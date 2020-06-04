@@ -62,8 +62,6 @@ CodeThorn::Analyzer::Analyzer():
   _contextSensitiveAnalysis(false)
 {
   initDiagnostics();
-  _analysisTimer.start();
-  _analysisTimer.stop();
   variableIdMapping=new VariableIdMappingExtended();
   //variableIdMapping->setModeVariableIdForEachArrayElement(true);
   for(int i=0;i<100;i++) {
@@ -532,7 +530,9 @@ Solver* CodeThorn::Analyzer::getSolver() {
 }
 
 void CodeThorn::Analyzer::runSolver() {
+  startAnalysisTimer();
   _solver->run();
+  stopAnalysisTimer();
 }
 
 set<string> CodeThorn::Analyzer::variableIdsToVariableNames(CodeThorn::VariableIdSet s) {
@@ -1675,7 +1675,22 @@ void CodeThorn::Analyzer::initializeCommandLineArgumentsInState(PState& initialP
   }
 }
 
+void CodeThorn::Analyzer::startAnalysisTimer() {
+  if (!_timerRunning) {
+    _analysisTimer.start();
+    _timerRunning=true;
+    cout<<"INFO: solver timer started."<<endl;
+  }
+}
+
+void CodeThorn::Analyzer::stopAnalysisTimer() {
+  _timerRunning=false;
+  _analysisTimer.stop();
+  cout<<"INFO: solver timer stopped."<<endl;
+}
+
 void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
+  startAnalysisTimer();
   ROSE_ASSERT(root);
   resetInputSequenceIterator();
   std::string funtofind=functionToStartAt;
