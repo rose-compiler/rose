@@ -150,18 +150,16 @@ namespace
       Lattice&              lattice;
   };
 
-#if OBSOLETE_CODE
   /// true if these string lengths indicate a caller/callee relationship
   /// on FiniteCallString
-  bool callerCalleeLengths(size_t caller, size_t callee, size_t MAXLEN)
+  inline
+  bool callerCalleeLengths(bool fixedLen, size_t caller, size_t callee, size_t MAXLEN)
   {
-    //~ std::cerr << caller << " / " << callee << " : " << MAXLEN << std::endl;
-
-    return (  ((caller == MAXLEN) && (callee == MAXLEN))
+    return (  fixedLen
+           || ((caller == MAXLEN) && (callee == MAXLEN))
            || ((caller <  MAXLEN) && (callee == caller+1))
            );
   }
-#endif /* OBSOLETE_CODE */
 
   /// tests if this is a prefix to target
   /// \details
@@ -169,21 +167,22 @@ namespace
   ///   whether target could be called from this.
   bool callerCalleePrefix(const FiniteCallString& caller, const FiniteCallString& callee)
   {
-    //~ static const size_t MAX_OVERLAP = CTX_CALL_STRING_MAX_LENGTH-1;
+    if (FiniteCallString::FIXED_LEN_REP)
+    {
+      const size_t ofs     = 1;
+    
+      return std::equal( std::next(caller.begin(), ofs), caller.end(), 
+                         callee.begin());
+    }    
+    
+    constexpr size_t MAX_OVERLAP = CTX_CALL_STRING_MAX_LENGTH-1;
 
-#if OBSOLETE_CODE
     // if all labels in the common subrange match
     const size_t len     = caller.size();
     const size_t overlap = std::min(len, MAX_OVERLAP);
     const size_t ofs     = len-overlap;
-#endif /* OBSOLETE_CODE */
-
-    //~ const size_t overlap = MAX_OVERLAP;
-    const size_t                     ofs = 1;
     
-    //~ ROSE_ASSERT(overlap+1 == callee.size());
-    return std::equal( std::next(caller.begin(), ofs), caller.end(), 
-                       callee.begin());
+    ROSE_ASSERT(overlap+1 == callee.size());
   }
 
   struct IsCallerCallee
@@ -398,12 +397,7 @@ bool FiniteCallString::isValidReturn(Labeler& labeler, Label retlbl) const
   //     if (argc<2) return main(argc-1, ...);
   //     return 0;
   //   }
-#if OBSOLETE_CODE  
-  // \todo use pseudo context to model call to entry functions.
-  //       -> saves periodic calls to size.
-  return size() && defaultIsValidReturn(labeler, back(), retlbl);
-#endif /* OBSOLETE_CODE */  
-  
+    
   return (  (!empty()) 
          && defaultIsValidReturn(labeler, last(), retlbl)
          );
@@ -423,16 +417,18 @@ void FiniteCallString::callReturn(Labeler& labeler, CodeThorn::Label lbl)
 
 bool FiniteCallString::callerOf(const FiniteCallString& target, Label callsite) const
 {
-  //~ ROSE_ASSERT(CTX_CALL_STRING_MAX_LENGTH > 0 && target.size());
+  ROSE_ASSERT(CTX_CALL_STRING_MAX_LENGTH > 0 && target.size());
+  
+  constexpr bool fixedLen = FiniteCallString::FIXED_LEN_REP
 
   // target is invoked from this, if
   // (1) the target's last label is callsite
   // (2) the lengths of the call string match caller/callee lengths 
-  //     NOTE: holds by construction (PP 05/15/20)
+  //     NOTE: holds by construction if fixedLen is used.
   // (3) if all labels in the common subrange match
   return (  (!target.empty())
          && (target.last() == callsite)
-         //~ && callerCalleeLengths(size(), target.size(), CTX_CALL_STRING_MAX_LENGTH)
+         && callerCalleeLengths(fixedLen, size(), target.size(), CTX_CALL_STRING_MAX_LENGTH)
          && callerCalleePrefix(*this, target)
          );
 }

@@ -297,6 +297,8 @@ struct ContextSequence
     typedef typename impl::const_reference        const_reference;
     typedef typename impl::const_reverse_iterator const_reverse_iterator;
     typedef typename impl::const_iterator         const_iterator;
+    
+    static const bool FIXED_LEN_REP = true;
   
     ContextSequence()
     : data(CTX_CALL_STRING_MAX_LENGTH, Label())
@@ -386,6 +388,8 @@ struct ContextSequenceCOW
     typedef typename impl::const_reference        const_reference;
     typedef typename impl::const_reverse_iterator const_reverse_iterator;
     typedef typename impl::const_iterator         const_iterator;
+    
+    static const bool FIXED_LEN_REP = true;
   
     ContextSequenceCOW()
     : data(new impl(CTX_CALL_STRING_MAX_LENGTH, Label()))
@@ -487,21 +491,26 @@ struct ContextSequenceCOW
 // \todo the base rep could be replaced by a ring-buffer for efficiency
 struct FiniteCallString 
 {
-    // pick your underlying sequence representation
-    //~ typedef SimpleString<Label>                       sequence; // 0.2% (1s/475s)faster than vector (on some whole application)
-    typedef ext_sequence< std::vector<Label> >        sequence; // seems slightly faster than alternatives below
-    //~ typedef cowbasic_string<Label>                    sequence; // wip
+    // pick the underlying sequence representation
+    typedef SimpleString<Label>                       sequence; // 0.2% (1s/475s)faster than vector (on some whole application)
+    //~ typedef ext_sequence< std::vector<Label> >        sequence; // seems slightly faster than alternatives below
     //~ typedef ext_sequence< std::basic_string<Label> >  sequence;
     //~ typedef std::deque<Label>                         sequence;
     //~ typedef std::list<Label>                          sequence;
     
-    typedef FiniteCallStringComparator                comparator;
     typedef ContextSequence< sequence >               context_string;
     //~ typedef ContextSequenceCOW< sequence >            context_string; // COW wrapper makes things slightly slower...
+    
+    // string comparison reverses "normal" sort to place NO_LABEL first.
+    //   (required by callsite merging in FiniteReturnHandler)
+    typedef FiniteCallStringComparator                comparator;
     
     // "inherited" types
     typedef context_string::const_reverse_iterator    const_reverse_iterator;
     typedef context_string::const_iterator            const_iterator;
+    
+    // true, if the underlying representation is fixed length.
+    static constexpr bool FIXED_LEN_REP = context_string::FIXED_LEN_REP;
     
     // "inherited" functions 
     const_iterator         begin()  const { return rep.begin(); }
