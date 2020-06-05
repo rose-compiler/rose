@@ -9,7 +9,8 @@ add_library(roseDisassemblers OBJECT
   SgAsmFloatValueExpression.C SgAsmFunction.C SgAsmInstruction.C
   SgAsmIntegerValueExpression.C SgAsmInterpretation.C SgAsmType.C
   SgAsmM68kInstruction.C SgAsmMipsInstruction.C SgAsmPowerpcInstruction.C
-  SgAsmX86Instruction.C x86InstructionProperties.C RegisterParts.C)
+  SgAsmX86Instruction.C x86InstructionProperties.C RegisterParts.C
+  BinaryInstructionCache.C)
 
 add_dependencies(roseDisassemblers rosetta_generated)
 
@@ -23,4 +24,5 @@ install(
     InstructionEnumsM68k.h x86InstructionProperties.h
     InstructionEnumsArm64.h InstructionEnumsMips.h InstructionEnumsX86.h
     Registers.h RegisterDescriptor.h InstructionEnumsPowerpc.h RegisterParts.h
+    BinaryInstructionCache.h
   DESTINATION ${INCLUDE_INSTALL_DIR})
