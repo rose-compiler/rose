@@ -24,7 +24,7 @@ int Solver12::getId() {
   * \date 2016.
  */
 void Solver12::run() {
-  _analyzer->_analysisTimer.start();
+  //_analyzer->_analysisTimer.start();
   if(_analyzer->svCompFunctionSemantics()) {
     _analyzer->reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {

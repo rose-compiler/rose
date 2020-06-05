@@ -216,6 +216,15 @@ void PState::writeValueToAllMemoryLocations(CodeThorn::AbstractValue val) {
   }
 }
 
+void PState::reserveMemoryLocation(AbstractValue varId) {
+  writeUndefToMemoryLocation(varId);
+}
+
+void PState::writeUndefToMemoryLocation(AbstractValue varId) {
+  AbstractValue undefValue=AbstractValue::createUndefined();
+  writeToMemoryLocation(varId, undefValue);
+}
+
 void PState::writeTopToMemoryLocation(AbstractValue varId) {
   CodeThorn::AbstractValue val=CodeThorn::Top();
   writeToMemoryLocation(varId, val);

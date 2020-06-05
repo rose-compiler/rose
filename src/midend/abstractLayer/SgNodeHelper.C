@@ -2094,4 +2094,16 @@ SgNodeHelper::matchExtendedNormalizedCall(SgNode* n)
   return res;
 }
 
-
+std::list<SgVariableDeclaration*> SgNodeHelper::memberVariableDeclarationsList(SgClassType* sgType) {
+  std::list<SgVariableDeclaration*> declVarList;
+  typedef std::vector< std::pair< SgNode*, std::string > > DataMemberPointers;
+  DataMemberPointers dataMemPtrs=isSgClassType(sgType)->returnDataMemberPointers();
+  // returnDataMemberPointers includes all declarations (methods need to be filtered)
+  for(DataMemberPointers::iterator i=dataMemPtrs.begin();i!=dataMemPtrs.end();++i) {
+    SgNode* node=(*i).first; 
+    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
+      declVarList.push_back(varDecl);
+    }
+  }
+  return declVarList;
+}

@@ -148,7 +148,7 @@ AbstractValue ExprAnalyzer::abstractValueFromSgValueExp(SgValueExp* valueExp, Ev
   switch(valueExp->variantT()) {
     CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgFloatVal, float);
     CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgDoubleVal, double);
-    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgLongDoubleVal, long double);
+    //    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgLongDoubleVal, long double);
     CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgShortVal, short int);
     CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgIntVal, int);
     CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgLongIntVal, long int);
@@ -2023,11 +2023,24 @@ AbstractValue ExprAnalyzer::readFromMemoryLocation(Label lab, const PState* psta
 void ExprAnalyzer::writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
   // inspect everything here
   if(memLoc.isTop()) {
+    //cout<<"DEBUG: writing to arbitrary memloc: "<<lab.toString()<<":"<<memLoc.toString(_variableIdMapping)<<":="<<newValue.toString(_variableIdMapping)<<endl;
     recordPotentialOutOfBoundsAccessLocation(lab);
   } else if(!pstate->memLocExists(memLoc)) {
-    recordDefinitiveOutOfBoundsAccessLocation(lab);
+    if(!newValue.isUndefined()) {
+      recordPotentialOutOfBoundsAccessLocation(lab);
+      //cout<<"DEBUG: writing defined value to memlog not in state: "<<lab.toString()<<":"<<memLoc.toString(_variableIdMapping)<<":="<<newValue.toString(_variableIdMapping)<<endl;
+    }
   }
   pstate->writeToMemoryLocation(memLoc,newValue);
+}
+
+void ExprAnalyzer::initializeMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
+  reserveMemoryLocation(lab,pstate,memLoc);
+  writeToMemoryLocation(lab,pstate,memLoc,newValue);
+ }
+
+void ExprAnalyzer::reserveMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc) {
+  writeUndefToMemoryLocation(lab,pstate,memLoc);
 }
 
 void ExprAnalyzer::writeUndefToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc) {
