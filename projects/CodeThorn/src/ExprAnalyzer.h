@@ -145,8 +145,14 @@ namespace CodeThorn {
     std::string getInterpreterModeFileName();
     void setInterpreterModeFileName(std::string);
 
+    // reserves memory location and sets as value 'undef'
+    void reserveMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc);
+    // reserves and initializes memory location with newValue
+    void initializeMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
     AbstractValue readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
+    // memory location must exist otherwise it is recorded as an out-of-bounds access
     void writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
+    // memory must already be reserved (hence, this function is redundant if reserves is used before)
     void writeUndefToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc);
     void writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc);
     //! This function turn a single result into a one-elment list with

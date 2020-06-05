@@ -26,7 +26,7 @@ int Solver5::getId() {
   * \date 2012.
  */
 void Solver5::run() {
-  _analyzer->_analysisTimer.start();
+  //_analyzer->_analysisTimer.start(); // is started in runSolver now
   if(_analyzer->svCompFunctionSemantics()) {
     _analyzer->reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {

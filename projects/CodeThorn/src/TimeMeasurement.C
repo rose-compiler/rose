@@ -2,6 +2,9 @@
 #include <stdexcept>
 #include <cmath>     
 #include <iomanip>
+#include <iostream>
+
+using namespace std;
 
 TimeDuration::TimeDuration():_timeDuration(0.0) {
 }
