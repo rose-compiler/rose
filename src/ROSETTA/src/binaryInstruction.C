@@ -734,6 +734,15 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
+        // Documentation is below because it uses different names than normal. Functions are not automatically generated because
+        // we need to synchronize access to the private p_cacheLockCount data member. However, we still use ROSETTA to generate
+        // the data member because we need to make sure it gets initialized to zero in the constructors. What a mess.
+#else
+        AsmInstruction.setDataPrototype("size_t", "cacheLockCount", "= 0",
+                                        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
         // FIXME[Robb P Matzke 2017-02-13]: unused?
 #else
         AsmInstruction.setDataPrototype("SgAsmStatementPtrList", "sources", "",
@@ -777,6 +786,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_sources);
             if (version >= 1)
                 s & BOOST_SERIALIZATION_NVP(semanticFailure_);
+            //s & BOOST_SERIALIZATION_NVP(p_cacheLockCount); -- definitely not!
         }
 #endif
 
@@ -795,6 +805,10 @@ void Grammar::setUpBinaryInstructions() {
 #endif
         };
         SemanticFailure semanticFailure_;
+
+        // Synchronized data members. All the following data members (as listed in binaryInstruction.C, not the ROSETTA-generated
+        // code) should be procted by the mutex_. Additionally, the p_cacheLockCount data member is synchronized.
+        mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
 
     public:
         /** Represents an invalid stack delta.
@@ -1130,6 +1144,16 @@ void Grammar::setUpBinaryInstructions() {
         void incrementSemanticFailure();
         /** @} */
 
+        /** Property: Cache lock count.
+         *
+         *  Number of locks held on this object, preventing the AST rooted at this node from being evicted from a cache.
+         *
+         *  Thread safety: This method is thread safe.
+         *
+         * @{ */
+        size_t cacheLockCount() const;
+        void adjustCacheLockCount(int increment);
+        /** @} */
 #endif // SgAsmInstruction_OTHERS
 
 #ifdef DOCUMENTATION
