@@ -25,9 +25,9 @@ SgAsmPowerpcInstruction::get_anyKind() const {
 }
 
 // Return control flow successors. See base class for full documentation.
-BinaryAnalysis::Disassembler::AddressSet
+AddressSet
 SgAsmPowerpcInstruction::getSuccessors(bool *complete) {
-    BinaryAnalysis::Disassembler::AddressSet retval;
+    AddressSet retval;
     *complete = true; /*assume retval is the complete set of successors for now*/
 
     switch (get_kind()) {

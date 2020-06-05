@@ -283,10 +283,10 @@ SgAsmM68kInstruction::isUnknown() const
     return m68k_unknown_instruction == get_kind();
 }
 
-BinaryAnalysis::Disassembler::AddressSet
+AddressSet
 SgAsmM68kInstruction::getSuccessors(bool *complete)
 {
-    BinaryAnalysis::Disassembler::AddressSet retval;
+    AddressSet retval;
     *complete = true;
 
     switch (get_kind()) {
@@ -429,7 +429,7 @@ SgAsmM68kInstruction::getSuccessors(bool *complete)
     return retval;
 }
 
-BinaryAnalysis::Disassembler::AddressSet
+AddressSet
 SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete,
                                     const BinaryAnalysis::MemoryMap::Ptr &initial_memory)
 {
@@ -441,7 +441,7 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
               <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<"\n";
     }
 
-    BinaryAnalysis::Disassembler::AddressSet successors = SgAsmInstruction::getSuccessors(insns, complete);
+    AddressSet successors = SgAsmInstruction::getSuccessors(insns, complete);
 
     // If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then
     // we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
@@ -475,7 +475,7 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
 
     if (debug) {
         debug <<"  successors:";
-        BOOST_FOREACH (rose_addr_t va, successors)
+        BOOST_FOREACH (rose_addr_t va, successors.values())
             debug <<" " <<StringUtility::addrToString(va);
         debug <<(*complete?"":"...") <<"\n";
     }

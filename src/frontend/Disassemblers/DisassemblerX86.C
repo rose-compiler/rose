@@ -150,8 +150,7 @@ DisassemblerX86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
     /* Note successors if necesssary */
     if (successors) {
         bool complete;
-        AddressSet suc2 = insn->getSuccessors(&complete);
-        successors->insert(suc2.begin(), suc2.end());
+        *successors |= insn->getSuccessors(&complete);
     }
 
     return insn;
