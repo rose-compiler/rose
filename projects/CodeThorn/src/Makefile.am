@@ -830,7 +830,7 @@ check-svcomp-witness:
 	./codethorn $(srcdir)/tests/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c --svcomp-mode --input-values="{1,2,3,4,5,6}" --witness-file=toBeImplemented.witness --with-counterexamples
 
 check-vxthorn:
-	./vxthorn tests/DOM009_sequence_arrayinits.C
+	./vxthorn $(srcdir)/tests/DOM009_sequence_arrayinits.C
 
 check-equivalence:
 	@rm -f tmp.nsdump
