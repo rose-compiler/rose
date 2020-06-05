@@ -92,11 +92,8 @@ CodeThorn::Analyzer::~Analyzer() {
 
 CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const CodeThorn::EState* currentEStatePtr) {
   // start the timer if not yet done
-  if (!_timerRunning) {
-    _analysisTimer.start();
-    _timerRunning=true;
-    cout<<"INFO: subsolver timer started."<<endl;
-  }
+  startAnalysisTimer();
+
   // first, check size of global EStateSet and print status or switch to topify/terminate analysis accordingly.
   unsigned long estateSetSize;
   bool earlyTermination = false;
@@ -1015,13 +1012,13 @@ PState CodeThorn::Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVar
       SAWYER_MESG(logger[WARN])<<"expected assign initializer but found "<<exp->unparseToString();
       SAWYER_MESG(logger[WARN])<<"AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
       AbstractValue newVal=AbstractValue::createTop();
-      getExprAnalyzer()->writeToMemoryLocation(label,&newPState,arrayElemAddr,newVal);
+      getExprAnalyzer()->initializeMemoryLocation(label,&newPState,arrayElemAddr,newVal);
     } else {
       // initialize element of array initializer in state
       SgExpression* assignInitExpr=assignInit->get_operand();
       // currentEState from above, newPState must be the same as in currentEState.
       AbstractValue newVal=singleValevaluateExpression(assignInitExpr,currentEState);
-      getExprAnalyzer()->writeToMemoryLocation(label,&newPState,arrayElemAddr,newVal);
+      getExprAnalyzer()->initializeMemoryLocation(label,&newPState,arrayElemAddr,newVal);
     }
     elemIndex++;
   }
@@ -1043,7 +1040,7 @@ PState CodeThorn::Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVar
       // note: int a[3]={}; also forces the array to be initialized with {0,0,0}, the list can be empty.
       // whereas with int a[3]; all 3 are undefined
       AbstractValue defaultValue=AbstractValue(0); // TODO: cases where default value is not 0.
-      getExprAnalyzer()->writeToMemoryLocation(label,&newPState,arrayElemAddr,defaultValue);
+      getExprAnalyzer()->initializeMemoryLocation(label,&newPState,arrayElemAddr,defaultValue);
     }
   } else {
     // if aggregate size is 0 there is nothing to do
@@ -1140,7 +1137,6 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
             setElementSize(initDeclVarId,arrayElementType);
             // only set size from aggregate initializer if not known from type
             if(variableIdMapping->getNumberOfElements(initDeclVarId)==0) {
-              // TODO: requires a sizeof computation of an aggregate initializer (e.g. {{1,2},{1,2}} == 4)
                variableIdMapping->setNumberOfElements(initDeclVarId, computeNumberOfElements(decl));
             }
             PState newPState=*currentEState.pstate();
@@ -1679,14 +1675,14 @@ void CodeThorn::Analyzer::startAnalysisTimer() {
   if (!_timerRunning) {
     _analysisTimer.start();
     _timerRunning=true;
-    cout<<"INFO: solver timer started."<<endl;
+    SAWYER_MESG(logger[INFO])<<"INFO: solver timer started."<<endl;
   }
 }
 
 void CodeThorn::Analyzer::stopAnalysisTimer() {
   _timerRunning=false;
   _analysisTimer.stop();
-  cout<<"INFO: solver timer stopped."<<endl;
+  SAWYER_MESG(logger[INFO])<<"INFO: solver timer stopped."<<endl;
 }
 
 void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
