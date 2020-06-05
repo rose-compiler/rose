@@ -23,7 +23,9 @@ JOVIAL_TESTCODES = \
  5_2_logical_continuation_a.jov         \
  5_2_logical_continuation_b.jov         \
  6_1_ptr_dereference.jov                \
- 6_3_5_shift_function.jov
+ 6_3_5_shift_function.jov               \
+ 4_10_abort_stmt_a.jov                  \
+ 4_10_abort_stmt_b.jov
 
 # status_enumval.jov                     \
 # 1_2_3_main-program-module_a.jov        \
@@ -33,9 +35,7 @@ JOVIAL_TESTCODES = \
 # 1_2_3_program-body_c.jov               \
 # 2_1_1_7_pointer_type.jov               \
 # 2_1_2_2_structure_spec.jov             \
-# 2_1_2_3_packing_spec.jov               \
-# 4_10_abort_stmt_a.jov                  \
-# 4_10_abort_stmt_b.jov
+# 2_1_2_3_packing_spec.jov
 
 JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \

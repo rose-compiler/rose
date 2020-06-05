@@ -502,6 +502,44 @@ Leave(SgExprStatement* assign_stmt)
 }
 
 void SageTreeBuilder::
+Enter(SgStopOrPauseStatement* &control_stmt, const boost::optional<SgExpression*> &opt_code, const std::string &stmt_kind)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgStopOrPauseStatement* &, ...) \n";
+
+   SgExpression* code = nullptr;
+
+   if (opt_code) {
+      code = *opt_code;
+   }
+   else {
+      code = SageBuilder::buildNullExpression_nfi();
+   }
+
+   control_stmt = new SgStopOrPauseStatement(code);
+   ROSE_ASSERT(control_stmt);
+   SageInterface::setSourcePosition(control_stmt);
+
+   if (stmt_kind == "abort") {
+      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_abort);
+   }
+   ROSE_ASSERT(control_stmt->get_stop_or_pause() != SgStopOrPauseStatement::e_unknown);
+
+   code->set_parent(control_stmt);
+
+   //TODO Lables and source position
+   //setSourcePosition(control_stmt, sources.get<0>(), sources.get<2>());
+
+   SageInterface::appendStatement(control_stmt, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Leave(SgStopOrPauseStatement* control_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgStopOrPauseStatement*, ...) \n";
+   ROSE_ASSERT(control_stmt);
+}
+
+void SageTreeBuilder::
 Enter(SgSwitchStatement* &switch_stmt, SgExpression* selector, const SourcePositionPair &sources)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgSwitchStatement* &, ...) \n";

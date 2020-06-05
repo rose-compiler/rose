@@ -736,20 +736,17 @@ Unparse_Jovial::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      if (kind == SgStopOrPauseStatement::e_stop)
         {
-          curprint("STOP ");
+          curprint_indented("STOP ", info);
           unparseExpression(sp_stmt->get_code(), info);
-          curprint(";");
-          unp->cur.insert_newline(1);
+          curprint(";\n");
         }
      else if (kind == SgStopOrPauseStatement::e_exit)
         {
-          curprint("EXIT ;");
-          unp->cur.insert_newline(1);
+          curprint_indented("EXIT;\n", info);
         }
      else if (kind == SgStopOrPauseStatement::e_abort)
         {
-          curprint("ABORT ;");
-          unp->cur.insert_newline(1);
+          curprint_indented("ABORT;\n", info);
         }
      else
         {
