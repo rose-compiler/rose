@@ -5463,34 +5463,19 @@ ATbool ATermToSageJovialTraversal::traverse_AbortStatement(ATerm term)
    std::vector<PosInfo> locations;
 
    SgStopOrPauseStatement* abort_stmt = nullptr;
-   SgExpression* stop_code = nullptr;
-
 
    if (ATmatch(term, "AbortStatement(<term>)", &t_labels)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
-
-//TODO_STATEMENTS
-#if 0
-
-      SgUntypedAbortStatement* abort_stmt = new SgUntypedAbortStatement("");
-      setSourcePosition(abort_stmt, term);
-      stmt = convert_Labels(labels, locations, abort_stmt);
-#endif
    }
    else return ATfalse;
 
-#if 0
    // Begin SageTreeBuilder
-   sage_tree_builder.Enter(abort_stmt, rhs, vars, std::string());
+   sage_tree_builder.Enter(abort_stmt, boost::none, std::string("abort"));
 
-   } else return ATfalse;
-   ROSE_ASSERT(assign_stmt != nullptr);
-
-  // End SageTreeBuilder
-  sage_tree_builder.Leave(assign_stmt, );
-#endif
+   // End SageTreeBuilder
+   sage_tree_builder.Leave(abort_stmt);
 
    return ATtrue;
 }
