@@ -9,6 +9,7 @@
 #define Sawyer_WorkList_H
 
 #include <Sawyer/Synchronization.h>
+#include <deque>
 
 namespace Sawyer {
 
@@ -61,6 +62,7 @@ public:
  *  list, such as adding additional work items. */
 template<class WorkItems, class Functor>
 void processWorkList(WorkItems &workList, size_t maxWorkers, Functor f) {
+#if SAWYER_MULTI_THREADED
     boost::mutex mutex;
     boost::condition_variable cond;
     size_t nActiveWorkers = 0;
@@ -97,6 +99,10 @@ void processWorkList(WorkItems &workList, size_t maxWorkers, Functor f) {
         if (workList.isEmpty() && 0 == nActiveWorkers)
             break;
     }
+#else
+    while (!workList.isEmpty())
+        f(workList.next(), workList);
+#endif
 }
 
 } // namespace
