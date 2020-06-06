@@ -522,6 +522,18 @@ Enter(SgStopOrPauseStatement* &control_stmt, const boost::optional<SgExpression*
    if (stmt_kind == "abort") {
       control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_abort);
    }
+   else if (stmt_kind == "error_stop") {
+      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_error_stop);
+   }
+   else if (stmt_kind == "exit") {
+      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_exit);
+   }
+   else if (stmt_kind == "pause") {
+      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_pause);
+   }
+   else if (stmt_kind == "stop") {
+      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_stop);
+   }
    ROSE_ASSERT(control_stmt->get_stop_or_pause() != SgStopOrPauseStatement::e_unknown);
 
    code->set_parent(control_stmt);

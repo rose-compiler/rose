@@ -5416,35 +5416,28 @@ ATbool ATermToSageJovialTraversal::traverse_StopStatement(ATerm term)
 
    SgStopOrPauseStatement* stop_stmt = nullptr;
    SgExpression* stop_code = nullptr;
+   boost::optional<SgExpression*> opt_code = boost::none;
 
    if (ATmatch(term, "StopStatement(<term>,<term>)", &t_labels, &t_stop_code)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
 
-#if 0
       if (ATmatch(t_stop_code, "no-integer-formula()")) {
          // no stop code
-         // DELETE ME
-         //         stop_code = UntypedBuilder::buildUntypedNullExpression();
       }
-      else if (traverse_NumericFormula(t_stop_code, sg_stop_code)) {
+      else if (traverse_NumericFormula(t_stop_code, stop_code)) {
          // MATCHED NumericFormula
+         opt_code = boost::optional<SgExpression*>(stop_code);
       } else return ATfalse;
-
-      // DELETE ME
-      //      SgUntypedStopStatement* stop_stmt = new SgUntypedStopStatement("", stop_code);
-      //      setSourcePosition(stop_stmt, term);
-
-      //      stmt = convert_Labels(labels, locations, stop_stmt);
-#endif
    }
    else return ATfalse;
 
-//TODO_STATEMENTS
-#if 0
-   stmt_list->get_stmt_list().push_back(stmt);
-#endif
+   // Begin SageTreeBuilder
+   sage_tree_builder.Enter(stop_stmt, opt_code, std::string("stop"));
+
+   // End SageTreeBuilder
+   sage_tree_builder.Leave(stop_stmt);
 
    return ATtrue;
 }
