@@ -880,7 +880,31 @@ namespace sg
     GEN_VISIT(SgTypeSigned128bitInteger)
     GEN_VISIT(SgTypeUnsigned128bitInteger)
     GEN_VISIT(SgTypeNullptr)
-
+    
+   // PP (06/03/20): Adding Ada nodes
+    GEN_VISIT(SgAdaAccessType)
+    GEN_VISIT(SgAdaAcceptStmt)
+    GEN_VISIT(SgAdaEntryDecl)
+    GEN_VISIT(SgAdaExitStmt)
+    GEN_VISIT(SgAdaFloatType)
+    GEN_VISIT(SgAdaFloatVal)
+    GEN_VISIT(SgAdaLoopStmt)
+    GEN_VISIT(SgAdaPackageBody)
+    GEN_VISIT(SgAdaPackageBodyDecl)
+    GEN_VISIT(SgAdaPackageSpec)
+    GEN_VISIT(SgAdaPackageSpecDecl)
+    GEN_VISIT(SgAdaPackageSymbol)
+    GEN_VISIT(SgAdaRangeConstraint)
+    GEN_VISIT(SgAdaSubtype)
+    GEN_VISIT(SgAdaTaskBody)
+    GEN_VISIT(SgAdaTaskBodyDecl)
+    GEN_VISIT(SgAdaTaskSpec)
+    GEN_VISIT(SgAdaTaskSpecDecl)
+    GEN_VISIT(SgAdaTaskRefExp)
+    GEN_VISIT(SgAdaTaskType)
+    GEN_VISIT(SgAdaTaskTypeDecl)
+    GEN_VISIT(SgAdaTypeConstraint)
+  
     // * token
     GEN_VISIT(SgToken)
 
