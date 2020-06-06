@@ -385,7 +385,24 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     mangled_name = joinMangledQualifiersToString (par_scope_name,stmt_name);
                     break;
                   }
+                  
+               case V_SgAdaPackageSpec:
+                  {
+                    const SgAdaPackageSpec*     spec   = isSgAdaPackageSpec(scope);
+                    const SgNode*               parent = spec->get_parent();
+                    ROSE_ASSERT(parent);
+                    
+                    const SgAdaPackageSpecDecl* dcl    = isSgAdaPackageSpecDecl(parent);
+                    ROSE_ASSERT(dcl);
+                    // or get_mangled_name ??
+                    mangled_name = dcl->get_name().getString();
+                    break;
+                  }
 
+           
+           // PP (06/01/20) - not sure how to handle function parameter scope;
+           //                 for now, handle like SgGlobal
+               case V_SgFunctionParameterScope:
            // DQ (2/22/2007): I'm not sure this is best, but we can leave it for now.
            // I expect that global scope should contribute to the mangled name to avoid
            // confusion with name of declarations in un-name namespaces for example.
