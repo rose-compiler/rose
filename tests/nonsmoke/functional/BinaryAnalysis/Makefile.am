@@ -1432,7 +1432,7 @@ noinst_PROGRAMS += testRandomInput
 testRandomInput_SOURCES = testRandomInput.C
 testRandomInput_LDADD = $(ROSE_SEPARATE_LIBS)
 
-testRandomInput_ISAs = amd64 coldfire i386 m68040 mips-be mips-le ppc32
+testRandomInput_ISAs = amd64 coldfire i386 m68040 mips-be mips-le ppc32-be ppc32-le ppc64-be ppc64-le
 testRandomInput_Targets = $(addprefix tri_, $(addsuffix .passed, $(testRandomInput_ISAs)))
 TEST_TARGETS += $(testRandomInput_Targets) tri_a64.passed
 
@@ -1628,7 +1628,7 @@ testDisassembler-ppc32.passed: $(top_srcdir)/scripts/test_with_answer testDisass
 		TITLE="test disassembler PowerPC-32 [$@]"					\
 		DISABLED="$$(./conditionalDisable)"						\
 		USE_SUBDIR=no									\
-		CMD="$$(pwd)/testDisassembler --isa=ppc32 $(testDisassembler_ppc32_input)"	\
+		CMD="$$(pwd)/testDisassembler --isa=ppc32-be $(testDisassembler_ppc32_input)"	\
 		ANS="$(testDisassembler_ppc32_answer)"						\
 		$< $@
 
@@ -1640,7 +1640,7 @@ testDisassembler-ppc64a.passed: $(top_srcdir)/scripts/test_with_answer testDisas
 		TITLE="test disassembler PowerPC-64 [$@]"					\
 		DISABLED="$$(./conditionalDisable)"						\
 		USE_SUBDIR=no									\
-		CMD="$$(pwd)/testDisassembler --isa=ppc64 $(testDisassembler_ppc64a_input)"	\
+		CMD="$$(pwd)/testDisassembler --isa=ppc64-be $(testDisassembler_ppc64a_input)"	\
 		ANS="$(testDisassembler_ppc64a_answer)"						\
 		$< $@
 
@@ -1652,7 +1652,7 @@ testDisassembler-ppc64b.passed: $(top_srcdir)/scripts/test_with_answer testDisas
 		TITLE="test disassembler PowerPC-64 [$@]"					\
 		DISABLED="$$(./conditionalDisable)"						\
 		USE_SUBDIR=no									\
-		CMD="$$(pwd)/testDisassembler --isa=ppc64 $(testDisassembler_ppc64b_input)"	\
+		CMD="$$(pwd)/testDisassembler --isa=ppc64-be $(testDisassembler_ppc64b_input)"	\
 		ANS="$(testDisassembler_ppc64b_answer)"						\
 		$< $@
 

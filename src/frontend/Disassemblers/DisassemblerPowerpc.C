@@ -69,7 +69,19 @@ DisassemblerPowerpc::init() {
             callingConventions(CallingConvention::dictionaryPowerpc64());
             break;
     }
+
     byteOrder(ByteOrder::ORDER_MSB);
+    switch (sex_) {
+        case ByteOrder::ORDER_MSB:
+            name(name() + "-be");
+            break;
+        case ByteOrder::ORDER_LSB:
+            name(name() + "-le");
+            break;
+        default:
+            ASSERT_not_reachable("invalid byte order");
+    }
+
     REG_IP = regdict->findOrThrow("iar");
     REG_SP = regdict->findOrThrow("r1");
     REG_LINK = regdict->findOrThrow("lr");
@@ -92,6 +104,8 @@ DisassemblerPowerpc::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start
     if (tempsz<4)
         throw Exception("short read", start_va);
     uint32_t c = (temp[0]<<24) | (temp[1]<<16) | (temp[2]<<8) | temp[3];
+    if (ByteOrder::ORDER_LSB == sex_)
+        c = ByteOrder::swap_bytes(c);
 
     // Disassemble the instruction
     startInstruction(start_va, c);
@@ -445,19 +459,40 @@ DisassemblerPowerpc::disassemble() {
         case 0x1E: return decode_MD_formInstruction();
         case 0x1F: return decode_X_formInstruction_1F();
         case 0x20: return MAKE_INSN2(lwz, RT(), memref(T_U32));
-        case 0x21: return MAKE_INSN2(lwzu, RT(), memrefu(T_U32));
+        case 0x21:
+            if (fld<11, 15>() == 0 || fld<11, 15>() == fld<6, 10>())
+                throw ExceptionPowerpc("invalid LWZU instruction", this);
+            return MAKE_INSN2(lwzu, RT(), memrefu(T_U32));
         case 0x22: return MAKE_INSN2(lbz, RT(), memref(T_U8));
-        case 0x23: return MAKE_INSN2(lbzu, RT(), memrefu(T_U8));
+        case 0x23:
+            if (fld<11, 15>() == 0 || fld<11, 15>() == fld<6, 10>())
+                throw ExceptionPowerpc("invalid LBZU instruction", this);
+            return MAKE_INSN2(lbzu, RT(), memrefu(T_U8));
         case 0x24: return MAKE_INSN2(stw, RS(), memref(T_U32));
-        case 0x25: return MAKE_INSN2(stwu, RS(), memrefu(T_U32));
+        case 0x25:
+            if (fld<11, 15>() == 0)
+                throw ExceptionPowerpc("invalid STWU instruction", this);
+            return MAKE_INSN2(stwu, RS(), memrefu(T_U32));
         case 0x26: return MAKE_INSN2(stb, RS(), memref(T_U8));
-        case 0x27: return MAKE_INSN2(stbu, RS(), memrefu(T_U8));
+        case 0x27:
+            if (fld<11, 15>() == 0)
+                throw ExceptionPowerpc("invalid STBU instruction", this);
+            return MAKE_INSN2(stbu, RS(), memrefu(T_U8));
         case 0x28: return MAKE_INSN2(lhz, RT(), memref(T_U16));
-        case 0x29: return MAKE_INSN2(lhzu, RT(), memrefu(T_U16));
+        case 0x29:
+            if (fld<11, 15>() == 0 || fld<11, 15>() == fld<6, 10>())
+                throw ExceptionPowerpc("invalid LHZU instruction", this);
+            return MAKE_INSN2(lhzu, RT(), memrefu(T_U16));
         case 0x2A: return MAKE_INSN2(lha, RT(), memref(T_U16));
-        case 0x2B: return MAKE_INSN2(lhau, RT(), memrefu(T_U16));
+        case 0x2B:
+            if (fld<11, 15>() == 0 || fld<11, 15>() == fld<6, 10>())
+                throw ExceptionPowerpc("invalid LHAU instruction", this);
+            return MAKE_INSN2(lhau, RT(), memrefu(T_U16));
         case 0x2C: return MAKE_INSN2(sth, RS(), memref(T_U16));
-        case 0x2D: return MAKE_INSN2(sthu, RS(), memrefu(T_U16));
+        case 0x2D:
+            if (fld<11, 15>() == 0)
+                throw ExceptionPowerpc("invalid STHU instruction", this);
+            return MAKE_INSN2(sthu, RS(), memrefu(T_U16));
         case 0x2E: return MAKE_INSN2(lmw, RT(), memref(T_U32));
         case 0x2F: return MAKE_INSN2(stmw, RS(), memref(T_U32));
         case 0x30: return MAKE_INSN2(lfs, FRT(), memref(T_FLOAT32));
@@ -473,7 +508,10 @@ DisassemblerPowerpc::disassemble() {
         case 0x3A: {
             switch (unsigned xo = insn & 0x3) {
                 case 0: return MAKE_INSN2(ld, RT(), memrefds(T_U64));
-                case 1: return MAKE_INSN2(ldu, RT(), memrefds(T_U64));
+                case 1:
+                    if (fld<11, 15>() == 0 || fld<11, 15>() == fld<6, 10>())
+                        throw ExceptionPowerpc("invalid LDU instruction", this);
+                    return MAKE_INSN2(ldu, RT(), memrefds(T_U64));
                 case 2: return MAKE_INSN2(lwa, RT(), memrefds(T_U32));
                 default:
                     throw ExceptionPowerpc("decoding error for pimary opcode 0x3a, XO=" + StringUtility::numberToString(xo),
@@ -590,7 +628,10 @@ DisassemblerPowerpc::decode_DS_formInstruction() {
 
     switch (insn & 0x03) {
         case 0: return MAKE_INSN2(std, RS(), memrefds(T_U64));
-        case 1: return MAKE_INSN2(stdu, RS(), memrefds(T_U64));
+        case 1:
+            if (fld<11, 15>() == 0)
+                throw ExceptionPowerpc("invalid STDU instruction", this);
+            return MAKE_INSN2(stdu, RS(), memrefds(T_U64));
         default: throw ExceptionPowerpc("invalid DS-form instruction", this);
     }
 }
@@ -618,8 +659,14 @@ DisassemblerPowerpc::decode_X_formInstruction_1F() {
         case 0x01C: return MAKE_INSN3_RC(and, RA(), RS(), RB());
         case 0x020: return MAKE_INSN4(cmpl, BF_cr(), L_10(), RA(), RB());
         case 0x028: return MAKE_INSN3_RC(subf, RT(), RA(), RB());
-        case 0x035: return MAKE_INSN2(ldux, RT(), memrefux(T_U64));
-        case 0x037: return MAKE_INSN2(lwzux, RT(), memrefux(T_U32));
+        case 0x035:
+            if (fld<11, 15>() == 0 || fld<11, 15>() == fld<6, 10>())
+                throw ExceptionPowerpc("invalid LDUX instruction", this);
+            return MAKE_INSN2(ldux, RT(), memrefux(T_U64));
+        case 0x037:
+            if (fld<11, 15>() == 0 || fld<11, 15>() == fld<6, 10>())
+                throw ExceptionPowerpc("invalid LWZUX instruction", this);
+            return MAKE_INSN2(lwzux, RT(), memrefux(T_U32));
         case 0x03a: return MAKE_INSN2_RC(cntlzd, RA(), RS());
         case 0x03C: return MAKE_INSN3_RC(andc, RA(), RS(), RB());
         case 0x044: return MAKE_INSN3(td, TO(), RA(), RB());
@@ -628,7 +675,10 @@ DisassemblerPowerpc::decode_X_formInstruction_1F() {
         case 0x053: return MAKE_INSN1(mfmsr, RT());
         case 0x057: return MAKE_INSN2(lbzx, RT(), memrefx(T_U8));
         case 0x068: return MAKE_INSN2_RC(neg, RT(), RA());
-        case 0x077: return MAKE_INSN2(lbzux, RT(), memrefux(T_U8));
+        case 0x077:
+            if (fld<11, 15>() == 0 || fld<11, 15>() == fld<6, 10>())
+                throw ExceptionPowerpc("invalid LBZUX instruction", this);
+            return MAKE_INSN2(lbzux, RT(), memrefux(T_U8));
         case 0x07A: return MAKE_INSN2(popcntb, RA(), RS());
         case 0x07C: return MAKE_INSN3_RC(nor, RA(), RS(), RB());
         case 0x088: return MAKE_INSN3_RC(subfe, RT(), RA(), RB());
@@ -638,8 +688,14 @@ DisassemblerPowerpc::decode_X_formInstruction_1F() {
         case 0x096: return MAKE_INSN2(stwcx_record, RS(), memrefx(T_U32));
         case 0x097: return MAKE_INSN2(stwx, RS(), memrefx(T_U32));
         case 0x0AE: return MAKE_INSN2(lfssux, FRT(), memrefux(T_FLOAT32));
-        case 0x0B5: return MAKE_INSN2(stdux, RS(), memrefux(T_U64));
-        case 0x0B7: return MAKE_INSN2(stwux, RS(), memrefux(T_U32));
+        case 0x0B5:
+            if (fld<11, 15>() == 0)
+                throw ExceptionPowerpc("invalid STDUX instruction", this);
+            return MAKE_INSN2(stdux, RS(), memrefux(T_U64));
+        case 0x0B7:
+            if (fld<11, 15>() == 0)
+                throw ExceptionPowerpc("invalid STWUX instruction", this);
+            return MAKE_INSN2(stwux, RS(), memrefux(T_U32));
         case 0x0C8: return MAKE_INSN2_RC(subfze, RT(), RA());
         case 0x0CA: return MAKE_INSN2_RC(addze, RT(), RA());
         case 0x0CE: return MAKE_INSN2(lfsdx, FRT(), memrefx(T_FLOAT64));
@@ -650,27 +706,42 @@ DisassemblerPowerpc::decode_X_formInstruction_1F() {
         case 0x0EB: return MAKE_INSN3_RC(mullw, RT(), RA(), RB());
         case 0x0EE: return MAKE_INSN2(lfsdux, FRT(), memrefux(T_FLOAT64));
         case 0x0f4: return MAKE_INSN3_RC(mulld, RT(), RA(), RB());
-        case 0x0F7: return MAKE_INSN2(stbux, RS(), memrefux(T_U8));
+        case 0x0F7:
+            if (fld<11, 15>() == 0)
+                throw ExceptionPowerpc("invalid STBUX instruction", this);
+            return MAKE_INSN2(stbux, RS(), memrefux(T_U8));
         case 0x10A: return MAKE_INSN3_RC(add, RT(), RA(), RB());
         case 0x10E: return MAKE_INSN2(lfxsx, FRT(), memrefx(T_V2_FLOAT32));
         case 0x116: return MAKE_INSN1(dcbt, memrefx(T_U8));
         case 0x117: return MAKE_INSN2(lhzx, RT(), memrefx(T_U16));
         case 0x11C: return MAKE_INSN3_RC(eqv, RA(), RS(), RB());
         case 0x12E: return MAKE_INSN2(lfxsux, FRT(), memrefux(T_V2_FLOAT32));
-        case 0x137: return MAKE_INSN2(lhzux, RT(), memrefux(T_U16));
+        case 0x137:
+            if (fld<11, 15>() == 0 || fld<11, 15>() == fld<6, 10>())
+                throw ExceptionPowerpc("invalid LHZUX instruction", this);
+            return MAKE_INSN2(lhzux, RT(), memrefux(T_U16));
         case 0x13C: return MAKE_INSN3_RC(xor, RA(), RS(), RB());
         case 0x14E: return MAKE_INSN2(lfxdx, FRT(), memrefx(T_V2_FLOAT64));
         case 0x153: return MAKE_INSN2(mfspr, RT(), SPR());
         case 0x155: return MAKE_INSN2(lwax, RT(), memrefx(T_U32));
         case 0x157: return MAKE_INSN2(lhax, RT(), memrefx(T_U16));
         case 0x16E: return MAKE_INSN2(lfxdux, FRT(), memrefux(T_V2_FLOAT64));
-        case 0x175: return MAKE_INSN2(lwaux, RT(), memrefux(T_U32));
-        case 0x177: return MAKE_INSN2(lhaux, RT(), memrefux(T_U16));
+        case 0x175:
+            if (fld<11, 15>() == 0 || fld<11, 15>() == fld<6, 10>())
+                throw ExceptionPowerpc("invalid LWAUX instruction", this);
+            return MAKE_INSN2(lwaux, RT(), memrefux(T_U32));
+        case 0x177:
+            if (fld<11, 15>() == 0 || fld<11, 15>() == fld<6, 10>())
+                throw ExceptionPowerpc("invalid LHAUX instruction", this);
+            return MAKE_INSN2(lhaux, RT(), memrefux(T_U16));
         case 0x18E: return MAKE_INSN2(lfpsx, FRT(), memrefx(T_V2_FLOAT32));
         case 0x197: return MAKE_INSN2(sthx, RS(), memrefx(T_U16));
         case 0x19C: return MAKE_INSN3_RC(orc, RA(), RS(), RB());
         case 0x1AE: return MAKE_INSN2(lfpsux, FRT(), memrefux(T_V2_FLOAT32));
-        case 0x1B7: return MAKE_INSN2(sthux, RS(), memrefux(T_U16));
+        case 0x1B7:
+            if (fld<11, 15>() == 0)
+                throw ExceptionPowerpc("invalid STHUX instruction", this);
+            return MAKE_INSN2(sthux, RS(), memrefux(T_U16));
         case 0x1BC: return MAKE_INSN3_RC(or, RA(), RS(), RB());
         case 0x1C9: return MAKE_INSN3_RC(divdu, RT(), RA(), RB());
         case 0x1CB: return MAKE_INSN3_RC(divwu, RT(), RA(), RB());

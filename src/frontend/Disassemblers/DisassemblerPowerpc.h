@@ -18,11 +18,12 @@ class DisassemblerPowerpc: public Disassembler {
     uint64_t ip;                                        // Instruction pointer
     uint32_t insn;                                      // 4-byte instruction word
     PowerpcWordSize wordSize_;
+    ByteOrder::Endianness sex_;
 
 public:
     /** Constructor for 32- or 64-bit disassembler. */
-    explicit DisassemblerPowerpc(PowerpcWordSize wordSize)
-        : ip(0), insn(0), wordSize_(wordSize) {
+    explicit DisassemblerPowerpc(PowerpcWordSize wordSize, ByteOrder::Endianness sex)
+        : ip(0), insn(0), wordSize_(wordSize), sex_(sex) {
         init();
     }
     
