@@ -6640,9 +6640,11 @@ ATbool ATermToSageJovialTraversal::traverse_IntrinsicFunctionCall(ATerm term, Sg
    else if (traverse_ShiftFunction(term, func_call)) {
       // MATCHED ShiftFunction
    }
+   else if (traverse_AbsFunction(term, func_call)) {
+      // MATCHED AbsFunction
+   }
 
    //   BitFunction                 -> IntrinsicFunctionCall
-   //   AbsFunction                 -> IntrinsicFunctionCall
    //   SignFunction                -> IntrinsicFunctionCall
 
    else if (traverse_SizeFunction(term, func_call)) {
@@ -6832,6 +6834,43 @@ ATbool ATermToSageJovialTraversal::traverse_ShiftFunction(ATerm term, SgFunction
    params->append_expression(shift_count);
 
    func_call = SageBuilder::buildFunctionCallExp(func_name, return_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
+   setSourcePosition(func_call, term);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 6.3.6 ABS FUNCTIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToSageJovialTraversal::traverse_AbsFunction(ATerm term, SgFunctionCallExp* &func_call)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_AbsFunction: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_argument;
+   SgExpression* argument;
+   SgType* return_type = nullptr;
+
+   func_call = nullptr;
+
+   if (ATmatch(term, "AbsFunction(<term>)", &t_argument)) {
+      if (traverse_NumericFormula(t_argument, argument)) {
+         // MATCHED NumericFormula
+
+         // The return type is the same as the type of the argument
+         return_type = argument->get_type();
+         ROSE_ASSERT(return_type);
+      } else return ATfalse;
+
+   } else return ATfalse;
+
+   // build the parameter list
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   params->append_expression(argument);
+
+   func_call = SageBuilder::buildFunctionCallExp("ABS", return_type, params, SageBuilder::topScopeStack());
    ROSE_ASSERT(func_call);
    setSourcePosition(func_call, term);
 

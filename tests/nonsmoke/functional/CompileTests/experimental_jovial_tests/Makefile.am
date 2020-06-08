@@ -24,6 +24,7 @@ JOVIAL_TESTCODES = \
  5_2_logical_continuation_b.jov         \
  6_1_ptr_dereference.jov                \
  6_3_5_shift_function.jov               \
+ 6_3_6_abs_function.jov                 \
  4_9_stop_stmt_a.jov                    \
  4_9_stop_stmt_b.jov                    \
  4_9_stop_stmt_c.jov                    \

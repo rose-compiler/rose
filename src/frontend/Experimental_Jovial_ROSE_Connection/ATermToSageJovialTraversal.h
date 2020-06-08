@@ -343,6 +343,9 @@ ATbool traverse_ByteFunction         (ATerm term, SgFunctionCallExp* &func_call)
 // 6.3.5 SHIFT FUNCTION
 ATbool traverse_ShiftFunction        (ATerm term, SgFunctionCallExp* &func_call);
 
+// 6.3.6 ABS FUNCTIONS
+ATbool traverse_AbsFunction          (ATerm term, SgFunctionCallExp* &func_call);
+
 // 6.3.7 SIZE FUNCTION
 ATbool traverse_SizeFunction         (ATerm term, SgFunctionCallExp* &func_call);
 
