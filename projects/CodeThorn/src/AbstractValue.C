@@ -375,7 +375,10 @@ AbstractValue AbstractValue::operatorEq(AbstractValue other) const {
   } else if(isPtr() && other.isPtr()) {
     return AbstractValue(variableId==other.variableId && intValue==other.intValue && getTypeSize()==other.getTypeSize());
   } else if(isConstInt() && other.isConstInt()) {
+    // includes case for two null pointer values
     return AbstractValue(intValue==other.intValue && getTypeSize()==other.getTypeSize());
+  } else if((isPtr() && other.isNullPtr()) || (isNullPtr() && other.isPtr()) ) {
+    return AbstractValue(0);
   } else {
     return AbstractValue(Top()); // all other cases can be true or false
   }
