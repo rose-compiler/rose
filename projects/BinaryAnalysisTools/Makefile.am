@@ -123,6 +123,15 @@ rose_trace_LDFLAGS = $(ROSE_RPATHS)
 rose_trace_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Experimental tool for parallel disassembly
+
+bin_PROGRAMS += rose-pardis
+rose_pardis_SOURCES = pardis.C
+rose_pardis_CPPFLAGS = $(ROSE_INCLUDES)
+rose_pardis_LDFLAGS = $(ROSE_RPATHS)
+rose_pardis_LDADD = $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Monitor execution and estimate number of unique instructions
 
 #~ bin_PROGRAMS += rose-execution-monitor
