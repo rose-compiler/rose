@@ -233,7 +233,7 @@ void Grammar::setUpBinaryInstructions() {
         // Overrides are documented in the base class
         virtual std::string description() const $ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
-        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool* complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
 #endif // SgAsmArm64Instruction_OTHERS
@@ -422,9 +422,9 @@ void Grammar::setUpBinaryInstructions() {
         virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
         virtual bool getBranchTarget(rose_addr_t *target/*out*/) $ROSE_OVERRIDE;
-        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool* complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
-                                                               bool* complete,
+                                                               bool &complete,
                                                                const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
                                                                Rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
@@ -497,7 +497,7 @@ void Grammar::setUpBinaryInstructions() {
         // Overrides are documented in the base class
         virtual std::string description() const $ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
-        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool* complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
@@ -567,7 +567,7 @@ void Grammar::setUpBinaryInstructions() {
                                         rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
-        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool* complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
@@ -631,9 +631,9 @@ void Grammar::setUpBinaryInstructions() {
         virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
         virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
-        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool* complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
-                                                               bool* complete,
+                                                               bool &complete,
                                                                const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
                                                                Rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
@@ -1041,7 +1041,7 @@ void Grammar::setUpBinaryInstructions() {
          *  information it can glean from this single instruction.  If the returned set of virtual instructions is fully known
          *  then the @p complete argument will be set to true, otherwise false.  The base class implementation always
          *  aborts()--it must be defined in an architecture-specific subclass (pure virtual is not possible due to ROSETTA). */
-        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool* complete); /*subclasses must redefine*/
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete); /*subclasses must redefine*/
 
         /** Control flow successors for a basic block.
          *
@@ -1052,7 +1052,7 @@ void Grammar::setUpBinaryInstructions() {
          *  etc).  The base class implementation just calls the single-instruction version, so architecture-specific subclasses
          *  might want to override this to do something more sophisticated. */
         virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*> &basicBlock,
-                                                               bool *complete,
+                                                               bool &complete,
                                                                const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
                                                                Rose::BinaryAnalysis::MemoryMap::Ptr());
 

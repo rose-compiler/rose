@@ -125,9 +125,9 @@ SgAsmMipsInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> 
 
 // see base class
 AddressSet
-SgAsmMipsInstruction::getSuccessors(bool *complete_)
+SgAsmMipsInstruction::getSuccessors(bool &complete)
 {
-    bool complete = false;
+    complete = false;
     rose_addr_t target_va = 0;
     AddressSet successors;
     switch (get_kind()) {
@@ -183,8 +183,6 @@ SgAsmMipsInstruction::getSuccessors(bool *complete_)
             successors.insert(get_address() + get_size());
             complete = true;
     }
-    if (complete_)
-        *complete_ = complete;
     return successors;
 }
 
