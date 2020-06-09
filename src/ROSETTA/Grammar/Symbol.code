@@ -240,8 +240,17 @@ SgSymbol::get_mangled_name() const
                const SgAdaPackageSymbol* symbol = isSgAdaPackageSymbol(symbolFromTable);
                ROSE_ASSERT(symbol != NULL);
                SgDeclarationStatement* decl = symbol->get_declaration();
+               ROSE_ASSERT(decl != NULL);
 
-            // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
+               mangledName = decl->get_mangled_name();
+               break;
+             }
+
+          case V_SgAdaTaskSymbol:
+             {
+               const SgAdaTaskSymbol* symbol = isSgAdaTaskSymbol(symbolFromTable);
+               ROSE_ASSERT(symbol != NULL);
+               SgDeclarationStatement* decl = symbol->get_declaration();
                ROSE_ASSERT(decl != NULL);
 
                mangledName = decl->get_mangled_name();
@@ -1122,6 +1131,15 @@ SgAliasSymbol::get_declaration() const
                break;
              }
 
+           case V_SgAdaTaskSymbol:
+             {
+               SgAdaTaskSymbol* symbol = isSgAdaTaskSymbol(get_alias());
+               ROSE_ASSERT(symbol != NULL);
+               returnValue = symbol->get_declaration();
+               ROSE_ASSERT(returnValue != NULL);
+               break;
+             }
+
            case V_SgEnumSymbol:
              {
                SgEnumSymbol* symbol = isSgEnumSymbol(get_alias());
@@ -1406,6 +1424,29 @@ SgAdaPackageSymbol::get_symbol_basis() const
   return get_declaration();
 }
 SOURCE_ADA_PACKAGE_SYMBOL_END
+
+SOURCE_ADA_TASK_SYMBOL_START
+SgName
+SgAdaTaskSymbol::get_name() const 
+{
+  if (SgAdaTaskSpecDecl* dcl = isSgAdaTaskSpecDecl(get_declaration()))
+    return dcl->get_name();
+
+  if (SgAdaTaskTypeDecl* dcl = isSgAdaTaskTypeDecl(get_declaration()))
+    return dcl->get_name();
+
+  if (SgAdaTaskBodyDecl* dcl = isSgAdaTaskBodyDecl(get_declaration()))
+    return dcl->get_name();
+    
+  return SgName("undefined");
+}
+
+SgNode*
+SgAdaTaskSymbol::get_symbol_basis() const
+{
+  return get_declaration();
+}
+SOURCE_ADA_TASK_SYMBOL_END
 
 
 

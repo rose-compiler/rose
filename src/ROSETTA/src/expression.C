@@ -164,6 +164,10 @@ Grammar::setUpExpressions ()
 
   // DQ (12/13/2007): Added support for Fortran string concatenation operator
      NEW_TERMINAL_MACRO (ConcatenationOp,        "ConcatenationOp",        "CONCATENATION_OP" );
+  
+  // PP (06/08/2020): Added support for Ada remainder (different from mod) and abs operators 
+     NEW_TERMINAL_MACRO (RemOp,                  "RemOp",                  "REM_OP" );
+     NEW_TERMINAL_MACRO (AbsOp,                  "AbsOp",                  "ABS_OP" );
 
   // driscoll6 (7/20/11): Support for n-ary operators in python
      NEW_TERMINAL_MACRO (NaryComparisonOp,       "NaryComparisonOp",       "NARY_COMPARISON_OP");
@@ -374,7 +378,7 @@ Grammar::setUpExpressions ()
                             ExpressionRoot | MinusOp            | UnaryAddOp | NotOp           | PointerDerefExp | 
                             AddressOfOp    | MinusMinusOp       | PlusPlusOp | BitComplementOp | CastExp         |
                             ThrowOp        | RealPartOp         | ImagPartOp | ConjugateOp     | UserDefinedUnaryOp |
-                            MatrixTransposeOp,
+                            MatrixTransposeOp | AbsOp,
                             "UnaryOp","UNARY_EXPRESSION", false);
 
 
@@ -394,7 +398,7 @@ Grammar::setUpExpressions ()
           ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         |
 
           NonMembershipOp | IsOp            | IsNotOp             | DotDotExp        | ElementwiseOp        | PowerOp        |
-          LeftDivideOp,
+          LeftDivideOp    | RemOp,
           "BinaryOp","BINARY_EXPRESSION", false);
 
 
@@ -790,6 +794,11 @@ Grammar::setUpExpressions ()
      ConcatenationOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
 
+     RemOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+     AbsOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+
      MembershipOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
      NonMembershipOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
@@ -1060,6 +1069,8 @@ Grammar::setUpExpressions ()
      NaryBooleanOp.editSubstitute    ( "PRECEDENCE_VALUE", "13" );
 
      ConcatenationOp.editSubstitute ( "PRECEDENCE_VALUE", " 3" );
+     RemOp.editSubstitute           ( "PRECEDENCE_VALUE", "13" );
+     AbsOp.editSubstitute           ( "PRECEDENCE_VALUE", "15" );
 
   // DQ (2/5/2004): Adding support for varargs in AST
      VarArgStartOp.editSubstitute   ( "PRECEDENCE_VALUE", "16" );
@@ -2158,7 +2169,7 @@ Grammar::setUpExpressions ()
   // VarArgOp.setFunctionPrototype ( "HEADER_VARARG_OPERATOR", "../Grammar/Expression.code" );
 
      NotOp.setFunctionPrototype    ( "HEADER_NOT_OPERATOR", "../Grammar/Expression.code" );
-
+     
      VarArgEndOp.setFunctionPrototype ( "HEADER_VARARG_END_OPERATOR", "../Grammar/Expression.code" );
      PointerDerefExp.setFunctionPrototype ( "HEADER_POINTER_DEREF_EXPRESSION", "../Grammar/Expression.code" );
 
@@ -2401,6 +2412,10 @@ Grammar::setUpExpressions ()
                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ConcatenationOp.setFunctionPrototype ( "HEADER_CONCATENATION_OPERATOR", "../Grammar/Expression.code" );
+     
+     RemOp.setFunctionPrototype ( "HEADER_REM_OPERATOR", "../Grammar/Expression.code" );
+     AbsOp.setFunctionPrototype ( "HEADER_ABS_OPERATOR", "../Grammar/Expression.code" );
+
 
   // DQ (9/4/2013): Adding support for compound literals.  These are not the same as initializers and define
   // a memory location that is un-named (much like an un-named variable).  When they are const they cannot
@@ -3139,7 +3154,10 @@ Grammar::setUpExpressions ()
      BracedInitializer.setFunctionSource ( "SOURCE_BRACED_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
 
      ConcatenationOp.setFunctionSource  ( "SOURCE_CONCATENATION_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-
+     
+     RemOp.setFunctionSource            ( "SOURCE_REM_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     AbsOp.setFunctionSource            ( "SOURCE_ABS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     
 
      // ###################################
      // Functions assigned by function name

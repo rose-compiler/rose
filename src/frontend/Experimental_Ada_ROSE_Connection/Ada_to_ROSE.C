@@ -26,7 +26,6 @@ namespace // local declarations
   
   //
   // loggers
-  //   \todo replace streams with Sawyer
   Sawyer::Message::Facility adalogger;
 
   inline
@@ -549,9 +548,11 @@ namespace // local declarations
   }
   
   SgAdaTaskTypeDecl&
-  mkAdaTaskTypeDecl(std::string name, SgAdaTaskSpec& spec)
+  mkAdaTaskTypeDecl(std::string name, SgAdaTaskSpec& spec, SgScopeStatement& scope)
   {
     SgAdaTaskTypeDecl& sgnode = SG_DEREF(new SgAdaTaskTypeDecl(name, &spec));
+    
+    scope.insert_symbol(name, new SgAdaTaskSymbol(&sgnode));
     
     spec.set_parent(&sgnode);
     markCompilerGenerated(sgnode);
@@ -1574,7 +1575,15 @@ namespace // local declarations
   {
     ROSE_ASSERT(decl.Declaration_Kind == A_Task_Type_Declaration);
     
-    // Definition_ID                  Discriminant_Part    
+    SgAdaTaskSpec&          sgnode = mkAdaTaskSpec();
+    
+    if (decl.Type_Declaration_View == 0)
+    {
+      sgnode.set_hasMembers(false);
+      return sgnode;
+    }
+    
+    // Definition_ID Discriminant_Part    
     Element_Struct&         elem = retrieveAs<Element_Struct>(asisMap, decl.Type_Declaration_View);
     ROSE_ASSERT(elem.Element_Kind == A_Definition);
 
@@ -1582,13 +1591,12 @@ namespace // local declarations
     ROSE_ASSERT(def.Definition_Kind == A_Task_Definition);
     
     Task_Definition_Struct& tasknode = def.The_Union.The_Task_Definition;
-    SgAdaTaskSpec&          sgnode = mkAdaTaskSpec();
 
     // visible items
     {
       ElemIdRange range = idRange(tasknode.Visible_Part_Items);
 
-      traverseIDs(range, asisMap, ElemCreator(ctx.scope(sgnode)));
+      traverseIDs(range, asisMap, ElemCreator(ctx.scope_npc(sgnode)));
     }
     
     // private items
@@ -1596,7 +1604,7 @@ namespace // local declarations
       ElemIdRange range = idRange(tasknode.Private_Part_Items);
       ROSE_ASSERT((!range.empty()) == tasknode.Is_Private_Present);
 
-      traverseIDs(range, asisMap, ElemCreator(ctx.scope(sgnode), true /* private items */));
+      traverseIDs(range, asisMap, ElemCreator(ctx.scope_npc(sgnode), true /* private items */));
     }
     
     /* unused fields: (Task_Definition_Struct)
@@ -2596,7 +2604,7 @@ namespace // local declarations
         {
           SgAdaTaskSpec&     spec    = getTaskSpec(decl, ctx);
           NameKeyPair        adaname = singleName(decl, ctx);
-          SgAdaTaskTypeDecl& sgnode  = mkAdaTaskTypeDecl(adaname.first, spec);
+          SgAdaTaskTypeDecl& sgnode  = mkAdaTaskTypeDecl(adaname.first, spec, ctx.scope());
 
           privatize(sgnode, isPrivate);
           ctx.scope().append_statement(&sgnode);

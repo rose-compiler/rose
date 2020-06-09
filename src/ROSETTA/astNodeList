@@ -1,5 +1,6 @@
 SgAccessModifier
 SgActualArgumentExpression
+SgAbsOp
 SgAdaAccessType
 SgAdaAcceptStmt
 SgAdaEntryDecl
@@ -18,6 +19,7 @@ SgAdaTaskBody
 SgAdaTaskBodyDecl
 SgAdaTaskSpec
 SgAdaTaskSpecDecl
+SgAdaTaskSymbol
 SgAdaTaskRefExp
 SgAdaTaskType
 SgAdaTaskTypeDecl
@@ -643,6 +645,7 @@ SgReadStatement
 SgRealPartOp
 SgRefExp
 SgReferenceType
+SgRemOp
 SgRenamePair
 SgRenameSymbol
 SgReturnStmt

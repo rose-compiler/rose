@@ -398,6 +398,23 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     mangled_name = dcl->get_name().getString();
                     break;
                   }
+                  
+               case V_SgAdaTaskSpec:
+                  {
+                    const SgAdaTaskSpec*     spec   = isSgAdaTaskSpec(scope);
+                    const SgNode*            parent = spec->get_parent();
+                    ROSE_ASSERT(parent);
+                    
+                    // or get_mangled_name ??
+                    if (const SgAdaTaskSpecDecl* taskspec = isSgAdaTaskSpecDecl(parent))
+                      mangled_name = taskspec->get_name().getString();
+                    else if (const SgAdaTaskTypeDecl* tasktype = isSgAdaTaskTypeDecl(parent))
+                      mangled_name = tasktype->get_name().getString();
+                    else
+                      ROSE_ASSERT(false);
+                    
+                    break;
+                  }
 
            
            // PP (06/01/20) - not sure how to handle function parameter scope;
