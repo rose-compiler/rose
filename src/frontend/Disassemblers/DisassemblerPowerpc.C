@@ -116,7 +116,7 @@ DisassemblerPowerpc::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start
     // Note successors if necessary
     if (successors) {
         bool complete;
-        *successors |= insn->getSuccessors(&complete);
+        *successors |= insn->getSuccessors(complete/*out*/);
     }
 
     return insn;

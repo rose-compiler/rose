@@ -343,7 +343,7 @@ public:
      *  complete to true before returning.
      *
      *  Thread safety: Thread safe provided no other thread is modifying the specified instruction map. */
-    AddressSet get_block_successors(const InstructionMap&, bool *complete);
+    AddressSet get_block_successors(const InstructionMap&, bool &complete/*out*/);
 
 private:
     /** Initialize class (e.g., register built-in disassemblers). This class method is thread safe, using class_mutex. */

@@ -46,10 +46,9 @@ static bool modifies_ip(SgAsmArm64Instruction *insn) {
 }
 
 AddressSet
-SgAsmArm64Instruction::getSuccessors(bool *complete) {
+SgAsmArm64Instruction::getSuccessors(bool &complete) {
     using Kind = ::Rose::BinaryAnalysis::Arm64InstructionKind;
-    ASSERT_not_null(complete);
-    *complete = true;           // set to true for now, change below if necessary
+    complete = true;           // set to true for now, change below if necessary
 
     AddressSet retval;
     const std::vector<SgAsmExpression*> &exprs = get_operandList()->get_operands();
@@ -69,7 +68,7 @@ SgAsmArm64Instruction::getSuccessors(bool *complete) {
             if (auto ival = isSgAsmIntegerValueExpression(exprs[0])) {
                 retval.insert(ival->get_absoluteValue());
             } else {
-                *complete = false;
+                complete = false;
             }
             break;
             
@@ -79,7 +78,7 @@ SgAsmArm64Instruction::getSuccessors(bool *complete) {
         case Kind::ARM64_INS_RET:
         case Kind::ARM64_INS_SMC:
         case Kind::ARM64_INS_SVC:
-            *complete = false;
+            complete = false;
             break;
 
         case Kind::ARM64_INS_CBNZ:
@@ -89,7 +88,7 @@ SgAsmArm64Instruction::getSuccessors(bool *complete) {
             if (auto ival = isSgAsmIntegerValueExpression(exprs[1])) {
                 retval.insert(ival->get_absoluteValue());
             } else {
-                *complete = false;
+                complete = false;
             }
             break;
 
@@ -104,7 +103,7 @@ SgAsmArm64Instruction::getSuccessors(bool *complete) {
             if (auto ival = isSgAsmIntegerValueExpression(exprs[1])) {
                 retval.insert(ival->get_absoluteValue());
             } else {
-                *complete = false;
+                complete = false;
             }
             break;
 

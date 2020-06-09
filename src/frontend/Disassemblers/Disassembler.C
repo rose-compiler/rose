@@ -335,7 +335,7 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
 
 /* Add last instruction's successors to returned successors. */
 AddressSet
-Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
+Disassembler::get_block_successors(const InstructionMap& insns, bool &complete)
 {
     std::vector<SgAsmInstruction*> block;
     for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)

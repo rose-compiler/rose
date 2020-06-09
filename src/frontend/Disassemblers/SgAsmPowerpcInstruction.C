@@ -26,9 +26,9 @@ SgAsmPowerpcInstruction::get_anyKind() const {
 
 // Return control flow successors. See base class for full documentation.
 AddressSet
-SgAsmPowerpcInstruction::getSuccessors(bool *complete) {
+SgAsmPowerpcInstruction::getSuccessors(bool &complete) {
     AddressSet retval;
-    *complete = true; /*assume retval is the complete set of successors for now*/
+    complete = true; /*assume retval is the complete set of successors for now*/
 
     switch (get_kind()) {
         case powerpc_bc:
@@ -56,7 +56,7 @@ SgAsmPowerpcInstruction::getSuccessors(bool *complete) {
         case powerpc_bclr:
         case powerpc_bclrl:
             /* Conditional branches to count register; target is unknown */
-            *complete = false;
+            complete = false;
 
             // Fall-through address only happens for conditional branches. If the BO field of a XL-form conditional branch is
             // equal to 1x1xx (where x is 0 or 1) then the branch is unconditional.
@@ -85,7 +85,7 @@ SgAsmPowerpcInstruction::getSuccessors(bool *complete) {
         case powerpc_rfi:
         case powerpc_sc:
             /* No known successors */
-            *complete = false;
+            complete = false;
             break;
 
         default:

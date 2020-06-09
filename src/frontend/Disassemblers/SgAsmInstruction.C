@@ -40,21 +40,21 @@ SgAsmInstruction::get_anyKind() const {
 }
 
 AddressSet
-SgAsmInstruction::getSuccessors(bool *complete) {
+SgAsmInstruction::getSuccessors(bool &complete) {
     abort();
     // tps (12/9/2009) : MSC requires a return value
     return AddressSet();
 }
 
 AddressSet
-SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& basic_block, bool *complete/*out*/,
+SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& basic_block, bool &complete/*out*/,
                                 const MemoryMap::Ptr &initial_memory/*=NULL*/)
 {
     if (basic_block.size()==0) {
-        if (complete) *complete = true;
+        complete = true;
         return AddressSet();
     }
-    return basic_block.back()->getSuccessors(complete);
+    return basic_block.back()->getSuccessors(complete/*out*/);
 }
 
 bool

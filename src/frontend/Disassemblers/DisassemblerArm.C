@@ -165,7 +165,7 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
     /* Note successors if necessary */
     if (successors) {
         bool complete;
-        *successors |= retval->getSuccessors(&complete);
+        *successors |= retval->getSuccessors(complete/*out*/);
     }
 
     return retval;

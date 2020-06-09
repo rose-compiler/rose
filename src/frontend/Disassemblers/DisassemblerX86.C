@@ -141,13 +141,18 @@ DisassemblerX86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
     /* Disassemble the instruction */
     State state;
     startInstruction(state, start_va, temp, tempsz);
-    SgAsmX86Instruction *insn = disassemble(state); /*throws an exception on error*/
+    SgAsmInstruction *insn = NULL;
+    try {
+        insn = disassemble(state); /*throws an exception on error*/
+    } catch (const ExceptionX86 &e) {
+        insn = makeUnknownInstruction(e);
+    }
     ASSERT_not_null(insn);
 
     /* Note successors if necesssary */
     if (successors) {
         bool complete;
-        *successors |= insn->getSuccessors(&complete);
+        *successors |= insn->getSuccessors(complete/*out*/);
     }
 
     return insn;

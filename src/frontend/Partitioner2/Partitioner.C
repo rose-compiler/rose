@@ -1006,7 +1006,7 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level pr
     } else {
         // We don't have semantics, so naively look at just the last instruction.
         bool complete = true;
-        AddressSet successorVas = lastInsn->getSuccessors(&complete);
+        AddressSet successorVas = lastInsn->getSuccessors(complete/*out*/);
 
         BaseSemantics::RiscOperatorsPtr ops = newOperators();
         BOOST_FOREACH (rose_addr_t va, successorVas.values())
@@ -1052,7 +1052,7 @@ Partitioner::basicBlockGhostSuccessors(const BasicBlock::Ptr &bb) const {
     const BasicBlock::Successors &bblockSuccessors = basicBlockSuccessors(bb);
     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
         bool complete = true;
-        AddressSet vas = insn->getSuccessors(&complete);
+        AddressSet vas = insn->getSuccessors(complete/*out*/);
         BOOST_FOREACH (rose_addr_t naiveSuccessor, vas.values()) {
             if (!insnVas.exists(naiveSuccessor)) {
                 // Is naiveSuccessor also a basic block successor?
@@ -1266,7 +1266,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
         if (i1->get_kind() == x86_call) {
             rose_addr_t callFallThroughVa = i1->get_address() + i1->get_size();
             bool complete = true;
-            AddressSet callSuccVas = i1->getSuccessors(&complete);
+            AddressSet callSuccVas = i1->getSuccessors(complete/*out*/);
             if (callSuccVas.size() == 1 && callSuccVas.least() == callFallThroughVa) {
                 if (SgAsmX86Instruction *i2 = isSgAsmX86Instruction(discoverInstruction(callFallThroughVa))) {
                     if (i2->get_kind() == x86_pop) {

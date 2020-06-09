@@ -284,10 +284,10 @@ SgAsmM68kInstruction::isUnknown() const
 }
 
 AddressSet
-SgAsmM68kInstruction::getSuccessors(bool *complete)
+SgAsmM68kInstruction::getSuccessors(bool &complete)
 {
     AddressSet retval;
-    *complete = true;
+    complete = true;
 
     switch (get_kind()) {
         //case m68k_halt: {
@@ -299,7 +299,7 @@ SgAsmM68kInstruction::getSuccessors(bool *complete)
         case m68k_illegal:
         case m68k_trap: {
             // Instructions having unknown successors
-            *complete = false;
+            complete = false;
             break;
         }
 
@@ -308,7 +308,7 @@ SgAsmM68kInstruction::getSuccessors(bool *complete)
         case m68k_rtr:
         case m68k_rts: {
             // Instructions that have a single successor that is unknown
-            *complete = false;
+            complete = false;
             break;
         }
             
@@ -397,7 +397,7 @@ SgAsmM68kInstruction::getSuccessors(bool *complete)
             if (getBranchTarget(&target_va)) {
                 retval.insert(target_va);
             } else {
-                *complete = false;
+                complete = false;
             }
             retval.insert(get_address() + get_size());
             break;
@@ -413,7 +413,7 @@ SgAsmM68kInstruction::getSuccessors(bool *complete)
             if (getBranchTarget(&target_va)) {
                 retval.insert(target_va);
             } else {
-                *complete = false;
+                complete = false;
             }
             break;
         }
@@ -430,7 +430,7 @@ SgAsmM68kInstruction::getSuccessors(bool *complete)
 }
 
 AddressSet
-SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete,
+SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool &complete,
                                     const BinaryAnalysis::MemoryMap::Ptr &initial_memory)
 {
     using namespace Rose::BinaryAnalysis::InstructionSemantics2;
@@ -441,13 +441,13 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
               <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<"\n";
     }
 
-    AddressSet successors = SgAsmInstruction::getSuccessors(insns, complete);
+    AddressSet successors = SgAsmInstruction::getSuccessors(insns, complete/*out*/);
 
     // If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then
     // we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
     // successors, a thorough analysis might be able to narrow it down to a single successor. We should not make special
     // assumptions about function call instructions -- their only successor is the specified address operand. */
-    if (!*complete || successors.size()>1) {
+    if (!complete || successors.size()>1) {
         using namespace Rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics;
 
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_coldfire_emac();
@@ -465,7 +465,7 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
             if (ip->is_number()) {
                 successors.clear();
                 successors.insert(ip->get_number());
-                *complete = true; /*this is the complete set of successors*/
+                complete = true; /*this is the complete set of successors*/
             }
         } catch(const BaseSemantics::Exception& e) {
             /* Abandon entire basic block if we hit an instruction that's not implemented. */
@@ -477,7 +477,7 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
         debug <<"  successors:";
         BOOST_FOREACH (rose_addr_t va, successors.values())
             debug <<" " <<StringUtility::addrToString(va);
-        debug <<(*complete?"":"...") <<"\n";
+        debug <<(complete?"":"...") <<"\n";
     }
 
     return successors;
