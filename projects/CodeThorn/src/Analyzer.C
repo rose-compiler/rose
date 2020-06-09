@@ -1119,8 +1119,10 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         }
         if(getVariableIdMapping()->hasClassType(initDeclVarId)) {
           SAWYER_MESG(logger[WARN])<<"initialization of structs not supported yet (not added to state) "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
-          //AbstractValue arrayAddress=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex))
-          //getExprAnalyzer()->writeToMemoryLocation(label,&newPState,arrayAddress,CodeThorn::Top());
+          // TODO: for(offset(membervar) : membervars {initialize(address(initDeclVarId)+offset,eval(initializer+));}
+          //AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
+          // TODO: STRUCT VARIABLE DECLARATION
+          //getExprAnalyzer()->reserveMemoryLocation(label,&newPState,pointerVal);
           PState newPState=*currentEState.pstate();
           return createEState(targetLabel,cs,newPState,cset);
         }
