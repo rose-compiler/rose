@@ -34,7 +34,6 @@ sawyer_checkers =				\
 	traceUnitTests				\
 	mesgUnitTests				\
 	markupUnitTests				\
-	workListTests				\
 	cmdUnitTests
 
 if ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -66,7 +65,6 @@ noinst_PROGRAMS +=				\
 	traceUnitTests				\
 	mesgUnitTests				\
 	markupUnitTests				\
-	workListTests				\
 	cmdUnitTests
 
 if ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -100,7 +98,6 @@ markupUnitTests_SOURCES		 = markupUnitTests.C
 cmdUnitTests_SOURCES		 = cmdUnitTests.C
 serializationUnitTests_SOURCES	 = serializationUnitTests.C
 databaseUnitTests_SOURCES	 = databaseUnitTests.C
-workListTests_SOURCES		 = workListTests.C 
 
 # Test targets
 sawyer_targets = $(addsuffix .passed, $(sawyer_checkers))
