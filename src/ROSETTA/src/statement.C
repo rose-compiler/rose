@@ -4345,7 +4345,10 @@ Grammar::setUpStatements ()
      AdaTaskSpec.setFunctionPrototype ( "HEADER_ADA_TASK_SPEC_STATEMENT", "../Grammar/Statement.code" );
      AdaTaskSpec.setDataPrototype ( "SgAdaTaskBodyDecl*", "body", "= NULL",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-                                    
+     // has_members is true, if the task specifcation has an explicit member list 
+     //                false, for cases like "task type The_Task_Type;" 
+     AdaTaskSpec.setDataPrototype ( "bool", "hasMembers", "= false",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaTaskSpec.setDataPrototype ( "SgDeclarationStatementPtrList", "declarations", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      

@@ -39,6 +39,7 @@ Unparse_Ada::unparseAdaFile(SgSourceFile *sourcefile, SgUnparse_Info& info)
 namespace
 {
   const char* COMMA_SEP = ", ";
+  const char* EOS_NL = ";\n";
   
   bool isAdaFunction(SgFunctionType& ty)
   {
@@ -223,6 +224,36 @@ namespace
       prn("null;\n");
     }
     
+    void handle(SgAdaTaskTypeDecl& n)
+    {
+      prn("task type ");
+      prn(n.get_name());
+      
+      SgAdaTaskSpec& spec = SG_DEREF(n.get_definition());
+      
+      if (!spec.get_hasMembers())
+      {
+        prn(EOS_NL);
+        return;
+      }  
+      
+      prn(" is\n");
+      stmt(&spec);
+      
+      prn("end ");
+      prn(n.get_name());
+      prn(EOS_NL);
+    }
+    
+    void handle(SgAdaTaskSpec& n)
+    {
+      ROSE_ASSERT(n.get_hasMembers());
+      
+      SgDeclarationStatementPtrList& lst = n.get_declarations();
+      
+      std::for_each(lst.begin(), lst.end(), *this);
+    }
+    
     void handle(SgAdaPackageSpecDecl& n)
     {
       prn("package ");
@@ -233,7 +264,7 @@ namespace
       
       prn("end ");
       prn(n.get_name());
-      prn(";\n");
+      prn(EOS_NL);
     }
     
     void handle(SgAdaPackageSpec& n)
@@ -278,7 +309,7 @@ namespace
         expr(exp);
       }
       
-      prn(";\n");
+      prn(EOS_NL);
     }
     
     void handle(SgFunctionDefinition& n)
@@ -306,7 +337,7 @@ namespace
       stmt(n.get_body());
       prn("end loop");
       handleStringLabel(n.get_string_label());
-      prn(";\n");
+      prn(EOS_NL);
     }
     
     void handle(SgForInitStatement& n)
@@ -338,7 +369,7 @@ namespace
       stmt(n.get_loop_body());
       prn("end loop");
       handleStringLabel(n.get_string_label());
-      prn(";\n");
+      prn(EOS_NL);
     }
     
     void handle(SgAdaLoopStmt& n) 
@@ -347,7 +378,7 @@ namespace
       stmt(n.get_body());
       prn("end loop");
       handleStringLabel(n.get_string_label());
-      prn(";\n");
+      prn(EOS_NL);
     }
     
     void handle(SgLabelStatement& n)
@@ -375,7 +406,7 @@ namespace
         expr(n.get_condition());
       }
       
-      prn(";\n");
+      prn(EOS_NL);
     }
     
     void handle(SgSwitchStatement& n) 
@@ -417,13 +448,13 @@ namespace
         expr(exp);
       }
       
-      prn(";\n");
+      prn(EOS_NL);
     }
     
     void handle(SgExprStatement& n) 
     {
       expr(n.get_expression());
-      prn(";\n");
+      prn(EOS_NL);
     }
     
     void handle(SgBasicBlock& n)
@@ -474,7 +505,7 @@ namespace
              
       if (!def)
       {
-        prn(";\n");
+        prn(EOS_NL);
         return;
       }
       
@@ -483,7 +514,7 @@ namespace
       
       prn(" ");
       prn(n.get_name());
-      prn(";\n");
+      prn(EOS_NL);
     }
     
     void stmt(SgStatement* s)
@@ -538,7 +569,7 @@ namespace
       prn("end");
       
       if (!functionbody)
-        prn(";\n");
+        prn(EOS_NL);
     }
   }  
   
