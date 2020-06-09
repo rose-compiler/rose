@@ -3434,6 +3434,16 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(sy->get_declaration() != NULL);
                          break;
                        }
+                       
+                    case V_SgAdaTaskSymbol:
+                       {
+                      // This is an alias for a symbol injected from another scope as part of a Fortran "use" statement
+                      // (or perhaps eventually a C++ using declaration or using directive).
+                         SgAdaTaskSymbol* sy = isSgAdaTaskSymbol(symbol);
+                         ROSE_ASSERT(sy != NULL);
+                         ROSE_ASSERT(sy->get_declaration() != NULL);
+                         break;
+                       }   
 
 
                     case V_SgNonrealSymbol:
