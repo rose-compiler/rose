@@ -35,9 +35,11 @@ typedef Sawyer::WorkFifo<WorkItem> WorkItems;
 static void doWork(const WorkItem &item, WorkItems &pending) {
     // Simulate work
     std::cerr <<"working on " <<item.id <<"\n";
+#if SAWYER_MULTI_THREADED
     static boost::random::mt19937 rng;
     static boost::random::uniform_int_distribution<> uniform(0, 1000);
     boost::this_thread::sleep_for(boost::chrono::milliseconds(uniform(rng)));
+#endif
     std::cerr <<"finished " <<item.id <<"\n";
 
     // Create additional work
