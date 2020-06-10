@@ -1059,7 +1059,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
     3) if no size is provided, determine it from the initializer list (and add this information to the variableIdMapping - or update the variableIdMapping).
    */
 
-  //cout<< "DEBUG: DECLARATION:"<<AstTerm::astTermWithNullValuesToString(decl)<<endl;
+  cout<<"DEBUG: declaration:"<<decl->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(decl)<<endl;
   CallString cs=currentEState.callString;
   Label label=currentEState.label();
 
@@ -1115,6 +1115,30 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
             std::list<EState> estateList=transferAssignOp(assignOp, dummyEdge, &currentEState);
             ROSE_ASSERT(estateList.size()==1);
             return *estateList.begin();
+          } else if(SgFunctionRefExp* funRefExp=isSgFunctionRefExp(assignInitOperand)) {
+            cout<<"DEBUG: DETECTED isSgFunctionRefExp: evaluating expression ..."<<endl;
+            list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(funRefExp,currentEState);
+            if(res.size()!=1) {
+              if(res.size()>1) {
+                SAWYER_MESG(logger[ERROR])<<"Error: multiple results in rhs evaluation."<<endl;
+                SAWYER_MESG(logger[ERROR])<<"expr: "<<SgNodeHelper::sourceLineColumnToString(decl)<<": "<<decl->unparseToString()<<endl;
+                exit(1);
+              } else {
+                ROSE_ASSERT(res.size()==0);
+                SAWYER_MESG(logger[TRACE])<<"no results in rhs evaluation (returning top): "<<decl->unparseToString()<<endl;
+              }
+            } else {
+              ROSE_ASSERT(res.size()==1);
+              SingleEvalResultConstInt evalResult=*res.begin();
+              SAWYER_MESG(logger[TRACE])<<"rhs eval result: "<<evalResult.result.toString()<<endl;
+              
+              EState estate=evalResult.estate;
+              PState newPState=*estate.pstate();
+              AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
+              getExprAnalyzer()->initializeMemoryLocation(label,&newPState,initDeclVarAddr,evalResult.value());
+              ConstraintSet cset=*estate.constraints();
+              return createEState(targetLabel,cs,newPState,cset);
+            }
           }
         }
         if(getVariableIdMapping()->hasClassType(initDeclVarId)) {
@@ -1928,6 +1952,12 @@ CTIOLabeler* CodeThorn::Analyzer::getLabeler() const {
   return ioLabeler;
 }
 
+Label CodeThorn::Analyzer::getFunctionEntryLabel(SgFunctionRefExp* funRefExp) {
+  Label lab;
+  return lab;
+}
+
+
 /*!
  * \author Marc Jasper
  * \date 2017.
@@ -2167,7 +2197,8 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
   // ad 1)
   SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source()));
   ROSE_ASSERT(funCall);
-
+  //FUNCTION CALL:funcPtr(data) L:53:SgFunctionCallExp(SgVarRefExp:funcPtr,SgExprListExp(SgVarRefExp:data))
+  cout<<"DEBUG: FUNCTION CALL:"<<funCall->unparseToString()<<" L:"<<edge.target().toString()<<":"<<AstTerm::astTermWithNullValuesToString(funCall)<<endl;
   if(_ctOpt.rers.rersBinary) {
     // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
     string funName=SgNodeHelper::getFunctionName(funCall);
@@ -2179,6 +2210,8 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
 
   SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   // ad 2)
+  // check for function pointer label
+
   SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.target()));
   recordAnalyzedFunction(funDef);
   SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);

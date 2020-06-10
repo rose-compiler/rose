@@ -158,6 +158,7 @@ namespace CodeThorn {
     FunctionIdMapping* getFunctionIdMapping();
     FunctionCallMapping* getFunctionCallMapping();
     FunctionCallMapping2* getFunctionCallMapping2();
+    Label getFunctionEntryLabel(SgFunctionRefExp* funRefExp);
     CTIOLabeler* getLabeler() const;
     Flow* getFlow();
     CodeThorn::PStateSet* getPStateSet();

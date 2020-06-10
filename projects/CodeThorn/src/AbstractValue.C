@@ -36,6 +36,8 @@ AbstractValue::AbstractValue():valueType(AbstractValue::BOT),intValue(0) {}
 AbstractValue::AbstractValue(VariableId varId):valueType(AbstractValue::PTR),variableId(varId),intValue(0) {
 }
 
+AbstractValue::AbstractValue(Label lab):valueType(AbstractValue::FUN_PTR),label(lab) {}
+
 // type conversion
 AbstractValue::AbstractValue(bool val) {
   if(val) {
@@ -175,6 +177,11 @@ AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId
   }
 }
 
+AbstractValue 
+AbstractValue::createAddressOfFunction(CodeThorn::Label lab) {
+  return AbstractValue(lab);
+}
+
 std::string AbstractValue::valueTypeToString() const {
   switch(valueType) {
   case TOP: return "top";
@@ -182,6 +189,7 @@ std::string AbstractValue::valueTypeToString() const {
   case INTEGER: return "constint";
   case FLOAT: return "float";
   case PTR: return "ptr";
+  case FUN_PTR: return "funptr";
   case REF: return "ref";
   case BOT: return "bot";
   default:
@@ -200,6 +208,7 @@ bool AbstractValue::isConstInt() const {return valueType==AbstractValue::INTEGER
 bool AbstractValue::isConstFloat() const {return valueType==AbstractValue::FLOAT;}
 bool AbstractValue::isConstPtr() const {return (valueType==AbstractValue::PTR);}
 bool AbstractValue::isPtr() const {return (valueType==AbstractValue::PTR);}
+bool AbstractValue::isFunctionPtr() const {return (valueType==AbstractValue::FUN_PTR);}
 bool AbstractValue::isRef() const {return (valueType==AbstractValue::REF);}
 bool AbstractValue::isNullPtr() const {return valueType==AbstractValue::INTEGER && intValue==0;}
 
@@ -212,8 +221,9 @@ long AbstractValue::hash() const {
     VariableId varId=getVariableId();
     ROSE_ASSERT(varId.isValid());
     return varId.getIdCode()+getIntValue();
-  }
-  else {
+  } else if(isFunctionPtr()) {
+    return (long)getLabel().getId();
+  } else {
     if(strictChecking)
       throw CodeThorn::Exception("Error: AbstractValue hash: unknown value.");
     return LONG_MAX<<1;
@@ -331,6 +341,8 @@ bool CodeThorn::strictWeakOrderingIsEqual(const AbstractValue& c1, const Abstrac
       return c1.getIntValue()==c2.getIntValue() && c1.getTypeSize()==c2.getTypeSize();
     else if(c1.isPtr() && c2.isPtr()) {
       return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue() && c1.getTypeSize()==c2.getTypeSize();
+    } else if(c1.isFunctionPtr() && c2.isFunctionPtr()) {
+      return c1.getLabel()==c2.getLabel();
     } else {
       ROSE_ASSERT((c1.isTop()&&c2.isTop()) || (c1.isBot()&&c2.isBot()));
       return true;
@@ -341,6 +353,9 @@ bool CodeThorn::strictWeakOrderingIsEqual(const AbstractValue& c1, const Abstrac
   }
 }
 
+Label CodeThorn::AbstractValue::getLabel() const {
+  return label;
+}
 bool CodeThorn::AbstractValueCmp::operator()(const AbstractValue& c1, const AbstractValue& c2) const {
   return CodeThorn::strictWeakOrderingIsSmaller(c1,c2);
 }
@@ -605,6 +620,9 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
       //      return variableId.toString(vim);
       //    }
   }
+  case FUN_PTR: {
+    return label.toString();
+  }
   default:
     if(strictChecking) {
       throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
@@ -747,6 +765,7 @@ AbstractValue AbstractValue::operatorUnaryMinus() {
     tmp=*this;break; // keep information that it is undefined
   case AbstractValue::BOT: tmp=Bot();break;
   case AbstractValue::PTR:
+  case AbstractValue::FUN_PTR:
     return topOrError("Error: AbstractValue operator unary minus on pointer value.");
   case AbstractValue::REF:
     return topOrError("Error: AbstractValue operator unary minus on reference value.");
@@ -875,6 +894,7 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
     case FLOAT: return (val1.floatValue==val2.floatValue);
     case PTR:
     case REF: return (val1.getVariableId()==val2.getVariableId()&&val1.intValue==val2.intValue);
+    case FUN_PTR: return (val1.label==val2.label);
     case TOP:
     case UNDEFINED:
       // should be unreachable because of 2nd if-condition above
@@ -922,6 +942,13 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
     case PTR: 
     case REF: {
       if(val1.getVariableId()==val2.getVariableId()) {
+        return val1;
+      } else {
+        return createTop();
+      }
+    }
+    case FUN_PTR: {
+      if(val1.label==val2.label) {
         return val1;
       } else {
         return createTop();
