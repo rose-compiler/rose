@@ -27,7 +27,7 @@ rose_paths.C:
 
 noinst_LTLIBRARIES = libroseutil.la
 
-# libroseutil_la_SOURCES = processSupport.C processSupport.h
+# libroseutil_la_SOURCES = processSupport.C processSupport.h RoseAsserts.h
 libroseutil_la_SOURCES =			\
 	Color.C					\
 	compilationFileDatabase.C		\
@@ -63,6 +63,7 @@ pkginclude_HEADERS =				\
 	timing.h				\
 	ParallelSort.h				\
 	processSupport.h			\
+	RoseAsserts.h                           \
 	Progress.h				\
 	RecursionCounter.h			\
 	rose_constants.h			\
