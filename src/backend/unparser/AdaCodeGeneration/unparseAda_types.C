@@ -37,6 +37,12 @@ namespace
     void handle(SgTypeChar&)  { prn(" Character"); }
     void handle(SgTypeFloat&) { prn(" Float"); }
     
+    void handle(SgTypedefType& n) 
+    { 
+      prn(" ");
+      prn(n.get_name()); 
+    }
+    
     Unparse_Ada&    unparser;
     SgUnparse_Info& info;
     std::ostream&   os;
