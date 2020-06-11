@@ -319,11 +319,11 @@ namespace // local declarations
     child.set_parent(&parent);
   }
   
-  template <class SageNode>
+  template <class SageNode, class ... Args>
   SageNode&
-  mkBareNode()
+  mkBareNode(Args... args)
   {
-    SageNode& sgnode = SG_DEREF(new SageNode());
+    SageNode& sgnode = SG_DEREF(new SageNode(args...));
 
     markCompilerGenerated(sgnode);
     return sgnode;
@@ -481,7 +481,7 @@ namespace // local declarations
   SgAdaPackageSpecDecl&
   mkAdaPackageSpecDecl(std::string name, SgScopeStatement& scope)
   {
-    SgAdaPackageSpec&     pkgdef = SG_DEREF( new SgAdaPackageSpec() );
+    SgAdaPackageSpec&     pkgdef = mkBareNode<SgAdaPackageSpec>();
     SgAdaPackageSpecDecl& sgnode = SG_DEREF( new SgAdaPackageSpecDecl(name, nullptr) );
 
     sgnode.set_parent(&scope);
@@ -516,6 +516,7 @@ namespace // local declarations
     SgAdaPackageBody&     pkgbody = SG_DEREF( new SgAdaPackageBody() );
     SgAdaPackageBodyDecl& sgnode  = SG_DEREF( new SgAdaPackageBodyDecl(specdcl.get_name(), &pkgbody) );
 
+    pkgbody.set_parent(&sgnode);
     sgnode.set_parent(&scope);
     
     SgAdaPackageSpec&     pkgspec = SG_DEREF( specdcl.get_definition() );
@@ -543,7 +544,8 @@ namespace // local declarations
       nsdef.set_global_definition(&globdef);
     }
 */
-
+    markCompilerGenerated(pkgbody);
+    markCompilerGenerated(sgnode);
     return sgnode;
   }
   
@@ -556,6 +558,67 @@ namespace // local declarations
     
     spec.set_parent(&sgnode);
     markCompilerGenerated(sgnode);
+    return sgnode;
+  }
+  
+  struct TaskDeclInfo
+  {
+    std::string    name;
+    SgAdaTaskSpec* spec;
+  };
+  
+  struct ExtractTaskDeclinfo : sg::DispatchHandler<TaskDeclInfo>
+  {
+    template <class SageTaskDecl>
+    void handleTaskDecl(SageTaskDecl& n)
+    {
+      res.name = n.get_name();
+      res.spec = n.get_definition();
+    }
+    
+    void handle(SgNode& n)            { SG_UNEXPECTED_NODE(n); }
+    void handle(SgAdaTaskSpecDecl& n) { handleTaskDecl(n); }
+    void handle(SgAdaTaskTypeDecl& n) { handleTaskDecl(n); }
+  };
+  
+  
+  SgAdaTaskBodyDecl&
+  mkAdaTaskBodyDecl(SgDeclarationStatement& tskdecl, SgAdaTaskBody& tskbody, SgScopeStatement& scope)
+  {
+    //~ SgAdaPackageBody&     pkgbody = SG_DEREF( new SgAdaPackageBody() );
+    TaskDeclInfo       specinfo = sg::dispatch(ExtractTaskDeclinfo(), &tskdecl);
+    SgAdaTaskBodyDecl& sgnode   = SG_DEREF( new SgAdaTaskBodyDecl(specinfo.name, &tskbody) );
+
+    tskbody.set_parent(&sgnode);
+    sgnode.set_parent(&scope);
+    
+    SgAdaTaskSpec&     tskspec = SG_DEREF( specinfo.spec );
+    
+    tskspec.set_body(&tskbody);
+    tskbody.set_spec(&tskspec);
+    
+    ROSE_ASSERT(scope.symbol_exists(specinfo.name));
+    return sgnode;
+  }
+  
+  SgAdaTaskBodyDecl&
+  mkAdaTaskBodyDecl(std::string name, SgAdaTaskBody& tskbody, SgScopeStatement& scope)
+  {
+    //~ SgAdaPackageBody&     pkgbody = SG_DEREF( new SgAdaPackageBody() );
+    SgAdaTaskBodyDecl& sgnode   = SG_DEREF( new SgAdaTaskBodyDecl(name, &tskbody) );
+
+    tskbody.set_parent(&sgnode);
+    sgnode.set_parent(&scope);
+    
+    /*
+    SgAdaTaskSpec&     tskspec = SG_DEREF( specinfo.spec );
+    
+    tskspec.set_body(&tskbody);
+    tskbody.set_spec(&tskspec);
+    */
+    
+    //~ ROSE_ASSERT(scope.symbol_exists(specinfo.name));
+    scope.insert_symbol(name, new SgAdaTaskSymbol(&sgnode));
     return sgnode;
   }
   
@@ -589,18 +652,26 @@ namespace // local declarations
     return sgnode;
   }
   
+  SgFunctionParameterList&
+  mkFunctionParameterList()
+  {
+    SgFunctionParameterList& sgnode = SG_DEREF(sb::buildFunctionParameterList());
+    
+    markCompilerGenerated(sgnode);
+    return sgnode;
+  }
+  
   template <class ParamCompletion>
   SgFunctionDeclaration&
   mkProcedure(std::string nm, SgScopeStatement& scope, SgType& retty, ParamCompletion complete, ProcScopeMaker scopeMaker = mkProcDecl)
   {
-    SgFunctionParameterList& lst       = SG_DEREF(sb::buildFunctionParameterList());
+    SgFunctionParameterList& lst       = mkFunctionParameterList();
     SgFunctionDeclaration&   sgnode    = SG_DEREF(sb::buildNondefiningFunctionDeclaration(nm, &retty, &lst, &scope, nullptr));
     SgScopeStatement&        parmScope = scopeMaker(sgnode); 
 
     complete(lst, parmScope);
     ROSE_ASSERT(sgnode.get_type() != nullptr);     
     
-    markCompilerGenerated(lst);
     markCompilerGenerated(sgnode);
     return sgnode;
   }
@@ -634,20 +705,26 @@ namespace // local declarations
   SgAdaEntryDecl&
   mkAdaEntryDecl(std::string name, SgScopeStatement& scope, ParamCompletion complete) 
   {
-    SgFunctionParameterList&  lst    = SG_DEREF(sb::buildFunctionParameterList());
+    //~ SgFunctionParameterList&  lst    = mkFunctionParameterList();
+    SgAdaEntryDecl&           sgnode = SG_DEREF(new SgAdaEntryDecl(name, NULL /* entry type */, NULL /* definition */));
+    SgFunctionParameterList&  lst    = SG_DEREF(sgnode.get_parameterList());
     SgFunctionParameterScope& psc    = SG_DEREF(new SgFunctionParameterScope(&mkFileInfo()));
+    
+    ROSE_ASSERT(sgnode.get_functionParameterScope() == nullptr);
+    linkParentChild<SgFunctionDeclaration>(sgnode, psc, &SgFunctionDeclaration::set_functionParameterScope);
     
     complete(lst, psc);
     
     SgFunctionType&           funty  = mkAdaEntryType(lst);
-    SgAdaEntryDecl&           sgnode = SG_DEREF(new SgAdaEntryDecl(name, &funty, NULL /* definition */));
-
-    ROSE_ASSERT(sgnode.get_functionParameterScope() == nullptr);
-    linkParentChild<SgFunctionDeclaration>(sgnode, psc, &SgFunctionDeclaration::set_functionParameterScope);
     
-    ROSE_ASSERT(sgnode.get_parameterList_syntax() == nullptr);
-    linkParentChild<SgFunctionDeclaration>(sgnode, lst, &SgFunctionDeclaration::set_parameterList_syntax);
+    sgnode.set_type(&funty);
+    
+    //~ ROSE_ASSERT(sgnode.get_parameterList() == nullptr);
+    //~ linkParentChild<SgFunctionDeclaration>(sgnode, lst, &SgFunctionDeclaration::set_parameterList);
 
+    // not used 
+    ROSE_ASSERT(sgnode.get_parameterList_syntax() == nullptr);
+    
     //~ SgFunctionSymbol*         funsy  = scope.find_symbol_by_type_of_function<SgAdaEntryDecl>(name, &funty, NULL, NULL);
     SgFunctionSymbol*         funsy  = scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL);
     
@@ -656,9 +733,11 @@ namespace // local declarations
     
     scope.insert_symbol(name, funsy);
     sgnode.set_scope(&scope);
+    sgnode.set_definingDeclaration(&sgnode);
+    sgnode.unsetForward();
     
-    markCompilerGenerated(lst);
     markCompilerGenerated(psc);
+    markCompilerGenerated(lst);
     markCompilerGenerated(sgnode);
     return sgnode;
   }
@@ -668,7 +747,7 @@ namespace // local declarations
   {
     SgAdaAcceptStmt&          sgnode = mkBareNode<SgAdaAcceptStmt>();
     SgFunctionParameterScope& psc    = SG_DEREF(new SgFunctionParameterScope(&mkFileInfo()));
-    SgFunctionParameterList&  lst    = SG_DEREF(sb::buildFunctionParameterList());
+    SgFunctionParameterList&  lst    = mkFunctionParameterList();
     
     ROSE_ASSERT(sgnode.get_parameterScope() == nullptr);
     linkParentChild(sgnode, psc, &SgAdaAcceptStmt::set_parameterScope);
@@ -826,6 +905,18 @@ namespace // local declarations
 
     //~ markCompilerGenerated(sgnode);
     return sgnode;
+  }
+  
+  SgRemOp* 
+  buildRemOp(SgExpression* lhs, SgExpression* rhs)
+  {
+    return &mkBareNode<SgRemOp>(lhs, rhs, nullptr);
+  }
+  
+  SgAbsOp* 
+  buildAbsOp(SgExpression* op)
+  {
+    return &mkBareNode<SgAbsOp>(op, nullptr);
   }
   
   template <class SageValue>
@@ -1577,11 +1668,10 @@ namespace // local declarations
     
     SgAdaTaskSpec&          sgnode = mkAdaTaskSpec();
     
-    if (decl.Type_Declaration_View == 0)
-    {
-      sgnode.set_hasMembers(false);
+    if (decl.Type_Declaration_View == 0) 
       return sgnode;
-    }
+        
+    sgnode.set_hasMembers(true);
     
     // Definition_ID Discriminant_Part    
     Element_Struct&         elem = retrieveAs<Element_Struct>(asisMap, decl.Type_Declaration_View);
@@ -1623,34 +1713,34 @@ namespace // local declarations
     ElemIdRange    decls = idRange(decl.Body_Declarative_Items);
     ElemIdRange    stmts = idRange(decl.Body_Statements);
 
-    traverseIDs(decls, asisMap, StmtCreator(ctx.scope(sgnode)));
-    traverseIDs(stmts, asisMap, StmtCreator(ctx.scope(sgnode)));
+    traverseIDs(decls, asisMap, StmtCreator(ctx.scope_npc(sgnode)));
+    traverseIDs(stmts, asisMap, StmtCreator(ctx.scope_npc(sgnode)));
     
     return sgnode;
   }
 
 
-    typedef SgExpression* (*mk_wrapper_fun)();
+  typedef SgExpression* (*mk_wrapper_fun)();
 
-    // homogeneous return types instead of covariant ones
-    template <class R, R* (*mkexp) (SgExpression*, SgExpression*)>
-    SgExpression* mk2_wrapper()
-    {
-      return mkexp(nullptr, nullptr);
-    }
-    
-    // homogeneous return types instead of covariant ones
-    template <class R, R* (*mkexp) (SgExpression*)>
-    SgExpression* mk1_wrapper()
-    {
-      return mkexp(nullptr);
-    }
-    
-    template <class R, R* (*mkexp) (SgExpression*)>
-    SgExpression* mk_rem_wrapper()
-    {
-      return mkexp(nullptr);
-    }
+  // homogeneous return types instead of covariant ones
+  template <class R, R* (*mkexp) (SgExpression*, SgExpression*)>
+  SgExpression* mk2_wrapper()
+  {
+    return mkexp(nullptr, nullptr);
+  }
+  
+  // homogeneous return types instead of covariant ones
+  template <class R, R* (*mkexp) (SgExpression*)>
+  SgExpression* mk1_wrapper()
+  {
+    return mkexp(nullptr);
+  }
+  
+  template <class R, R* (*mkexp) (SgExpression*)>
+  SgExpression* mk_rem_wrapper()
+  {
+    return mkexp(nullptr);
+  }
 
 /*
     SgExpression* mkCall(SgExpression* callee, SgExpression* args)
@@ -1684,9 +1774,9 @@ namespace // local declarations
                          { A_Multiply_Operator,              mk2_wrapper<SgMultiplyOp,       sb::buildMultiplyOp> },       /* break; */
                          { A_Divide_Operator,                mk2_wrapper<SgDivideOp,         sb::buildDivideOp> },         /* break; */
                          { A_Mod_Operator,                   mk2_wrapper<SgModOp,            sb::buildModOp> },            /* break; */
-                         //~ { A_Rem_Operator,                   mk2_wrapper<SgRemOp,            sb::buildRemOp> },        /* break; */
+                         { A_Rem_Operator,                   mk2_wrapper<SgRemOp,            buildRemOp> },                /* break; */
                          { An_Exponentiate_Operator,         mk2_wrapper<SgPowerOp,          sb::buildPowerOp> },          /* break; */
-                         //~ { An_Abs_Operator,                   mk2_wrapper<SgAbsOp,            sb::buildAbsOp> },       /* break; */
+                         { An_Abs_Operator,                  mk1_wrapper<SgAbsOp,            buildAbsOp> },                /* break; */
                          { A_Not_Operator,                   mk1_wrapper<SgNotOp,            sb::buildNotOp> },            /* break; */
                        };
     
@@ -2606,9 +2696,11 @@ namespace // local declarations
           NameKeyPair        adaname = singleName(decl, ctx);
           SgAdaTaskTypeDecl& sgnode  = mkAdaTaskTypeDecl(adaname.first, spec, ctx.scope());
 
+          attachSourceLocation(sgnode, elem);
           privatize(sgnode, isPrivate);
           ctx.scope().append_statement(&sgnode);
           recordNode(asisTypes, adaname.second, sgnode);
+          recordNode(asisDecls, adaname.second, sgnode);
 
           /* unused fields:
                bool                           Has_Task;
@@ -2630,16 +2722,19 @@ namespace // local declarations
       
       case A_Task_Body_Declaration:                  // 9.1(6)
         {
-          SgAdaTaskBody&     spec    = getTaskBody(decl, ctx);
-          NameKeyPair        adaname = singleName(decl, ctx);
+          SgAdaTaskBody&          tskbody = getTaskBody(decl, ctx);
+          NameKeyPair             adaname = singleName(decl, ctx);
+          Element_ID              declID  = decl.Corresponding_Declaration;
+          SgDeclarationStatement* tskdecl = findNode(asisDecls, declID);
           
-          /*
-          SgAdaTaskBodyDecl& sgnode  = mkAdaTaskBodyDecl(adaname.first, spec);
-
+          // \todo \review not sure why a task body could be independently created
+          SgAdaTaskBodyDecl&      sgnode  = tskdecl ? mkAdaTaskBodyDecl(*tskdecl, tskbody, ctx.scope())
+                                                    : mkAdaTaskBodyDecl(adaname.first, tskbody, ctx.scope());
+          
+          attachSourceLocation(sgnode, elem);
           privatize(sgnode, isPrivate);
           ctx.scope().append_statement(&sgnode);
-          recordNode(asisTypes, adaname.second, sgnode);
-          */
+          recordNode(asisDecls, adaname.second, sgnode);
           
           /* unused fields:
                bool                           Has_Task;
@@ -2661,6 +2756,7 @@ namespace // local declarations
           ElemIdRange     range   = idRange(decl.Parameter_Profile);
           SgAdaEntryDecl& sgnode  = mkAdaEntryDecl(adaname.first, ctx.scope(), ParameterCompletion(range, ctx));
                     
+          attachSourceLocation(sgnode, elem);
           privatize(sgnode, isPrivate);
           ctx.scope().append_statement(&sgnode);
           recordNode(asisDecls, adaname.second, sgnode);
@@ -2681,12 +2777,12 @@ namespace // local declarations
           ElemIdRange              range    = idRange(decl.Names);
           name_container           names    = traverseIDs(range, asisMap, NameCreator(ctx));
           SgScopeStatement&        scope    = ctx.scope();
-          SgType&                  excty    = SG_DEREF( sb::buildOpaqueType("Exception", &scope) );
+          SgType&                  excty    = retrieveNode(adaTypes, std::string("Exception"));
           SgInitializedNamePtrList dclnames = constructInitializedNamePtrList(asisExcps, names, excty);
           SgVariableDeclaration&   sgnode   = mkExceptionDecl(dclnames, scope); 
 
-          privatize(sgnode, isPrivate);
           attachSourceLocation(sgnode, elem);
+          privatize(sgnode, isPrivate);
           scope.append_statement(&sgnode);
           break;
         }
@@ -2917,9 +3013,16 @@ namespace // local declarations
 
   void handleStmt(Element_Struct& elem, AstContext ctx)
   {
+    logTrace() << "a statement (in progress) " << elem.Element_Kind << std::endl;
+    
+    // declarations are statements too
+    if (elem.Element_Kind == A_Declaration)
+    {
+      handleDeclaration(elem, ctx);
+      return;
+    }
+    
     ROSE_ASSERT(elem.Element_Kind == A_Statement);
-
-    logTrace() << "a statement (in progress)" << std::endl;
 
     Statement_Struct& stmt = elem.The_Union.Statement;
 
@@ -3140,8 +3243,8 @@ namespace // local declarations
           {
             SgBasicBlock&         block   = mkBasicBlock();
             
-            traverseIDs(params, asisMap, StmtCreator(parmctx.scope(block)));
             linkParentChild(sgnode, as<SgStatement>(block), &SgAdaAcceptStmt::set_body);
+            traverseIDs(stmts, asisMap, StmtCreator(parmctx.scope(block)));
           }
           
           /* unused fields:
@@ -3344,6 +3447,7 @@ namespace // local declarations
           SgAdaPackageBody&     pkgbody = SG_DEREF(pkgdecl.get_definition());
 
           outer.append_statement(&pkgdecl);
+          
 
           ElemIdRange           elemRange = idRange(adaUnit.Context_Clause_Elements);
           UnitIdRange           unitRange = idRange(adaUnit.Corresponding_Children);
@@ -3416,8 +3520,12 @@ namespace // local declarations
     }
   }
   
-  void initializeAdaTypes()
+  void initializeAdaTypes(SgGlobal& global)
   {
+    SgAdaPackageSpec& hiddenScope = mkBareNode<SgAdaPackageSpec>();
+    
+    hiddenScope.set_parent(&global);
+    
     adaTypes[std::string("Integer")]   = sb::buildIntType();  
     adaTypes[std::string("Character")] = sb::buildCharType();  
     
@@ -3425,7 +3533,9 @@ namespace // local declarations
     adaTypes[std::string("Float")]     = sb::buildFloatType();  // Float is a subtype of Real
     adaTypes[std::string("Positive")]  = sb::buildIntType();    // Positive is a subtype of int  
     adaTypes[std::string("Natural")]   = sb::buildIntType();    // Natural is a subtype of int  
-    adaTypes[std::string("Boolean")]   = sb::buildBoolType();   // Boolean is an enumeration of True and False  
+    adaTypes[std::string("Boolean")]   = sb::buildBoolType();   // Boolean is an enumeration of True and False
+    
+    adaTypes[std::string("Exception")] = sb::buildOpaqueType("Exception", &hiddenScope);  
   }
 }
 
@@ -3435,12 +3545,12 @@ void secondConversion(Nodes_Struct& headNodes, SgSourceFile* file)
 
   logInit();
   logInfo() << "Building ROSE AST .." << std::endl;
-  initializeAdaTypes();
 
   Unit_Struct_List_Struct* adaLimit = 0;
   Unit_Struct_List_Struct* adaUnit  = headNodes.Units;
   SgGlobal&                astScope = SG_DEREF(file->get_globalScope());
 
+  initializeAdaTypes(astScope);
   traverse(adaUnit, adaLimit, UnitCreator(AstContext(astScope)));
 
   logTrace() << "Generating DOT file: " << "adaTypedAst.dot" << std::endl;

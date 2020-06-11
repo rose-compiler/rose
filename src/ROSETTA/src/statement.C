@@ -424,7 +424,7 @@ Grammar::setUpStatements ()
      NEW_NONTERMINAL_MACRO (FunctionDefinition, TemplateFunctionDefinition, "FunctionDefinition",  "FUNC_DEFN_STMT", true );
      
   // PP 05/07/20: Add Ada nodes
-     NEW_TERMINAL_MACRO (AdaAcceptStmt, "AdaAcceptStmt", "ADA_ACCEPT_STMT" );
+     NEW_TERMINAL_MACRO (AdaAcceptStmt,  "AdaAcceptStmt", "ADA_ACCEPT_STMT" );
      NEW_TERMINAL_MACRO (AdaPackageBody, "AdaPackageBody", "ADA_PACKAGE_BODY");     
      NEW_TERMINAL_MACRO (AdaPackageSpec, "AdaPackageSpec", "ADA_PACKAGE_SPEC"); 
      NEW_TERMINAL_MACRO (AdaTaskBody,    "AdaTaskBody",    "ADA_TASK_BODY");     
@@ -4339,14 +4339,16 @@ Grammar::setUpStatements ()
      
      AdaPackageBody.setFunctionPrototype ( "HEADER_ADA_PACKAGE_BODY_STATEMENT", "../Grammar/Statement.code" );
      AdaPackageBody.setDataPrototype ( "SgAdaPackageSpec*", "spec", "= NULL",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaPackageBody.setDataPrototype ( "SgStatementPtrList", "statements", "",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      // tasks
      AdaTaskSpec.setFunctionPrototype ( "HEADER_ADA_TASK_SPEC_STATEMENT", "../Grammar/Statement.code" );
-     AdaTaskSpec.setDataPrototype ( "SgAdaTaskBodyDecl*", "body", "= NULL",
+     AdaTaskSpec.setDataPrototype ( "SgAdaTaskBody*", "body", "= NULL",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     // has_members is true, if the task specifcation has an explicit member list 
-     //                false, for cases like "task type The_Task_Type;" 
+     // hasMembers is true, if the task specification has an explicit member list 
+     //               false, for cases like "task type The_Task_Type;" 
      AdaTaskSpec.setDataPrototype ( "bool", "hasMembers", "= false",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaTaskSpec.setDataPrototype ( "SgDeclarationStatementPtrList", "declarations", "",
@@ -4354,8 +4356,10 @@ Grammar::setUpStatements ()
      
      
      AdaTaskBody.setFunctionPrototype ( "HEADER_ADA_TASK_BODY_STATEMENT", "../Grammar/Statement.code" );
-     AdaTaskBody.setDataPrototype ( "SgDeclarationStatement*", "spec", "= NULL",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaTaskBody.setDataPrototype ( "SgAdaTaskSpec*", "spec", "= NULL",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaTaskBody.setDataPrototype ( "SgStatementPtrList", "statements", "",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AdaAcceptStmt.setFunctionPrototype ( "HEADER_ADA_ACCEPT_STATEMENT", "../Grammar/Statement.code" );
      AdaAcceptStmt.setDataPrototype ( "SgFunctionParameterScope*", "parameterScope", "= NULL",
