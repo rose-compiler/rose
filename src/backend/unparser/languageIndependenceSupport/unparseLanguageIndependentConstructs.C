@@ -1963,7 +1963,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // if (!statementFromFile(stmt, getFileName(), info))
      if (statementFromFile(stmt, getFileName(), info) == false)
         {
-#if 1
+#if 0
           printf ("WARNING: Skipping calls to output statements that are not recorded as being in the target file: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
           printf ("   --- getFileName() = %s \n",getFileName().c_str());
 #endif
