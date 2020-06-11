@@ -191,6 +191,12 @@ namespace
     AdaStatementUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
     : unparser(unp), info(inf), os(outp)
     {}
+    
+    template <class SageStmtList>
+    void list(SageStmtList& lst);
+
+    template <class ForwardIterator>
+    void list(ForwardIterator aa, ForwardIterator zz);
 
     void prn(const std::string& s)
     {
@@ -207,6 +213,7 @@ namespace
         
     void handleStringLabel(const std::string& s);
     
+    void handleFunctionEntryDecl(SgFunctionDeclaration&, std::string keyword, bool hasReturn = false);
     
     //
     // handlers 
@@ -245,13 +252,50 @@ namespace
       prn(EOS_NL);
     }
     
+    void handle(SgAdaTaskBodyDecl& n)
+    {
+      prn("task body ");
+      prn(n.get_name());
+      prn(" is\n");
+      
+      stmt(n.get_definition());
+      
+      prn("end ");
+      prn(n.get_name());
+      prn(EOS_NL);
+    }
+    
+    void handle(SgAdaTaskSpecDecl& n)
+    {
+      prn("task ");
+      prn(n.get_name());
+      
+      SgAdaTaskSpec& spec = SG_DEREF(n.get_definition());
+      
+      if (!spec.get_hasMembers())
+      {
+        prn(EOS_NL);
+        return;
+      }  
+      
+      prn(" is\n");
+      stmt(&spec);
+      
+      prn("end ");
+      prn(n.get_name());
+      prn(EOS_NL);
+    }
+    
     void handle(SgAdaTaskSpec& n)
     {
       ROSE_ASSERT(n.get_hasMembers());
       
-      SgDeclarationStatementPtrList& lst = n.get_declarations();
-      
-      std::for_each(lst.begin(), lst.end(), *this);
+      list(n.get_declarations());      
+    }
+    
+    void handle(SgAdaTaskBody& n)
+    {
+      list(n.get_statements());      
     }
     
     void handle(SgAdaPackageSpecDecl& n)
@@ -267,11 +311,27 @@ namespace
       prn(EOS_NL);
     }
     
+    void handle(SgAdaPackageBodyDecl& n)
+    {
+      prn("package body ");
+      prn(n.get_name());
+      prn(" is\n");
+      
+      stmt(n.get_definition());
+      
+      prn("end ");
+      prn(n.get_name());
+      prn(EOS_NL);
+    }
+    
     void handle(SgAdaPackageSpec& n)
     {
-      SgDeclarationStatementPtrList& lst = n.get_declarations();
-      
-      std::for_each(lst.begin(), lst.end(), *this);
+      list(n.get_declarations());
+    }
+    
+    void handle(SgAdaPackageBody& n)
+    {
+      list(n.get_statements());
     }
     
     void handle(SgTypedefDeclaration& n)
@@ -381,6 +441,26 @@ namespace
       prn(EOS_NL);
     }
     
+    void handle(SgAdaAcceptStmt& n)
+    {
+      prn("accept ");
+      expr(n.get_entry());
+      prn(" ");
+      expr_opt(n.get_index());
+      
+      SgStatement* body = n.get_body();
+      
+      if (SgBasicBlock* block = isSgBasicBlock(body))
+      {
+        prn("do\n");
+        handleBasicBlock(*block);
+        prn("end ");
+        expr(n.get_entry());
+      }   
+      
+      prn(EOS_NL);
+    }
+    
     void handle(SgLabelStatement& n)
     {
       prn(n.get_label());
@@ -464,57 +544,16 @@ namespace
     
     void handle(SgFunctionDeclaration& n) 
     {
-      typedef std::vector<SgVariableDeclaration*> parameter_decl_t;
+      SgFunctionType& ty     = SG_DEREF(n.get_type());
+      const bool      isFunc = isAdaFunction(ty);
+      std::string     keyword = isFunc ? "function" : "procedure";
       
-      SgFunctionType&            ty     = SG_DEREF(n.get_type());
-      const bool                 isFunc = isAdaFunction(ty);
-      parameter_decl_t           paramdecls;
-      SgInitializedNamePtrList&  params = n.get_parameterList()->get_args();
-      
-      // Since SgFunctionParameterScope (and SgFunctionDefinition) do not allow
-      //   traversing the function parameter declarations, they are collected
-      //   from initialized names.
-      
-      std::transform( params.begin(), params.end(), 
-                      std::back_inserter(paramdecls),
-                      variableDeclaration
-                    );
-      
-      parameter_decl_t::iterator aa = paramdecls.begin();             
-      parameter_decl_t::iterator zz = std::unique(aa, paramdecls.end());
-      
-      prn(isFunc ? "function" : "procedure");
-      prn(" ");
-      prn(n.get_name());
-      
-      // print parenthesis only if parameters were present
-      if (aa != zz)
-      {
-        prn("(");      
-        std::for_each(aa, zz, AdaParamUnparser(unparser, info, os, "" /* initial sep */));
-        prn(")");
-      }
-      
-      if (isFunc)
-      {
-        prn(" return");
-        type(n.get_orig_return_type());
-      }
-      
-      SgFunctionDefinition* def = n.get_definition();
-             
-      if (!def)
-      {
-        prn(EOS_NL);
-        return;
-      }
-      
-      prn(" is\n");
-      stmt(def);
-      
-      prn(" ");
-      prn(n.get_name());
-      prn(EOS_NL);
+      handleFunctionEntryDecl(n, keyword, isFunc);
+    }  
+    
+    void handle(SgAdaEntryDecl& n) 
+    {
+      handleFunctionEntryDecl(n, "entry");
     }
     
     void stmt(SgStatement* s)
@@ -525,6 +564,13 @@ namespace
     void expr(SgExpression* e)
     {
       unparser.unparseExpression(e, info);
+    }
+    
+    void expr_opt(SgExpression* e)
+    {
+      if (!e || isSgNullExpression(e)) return;
+      
+      expr(e);
     }
     
     void type(SgType* t)
@@ -557,12 +603,12 @@ namespace
     if (!functionbody && (aa != dcllimit))
       prn("declare\n");               
     
-    std::for_each(stmts.begin(), dcllimit, *this);
+    list(stmts.begin(), dcllimit);
     
     if (functionbody || (aa != dcllimit))
       prn("begin\n");
       
-    std::for_each(dcllimit, stmts.end(), *this);
+    list(dcllimit, stmts.end());
     
     if (functionbody || (aa != dcllimit))
     {
@@ -580,6 +626,72 @@ namespace
     
     prn(" ");
     prn(s);
+  }
+  
+  void 
+  AdaStatementUnparser::handleFunctionEntryDecl(SgFunctionDeclaration& n, std::string keyword, bool hasReturn)
+  {
+    typedef std::vector<SgVariableDeclaration*> parameter_decl_t;
+    
+    parameter_decl_t           paramdecls;
+    SgInitializedNamePtrList&  params = n.get_parameterList()->get_args();
+    
+    // Since SgFunctionParameterScope (and SgFunctionDefinition) do not allow
+    //   traversing the function parameter declarations, they are collected
+    //   from initialized names.
+    
+    std::transform( params.begin(), params.end(), 
+                    std::back_inserter(paramdecls),
+                    variableDeclaration
+                  );
+    
+    parameter_decl_t::iterator aa = paramdecls.begin();             
+    parameter_decl_t::iterator zz = std::unique(aa, paramdecls.end());
+    
+    prn(keyword);
+    prn(" ");
+    prn(n.get_name());
+    
+    // print parenthesis only if parameters were present
+    if (aa != zz)
+    {
+      prn("(");      
+      std::for_each(aa, zz, AdaParamUnparser(unparser, info, os, "" /* initial sep */));
+      prn(")");
+    }
+    
+    if (hasReturn)
+    {
+      prn(" return");
+      type(n.get_orig_return_type());
+    }
+    
+    SgFunctionDefinition* def = n.get_definition();
+           
+    if (!def)
+    {
+      prn(EOS_NL);
+      return;
+    }
+    
+    prn(" is\n");
+    stmt(def);
+    
+    prn(" ");
+    prn(n.get_name());
+    prn(EOS_NL);
+  }
+  
+  template <class ForwardIterator>
+  void AdaStatementUnparser::list(ForwardIterator aa, ForwardIterator zz)
+  {
+    std::for_each(aa, zz, *this);
+  }
+  
+  template <class SageStmtList>
+  void AdaStatementUnparser::list(SageStmtList& lst)
+  {
+    list(lst.begin(), lst.end());
   }
 }
 

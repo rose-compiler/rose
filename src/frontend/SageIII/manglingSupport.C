@@ -393,9 +393,11 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     ROSE_ASSERT(parent);
                     
                     const SgAdaPackageSpecDecl* dcl    = isSgAdaPackageSpecDecl(parent);
-                    ROSE_ASSERT(dcl);
-                    // or get_mangled_name ??
-                    mangled_name = dcl->get_name().getString();
+                    // ROSE_ASSERT(dcl);
+                    
+                    // \todo \revise dcl may not exist for a special, hidden scope
+                    mangled_name = dcl ? dcl->get_name().getString() // or get_mangled_name ??
+                                       : spec->get_mangled_name().getString();
                     break;
                   }
                   
