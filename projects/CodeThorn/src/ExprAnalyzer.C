@@ -1446,7 +1446,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
 }
 
 std::list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionRefExp(SgFunctionRefExp* node, EState estate, EvalMode mode) {
-  cout<<"DEBUG: evalFunctionRefExp:"<<node->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
+  //cout<<"DEBUG: evalFunctionRefExp:"<<node->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
   if(mode==ExprAnalyzer::MODE_EMPTY_STATE) {
     SingleEvalResultConstInt res;
     res.init(estate,AbstractValue(CodeThorn::Top()));

@@ -14,6 +14,7 @@
 #include <sstream>
 #include <list>
 #include <vector>
+#include <utility>
 
 #include <omp.h>
 
@@ -367,6 +368,11 @@ namespace CodeThorn {
     std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
+
+    // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
+    typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
+    typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
+    MemoryUpdateList  evalAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
 
     // uses ExprAnalyzer to compute the result. Limits the number of results to one result only. Does not permit state splitting.
     // requires normalized AST
