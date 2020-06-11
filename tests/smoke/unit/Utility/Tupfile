@@ -62,4 +62,11 @@ run $(test) testRangeMap
 run $(tool_compile_linkexe) testSourceLocation.C
 run $(test) testSourceLocation
 
+########################################################################################################################
+# Bit operations
+########################################################################################################################
+
+run $(tool_compile_linkexe) testBitOps.C
+run $(test) testBitOps
+
 endif

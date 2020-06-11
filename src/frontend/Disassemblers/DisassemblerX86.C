@@ -121,10 +121,6 @@ DisassemblerX86::init(size_t wordsize)
     registerDictionary(regdict);
     wordSizeBytes(wordsize);
     byteOrder(ByteOrder::ORDER_LSB);
-
-    /* Not actually necessary because we'll call it before each instruction. We call it here just to initialize all the data
-     * members to reasonable values for debugging. */
-    startInstruction(0, NULL, 0);
 }
 
 SgAsmInstruction *
@@ -143,15 +139,20 @@ DisassemblerX86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
     size_t tempsz = map->at(start_va).limit(sizeof temp).require(MemoryMap::EXECUTABLE).read(temp).size();
 
     /* Disassemble the instruction */
-    startInstruction(start_va, temp, tempsz);
-    SgAsmX86Instruction *insn = disassemble(); /*throws an exception on error*/
+    State state;
+    startInstruction(state, start_va, temp, tempsz);
+    SgAsmInstruction *insn = NULL;
+    try {
+        insn = disassemble(state); /*throws an exception on error*/
+    } catch (const ExceptionX86 &e) {
+        insn = makeUnknownInstruction(e);
+    }
     ASSERT_not_null(insn);
 
     /* Note successors if necesssary */
     if (successors) {
         bool complete;
-        AddressSet suc2 = insn->getSuccessors(&complete);
-        successors->insert(suc2.begin(), suc2.end());
+        *successors |= insn->getSuccessors(complete/*out*/);
     }
 
     return insn;
@@ -160,8 +161,14 @@ DisassemblerX86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 SgAsmInstruction *
 DisassemblerX86::makeUnknownInstruction(const Exception &e)
 {
-    SgAsmX86Instruction *insn = makeInstruction(x86_unknown_instruction, "unknown");
-    insn->set_raw_bytes(e.bytes);
+    // We don't need any of the state except the opcodes, and since this is a variable width instruction set architecture
+    // whose smallest instruction in a single byte, the unknown instructions are always single bytes.
+    State state;
+    state.ip = e.ip;
+    ASSERT_require(e.bytes.size() >= 1);
+    state.insnbuf.push_back(e.bytes[0]);
+    state.insnbufat = 1;
+    SgAsmX86Instruction *insn = makeInstruction(state, x86_unknown_instruction, "unknown");
     return insn;
 }
 
@@ -171,36 +178,36 @@ DisassemblerX86::makeUnknownInstruction(const Exception &e)
  *========================================================================================================================*/
 
 uint8_t
-DisassemblerX86::getByte()
+DisassemblerX86::getByte(State &state) const
 {
-    if (insnbufat>=15)
-        throw ExceptionX86("instruction longer than 15 bytes", this);
-    if (insnbufat>=insnbuf.size())
-        throw ExceptionX86("short read", this);
-    return insnbuf[insnbufat++];
+    if (state.insnbufat>=15)
+        throw ExceptionX86("instruction longer than 15 bytes", state);
+    if (state.insnbufat>=state.insnbuf.size())
+        throw ExceptionX86("short read", state);
+    return state.insnbuf[state.insnbufat++];
 }
 
 uint16_t
-DisassemblerX86::getWord()
+DisassemblerX86::getWord(State &state) const
 {
-    uint16_t lo = getByte();
-    uint16_t hi = getByte();
+    uint16_t lo = getByte(state);
+    uint16_t hi = getByte(state);
     return (hi<<8) | lo;
 }
 
 uint32_t
-DisassemblerX86::getDWord()
+DisassemblerX86::getDWord(State &state) const
 {
-    uint32_t lo = getWord();
-    uint32_t hi = getWord();
+    uint32_t lo = getWord(state);
+    uint32_t hi = getWord(state);
     return (hi<<16) | lo;
 }
 
 uint64_t
-DisassemblerX86::getQWord()
+DisassemblerX86::getQWord(State &state) const
 {
-    uint64_t lo = getDWord();
-    uint64_t hi = getDWord();
+    uint64_t lo = getDWord(state);
+    uint64_t hi = getDWord(state);
     return (hi<<32) | lo;
 }
 
@@ -212,16 +219,16 @@ DisassemblerX86::getQWord()
  *========================================================================================================================*/
 
 SgAsmExpression *
-DisassemblerX86::currentDataSegment() const {
-    if (segOverride != x86_segreg_none)
-        return makeSegmentRegister(segOverride, insnSize==x86_insnsize_64);
-    return makeSegmentRegister(x86_segreg_ds, insnSize==x86_insnsize_64);
+DisassemblerX86::currentDataSegment(State &state) const {
+    if (state.segOverride != x86_segreg_none)
+        return makeSegmentRegister(state, state.segOverride, insnSize==x86_insnsize_64);
+    return makeSegmentRegister(state, x86_segreg_ds, insnSize==x86_insnsize_64);
 }
 
 X86InstructionSize
-DisassemblerX86::effectiveAddressSize() const
+DisassemblerX86::effectiveAddressSize(State &state) const
 {
-    if (addressSizeOverride) {
+    if (state.addressSizeOverride) {
         switch (insnSize) {
             case x86_insnsize_16: return x86_insnsize_32;
             case x86_insnsize_32: return x86_insnsize_16;
@@ -239,9 +246,9 @@ DisassemblerX86::effectiveAddressSize() const
 }
 
 X86InstructionSize
-DisassemblerX86::effectiveOperandSize() const
+DisassemblerX86::effectiveOperandSize(State &state) const
 {
-    if (operandSizeOverride) {
+    if (state.operandSizeOverride) {
         switch (insnSize) {
             case x86_insnsize_16:
                 return x86_insnsize_32;
@@ -252,7 +259,7 @@ DisassemblerX86::effectiveOperandSize() const
                  * bit. These instructions are inherently 32-bit and they use the REX.W bit to specify 64-bit operands. Also,
                  * for instructions that don't have 0x66 as part of the opcode but which are inherently 32-bit and use the
                  * REX.W bit to select 64-bit operands, the CPU seems to ignore extraneous 0x66 prefixes when REX.W is set. */
-                if (rexPresent && rexW)
+                if (state.rexPresent && state.rexW)
                     return x86_insnsize_64;
                 return x86_insnsize_16;
             }
@@ -265,7 +272,7 @@ DisassemblerX86::effectiveOperandSize() const
         }
     } else {
         X86InstructionSize s = insnSize;
-        if (insnSize == x86_insnsize_64 && !rexW && !sizeMustBe64Bit)
+        if (insnSize == x86_insnsize_64 && !state.rexW && !state.sizeMustBe64Bit)
             s = x86_insnsize_32;
         return s;
         /* FIXME: This doesn't handle all of the special cases */
@@ -273,33 +280,33 @@ DisassemblerX86::effectiveOperandSize() const
 }
 
 DisassemblerX86::MMPrefix
-DisassemblerX86::mmPrefix() const
+DisassemblerX86::mmPrefix(State &state) const
 {
-    switch (repeatPrefix) {
+    switch (state.repeatPrefix) {
         case x86_repeat_none: {
-            if (operandSizeOverride) {
+            if (state.operandSizeOverride) {
                 return mm66;
             } else {
                 return mmNone;
             }
         }
         case x86_repeat_repne: {
-            if (operandSizeOverride) {
-                throw ExceptionX86("bad combination of repeat prefix and operand size override", this);
+            if (state.operandSizeOverride) {
+                throw ExceptionX86("bad combination of repeat prefix and operand size override", state);
             } else {
                 return mmF2;
             }
         }
         case x86_repeat_repe: {
-            if (operandSizeOverride) {
-                throw ExceptionX86("bad combination of repeat prefix and operand size override", this);
+            if (state.operandSizeOverride) {
+                throw ExceptionX86("bad combination of repeat prefix and operand size override", state);
             } else {
                 return mmF3;
             }
         }
         default: {
             ASSERT_not_reachable("not a valid repeat prefix: " +
-                                 stringifyBinaryAnalysisX86RepeatPrefix(repeatPrefix));
+                                 stringifyBinaryAnalysisX86RepeatPrefix(state.repeatPrefix));
             /* avoid MSCV warning by adding return stmt */
             return mmNone;
         }
@@ -307,13 +314,13 @@ DisassemblerX86::mmPrefix() const
 }
 
 void
-DisassemblerX86::setRex(uint8_t opcode)
+DisassemblerX86::setRex(State &state, uint8_t opcode) const
 {
-    rexPresent = true;
-    rexW = (opcode & 8) != 0;
-    rexR = (opcode & 4) != 0;
-    rexX = (opcode & 2) != 0;
-    rexB = (opcode & 1) != 0;
+    state.rexPresent = true;
+    state.rexW = (opcode & 8) != 0;
+    state.rexR = (opcode & 4) != 0;
+    state.rexX = (opcode & 2) != 0;
+    state.rexB = (opcode & 1) != 0;
 }
 
 DisassemblerX86::RegisterMode
@@ -357,10 +364,10 @@ DisassemblerX86::sizeToType(X86InstructionSize s)
  *========================================================================================================================*/
 
 SgAsmExpression *
-DisassemblerX86::makeAddrSizeValue(int64_t val, size_t bit_offset, size_t bit_size)
+DisassemblerX86::makeAddrSizeValue(State &state, int64_t val, size_t bit_offset, size_t bit_size) const
 {
     SgAsmValueExpression *retval = NULL;
-    switch (effectiveAddressSize()) {
+    switch (effectiveAddressSize(state)) {
         case x86_insnsize_16:
             retval = SageBuilderAsm::buildValueX86Word((uint16_t)val);
             break;
@@ -372,7 +379,7 @@ DisassemblerX86::makeAddrSizeValue(int64_t val, size_t bit_offset, size_t bit_si
             break;
         default:
             ASSERT_not_reachable("not a valid effective address size " +
-                                 stringifyBinaryAnalysisX86InstructionSize(effectiveAddressSize()));
+                                 stringifyBinaryAnalysisX86InstructionSize(effectiveAddressSize(state)));
     }
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(bit_size);
@@ -380,19 +387,20 @@ DisassemblerX86::makeAddrSizeValue(int64_t val, size_t bit_offset, size_t bit_si
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mnemonic,
-                                 SgAsmExpression *op1, SgAsmExpression *op2, SgAsmExpression *op3, SgAsmExpression *op4)
+DisassemblerX86::makeInstruction(State &state, X86InstructionKind kind, const std::string &mnemonic,
+                                 SgAsmExpression *op1, SgAsmExpression *op2, SgAsmExpression *op3, SgAsmExpression *op4) const
 {
-    SgAsmX86Instruction *insn = new SgAsmX86Instruction(ip, mnemonic, kind, insnSize, effectiveOperandSize(),
-                                                        effectiveAddressSize());
+    SgAsmX86Instruction *insn = new SgAsmX86Instruction(state.ip, mnemonic, kind, insnSize, effectiveOperandSize(state),
+                                                        effectiveAddressSize(state));
     ASSERT_not_null(insn);
-    insn->set_lockPrefix(lock);
-    insn->set_repeatPrefix(repeatPrefix);
-    insn->set_raw_bytes(SgUnsignedCharList(&(insnbuf[0]), &(insnbuf[0])+insnbufat));
-    if (segOverride != x86_segreg_none)
-        insn->set_segmentOverride(segOverride);
-    if (branchPredictionEnabled)
-        insn->set_branchPrediction(branchPrediction);
+    insn->set_lockPrefix(state.lock);
+    insn->set_repeatPrefix(state.repeatPrefix);
+    if (state.insnbufat > 0)
+        insn->set_raw_bytes(SgUnsignedCharList(&(state.insnbuf[0]), &(state.insnbuf[0])+state.insnbufat));
+    if (state.segOverride != x86_segreg_none)
+        insn->set_segmentOverride(state.segOverride);
+    if (state.branchPredictionEnabled)
+        insn->set_branchPrediction(state.branchPrediction);
 
     SgAsmOperandList *operands = new SgAsmOperandList();
     insn->set_operandList(operands);
@@ -420,7 +428,7 @@ DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mne
 }
 
 SgAsmRegisterReferenceExpression *
-DisassemblerX86::makeIP()
+DisassemblerX86::makeIP() const
 {
     ASSERT_forbid(REG_IP.isEmpty());
     SgAsmRegisterReferenceExpression *r = new SgAsmDirectRegisterExpression(REG_IP);
@@ -429,16 +437,16 @@ DisassemblerX86::makeIP()
 }
 
 SgAsmRegisterReferenceExpression *
-DisassemblerX86::makeOperandRegisterByte(bool rexExtension, uint8_t registerNumber)
+DisassemblerX86::makeOperandRegisterByte(State &state, bool rexExtension, uint8_t registerNumber) const
 {
-    return makeRegister((rexExtension ? 8 : 0) + registerNumber,
-                        (rexPresent ? rmRexByte : rmLegacyByte));
+    return makeRegister(state, (rexExtension ? 8 : 0) + registerNumber,
+                        (state.rexPresent ? rmRexByte : rmLegacyByte));
 }
 
 SgAsmRegisterReferenceExpression *
-DisassemblerX86::makeOperandRegisterFull(bool rexExtension, uint8_t registerNumber)
+DisassemblerX86::makeOperandRegisterFull(State &state, bool rexExtension, uint8_t registerNumber) const
 {
-    return makeRegister((rexExtension ? 8 : 0) + registerNumber,
+    return makeRegister(state, (rexExtension ? 8 : 0) + registerNumber,
                         sizeToMode(insnSize));
 }
 
@@ -458,7 +466,7 @@ DisassemblerX86::makeOperandRegisterFull(bool rexExtension, uint8_t registerNumb
  * non-overlapping areas of the descriptor address space {major,minor,offset,size} while related registers (e.g., "eax" vs
  * "ax") map to overlapping areas of the descriptor address space. */
 SgAsmRegisterReferenceExpression *
-DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmType *registerType) const
+DisassemblerX86::makeRegister(State &state, uint8_t fullRegisterNumber, RegisterMode m, SgAsmType *registerType) const
 {
     /* Register names for various RegisterMode, indexed by the fullRegisterNumber. The names and order of these names come from
      * Intel documentation. */
@@ -486,7 +494,7 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
     switch (m) {
         case rmLegacyByte:
             if (fullRegisterNumber >= 8)
-                throw Exception("register number out of bounds");
+                throw ExceptionX86("register number out of bounds", state);
             if (fullRegisterNumber & 4) {
                 name = regnames8h[fullRegisterNumber % 4];
             } else {
@@ -496,31 +504,31 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
             break;
         case rmRexByte:
             if (fullRegisterNumber >= 16)
-                throw Exception("register number out of bounds");
+                throw ExceptionX86("register number out of bounds", state);
             name = regnames8l[fullRegisterNumber];
             registerType = BYTET;
             break;
         case rmWord:
             if (fullRegisterNumber >= 16)
-                throw Exception("register number out of bounds");
+                throw ExceptionX86("register number out of bounds", state);
             name = regnames16[fullRegisterNumber];
             registerType = WORDT;
             break;
         case rmDWord:
             if (fullRegisterNumber >= 16)
-                throw Exception("register number out of bounds");
+                throw ExceptionX86("register number out of bounds", state);
             name = regnames32[fullRegisterNumber];
             registerType = DWORDT;
             break;
         case rmQWord:
             if (fullRegisterNumber >= 16)
-                throw Exception("register number out of bounds");
+                throw ExceptionX86("register number out of bounds", state);
             name = regnames64[fullRegisterNumber];
             registerType = QWORDT;
             break;
         case rmSegment:
             if (fullRegisterNumber >= 6)
-                throw Exception("register number out of bounds");
+                throw ExceptionX86("register number out of bounds", state);
             name = regnamesSeg[fullRegisterNumber];
             registerType = WORDT;
             break;
@@ -549,7 +557,8 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
     ASSERT_not_null(registerDictionary());
     const RegisterDescriptor rdesc = registerDictionary()->find(name);
     if (!rdesc)
-        throw Exception("register \"" + name + "\" is not available for " + registerDictionary()->get_architecture_name());
+        throw ExceptionX86("register \"" + name + "\" is not available for " + registerDictionary()->get_architecture_name(),
+                           state);
 
     /* Construct the return value. */
     SgAsmRegisterReferenceExpression *rre = NULL;
@@ -571,16 +580,16 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
 }
 
 SgAsmExpression *
-DisassemblerX86::makeSegmentRegister(X86SegmentRegister so, bool insn64) const
+DisassemblerX86::makeSegmentRegister(State &state, X86SegmentRegister so, bool insn64) const
 {
     switch (so) {
         case x86_segreg_none: ASSERT_not_reachable("makeSegmentRegister must not be x86_segreg_none");
-        case x86_segreg_cs: return makeRegister(insn64 ? x86_segreg_ds : x86_segreg_cs, rmSegment);
-        case x86_segreg_ds: return makeRegister(x86_segreg_ds, rmSegment);
-        case x86_segreg_es: return makeRegister(insn64 ? x86_segreg_ds : x86_segreg_es, rmSegment);
-        case x86_segreg_fs: return makeRegister(x86_segreg_fs, rmSegment);
-        case x86_segreg_gs: return makeRegister(x86_segreg_gs, rmSegment);
-        case x86_segreg_ss: return makeRegister(insn64 ? x86_segreg_ds : x86_segreg_ss, rmSegment);
+        case x86_segreg_cs: return makeRegister(state, insn64 ? x86_segreg_ds : x86_segreg_cs, rmSegment);
+        case x86_segreg_ds: return makeRegister(state, x86_segreg_ds, rmSegment);
+        case x86_segreg_es: return makeRegister(state, insn64 ? x86_segreg_ds : x86_segreg_es, rmSegment);
+        case x86_segreg_fs: return makeRegister(state, x86_segreg_fs, rmSegment);
+        case x86_segreg_gs: return makeRegister(state, x86_segreg_gs, rmSegment);
+        case x86_segreg_ss: return makeRegister(state, insn64 ? x86_segreg_ds : x86_segreg_ss, rmSegment);
         default: ASSERT_not_reachable("bad segment register in makeSegmentRegister");
     }
 
@@ -597,75 +606,75 @@ DisassemblerX86::makeSegmentRegister(X86SegmentRegister so, bool insn64) const
  *========================================================================================================================*/
 
 void
-DisassemblerX86::getModRegRM(RegisterMode regMode, RegisterMode rmMode, SgAsmType *t, SgAsmType *tForReg)
+DisassemblerX86::getModRegRM(State &state, RegisterMode regMode, RegisterMode rmMode, SgAsmType *t, SgAsmType *tForReg) const
 {
     if (!tForReg)
         tForReg = t;
-    modregrmByte = getByte();
-    modregrmByteSet = true;
-    modeField = modregrmByte >> 6;
-    regField = (modregrmByte & 070) >> 3;
-    rmField = modregrmByte & 7;
-    reg = makeModrmRegister(regMode, tForReg);
-    modrm = makeModrmNormal(rmMode, t);
+    state.modregrmByte = getByte(state);
+    state.modregrmByteSet = true;
+    state.modeField = state.modregrmByte >> 6;
+    state.regField = (state.modregrmByte & 070) >> 3;
+    state.rmField = state.modregrmByte & 7;
+    state.reg = makeModrmRegister(state, regMode, tForReg);
+    state.modrm = makeModrmNormal(state, rmMode, t);
 }
 
 SgAsmMemoryReferenceExpression *
-DisassemblerX86::decodeModrmMemory()
+DisassemblerX86::decodeModrmMemory(State &state) const
 {
-    ASSERT_require(modregrmByteSet);
+    ASSERT_require(state.modregrmByteSet);
     SgAsmExpression* addressExpr = NULL;
     X86SegmentRegister defaultSeg = x86_segreg_ds;
-    if (effectiveAddressSize() == x86_insnsize_16) {
-        if (modeField == 0 && rmField == 6) {
+    if (effectiveAddressSize(state) == x86_insnsize_16) {
+        if (state.modeField == 0 && state.rmField == 6) {
             /* Special case */
-            size_t bit_offset = 8*insnbufat;
-            SgAsmValueExpression *ve = SageBuilderAsm::buildValueX86Word(getWord());
+            size_t bit_offset = 8*state.insnbufat;
+            SgAsmValueExpression *ve = SageBuilderAsm::buildValueX86Word(getWord(state));
             ve->set_bit_offset(bit_offset);
             ve->set_bit_size(32);
             addressExpr = ve;
         } else {
-            switch (rmField) {
+            switch (state.rmField) {
                 case 0:
                     defaultSeg = x86_segreg_ds;
-                    addressExpr = SageBuilderAsm::buildAddExpression(makeRegister(3, rmWord), makeRegister(6, rmWord));
+                    addressExpr = SageBuilderAsm::buildAddExpression(makeRegister(state, 3, rmWord), makeRegister(state, 6, rmWord));
                     break;
                 case 1:
                     defaultSeg = x86_segreg_ds;
-                    addressExpr = SageBuilderAsm::buildAddExpression(makeRegister(3, rmWord), makeRegister(7, rmWord));
+                    addressExpr = SageBuilderAsm::buildAddExpression(makeRegister(state, 3, rmWord), makeRegister(state, 7, rmWord));
                     break;
                 case 2:
                     defaultSeg = x86_segreg_ss;
-                    addressExpr = SageBuilderAsm::buildAddExpression(makeRegister(5, rmWord), makeRegister(6, rmWord));
+                    addressExpr = SageBuilderAsm::buildAddExpression(makeRegister(state, 5, rmWord), makeRegister(state, 6, rmWord));
                     break;
                 case 3:
                     defaultSeg = x86_segreg_ss;
-                    addressExpr = SageBuilderAsm::buildAddExpression(makeRegister(5, rmWord), makeRegister(7, rmWord));
+                    addressExpr = SageBuilderAsm::buildAddExpression(makeRegister(state, 5, rmWord), makeRegister(state, 7, rmWord));
                     break;
                 case 4:
                     defaultSeg = x86_segreg_ds;
-                    addressExpr = makeRegister(6, rmWord);
+                    addressExpr = makeRegister(state, 6, rmWord);
                     break;
                 case 5:
                     defaultSeg = x86_segreg_ds;
-                    addressExpr = makeRegister(7, rmWord);
+                    addressExpr = makeRegister(state, 7, rmWord);
                     break;
                 case 6:
                     defaultSeg = x86_segreg_ss;
-                    addressExpr = makeRegister(5, rmWord);
+                    addressExpr = makeRegister(state, 5, rmWord);
                     break;
                 case 7:
                     defaultSeg = x86_segreg_ds;
-                    addressExpr = makeRegister(3, rmWord);
+                    addressExpr = makeRegister(state, 3, rmWord);
                     break;
-                default: ASSERT_not_reachable("invalid rmField: " + StringUtility::numberToString(rmField));
+                default: ASSERT_not_reachable("invalid state.rmField: " + StringUtility::numberToString(state.rmField));
             }
-            switch (modeField) {
+            switch (state.modeField) {
                 case 0:
                     break; // No offset
                 case 1: {
-                    size_t bit_offset = 8*insnbufat;
-                    uint8_t offset = getByte();
+                    size_t bit_offset = 8*state.insnbufat;
+                    uint8_t offset = getByte(state);
                     SgAsmValueExpression *wv = SageBuilderAsm::buildValueX86Word((int16_t)(int8_t)offset);
                     wv->set_bit_offset(bit_offset);
                     wv->set_bit_size(8);
@@ -673,8 +682,8 @@ DisassemblerX86::decodeModrmMemory()
                     break;
                 }
                 case 2: {
-                    size_t bit_offset = 8*insnbufat;
-                    uint16_t offset = getWord();
+                    size_t bit_offset = 8*state.insnbufat;
+                    uint16_t offset = getWord(state);
                     SgAsmValueExpression *wv = SageBuilderAsm::buildValueX86Word(offset);
                     wv->set_bit_offset(bit_offset);
                     wv->set_bit_size(16);
@@ -682,74 +691,74 @@ DisassemblerX86::decodeModrmMemory()
                     break;
                 }
                 default:
-                    ASSERT_not_reachable("invalid mode field: " + StringUtility::numberToString(modeField));
+                    ASSERT_not_reachable("invalid mode field: " + StringUtility::numberToString(state.modeField));
             }
         }
     } else {
         /* 32 or 64 bits */
-        if (modeField == 0 && rmField == 5) {
+        if (state.modeField == 0 && state.rmField == 5) {
             /* Special case */
-            size_t bit_offset = 8*insnbufat;
-            uint32_t offset = getDWord();
-            addressExpr = makeAddrSizeValue(IntegerOps::signExtend<32, 64>((uint64_t)offset), bit_offset, 32);
+            size_t bit_offset = 8*state.insnbufat;
+            uint32_t offset = getDWord(state);
+            addressExpr = makeAddrSizeValue(state, IntegerOps::signExtend<32, 64>((uint64_t)offset), bit_offset, 32);
             if (insnSize == x86_insnsize_64) {
                 addressExpr = SageBuilderAsm::buildAddExpression(makeIP(), addressExpr);
             }
         } else {
-            if (rmField == 4) { /* Need SIB */
-                uint8_t sib = getByte();
+            if (state.rmField == 4) { /* Need SIB */
+                uint8_t sib = getByte(state);
                 uint8_t sibScaleField = sib >> 6;
                 uint8_t sibIndexField = (sib & 0070) >> 3;
                 uint8_t sibBaseField = sib & 7;
                 uint8_t actualScale = (1 << sibScaleField);
                 SgAsmExpression* sibBase = NULL;
                 if (sibBaseField == 5) {
-                    switch (modeField) {
+                    switch (state.modeField) {
                         case 0: {
-                            size_t bit_offset = 8*insnbufat;
-                            uint32_t offset = getDWord();
-                            sibBase = makeAddrSizeValue(IntegerOps::signExtend<32, 64>((uint64_t)offset), bit_offset, 32);
+                            size_t bit_offset = 8*state.insnbufat;
+                            uint32_t offset = getDWord(state);
+                            sibBase = makeAddrSizeValue(state, IntegerOps::signExtend<32, 64>((uint64_t)offset), bit_offset, 32);
                             break;
                         }
                         case 1: {
-                            sibBase = makeRegister((rexB ? 13 : 5), sizeToMode(insnSize));
+                            sibBase = makeRegister(state, (state.rexB ? 13 : 5), sizeToMode(insnSize));
                             defaultSeg = x86_segreg_ss;
                             break;
                         }
                         case 2: {
-                            sibBase = makeRegister((rexB ? 13 : 5), sizeToMode(insnSize));
+                            sibBase = makeRegister(state, (state.rexB ? 13 : 5), sizeToMode(insnSize));
                             defaultSeg = x86_segreg_ss;
                             break;
                         }
                         default:
-                            ASSERT_not_reachable("invalid mode field: " + StringUtility::numberToString(modeField));
+                            ASSERT_not_reachable("invalid mode field: " + StringUtility::numberToString(state.modeField));
                     }
                 } else {
-                    sibBase = makeOperandRegisterFull(rexB, sibBaseField);
+                    sibBase = makeOperandRegisterFull(state, state.rexB, sibBaseField);
                     if (sibBaseField == 4)
                         defaultSeg = x86_segreg_ss;
                 }
-                if (sibIndexField == 4 && !rexX) {
+                if (sibIndexField == 4 && !state.rexX) {
                     addressExpr = sibBase;
                 } else if (actualScale == 1) {
-                    addressExpr = SageBuilderAsm::buildAddExpression(sibBase, makeOperandRegisterFull(rexX, sibIndexField));
+                    addressExpr = SageBuilderAsm::buildAddExpression(sibBase, makeOperandRegisterFull(state, state.rexX, sibIndexField));
                 } else {
-                    SgAsmExpression *regExpr = makeOperandRegisterFull(rexX, sibIndexField);
+                    SgAsmExpression *regExpr = makeOperandRegisterFull(state, state.rexX, sibIndexField);
                     SgAsmExpression *scaleExpr = SageBuilderAsm::buildValueX86Byte(actualScale);
                     SgAsmExpression *productExpr = SageBuilderAsm::buildMultiplyExpression(regExpr, scaleExpr);
                     addressExpr = SageBuilderAsm::buildAddExpression(sibBase, productExpr);
                 }
             } else {
-                addressExpr = makeOperandRegisterFull(rexB, rmField);
-                if (rmField == 5)
+                addressExpr = makeOperandRegisterFull(state, state.rexB, state.rmField);
+                if (state.rmField == 5)
                     defaultSeg = x86_segreg_ss;
             }
-            switch (modeField) {
+            switch (state.modeField) {
                 case 0:
                     break; /* No offset */
                 case 1: {
-                    size_t bit_offset = 8*insnbufat;
-                    uint8_t offset = getByte();
+                    size_t bit_offset = 8*state.insnbufat;
+                    uint8_t offset = getByte(state);
                     SgAsmIntegerValueExpression *offsetExpr = SageBuilderAsm::buildValueX86Byte(offset);
                     offsetExpr->set_bit_offset(bit_offset);
                     offsetExpr->set_bit_size(8);
@@ -757,8 +766,8 @@ DisassemblerX86::decodeModrmMemory()
                     break;
                 }
                 case 2: {
-                    size_t bit_offset = 8*insnbufat;
-                    uint32_t offset = getDWord();
+                    size_t bit_offset = 8*state.insnbufat;
+                    uint32_t offset = getDWord(state);
                     SgAsmIntegerValueExpression *offsetExpr = SageBuilderAsm::buildValueX86DWord(offset);
                     offsetExpr->set_bit_offset(bit_offset);
                     offsetExpr->set_bit_size(32);
@@ -766,55 +775,55 @@ DisassemblerX86::decodeModrmMemory()
                     break;
                 }
                 default:
-                    ASSERT_not_reachable("invalid mode field: " + StringUtility::numberToString(modeField));
+                    ASSERT_not_reachable("invalid mode field: " + StringUtility::numberToString(state.modeField));
             }
         }
     }
     ASSERT_not_null(addressExpr);
     X86SegmentRegister seg;
-    if (segOverride != x86_segreg_none) {
-        seg = segOverride;
+    if (state.segOverride != x86_segreg_none) {
+        seg = state.segOverride;
     } else {
         seg = defaultSeg;
     }
     SgAsmMemoryReferenceExpression* mr = SageBuilderAsm::buildMemoryReferenceExpression(addressExpr,
-                                                                             makeSegmentRegister(seg, insnSize==x86_insnsize_64));
+                                                                             makeSegmentRegister(state, seg, insnSize==x86_insnsize_64));
     return mr;
 }
 
 void
-DisassemblerX86::fillInModRM(RegisterMode rmMode, SgAsmType *t)
+DisassemblerX86::fillInModRM(State &state, RegisterMode rmMode, SgAsmType *t) const
 {
-    if (modeField == 3) {
-        modrm = makeRegister((rexB ? 8 : 0) + rmField, rmMode, t);
+    if (state.modeField == 3) {
+        state.modrm = makeRegister(state, (state.rexB ? 8 : 0) + state.rmField, rmMode, t);
     } else {
-        isSgAsmMemoryReferenceExpression(modrm)->set_type(t);
+        isSgAsmMemoryReferenceExpression(state.modrm)->set_type(t);
     }
 }
 
 SgAsmExpression *
-DisassemblerX86::makeModrmNormal(RegisterMode m, SgAsmType* mrType)
+DisassemblerX86::makeModrmNormal(State &state, RegisterMode m, SgAsmType* mrType) const
 {
-    ASSERT_require(modregrmByteSet);
-    if (modeField == 3) {
+    ASSERT_require(state.modregrmByteSet);
+    if (state.modeField == 3) {
         /* Register */
-        if (m == rmLegacyByte && rexPresent)
+        if (m == rmLegacyByte && state.rexPresent)
             m = rmRexByte;
-        return makeRegister((rexB ? 8 : 0) + rmField, m, mrType);
+        return makeRegister(state, (state.rexB ? 8 : 0) + state.rmField, m, mrType);
     } else {
-        SgAsmMemoryReferenceExpression* modrm = decodeModrmMemory();
+        SgAsmMemoryReferenceExpression* modrm = decodeModrmMemory(state);
         modrm->set_type(mrType);
         return modrm;
     }
 }
 
 SgAsmRegisterReferenceExpression *
-DisassemblerX86::makeModrmRegister(RegisterMode m, SgAsmType* mrType)
+DisassemblerX86::makeModrmRegister(State &state, RegisterMode m, SgAsmType* mrType) const
 {
-    ASSERT_require(modregrmByteSet);
-    if (m == rmLegacyByte && rexPresent)
+    ASSERT_require(state.modregrmByteSet);
+    if (m == rmLegacyByte && state.rexPresent)
         m = rmRexByte;
-    return makeRegister((rexR ? 8 : 0) + regField, m, mrType);
+    return makeRegister(state, (state.rexR ? 8 : 0) + state.regField, m, mrType);
 }
 
 
@@ -826,55 +835,55 @@ DisassemblerX86::makeModrmRegister(RegisterMode m, SgAsmType* mrType)
  *========================================================================================================================*/
 
 SgAsmExpression *
-DisassemblerX86::getImmByte()
+DisassemblerX86::getImmByte(State &state) const
 {
-    size_t bit_offset = 8*insnbufat;
-    SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86Byte(getByte());
+    size_t bit_offset = 8*state.insnbufat;
+    SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86Byte(getByte(state));
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(8);
     return retval;
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmWord()
+DisassemblerX86::getImmWord(State &state) const
 {
-    size_t bit_offset = 8*insnbufat;
-    SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86Word(getWord());
+    size_t bit_offset = 8*state.insnbufat;
+    SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86Word(getWord(state));
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(16);
     return retval;
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmDWord()
+DisassemblerX86::getImmDWord(State &state) const
 {
-    size_t bit_offset = 8*insnbufat;
-    SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86DWord(getDWord());
+    size_t bit_offset = 8*state.insnbufat;
+    SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86DWord(getDWord(state));
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(32);
     return retval;
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmQWord()
+DisassemblerX86::getImmQWord(State &state) const
 {
-    size_t bit_offset = 8*insnbufat;
-    SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86QWord(getQWord());
+    size_t bit_offset = 8*state.insnbufat;
+    SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86QWord(getQWord(state));
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(64);
     return retval;
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmForAddr()
+DisassemblerX86::getImmForAddr(State &state) const
 {
-    switch (effectiveAddressSize()) {
-        case x86_insnsize_16: return getImmWord();
-        case x86_insnsize_32: return getImmDWord();
-        case x86_insnsize_64: return getImmQWord();
+    switch (effectiveAddressSize(state)) {
+        case x86_insnsize_16: return getImmWord(state);
+        case x86_insnsize_32: return getImmDWord(state);
+        case x86_insnsize_64: return getImmQWord(state);
         default: {
             ASSERT_not_reachable("invalid effective address size: " +
-                                 stringifyBinaryAnalysisX86InstructionSize(effectiveAddressSize()));
+                                 stringifyBinaryAnalysisX86InstructionSize(effectiveAddressSize(state)));
             /* avoid MSCV warning by adding return stmt */
             return NULL;
         }
@@ -882,15 +891,15 @@ DisassemblerX86::getImmForAddr()
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmIv()
+DisassemblerX86::getImmIv(State &state) const
 {
-    switch (effectiveOperandSize()) {
-        case x86_insnsize_16: return getImmWord();
-        case x86_insnsize_32: return getImmDWord();
-        case x86_insnsize_64: return getImmQWord();
+    switch (effectiveOperandSize(state)) {
+        case x86_insnsize_16: return getImmWord(state);
+        case x86_insnsize_32: return getImmDWord(state);
+        case x86_insnsize_64: return getImmQWord(state);
         default: {
             ASSERT_not_reachable("invalid effective operand size: " +
-                                 stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
+                                 stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize(state)));
             /* avoid MSCV warning by adding return stmt */
             return NULL;
         }
@@ -898,20 +907,20 @@ DisassemblerX86::getImmIv()
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmJz()
+DisassemblerX86::getImmJz(State &state) const
 {
     uint64_t val;
-    size_t bit_offset=8*insnbufat, bit_size=0;
-    if (effectiveOperandSize() == x86_insnsize_16) {
+    size_t bit_offset=8*state.insnbufat, bit_size=0;
+    if (effectiveOperandSize(state) == x86_insnsize_16) {
         bit_size = 16;
-        uint16_t val2 = getWord();
+        uint16_t val2 = getWord(state);
         val = IntegerOps::signExtend<16, 64>((uint64_t)val2);
     } else {
         bit_size = 32;
-        uint32_t val2 = getDWord();
+        uint32_t val2 = getDWord(state);
         val = IntegerOps::signExtend<32, 64>((uint64_t)val2);
     }
-    uint64_t target = ip + insnbufat + val;
+    uint64_t target = state.ip + state.insnbufat + val;
     SgAsmValueExpression *retval = NULL;
     switch (insnSize) {
         case x86_insnsize_16:
@@ -930,11 +939,11 @@ DisassemblerX86::getImmJz()
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmByteAsIv()
+DisassemblerX86::getImmByteAsIv(State &state) const
 {
     SgAsmValueExpression *retval = NULL;
-    size_t bit_offset = 8*insnbufat;
-    uint8_t val = getByte();
+    size_t bit_offset = 8*state.insnbufat;
+    uint8_t val = getByte(state);
     retval = SageBuilderAsm::buildValueX86Byte(val);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(8);
@@ -942,19 +951,19 @@ DisassemblerX86::getImmByteAsIv()
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmIzAsIv()
+DisassemblerX86::getImmIzAsIv(State &state) const
 {
-    switch (effectiveOperandSize()) {
+    switch (effectiveOperandSize(state)) {
         case x86_insnsize_16:
-            return getImmWord();
+            return getImmWord(state);
         case x86_insnsize_32:
-            return getImmDWord();
+            return getImmDWord(state);
         case x86_insnsize_64: {
-            return getImmDWord();
+            return getImmDWord(state);
         }
         default: {
             ASSERT_not_reachable("invalid effective operand size: " +
-                                 stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
+                                 stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize(state)));
             /* avoid MSCV warning by adding return stmt */
             return NULL;
         }
@@ -962,11 +971,11 @@ DisassemblerX86::getImmIzAsIv()
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmJb()
+DisassemblerX86::getImmJb(State &state) const
 {
-    size_t bit_offset = 8*insnbufat;
-    uint8_t val = getByte();
-    uint64_t target = ip + insnbufat + IntegerOps::signExtend<8, 64>((uint64_t)val);
+    size_t bit_offset = 8*state.insnbufat;
+    uint8_t val = getByte(state);
+    uint64_t target = state.ip + state.insnbufat + IntegerOps::signExtend<8, 64>((uint64_t)val);
     SgAsmValueExpression *retval=NULL;
     switch (insnSize) {
         case x86_insnsize_16:
@@ -998,1782 +1007,1782 @@ DisassemblerX86::getImmJb()
 
 /* Mostly copied from the old x86Disassembler.C version */
 SgAsmX86Instruction *
-DisassemblerX86::disassemble()
+DisassemblerX86::disassemble(State &state) const
 {
-    uint8_t opcode = getByte();
+    uint8_t opcode = getByte(state);
     SgAsmX86Instruction *insn = 0;
     switch (opcode) {
         case 0x00: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_add, "add", modrm, reg);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_add, "add", state.modrm, state.reg);
             goto done;
         }
         case 0x01: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_add, "add", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_add, "add", state.modrm, state.reg);
             goto done;
         }
         case 0x02: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_add, "add", reg, modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_add, "add", state.reg, state.modrm);
             goto done;
         }
         case 0x03: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_add, "add", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_add, "add", state.reg, state.modrm);
             goto done;
         }
         case 0x04: {
-            SgAsmExpression* imm = getImmByteAsIv();
-            insn = makeInstruction(x86_add, "add", makeRegister(0, rmLegacyByte), imm);
+            SgAsmExpression* imm = getImmByteAsIv(state);
+            insn = makeInstruction(state, x86_add, "add", makeRegister(state, 0, rmLegacyByte), imm);
             goto done;
         }
         case 0x05: {
-            SgAsmExpression* imm = getImmIzAsIv();
-            insn = makeInstruction(x86_add, "add", makeRegisterEffective(0), imm);
+            SgAsmExpression* imm = getImmIzAsIv(state);
+            insn = makeInstruction(state, x86_add, "add", makeRegisterEffective(state, 0), imm);
             goto done;
         }
         case 0x06: {
-            not64();
-            insn = makeInstruction(x86_push, "push", makeRegister(0, rmSegment));
+            not64(state);
+            insn = makeInstruction(state, x86_push, "push", makeRegister(state, 0, rmSegment));
             goto done;
         }
         case 0x07: {
-            not64();
-            insn = makeInstruction(x86_pop, "pop", makeRegister(0, rmSegment));
+            not64(state);
+            insn = makeInstruction(state, x86_pop, "pop", makeRegister(state, 0, rmSegment));
             goto done;
         }
         case 0x08: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_or, "or", modrm, reg);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_or, "or", state.modrm, state.reg);
             goto done;
         }
         case 0x09: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_or, "or", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_or, "or", state.modrm, state.reg);
             goto done;
         }
         case 0x0A: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_or, "or", reg, modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_or, "or", state.reg, state.modrm);
             goto done;
         }
         case 0x0B: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_or, "or", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_or, "or", state.reg, state.modrm);
             goto done;
         }
         case 0x0C: {
-            SgAsmExpression* imm = getImmByteAsIv();
-            insn = makeInstruction(x86_or, "or", makeRegister(0, rmLegacyByte), imm);
+            SgAsmExpression* imm = getImmByteAsIv(state);
+            insn = makeInstruction(state, x86_or, "or", makeRegister(state, 0, rmLegacyByte), imm);
             goto done;
         }
         case 0x0D: {
-            SgAsmExpression* imm = getImmIzAsIv();
-            insn = makeInstruction(x86_or, "or", makeRegisterEffective(0), imm);
+            SgAsmExpression* imm = getImmIzAsIv(state);
+            insn = makeInstruction(state, x86_or, "or", makeRegisterEffective(state, 0), imm);
             goto done;
         }
         case 0x0E: {
-            not64();
-            insn = makeInstruction(x86_push, "push", makeRegister(1, rmSegment));
+            not64(state);
+            insn = makeInstruction(state, x86_push, "push", makeRegister(state, 1, rmSegment));
             goto done;
         }
         case 0x0F: {
-            insn = decodeOpcode0F();
+            insn = decodeOpcode0F(state);
             goto done;
         }
         case 0x10: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_adc, "adc", modrm, reg);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_adc, "adc", state.modrm, state.reg);
             goto done;
         }
         case 0x11: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_adc, "adc", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_adc, "adc", state.modrm, state.reg);
             goto done;
         }
         case 0x12: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_adc, "adc", reg, modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_adc, "adc", state.reg, state.modrm);
             goto done;
         }
         case 0x13: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_adc, "adc", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_adc, "adc", state.reg, state.modrm);
             goto done;
         }
         case 0x14: {
-            SgAsmExpression* imm = getImmByteAsIv();
-            insn = makeInstruction(x86_adc, "adc", makeRegister(0, rmLegacyByte), imm);
+            SgAsmExpression* imm = getImmByteAsIv(state);
+            insn = makeInstruction(state, x86_adc, "adc", makeRegister(state, 0, rmLegacyByte), imm);
             goto done;
         }
         case 0x15: {
-            SgAsmExpression* imm = getImmIzAsIv();
-            insn = makeInstruction(x86_adc, "adc", makeRegisterEffective(0), imm);
+            SgAsmExpression* imm = getImmIzAsIv(state);
+            insn = makeInstruction(state, x86_adc, "adc", makeRegisterEffective(state, 0), imm);
             goto done;
         }
         case 0x16: {
-            not64();
-            insn = makeInstruction(x86_push, "push", makeRegister(2, rmSegment));
+            not64(state);
+            insn = makeInstruction(state, x86_push, "push", makeRegister(state, 2, rmSegment));
             goto done;
         }
         case 0x17: {
-            not64();
-            insn = makeInstruction(x86_pop, "pop", makeRegister(2, rmSegment));
+            not64(state);
+            insn = makeInstruction(state, x86_pop, "pop", makeRegister(state, 2, rmSegment));
             goto done;
         }
         case 0x18: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_sbb, "sbb", modrm, reg);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_sbb, "sbb", state.modrm, state.reg);
             goto done;
         }
         case 0x19: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_sbb, "sbb", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_sbb, "sbb", state.modrm, state.reg);
             goto done;
         }
         case 0x1A: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_sbb, "sbb", reg, modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_sbb, "sbb", state.reg, state.modrm);
             goto done;
         }
         case 0x1B: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_sbb, "sbb", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_sbb, "sbb", state.reg, state.modrm);
             goto done;
         }
         case 0x1C: {
-            SgAsmExpression* imm = getImmByteAsIv();
-            insn = makeInstruction(x86_sbb, "sbb", makeRegister(0, rmLegacyByte), imm);
+            SgAsmExpression* imm = getImmByteAsIv(state);
+            insn = makeInstruction(state, x86_sbb, "sbb", makeRegister(state, 0, rmLegacyByte), imm);
             goto done;
         }
         case 0x1D: {
-            SgAsmExpression* imm = getImmIzAsIv();
-            insn = makeInstruction(x86_sbb, "sbb", makeRegisterEffective(0), imm);
+            SgAsmExpression* imm = getImmIzAsIv(state);
+            insn = makeInstruction(state, x86_sbb, "sbb", makeRegisterEffective(state, 0), imm);
             goto done;
         }
         case 0x1E: {
-            not64();
-            insn = makeInstruction(x86_push, "push", makeRegister(3, rmSegment));
+            not64(state);
+            insn = makeInstruction(state, x86_push, "push", makeRegister(state, 3, rmSegment));
             goto done;
         }
         case 0x1F: {
-            not64();
-            insn = makeInstruction(x86_pop, "pop", makeRegister(3, rmSegment));
+            not64(state);
+            insn = makeInstruction(state, x86_pop, "pop", makeRegister(state, 3, rmSegment));
             goto done;
         }
         case 0x20: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_and, "and", modrm, reg);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_and, "and", state.modrm, state.reg);
             goto done;
         }
         case 0x21: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_and, "and", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_and, "and", state.modrm, state.reg);
             goto done;
         }
         case 0x22: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_and, "and", reg, modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_and, "and", state.reg, state.modrm);
             goto done;
         }
         case 0x23: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_and, "and", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_and, "and", state.reg, state.modrm);
             goto done;
         }
         case 0x24: {
-            SgAsmExpression* imm = getImmByteAsIv();
-            insn = makeInstruction(x86_and, "and", makeRegister(0, rmLegacyByte), imm);
+            SgAsmExpression* imm = getImmByteAsIv(state);
+            insn = makeInstruction(state, x86_and, "and", makeRegister(state, 0, rmLegacyByte), imm);
             goto done;
         }
         case 0x25: {
-            SgAsmExpression* imm = getImmIzAsIv();
-            insn = makeInstruction(x86_and, "and", makeRegisterEffective(0), imm);
+            SgAsmExpression* imm = getImmIzAsIv(state);
+            insn = makeInstruction(state, x86_and, "and", makeRegisterEffective(state, 0), imm);
             goto done;
         }
         case 0x26: {
-            segOverride = x86_segreg_es;
-            insn = disassemble();
+            state.segOverride = x86_segreg_es;
+            insn = disassemble(state);
             goto done;
         }
         case 0x27: {
-            not64();
-            insn = makeInstruction(x86_daa, "daa");
+            not64(state);
+            insn = makeInstruction(state, x86_daa, "daa");
             goto done;
         }
         case 0x28: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_sub, "sub", modrm, reg);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_sub, "sub", state.modrm, state.reg);
             goto done;
         }
         case 0x29: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_sub, "sub", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_sub, "sub", state.modrm, state.reg);
             goto done;
         }
         case 0x2A: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_sub, "sub", reg, modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_sub, "sub", state.reg, state.modrm);
             goto done;
         }
         case 0x2B: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_sub, "sub", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_sub, "sub", state.reg, state.modrm);
             goto done;
         }
         case 0x2C: {
-            SgAsmExpression* imm = getImmByteAsIv();
-            insn = makeInstruction(x86_sub, "sub", makeRegister(0, rmLegacyByte), imm);
+            SgAsmExpression* imm = getImmByteAsIv(state);
+            insn = makeInstruction(state, x86_sub, "sub", makeRegister(state, 0, rmLegacyByte), imm);
             goto done;
         }
         case 0x2D: {
-            SgAsmExpression* imm = getImmIzAsIv();
-            insn = makeInstruction(x86_sub, "sub", makeRegisterEffective(0), imm);
+            SgAsmExpression* imm = getImmIzAsIv(state);
+            insn = makeInstruction(state, x86_sub, "sub", makeRegisterEffective(state, 0), imm);
             goto done;
         }
         case 0x2E: {
             /* Example of recursive use of disassemble() */
-            segOverride = x86_segreg_cs;
-            branchPrediction = x86_branch_prediction_not_taken;
-            insn = disassemble();
+            state.segOverride = x86_segreg_cs;
+            state.branchPrediction = x86_branch_prediction_not_taken;
+            insn = disassemble(state);
             goto done;
         }
         case 0x2F: {
-            not64();
-            insn = makeInstruction(x86_das, "das");
+            not64(state);
+            insn = makeInstruction(state, x86_das, "das");
             goto done;
         }
         case 0x30: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_xor, "xor", modrm, reg);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_xor, "xor", state.modrm, state.reg);
             goto done;
         }
         case 0x31: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_xor, "xor", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_xor, "xor", state.modrm, state.reg);
             goto done;
         }
         case 0x32: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_xor, "xor", reg, modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_xor, "xor", state.reg, state.modrm);
             goto done;
         }
         case 0x33: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_xor, "xor", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_xor, "xor", state.reg, state.modrm);
             goto done;
         }
         case 0x34: {
-            SgAsmExpression* imm = getImmByteAsIv();
-            insn = makeInstruction(x86_xor, "xor", makeRegister(0, rmLegacyByte), imm);
+            SgAsmExpression* imm = getImmByteAsIv(state);
+            insn = makeInstruction(state, x86_xor, "xor", makeRegister(state, 0, rmLegacyByte), imm);
             goto done;
         }
         case 0x35: {
-            SgAsmExpression* imm = getImmIzAsIv();
-            insn = makeInstruction(x86_xor, "xor", makeRegisterEffective(0), imm);
+            SgAsmExpression* imm = getImmIzAsIv(state);
+            insn = makeInstruction(state, x86_xor, "xor", makeRegisterEffective(state, 0), imm);
             goto done;
         }
         case 0x36: {
-            segOverride = x86_segreg_ss;
-            insn = disassemble();
+            state.segOverride = x86_segreg_ss;
+            insn = disassemble(state);
             goto done;
         }
         case 0x37: {
-            not64();
-            insn = makeInstruction(x86_aaa, "aaa");
+            not64(state);
+            insn = makeInstruction(state, x86_aaa, "aaa");
             goto done;
         }
         case 0x38: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_cmp, "cmp", modrm, reg);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_cmp, "cmp", state.modrm, state.reg);
             goto done;
         }
         case 0x39: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_cmp, "cmp", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_cmp, "cmp", state.modrm, state.reg);
             goto done;
         }
         case 0x3A: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_cmp, "cmp", reg, modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_cmp, "cmp", state.reg, state.modrm);
             goto done;
         }
         case 0x3B: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_cmp, "cmp", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_cmp, "cmp", state.reg, state.modrm);
             goto done;
         }
         case 0x3C: {
-            SgAsmExpression* imm = getImmByteAsIv();
-            insn = makeInstruction(x86_cmp, "cmp", makeRegister(0, rmLegacyByte), imm);
+            SgAsmExpression* imm = getImmByteAsIv(state);
+            insn = makeInstruction(state, x86_cmp, "cmp", makeRegister(state, 0, rmLegacyByte), imm);
             goto done;
         }
         case 0x3D: {
-            SgAsmExpression* imm = getImmIzAsIv();
-            insn = makeInstruction(x86_cmp, "cmp", makeRegisterEffective(0), imm);
+            SgAsmExpression* imm = getImmIzAsIv(state);
+            insn = makeInstruction(state, x86_cmp, "cmp", makeRegisterEffective(state, 0), imm);
             goto done;
         }
         case 0x3E: {
-            segOverride = x86_segreg_ds;
-            branchPrediction = x86_branch_prediction_taken;
-            insn = disassemble();
+            state.segOverride = x86_segreg_ds;
+            state.branchPrediction = x86_branch_prediction_taken;
+            insn = disassemble(state);
             goto done;
         }
         case 0x3F: {
-            not64();
-            insn = makeInstruction(x86_aas, "aas");
+            not64(state);
+            insn = makeInstruction(state, x86_aas, "aas");
             goto done;
         }
         case 0x40: {
             if (longMode()) {
-                setRex(0x40);
-                insn = disassemble();
+                setRex(state, 0x40);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_inc, "inc", makeRegisterEffective(0));
+                insn = makeInstruction(state, x86_inc, "inc", makeRegisterEffective(state, 0));
                 goto done;
             }
         }
         case 0x41: {
             if (longMode()) {
-                setRex(0x41);
-                insn = disassemble();
+                setRex(state, 0x41);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_inc, "inc", makeRegisterEffective(1));
+                insn = makeInstruction(state, x86_inc, "inc", makeRegisterEffective(state, 1));
                 goto done;
             }
         }
         case 0x42: {
             if (longMode()) {
-                setRex(0x42);
-                insn = disassemble();
+                setRex(state, 0x42);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_inc, "inc", makeRegisterEffective(2));
+                insn = makeInstruction(state, x86_inc, "inc", makeRegisterEffective(state, 2));
                 goto done;
             }
         }
         case 0x43: {
             if (longMode()) {
-                setRex(0x43);
-                insn = disassemble();
+                setRex(state, 0x43);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_inc, "inc", makeRegisterEffective(3));
+                insn = makeInstruction(state, x86_inc, "inc", makeRegisterEffective(state, 3));
                 goto done;
             }
         }
         case 0x44: {
             if (longMode()) {
-                setRex(0x44);
-                insn = disassemble();
+                setRex(state, 0x44);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_inc, "inc", makeRegisterEffective(4));
+                insn = makeInstruction(state, x86_inc, "inc", makeRegisterEffective(state, 4));
                 goto done;
             }
         }
         case 0x45: {
             if (longMode()) {
-                setRex(0x45);
-                insn = disassemble();
+                setRex(state, 0x45);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_inc, "inc", makeRegisterEffective(5));
+                insn = makeInstruction(state, x86_inc, "inc", makeRegisterEffective(state, 5));
                 goto done;
             }
         }
         case 0x46: {
             if (longMode()) {
-                setRex(0x46);
-                insn = disassemble();
+                setRex(state, 0x46);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_inc, "inc", makeRegisterEffective(6));
+                insn = makeInstruction(state, x86_inc, "inc", makeRegisterEffective(state, 6));
                 goto done;
             }
         }
         case 0x47: {
             if (longMode()) {
-                setRex(0x47);
-                insn = disassemble();
+                setRex(state, 0x47);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_inc, "inc", makeRegisterEffective(7));
+                insn = makeInstruction(state, x86_inc, "inc", makeRegisterEffective(state, 7));
                 goto done;
             }
         }
         case 0x48: {
             if (longMode()) {
-                setRex(0x48);
-                insn = disassemble();
+                setRex(state, 0x48);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_dec, "dec", makeRegisterEffective(0));
+                insn = makeInstruction(state, x86_dec, "dec", makeRegisterEffective(state, 0));
                 goto done;
             }
         }
         case 0x49: {
             if (longMode()) {
-                setRex(0x49);
-                insn = disassemble();
+                setRex(state, 0x49);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_dec, "dec", makeRegisterEffective(1));
+                insn = makeInstruction(state, x86_dec, "dec", makeRegisterEffective(state, 1));
                 goto done;
             }
         }
         case 0x4A: {
             if (longMode()) {
-                setRex(0x4A);
-                insn = disassemble();
+                setRex(state, 0x4A);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_dec, "dec", makeRegisterEffective(2));
+                insn = makeInstruction(state, x86_dec, "dec", makeRegisterEffective(state, 2));
                 goto done;
             }
         }
         case 0x4B: {
             if (longMode()) {
-                setRex(0x4B);
-                insn = disassemble();
+                setRex(state, 0x4B);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_dec, "dec", makeRegisterEffective(3));
+                insn = makeInstruction(state, x86_dec, "dec", makeRegisterEffective(state, 3));
                 goto done;
             }
         }
         case 0x4C: {
             if (longMode()) {
-                setRex(0x4C);
-                insn = disassemble();
+                setRex(state, 0x4C);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_dec, "dec", makeRegisterEffective(4));
+                insn = makeInstruction(state, x86_dec, "dec", makeRegisterEffective(state, 4));
                 goto done;
             }
         }
         case 0x4D: {
             if (longMode()) {
-                setRex(0x4D);
-                insn = disassemble();
+                setRex(state, 0x4D);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_dec, "dec", makeRegisterEffective(5));
+                insn = makeInstruction(state, x86_dec, "dec", makeRegisterEffective(state, 5));
                 goto done;
             }
         }
         case 0x4E: {
             if (longMode()) {
-                setRex(0x4E);
-                insn = disassemble();
+                setRex(state, 0x4E);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_dec, "dec", makeRegisterEffective(6));
+                insn = makeInstruction(state, x86_dec, "dec", makeRegisterEffective(state, 6));
                 goto done;
             }
         }
         case 0x4F: {
             if (longMode()) {
-                setRex(0x4F);
-                insn = disassemble();
+                setRex(state, 0x4F);
+                insn = disassemble(state);
                 goto done;
             } else {
-                insn = makeInstruction(x86_dec, "dec", makeRegisterEffective(7));
+                insn = makeInstruction(state, x86_dec, "dec", makeRegisterEffective(state, 7));
                 goto done;
             }
         }
         case 0x50: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_push, "push", makeRegisterEffective(rexB, 0));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_push, "push", makeRegisterEffective(state, state.rexB, 0));
             goto done;
         }
         case 0x51: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_push, "push", makeRegisterEffective(rexB, 1));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_push, "push", makeRegisterEffective(state, state.rexB, 1));
             goto done;
         }
         case 0x52: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_push, "push", makeRegisterEffective(rexB, 2));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_push, "push", makeRegisterEffective(state, state.rexB, 2));
             goto done;
         }
         case 0x53: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_push, "push", makeRegisterEffective(rexB, 3));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_push, "push", makeRegisterEffective(state, state.rexB, 3));
             goto done;
         }
         case 0x54: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_push, "push", makeRegisterEffective(rexB, 4));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_push, "push", makeRegisterEffective(state, state.rexB, 4));
             goto done;
         }
         case 0x55: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_push, "push", makeRegisterEffective(rexB, 5));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_push, "push", makeRegisterEffective(state, state.rexB, 5));
             goto done;
         }
         case 0x56: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_push, "push", makeRegisterEffective(rexB, 6));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_push, "push", makeRegisterEffective(state, state.rexB, 6));
             goto done;
         }
         case 0x57: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_push, "push", makeRegisterEffective(rexB, 7));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_push, "push", makeRegisterEffective(state, state.rexB, 7));
             goto done;
         }
         case 0x58: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_pop, "pop", makeRegisterEffective(rexB, 0));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_pop, "pop", makeRegisterEffective(state, state.rexB, 0));
             goto done;
         }
         case 0x59: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_pop, "pop", makeRegisterEffective(rexB, 1));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_pop, "pop", makeRegisterEffective(state, state.rexB, 1));
             goto done;
         }
         case 0x5A: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_pop, "pop", makeRegisterEffective(rexB, 2));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_pop, "pop", makeRegisterEffective(state, state.rexB, 2));
             goto done;
         }
         case 0x5B: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_pop, "pop", makeRegisterEffective(rexB, 3));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_pop, "pop", makeRegisterEffective(state, state.rexB, 3));
             goto done;
         }
         case 0x5C: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_pop, "pop", makeRegisterEffective(rexB, 4));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_pop, "pop", makeRegisterEffective(state, state.rexB, 4));
             goto done;
         }
         case 0x5D: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_pop, "pop", makeRegisterEffective(rexB, 5));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_pop, "pop", makeRegisterEffective(state, state.rexB, 5));
             goto done;
         }
         case 0x5E: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_pop, "pop", makeRegisterEffective(rexB, 6));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_pop, "pop", makeRegisterEffective(state, state.rexB, 6));
             goto done;
         }
         case 0x5F: {
-            sizeMustBe64Bit = true;
-            insn = makeInstruction(x86_pop, "pop", makeRegisterEffective(rexB, 7));
+            state.sizeMustBe64Bit = true;
+            insn = makeInstruction(state, x86_pop, "pop", makeRegisterEffective(state, state.rexB, 7));
             goto done;
         }
         case 0x60: {
-            not64();
-            if (effectiveOperandSize() == x86_insnsize_32) {
-                insn = makeInstruction(x86_pushad, "pushad");
+            not64(state);
+            if (effectiveOperandSize(state) == x86_insnsize_32) {
+                insn = makeInstruction(state, x86_pushad, "pushad");
             } else {
-                insn = makeInstruction(x86_pusha, "pusha");
+                insn = makeInstruction(state, x86_pusha, "pusha");
             }
             goto done;
         }
         case 0x61: {
-            not64();
-            if (effectiveOperandSize() == x86_insnsize_32) {
-                insn = makeInstruction(x86_popad, "popad");
+            not64(state);
+            if (effectiveOperandSize(state) == x86_insnsize_32) {
+                insn = makeInstruction(state, x86_popad, "popad");
             } else {
-                insn = makeInstruction(x86_popa, "popa");
+                insn = makeInstruction(state, x86_popa, "popa");
             }
             goto done;
         }
         case 0x62: {
-            not64();
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            requireMemory();
-            insn = makeInstruction(x86_bound, "bound", reg, modrm);
+            not64(state);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            requireMemory(state);
+            insn = makeInstruction(state, x86_bound, "bound", state.reg, state.modrm);
             goto done;
         }
         case 0x63: {
             if (longMode()) {
-                getModRegRM(effectiveOperandMode(), rmDWord, DWORDT);
-                insn = makeInstruction(x86_movsxd, "movsxd", reg, modrm);
+                getModRegRM(state, effectiveOperandMode(state), rmDWord, DWORDT);
+                insn = makeInstruction(state, x86_movsxd, "movsxd", state.reg, state.modrm);
                 goto done;
             } else {
-                getModRegRM(rmWord, rmWord, WORDT);
-                insn = makeInstruction(x86_arpl, "arpl", modrm, reg);
+                getModRegRM(state, rmWord, rmWord, WORDT);
+                insn = makeInstruction(state, x86_arpl, "arpl", state.modrm, state.reg);
                 goto done;
             }
         }
         case 0x64: {
-            segOverride = x86_segreg_fs;
-            insn = disassemble();
+            state.segOverride = x86_segreg_fs;
+            insn = disassemble(state);
             goto done;
         }
         case 0x65: {
-            segOverride = x86_segreg_gs;
-            insn = disassemble();
+            state.segOverride = x86_segreg_gs;
+            insn = disassemble(state);
             goto done;
         }
         case 0x66: {
-            operandSizeOverride = true;
-            insn = disassemble();
+            state.operandSizeOverride = true;
+            insn = disassemble(state);
             goto done;
         }
         case 0x67: {
-            addressSizeOverride = true;
-            insn = disassemble();
+            state.addressSizeOverride = true;
+            insn = disassemble(state);
             goto done;
         }
         case 0x68: {
-            sizeMustBe64Bit = true;
-            SgAsmExpression* imm = getImmIzAsIv();
-            insn = makeInstruction(x86_push, "push", imm);
+            state.sizeMustBe64Bit = true;
+            SgAsmExpression* imm = getImmIzAsIv(state);
+            insn = makeInstruction(state, x86_push, "push", imm);
             goto done;
         }
         case 0x69: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            SgAsmExpression* imm = getImmIzAsIv();
-            insn = makeInstruction(x86_imul, "imul", reg, modrm, imm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            SgAsmExpression* imm = getImmIzAsIv(state);
+            insn = makeInstruction(state, x86_imul, "imul", state.reg, state.modrm, imm);
             goto done;
         }
         case 0x6A: {
-            sizeMustBe64Bit = true;
-            SgAsmExpression* imm = getImmByteAsIv();
-            insn = makeInstruction(x86_push, "push", imm);
+            state.sizeMustBe64Bit = true;
+            SgAsmExpression* imm = getImmByteAsIv(state);
+            insn = makeInstruction(state, x86_push, "push", imm);
             goto done;
         }
         case 0x6B: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            SgAsmExpression* imm = getImmByteAsIv();
-            insn = makeInstruction(x86_imul, "imul", reg, modrm, imm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            SgAsmExpression* imm = getImmByteAsIv(state);
+            insn = makeInstruction(state, x86_imul, "imul", state.reg, state.modrm, imm);
             goto done;
         }
         case 0x6C: {
-            switch (repeatPrefix) {
+            switch (state.repeatPrefix) {
                 case x86_repeat_none:
-                    insn = makeInstruction(x86_insb, "insb");
+                    insn = makeInstruction(state, x86_insb, "insb");
                     goto done;
                 case x86_repeat_repe:
-                    insn = makeInstruction(x86_rep_insb, "rep_insb");
+                    insn = makeInstruction(state, x86_rep_insb, "rep_insb");
                     goto done;
                 default:
-                    throw ExceptionX86("bad repeat prefix for insb", this);
+                    throw ExceptionX86("bad repeat prefix for insb", state);
             }
         }
         case 0x6D: {
-            switch (effectiveOperandSize()) {
+            switch (effectiveOperandSize(state)) {
                 case x86_insnsize_16:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_insw, "insw");
+                            insn = makeInstruction(state, x86_insw, "insw");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_rep_insw, "rep_insw");
+                            insn = makeInstruction(state, x86_rep_insw, "rep_insw");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for insw", this);
+                            throw ExceptionX86("bad repeat prefix for insw", state);
                     }
                 case x86_insnsize_32:
                 case x86_insnsize_64:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_insd, "insd");
+                            insn = makeInstruction(state, x86_insd, "insd");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_rep_insd, "rep_insd");
+                            insn = makeInstruction(state, x86_rep_insd, "rep_insd");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for insd", this);
+                            throw ExceptionX86("bad repeat prefix for insd", state);
                     }
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize(state)));
             }
         }
         case 0x6E: {
-            switch (repeatPrefix) {
+            switch (state.repeatPrefix) {
                 case x86_repeat_none:
-                    insn = makeInstruction(x86_outsb, "outsb");
+                    insn = makeInstruction(state, x86_outsb, "outsb");
                     goto done;
                 case x86_repeat_repe:
-                    insn = makeInstruction(x86_rep_outsb, "rep_outsb");
+                    insn = makeInstruction(state, x86_rep_outsb, "rep_outsb");
                     goto done;
                 default:
-                    throw ExceptionX86("bad repeat prefix for outsb", this);
+                    throw ExceptionX86("bad repeat prefix for outsb", state);
             }
         }
         case 0x6F: {
-            switch (effectiveOperandSize()) {
+            switch (effectiveOperandSize(state)) {
                 case x86_insnsize_16:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_outsw, "outsw");
+                            insn = makeInstruction(state, x86_outsw, "outsw");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_rep_outsw, "rep_outsw");
+                            insn = makeInstruction(state, x86_rep_outsw, "rep_outsw");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for outsw", this);
+                            throw ExceptionX86("bad repeat prefix for outsw", state);
                     }
                 case x86_insnsize_32:
                 case x86_insnsize_64:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_outsd, "outsd");
+                            insn = makeInstruction(state, x86_outsd, "outsd");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_rep_outsd, "rep_outsd");
+                            insn = makeInstruction(state, x86_rep_outsd, "rep_outsd");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for outsd", this);
+                            throw ExceptionX86("bad repeat prefix for outsd", state);
                     }
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize(state)));
             }
         }
         case 0x70: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_jo, "jo", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_jo, "jo", imm);
             goto done;
         }
         case 0x71: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_jno, "jno", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_jno, "jno", imm);
             goto done;
         }
         case 0x72: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_jb, "jb", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_jb, "jb", imm);
             goto done;
         }
         case 0x73: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_jae, "jae", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_jae, "jae", imm);
             goto done;
         }
         case 0x74: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_je, "je", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_je, "je", imm);
             goto done;
         }
         case 0x75: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_jne, "jne", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_jne, "jne", imm);
             goto done;
         }
         case 0x76: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_jbe, "jbe", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_jbe, "jbe", imm);
             goto done;
         }
         case 0x77: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_ja, "ja", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_ja, "ja", imm);
             goto done;
         }
         case 0x78: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_js, "js", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_js, "js", imm);
             goto done;
         }
         case 0x79: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_jns, "jns", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_jns, "jns", imm);
             goto done;
         }
         case 0x7A: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_jpe, "jpe", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_jpe, "jpe", imm);
             goto done;
         }
         case 0x7B: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_jpo, "jpo", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_jpo, "jpo", imm);
             goto done;
         }
         case 0x7C: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_jl, "jl", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_jl, "jl", imm);
             goto done;
         }
         case 0x7D: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_jge, "jge", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_jge, "jge", imm);
             goto done;
         }
         case 0x7E: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_jle, "jle", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_jle, "jle", imm);
             goto done;
         }
         case 0x7F: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            insn = makeInstruction(x86_jg, "jg", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            insn = makeInstruction(state, x86_jg, "jg", imm);
             goto done;
         }
         case 0x80: {
             /* The names for groups will make more sense relative to the AMD manual. */
-            getModRegRM(rmReturnNull, rmLegacyByte, BYTET);
-            SgAsmExpression* imm = getImmByte();
-            insn = decodeGroup1(imm);
+            getModRegRM(state, rmReturnNull, rmLegacyByte, BYTET);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = decodeGroup1(state, imm);
             goto done;
         }
         case 0x81: {
-            /* effectiveOperandMode() returns register mode for the effective operand size (16bit, 32, bit, 64bit)
-             * effectiveOperandType() does the same thing but returne a SgAsmType. */
-            getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType());
-            SgAsmExpression* imm = getImmIzAsIv();
-            insn = decodeGroup1(imm);
+            /* effectiveOperandMode(state) returns register mode for the effective operand size (16bit, 32, bit, 64bit)
+             * effectiveOperandType(state) does the same thing but returne a SgAsmType. */
+            getModRegRM(state, rmReturnNull, effectiveOperandMode(state), effectiveOperandType(state));
+            SgAsmExpression* imm = getImmIzAsIv(state);
+            insn = decodeGroup1(state, imm);
             goto done;
         }
         case 0x82: {
-            not64();
-            getModRegRM(rmReturnNull, rmLegacyByte, BYTET);
-            SgAsmExpression* imm = getImmByte();
-            insn = decodeGroup1(imm);
+            not64(state);
+            getModRegRM(state, rmReturnNull, rmLegacyByte, BYTET);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = decodeGroup1(state, imm);
             goto done;
         }
         case 0x83: {
-            getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType());
-            SgAsmExpression* imm = getImmByteAsIv();
-            insn = decodeGroup1(imm);
+            getModRegRM(state, rmReturnNull, effectiveOperandMode(state), effectiveOperandType(state));
+            SgAsmExpression* imm = getImmByteAsIv(state);
+            insn = decodeGroup1(state, imm);
             goto done;
         }
         case 0x84: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_test, "test", modrm, reg);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_test, "test", state.modrm, state.reg);
             goto done;
         }
         case 0x85: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_test, "test", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_test, "test", state.modrm, state.reg);
             goto done;
         }
         case 0x86: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_xchg, "xchg", modrm, reg);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_xchg, "xchg", state.modrm, state.reg);
             goto done;
         }
         case 0x87: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_xchg, "xchg", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_xchg, "xchg", state.modrm, state.reg);
             goto done;
         }
         case 0x88: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_mov, "mov", modrm, reg);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_mov, "mov", state.modrm, state.reg);
             goto done;
         }
         case 0x89: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_mov, "mov", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_mov, "mov", state.modrm, state.reg);
             goto done;
         }
         case 0x8A: {
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            insn = makeInstruction(x86_mov, "mov", reg, modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            insn = makeInstruction(state, x86_mov, "mov", state.reg, state.modrm);
             goto done;
         }
         case 0x8B: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            insn = makeInstruction(x86_mov, "mov", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            insn = makeInstruction(state, x86_mov, "mov", state.reg, state.modrm);
             goto done;
         }
         case 0x8C: {
-            getModRegRM(rmSegment, effectiveOperandMode(), WORDT);
-            insn = makeInstruction(x86_mov, "mov", modrm, reg);
+            getModRegRM(state, rmSegment, effectiveOperandMode(state), WORDT);
+            insn = makeInstruction(state, x86_mov, "mov", state.modrm, state.reg);
             goto done;
         }
         case 0x8D: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            requireMemory();
-            insn = makeInstruction(x86_lea, "lea", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            requireMemory(state);
+            insn = makeInstruction(state, x86_lea, "lea", state.reg, state.modrm);
             goto done;
         }
         case 0x8E: {
-            getModRegRM(rmSegment, rmWord, WORDT);
-            insn = makeInstruction(x86_mov, "mov", reg, modrm);
+            getModRegRM(state, rmSegment, rmWord, WORDT);
+            insn = makeInstruction(state, x86_mov, "mov", state.reg, state.modrm);
             goto done;
         }
         case 0x8F: {
-            getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType());
-            insn = decodeGroup1a();
+            getModRegRM(state, rmReturnNull, effectiveOperandMode(state), effectiveOperandType(state));
+            insn = decodeGroup1a(state);
             goto done;
         }
         case 0x90: {
-            if (rexB) {
-                insn = makeInstruction(x86_xchg, "xchg", makeRegisterEffective(8), makeRegisterEffective(0));
+            if (state.rexB) {
+                insn = makeInstruction(state, x86_xchg, "xchg", makeRegisterEffective(state, 8), makeRegisterEffective(state, 0));
                 goto done;
-            } else if (repeatPrefix == x86_repeat_repe) {
-                insn = makeInstruction(x86_pause, "pause");
+            } else if (state.repeatPrefix == x86_repeat_repe) {
+                insn = makeInstruction(state, x86_pause, "pause");
                 goto done;
             } else {
-                insn = makeInstruction(x86_nop, "nop");
+                insn = makeInstruction(state, x86_nop, "nop");
                 goto done;
             }
         }
         case 0x91: {
-            insn = makeInstruction(x86_xchg, "xchg", makeRegisterEffective(rexB, 1), makeRegisterEffective(0));
+            insn = makeInstruction(state, x86_xchg, "xchg", makeRegisterEffective(state, state.rexB, 1), makeRegisterEffective(state, 0));
             goto done;
         }
         case 0x92: {
-            insn = makeInstruction(x86_xchg, "xchg", makeRegisterEffective(rexB, 2), makeRegisterEffective(0));
+            insn = makeInstruction(state, x86_xchg, "xchg", makeRegisterEffective(state, state.rexB, 2), makeRegisterEffective(state, 0));
             goto done;
         }
         case 0x93: {
-            insn = makeInstruction(x86_xchg, "xchg", makeRegisterEffective(rexB, 3), makeRegisterEffective(0));
+            insn = makeInstruction(state, x86_xchg, "xchg", makeRegisterEffective(state, state.rexB, 3), makeRegisterEffective(state, 0));
             goto done;
         }
         case 0x94: {
-            insn = makeInstruction(x86_xchg, "xchg", makeRegisterEffective(rexB, 4), makeRegisterEffective(0));
+            insn = makeInstruction(state, x86_xchg, "xchg", makeRegisterEffective(state, state.rexB, 4), makeRegisterEffective(state, 0));
             goto done;
         }
         case 0x95: {
-            insn = makeInstruction(x86_xchg, "xchg", makeRegisterEffective(rexB, 5), makeRegisterEffective(0));
+            insn = makeInstruction(state, x86_xchg, "xchg", makeRegisterEffective(state, state.rexB, 5), makeRegisterEffective(state, 0));
             goto done;
         }
         case 0x96: {
-            insn = makeInstruction(x86_xchg, "xchg", makeRegisterEffective(rexB, 6), makeRegisterEffective(0));
+            insn = makeInstruction(state, x86_xchg, "xchg", makeRegisterEffective(state, state.rexB, 6), makeRegisterEffective(state, 0));
             goto done;
         }
         case 0x97: {
-            insn = makeInstruction(x86_xchg, "xchg", makeRegisterEffective(rexB, 7), makeRegisterEffective(0));
+            insn = makeInstruction(state, x86_xchg, "xchg", makeRegisterEffective(state, state.rexB, 7), makeRegisterEffective(state, 0));
             goto done;
         }
         case 0x98: {
-            switch (effectiveOperandSize()) {
+            switch (effectiveOperandSize(state)) {
                 case x86_insnsize_16:
-                    insn = makeInstruction(x86_cbw, "cbw");
+                    insn = makeInstruction(state, x86_cbw, "cbw");
                     goto done;
                 case x86_insnsize_32:
-                    insn = makeInstruction(x86_cwde, "cwde");
+                    insn = makeInstruction(state, x86_cwde, "cwde");
                     goto done;
                 case x86_insnsize_64:
-                    insn = makeInstruction(x86_cdqe, "cdqe");
+                    insn = makeInstruction(state, x86_cdqe, "cdqe");
                     goto done;
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize(state)));
             }
         }
         case 0x99: {
-            switch (effectiveOperandSize()) {
+            switch (effectiveOperandSize(state)) {
                 case x86_insnsize_16:
-                    insn = makeInstruction(x86_cwd, "cwd");
+                    insn = makeInstruction(state, x86_cwd, "cwd");
                     goto done;
                 case x86_insnsize_32:
-                    insn = makeInstruction(x86_cdq, "cdq");
+                    insn = makeInstruction(state, x86_cdq, "cdq");
                     goto done;
                 case x86_insnsize_64:
-                    insn = makeInstruction(x86_cqo, "cqo");
+                    insn = makeInstruction(state, x86_cqo, "cqo");
                     goto done;
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize(state)));
             }
         }
         case 0x9A: {
-            not64();
-            SgAsmExpression* addr = getImmForAddr();
-            SgAsmExpression* seg = getImmWord();
-            insn = makeInstruction(x86_farcall, "farCall", seg, addr);
+            not64(state);
+            SgAsmExpression* addr = getImmForAddr(state);
+            SgAsmExpression* seg = getImmWord(state);
+            insn = makeInstruction(state, x86_farcall, "farCall", seg, addr);
             goto done;
         }
         case 0x9B: {
-            insn = makeInstruction(x86_wait, "wait");
+            insn = makeInstruction(state, x86_wait, "wait");
             goto done;
         }
         case 0x9C: {
-            sizeMustBe64Bit = true;
-            switch (effectiveOperandSize()) {
+            state.sizeMustBe64Bit = true;
+            switch (effectiveOperandSize(state)) {
                 case x86_insnsize_16:
-                    insn = makeInstruction(x86_pushf, "pushf");
+                    insn = makeInstruction(state, x86_pushf, "pushf");
                     goto done;
                 case x86_insnsize_32:
-                    insn = makeInstruction(x86_pushfd, "pushfd");
+                    insn = makeInstruction(state, x86_pushfd, "pushfd");
                     goto done;
                 case x86_insnsize_64:
-                    insn = makeInstruction(x86_pushfq, "pushfq");
+                    insn = makeInstruction(state, x86_pushfq, "pushfq");
                     goto done;
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize(state)));
             }
         }
         case 0x9D: {
-            sizeMustBe64Bit = true;
-            switch (effectiveOperandSize()) {
+            state.sizeMustBe64Bit = true;
+            switch (effectiveOperandSize(state)) {
                 case x86_insnsize_16:
-                    insn = makeInstruction(x86_popf, "popf");
+                    insn = makeInstruction(state, x86_popf, "popf");
                     goto done;
                 case x86_insnsize_32:
-                    insn = makeInstruction(x86_popfd, "popfd");
+                    insn = makeInstruction(state, x86_popfd, "popfd");
                     goto done;
                 case x86_insnsize_64:
-                    insn = makeInstruction(x86_popfq, "popfq");
+                    insn = makeInstruction(state, x86_popfq, "popfq");
                     goto done;
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize(state)));
             }
         }
         case 0x9E: {
-            insn = makeInstruction(x86_sahf, "sahf");
+            insn = makeInstruction(state, x86_sahf, "sahf");
             goto done;
         }
         case 0x9F: {
-            insn = makeInstruction(x86_lahf, "lahf");
+            insn = makeInstruction(state, x86_lahf, "lahf");
             goto done;
         }
         case 0xA0: {
-            SgAsmExpression* addr = getImmForAddr();
-            insn = makeInstruction(x86_mov, "mov", makeRegister(0, rmLegacyByte),
-                                         SageBuilderAsm::buildMemoryReferenceExpression(addr, currentDataSegment(), BYTET));
+            SgAsmExpression* addr = getImmForAddr(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeRegister(state, 0, rmLegacyByte),
+                                         SageBuilderAsm::buildMemoryReferenceExpression(addr, currentDataSegment(state), BYTET));
             goto done;
         }
         case 0xA1: {
-            SgAsmExpression* addr = getImmForAddr();
-            insn = makeInstruction(x86_mov, "mov", makeRegisterEffective(0),
-                                         SageBuilderAsm::buildMemoryReferenceExpression(addr, currentDataSegment(), effectiveOperandType()));
+            SgAsmExpression* addr = getImmForAddr(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeRegisterEffective(state, 0),
+                                         SageBuilderAsm::buildMemoryReferenceExpression(addr, currentDataSegment(state), effectiveOperandType(state)));
             goto done;
         }
         case 0xA2: {
-            SgAsmExpression* addr = getImmForAddr();
-            insn = makeInstruction(x86_mov, "mov",
-                                         SageBuilderAsm::buildMemoryReferenceExpression(addr, currentDataSegment(), BYTET),
-                                         makeRegister(0, rmLegacyByte));
+            SgAsmExpression* addr = getImmForAddr(state);
+            insn = makeInstruction(state, x86_mov, "mov",
+                                         SageBuilderAsm::buildMemoryReferenceExpression(addr, currentDataSegment(state), BYTET),
+                                         makeRegister(state, 0, rmLegacyByte));
             goto done;
         }
         case 0xA3: {
-            SgAsmExpression* addr = getImmForAddr();
-            insn = makeInstruction(x86_mov, "mov",
-                                         SageBuilderAsm::buildMemoryReferenceExpression(addr, currentDataSegment(), effectiveOperandType()),
-                                         makeRegisterEffective(0));
+            SgAsmExpression* addr = getImmForAddr(state);
+            insn = makeInstruction(state, x86_mov, "mov",
+                                         SageBuilderAsm::buildMemoryReferenceExpression(addr, currentDataSegment(state), effectiveOperandType(state)),
+                                         makeRegisterEffective(state, 0));
             goto done;
         }
         case 0xA4: {
-            switch (repeatPrefix) {
+            switch (state.repeatPrefix) {
                 case x86_repeat_none:
-                    insn = makeInstruction(x86_movsb, "movsb");
+                    insn = makeInstruction(state, x86_movsb, "movsb");
                     goto done;
                 case x86_repeat_repe:
-                    insn = makeInstruction(x86_rep_movsb, "rep_movsb");
+                    insn = makeInstruction(state, x86_rep_movsb, "rep_movsb");
                     goto done;
                 default:
-                    throw ExceptionX86("bad repeat prefix for movsb", this);
+                    throw ExceptionX86("bad repeat prefix for movsb", state);
             }
         }
         case 0xA5: {
-            switch (effectiveOperandSize()) {
+            switch (effectiveOperandSize(state)) {
                 case x86_insnsize_16:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_movsw, "movsw");
+                            insn = makeInstruction(state, x86_movsw, "movsw");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_rep_movsw, "rep_movsw");
+                            insn = makeInstruction(state, x86_rep_movsw, "rep_movsw");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for movsw", this);
+                            throw ExceptionX86("bad repeat prefix for movsw", state);
                     }
                 case x86_insnsize_32:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_movsd, "movsd");
+                            insn = makeInstruction(state, x86_movsd, "movsd");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_rep_movsd, "rep_movsd");
+                            insn = makeInstruction(state, x86_rep_movsd, "rep_movsd");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for movsd", this);
+                            throw ExceptionX86("bad repeat prefix for movsd", state);
                     }
                 case x86_insnsize_64:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_movsq, "movsq");
+                            insn = makeInstruction(state, x86_movsq, "movsq");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_rep_movsq, "rep_movsq");
+                            insn = makeInstruction(state, x86_rep_movsq, "rep_movsq");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for movsq", this);
+                            throw ExceptionX86("bad repeat prefix for movsq", state);
                     }
                 default: ASSERT_not_reachable("invalid effective operand size: " +
-                                              stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
+                                              stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize(state)));
             }
         }
         case 0xA6: {
-            switch (repeatPrefix) {
+            switch (state.repeatPrefix) {
                 case x86_repeat_none:
-                    insn = makeInstruction(x86_cmpsb, "cmpsb");
+                    insn = makeInstruction(state, x86_cmpsb, "cmpsb");
                     goto done;
                 case x86_repeat_repe:
-                    insn = makeInstruction(x86_repe_cmpsb, "repe_cmpsb");
+                    insn = makeInstruction(state, x86_repe_cmpsb, "repe_cmpsb");
                     goto done;
                 case x86_repeat_repne:
-                    insn = makeInstruction(x86_repne_cmpsb, "repne_cmpsb");
+                    insn = makeInstruction(state, x86_repne_cmpsb, "repne_cmpsb");
                     goto done;
                 default:
-                    throw ExceptionX86("bad repeat prefix for cmpsb", this);
+                    throw ExceptionX86("bad repeat prefix for cmpsb", state);
             }
         }
         case 0xA7: {
-            switch (effectiveOperandSize()) {
+            switch (effectiveOperandSize(state)) {
                 case x86_insnsize_16:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_cmpsw, "cmpsw");
+                            insn = makeInstruction(state, x86_cmpsw, "cmpsw");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_repe_cmpsw, "repe_cmpsw");
+                            insn = makeInstruction(state, x86_repe_cmpsw, "repe_cmpsw");
                             goto done;
                         case x86_repeat_repne:
-                            insn = makeInstruction(x86_repne_cmpsw, "repne_cmpsw");
+                            insn = makeInstruction(state, x86_repne_cmpsw, "repne_cmpsw");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for cmpsw", this);
+                            throw ExceptionX86("bad repeat prefix for cmpsw", state);
                     }
                 case x86_insnsize_32:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_cmpsd, "cmpsd");
+                            insn = makeInstruction(state, x86_cmpsd, "cmpsd");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_repe_cmpsd, "repe_cmpsd");
+                            insn = makeInstruction(state, x86_repe_cmpsd, "repe_cmpsd");
                             goto done;
                         case x86_repeat_repne:
-                            insn = makeInstruction(x86_repne_cmpsd, "repne_cmpsd");
+                            insn = makeInstruction(state, x86_repne_cmpsd, "repne_cmpsd");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for cmpsd", this);
+                            throw ExceptionX86("bad repeat prefix for cmpsd", state);
                     }
                 case x86_insnsize_64:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_cmpsq, "cmpsq");
+                            insn = makeInstruction(state, x86_cmpsq, "cmpsq");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_repe_cmpsq, "repe_cmpsq");
+                            insn = makeInstruction(state, x86_repe_cmpsq, "repe_cmpsq");
                             goto done;
                         case x86_repeat_repne:
-                            insn = makeInstruction(x86_repne_cmpsq, "repne_cmpsq");
+                            insn = makeInstruction(state, x86_repne_cmpsq, "repne_cmpsq");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for cmpsq", this);
+                            throw ExceptionX86("bad repeat prefix for cmpsq", state);
                     }
                 default: ASSERT_not_reachable("invalid effective operand size: " +
-                                              stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
+                                              stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize(state)));
             }
         }
         case 0xA8: {
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_test, "test", makeRegister(0, rmLegacyByte), imm);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_test, "test", makeRegister(state, 0, rmLegacyByte), imm);
             goto done;
         }
         case 0xA9: {
-            SgAsmExpression* imm = getImmIzAsIv();
-            insn = makeInstruction(x86_test, "test", makeRegisterEffective(0), imm);
+            SgAsmExpression* imm = getImmIzAsIv(state);
+            insn = makeInstruction(state, x86_test, "test", makeRegisterEffective(state, 0), imm);
             goto done;
         }
         case 0xAA: {
-            switch (repeatPrefix) {
+            switch (state.repeatPrefix) {
                 case x86_repeat_none:
-                    insn = makeInstruction(x86_stosb, "stosb");
+                    insn = makeInstruction(state, x86_stosb, "stosb");
                     goto done;
                 case x86_repeat_repe:
-                    insn = makeInstruction(x86_rep_stosb, "rep_stosb");
+                    insn = makeInstruction(state, x86_rep_stosb, "rep_stosb");
                     goto done;
                 default:
-                    throw ExceptionX86("bad repeat prefix for stosb", this);
+                    throw ExceptionX86("bad repeat prefix for stosb", state);
             }
         }
         case 0xAB: {
-            switch (effectiveOperandSize()) {
+            switch (effectiveOperandSize(state)) {
                 case x86_insnsize_16:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_stosw, "stosw");
+                            insn = makeInstruction(state, x86_stosw, "stosw");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_rep_stosw, "rep_stosw");
+                            insn = makeInstruction(state, x86_rep_stosw, "rep_stosw");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for stosw", this);
+                            throw ExceptionX86("bad repeat prefix for stosw", state);
                     }
                 case x86_insnsize_32:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_stosd, "stosd");
+                            insn = makeInstruction(state, x86_stosd, "stosd");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_rep_stosd, "rep_stosd");
+                            insn = makeInstruction(state, x86_rep_stosd, "rep_stosd");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for stosd", this);
+                            throw ExceptionX86("bad repeat prefix for stosd", state);
                     }
                 case x86_insnsize_64:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_stosq, "stosq");
+                            insn = makeInstruction(state, x86_stosq, "stosq");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_rep_stosq, "rep_stosq");
+                            insn = makeInstruction(state, x86_rep_stosq, "rep_stosq");
                             goto done;
-                        default: throw ExceptionX86("bad repeat prefix for stosq", this);
+                        default: throw ExceptionX86("bad repeat prefix for stosq", state);
                     }
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize(state)));
             }
         }
         case 0xAC: {
-            switch (repeatPrefix) {
+            switch (state.repeatPrefix) {
                 case x86_repeat_none:
-                    insn = makeInstruction(x86_lodsb, "lodsb");
+                    insn = makeInstruction(state, x86_lodsb, "lodsb");
                     goto done;
                 case x86_repeat_repe:
-                    insn = makeInstruction(x86_rep_lodsb, "rep_lodsb");
+                    insn = makeInstruction(state, x86_rep_lodsb, "rep_lodsb");
                     goto done;
                 default:
-                    throw ExceptionX86("bad repeat prefix for lodsb", this);
+                    throw ExceptionX86("bad repeat prefix for lodsb", state);
             }
         }
         case 0xAD: {
-            switch (effectiveOperandSize()) {
+            switch (effectiveOperandSize(state)) {
                 case x86_insnsize_16:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_lodsw, "lodsw");
+                            insn = makeInstruction(state, x86_lodsw, "lodsw");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_rep_lodsw, "rep_lodsw");
+                            insn = makeInstruction(state, x86_rep_lodsw, "rep_lodsw");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for lodsw", this);
+                            throw ExceptionX86("bad repeat prefix for lodsw", state);
                     }
                 case x86_insnsize_32:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_lodsd, "lodsd");
+                            insn = makeInstruction(state, x86_lodsd, "lodsd");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_rep_lodsd, "rep_lodsd");
+                            insn = makeInstruction(state, x86_rep_lodsd, "rep_lodsd");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for lodsd", this);
+                            throw ExceptionX86("bad repeat prefix for lodsd", state);
                     }
                 case x86_insnsize_64:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_lodsq, "lodsq");
+                            insn = makeInstruction(state, x86_lodsq, "lodsq");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_rep_lodsq, "rep_lodsq");
+                            insn = makeInstruction(state, x86_rep_lodsq, "rep_lodsq");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for lodsq", this);
+                            throw ExceptionX86("bad repeat prefix for lodsq", state);
                     }
                 default: ASSERT_not_reachable("invalid effective operand size: " +
-                                              stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
+                                              stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize(state)));
             }
         }
         case 0xAE: {
-            switch (repeatPrefix) {
+            switch (state.repeatPrefix) {
                 case x86_repeat_none:
-                    insn = makeInstruction(x86_scasb, "scasb");
+                    insn = makeInstruction(state, x86_scasb, "scasb");
                     goto done;
                 case x86_repeat_repe:
-                    insn = makeInstruction(x86_repe_scasb, "repe_scasb");
+                    insn = makeInstruction(state, x86_repe_scasb, "repe_scasb");
                     goto done;
                 case x86_repeat_repne:
-                    insn = makeInstruction(x86_repne_scasb, "repne_scasb");
+                    insn = makeInstruction(state, x86_repne_scasb, "repne_scasb");
                     goto done;
                 default:
-                    throw ExceptionX86("bad repeat prefix for scasb", this);
+                    throw ExceptionX86("bad repeat prefix for scasb", state);
             }
         }
         case 0xAF: {
-            switch (effectiveOperandSize()) {
+            switch (effectiveOperandSize(state)) {
                 case x86_insnsize_16:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_scasw, "scasw");
+                            insn = makeInstruction(state, x86_scasw, "scasw");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_repe_scasw, "repe_scasw");
+                            insn = makeInstruction(state, x86_repe_scasw, "repe_scasw");
                             goto done;
                         case x86_repeat_repne:
-                            insn = makeInstruction(x86_repne_scasw, "repne_scasw");
+                            insn = makeInstruction(state, x86_repne_scasw, "repne_scasw");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for scasw", this);
+                            throw ExceptionX86("bad repeat prefix for scasw", state);
                     }
                 case x86_insnsize_32:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_scasd, "scasd");
+                            insn = makeInstruction(state, x86_scasd, "scasd");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_repe_scasd, "repe_scasd");
+                            insn = makeInstruction(state, x86_repe_scasd, "repe_scasd");
                             goto done;
                         case x86_repeat_repne:
-                            insn = makeInstruction(x86_repne_scasd, "repne_scasd");
+                            insn = makeInstruction(state, x86_repne_scasd, "repne_scasd");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for scasd", this);
+                            throw ExceptionX86("bad repeat prefix for scasd", state);
                     }
                 case x86_insnsize_64:
-                    switch (repeatPrefix) {
+                    switch (state.repeatPrefix) {
                         case x86_repeat_none:
-                            insn = makeInstruction(x86_scasq, "scasq");
+                            insn = makeInstruction(state, x86_scasq, "scasq");
                             goto done;
                         case x86_repeat_repe:
-                            insn = makeInstruction(x86_repe_scasq, "repe_scasq");
+                            insn = makeInstruction(state, x86_repe_scasq, "repe_scasq");
                             goto done;
                         case x86_repeat_repne:
-                            insn = makeInstruction(x86_repne_scasq, "repne_scasq");
+                            insn = makeInstruction(state, x86_repne_scasq, "repne_scasq");
                             goto done;
                         default:
-                            throw ExceptionX86("bad repeat prefix for scasq", this);
+                            throw ExceptionX86("bad repeat prefix for scasq", state);
                     }
                 default: ASSERT_not_reachable("invalid effective operand size: " +
-                                              stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
+                                              stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize(state)));
             }
         }
         case 0xB0: {
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_mov, "mov", makeOperandRegisterByte(rexB, 0), imm);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeOperandRegisterByte(state, state.rexB, 0), imm);
             goto done;
         }
         case 0xB1: {
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_mov, "mov", makeOperandRegisterByte(rexB, 1), imm);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeOperandRegisterByte(state, state.rexB, 1), imm);
             goto done;
         }
         case 0xB2: {
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_mov, "mov", makeOperandRegisterByte(rexB, 2), imm);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeOperandRegisterByte(state, state.rexB, 2), imm);
             goto done;
         }
         case 0xB3: {
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_mov, "mov", makeOperandRegisterByte(rexB, 3), imm);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeOperandRegisterByte(state, state.rexB, 3), imm);
             goto done;
         }
         case 0xB4: {
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_mov, "mov", makeOperandRegisterByte(rexB, 4), imm);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeOperandRegisterByte(state, state.rexB, 4), imm);
             goto done;
         }
         case 0xB5: {
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_mov, "mov", makeOperandRegisterByte(rexB, 5), imm);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeOperandRegisterByte(state, state.rexB, 5), imm);
             goto done;
         }
         case 0xB6: {
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_mov, "mov", makeOperandRegisterByte(rexB, 6), imm);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeOperandRegisterByte(state, state.rexB, 6), imm);
             goto done;
         }
         case 0xB7: {
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_mov, "mov", makeOperandRegisterByte(rexB, 7), imm);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeOperandRegisterByte(state, state.rexB, 7), imm);
             goto done;
         }
         case 0xB8: {
-            SgAsmExpression* imm = getImmIv();
-            insn = makeInstruction(x86_mov, "mov", makeRegisterEffective(rexB, 0), imm);
+            SgAsmExpression* imm = getImmIv(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeRegisterEffective(state, state.rexB, 0), imm);
             goto done;
         }
         case 0xB9: {
-            SgAsmExpression* imm = getImmIv();
-            insn = makeInstruction(x86_mov, "mov", makeRegisterEffective(rexB, 1), imm);
+            SgAsmExpression* imm = getImmIv(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeRegisterEffective(state, state.rexB, 1), imm);
             goto done;
         }
         case 0xBA: {
-            SgAsmExpression* imm = getImmIv();
-            insn = makeInstruction(x86_mov, "mov", makeRegisterEffective(rexB, 2), imm);
+            SgAsmExpression* imm = getImmIv(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeRegisterEffective(state, state.rexB, 2), imm);
             goto done;
         }
         case 0xBB: {
-            SgAsmExpression* imm = getImmIv();
-            insn = makeInstruction(x86_mov, "mov", makeRegisterEffective(rexB, 3), imm);
+            SgAsmExpression* imm = getImmIv(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeRegisterEffective(state, state.rexB, 3), imm);
             goto done;
         }
         case 0xBC: {
-            SgAsmExpression* imm = getImmIv();
-            insn = makeInstruction(x86_mov, "mov", makeRegisterEffective(rexB, 4), imm);
+            SgAsmExpression* imm = getImmIv(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeRegisterEffective(state, state.rexB, 4), imm);
             goto done;
         }
         case 0xBD: {
-            SgAsmExpression* imm = getImmIv();
-            insn = makeInstruction(x86_mov, "mov", makeRegisterEffective(rexB, 5), imm);
+            SgAsmExpression* imm = getImmIv(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeRegisterEffective(state, state.rexB, 5), imm);
             goto done;
         }
         case 0xBE: {
-            SgAsmExpression* imm = getImmIv();
-            insn = makeInstruction(x86_mov, "mov", makeRegisterEffective(rexB, 6), imm);
+            SgAsmExpression* imm = getImmIv(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeRegisterEffective(state, state.rexB, 6), imm);
             goto done;
         }
         case 0xBF: {
-            SgAsmExpression* imm = getImmIv();
-            insn = makeInstruction(x86_mov, "mov", makeRegisterEffective(rexB, 7), imm);
+            SgAsmExpression* imm = getImmIv(state);
+            insn = makeInstruction(state, x86_mov, "mov", makeRegisterEffective(state, state.rexB, 7), imm);
             goto done;
         }
         case 0xC0: {
-            getModRegRM(rmReturnNull, rmLegacyByte, BYTET);
-            SgAsmExpression* imm = getImmByte();
-            insn = decodeGroup2(imm);
+            getModRegRM(state, rmReturnNull, rmLegacyByte, BYTET);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = decodeGroup2(state, imm);
             goto done;
         }
         case 0xC1: {
-            getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType());
-            SgAsmExpression* imm = getImmByteAsIv();
-            insn = decodeGroup2(imm);
+            getModRegRM(state, rmReturnNull, effectiveOperandMode(state), effectiveOperandType(state));
+            SgAsmExpression* imm = getImmByteAsIv(state);
+            insn = decodeGroup2(state, imm);
             goto done;
         }
         case 0xC2: {
-            isUnconditionalJump = true;
-            SgAsmExpression* imm = getImmWord();
-            insn = makeInstruction(x86_ret, "ret", imm);
+            state.isUnconditionalJump = true;
+            SgAsmExpression* imm = getImmWord(state);
+            insn = makeInstruction(state, x86_ret, "ret", imm);
             goto done;
         }
         case 0xC3: {
-            isUnconditionalJump = true;
-            insn = makeInstruction(x86_ret, "ret");
+            state.isUnconditionalJump = true;
+            insn = makeInstruction(state, x86_ret, "ret");
             goto done;
         }
         case 0xC4: {
-            not64();
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            requireMemory();
-            insn = makeInstruction(x86_les, "les", reg, modrm);
+            not64(state);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            requireMemory(state);
+            insn = makeInstruction(state, x86_les, "les", state.reg, state.modrm);
             goto done;
         }
         case 0xC5: {
-            not64();
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            requireMemory();
-            insn = makeInstruction(x86_lds, "lds", reg, modrm);
+            not64(state);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            requireMemory(state);
+            insn = makeInstruction(state, x86_lds, "lds", state.reg, state.modrm);
             goto done;
         }
         case 0xC6: {
-            getModRegRM(rmReturnNull, rmLegacyByte, BYTET);
-            SgAsmExpression* imm = getImmByte();
-            insn = decodeGroup11(imm);
+            getModRegRM(state, rmReturnNull, rmLegacyByte, BYTET);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = decodeGroup11(state, imm);
             goto done;
         }
         case 0xC7: {
-            getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType());
-            SgAsmExpression* imm = getImmIzAsIv();
-            insn = decodeGroup11(imm);
+            getModRegRM(state, rmReturnNull, effectiveOperandMode(state), effectiveOperandType(state));
+            SgAsmExpression* imm = getImmIzAsIv(state);
+            insn = decodeGroup11(state, imm);
             goto done;
         }
         case 0xC8: {
-            SgAsmExpression* immw = getImmWord();
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_enter, "enter", immw, imm);
+            SgAsmExpression* immw = getImmWord(state);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_enter, "enter", immw, imm);
             goto done;
         }
         case 0xC9: {
-            insn = makeInstruction(x86_leave, "leave");
+            insn = makeInstruction(state, x86_leave, "leave");
             goto done;
         }
         case 0xCA: {
-            isUnconditionalJump = true;
-            SgAsmExpression* imm = getImmWord();
-            insn = makeInstruction(x86_retf, "retf", imm);
+            state.isUnconditionalJump = true;
+            SgAsmExpression* imm = getImmWord(state);
+            insn = makeInstruction(state, x86_retf, "retf", imm);
             goto done;
         }
         case 0xCB: {
-            isUnconditionalJump = true;
-            insn = makeInstruction(x86_retf, "retf");
+            state.isUnconditionalJump = true;
+            insn = makeInstruction(state, x86_retf, "retf");
             goto done;
         }
         case 0xCC: {
-            insn = makeInstruction(x86_int3, "int3");
+            insn = makeInstruction(state, x86_int3, "int3");
             goto done;
         }
         case 0xCD: {
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_int, "int", imm);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_int, "int", imm);
             goto done;
         }
         case 0xCE: {
-            not64();
-            insn = makeInstruction(x86_into, "into");
+            not64(state);
+            insn = makeInstruction(state, x86_into, "into");
             goto done;
         }
         case 0xCF: {
-            isUnconditionalJump = true;
-            insn = makeInstruction(x86_iret, "iret");
+            state.isUnconditionalJump = true;
+            insn = makeInstruction(state, x86_iret, "iret");
             goto done;
         }
         case 0xD0: {
-            getModRegRM(rmReturnNull, rmLegacyByte, BYTET);
-            insn = decodeGroup2(SageBuilderAsm::buildValueX86Byte(1));
+            getModRegRM(state, rmReturnNull, rmLegacyByte, BYTET);
+            insn = decodeGroup2(state, SageBuilderAsm::buildValueX86Byte(1));
             goto done;
         }
         case 0xD1: {
-            getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType());
-            insn = decodeGroup2(SageBuilderAsm::buildValueX86Byte(1));
+            getModRegRM(state, rmReturnNull, effectiveOperandMode(state), effectiveOperandType(state));
+            insn = decodeGroup2(state, SageBuilderAsm::buildValueX86Byte(1));
             goto done;
         }
         case 0xD2: {
-            getModRegRM(rmReturnNull, rmLegacyByte, BYTET);
-            insn = decodeGroup2(makeRegister(1, rmLegacyByte));
+            getModRegRM(state, rmReturnNull, rmLegacyByte, BYTET);
+            insn = decodeGroup2(state, makeRegister(state, 1, rmLegacyByte));
             goto done;
         }
         case 0xD3: {
-            getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType());
-            insn = decodeGroup2(makeRegister(1, rmLegacyByte));
+            getModRegRM(state, rmReturnNull, effectiveOperandMode(state), effectiveOperandType(state));
+            insn = decodeGroup2(state, makeRegister(state, 1, rmLegacyByte));
             goto done;
         }
         case 0xD4: {
-            not64();
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_aam, "aam", imm);
+            not64(state);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_aam, "aam", imm);
             goto done;
         }
         case 0xD5: {
-            not64();
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_aad, "aad", imm);
+            not64(state);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_aad, "aad", imm);
             goto done;
         }
         case 0xD6: {
-            not64();
-            insn = makeInstruction(x86_salc, "salc");
+            not64(state);
+            insn = makeInstruction(state, x86_salc, "salc");
             goto done;
         }
         case 0xD7: {
-            insn = makeInstruction(x86_xlatb, "xlatb");
+            insn = makeInstruction(state, x86_xlatb, "xlatb");
             goto done;
         }
         case 0xD8: {
-            insn = decodeX87InstructionD8();
+            insn = decodeX87InstructionD8(state);
             goto done;
         }
         case 0xD9: {
-            insn = decodeX87InstructionD9();
+            insn = decodeX87InstructionD9(state);
             goto done;
         }
         case 0xDA: {
-            insn = decodeX87InstructionDA();
+            insn = decodeX87InstructionDA(state);
             goto done;
         }
         case 0xDB: {
-            insn = decodeX87InstructionDB();
+            insn = decodeX87InstructionDB(state);
             goto done;
         }
         case 0xDC: {
-            insn = decodeX87InstructionDC();
+            insn = decodeX87InstructionDC(state);
             goto done;
         }
         case 0xDD: {
-            insn = decodeX87InstructionDD();
+            insn = decodeX87InstructionDD(state);
             goto done;
         }
         case 0xDE: {
-            insn = decodeX87InstructionDE();
+            insn = decodeX87InstructionDE(state);
             goto done;
         }
         case 0xDF: {
-            insn = decodeX87InstructionDF();
+            insn = decodeX87InstructionDF(state);
             goto done;
         }
         case 0xE0: {
-            SgAsmExpression* imm = getImmJb();
-            insn = makeInstruction(x86_loopnz, "loopnz", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            insn = makeInstruction(state, x86_loopnz, "loopnz", imm);
             goto done;
         }
         case 0xE1: {
-            SgAsmExpression* imm = getImmJb();
-            insn = makeInstruction(x86_loopz, "loopz", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            insn = makeInstruction(state, x86_loopz, "loopz", imm);
             goto done;
         }
         case 0xE2: {
-            SgAsmExpression* imm = getImmJb();
-            insn = makeInstruction(x86_loop, "loop", imm);
+            SgAsmExpression* imm = getImmJb(state);
+            insn = makeInstruction(state, x86_loop, "loop", imm);
             goto done;
         }
         case 0xE3: {
-            SgAsmExpression* imm = getImmJb();
-            branchPredictionEnabled = true;
-            switch (effectiveOperandSize()) {
+            SgAsmExpression* imm = getImmJb(state);
+            state.branchPredictionEnabled = true;
+            switch (effectiveOperandSize(state)) {
                 case x86_insnsize_16:
-                    insn = makeInstruction(x86_jcxz, "jcxz", imm);
+                    insn = makeInstruction(state, x86_jcxz, "jcxz", imm);
                     goto done;
                 case x86_insnsize_32:
-                    insn = makeInstruction(x86_jecxz, "jecxz", imm);
+                    insn = makeInstruction(state, x86_jecxz, "jecxz", imm);
                     goto done;
                 case x86_insnsize_64:
-                    insn = makeInstruction(x86_jrcxz, "jrcxz", imm);
+                    insn = makeInstruction(state, x86_jrcxz, "jrcxz", imm);
                     goto done;
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize(state)));
             }
         }
         case 0xE4: {
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_in, "in", makeRegister(0, rmLegacyByte), imm);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_in, "in", makeRegister(state, 0, rmLegacyByte), imm);
             goto done;
         }
         case 0xE5: {
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_in, "in", makeRegisterEffective(0), imm);
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_in, "in", makeRegisterEffective(state, 0), imm);
             goto done;
         }
         case 0xE6: {
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_out, "out", imm, makeRegister(0, rmLegacyByte));
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_out, "out", imm, makeRegister(state, 0, rmLegacyByte));
             goto done;
         }
         case 0xE7: {
-            SgAsmExpression* imm = getImmByte();
-            insn = makeInstruction(x86_out, "out", imm, makeRegisterEffective(0));
+            SgAsmExpression* imm = getImmByte(state);
+            insn = makeInstruction(state, x86_out, "out", imm, makeRegisterEffective(state, 0));
             goto done;
         }
         case 0xE8: {
-            SgAsmExpression* imm = getImmJz();
-            insn = makeInstruction(x86_call, "call", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            insn = makeInstruction(state, x86_call, "call", imm);
             goto done;
         }
         case 0xE9: {
-            SgAsmExpression* imm = getImmJz();
-            insn = makeInstruction(x86_jmp, "jmp", imm);
-            isUnconditionalJump = true;
+            SgAsmExpression* imm = getImmJz(state);
+            insn = makeInstruction(state, x86_jmp, "jmp", imm);
+            state.isUnconditionalJump = true;
             goto done;
         }
         case 0xEA: {
-            not64();
-            SgAsmExpression* addr = getImmForAddr();
-            SgAsmExpression* seg = getImmWord();
-            insn = makeInstruction(x86_farjmp, "farJmp", seg, addr);
-            isUnconditionalJump = true;
+            not64(state);
+            SgAsmExpression* addr = getImmForAddr(state);
+            SgAsmExpression* seg = getImmWord(state);
+            insn = makeInstruction(state, x86_farjmp, "farJmp", seg, addr);
+            state.isUnconditionalJump = true;
             goto done;
         }
         case 0xEB: {
-            SgAsmExpression* imm = getImmJb();
-            insn = makeInstruction(x86_jmp, "jmp", imm);
-            isUnconditionalJump = true;
+            SgAsmExpression* imm = getImmJb(state);
+            insn = makeInstruction(state, x86_jmp, "jmp", imm);
+            state.isUnconditionalJump = true;
             goto done;
         }
         case 0xEC: {
-            insn = makeInstruction(x86_in, "in", makeRegister(0, rmLegacyByte), makeRegister(2, rmWord));
+            insn = makeInstruction(state, x86_in, "in", makeRegister(state, 0, rmLegacyByte), makeRegister(state, 2, rmWord));
             goto done;
         }
         case 0xED: {
-            insn = makeInstruction(x86_in, "in", makeRegisterEffective(0), makeRegister(2, rmWord));
+            insn = makeInstruction(state, x86_in, "in", makeRegisterEffective(state, 0), makeRegister(state, 2, rmWord));
             goto done;
         }
         case 0xEE: {
-            insn = makeInstruction(x86_out, "out", makeRegister(2, rmWord), makeRegister(0, rmLegacyByte));
+            insn = makeInstruction(state, x86_out, "out", makeRegister(state, 2, rmWord), makeRegister(state, 0, rmLegacyByte));
             goto done;
         }
         case 0xEF: {
-            insn = makeInstruction(x86_out, "out", makeRegister(2, rmWord), makeRegisterEffective(0));
+            insn = makeInstruction(state, x86_out, "out", makeRegister(state, 2, rmWord), makeRegisterEffective(state, 0));
             goto done;
         }
         case 0xF0: {
-            lock = true;
-            insn = disassemble();
+            state.lock = true;
+            insn = disassemble(state);
             goto done;
         }
         case 0xF1: {
-            insn = makeInstruction(x86_int1, "int1");
+            insn = makeInstruction(state, x86_int1, "int1");
             goto done;
         }
         case 0xF2: {
-            repeatPrefix = x86_repeat_repne;
-            insn = disassemble();
+            state.repeatPrefix = x86_repeat_repne;
+            insn = disassemble(state);
             goto done;
         }
         case 0xF3: {
-            repeatPrefix = x86_repeat_repe;
-            insn = disassemble();
+            state.repeatPrefix = x86_repeat_repe;
+            insn = disassemble(state);
             goto done;
         }
         case 0xF4: {
-            insn = makeInstruction(x86_hlt, "hlt");
-            isUnconditionalJump = true;
+            insn = makeInstruction(state, x86_hlt, "hlt");
+            state.isUnconditionalJump = true;
             goto done;
         }
         case 0xF5: {
-            insn = makeInstruction(x86_cmc, "cmc");
+            insn = makeInstruction(state, x86_cmc, "cmc");
             goto done;
         }
         case 0xF6: {
-            getModRegRM(rmReturnNull, rmLegacyByte, BYTET);
+            getModRegRM(state, rmReturnNull, rmLegacyByte, BYTET);
             SgAsmExpression* immMaybe = NULL;
-            if (regField <= 1) {
-                SgAsmExpression* imm = getImmByteAsIv();
+            if (state.regField <= 1) {
+                SgAsmExpression* imm = getImmByteAsIv(state);
                 immMaybe = imm;
             }
-            insn = decodeGroup3(immMaybe);
+            insn = decodeGroup3(state, immMaybe);
             goto done;
         }
         case 0xF7: {
-            getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType());
+            getModRegRM(state, rmReturnNull, effectiveOperandMode(state), effectiveOperandType(state));
             SgAsmExpression* immMaybe = NULL;
-            if (regField <= 1) {
-                SgAsmExpression* imm = getImmIzAsIv();
+            if (state.regField <= 1) {
+                SgAsmExpression* imm = getImmIzAsIv(state);
                 immMaybe = imm;
             }
-            insn = decodeGroup3(immMaybe);
+            insn = decodeGroup3(state, immMaybe);
             goto done;
         }
         case 0xF8: {
-            insn = makeInstruction(x86_clc, "clc");
+            insn = makeInstruction(state, x86_clc, "clc");
             goto done;
         }
         case 0xF9: {
-            insn = makeInstruction(x86_stc, "stc");
+            insn = makeInstruction(state, x86_stc, "stc");
             goto done;
         }
         case 0xFA: {
-            insn = makeInstruction(x86_cli, "cli");
+            insn = makeInstruction(state, x86_cli, "cli");
             goto done;
         }
         case 0xFB: {
-            insn = makeInstruction(x86_sti, "sti");
+            insn = makeInstruction(state, x86_sti, "sti");
             goto done;
         }
         case 0xFC: {
-            insn = makeInstruction(x86_cld, "cld");
+            insn = makeInstruction(state, x86_cld, "cld");
             goto done;
         }
         case 0xFD: {
-            insn = makeInstruction(x86_std, "std");
+            insn = makeInstruction(state, x86_std, "std");
             goto done;
         }
         case 0xFE: {
-            getModRegRM(rmReturnNull, rmLegacyByte, BYTET);
-            insn = decodeGroup4();
+            getModRegRM(state, rmReturnNull, rmLegacyByte, BYTET);
+            insn = decodeGroup4(state);
             goto done;
         }
         case 0xFF: {
-            getModRegRM(rmReturnNull, rmReturnNull, NULL);
-            if (regField >= 2 && regField <= 6) {
-                sizeMustBe64Bit = true;
+            getModRegRM(state, rmReturnNull, rmReturnNull, NULL);
+            if (state.regField >= 2 && state.regField <= 6) {
+                state.sizeMustBe64Bit = true;
             }
-            fillInModRM(effectiveOperandMode(), effectiveOperandType());
-            insn = decodeGroup5();
+            fillInModRM(state, effectiveOperandMode(state), effectiveOperandType(state));
+            insn = decodeGroup5(state);
             goto done;
         }
         default: ASSERT_not_reachable("should not get here");
@@ -2784,257 +2793,257 @@ done:
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeOpcode0F()
+DisassemblerX86::decodeOpcode0F(State &state) const
 {
-    uint8_t opcode = getByte();
+    uint8_t opcode = getByte(state);
     switch (opcode) {
         case 0x00: {
-            getModRegRM(rmReturnNull, rmWord, WORDT);
-            return decodeGroup6();
+            getModRegRM(state, rmReturnNull, rmWord, WORDT);
+            return decodeGroup6(state);
         }
         case 0x01:
-            return decodeGroup7();
+            return decodeGroup7(state);
         case 0x02: {
-            getModRegRM(rmWord, rmWord, WORDT);
-            return makeInstruction(x86_lar, "lar", reg, modrm);
+            getModRegRM(state, rmWord, rmWord, WORDT);
+            return makeInstruction(state, x86_lar, "lar", state.reg, state.modrm);
         }
         case 0x03: {
-            getModRegRM(rmWord, rmWord, WORDT);
-            return makeInstruction(x86_lsl, "lsl", reg, modrm);
+            getModRegRM(state, rmWord, rmWord, WORDT);
+            return makeInstruction(state, x86_lsl, "lsl", state.reg, state.modrm);
         }
         case 0x04:
-            throw ExceptionX86("bad opcode 0x0f04", this);
+            throw ExceptionX86("bad opcode 0x0f04", state);
         case 0x05:
-            return makeInstruction(x86_syscall, "syscall");
+            return makeInstruction(state, x86_syscall, "syscall");
         case 0x06:
-            return makeInstruction(x86_clts, "clts");
+            return makeInstruction(state, x86_clts, "clts");
         case 0x07:
-            return makeInstruction(x86_sysret, "sysret");
+            return makeInstruction(state, x86_sysret, "sysret");
         case 0x08:
-            return makeInstruction(x86_invd, "invd");
+            return makeInstruction(state, x86_invd, "invd");
         case 0x09:
-            return makeInstruction(x86_wbinvd, "wbinvd");
+            return makeInstruction(state, x86_wbinvd, "wbinvd");
         case 0x0A:
-            throw ExceptionX86("bad opcode 0x0f0a", this);
+            throw ExceptionX86("bad opcode 0x0f0a", state);
         case 0x0B:
-            return makeInstruction(x86_ud2, "ud2");
+            return makeInstruction(state, x86_ud2, "ud2");
         case 0x0C:
-            throw ExceptionX86("bad opcode 0x0f0c", this);
+            throw ExceptionX86("bad opcode 0x0f0c", state);
         case 0x0D:
-            return decodeGroupP();
+            return decodeGroupP(state);
         case 0x0E:
-            return makeInstruction(x86_femms, "femms");
+            return makeInstruction(state, x86_femms, "femms");
         case 0x0F: {
             /* 3DNow! (AMD Specific) */
-            getModRegRM(rmReturnNull, rmReturnNull, NULL);
-            uint8_t thirdOpcodeByte = getByte();
+            getModRegRM(state, rmReturnNull, rmReturnNull, NULL);
+            uint8_t thirdOpcodeByte = getByte(state);
             char opcodestr[16];
             sprintf(opcodestr, "0x0f0f%02x", thirdOpcodeByte);
             if (thirdOpcodeByte < 0x80) {
                 /* Conversions */
                 switch (thirdOpcodeByte) {
                     case 0x0C: {
-                        fillInModRM(rmMM, V4WORDT);
-                        reg = makeModrmRegister(rmMM, V2FLOATT);
-                        return makeInstruction(x86_pi2fw, "pi2fw", reg, modrm);
+                        fillInModRM(state, rmMM, V4WORDT);
+                        state.reg = makeModrmRegister(state, rmMM, V2FLOATT);
+                        return makeInstruction(state, x86_pi2fw, "pi2fw", state.reg, state.modrm);
                     }
                     case 0x0D: {
-                        fillInModRM(rmMM, V2DWORDT);
-                        reg = makeModrmRegister(rmMM, V2FLOATT);
-                        return makeInstruction(x86_pi2fd, "pi2fd", reg, modrm);
+                        fillInModRM(state, rmMM, V2DWORDT);
+                        state.reg = makeModrmRegister(state, rmMM, V2FLOATT);
+                        return makeInstruction(state, x86_pi2fd, "pi2fd", state.reg, state.modrm);
                     }
                     case 0x1C: {
-                        fillInModRM(rmMM, V2FLOATT);
-                        reg = makeModrmRegister(rmMM, V4WORDT);
-                        return makeInstruction(x86_pf2iw, "pf2iw", reg, modrm);
+                        fillInModRM(state, rmMM, V2FLOATT);
+                        state.reg = makeModrmRegister(state, rmMM, V4WORDT);
+                        return makeInstruction(state, x86_pf2iw, "pf2iw", state.reg, state.modrm);
                     }
                     case 0x1D: {
-                        fillInModRM(rmMM, V2FLOATT);
-                        reg = makeModrmRegister(rmMM, V2DWORDT);
-                        return makeInstruction(x86_pf2id, "pf2id", reg, modrm);
+                        fillInModRM(state, rmMM, V2FLOATT);
+                        state.reg = makeModrmRegister(state, rmMM, V2DWORDT);
+                        return makeInstruction(state, x86_pf2id, "pf2id", state.reg, state.modrm);
                     }
                     default:
-                        throw ExceptionX86(std::string("bad opcode ")+opcodestr, this);
+                        throw ExceptionX86(std::string("bad opcode ")+opcodestr, state);
                 }
             } else if (thirdOpcodeByte < 0xB7) {
                 /* Floating-point operations */
-                fillInModRM(rmMM, V2FLOATT);
-                reg = makeModrmRegister(rmMM, V2FLOATT);
+                fillInModRM(state, rmMM, V2FLOATT);
+                state.reg = makeModrmRegister(state, rmMM, V2FLOATT);
                 switch (thirdOpcodeByte) {
-                    case 0x8A: return makeInstruction(x86_pfnacc, "pfnacc", reg, modrm);
-                    case 0x8E: return makeInstruction(x86_pfpnacc, "pfpnacc", reg, modrm);
-                    case 0x90: return makeInstruction(x86_pfcmpge, "pfcmpge", reg, modrm);
-                    case 0x94: return makeInstruction(x86_pfmin, "pfmin", reg, modrm);
-                    case 0x96: return makeInstruction(x86_pfrcp, "pfrcp", reg, modrm);
-                    case 0x97: return makeInstruction(x86_pfrsqrt, "pfrsqrt", reg, modrm);
-                    case 0x9A: return makeInstruction(x86_pfsub, "pfsub", reg, modrm);
-                    case 0x9E: return makeInstruction(x86_pfadd, "pfadd", reg, modrm);
-                    case 0xA0: return makeInstruction(x86_pfcmpgt, "pfcmpgt", reg, modrm);
-                    case 0xA4: return makeInstruction(x86_pfmax, "pfmax", reg, modrm);
-                    case 0xA6: return makeInstruction(x86_pfrcpit1, "pfrcpit1", reg, modrm);
-                    case 0xA7: return makeInstruction(x86_pfrsqit1, "pfrsqit1", reg, modrm);
-                    case 0xAA: return makeInstruction(x86_pfsubr, "pfsubr", reg, modrm);
-                    case 0xAE: return makeInstruction(x86_pfacc, "pfacc", reg, modrm);
-                    case 0xB0: return makeInstruction(x86_pfcmpeq, "pfcmpeq", reg, modrm);
-                    case 0xB4: return makeInstruction(x86_pfmul, "pfmul", reg, modrm);
-                    case 0xB6: return makeInstruction(x86_pfrcpit2, "pfrcpit2", reg, modrm);
+                    case 0x8A: return makeInstruction(state, x86_pfnacc, "pfnacc", state.reg, state.modrm);
+                    case 0x8E: return makeInstruction(state, x86_pfpnacc, "pfpnacc", state.reg, state.modrm);
+                    case 0x90: return makeInstruction(state, x86_pfcmpge, "pfcmpge", state.reg, state.modrm);
+                    case 0x94: return makeInstruction(state, x86_pfmin, "pfmin", state.reg, state.modrm);
+                    case 0x96: return makeInstruction(state, x86_pfrcp, "pfrcp", state.reg, state.modrm);
+                    case 0x97: return makeInstruction(state, x86_pfrsqrt, "pfrsqrt", state.reg, state.modrm);
+                    case 0x9A: return makeInstruction(state, x86_pfsub, "pfsub", state.reg, state.modrm);
+                    case 0x9E: return makeInstruction(state, x86_pfadd, "pfadd", state.reg, state.modrm);
+                    case 0xA0: return makeInstruction(state, x86_pfcmpgt, "pfcmpgt", state.reg, state.modrm);
+                    case 0xA4: return makeInstruction(state, x86_pfmax, "pfmax", state.reg, state.modrm);
+                    case 0xA6: return makeInstruction(state, x86_pfrcpit1, "pfrcpit1", state.reg, state.modrm);
+                    case 0xA7: return makeInstruction(state, x86_pfrsqit1, "pfrsqit1", state.reg, state.modrm);
+                    case 0xAA: return makeInstruction(state, x86_pfsubr, "pfsubr", state.reg, state.modrm);
+                    case 0xAE: return makeInstruction(state, x86_pfacc, "pfacc", state.reg, state.modrm);
+                    case 0xB0: return makeInstruction(state, x86_pfcmpeq, "pfcmpeq", state.reg, state.modrm);
+                    case 0xB4: return makeInstruction(state, x86_pfmul, "pfmul", state.reg, state.modrm);
+                    case 0xB6: return makeInstruction(state, x86_pfrcpit2, "pfrcpit2", state.reg, state.modrm);
                     default: {
-                        throw ExceptionX86(std::string("bad opcode ")+opcodestr, this);
+                        throw ExceptionX86(std::string("bad opcode ")+opcodestr, state);
                     }
                 }
             } else {
                 /* Extra integer operations */
                 switch (thirdOpcodeByte) {
                     case 0xB7:
-                        getModRegRM(rmMM, rmMM, V4WORDT);
-                        return makeInstruction(x86_pmulhrw, "pmulhrw", reg, modrm);
+                        getModRegRM(state, rmMM, rmMM, V4WORDT);
+                        return makeInstruction(state, x86_pmulhrw, "pmulhrw", state.reg, state.modrm);
                     case 0xBB:
-                        getModRegRM(rmMM, rmMM, V2DWORDT);
-                        return makeInstruction(x86_pswapd, "pswapd", reg, modrm);
+                        getModRegRM(state, rmMM, rmMM, V2DWORDT);
+                        return makeInstruction(state, x86_pswapd, "pswapd", state.reg, state.modrm);
                     case 0xBF:
-                        getModRegRM(rmMM, rmMM, V8BYTET);
-                        return makeInstruction(x86_pavgusb, "pavgusb", reg, modrm);
+                        getModRegRM(state, rmMM, rmMM, V8BYTET);
+                        return makeInstruction(state, x86_pavgusb, "pavgusb", state.reg, state.modrm);
                     default:
-                        throw ExceptionX86(std::string("bad opcode ")+opcodestr, this);
+                        throw ExceptionX86(std::string("bad opcode ")+opcodestr, state);
                 }
             }
         }
         case 0x10: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_movups, "movups", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_movups, "movups", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_movss, "movss", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT);
+                    return makeInstruction(state, x86_movss, "movss", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_movupd, "movupd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_movupd, "movupd", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    return makeInstruction(x86_movsd_sse, "movsd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    return makeInstruction(state, x86_movsd_sse, "movsd", state.reg, state.modrm);
             }
         }
         case 0x11: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_movups, "movups", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_movups, "movups", state.modrm, state.reg);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_movss, "movss", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT);
+                    return makeInstruction(state, x86_movss, "movss", state.modrm, state.reg);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_movupd, "movupd", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_movupd, "movupd", state.modrm, state.reg);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    return makeInstruction(x86_movsd_sse, "movsd", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    return makeInstruction(state, x86_movsd_sse, "movsd", state.modrm, state.reg);
             }
         }
         case 0x12: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    if (modeField == 3) {
-                        return makeInstruction(x86_movhlps, "movhlps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    if (state.modeField == 3) {
+                        return makeInstruction(state, x86_movhlps, "movhlps", state.reg, state.modrm);
                     } else {
-                        return makeInstruction(x86_movlps, "movlps", reg, modrm);
+                        return makeInstruction(state, x86_movlps, "movlps", state.reg, state.modrm);
                     }
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_movsldup, "movsldup", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_movsldup, "movsldup", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    requireMemory();
-                    return makeInstruction(x86_movlpd, "movlpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    requireMemory(state);
+                    return makeInstruction(state, x86_movlpd, "movlpd", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    return makeInstruction(x86_movddup, "movddup", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    return makeInstruction(state, x86_movddup, "movddup", state.reg, state.modrm);
             }
         }
         case 0x13: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    requireMemory();
-                    return makeInstruction(x86_movlps, "movlps", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    requireMemory(state);
+                    return makeInstruction(state, x86_movlps, "movlps", state.modrm, state.reg);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f13", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f13", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    requireMemory();
-                    return makeInstruction(x86_movlpd, "movlpd", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    requireMemory(state);
+                    return makeInstruction(state, x86_movlpd, "movlpd", state.modrm, state.reg);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f13", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f13", state);
             }
         }
         case 0x14: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V2FLOATT, V4FLOATT);
-                    return makeInstruction(x86_unpcklps, "unpcklps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2FLOATT, V4FLOATT);
+                    return makeInstruction(state, x86_unpcklps, "unpcklps", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f14", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f14", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET, V2DOUBLET);
-                    return makeInstruction(x86_unpcklpd, "unpcklpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET, V2DOUBLET);
+                    return makeInstruction(state, x86_unpcklpd, "unpcklpd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f14", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f14", state);
             }
         }
         case 0x15: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V2FLOATT, V4FLOATT);
-                    return makeInstruction(x86_unpckhps, "unpckhps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2FLOATT, V4FLOATT);
+                    return makeInstruction(state, x86_unpckhps, "unpckhps", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f15", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f15", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET, V2DOUBLET);
-                    return makeInstruction(x86_unpckhpd, "unpckhpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET, V2DOUBLET);
+                    return makeInstruction(state, x86_unpckhpd, "unpckhpd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f15", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f15", state);
             }
         }
         case 0x16: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    if (modeField == 3) {
-                        return makeInstruction(x86_movlhps, "movlhps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    if (state.modeField == 3) {
+                        return makeInstruction(state, x86_movlhps, "movlhps", state.reg, state.modrm);
                     } else {
-                        return makeInstruction(x86_movhps, "movhps", reg, modrm);
+                        return makeInstruction(state, x86_movhps, "movhps", state.reg, state.modrm);
                     }
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_movshdup, "movshdup", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_movshdup, "movshdup", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    requireMemory();
-                    return makeInstruction(x86_movhpd, "movhpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    requireMemory(state);
+                    return makeInstruction(state, x86_movhpd, "movhpd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f16", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f16", state);
             }
         }
         case 0x17: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    requireMemory();
-                    return makeInstruction(x86_movhps, "movhps", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    requireMemory(state);
+                    return makeInstruction(state, x86_movhps, "movhps", state.modrm, state.reg);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f17", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f17", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    requireMemory();
-                    return makeInstruction(x86_movhpd, "movhpd", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    requireMemory(state);
+                    return makeInstruction(state, x86_movhpd, "movhpd", state.modrm, state.reg);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f17", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f17", state);
             }
         }
         case 0x18:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return decodeGroup16();
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return decodeGroup16(state);
         case 0x19:
         case 0x1A:
         case 0x1B:
@@ -3042,2183 +3051,2183 @@ DisassemblerX86::decodeOpcode0F()
         case 0x1D:
         case 0x1E:
             /* Undocumented no-ops */
-            getModRegRM(rmReturnNull, rmReturnNull, NULL);
-            return makeInstruction(x86_nop, "nop");
+            getModRegRM(state, rmReturnNull, rmReturnNull, NULL);
+            return makeInstruction(state, x86_nop, "nop");
         case 0x1F:
             /* Documented no-op */
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_nop, "nop", modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_nop, "nop", state.modrm);
 
         case 0x20:
             /* BUG: The mode and type fields should forced to the current processor number of bits instead of the size
              *      determied by the operand size flag. See documentation for move  to control register ("lock mov cr0, *").
              *      This may be an AMD specific issue, but the  operand size issues is a bug everywhere. */
-            getModRegRM(rmControl, effectiveOperandMode(), effectiveOperandType());
-            if (modeField == 3) {
-                return makeInstruction(x86_mov, "mov", modrm, reg);
+            getModRegRM(state, rmControl, effectiveOperandMode(state), effectiveOperandType(state));
+            if (state.modeField == 3) {
+                return makeInstruction(state, x86_mov, "mov", state.modrm, state.reg);
             } else {
-                throw ExceptionX86("bad ModR/M value for 0x0f20", this);
+                throw ExceptionX86("bad ModR/M value for 0x0f20", state);
             }
         case 0x21:
-            getModRegRM(rmDebug, effectiveOperandMode(), effectiveOperandType());
-            if (modeField == 3) {
-                return makeInstruction(x86_mov, "mov", modrm, reg);
+            getModRegRM(state, rmDebug, effectiveOperandMode(state), effectiveOperandType(state));
+            if (state.modeField == 3) {
+                return makeInstruction(state, x86_mov, "mov", state.modrm, state.reg);
             } else {
-                throw ExceptionX86("bad ModR/M value for 0x0f21", this);
+                throw ExceptionX86("bad ModR/M value for 0x0f21", state);
             }
         case 0x22:
-            getModRegRM(rmControl, effectiveOperandMode(), effectiveOperandType());
-            if (modeField == 3) {
-                return makeInstruction(x86_mov, "mov", reg, modrm);
+            getModRegRM(state, rmControl, effectiveOperandMode(state), effectiveOperandType(state));
+            if (state.modeField == 3) {
+                return makeInstruction(state, x86_mov, "mov", state.reg, state.modrm);
             } else {
-                throw ExceptionX86("bad ModR/M value for 0x0f22", this);
+                throw ExceptionX86("bad ModR/M value for 0x0f22", state);
             }
         case 0x23:
-            getModRegRM(rmDebug, effectiveOperandMode(), effectiveOperandType());
-            if (modeField == 3) {
-                return makeInstruction(x86_mov, "mov", reg, modrm);
+            getModRegRM(state, rmDebug, effectiveOperandMode(state), effectiveOperandType(state));
+            if (state.modeField == 3) {
+                return makeInstruction(state, x86_mov, "mov", state.reg, state.modrm);
             } else {
-                throw ExceptionX86("bad ModR/M value for 0x0f23", this);
+                throw ExceptionX86("bad ModR/M value for 0x0f23", state);
             }
         case 0x24:
             /* Move from test register */
-            throw ExceptionX86("bad opcode 0x0f24", this);
+            throw ExceptionX86("bad opcode 0x0f24", state);
         case 0x25:
-            throw ExceptionX86("bad opcode 0x0f25", this);
+            throw ExceptionX86("bad opcode 0x0f25", state);
         case 0x26:
             /* Move to test register */
-            throw ExceptionX86("bad opcode 0x0f26", this);
+            throw ExceptionX86("bad opcode 0x0f26", state);
         case 0x27:
-            throw ExceptionX86("bad opcode 0x0f27", this);
+            throw ExceptionX86("bad opcode 0x0f27", state);
         case 0x28: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_movaps, "movaps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_movaps, "movaps", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f28", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f28", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_movapd, "movapd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_movapd, "movapd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f18", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f18", state);
             }
         }
         case 0x29: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_movaps, "movaps", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_movaps, "movaps", state.modrm, state.reg);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f29", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f29", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_movapd, "movapd", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_movapd, "movapd", state.modrm, state.reg);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f19", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f19", state);
             }
         }
         case 0x2A: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmMM, V2DWORDT, V4FLOATT);
-                    return makeInstruction(x86_cvtpi2ps, "cvtpi2ps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmMM, V2DWORDT, V4FLOATT);
+                    return makeInstruction(state, x86_cvtpi2ps, "cvtpi2ps", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), V4FLOATT);
-                    return makeInstruction(x86_cvtsi2ss, "cvtsi2ss", reg, modrm);
+                    getModRegRM(state, rmXMM, effectiveOperandMode(state), effectiveOperandType(state), V4FLOATT);
+                    return makeInstruction(state, x86_cvtsi2ss, "cvtsi2ss", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmXMM, rmMM, V2DWORDT, V2DOUBLET);
-                    return makeInstruction(x86_cvtpi2pd, "cvtpi2pd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmMM, V2DWORDT, V2DOUBLET);
+                    return makeInstruction(state, x86_cvtpi2pd, "cvtpi2pd", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), V2DOUBLET);
-                    return makeInstruction(x86_cvtsi2sd, "cvtsi2sd", reg, modrm);
+                    getModRegRM(state, rmXMM, effectiveOperandMode(state), effectiveOperandType(state), V2DOUBLET);
+                    return makeInstruction(state, x86_cvtsi2sd, "cvtsi2sd", state.reg, state.modrm);
             }
         }
         case 0x2B: {
-            requireMemory();
-            switch (mmPrefix()) {
+            requireMemory(state);
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_movntps, "movntps", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_movntps, "movntps", state.modrm, state.reg);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_movntss, "movntss", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT);
+                    return makeInstruction(state, x86_movntss, "movntss", state.modrm, state.reg);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_movntpd, "movntpd", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_movntpd, "movntpd", state.modrm, state.reg);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    return makeInstruction(x86_movntsd, "movntsd", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    return makeInstruction(state, x86_movntsd, "movntsd", state.modrm, state.reg);
             }
         }
         case 0x2C: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmXMM, V4FLOATT, V2DWORDT);
-                    return makeInstruction(x86_cvttps2pi, "cvttps2pi", reg, modrm);
+                    getModRegRM(state, rmMM, rmXMM, V4FLOATT, V2DWORDT);
+                    return makeInstruction(state, x86_cvttps2pi, "cvttps2pi", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(effectiveOperandMode(), rmXMM, FLOATT, effectiveOperandType());
-                    return makeInstruction(x86_cvttss2si, "cvttss2si", reg, modrm);
+                    getModRegRM(state, effectiveOperandMode(state), rmXMM, FLOATT, effectiveOperandType(state));
+                    return makeInstruction(state, x86_cvttss2si, "cvttss2si", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmMM, rmXMM, V2DOUBLET, V2DWORDT);
-                    return makeInstruction(x86_cvttpd2pi, "cvttpd2pi", reg, modrm);
+                    getModRegRM(state, rmMM, rmXMM, V2DOUBLET, V2DWORDT);
+                    return makeInstruction(state, x86_cvttpd2pi, "cvttpd2pi", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(effectiveOperandMode(), rmXMM, DOUBLET, effectiveOperandType());
-                    return makeInstruction(x86_cvttsd2si, "cvttsd2si", reg, modrm);
+                    getModRegRM(state, effectiveOperandMode(state), rmXMM, DOUBLET, effectiveOperandType(state));
+                    return makeInstruction(state, x86_cvttsd2si, "cvttsd2si", state.reg, state.modrm);
             }
         }
         case 0x2D: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmXMM, V4FLOATT, V2DWORDT);
-                    return makeInstruction(x86_cvtps2pi, "cvtps2pi", reg, modrm);
+                    getModRegRM(state, rmMM, rmXMM, V4FLOATT, V2DWORDT);
+                    return makeInstruction(state, x86_cvtps2pi, "cvtps2pi", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(effectiveOperandMode(), rmXMM, V4FLOATT, effectiveOperandType());
-                    return makeInstruction(x86_cvtss2si, "cvtss2si", reg, modrm);
+                    getModRegRM(state, effectiveOperandMode(state), rmXMM, V4FLOATT, effectiveOperandType(state));
+                    return makeInstruction(state, x86_cvtss2si, "cvtss2si", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmMM, rmXMM, V2DOUBLET, V2DWORDT);
-                    return makeInstruction(x86_cvtpd2pi, "cvtpd2pi", reg, modrm);
+                    getModRegRM(state, rmMM, rmXMM, V2DOUBLET, V2DWORDT);
+                    return makeInstruction(state, x86_cvtpd2pi, "cvtpd2pi", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(effectiveOperandMode(), rmXMM, V2DOUBLET, effectiveOperandType());
-                    return makeInstruction(x86_cvtsd2si, "cvtsd2si", reg, modrm);
+                    getModRegRM(state, effectiveOperandMode(state), rmXMM, V2DOUBLET, effectiveOperandType(state));
+                    return makeInstruction(state, x86_cvtsd2si, "cvtsd2si", state.reg, state.modrm);
             }
         }
         case 0x2E: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_ucomiss, "ucomiss", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT);
+                    return makeInstruction(state, x86_ucomiss, "ucomiss", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f2e", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f2e", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    return makeInstruction(x86_ucomisd, "ucomisd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    return makeInstruction(state, x86_ucomisd, "ucomisd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f2e", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f2e", state);
             }
         }
         case 0x2F: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_comiss, "comiss", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT);
+                    return makeInstruction(state, x86_comiss, "comiss", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f2f", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f2f", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    return makeInstruction(x86_comisd, "comisd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    return makeInstruction(state, x86_comisd, "comisd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f2f", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f2f", state);
             }
         }
         case 0x30:
-            return makeInstruction(x86_wrmsr, "wrmsr");
+            return makeInstruction(state, x86_wrmsr, "wrmsr");
         case 0x31:
-            return makeInstruction(x86_rdtsc, "rdtsc");
+            return makeInstruction(state, x86_rdtsc, "rdtsc");
         case 0x32:
-            return makeInstruction(x86_rdmsr, "rdmsr");
+            return makeInstruction(state, x86_rdmsr, "rdmsr");
         case 0x33:
-            return makeInstruction(x86_rdpmc, "rdpmc");
+            return makeInstruction(state, x86_rdpmc, "rdpmc");
         case 0x34:
-            not64();
-            return makeInstruction(x86_sysenter, "sysenter");
+            not64(state);
+            return makeInstruction(state, x86_sysenter, "sysenter");
         case 0x35:
-            not64();
-            return makeInstruction(x86_sysexit, "sysexit");
+            not64(state);
+            return makeInstruction(state, x86_sysexit, "sysexit");
         case 0x36:
-            throw ExceptionX86("bad opcode 0x0f36", this);
+            throw ExceptionX86("bad opcode 0x0f36", state);
         case 0x37:
-            return makeInstruction(x86_getsec, "getsec");
+            return makeInstruction(state, x86_getsec, "getsec");
         case 0x38:
-            decodeOpcode0F38(); /*SSSE3*/
+            decodeOpcode0F38(state); /*SSSE3*/
         case 0x39:
-            throw ExceptionX86("bad opcode 0x0f39", this);
+            throw ExceptionX86("bad opcode 0x0f39", state);
         case 0x3A: {
             /* more SSE3? should this be in a decodeOpcode0F3A() instead? */
-            uint8_t thirdOpcodeByte = getByte();
+            uint8_t thirdOpcodeByte = getByte(state);
             switch (thirdOpcodeByte) {
                 case 0x0F: { /* palignr */
                     SgAsmExpression* shiftAmount;
-                    switch (mmPrefix()) {
-                        /* Note that getModRegRM sets the states reg and modrm. Also, standard prefixed used in the manual,
+                    switch (mmPrefix(state)) {
+                        /* Note that getModRegRM sets the states state.reg and modrm. Also, standard prefixed used in the manual,
                          * "mm" refers to "mmx" registers and "xmm" refers to "sse" registers. */
                         case mmNone:
-                            getModRegRM(rmMM, rmMM, QWORDT);
-                            shiftAmount = getImmByte();
-                            return makeInstruction(x86_palignr, "palignr", reg, modrm, shiftAmount);
+                            getModRegRM(state, rmMM, rmMM, QWORDT);
+                            shiftAmount = getImmByte(state);
+                            return makeInstruction(state, x86_palignr, "palignr", state.reg, state.modrm, shiftAmount);
                         case mmF3:
-                            throw ExceptionX86("bad mm prefix F3 for opcode 0x0f3a0f", this);
+                            throw ExceptionX86("bad mm prefix F3 for opcode 0x0f3a0f", state);
                         case mm66:
-                            getModRegRM(rmXMM, rmXMM, DQWORDT);
-                            shiftAmount = getImmByte();
-                            return makeInstruction(x86_palignr, "palignr", reg, modrm, shiftAmount);
+                            getModRegRM(state, rmXMM, rmXMM, DQWORDT);
+                            shiftAmount = getImmByte(state);
+                            return makeInstruction(state, x86_palignr, "palignr", state.reg, state.modrm, shiftAmount);
                         case mmF2:
-                            throw ExceptionX86("bad mm prefix F2 for opcode 0x0f3a0f", this);
+                            throw ExceptionX86("bad mm prefix F2 for opcode 0x0f3a0f", state);
                     }
                 }
                 default: {
                     char opcodestr[16];
                     sprintf(opcodestr, "0x0f3a%02x", thirdOpcodeByte);
-                    throw ExceptionX86(std::string("bad or unimplemented opcode ")+opcodestr, this);
+                    throw ExceptionX86(std::string("bad or unimplemented opcode ")+opcodestr, state);
                 }
             }
         }
         case 0x3B:
-            throw ExceptionX86("bad opcode 0x0f3b", this);
+            throw ExceptionX86("bad opcode 0x0f3b", state);
         case 0x3C:
-            throw ExceptionX86("bad opcode 0x0f3c", this);
+            throw ExceptionX86("bad opcode 0x0f3c", state);
         case 0x3D:
-            throw ExceptionX86("bad opcode 0x0f3d", this);
+            throw ExceptionX86("bad opcode 0x0f3d", state);
         case 0x3E:
-            throw ExceptionX86("bad opcode 0x0f3e", this);
+            throw ExceptionX86("bad opcode 0x0f3e", state);
         case 0x3F:
-            throw ExceptionX86("bad opcode 0x0f3f", this);
+            throw ExceptionX86("bad opcode 0x0f3f", state);
         case 0x40:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmovo, "cmovo", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmovo, "cmovo", state.reg, state.modrm);
         case 0x41:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmovno, "cmovno", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmovno, "cmovno", state.reg, state.modrm);
         case 0x42:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmovb, "cmovb", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmovb, "cmovb", state.reg, state.modrm);
         case 0x43:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmovae, "cmovae", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmovae, "cmovae", state.reg, state.modrm);
         case 0x44:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmove, "cmove", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmove, "cmove", state.reg, state.modrm);
         case 0x45:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmovne, "cmovne", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmovne, "cmovne", state.reg, state.modrm);
         case 0x46:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmovbe, "cmovbe", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmovbe, "cmovbe", state.reg, state.modrm);
         case 0x47:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmova, "cmova", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmova, "cmova", state.reg, state.modrm);
         case 0x48:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmovs, "cmovs", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmovs, "cmovs", state.reg, state.modrm);
         case 0x49:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmovns, "cmovns", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmovns, "cmovns", state.reg, state.modrm);
         case 0x4A:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmovpe, "cmovpe", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmovpe, "cmovpe", state.reg, state.modrm);
         case 0x4B:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmovpo, "cmovpo", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmovpo, "cmovpo", state.reg, state.modrm);
         case 0x4C:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmovl, "cmovl", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmovl, "cmovl", state.reg, state.modrm);
         case 0x4D:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmovge, "cmovge", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmovge, "cmovge", state.reg, state.modrm);
         case 0x4E:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmovle, "cmovle", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmovle, "cmovle", state.reg, state.modrm);
         case 0x4F:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmovg, "cmovg", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmovg, "cmovg", state.reg, state.modrm);
         case 0x50: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmDWord, rmXMM, V4FLOATT);
-                    if (modeField == 3) {
-                        return makeInstruction(x86_movmskps, "movmskps", reg, modrm);
+                    getModRegRM(state, rmDWord, rmXMM, V4FLOATT);
+                    if (state.modeField == 3) {
+                        return makeInstruction(state, x86_movmskps, "movmskps", state.reg, state.modrm);
                     } else {
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f50", this);
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f50", state);
                     }
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f50", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f50", state);
                 case mm66:
-                    getModRegRM(rmDWord, rmXMM, V2DOUBLET);
-                    if (modeField == 3) {
-                        return makeInstruction(x86_movmskpd, "movmskpd", reg, modrm);
+                    getModRegRM(state, rmDWord, rmXMM, V2DOUBLET);
+                    if (state.modeField == 3) {
+                        return makeInstruction(state, x86_movmskpd, "movmskpd", state.reg, state.modrm);
                     } else {
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f50", this);
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f50", state);
                     }
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f50", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f50", state);
             }
         }
         case 0x51: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_sqrtps, "sqrtps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_sqrtps, "sqrtps", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_sqrtss, "sqrtss", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT);
+                    return makeInstruction(state, x86_sqrtss, "sqrtss", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_sqrtpd, "sqrtpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_sqrtpd, "sqrtpd", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    return makeInstruction(x86_sqrtsd, "sqrtsd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    return makeInstruction(state, x86_sqrtsd, "sqrtsd", state.reg, state.modrm);
             }
         }
         case 0x52: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_rsqrtps, "rsqrtps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_rsqrtps, "rsqrtps", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_rsqrtss, "rsqrtss", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT);
+                    return makeInstruction(state, x86_rsqrtss, "rsqrtss", state.reg, state.modrm);
                 case mm66:
-                    throw ExceptionX86("bad mm prefix 66 for opcode 0x0f52", this);
+                    throw ExceptionX86("bad mm prefix 66 for opcode 0x0f52", state);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f52", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f52", state);
             }
         }
         case 0x53: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_rcpps, "rcpps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_rcpps, "rcpps", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_rcpss, "rcpss", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT);
+                    return makeInstruction(state, x86_rcpss, "rcpss", state.reg, state.modrm);
                 case mm66:
-                    throw ExceptionX86("bad mm prefix 66 for opcode 0x0f53", this);
+                    throw ExceptionX86("bad mm prefix 66 for opcode 0x0f53", state);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f53", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f53", state);
             }
         }
         case 0x54: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_andps, "andps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_andps, "andps", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f54", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f54", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_andpd, "andpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_andpd, "andpd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f54", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f54", state);
             }
         }
         case 0x55: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_andnps, "andnps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_andnps, "andnps", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f55", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f55", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_andnpd, "andnpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_andnpd, "andnpd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f55", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f55", state);
             }
         }
         case 0x56: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_orps, "orps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_orps, "orps", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f56", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f56", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_orpd, "orpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_orpd, "orpd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f56", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f56", state);
             }
         }
         case 0x57: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_xorps, "xorps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_xorps, "xorps", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f57", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f57", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_xorpd, "xorpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_xorpd, "xorpd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f57", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f57", state);
             }
         }
         case 0x58: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_addps, "addps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_addps, "addps", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_addss, "addss", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT);
+                    return makeInstruction(state, x86_addss, "addss", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_addpd, "addpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_addpd, "addpd", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    return makeInstruction(x86_addsd, "addsd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    return makeInstruction(state, x86_addsd, "addsd", state.reg, state.modrm);
             }
         }
         case 0x59: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_mulps, "mulps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_mulps, "mulps", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_mulss, "mulss", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT);
+                    return makeInstruction(state, x86_mulss, "mulss", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_mulpd, "mulpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_mulpd, "mulpd", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    return makeInstruction(x86_mulsd, "mulsd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    return makeInstruction(state, x86_mulsd, "mulsd", state.reg, state.modrm);
             }
         }
         case 0x5A: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT, V2DOUBLET);
-                    return makeInstruction(x86_cvtps2pd, "cvtps2pd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT, V2DOUBLET);
+                    return makeInstruction(state, x86_cvtps2pd, "cvtps2pd", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, FLOATT, V2DOUBLET);
-                    return makeInstruction(x86_cvtss2sd, "cvtss2sd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT, V2DOUBLET);
+                    return makeInstruction(state, x86_cvtss2sd, "cvtss2sd", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET, V4FLOATT);
-                    return makeInstruction(x86_cvtpd2ps, "cvtpd2ps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET, V4FLOATT);
+                    return makeInstruction(state, x86_cvtpd2ps, "cvtpd2ps", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET, V4FLOATT);
-                    return makeInstruction(x86_cvtsd2ss, "cvtsd2ss", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET, V4FLOATT);
+                    return makeInstruction(state, x86_cvtsd2ss, "cvtsd2ss", state.reg, state.modrm);
             }
         }
         case 0x5B: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4DWORDT, V4FLOATT);
-                    return makeInstruction(x86_cvtdq2ps, "cvtdq2ps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4DWORDT, V4FLOATT);
+                    return makeInstruction(state, x86_cvtdq2ps, "cvtdq2ps", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT, V4DWORDT);
-                    return makeInstruction(x86_cvttps2dq, "cvttps2dq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT, V4DWORDT);
+                    return makeInstruction(state, x86_cvttps2dq, "cvttps2dq", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT, V4DWORDT);
-                    return makeInstruction(x86_cvtps2dq, "cvtps2dq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT, V4DWORDT);
+                    return makeInstruction(state, x86_cvtps2dq, "cvtps2dq", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f5b", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f5b", state);
             }
         }
         case 0x5C: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_subps, "subps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_subps, "subps", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_subss, "subss", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT);
+                    return makeInstruction(state, x86_subss, "subss", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_subpd, "subpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_subpd, "subpd", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    return makeInstruction(x86_subsd, "subsd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    return makeInstruction(state, x86_subsd, "subsd", state.reg, state.modrm);
             }
         }
         case 0x5D: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_minps, "minps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_minps, "minps", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_minss, "minss", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT);
+                    return makeInstruction(state, x86_minss, "minss", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_minpd, "minpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_minpd, "minpd", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    return makeInstruction(x86_minsd, "minsd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    return makeInstruction(state, x86_minsd, "minsd", state.reg, state.modrm);
             }
         }
         case 0x5E: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_divps, "divps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_divps, "divps", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_divss, "divss", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT);
+                    return makeInstruction(state, x86_divss, "divss", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_divpd, "divpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_divpd, "divpd", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    return makeInstruction(x86_divsd, "divsd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    return makeInstruction(state, x86_divsd, "divsd", state.reg, state.modrm);
             }
         }
         case 0x5F: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_maxps, "maxps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_maxps, "maxps", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_maxss, "maxss", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT);
+                    return makeInstruction(state, x86_maxss, "maxss", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_maxpd, "maxpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_maxpd, "maxpd", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    return makeInstruction(x86_maxsd, "maxsd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    return makeInstruction(state, x86_maxsd, "maxsd", state.reg, state.modrm);
             }
         }
         case 0x60: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V8BYTET, V4WORDT);
-                    return makeInstruction(x86_punpcklbw, "punpcklbw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V8BYTET, V4WORDT);
+                    return makeInstruction(state, x86_punpcklbw, "punpcklbw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f60", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f60", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V16BYTET, V8WORDT);
-                    return makeInstruction(x86_punpcklbw, "punpcklbw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V16BYTET, V8WORDT);
+                    return makeInstruction(state, x86_punpcklbw, "punpcklbw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f60", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f60", state);
             }
         }
         case 0x61: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT, V2DWORDT);
-                    return makeInstruction(x86_punpcklwd, "punpcklwd", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT, V2DWORDT);
+                    return makeInstruction(state, x86_punpcklwd, "punpcklwd", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f61", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f61", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT, V4DWORDT);
-                    return makeInstruction(x86_punpcklwd, "punpcklwd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT, V4DWORDT);
+                    return makeInstruction(state, x86_punpcklwd, "punpcklwd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f61", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f61", state);
             }
         }
         case 0x62: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V2DWORDT, QWORDT);
-                    return makeInstruction(x86_punpckldq, "punpckldq", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V2DWORDT, QWORDT);
+                    return makeInstruction(state, x86_punpckldq, "punpckldq", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f62", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f62", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V4DWORDT, V2QWORDT);
-                    return makeInstruction(x86_punpckldq, "punpckldq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4DWORDT, V2QWORDT);
+                    return makeInstruction(state, x86_punpckldq, "punpckldq", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f62", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f62", state);
             }
         }
         case 0x63: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT, V8BYTET);
-                    return makeInstruction(x86_packsswb, "packsswb", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT, V8BYTET);
+                    return makeInstruction(state, x86_packsswb, "packsswb", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f63", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f63", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT, V16BYTET);
-                    return makeInstruction(x86_packsswb, "packsswb", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT, V16BYTET);
+                    return makeInstruction(state, x86_packsswb, "packsswb", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f63", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f63", state);
             }
         }
         case 0x64: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V8BYTET);
-                    return makeInstruction(x86_pcmpgtb, "pcmpgtb", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V8BYTET);
+                    return makeInstruction(state, x86_pcmpgtb, "pcmpgtb", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f64", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f64", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V16BYTET);
-                    return makeInstruction(x86_pcmpgtb, "pcmpgtb", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V16BYTET);
+                    return makeInstruction(state, x86_pcmpgtb, "pcmpgtb", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f64", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f64", state);
             }
         }
         case 0x65: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_pcmpgtw, "pcmpgtw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_pcmpgtw, "pcmpgtw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f65", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f65", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_pcmpgtw, "pcmpgtw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_pcmpgtw, "pcmpgtw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f65", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f65", state);
             }
         }
         case 0x66: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V2DWORDT);
-                    return makeInstruction(x86_pcmpgtd, "pcmpgtd", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V2DWORDT);
+                    return makeInstruction(state, x86_pcmpgtd, "pcmpgtd", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f66", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f66", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V4DWORDT);
-                    return makeInstruction(x86_pcmpgtd, "pcmpgtd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4DWORDT);
+                    return makeInstruction(state, x86_pcmpgtd, "pcmpgtd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f66", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f66", state);
             }
         }
         case 0x67: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT, V8BYTET);
-                    return makeInstruction(x86_packuswb, "packuswb", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT, V8BYTET);
+                    return makeInstruction(state, x86_packuswb, "packuswb", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f67", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f67", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT, V16BYTET);
-                    return makeInstruction(x86_packuswb, "packuswb", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT, V16BYTET);
+                    return makeInstruction(state, x86_packuswb, "packuswb", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f67", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f67", state);
             }
         }
         case 0x68: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V8BYTET, V4WORDT);
-                    return makeInstruction(x86_punpckhbw, "punpckhbw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V8BYTET, V4WORDT);
+                    return makeInstruction(state, x86_punpckhbw, "punpckhbw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f68", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f68", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V16BYTET, V8WORDT);
-                    return makeInstruction(x86_punpckhbw, "punpckhbw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V16BYTET, V8WORDT);
+                    return makeInstruction(state, x86_punpckhbw, "punpckhbw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f68", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f68", state);
             }
         }
         case 0x69: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT, V2DWORDT);
-                    return makeInstruction(x86_punpckhwd, "punpckhwd", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT, V2DWORDT);
+                    return makeInstruction(state, x86_punpckhwd, "punpckhwd", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f69", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f69", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT, V4DWORDT);
-                    return makeInstruction(x86_punpckhwd, "punpckhwd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT, V4DWORDT);
+                    return makeInstruction(state, x86_punpckhwd, "punpckhwd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f69", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f69", state);
             }
         }
         case 0x6A: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V2DWORDT, QWORDT);
-                    return makeInstruction(x86_punpckhdq, "punpckhdq", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V2DWORDT, QWORDT);
+                    return makeInstruction(state, x86_punpckhdq, "punpckhdq", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f6a", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f6a", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V4DWORDT, V2QWORDT);
-                    return makeInstruction(x86_punpckhdq, "punpckhdq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4DWORDT, V2QWORDT);
+                    return makeInstruction(state, x86_punpckhdq, "punpckhdq", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6a", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6a", state);
             }
         }
         case 0x6B: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V2DWORDT, V4WORDT);
-                    return makeInstruction(x86_packssdw, "packssdw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V2DWORDT, V4WORDT);
+                    return makeInstruction(state, x86_packssdw, "packssdw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f6b", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f6b", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V4DWORDT, V8WORDT);
-                    return makeInstruction(x86_packssdw, "packssdw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4DWORDT, V8WORDT);
+                    return makeInstruction(state, x86_packssdw, "packssdw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6b", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6b", state);
             }
         }
         case 0x6C: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    throw ExceptionX86("bad mm prefix None for opcode 0x0f6c", this);
+                    throw ExceptionX86("bad mm prefix None for opcode 0x0f6c", state);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f6c", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f6c", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2QWORDT, DQWORDT);
-                    return makeInstruction(x86_punpcklqdq, "punpcklqdq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2QWORDT, DQWORDT);
+                    return makeInstruction(state, x86_punpcklqdq, "punpcklqdq", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6c", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6c", state);
             }
         }
         case 0x6D: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    throw ExceptionX86("bad mm prefix None for opcode 0x0f6d", this);
+                    throw ExceptionX86("bad mm prefix None for opcode 0x0f6d", state);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f6d", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f6d", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2QWORDT, DQWORDT);
-                    return makeInstruction(x86_punpckhqdq, "punpckhqdq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2QWORDT, DQWORDT);
+                    return makeInstruction(state, x86_punpckhqdq, "punpckhqdq", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6d", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6d", state);
             }
         }
         case 0x6E: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    if (effectiveOperandSize()==x86_insnsize_64) {
-                        getModRegRM(rmMM, effectiveOperandMode(), effectiveOperandType(), QWORDT);
-                        return makeInstruction(x86_movq, "movq", reg, modrm);
+                    if (effectiveOperandSize(state)==x86_insnsize_64) {
+                        getModRegRM(state, rmMM, effectiveOperandMode(state), effectiveOperandType(state), QWORDT);
+                        return makeInstruction(state, x86_movq, "movq", state.reg, state.modrm);
                     } else {
-                        getModRegRM(rmMM, effectiveOperandMode(), effectiveOperandType(), V2DWORDT);
-                        return makeInstruction(x86_movd, "movd", reg, modrm);
+                        getModRegRM(state, rmMM, effectiveOperandMode(state), effectiveOperandType(state), V2DWORDT);
+                        return makeInstruction(state, x86_movd, "movd", state.reg, state.modrm);
                     }
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f6e", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f6e", state);
                 case mm66:
                     /* 0x66 is part of the opcode rather than an operand size override and used to distinguish between mm and
                      * xmm registers. The operands are 32 bits unless the REX.W bit is set, in which case they're 64 bits. */
-                    operandSizeOverride = false;
-                    if (effectiveOperandSize()==x86_insnsize_64) {
-                        getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), V2QWORDT);
-                        return makeInstruction(x86_movq, "movq", reg, modrm);
+                    state.operandSizeOverride = false;
+                    if (effectiveOperandSize(state)==x86_insnsize_64) {
+                        getModRegRM(state, rmXMM, effectiveOperandMode(state), effectiveOperandType(state), V2QWORDT);
+                        return makeInstruction(state, x86_movq, "movq", state.reg, state.modrm);
                     } else {
-                        getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), V4DWORDT);
-                        return makeInstruction(x86_movd, "movd", reg, modrm);
+                        getModRegRM(state, rmXMM, effectiveOperandMode(state), effectiveOperandType(state), V4DWORDT);
+                        return makeInstruction(state, x86_movd, "movd", state.reg, state.modrm);
                     }
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6e", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6e", state);
             }
         }
         case 0x6F: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, QWORDT);
-                    return makeInstruction(x86_movq, "movq", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, QWORDT);
+                    return makeInstruction(state, x86_movq, "movq", state.reg, state.modrm);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, DQWORDT);
-                    return makeInstruction(x86_movdqu, "movdqu", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DQWORDT);
+                    return makeInstruction(state, x86_movdqu, "movdqu", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DQWORDT);
-                    return makeInstruction(x86_movdqa, "movdqa", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DQWORDT);
+                    return makeInstruction(state, x86_movdqa, "movdqa", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6f", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6f", state);
             }
         }
         case 0x70: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone: {
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    SgAsmExpression* shufConstant = getImmByte();
-                    return makeInstruction(x86_pshufw, "pshufw", reg, modrm, shufConstant);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    SgAsmExpression* shufConstant = getImmByte(state);
+                    return makeInstruction(state, x86_pshufw, "pshufw", state.reg, state.modrm, shufConstant);
                 }
                 case mmF3: {
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    SgAsmExpression* shufConstant = getImmByte();
-                    return makeInstruction(x86_pshufhw, "pshufhw", reg, modrm, shufConstant);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    SgAsmExpression* shufConstant = getImmByte(state);
+                    return makeInstruction(state, x86_pshufhw, "pshufhw", state.reg, state.modrm, shufConstant);
                 }
                 case mm66: {
-                    getModRegRM(rmXMM, rmXMM, V4DWORDT);
-                    SgAsmExpression* shufConstant = getImmByte();
-                    return makeInstruction(x86_pshufd, "pshufd", reg, modrm, shufConstant);
+                    getModRegRM(state, rmXMM, rmXMM, V4DWORDT);
+                    SgAsmExpression* shufConstant = getImmByte(state);
+                    return makeInstruction(state, x86_pshufd, "pshufd", state.reg, state.modrm, shufConstant);
                 }
                 case mmF2: {
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    SgAsmExpression* shufConstant = getImmByte();
-                    return makeInstruction(x86_pshuflw, "pshuflw", reg, modrm, shufConstant);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    SgAsmExpression* shufConstant = getImmByte(state);
+                    return makeInstruction(state, x86_pshuflw, "pshuflw", state.reg, state.modrm, shufConstant);
                 }
             }
         }
         case 0x71: {
             /* Group 12 */
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone: {
-                    getModRegRM(rmReturnNull, rmMM, V4WORDT);
-                    if (modeField != 3)
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
-                    SgAsmExpression* shiftAmount = getImmByte();
-                    switch (regField) {
-                        case 0: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
-                        case 1: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
-                        case 2: return makeInstruction(x86_psrlw, "psrlw", modrm, shiftAmount);
-                        case 3: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
-                        case 4: return makeInstruction(x86_psraw, "psraw", modrm, shiftAmount);
-                        case 5: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
-                        case 6: return makeInstruction(x86_psllw, "psllw", modrm, shiftAmount);
-                        case 7: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
-                        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+                    getModRegRM(state, rmReturnNull, rmMM, V4WORDT);
+                    if (state.modeField != 3)
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", state);
+                    SgAsmExpression* shiftAmount = getImmByte(state);
+                    switch (state.regField) {
+                        case 0: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", state);
+                        case 1: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", state);
+                        case 2: return makeInstruction(state, x86_psrlw, "psrlw", state.modrm, shiftAmount);
+                        case 3: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", state);
+                        case 4: return makeInstruction(state, x86_psraw, "psraw", state.modrm, shiftAmount);
+                        case 5: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", state);
+                        case 6: return makeInstruction(state, x86_psllw, "psllw", state.modrm, shiftAmount);
+                        case 7: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", state);
+                        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
                     }
                 }
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f71", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f71", state);
                 case mm66: {
-                    getModRegRM(rmReturnNull, rmXMM, V8WORDT);
-                    if (modeField != 3)
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
-                    SgAsmExpression* shiftAmount = getImmByte();
-                    switch (regField) {
-                        case 0: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
-                        case 1: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
-                        case 2: return makeInstruction(x86_psrlw, "psrlw", modrm, shiftAmount);
-                        case 3: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
-                        case 4: return makeInstruction(x86_psraw, "psraw", modrm, shiftAmount);
-                        case 5: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
-                        case 6: return makeInstruction(x86_psllw, "psllw", modrm, shiftAmount);
-                        case 7: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
-                        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+                    getModRegRM(state, rmReturnNull, rmXMM, V8WORDT);
+                    if (state.modeField != 3)
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", state);
+                    SgAsmExpression* shiftAmount = getImmByte(state);
+                    switch (state.regField) {
+                        case 0: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", state);
+                        case 1: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", state);
+                        case 2: return makeInstruction(state, x86_psrlw, "psrlw", state.modrm, shiftAmount);
+                        case 3: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", state);
+                        case 4: return makeInstruction(state, x86_psraw, "psraw", state.modrm, shiftAmount);
+                        case 5: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", state);
+                        case 6: return makeInstruction(state, x86_psllw, "psllw", state.modrm, shiftAmount);
+                        case 7: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", state);
+                        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
                     }
                 }
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f71", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f71", state);
             }
         }
         case 0x72: {
             /* Group 13 */
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone: {
-                    getModRegRM(rmReturnNull, rmMM, V2DWORDT);
-                    if (modeField != 3)
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
-                    SgAsmExpression* shiftAmount = getImmByte();
-                    switch (regField) {
-                        case 0: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
-                        case 1: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
-                        case 2: return makeInstruction(x86_psrld, "psrld", modrm, shiftAmount);
-                        case 3: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
-                        case 4: return makeInstruction(x86_psrad, "psrad", modrm, shiftAmount);
-                        case 5: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
-                        case 6: return makeInstruction(x86_pslld, "pslld", modrm, shiftAmount);
-                        case 7: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
-                        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+                    getModRegRM(state, rmReturnNull, rmMM, V2DWORDT);
+                    if (state.modeField != 3)
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", state);
+                    SgAsmExpression* shiftAmount = getImmByte(state);
+                    switch (state.regField) {
+                        case 0: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", state);
+                        case 1: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", state);
+                        case 2: return makeInstruction(state, x86_psrld, "psrld", state.modrm, shiftAmount);
+                        case 3: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", state);
+                        case 4: return makeInstruction(state, x86_psrad, "psrad", state.modrm, shiftAmount);
+                        case 5: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", state);
+                        case 6: return makeInstruction(state, x86_pslld, "pslld", state.modrm, shiftAmount);
+                        case 7: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", state);
+                        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
                     }
                 }
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f72", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f72", state);
                 case mm66: {
-                    getModRegRM(rmReturnNull, rmXMM, V4DWORDT);
-                    if (modeField != 3)
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
-                    SgAsmExpression* shiftAmount = getImmByte();
-                    switch (regField) {
-                        case 0: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
-                        case 1: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
-                        case 2: return makeInstruction(x86_psrld, "psrld", modrm, shiftAmount);
-                        case 3: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
-                        case 4: return makeInstruction(x86_psrad, "psrad", modrm, shiftAmount);
-                        case 5: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
-                        case 6: return makeInstruction(x86_pslld, "pslld", modrm, shiftAmount);
-                        case 7: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
-                        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+                    getModRegRM(state, rmReturnNull, rmXMM, V4DWORDT);
+                    if (state.modeField != 3)
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", state);
+                    SgAsmExpression* shiftAmount = getImmByte(state);
+                    switch (state.regField) {
+                        case 0: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", state);
+                        case 1: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", state);
+                        case 2: return makeInstruction(state, x86_psrld, "psrld", state.modrm, shiftAmount);
+                        case 3: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", state);
+                        case 4: return makeInstruction(state, x86_psrad, "psrad", state.modrm, shiftAmount);
+                        case 5: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", state);
+                        case 6: return makeInstruction(state, x86_pslld, "pslld", state.modrm, shiftAmount);
+                        case 7: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", state);
+                        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
                     }
                 }
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f72", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f72", state);
             }
         }
         case 0x73: {
             /* Group 14 */
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone: {
-                    getModRegRM(rmReturnNull, rmMM, QWORDT);
-                    if (modeField != 3)
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", this);
-                    SgAsmExpression* shiftAmount = getImmByte();
-                    switch (regField) {
-                        case 0: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", this);
-                        case 1: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", this);
-                        case 2: return makeInstruction(x86_psrlq, "psrlq", modrm, shiftAmount);
-                        case 3: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", this);
-                        case 4: return makeInstruction(x86_psraq, "psraq", modrm, shiftAmount);
-                        case 5: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", this);
-                        case 6: return makeInstruction(x86_psllq, "psllq", modrm, shiftAmount);
-                        case 7: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", this);
-                        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+                    getModRegRM(state, rmReturnNull, rmMM, QWORDT);
+                    if (state.modeField != 3)
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", state);
+                    SgAsmExpression* shiftAmount = getImmByte(state);
+                    switch (state.regField) {
+                        case 0: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", state);
+                        case 1: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", state);
+                        case 2: return makeInstruction(state, x86_psrlq, "psrlq", state.modrm, shiftAmount);
+                        case 3: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", state);
+                        case 4: return makeInstruction(state, x86_psraq, "psraq", state.modrm, shiftAmount);
+                        case 5: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", state);
+                        case 6: return makeInstruction(state, x86_psllq, "psllq", state.modrm, shiftAmount);
+                        case 7: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", state);
+                        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
                     }
                 }
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f73", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f73", state);
                 case mm66: {
-                    getModRegRM(rmReturnNull, rmXMM, V2QWORDT);
-                    if (modeField != 3)
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", this);
-                    SgAsmExpression* shiftAmount = getImmByte();
-                    switch (regField) {
+                    getModRegRM(state, rmReturnNull, rmXMM, V2QWORDT);
+                    if (state.modeField != 3)
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", state);
+                    SgAsmExpression* shiftAmount = getImmByte(state);
+                    switch (state.regField) {
                         case 0:
-                            throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", this);
+                            throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", state);
                         case 1:
-                            throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", this);
+                            throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", state);
                         case 2:
-                            return makeInstruction(x86_psrlq, "psrlq", modrm, shiftAmount);
+                            return makeInstruction(state, x86_psrlq, "psrlq", state.modrm, shiftAmount);
                         case 3:
-                            isSgAsmRegisterReferenceExpression(modrm)->set_type(DQWORDT);
-                            return makeInstruction(x86_psrldq, "psrldq", modrm, shiftAmount);
+                            isSgAsmRegisterReferenceExpression(state.modrm)->set_type(DQWORDT);
+                            return makeInstruction(state, x86_psrldq, "psrldq", state.modrm, shiftAmount);
                         case 4:
-                            throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", this);
+                            throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", state);
                         case 5:
-                            throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", this);
+                            throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", state);
                         case 6:
-                            return makeInstruction(x86_psllq, "psllq", modrm, shiftAmount);
+                            return makeInstruction(state, x86_psllq, "psllq", state.modrm, shiftAmount);
                         case 7:
-                            isSgAsmRegisterReferenceExpression(modrm)->set_type(DQWORDT);
-                            return makeInstruction(x86_pslldq, "pslldq", modrm, shiftAmount);
+                            isSgAsmRegisterReferenceExpression(state.modrm)->set_type(DQWORDT);
+                            return makeInstruction(state, x86_pslldq, "pslldq", state.modrm, shiftAmount);
                         default:
-                            ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+                            ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
                     }
                 }
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f73", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f73", state);
             }
         }
         case 0x74: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V8BYTET);
-                    return makeInstruction(x86_pcmpeqb, "pcmpeqb", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V8BYTET);
+                    return makeInstruction(state, x86_pcmpeqb, "pcmpeqb", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f74", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f74", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V16BYTET);
-                    return makeInstruction(x86_pcmpeqb, "pcmpeqb", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V16BYTET);
+                    return makeInstruction(state, x86_pcmpeqb, "pcmpeqb", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f74", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f74", state);
             }
         }
         case 0x75: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_pcmpeqw, "pcmpeqw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_pcmpeqw, "pcmpeqw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f75", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f75", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_pcmpeqw, "pcmpeqw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_pcmpeqw, "pcmpeqw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f75", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f75", state);
             }
         }
         case 0x76: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V2DWORDT);
-                    return makeInstruction(x86_pcmpeqd, "pcmpeqd", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V2DWORDT);
+                    return makeInstruction(state, x86_pcmpeqd, "pcmpeqd", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f76", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f76", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V4DWORDT);
-                    return makeInstruction(x86_pcmpeqd, "pcmpeqd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4DWORDT);
+                    return makeInstruction(state, x86_pcmpeqd, "pcmpeqd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f76", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f76", state);
             }
         }
         case 0x77: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    return makeInstruction(x86_emms, "emms");
+                    return makeInstruction(state, x86_emms, "emms");
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f77", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f77", state);
                 case mm66:
-                    throw ExceptionX86("bad mm prefix 66 for opcode 0x0f77", this);
+                    throw ExceptionX86("bad mm prefix 66 for opcode 0x0f77", state);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f77", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f77", state);
             }
         }
         case 0x78: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    throw ExceptionX86("vmread not supported", this);
+                    throw ExceptionX86("vmread not supported", state);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f78", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f78", state);
                 case mm66: {
                     /* Group 17 */
-                    getModRegRM(rmReturnNull, rmXMM, DQWORDT);
-                    SgAsmExpression* imm1 = getImmByte();
-                    SgAsmExpression* imm2 = getImmByte();
-                    switch (regField) {
+                    getModRegRM(state, rmReturnNull, rmXMM, DQWORDT);
+                    SgAsmExpression* imm1 = getImmByte(state);
+                    SgAsmExpression* imm2 = getImmByte(state);
+                    switch (state.regField) {
                         case 0:
-                            if (modeField == 3) {
-                                return makeInstruction(x86_extrq, "extrq", modrm, imm1, imm2);
+                            if (state.modeField == 3) {
+                                return makeInstruction(state, x86_extrq, "extrq", state.modrm, imm1, imm2);
                             } else {
-                                throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f78", this);
+                                throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f78", state);
                             }
                         default:
-                            throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f78", this);
+                            throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f78", state);
                     }
                 }
                 case mmF2: {
-                    getModRegRM(rmXMM, rmXMM, QWORDT, DQWORDT);
-                    SgAsmExpression* imm1 = getImmByte();
-                    SgAsmExpression* imm2 = getImmByte();
-                    if (modeField == 3) {
-                        return makeInstruction(x86_insertq, "insertq", reg, modrm, imm1, imm2);
+                    getModRegRM(state, rmXMM, rmXMM, QWORDT, DQWORDT);
+                    SgAsmExpression* imm1 = getImmByte(state);
+                    SgAsmExpression* imm2 = getImmByte(state);
+                    if (state.modeField == 3) {
+                        return makeInstruction(state, x86_insertq, "insertq", state.reg, state.modrm, imm1, imm2);
                     } else {
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f78", this);
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f78", state);
                     }
                 }
             }
         }
         case 0x79: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    throw ExceptionX86("vmwrite not supported", this);
+                    throw ExceptionX86("vmwrite not supported", state);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f79", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f79", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, QWORDT, DQWORDT);
-                    if (modeField == 3) {
-                        return makeInstruction(x86_extrq, "extrq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, QWORDT, DQWORDT);
+                    if (state.modeField == 3) {
+                        return makeInstruction(state, x86_extrq, "extrq", state.reg, state.modrm);
                     } else {
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f79", this);
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f79", state);
                     }
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, DQWORDT);
-                    if (modeField == 3) {
-                        return makeInstruction(x86_insertq, "insertq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DQWORDT);
+                    if (state.modeField == 3) {
+                        return makeInstruction(state, x86_insertq, "insertq", state.reg, state.modrm);
                     } else {
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f79", this);
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f79", state);
                     }
             }
         }
         case 0x7A:
-            throw ExceptionX86("bad opcode 0x0f7a", this);
+            throw ExceptionX86("bad opcode 0x0f7a", state);
         case 0x7B:
-            throw ExceptionX86("bad opcode 0x0f7b", this);
+            throw ExceptionX86("bad opcode 0x0f7b", state);
         case 0x7C: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    throw ExceptionX86("bad mm prefix None for opcode 0x0f7c", this);
+                    throw ExceptionX86("bad mm prefix None for opcode 0x0f7c", state);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f7c", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f7c", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_haddpd, "haddpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_haddpd, "haddpd", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_haddps, "haddps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_haddps, "haddps", state.reg, state.modrm);
             }
         }
         case 0x7D: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    throw ExceptionX86("bad mm prefix None for opcode 0x0f7d", this);
+                    throw ExceptionX86("bad mm prefix None for opcode 0x0f7d", state);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f7d", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f7d", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_hsubpd, "hsubpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_hsubpd, "hsubpd", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_hsubps, "hsubps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_hsubps, "hsubps", state.reg, state.modrm);
             }
         }
         case 0x7E: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    if (effectiveOperandSize()==x86_insnsize_64) {
-                        getModRegRM(rmMM, effectiveOperandMode(), effectiveOperandType(), QWORDT);
-                        return makeInstruction(x86_movq, "movq", modrm, reg);
+                    if (effectiveOperandSize(state)==x86_insnsize_64) {
+                        getModRegRM(state, rmMM, effectiveOperandMode(state), effectiveOperandType(state), QWORDT);
+                        return makeInstruction(state, x86_movq, "movq", state.modrm, state.reg);
                     } else {
-                        getModRegRM(rmMM, effectiveOperandMode(), effectiveOperandType(), V2DWORDT);
-                        return makeInstruction(x86_movd, "movd", modrm, reg);
+                        getModRegRM(state, rmMM, effectiveOperandMode(state), effectiveOperandType(state), V2DWORDT);
+                        return makeInstruction(state, x86_movd, "movd", state.modrm, state.reg);
                     }
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, V2QWORDT);
-                    return makeInstruction(x86_movq, "movq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2QWORDT);
+                    return makeInstruction(state, x86_movq, "movq", state.reg, state.modrm);
                 case mm66:
                     /* 0x66 is part of the opcode rather than an operand size override and used to distinguish between mm and
                      * xmm registers. The operands are 32 bits unless the REX.W bit is set, in which case they're 64 bits. */
-                    operandSizeOverride = false;
-                    if (effectiveOperandSize()==x86_insnsize_64) {
-                        getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), V2QWORDT);
-                        return makeInstruction(x86_movq, "movq", modrm, reg);
+                    state.operandSizeOverride = false;
+                    if (effectiveOperandSize(state)==x86_insnsize_64) {
+                        getModRegRM(state, rmXMM, effectiveOperandMode(state), effectiveOperandType(state), V2QWORDT);
+                        return makeInstruction(state, x86_movq, "movq", state.modrm, state.reg);
                     } else {
-                        getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), V4DWORDT);
-                        return makeInstruction(x86_movd, "movd", modrm, reg);
+                        getModRegRM(state, rmXMM, effectiveOperandMode(state), effectiveOperandType(state), V4DWORDT);
+                        return makeInstruction(state, x86_movd, "movd", state.modrm, state.reg);
                     }
                     
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f7e", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f7e", state);
             }
         }
         case 0x7F: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, QWORDT);
-                    return makeInstruction(x86_movq, "movq", modrm, reg);
+                    getModRegRM(state, rmMM, rmMM, QWORDT);
+                    return makeInstruction(state, x86_movq, "movq", state.modrm, state.reg);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, DQWORDT);
-                    return makeInstruction(x86_movdqu, "movdqu", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, DQWORDT);
+                    return makeInstruction(state, x86_movdqu, "movdqu", state.modrm, state.reg);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DQWORDT);
-                    return makeInstruction(x86_movdqa, "movdqa", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, DQWORDT);
+                    return makeInstruction(state, x86_movdqa, "movdqa", state.modrm, state.reg);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f7f", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f7f", state);
             }
         }
         case 0x80: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_jo, "jo", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_jo, "jo", imm);
         }
         case 0x81: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_jno, "jno", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_jno, "jno", imm);
         }
         case 0x82: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_jb, "jb", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_jb, "jb", imm);
         }
         case 0x83: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_jae, "jae", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_jae, "jae", imm);
         }
         case 0x84: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_je, "je", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_je, "je", imm);
         }
         case 0x85: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_jne, "jne", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_jne, "jne", imm);
         }
         case 0x86: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_jbe, "jbe", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_jbe, "jbe", imm);
         }
         case 0x87: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_ja, "ja", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_ja, "ja", imm);
         }
         case 0x88: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_js, "js", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_js, "js", imm);
         }
         case 0x89: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_jns, "jns", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_jns, "jns", imm);
         }
         case 0x8A: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_jpe, "jpe", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_jpe, "jpe", imm);
         }
         case 0x8B: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_jpo, "jpo", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_jpo, "jpo", imm);
         }
         case 0x8C: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_jl, "jl", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_jl, "jl", imm);
         }
         case 0x8D: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_jge, "jge", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_jge, "jge", imm);
         }
         case 0x8E: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_jle, "jle", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_jle, "jle", imm);
         }
         case 0x8F: {
-            SgAsmExpression* imm = getImmJz();
-            branchPredictionEnabled = true;
-            return makeInstruction(x86_jg, "jg", imm);
+            SgAsmExpression* imm = getImmJz(state);
+            state.branchPredictionEnabled = true;
+            return makeInstruction(state, x86_jg, "jg", imm);
         }
         case 0x90:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_seto, "seto", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_seto, "seto", state.modrm);
         case 0x91:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_setno, "setno", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_setno, "setno", state.modrm);
         case 0x92:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_setb, "setb", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_setb, "setb", state.modrm);
         case 0x93:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_setae, "setae", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_setae, "setae", state.modrm);
         case 0x94:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_sete, "sete", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_sete, "sete", state.modrm);
         case 0x95:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_setne, "setne", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_setne, "setne", state.modrm);
         case 0x96:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_setbe, "setbe", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_setbe, "setbe", state.modrm);
         case 0x97:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_seta, "seta", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_seta, "seta", state.modrm);
         case 0x98:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_sets, "sets", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_sets, "sets", state.modrm);
         case 0x99:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_setns, "setns", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_setns, "setns", state.modrm);
         case 0x9A:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_setpe, "setpe", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_setpe, "setpe", state.modrm);
         case 0x9B:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_setpo, "setpo", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_setpo, "setpo", state.modrm);
         case 0x9C:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_setl, "setl", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_setl, "setl", state.modrm);
         case 0x9D:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_setge, "setge", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_setge, "setge", state.modrm);
         case 0x9E:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_setle, "setle", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_setle, "setle", state.modrm);
         case 0x9F:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_setg, "setg", modrm);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_setg, "setg", state.modrm);
         case 0xA0:
-            return makeInstruction(x86_push, "push", makeRegister(4, rmSegment));
+            return makeInstruction(state, x86_push, "push", makeRegister(state, 4, rmSegment));
         case 0xA1:
-            return makeInstruction(x86_pop, "pop", makeRegister(4, rmSegment));
+            return makeInstruction(state, x86_pop, "pop", makeRegister(state, 4, rmSegment));
         case 0xA2:
-            return makeInstruction(x86_cpuid, "cpuid");
+            return makeInstruction(state, x86_cpuid, "cpuid");
         case 0xA3:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_bt, "bt", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_bt, "bt", state.modrm, state.reg);
         case 0xA4:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_shld, "shld", modrm, reg, getImmByte());
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_shld, "shld", state.modrm, state.reg, getImmByte(state));
         case 0xA5:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_shld, "shld", modrm, reg, makeRegister(1, rmLegacyByte));
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_shld, "shld", state.modrm, state.reg, makeRegister(state, 1, rmLegacyByte));
         case 0xA6:
-            throw ExceptionX86("bad opcode 0x0fa6", this);
+            throw ExceptionX86("bad opcode 0x0fa6", state);
         case 0xA7:
-            throw ExceptionX86("bad opcode 0x0fa7", this);
+            throw ExceptionX86("bad opcode 0x0fa7", state);
         case 0xA8:
-            return makeInstruction(x86_push, "push", makeRegister(5, rmSegment));
+            return makeInstruction(state, x86_push, "push", makeRegister(state, 5, rmSegment));
         case 0xA9:
-            return makeInstruction(x86_pop, "pop", makeRegister(5, rmSegment));
+            return makeInstruction(state, x86_pop, "pop", makeRegister(state, 5, rmSegment));
         case 0xAA:
-            return makeInstruction(x86_rsm, "rsm");
+            return makeInstruction(state, x86_rsm, "rsm");
         case 0xAB:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_btr, "btr", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_btr, "btr", state.modrm, state.reg);
         case 0xAC:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_shrd, "shrd", modrm, reg, getImmByte());
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_shrd, "shrd", state.modrm, state.reg, getImmByte(state));
         case 0xAD:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_shrd, "shrd", modrm, reg, makeRegister(1, rmLegacyByte));
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_shrd, "shrd", state.modrm, state.reg, makeRegister(state, 1, rmLegacyByte));
         case 0xAE:
-            return decodeGroup15();
+            return decodeGroup15(state);
         case 0xAF:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_imul, "imul", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_imul, "imul", state.reg, state.modrm);
         case 0xB0:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_cmpxchg, "cmpxchg", modrm, reg);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_cmpxchg, "cmpxchg", state.modrm, state.reg);
         case 0xB1:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_cmpxchg, "cmpxchg", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_cmpxchg, "cmpxchg", state.modrm, state.reg);
         case 0xB2:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            requireMemory();
-            return makeInstruction(x86_lss, "lss", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            requireMemory(state);
+            return makeInstruction(state, x86_lss, "lss", state.reg, state.modrm);
         case 0xB3:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_bts, "bts", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_bts, "bts", state.modrm, state.reg);
         case 0xB4:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            requireMemory();
-            return makeInstruction(x86_lfs, "lfs", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            requireMemory(state);
+            return makeInstruction(state, x86_lfs, "lfs", state.reg, state.modrm);
         case 0xB5:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            requireMemory();
-            return makeInstruction(x86_lgs, "lgs", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            requireMemory(state);
+            return makeInstruction(state, x86_lgs, "lgs", state.reg, state.modrm);
         case 0xB6:
-            getModRegRM(effectiveOperandMode(), rmLegacyByte, BYTET);
-            return makeInstruction(x86_movzx, "movzx", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_movzx, "movzx", state.reg, state.modrm);
         case 0xB7:
-            getModRegRM(effectiveOperandMode(), rmWord, WORDT);
-            return makeInstruction(x86_movzx, "movzx", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), rmWord, WORDT);
+            return makeInstruction(state, x86_movzx, "movzx", state.reg, state.modrm);
         case 0xB8: {
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
             /* Here is an example of the existence of a prefix leading to two very different instructions. */
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    isUnconditionalJump = true;
-                    return makeInstruction(x86_jmpe, "jmpe", modrm);
+                    state.isUnconditionalJump = true;
+                    return makeInstruction(state, x86_jmpe, "jmpe", state.modrm);
                 case mmF3:
-                    return makeInstruction(x86_popcnt, "popcnt", reg, modrm);
+                    return makeInstruction(state, x86_popcnt, "popcnt", state.reg, state.modrm);
                 default:
-                    throw ExceptionX86("bad mm prefix for opcode 0x0fb8", this);
+                    throw ExceptionX86("bad mm prefix for opcode 0x0fb8", state);
             }
         }
         case 0xB9:
-            throw ExceptionX86("bad opcode 0x0fb9", this);
+            throw ExceptionX86("bad opcode 0x0fb9", state);
         case 0xBA:
-            getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType());
-            return decodeGroup8(getImmByte());
+            getModRegRM(state, rmReturnNull, effectiveOperandMode(state), effectiveOperandType(state));
+            return decodeGroup8(state, getImmByte(state));
         case 0xBB:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_btc, "btc", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_btc, "btc", state.modrm, state.reg);
         case 0xBC:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_bsf, "bsf", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_bsf, "bsf", state.reg, state.modrm);
         case 0xBD:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            if (repeatPrefix == x86_repeat_repe) return makeInstruction(x86_lzcnt, "lzcnt", reg, modrm);
-            else return makeInstruction(x86_bsr, "bsr", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            if (state.repeatPrefix == x86_repeat_repe) return makeInstruction(state, x86_lzcnt, "lzcnt", state.reg, state.modrm);
+            else return makeInstruction(state, x86_bsr, "bsr", state.reg, state.modrm);
         case 0xBE:
-            getModRegRM(effectiveOperandMode(), rmLegacyByte, BYTET);
-            return makeInstruction(x86_movsx, "movsx", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_movsx, "movsx", state.reg, state.modrm);
         case 0xBF:
-            getModRegRM(effectiveOperandMode(), rmWord, WORDT);
-            return makeInstruction(x86_movsx, "movsx", reg, modrm);
+            getModRegRM(state, effectiveOperandMode(state), rmWord, WORDT);
+            return makeInstruction(state, x86_movsx, "movsx", state.reg, state.modrm);
         case 0xC0:
-            getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
-            return makeInstruction(x86_xadd, "xadd", modrm, reg);
+            getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
+            return makeInstruction(state, x86_xadd, "xadd", state.modrm, state.reg);
         case 0xC1:
-            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            return makeInstruction(x86_xadd, "xadd", modrm, reg);
+            getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+            return makeInstruction(state, x86_xadd, "xadd", state.modrm, state.reg);
         case 0xC2: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_cmpps, "cmpps", reg, modrm, getImmByte());
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_cmpps, "cmpps", state.reg, state.modrm, getImmByte(state));
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_cmpss, "cmpss", reg, modrm, getImmByte());
+                    getModRegRM(state, rmXMM, rmXMM, FLOATT);
+                    return makeInstruction(state, x86_cmpss, "cmpss", state.reg, state.modrm, getImmByte(state));
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_cmppd, "cmppd", reg, modrm, getImmByte());
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_cmppd, "cmppd", state.reg, state.modrm, getImmByte(state));
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    return makeInstruction(x86_cmpsd, "cmpsd", reg, modrm, getImmByte());
+                    getModRegRM(state, rmXMM, rmXMM, DOUBLET);
+                    return makeInstruction(state, x86_cmpsd, "cmpsd", state.reg, state.modrm, getImmByte(state));
             }
         }
         case 0xC3: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-                    requireMemory();
-                    return makeInstruction(x86_movnti, "movnti", modrm, reg);
+                    getModRegRM(state, effectiveOperandMode(state), effectiveOperandMode(state), effectiveOperandType(state));
+                    requireMemory(state);
+                    return makeInstruction(state, x86_movnti, "movnti", state.modrm, state.reg);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fc3", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fc3", state);
                 case mm66:
-                    throw ExceptionX86("bad mm prefix 66 for opcode 0x0fc3", this);
+                    throw ExceptionX86("bad mm prefix 66 for opcode 0x0fc3", state);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fc3", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fc3", state);
             }
         }
         case 0xC4: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone: {
-                    getModRegRM(rmMM, rmWord, WORDT, QWORDT);
-                    SgAsmExpression* imm = getImmByte();
-                    return makeInstruction(x86_pinsrw, "pinsrw", reg, modrm, imm);
+                    getModRegRM(state, rmMM, rmWord, WORDT, QWORDT);
+                    SgAsmExpression* imm = getImmByte(state);
+                    return makeInstruction(state, x86_pinsrw, "pinsrw", state.reg, state.modrm, imm);
                 }
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fc4", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fc4", state);
                 case mm66: {
-                    getModRegRM(rmXMM, rmWord, WORDT, DQWORDT);
-                    SgAsmExpression* imm = getImmByte();
-                    return makeInstruction(x86_pinsrw, "pinsrw", reg, modrm, imm);
+                    getModRegRM(state, rmXMM, rmWord, WORDT, DQWORDT);
+                    SgAsmExpression* imm = getImmByte(state);
+                    return makeInstruction(state, x86_pinsrw, "pinsrw", state.reg, state.modrm, imm);
                 }
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fc4", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fc4", state);
             }
         }
         case 0xC5: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone: {
-                    getModRegRM(rmDWord, rmMM, V4WORDT, DWORDT);
-                    SgAsmExpression* imm = getImmByte();
-                    if (modeField == 3) {
-                        return makeInstruction(x86_pextrw, "pextrw", reg, modrm, imm);
+                    getModRegRM(state, rmDWord, rmMM, V4WORDT, DWORDT);
+                    SgAsmExpression* imm = getImmByte(state);
+                    if (state.modeField == 3) {
+                        return makeInstruction(state, x86_pextrw, "pextrw", state.reg, state.modrm, imm);
                     } else {
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fc5", this);
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fc5", state);
                     }
                 }
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fc5", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fc5", state);
                 case mm66: {
-                    getModRegRM(rmDWord, rmXMM, V8WORDT, DWORDT);
-                    SgAsmExpression* imm = getImmByte();
-                    if (modeField == 3) {
-                        return makeInstruction(x86_pextrw, "pextrw", reg, modrm, imm);
+                    getModRegRM(state, rmDWord, rmXMM, V8WORDT, DWORDT);
+                    SgAsmExpression* imm = getImmByte(state);
+                    if (state.modeField == 3) {
+                        return makeInstruction(state, x86_pextrw, "pextrw", state.reg, state.modrm, imm);
                     } else {
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fc5", this);
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fc5", state);
                     }
                 }
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fc5", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fc5", state);
             }
         }
         case 0xC6: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone: {
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    SgAsmExpression* shufConstant = getImmByte();
-                    return makeInstruction(x86_shufps, "shufps", reg, modrm, shufConstant);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    SgAsmExpression* shufConstant = getImmByte(state);
+                    return makeInstruction(state, x86_shufps, "shufps", state.reg, state.modrm, shufConstant);
                 }
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fc6", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fc6", state);
                 case mm66: {
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    SgAsmExpression* shufConstant = getImmByte();
-                    return makeInstruction(x86_shufpd, "shufpd", reg, modrm, shufConstant);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    SgAsmExpression* shufConstant = getImmByte(state);
+                    return makeInstruction(state, x86_shufpd, "shufpd", state.reg, state.modrm, shufConstant);
                 }
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fc6", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fc6", state);
             }
         }
         case 0xC7: {
             /* Group 9 */
-            getModRegRM(rmReturnNull, rmReturnNull, NULL);
-            requireMemory();
-            switch (regField) {
+            getModRegRM(state, rmReturnNull, rmReturnNull, NULL);
+            requireMemory(state);
+            switch (state.regField) {
                 case 1: {
-                    if (effectiveOperandSize() == x86_insnsize_64) {
-                        fillInModRM(rmReturnNull, DQWORDT);
-                        return makeInstruction(x86_cmpxchg16b, "cmpxchg16b", modrm);
+                    if (effectiveOperandSize(state) == x86_insnsize_64) {
+                        fillInModRM(state, rmReturnNull, DQWORDT);
+                        return makeInstruction(state, x86_cmpxchg16b, "cmpxchg16b", state.modrm);
                     } else {
-                        fillInModRM(rmReturnNull, QWORDT);
-                        return makeInstruction(x86_cmpxchg8b, "cmpxchg8b", modrm);
+                        fillInModRM(state, rmReturnNull, QWORDT);
+                        return makeInstruction(state, x86_cmpxchg8b, "cmpxchg8b", state.modrm);
                     }
                 }
                 case 6: {
-                    fillInModRM(rmReturnNull, QWORDT);
-                    switch (mmPrefix()) {
-                        case mmNone: return makeInstruction(x86_vmptrld, "vmptrld", modrm);
-                        case mmF3:   return makeInstruction(x86_vmxon, "vmxon", modrm);
-                        case mm66:   return makeInstruction(x86_vmclear, "vmclear", modrm);
-                        default:     throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fc7", this);
+                    fillInModRM(state, rmReturnNull, QWORDT);
+                    switch (mmPrefix(state)) {
+                        case mmNone: return makeInstruction(state, x86_vmptrld, "vmptrld", state.modrm);
+                        case mmF3:   return makeInstruction(state, x86_vmxon, "vmxon", state.modrm);
+                        case mm66:   return makeInstruction(state, x86_vmclear, "vmclear", state.modrm);
+                        default:     throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fc7", state);
                     }
                 }
                 case 7: {
-                    fillInModRM(rmReturnNull, QWORDT);
-                    return makeInstruction(x86_vmptrst, "vmptrst", modrm);
+                    fillInModRM(state, rmReturnNull, QWORDT);
+                    return makeInstruction(state, x86_vmptrst, "vmptrst", state.modrm);
                 }
                 default:
-                    throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fc7", this);
+                    throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fc7", state);
             }
         }
         case 0xC8:
-            return makeInstruction(x86_bswap, "bswap", makeRegisterEffective(rexB, 0));
+            return makeInstruction(state, x86_bswap, "bswap", makeRegisterEffective(state, state.rexB, 0));
         case 0xC9:
-            return makeInstruction(x86_bswap, "bswap", makeRegisterEffective(rexB, 1));
+            return makeInstruction(state, x86_bswap, "bswap", makeRegisterEffective(state, state.rexB, 1));
         case 0xCA:
-            return makeInstruction(x86_bswap, "bswap", makeRegisterEffective(rexB, 2));
+            return makeInstruction(state, x86_bswap, "bswap", makeRegisterEffective(state, state.rexB, 2));
         case 0xCB:
-            return makeInstruction(x86_bswap, "bswap", makeRegisterEffective(rexB, 3));
+            return makeInstruction(state, x86_bswap, "bswap", makeRegisterEffective(state, state.rexB, 3));
         case 0xCC:
-            return makeInstruction(x86_bswap, "bswap", makeRegisterEffective(rexB, 4));
+            return makeInstruction(state, x86_bswap, "bswap", makeRegisterEffective(state, state.rexB, 4));
         case 0xCD:
-            return makeInstruction(x86_bswap, "bswap", makeRegisterEffective(rexB, 5));
+            return makeInstruction(state, x86_bswap, "bswap", makeRegisterEffective(state, state.rexB, 5));
         case 0xCE:
-            return makeInstruction(x86_bswap, "bswap", makeRegisterEffective(rexB, 6));
+            return makeInstruction(state, x86_bswap, "bswap", makeRegisterEffective(state, state.rexB, 6));
         case 0xCF:
-            return makeInstruction(x86_bswap, "bswap", makeRegisterEffective(rexB, 7));
+            return makeInstruction(state, x86_bswap, "bswap", makeRegisterEffective(state, state.rexB, 7));
         case 0xD0: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    throw ExceptionX86("bad mm prefix None for opcode 0x0fd0", this);
+                    throw ExceptionX86("bad mm prefix None for opcode 0x0fd0", state);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd0", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd0", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_addsubpd, "addsubpd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET);
+                    return makeInstruction(state, x86_addsubpd, "addsubpd", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_addsubps, "addsubps", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
+                    return makeInstruction(state, x86_addsubps, "addsubps", state.reg, state.modrm);
             }
         }
         case 0xD1: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_psrlw, "psrlw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_psrlw, "psrlw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd1", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd1", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_psrlw, "psrlw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_psrlw, "psrlw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd1", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd1", state);
             }
         }
         case 0xD2: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V2DWORDT);
-                    return makeInstruction(x86_psrld, "psrld", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V2DWORDT);
+                    return makeInstruction(state, x86_psrld, "psrld", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd2", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd2", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V4DWORDT);
-                    return makeInstruction(x86_psrld, "psrld", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4DWORDT);
+                    return makeInstruction(state, x86_psrld, "psrld", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd2", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd2", state);
             }
         }
         case 0xD3: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, QWORDT);
-                    return makeInstruction(x86_psrlq, "psrlq", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, QWORDT);
+                    return makeInstruction(state, x86_psrlq, "psrlq", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd3", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd3", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2QWORDT);
-                    return makeInstruction(x86_psrlq, "psrlq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2QWORDT);
+                    return makeInstruction(state, x86_psrlq, "psrlq", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd3", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd3", state);
             }
         }
         case 0xD4: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, QWORDT);
-                    return makeInstruction(x86_paddq, "paddq", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, QWORDT);
+                    return makeInstruction(state, x86_paddq, "paddq", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd4", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd4", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2QWORDT);
-                    return makeInstruction(x86_paddq, "paddq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2QWORDT);
+                    return makeInstruction(state, x86_paddq, "paddq", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd4", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd4", state);
             }
         }
         case 0xD5: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_pmullw, "pmullw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_pmullw, "pmullw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd5", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd5", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_pmullw, "pmullw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_pmullw, "pmullw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd5", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd5", state);
             }
         }
         case 0xD6: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    throw ExceptionX86("bad mm prefix None for opcode 0x0fd6", this);
+                    throw ExceptionX86("bad mm prefix None for opcode 0x0fd6", state);
                 case mmF3:
-                    getModRegRM(rmMM, rmXMM, QWORDT, DQWORDT);
-                    if (modeField == 3) {
-                        return makeInstruction(x86_movq2dq, "movq2dq", reg, modrm);
+                    getModRegRM(state, rmMM, rmXMM, QWORDT, DQWORDT);
+                    if (state.modeField == 3) {
+                        return makeInstruction(state, x86_movq2dq, "movq2dq", state.reg, state.modrm);
                     } else {
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fd6", this);
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fd6", state);
                     }
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, QWORDT);
-                    return makeInstruction(x86_movq, "movq", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, QWORDT);
+                    return makeInstruction(state, x86_movq, "movq", state.modrm, state.reg);
                 case mmF2:
-                    getModRegRM(rmXMM, rmMM, DQWORDT, QWORDT);
-                    if (modeField == 3) {
-                        return makeInstruction(x86_movdq2q, "movdq2q", reg, modrm);
+                    getModRegRM(state, rmXMM, rmMM, DQWORDT, QWORDT);
+                    if (state.modeField == 3) {
+                        return makeInstruction(state, x86_movdq2q, "movdq2q", state.reg, state.modrm);
                     } else {
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fd6", this);
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fd6", state);
                     }
             }
         }
         case 0xD7: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmDWord, rmMM, V8BYTET, DWORDT);
-                    if (modeField == 3) {
-                        return makeInstruction(x86_pmovmskb, "pmovmskb", reg, modrm);
+                    getModRegRM(state, rmDWord, rmMM, V8BYTET, DWORDT);
+                    if (state.modeField == 3) {
+                        return makeInstruction(state, x86_pmovmskb, "pmovmskb", state.reg, state.modrm);
                     } else {
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fd7", this);
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fd7", state);
                     }
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd7", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd7", state);
                 case mm66:
-                    getModRegRM(rmDWord, rmXMM, V16BYTET, DWORDT);
-                    if (modeField == 3) {
-                        return makeInstruction(x86_pmovmskb, "pmovmskb", reg, modrm);
+                    getModRegRM(state, rmDWord, rmXMM, V16BYTET, DWORDT);
+                    if (state.modeField == 3) {
+                        return makeInstruction(state, x86_pmovmskb, "pmovmskb", state.reg, state.modrm);
                     } else {
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fd7", this);
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fd7", state);
                     }
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd7", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd7", state);
             }
         }
         case 0xD8: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V8BYTET);
-                    return makeInstruction(x86_psubusb, "psubusb", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V8BYTET);
+                    return makeInstruction(state, x86_psubusb, "psubusb", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd8", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd8", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V16BYTET);
-                    return makeInstruction(x86_psubusb, "psubusb", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V16BYTET);
+                    return makeInstruction(state, x86_psubusb, "psubusb", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd8", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd8", state);
             }
         }
         case 0xD9: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_psubusw, "psubusw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_psubusw, "psubusw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd9", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fd9", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_psubusw, "psubusw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_psubusw, "psubusw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd9", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd9", state);
             }
         }
         case 0xDA: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V8BYTET);
-                    return makeInstruction(x86_pminub, "pminub", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V8BYTET);
+                    return makeInstruction(state, x86_pminub, "pminub", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fda", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fda", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V16BYTET);
-                    return makeInstruction(x86_pminub, "pminub", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V16BYTET);
+                    return makeInstruction(state, x86_pminub, "pminub", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fda", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fda", state);
             }
         }
         case 0xDB: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, QWORDT);
-                    return makeInstruction(x86_pand, "pand", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, QWORDT);
+                    return makeInstruction(state, x86_pand, "pand", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fdb", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fdb", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DQWORDT);
-                    return makeInstruction(x86_pand, "pand", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DQWORDT);
+                    return makeInstruction(state, x86_pand, "pand", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fdb", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fdb", state);
             }
         }
         case 0xDC: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V8BYTET);
-                    return makeInstruction(x86_paddusb, "paddusb", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V8BYTET);
+                    return makeInstruction(state, x86_paddusb, "paddusb", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fdc", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fdc", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V16BYTET);
-                    return makeInstruction(x86_paddusb, "paddusb", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V16BYTET);
+                    return makeInstruction(state, x86_paddusb, "paddusb", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fdc", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fdc", state);
             }
         }
         case 0xDD: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_paddusw, "paddusw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_paddusw, "paddusw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fdd", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fdd", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_paddusw, "paddusw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_paddusw, "paddusw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fdd", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fdd", state);
             }
         }
         case 0xDE: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V8BYTET);
-                    return makeInstruction(x86_pmaxub, "pmaxub", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V8BYTET);
+                    return makeInstruction(state, x86_pmaxub, "pmaxub", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fde", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fde", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V16BYTET);
-                    return makeInstruction(x86_pmaxub, "pmaxub", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V16BYTET);
+                    return makeInstruction(state, x86_pmaxub, "pmaxub", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fde", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fde", state);
             }
         }
         case 0xDF: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, QWORDT);
-                    return makeInstruction(x86_pandn, "pandn", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, QWORDT);
+                    return makeInstruction(state, x86_pandn, "pandn", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fdf", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fdf", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DQWORDT);
-                    return makeInstruction(x86_pandn, "pandn", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DQWORDT);
+                    return makeInstruction(state, x86_pandn, "pandn", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fdf", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fdf", state);
             }
         }
         case 0xE0: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V8BYTET);
-                    return makeInstruction(x86_pavgb, "pavgb", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V8BYTET);
+                    return makeInstruction(state, x86_pavgb, "pavgb", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe0", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe0", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V16BYTET);
-                    return makeInstruction(x86_pavgb, "pavgb", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V16BYTET);
+                    return makeInstruction(state, x86_pavgb, "pavgb", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe0", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe0", state);
             }
         }
         case 0xE1: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_psraw, "psraw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_psraw, "psraw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe1", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe1", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_psraw, "psraw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_psraw, "psraw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe1", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe1", state);
             }
         }
         case 0xE2: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V2DWORDT);
-                    return makeInstruction(x86_psrad, "psrad", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V2DWORDT);
+                    return makeInstruction(state, x86_psrad, "psrad", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe2", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe2", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V4DWORDT);
-                    return makeInstruction(x86_psrad, "psrad", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4DWORDT);
+                    return makeInstruction(state, x86_psrad, "psrad", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe2", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe2", state);
             }
         }
         case 0xE3: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_pavgw, "pavgw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_pavgw, "pavgw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe3", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe3", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_pavgw, "pavgw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_pavgw, "pavgw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe3", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe3", state);
             }
         }
         case 0xE4: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_pmulhuw, "pmulhuw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_pmulhuw, "pmulhuw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe4", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe4", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_pmulhuw, "pmulhuw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_pmulhuw, "pmulhuw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe4", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe4", state);
             }
         }
         case 0xE5: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_pmulhw, "pmulhw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_pmulhw, "pmulhw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe5", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe5", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_pmulhw, "pmulhw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_pmulhw, "pmulhw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe5", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe5", state);
             }
         }
         case 0xE6: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    throw ExceptionX86("bad mm prefix None for opcode 0x0fe6", this);
+                    throw ExceptionX86("bad mm prefix None for opcode 0x0fe6", state);
                 case mmF3:
-                    getModRegRM(rmXMM, rmXMM, V2QWORDT, V2DOUBLET);
-                    return makeInstruction(x86_cvtdq2pd, "cvtdq2pd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2QWORDT, V2DOUBLET);
+                    return makeInstruction(state, x86_cvtdq2pd, "cvtdq2pd", state.reg, state.modrm);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET, V2QWORDT);
-                    return makeInstruction(x86_cvttpd2dq, "cvttpd2dq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET, V2QWORDT);
+                    return makeInstruction(state, x86_cvttpd2dq, "cvttpd2dq", state.reg, state.modrm);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, V2DOUBLET, V2QWORDT);
-                    return makeInstruction(x86_cvtpd2dq, "cvtpd2dq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2DOUBLET, V2QWORDT);
+                    return makeInstruction(state, x86_cvtpd2dq, "cvtpd2dq", state.reg, state.modrm);
             }
         }
         case 0xE7: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, QWORDT);
-                    requireMemory();
-                    return makeInstruction(x86_movntq, "movntq", modrm, reg);
+                    getModRegRM(state, rmMM, rmMM, QWORDT);
+                    requireMemory(state);
+                    return makeInstruction(state, x86_movntq, "movntq", state.modrm, state.reg);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe7", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe7", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DQWORDT);
-                    requireMemory();
-                    return makeInstruction(x86_movntdq, "movntdq", modrm, reg);
+                    getModRegRM(state, rmXMM, rmXMM, DQWORDT);
+                    requireMemory(state);
+                    return makeInstruction(state, x86_movntdq, "movntdq", state.modrm, state.reg);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe7", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe7", state);
             }
         }
         case 0xE8: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V8BYTET);
-                    return makeInstruction(x86_psubsb, "psubsb", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V8BYTET);
+                    return makeInstruction(state, x86_psubsb, "psubsb", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe8", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe8", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V16BYTET);
-                    return makeInstruction(x86_psubsb, "psubsb", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V16BYTET);
+                    return makeInstruction(state, x86_psubsb, "psubsb", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe8", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe8", state);
             }
         }
         case 0xE9: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_psubsw, "psubsw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_psubsw, "psubsw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe9", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fe9", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_psubsw, "psubsw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_psubsw, "psubsw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe9", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe9", state);
             }
         }
         case 0xEA: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_pminsw, "pminsw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_pminsw, "pminsw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fea", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fea", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_pminsw, "pminsw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_pminsw, "pminsw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fea", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fea", state);
             }
         }
         case 0xEB: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, QWORDT);
-                    return makeInstruction(x86_por, "por", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, QWORDT);
+                    return makeInstruction(state, x86_por, "por", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0feb", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0feb", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DQWORDT);
-                    return makeInstruction(x86_por, "por", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DQWORDT);
+                    return makeInstruction(state, x86_por, "por", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0feb", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0feb", state);
             }
         }
         case 0xEC: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V8BYTET);
-                    return makeInstruction(x86_paddsb, "paddsb", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V8BYTET);
+                    return makeInstruction(state, x86_paddsb, "paddsb", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fec", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fec", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V16BYTET);
-                    return makeInstruction(x86_paddsb, "paddsb", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V16BYTET);
+                    return makeInstruction(state, x86_paddsb, "paddsb", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fec", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fec", state);
             }
         }
         case 0xED: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_paddsw, "paddsw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_paddsw, "paddsw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fed", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fed", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_paddsw, "paddsw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_paddsw, "paddsw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fed", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fed", state);
             }
         }
         case 0xEE: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_pmaxsw, "pmaxsw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_pmaxsw, "pmaxsw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fee", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fee", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_pmaxsw, "pmaxsw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_pmaxsw, "pmaxsw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fee", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fee", state);
             }
         }
         case 0xEF: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, QWORDT);
-                    return makeInstruction(x86_pxor, "pxor", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, QWORDT);
+                    return makeInstruction(state, x86_pxor, "pxor", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fef", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0fef", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DQWORDT);
-                    return makeInstruction(x86_pxor, "pxor", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DQWORDT);
+                    return makeInstruction(state, x86_pxor, "pxor", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fef", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0fef", state);
             }
         }
         case 0xF0: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    throw ExceptionX86("bad mm prefix None for opcode 0x0ff0", this);
+                    throw ExceptionX86("bad mm prefix None for opcode 0x0ff0", state);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff0", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff0", state);
                 case mm66:
-                    throw ExceptionX86("bad mm prefix 66 for opcode 0x0ff0", this);
+                    throw ExceptionX86("bad mm prefix 66 for opcode 0x0ff0", state);
                 case mmF2:
-                    getModRegRM(rmXMM, rmXMM, DQWORDT);
-                    requireMemory();
-                    return makeInstruction(x86_lddqu, "lddqu", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DQWORDT);
+                    requireMemory(state);
+                    return makeInstruction(state, x86_lddqu, "lddqu", state.reg, state.modrm);
             }
         }
         case 0xF1: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_psllw, "psllw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_psllw, "psllw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff1", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff1", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_psllw, "psllw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_psllw, "psllw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff1", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff1", state);
             }
         }
         case 0xF2: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V2DWORDT);
-                    return makeInstruction(x86_pslld, "pslld", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V2DWORDT);
+                    return makeInstruction(state, x86_pslld, "pslld", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff2", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff2", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V4DWORDT);
-                    return makeInstruction(x86_pslld, "pslld", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4DWORDT);
+                    return makeInstruction(state, x86_pslld, "pslld", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff2", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff2", state);
             }
         }
         case 0xF3: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, QWORDT);
-                    return makeInstruction(x86_psllq, "psllq", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, QWORDT);
+                    return makeInstruction(state, x86_psllq, "psllq", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff3", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff3", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2QWORDT);
-                    return makeInstruction(x86_psllq, "psllq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2QWORDT);
+                    return makeInstruction(state, x86_psllq, "psllq", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff3", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff3", state);
             }
         }
         case 0xF4: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V2DWORDT, QWORDT);
-                    return makeInstruction(x86_pmuludq, "pmuludq", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V2DWORDT, QWORDT);
+                    return makeInstruction(state, x86_pmuludq, "pmuludq", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff4", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff4", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V4DWORDT, V2QWORDT);
-                    return makeInstruction(x86_pmuludq, "pmuludq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4DWORDT, V2QWORDT);
+                    return makeInstruction(state, x86_pmuludq, "pmuludq", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff4", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff4", state);
             }
         }
         case 0xF5: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT, V2DWORDT);
-                    return makeInstruction(x86_pmaddwd, "pmaddwd", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT, V2DWORDT);
+                    return makeInstruction(state, x86_pmaddwd, "pmaddwd", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff5", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff5", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT, V4DWORDT);
-                    return makeInstruction(x86_pmaddwd, "pmaddwd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT, V4DWORDT);
+                    return makeInstruction(state, x86_pmaddwd, "pmaddwd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff5", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff5", state);
             }
         }
         case 0xF6: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V8BYTET, V4WORDT);
-                    return makeInstruction(x86_psadbw, "psadbw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V8BYTET, V4WORDT);
+                    return makeInstruction(state, x86_psadbw, "psadbw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff6", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff6", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V16BYTET, V8WORDT);
-                    return makeInstruction(x86_psadbw, "psadbw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V16BYTET, V8WORDT);
+                    return makeInstruction(state, x86_psadbw, "psadbw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff6", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff6", state);
             }
         }
         case 0xF7: {
             /* FIXME: The MOVNTQ and MOVNTDQ are at 0F E7 instead. This should be MASKMOVDQU. See Intel documentation.
              *        [RPM 2009-07-02] */
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, QWORDT);
-                    if (modeField == 3) {
-                        return makeInstruction(x86_movntq, "movntq", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, QWORDT);
+                    if (state.modeField == 3) {
+                        return makeInstruction(state, x86_movntq, "movntq", state.reg, state.modrm);
                     } else {
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0ff7", this);
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0ff7", state);
                     }
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff7", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff7", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, DQWORDT);
-                    if (modeField == 3) {
-                        return makeInstruction(x86_movntdq, "movntdq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, DQWORDT);
+                    if (state.modeField == 3) {
+                        return makeInstruction(state, x86_movntdq, "movntdq", state.reg, state.modrm);
                     } else {
-                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0ff7", this);
+                        throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0ff7", state);
                     }
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff7", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff7", state);
             }
         }
         case 0xF8: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V8BYTET);
-                    return makeInstruction(x86_psubb, "psubb", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V8BYTET);
+                    return makeInstruction(state, x86_psubb, "psubb", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff8", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff8", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V16BYTET);
-                    return makeInstruction(x86_psubb, "psubb", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V16BYTET);
+                    return makeInstruction(state, x86_psubb, "psubb", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff8", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff8", state);
             }
         }
         case 0xF9: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_psubw, "psubw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_psubw, "psubw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff9", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ff9", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_psubw, "psubw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_psubw, "psubw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff9", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff9", state);
             }
         }
         case 0xFA: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V2DWORDT);
-                    return makeInstruction(x86_psubd, "psubd", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V2DWORDT);
+                    return makeInstruction(state, x86_psubd, "psubd", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ffa", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ffa", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V4DWORDT);
-                    return makeInstruction(x86_psubd, "psubd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4DWORDT);
+                    return makeInstruction(state, x86_psubd, "psubd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ffa", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ffa", state);
             }
         }
         case 0xFB: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, QWORDT);
-                    return makeInstruction(x86_psubq, "psubq", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, QWORDT);
+                    return makeInstruction(state, x86_psubq, "psubq", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ffb", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ffb", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V2QWORDT);
-                    return makeInstruction(x86_psubq, "psubq", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V2QWORDT);
+                    return makeInstruction(state, x86_psubq, "psubq", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ffb", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ffb", state);
             }
         }
         case 0xFC: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V8BYTET);
-                    return makeInstruction(x86_paddb, "paddb", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V8BYTET);
+                    return makeInstruction(state, x86_paddb, "paddb", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ffc", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ffc", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V16BYTET);
-                    return makeInstruction(x86_paddb, "paddb", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V16BYTET);
+                    return makeInstruction(state, x86_paddb, "paddb", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ffc", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ffc", state);
             }
         }
         case 0xFD: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V4WORDT);
-                    return makeInstruction(x86_paddw, "paddw", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V4WORDT);
+                    return makeInstruction(state, x86_paddw, "paddw", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ffd", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ffd", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V8WORDT);
-                    return makeInstruction(x86_paddw, "paddw", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V8WORDT);
+                    return makeInstruction(state, x86_paddw, "paddw", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ffd", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ffd", state);
             }
         }
         case 0xFE: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V2DWORDT);
-                    return makeInstruction(x86_paddd, "paddd", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V2DWORDT);
+                    return makeInstruction(state, x86_paddd, "paddd", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ffe", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0ffe", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V4DWORDT);
-                    return makeInstruction(x86_paddd, "paddd", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4DWORDT);
+                    return makeInstruction(state, x86_paddd, "paddd", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ffe", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0ffe", state);
             }
         }
         case 0xFF:
-            throw ExceptionX86("bad opcode 0x0fff", this);
+            throw ExceptionX86("bad opcode 0x0fff", state);
     }
 
     // avoid MSCV warning by adding return stmt
@@ -5227,67 +5236,67 @@ DisassemblerX86::decodeOpcode0F()
 
 /* SSSE3 (opcode 0F38) */
 SgAsmX86Instruction *
-DisassemblerX86::decodeOpcode0F38()
+DisassemblerX86::decodeOpcode0F38(State &state) const
 {
     // Get the third byte of the opcode (the first two were read by the caller (decodeOpcode0F())
-    uint8_t opcode = getByte();
+    uint8_t opcode = getByte(state);
     switch (opcode) {
         case 0x00: {
-            switch (mmPrefix()) {
+            switch (mmPrefix(state)) {
                 /* Note that getModRegRM sets the states reg and modrm. Also, standard prefixed used in the manual, "mm"
                  * refers to "mmx" registers and "xmm" refers to "sse" registers. */
                 case mmNone:
-                    getModRegRM(rmMM, rmMM, V2DWORDT);
-                    return makeInstruction(x86_pshufb, "pshufb", reg, modrm);
+                    getModRegRM(state, rmMM, rmMM, V2DWORDT);
+                    return makeInstruction(state, x86_pshufb, "pshufb", state.reg, state.modrm);
                 case mmF3:
-                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f3800", this);
+                    throw ExceptionX86("bad mm prefix F3 for opcode 0x0f3800", state);
                 case mm66:
-                    getModRegRM(rmXMM, rmXMM, V4DWORDT);
-                    return makeInstruction(x86_pshufb, "pshufb", reg, modrm);
+                    getModRegRM(state, rmXMM, rmXMM, V4DWORDT);
+                    return makeInstruction(state, x86_pshufb, "pshufb", state.reg, state.modrm);
                 case mmF2:
-                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f3800", this);
+                    throw ExceptionX86("bad mm prefix F2 for opcode 0x0f3800", state);
             }
         }
         default:
-            throw ExceptionX86("bad SSE3 opcode", this);
+            throw ExceptionX86("bad SSE3 opcode", state);
     }
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionD8()
+DisassemblerX86::decodeX87InstructionD8(State &state) const
 {
-    getModRegRM(rmReturnNull, rmST, FLOATT);
-    if (isSgAsmMemoryReferenceExpression(modrm)) {
-        isSgAsmMemoryReferenceExpression(modrm)->set_type(FLOATT);
+    getModRegRM(state, rmReturnNull, rmST, FLOATT);
+    if (isSgAsmMemoryReferenceExpression(state.modrm)) {
+        isSgAsmMemoryReferenceExpression(state.modrm)->set_type(FLOATT);
     }
-    if (modregrmByte < 0xC0) { // Using memory
-        switch (regField) {
-            case 0: return makeInstruction(x86_fadd, "fadd",  modrm);
-            case 1: return makeInstruction(x86_fmul, "fmul",  modrm);
-            case 2: return makeInstruction(x86_fcom, "fcom",  modrm);
-            case 3: return makeInstruction(x86_fcomp, "fcomp", modrm);
-            case 4: return makeInstruction(x86_fsub, "fsub",  modrm);
-            case 5: return makeInstruction(x86_fsubr, "fsubr", modrm);
-            case 6: return makeInstruction(x86_fdiv, "fdiv",  modrm);
-            case 7: return makeInstruction(x86_fdivr, "fdivr", modrm);
+    if (state.modregrmByte < 0xC0) { // Using memory
+        switch (state.regField) {
+            case 0: return makeInstruction(state, x86_fadd, "fadd",  state.modrm);
+            case 1: return makeInstruction(state, x86_fmul, "fmul",  state.modrm);
+            case 2: return makeInstruction(state, x86_fcom, "fcom",  state.modrm);
+            case 3: return makeInstruction(state, x86_fcomp, "fcomp", state.modrm);
+            case 4: return makeInstruction(state, x86_fsub, "fsub",  state.modrm);
+            case 5: return makeInstruction(state, x86_fsubr, "fsubr", state.modrm);
+            case 6: return makeInstruction(state, x86_fdiv, "fdiv",  state.modrm);
+            case 7: return makeInstruction(state, x86_fdivr, "fdivr", state.modrm);
             default: {
-                ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+                ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
                 /* avoid MSCV warning by adding return stmt */
                 return NULL;
             }
         }
     } else { // Two-operand register forms
-        switch (regField) {
-            case 0: return makeInstruction(x86_fadd, "fadd",   makeRegister(0, rmST), modrm);
-            case 1: return makeInstruction(x86_fmul, "fmul",   makeRegister(0, rmST), modrm);
-            case 2: return makeInstruction(x86_fcom, "fcom",   makeRegister(0, rmST), modrm);
-            case 3: return makeInstruction(x86_fcomp, "fcomp", makeRegister(0, rmST), modrm);
-            case 4: return makeInstruction(x86_fsub, "fsub",   makeRegister(0, rmST), modrm);
-            case 5: return makeInstruction(x86_fsubr, "fsubr", makeRegister(0, rmST), modrm);
-            case 6: return makeInstruction(x86_fdiv, "fdiv",   makeRegister(0, rmST), modrm);
-            case 7: return makeInstruction(x86_fdivr, "fdivr", makeRegister(0, rmST), modrm);
+        switch (state.regField) {
+            case 0: return makeInstruction(state, x86_fadd, "fadd",   makeRegister(state, 0, rmST), state.modrm);
+            case 1: return makeInstruction(state, x86_fmul, "fmul",   makeRegister(state, 0, rmST), state.modrm);
+            case 2: return makeInstruction(state, x86_fcom, "fcom",   makeRegister(state, 0, rmST), state.modrm);
+            case 3: return makeInstruction(state, x86_fcomp, "fcomp", makeRegister(state, 0, rmST), state.modrm);
+            case 4: return makeInstruction(state, x86_fsub, "fsub",   makeRegister(state, 0, rmST), state.modrm);
+            case 5: return makeInstruction(state, x86_fsubr, "fsubr", makeRegister(state, 0, rmST), state.modrm);
+            case 6: return makeInstruction(state, x86_fdiv, "fdiv",   makeRegister(state, 0, rmST), state.modrm);
+            case 7: return makeInstruction(state, x86_fdivr, "fdivr", makeRegister(state, 0, rmST), state.modrm);
             default: {
-                ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+                ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
                 /* avoid MSCV warning by adding return stmt */
                 return NULL;
             }
@@ -5296,77 +5305,77 @@ DisassemblerX86::decodeX87InstructionD8()
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionD9()
+DisassemblerX86::decodeX87InstructionD9(State &state) const
 {
-    getModRegRM(rmReturnNull, rmReturnNull, NULL);
-    if (modeField < 3) {
-        SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(modrm);
+    getModRegRM(state, rmReturnNull, rmReturnNull, NULL);
+    if (state.modeField < 3) {
+        SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(state.modrm);
         ASSERT_not_null(mr);
-        switch (regField) {
+        switch (state.regField) {
             case 0:
                 mr->set_type(FLOATT);
-                return makeInstruction(x86_fld, "fld", modrm);
+                return makeInstruction(state, x86_fld, "fld", state.modrm);
             case 1:
-                throw ExceptionX86("bad ModR/M for x87 opcode 0xd9", this);
+                throw ExceptionX86("bad ModR/M for x87 opcode 0xd9", state);
             case 2:
                 mr->set_type(FLOATT);
-                return makeInstruction(x86_fst, "fst", modrm);
+                return makeInstruction(state, x86_fst, "fst", state.modrm);
             case 3:
                 mr->set_type(FLOATT);
-                return makeInstruction(x86_fstp, "fstp", modrm);
+                return makeInstruction(state, x86_fstp, "fstp", state.modrm);
             case 4:
                 mr->set_type(BYTET);
-                return makeInstruction(x86_fldenv, "fldenv", modrm);
+                return makeInstruction(state, x86_fldenv, "fldenv", state.modrm);
             case 5:
                 mr->set_type(WORDT);
-                return makeInstruction(x86_fldcw, "fldcw", modrm);
+                return makeInstruction(state, x86_fldcw, "fldcw", state.modrm);
             case 6:
                 mr->set_type(BYTET);
-                return makeInstruction(x86_fnstenv, "fnstenv", modrm);
+                return makeInstruction(state, x86_fnstenv, "fnstenv", state.modrm);
             case 7:
                 mr->set_type(WORDT);
-                return makeInstruction(x86_fnstcw, "fnstcw", modrm);
+                return makeInstruction(state, x86_fnstcw, "fnstcw", state.modrm);
             default:
-                ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+                ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
       }
-    } else if (regField == 0 || regField == 1) { // FLD and FXCH on registers
-        modrm = makeModrmNormal(rmST, NULL);
-        switch (regField) {
-            case 0: return makeInstruction(x86_fld, "fld", modrm);
-            case 1: return makeInstruction(x86_fxch, "fxch", modrm);
-            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+    } else if (state.regField == 0 || state.regField == 1) { // FLD and FXCH on registers
+        state.modrm = makeModrmNormal(state, rmST, NULL);
+        switch (state.regField) {
+            case 0: return makeInstruction(state, x86_fld, "fld", state.modrm);
+            case 1: return makeInstruction(state, x86_fxch, "fxch", state.modrm);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
         }
     } else {
-        switch (modregrmByte) {
-            case 0xD0: return makeInstruction(x86_fnop, "fnop");
-            case 0xE0: return makeInstruction(x86_fchs, "fchs");
-            case 0xE1: return makeInstruction(x86_fabs, "fabs");
-            case 0xE4: return makeInstruction(x86_ftst, "ftst");
-            case 0xE5: return makeInstruction(x86_fxam, "fxam");
-            case 0xE8: return makeInstruction(x86_fld1, "fld1");
-            case 0xE9: return makeInstruction(x86_fldl2t, "fldl2t");
-            case 0xEA: return makeInstruction(x86_fldl2e, "fldl2e");
-            case 0xEB: return makeInstruction(x86_fldpi, "fldpi");
-            case 0xEC: return makeInstruction(x86_fldlg2, "fldlg2");
-            case 0xED: return makeInstruction(x86_fldln2, "fldln2");
-            case 0xEE: return makeInstruction(x86_fldz, "fldz");
-            case 0xF0: return makeInstruction(x86_f2xm1, "f2xm1");
-            case 0xF1: return makeInstruction(x86_fyl2x, "fyl2x");
-            case 0xF2: return makeInstruction(x86_fptan, "fptan");
-            case 0xF3: return makeInstruction(x86_fpatan, "fpatan");
-            case 0xF4: return makeInstruction(x86_fxtract, "fxtract");
-            case 0xF5: return makeInstruction(x86_fprem1, "fprem1");
-            case 0xF6: return makeInstruction(x86_fdecstp, "fdecstp");
-            case 0xF7: return makeInstruction(x86_fincstp, "fincstp");
-            case 0xF8: return makeInstruction(x86_fprem, "fprem");
-            case 0xF9: return makeInstruction(x86_fyl2xp1, "fyl2xp1");
-            case 0xFA: return makeInstruction(x86_fsqrt, "fsqrt");
-            case 0xFB: return makeInstruction(x86_fsincos, "fsincos");
-            case 0xFC: return makeInstruction(x86_frndint, "frndint");
-            case 0xFD: return makeInstruction(x86_fscale, "fscale");
-            case 0xFE: return makeInstruction(x86_fsin, "fsin");
-            case 0xFF: return makeInstruction(x86_fcos, "fcos");
-            default: throw ExceptionX86("bad ModR/M value for x87 opcode 0xd9", this);
+        switch (state.modregrmByte) {
+            case 0xD0: return makeInstruction(state, x86_fnop, "fnop");
+            case 0xE0: return makeInstruction(state, x86_fchs, "fchs");
+            case 0xE1: return makeInstruction(state, x86_fabs, "fabs");
+            case 0xE4: return makeInstruction(state, x86_ftst, "ftst");
+            case 0xE5: return makeInstruction(state, x86_fxam, "fxam");
+            case 0xE8: return makeInstruction(state, x86_fld1, "fld1");
+            case 0xE9: return makeInstruction(state, x86_fldl2t, "fldl2t");
+            case 0xEA: return makeInstruction(state, x86_fldl2e, "fldl2e");
+            case 0xEB: return makeInstruction(state, x86_fldpi, "fldpi");
+            case 0xEC: return makeInstruction(state, x86_fldlg2, "fldlg2");
+            case 0xED: return makeInstruction(state, x86_fldln2, "fldln2");
+            case 0xEE: return makeInstruction(state, x86_fldz, "fldz");
+            case 0xF0: return makeInstruction(state, x86_f2xm1, "f2xm1");
+            case 0xF1: return makeInstruction(state, x86_fyl2x, "fyl2x");
+            case 0xF2: return makeInstruction(state, x86_fptan, "fptan");
+            case 0xF3: return makeInstruction(state, x86_fpatan, "fpatan");
+            case 0xF4: return makeInstruction(state, x86_fxtract, "fxtract");
+            case 0xF5: return makeInstruction(state, x86_fprem1, "fprem1");
+            case 0xF6: return makeInstruction(state, x86_fdecstp, "fdecstp");
+            case 0xF7: return makeInstruction(state, x86_fincstp, "fincstp");
+            case 0xF8: return makeInstruction(state, x86_fprem, "fprem");
+            case 0xF9: return makeInstruction(state, x86_fyl2xp1, "fyl2xp1");
+            case 0xFA: return makeInstruction(state, x86_fsqrt, "fsqrt");
+            case 0xFB: return makeInstruction(state, x86_fsincos, "fsincos");
+            case 0xFC: return makeInstruction(state, x86_frndint, "frndint");
+            case 0xFD: return makeInstruction(state, x86_fscale, "fscale");
+            case 0xFE: return makeInstruction(state, x86_fsin, "fsin");
+            case 0xFF: return makeInstruction(state, x86_fcos, "fcos");
+            default: throw ExceptionX86("bad ModR/M value for x87 opcode 0xd9", state);
         }
     }
     /* avoid MSCV warning by adding return stmt */
@@ -5374,34 +5383,34 @@ DisassemblerX86::decodeX87InstructionD9()
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionDA()
+DisassemblerX86::decodeX87InstructionDA(State &state) const
 {
-    getModRegRM(rmReturnNull, rmReturnNull, DWORDT);
-    if (modeField < 3) {
-        switch (regField) {
-            case 0: return makeInstruction(x86_fiadd, "fiadd", modrm);
-            case 1: return makeInstruction(x86_fimul, "fimul", modrm);
-            case 2: return makeInstruction(x86_ficom, "ficom", modrm);
-            case 3: return makeInstruction(x86_ficomp, "ficomp", modrm);
-            case 4: return makeInstruction(x86_fisub, "fisub", modrm);
-            case 5: return makeInstruction(x86_fisubr, "fisubr", modrm);
-            case 6: return makeInstruction(x86_fidiv, "fidiv", modrm);
-            case 7: return makeInstruction(x86_fidivr, "fidivr", modrm);
-            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+    getModRegRM(state, rmReturnNull, rmReturnNull, DWORDT);
+    if (state.modeField < 3) {
+        switch (state.regField) {
+            case 0: return makeInstruction(state, x86_fiadd, "fiadd", state.modrm);
+            case 1: return makeInstruction(state, x86_fimul, "fimul", state.modrm);
+            case 2: return makeInstruction(state, x86_ficom, "ficom", state.modrm);
+            case 3: return makeInstruction(state, x86_ficomp, "ficomp", state.modrm);
+            case 4: return makeInstruction(state, x86_fisub, "fisub", state.modrm);
+            case 5: return makeInstruction(state, x86_fisubr, "fisubr", state.modrm);
+            case 6: return makeInstruction(state, x86_fidiv, "fidiv", state.modrm);
+            case 7: return makeInstruction(state, x86_fidivr, "fidivr", state.modrm);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
         }
-    } else if (regField < 4) { // FCMOV{B,E,BE,U}
-        modrm = makeModrmRegister(rmST);
-        switch (regField) {
-            case 0: return makeInstruction(x86_fcmovb, "fcmovb", makeRegister(0, rmST), modrm);
-            case 1: return makeInstruction(x86_fcmove, "fcmove", makeRegister(0, rmST), modrm);
-            case 2: return makeInstruction(x86_fcmovbe, "fcmovbe", makeRegister(0, rmST), modrm);
-            case 3: return makeInstruction(x86_fcmovu, "fcmovu", makeRegister(0, rmST), modrm);
-            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+    } else if (state.regField < 4) { // FCMOV{B,E,BE,U}
+        state.modrm = makeModrmRegister(state, rmST);
+        switch (state.regField) {
+            case 0: return makeInstruction(state, x86_fcmovb, "fcmovb", makeRegister(state, 0, rmST), state.modrm);
+            case 1: return makeInstruction(state, x86_fcmove, "fcmove", makeRegister(state, 0, rmST), state.modrm);
+            case 2: return makeInstruction(state, x86_fcmovbe, "fcmovbe", makeRegister(state, 0, rmST), state.modrm);
+            case 3: return makeInstruction(state, x86_fcmovu, "fcmovu", makeRegister(state, 0, rmST), state.modrm);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
         }
     } else {
-        switch (modregrmByte) {
-            case 0xE9: return makeInstruction(x86_fucompp, "fucompp");
-            default: throw ExceptionX86("bad ModR/M value for x87 opcode 0xda", this);
+        switch (state.modregrmByte) {
+            case 0xE9: return makeInstruction(state, x86_fucompp, "fucompp");
+            default: throw ExceptionX86("bad ModR/M value for x87 opcode 0xda", state);
         }
     }
     /* avoid MSCV warning by adding return stmt */
@@ -5409,44 +5418,44 @@ DisassemblerX86::decodeX87InstructionDA()
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionDB()
+DisassemblerX86::decodeX87InstructionDB(State &state) const
 {
-    getModRegRM(rmReturnNull, rmReturnNull, NULL);
-    if (modeField < 3) {
-        SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(modrm);
+    getModRegRM(state, rmReturnNull, rmReturnNull, NULL);
+    if (state.modeField < 3) {
+        SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(state.modrm);
         ASSERT_not_null(mr);
-        if (regField <= 3) {
+        if (state.regField <= 3) {
             mr->set_type(DWORDT);
         } else {
             mr->set_type(LDOUBLET);
         }
-        switch (regField) {
-            case 0: return makeInstruction(x86_fild, "fild", modrm);
-            case 1: return makeInstruction(x86_fisttp, "fisttp", modrm);
-            case 2: return makeInstruction(x86_fist, "fist", modrm);
-            case 3: return makeInstruction(x86_fistp, "fistp", modrm);
-            case 4: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdb", this);
-            case 5: return makeInstruction(x86_fld, "fld", modrm);
-            case 6: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdb", this);
-            case 7: return makeInstruction(x86_fstp, "fstp", modrm);
-            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+        switch (state.regField) {
+            case 0: return makeInstruction(state, x86_fild, "fild", state.modrm);
+            case 1: return makeInstruction(state, x86_fisttp, "fisttp", state.modrm);
+            case 2: return makeInstruction(state, x86_fist, "fist", state.modrm);
+            case 3: return makeInstruction(state, x86_fistp, "fistp", state.modrm);
+            case 4: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdb", state);
+            case 5: return makeInstruction(state, x86_fld, "fld", state.modrm);
+            case 6: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdb", state);
+            case 7: return makeInstruction(state, x86_fstp, "fstp", state.modrm);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
         }
-    } else if (regField <= 3 || regField == 5 || regField == 6) { // FCMOV{NB,NE,NBE,NU}, FUCOMI, FCOMI
-        modrm = makeModrmNormal(rmST, NULL);
-        switch (regField) {
-            case 0: return makeInstruction(x86_fcmovnb, "fcmovnb", makeRegister(0, rmST), modrm);
-            case 1: return makeInstruction(x86_fcmovne, "fcmovne", makeRegister(0, rmST), modrm);
-            case 2: return makeInstruction(x86_fcmovnbe, "fcmovnbe", makeRegister(0, rmST), modrm);
-            case 3: return makeInstruction(x86_fcmovnu, "fcmovnu", makeRegister(0, rmST), modrm);
-            case 5: return makeInstruction(x86_fucomi, "fucomi", makeRegister(0, rmST), modrm);
-            case 6: return makeInstruction(x86_fcomi, "fcomi", makeRegister(0, rmST), modrm);
-            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+    } else if (state.regField <= 3 || state.regField == 5 || state.regField == 6) { // FCMOV{NB,NE,NBE,NU}, FUCOMI, FCOMI
+        state.modrm = makeModrmNormal(state, rmST, NULL);
+        switch (state.regField) {
+            case 0: return makeInstruction(state, x86_fcmovnb, "fcmovnb", makeRegister(state, 0, rmST), state.modrm);
+            case 1: return makeInstruction(state, x86_fcmovne, "fcmovne", makeRegister(state, 0, rmST), state.modrm);
+            case 2: return makeInstruction(state, x86_fcmovnbe, "fcmovnbe", makeRegister(state, 0, rmST), state.modrm);
+            case 3: return makeInstruction(state, x86_fcmovnu, "fcmovnu", makeRegister(state, 0, rmST), state.modrm);
+            case 5: return makeInstruction(state, x86_fucomi, "fucomi", makeRegister(state, 0, rmST), state.modrm);
+            case 6: return makeInstruction(state, x86_fcomi, "fcomi", makeRegister(state, 0, rmST), state.modrm);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
       }
     } else {
-        switch (modregrmByte) {
-            case 0xE2: return makeInstruction(x86_fnclex, "fnclex");
-            case 0xE3: return makeInstruction(x86_fninit, "fninit");
-            default: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdb", this);
+        switch (state.modregrmByte) {
+            case 0xE2: return makeInstruction(state, x86_fnclex, "fnclex");
+            case 0xE3: return makeInstruction(state, x86_fninit, "fninit");
+            default: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdb", state);
         }
     }
     /* avoid MSCV warning by adding return stmt */
@@ -5454,32 +5463,32 @@ DisassemblerX86::decodeX87InstructionDB()
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionDC()
+DisassemblerX86::decodeX87InstructionDC(State &state) const
 {
-    getModRegRM(rmReturnNull, rmST, DOUBLET);
-    if (modeField < 3) { // Using memory
-        switch (regField & 7) {
-            case 0: return makeInstruction(x86_fadd, "fadd", modrm);
-            case 1: return makeInstruction(x86_fmul, "fmul", modrm);
-            case 2: return makeInstruction(x86_fcom, "fcom", modrm);
-            case 3: return makeInstruction(x86_fcomp, "fcomp", modrm);
-            case 4: return makeInstruction(x86_fsub, "fsub", modrm);
-            case 5: return makeInstruction(x86_fsubr, "fsubr", modrm);
-            case 6: return makeInstruction(x86_fdiv, "fdiv", modrm);
-            case 7: return makeInstruction(x86_fdivr, "fdivr", modrm);
-            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+    getModRegRM(state, rmReturnNull, rmST, DOUBLET);
+    if (state.modeField < 3) { // Using memory
+        switch (state.regField & 7) {
+            case 0: return makeInstruction(state, x86_fadd, "fadd", state.modrm);
+            case 1: return makeInstruction(state, x86_fmul, "fmul", state.modrm);
+            case 2: return makeInstruction(state, x86_fcom, "fcom", state.modrm);
+            case 3: return makeInstruction(state, x86_fcomp, "fcomp", state.modrm);
+            case 4: return makeInstruction(state, x86_fsub, "fsub", state.modrm);
+            case 5: return makeInstruction(state, x86_fsubr, "fsubr", state.modrm);
+            case 6: return makeInstruction(state, x86_fdiv, "fdiv", state.modrm);
+            case 7: return makeInstruction(state, x86_fdivr, "fdivr", state.modrm);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
         }
     } else { // Two-operand register forms
-        switch (regField & 7) {
-            case 0: return makeInstruction(x86_fadd,  "fadd",  modrm, makeRegister(0, rmST));
-            case 1: return makeInstruction(x86_fmul,  "fmul",  modrm, makeRegister(0, rmST));
-            case 2: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdc", this);
-            case 3: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdc", this);
-            case 4: return makeInstruction(x86_fsubr, "fsubr", modrm, makeRegister(0, rmST));
-            case 5: return makeInstruction(x86_fsub,  "fsub",  modrm, makeRegister(0, rmST));
-            case 6: return makeInstruction(x86_fdivr, "fdivr", modrm, makeRegister(0, rmST));
-            case 7: return makeInstruction(x86_fdiv,  "fdiv",  modrm, makeRegister(0, rmST));
-            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+        switch (state.regField & 7) {
+            case 0: return makeInstruction(state, x86_fadd,  "fadd",  state.modrm, makeRegister(state, 0, rmST));
+            case 1: return makeInstruction(state, x86_fmul,  "fmul",  state.modrm, makeRegister(state, 0, rmST));
+            case 2: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdc", state);
+            case 3: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdc", state);
+            case 4: return makeInstruction(state, x86_fsubr, "fsubr", state.modrm, makeRegister(state, 0, rmST));
+            case 5: return makeInstruction(state, x86_fsub,  "fsub",  state.modrm, makeRegister(state, 0, rmST));
+            case 6: return makeInstruction(state, x86_fdivr, "fdivr", state.modrm, makeRegister(state, 0, rmST));
+            case 7: return makeInstruction(state, x86_fdiv,  "fdiv",  state.modrm, makeRegister(state, 0, rmST));
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
         }
     }
     /* avoid MSCV warning by adding return stmt */
@@ -5487,50 +5496,50 @@ DisassemblerX86::decodeX87InstructionDC()
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionDD()
+DisassemblerX86::decodeX87InstructionDD(State &state) const
 {
-    getModRegRM(rmReturnNull, rmST, NULL);
-    if (modeField < 3) { // Using memory
-        SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(modrm);
+    getModRegRM(state, rmReturnNull, rmST, NULL);
+    if (state.modeField < 3) { // Using memory
+        SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(state.modrm);
         ASSERT_not_null(mr);
-        switch (regField) {
+        switch (state.regField) {
             case 0:
                 mr->set_type(DOUBLET);
-                return makeInstruction(x86_fld, "fld", modrm);
+                return makeInstruction(state, x86_fld, "fld", state.modrm);
             case 1:
                 mr->set_type(QWORDT);
-                return makeInstruction(x86_fisttp, "fisttp", modrm);
+                return makeInstruction(state, x86_fisttp, "fisttp", state.modrm);
             case 2:
                 mr->set_type(DOUBLET);
-                return makeInstruction(x86_fst, "fst", modrm);
+                return makeInstruction(state, x86_fst, "fst", state.modrm);
             case 3:
                 mr->set_type(DOUBLET);
-                return makeInstruction(x86_fstp, "fstp", modrm);
+                return makeInstruction(state, x86_fstp, "fstp", state.modrm);
             case 4:
                 mr->set_type(BYTET);
-                return makeInstruction(x86_frstor, "frstor", modrm);
+                return makeInstruction(state, x86_frstor, "frstor", state.modrm);
             case 5:
-                throw ExceptionX86("bad ModR/M value for x87 opcode 0xdd", this);
+                throw ExceptionX86("bad ModR/M value for x87 opcode 0xdd", state);
             case 6:
                 mr->set_type(BYTET);
-                return makeInstruction(x86_fnsave, "fnsave", modrm);
+                return makeInstruction(state, x86_fnsave, "fnsave", state.modrm);
             case 7:
                 mr->set_type(WORDT);
-                return makeInstruction(x86_fnstsw, "fnstsw", modrm);
+                return makeInstruction(state, x86_fnstsw, "fnstsw", state.modrm);
             default:
-                ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+                ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
         }
     } else { // Register forms
-        switch (regField) {
-            case 0: return makeInstruction(x86_ffree, "ffree", modrm);
-            case 1: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdd", this);
-            case 2: return makeInstruction(x86_fst, "fst", modrm);
-            case 3: return makeInstruction(x86_fstp, "fstp", modrm);
-            case 4: return makeInstruction(x86_fucom, "fucom", modrm, makeRegister(0, rmST));
-            case 5: return makeInstruction(x86_fucomp, "fucomp", modrm, makeRegister(0, rmST));
-            case 6: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdd", this);
-            case 7: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdd", this);
-            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+        switch (state.regField) {
+            case 0: return makeInstruction(state, x86_ffree, "ffree", state.modrm);
+            case 1: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdd", state);
+            case 2: return makeInstruction(state, x86_fst, "fst", state.modrm);
+            case 3: return makeInstruction(state, x86_fstp, "fstp", state.modrm);
+            case 4: return makeInstruction(state, x86_fucom, "fucom", state.modrm, makeRegister(state, 0, rmST));
+            case 5: return makeInstruction(state, x86_fucomp, "fucomp", state.modrm, makeRegister(state, 0, rmST));
+            case 6: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdd", state);
+            case 7: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdd", state);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
         }
     }
     /* avoid MSCV warning by adding return stmt */
@@ -5538,37 +5547,37 @@ DisassemblerX86::decodeX87InstructionDD()
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionDE()
+DisassemblerX86::decodeX87InstructionDE(State &state) const
 {
-    getModRegRM(rmReturnNull, rmST, WORDT);
-    if (modeField < 3) { // Using memory
-        switch (regField & 7) {
-            case 0: return makeInstruction(x86_fiadd, "fiadd", modrm);
-            case 1: return makeInstruction(x86_fimul, "fimul", modrm);
-            case 2: return makeInstruction(x86_ficom, "ficom", modrm);
-            case 3: return makeInstruction(x86_ficomp, "ficomp", modrm);
-            case 4: return makeInstruction(x86_fisub, "fisub", modrm);
-            case 5: return makeInstruction(x86_fisubr, "fisubr", modrm);
-            case 6: return makeInstruction(x86_fidiv, "fidiv", modrm);
-            case 7: return makeInstruction(x86_fidivr, "fidivr", modrm);
-            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+    getModRegRM(state, rmReturnNull, rmST, WORDT);
+    if (state.modeField < 3) { // Using memory
+        switch (state.regField & 7) {
+            case 0: return makeInstruction(state, x86_fiadd, "fiadd", state.modrm);
+            case 1: return makeInstruction(state, x86_fimul, "fimul", state.modrm);
+            case 2: return makeInstruction(state, x86_ficom, "ficom", state.modrm);
+            case 3: return makeInstruction(state, x86_ficomp, "ficomp", state.modrm);
+            case 4: return makeInstruction(state, x86_fisub, "fisub", state.modrm);
+            case 5: return makeInstruction(state, x86_fisubr, "fisubr", state.modrm);
+            case 6: return makeInstruction(state, x86_fidiv, "fidiv", state.modrm);
+            case 7: return makeInstruction(state, x86_fidivr, "fidivr", state.modrm);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
         }
     } else {
-        switch (regField & 7) {
-            case 0: return makeInstruction(x86_faddp, "faddp", modrm, makeRegister(0, rmST));
-            case 1: return makeInstruction(x86_fmulp, "fmulp", modrm, makeRegister(0, rmST));
-            case 2: throw ExceptionX86("bad ModR/M value for x87 opcode 0xde", this);
+        switch (state.regField & 7) {
+            case 0: return makeInstruction(state, x86_faddp, "faddp", state.modrm, makeRegister(state, 0, rmST));
+            case 1: return makeInstruction(state, x86_fmulp, "fmulp", state.modrm, makeRegister(state, 0, rmST));
+            case 2: throw ExceptionX86("bad ModR/M value for x87 opcode 0xde", state);
             case 3: {
-                switch (modregrmByte) {
-                    case 0xD9: delete modrm; delete reg; return makeInstruction(x86_fcompp, "fcompp");
-                    default: throw ExceptionX86("bad ModR/M value for x87 opcode 0xde", this);
+                switch (state.modregrmByte) {
+                    case 0xD9: delete state.modrm; delete state.reg; return makeInstruction(state, x86_fcompp, "fcompp");
+                    default: throw ExceptionX86("bad ModR/M value for x87 opcode 0xde", state);
                 }
             }
-            case 4: return makeInstruction(x86_fsubrp, "fsubrp", modrm, makeRegister(0, rmST));
-            case 5: return makeInstruction(x86_fsubp, "fsubp", modrm, makeRegister(0, rmST));
-            case 6: return makeInstruction(x86_fdivrp, "fdivrp", modrm, makeRegister(0, rmST));
-            case 7: return makeInstruction(x86_fdivp, "fdivp", modrm, makeRegister(0, rmST));
-            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+            case 4: return makeInstruction(state, x86_fsubrp, "fsubrp", state.modrm, makeRegister(state, 0, rmST));
+            case 5: return makeInstruction(state, x86_fsubp, "fsubp", state.modrm, makeRegister(state, 0, rmST));
+            case 6: return makeInstruction(state, x86_fdivrp, "fdivrp", state.modrm, makeRegister(state, 0, rmST));
+            case 7: return makeInstruction(state, x86_fdivp, "fdivp", state.modrm, makeRegister(state, 0, rmST));
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
         }
     }
     /* avoid MSCV warning by adding return stmt */
@@ -5576,41 +5585,41 @@ DisassemblerX86::decodeX87InstructionDE()
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionDF()
+DisassemblerX86::decodeX87InstructionDF(State &state) const
 {
-    getModRegRM(rmReturnNull, rmReturnNull, NULL);
-    if (modeField < 3) { // Using memory
-        SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(modrm);
+    getModRegRM(state, rmReturnNull, rmReturnNull, NULL);
+    if (state.modeField < 3) { // Using memory
+        SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(state.modrm);
         ASSERT_not_null(mr);
-        switch (regField) {
-            case 0: mr->set_type(WORDT); return makeInstruction(x86_fild, "fild", modrm);
-            case 1: mr->set_type(WORDT); return makeInstruction(x86_fisttp, "fisttp", modrm);
-            case 2: mr->set_type(WORDT); return makeInstruction(x86_fist, "fist", modrm);
-            case 3: mr->set_type(WORDT); return makeInstruction(x86_fistp, "fistp", modrm);
-            case 4: mr->set_type(BYTET); return makeInstruction(x86_fbld, "fbld", modrm);
-            case 5: mr->set_type(QWORDT); return makeInstruction(x86_fild, "fild", modrm);
-            case 6: mr->set_type(BYTET); return makeInstruction(x86_fbstp, "fbstp", modrm);
-            case 7: mr->set_type(QWORDT); return makeInstruction(x86_fistp, "fistp", modrm);
-            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+        switch (state.regField) {
+            case 0: mr->set_type(WORDT); return makeInstruction(state, x86_fild, "fild", state.modrm);
+            case 1: mr->set_type(WORDT); return makeInstruction(state, x86_fisttp, "fisttp", state.modrm);
+            case 2: mr->set_type(WORDT); return makeInstruction(state, x86_fist, "fist", state.modrm);
+            case 3: mr->set_type(WORDT); return makeInstruction(state, x86_fistp, "fistp", state.modrm);
+            case 4: mr->set_type(BYTET); return makeInstruction(state, x86_fbld, "fbld", state.modrm);
+            case 5: mr->set_type(QWORDT); return makeInstruction(state, x86_fild, "fild", state.modrm);
+            case 6: mr->set_type(BYTET); return makeInstruction(state, x86_fbstp, "fbstp", state.modrm);
+            case 7: mr->set_type(QWORDT); return makeInstruction(state, x86_fistp, "fistp", state.modrm);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
         }
     } else {
-        modrm = makeModrmNormal(rmST, NULL);
-        switch (regField) {
-            case 0: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdf", this);
-            case 1: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdf", this);
-            case 2: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdf", this);
-            case 3: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdf", this);
+        state.modrm = makeModrmNormal(state, rmST, NULL);
+        switch (state.regField) {
+            case 0: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdf", state);
+            case 1: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdf", state);
+            case 2: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdf", state);
+            case 3: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdf", state);
             case 4: {
-                if (modregrmByte == 0xE0) {
-                    return makeInstruction(x86_fnstsw, "fnstsw", makeRegister(0, rmWord));
+                if (state.modregrmByte == 0xE0) {
+                    return makeInstruction(state, x86_fnstsw, "fnstsw", makeRegister(state, 0, rmWord));
                 } else {
-                    throw ExceptionX86("bad ModR/M value for x87 opcode 0xdf", this);
+                    throw ExceptionX86("bad ModR/M value for x87 opcode 0xdf", state);
                 }
             }
-            case 5: return makeInstruction(x86_fucomip, "fucomip", makeRegister(0, rmST), modrm);
-            case 6: return makeInstruction(x86_fcomip, "fcomip", makeRegister(0, rmST), modrm);
-            case 7: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdf", this);
-            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+            case 5: return makeInstruction(state, x86_fucomip, "fucomip", makeRegister(state, 0, rmST), state.modrm);
+            case 6: return makeInstruction(state, x86_fcomip, "fcomip", makeRegister(state, 0, rmST), state.modrm);
+            case 7: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdf", state);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
         }
     }
     /* avoid MSCV warning by adding return stmt */
@@ -5618,328 +5627,328 @@ DisassemblerX86::decodeX87InstructionDF()
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup1(SgAsmExpression* imm)
+DisassemblerX86::decodeGroup1(State &state, SgAsmExpression* imm) const
 {
-    switch (regField) {
-        case 0: return makeInstruction(x86_add, "add", modrm, imm);
-        case 1: return makeInstruction(x86_or, "or", modrm, imm);
-        case 2: return makeInstruction(x86_adc, "adc", modrm, imm);
-        case 3: return makeInstruction(x86_sbb, "sbb", modrm, imm);
-        case 4: return makeInstruction(x86_and, "and", modrm, imm);
-        case 5: return makeInstruction(x86_sub, "sub", modrm, imm);
-        case 6: return makeInstruction(x86_xor, "xor", modrm, imm);
-        case 7: return makeInstruction(x86_cmp, "cmp", modrm, imm);
-        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+    switch (state.regField) {
+        case 0: return makeInstruction(state, x86_add, "add", state.modrm, imm);
+        case 1: return makeInstruction(state, x86_or, "or", state.modrm, imm);
+        case 2: return makeInstruction(state, x86_adc, "adc", state.modrm, imm);
+        case 3: return makeInstruction(state, x86_sbb, "sbb", state.modrm, imm);
+        case 4: return makeInstruction(state, x86_and, "and", state.modrm, imm);
+        case 5: return makeInstruction(state, x86_sub, "sub", state.modrm, imm);
+        case 6: return makeInstruction(state, x86_xor, "xor", state.modrm, imm);
+        case 7: return makeInstruction(state, x86_cmp, "cmp", state.modrm, imm);
+        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup1a()
+DisassemblerX86::decodeGroup1a(State &state) const
 {
-    if (regField != 0)
-        throw ExceptionX86("bad ModR/M value for Group 1a opcode", this);
-    return makeInstruction(x86_pop, "pop", modrm);
+    if (state.regField != 0)
+        throw ExceptionX86("bad ModR/M value for Group 1a opcode", state);
+    return makeInstruction(state, x86_pop, "pop", state.modrm);
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup2(SgAsmExpression* count)
+DisassemblerX86::decodeGroup2(State &state, SgAsmExpression* count) const
 {
-    switch (regField) {
-        case 0: return makeInstruction(x86_rol, "rol", modrm, count);
-        case 1: return makeInstruction(x86_ror, "ror", modrm, count);
-        case 2: return makeInstruction(x86_rcl, "rcl", modrm, count);
-        case 3: return makeInstruction(x86_rcr, "rcr", modrm, count);
-        case 4: return makeInstruction(x86_shl, "shl", modrm, count);
-        case 5: return makeInstruction(x86_shr, "shr", modrm, count);
-        case 6: return makeInstruction(x86_shl, "shl", modrm, count);
-        case 7: return makeInstruction(x86_sar, "sar", modrm, count);
-        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+    switch (state.regField) {
+        case 0: return makeInstruction(state, x86_rol, "rol", state.modrm, count);
+        case 1: return makeInstruction(state, x86_ror, "ror", state.modrm, count);
+        case 2: return makeInstruction(state, x86_rcl, "rcl", state.modrm, count);
+        case 3: return makeInstruction(state, x86_rcr, "rcr", state.modrm, count);
+        case 4: return makeInstruction(state, x86_shl, "shl", state.modrm, count);
+        case 5: return makeInstruction(state, x86_shr, "shr", state.modrm, count);
+        case 6: return makeInstruction(state, x86_shl, "shl", state.modrm, count);
+        case 7: return makeInstruction(state, x86_sar, "sar", state.modrm, count);
+        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup3(SgAsmExpression* immMaybe)
+DisassemblerX86::decodeGroup3(State &state, SgAsmExpression* immMaybe) const
 {
-    switch (regField) {
+    switch (state.regField) {
         case 0:
         case 1:
             ASSERT_require(immMaybe);
-            return makeInstruction(x86_test, "test", modrm, immMaybe);
+            return makeInstruction(state, x86_test, "test", state.modrm, immMaybe);
         case 2:
-            return makeInstruction(x86_not, "not", modrm);
+            return makeInstruction(state, x86_not, "not", state.modrm);
         case 3:
-            return makeInstruction(x86_neg, "neg", modrm);
+            return makeInstruction(state, x86_neg, "neg", state.modrm);
         case 4:
-            return makeInstruction(x86_mul, "mul", modrm);
+            return makeInstruction(state, x86_mul, "mul", state.modrm);
         case 5:
-            return makeInstruction(x86_imul, "imul", modrm);
+            return makeInstruction(state, x86_imul, "imul", state.modrm);
         case 6:
-            return makeInstruction(x86_div, "div", modrm);
+            return makeInstruction(state, x86_div, "div", state.modrm);
         case 7:
-            return makeInstruction(x86_idiv, "idiv", modrm);
+            return makeInstruction(state, x86_idiv, "idiv", state.modrm);
         default:
-            ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+            ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup4()
+DisassemblerX86::decodeGroup4(State &state) const
 {
-    switch (regField) {
-        case 0: return makeInstruction(x86_inc, "inc", modrm);
-        case 1: return makeInstruction(x86_dec, "dec", modrm);
-        default: throw ExceptionX86("bad ModR/M value for Group 4 opcode", this);
+    switch (state.regField) {
+        case 0: return makeInstruction(state, x86_inc, "inc", state.modrm);
+        case 1: return makeInstruction(state, x86_dec, "dec", state.modrm);
+        default: throw ExceptionX86("bad ModR/M value for Group 4 opcode", state);
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup5()
+DisassemblerX86::decodeGroup5(State &state) const
 {
-    switch (regField) {
+    switch (state.regField) {
         case 0:
-            return makeInstruction(x86_inc, "inc", modrm);
+            return makeInstruction(state, x86_inc, "inc", state.modrm);
         case 1:
-            return makeInstruction(x86_dec, "dec", modrm);
+            return makeInstruction(state, x86_dec, "dec", state.modrm);
         case 2:
-            return makeInstruction(x86_call, "call", modrm);
+            return makeInstruction(state, x86_call, "call", state.modrm);
         case 3:
-            return makeInstruction(x86_farcall, "farCall", modrm);
+            return makeInstruction(state, x86_farcall, "farCall", state.modrm);
         case 4:
-            isUnconditionalJump = true;
-            return makeInstruction(x86_jmp, "jmp", modrm);
+            state.isUnconditionalJump = true;
+            return makeInstruction(state, x86_jmp, "jmp", state.modrm);
         case 5:
-            isUnconditionalJump = true;
-            return makeInstruction(x86_farjmp, "farJmp", modrm);
+            state.isUnconditionalJump = true;
+            return makeInstruction(state, x86_farjmp, "farJmp", state.modrm);
         case 6:
-            return makeInstruction(x86_push, "push", modrm);
+            return makeInstruction(state, x86_push, "push", state.modrm);
         case 7:
-            throw ExceptionX86("bad ModR/M value for Group 5 opcode", this);
+            throw ExceptionX86("bad ModR/M value for Group 5 opcode", state);
         default:
-            ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+            ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup6()
+DisassemblerX86::decodeGroup6(State &state) const
 {
-    switch (regField) {
-        case 0: return makeInstruction(x86_sldt, "sldt", modrm); // FIXME adjust register size
-        case 1: return makeInstruction(x86_str, "str", modrm); // FIXME adjust register size
-        case 2: return makeInstruction(x86_lldt, "lldt", modrm);
-        case 3: return makeInstruction(x86_ltr, "ltr", modrm);
-        case 4: return makeInstruction(x86_verr, "verr", modrm);
-        case 5: return makeInstruction(x86_verw, "verw", modrm);
-        case 6: throw ExceptionX86("bad ModR/M value for Group 6 opcode", this);
-        case 7: throw ExceptionX86("bad ModR/M value for Group 6 opcode", this);
-        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+    switch (state.regField) {
+        case 0: return makeInstruction(state, x86_sldt, "sldt", state.modrm); // FIXME adjust register size
+        case 1: return makeInstruction(state, x86_str, "str", state.modrm); // FIXME adjust register size
+        case 2: return makeInstruction(state, x86_lldt, "lldt", state.modrm);
+        case 3: return makeInstruction(state, x86_ltr, "ltr", state.modrm);
+        case 4: return makeInstruction(state, x86_verr, "verr", state.modrm);
+        case 5: return makeInstruction(state, x86_verw, "verw", state.modrm);
+        case 6: throw ExceptionX86("bad ModR/M value for Group 6 opcode", state);
+        case 7: throw ExceptionX86("bad ModR/M value for Group 6 opcode", state);
+        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup7()
+DisassemblerX86::decodeGroup7(State &state) const
 {
-    getModRegRM(rmReturnNull, rmReturnNull, NULL);
-    switch (regField) {
+    getModRegRM(state, rmReturnNull, rmReturnNull, NULL);
+    switch (state.regField) {
         case 0: {
-            if (modeField == 3) {
-                switch (rmField) {
-                    case 1: return makeInstruction(x86_vmcall, "vmcall");
-                    case 2: return makeInstruction(x86_vmlaunch, "vmlaunch");
-                    case 3: return makeInstruction(x86_vmresume, "vmresume");
-                    case 4: return makeInstruction(x86_vmxoff, "vmxoff");
-                    default: throw ExceptionX86("bad ModR/M value for Group 7 opcode", this);
+            if (state.modeField == 3) {
+                switch (state.rmField) {
+                    case 1: return makeInstruction(state, x86_vmcall, "vmcall");
+                    case 2: return makeInstruction(state, x86_vmlaunch, "vmlaunch");
+                    case 3: return makeInstruction(state, x86_vmresume, "vmresume");
+                    case 4: return makeInstruction(state, x86_vmxoff, "vmxoff");
+                    default: throw ExceptionX86("bad ModR/M value for Group 7 opcode", state);
                 }
             } else {
-                fillInModRM(rmReturnNull, BYTET /* pseudo-descriptor */ );
-                return makeInstruction(x86_sgdt, "sgdt", modrm);
+                fillInModRM(state, rmReturnNull, BYTET /* pseudo-descriptor */ );
+                return makeInstruction(state, x86_sgdt, "sgdt", state.modrm);
             }
         }
         case 1: {
-            if (modeField == 3) {
-                switch (rmField) {
-                    case 0: return makeInstruction(x86_monitor, "monitor");
-                    case 1: return makeInstruction(x86_mwait, "mwait");
-                    default: throw ExceptionX86("bad ModR/M value for Group 7 opcode", this);
+            if (state.modeField == 3) {
+                switch (state.rmField) {
+                    case 0: return makeInstruction(state, x86_monitor, "monitor");
+                    case 1: return makeInstruction(state, x86_mwait, "mwait");
+                    default: throw ExceptionX86("bad ModR/M value for Group 7 opcode", state);
                 }
             } else {
-                fillInModRM(rmReturnNull, BYTET /* pseudo-descriptor */ );
-                return makeInstruction(x86_sidt, "sidt", modrm);
+                fillInModRM(state, rmReturnNull, BYTET /* pseudo-descriptor */ );
+                return makeInstruction(state, x86_sidt, "sidt", state.modrm);
             }
         }
         case 2: {
-            if (modeField ==3) {
-                switch (rmField) {
-                    case 0: return makeInstruction(x86_xgetbv, "xgetbv");
-                    case 1: return makeInstruction(x86_xsetbv, "xsetbv");
-                    default: throw ExceptionX86("bad ModR/M value for Group 7 opcode", this);
+            if (state.modeField ==3) {
+                switch (state.rmField) {
+                    case 0: return makeInstruction(state, x86_xgetbv, "xgetbv");
+                    case 1: return makeInstruction(state, x86_xsetbv, "xsetbv");
+                    default: throw ExceptionX86("bad ModR/M value for Group 7 opcode", state);
                 }
             } else {
-                fillInModRM(rmReturnNull, BYTET /* pseudo-descriptor */ );
-                return makeInstruction(x86_lgdt, "lgdt", modrm);
+                fillInModRM(state, rmReturnNull, BYTET /* pseudo-descriptor */ );
+                return makeInstruction(state, x86_lgdt, "lgdt", state.modrm);
             }
         }
         case 3: {
-            if (modeField == 3) {
-                switch (rmField) {
-                    case 0: return makeInstruction(x86_vmrun, "vmrun");
-                    case 1: return makeInstruction(x86_vmmcall, "vmmcall");
-                    case 2: return makeInstruction(x86_vmload, "vmload");
-                    case 3: return makeInstruction(x86_vmsave, "vmsave");
-                    case 4: return makeInstruction(x86_stgi, "stgi");
-                    case 5: return makeInstruction(x86_clgi, "clgi");
-                    case 6: return makeInstruction(x86_skinit, "skinit");
-                    case 7: return makeInstruction(x86_invlpga, "invlpga");
-                    default: ASSERT_not_reachable("invalid rm field: " + StringUtility::numberToString(rmField));
+            if (state.modeField == 3) {
+                switch (state.rmField) {
+                    case 0: return makeInstruction(state, x86_vmrun, "vmrun");
+                    case 1: return makeInstruction(state, x86_vmmcall, "vmmcall");
+                    case 2: return makeInstruction(state, x86_vmload, "vmload");
+                    case 3: return makeInstruction(state, x86_vmsave, "vmsave");
+                    case 4: return makeInstruction(state, x86_stgi, "stgi");
+                    case 5: return makeInstruction(state, x86_clgi, "clgi");
+                    case 6: return makeInstruction(state, x86_skinit, "skinit");
+                    case 7: return makeInstruction(state, x86_invlpga, "invlpga");
+                    default: ASSERT_not_reachable("invalid rm field: " + StringUtility::numberToString(state.rmField));
                 }
             } else {
-                fillInModRM(rmReturnNull, BYTET /* pseudo-descriptor */ );
-                return makeInstruction(x86_lidt, "lidt", modrm);
+                fillInModRM(state, rmReturnNull, BYTET /* pseudo-descriptor */ );
+                return makeInstruction(state, x86_lidt, "lidt", state.modrm);
             }
         }
         case 4: {
-            fillInModRM(effectiveOperandMode(), WORDT);
-            return makeInstruction(x86_smsw, "smsw", modrm);
+            fillInModRM(state, effectiveOperandMode(state), WORDT);
+            return makeInstruction(state, x86_smsw, "smsw", state.modrm);
         }
         case 5:
-            throw ExceptionX86("bad ModR/M value for Group 7 opcode", this);
+            throw ExceptionX86("bad ModR/M value for Group 7 opcode", state);
         case 6: {
-            fillInModRM(rmWord, WORDT);
-            return makeInstruction(x86_lmsw, "lmsw", modrm);
+            fillInModRM(state, rmWord, WORDT);
+            return makeInstruction(state, x86_lmsw, "lmsw", state.modrm);
         }
         case 7: {
-            if (modeField == 3) {
-                switch (rmField) {
-                    case 0: return makeInstruction(x86_swapgs, "swapgs");
-                    case 1: return makeInstruction(x86_rdtscp, "rdtscp");
-                    default: throw ExceptionX86("bad ModR/M value for Group 7 opcode", this);
+            if (state.modeField == 3) {
+                switch (state.rmField) {
+                    case 0: return makeInstruction(state, x86_swapgs, "swapgs");
+                    case 1: return makeInstruction(state, x86_rdtscp, "rdtscp");
+                    default: throw ExceptionX86("bad ModR/M value for Group 7 opcode", state);
                 }
             } else {
-                fillInModRM(rmReturnNull, BYTET);
-                return makeInstruction(x86_invlpg, "invlpg", modrm);
+                fillInModRM(state, rmReturnNull, BYTET);
+                return makeInstruction(state, x86_invlpg, "invlpg", state.modrm);
             }
         }
         default:
-            ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+            ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup8(SgAsmExpression* imm)
+DisassemblerX86::decodeGroup8(State &state, SgAsmExpression* imm) const
 {
-    switch (regField) {
-        case 0: throw ExceptionX86("bad ModR/M value for Group 8 opcode", this);
-        case 1: throw ExceptionX86("bad ModR/M value for Group 8 opcode", this);
-        case 2: throw ExceptionX86("bad ModR/M value for Group 8 opcode", this);
-        case 3: throw ExceptionX86("bad ModR/M value for Group 8 opcode", this);
-        case 4: return makeInstruction(x86_bt, "bt", modrm, imm);
-        case 5: return makeInstruction(x86_bts, "bts", modrm, imm);
-        case 6: return makeInstruction(x86_btr, "btr", modrm, imm);
-        case 7: return makeInstruction(x86_btc, "btc", modrm, imm);
-        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+    switch (state.regField) {
+        case 0: throw ExceptionX86("bad ModR/M value for Group 8 opcode", state);
+        case 1: throw ExceptionX86("bad ModR/M value for Group 8 opcode", state);
+        case 2: throw ExceptionX86("bad ModR/M value for Group 8 opcode", state);
+        case 3: throw ExceptionX86("bad ModR/M value for Group 8 opcode", state);
+        case 4: return makeInstruction(state, x86_bt, "bt", state.modrm, imm);
+        case 5: return makeInstruction(state, x86_bts, "bts", state.modrm, imm);
+        case 6: return makeInstruction(state, x86_btr, "btr", state.modrm, imm);
+        case 7: return makeInstruction(state, x86_btc, "btc", state.modrm, imm);
+        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup11(SgAsmExpression* imm)
+DisassemblerX86::decodeGroup11(State &state, SgAsmExpression* imm) const
 {
-    switch (regField) {
-        case 0: return makeInstruction(x86_mov, "mov", modrm, imm);
-        default: throw ExceptionX86("bad ModR/M value for Group 11 opcode", this);
+    switch (state.regField) {
+        case 0: return makeInstruction(state, x86_mov, "mov", state.modrm, imm);
+        default: throw ExceptionX86("bad ModR/M value for Group 11 opcode", state);
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup15()
+DisassemblerX86::decodeGroup15(State &state) const
 {
-    getModRegRM(rmReturnNull, rmReturnNull, NULL);
-    switch (regField) {
+    getModRegRM(state, rmReturnNull, rmReturnNull, NULL);
+    switch (state.regField) {
         case 0:
-            requireMemory();
-            fillInModRM(rmReturnNull, BYTET);
-            return makeInstruction(x86_fxsave, "fxsave", modrm);
+            requireMemory(state);
+            fillInModRM(state, rmReturnNull, BYTET);
+            return makeInstruction(state, x86_fxsave, "fxsave", state.modrm);
         case 1:
-            requireMemory();
-            fillInModRM(rmReturnNull, BYTET);
-            return makeInstruction(x86_fxrstor, "fxrstor", modrm);
+            requireMemory(state);
+            fillInModRM(state, rmReturnNull, BYTET);
+            return makeInstruction(state, x86_fxrstor, "fxrstor", state.modrm);
         case 2:
-            requireMemory();
-            fillInModRM(rmReturnNull, DWORDT);
-            return makeInstruction(x86_ldmxcsr, "ldmxcsr", modrm);
+            requireMemory(state);
+            fillInModRM(state, rmReturnNull, DWORDT);
+            return makeInstruction(state, x86_ldmxcsr, "ldmxcsr", state.modrm);
         case 3:
-            requireMemory();
-            fillInModRM(rmReturnNull, DWORDT);
-            return makeInstruction(x86_stmxcsr, "stmxcsr", modrm);
+            requireMemory(state);
+            fillInModRM(state, rmReturnNull, DWORDT);
+            return makeInstruction(state, x86_stmxcsr, "stmxcsr", state.modrm);
         case 4:
-            requireMemory();
-            fillInModRM(rmReturnNull, BYTET);
-            return makeInstruction(x86_xsave, "xsave", modrm);
+            requireMemory(state);
+            fillInModRM(state, rmReturnNull, BYTET);
+            return makeInstruction(state, x86_xsave, "xsave", state.modrm);
         case 5:
-            if (modeField == 3) {
-                return makeInstruction(x86_lfence, "lfence");
+            if (state.modeField == 3) {
+                return makeInstruction(state, x86_lfence, "lfence");
             } else {
-                return makeInstruction(x86_xrstor, "xrstor", modrm);
+                return makeInstruction(state, x86_xrstor, "xrstor", state.modrm);
             }
         case 6:
-            if (modeField == 3) {
-                return makeInstruction(x86_mfence, "mfence");
+            if (state.modeField == 3) {
+                return makeInstruction(state, x86_mfence, "mfence");
             } else {
-                throw ExceptionX86("bad ModR/M value for Group 15 opcode", this);
+                throw ExceptionX86("bad ModR/M value for Group 15 opcode", state);
             }
         case 7:
-            if (modeField == 3) {
-                return makeInstruction(x86_sfence, "sfence");
+            if (state.modeField == 3) {
+                return makeInstruction(state, x86_sfence, "sfence");
             } else {
-                fillInModRM(rmReturnNull, BYTET);
-                return makeInstruction(x86_clflush, "clflush", modrm);
+                fillInModRM(state, rmReturnNull, BYTET);
+                return makeInstruction(state, x86_clflush, "clflush", state.modrm);
             }
         default:
-            ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+            ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(state.regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup16()
+DisassemblerX86::decodeGroup16(State &state) const
 {
-    requireMemory();
-    switch (regField) {
-        case 0: return makeInstruction(x86_prefetchnta, "prefetchnta", modrm);
-        case 1: return makeInstruction(x86_prefetcht0, "prefetcht0", modrm);
-        case 2: return makeInstruction(x86_prefetcht1, "prefetcht1", modrm);
-        case 3: return makeInstruction(x86_prefetcht2, "prefetcht2", modrm);
-        default: return makeInstruction(x86_prefetch, "prefetch", modrm);
+    requireMemory(state);
+    switch (state.regField) {
+        case 0: return makeInstruction(state, x86_prefetchnta, "prefetchnta", state.modrm);
+        case 1: return makeInstruction(state, x86_prefetcht0, "prefetcht0", state.modrm);
+        case 2: return makeInstruction(state, x86_prefetcht1, "prefetcht1", state.modrm);
+        case 3: return makeInstruction(state, x86_prefetcht2, "prefetcht2", state.modrm);
+        default: return makeInstruction(state, x86_prefetch, "prefetch", state.modrm);
     }
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroupP()
+DisassemblerX86::decodeGroupP(State &state) const
 {
-    getModRegRM(rmReturnNull, rmLegacyByte, BYTET);
-    requireMemory();
-    switch (regField) {
-        case 0: return makeInstruction(x86_prefetch, "prefetch", modrm);
-        case 1: return makeInstruction(x86_prefetchw, "prefetchw", modrm);
-        case 3: return makeInstruction(x86_prefetchw, "prefetchw", modrm);
-        default: return makeInstruction(x86_prefetch, "prefetch", modrm);
+    getModRegRM(state, rmReturnNull, rmLegacyByte, BYTET);
+    requireMemory(state);
+    switch (state.regField) {
+        case 0: return makeInstruction(state, x86_prefetch, "prefetch", state.modrm);
+        case 1: return makeInstruction(state, x86_prefetchw, "prefetchw", state.modrm);
+        case 3: return makeInstruction(state, x86_prefetchw, "prefetchw", state.modrm);
+        default: return makeInstruction(state, x86_prefetch, "prefetch", state.modrm);
     }
 }
 

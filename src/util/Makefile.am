@@ -52,6 +52,7 @@ libroseutil_la_LIBADD = \
 
 pkginclude_HEADERS =				\
 	BitFlags.h				\
+	BitOps.h				\
 	Color.h					\
 	compilationFileDatabase.h		\
 	FileSystem.h				\

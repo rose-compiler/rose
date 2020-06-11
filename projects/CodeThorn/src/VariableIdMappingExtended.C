@@ -14,11 +14,9 @@ namespace CodeThorn {
   }
 
   unsigned int VariableIdMappingExtended::getTypeSize(CodeThorn::BuiltInType biType) {
-    CodeThorn::logger[TRACE]<<"getTypeSize(BuiltInType)"<<std::endl;
     return typeSizeMapping.getTypeSize(biType);
   }
   unsigned int VariableIdMappingExtended::getTypeSize(SgType* type) {
-    CodeThorn::logger[TRACE]<<"getTypeSize(SgType*)"<<std::endl;
     return typeSizeMapping.determineTypeSize(type);
   }
   unsigned int VariableIdMappingExtended::getTypeSize(VariableId varId) {

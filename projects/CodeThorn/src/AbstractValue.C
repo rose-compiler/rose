@@ -66,7 +66,7 @@ void AbstractValue::setValue(long long int val) {
   intValue=val;
 }
 
-void AbstractValue::setValue(long double fval) {
+void AbstractValue::setValue(double fval) {
   ROSE_ASSERT(typeSize!=0);
   // TODO: adapt here if necessary
   floatValue=fval;
@@ -84,10 +84,14 @@ void AbstractValue::initInteger(CodeThorn::BuiltInType btype, long long int ival
   setValue(ival);
 }
 
-void AbstractValue::initFloat(CodeThorn::BuiltInType btype, long double fval) {
+void AbstractValue::initFloat(CodeThorn::BuiltInType btype, double fval) {
+  valueType=AbstractValue::TOP;intValue=0;
+  /* implementation of algebraic operators for floats not implemented yet
+  using top instead
   valueType=AbstractValue::FLOAT;
   setTypeSize(calculateTypeSize(btype));
   setValue(fval);
+  */
 }
 
 // type conversion
@@ -132,10 +136,11 @@ AbstractValue::AbstractValue(float x) {
 AbstractValue::AbstractValue(double x) {
   initFloat(BITYPE_DOUBLE,x);
 }
+/*
 AbstractValue::AbstractValue(long double x) {
   initFloat(BITYPE_LONG_DOUBLE,x);
 }
-
+*/
 AbstractValue AbstractValue::createNullPtr() {
   AbstractValue aval(0);
   // create an integer 0, not marked as pointer value.
@@ -192,6 +197,7 @@ bool AbstractValue::isTrue() const {return valueType==AbstractValue::INTEGER && 
 bool AbstractValue::isFalse() const {return valueType==AbstractValue::INTEGER && intValue==0;}
 bool AbstractValue::isBot() const {return valueType==AbstractValue::BOT;}
 bool AbstractValue::isConstInt() const {return valueType==AbstractValue::INTEGER;}
+bool AbstractValue::isConstFloat() const {return valueType==AbstractValue::FLOAT;}
 bool AbstractValue::isConstPtr() const {return (valueType==AbstractValue::PTR);}
 bool AbstractValue::isPtr() const {return (valueType==AbstractValue::PTR);}
 bool AbstractValue::isRef() const {return (valueType==AbstractValue::REF);}
@@ -201,6 +207,7 @@ long AbstractValue::hash() const {
   if(isTop()) return LONG_MAX;
   else if(isBot()) return LONG_MIN;
   else if(isConstInt()) return getIntValue();
+  else if(isConstFloat()) return getFloatValue();
   else if(isPtr()||isRef()) {
     VariableId varId=getVariableId();
     ROSE_ASSERT(varId.isValid());
@@ -683,9 +690,22 @@ int AbstractValue::getIntValue() const {
     throw CodeThorn::Exception("Error: AbstractValue::getIntValue operation failed.");
   }
   else 
-    return intValue;
+    return (int)intValue;
 }
-
+long int AbstractValue::getLongIntValue() const { 
+  return (long int)intValue;
+}
+float AbstractValue::getFloatValue() const {
+  return (float)floatValue;
+}
+double AbstractValue::getDoubleValue() const {
+  return (double)floatValue;
+}
+/*
+long double AbstractValue::getLongDoubleValue() const {
+  return (long double)floatValue;
+}
+*/
 std::string AbstractValue::getFloatValueString() const { 
    if(valueType!=FLOAT) {
      cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;

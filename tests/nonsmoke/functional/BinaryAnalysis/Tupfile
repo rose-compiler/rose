@@ -493,7 +493,7 @@ run $(test) testLazyInitialStates \
 # Test disassembling random input data for various architectures.
 #############################################################################################
 run $(tool_compile_linkexe) testRandomInput.C
-testRandomInput_ISA = a64 amd64 coldfire i386 m68040 mips-be mips-le ppc32
+testRandomInput_ISA = a64 amd64 coldfire i386 m68040 mips-be mips-le ppc32-be ppc32-le ppc64-be ppc64-le
 
 run for isa in $(testRandomInput_ISA); do \
         $(test) testRandomInput -o ${isa} ./testRandomInput --size=50000 --isa=${isa}; \
@@ -560,14 +560,14 @@ run $(test) testSRecords
 run $(tool_compile_linkexe) testDisassembler.C
 
 # PowerPC-32
-run $(test) testDisassembler -o ppc32 --input=testDisassembler-ppc32.txt --answer=testDisassembler-ppc32.ans \
-    ./testDisassembler --isa=ppc32 ./testDisassembler-ppc32.txt
+run $(test) testDisassembler -o ppc32-be --input=testDisassembler-ppc32.txt --answer=testDisassembler-ppc32.ans \
+    ./testDisassembler --isa=ppc32-be ./testDisassembler-ppc32.txt
 
 # PowerPC-64
-run $(test) testDisassembler -o ppc64a --input=testDisassembler-ppc32.txt --answer=testDisassembler-ppc64a.ans \
-    ./testDisassembler --isa=ppc64 ./testDisassembler-ppc32.txt
-run $(test) testDisassembler -o ppc64b --input=testDisassembler-ppc64.txt --answer=testDisassembler-ppc64b.ans \
-    ./testDisassembler --isa=ppc64 ./testDisassembler-ppc64.txt
+run $(test) testDisassembler -o ppc64a-be --input=testDisassembler-ppc32.txt --answer=testDisassembler-ppc64a.ans \
+    ./testDisassembler --isa=ppc64-be ./testDisassembler-ppc32.txt
+run $(test) testDisassembler -o ppc64b-be --input=testDisassembler-ppc64.txt --answer=testDisassembler-ppc64b.ans \
+    ./testDisassembler --isa=ppc64-be ./testDisassembler-ppc64.txt
 
 # ARM AArch A64
 run $(test) testDisassembler -o a64 --input=isA64Disabled --disabled-by=./isA64Disabled \
