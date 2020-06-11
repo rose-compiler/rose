@@ -4861,10 +4861,11 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
    SgExpression* conditional = nullptr;
-   SgUntypedStatement *false_body;
+   SgBasicBlock* true_body = nullptr;
+   SgBasicBlock* false_body = nullptr;
+   SgIfStmt* if_stmt = nullptr;
 
    if (ATmatch(term, "IfStatement(<term>,<term>,<term>,<term>)", &t_labels,&t_cond,&t_true,&t_else)) {
-
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
@@ -4873,41 +4874,41 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
          // MATCHED BitFormula
       } else return ATfalse;
 
+   // Create a basic block and push it on the scope stack so that there is a place for statements
+      true_body = SageBuilder::buildBasicBlock_nfi();
+      SageBuilder::pushScopeStack(true_body);
+
       if (traverse_Statement(t_true)) {
-//TODO_STATEMENTS
-#if 0
-         true_body = stmt_list->get_stmt_list().back();
-         stmt_list->get_stmt_list().pop_back();
-#endif
+         // MATCHED Statement for the true body
       } else return ATfalse;
 
+      ROSE_ASSERT(true_body);
+      SageBuilder::popScopeStack();
+
       if (ATmatch(t_else, "no-else-clause()")) {
-         false_body = NULL;
+         // MATCHED no-else-clase
       }
       else if (ATmatch(t_else, "ElseClause(<term>)", &t_false)) {
+      // There is a false body
+         false_body = SageBuilder::buildBasicBlock_nfi();
+         SageBuilder::pushScopeStack(false_body);
+
          if (traverse_Statement(t_false)) {
-//TODO_STATEMENTS
-#if 0
-            false_body = stmt_list->get_stmt_list().back();
-            stmt_list->get_stmt_list().pop_back();
-#endif
+            // MATCHED Statement for the false body
          } else return ATfalse;
+
+         ROSE_ASSERT(false_body);
+         SageBuilder::popScopeStack();
       }
       else return ATfalse;
    }
    else return ATfalse;
 
-//TODO_STATEMENTS
-#if 0
-   int statement_enum = LanguageTranslation::e_unknown;
-   //   SgUntypedIfStatement* if_stmt = SageBuilder::buildUntypedIfStatement("",statement_enum,conditional,true_body,false_body);
-   SgUntypedIfStatement* if_stmt = new SgUntypedIfStatement("", statement_enum, conditional, true_body, false_body);
-   setSourcePosition(if_stmt, term);
+// Begin SageTreeBuilder
+   sage_tree_builder.Enter(if_stmt, conditional, true_body, false_body);
 
-   stmt = convert_Labels(labels, locations, if_stmt);
-
-   stmt_list->get_stmt_list().push_back(stmt);
-#endif
+// End SageTreeBuilder
+   sage_tree_builder.Leave(if_stmt);
 
    return ATtrue;
 }

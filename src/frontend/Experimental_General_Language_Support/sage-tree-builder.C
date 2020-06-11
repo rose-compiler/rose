@@ -502,6 +502,27 @@ Leave(SgExprStatement* assign_stmt)
 }
 
 void SageTreeBuilder::
+Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, SgBasicBlock* false_body)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgIfStmt* &, ...) \n";
+
+   ROSE_ASSERT(conditional);
+   ROSE_ASSERT(true_body);
+
+   SgStatement* conditional_stmt = SageBuilder::buildExprStatement_nfi(conditional);
+   if_stmt = SageBuilder::buildIfStmt_nfi(conditional_stmt, true_body, false_body);
+}
+
+void SageTreeBuilder::
+Leave(SgIfStmt* if_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgIfStmt*) \n";
+
+   ROSE_ASSERT(if_stmt);
+   SageInterface::appendStatement(if_stmt, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
 Enter(SgStopOrPauseStatement* &control_stmt, const boost::optional<SgExpression*> &opt_code, const std::string &stmt_kind)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgStopOrPauseStatement* &, ...) \n";
