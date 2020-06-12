@@ -2845,6 +2845,19 @@ SageBuilder::buildFunctionParameterList_nfi() {
 }
 
 //-----------------------------------------------
+SgCtorInitializerList *
+SageBuilder::buildCtorInitializerList_nfi() {
+  SgCtorInitializerList *ctorInitList = new SgCtorInitializerList();
+  ROSE_ASSERT (ctorInitList);
+  ctorInitList->set_definingDeclaration (NULL);
+  ctorInitList->set_firstNondefiningDeclaration (ctorInitList);
+
+  setOneSourcePositionNull(ctorInitList);
+
+  return ctorInitList;
+}
+
+//-----------------------------------------------
 // no type vs. void type ?
 SgFunctionParameterTypeList *
 SageBuilder::buildFunctionParameterTypeList(SgFunctionParameterList* paralist)
@@ -10998,6 +11011,13 @@ SgTypeVoid * SageBuilder::buildVoidType()
 SgTypeUnknown * SageBuilder::buildUnknownType()
 {
   SgTypeUnknown * result =SgTypeUnknown::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
+SgAutoType * SageBuilder::buildAutoType()
+{
+  SgAutoType * result =new SgAutoType();
   ROSE_ASSERT(result);
   return result;
 }

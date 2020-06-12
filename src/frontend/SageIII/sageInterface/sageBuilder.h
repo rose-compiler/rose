@@ -228,6 +228,8 @@ ROSE_DLL_API SgTypeUnsignedLongLong*    buildUnsignedLongLongType();
 ROSE_DLL_API SgTypeUnsignedShort*    buildUnsignedShortType();
 ROSE_DLL_API SgTypeUnknown * buildUnknownType();
 
+ROSE_DLL_API SgAutoType * buildAutoType();
+
 // Rasmussen (2/20/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
 //! Builder functions for primitive types with type size (kind) expressions
 ROSE_DLL_API SgTypeBool * buildBoolType(SgExpression* kind_expr);
@@ -1000,6 +1002,7 @@ buildFunctionParameterList(SgFunctionParameterTypeList * paraTypeList);
 ROSE_DLL_API SgFunctionParameterList*
 buildFunctionParameterList_nfi(SgFunctionParameterTypeList * paraTypeList);
 
+SgCtorInitializerList * buildCtorInitializerList_nfi();
 //! DQ (2/11/2012): Added support to set the template name in function template instantiations (member and non-member).
 ROSE_DLL_API void setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* func, const SgName & name );
 
