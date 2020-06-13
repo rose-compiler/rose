@@ -1456,7 +1456,16 @@ add
     SgType* expressionType = expression->get_type();
     SgType* variableType = expressionType;
 
-    //MS 10/24/2018: If the expression has array type, we need to use a pointer type for the temporary variable.
+    //MS 10/24/2018: If variable has referece type, use a value type for the temporary variable (otherwise reference would be duplicated into 2 memory locations)
+    if (SgReferenceType* referenceType=isSgReferenceType(expressionType))
+    {
+      if(SgReferenceType* strippedReferenceType = isSgReferenceType(referenceType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
+        SgType* strippedReferenceBaseType = strippedReferenceType->get_base_type();
+        variableType = strippedReferenceBaseType;
+      }
+    }
+
+    //MS 10/24/2018: If the expression has array type, use a pointer type for the temporary variable.
     if (SgArrayType* arrayType=isSgArrayType(expressionType))
     {
       if(SgArrayType* strippedArrayType = isSgArrayType(arrayType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {

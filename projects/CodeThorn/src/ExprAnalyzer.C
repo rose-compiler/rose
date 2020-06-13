@@ -1175,7 +1175,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node
   SingleEvalResultConstInt res;
   res.estate=estate;
   AbstractValue operand=operandResult.result;
-  SAWYER_MESG(logger[TRACE])<<"AddressOfOp: "<<node->unparseToString()<<" - operand: "<<operand.toString(_variableIdMapping)<<endl;
+  SAWYER_MESG(logger[INFO])<<"AddressOfOp: "<<node->unparseToString()<<" - operand: "<<operand.toString(_variableIdMapping)<<endl;
   if(operand.isTop()||operand.isBot()) {
     res.result=operand;
   } else {
@@ -1493,7 +1493,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
     if(_variableIdMapping->hasArrayType(varId)) {
       res.result=AbstractValue::createAddressOfArray(varId);
     } else {
-      res.result=readFromMemoryLocation(estate.label(),pstate,varId);
+      if(_variableIdMapping->hasReferenceType(varId)) {
+        res.result=readFromReferenceMemoryLocation(estate.label(),pstate,varId);
+        logger[INFO]<<"reading from memory reference location: value: "<<res.result.toString()<<endl;
+      } else {
+        res.result=readFromMemoryLocation(estate.label(),pstate,varId);
+      }
     }
     return listify(res);
   } else {
@@ -2042,6 +2047,16 @@ void ExprAnalyzer::writeToMemoryLocation(Label lab, PState* pstate, AbstractValu
     }
   }
   pstate->writeToMemoryLocation(memLoc,newValue);
+}
+
+AbstractValue ExprAnalyzer::readFromReferenceMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc) {
+  AbstractValue referedMemLoc=readFromMemoryLocation(lab,pstate,memLoc);
+  return readFromMemoryLocation(lab,pstate,referedMemLoc);
+}
+
+void ExprAnalyzer::writeToReferenceMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
+  AbstractValue referedMemLoc=readFromMemoryLocation(lab,pstate,memLoc);
+  writeToMemoryLocation(lab,pstate,referedMemLoc,newValue);
 }
 
 void ExprAnalyzer::initializeMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {

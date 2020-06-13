@@ -1163,9 +1163,39 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         }
         if(getVariableIdMapping()->hasReferenceType(initDeclVarId)) {
           // TODO: initialization of references not supported yet
-          SAWYER_MESG(logger[WARN])<<"initialization of references not supported yet (not added to state) "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
-          PState newPState=*currentEState.pstate();
-          return createEState(targetLabel,cs,newPState,cset);
+          SAWYER_MESG(logger[INFO])<<"initialization of reference:"<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
+          SgAssignInitializer* assignInit=isSgAssignInitializer(initializer);
+          ROSE_ASSERT(assignInit);
+          SgExpression* assignInitOperand=assignInit->get_operand_i();
+          ROSE_ASSERT(assignInitOperand);
+          //list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(assignInitOperand,currentEState, CodeThorn::ExprAnalyzer::MODE_ADDRESS);
+          list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateLExpression(assignInitOperand,currentEState);
+
+          SAWYER_MESG(logger[INFO])<<"initialization of reference:"<<AstTerm::astTermWithNullValuesToString(assignInitOperand)<<endl;
+          if(res.size()!=1) {
+            if(res.size()>1) {
+              SAWYER_MESG(logger[ERROR])<<"Error: multiple results in rhs evaluation."<<endl;
+              SAWYER_MESG(logger[ERROR])<<"expr: "<<SgNodeHelper::sourceLineColumnToString(decl)<<": "<<decl->unparseToString()<<endl;
+              exit(1);
+            } else {
+              ROSE_ASSERT(res.size()==0);
+              SAWYER_MESG(logger[TRACE])<<"no results in rhs evaluation (returning top): "<<decl->unparseToString()<<endl;
+            }
+          } else {
+            ROSE_ASSERT(res.size()==1);
+            SingleEvalResultConstInt evalResult=*res.begin();
+            SAWYER_MESG(logger[INFO])<<"rhs (reference init) result: "<<evalResult.result.toString()<<endl;
+            
+            EState estate=evalResult.estate;
+            PState newPState=*estate.pstate();
+            AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
+            //initDeclVarAddr.setRefType(); // known to be ref from hasReferenceType above
+            // creates a memory cell in state that contains the address of the referred memory cell
+            getExprAnalyzer()->initializeMemoryLocation(label,&newPState,initDeclVarAddr,evalResult.value());
+            ConstraintSet cset=*estate.constraints();
+            return createEState(targetLabel,cs,newPState,cset);
+          }
+          ROSE_ASSERT(false); // not reachable
         }
         // has aggregate initializer
         if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
@@ -2982,6 +3012,7 @@ list<EState> CodeThorn::Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, E
       exit(1);
     }
     //newPState[var]=varVal;
+    // TODOREF
     getExprAnalyzer()->writeToMemoryLocation(estate.label(),&newPState,var,newVarVal);
 
 #if 0
@@ -3006,7 +3037,10 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
     Label label=estate.label();
     PState newPState=*estate.pstate();
     ConstraintSet cset=*estate.constraints();
-    getExprAnalyzer()->writeToMemoryLocation(label,&newPState,lhsAddress,rhsValue);
+    if(lhsAddress.isReferenceVariableAddress())
+      getExprAnalyzer()->writeToReferenceMemoryLocation(label,&newPState,lhsAddress,rhsValue);
+    else
+      getExprAnalyzer()->writeToMemoryLocation(label,&newPState,lhsAddress,rhsValue);
     CallString cs=estate.callString;
     estateList.push_back(createEState(edge.target(),cs,newPState,cset));
   }
@@ -3043,6 +3077,8 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else if(variableIdMapping->hasPointerType(lhsVar)) {
         // assume here that only arrays (pointers to arrays) are assigned
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+      } else if(variableIdMapping->hasReferenceType(lhsVar)) {
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else {
         SAWYER_MESG(logger[ERROR])<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(nextNodeToAnalyze2)<<endl;

@@ -125,6 +125,8 @@ class AbstractValue {
   bool operator!=(const AbstractValue other) const;
   bool operator<(AbstractValue other) const;
 
+  bool isReferenceVariableAddress();
+
   string toString() const;
   string toString(CodeThorn::VariableIdMapping* vim) const;
   string toLhsString(CodeThorn::VariableIdMapping* vim) const;

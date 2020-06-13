@@ -973,6 +973,13 @@ AbstractValue AbstractValue::createBot() {
   return AbstractValue(bot);
 }
 
+bool AbstractValue::isReferenceVariableAddress() {
+  if(isPtr()||isNullPtr()||isRef()) {
+    return getVariableIdMapping()->hasReferenceType(getVariableId());
+  }
+  return false;
+}
+
 AbstractValue CodeThorn::operator+(AbstractValue& a,AbstractValue& b) {
   return AbstractValue::operatorAdd(a,b);
 }
