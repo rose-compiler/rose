@@ -11,8 +11,8 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 #------------------------------------------------------------------------------------------------------------------------
 # outline (lots of tests later in the makefile)
-
-noinst_PROGRAMS += outline
+# we install this copy since it is the most tested version, better than the tutorial one
+bin_PROGRAMS = outline
 outline_SOURCES = outline.cc
 outline_CPPFLAGS = $(ROSE_INCLUDES)
 outline_LDFLAGS = $(ROSE_RPATHS)
