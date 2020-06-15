@@ -85,7 +85,7 @@ fixupFileInfoInconsistanties(SgNode *ast)
                                 else
                                    expression->get_operatorPosition()->unsetTransformation();
 
-                              printf ("WARNING: In fixupFileInfoInconsistanties(): located = %p = %s testing: get_operatorPosition()->isTransformation() inconsistantly set (set to match startOfConstruct) \n",expression,expression->class_name().c_str());
+                              printf ("WARNING: In fixupFileInfoInconsistanties(): expression located = %p = %s testing: get_operatorPosition()->isTransformation() inconsistantly set (set to match startOfConstruct) \n",expression,expression->class_name().c_str());
                               expression->get_startOfConstruct()->display("fixupFileInfoInconsistanties()");
                             }
                          ROSE_ASSERT(expression->get_startOfConstruct()->isTransformation() == expression->get_operatorPosition()->isTransformation());
