@@ -69,7 +69,7 @@ outlineSelection_LDADD = $(ROSE_LIBS)
 # adding the new name qualification support.
 # DQ (/27/2011): Outlining test moreTest3.cpp fails with level 2 testing for dangling pointer detection.
 
-C_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS =			\
+C_TESTS_REQUIRED_TO_PASS =			\
 	 array1.c				\
 	 arrayParameter.c			\
 	 arrayRef.c \
@@ -85,7 +85,7 @@ C_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS =			\
 #         variables_in_header.c
 # template_function1.cpp
 
-CXX_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS =		\
+CXX_TESTS_REQUIRED_TO_PASS =		\
 	array2.cpp				\
 	moreTest6.cpp				\
 	moreTest7.cpp				\
@@ -94,7 +94,7 @@ CXX_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS =		\
 
 # Add a few tool_G's regression tests
 # 	test_26_v2_2020.cpp  this is not ready, not sure what happened for preprocessing
-CXX2_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS =                \
+CXX2_TESTS_REQUIRED_TO_PASS =                \
  	print.cpp \						 
 	test_42_2020.cpp \
 	test_20_2019.cpp \
@@ -139,8 +139,8 @@ FORTRAN_TESTS_REQUIRED_TO_PASS =		\
 	ugoto.f					\
 	write.f
 
-C_AND_CXX_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS = $(C_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS) $(CXX_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS)
-EXTRA_DIST += $(C_AND_CXX_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS) $(FORTRAN_TESTS_REQUIRED_TO_PASS)
+C_AND_CXX_TESTS_REQUIRED_TO_PASS = $(C_TESTS_REQUIRED_TO_PASS) $(CXX_TESTS_REQUIRED_TO_PASS)
+EXTRA_DIST += $(C_AND_CXX_TESTS_REQUIRED_TO_PASS) $(FORTRAN_TESTS_REQUIRED_TO_PASS)
 
 # arithmeticIf.f, bug 166 refer to labels 
 # column72.f, not present in original makefile [RPM 2013-09-28]
@@ -207,9 +207,9 @@ TEST_INCLUDES = -I$(TEST_DIR) -I$(abs_top_srcdir)/tests/nonsmoke/functional/Comp
 TEST_CXXFLAGS = $(TEST_INCLUDES) -rose:verbose 0 -rose:outline:seq 7 -rose:outline:parameter_wrapper 
 
 if ROSE_USE_LONG_MAKE_CHECK_RULE
-EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS = $(EXAMPLE_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS)
+EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS = $(EXAMPLE_CXX_TESTS_REQUIRED_TO_PASS)
 else
-EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS = $(EXAMPLE_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS_SHORT)
+EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS = $(EXAMPLE_CXX_TESTS_REQUIRED_TO_PASS_SHORT)
 endif
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -231,7 +231,7 @@ OpenMP_TEST_INCLUDES = -I$(OpenMP_TEST_DIR)
 # Default outlining flags
 
 # DQ (2/6/2009): The last option should be possible to remove...-rose:skipfinalCompileStep
-# this flag is used for the files listed within this file: C_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS and CXX_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS
+# this flag is used for the files listed within this file: C_TESTS_REQUIRED_TO_PASS and CXX_TESTS_REQUIRED_TO_PASS
 # TODO remove -rose:skipfinalCompileStep when the command line issue is solved
 #-rose:outline:temp_variable
 OUTLINE_FLAGS= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper -rose:detect_dangling_pointers 1
@@ -240,7 +240,7 @@ OUTLINE_FLAGS= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper
 # Test outlining using the classic scheme, using tests within the current folder
 
 FORTRAN_RESULTS = 
-classic_test_targets = $(addprefix classic_, $(addsuffix .passed, $(C_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS)))
+classic_test_targets = $(addprefix classic_, $(addsuffix .passed, $(C_TESTS_REQUIRED_TO_PASS)))
 TEST_TARGETS += $(classic_test_targets)
 
 $(classic_test_targets): classic_%.passed: % outline
@@ -265,7 +265,7 @@ $(omp_c_classic_test_targets): classic_%.passed: $(OpenMP_TEST_DIR)/% outline
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining in the same file, using tests within the current folder
 
-inplace_test_targets = $(addprefix inplace_, $(addsuffix .passed, $(C_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS)))
+inplace_test_targets = $(addprefix inplace_, $(addsuffix .passed, $(C_TESTS_REQUIRED_TO_PASS)))
 TEST_TARGETS += $(inplace_test_targets)
 
 $(inplace_test_targets): inplace_%.passed: % outline
@@ -278,7 +278,7 @@ $(inplace_test_targets): inplace_%.passed: % outline
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining to a separate file
 
-tofile_test_targets  = $(addprefix tofile_,  $(addsuffix .passed, $(C_AND_CXX_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS)))
+tofile_test_targets  = $(addprefix tofile_,  $(addsuffix .passed, $(C_AND_CXX_TESTS_REQUIRED_TO_PASS)))
 TEST_TARGETS += $(tofile_test_targets)
 
 $(tofile_test_targets): tofile_%.passed: % outline
@@ -295,7 +295,7 @@ test_newfile: $(tofile_test_targets)
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining to a separate file using dlopen
 
-dlopen_test_targets  = $(addprefix dlopen_,  $(addsuffix .passed, $(C_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS)))
+dlopen_test_targets  = $(addprefix dlopen_,  $(addsuffix .passed, $(C_TESTS_REQUIRED_TO_PASS)))
 TEST_TARGETS += $(dlopen_test_targets)
 
 dlopen_test_flags =				\
@@ -311,8 +311,8 @@ $(dlopen_test_targets): dlopen_%.passed: % outline
 		$(TEST_EXIT_STATUS) $@
 # Liao, 2019/1/31
 # test the new option  -rose:outline:copy_orig_file , which copies input file into a lib source file and append all outlined functions to the single lib source file. This eliminates the need to copy dependent headers and prototypes into the lib source file. 
-dlopen2_test_targets  = $(addprefix dlopen2_,  $(addsuffix .passed, $(C_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS)))
-dlopen2_test_targets  += $(addprefix dlopen2_,  $(addsuffix .passed, $(CXX_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS)))
+dlopen2_test_targets  = $(addprefix dlopen2_,  $(addsuffix .passed, $(C_TESTS_REQUIRED_TO_PASS)))
+dlopen2_test_targets  += $(addprefix dlopen2_,  $(addsuffix .passed, $(CXX_TESTS_REQUIRED_TO_PASS)))
 TEST_TARGETS += $(dlopen2_test_targets)
 dlopen2_test_flags =				\
 	-rose:outline:use_dlopen		\
@@ -330,7 +330,7 @@ $(dlopen2_test_targets): dlopen2_%.passed: % outline
 # Liao, 2020//25
 # test the new option  -rose:outline:copy_orig_file , which copies input file into a lib source file and append all outlined functions to the single lib source file. This eliminates the need to copy dependent headers and prototypes into the lib source file. 
 # combined with -rose:unparseHeaderFiles -rose:unparseHeaderFilesRootFolder
-dlopen3_test_targets = $(addprefix dlopen3_,  $(addsuffix .passed, $(CXX2_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS)))
+dlopen3_test_targets = $(addprefix dlopen3_,  $(addsuffix .passed, $(CXX2_TESTS_REQUIRED_TO_PASS)))
 TEST_TARGETS += $(dlopen3_test_targets)
 dlopen3_test_flags =				\
 	-rose:outline:use_dlopen		\
@@ -353,8 +353,8 @@ test_dlopen3: $(dlopen3_test_targets)
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining with default $(OUTLINE_FLAGS) switches
 
-#default_test_targets = $(addprefix default_, $(addsuffix .passed, $(CXX_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS)))
-default_test_targets = $(addprefix default_, $(addsuffix .passed, $(C_AND_CXX_EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS)))
+#default_test_targets = $(addprefix default_, $(addsuffix .passed, $(CXX_TESTS_REQUIRED_TO_PASS)))
+default_test_targets = $(addprefix default_, $(addsuffix .passed, $(C_AND_CXX_TESTS_REQUIRED_TO_PASS)))
 TEST_TARGETS += $(default_test_targets)
 
 $(default_test_targets): default_%.passed: % outline
