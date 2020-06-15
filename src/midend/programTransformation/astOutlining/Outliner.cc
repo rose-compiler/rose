@@ -37,6 +37,7 @@ namespace Outliner {
   bool exclude_headers=false;
   bool use_dlopen=false; // Outlining the target to a separated file and calling it using a dlopen() scheme. It turns on useNewFile.
   bool enable_template=false; // Outlining code blocks inside C++ templates
+  bool select_omp_loop = false;  // Find OpenMP for loops and outline them. This is used for testing purposes.
   std::string output_path=""; // default output path is the original file's directory
   std::vector<std::string> handles; //  abstract handles of outlining targets, given by command line option -rose:outline:abstract_handle for each
 
@@ -425,7 +426,15 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 //  else  //reset to NULL if useNewFile is not true
 //    output_path="";
 
-
+  if (CommandlineProcessing::isOption (argvList,"-rose:outline:","select_omp_loop",true))
+  {
+    if (enable_debug)
+      cout<<"Select OpenMP loops for outlining  ..."<<endl;
+    select_omp_loop = true;
+    // turn on OpenMP parsing and AST creation
+    argvList.push_back("-rose:openmp:ast_only");
+  }
+ 
  if (use_dlopen || temp_variable)    
   {
     if (CommandlineProcessing::isOption (argvList,"-rose:outline:","enable_liveness",true))
@@ -455,6 +464,7 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
     cout<<"\t-rose:outline:copy_orig_file                   used with dlopen(): single lib source file copied from the entire original input file. All generated outlined functions are appended to the lib source file"<<endl;
     cout<<"\t-rose:outline:enable_template                  support outlining code blocks inside C++ templates (experimental)"<<endl;
     cout<<"\t-rose:outline:enable_debug                     run outliner in a debugging mode"<<endl;
+    cout<<"\t-rose:outline:select_omp_loop                  select OpenMP for loops for outlining, used for testing purpose"<<endl;
     cout <<"---------------------------------------------------------------"<<endl;
   }
 

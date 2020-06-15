@@ -259,6 +259,28 @@ collectFortranTarget (SgProject* proj, TargetList_t& targets)
   return count;
 }
 
+// Collect OpenMP for loops in the AST
+// The assumption is that OpenMP parsing and AST creation is already turned on. 
+// The AST has normalized #pragma omp parallel for also (split into separated paralle and for AST nodes).
+static size_t
+collectOmpLoops(SgProject* proj, Rose_STL_Container<SgOmpForStatement*> & ompfor_stmts)
+{
+  typedef Rose_STL_Container<SgNode *> NodeList_t;
+  NodeList_t raw_list = NodeQuery::querySubTree (proj, V_SgOmpForStatement);
+  size_t count = 0;
+  for (NodeList_t::reverse_iterator i = raw_list.rbegin ();
+      i != raw_list.rend (); ++i)
+  {
+    SgOmpForStatement* decl = isSgOmpForStatement(*i);
+    if (decl)
+    {
+      ompfor_stmts.push_back (decl);
+      ++count;
+    }
+  }
+  return count;
+}
+
 //! Collect outlining targets specified using abstract handles
 // save them into targetList
 static size_t
@@ -350,25 +372,57 @@ Outliner::outlineAll (SgProject* project)
     PragmaList_t pragmas;
     if (collectPragmas (project, pragmas))
     {
-       for (PragmaList_t::iterator i = pragmas.begin (); i != pragmas.end (); ++i)
-         {
-            if (outline (*i).isValid ())
-               {
-                 ++num_outlined;
-               }
-         }
+      for (PragmaList_t::iterator i = pragmas.begin (); i != pragmas.end (); ++i)
+      {
+        if (outline (*i).isValid ())
+        {
+          ++num_outlined;
+        }
+      }
 
-    // DQ (2/24/2009): Now remove the pragma from the original source code.
-    // Any dangling pointers have already been taken care of.
-    // Liao (4/14/2009):delete only if it is not preprocessing only
+      // DQ (2/24/2009): Now remove the pragma from the original source code.
+      // Any dangling pointers have already been taken care of.
+      // Liao (4/14/2009):delete only if it is not preprocessing only
       if (!preproc_only_) 
       {
-       for (PragmaList_t::iterator i = pragmas.begin (); i != pragmas.end (); ++i)
-         {
-           SageInterface::deleteAST(*i);
-         }
+        for (PragmaList_t::iterator i = pragmas.begin (); i != pragmas.end (); ++i)
+        {
+          SageInterface::deleteAST(*i);
+        }
       }
     }
+
+    // New interface : OpenMP for loops, for testing purpose, only for C/C++ code
+    if (select_omp_loop)
+    {
+      Rose_STL_Container<SgOmpForStatement*> ompfor_stmts;
+      if (collectOmpLoops(project, ompfor_stmts))
+      {  
+        for ( Rose_STL_Container<SgOmpForStatement*> ::iterator i = ompfor_stmts.begin (); i != ompfor_stmts.end (); ++i)
+        {  
+          SgOmpForStatement* omp_stmt = *i; 
+          SgStatement* body = omp_stmt->get_body();
+          string func_name =  generateFuncName(body);
+
+          if (outline(body, func_name).isValid ())
+          { 
+            ++num_outlined;
+          }
+        }
+#if 0
+        // Any dangling pointers have already been taken care of.
+        // delete only if it is not preprocessing only
+        if (!preproc_only_)
+        {
+          for (PragmaList_t::iterator i = pragmas.begin (); i != pragmas.end (); ++i)
+          {
+            SageInterface::deleteAST(*i);
+          }
+        }
+#endif
+      }
+    } // end select_omp_loop
+
   }
   return num_outlined;
 }
