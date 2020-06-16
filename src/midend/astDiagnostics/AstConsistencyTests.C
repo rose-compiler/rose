@@ -1386,11 +1386,14 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          SgInitializedNamePtrList::const_iterator result = std::find(initNameList.begin(), initNameList.end(), initializedName);
                          ROSE_ASSERT(result != initNameList.end());
                        }
-                      else
+                      else if (isSgTemplateDeclaration(parentParameterList->get_parent()))
                        {
                       // DQ (12/6/2011): Now that we have the template declarations in the AST, this could be a SgTemplateDeclaration.
-                         ROSE_ASSERT(isSgTemplateDeclaration(parentParameterList->get_parent()) != NULL);
                          printf ("WARNING: There are tests missing for the case of a parentParameterList->get_parent() that is a SgTemplateDeclaration \n");
+                       }
+                       else
+                       {
+                         ROSE_ASSERT(isSgAdaAcceptStmt(parentParameterList->get_parent()));
                        }
                   }
                  else
