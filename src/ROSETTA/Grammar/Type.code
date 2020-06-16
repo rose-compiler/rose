@@ -437,6 +437,14 @@ HEADER_JAVA_PARAMETER_TYPE_END
 
 HEADER_JOVIAL_TABLE_TYPE_START
           SgJovialTableType ( const SgJovialTableType & X );
+
+      //! Enum for Jovial structure specifiers
+          enum structure_specifier_enum
+             {
+               e_default = 0, /*!< jovial table structure is unspecified, indicates serial structure */
+               e_parallel,    /*!< jovial table has parallel structure */
+               e_tight        /*!< jovial table has serial structure that is tightly packed */
+             };
 HEADER_JOVIAL_TABLE_TYPE_END
 
 
