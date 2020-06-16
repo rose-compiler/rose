@@ -311,11 +311,10 @@
 # bfxil w2, w1, #0, #1
 0x22 0x00 0x00 0x33
 
+# ldr x17, [x16, #3632]
+0x11 0x1a 0x47 0xf9
+
 # prfum plil2keep, [x13, #0xf4]
-# This seems to be disassembled incorrecty by Capstone as far as I can
-# tell. The returned instruction has only one operand, although
-# Capstone itself prints both operands. Therfore ROSE is only able to
-# build the first operand and reports just "prfum plil2keep".
 0xaa 0x41 0x8f 0xf8
 
 # mrs x23, s3_0_c15_c12_5

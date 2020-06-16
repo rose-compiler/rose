@@ -35,8 +35,8 @@ Pointer detection analysis for function 0x080483b0 "simple03"
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
-    32-bit pointer at v19460[u32]
     32-bit pointer at (add[u32] esp_0[u32] 0x00000004[u32])
+    32-bit pointer at v19511[u32]
 
 Pointer detection analysis for function 0x080483bc "simple04"
   Instructions:
@@ -74,7 +74,7 @@ Pointer detection analysis for function 0x080483d2 "simple06"
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
-    32-bit pointer at v19943[u32]
+    32-bit pointer at v19994[u32]
     32-bit pointer at 0x080497f0<134518768>[u32]
 
 Pointer detection analysis for function 0x080483e0 "simple07"
@@ -189,7 +189,7 @@ Pointer detection analysis for function 0x08048444 "simple15"
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
-    32-bit pointer at v21423[u32]
+    32-bit pointer at v21474[u32]
     32-bit pointer at 0x080497fc<134518780>[u32]
 
 Pointer detection analysis for function 0x08048452 "simple16"
@@ -278,8 +278,8 @@ Pointer detection analysis for function 0x080484a0 "simple22"
     0x080484ab: leave
     0x080484ac: ret
   Code pointers:
-    32-bit pointer at (add[u32] esp_0[u32] 0x00000004[u32])
     32-bit pointer at esp_0[u32]
+    32-bit pointer at (add[u32] esp_0[u32] 0x00000004[u32])
   Data pointers:
 
 Pointer detection analysis for function 0x080484ad "simple23"
@@ -349,8 +349,8 @@ Pointer detection analysis for function 0x080484ef "flow01"
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
-    32-bit pointer at (add[u32] esp_0[u32] 0x0000000c[u32])
     32-bit pointer at (add[u32] esp_0[u32] 0x00000008[u32])
+    32-bit pointer at (add[u32] esp_0[u32] 0x0000000c[u32])
 
 Pointer detection analysis for function 0x08048506 "flow02"
   Instructions:
@@ -477,5 +477,5 @@ Pointer detection analysis for function 0x080485aa "flow06"
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
-    32-bit pointer at (add[u32] esp_0[u32] 0x00000008[u32])
     32-bit pointer at (add[u32] esp_0[u32] 0x0000000c[u32])
+    32-bit pointer at (add[u32] esp_0[u32] 0x00000008[u32])

@@ -237,6 +237,9 @@ Enter(SgFunctionParameterList* &param_list, SgBasicBlock* &param_scope)
    ROSE_ASSERT(param_scope->get_parent() == nullptr); // make sure this node is unattached in the AST
    SageInterface::setSourcePosition(param_scope);
 
+   // if unattached then symbol lookups may fail
+   param_scope->set_parent(SageBuilder::topScopeStack());
+
    if (SageInterface::is_language_case_insensitive()) {
       param_scope->setCaseInsensitive(true);
    }
@@ -496,6 +499,77 @@ Leave(SgExprStatement* assign_stmt)
    ROSE_ASSERT(assign_stmt != nullptr);
 
    SageInterface::appendStatement(assign_stmt, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, SgBasicBlock* false_body)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgIfStmt* &, ...) \n";
+
+   ROSE_ASSERT(conditional);
+   ROSE_ASSERT(true_body);
+
+   SgStatement* conditional_stmt = SageBuilder::buildExprStatement_nfi(conditional);
+   if_stmt = SageBuilder::buildIfStmt_nfi(conditional_stmt, true_body, false_body);
+}
+
+void SageTreeBuilder::
+Leave(SgIfStmt* if_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgIfStmt*) \n";
+
+   ROSE_ASSERT(if_stmt);
+   SageInterface::appendStatement(if_stmt, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgStopOrPauseStatement* &control_stmt, const boost::optional<SgExpression*> &opt_code, const std::string &stmt_kind)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgStopOrPauseStatement* &, ...) \n";
+
+   SgExpression* code = nullptr;
+
+   if (opt_code) {
+      code = *opt_code;
+   }
+   else {
+      code = SageBuilder::buildNullExpression_nfi();
+   }
+
+   control_stmt = new SgStopOrPauseStatement(code);
+   ROSE_ASSERT(control_stmt);
+   SageInterface::setSourcePosition(control_stmt);
+
+   if (stmt_kind == "abort") {
+      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_abort);
+   }
+   else if (stmt_kind == "error_stop") {
+      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_error_stop);
+   }
+   else if (stmt_kind == "exit") {
+      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_exit);
+   }
+   else if (stmt_kind == "pause") {
+      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_pause);
+   }
+   else if (stmt_kind == "stop") {
+      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_stop);
+   }
+   ROSE_ASSERT(control_stmt->get_stop_or_pause() != SgStopOrPauseStatement::e_unknown);
+
+   code->set_parent(control_stmt);
+
+   //TODO Lables and source position
+   //setSourcePosition(control_stmt, sources.get<0>(), sources.get<2>());
+
+   SageInterface::appendStatement(control_stmt, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Leave(SgStopOrPauseStatement* control_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgStopOrPauseStatement*, ...) \n";
+   ROSE_ASSERT(control_stmt);
 }
 
 void SageTreeBuilder::

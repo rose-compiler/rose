@@ -621,13 +621,20 @@ static void dict_free(item* head) {
     head = NULL;
 }
 
-static int distance(const unsigned int *src, const unsigned int *tgt, unsigned int x, unsigned int y)
+static int distance(const unsigned int *src, const unsigned int *tgt, unsigned int x, unsigned int y, unsigned int maxDistance)
 {
     item *head = NULL;
     unsigned int swapCount, swapScore, targetCharCount, i, j;
     unsigned int *scores = new unsigned int[(x+2)*(y+2)];
     unsigned int score_ceil = x + y;
- 
+    unsigned int curr_score = 0;
+    unsigned int diff = x > y ? x - y : y - x;
+
+    if (maxDistance != 0 && diff > maxDistance) {
+        delete[] scores;
+        return -1;
+    }
+    
     /* intialize matrix start values */
     scores[0] = score_ceil;
     scores[1 * (y + 2) + 0] = score_ceil;
@@ -639,17 +646,20 @@ static int distance(const unsigned int *src, const unsigned int *tgt, unsigned i
     /* i = src index */
     /* j = tgt index */
     for (i=1;i<=x;i++) {
-        head = uniquePush(head,src[i]);
+        if (i < x)
+            head = uniquePush(head,src[i]);
         scores[(i+1) * (y + 2) + 1] = i;
         scores[(i+1) * (y + 2) + 0] = score_ceil;
         swapCount = 0;
 
         for (j=1;j<=y;j++) {
             if (i == 1) {
-                head = uniquePush(head,tgt[j]);
+                if (j < y)
+                    head = uniquePush(head,tgt[j]);
                 scores[1 * (y + 2) + (j + 1)] = j;
                 scores[0 * (y + 2) + (j + 1)] = score_ceil;
             }
+            curr_score = 0;
 
             targetCharCount = find(head,tgt[j-1])->value;
             swapScore = scores[targetCharCount * (y + 2) + swapCount] + i - targetCharCount - 1 + j - swapCount;
@@ -663,14 +673,23 @@ static int distance(const unsigned int *src, const unsigned int *tgt, unsigned i
                 swapCount = j;
                 scores[(i+1) * (y + 2) + (j + 1)] = std::min(scores[i * (y + 2) + j], swapScore);
             }
+
+            curr_score = std::min(curr_score, scores[(i+1) * (y+2) + (j+1)]);
         }
+
+        if (maxDistance != 0 && curr_score > maxDistance) {
+            dict_free(head);
+            delete[] scores;
+            return -1;
+        }
+
         find(head,src[i-1])->value = i;
     }
 
     unsigned int score = scores[(x+1) * (y + 2) + (y + 1)];
     dict_free(head);
     delete[] scores;
-    return score;
+    return (maxDistance != 0 && maxDistance < score) ? -1 : score;
 }
 } // namespace
 
@@ -749,7 +768,7 @@ test_edit_distance()
                             v1.push_back(911); // we need a pointer, and &v1[0] won't cut it if v1 is empty
                         if (v2.empty())
                             v2.push_back(911);
-                        d2 = DamerauLevenshtein2::distance(&v1[0], &v2[0], sz1, sz2);
+                        d2 = DamerauLevenshtein2::distance(&v1[0], &v2[0], sz1, sz2, 0);
                         v1.resize(sz1);
                         v2.resize(sz2);
                         break;
