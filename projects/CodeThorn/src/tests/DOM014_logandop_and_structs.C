@@ -15,6 +15,11 @@ int main() {
   /* FIX: Use && in the if statement so that if the left side of the expression fails then
    * the right side will not be evaluated */
   printf("twoIntsStructPointer->intOne:%d\n",twoIntsStructPointer->intOne);
+  bool cond1;
+  cond1=twoIntsStructPointer != NULL;
+  printf("cond1:%d\n",cond1);
+  bool cond2=twoIntsStructPointer->intOne == 5;
+  printf("cond2:%d\n",cond2);
   if ((twoIntsStructPointer != NULL) && (twoIntsStructPointer->intOne == 5)) {
     x=2;
   }

@@ -15,6 +15,7 @@
 #include <cstdint>
 #include "VariableIdMappingExtended.h"
 #include "TypeSizeMapping.h"
+#include "Labeler.h"
 
 using std::string;
 using std::istream;
@@ -37,7 +38,7 @@ class AbstractValue {
  public:
   friend bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
   friend bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
-  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, TOP, UNDEFINED };
+  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, FUN_PTR, TOP, UNDEFINED };
   AbstractValue();
   AbstractValue(bool val);
   // type conversion
@@ -45,6 +46,7 @@ class AbstractValue {
   // type conversion
   AbstractValue(CodeThorn::Bot e);
   // type conversion
+  AbstractValue(Label lab); // for modelling function addresses
   AbstractValue(signed char x);
   AbstractValue(unsigned char x);
   AbstractValue(short int x);
@@ -79,6 +81,7 @@ class AbstractValue {
   // currently identical to isPtr() but already used where one unique value is required
   bool isConstPtr() const;
   bool isPtr() const;
+  bool isFunctionPtr() const;
   bool isRef() const;
   bool isNullPtr() const;
   AbstractValue operatorNot();
@@ -109,6 +112,7 @@ class AbstractValue {
   static AbstractValue createAddressOfVariable(CodeThorn::VariableId varId);
   static AbstractValue createAddressOfArray(CodeThorn::VariableId arrayVariableId);
   static AbstractValue createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, AbstractValue Index);
+  static AbstractValue createAddressOfFunction(CodeThorn::Label lab);
   static AbstractValue createNullPtr();
   static AbstractValue createUndefined(); // used to model values of uninitialized variables/memory locations
   static AbstractValue createTop();
@@ -120,6 +124,8 @@ class AbstractValue {
   bool operator==(const AbstractValue other) const;
   bool operator!=(const AbstractValue other) const;
   bool operator<(AbstractValue other) const;
+
+  bool isReferenceVariableAddress();
 
   string toString() const;
   string toString(CodeThorn::VariableIdMapping* vim) const;
@@ -147,6 +153,7 @@ class AbstractValue {
   // sets value according to type size (truncates if necessary)
   void setValue(long long int ival);
   void setValue(double fval);
+  Label getLabel() const;
   long hash() const;
   std::string valueTypeToString() const;
 
@@ -165,6 +172,7 @@ class AbstractValue {
     long long int intValue=0;
     double floatValue;
   };
+  Label label;
   CodeThorn::TypeSize typeSize=0;
   static CodeThorn::VariableIdMappingExtended* _variableIdMapping;
 };

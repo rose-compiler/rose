@@ -150,8 +150,11 @@ namespace CodeThorn {
     // reserves and initializes memory location with newValue
     void initializeMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
     AbstractValue readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
-    // memory location must exist otherwise it is recorded as an out-of-bounds access
     void writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
+
+    AbstractValue readFromReferenceMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
+    void writeToReferenceMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
+    
     // memory must already be reserved (hence, this function is redundant if reserves is used before)
     void writeUndefToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc);
     void writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc);
@@ -317,7 +320,7 @@ namespace CodeThorn {
 
     list<SingleEvalResultConstInt> evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate, EvalMode mode);
-    
+    list<SingleEvalResultConstInt> evalFunctionRefExp(SgFunctionRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     // supported system functions
     list<SingleEvalResultConstInt> evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate);
     list<SingleEvalResultConstInt> evalFunctionCallFree(SgFunctionCallExp* funCall, EState estate);

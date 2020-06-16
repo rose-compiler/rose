@@ -132,6 +132,9 @@ public:
    void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &, const std::string &);
    void Leave(SgExprStatement*);
 
+   void Enter(SgIfStmt* &, SgExpression*, SgBasicBlock*, SgBasicBlock*);
+   void Leave(SgIfStmt*);
+
    void Enter(SgStopOrPauseStatement* &, const boost::optional<SgExpression*> &, const std::string &);
    void Leave(SgStopOrPauseStatement*);
 

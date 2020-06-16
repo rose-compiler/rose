@@ -617,15 +617,14 @@ Unparse_Jovial::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(if_stmt->get_conditional());
 
   // condition
-     curprint("IF (");
+     curprint_indented("IF (", info);
      info.set_inConditional();
 
      SgExprStatement* expressionStatement = isSgExprStatement(if_stmt->get_conditional());
      unparseExpression(expressionStatement->get_expression(), info);
 
      info.unset_inConditional();
-     curprint(") ;");
-     unp->cur.insert_newline(1);
+     curprint(") ;\n");
 
   // true body
      ROSE_ASSERT(if_stmt->get_true_body());
@@ -633,8 +632,7 @@ Unparse_Jovial::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // false body
      if (if_stmt->get_false_body() != NULL) {
-        curprint("ELSE");
-        unp->cur.insert_newline(1);
+        curprint_indented("ELSE\n", info);
         unparseStatement(if_stmt->get_false_body(), info);
      }
    }

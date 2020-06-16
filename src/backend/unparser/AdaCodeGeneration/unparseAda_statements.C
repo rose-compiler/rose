@@ -634,7 +634,6 @@ namespace
     
     void handle(SgClassDefinition& n)
     {
-      // SgBaseClassPtrList & 	get_inheritances ()
       list(n.get_members());
     } 
     

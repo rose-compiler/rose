@@ -350,7 +350,11 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
     // writing bot to memory (bot->top conversion)
     abstractValue=AbstractValue(CodeThorn::Top());
   }
-  operator[](abstractMemLoc)=abstractValue;
+  if(abstractMemLoc.isTop()) {
+    //combineValueAtAllMemoryLocations(abstractValue); // BUG: leads to infinite loop in DOM029
+  } else {
+    operator[](abstractMemLoc)=abstractValue;
+  }
 }
 
 void PState::combineAtMemoryLocation(AbstractValue abstractMemLoc,

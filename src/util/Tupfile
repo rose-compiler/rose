@@ -10,5 +10,5 @@ run $(support_compile_linklib) -o rose_util --objects=OBJECTS \
 : {OBJECTS} |> !for_librose |>
 
 run $(public_header) BitFlags.h BitOps.h Color.h compilationFileDatabase.h FileSystem.h FormatRestorer.h GraphUtility.h \
-    LinearCongruentialGenerator.h Map.h timing.h ParallelSort.h processSupport.h Progress.h RecursionCounter.h \
+    LinearCongruentialGenerator.h Map.h timing.h ParallelSort.h processSupport.h RoseAsserts.h Progress.h RecursionCounter.h \
     rose_constants.h rose_getline.h rose_isnan.h rose_override.h rose_paths.h rose_strtoull.h setup.h
