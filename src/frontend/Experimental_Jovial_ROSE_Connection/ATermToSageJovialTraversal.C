@@ -2712,9 +2712,15 @@ ATbool ATermToSageJovialTraversal::traverse_TablePreset(ATerm term, SgExpression
    else if (ATmatch(term, "TablePreset(<term>)", &t_preset_list)) {
       SgExprListExp* preset_list = SageBuilder::buildExprListExp_nfi();
 
-      if (traverse_TablePresetList(t_preset_list, preset_list)) {
+   // Grammar construction in Main.sdf is a bit convoluted here (cons names could be better chosen).
+   // DefaultPresetSublist can be reached directly here or optionally in TablePresetList
+      if (traverse_DefaultPresetSublist(t_preset_list, preset_list)) {
+         // MATCHED DefaultPresetSublist
+      }
+      else if (traverse_TablePresetList(t_preset_list, preset_list)) {
          // MATCHED TablePresetList
-      } else return ATfalse;
+      }
+      else return ATfalse;
 
       table_preset = preset_list;
       setSourcePosition(table_preset, t_preset_list);
@@ -2734,15 +2740,22 @@ ATbool ATermToSageJovialTraversal::traverse_TablePresetList(ATerm term, SgExprLi
 
    ROSE_ASSERT(preset_list);
 
-   if (traverse_DefaultPresetSublist(term, preset_list)) {
-      // MATCHED DefaultPresetSublist
-   }
-   else if (ATmatch(term, "TablePresetList(<term>,<term>)", &t_default_preset_list, &t_spec_preset_list)) {
-//TODO - break into two lists?
+   if (ATmatch(term, "TablePresetList(<term>,<term>)", &t_default_preset_list, &t_spec_preset_list)) {
+      // DefaultPresetSublist is optional here
       if (traverse_DefaultPresetSublist(t_default_preset_list, preset_list)) {
          // MATCHED DefaultPresetSublist
       } else return ATfalse;
 
+#if 1
+      if (traverse_DefaultPresetSublist(t_default_preset_list, preset_list)) {
+         // MATCHED DefaultPresetSublist
+      } else return ATfalse;
+      cerr << "WARNING UNIMPLEMENTED: TablePresetList\n";
+      ROSE_ASSERT(false);
+
+#else
+// TODO_COMPOOL
+// TODO - break into two lists rather than use same list as above?
       ATermList tail = (ATermList) ATmake("<term>", t_spec_preset_list);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
@@ -2751,8 +2764,7 @@ ATbool ATermToSageJovialTraversal::traverse_TablePresetList(ATerm term, SgExprLi
             // MATCHED SpecifiedPresetSublist
          } else return ATfalse;
       }
-   // TODO_COMPOOL
-      cerr << "WARNING UNIMPLEMENTED: DefaultPresetSublist\n";
+#endif
    }
    else return ATfalse;
 
@@ -2769,15 +2781,12 @@ ATbool ATermToSageJovialTraversal::traverse_DefaultPresetSublist(ATerm term, SgE
    SgExpression* preset = nullptr;
 
    if (ATmatch(term, "DefaultPresetSublist(<term>)", &t_default_preset_list)) {
-   // TODO
-      cerr << "WARNING UNIMPLEMENTED: DefaultPresetSublist\n";
-
       ATermList tail = (ATermList) ATmake("<term>", t_default_preset_list);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
          if (traverse_PresetValuesOption(head, preset)) {
-            // MATCHED PresetValuesOption: NOTE - this is optional so preset expression may be NULL
+            // MATCHED PresetValuesOption
             if (preset != nullptr) {
                preset_list->get_expressions().push_back(preset);
                preset->set_parent(preset_list);
@@ -2803,8 +2812,8 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedPresetSublist(ATerm term, S
    SgExpression* preset;
 
    if (ATmatch(term, "SpecifiedPresetSublist(<term>,<term>)", &t_preset_index_spec, &t_preset_values_option)) {
-   // TODO_COMPOOL
       SgInitializer* sg_preset = nullptr;
+   // TODO_COMPOOL
       cerr << "WARNING UNIMPLEMENTED: SpecifiedPresetSublist\n";
 
       if (traverse_PresetIndexSpecifier(t_preset_index_spec, sg_preset)) {
@@ -2819,6 +2828,7 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedPresetSublist(ATerm term, S
             // MATCHED PresetValuesOption, optional so ok if nullptr
             if (preset != nullptr) {
                preset_list->get_expressions().push_back(preset);
+               preset->set_parent(preset_list);
             }
          } else return ATfalse;
       }
@@ -4861,10 +4871,11 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
    SgExpression* conditional = nullptr;
-   SgUntypedStatement *false_body;
+   SgBasicBlock* true_body = nullptr;
+   SgBasicBlock* false_body = nullptr;
+   SgIfStmt* if_stmt = nullptr;
 
    if (ATmatch(term, "IfStatement(<term>,<term>,<term>,<term>)", &t_labels,&t_cond,&t_true,&t_else)) {
-
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
@@ -4873,41 +4884,41 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
          // MATCHED BitFormula
       } else return ATfalse;
 
+   // Create a basic block and push it on the scope stack so that there is a place for statements
+      true_body = SageBuilder::buildBasicBlock_nfi();
+      SageBuilder::pushScopeStack(true_body);
+
       if (traverse_Statement(t_true)) {
-//TODO_STATEMENTS
-#if 0
-         true_body = stmt_list->get_stmt_list().back();
-         stmt_list->get_stmt_list().pop_back();
-#endif
+         // MATCHED Statement for the true body
       } else return ATfalse;
 
+      ROSE_ASSERT(true_body);
+      SageBuilder::popScopeStack();
+
       if (ATmatch(t_else, "no-else-clause()")) {
-         false_body = NULL;
+         // MATCHED no-else-clase
       }
       else if (ATmatch(t_else, "ElseClause(<term>)", &t_false)) {
+      // There is a false body
+         false_body = SageBuilder::buildBasicBlock_nfi();
+         SageBuilder::pushScopeStack(false_body);
+
          if (traverse_Statement(t_false)) {
-//TODO_STATEMENTS
-#if 0
-            false_body = stmt_list->get_stmt_list().back();
-            stmt_list->get_stmt_list().pop_back();
-#endif
+            // MATCHED Statement for the false body
          } else return ATfalse;
+
+         ROSE_ASSERT(false_body);
+         SageBuilder::popScopeStack();
       }
       else return ATfalse;
    }
    else return ATfalse;
 
-//TODO_STATEMENTS
-#if 0
-   int statement_enum = LanguageTranslation::e_unknown;
-   //   SgUntypedIfStatement* if_stmt = SageBuilder::buildUntypedIfStatement("",statement_enum,conditional,true_body,false_body);
-   SgUntypedIfStatement* if_stmt = new SgUntypedIfStatement("", statement_enum, conditional, true_body, false_body);
-   setSourcePosition(if_stmt, term);
+// Begin SageTreeBuilder
+   sage_tree_builder.Enter(if_stmt, conditional, true_body, false_body);
 
-   stmt = convert_Labels(labels, locations, if_stmt);
-
-   stmt_list->get_stmt_list().push_back(stmt);
-#endif
+// End SageTreeBuilder
+   sage_tree_builder.Leave(if_stmt);
 
    return ATtrue;
 }

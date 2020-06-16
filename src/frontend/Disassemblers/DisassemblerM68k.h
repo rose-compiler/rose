@@ -19,6 +19,19 @@ namespace BinaryAnalysis {
 /** Disassembler for Motorola M68k-based instruction set architectures. */
 class DisassemblerM68k: public Disassembler {
 public:
+    // State mutated during the call to disassembleOne. Used internally.
+    struct State: boost::noncopyable { // noncopyable is so we don't accidentally pass it by value
+        MemoryMap::Ptr map;                         /**< Map from which to read instruction words. */
+        rose_addr_t insn_va;                        /**< Address of instruction. */
+        uint16_t    iwords[11];                     /**< Instruction words. */
+        size_t      niwords;                        /**< Number of instruction words read. */
+        size_t      niwords_used;                   /**< High water number of instruction words used by instructionWord(). */
+
+        State()
+            : insn_va(0), niwords(0), niwords_used(0) {}
+    };
+
+public:
     /** Interface for disassembling a single instruction.  Each instruction (or in some cases groups of closely related
      *  instructions) will define a subclass whose operator() unparses a single instruction and returns a
      *  SgAsmM68kInstruction. These functors are allocated and inserted into a list. When an instruction is to be
@@ -36,16 +49,11 @@ public:
         unsigned family;                                // bitmask of M68kFamily bits
         BitPattern<uint16_t> pattern;                   // bits that match
         typedef DisassemblerM68k D;
-        virtual SgAsmM68kInstruction *operator()(D *d, unsigned w0) = 0;
+        virtual SgAsmM68kInstruction *operator()(State&, const D *d, unsigned w0) = 0;
     };
 
 private:
     M68kFamily  family;                         /**< Specific family being disassembled. */
-    MemoryMap::Ptr map;                         /**< Map from which to read instruction words. */
-    rose_addr_t insn_va;                        /**< Address of instruction. */
-    uint16_t    iwords[11];                     /**< Instruction words. */
-    size_t      niwords;                        /**< Number of instruction words read. */
-    size_t      niwords_used;                   /**< High water number of instruction words used by instructionWord(). */
 
     // The instruction disassembly table is an array indexed by the high-order nybble of the first 16-bit word of the
     // instruction's pattern, the so-called "operator" bits. Since most instruction disassembler have invariant operator
@@ -64,11 +72,6 @@ private:
     void serialize_common(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Disassembler);
         s & BOOST_SERIALIZATION_NVP(family);
-        s & BOOST_SERIALIZATION_NVP(map);
-        s & BOOST_SERIALIZATION_NVP(insn_va);
-        s & BOOST_SERIALIZATION_NVP(iwords);
-        s & BOOST_SERIALIZATION_NVP(niwords);
-        s & BOOST_SERIALIZATION_NVP(niwords_used);
         //s & idis_table; -- not saved
     }
 
@@ -89,7 +92,7 @@ private:
 protected:
     // undocumented constructor for serialization. The init() will be called by the serialization.
     DisassemblerM68k()
-        : family(m68k_freescale_cpu32), insn_va(0), niwords(0), niwords_used(0) {}
+        : family(m68k_freescale_cpu32) {}
         
 public:
     /** Constructor for a specific family.
@@ -101,7 +104,7 @@ public:
      *  Disassembler *disassembler = new DisassemblerM68k(m68k_freescale_isab);
      * @endcode */
     explicit DisassemblerM68k(M68kFamily family)
-        : family(family), insn_va(0), niwords(0), niwords_used(0) {
+        : family(family) {
         init();
     }
     virtual DisassemblerM68k *clone() const ROSE_OVERRIDE { return new DisassemblerM68k(*this); }
@@ -123,86 +126,87 @@ public:
     void insert_idis(M68k*);
 
     /** Called by disassembleOne() to initialize the disassembler state for the next instruction. */
-    void start_instruction(const MemoryMap::Ptr &map, rose_addr_t start_va) {
-        this->map = map;
-        insn_va = start_va;
-        niwords = 0;
-        memset(iwords, 0, sizeof iwords);
-        niwords_used = 0;
+    void start_instruction(State &state, const MemoryMap::Ptr &map, rose_addr_t start_va) const{
+        state.map = map;
+        state.insn_va = start_va;
+        state.niwords = 0;
+        memset(state.iwords, 0, sizeof state.iwords);
+        state.niwords_used = 0;
     }
 
     /** Return the Nth instruction word. */
-    uint16_t instructionWord(size_t n);
+    uint16_t instructionWord(State&, size_t n) const;
 
     /** Returns number of instruction words referenced so far in the current instruction. */
-    size_t extensionWordsUsed() const;
+    size_t extensionWordsUsed(State&) const;
 
     /** Create a ROSE data type for m68k data format. */
-    SgAsmType *makeType(M68kDataFormat);
+    SgAsmType *makeType(State&, M68kDataFormat) const;
 
     /** Create a data register reference expression. */
-    SgAsmRegisterReferenceExpression *makeDataRegister(unsigned regnum, M68kDataFormat, size_t bit_offset=0);
+    SgAsmRegisterReferenceExpression *makeDataRegister(State&, unsigned regnum, M68kDataFormat, size_t bit_offset=0) const;
 
     /** Create an address register reference expression. */
-    SgAsmRegisterReferenceExpression *makeAddressRegister(unsigned regnum, M68kDataFormat, size_t bit_offset=0);
+    SgAsmRegisterReferenceExpression *makeAddressRegister(State&, unsigned regnum, M68kDataFormat, size_t bit_offset=0) const;
 
     /** Make a memory reference expression using an address register in pre-decrement mode. The @p fmt is the format of the
      *  memory reference; all 32-bits of the address register are accessed. */
-    SgAsmMemoryReferenceExpression *makeAddressRegisterPreDecrement(unsigned regnum, M68kDataFormat fmt);
+    SgAsmMemoryReferenceExpression *makeAddressRegisterPreDecrement(State&, unsigned regnum, M68kDataFormat fmt) const;
 
     /** Make a memory reference expression using an address register in post-increment mode. The @p fmt is the format of the
      *  memory reference; all 32-bits of the address register are accessed. */
-    SgAsmMemoryReferenceExpression *makeAddressRegisterPostIncrement(unsigned regnum, M68kDataFormat fmt);
+    SgAsmMemoryReferenceExpression *makeAddressRegisterPostIncrement(State&, unsigned regnum, M68kDataFormat fmt) const;
 
     /** Create either a data or address register reference expression. When @p regnum is zero through seven a data register is
      *  created; when @p regnum is eight through 15 an address register is created. */
-    SgAsmRegisterReferenceExpression *makeDataAddressRegister(unsigned regnum, M68kDataFormat fmt, size_t bit_offset=0);
+    SgAsmRegisterReferenceExpression *makeDataAddressRegister(State&, unsigned regnum, M68kDataFormat fmt,
+                                                              size_t bit_offset=0) const;
 
     /** Create a list of data and/or address registers.
      *
      *  The bit mask indicates the registers. Starting at the least significant bit, the register are either:
      *  D0, D1, ... D7, A0, A1, ... A7 if @p reverse is false, or A7, A6, ... A0, D7, D6, ... D0 if @p reverse is true.  The
      *  returned list has the registers in order starting at the least significant bit. */
-    SgAsmRegisterNames *makeRegistersFromMask(unsigned mask, M68kDataFormat fmt, bool reverse=false);
+    SgAsmRegisterNames *makeRegistersFromMask(State&, unsigned mask, M68kDataFormat fmt, bool reverse=false) const;
 
     /** Create a list of floating-point data registers.
      *
      *  The bit mask indicates the registers. Starting at the least significant bit, the registers are either:
      *  FP0 through FP7 if @p reverse is false, or FP7 through FP0 if @p reverse is true.  The returned list has the registers
      *  in order starting at the least significant bit. */
-    SgAsmRegisterNames *makeFPRegistersFromMask(unsigned mask, M68kDataFormat fmt, bool reverse=false);
+    SgAsmRegisterNames *makeFPRegistersFromMask(State&, unsigned mask, M68kDataFormat fmt, bool reverse=false) const;
 
     /** Create a reference to the status register. */
-    SgAsmRegisterReferenceExpression *makeStatusRegister();
+    SgAsmRegisterReferenceExpression *makeStatusRegister(State&) const;
 
     /** Create a reference to the condition code register. This is the low-order 8 bits of the status register. */
-    SgAsmRegisterReferenceExpression *makeConditionCodeRegister();
+    SgAsmRegisterReferenceExpression *makeConditionCodeRegister(State&) const;
 
     /** Create control register for ColdFire cpu. */
-    SgAsmRegisterReferenceExpression* makeColdFireControlRegister(unsigned regnum);
+    SgAsmRegisterReferenceExpression* makeColdFireControlRegister(State&, unsigned regnum) const;
 
     /** Create a reference to the program counter register. */
-    SgAsmRegisterReferenceExpression *makeProgramCounter();
+    SgAsmRegisterReferenceExpression *makeProgramCounter(State&) const;
 
     /** Create a MAC register reference expression. */
-    SgAsmRegisterReferenceExpression *makeMacRegister(M68kMacRegister);
+    SgAsmRegisterReferenceExpression *makeMacRegister(State&, M68kMacRegister) const;
 
     /** Create a MAC accumulator register. These are ACC0 through ACC3, 32-bit integers. */
-    SgAsmRegisterReferenceExpression *makeMacAccumulatorRegister(unsigned accumIndex);
+    SgAsmRegisterReferenceExpression *makeMacAccumulatorRegister(State&, unsigned accumIndex) const;
 
     /** Create a floating point register.  Floating point registers are different sizes on different platforms. For example,
      * the M68040 has 80-bit registers that can store 96-bit extended-precision real values (16-bits of which are zero), but
      * the follow on FreeScale ColdFire processors have only 64-bit registers that hold double-precision real values. */
-    SgAsmRegisterReferenceExpression *makeFPRegister(unsigned regnum);
+    SgAsmRegisterReferenceExpression *makeFPRegister(State&, unsigned regnum) const;
 
     /** Generic ways to make a register. */
-    SgAsmRegisterReferenceExpression *makeRegister(RegisterDescriptor);
+    SgAsmRegisterReferenceExpression *makeRegister(RegisterDescriptor) const;
 
     /** Create an integer expression from a specified value. */
-    SgAsmIntegerValueExpression *makeImmediateValue(M68kDataFormat fmt, unsigned value);
+    SgAsmIntegerValueExpression *makeImmediateValue(State&, M68kDataFormat fmt, unsigned value) const;
 
     /** Create an integer expression from extension words. */
-    SgAsmIntegerValueExpression *makeImmediateExtension(M68kDataFormat fmt, size_t ext_word_idx);
+    SgAsmIntegerValueExpression *makeImmediateExtension(State&, M68kDataFormat fmt, size_t ext_word_idx) const;
 
     /** Create an expression for m68k "<ea>x" or "<ea>y". The @p modreg is a six-bit value whose high-order three bits are the
      * addressing mode and whose low-order three bits are (usually) a register number. The return value has a type of the
@@ -210,27 +214,24 @@ public:
      * consumed.
      *
      * @{ */
-    SgAsmExpression *makeEffectiveAddress(unsigned modreg, M68kDataFormat fmt, size_t ext_offset);
-    SgAsmExpression *makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataFormat fmt, size_t ext_offset);
+    SgAsmExpression *makeEffectiveAddress(State&, unsigned modreg, M68kDataFormat fmt, size_t ext_offset) const;
+    SgAsmExpression *makeEffectiveAddress(State&, unsigned mode, unsigned reg, M68kDataFormat fmt, size_t ext_offset) const;
     /** @} */
 
     /** Converts a memory-reference expression to an address.  This is used for things like the JSR instruction that takes an
      *  effective address that's a memory reference, and converts it to just an address. It also rewrites PC-relative addresses
      *  since the PC is constant. */
-    SgAsmExpression *makeAddress(SgAsmExpression *expr);
+    SgAsmExpression *makeAddress(State&, SgAsmExpression *expr) const;
 
     /** Create an offset width pair from an extension word.  The extension word contains an offset and width expression each of
      *  which is either a 5-bit unsigned integer or a data register number. This is used by various bit field instructions. */
-    ExpressionPair makeOffsetWidthPair(unsigned extension_word);
+    ExpressionPair makeOffsetWidthPair(State&, unsigned extension_word) const;
 
     /** Build an instruction. */
-    SgAsmM68kInstruction *makeInstruction(M68kInstructionKind, const std::string &mnemonic,
+    SgAsmM68kInstruction *makeInstruction(State&, M68kInstructionKind, const std::string &mnemonic,
                                           SgAsmExpression *arg0=NULL, SgAsmExpression *arg1=NULL, SgAsmExpression *arg2=NULL,
                                           SgAsmExpression *arg3=NULL, SgAsmExpression *arg4=NULL, SgAsmExpression *arg5=NULL,
-                                          SgAsmExpression *arg6=NULL);
-
-    /** Return the address of the instruction we are disassembling. */
-    rose_addr_t get_insn_va() const { return insn_va; }
+                                          SgAsmExpression *arg6=NULL) const;
 
     /** Returns ISA family specified in constructor. */
     M68kFamily get_family() const { return family; }

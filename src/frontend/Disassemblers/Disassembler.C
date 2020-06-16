@@ -334,13 +334,13 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
 }
 
 /* Add last instruction's successors to returned successors. */
-Disassembler::AddressSet
-Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
+AddressSet
+Disassembler::get_block_successors(const InstructionMap& insns, bool &complete)
 {
     std::vector<SgAsmInstruction*> block;
     for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
         block.push_back(ii->second);
-    Disassembler::AddressSet successors = block.front()->getSuccessors(block, complete);
+    AddressSet successors = block.front()->getSuccessors(block, complete);
 
     /* For the purposes of disassembly, assume that a CALL instruction eventually executes a RET that causes execution to
      * resume at the address following the CALL. This is true 99% of the time.  Higher software layers (e.g., Partitioner) may

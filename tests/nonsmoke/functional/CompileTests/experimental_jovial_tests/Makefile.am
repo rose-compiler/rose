@@ -19,6 +19,11 @@ JOVIAL_TESTCODES = \
  1_2_2_procedure-module_e.jov           \
  1_2_2_procedure-module_f.jov           \
  2_1_1_4_bit_type.jov                   \
+ 4_3_if_stmt_a.jov                      \
+ 4_3_if_stmt_b.jov                      \
+ 4_3_if_stmt_c.jov                      \
+ 4_3_if_stmt_d.jov                      \
+ 4_3_if_stmt_e.jov                      \
  4_4_case_stmt_a.jov                    \
  5_2_logical_continuation_a.jov         \
  5_2_logical_continuation_b.jov         \
@@ -73,17 +78,17 @@ JOVIAL_PARSER_TESTCODES = \
  rose-issue-2143.jov
 
 COMPOOL_TESTCODES = \
+ simple_compool.cpl                     \
  status_type.cpl                        \
  3_0_rent_and_rec.cpl                   \
  rose-issue-2654.cpl                    \
  rose-issue-2658.cpl                    \
  rose-issue-2683.cpl                    \
- rose-issue-2687.cpl
+ rose-issue-2687.cpl                    \
+ rose-issue-2691.cpl
 
-# bit_cast.cpl                           \
-# simple_compool.cpl                     \
+# bit_cast.cpl
 # 9_1_compool_directive.cpl
-
 # proc_refs.cpl                          
 
 
@@ -115,8 +120,6 @@ JOVIAL_TESTCODES_PASS_TRAVERSE = \
  4_0_compound_stmt_a.jov                \
  4_0_compound_stmt_b.jov                \
  4_0_null_block_stmt.jov                \
- 4_3_if_stmt_b.jov                      \
- 4_3_if_stmt_c.jov                      \
  4_3_if_stmt_d.jov                      \
  4_3_if_stmt_e.jov                      \
  4_7_goto_stmt_b.jov                    \
@@ -164,7 +167,6 @@ JOVIAL_TESTCODES_WORKING_ON = \
  4_2_loop_stmt_b.jov                    \
  4_2_loop_stmt_c.jov                    \
  4_2_loop_stmt_d.jov                    \
- 4_3_if_stmt_a.jov                      \
  4_6_return_stmt_b.jov                  \
  4_10_abort_stmt_c.jov                  \
  5_1_1_integer-factor.jov               \

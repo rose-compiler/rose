@@ -678,12 +678,12 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain unit-test check-normalization check-vxthorn check-equivalence check-svcomp-witness check-par-cfg
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain unit-test check-normalization check-vxthorn check-equivalence check-par-cfg
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
 #CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven
-CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer
+CHECK_WITH_SPOT_ONLY_PASSING=check-svcomp-witness check-ltl check-ltl-driven-reset-analyzer
 
 CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_ONLY_PASSING)
 
