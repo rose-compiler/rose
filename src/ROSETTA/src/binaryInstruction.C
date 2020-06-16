@@ -9569,7 +9569,9 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
         explicit SgAsmDOSFileHeader(SgAsmGenericFile *f)
-            : SgAsmGenericHeader(f), p_relocs(NULL), p_rm_section(NULL) {
+            : SgAsmGenericHeader(f), p_e_last_page_size(0), p_e_total_pages(0), p_e_nrelocs(0), p_e_header_paragraphs(0),
+              p_e_minalloc(0), p_e_maxalloc(0), p_e_ss(0), p_e_sp(0), p_e_cksum(0), p_e_ip(0), p_e_cs(0), p_e_overlay(0),
+              p_e_relocs_offset(0), p_e_res1(0), p_relocs(NULL), p_rm_section(NULL) {
             ctor();
         }
         virtual SgAsmDOSFileHeader *parse() $ROSE_OVERRIDE {return parse(true);}
@@ -9790,7 +9792,8 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
         explicit SgAsmDOSExtendedHeader(SgAsmDOSFileHeader *fhdr)
-            : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+            : SgAsmGenericSection(fhdr->get_file(), fhdr), p_e_res1(0), p_e_oemid(0), p_e_oeminfo(0), p_e_res2(0),
+              p_e_res3(0), p_e_res4(0), p_e_res5(0), p_e_res6(0), p_e_lfanew(0) {
             ctor();
         }
         virtual SgAsmDOSExtendedHeader *parse() $ROSE_OVERRIDE;
@@ -10555,7 +10558,13 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         explicit SgAsmPEFileHeader(SgAsmGenericFile *f)
-            : SgAsmGenericHeader(f), p_section_table(NULL), p_coff_symtab(NULL) {
+            : SgAsmGenericHeader(f), p_e_cpu_type(0), p_e_nsections(0), p_e_time(0), p_e_coff_symtab(0), p_e_nt_hdr_size(0),
+              p_e_coff_nsyms(0), p_e_flags(0), p_e_opt_magic(0), p_e_lmajor(0), p_e_lminor(0), p_e_code_size(0), p_e_data_size(0),
+              p_e_bss_size(0), p_e_code_rva(0), p_e_data_rva(0), p_e_section_align(0), p_e_file_align(0), p_e_os_major(0),
+              p_e_os_minor(0), p_e_user_major(0), p_e_user_minor(0), p_e_subsys_major(0), p_e_subsys_minor(0), p_e_reserved9(0),
+              p_e_image_size(0), p_e_header_size(0), p_e_file_checksum(0), p_e_subsystem(0), p_e_dll_flags(0),
+              p_e_stack_reserve_size(0), p_e_stack_commit_size(0), p_e_heap_reserve_size(0), p_e_heap_commit_size(0),
+              p_e_loader_flags(0), p_e_num_rvasize_pairs(0), p_rvasize_pairs(NULL), p_section_table(NULL), p_coff_symtab(NULL) {
             ctor();
         }
 

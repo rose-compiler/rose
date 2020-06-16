@@ -8060,6 +8060,27 @@ SgSymbolTable::get_name( const SgNode* node) const
                name = initializedName->get_name();
                break;
              }
+             
+          case V_SgAdaPackageSpecDecl:
+             {
+               const SgAdaPackageSpecDecl* dcl = isSgAdaPackageSpecDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
+          case V_SgAdaTaskSpecDecl:
+             {
+               const SgAdaTaskSpecDecl* dcl = isSgAdaTaskSpecDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
+          case V_SgAdaTaskTypeDecl:
+             {
+               const SgAdaTaskTypeDecl* dcl = isSgAdaTaskTypeDecl(node);
+               name = dcl->get_name();
+               break;
+             }
 
           case V_SgNonrealDecl:
              {
