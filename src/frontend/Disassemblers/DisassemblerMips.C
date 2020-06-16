@@ -125,6 +125,13 @@ DisassemblerMips::makeUnknownInstruction(const Disassembler::Exception &e)
     return insn;
 }
 
+SgAsmMipsInstruction*
+DisassemblerMips::makeUnknownInstruction(unsigned ib) {
+    SgAsmMipsInstruction *insn = makeInstruction(mips_unknown_instruction, "unknown");
+    insn->set_raw_bytes(SgUnsignedCharList((unsigned char*)&ib, (unsigned char*)&ib + 4));
+    return insn;
+}
+
 SgAsmMipsInstruction *
 DisassemblerMips::makeInstruction(MipsInstructionKind kind, const std::string &mnemonic,
                                   SgAsmExpression *op1, SgAsmExpression *op2, SgAsmExpression *op3, SgAsmExpression *op4)
@@ -437,11 +444,10 @@ DisassemblerMips::makeCp2ccRegister(unsigned regnum)
     return new SgAsmDirectRegisterExpression(RegisterDescriptor(mips_regclass_cp2spr, regnum, 0, 32));
 }
 
-SgAsmRegisterReferenceExpression *
-DisassemblerMips::makeHwRegister(unsigned cc)
-{
-    ASSERT_not_implemented("[Robb Matzke 2014-01-27]");
-    return NULL;
+SgAsmRegisterReferenceExpression*
+DisassemblerMips::makeHwRegister(unsigned regnum) {
+    ASSERT_require(regnum < 32);
+    return new SgAsmDirectRegisterExpression(RegisterDescriptor(mips_regclass_hw, regnum, 0, 32));
 }
 
 SgAsmRegisterReferenceExpression *
@@ -1577,6 +1583,8 @@ static struct Mips32_ins: Mips32 {
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
         unsigned pos = gR3(ib);
         unsigned size = gR2(ib) - pos + 1;
+        if (pos >= 32 || size > 32 || pos + size > 32)
+            return d->makeUnknownInstruction(ib);
         return d->makeInstruction(mips_ins, "ins",
                                   d->makeRegister(gR1(ib)), d->makeRegister(gR0(ib)),
                                   d->makeImmediate8(pos, 6, 5), d->makeImmediate8(size, 11, 5));

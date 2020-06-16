@@ -736,20 +736,17 @@ Unparse_Jovial::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      if (kind == SgStopOrPauseStatement::e_stop)
         {
-          curprint("STOP ");
+          curprint_indented("STOP ", info);
           unparseExpression(sp_stmt->get_code(), info);
-          curprint(";");
-          unp->cur.insert_newline(1);
+          curprint(";\n");
         }
      else if (kind == SgStopOrPauseStatement::e_exit)
         {
-          curprint("EXIT ;");
-          unp->cur.insert_newline(1);
+          curprint_indented("EXIT;\n", info);
         }
      else if (kind == SgStopOrPauseStatement::e_abort)
         {
-          curprint("ABORT ;");
-          unp->cur.insert_newline(1);
+          curprint_indented("ABORT;\n", info);
         }
      else
         {
@@ -954,10 +951,13 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
            foreach(SgDeclarationStatement* item_decl, table_def->get_members())
               {
-                 SgVariableDeclaration* vardecl = isSgVariableDeclaration(item_decl);
-                 if (vardecl)
+                 if (isSgVariableDeclaration(item_decl))
                     {
                        unparseVarDeclStmt(item_decl, info);
+                    }
+                 else if (isSgEmptyDeclaration(item_decl))
+                    {
+                       // do nothing for a null declaration (may want to unparse ";\n")
                     }
                  else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
               }
@@ -1135,10 +1135,13 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
                  info.inc_nestingLevel();
                  foreach(SgDeclarationStatement* item_decl, table_def->get_members())
                     {
-                       SgVariableDeclaration* vardecl = isSgVariableDeclaration(item_decl);
-                       if (vardecl)
+                       if (isSgVariableDeclaration(item_decl))
                           {
                              unparseVarDeclStmt(item_decl, info);
+                          }
+                       else if (isSgEmptyDeclaration(item_decl))
+                          {
+                             // do nothing for a null declaration (may want to unparse ";\n")
                           }
                        else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
                     }

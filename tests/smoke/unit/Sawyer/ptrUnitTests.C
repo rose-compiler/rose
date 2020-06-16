@@ -283,6 +283,7 @@ static void arrow_null() {
 
 // Tests that we can say things like "if (ptr)"
 static void implicit_bool() {
+    ObjectStats stats;
     SharedPointer<Subclass> ptr;
     ASSERT_always_forbid(ptr);
     ASSERT_always_require(!ptr);
@@ -299,7 +300,6 @@ static void implicit_bool() {
         ASSERT_always_require2(ss.str()=="0" || ss.str()=="0x0", "ss.str()==" + ss.str());
     }
     
-    ObjectStats stats;
     Subclass *obj = new Subclass(stats, 123);
     ptr = SharedPointer<Subclass>(obj);
     ASSERT_always_require(ptr);

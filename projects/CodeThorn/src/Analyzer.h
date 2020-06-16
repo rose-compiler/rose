@@ -298,8 +298,12 @@ namespace CodeThorn {
     void setLtlOptions(LTLOptions ltlOptions);
     LTLOptions& getLtlOptionsRef();
   protected:
-    // this function is protected to ensure it is not used from outside. It is supposed to be used
-    // only for internal timing managing the max-time option resource.
+    /* these functions are used for the internal timer for resource management
+       this function is protected to ensure it is not used from outside. It is supposed to be used
+       only for internal timing managing the max-time option resource.
+    */
+    void startAnalysisTimer();
+    void stopAnalysisTimer();
     long analysisRunTimeInSeconds();
 
     static Sawyer::Message::Facility logger;

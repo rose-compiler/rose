@@ -10,6 +10,7 @@ JOVIAL_TESTCODES = \
  tiny.jov                               \
  int_conversion.jov                     \
  item_desc_conversion.jov               \
+ parens.jov                             \
  typename_conv.jov                      \
  1_2_2_non-nested-subroutine_a.jov      \
  1_2_2_non-nested-subroutine_b.jov      \
@@ -22,7 +23,13 @@ JOVIAL_TESTCODES = \
  5_2_logical_continuation_a.jov         \
  5_2_logical_continuation_b.jov         \
  6_1_ptr_dereference.jov                \
- 6_3_5_shift_function.jov
+ 6_3_5_shift_function.jov               \
+ 6_3_6_abs_function.jov                 \
+ 4_9_stop_stmt_a.jov                    \
+ 4_9_stop_stmt_b.jov                    \
+ 4_9_stop_stmt_c.jov                    \
+ 4_10_abort_stmt_a.jov                  \
+ 4_10_abort_stmt_b.jov
 
 # status_enumval.jov                     \
 # 1_2_3_main-program-module_a.jov        \
@@ -32,9 +39,7 @@ JOVIAL_TESTCODES = \
 # 1_2_3_program-body_c.jov               \
 # 2_1_1_7_pointer_type.jov               \
 # 2_1_2_2_structure_spec.jov             \
-# 2_1_2_3_packing_spec.jov               \
-# 4_10_abort_stmt_a.jov                  \
-# 4_10_abort_stmt_b.jov
+# 2_1_2_3_packing_spec.jov
 
 JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \
@@ -71,6 +76,8 @@ COMPOOL_TESTCODES = \
  status_type.cpl                        \
  3_0_rent_and_rec.cpl                   \
  rose-issue-2654.cpl                    \
+ rose-issue-2658.cpl                    \
+ rose-issue-2683.cpl                    \
  rose-issue-2687.cpl
 
 # bit_cast.cpl                           \

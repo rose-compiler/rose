@@ -6,12 +6,14 @@ static const char *description =
 
 #include <rose.h>
 
-#include <AsmUnparser_compat.h>
+#include <BinaryUnparserBase.h>
 #include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
 #include <LinearCongruentialGenerator.h>
 #include <MemoryMap.h>
+#include <Partitioner2/Engine.h>
+#include <Partitioner2/Partitioner.h>
 #include <Sawyer/AllocatingBuffer.h>
 #include <Sawyer/CommandLine.h>
 #include <SymbolicSemantics2.h>
@@ -19,6 +21,7 @@ static const char *description =
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
 
 Facility mlog;
@@ -91,16 +94,18 @@ main(int argc, char *argv[]) {
     MemoryMap::Ptr map = createInput(settings);
 
     // Obtain a disassembler
-    Disassembler *disassembler = NULL;
-    try {
-        disassembler = Disassembler::lookup(settings.isa);
-    } catch (...) {};
-    if (!disassembler) {
-        if (settings.isa == "list")
-            exit(0);
-        mlog[FATAL] <<"unknown instruction set architecture: " <<settings.isa <<"\n";
-        exit(0);
-    }
+    P2::Engine engine;
+    engine.settings().disassembler.isaName = settings.isa;
+    P2::Partitioner partitioner = engine.createPartitioner();
+    Disassembler *disassembler = partitioner.instructionProvider().disassembler();
+    ASSERT_not_null(disassembler);
+
+    // Configure unparser
+    partitioner.insnUnparser()->settings().insn.bytes.showing = true;
+#if 1 // FIXME: this is just here for A64 debugging
+    partitioner.insnUnparser()->settings().insn.bytes.perLine = 4;
+    partitioner.insnUnparser()->settings().insn.bytes.fieldWidth = 11;
+#endif
 
     // Obtain an instruction semantics dispatcher if possible.
     S2::BaseSemantics::DispatcherPtr cpu = disassembler->dispatcher();
@@ -141,7 +146,7 @@ main(int argc, char *argv[]) {
         }
 
         if (insn && settings.showingInsns)
-            std::cout <<unparseInstructionWithAddress(insn) <<"\n";
+            std::cerr <<"                            " <<partitioner.unparse(insn) <<"\n";
 
         // Run semantics. We use a fresh input state each time, otherwise the state would eventually get too large.
         if (cpu && insn && !insn->isUnknown()) {

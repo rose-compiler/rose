@@ -21,6 +21,14 @@ SAWYER_ROOT="sawyer-$(date +%Y%m%d)"
 rm -rf "$SAWYER_ROOT"
 git clone "$SAWYER_REPO" "$SAWYER_ROOT"
 
+# Apply any patches related to ROSE. For instance, we need to patch the serialization unit test to avoid ODR violations
+# reported by Address Sanitizer.
+for patch in *.patch; do
+    if [ -e "$patch" ]; then
+	(cd "$SAWYER_ROOT" && patch -p1) <"$patch"
+    fi
+done
+
 cp "$SAWYER_ROOT/LICENSE" LICENSE
         
 # Copy some of Sawyer's source files into the ROSE source tree. Don't worry about overwriting ROSE-local changes--they
@@ -32,7 +40,7 @@ for f in                                                                        
     GraphBoost GraphIteratorBiMap GraphIteratorMap GraphIteratorSet GraphTraversal IndexedList Interval IntervalMap IntervalSet         \
     IntervalSetMap HashMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional PoolAllocator ProgressBar Sawyer Set           \
     SharedObject SharedPointer SmallObject Stack StackAllocator StaticBuffer Stopwatch Synchronization ThreadWorkers Trace Tracker      \
-    Tree Type WarningsOff WarningsRestore;                                                                                              \
+    Tree Type WarningsOff WarningsRestore WorkList;                                                                                     \
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
     ( emit_cpp_warning; cat "$srcbase.h" ) > ./$f.h
@@ -71,7 +79,8 @@ for f in                                        \
     Markup/markupUnitTests.C                    \
     Message/mesgUnitTests.C                     \
     Pointers/ptrUnitTests.C                     \
-    Serialization/serializationUnitTests.C
+    Serialization/serializationUnitTests.C      \
+    Threads/workListTests.C
 do
     srcbase="$SAWYER_ROOT/tests/$f";
     ( emit_cpp_warning; cat "$srcbase" ) > ../../../tests/smoke/unit/Sawyer/$(basename "$f")
