@@ -486,14 +486,12 @@ void CodeThorn::Analyzer::setExternalErrorFunctionName(std::string externalError
 }
 
 bool CodeThorn::Analyzer::isPrecise() {
-  if (isActiveGlobalTopify()) {
-    return false;
-  }
   // MS 05/20/20: removed (eliminated explicitArrays mode)
   //if (_ctOpt.arraysNotInState==true && !_ctOpt.rers.rersBinary) {
   //  return false;
   //}
-  return true;
+  // analysis is precise if it is not in any abstraction mode
+  return !(isActiveGlobalTopify()||_ctOpt.abstractionMode>0);
 }
 
 // only relevant for maximum values (independent of topify mode)
@@ -1059,7 +1057,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
     3) if no size is provided, determine it from the initializer list (and add this information to the variableIdMapping - or update the variableIdMapping).
    */
 
-  //cout<< "DEBUG: DECLARATION:"<<AstTerm::astTermWithNullValuesToString(decl)<<endl;
+  //cout<<"DEBUG: declaration:"<<decl->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(decl)<<endl;
   CallString cs=currentEState.callString;
   Label label=currentEState.label();
 
@@ -1104,17 +1102,54 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
       ConstraintSet cset=*currentEState.constraints();
       SgInitializer* initializer=initName->get_initializer();
       if(initializer) {
+        //cout<<"DEBUG: decl-init: "<<decl->unparseToString()<<":AST:"<<AstTerm::astTermWithNullValuesToString(initializer)<<endl;
         // special case that initializer is an assignment (reusing transferAssignOp)
         if(SgAssignInitializer* assignInit=isSgAssignInitializer(initializer)) {
           SgExpression* assignInitOperand=assignInit->get_operand_i();
           ROSE_ASSERT(assignInitOperand);
           if(SgAssignOp* assignOp=isSgAssignOp(assignInitOperand)) {
             SAWYER_MESG(logger[TRACE])<<"assignment in initializer: "<<decl->unparseToString()<<endl;
+            //cout<<"DEBUG: assignment in initializer: "<<decl->unparseToString()<<endl;
             Edge dummyEdge(targetLabel,EDGE_FORWARD,targetLabel); // only target label is used in transferAssignOp
-            // TODO: assign does not properly reserve memory before assigning to it
-            std::list<EState> estateList=transferAssignOp(assignOp, dummyEdge, &currentEState);
-            ROSE_ASSERT(estateList.size()==1);
-            return *estateList.begin();
+            //std::list<EState> estateList=transferAssignOp(assignOp, dummyEdge, &currentEState);
+            CodeThorn::Analyzer::MemoryUpdateList memUpdList=evalAssignOp(assignOp,dummyEdge,&currentEState);
+            std::list<EState> estateList;
+            ROSE_ASSERT(memUpdList.size()==1);
+            auto memUpd=*memUpdList.begin();
+            // code is normalized, lhs must be a variable : tmpVar= var=val;
+            // store result of assignment in declaration variable
+            EState estate=memUpd.first;
+            PState newPState=*estate.pstate();
+            AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
+            AbstractValue lhsAddr=memUpd.second.first;
+            AbstractValue rhsValue=memUpd.second.second;
+            getExprAnalyzer()->writeToMemoryLocation(label,&newPState,lhsAddr,rhsValue); // assignment in initializer
+            getExprAnalyzer()->initializeMemoryLocation(label,&newPState,initDeclVarAddr,rhsValue); // initialization of declared var
+            return createEState(targetLabel,cs,newPState,cset);
+          } else if(SgFunctionRefExp* funRefExp=isSgFunctionRefExp(assignInitOperand)) {
+            //cout<<"DEBUG: DETECTED isSgFunctionRefExp: evaluating expression ..."<<endl;
+            list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(funRefExp,currentEState);
+            if(res.size()!=1) {
+              if(res.size()>1) {
+                SAWYER_MESG(logger[ERROR])<<"Error: multiple results in rhs evaluation."<<endl;
+                SAWYER_MESG(logger[ERROR])<<"expr: "<<SgNodeHelper::sourceLineColumnToString(decl)<<": "<<decl->unparseToString()<<endl;
+                exit(1);
+              } else {
+                ROSE_ASSERT(res.size()==0);
+                SAWYER_MESG(logger[TRACE])<<"no results in rhs evaluation (returning top): "<<decl->unparseToString()<<endl;
+              }
+            } else {
+              ROSE_ASSERT(res.size()==1);
+              SingleEvalResultConstInt evalResult=*res.begin();
+              SAWYER_MESG(logger[TRACE])<<"rhs eval result: "<<evalResult.result.toString()<<endl;
+              
+              EState estate=evalResult.estate;
+              PState newPState=*estate.pstate();
+              AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
+              getExprAnalyzer()->initializeMemoryLocation(label,&newPState,initDeclVarAddr,evalResult.value());
+              ConstraintSet cset=*estate.constraints();
+              return createEState(targetLabel,cs,newPState,cset);
+            }
           }
         }
         if(getVariableIdMapping()->hasClassType(initDeclVarId)) {
@@ -1128,9 +1163,39 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         }
         if(getVariableIdMapping()->hasReferenceType(initDeclVarId)) {
           // TODO: initialization of references not supported yet
-          SAWYER_MESG(logger[WARN])<<"initialization of references not supported yet (not added to state) "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
-          PState newPState=*currentEState.pstate();
-          return createEState(targetLabel,cs,newPState,cset);
+          SAWYER_MESG(logger[INFO])<<"initialization of reference:"<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
+          SgAssignInitializer* assignInit=isSgAssignInitializer(initializer);
+          ROSE_ASSERT(assignInit);
+          SgExpression* assignInitOperand=assignInit->get_operand_i();
+          ROSE_ASSERT(assignInitOperand);
+          //list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(assignInitOperand,currentEState, CodeThorn::ExprAnalyzer::MODE_ADDRESS);
+          list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateLExpression(assignInitOperand,currentEState);
+
+          SAWYER_MESG(logger[INFO])<<"initialization of reference:"<<AstTerm::astTermWithNullValuesToString(assignInitOperand)<<endl;
+          if(res.size()!=1) {
+            if(res.size()>1) {
+              SAWYER_MESG(logger[ERROR])<<"Error: multiple results in rhs evaluation."<<endl;
+              SAWYER_MESG(logger[ERROR])<<"expr: "<<SgNodeHelper::sourceLineColumnToString(decl)<<": "<<decl->unparseToString()<<endl;
+              exit(1);
+            } else {
+              ROSE_ASSERT(res.size()==0);
+              SAWYER_MESG(logger[TRACE])<<"no results in rhs evaluation (returning top): "<<decl->unparseToString()<<endl;
+            }
+          } else {
+            ROSE_ASSERT(res.size()==1);
+            SingleEvalResultConstInt evalResult=*res.begin();
+            SAWYER_MESG(logger[INFO])<<"rhs (reference init) result: "<<evalResult.result.toString()<<endl;
+            
+            EState estate=evalResult.estate;
+            PState newPState=*estate.pstate();
+            AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
+            //initDeclVarAddr.setRefType(); // known to be ref from hasReferenceType above
+            // creates a memory cell in state that contains the address of the referred memory cell
+            getExprAnalyzer()->initializeMemoryLocation(label,&newPState,initDeclVarAddr,evalResult.value());
+            ConstraintSet cset=*estate.constraints();
+            return createEState(targetLabel,cs,newPState,cset);
+          }
+          ROSE_ASSERT(false); // not reachable
         }
         // has aggregate initializer
         if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
@@ -1928,6 +1993,12 @@ CTIOLabeler* CodeThorn::Analyzer::getLabeler() const {
   return ioLabeler;
 }
 
+Label CodeThorn::Analyzer::getFunctionEntryLabel(SgFunctionRefExp* funRefExp) {
+  Label lab;
+  return lab;
+}
+
+
 /*!
  * \author Marc Jasper
  * \date 2017.
@@ -2167,7 +2238,8 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
   // ad 1)
   SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source()));
   ROSE_ASSERT(funCall);
-
+  //FUNCTION CALL:funcPtr(data) L:53:SgFunctionCallExp(SgVarRefExp:funcPtr,SgExprListExp(SgVarRefExp:data))
+  //cout<<"DEBUG: FUNCTION CALL:"<<funCall->unparseToString()<<" L:"<<edge.target().toString()<<":"<<AstTerm::astTermWithNullValuesToString(funCall)<<endl;
   if(_ctOpt.rers.rersBinary) {
     // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
     string funName=SgNodeHelper::getFunctionName(funCall);
@@ -2179,6 +2251,8 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
 
   SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   // ad 2)
+  // check for function pointer label
+
   SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.target()));
   recordAnalyzedFunction(funDef);
   SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
@@ -2229,8 +2303,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
       evalResultValue=evalResult.value();
     }
     // above evaluateExpression does not use constraints (par3==false). Therefore top vars remain top vars
-    getExprAnalyzer()->reserveMemoryLocation(currentLabel,&newPState,formalParameterVarId);
-    getExprAnalyzer()->writeToMemoryLocation(currentLabel,&newPState,formalParameterVarId,evalResultValue);
+    getExprAnalyzer()->initializeMemoryLocation(currentLabel,&newPState,formalParameterVarId,evalResultValue);
     ++i;++j;
   }
   // assert must hold if #formal-params==#actual-params (TODO: default values)
@@ -2939,6 +3012,7 @@ list<EState> CodeThorn::Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, E
       exit(1);
     }
     //newPState[var]=varVal;
+    // TODOREF
     getExprAnalyzer()->writeToMemoryLocation(estate.label(),&newPState,var,newVarVal);
 
 #if 0
@@ -2954,38 +3028,58 @@ list<EState> CodeThorn::Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, E
 }
 
 std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estate) {
-  CallString cs=estate->callString;
+  auto pList=evalAssignOp(nextNodeToAnalyze2, edge, estate);
+  std::list<EState> estateList;
+  for (auto p : pList) {
+    EState estate=p.first;
+    AbstractValue lhsAddress=p.second.first;
+    AbstractValue rhsValue=p.second.second;
+    Label label=estate.label();
+    PState newPState=*estate.pstate();
+    ConstraintSet cset=*estate.constraints();
+    if(lhsAddress.isReferenceVariableAddress())
+      getExprAnalyzer()->writeToReferenceMemoryLocation(label,&newPState,lhsAddress,rhsValue);
+    else
+      getExprAnalyzer()->writeToMemoryLocation(label,&newPState,lhsAddress,rhsValue);
+    CallString cs=estate.callString;
+    estateList.push_back(createEState(edge.target(),cs,newPState,cset));
+  }
+  return estateList;
+}
+
+CodeThorn::Analyzer::MemoryUpdateList
+CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estatePtr) {
+  MemoryUpdateList memoryUpdateList;
+  CallString cs=estatePtr->callString;
   //cout<<"DEBUG: AssignOp: "<<nextNodeToAnalyze2->unparseToString()<<endl;
-  EState currentEState=*estate;
+  EState currentEState=*estatePtr;
   SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
   SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
   list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(rhs,currentEState, CodeThorn::ExprAnalyzer::MODE_VALUE);
-  list<EState> estateList;
+  //list<EState> estateList;
   for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
     VariableId lhsVar;
     bool isLhsVar=exprAnalyzer.checkIfVariableAndDetermineVarId(lhs,lhsVar);
     if(isLhsVar) {
       EState estate=(*i).estate;
-      Label currentLabel=estate.label();
-      PState newPState=*estate.pstate();
-      ConstraintSet cset=*estate.constraints();
       if(variableIdMapping->hasClassType(lhsVar)) {
         // assignments to struct variables are not supported yet (this test does not detect s1.s2 (where s2 is a struct, see below)).
         logger[WARN]<<"assignment of structs (copy constructor) is not supported yet. Target update ignored! (unsound)"<<endl;
       } else if(variableIdMapping->hasCharType(lhsVar)) {
-        getExprAnalyzer()->writeToMemoryLocation(currentLabel,&newPState,lhsVar,(*i).result);
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else if(variableIdMapping->hasIntegerType(lhsVar)) {
-        getExprAnalyzer()->writeToMemoryLocation(currentLabel,&newPState,lhsVar,(*i).result);
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else if(variableIdMapping->hasEnumType(lhsVar)) /* PP */ {
-        getExprAnalyzer()->writeToMemoryLocation(currentLabel,&newPState,lhsVar,(*i).result);
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else if(variableIdMapping->hasFloatingPointType(lhsVar)) {
-        getExprAnalyzer()->writeToMemoryLocation(currentLabel,&newPState,lhsVar,(*i).result);
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else if(variableIdMapping->hasBoolType(lhsVar)) {
-        getExprAnalyzer()->writeToMemoryLocation(currentLabel,&newPState,lhsVar,(*i).result);
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else if(variableIdMapping->hasPointerType(lhsVar)) {
-        // we assume here that only arrays (pointers to arrays) are assigned
-        //newPState[lhsVar]=(*i).result;
-        getExprAnalyzer()->writeToMemoryLocation(currentLabel,&newPState,lhsVar,(*i).result);
+        // assume here that only arrays (pointers to arrays) are assigned
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+      } else if(variableIdMapping->hasReferenceType(lhsVar)) {
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else {
         SAWYER_MESG(logger[ERROR])<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(nextNodeToAnalyze2)<<endl;
         SAWYER_MESG(logger[ERROR])<<"Unsupported type on LHS side of assignment: "
@@ -2995,46 +3089,31 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
             <<endl;
         exit(1);
       }
-#if 0
-      if(!(*i).result.isTop()) {
-        cset.removeAllConstraintsOfVar(lhsVar);
-      }
-#endif
-      estateList.push_back(createEState(edge.target(),cs,newPState,cset));
     } else if(isSgDotExp(lhs)) {
       SAWYER_MESG(logger[TRACE])<<"detected dot operator on lhs "<<lhs->unparseToString()<<"."<<endl;
       list<SingleEvalResultConstInt> lhsRes=exprAnalyzer.evaluateExpression(lhs,currentEState, CodeThorn::ExprAnalyzer::MODE_ADDRESS);
       for (auto lhsAddressResult : lhsRes) {
         EState estate=(*i).estate;
-        Label label=estate.label();
-        PState newPState=*estate.pstate();
-        ConstraintSet cset=*estate.constraints();
         AbstractValue lhsAddress=lhsAddressResult.result;
         SAWYER_MESG(logger[TRACE])<<"detected dot operator on lhs: writing to "<<lhsAddress.toString(getVariableIdMapping())<<"."<<endl;
-        getExprAnalyzer()->writeToMemoryLocation(label,&newPState,lhsAddress,(*i).result);
-        estateList.push_back(createEState(edge.target(),cs,newPState,cset));
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsAddress,(*i).result)));
       }
     } else if(isSgArrowExp(lhs)) {
       SAWYER_MESG(logger[TRACE])<<"detected arrow operator on lhs "<<lhs->unparseToString()<<"."<<endl;
       list<SingleEvalResultConstInt> lhsRes=exprAnalyzer.evaluateExpression(lhs,currentEState, CodeThorn::ExprAnalyzer::MODE_ADDRESS);
       for (auto lhsAddressResult : lhsRes) {
         EState estate=(*i).estate;
-        Label label=estate.label();
-        PState newPState=*estate.pstate();
-        ConstraintSet cset=*estate.constraints();
         AbstractValue lhsAddress=lhsAddressResult.result;
         SAWYER_MESG(logger[TRACE])<<"detected arrow operator on lhs: writing to "<<lhsAddress.toString(getVariableIdMapping())<<"."<<endl;
-        getExprAnalyzer()->writeToMemoryLocation(label,&newPState,lhsAddress,(*i).result);
-        estateList.push_back(createEState(edge.target(),cs,newPState,cset));
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsAddress,(*i).result)));
       }
     } else if(isSgPntrArrRefExp(lhs)) {
       VariableIdMapping* _variableIdMapping=variableIdMapping;
       EState estate=(*i).estate;
-      Label label=estate.label();
       PState oldPState=*estate.pstate();
-      ConstraintSet oldcset=*estate.constraints();
       if(getSkipArrayAccesses()) {
-        estateList.push_back(createEState(edge.target(),cs,oldPState,oldcset));
+        // estateList.push_back(createEState(edge.target(),cs,oldPState,oldcset));
+        // nothing to do (no memory access to add to list)
       } else {
         SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(lhs));
         SgExpression* indexExp=isSgExpression(SgNodeHelper::getRhs(lhs));
@@ -3067,23 +3146,21 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
             SAWYER_MESG(logger[ERROR]) <<"lhs array access: unknown type of array or pointer."<<endl;
             exit(1);
           }
-          AbstractValue arrayElementId;
-          //AbstractValue aValue=(*i).value();
           list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(indexExp,currentEState);
           ROSE_ASSERT(res.size()==1); // this should always hold for normalized ASTs
           AbstractValue indexValue=(*(res.begin())).value();
           AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
-          arrayElementId=arrayPtrPlusIndexValue;
+          AbstractValue arrayElementAddr=arrayPtrPlusIndexValue;
           //cout<<"DEBUG: arrayElementId: "<<arrayElementId.toString(_variableIdMapping)<<endl;
           //SAWYER_MESG(logger[TRACE])<<"arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
-          if(arrayElementId.isBot()) {
+          if(arrayElementAddr.isBot()) {
             // inaccessible memory location, return empty estate list
-            return estateList;
+            return memoryUpdateList;
           }
           // read value of variable var id (same as for VarRefExp - TODO: reuse)
           // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)
-          getExprAnalyzer()->writeToMemoryLocation(label,&pstate2,arrayElementId,(*i).value()); // *i is assignment-rhs evaluation result
-            estateList.push_back(createEState(edge.target(),cs,pstate2,oldcset));
+          //TODO: getExprAnalyzer()->writeToMemoryLocation(label,&pstate2,arrayElementId,(*i).value()); // *i is assignment-rhs evaluation result
+          memoryUpdateList.push_back(make_pair(estate,make_pair(arrayElementAddr,(*i).result)));
         } else {
           logger[ERROR] <<"array-access uses expr for denoting the array. Normalization missing."<<endl;
           logger[ERROR] <<"expr: "<<lhs->unparseToString()<<endl;
@@ -3102,40 +3179,34 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
       AbstractValue lhsPointerValue=(*resLhs.begin()).result;
       SAWYER_MESG(logger[TRACE])<<"lhsPointerValue: "<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
       if(lhsPointerValue.isNullPtr()) {
-        getExprAnalyzer()->recordDefinitiveNullPointerDereferenceLocation(estate->label());
+        getExprAnalyzer()->recordDefinitiveNullPointerDereferenceLocation(estatePtr->label());
         // no state can follow, return estateList (may be empty)
-        // TODO: create error state here
-        return estateList;
+        // TODO: create error state here?
+        //return estateList;
+        return memoryUpdateList;
       } else if(lhsPointerValue.isTop()) {
-        getExprAnalyzer()->recordPotentialNullPointerDereferenceLocation(estate->label());
+        getExprAnalyzer()->recordPotentialNullPointerDereferenceLocation(estatePtr->label());
         // specific case a pointer expr evaluates to top. Dereference operation
         // potentially modifies any memory location in the state.
-        PState pstate2=*(estate->pstate());
-        // iterate over all elements of the state and merge with rhs value
-        pstate2.combineValueAtAllMemoryLocations((*i).result);
-        estateList.push_back(createEState(edge.target(),cs,pstate2,*(estate->constraints())));
+        AbstractValue lhsAddress=lhsPointerValue;
+        memoryUpdateList.push_back(make_pair(*estatePtr,make_pair(lhsAddress,(*i).result))); // lhsAddress is TOP!!!
       } else if(!(lhsPointerValue.isPtr())) {
         // changed isUndefined to isTop (2/17/20)
         if(lhsPointerValue.isTop() && getIgnoreUndefinedDereference()) {
           //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
-          PState pstate2=*(estate->pstate());
           // skip write access, just create new state (no effect)
-          estateList.push_back(createEState(edge.target(),cs,pstate2,*(estate->constraints())));
+          // nothing to do, as it request to not update the state in this case
         } else {
           SAWYER_MESG(logger[WARN])<<"not a pointer value (or top) in dereference operator: lhs-value:"<<lhsPointerValue.toLhsString(getVariableIdMapping())<<" lhs: "<<lhs->unparseToString()<<" : assuming change of any memory location."<<endl;
-          getExprAnalyzer()->recordPotentialNullPointerDereferenceLocation(estate->label());
+          getExprAnalyzer()->recordPotentialNullPointerDereferenceLocation(estatePtr->label());
           // specific case a pointer expr evaluates to top. Dereference operation
           // potentially modifies any memory location in the state.
-          PState pstate2=*(estate->pstate());
           // iterate over all elements of the state and merge with rhs value
-          pstate2.combineValueAtAllMemoryLocations((*i).result);
-          estateList.push_back(createEState(edge.target(),cs,pstate2,*(estate->constraints())));
+          memoryUpdateList.push_back(make_pair(*estatePtr,make_pair(lhsPointerValue,(*i).result))); // lhsPointerValue is TOP!!!
         }
       } else {
         //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
-        PState pstate2=*(estate->pstate());
-        getExprAnalyzer()->writeToMemoryLocation(estate->label(),&pstate2,lhsPointerValue,(*i).result);
-        estateList.push_back(createEState(edge.target(),cs,pstate2,*(estate->constraints())));
+        memoryUpdateList.push_back(make_pair(*estatePtr,make_pair(lhsPointerValue,(*i).result)));
       }
     } else {
       //cout<<"DEBUG: else (no var, no ptr) ... "<<endl;
@@ -3150,7 +3221,7 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
       }
     }
   }
-  return estateList;
+  return memoryUpdateList;
 }
 
 //#define CONSTR_ELIM_DEBUG

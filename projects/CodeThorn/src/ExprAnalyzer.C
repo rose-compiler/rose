@@ -12,6 +12,7 @@
 #include "CodeThornCommandLineOptions.h"
 #include "CodeThornLib.h"
 #include "PredefinedSemanticFunctions.h"
+#include "AstTerm.h"
 
 using namespace CodeThorn;
 using namespace CodeThorn;
@@ -494,12 +495,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
       resultList.push_front(res);
       return resultList;
     } else {
-      // use of function addresses as values. Not implemented yet.
-      SAWYER_MESG(logger[WARN])<<"Imprecision: function pointer value: evaluating SgFunctionRefExp as top: "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
-      list<SingleEvalResultConstInt> resultList;
-      res.result=AbstractValue::createTop();
-      resultList.push_front(res);
-      return resultList;
+      // use of function addresses as values. Being implemented now.
+      //SAWYER_MESG(logger[WARN])<<"Imprecision: function pointer value: evaluating SgFunctionRefExp as top: "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
+      return evalFunctionRefExp(isSgFunctionRefExp(node),estate,mode);
     }
   }
   case V_SgThisExp: {
@@ -1177,15 +1175,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node
   SingleEvalResultConstInt res;
   res.estate=estate;
   AbstractValue operand=operandResult.result;
-  SAWYER_MESG(logger[TRACE])<<"AddressOfOp: "<<node->unparseToString()<<" - operand: "<<operand.toString(_variableIdMapping)<<endl;
+  SAWYER_MESG(logger[INFO])<<"AddressOfOp: "<<node->unparseToString()<<" - operand: "<<operand.toString(_variableIdMapping)<<endl;
   if(operand.isTop()||operand.isBot()) {
     res.result=operand;
   } else {
-#if 0
-    res.result=AbstractValue(operand.getVariableId());
-#else
     res.result=operand;
-#endif
   }
   return listify(res);
 }
@@ -1451,7 +1445,23 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
   // unreachable
 }
 
+std::list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionRefExp(SgFunctionRefExp* node, EState estate, EvalMode mode) {
+  //cout<<"DEBUG: evalFunctionRefExp:"<<node->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
+  if(mode==ExprAnalyzer::MODE_EMPTY_STATE) {
+    SingleEvalResultConstInt res;
+    res.init(estate,AbstractValue(CodeThorn::Top()));
+    return listify(res);
+  }  
+  // create address of function
+  SingleEvalResultConstInt res;
+  ROSE_ASSERT(_analyzer);
+  Label funLab=_analyzer->getFunctionEntryLabel(node);
+  // label of corresponding entry label of function of node; if function is external, then label is an invalid label.
+  res.init(estate,AbstractValue::createAddressOfFunction(funLab));
+  return listify(res);
+}
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode) {
+  //  cout<<"DEBUG: evalRValueVarRefExp:"<<node->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
   if(mode==ExprAnalyzer::MODE_EMPTY_STATE) {
     SingleEvalResultConstInt res;
     res.init(estate,AbstractValue(CodeThorn::Top()));
@@ -1460,7 +1470,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
   SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<"MODE:"<<mode<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(CodeThorn::Bot()));
-
 
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
@@ -1475,6 +1484,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
     //cout<<"DEBUG1 STRUCT MEMBER: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
     return listify(res);
   }
+  // TODO: as rvalue it represents the entire class
   if(_variableIdMapping->hasClassType(varId)) {
     res.result=AbstractValue::createAddressOfVariable(varId);
     return listify(res);
@@ -1483,7 +1493,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
     if(_variableIdMapping->hasArrayType(varId)) {
       res.result=AbstractValue::createAddressOfArray(varId);
     } else {
-      res.result=readFromMemoryLocation(estate.label(),pstate,varId);
+      if(_variableIdMapping->hasReferenceType(varId)) {
+        res.result=readFromReferenceMemoryLocation(estate.label(),pstate,varId);
+        logger[INFO]<<"reading from memory reference location: value: "<<res.result.toString()<<endl;
+      } else {
+        res.result=readFromMemoryLocation(estate.label(),pstate,varId);
+      }
     }
     return listify(res);
   } else {
@@ -2032,6 +2047,16 @@ void ExprAnalyzer::writeToMemoryLocation(Label lab, PState* pstate, AbstractValu
     }
   }
   pstate->writeToMemoryLocation(memLoc,newValue);
+}
+
+AbstractValue ExprAnalyzer::readFromReferenceMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc) {
+  AbstractValue referedMemLoc=readFromMemoryLocation(lab,pstate,memLoc);
+  return readFromMemoryLocation(lab,pstate,referedMemLoc);
+}
+
+void ExprAnalyzer::writeToReferenceMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
+  AbstractValue referedMemLoc=readFromMemoryLocation(lab,pstate,memLoc);
+  writeToMemoryLocation(lab,pstate,referedMemLoc,newValue);
 }
 
 void ExprAnalyzer::initializeMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
