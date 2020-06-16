@@ -51,7 +51,7 @@ int main(int argc, char * argv[])
 
 //  visitorTraversal myvisitor;
 //  myvisitor.traverseInputFiles(project,preorder);
-#if 1  // used to trigger issue outliner-32
+#if 0  // used to trigger issue outliner-32
   SgGlobal * global =  SageInterface::getFirstGlobalScope(project);
   SgSourceFile* originalSourceFile = TransformationSupport::getSourceFile(global); 
   // check this first, before doing any ast post processing
