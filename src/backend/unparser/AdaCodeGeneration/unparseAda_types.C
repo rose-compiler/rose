@@ -32,16 +32,74 @@ namespace
     
     void handle(SgNode& n)    { SG_UNEXPECTED_NODE(n); }
     
+    //
+    // Ada constraints
+
+    void handle(SgAdaRangeConstraint& n)
+    {
+      prn(" range ");
+      
+      SgRangeExp& range = SG_DEREF(n.get_range());
+      
+      expr(range.get_start());
+      prn(" .. ");
+      expr(range.get_end());
+    }
+    
+    //
+    // Fundamental types
+    
     void handle(SgTypeBool&)  { prn(" Boolean"); }
     void handle(SgTypeInt&)   { prn(" Integer"); }
     void handle(SgTypeChar&)  { prn(" Character"); }
     void handle(SgTypeFloat&) { prn(" Float"); }
+    void handle(SgTypeVoid&)  { prn(" -- void\n"); }
     
-    void handle(SgTypedefType& n) 
+    //
+    // Ada types
+
+    void handle(SgAdaSubtype& n) 
+    { 
+      type(n.get_base_type());
+      support(n.get_constraint());
+    }
+    
+    void handle(SgModifierType& n) 
+    {
+      if (n.get_typeModifier().get_constVolatileModifier().isConst())
+        prn("constant ");
+      
+      type(n.get_base_type());
+    }
+    
+    void handle(SgNamedType& n) 
     { 
       prn(" ");
       prn(n.get_name()); 
     }
+    
+    void handle(SgAdaTaskType& n) 
+    { 
+      // \todo fix in AST and override get_name and get_declaration in AdaTaskType
+      prn(" ");
+      prn(SG_DEREF(n.get_decl()).get_name()); 
+    }
+    
+    void type(SgType* ty)
+    {
+      sg::dispatch(*this, ty);
+    }
+    
+    void support(SgNode* n)
+    {
+      sg::dispatch(*this, n);
+    }
+    
+    void expr(SgExpression* e)
+    {
+      unparser.unparseExpression(e, info);
+    }
+    
     
     Unparse_Ada&    unparser;
     SgUnparse_Info& info;

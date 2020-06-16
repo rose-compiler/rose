@@ -86,7 +86,7 @@ namespace
       operator_symbols[V_SgBitOrOp] =          "or";
       operator_symbols[V_SgBitXorOp] =         "xor";
       operator_symbols[V_SgEqualityOp] =       "=";
-      operator_symbols[V_SgNotEqualOp] =       "!=";
+      operator_symbols[V_SgNotEqualOp] =       "/=";
       operator_symbols[V_SgLessThanOp] =       "<";
       operator_symbols[V_SgLessOrEqualOp] =    "<=";
       operator_symbols[V_SgGreaterThanOp] =    ">";
@@ -101,11 +101,12 @@ namespace
       operator_symbols[V_SgModOp] =            "mod";
       operator_symbols[V_SgPowerOp] =          "**";
       operator_symbols[V_SgNotOp] =            "not";
+      operator_symbols[V_SgAbsOp] =            "abs";
+      operator_symbols[V_SgRemOp] =            "rem";
+      // not an official operator
+      operator_symbols[V_SgDotExp] =           ".";
       // not really in Ada (when clause separator)   
       operator_symbols[V_SgCommaOpExp] =       "|";
-      // not yet in ROSE
-      //~ operator_symbols[V_SgAbsOp] =            "abs";
-      //~ operator_symbols[V_SgRemOp] =            "rem";
     }
 
     operator_symbols_map::const_iterator pos = operator_symbols.find(n.variantT());
@@ -159,6 +160,27 @@ namespace
       prn(")");
     }
     
+    void handle(SgCastExp& n)
+    {
+      type(n.get_type());
+      prn("(");
+      expr(n.get_operand());
+      prn(")");
+    }
+    
+    void handle(SgThrowOp& n)
+    {
+      prn("raise ");
+      expr(n.get_operand());
+    }
+    
+    void handle(SgActualArgumentExpression& n)
+    {
+      prn(n.get_argument_name());
+      prn(" => ");
+      expr(n.get_expression());
+    }
+    
     void handle(SgVarRefExp& n)
     {
       prn(nameOf(n));
@@ -181,6 +203,11 @@ namespace
       
       // or just handle everything
       //~ sg::dispatch(*this, exp);
+    }
+    
+    void handle(SgAssignInitializer& n)
+    {
+      expr(n.get_operand());  
     }
     
     void expr(SgExprListExp* exp)
@@ -206,6 +233,11 @@ namespace
     void operator()(SgExpression* exp)
     {
       expr(exp);
+    }
+    
+    void type(SgType* t)
+    {
+      unparser.unparseType(t, info);
     }
     
     Unparse_Ada&    unparser;
@@ -236,7 +268,12 @@ bool Unparse_Ada::requiresParentheses(SgExpression* expr, SgUnparse_Info& info)
 {
   ASSERT_not_null(expr);
   
-  if (!isTransformed(sg::ancestor<SgStatement>(expr)))
+  SgStatement* stmt = sg::ancestor<SgStatement>(expr);
+  
+  // inside a type, etc. ?
+  if (!stmt) return false; 
+  
+  if (!isTransformed(stmt))
     return expr->get_need_paren();
   
   return base::requiresParentheses(expr, info);
