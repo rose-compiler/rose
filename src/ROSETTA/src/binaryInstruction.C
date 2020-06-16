@@ -233,7 +233,7 @@ void Grammar::setUpBinaryInstructions() {
         // Overrides are documented in the base class
         virtual std::string description() const $ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
 #endif // SgAsmArm64Instruction_OTHERS
@@ -422,11 +422,11 @@ void Grammar::setUpBinaryInstructions() {
         virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
         virtual bool getBranchTarget(rose_addr_t *target/*out*/) $ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
-                                                    bool* complete,
-                                                    const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
-                                                    Rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
+                                                               bool &complete,
+                                                               const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
+                                                               Rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
 #endif // SgAsmX86Instruction_OTHERS
@@ -497,7 +497,7 @@ void Grammar::setUpBinaryInstructions() {
         // Overrides are documented in the base class
         virtual std::string description() const $ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
@@ -567,7 +567,7 @@ void Grammar::setUpBinaryInstructions() {
                                         rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
@@ -631,11 +631,11 @@ void Grammar::setUpBinaryInstructions() {
         virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
         virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
-                                                    bool* complete,
-                                                    const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
-                                                    Rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
+                                                               bool &complete,
+                                                               const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
+                                                               Rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
 #endif // SgAsmM68kInstruction_OTHERS
@@ -1041,7 +1041,7 @@ void Grammar::setUpBinaryInstructions() {
          *  information it can glean from this single instruction.  If the returned set of virtual instructions is fully known
          *  then the @p complete argument will be set to true, otherwise false.  The base class implementation always
          *  aborts()--it must be defined in an architecture-specific subclass (pure virtual is not possible due to ROSETTA). */
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete); /*subclasses must redefine*/
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete); /*subclasses must redefine*/
 
         /** Control flow successors for a basic block.
          *
@@ -1051,10 +1051,10 @@ void Grammar::setUpBinaryInstructions() {
          *  argument return value indicates whether the returned set is known to be complete (aside from interrupts, faults,
          *  etc).  The base class implementation just calls the single-instruction version, so architecture-specific subclasses
          *  might want to override this to do something more sophisticated. */
-        virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*> &basicBlock,
-                                                    bool *complete,
-                                                    const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
-                                                    Rose::BinaryAnalysis::MemoryMap::Ptr());
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*> &basicBlock,
+                                                               bool &complete,
+                                                               const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
+                                                               Rose::BinaryAnalysis::MemoryMap::Ptr());
 
         /** Returns the size of an instruction in bytes.
          *
@@ -12840,7 +12840,7 @@ void Grammar::setUpBinaryInstructions() {
     AsmNEEntryTable.setDataPrototype("SgSizeTList", "bundle_sizes", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmNEEntryTable.setDataPrototype("SgAsmNEEntryPointPtrList", "entries", "",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -12896,7 +12896,7 @@ void Grammar::setUpBinaryInstructions() {
     NEW_TERMINAL_MACRO(AsmNERelocTable, "AsmNERelocTable", "AsmNERelocTableTag");
     AsmNERelocTable.setFunctionPrototype("HEADER_NE_RELOC_TABLE", "../Grammar/BinaryInstruction.code");
     AsmNERelocTable.setDataPrototype("SgAsmNERelocEntryPtrList", "entries", "",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -13082,7 +13082,7 @@ void Grammar::setUpBinaryInstructions() {
     AsmLEEntryTable.setDataPrototype("SgSizeTList", "bundle_sizes", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmLEEntryTable.setDataPrototype("SgAsmLEEntryPointPtrList", "entries", "",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -13090,7 +13090,7 @@ void Grammar::setUpBinaryInstructions() {
     AsmLEEntryPoint.setFunctionPrototype("HEADER_LE_ENTRY_POINT", "../Grammar/BinaryInstruction.code");
     AsmLEEntryPoint.setFunctionSource("SOURCE_LE_ENTRY_POINT", "../Grammar/BinaryInstruction.code");
     AsmLEEntryPoint.setDataPrototype("SgAsmLEEntryPointPtrList", "entries", "",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     AsmLEEntryPoint.setDataPrototype("unsigned", "flags", "= 0",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmLEEntryPoint.setDataPrototype("unsigned", "objnum", "= 0",
@@ -13138,7 +13138,7 @@ void Grammar::setUpBinaryInstructions() {
     NEW_TERMINAL_MACRO(AsmLERelocTable, "AsmLERelocTable", "AsmLERelocTableTag");
     AsmLERelocTable.setFunctionPrototype("HEADER_LE_RELOC_TABLE", "../Grammar/BinaryInstruction.code");
     AsmLERelocTable.setDataPrototype("SgAsmLERelocEntryPtrList", "entries", "",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -13158,7 +13158,7 @@ void Grammar::setUpBinaryInstructions() {
     NEW_TERMINAL_MACRO(AsmLEPageTable, "AsmLEPageTable", "AsmLEPageTableTag");
     AsmLEPageTable.setFunctionPrototype("HEADER_LE_PAGE_TABLE", "../Grammar/BinaryInstruction.code");
     AsmLEPageTable.setDataPrototype("SgAsmLEPageTableEntryPtrList", "entries", "",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 

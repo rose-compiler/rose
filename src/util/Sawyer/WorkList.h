@@ -42,7 +42,12 @@ public:
 
     /** Remove and return the next item of work.
      *
-     *  This is only called when @ref isEmpty returns true. */
+     *  This is only called when @ref isEmpty returns true.
+     *
+     *  This function is allowed to block to wait for other work to complete, which can be useful when the work list has more work
+     *  to do but all that work depends on the completion of work that's already underway.  Determining when the other work
+     *  completes can be done by having the @ref processWorkList functor signal a condition variable on which this function is
+     *  waiting. */
     Item next() {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
         ASSERT_forbid(items_.empty());

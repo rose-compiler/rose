@@ -3299,14 +3299,6 @@ HEADER_NAMESPACE_DECLARATION_STATEMENT_START
 
 HEADER_NAMESPACE_DECLARATION_STATEMENT_END
 
-HEADER_ADA_TASK_SPEC_STMT_START
-// PP what do we need here? 
-HEADER_ADA_TASK_SPEC_STMT_END
-
-HEADER_ADA_TASK_BODY_STMT_START
-// PP what do we need here? 
-HEADER_ADA_TASK_BODY_STMT_END
-
 HEADER_NAMESPACE_DEFINITION_STATEMENT_START
 
        // DQ (9/8/2004): Added to support qualified name generation
@@ -3445,15 +3437,16 @@ SgName get_mangled_name() const ROSE_OVERRIDE;
 HEADER_ADA_PACKAGE_SPEC_DECL_STATEMENT_END
 
 HEADER_ADA_PACKAGE_BODY_DECL_STATEMENT_START
-/* TODO: SgAdaPackageBodyDecl */
+SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE; 
+SgName get_mangled_name() const ROSE_OVERRIDE; 
 HEADER_ADA_PACKAGE_BODY_DECL_STATEMENT_END
 
 HEADER_ADA_PACKAGE_SPEC_STATEMENT_START
-/* TODO: SgAdaPackageSpec */
+SgName get_mangled_name() const ROSE_OVERRIDE;
 HEADER_ADA_PACKAGE_SPEC_STATEMENT_END
 
 HEADER_ADA_PACKAGE_BODY_STATEMENT_START
-/* TODO: SgAdaPackageBody */
+SgName get_mangled_name() const ROSE_OVERRIDE;
 HEADER_ADA_PACKAGE_BODY_STATEMENT_END
 
 
@@ -3468,16 +3461,18 @@ SgName get_mangled_name() const ROSE_OVERRIDE;
 HEADER_ADA_TASK_TYPE_DECL_STATEMENT_END
 
 HEADER_ADA_TASK_BODY_DECL_STATEMENT_START
-/* TODO: SgAdaTaskBodyDecl */
+SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE; 
+SgName get_mangled_name() const ROSE_OVERRIDE; 
 HEADER_ADA_TASK_BODY_DECL_STATEMENT_END
 
 HEADER_ADA_TASK_SPEC_STATEMENT_START
-/* TODO: SgAdaTaskSpec */
+SgName get_mangled_name() const ROSE_OVERRIDE;
 HEADER_ADA_TASK_SPEC_STATEMENT_END
 
 HEADER_ADA_TASK_BODY_STATEMENT_START
-/* TODO: SgAdaTaskBody */
+SgName get_mangled_name() const ROSE_OVERRIDE;
 HEADER_ADA_TASK_BODY_STATEMENT_END
+
 
 HEADER_PROGRAM_HEADER_STATEMENT_START
   /* HEADER_LIST_DECLARATIONS */
@@ -4536,6 +4531,11 @@ SgStatement::get_scope(void) const
                    ROSE_ASSERT( returnScope != NULL );
                    break;
                }
+               
+               if (SgAdaAcceptStmt* adaAccept = isSgAdaAcceptStmt(stmt->get_parent()))
+               {
+                 return adaAccept->get_parameterScope();
+               } 
 
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt->get_parent());
                if (functionDeclaration != NULL)
@@ -6298,6 +6298,7 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgCAFWithTeamStatement: //FMZ (2/18/2009)
       // PP (05/11/20) - Ada support
           case V_SgAdaPackageBody: 
+          case V_SgAdaAcceptStmt: 
           case V_SgAdaTaskBody: 
                returnValue = false;
                break;
@@ -6804,6 +6805,36 @@ SgScopeStatement::getStatementList ()
                break;
              }
 
+          case V_SgAdaAcceptStmt:
+             {
+               ROSE_ASSERT(!"SgAdaAcceptStmt may not have a statement list! (use generateStatementList() to form copy of merges lists)");
+              /*
+               SgAdaAcceptStmt* adanode = isSgAdaAcceptStmt(currentScope);
+               ROSE_ASSERT(adanode && adanode->get_body());
+             
+               currentStatementList = &adanode->get_body()->getStatementList();
+              */             
+               break;
+             }
+
+          case V_SgAdaPackageBody:
+             {
+               SgAdaPackageBody* adabody = isSgAdaPackageBody(currentScope);
+               ROSE_ASSERT(adabody);
+             
+               currentStatementList = &(adabody->get_statements());
+               break;
+             }
+             
+          case V_SgAdaTaskBody:
+             {
+               SgAdaTaskBody* adabody = isSgAdaTaskBody(currentScope);
+               ROSE_ASSERT(adabody);
+             
+               currentStatementList = &(adabody->get_statements());
+               break;
+             }
+
        // DQ (1/30/2007): Added this case!
           case V_SgTemplateInstantiationDefn:
              {
@@ -6890,15 +6921,15 @@ SgScopeStatement::getStatementList ()
              }
 
 	     //SK(08/06/2015): Adding support for MatlabForStatement:
-	case V_SgMatlabForStatement:
-	    {
-	      SgMatlabForStatement *matlabForStatement = isSgMatlabForStatement(currentScope);
-	      ROSE_ASSERT(matlabForStatement != NULL);
-	      ROSE_ASSERT (matlabForStatement->get_body() != NULL);
-
-	      currentStatementList = &(matlabForStatement->get_body()->getStatementList());
-	      break;
-	    }
+          case V_SgMatlabForStatement:
+              {
+                SgMatlabForStatement *matlabForStatement = isSgMatlabForStatement(currentScope);
+                ROSE_ASSERT(matlabForStatement != NULL);
+                ROSE_ASSERT (matlabForStatement->get_body() != NULL);
+        
+                currentStatementList = &(matlabForStatement->get_body()->getStatementList());
+                break;
+              }
 
           default:
                printf ("ERROR: default reached in switch (getStatementList()) currentScope = %s \n",currentScope->sage_class_name());
@@ -7025,6 +7056,35 @@ SgScopeStatement::getStatementList () const
                ROSE_ASSERT (functionScope->get_body() != NULL);
             // currentStatementList = &(functionScope->get_body()->getStatementList());
                return functionScope->get_body()->getStatementList();
+               break;
+             }
+          
+          case V_SgAdaAcceptStmt:
+             {
+               const SgAdaAcceptStmt* adanode = isSgAdaAcceptStmt(currentScope);
+               ROSE_ASSERT(adanode && adanode->get_body());
+               
+               const SgBasicBlock*    block = isSgBasicBlock(adanode->get_body()); 
+               
+               return block ? block->getStatementList() : emptyStatementList;
+               break;
+             }
+             
+          case V_SgAdaPackageBody:
+             {
+               const SgAdaPackageBody* adabody = isSgAdaPackageBody(currentScope);
+               ROSE_ASSERT(adabody);
+             
+               return adabody->get_statements();
+               break;
+             }
+             
+          case V_SgAdaTaskBody:
+             {
+               const SgAdaTaskBody* adabody = isSgAdaTaskBody(currentScope);
+               ROSE_ASSERT(adabody);
+             
+               return adabody->get_statements();
                break;
              }
 
@@ -20008,7 +20068,7 @@ SgAdaPackageSpecDecl::get_symbol_from_symbol_table() const
 SgName 
 SgAdaPackageSpecDecl::get_mangled_name() const
 {
-  std::string name = "ada$";
+  std::string name = "ada$pkg$";
   
   name.append(get_name());
   return name;
@@ -20018,22 +20078,51 @@ SOURCE_ADA_PACKAGE_SPEC_DECL_STATEMENT_END
 SOURCE_ADA_PACKAGE_BODY_DECL_STATEMENT_START
 // PP implement header declarations (currently empty)
 void SgAdaPackageBodyDecl::post_construction_initialization() {}
+
+SgSymbol* 
+SgAdaPackageBodyDecl::get_symbol_from_symbol_table() const 
+{
+  SgScopeStatement* scope = get_scope();
+  
+  ROSE_ASSERT(scope);
+  return scope->find_symbol_from_declaration(this); 
+}
+
+SgName 
+SgAdaPackageBodyDecl::get_mangled_name() const
+{
+  std::string name = "ada$pkg$";
+  
+  name.append(get_name());
+  return name;
+}
 SOURCE_ADA_PACKAGE_BODY_DECL_STATEMENT_END
 
 SOURCE_ADA_PACKAGE_SPEC_STATEMENT_START
-// PP implement header declarations (currently empty)
 void SgAdaPackageSpec::post_construction_initialization() {}
+
+SgName 
+SgAdaPackageSpec::get_mangled_name() const
+{
+  return "ada$pkg$spec";
+}
+
 SOURCE_ADA_PACKAGE_SPEC_STATEMENT_END
 
 SOURCE_ADA_PACKAGE_BODY_STATEMENT_START
-// PP implement header declarations (currently empty)
 void SgAdaPackageBody::post_construction_initialization() {}
+
+SgName 
+SgAdaPackageBody::get_mangled_name() const
+{
+  return "ada$pkg$body";
+}
+
 SOURCE_ADA_PACKAGE_BODY_STATEMENT_END
 
 // - tasks
 
 SOURCE_ADA_TASK_SPEC_DECL_STATEMENT_START
-// PP implement header declarations (currently empty)
 void SgAdaTaskSpecDecl::post_construction_initialization() {}
 
 SgSymbol* 
@@ -20048,7 +20137,7 @@ SgAdaTaskSpecDecl::get_symbol_from_symbol_table() const
 SgName 
 SgAdaTaskSpecDecl::get_mangled_name() const
 {
-  std::string name = "ada$";
+  std::string name = "ada$tsk$";
   
   name.append(get_name());
   return name;
@@ -20072,7 +20161,7 @@ SgAdaTaskTypeDecl::get_symbol_from_symbol_table() const
 SgName 
 SgAdaTaskTypeDecl::get_mangled_name() const
 {
-  std::string name = "ada$";
+  std::string name = "ada$tsk$";
   
   name.append(get_name());
   return name;
@@ -20081,17 +20170,45 @@ SgAdaTaskTypeDecl::get_mangled_name() const
 SOURCE_ADA_TASK_TYPE_DECL_STATEMENT_END
 
 SOURCE_ADA_TASK_BODY_DECL_STATEMENT_START
-// PP implement header declarations (currently empty)
 void SgAdaTaskBodyDecl::post_construction_initialization() {}
+
+SgSymbol* 
+SgAdaTaskBodyDecl::get_symbol_from_symbol_table() const 
+{
+  SgScopeStatement* scope = get_scope();
+  
+  ROSE_ASSERT(scope);
+  return scope->find_symbol_from_declaration(this); 
+}
+
+SgName 
+SgAdaTaskBodyDecl::get_mangled_name() const
+{
+  std::string name = "ada$tsk$";
+  
+  name.append(get_name());
+  return name;
+}
 SOURCE_ADA_TASK_BODY_DECL_STATEMENT_END
 
 SOURCE_ADA_TASK_SPEC_STATEMENT_START
-// PP implement header declarations (currently empty)
 void SgAdaTaskSpec::post_construction_initialization() {}
+
+SgName 
+SgAdaTaskSpec::get_mangled_name() const
+{
+  return "ada$tsk$spec";
+}
+
 SOURCE_ADA_TASK_SPEC_STATEMENT_END
 
 SOURCE_ADA_TASK_BODY_STATEMENT_START
-// PP implement header declarations (currently empty)
 void SgAdaTaskBody::post_construction_initialization() {}
+
+SgName 
+SgAdaTaskBody::get_mangled_name() const
+{
+  return "ada$tsk$body";
+}
 SOURCE_ADA_TASK_BODY_STATEMENT_END
 

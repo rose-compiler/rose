@@ -7916,6 +7916,7 @@ SgSymbolTable::get_name( const SgNode* node) const
           case V_SgProgramHeaderStatement:
           case V_SgProcedureHeaderStatement:
           case V_SgMemberFunctionDeclaration:
+          case V_SgAdaEntryDecl:
              {
                const SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
             // mprintf ("functionDeclaration                                    = %p \n",functionDeclaration);
@@ -8068,6 +8069,13 @@ SgSymbolTable::get_name( const SgNode* node) const
                break;
              }
 
+          case V_SgAdaPackageBodyDecl:
+             {
+               const SgAdaPackageBodyDecl* dcl = isSgAdaPackageBodyDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
           case V_SgAdaTaskSpecDecl:
              {
                const SgAdaTaskSpecDecl* dcl = isSgAdaTaskSpecDecl(node);
@@ -8078,6 +8086,13 @@ SgSymbolTable::get_name( const SgNode* node) const
           case V_SgAdaTaskTypeDecl:
              {
                const SgAdaTaskTypeDecl* dcl = isSgAdaTaskTypeDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
+          case V_SgAdaTaskBodyDecl:
+             {
+               const SgAdaTaskBodyDecl* dcl = isSgAdaTaskBodyDecl(node);
                name = dcl->get_name();
                break;
              }
