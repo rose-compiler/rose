@@ -216,6 +216,15 @@ void PState::writeValueToAllMemoryLocations(CodeThorn::AbstractValue val) {
   }
 }
 
+void PState::reserveMemoryLocation(AbstractValue varId) {
+  writeUndefToMemoryLocation(varId);
+}
+
+void PState::writeUndefToMemoryLocation(AbstractValue varId) {
+  AbstractValue undefValue=AbstractValue::createUndefined();
+  writeToMemoryLocation(varId, undefValue);
+}
+
 void PState::writeTopToMemoryLocation(AbstractValue varId) {
   CodeThorn::AbstractValue val=CodeThorn::Top();
   writeToMemoryLocation(varId, val);
@@ -341,7 +350,11 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
     // writing bot to memory (bot->top conversion)
     abstractValue=AbstractValue(CodeThorn::Top());
   }
-  operator[](abstractMemLoc)=abstractValue;
+  if(abstractMemLoc.isTop()) {
+    //combineValueAtAllMemoryLocations(abstractValue); // BUG: leads to infinite loop in DOM029
+  } else {
+    operator[](abstractMemLoc)=abstractValue;
+  }
 }
 
 void PState::combineAtMemoryLocation(AbstractValue abstractMemLoc,

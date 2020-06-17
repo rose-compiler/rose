@@ -161,7 +161,8 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	threadProcessor.c \
 	upperCase.c \
 	variables.c
-
+# frontend: EDG to SAGE connection bug
+#	while-task.c
 # removed experimental test cases	
 removed_Experimental_TEST = \
 	axpy_ompacc_mpi.c \

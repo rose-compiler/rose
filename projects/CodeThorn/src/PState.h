@@ -62,6 +62,8 @@ namespace CodeThorn {
     void writeTopToAllMemoryLocations();
     void combineValueAtAllMemoryLocations(CodeThorn::AbstractValue val);
     void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);  
+    void reserveMemoryLocation(AbstractValue varId);
+    void writeUndefToMemoryLocation(AbstractValue varId);
     void writeTopToMemoryLocation(AbstractValue varId);
     AbstractValue readFromMemoryLocation(AbstractValue abstractMemLoc) const;
     void combineAtMemoryLocation(AbstractValue abstractMemLoc,

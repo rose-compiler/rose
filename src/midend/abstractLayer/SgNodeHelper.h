@@ -465,17 +465,23 @@ namespace SgNodeHelper {
   */
   std::string getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl);
 
-  // replace in string 'str' each string 'from' with string 'to'.
+  //! replace in string 'str' each string 'from' with string 'to'.
   void replaceString(std::string& str, const std::string& from, const std::string& to);
 
-  // checks whether prefix 'prefix' is a prefix in string 's'.
+  //! checks whether prefix 'prefix' is a prefix in string 's'.
   bool isPrefix(const std::string& prefix, const std::string& s);
 
-  // checks whether 'elem' is the last child (in traversal order) of node 'parent'.
+  //! checks whether 'elem' is the last child (in traversal order) of node 'parent'.
   bool isLastChildOf(SgNode* elem, SgNode* parent);
 
+  /*! Returns for a given class/struct/union a list with the variable declarations of the member variables.
+    Note this is a filtered list returned by the SgType::returnDataMemberPointers function which also returns
+    pointers to methods
+   */
+  std::list<SgVariableDeclaration*> memberVariableDeclarationsList(SgClassType* sgType);
+  
 #if __cplusplus > 199711L
-  // Checks if an OpenMP construct is marked with a nowait clause
+  //! Checks if an OpenMP construct is marked with a nowait clause
   bool hasOmpNoWait(SgOmpClauseBodyStatement *ompNode);
 
   typedef std::vector<SgOmpSectionStatement *> OmpSectionList;

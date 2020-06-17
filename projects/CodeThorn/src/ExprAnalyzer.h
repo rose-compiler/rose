@@ -145,8 +145,17 @@ namespace CodeThorn {
     std::string getInterpreterModeFileName();
     void setInterpreterModeFileName(std::string);
 
+    // reserves memory location and sets as value 'undef'
+    void reserveMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc);
+    // reserves and initializes memory location with newValue
+    void initializeMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
     AbstractValue readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
     void writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
+
+    AbstractValue readFromReferenceMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
+    void writeToReferenceMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
+    
+    // memory must already be reserved (hence, this function is redundant if reserves is used before)
     void writeUndefToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc);
     void writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc);
     //! This function turn a single result into a one-elment list with
@@ -311,7 +320,7 @@ namespace CodeThorn {
 
     list<SingleEvalResultConstInt> evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate, EvalMode mode);
-    
+    list<SingleEvalResultConstInt> evalFunctionRefExp(SgFunctionRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     // supported system functions
     list<SingleEvalResultConstInt> evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate);
     list<SingleEvalResultConstInt> evalFunctionCallFree(SgFunctionCallExp* funCall, EState estate);

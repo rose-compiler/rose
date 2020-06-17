@@ -15,6 +15,7 @@
 #include <cstdint>
 #include "VariableIdMappingExtended.h"
 #include "TypeSizeMapping.h"
+#include "Labeler.h"
 
 using std::string;
 using std::istream;
@@ -37,7 +38,7 @@ class AbstractValue {
  public:
   friend bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
   friend bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
-  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, TOP, UNDEFINED };
+  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, FUN_PTR, TOP, UNDEFINED };
   AbstractValue();
   AbstractValue(bool val);
   // type conversion
@@ -45,6 +46,7 @@ class AbstractValue {
   // type conversion
   AbstractValue(CodeThorn::Bot e);
   // type conversion
+  AbstractValue(Label lab); // for modelling function addresses
   AbstractValue(signed char x);
   AbstractValue(unsigned char x);
   AbstractValue(short int x);
@@ -57,10 +59,12 @@ class AbstractValue {
   AbstractValue(unsigned long long int x);
   AbstractValue(float x);
   AbstractValue(double x);
-  AbstractValue(long double x);
+  //using in a union causes gcc warning because of backward incompatibility with gcc 4.4 (in 7.4)
+  // -Wno-psabi allows to turn this off
+  //AbstractValue(long double x);
   AbstractValue(CodeThorn::VariableId varId); // allows implicit type conversion
   void initInteger(CodeThorn::BuiltInType btype, long long int ival);
-  void initFloat(CodeThorn::BuiltInType btype, long double fval);
+  void initFloat(CodeThorn::BuiltInType btype, double fval);
   static AbstractValue createIntegerValue(CodeThorn::BuiltInType btype, long long int ival);
   CodeThorn::TypeSize calculateTypeSize(CodeThorn::BuiltInType btype);
   // currently this maps to isTop() - in preparation to handle
@@ -73,9 +77,11 @@ class AbstractValue {
   bool isBot() const;
   // determines whether the value is known and constant. Otherwise it can be bot or top.
   bool isConstInt() const;
+  bool isConstFloat() const;
   // currently identical to isPtr() but already used where one unique value is required
   bool isConstPtr() const;
   bool isPtr() const;
+  bool isFunctionPtr() const;
   bool isRef() const;
   bool isNullPtr() const;
   AbstractValue operatorNot();
@@ -106,6 +112,7 @@ class AbstractValue {
   static AbstractValue createAddressOfVariable(CodeThorn::VariableId varId);
   static AbstractValue createAddressOfArray(CodeThorn::VariableId arrayVariableId);
   static AbstractValue createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, AbstractValue Index);
+  static AbstractValue createAddressOfFunction(CodeThorn::Label lab);
   static AbstractValue createNullPtr();
   static AbstractValue createUndefined(); // used to model values of uninitialized variables/memory locations
   static AbstractValue createTop();
@@ -117,6 +124,8 @@ class AbstractValue {
   bool operator==(const AbstractValue other) const;
   bool operator!=(const AbstractValue other) const;
   bool operator<(AbstractValue other) const;
+
+  bool isReferenceVariableAddress();
 
   string toString() const;
   string toString(CodeThorn::VariableIdMapping* vim) const;
@@ -130,6 +139,10 @@ class AbstractValue {
 
   ValueType getValueType() const;
   int getIntValue() const;
+  long int getLongIntValue() const;
+  float getFloatValue() const;
+  double getDoubleValue() const;
+  //long double getLongDoubleValue() const;
   std::string getFloatValueString() const;
 
   // returns index value if it is an integer
@@ -139,7 +152,8 @@ class AbstractValue {
   CodeThorn::VariableId getVariableId() const;
   // sets value according to type size (truncates if necessary)
   void setValue(long long int ival);
-  void setValue(long double fval);
+  void setValue(double fval);
+  Label getLabel() const;
   long hash() const;
   std::string valueTypeToString() const;
 
@@ -154,10 +168,11 @@ class AbstractValue {
   AbstractValue topOrError(std::string) const;
   ValueType valueType;
   CodeThorn::VariableId variableId;
-  // union required
-  long long int intValue=0;
-  long double floatValue=0.0;
-
+  union {
+    long long int intValue=0;
+    double floatValue;
+  };
+  Label label;
   CodeThorn::TypeSize typeSize=0;
   static CodeThorn::VariableIdMappingExtended* _variableIdMapping;
 };

@@ -14,6 +14,7 @@
 #include <sstream>
 #include <list>
 #include <vector>
+#include <utility>
 
 #include <omp.h>
 
@@ -158,6 +159,7 @@ namespace CodeThorn {
     FunctionIdMapping* getFunctionIdMapping();
     FunctionCallMapping* getFunctionCallMapping();
     FunctionCallMapping2* getFunctionCallMapping2();
+    Label getFunctionEntryLabel(SgFunctionRefExp* funRefExp);
     CTIOLabeler* getLabeler() const;
     Flow* getFlow();
     CodeThorn::PStateSet* getPStateSet();
@@ -298,8 +300,12 @@ namespace CodeThorn {
     void setLtlOptions(LTLOptions ltlOptions);
     LTLOptions& getLtlOptionsRef();
   protected:
-    // this function is protected to ensure it is not used from outside. It is supposed to be used
-    // only for internal timing managing the max-time option resource.
+    /* these functions are used for the internal timer for resource management
+       this function is protected to ensure it is not used from outside. It is supposed to be used
+       only for internal timing managing the max-time option resource.
+    */
+    void startAnalysisTimer();
+    void stopAnalysisTimer();
     long analysisRunTimeInSeconds();
 
     static Sawyer::Message::Facility logger;
@@ -362,6 +368,11 @@ namespace CodeThorn {
     std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
+
+    // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
+    typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
+    typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
+    MemoryUpdateList  evalAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
 
     // uses ExprAnalyzer to compute the result. Limits the number of results to one result only. Does not permit state splitting.
     // requires normalized AST

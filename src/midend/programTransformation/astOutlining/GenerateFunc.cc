@@ -706,25 +706,54 @@ createPackExpr (SgInitializedName* local_unpack_def)
   if (!Outliner::temp_variable)
   {
     if (is_C_language()) //skip for pointer dereferencing used in C language
+    {
+      if (Outliner::enable_debug)
+      {
+        cout<<"createPackExpr() in " << __FILE__ << " skiping creating restoring expresion because of !temp_variable && is_C " <<endl;
+      }
       return NULL;
+    }
   }
   // reference types do not need copy the value back in any cases
   if (isSgReferenceType (local_unpack_def->get_type ()))  
+  {
+      if (Outliner::enable_debug)
+      {
+        cout<<"createPackExpr() in " << __FILE__ << " skiping creating restoring expresion because of reference type of C++ " <<endl;
+      }
     return NULL;
+  }
   
   // Liao 10/26/2009, Most of time, using data structure of parameters don't need copy 
   // a local variable's value back to its original parameter
   if (Outliner::useStructureWrapper)
   {
     if (is_Cxx_language())
+    {
+      if (Outliner::enable_debug)
+      {
+        cout<<"createPackExpr() in " << __FILE__ << " skiping creating restoring expresion because of useStructureWrapper && is_Cxx " <<endl;
+      }
       return NULL;
+    }
   }
 
+#if 0  // TODO: we should not decide if a variable should be restored inside of this function. 
+       // Another function calculateVariableRestorationSet() already does this analysis
+       // Also const char* a;  it will be wrongfuly recognized to be constant pointer.
   // We expect that the value transferring back to the original parameter is only 
-  // needed for variable clone options and when the variable is being written. 
-  if (local_unpack_def
-      && !isReadOnlyType (local_unpack_def->get_type ()))
-//      && !isSgReferenceType (local_unpack_def->get_type ()))
+  // needed for variable clone options and when the variable is being written && liveOut. 
+  if (isReadOnlyType(local_unpack_def->get_type ()))  
+  {
+      if (Outliner::enable_debug)
+      {
+        cout<<"createPackExpr() in " << __FILE__ << " skiping creating restoring expresion because of readOnly type " <<endl;
+      }
+    return NULL;
+  }
+#endif  
+  if (local_unpack_def)
+//      && !isReadOnlyType (local_unpack_def->get_type ()))
     {
       SgName local_var_name (local_unpack_def->get_name ());
 
@@ -793,7 +822,9 @@ createPackStmt (SgInitializedName* local_unpack_def)
   // No repacking for Fortran for now
   if (local_unpack_def==NULL || SageInterface::is_Fortran_language())
     return NULL;
+
   SgAssignOp* pack_expr = createPackExpr (local_unpack_def);
+
   if (pack_expr)
     return SageBuilder::buildExprStatement (pack_expr);
   else

@@ -173,6 +173,15 @@ static void calculateVariableRestorationSet(const ASTtools::VarSymSet_t& syms,
     if (readOnlyVars.find(i_name)==readOnlyVars.end() && isLiveOut)   // variables not in read-only set have to be restored
       restoreVars.insert(i_name);
   }
+
+  if (Outliner::enable_debug)
+  { 
+    cout<<"Executing calculateVariableRestorationSet()....."<<endl;
+    cout<<"Found "<<restoreVars.size()<<" symbols which must be restored in the end of the outlined function:";
+    for (std::set<SgInitializedName*> ::const_iterator iter=restoreVars.begin();iter!=restoreVars.end();iter++)
+      cout<<(*iter)->get_name().getString()<<" ";
+    cout<<endl;
+  }
 }
  
 //! A helper function to decide for the classic outlining, if a variable should be passed using its original type (a) or its pointer type (&a)
@@ -261,6 +270,13 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
           iter!=readOnlyVars.end(); iter++)
         cout<<" "<<(*iter)->get_name().getString()<<" ";
       cout<<endl;
+
+      cout<<"Outliner::Transform::generateFunction() -----Found "<<pdSyms.size()<<" varaibles to be replaced as pointer dereferencing variables..:";
+      for (ASTtools::VarSymSet_t::const_iterator iter = pdSyms.begin();
+          iter!=pdSyms.end(); iter++)
+        cout<<" "<<(*iter)->get_name().getString()<<" ";
+      cout<<endl;
+
       cout<<"Outliner::Transform::generateFunction() -----Found "<<liveOuts.size()<<" live out variables..:";
       for (std::set<SgInitializedName*>::const_iterator iter = liveOuts.begin();
           iter!=liveOuts.end(); iter++)

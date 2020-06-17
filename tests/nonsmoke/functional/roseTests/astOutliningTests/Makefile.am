@@ -78,6 +78,7 @@ C_TESTCODES_REQUIRED_TO_PASS =			\
 	 moreTest1.c				\
 	 moreTest8.c				\
 	 print.c	\
+	 variableCloning.c \
 	 zeroParameter.c
 
 # This is not ready
@@ -88,6 +89,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS =		\
 	array2.cpp				\
 	moreTest6.cpp				\
 	moreTest7.cpp				\
+        charStar.cpp  \
 	reference.cpp
 
 # Add a few tool_G's regression tests
@@ -97,6 +99,7 @@ CXX2_TESTCODES_REQUIRED_TO_PASS =                \
 	test_42_2020.cpp \
 	test_20_2019.cpp \
 	test_26_v1_2020.cpp \
+	charStar.cpp  \
 	test_37_2020.cpp
 
 # DQ (11/14/2017): This is failing and I need to learn the depth of what is the problem for the outlining tests.
@@ -329,7 +332,8 @@ test_dlopen3: $(dlopen3_test_targets)
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining with default $(OUTLINE_FLAGS) switches
 
-default_test_targets = $(addprefix default_, $(addsuffix .passed, $(CXX_TESTCODES_REQUIRED_TO_PASS)))
+#default_test_targets = $(addprefix default_, $(addsuffix .passed, $(CXX_TESTCODES_REQUIRED_TO_PASS)))
+default_test_targets = $(addprefix default_, $(addsuffix .passed, $(C_AND_CXX_TESTCODES_REQUIRED_TO_PASS)))
 TEST_TARGETS += $(default_test_targets)
 
 $(default_test_targets): default_%.passed: % outline
@@ -338,6 +342,8 @@ $(default_test_targets): default_%.passed: % outline
 		USE_SUBDIR=yes \
 		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) $(OUTLINE_FLAGS) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
+
+test_default:$(default_test_targets)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Outlining tests that don't use any outline-specific switches
