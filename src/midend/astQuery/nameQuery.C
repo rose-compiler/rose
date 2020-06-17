@@ -1042,7 +1042,7 @@ NameQuery::queryNameTypeName (SgNode * astNode)
 
 
 
-std::pointer_to_unary_function<SgNode*, Rose_STL_Container<std::string> > NameQuery::getFunction(NameQuery::TypeOfQueryTypeOneParameter oneParam){
+std::function<Rose_STL_Container<std::string>(SgNode*) > NameQuery::getFunction(NameQuery::TypeOfQueryTypeOneParameter oneParam){
            NameQuery::roseFunctionPointerOneParameter __x; 
      switch (oneParam)
         {
@@ -1137,7 +1137,7 @@ std::pointer_to_unary_function<SgNode*, Rose_STL_Container<std::string> > NameQu
 
   }
 
-std::pointer_to_binary_function<SgNode*, std::string, Rose_STL_Container<std::string> > NameQuery::getFunction(NameQuery::TypeOfQueryTypeTwoParameters twoParam){
+std::function< Rose_STL_Container<std::string>(SgNode*, std::string) > NameQuery::getFunction(NameQuery::TypeOfQueryTypeTwoParameters twoParam){
      NameQuery::roseFunctionPointerTwoParameters __x;
      switch (twoParam)
         {
@@ -1177,9 +1177,7 @@ std::pointer_to_binary_function<SgNode*, std::string, Rose_STL_Container<std::st
                     NameQuery::roseFunctionPointerTwoParameters querySolverFunction,
                     AstQueryNamespace::QueryDepth defineQueryType){
                      return AstQueryNamespace::querySubTree(subTree, 
-                                  std::bind2nd(std::ptr_fun(querySolverFunction),traversal), defineQueryType);
-        
-
+                                  std::bind(std::ptr_fun(querySolverFunction), std::placeholders::_1, traversal), defineQueryType);
           };
           NameQuerySynthesizedAttributeType NameQuery::querySubTree
                   ( SgNode * subTree,
@@ -1187,7 +1185,7 @@ std::pointer_to_binary_function<SgNode*, std::string, Rose_STL_Container<std::st
                     NameQuery::TypeOfQueryTypeTwoParameters elementReturnType,
                     AstQueryNamespace::QueryDepth defineQueryType ){
                     return AstQueryNamespace::querySubTree(subTree, 
-                                  std::bind2nd(getFunction(elementReturnType),traversal), defineQueryType);
+                                  std::bind(getFunction(elementReturnType), std::placeholders::_1 , traversal), defineQueryType);
           };
 
 
@@ -1225,7 +1223,7 @@ std::pointer_to_binary_function<SgNode*, std::string, Rose_STL_Container<std::st
                    std::string targetNode,
                    NameQuery::roseFunctionPointerTwoParameters querySolverFunction ){
                 return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),
-                             std::bind2nd(std::ptr_fun(querySolverFunction), targetNode));
+                             std::bind(std::ptr_fun(querySolverFunction), std::placeholders::_1, targetNode));
 //                                  std::bind2nd(getFunction(elementReturnType),traversal), defineQueryType);
 
           };
@@ -1234,7 +1232,7 @@ std::pointer_to_binary_function<SgNode*, std::string, Rose_STL_Container<std::st
                    std::string targetNode,
                    NameQuery::TypeOfQueryTypeTwoParameters elementReturnType ){
                 return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),
-                             std::bind2nd(getFunction(elementReturnType), targetNode));
+                             std::bind(getFunction(elementReturnType), std::placeholders::_1, targetNode));
 
           };
 
@@ -1257,7 +1255,7 @@ NameQuerySynthesizedAttributeType
      NameQuery::roseFunctionPointerTwoParameters querySolverFunction, VariantVector* targetVariantVector)
    {
          return AstQueryNamespace::queryMemoryPool(
-                                  std::bind2nd(std::ptr_fun(querySolverFunction),traversal), targetVariantVector);
+                                  std::bind(std::ptr_fun(querySolverFunction), std::placeholders::_1, traversal), targetVariantVector);
 
    };
 
@@ -1300,7 +1298,7 @@ NameQuerySynthesizedAttributeType
      VariantVector* targetVariantVector)
    {
  return AstQueryNamespace::queryMemoryPool( 
-                                  std::bind2nd(getFunction(elementReturnType),traversal), targetVariantVector);
+                                  std::bind(getFunction(elementReturnType), std::placeholders::_1, traversal), targetVariantVector);
 
 
    };

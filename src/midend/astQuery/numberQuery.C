@@ -268,7 +268,7 @@ NumberQuery::queryNumberOfArgsInScalarIndexingOperator (SgNode * astNode)
 } // End function queryNumberOfArgsInScalarIndexingOperator() 
 
 
-std::pointer_to_unary_function<SgNode*, NumberQuerySynthesizedAttributeType> NumberQuery::getFunction(NumberQuery::TypeOfQueryTypeOneParameter oneParam){
+std::function<NumberQuerySynthesizedAttributeType(SgNode*)> NumberQuery::getFunction(NumberQuery::TypeOfQueryTypeOneParameter oneParam){
   NumberQuery::roseFunctionPointerOneParameter __x; 
   switch (oneParam)
   {
@@ -298,7 +298,7 @@ std::pointer_to_unary_function<SgNode*, NumberQuerySynthesizedAttributeType> Num
 
 }
 
-std::pointer_to_binary_function<SgNode*, std::string, NumberQuerySynthesizedAttributeType > NumberQuery::getFunction(NumberQuery::TypeOfQueryTypeTwoParameters twoParam){
+std::function<NumberQuerySynthesizedAttributeType(SgNode*, std::string) > NumberQuery::getFunction(NumberQuery::TypeOfQueryTypeTwoParameters twoParam){
   NumberQuery::roseFunctionPointerTwoParameters __x;
   switch (twoParam)
   {
@@ -339,7 +339,7 @@ NumberQuerySynthesizedAttributeType NumberQuery::querySubTree
   NumberQuery::roseFunctionPointerTwoParameters querySolverFunction,
   AstQueryNamespace::QueryDepth defineQueryType){
   return AstQueryNamespace::querySubTree(subTree, 
-      std::bind2nd(std::ptr_fun(querySolverFunction),traversal), defineQueryType);
+      std::bind(std::ptr_fun(querySolverFunction),std::placeholders::_1,traversal), defineQueryType);
 
 
 };
@@ -349,7 +349,7 @@ NumberQuerySynthesizedAttributeType NumberQuery::querySubTree
   NumberQuery::TypeOfQueryTypeTwoParameters elementReturnType,
   AstQueryNamespace::QueryDepth defineQueryType ){
   return AstQueryNamespace::querySubTree(subTree, 
-      std::bind2nd(getFunction(elementReturnType),traversal), defineQueryType);
+      std::bind(getFunction(elementReturnType),std::placeholders::_1,traversal), defineQueryType);
 };
 
 
@@ -360,6 +360,7 @@ NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList
   NumberQuery::roseFunctionPointerOneParameter querySolverFunction){
   return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),
       std::ptr_fun(querySolverFunction));
+
 };
 NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList 
 ( Rose_STL_Container<SgNode*> nodeList,
@@ -387,7 +388,7 @@ NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList
   std::string targetNode,
   NumberQuery::roseFunctionPointerTwoParameters querySolverFunction ){
   return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),
-      std::bind2nd(std::ptr_fun(querySolverFunction), targetNode));
+      std::bind(std::ptr_fun(querySolverFunction), std::placeholders::_1, targetNode));
   //                                  std::bind2nd(getFunction(elementReturnType),traversal), defineQueryType);
 
 };
@@ -396,7 +397,7 @@ NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList
   std::string targetNode,
   NumberQuery::TypeOfQueryTypeTwoParameters elementReturnType ){
   return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),
-      std::bind2nd(getFunction(elementReturnType), targetNode));
+      std::bind(getFunction(elementReturnType), std::placeholders::_1, targetNode));
 
 };
 
@@ -417,7 +418,7 @@ NumberQuery::queryMemoryPool
  NumberQuery::roseFunctionPointerTwoParameters querySolverFunction, VariantVector* targetVariantVector)
 {
   return AstQueryNamespace::queryMemoryPool(
-      std::bind2nd(std::ptr_fun(querySolverFunction),traversal), targetVariantVector);
+      std::bind(std::ptr_fun(querySolverFunction),std::placeholders::_1,traversal), targetVariantVector);
 
 };
 
@@ -460,7 +461,7 @@ NumberQuery::queryMemoryPool
  VariantVector* targetVariantVector)
 {
   return AstQueryNamespace::queryMemoryPool( 
-      std::bind2nd(getFunction(elementReturnType),traversal), targetVariantVector);
+      std::bind(getFunction(elementReturnType),std::placeholders::_1,traversal), targetVariantVector);
 
 
 };

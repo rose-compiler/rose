@@ -23,7 +23,7 @@ using namespace AstQueryNamespace;
 
 #include "queryVariant.C"
 
-  std::pointer_to_unary_function<SgNode*, Rose_STL_Container<SgNode*> > 
+std::function<Rose_STL_Container<SgNode*>(SgNode*) >
 NodeQuery::getFunction(TypeOfQueryTypeOneParameter oneParam)
 {
   Rose_STL_Container<SgNode*> (*__x)(SgNode*); 
@@ -120,7 +120,7 @@ NodeQuery::getFunction(TypeOfQueryTypeOneParameter oneParam)
 
 }
 
-  std::pointer_to_binary_function<SgNode*, SgNode*, Rose_STL_Container<SgNode*> > 
+std::function< Rose_STL_Container<SgNode*>(SgNode*, SgNode*) >
 NodeQuery::getFunction(TypeOfQueryTypeTwoParameters twoParam)
 {
   Rose_STL_Container<SgNode*> (*__x)(SgNode*,SgNode*); 
@@ -947,7 +947,7 @@ NodeQuerySynthesizedAttributeType NodeQuery::querySubTree ( SgNode * subTree, Sg
 #if 0
      printf ("Inside of NodeQuery::querySubTree #2 \n");
 #endif
-     return AstQueryNamespace::querySubTree(subTree, std::bind2nd(std::ptr_fun(querySolverFunction),traversal), defineQueryType);
+     return AstQueryNamespace::querySubTree(subTree, std::bind(std::ptr_fun(querySolverFunction),std::placeholders::_1,traversal), defineQueryType);
    }
 
 NodeQuerySynthesizedAttributeType NodeQuery::querySubTree ( SgNode * subTree, SgNode * traversal, TypeOfQueryTypeTwoParameters elementReturnType, AstQueryNamespace::QueryDepth defineQueryType )
@@ -955,7 +955,7 @@ NodeQuerySynthesizedAttributeType NodeQuery::querySubTree ( SgNode * subTree, Sg
 #if 0
      printf ("Inside of NodeQuery::querySubTree #3 \n");
 #endif
-     return AstQueryNamespace::querySubTree(subTree, std::bind2nd(getFunction(elementReturnType),traversal), defineQueryType);
+     return AstQueryNamespace::querySubTree(subTree, std::bind(getFunction(elementReturnType),std::placeholders::_1,traversal), defineQueryType);
    }
 
 
@@ -989,7 +989,7 @@ Rose_STL_Container<SgNode*> NodeQuery::queryNodeList ( Rose_STL_Container<SgNode
 
 Rose_STL_Container<SgNode*> NodeQuery::queryNodeList ( Rose_STL_Container<SgNode*> nodeList, SgNode * targetNode, TypeOfQueryTypeTwoParameters elementReturnType )
    {
-     return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(), std::bind2nd(getFunction(elementReturnType), targetNode));
+     return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(), std::bind(getFunction(elementReturnType), std::placeholders::_1, targetNode));
    }
 
 // DQ (4/8/2004): Added query based on vector of variants
@@ -1137,7 +1137,7 @@ Rose_STL_Container<SgNode*> NodeQuery::generateListOfTypes ( SgNode* astNode )
 
     // DQ (2/16/2007): This is Andreas's fix for the performance problem represented by the previous 
     // implementat which built and returns STL lists by value with only a single IR node in the list.
-    AstQueryNamespace::queryMemoryPool(std::bind2nd(funcTest,&nodeList),&ir_nodes); 
+    AstQueryNamespace::queryMemoryPool(std::bind(funcTest,std::placeholders::_1,&nodeList),&ir_nodes);
   }
   else
   {
@@ -1193,7 +1193,7 @@ Rose_STL_Container<SgNode*> NodeQuery::generateListOfTypes ( SgNode* astNode )
   NodeQuerySynthesizedAttributeType
 NodeQuery::queryMemoryPool ( SgNode * traversal, NodeQuery::roseFunctionPointerTwoParameters querySolverFunction, VariantVector* targetVariantVector)
 {
-  return AstQueryNamespace::queryMemoryPool(std::bind2nd(std::ptr_fun(querySolverFunction),traversal), targetVariantVector);
+  return AstQueryNamespace::queryMemoryPool(std::bind(std::ptr_fun(querySolverFunction),std::placeholders::_1,traversal), targetVariantVector);
 }
 
 
@@ -1224,7 +1224,7 @@ NodeQuery::queryMemoryPool ( SgNode * traversal, NodeQuery::roseFunctionPointerO
   NodeQuerySynthesizedAttributeType
 NodeQuery::queryMemoryPool (SgNode * traversal, NodeQuery::TypeOfQueryTypeTwoParameters elementReturnType, VariantVector* targetVariantVector)
 {
-  return AstQueryNamespace::queryMemoryPool(std::bind2nd(getFunction(elementReturnType),traversal), targetVariantVector);
+  return AstQueryNamespace::queryMemoryPool(std::bind(getFunction(elementReturnType),std::placeholders::_1,traversal), targetVariantVector);
 }
 
 /********************************************************************************
