@@ -22,21 +22,21 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
-$mkinstaller_ver_build = "1";
-$mkinstaller_ver_patch = "5";
-$mkinstaller_ver_name  = "2.6.1.5";
-$mkinstaller_ver_time  = "29May2020,02:17:56z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.1.5 - 29May2020,02:17:56z";
+$mkinstaller_ver_build = "2";
+$mkinstaller_ver_patch = "1";
+$mkinstaller_ver_name  = "2.6.2.1";
+$mkinstaller_ver_time  = "31May2020,05:18:26z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.2.1 - 31May2020,05:18:26z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
 $perl_library_ver_major = "1";
 $perl_library_ver_minor = "6";
-$perl_library_ver_build = "18";
-$perl_library_ver_patch = "3";
-$perl_library_ver_name  = "1.6.18.3";
-$perl_library_ver_time  = "28May2020,20:15:33z";
-$perl_library_ver_id    = "@(#)perl_library 1.6.18.3 - 28May2020,20:15:33z";
+$perl_library_ver_build = "19";
+$perl_library_ver_patch = "2";
+$perl_library_ver_name  = "1.6.19.2";
+$perl_library_ver_time  = " 1Jun2020,18:24:29z";
+$perl_library_ver_id    = "@(#)perl_library 1.6.19.2 -  1Jun2020,18:24:29z";
 
 #{------------------------------------------------------------------------------
 #
@@ -6484,7 +6484,7 @@ EOF09
          |         given="\${Overide_caret_oh_with}"
          |         if [ "X\${debugging}" != "X0" ]
          |         then
-         |            echo "getOSname: ...used overide" | "\${use_sendStdinTo}" \${debugOpt}
+         |            echo "getOSname: ...used override" | "\${use_sendStdinTo}" \${debugOpt}
          |         fi
          |      else
          |         given=`perl -e 'print \$^O."\\n"'`
@@ -10456,9 +10456,9 @@ EOF28
          |                               then
          |                                  if [ "X\${IsGNUtarHow}" = "Xtold" ]
          |                                  then
-         |                                     echo "$scriptName: note: overide specified capability of tar" >&2
+         |                                     echo "$scriptName: note: override specified capability of tar" >&2
          |                                  else
-         |                                     echo "$scriptName: note: overide tested capability of tar" >&2
+         |                                     echo "$scriptName: note: override tested capability of tar" >&2
          |                                  fi
          |                               fi
          |                               IsGNUtar="true"
@@ -10481,9 +10481,9 @@ EOF28
          |                               then
          |                                  if [ "X\${IsGNUtarHow}" = "Xtold" ]
          |                                  then
-         |                                     echo "$scriptName: note: overide specified capability of tar" >&2
+         |                                     echo "$scriptName: note: override specified capability of tar" >&2
          |                                  else
-         |                                     echo "$scriptName: note: overide tested capability of tar" >&2
+         |                                     echo "$scriptName: note: override tested capability of tar" >&2
          |                                  fi
          |                               fi
          |                               IsGNUtar="false"
@@ -18064,7 +18064,7 @@ sub deletePathnames {
       if ($rootPathname ne "") {
          #---------------------------------------
          #
-         #  We first recursivly crawl the directory
+         #  We first recursively crawl the directory
          #  tree forming a list of pathnames that
          #  appear to exist. The size of this list
          #  also serves as the initial pathname
@@ -18230,7 +18230,7 @@ sub deletePathnames {
                }
                #---------------------------------------
                #
-               #  We again recursivly crawl the directory
+               #  We again recursively crawl the directory
                #  tree to rebuild the list of pathnames
                #  that still appear to exist. We keep
                #  looping while it continues to shrink.
@@ -22013,7 +22013,7 @@ sub mkDirectory {
 #
 #  see: totebag/src/perl-lib/mustDeletePathname.psub
 #
-#  Dated: 17May2020 mustDeletePathname
+#  Dated: 01Jun2020 mustDeletePathname
 #
 #  NOTE: This function is silent if there is no problem.
 #
@@ -22042,7 +22042,7 @@ sub mustDeletePathname {
          my $Nfailures = $#failures + 1;
          if (1 <= $Nfailures) {
             $result = 0;
-	    if ($noisy) {
+            if ($noisy) {
                my $count;
                my $failedOn;
                foreach $failedOn (@failures) {
@@ -22055,7 +22055,7 @@ sub mustDeletePathname {
                      last;
                   }
                }
-	    }
+            }
          }
       }
    }
@@ -22176,7 +22176,7 @@ sub nullPathname {
 #
 #  see: totebag/src/perl-lib/pathExists.psub
 #
-#  Dated: 16Nov2019 pathExists
+#  Dated: 01Jun2020 pathExists
 #
 #  NOTE: This function is known to be "hand included" in the following
 #        source files:
@@ -22190,10 +22190,10 @@ sub pathExists {
    print DBGOUT "pathExists[ pathname=\"$pathname\"...\n" if $debugging;
    my $result;
    if ($osClass eq "UNIX-like") {
-      if ( -l $pathname) { 
+      if ( -l $pathname) {
          print DBGOUT "pathExists: ...\"$pathname\" is a symbolic-link\n" if $debugging;
          $result = 1;
-      } 
+      }
       elsif ( -e $pathname) {
          print DBGOUT "pathExists: ...\"$pathname\" exists\n" if $debugging;
          $result = 1;
@@ -22210,7 +22210,7 @@ sub pathExists {
       }
       else {
          print DBGOUT "pathExists: ...\"$pathname\" doesn't exist\n" if $debugging;
-         $result = 0; 
+         $result = 0;
       }
    }
    print DBGOUT "pathExists] ...done(=$result)\n" if $debugging;
@@ -22391,7 +22391,7 @@ sub quoteIfReqd {
 #
 #  All symbolic-links in the given pathname are resolved (followed) constructing
 #  a new return pathname that is "real" (without symbolic-links). An empty string
-#  is returned on failure. On Windows-like hosts 
+#  is returned on failure. On Windows-like hosts
 #
 #  The parameters are: pathname (a string)
 #                      optional OS class
@@ -22407,7 +22407,7 @@ sub quoteIfReqd {
 #
 #  see: totebag/src/perl-lib/realpath.psub
 #
-#  Dated: 16Nov2019 realpath
+#  Dated: 01Jun2020 realpath
 #
 #  NOTE: This function is know to be "hand included" in the following
 #        source files:

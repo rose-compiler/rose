@@ -617,15 +617,14 @@ Unparse_Jovial::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(if_stmt->get_conditional());
 
   // condition
-     curprint("IF (");
+     curprint_indented("IF (", info);
      info.set_inConditional();
 
      SgExprStatement* expressionStatement = isSgExprStatement(if_stmt->get_conditional());
      unparseExpression(expressionStatement->get_expression(), info);
 
      info.unset_inConditional();
-     curprint(") ;");
-     unp->cur.insert_newline(1);
+     curprint(") ;\n");
 
   // true body
      ROSE_ASSERT(if_stmt->get_true_body());
@@ -633,8 +632,7 @@ Unparse_Jovial::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // false body
      if (if_stmt->get_false_body() != NULL) {
-        curprint("ELSE");
-        unp->cur.insert_newline(1);
+        curprint_indented("ELSE\n", info);
         unparseStatement(if_stmt->get_false_body(), info);
      }
    }
@@ -736,20 +734,17 @@ Unparse_Jovial::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      if (kind == SgStopOrPauseStatement::e_stop)
         {
-          curprint("STOP ");
+          curprint_indented("STOP ", info);
           unparseExpression(sp_stmt->get_code(), info);
-          curprint(";");
-          unp->cur.insert_newline(1);
+          curprint(";\n");
         }
      else if (kind == SgStopOrPauseStatement::e_exit)
         {
-          curprint("EXIT ;");
-          unp->cur.insert_newline(1);
+          curprint_indented("EXIT;\n", info);
         }
      else if (kind == SgStopOrPauseStatement::e_abort)
         {
-          curprint("ABORT ;");
-          unp->cur.insert_newline(1);
+          curprint_indented("ABORT;\n", info);
         }
      else
         {
@@ -904,6 +899,19 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
            unparseDimInfo(dim_info, info);
         }
 
+  // OptStructureSpecifier
+     if (table_type->get_structure_specifier() == SgJovialTableType::e_parallel) {
+        curprint("PARALLEL ");
+     }
+     else if (table_type->get_structure_specifier() == SgJovialTableType::e_tight) {
+        curprint("T ");
+        if (table_type->get_bits_per_entry() > 0) {
+           std::string value = Rose::StringUtility::numberToString(table_type->get_bits_per_entry());
+           curprint(value);
+           curprint(" ");
+        }
+     }
+
   // WordsPerEntry
      if (table_decl->get_has_table_entry_size())
         {
@@ -954,10 +962,17 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
            foreach(SgDeclarationStatement* item_decl, table_def->get_members())
               {
-                 SgVariableDeclaration* vardecl = isSgVariableDeclaration(item_decl);
-                 if (vardecl)
+                 if (isSgVariableDeclaration(item_decl))
                     {
                        unparseVarDeclStmt(item_decl, info);
+                    }
+                 else if (SgJovialDirectiveStatement* directive = isSgJovialDirectiveStatement(item_decl))
+                    {
+                       unparseDirectiveStmt(directive, info);
+                    }
+                 else if (isSgEmptyDeclaration(item_decl))
+                    {
+                       // do nothing for a null declaration (may want to unparse ";\n")
                     }
                  else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
               }
@@ -989,13 +1004,6 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      ASSERT_not_null(type);
 
      info.set_inVarDecl();
-
-  // Unwrap the base type if there is a modifier for it
-     SgModifierType* modifier_type = isSgModifierType(type);
-     if (modifier_type)
-        {
-           type = modifier_type->get_base_type();
-        }
 
   // pretty printing
      curprint( ws_prefix(info.get_nestingLevel()) );
@@ -1055,16 +1063,15 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      unparseType(type, info);
 
   // OptStructureSpecifier
-     if (modifier_type)
+     if (table_type)
         {
-           SgStructureModifier& struct_modifier = modifier_type->get_typeModifier().get_structureModifier();
-           if (struct_modifier.isParallel()) {
+           if (table_type->get_structure_specifier() == SgJovialTableType::e_parallel) {
               curprint("PARALLEL ");
            }
-           else if (struct_modifier.isTight()) {
+           else if (table_type->get_structure_specifier() == SgJovialTableType::e_tight) {
               curprint("T ");
-              if (struct_modifier.get_bits_per_entry() > 0) {
-                 std::string value = Rose::StringUtility::numberToString(struct_modifier.get_bits_per_entry());
+              if (table_type->get_bits_per_entry() > 0) {
+                 std::string value = Rose::StringUtility::numberToString(table_type->get_bits_per_entry());
                  curprint(value);
                  curprint(" ");
               }
@@ -1135,10 +1142,13 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
                  info.inc_nestingLevel();
                  foreach(SgDeclarationStatement* item_decl, table_def->get_members())
                     {
-                       SgVariableDeclaration* vardecl = isSgVariableDeclaration(item_decl);
-                       if (vardecl)
+                       if (isSgVariableDeclaration(item_decl))
                           {
                              unparseVarDeclStmt(item_decl, info);
+                          }
+                       else if (isSgEmptyDeclaration(item_decl))
+                          {
+                             // do nothing for a null declaration (may want to unparse ";\n")
                           }
                        else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
                     }

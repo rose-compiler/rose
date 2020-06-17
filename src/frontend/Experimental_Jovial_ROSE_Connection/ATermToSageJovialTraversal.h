@@ -85,6 +85,7 @@ ATbool traverse_CharacterItemDescription (ATerm term, SgType* & type);
 ATbool traverse_CharacterLiteral         (ATerm term, std::string &str_literal);
 
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
+ATbool    match_StatusItemDescription (ATerm term);
 ATbool traverse_StatusItemDescription (ATerm term, std::list<SgInitializedName*> &status_list, Sawyer::Optional<SgExpression*> &status_size);
 ATbool traverse_StatusConstant        (ATerm term, SgInitializedName* &init_name, SgType* &enum_type, SgExpression* init_expr);
 ATbool traverse_StatusConstant        (ATerm term, SgExpression* &expr);
@@ -341,6 +342,9 @@ ATbool traverse_ByteFunction         (ATerm term, SgFunctionCallExp* &func_call)
 
 // 6.3.5 SHIFT FUNCTION
 ATbool traverse_ShiftFunction        (ATerm term, SgFunctionCallExp* &func_call);
+
+// 6.3.6 ABS FUNCTIONS
+ATbool traverse_AbsFunction          (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.7 SIZE FUNCTION
 ATbool traverse_SizeFunction         (ATerm term, SgFunctionCallExp* &func_call);
