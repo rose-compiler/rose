@@ -1510,8 +1510,20 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    SgJovialTableType* table_type = isSgJovialTableType(type);
    ROSE_ASSERT(table_type);
 
-   // Wrap the type in an SgStructureModifier if needed
+// Set the structure specifier if present
    StructureSpecifier& struct_spec = table_spec.struct_spec;
+   if (struct_spec.is_parallel) {
+      table_type->set_structure_specifier(SgJovialTableType::e_parallel);
+   }
+   else if (struct_spec.is_tight) {
+      table_type->set_structure_specifier(SgJovialTableType::e_tight);
+      table_type->set_bits_per_entry(struct_spec.bits_per_entry);
+   }
+
+// TODO: DELETE_ME - StructureSpecifier information has been placed in SgJovialTableType
+// If this works out, this code should be removed and the node deleted in ROSETTA
+#if 0
+   // Wrap the type in an SgStructureModifier if needed
    if (struct_spec.is_parallel || struct_spec.is_tight) {
       SgModifierType* modifiers = SageBuilder::buildModifierType(type);
       if (struct_spec.is_parallel) {
@@ -1525,6 +1537,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    // Reset the type to the SgModifierType wrapper
       type = modifiers;
    }
+#endif
 
 // Begin SageTreeBuilder
    SgVariableDeclaration* var_decl = nullptr;
@@ -3035,11 +3048,11 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
 
    ATerm t_dim_list, t_struct_spec, t_like_option, t_entry_spec, t_type_name;
    std::string table_type_name, like_name;
+   TableSpecifier table_spec;
 
    bool has_table_type_name = false;
    bool has_like_option = false;
 
-// Begin SageTreeBuilder
    SgJovialTableType* table_type = isSgJovialTableType(table_decl->get_type());
    ROSE_ASSERT(table_type);
 
@@ -3090,9 +3103,6 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
    else if (ATmatch(term, "TableTypeSpecifier(<term>,<term>,<term>,<term>)",
                           &t_dim_list, &t_struct_spec, &t_like_option, &t_entry_spec)) {
 
-      TableSpecifier table_spec;
-      cerr << "WARNING UNIMPLEMENTED: TableTypeSpecifier - table_spec \n";
-
       StructureSpecifier& struct_spec = table_spec.struct_spec;
 
       if (dim_info == nullptr) {
@@ -3139,6 +3149,15 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
          // MATCHED EntrySpecifierBody
       }
       else return ATfalse;
+
+      if (preset) {
+         cerr << "WARNING UNIMPLEMENTED: TableTypeSpecifier - preset \n";
+         ROSE_ASSERT(preset == nullptr);
+      }
+      if (attr_list) {
+         cerr << "WARNING UNIMPLEMENTED: TableTypeSpecifier - preset \n";
+         ROSE_ASSERT(attr_list == nullptr);
+      }
    }
    else return ATfalse;
 
@@ -3150,10 +3169,22 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
       base_type->set_parent(table_type);
    }
 
+// Set the structure specifier if present
+   StructureSpecifier& struct_spec = table_spec.struct_spec;
+   if (struct_spec.is_parallel) {
+      table_type->set_structure_specifier(SgJovialTableType::e_parallel);
+   }
+   else if (struct_spec.is_tight) {
+      table_type->set_structure_specifier(SgJovialTableType::e_tight);
+      table_type->set_bits_per_entry(struct_spec.bits_per_entry);
+   }
+
 #if 0
    std::cout << ".x. TABLE DECLARATION for type " << table_type_name << endl;
    std::cout << ".x. TABLE TYPE SPEC rank is "     << dim_info->get_expressions().size() << endl;
    std::cout << ".x. TABLE TYPE SPEC dim_info: "   << dim_info << endl;
+   std::cout << ".x. TABLE TYPE struct spec is: "  << table_type->get_structure_specifier() << endl;
+   std::cout << ".x. TABLE TYPE bits per entry: "  << table_type->get_bits_per_entry() << endl;
    if (base_type) {
       std::cout << ".x. base_type is " << base_type << ": " << base_type->class_name() << endl;
    }

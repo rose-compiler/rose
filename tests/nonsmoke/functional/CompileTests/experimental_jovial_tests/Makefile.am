@@ -85,7 +85,9 @@ COMPOOL_TESTCODES = \
  rose-issue-2658.cpl                    \
  rose-issue-2683.cpl                    \
  rose-issue-2687.cpl                    \
- rose-issue-2691.cpl
+ rose-issue-2691.cpl                    \
+ rose-issue-2701.cpl                    \
+ rose-issue-2702.cpl
 
 # bit_cast.cpl
 # 9_1_compool_directive.cpl
