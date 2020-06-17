@@ -635,12 +635,49 @@ namespace
     void handle(SgClassDefinition& n)
     {
       list(n.get_members());
+    }
+    
+    void handle(SgTryStmt& n)
+    {
+      // skip the block, just print the statements
+      SgBasicBlock& blk = SG_DEREF(isSgBasicBlock(n.get_body()));
+      
+      list(blk.get_statements());
+      prn("exception\n");
+      stmt(n.get_catch_statement_seq_root());
     } 
+    
+    void handle(SgCatchStatementSeq& n)
+    {
+      list(n.get_catch_statement_seq());
+    }
+    
+    void handle(SgCatchOptionStmt& n)
+    {
+      prn("when ");
+      
+      SgVariableDeclaration&    dcl   = SG_DEREF(n.get_condition());
+      SgInitializedNamePtrList& vars  = dcl.get_variables();
+      ROSE_ASSERT(vars.size() == 1);
+      SgInitializedName&        exvar = SG_DEREF(vars[0]);
+      std::string               name  = exvar.get_name();
+      
+      if (name.size())
+      {
+        prn(name);
+        prn(": ");
+      }
+      
+      type(exvar.get_type());
+      prn(" =>\n");
+    
+      stmt(n.get_body());
+    }
     
     void handle(SgFunctionDeclaration& n) 
     {
-      SgFunctionType& ty     = SG_DEREF(n.get_type());
-      const bool      isFunc = isAdaFunction(ty);
+      SgFunctionType& ty      = SG_DEREF(n.get_type());
+      const bool      isFunc  = isAdaFunction(ty);
       std::string     keyword = isFunc ? "function" : "procedure";
       
       if (n.get_declarationModifier().isOverride())
