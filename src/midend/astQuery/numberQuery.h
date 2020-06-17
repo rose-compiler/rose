@@ -46,20 +46,21 @@ namespace NumberQuery{
 
   /**************************************************************************************************************
    * The function
-   *    std::pointer_to_unary_function<SgNode*, std::list<SgNode*> > getFunction(TypeOfQueryTypeOneParameter oneParam);
+   *    std::function<NumberQuerySynthesizedAttributeType(SgNode *)> getFunction(TypeOfQueryTypeOneParameter oneParam);
    * will return a functor wrapping the pre-implemented function for TypeOfQueryTypeOneParameter.
    **************************************************************************************************************/
 
-  std::pointer_to_unary_function < SgNode *,
-    NumberQuerySynthesizedAttributeType >getFunction (TypeOfQueryTypeOneParameter oneParam);
+  std::function<NumberQuerySynthesizedAttributeType(SgNode *)> getFunction(TypeOfQueryTypeOneParameter oneParam);
 
   /**************************************************************************************************************
    * The function
-   * std::pointer_to_binary_function<SgNode*, SgNode*, std::list<SgNode*> > getFunction(TypeOfQueryTypeTwoParameters twoParam);
+   *    std::function<NumberQuerySynthesizedAttributeType(SgNode *, std::string)>
+   *       getFunction(TypeOfQueryTypeTwoParameters twoParam);
    * will return a functor wrapping the pre-implemented function for TypeOfQueryTypeTwoParameters.
    **************************************************************************************************************/
-  std::pointer_to_binary_function < SgNode *, std::string,
-    NumberQuerySynthesizedAttributeType > getFunction (TypeOfQueryTypeTwoParameters twoParam);
+
+  std::function<NumberQuerySynthesizedAttributeType(SgNode *, std::string)>
+     getFunction(TypeOfQueryTypeTwoParameters twoParam);
 
   // get the SgNode's conforming to the test in querySolverFunction or
   // get the SgNode's conforming to the test in the TypeOfQueryTypeOneParamter the user specify.

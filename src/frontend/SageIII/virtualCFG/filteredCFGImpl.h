@@ -111,8 +111,8 @@ namespace VirtualCFG
     {
         std::vector < CFGPath > paths(orig.begin(), orig.end()); // convert each raw edges into a path: 1-to-1 conversion for now
         return makeClosure < FilteredEdge > (paths, 
-                                             std::mem_fun_ref(closure),
-                                             std::mem_fun_ref(otherSide), 
+                                             std::mem_fn(closure),
+                                             std::mem_fn(otherSide),
                                              filter,
                                              merge);
     }

@@ -338,7 +338,7 @@ template<typename NodeFunctional>
      _Result querySubTree ( SgNode * subTree,
         _Result (*__x)(SgNode*,_Arg), _Arg x_arg,
         AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes ){
-      return querySubTree(subTree,std::bind2nd(std::ptr_fun(__x),x_arg),defineQueryType);
+      return querySubTree(subTree,std::bind(std::ptr_fun(__x),std::placeholders::_1,x_arg),defineQueryType);
     }
 
   /********************************************************************************
@@ -389,7 +389,7 @@ template<typename NodeFunctional>
   template <class _Arg, class _Result> 
     _Result queryRange ( typename _Result::iterator begin, const typename _Result::iterator end,
         _Result (*__x)(SgNode*,_Arg), _Arg x_arg){
-      return queryRange(begin,end,std::bind2nd(std::ptr_fun(__x),x_arg));
+      return queryRange(begin,end,std::bind(std::ptr_fun(__x), std::placeholders::_1,x_arg));
     }
 
   /********************************************************************************
@@ -453,7 +453,7 @@ template <class _Arg, class _Result>
 _Result queryMemoryPool ( 
     _Result (*__x)(SgNode*,_Arg), _Arg x_arg,
     VariantVector* targetVariantVector = NULL){
-  return queryMemoryPool(std::bind2nd(std::ptr_fun(__x),x_arg),targetVariantVector);
+  return queryMemoryPool(std::bind(std::ptr_fun(__x),std::placeholders::_1,x_arg),targetVariantVector);
 }
 
 /********************************************************************************
