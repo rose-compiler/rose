@@ -73,6 +73,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
        // declarations
 
+          case V_SgEmptyDeclaration:           /* let's ignore it (or print ';') */   break;
           case V_SgEnumDeclaration:            unparseEnumDeclStmt   (stmt, info);    break;
           case V_SgJovialOverlayDeclaration:   unparseOverlayDeclStmt(stmt, info);    break;
           case V_SgJovialTableStatement:       unparseTableDeclStmt  (stmt, info);    break;
@@ -1024,10 +1025,6 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt);
      ASSERT_not_null(var_decl);
 
-     if (var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst())
-        {
-           curprint("CONSTANT ");
-        }
      if (var_decl->get_declarationModifier().isJovialDef())
         {
            curprint("DEF ");
@@ -1035,6 +1032,10 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      if (var_decl->get_declarationModifier().isJovialRef())
         {
            curprint("REF ");
+        }
+     if (var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst())
+        {
+           curprint("CONSTANT ");
         }
 
      switch (type->variantT())
