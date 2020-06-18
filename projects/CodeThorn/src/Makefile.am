@@ -118,6 +118,10 @@ CODETHORN_HEADER_FILES=\
   LVAstAttributeInterface.h \
   LVLattice.h \
   LVTransferFunctions.h \
+  MemAnalysis.h \
+  MemTransferFunctions.h \
+  MemPropertyState.h \
+  MemPropertyStateFactory.h \
   Miscellaneous2.h \
   Miscellaneous.h \
   Normalization.h \
@@ -229,6 +233,10 @@ CODETHORN_SOURCE_FILES=\
   LVAstAttributeInterface.C \
   LVLattice.C \
   LVTransferFunctions.C \
+  MemAnalysis.C \
+  MemTransferFunctions.C \
+  MemPropertyState.C \
+  MemPropertyStateFactory.C \
   Miscellaneous2.C \
   Miscellaneous.C \
   Normalization.C \

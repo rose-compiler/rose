@@ -10,7 +10,7 @@
 #include <set>
 #include <list>
 
-#include "WorkList.h"
+#include "CodeThornException.h"
 
 namespace CodeThorn {
 
@@ -30,7 +30,6 @@ namespace CodeThorn {
   
 } // end of namespace CodeThorn
 
-namespace CodeThorn {
 // template implementation code
 template<typename Element>
 bool CodeThorn::WorkListSeq<Element>::isEmpty() { 
@@ -78,8 +77,6 @@ Element CodeThorn::WorkListSeq<Element>::examine() {
   if(workList.size()>0)
     elem=*workList.begin();
   return elem;
-}
-
 }
 
 #endif
