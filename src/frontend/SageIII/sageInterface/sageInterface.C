@@ -1287,7 +1287,15 @@ SageInterface::listHeaderFiles ( SgIncludeFile* includeFile )
    }
 
 
-
+namespace
+{
+  template <class SageDecl>
+  std::string genericGetName(SageDecl* dcl)
+  {
+    ROSE_ASSERT(dcl);
+    return dcl->get_name();
+  }
+}
 
 
 
@@ -1772,6 +1780,18 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                name = string("emptyDeclaration") + StringUtility::numberToString(const_cast<SgDeclarationStatement*>(declaration));
                break;
              }
+             
+          case V_SgAdaPackageSpecDecl:
+            {
+              name = "_ada_package_spec_decl_" + genericGetName(isSgAdaPackageSpecDecl(declaration));
+              break;
+            }
+            
+          case V_SgAdaPackageBodyDecl:
+            {
+              name = "_ada_package_body_decl_" + genericGetName(isSgAdaPackageBodyDecl(declaration));
+              break;
+            }
 
        // Note that the case for SgVariableDeclaration is not implemented
           default:

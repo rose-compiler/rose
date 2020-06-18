@@ -5540,7 +5540,7 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
              {
             // DQ (10/11/2006): As part of new implementation of qualified names we now default to the generation of all qualified names unless they are skipped.
             // newinfo.set_SkipQualifiedNames();
-#if 0
+#if 1
             // DQ (3/15/2015): test2015_11.c demonstrates a case where I think this should be not be set (un-named struct type).
             // DQ (10/17/2012): Added new code not present where this is handled for SgVariableDeclaration IR nodes.
                newinfo.unset_SkipDefinition();
@@ -5565,7 +5565,7 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
 #endif
        // DQ (10/18/2012): Added to unset ";" usage in defining declaration.
           newinfo.unset_SkipSemiColon();
-#if 1
+
        // DQ (10/17/2012): We have to separate these out if we want to output the defining declarations.
           newinfo.set_isTypeFirstPart();
 
@@ -5585,15 +5585,6 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
           curprint ("/* In unparseSizeOfOp(): isTypeSecondPart \n */ ");
 #endif
           unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
-#else
-
-#error "DEAD CODE!"
-
-       // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
-       // unp->u_type->unparseType(cast_op->get_expression_type(), newinfo);
-       // unp->u_type->unparseType(cast_op->get_type(), newinfo);
-          unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
-#endif
         }
 
      curprint(")");
