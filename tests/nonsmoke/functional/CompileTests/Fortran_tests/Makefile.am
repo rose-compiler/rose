@@ -1,3 +1,4 @@
+SHELL := /bin/bash  # support diff <() <() 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # DQ (10/22/2016): Change order of tests (simple --> hardest).
@@ -341,13 +342,33 @@ F90_TESTCODES_REQUIRED_TO_PASS =  \
      test2020_use_iso_c_binding.f90 \
      test2020_use_iso_c_binding_2.f90 \
      test2020_select_case.f90 \
-     test2020_comment_1.f90 \
-     test2020_comment_2.f90 \
-     test2020_comment_3.f90 \
      rose-issue-par-39.f90 \
      canonicalExample.f90 \
      fCaller.f90 \
      rose-1612.f90
+
+#     test2020_comment_3.f90
+#    test2020_comment_2.f90 
+# Liao: 6/18/2020. tests with comments
+F90_COMMENTS_REQUIRED_TO_PASS  =  \
+    test2020_comment_1.f90 
+
+# result is rose_input.f90
+F90_COMMENTS_REQUIRED_TO_PASS_RESULTS =  $(addprefix rose_, ${F90_COMMENTS_REQUIRED_TO_PASS})    
+
+# $(srcdir)/$(@:rose_%=%) :  source/ for each output target @, convert rose_input.f90 to input.f90 
+$(F90_COMMENTS_REQUIRED_TO_PASS_RESULTS): $(srcdir)/$(@:rose_%=%) ../../testTranslator
+	../../testTranslator -c $(srcdir)/$(@:rose_%=%)
+
+# result's diff is input.f90.diff
+F90_COMMENTS_REQUIRED_TO_PASS_RESULTS_DIFF = $(addsuffix .diff, $(F90_COMMENTS_REQUIRED_TO_PASS))  
+
+# rule to generate the diff file: depending on rose_input.f90  
+# grep comments from rose_input.f90
+# grep comments from sourcetree/input.f90
+# diff the output of two grep command lines
+$(F90_COMMENTS_REQUIRED_TO_PASS_RESULTS_DIFF): %.diff:rose_%
+	diff <(grep -n "\!"  $(@:%.diff=rose_%)) <(grep -n "\!" $(srcdir)/$(@:%.diff=%)) > $@
 
 # DQ (11/11/2014): These test fail due to changes to support C++11 work (need to look into this separately).
 #    test2010_154.f90
@@ -1495,6 +1516,7 @@ if !ROSE_USING_GFORTRAN_VERSION_4_0
 	@$(MAKE) enforce_module_name_policy
 #	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_TEST_Sources)
+	@$(MAKE) $(F90_COMMENTS_REQUIRED_TO_PASS_RESULTS_DIFF)
 #	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
 #	@$(MAKE) testCPP_Defines
 #	@$(MAKE) testMPItypes
@@ -1546,7 +1568,7 @@ clean-local:
 	rm -f *_postprocessed.* 
 	rm -rf QMTest
 	rm -f *.passed *.failed *.err
-	rm -f *.aterm
+	rm -f *.aterm $(F90_COMMENTS_REQUIRED_TO_PASS_RESULTS_DIFF)
 if ROSE_USE_INSURE
 #	Remove the links built to get the filename being compiled into the name of the executable.
 	rm -f testTranslator_*
