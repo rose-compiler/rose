@@ -2,6 +2,7 @@
 
 #include "AnnotCollect.h"
 #include "CommandOptions.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 using namespace std;
 
@@ -32,13 +33,13 @@ void ReadAnnotation::read()
          }
        }
     }
-//! Read the annotation file and recognize type and operator annotation collections    
+//! Read the annotation file and recognize type and operator annotation collections
 void ReadAnnotation:: read( istream & in)
 {
   while (in.good()) {
     peek_ch(in);
     string buf = read_id(in);
-    
+
     if (buf == "class") {
        typeInfo.read(in);
     }

@@ -1,9 +1,10 @@
 #include <ParallelizeLoop.h>
 #include <AutoTuningInterface.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 LoopTreeNode* ParallelizeBlocking::
-apply( const CompSliceDepGraphNode::FullNestInfo& nestInfo, 
-              LoopTreeDepComp& comp, DependenceHoisting &op, 
+apply( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
+              LoopTreeDepComp& comp, DependenceHoisting &op,
               LoopTreeNode *&top)
 {
   AutoTuningInterface* tuning = LoopTransformInterface::getAutoTuningInterface();
@@ -19,10 +20,10 @@ apply( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
      if (!cur.reversible) { //* QY: not parallelizable; return
         return top;
      }
-  } 
+  }
   /*QY: parallelize the outermost loop*/
   top = op.Transform( comp, outer, top);
   int bsize = LoopTransformOptions::GetInstance()->GetParBlockSize();
-  tuning->ParallelizeLoop(top, bsize);  
+  tuning->ParallelizeLoop(top, bsize);
   return top;
 }
