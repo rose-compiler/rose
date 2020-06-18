@@ -424,6 +424,7 @@ CodeThorn::PState PState::combine(CodeThorn::PState& p1, CodeThorn::PState& p2) 
   // case if the number of matched elements above is different to p2.size()
   if(numMatched!=p2.size()) {
     for(auto elem2:p2) {
+      // only add elements of p2 that are not in p1
       if(p1.find(elem2.first)==p1.end()) {
         res.writeToMemoryLocation(elem2.first,elem2.second);
       }

@@ -7,6 +7,7 @@
 #include "PointerAnalysisInterface.h"
 #include "ProgramAbstractionLayer.h"
 #include "PropertyState.h"
+#include "PropertyStateFactory.h"
 
 namespace CodeThorn {
 
