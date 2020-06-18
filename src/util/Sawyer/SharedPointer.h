@@ -22,7 +22,7 @@
 
 namespace Sawyer {
 
-/** Reference-counting smart pointer.
+/** Reference-counting intrusive smart pointer.
  *
  *  This class implements a reference-counting pointer to an object that inherits from @ref SharedObject. See @ref SharedObject
  *  for a detailed description of how to prepare objects to be referenced by @ref SharedPointer.
@@ -59,8 +59,9 @@ namespace Sawyer {
  *  unique pointers to such objects.  Otherwise default to using @c std::shared_ptr et. al. (or @c boost::shared_ptr for C++03
  *  and earlier).
  *
- *  Thread safety: The @ref SharedPointer implementation is thread safe when compiled with thread support. For GCC and LLVM,
- *  the "-pthread" switch must be specified for both compiling and linking.
+ *  Thread safety: Similar to raw pointers. Different threads can access different pointers to the same object, but operations
+ *  on the pointer itself (such as assignment, comparison with null, and dereferencing in the presence of other writers needs
+ *  to be synchronized by the callers.
  *  
  *  @sa SharedObject, @ref SharedFromThis */
 template<class T>

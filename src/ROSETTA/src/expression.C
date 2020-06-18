@@ -164,6 +164,10 @@ Grammar::setUpExpressions ()
 
   // DQ (12/13/2007): Added support for Fortran string concatenation operator
      NEW_TERMINAL_MACRO (ConcatenationOp,        "ConcatenationOp",        "CONCATENATION_OP" );
+  
+  // PP (06/08/2020): Added support for Ada remainder (different from mod) and abs operators 
+     NEW_TERMINAL_MACRO (RemOp,                  "RemOp",                  "REM_OP" );
+     NEW_TERMINAL_MACRO (AbsOp,                  "AbsOp",                  "ABS_OP" );
 
   // driscoll6 (7/20/11): Support for n-ary operators in python
      NEW_TERMINAL_MACRO (NaryComparisonOp,       "NaryComparisonOp",       "NARY_COMPARISON_OP");
@@ -374,7 +378,7 @@ Grammar::setUpExpressions ()
                             ExpressionRoot | MinusOp            | UnaryAddOp | NotOp           | PointerDerefExp | 
                             AddressOfOp    | MinusMinusOp       | PlusPlusOp | BitComplementOp | CastExp         |
                             ThrowOp        | RealPartOp         | ImagPartOp | ConjugateOp     | UserDefinedUnaryOp |
-                            MatrixTransposeOp,
+                            MatrixTransposeOp | AbsOp,
                             "UnaryOp","UNARY_EXPRESSION", false);
 
 
@@ -394,7 +398,7 @@ Grammar::setUpExpressions ()
           ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         |
 
           NonMembershipOp | IsOp            | IsNotOp             | DotDotExp        | ElementwiseOp        | PowerOp        |
-          LeftDivideOp,
+          LeftDivideOp    | RemOp,
           "BinaryOp","BINARY_EXPRESSION", false);
 
 
@@ -499,28 +503,6 @@ Grammar::setUpExpressions ()
 
      Expression.setDataPrototype     ( "Sg_File_Info*", "operatorPosition", "= NULL",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
-
-#if 0
-  // DQ (2/7/2011): Removed this data member since this general of a level of support for this concept is
-  // problematic.  We can't exclude it from SgExprListExp for example and we also want it to be defined 
-  // as DEF_TRAVERSAL.
-  // DQ (2/7/2011): Moved the originalExpressionTree data member to the SgExpression since it is required in
-  // a wide range of IR nodes already (SgValueExp, SgCastExp, SgPntrArrRefExp, SgSubtractOp, SgVarRefExp, 
-  // SgFunctionRefExp, SgAddressOfOp) and I expect this is not the complete list.  This disadvantage is 
-  // that this general a level of support in ROSE makes the SgExpression IR nodes 4 bytes larger for 32-bit
-  // systems and 8 byts larger for 64-bit systems.  Alternatively, if we ever get a small but clear list
-  // of required IR nodes for ths sort of support, we could support the data members only on those IR nodes
-  // and use a virtual function to support the interface functions (this would not change the API).
-  // A design problem is that we want this data member to be traversed as part of the AST, however we can't
-  // specify DEF_TRAVERSAL since then the SgExprListExp would have a list plus a data member (a ROSETTA rule 
-  // violation)., but we likely don't need this data member for the SgExprListExp.
-  // WHAT THIS DATA MEMBER SUPPORTS: This data member holds the original AST for constant folded expressions.  
-  // The constant folded expressions are held in the AST and the original expression as also saved.
-  // Expression.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     Expression.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
 #ifdef HL_GRAMMARS
      X_Expression.setFunctionPrototype          ( "HEADER_X_EXPRESSION",     "../Grammar/Expression.code" );
@@ -788,6 +770,11 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
 
      ConcatenationOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+
+     RemOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+     AbsOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
 
      MembershipOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
@@ -1060,6 +1047,8 @@ Grammar::setUpExpressions ()
      NaryBooleanOp.editSubstitute    ( "PRECEDENCE_VALUE", "13" );
 
      ConcatenationOp.editSubstitute ( "PRECEDENCE_VALUE", " 3" );
+     RemOp.editSubstitute           ( "PRECEDENCE_VALUE", "13" );
+     AbsOp.editSubstitute           ( "PRECEDENCE_VALUE", "15" );
 
   // DQ (2/5/2004): Adding support for varargs in AST
      VarArgStartOp.editSubstitute   ( "PRECEDENCE_VALUE", "16" );
@@ -1180,12 +1169,6 @@ Grammar::setUpExpressions ()
   // DQ (9/17/2011): Put back the traversal over the originalExpressionTree (because it will be set to NULL in post processing).
   // DQ (9/16/2011): Modified this to specify NO_TRAVERSAL.
   // DQ (2/6/2011): Added reference to expression tree for unfolded constant expressions (see comment above).
-  // BinaryOp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-  // BinaryOp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // BinaryOp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      BinaryOp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -1236,11 +1219,6 @@ Grammar::setUpExpressions ()
 
      MatrixTransposeOp.setDataPrototype("bool", "is_conjugate", "= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-                                     
-     
-  // Note that excludeDataPrototype() function does not exist in ROSETTA.
-  // DQ (2/7/2011): Exclude support for originalExpressionTree (violates ROSETTA rules for compiling lists and data members).
-  // ExprListExp.excludeDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      VarRefExp.setFunctionPrototype ( "HEADER_VAR_REF_EXPRESSION", "../Grammar/Expression.code" );
 
@@ -1257,12 +1235,6 @@ Grammar::setUpExpressions ()
   // DQ (9/17/2011): Put back the traversal over the originalExpressionTree (because it will be set to NULL in post processing).
   // DQ (9/16/2011): Modified this to specify NO_TRAVERSAL.
   // DQ (2/6/2011): Added reference to expression tree for unfolded constant expressions (see comment above).
-  // VarRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-  // VarRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // VarRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      VarRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -1332,12 +1304,6 @@ Grammar::setUpExpressions ()
   // DQ (9/17/2011): Put back the traversal over the originalExpressionTree (because it will be set to NULL in post processing).
   // DQ (9/16/2011): Modified this to specify NO_TRAVERSAL.
   // DQ (2/6/2011): Added reference to expression tree for unfolded constant expressions (see comment above).
-  // FunctionRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-  // FunctionRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // FunctionRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      FunctionRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -1505,12 +1471,6 @@ Grammar::setUpExpressions ()
   // DQ (11/9/2005): Added reference to expression tree for original unfolded constant expressions.
   // Constant folding in EDG and ROSE allows us to ignore this subtree, but it is here to to permit
   // the original source code to be faithfully represented.
-  // ValueExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-  // ValueExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // ValueExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ValueExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -2158,7 +2118,7 @@ Grammar::setUpExpressions ()
   // VarArgOp.setFunctionPrototype ( "HEADER_VARARG_OPERATOR", "../Grammar/Expression.code" );
 
      NotOp.setFunctionPrototype    ( "HEADER_NOT_OPERATOR", "../Grammar/Expression.code" );
-
+     
      VarArgEndOp.setFunctionPrototype ( "HEADER_VARARG_END_OPERATOR", "../Grammar/Expression.code" );
      PointerDerefExp.setFunctionPrototype ( "HEADER_POINTER_DEREF_EXPRESSION", "../Grammar/Expression.code" );
 
@@ -2221,12 +2181,6 @@ Grammar::setUpExpressions ()
   // and I would like to avoid the extra memory requirement of this design, since expressions are numerous
   // within the AST and so they need to be kept as small as possible.  So we handle it in SgValue and SgCastExp 
   // explicitly instead of at the SgExpression level.
-  // CastExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-  // CastExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // CastExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-  //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      CastExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -2275,13 +2229,6 @@ Grammar::setUpExpressions ()
 
 
      PntrArrRefExp.setFunctionPrototype ( "HEADER_POINTER_ARRAY_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
-
-#if 0
-  // DQ (2/7/2011): This is included in SgBinaryOp, so it is redundant (and an error) to include it here.
-  // DQ (2/6/2011): Added reference to expression tree for unfolded constant expressions (see comment above).
-     PntrArrRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
 
      NewExp.setFunctionPrototype ( "HEADER_NEW_OPERATOR_EXPRESSION", "../Grammar/Expression.code" );
   // DQ (1/14/2006): We should not store the type of unary operators but instead obtain it from the operand directly.
@@ -2401,6 +2348,10 @@ Grammar::setUpExpressions ()
                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ConcatenationOp.setFunctionPrototype ( "HEADER_CONCATENATION_OPERATOR", "../Grammar/Expression.code" );
+     
+     RemOp.setFunctionPrototype ( "HEADER_REM_OPERATOR", "../Grammar/Expression.code" );
+     AbsOp.setFunctionPrototype ( "HEADER_ABS_OPERATOR", "../Grammar/Expression.code" );
+
 
   // DQ (9/4/2013): Adding support for compound literals.  These are not the same as initializers and define
   // a memory location that is un-named (much like an un-named variable).  When they are const they cannot
@@ -3139,7 +3090,10 @@ Grammar::setUpExpressions ()
      BracedInitializer.setFunctionSource ( "SOURCE_BRACED_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
 
      ConcatenationOp.setFunctionSource  ( "SOURCE_CONCATENATION_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-
+     
+     RemOp.setFunctionSource            ( "SOURCE_REM_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     AbsOp.setFunctionSource            ( "SOURCE_ABS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     
 
      // ###################################
      // Functions assigned by function name

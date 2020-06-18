@@ -99,7 +99,7 @@ ATbool traverse_PointerItemDescription (ATerm term, SgType* & type);
 ATbool traverse_OptTypeName            (ATerm term, SgType* & type, std::string & name);
 
 // 2.1.2 TABLE DECLARATION
-ATbool traverse_TableDeclaration       (ATerm term, int def_or_ref = 0);
+ATbool traverse_TableDeclaration       (ATerm term, int def_or_ref = 0, bool constant = false);
 ATbool traverse_TableDescriptionName   (ATerm term, std::string &type_name, SgType* &sg_type, SgExpression* &preset);
 ATbool traverse_TableDescriptionType   (ATerm term, SgType* &base_type, SgExpression* &preset,
                                                     SgExprListExp* attr_list, TableSpecifier &table_spec);
@@ -133,7 +133,7 @@ ATbool traverse_SpecifiedItemDescription      (ATerm term, SgType* &type, Locati
 ATbool traverse_WordsPerEntry                 (ATerm term, Sawyer::Optional<SgExpression*> &words_per_entry);
 
 // 2.1.3 CONSTANT DECLARATIONS
-ATbool traverse_ConstantDeclaration(ATerm term);
+ATbool traverse_ConstantDeclaration(ATerm term, int def_or_ref = 0);
 
 // 2.1.4 BLOCK DECLARATION
 ATbool traverse_BlockDeclaration   (ATerm term, int def_or_ref = 0);
@@ -342,6 +342,9 @@ ATbool traverse_ByteFunction         (ATerm term, SgFunctionCallExp* &func_call)
 
 // 6.3.5 SHIFT FUNCTION
 ATbool traverse_ShiftFunction        (ATerm term, SgFunctionCallExp* &func_call);
+
+// 6.3.6 ABS FUNCTIONS
+ATbool traverse_AbsFunction          (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.7 SIZE FUNCTION
 ATbool traverse_SizeFunction         (ATerm term, SgFunctionCallExp* &func_call);

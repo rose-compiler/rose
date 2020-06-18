@@ -8629,6 +8629,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgNonrealRefExp:
                                      precedence_value = 0; break;
 
+          case V_SgRangeExp:
+                                     precedence_value = 0; break;
+
           default:
              {
             // We want this to be a printed warning (so we can catch these missing cases), but it is not worthy of calling an error since the default works fine.
