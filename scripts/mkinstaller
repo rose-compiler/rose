@@ -23,20 +23,20 @@ $Interpreter ||= "/usr/bin/perl";
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
 $mkinstaller_ver_build = "2";
-$mkinstaller_ver_patch = "1";
-$mkinstaller_ver_name  = "2.6.2.1";
-$mkinstaller_ver_time  = "31May2020,05:18:26z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.2.1 - 31May2020,05:18:26z";
+$mkinstaller_ver_patch = "2";
+$mkinstaller_ver_name  = "2.6.2.2";
+$mkinstaller_ver_time  = "13Jun2020,21:23:10z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.2.2 - 13Jun2020,21:23:10z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
 $perl_library_ver_major = "1";
 $perl_library_ver_minor = "6";
 $perl_library_ver_build = "19";
-$perl_library_ver_patch = "2";
-$perl_library_ver_name  = "1.6.19.2";
-$perl_library_ver_time  = " 1Jun2020,18:24:29z";
-$perl_library_ver_id    = "@(#)perl_library 1.6.19.2 -  1Jun2020,18:24:29z";
+$perl_library_ver_patch = "3";
+$perl_library_ver_name  = "1.6.19.3";
+$perl_library_ver_time  = " 5Jun2020,23:51:08z";
+$perl_library_ver_id    = "@(#)perl_library 1.6.19.3 -  5Jun2020,23:51:08z";
 
 #{------------------------------------------------------------------------------
 #
@@ -17918,9 +17918,9 @@ sub basename {
 #     format     One of:
 #
 #                   "dense"     YYYYMMDDhhmmss         similar to: zulu (with no options)
-#                   "std"       DDMMMYYYY hh:mm:ss     similar to: zulu -r
-#                   "std-at"    DDMMMYYYY at hh:mm:ss  similar to: zulu -r but with "at"
-#                   "std-comma" DDMMMYYYY,hh:mm:ss     similar to: zulu -r but with a comma
+#                   "std"       DDMMMYYYY hh:mm:ss     similar to: zulu --revision
+#                   "std-at"    DDMMMYYYY at hh:mm:ss  similar to: zulu --revision but with "at"
+#                   "std-comma" DDMMMYYYY,hh:mm:ss     similar to: zulu --revision but with a comma
 #                   "verbose"   YYYY-MM-DD,hh:mm:ss    similar to: zulu -v
 #
 #     asLocal    A "boolean", if 1 then the output string is to be in local
