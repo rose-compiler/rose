@@ -1144,9 +1144,11 @@ RegisterDictionary::dictionary_mips32() {
     if (!regs) {
         regs = new RegisterDictionary("mips32");
 
-        // 32 general purpose registers
-        for (size_t i=0; i<32; ++i)
+        // 32 general purpose registers and hardware registers
+        for (size_t i=0; i<32; ++i) {
             regs->insert("r"+StringUtility::numberToString(i), mips_regclass_gpr, i, 0, 32);
+            regs->insert("hw"+StringUtility::numberToString(i), mips_regclass_hw, i, 0, 32);
+        }
 
         // Alternate names for the general purpose registers
         regs->insert("zero", mips_regclass_gpr, 0,  0, 32);                     // always equal to zero

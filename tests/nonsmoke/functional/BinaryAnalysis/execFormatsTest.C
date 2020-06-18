@@ -99,7 +99,7 @@ main(int argc, char *argv[])
     for (int i=1; i<argc; ++i) {
         if (strcmp(argv[i], "-o") == 0 && i+1 < argc) {
             unparseFileName = argv[i+1];
-            memcpy(argv+i, argv+i+2, (argc-(i+1))*sizeof(argv[0]));// don't forget to move argv[argc]
+            memmove(argv+i, argv+i+2, (argc-(i+1))*sizeof(argv[0]));// don't forget to move argv[argc]
             argc -= 2;
             break;
         }

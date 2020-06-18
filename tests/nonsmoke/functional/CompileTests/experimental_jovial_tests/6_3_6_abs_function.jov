@@ -1,0 +1,18 @@
+START
+PROGRAM absFunction;
+BEGIN
+
+ITEM abs'var U;
+ITEM num'pos U = 28;
+ITEM num'neg S = -5;
+ITEM num'zero S = 0;
+ITEM num'float F = 5.342;
+
+abs'var = ABS(num'pos);
+abs'var = ABS(num'neg);
+abs'var = ABS(num'zero);
+abs'var = ABS(num'pos/num'neg);
+abs'var = ABS(num'float);
+
+END
+TERM

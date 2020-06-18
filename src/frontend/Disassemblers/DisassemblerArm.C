@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_ASM_A64
 
 #include <sage3basic.h>
+#include <BitOps.h>
 #include <DisassemblerArm.h>
 #include <BinaryUnparserArm.h>
 
@@ -67,7 +68,7 @@ DisassemblerArm::init() {
     if (CS_ERR_OK != cs_open(arch, mode, &capstone_))
         throw Exception("capstone cs_open failed");
     capstoneOpened_ = true;
-    if (CS_ERR_OK != cs_option(capstone_, CS_OPT_DETAIL, 1))
+    if (CS_ERR_OK != cs_option(capstone_, CS_OPT_DETAIL, CS_OPT_ON))
         throw Exception("capstone cs_option failed");
 }
 
@@ -107,14 +108,24 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
 
     // Disassemble the instruction with capstone
     r.nInsns = cs_disasm(capstone_, bytes, nRead, va, 1, &r.csi);
-    if (0 == r.nInsns)
+    if (0 == r.nInsns) {
+#if 1 // DEBGUGGING: show the disassembly string from capstone itself
+        std::cerr <<"ROBB: capstone disassembly:"
+                  <<" " <<StringUtility::addrToString(va) <<":"
+                  <<" " <<StringUtility::toHex2(bytes[0], 8, false, false).substr(2)
+                  <<" " <<StringUtility::toHex2(bytes[1], 8, false, false).substr(2)
+                  <<" " <<StringUtility::toHex2(bytes[2], 8, false, false).substr(2)
+                  <<" " <<StringUtility::toHex2(bytes[3], 8, false, false).substr(2)
+                  <<" unknown\n";
+#endif
         return makeUnknownInstruction(Exception("unable to decode instruction", va, SgUnsignedCharList(bytes+0, bytes+nRead), 0));
+    }
 
     ASSERT_require(1 == r.nInsns);
     ASSERT_not_null(r.csi);
     ASSERT_require(r.csi->address == va);
     ASSERT_not_null(r.csi->detail);
-    
+
     // Convert disassembled capstone instruction to ROSE AST
     SgAsmInstruction *retval = nullptr;
     if (Architecture::ARCH_ARM == arch_) {
@@ -122,18 +133,24 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
         ASSERT_not_implemented("ARM (32-bit) disassembler is not implemented");
     } else if (Architecture::ARCH_ARM64 == arch_) {
         const cs_arm64 &detail = r.csi->detail->arm64;
+#if 1 // DEBGUGGING: show the disassembly string from capstone itself
         std::cerr <<"ROBB: capstone disassembly:"
-                  <<" " <<StringUtility::toHex2(bytes[0], 8, false, false)
-                  <<" " <<StringUtility::toHex2(bytes[1], 8, false, false)
-                  <<" " <<StringUtility::toHex2(bytes[2], 8, false, false)
-                  <<" " <<StringUtility::toHex2(bytes[3], 8, false, false)
-                  <<": " <<r.csi->mnemonic <<" " <<r.csi->op_str <<"\n";
+                  <<" " <<StringUtility::addrToString(va) <<":"
+                  <<" " <<StringUtility::toHex2(bytes[0], 8, false, false).substr(2)
+                  <<" " <<StringUtility::toHex2(bytes[1], 8, false, false).substr(2)
+                  <<" " <<StringUtility::toHex2(bytes[2], 8, false, false).substr(2)
+                  <<" " <<StringUtility::toHex2(bytes[3], 8, false, false).substr(2)
+                  <<" " <<r.csi->mnemonic <<" " <<r.csi->op_str <<"\n";
+#endif
         auto operands = new SgAsmOperandList;
         for (uint8_t i = 0; i < detail.op_count; ++i) {
-            auto operand = makeOperand(detail.operands[i]);
+            auto operand = makeOperand(*r.csi, detail.operands[i]);
+            ASSERT_not_null(operand);
+            ASSERT_not_null(operand->get_type());
             operands->get_operands().push_back(operand);
             operand->set_parent(operands);
         }
+        wrapPrePostIncrement(operands, detail);
         auto insn = new SgAsmArm64Instruction(va, r.csi->mnemonic, (Arm64InstructionKind)r.csi->id, detail.cc);
         insn->set_raw_bytes(SgUnsignedCharList(r.csi->bytes+0, r.csi->bytes+r.csi->size));
         insn->set_operandList(operands);
@@ -148,8 +165,7 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
     /* Note successors if necessary */
     if (successors) {
         bool complete;
-        AddressSet suc2 = retval->getSuccessors(&complete);
-        successors->insert(suc2.begin(), suc2.end());
+        *successors |= retval->getSuccessors(complete/*out*/);
     }
 
     return retval;
@@ -166,7 +182,7 @@ DisassemblerArm::makeUnknownInstruction(const Exception &e) {
 }
 
 SgAsmExpression*
-DisassemblerArm::makeOperand(const cs_arm64_op &op) {
+DisassemblerArm::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
     SgAsmExpression *retval = nullptr;
 
     switch (op.type) {
@@ -191,11 +207,13 @@ DisassemblerArm::makeOperand(const cs_arm64_op &op) {
 
         case ARM64_OP_MEM: {    // memory operand
             auto base = new SgAsmDirectRegisterExpression(makeRegister(op.mem.base));
+            base->set_type(registerType(op.mem.base, ARM64_VAS_INVALID));
             SgAsmExpression *addr = base;
             SgAsmType *u64 = SageBuilderAsm::buildTypeU64();
 
             if (op.mem.index != ARM64_REG_INVALID) {
                 auto index = new SgAsmDirectRegisterExpression(makeRegister(op.mem.index));
+                index->set_type(registerType(op.mem.index, ARM64_VAS_INVALID));
 
                 if (op.mem.disp != 0) {
                     auto disp = new SgAsmIntegerValueExpression(op.mem.disp, u64);
@@ -226,10 +244,11 @@ DisassemblerArm::makeOperand(const cs_arm64_op &op) {
                 auto disp = new SgAsmIntegerValueExpression(op.mem.disp, u64);
                 addr = SageBuilderAsm::buildAddExpression(addr, disp, u64);
             }
-            addr = extendOperand(retval, op.ext, retval->get_type(), op.shift.type, op.shift.value);
+            addr = extendOperand(addr, op.ext, addr->get_type(), op.shift.type, op.shift.value);
 
             auto mre = new SgAsmMemoryReferenceExpression;
             mre->set_address(addr);
+            mre->set_type(typeForMemoryRead(insn));
             retval = mre;
             break;
         }
@@ -240,11 +259,13 @@ DisassemblerArm::makeOperand(const cs_arm64_op &op) {
 
         case ARM64_OP_CIMM:     // C-immediate
             retval = new SgAsmArm64CImmediateOperand(op.sys);
+            retval->set_type(SageBuilderAsm::buildTypeU(1)); // FIXME: not sure what the type should be, but probably not this
             break;
 
         case ARM64_OP_REG_MRS:  // MRS register operand
         case ARM64_OP_REG_MSR:  // MSR register operand
             retval = new SgAsmArm64SysMoveOperand(op.reg);
+            retval->set_type(SageBuilderAsm::buildTypeU(1)); // FIXME: not sure what the type should be, but probably not this
             break;
 
         case ARM64_OP_PSTATE:   // PState operand
@@ -252,16 +273,19 @@ DisassemblerArm::makeOperand(const cs_arm64_op &op) {
 
         case ARM64_OP_SYS:      // SYS operand for IC/DC/AT/TLBI
             retval = new SgAsmArm64AtOperand((Arm64AtOperation)op.sys);
+            retval->set_type(SageBuilderAsm::buildTypeU(1)); // FIXME: not sure what the type should be, but probably not this
             break;
 
         case ARM64_OP_PREFETCH: // prefetch operand
             retval = new SgAsmArm64PrefetchOperand(op.prefetch);
+            retval->set_type(SageBuilderAsm::buildTypeU(1)); // FIXME: not sure what the type should be, but probably not this
             break;
 
         case ARM64_OP_BARRIER:  // memory barrier operand for ISB/DMB/DSB instruction
             break;
     }
     ASSERT_not_null(retval);
+    ASSERT_not_null(retval->get_type());
     return retval;
 }
 
@@ -353,6 +377,433 @@ DisassemblerArm::extendOperand(SgAsmExpression *expr, arm64_extender extender, S
     ASSERT_not_null(expr->get_type());
     ASSERT_require(expr->get_type() == dstType);
     return expr;
+}
+
+void
+DisassemblerArm::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_arm64 &cs_detail) {
+    ASSERT_not_null(operands);
+
+    if (cs_detail.writeback) {
+        // This A64 instruction must have a memory reference operand and is either pre-update or post-update.  A pre-update
+        // instruction will have both the register and the increment within the memory address expression, such as:
+        //
+        //    Opcode:      95 9d 87 ad
+        //    ARM syntax:  stp q21, q7, [x12, #0xf0]!
+        //    ROSE syntax: stp q21, q7, u128 [x12 + 0xf0]   (before the transformation)
+        //    ROSE syntax: stp q21, q7, u128 [x12 += 0xf0]  (after the transformation)
+        //
+        // Semantically, the above means that the value in register x12 is added to the constant 0xf0 resulting in the first
+        // (lowest) address where data is written to memory.
+        //
+        // The post-increment operations is slightly different in that Capstone disassembles the expression as two separate
+        // instruction operands. For instance:
+        //
+        //    Opcode:       95 9d 87 ac
+        //    ARM syntax:   stp q21, q7, [x12], #0xf0
+        //    ROSE syntax:  stp q21, q7, u128 [x12], 0xf0             (before the transformation)
+        //    ROSE syntax:  stp q21, q7, u128 [x12 then x12 += 0xf0]  (after the transofmration)
+        //
+        // Semantically, the value stored originally in x12 is used as the memory address, and then the register is incremented
+        // by 0xf0. ROSE combines these two arguments into a single expression containing a SgAsmBinaryAddPostupdate node.
+        for (size_t i = 0; i < operands->get_operands().size(); ++i) {
+            if (auto mre = isSgAsmMemoryReferenceExpression(operands->get_operands()[i])) {
+                if (i + 1 == operands->get_operands().size()) {
+                    // The memory reference expression is the last operand, therefore this is a pre-increment. The address must
+                    // be an addition expression whose lhs is a register reference (or just a register expression, in which
+                    // case the pre-increment is a no-op).  Replace the SgAsmBinaryAdd with a SgAsmBinaryAddPreupdate node.
+                    // First unlink things from the tree...
+                    SgAsmBinaryAdd *add = isSgAsmBinaryAdd(mre->get_address());
+                    if (!add) {
+                        ASSERT_require(isSgAsmDirectRegisterExpression(mre->get_address()));
+                        return; // if the offset is zero then we have already removed it and the pre-increment is a no-op.
+                    }
+                    SgAsmType *type = add->get_type();
+                    ASSERT_not_null(type);
+                    SgAsmExpression *lhs = add->get_lhs();
+                    ASSERT_require(isSgAsmDirectRegisterExpression(lhs));
+                    add->set_lhs(NULL);
+                    lhs->set_parent(NULL);
+                    SgAsmExpression *rhs = add->get_rhs();
+                    add->set_rhs(NULL);
+                    rhs->set_parent(NULL);
+                    mre->set_address(NULL);
+                    add->set_parent(NULL);
+#if 0 // FIXME: Deleting parts of an AST is unsafe because ROSE has no formal ownership rules for its nodes.
+                    delete add;
+#else // instead, we'll just drop it
+                    add = nullptr;
+#endif
+                    // Construct the replacement and link it into the tree.
+                    auto newNode = SageBuilderAsm::buildAddPreupdateExpression(lhs, rhs, type);
+                    mre->set_address(newNode);
+                    newNode->set_parent(mre);
+                    return;
+
+                } else {
+                    // The memory reference must be a post-increment, in which case it must the the penultimate argument. The
+                    // address must be a register reference. First unlink things from the tree...
+                    ASSERT_require(i + 2 == operands->get_operands().size());
+                    SgAsmExpression *lhs = mre->get_address();
+                    mre->set_address(NULL);
+                    lhs->set_parent(NULL);
+                    SgAsmExpression *rhs = operands->get_operands()[i+1];
+                    operands->get_operands().erase(operands->get_operands().begin() + i + 1);
+                    rhs->set_parent(NULL);
+
+                    // Construct the replacement and link it into the tree
+                    auto newNode = SageBuilderAsm::buildAddPostupdateExpression(lhs, rhs, lhs->get_type());
+                    mre->set_address(newNode);
+                    newNode->set_parent(mre);
+                    return;
+                }
+            }
+        }
+        ASSERT_not_reachable("writeback was set but there is no memory reference operand");
+    }
+}
+
+SgAsmType*
+DisassemblerArm::typeForMemoryRead(const cs_insn &insn) {
+    using namespace ::Rose::BitOps;
+    using Kind = ::Rose::BinaryAnalysis::Arm64InstructionKind;
+    // FIXME: This is for little endian. Will need to be swapped for big endian when we implement that.
+    uint32_t code = (insn.bytes[0] << 0) | (insn.bytes[1] << 8) | (insn.bytes[2] << 16) | (insn.bytes[3] << 24);
+
+    switch ((Kind)insn.id) {
+        //--------------------------------------------------------------------------------------------------------
+        //case Kind::ARM64_INS_LDADDB:    // atomic add on byte in memory                       -- not in capstone
+        //case Kind::ARM64_INS_LDADDAB:   // atomic add on byte in memorym                      -- not in capstone
+        //case Kind::ARM64_INS_LDADDALB:  // atomic add on byte in memory                       -- not in capstone
+        //case Kind::ARM64_INS_LDADDLB:   // atomic add on byte in memory                       -- not in capstone
+        //case Kind::ARM64_INS_LDAPRB:    // load-acquire RCpc register byte                    -- not in capstone
+        //case Kind::ARM64_INS_LDAPURB:   // load-acquire RCpc register byte unscaled           -- not in capstone
+        //case Kind::ARM64_INS_LDAPURSB:  // load-acquire RCpc regiater signed byte unscaled    -- not in capstone
+        case Kind::ARM64_INS_LDARB:     // load-acquire register byte
+        case Kind::ARM64_INS_LDAXRB:    // load-acquire exclusive register byte
+        //case Kind::ARM64_INS_LDCLRB:    // atomic bit clear on byte in memory                 -- not in capstone
+        //case Kind::ARM64_INS_LDCLRAB:   // atomic bit clear on byte in memory                 -- not in capstone
+        //case Kind::ARM64_INS_LDCLRALB:  // atomic bit clear on byte in memory                 -- not in capstone
+        //case Kind::ARM64_INS_LDCLRLB:   // atomic bit clear on byte in memory                 -- not in capstone
+        //case Kind::ARM64_INS_LDEORB:    // atomic exclusive OR on byte in memory              -- not in capstone
+        //case Kind::ARM64_INS_LDEORAB:   // atomic exclusive OR on byte in memory              -- not in capstone
+        //case Kind::ARM64_INS_LDEORALB:  // atomic exclusive OR on byte in memory              -- not in capstone
+        //case Kind::ARM64_INS_LDEORLB:   // atomic exclusive OR on byte in memory              -- not in capstone
+        //case Kind::ARM64_INS_LDLARB:    // load LOAcquire register byte                       -- not in capstone
+        case Kind::ARM64_INS_LDRB:      // load register byte
+        case Kind::ARM64_INS_LDRSB:     // load register signed byte
+        //case Kind::ARM64_INS_LDSETB:    // atomic bit set on byte in memory                   -- not in capstone
+        //case Kind::ARM64_INS_LDSETAB:   // atomic bit set on byte in memory                   -- not in capstone
+        //case Kind::ARM64_INS_LDSETALB:  // atomic bit set on byte in memory                   -- not in capstone
+        //case Kind::ARM64_INS_LDSETLB:   // atomic bit set on byte in memory                   -- not in capstone
+        //case Kind::ARM64_INS_LDSMAXB:   // atomic signed maximum on byte in memory            -- not in capstone
+        //case Kind::ARM64_INS_LDSMAXAB:  // atomic signed maximum on byte in memory            -- not in capstone
+        //case Kind::ARM64_INS_LDSMAXALB: // atomic signed maximum on byte in memory            -- not in capstone
+        //case Kind::ARM64_INS_LDSMAXLB:  // atomic signed maximum on byte in memory            -- not in capstone
+        //case Kind::ARM64_INS_LDSMINB:   // atomic signed minimum on byte in memory            -- not in capstone
+        //case Kind::ARM64_INS_LDSMINAB:  // atomic signed minimum on byte in memory            -- not in capstone
+        //case Kind::ARM64_INS_LDSMINALB: // atomic signed minimum on byte in memory            -- not in capstone
+        //case Kind::ARM64_INS_LDSMINLB:  // atomic signed minimum on byte in memory            -- not in capstone
+        case Kind::ARM64_INS_LDTRB:     // load register byte unprivileged
+        case Kind::ARM64_INS_LDTRSB:    // load register signed byte unprivileged
+        //case Kind::ARM64_INS_LDUMAXB:   // atomic unsigned maximum on byte in memory          -- not in capstone
+        //case Kind::ARM64_INS_LDUMAXAB:  // atomic unsigned maximum on byte in memory          -- not in capstone
+        //case Kind::ARM64_INS_LDUMAXALB: // atomic unsigned maximum on byte in memory          -- not in capstone
+        //case Kind::ARM64_INS_LDUMAXLB:  // atomic unsigned maximum on byte in memory          -- not in capstone
+        //case Kind::ARM64_INS_LDUMINB:   // atomic unsigned minimum on byte in memory          -- not in capstone
+        //case Kind::ARM64_INS_LDUMINAB:  // atomic unsigned minimum on byte in memory          -- not in capstone
+        //case Kind::ARM64_INS_LDUMINALB: // atomic unsigned minimum on byte in memory          -- not in capstone
+        //case Kind::ARM64_INS_LDUMINLB:  // atomic unsigned minimum on byte in memory          -- not in capstone
+        case Kind::ARM64_INS_LDURB:     // load register byte unscaled
+        case Kind::ARM64_INS_LDURSB:    // load register signed byte unscaled
+        case Kind::ARM64_INS_LDXRB:     // load exclusive register byte
+        case Kind::ARM64_INS_PRFM:      // prefetch memory
+        case Kind::ARM64_INS_PRFUM:     // prefetch memory, unscaled offset
+        //case Kind::ARM64_INS_STADDB:    // atomic add on byte in memory                       -- not in capstone
+        //case Kind::ARM64_INS_STADDLB:   // atomic add on byte in memory                       -- not in capstone
+        //case Kind::ARM64_INS_STCLRB:    // atomic bit clear on byte in memory                 -- not in capstone
+        //case Kind::ARM64_INS_STCLRLB:   // atomic bit clear on byte in memory                 -- not in capstone
+        //case Kind::ARM64_INS_STEORB:    // atomic exclusive OR on byte in memory              -- not in capstone
+        //case Kind::ARM64_INS_STEORLB:   // atomic exclusive OR on byte in memory              -- not in capstone
+        //case Kind::ARM64_INS_STLLRB:    // store LORelease register byte                      -- not in capstone
+        case Kind::ARM64_INS_STLRB:     // store-release register byte
+        //case Kind::ARM64_INS_STLURB:    // store-release register byte                        -- not in capstone
+        case Kind::ARM64_INS_STLXRB:    // store-release exclusive register byte
+        case Kind::ARM64_INS_STRB:      // store register byte
+        //case Kind::ARM64_INS_STSETB:    // atomic bit set on byte in memory                   -- not in capstone
+        //case Kind::ARM64_INS_STSETLB:   // atomic bit set on byte in memory                   -- not in capstone
+        //case Kind::ARM64_INS_STSMAXB:   // atomic signed maximum on byte in memory            -- not in capstone
+        //case Kind::ARM64_INS_STSMAXLB:  // atomic signed maximum on byte in memory            -- not in capstone
+        //case Kind::ARM64_INS_STSMINB:   // atomic signed minimum on byte in memory            -- not in capstone
+        //case Kind::ARM64_INS_STSMINLB:  // atomic signed minimum on byte in memory            -- not in capstone
+        case Kind::ARM64_INS_STTRB:     // store register byte unprivileged
+        //case Kind::ARM64_INS_STUMAXB:   // atomic unsigned maximum on byte in memory          -- not in capstone
+        //case Kind::ARM64_INS_STUMAXLB:  // atomic unsigned maximum on byte in memory          -- not in capstone
+        //case Kind::ARM64_INS_STUMINB:   // atomic unsigned minimum on byte in memory          -- not in capstone
+        //case Kind::ARM64_INS_STUMINLB:  // atomic unsigned minimum on byte in memory          -- not in capstone
+        case Kind::ARM64_INS_STURB:     // store register byte unscaled
+        case Kind::ARM64_INS_STXRB:     // store exclusive register byte
+            return SageBuilderAsm::buildTypeU(8);
+
+        //--------------------------------------------------------------------------------------------------------
+        //case Kind::ARM64_INS_LDADDH:    // atomic add on halfword in memory                   -- not in capstone
+        //case Kind::ARM64_INS_LDADDAH:   // atomic add on halfword in memory                   -- not in capstone
+        //case Kind::ARM64_INS_LDADDALH:  // atomic add on halfword in memory                   -- not in capstone
+        //case Kind::ARM64_INS_LDADDLH:   // atomic add on halfword in memory                   -- not in capstone
+        //case Kind::ARM64_INS_LDAPRH:    // load-acquire RCpc register halfword                -- not in capstone
+        //case Kind::ARM64_INS_LDAPURH:   // load-acquire RCpc register halfword unscaled       -- not in capstone
+        //case Kind::ARM64_INS_LDAPURSH:  // load-acquire RCpc register signed halfword unscaled-- not in capstone
+        case Kind::ARM64_INS_LDARH:     // load-acquire register halfword
+        case Kind::ARM64_INS_LDAXRH:    // load-acquire exclusive register halfword
+        //case Kind::ARM64_INS_LDCLRH:    // atomic bit clear on halfword in memory             -- not in capstone
+        //case Kind::ARM64_INS_LDCLRAH:   // atomic bit clear on halfword in memory             -- not in capstone
+        //case Kind::ARM64_INS_LDCLRALH:  // atomic bit clear on halfword in memory             -- not in capstone
+        //case Kind::ARM64_INS_LDCLRLH:   // atomic bit clear on halfword in memory             -- not in capstone
+        //case Kind::ARM64_INS_LDEORH:    // atomic exclusive OR on halfword in memory          -- not in capstone
+        //case Kind::ARM64_INS_LDEORAH:   // atomic exclusive OR on halfword in memory          -- not in capstone
+        //case Kind::ARM64_INS_LDEORALH:  // atomic exclusive OR on halfword in memory          -- not in capstone
+        //case Kind::ARM64_INS_LDEORLH:   // atomic exclusive OR on halfword in memory          -- not in capstone
+        //case Kind::ARM64_INS_LDLARH:    // load LOAcquire register halfword                   -- not in capstone
+        case Kind::ARM64_INS_LDRH:      // load register halfword
+        case Kind::ARM64_INS_LDRSH:     // load register signed halfword
+        //case Kind::ARM64_INS_LDSETH:    // atomic bit set on halfword in memory               -- not in capstone
+        //case Kind::ARM64_INS_LDSETAH:   // atomic bit set on halfword in memory               -- not in capstone
+        //case Kind::ARM64_INS_LDSETALH:  // atomic bit set on halfword in memory               -- not in capstone
+        //case Kind::ARM64_INS_LDSETLH:   // atomic bit set on halfword in memory               -- not in capstone
+        //case Kind::ARM64_INS_LDSMAXH:   // atomic signed maximum on halfword in memory        -- not in capstone
+        //case Kind::ARM64_INS_LDSMAXAH:  // atomic signed maximum on halfword in memory        -- not in capstone
+        //case Kind::ARM64_INS_LDSMAXALH: // atomic signed maximum on halfword in memory        -- not in capstone
+        //case Kind::ARM64_INS_LDSMAXLH:  // atomic signed maximum on halfword in memory        -- not in capstone
+        //case Kind::ARM64_INS_LDSMINH:   // atomic signed minimum on halfword in memory        -- not in capstone
+        //case Kind::ARM64_INS_LDSMINAH:  // atomic signed minimum on halfword in memory        -- not in capstone
+        //case Kind::ARM64_INS_LDSMINALH: // atomic signed minimum on halfword in memory        -- not in capstone
+        //case Kind::ARM64_INS_LDSMINLH:  // atomic signed minimum on halfword in memory        -- not in capstone
+        case Kind::ARM64_INS_LDTRH:     // load register halfword unprivileged
+        case Kind::ARM64_INS_LDTRSH:    // load register signed halfword unprivileged
+        //case Kind::ARM64_INS_LDUMAXH:   // atomic unsigned maximum on halfword in memory      -- not in capstone
+        //case Kind::ARM64_INS_LDUMAXAH:  // atomic unsigned maximum on halfword in memory      -- not in capstone
+        //case Kind::ARM64_INS_LDUMAXALH: // atomic unsigned maximum on halfword in memory      -- not in capstone
+        //case Kind::ARM64_INS_LDUMAXLH:  // atomic unsigned maximum on halfword in memory      -- not in capstone
+        //case Kind::ARM64_INS_LDUMINH:   // atomic unsigned minimum on halfword in memory      -- not in capstone
+        //case Kind::ARM64_INS_LDUMINAH:  // atomic unsigned minimum on halfword in memory      -- not in capstone
+        //case Kind::ARM64_INS_LDUMINALH: // atomic unsigned minimum on halfword in memory      -- not in capstone
+        //case Kind::ARM64_INS_LDUMINLH:  // atomic unsigned minimum on halfword in memory      -- not in capstone
+        case Kind::ARM64_INS_LDURH:     // load register halfword unscaled
+        case Kind::ARM64_INS_LDURSH:    // load register signed halfword unscaled
+        case Kind::ARM64_INS_LDXRH:     // load exclusive register halfword
+        //case Kind::ARM64_INS_LDADDH:    // atomic add on halfword in memory                   -- not in capstone
+        //case Kind::ARM64_INS_LDADDLH:   // atomic add on halfword in memory                   -- not in capstone
+        //case Kind::ARM64_INS_STCLRH:    // atomic bit clear on halfword in memory             -- not in capstone
+        //case Kind::ARM64_INS_STCLRLH:   // atomic bit clear on halfword in memory             -- not in capstone
+        //case Kind::ARM64_INS_STEORH:    // atomic exclusive OR on halfword in memory          -- not in capstone
+        //case Kind::ARM64_INS_STEORLH:   // atomic exclusive OR on halfword in memory          -- not in capstone
+        //case Kind::ARM64_INS_STLLRH:    // store LORelease register halfword                  -- not in capstone
+        case Kind::ARM64_INS_STLRH:     // store-release register halfword
+        //case Kind::ARM64_INS_STLURH:    // store-release reigster halfword                    -- not in capstone
+        case Kind::ARM64_INS_STLXRH:    // store-release exclusive register halfword
+        case Kind::ARM64_INS_STRH:      // store register halfword
+        //case Kind::ARM64_INS_STSETH:    // atomic bit set on halfword in memory               -- not in capstone
+        //case Kind::ARM64_INS_STSETLH:   // atomic bit set on halfword in memory               -- not in capstone
+        //case Kind::ARM64_INS_STSMAXH:   // atomic signed maximum on halfword in memory        -- not in capstone
+        //case Kind::ARM64_INS_STSMAXLH:  // atomic signed maximum on halfword in memory        -- not in capstone
+        //case Kind::ARM64_INS_STSMINH:   // atomic signed minimum on halfword in memory        -- not in capstone
+        //case Kind::ARM64_INS_STSMINLH:  // atomic signed minimum on halfword in memory        -- not in capstone
+        case Kind::ARM64_INS_STTRH:     // store register halfword unprivileged
+        //case Kind::ARM64_INS_STUMAXH:   // atomic unsigned maximum on halfword in memory      -- not in capstone
+        //case Kind::ARM64_INS_STUMAXLH:  // atomic unsigned maximum on halfword in memory      -- not in capstone
+        //case Kind::ARM64_INS_STUMINH:   // atomic unsigned minimum on halfword in memory      -- not in capstone
+        //case Kind::ARM64_INS_STUMINLH:  // atomic unsigned minimum on halfword in memory      -- not in capstone
+        case Kind::ARM64_INS_STURH:     // store register halfword unscaled
+        case Kind::ARM64_INS_STXRH:     // store exclusive register halfword
+            return SageBuilderAsm::buildTypeU(16);
+
+        //--------------------------------------------------------------------------------------------------------
+        case Kind::ARM64_INS_LDRSW:     // load register signed word
+        //case Kind::ARM64_INS_LDAPURSW:  // load-acquire RCpc register signed word unscaled    -- not in capstone
+        case Kind::ARM64_INS_LDTRSW:    // load register signed word unprivileged
+        case Kind::ARM64_INS_LDURSW:    // laod register signed word
+            return SageBuilderAsm::buildTypeU(32);
+
+        //--------------------------------------------------------------------------------------------------------
+        case Kind::ARM64_INS_LDPSW:     // load pair of registers signed word
+        //case Kind::ARM64_INS_LDRAA:     // load register with pointer authentication          -- not in capstone
+        //case Kind::ARM64_INS_LDRAB:     // load register with pointer authentication          -- not in capstone
+            return SageBuilderAsm::buildTypeU(64); // two 32-bit words
+
+        //--------------------------------------------------------------------------------------------------------
+        //case Kind::ARM64_INS_LDADD:     // atomic add on word or doubleword in memory         -- not in capstone
+        //case Kind::ARM64_INS_LDADDA:    // atomic add on word or doubleword in memory         -- not in capstone
+        //case Kind::ARM64_INS_LDADDAL:   // atomic add on word or doubleword in memory         -- not in capstone
+        //case Kind::ARM64_INS_LDADDL:    // atomic add on word or doubleword in memory         -- not in capstone
+        //case Kind::ARM64_INS_LDALR:     // load LOAcquire register                            -- not in capstone
+        //case Kind::ARM64_INS_LDAPR:     // load-acquire RCpc register                         -- not in capstone
+        //case Kind::ARM64_INS_LDAPUR:    // load-acquire RCpe register unscaled                -- not in capstone
+        case Kind::ARM64_INS_LDAR:      // load-acquire register
+        case Kind::ARM64_INS_LDAXR:     // load-acquire exclusive register
+        //case Kind::ARM64_INS_LDCLR:     // atomic bit clear on word or doubleword in memory   -- not in capstone
+        //case Kind::ARM64_INS_LDCLRA:    // atomic bit clear on word or doubleword in memory   -- not in capstone
+        //case Kind::ARM64_INS_LDCLRAL:   // atomic bit clear on word or doubleword in memory   -- not in capstone
+        //case Kind::ARM64_INS_LDCLRL:    // atomic bit clear on word or doubleword in memory   -- not in capstone
+        //case Kind::ARM64_INS_LDEOR:     // atomic exclusive OR on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDEORA:    // atomic exclusive OR on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDEORAL:   // atomic exclusive OR on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDEORL:    // atomic exclusive OR on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDSET:     // atomic bit set on word or doubleword in memory     -- not in capstone
+        //case Kind::ARM64_INS_LDSETA:    // atomic bit set on word or doubleword in memory     -- not in capstone
+        //case Kind::ARM64_INS_LDSETAL:   // atomic bit set on word or doubleword in memory     -- not in capstone
+        //case Kind::ARM64_INS_LDSETL:    // atomic bit set on word or doubleword in memory     -- not in capstone
+        //case Kind::ARM64_INS_LDSMAX:    // atomic signed maximum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDSMAXA:   // atomic signed maximum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDSMAXAL:  // atomic signed maximum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDSMAXL:   // atomic signed maximum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDSMIN:    // atomic signed minimum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDSMINA:   // atomic signed minimum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDSMINAL:  // atomic signed minimum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDSMINL:   // atomic signed minimum on word or doubleword in memory-- not in capstone
+        case Kind::ARM64_INS_LDTR:      // load register unprivileged
+        //case Kind::ARM64_INS_LDUMAX:    // atomic unsigned maximum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDUMAXA:   // atomic unsigned maximum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDUMAXAL:  // atomic unsigned maximum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDUMAXL:   // atomic unsigned maximum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDUMIN:    // atomic unsigned minimum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDUMINA:   // atomic unsigned minimum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDUMINAL:  // atomic unsigned minimum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_LDUMINL:   // atomic unsigned minimum on word or doubleword in memory-- not in capstone
+        case Kind::ARM64_INS_LDXR:      // load exclusive register
+        //case Kind::ARM64_INS_STADD:     // atomic add on word or doubleword in memory         -- not in capstone
+        //case Kind::ARM64_INS_STADDL:    // atomic add on word or doubleword in memory         -- not in capstone
+        //case Kind::ARM64_INS_STCLR:     // atomci bit clear on word or doubleword in memory   -- not in capstone
+        //case Kind::ARM64_INS_STCLRL:    // atomic bit clear on word or doubleword in memory   -- not in capstone
+        //case Kind::ARM64_INS_STEOR:     // atomic exclusive OR on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_STEORL:    // atomic exclusive OR on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_STLLR:     // store LORelease register                           -- not in capstone
+        case Kind::ARM64_INS_STLR:      // store-release register
+        //case Kind::ARM64_INS_STLUR:     // store-release register unscaled                    -- not in capstone
+        case Kind::ARM64_INS_STLXR:     // store-release exclusive register
+        //case Kind::ARM64_INS_STSET:     // atomic bit set on word or doubleword in memory     -- not in capstone
+        //case Kind::ARM64_INS_STSETL:    // atomic bit set on word or doubleword in memory     -- not in capstone
+        //case Kind::ARM64_INS_STSMAX:    // atomic signed maximum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_STSMAXL:   // atomic signed maximum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_STSMIN:    // atomic signed minimum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_STSMINL:   // atomic signed minimum on word or doubleword in memory-- not in capstone
+        case Kind::ARM64_INS_STTR:      // store register
+        //case Kind::ARM64_INS_STUMAX:    // atomic unsigned maximum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_STUMAXL:   // atomic unsigned maximum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_STUMIN:    // atomic unsigned minimum on word or doubleword in memory-- not in capstone
+        //case Kind::ARM64_INS_STUMINL:   // atomic unsigned minimum on word or doubleword in memory-- not in capstone
+        case Kind::ARM64_INS_STXR:      // store exclusive register
+            return SageBuilderAsm::buildTypeU(bit(code, 30) ? 64 : 32);
+
+        //--------------------------------------------------------------------------------------------------------
+        case Kind::ARM64_INS_LD1:       // load (multiple or single) 1-element structures
+        case Kind::ARM64_INS_LD1R:      // load one single-element structure and replicate to all lanes
+        case Kind::ARM64_INS_LD2:       // load (multiple or single) 2-element structures
+        case Kind::ARM64_INS_LD2R:      // load single 2-element structure and replicate to all lanes
+        case Kind::ARM64_INS_LD3:       // load (multiple or single) 3-element structures
+        case Kind::ARM64_INS_LD3R:      // load single 3-element structure and replicate to all lanes
+        case Kind::ARM64_INS_LD4:       // load (multiple or single) 4-element structures
+        case Kind::ARM64_INS_LD4R:      // load single 4-element structure and replicate to all lanes
+        case Kind::ARM64_INS_LDAXP:     // load-acquire exclusive pair of registers
+        case Kind::ARM64_INS_LDXP:      // load exclusive pair of registers
+        case Kind::ARM64_INS_ST1:       // store (multiple or single) 1-element structures
+        case Kind::ARM64_INS_ST2:       // store (multiple or single) 2-element structures
+        case Kind::ARM64_INS_ST3:       // store (multiple or single) 3-element structures
+        case Kind::ARM64_INS_ST4:       // store (multiple or single) 4-element structures
+        case Kind::ARM64_INS_STLXP:    // store-release exclusive pair of registers
+        case Kind::ARM64_INS_STXP:      // store exclusive pair of registers
+            return SageBuilderAsm::buildTypeU(bit(code, 30) ? 128 : 64);
+
+        //--------------------------------------------------------------------------------------------------------
+        case Kind::ARM64_INS_LDNP:      // load pair of registers with non-temporal hint
+        case Kind::ARM64_INS_LDP:       // load pair of registers
+        case Kind::ARM64_INS_STNP:      // store pair of registers with non-temporal hint
+        case Kind::ARM64_INS_STP: {     // store pair of registers
+            if (bits(code, 22, 29) == 0b10110001 || // LDNP (SIMD&FP)
+                bits(code, 22, 29) == 0b10110011 || // LDP (SIMD&FP) Post-index
+                bits(code, 22, 29) == 0b10110111 || // LDP (SIMD&FP) Pre-index
+                bits(code, 22, 29) == 0b10110101 || // LDP (SIMD&FP) Signed offset
+                bits(code, 22, 29) == 0b10110000 || // STNP (SIMD&FP)
+                bits(code, 22, 29) == 0b10110010 || // STP (SIMD&FP) Post-index
+                bits(code, 22, 29) == 0b10110110 || // STP (SIMD&FP) Pre-index
+                bits(code, 22, 29) == 0b10110100) { // STP (SIMD&FP) Signed offset
+                uint32_t opc = bits(code, 30, 31);
+                return SageBuilderAsm::buildTypeU(8 << (2 + opc));
+            } else if (bits(code, 22, 30) == 0b010100001 || // LDNP
+                       bits(code, 22, 30) == 0b010100011 || // LDP Post-index
+                       bits(code, 22, 30) == 0b010100111 || // LDP Pre-index
+                       bits(code, 22, 30) == 0b010100101 || // LDP Signed offset
+                       bits(code, 22, 30) == 0b010100000 || // STNP
+                       bits(code, 22, 30) == 0b010100010 || // STP Post-index
+                       bits(code, 22, 30) == 0b010100110 || // STP Pre-index
+                       bits(code, 22, 30) == 0b010100100) { // STP Signed offset
+                return SageBuilderAsm::buildTypeU(bit(code, 31) ? 64 : 32);
+            } else {
+                ASSERT_not_reachable("invalid opcode");
+            }
+        }
+
+        //--------------------------------------------------------------------------------------------------------
+        case Kind::ARM64_INS_LDR:       // load register
+        case Kind::ARM64_INS_LDUR:      // load register unscaled
+        case Kind::ARM64_INS_STR:       // store register
+        case Kind::ARM64_INS_STUR: {    // store register unscaled offset
+            if ((bits(code, 24, 29) == 0b111100 && bits(code, 21, 22) == 0b10 && bits(code, 10, 11) == 0b01) || // LDR (immediate, SIMD&FP) Post-index
+                (bits(code, 24, 29) == 0b111100 && bits(code, 21, 22) == 0b10 && bits(code, 10, 11) == 0b11) || // LDR (immediate, SIMD&FP) Pre-index
+                (bits(code, 24, 29) == 0b111101 && bit(code, 22)) || // LDR (immediate, SIMD&FP) Unsigned offset
+                (bits(code, 24, 29) == 0b111100 && bits(code, 21, 22) == 0b11 && bits(code, 10, 11) == 0b10) || // LDR (register, SIMD&FP)
+                (bits(code, 24, 29) == 0b111100 && bits(code, 21, 22) == 0b10 && bits(code, 10, 11) == 0b00) || // LDUR (SIMD&FP)
+                (bits(code, 24, 29) == 0b111100 && bits(code, 21, 22) == 0b00 && bits(code, 10, 11) == 0b01) || // STR (immediate, SIMD&FP) Post-index
+                (bits(code, 24, 29) == 0b111100 && bits(code, 21, 22) == 0b00 && bits(code, 10, 11) == 0b11) || // STR (immediate, SIMD&FP) Pre-index
+                (bits(code, 24, 29) == 0b111101 && !bit(code, 22)) || // STR (immediate, SIMD&FP) Unsigned offset
+                (bits(code, 24, 29) == 0b111100 && bits(code, 21, 22) == 0b01 && bits(code, 10, 11) == 0b10) || // STR (register, SIMD&FP)
+                (bits(code, 24, 29) == 0b111100 && bits(code, 21, 22) == 0b00 && bits(code, 10, 11) == 0b00)) { // STUR (SIMD&FP)
+                if (bits(code, 30, 31) == 0b00 && !bit(code, 23)) {
+                    return SageBuilderAsm::buildTypeU(8);
+                } else if (bits(code, 30, 31) == 0b01 && !bit(code, 23)) {
+                    return SageBuilderAsm::buildTypeU(16);
+                } else if (bits(code, 30, 31) == 0b10 && !bit(code, 23)) {
+                    return SageBuilderAsm::buildTypeU(32);
+                } else if (bits(code, 30, 31) == 0b11 && !bit(code, 23)) {
+                    return SageBuilderAsm::buildTypeU(64);
+                } else {
+                    ASSERT_require(bits(code, 30, 31) == 0b00);
+                    ASSERT_require(bit(code, 23));
+                    return SageBuilderAsm::buildTypeU(128);
+                }
+            } else if (( bit(code, 31) && bits(code, 21, 29) == 0b111000010 && bits(code, 10, 11) == 0b01) || // LDR (immediate) Post-index
+                       ( bit(code, 31) && bits(code, 21, 29) == 0b111000010 && bits(code, 10, 11) == 0b11) || // LDR (immediate) Pre-index
+                       ( bit(code, 31) && bits(code, 22, 29) == 0b11100101) || // LDR (immediate) unsigned offset
+                       (!bit(code, 31) && bits(code, 24, 29) == 0b011000) || // LDR (literal)
+                       ( bit(code, 31) && bits(code, 21, 29) == 0b111000011 && bits(code, 10, 11) == 0b10) || // LDR (register)
+                       ( bit(code, 31) && bits(code, 21, 29) == 0b111000010 && bits(code, 10, 11) == 0b00) || // LDUR
+                       ( bit(code, 31) && bits(code, 21, 29) == 0b111000000 && bits(code, 10, 11) == 0b01) || // STR (immediate) Post-index
+                       ( bit(code, 31) && bits(code, 21, 29) == 0b111000000 && bits(code, 10, 11) == 0b11) || // STR (immediate) Pre-index
+                       ( bit(code, 31) && bits(code, 22, 29) == 0b11100100) || // STR (immediate) unsigned offset
+                       ( bit(code, 31) && bits(code, 21, 29) == 0b111000001 && bits(code, 10, 11) == 0b10) || // STR (register)
+                       ( bit(code, 31) && bits(code, 21, 29) == 0b111000000 && bits(code, 10, 11) == 0b00)) { // STUR
+                if (bit(code, 30) == 0) {
+                    return SageBuilderAsm::buildTypeU(32);
+                } else {
+                    return SageBuilderAsm::buildTypeU(64);
+                }
+            } else if (bits(code, 24, 29) == 0b011100) { // LDR (literal, SIMD&FP)
+                if (bits(code, 30, 31) == 0b00) {
+                    return SageBuilderAsm::buildTypeU(32);
+                } else if (bits(code, 30, 31) == 0b01) {
+                    return SageBuilderAsm::buildTypeU(64);
+                } else {
+                    ASSERT_require(bits(code, 30, 31) == 0b10);
+                    return SageBuilderAsm::buildTypeU(128);
+                }
+            } else {
+                ASSERT_not_reachable("invalid opcode");
+            }
+            break;
+        }
+
+        //--------------------------------------------------------------------------------------------------------
+        default:
+            ASSERT_not_reachable("memory read instruction not handled");
+    }
 }
 
 SgAsmType*

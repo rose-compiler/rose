@@ -86,10 +86,6 @@ public:
         SgAsmInstruction *insn;         /**< Instruction associated with an assembly error. */
     };
 
-    /** An AddressSet contains virtual addresses (alternatively, relative virtual addresses) for such things as specifying
-     *  which virtual addresses should be disassembled. */
-    typedef std::set<rose_addr_t> AddressSet;
-
     /** The InstructionMap is a mapping from (absolute) virtual address to disassembled instruction. */
     typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
 
@@ -347,7 +343,7 @@ public:
      *  complete to true before returning.
      *
      *  Thread safety: Thread safe provided no other thread is modifying the specified instruction map. */
-    AddressSet get_block_successors(const InstructionMap&, bool *complete);
+    AddressSet get_block_successors(const InstructionMap&, bool &complete/*out*/);
 
 private:
     /** Initialize class (e.g., register built-in disassemblers). This class method is thread safe, using class_mutex. */

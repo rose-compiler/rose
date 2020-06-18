@@ -24,7 +24,7 @@ BENCH_PASS=0
 BENCH_FAIL=0
 
 function DomainTests {
-testNumbers=`echo {001..029}`
+testNumbers=`echo {001..032}`
 echo "Scheduled tests: $testNumbers"
 for testNumber in $testNumbers; do
     benchmarkprefix=$TESTDIR/DOM${testNumber};

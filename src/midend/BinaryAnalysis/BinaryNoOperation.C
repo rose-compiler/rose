@@ -269,10 +269,10 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
     // after each instruction.
     if (ignoreTerminalBranches_ && insns.size() > 1 && states.size() == insns.size() + 1) {
         bool isComplete = true;
-        std::set<rose_addr_t> succs = insns.back()->getSuccessors(&isComplete);
+        AddressSet succs = insns.back()->getSuccessors(isComplete/*out*/);
         if (succs.size() > 1 || !isComplete) {
             states.pop_back();
-        } else if (succs.size() == 1 && *succs.begin() != insns.back()->get_address() + insns.back()->get_size()) {
+        } else if (succs.size() == 1 && succs.least() != insns.back()->get_address() + insns.back()->get_size()) {
             states.pop_back();
         }
     }

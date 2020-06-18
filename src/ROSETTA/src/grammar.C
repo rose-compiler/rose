@@ -1195,6 +1195,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
   // Rasmussen (11/20/2018): Added SgUntypedArrayReferenceExpression, SgUntypedForAllStatement, and SgJovialCompoolStatement
   // Rasmussen (05/22/2019): Moved scope from SgUntypedStructureDeclaration to SgUntypedStructureDefinition
   // Rasmussen (09/30/2019): Added SgUntypedTypedefDeclaration
+  // PP (06/03/20): Added Ada nodes
 
   // Except in the root class for the virtual access function.
      if ( (nodeName == "XXXPragma"                  && variableNameString == "startOfConstruct")  ||
@@ -1290,6 +1291,11 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "AsmOp"                      && variableNameString == "name")  ||
           (nodeName == "UnknownArrayOrFunctionReference" && variableNameString == "name")  ||
           (nodeName == "TypeTraitBuiltinOperator"   && variableNameString == "name")  ||
+          (nodeName == "AdaPackageBodyDecl"         && variableNameString == "name")  ||
+          (nodeName == "AdaPackageSpecDecl"         && variableNameString == "name")  ||
+          (nodeName == "AdaTaskBodyDecl"            && variableNameString == "name")  ||
+          (nodeName == "AdaTaskSpecDecl"            && variableNameString == "name")  ||
+          (nodeName == "AdaTaskTypeDecl"            && variableNameString == "name")  ||
           (nodeName == "AsmFunction"                && variableNameString == "name")  ||
           (nodeName == "AsmSynthesizedFieldDeclaration" && variableNameString == "name")  ||
           (nodeName == "AsmGenericFile"             && variableNameString == "name")  ||
@@ -1420,6 +1426,11 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "UnknownArrayOrFunctionReference" && variableNameString == "name")  ||
           (nodeName == "TypeTraitBuiltinOperator"   && variableNameString == "name")  ||
           (nodeName == "FunctionTypeSymbol"         && variableNameString == "name")  ||
+          (nodeName == "AdaPackageBodyDecl"         && variableNameString == "name")  ||
+          (nodeName == "AdaPackageSpecDecl"         && variableNameString == "name")  ||
+          (nodeName == "AdaTaskBodyDecl"            && variableNameString == "name")  ||
+          (nodeName == "AdaTaskSpecDecl"            && variableNameString == "name")  ||
+          (nodeName == "AdaTaskTypeDecl"            && variableNameString == "name")  ||
           (nodeName == "AsmFunction"                && variableNameString == "name")  ||
           (nodeName == "AsmSynthesizedFieldDeclaration" && variableNameString == "name")  ||
           (nodeName == "AsmGenericFile"             && variableNameString == "name")  ||
@@ -4040,7 +4051,7 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
         ||nodeName == "SgOmpDoStatement"
         ||nodeName == "SgOmpAtomicStatement"
         ||nodeName == "SgExprListExp"
-        ||nodeName == "SgAdaTaskSpec");
+        ||nodeName == "SgAdaTaskSpec" /* \todo \revisit PP */);
   }
   return info;
 }
