@@ -8696,9 +8696,11 @@ SageBuilder::buildTypeTraitBuiltinOperator(SgName functionName, SgNodePtrList pa
      SgTypeTraitBuiltinOperator * builtin_func_call_expr = new SgTypeTraitBuiltinOperator(functionName);
      ROSE_ASSERT(builtin_func_call_expr != NULL);
 
-  // Note that this is copy by value...on SgNodePtrList (because we have to support both SgExpression and SgType IR nodes as arguments).
-  // In this way this is implemented differently from a SgCallExpression ro SgFunctionCallExp (which uses a SgExprListExp).
-     builtin_func_call_expr->get_args() = parameters;
+     SgNodePtrList & args = builtin_func_call_expr->get_args();
+     for (SgNodePtrList::iterator it = parameters.begin(); it != parameters.end(); ++it) {
+       args.push_back(*it);
+       (*it)->set_parent(builtin_func_call_expr);
+     }
 
      return builtin_func_call_expr;
    }

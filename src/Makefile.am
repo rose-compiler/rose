@@ -563,8 +563,9 @@ check-hello-c: $(eval SHELL:=/bin/bash)
 	${AM_V_at}echo "   printf(\"Hello World from C\\n\");" >> hello-world.c
 	${AM_V_at}echo "   return 0;"                           >> hello-world.c
 	${AM_V_at}echo "}"                                      >> hello-world.c
-	${AM_V_at}./rose-cc hello-world.c -o hello-world-c
+	${AM_V_at}./rose-cc -rose:ast:write hello-world-c.ast hello-world.c -o hello-world-c
 	${AM_V_at}./hello-world-c
+	${AM_V_at}./rose-compiler -rose:ast:read hello-world-c.ast
 else
 check-hello-c:
 	@echo "  TEST     ROSE C compiler [rose-cc]"
@@ -573,8 +574,9 @@ check-hello-c:
 	${AM_V_at}echo "   printf(\"Hello World from C\\n\");" >> hello-world.c
 	${AM_V_at}echo "   return 0;"                           >> hello-world.c
 	${AM_V_at}echo "}"                                      >> hello-world.c
-	${AM_V_at}./rose-cc hello-world.c -o hello-world-c
+	${AM_V_at}./rose-cc -rose:ast:write hello-world-c.ast hello-world.c -o hello-world-c
 	${AM_V_at}./hello-world-c
+	${AM_V_at}./rose-compiler -rose:ast:read hello-world-c.ast
 endif
 endif
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
@@ -585,8 +587,9 @@ check-hello-cxx:
 	${AM_V_at}echo "    std::cout << \"Hello World from C++!\" << std::endl;" >> hello-world.cpp
 	${AM_V_at}echo "    return 0;"                                            >> hello-world.cpp
 	${AM_V_at}echo "}"                                                        >> hello-world.cpp
-	${AM_V_at}./rose-c++ hello-world.cpp -o hello-world-cpp
+	${AM_V_at}./rose-c++ -rose:ast:write hello-world-cxx.ast hello-world.cpp -o hello-world-cpp
 	${AM_V_at}./hello-world-cpp
+	${AM_V_at}./rose-compiler -rose:ast:read hello-world-cxx.ast
 endif
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 check-hello-fortran:
@@ -594,8 +597,9 @@ check-hello-fortran:
 	${AM_V_at}echo "program hello"                            >  hello-world.f90
 	${AM_V_at}echo "  print *, \"Hello World from Fortran!\"" >> hello-world.f90
 	${AM_V_at}echo "end program hello"                        >> hello-world.f90
-	${AM_V_at}./rose-fortran hello-world.f90 -o hello-world-f90
+	${AM_V_at}./rose-fortran -rose:ast:write hello-world-f90.ast hello-world.f90 -o hello-world-f90
 	${AM_V_at}./hello-world-f90
+#	${AM_V_at}./rose-compiler -rose:ast:read hello-world-f90.ast
 endif
 
 check-local: $(bin_PROGRAMS)

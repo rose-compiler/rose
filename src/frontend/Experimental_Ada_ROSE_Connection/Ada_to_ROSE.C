@@ -138,18 +138,28 @@ namespace // local declarations
   /// records a node (value) @ref val with key @ref key in map @ref m. 
   template <class KeyT, class DclT, class ValT>
   void
-  recordNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val, bool unique = true)
+  recordNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val)
   {
-    ROSE_ASSERT(!unique || m.find(key) == m.end());
+    ROSE_ASSERT(m.find(key) == m.end());
 
-    //~ logInfo() << ">el# " << key << std::endl;
     m[key] = &val;
+  }
+  
+  /// use for non-defining/defining decls and 
+  /// other nodes that do not have a single defining mapping.
+  template <class KeyT, class DclT, class ValT>
+  void
+  recordNonUniqueNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val)
+  {
+    if (m.find(key) != m.end()) return;
+    
+    recordNode(m, key, val);
   }
   
   /// retrieves a node from map @ref m with key @ref key.
   template <class KeyT, class DclT>
   DclT&
-  retrieveNode(const map_t<KeyT, DclT*>& m, KeyT key)
+  lookupNode(const map_t<KeyT, DclT*>& m, KeyT key)
   {
     typename map_t<KeyT, DclT*>::const_iterator pos = m.find(key);
 
@@ -161,25 +171,13 @@ namespace // local declarations
   ///   assumption that it is of real type TgtT.
   template <class TgtT, class KeyT, class DclT>
   TgtT&
-  retrieveNodeAs(const map_t<KeyT, DclT*>& m, KeyT key)
+  lookupNodeAs(const map_t<KeyT, DclT*>& m, KeyT key)
   {
-    DclT& node = retrieveNode(m, key);
+    DclT& node = lookupNode(m, key);
 
     return SG_ASSERT_TYPE(TgtT, node);
   }
   
-  /// retrieves a node from map @ref m with key @ref key, only if key is valid.
-  /// returns the result of calling @ref alt otherwise (i.e., alt()).
-  template <class KeyT, class DclT, class Alt>
-  inline
-  DclT&
-  retrieveNodeIfAvail(const map_t<KeyT, DclT*>& m, KeyT key, Alt alt)
-  {
-    if (key == -1) return alt(); 
-    
-    return retrieveNode(m, key);
-  }
-
   /// retrieves a node from map @ref m with key @ref key if key exists.
   /// returns nullptr otherwise.
   template <class KeyT, class DclT>
@@ -368,6 +366,12 @@ namespace // local declarations
   mkExceptionType(SgExpression& n)
   {
     return mkTypeNode<SgDeclType>(&n);
+  }
+  
+  SgTypeDefault&
+  mkDefaultType()
+  {
+    return mkTypeNode<SgTypeDefault>();
   }
   
   SgTypeTuple&
@@ -568,7 +572,7 @@ namespace // local declarations
     linkParentChild(sgnode, pkgdef, &SgAdaPackageSpecDecl::set_definition);
     
     // add the symbol to the table
-    ROSE_ASSERT(!scope.symbol_exists(name));
+    //~ ROSE_ASSERT(!scope.symbol_exists(name));
     scope.insert_symbol(name, new SgAdaPackageSymbol(&sgnode));
     
     /*
@@ -1056,7 +1060,7 @@ namespace // local declarations
       {
         for (GotoContainer::value_type el : gotos)
         {
-          el.first->set_label(&retrieveNode(labels, el.second));
+          el.first->set_label(&lookupNode(labels, el.second));
         }
       }
       
@@ -1192,8 +1196,20 @@ namespace // local declarations
   {
     while (first != limit)
     {
-      func(retrieveAs<ElemT>(map, *first));
-
+      ElemT* el = retrieveAsOpt<ElemT>(map, *first);
+      
+      if (el)
+      { 
+        func(*el);
+      }
+      else 
+      {
+        logWarn() << "asis-element of type " << typeid(ElemT).name()
+                  << " not available -- asismap[" << *first << "]=nullptr"
+                  << std::endl;
+      }
+      
+      //~ func(retrieveAs<ElemT>(map, *first));
       ++first;
     }
 
@@ -1353,6 +1369,14 @@ namespace // local declarations
 
   //
   // pre declarations
+  
+  struct NameInfo
+  {
+    std::string       ident;
+    std::string       fullName;
+    SgScopeStatement* parent;
+    Element_ID        asisID;
+  };
 
   SgVariableDeclaration&
   getParm(Element_Struct& elem, AstContext ctx);
@@ -1366,7 +1390,7 @@ namespace // local declarations
   SgExpression&
   getExpr(Element_Struct& elem, AstContext ctx);
 
-  std::string
+  NameInfo
   getName(Element_Struct& elem, AstContext ctx);
   
   SgAdaRangeConstraint&
@@ -1405,10 +1429,11 @@ namespace // local declarations
       AstContext               ctx;
   };
 
+
   struct NameCreator
   {
-      typedef std::pair<std::string, Element_ID> result_type;
-      typedef std::vector<result_type>           result_container;
+      typedef NameInfo              result_type;
+      typedef std::vector<NameInfo> result_container;
 
       explicit
       NameCreator(AstContext astctx)
@@ -1417,7 +1442,7 @@ namespace // local declarations
 
       void operator()(Element_Struct& elem)
       {
-        names.push_back(result_type(getName(elem, ctx), elem.ID));
+        names.push_back(getName(elem, ctx));
       }
 
       operator result_container() { return names; }
@@ -2192,10 +2217,7 @@ namespace // local declarations
     return SG_DEREF( res );
   }
 
-
-  typedef std::pair<std::string, int> NameKeyPair;
-
-  NameKeyPair
+  NameInfo
   singleName(Declaration_Struct& decl, AstContext ctx)
   {
     ElemIdRange     range = idRange(decl.Names);
@@ -2203,7 +2225,7 @@ namespace // local declarations
 
     Element_Struct& dclname = retrieveAs<Element_Struct>(asisMap, *range.first);
 
-    return NameKeyPair(getName(dclname, ctx), dclname.ID);
+    return getName(dclname, ctx);
   }
   
   struct AdaCallBuilder : sg::DispatchHandler<SgExpression*>
@@ -2273,6 +2295,30 @@ namespace // local declarations
     AstContext  ctx;
   };
   
+  struct ScopeQuery : sg::DispatchHandler<SgScopeStatement*>
+  {
+    template <class SageNode>
+    void def(SageNode& n) 
+    { res = n.get_definition(); } 
+    
+    void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
+    void handle(SgAdaPackageSpecDecl& n) { def(n); }
+    void handle(SgAdaPackageBodyDecl& n) { def(n); }
+  };
+  
+  SgScopeStatement&
+  getScope(Element_Struct& elem, AstContext ctx)
+  {
+    ROSE_ASSERT(elem.Element_Kind == An_Expression);
+
+    Expression_Struct& expr = elem.The_Union.Expression;
+    ROSE_ASSERT (expr.Expression_Kind == An_Identifier);
+    
+    SgDeclarationStatement* dcl = findFirst(asisDecls, expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration);
+    SgScopeStatement*       res = sg::dispatch(ScopeQuery(), dcl);
+  
+    return SG_DEREF(res);
+  }
 
   SgExpression&
   getExpr(Element_Struct& elem, AstContext ctx)
@@ -2669,14 +2715,16 @@ namespace // local declarations
 
     for (int i = 0; i < num; ++i)
     {
-      const std::string& name = names.at(i).first;
-      Element_ID         id   = names.at(i).second;
+      ROSE_ASSERT(names.at(i).fullName == names.at(i).ident);
+      
+      const std::string& name = names.at(i).fullName;
+      Element_ID         id   = names.at(i).asisID;
       SgInitializedName& dcl  = mkInitializedName(name, dcltype, cloneNonNull(initexpr.get()));
       
       attachSourceLocation(dcl, retrieveAs<Element_Struct>(asisMap, id));
 
       lst.push_back(&dcl);
-      recordNode(m, id, dcl, false /* key is non-unique (non-defining/defining declarations) */);
+      recordNonUniqueNode(m, id, dcl);
     }
 
     return lst;
@@ -2784,28 +2832,60 @@ namespace // local declarations
 
   struct DeclareType
   {
-    DeclareType(TypeFundamental what, AstContext astctx, bool privateItems)
-    : foundation(what), scope(astctx.scope()), privateElems(privateItems)
-    {}
+      DeclareType(TypeFundamental what, AstContext astctx, bool privateItems)
+      : foundation(what), scope(astctx.scope()), privateElems(privateItems)
+      {}
+  
+      void operator()(const NameInfo& nameelem)
+      {
+        ROSE_ASSERT(nameelem.fullName == nameelem.ident);
+        
+        const std::string&      name = nameelem.fullName;
+        Element_ID              id   = nameelem.asisID;
+        SgDeclarationStatement* dcl = sg::dispatch(MakeDeclaration(name, scope, foundation), foundation.n);
+        ROSE_ASSERT(dcl);
+  
+        privatize(*dcl, privateElems);
+        scope.append_statement(dcl);
+        recordNode(asisTypes, id, *dcl);
+        ROSE_ASSERT(dcl->get_parent() == &scope);
+      }
 
-    void operator()(NameCreator::result_container::value_type nameelem)
-    {
-      const std::string&      name = nameelem.first;
-      Element_ID              id   = nameelem.second;
-      SgDeclarationStatement* dcl = sg::dispatch(MakeDeclaration(name, scope, foundation), foundation.n);
-      ROSE_ASSERT(dcl);
-
-      privatize(*dcl, privateElems);
-      scope.append_statement(dcl);
-      recordNode(asisTypes, id, *dcl);
-      ROSE_ASSERT(dcl->get_parent() == &scope);
-    }
-
-    TypeFundamental   foundation;
-    SgScopeStatement& scope;
-    bool              privateElems;
+    private:
+      TypeFundamental   foundation;
+      SgScopeStatement& scope;
+      bool              privateElems;
     // AstContext        ctx;
   };
+  
+  
+  struct DeclarePrivateType
+  {
+      DeclarePrivateType(SgType& tyrep, AstContext astctx, bool privateItems)
+      : ty(tyrep), scope(astctx.scope()), privateElems(privateItems)
+      {}
+  
+      void operator()(const NameInfo& nameelem)
+      {
+        ROSE_ASSERT(nameelem.fullName == nameelem.ident);
+        
+        const std::string&      name = nameelem.fullName;
+        Element_ID              id   = nameelem.asisID;
+        SgDeclarationStatement* dcl  = &mkTypeDecl(name, ty, scope);
+        ROSE_ASSERT(dcl);
+  
+        privatize(*dcl, privateElems);
+        scope.append_statement(dcl);
+        recordNode(asisTypes, id, *dcl);
+        ROSE_ASSERT(dcl->get_parent() == &scope);
+      }
+
+    private:
+      SgType&           ty;
+      SgScopeStatement& scope;
+      bool              privateElems;
+  };
+
   
   struct ParameterCompletion
   {
@@ -2832,7 +2912,7 @@ namespace // local declarations
     : spec(taskspec), scope(astctx.scope()), privateElems(privateItems)
     {}
 
-    void operator()(NameCreator::result_container::value_type nameelem)
+    void operator()(const NameInfo& nameelem)
     {
       const std::string& name = nameelem.first;
       Element_ID         id   = nameelem.second;
@@ -2892,19 +2972,28 @@ namespace // local declarations
     {
       case A_Package_Declaration:                    // 7.1(2)
         {
-          logTrace() << "package decl" << std::endl;
           SgScopeStatement&     outer   = ctx.scope();
-          NameKeyPair           adaname = singleName(decl, ctx);
-          SgAdaPackageSpecDecl& sgnode  = mkAdaPackageSpecDecl(adaname.first, outer);
+          NameInfo              adaname = singleName(decl, ctx);
+          //~ SgAdaPackageSpecDecl& sgnode  = mkAdaPackageSpecDecl(adaname.ident, outer);
+          SgAdaPackageSpecDecl& sgnode  = mkAdaPackageSpecDecl(adaname.ident, SG_DEREF(adaname.parent));
           SgAdaPackageSpec&     pkgspec = SG_DEREF(sgnode.get_definition());
           
-          //~ recordNode(asisUnits, adaUnit.ID, pkgdecl);
+          ROSE_ASSERT(adaname.parent);
+          sgnode.set_scope(adaname.parent);
+          //~ sgnode.set_scope(&outer);
+          logTrace() << "package decl " << adaname.ident 
+                     << " (" <<  adaname.fullName << ")" 
+                     << std::endl;
+          
           recordNode(asisDecls, elem.ID, sgnode);
+          //~ recordNode(asisDecls, adaname.asisID, sgnode);
 
           privatize(sgnode, isPrivate);
           attachSourceLocation(sgnode, elem);
           outer.append_statement(&sgnode);
           ROSE_ASSERT(sgnode.get_parent() == &outer);
+          
+          ROSE_ASSERT(sgnode.search_for_symbol_from_symbol_table());
           
           // visible items
           {
@@ -2936,10 +3025,11 @@ namespace // local declarations
           
           SgScopeStatement&     outer   = ctx.scope();
           Element_ID            specID  = decl.Corresponding_Declaration;
-          SgAdaPackageSpecDecl& specdcl = retrieveNodeAs<SgAdaPackageSpecDecl>(asisDecls, specID);
+          SgAdaPackageSpecDecl& specdcl = lookupNodeAs<SgAdaPackageSpecDecl>(asisDecls, specID);
           SgAdaPackageBodyDecl& sgnode  = mkAdaPackageBodyDecl(specdcl, outer);
           SgAdaPackageBody&     pkgbody = SG_DEREF(sgnode.get_definition());
-
+          
+          sgnode.set_scope(specdcl.get_scope());
           outer.append_statement(&sgnode);
           ROSE_ASSERT(sgnode.get_parent() == &outer);
           
@@ -2978,14 +3068,17 @@ namespace // local declarations
 
           const bool             isFunc  = decl.Declaration_Kind == A_Function_Declaration;
           SgScopeStatement&      outer   = ctx.scope();
-          NameKeyPair            adaname = singleName(decl, ctx);
+          NameInfo               adaname = singleName(decl, ctx);
           ElemIdRange            range   = idRange(decl.Parameter_Profile);
           SgType&                rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
                                                   : SG_DEREF(sb::buildVoidType());
-          SgFunctionDeclaration& sgnode  = mkProcedure(adaname.first, outer, rettype, ParameterCompletion(range, ctx));
+                                                  
+          ROSE_ASSERT(adaname.fullName == adaname.ident);
+          SgFunctionDeclaration& sgnode  = mkProcedure(adaname.fullName, outer, rettype, ParameterCompletion(range, ctx));
           
           setOverride(sgnode.get_declarationModifier(), decl.Is_Overriding_Declaration);
           recordNode(asisDecls, elem.ID, sgnode);
+          //~ recordNode(asisDecls, adaname.asisID, sgnode);
 
           privatize(sgnode, isPrivate);
           attachSourceLocation(sgnode, elem);
@@ -3020,14 +3113,17 @@ namespace // local declarations
 
           const bool             isFunc  = decl.Declaration_Kind == A_Function_Body_Declaration;
           SgScopeStatement&      outer   = ctx.scope();
-          NameKeyPair            adaname = singleName(decl, ctx);
+          NameInfo               adaname = singleName(decl, ctx);
           ElemIdRange            params  = idRange(decl.Parameter_Profile);
           SgType&                rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
                                                   : SG_DEREF(sb::buildVoidType());
-          SgFunctionDeclaration& sgnode  = mkProcedureDef(adaname.first, outer, rettype, ParameterCompletion(params, ctx));
+          
+          ROSE_ASSERT(adaname.fullName == adaname.ident);
+          SgFunctionDeclaration& sgnode  = mkProcedureDef(adaname.fullName, outer, rettype, ParameterCompletion(params, ctx));
           SgBasicBlock&          declblk = getFunctionBody(sgnode);
           
           recordNode(asisDecls, elem.ID, sgnode);
+          //~ recordNode(asisDecls, adaname.asisID, sgnode);
           privatize(sgnode, isPrivate);
           attachSourceLocation(sgnode, elem);
           outer.append_statement(&sgnode);
@@ -3069,6 +3165,39 @@ namespace // local declarations
           break;
         }
 
+      case A_Private_Type_Declaration:               // 3.2.1(2):7.3(2) -> Trait_Kinds
+        {
+          typedef NameCreator::result_container name_container;
+
+          logTrace() << "Private Type "
+                     << "\n  abstract: " << decl.Has_Abstract
+                     << "\n  limited: " << decl.Has_Limited
+                     << "\n  private: " << decl.Has_Private
+                     << std::endl;
+          ElemIdRange     range  = idRange(decl.Names);
+          name_container  names  = traverseIDs(range, asisMap, NameCreator(ctx));
+          SgType&         opaque = mkDefaultType();
+          
+          ROSE_ASSERT(ctx.scope().get_parent());
+          std::for_each(names.begin(), names.end(), DeclarePrivateType(opaque, ctx, isPrivate));
+
+          /*
+            bool                           Has_Abstract;
+            bool                           Has_Limited;
+            bool                           Has_Private;
+            Definition_ID                  Discriminant_Part;
+            Definition_ID                  Type_Declaration_View;
+            Declaration_ID                 Corresponding_Type_Declaration;
+            Declaration_ID                 Corresponding_Type_Completion;
+            Declaration_ID                 Corresponding_Type_Partial_View;
+            Declaration_ID                 Corresponding_First_Subtype;
+            Declaration_ID                 Corresponding_Last_Constraint;
+            Declaration_ID                 Corresponding_Last_Subtype;
+          */
+          
+          break;
+        }
+      
       case An_Ordinary_Type_Declaration:            // 3.2.1(3)
         {
           typedef NameCreator::result_container name_container;
@@ -3149,12 +3278,14 @@ namespace // local declarations
         {
           ROSE_ASSERT(!isPrivate);
           
-          NameKeyPair            adaname = singleName(decl, ctx);           
+          NameInfo               adaname = singleName(decl, ctx);
+          ROSE_ASSERT(adaname.fullName == adaname.ident);
+                     
           SgType&                vartype = SG_DEREF( sb::buildIntType() ); // \todo 
-          SgInitializedName&     loopvar = mkInitializedName(adaname.first, vartype, nullptr);
+          SgInitializedName&     loopvar = mkInitializedName(adaname.fullName, vartype, nullptr);
           SgScopeStatement&      scope   = ctx.scope();
                
-          recordNode(asisVars, adaname.second, loopvar);
+          recordNode(asisVars, adaname.asisID, loopvar);
           
           SgVariableDeclaration& sgnode  = mkVarDecl(loopvar, scope);
           
@@ -3179,15 +3310,16 @@ namespace // local declarations
       case A_Task_Type_Declaration:                  // 9.1(2)
         {
           SgAdaTaskSpec&     spec    = getTaskSpec(decl, ctx);
-          NameKeyPair        adaname = singleName(decl, ctx);
-          SgAdaTaskTypeDecl& sgnode  = mkAdaTaskTypeDecl(adaname.first, spec, ctx.scope());
+          NameInfo           adaname = singleName(decl, ctx);
+          ROSE_ASSERT(adaname.fullName == adaname.ident);
+          SgAdaTaskTypeDecl& sgnode  = mkAdaTaskTypeDecl(adaname.fullName, spec, ctx.scope());
 
           attachSourceLocation(sgnode, elem);
           privatize(sgnode, isPrivate);
           ctx.scope().append_statement(&sgnode);
           ROSE_ASSERT(sgnode.get_parent() == &ctx.scope());
-          recordNode(asisTypes, adaname.second, sgnode);
-          recordNode(asisDecls, adaname.second, sgnode);
+          recordNode(asisTypes, adaname.asisID, sgnode);
+          recordNode(asisDecls, adaname.asisID, sgnode);
 
           /* unused fields:
                bool                           Has_Task;
@@ -3210,19 +3342,21 @@ namespace // local declarations
       case A_Task_Body_Declaration:                  // 9.1(6)
         {
           SgAdaTaskBody&          tskbody = getTaskBody(decl, ctx);
-          NameKeyPair             adaname = singleName(decl, ctx);
+          NameInfo                adaname = singleName(decl, ctx);
           Element_ID              declID  = decl.Corresponding_Declaration;
           SgDeclarationStatement* tskdecl = findNode(asisDecls, declID);
+          ROSE_ASSERT(adaname.fullName == adaname.ident);
           
           // \todo \review not sure why a task body could be independently created
           SgAdaTaskBodyDecl&      sgnode  = tskdecl ? mkAdaTaskBodyDecl(*tskdecl, tskbody, ctx.scope())
-                                                    : mkAdaTaskBodyDecl(adaname.first, tskbody, ctx.scope());
+                                                    : mkAdaTaskBodyDecl(adaname.fullName, tskbody, ctx.scope());
           
           attachSourceLocation(sgnode, elem);
           privatize(sgnode, isPrivate);
           ctx.scope().append_statement(&sgnode);
           ROSE_ASSERT(sgnode.get_parent() == &ctx.scope());
-          recordNode(asisDecls, adaname.second, sgnode);
+          //~ recordNode(asisDecls, elem.ID, sgnode);
+          recordNode(asisDecls, adaname.asisID, sgnode);
           
           /* unused fields:
                bool                           Has_Task;
@@ -3240,15 +3374,18 @@ namespace // local declarations
         
       case An_Entry_Declaration:                     // 9.5.2(2)
         {
-          NameKeyPair     adaname = singleName(decl, ctx);
+          NameInfo        adaname = singleName(decl, ctx);
           ElemIdRange     range   = idRange(decl.Parameter_Profile);
-          SgAdaEntryDecl& sgnode  = mkAdaEntryDecl(adaname.first, ctx.scope(), ParameterCompletion(range, ctx));
+          
+          ROSE_ASSERT(adaname.fullName == adaname.ident);
+          SgAdaEntryDecl& sgnode  = mkAdaEntryDecl(adaname.fullName, ctx.scope(), ParameterCompletion(range, ctx));
                     
           attachSourceLocation(sgnode, elem);
           privatize(sgnode, isPrivate);
           ctx.scope().append_statement(&sgnode);
           ROSE_ASSERT(sgnode.get_parent() == &ctx.scope());
-          recordNode(asisDecls, adaname.second, sgnode);
+          //~ recordNode(asisDecls, elem.ID, sgnode);
+          recordNode(asisDecls, adaname.asisID, sgnode);
 
           /* unused fields:
                bool                           Is_Overriding_Declaration;
@@ -3266,7 +3403,7 @@ namespace // local declarations
           ElemIdRange              range    = idRange(decl.Names);
           name_container           names    = traverseIDs(range, asisMap, NameCreator(ctx));
           SgScopeStatement&        scope    = ctx.scope();
-          SgType&                  excty    = retrieveNode(adaTypes, std::string("Exception"));
+          SgType&                  excty    = lookupNode(adaTypes, std::string("Exception"));
           SgInitializedNamePtrList dclnames = constructInitializedNamePtrList(asisExcps, names, excty);
           SgVariableDeclaration&   sgnode   = mkExceptionDecl(dclnames, scope); 
 
@@ -3300,7 +3437,6 @@ namespace // local declarations
       case A_Protected_Type_Declaration:             // 9.4(2)
       case An_Incomplete_Type_Declaration:           // 3.2.1(2):3.10(2)
       case A_Tagged_Incomplete_Type_Declaration:     //  3.10.1(2)
-      case A_Private_Type_Declaration:               // 3.2.1(2):7.3(2) -> Trait_Kinds
       case A_Private_Extension_Declaration:          // 3.2.1(2):7.3(3) -> Trait_Kinds
       case A_Deferred_Constant_Declaration:          // 3.3.1(6):7.4(2) -> Trait_Kinds
       case A_Single_Task_Declaration:                // 3.3.1(2):9.1(3)
@@ -3354,6 +3490,12 @@ namespace // local declarations
 
     switch (clause.Clause_Kind)
     {
+      case A_Use_Package_Clause:         // 8.4
+        {
+          
+        }
+      
+      
       case A_With_Clause:                // 10.1.2
         {
           typedef std::vector<SgExpression*> ExprVec;
@@ -3372,7 +3514,6 @@ namespace // local declarations
         }
 
       case Not_A_Clause: /* break; */    // An unexpected element
-      case A_Use_Package_Clause:         // 8.4
       case A_Use_Type_Clause:            // 8.4
       case A_Use_All_Type_Clause:        // 8.4: Ada 2012
       case A_Representation_Clause:      // 13.1     -> Representation_Clause_Kinds
@@ -3471,6 +3612,12 @@ namespace // local declarations
     return sgn; 
   }
   
+  std::string 
+  getLabelName(Element_Struct& el, AstContext ctx)
+  {
+    return getName(el, ctx).fullName;
+  }
+  
   template <class SageAdaStmt>
   SgStatement&
   labelIfNeeded(SageAdaStmt& stmt, Defining_Name_ID lblid, AstContext ctx)
@@ -3480,7 +3627,7 @@ namespace // local declarations
     if (!lblid) return stmt;
     
     Element_Struct& lblelem = retrieveAs<Element_Struct>(asisMap, lblid);
-    std::string     lblname = getName(lblelem, ctx);
+    std::string     lblname = getLabelName(lblelem, ctx);
     
     stmt.set_string_label(lblname);
     return labelIfNeeded(stmt, lblname, lblid, ctx);
@@ -3495,9 +3642,10 @@ namespace // local declarations
     name_container names  = traverseIDs(range, asisMap, NameCreator(ctx));
     SgStatement*   sgnode = std::accumulate( names.rbegin(), names.rend(),
                                              &stmt,
-                                             [&](SgStatement* labeled, name_container::value_type& el) -> SgStatement*
+                                             [&](SgStatement* labeled, const NameInfo& el) -> SgStatement*
                                              {
-                                               return &labelIfNeeded(SG_DEREF(labeled), el.first, el.second, ctx);
+                                               ROSE_ASSERT(el.fullName == el.ident);
+                                               return &labelIfNeeded(SG_DEREF(labeled), el.fullName, el.asisID, ctx);
                                              } 
                                            );
         
@@ -3574,7 +3722,7 @@ namespace // local declarations
     
     if (names.size() == 0)
     {
-      names.push_back(std::make_pair(std::string(), elem.ID));
+      names.push_back(NameInfo{std::string(), std::string(), &ctx.scope(), elem.ID});
     }
     
     ROSE_ASSERT (names.size() == 1);
@@ -3758,7 +3906,7 @@ namespace // local declarations
 
       case An_Exit_Statement:                   // 5.7
         {
-          SgStatement&  exitedLoop    = retrieveNode(asisLoops, stmt.Corresponding_Loop_Exited); 
+          SgStatement&  exitedLoop    = lookupNode(asisLoops, stmt.Corresponding_Loop_Exited); 
           SgExpression& exitCondition = getExprID_opt(stmt.Exit_Condition, ctx);
           const bool    loopIsNamed   = stmt.Exit_Loop_Name > 0;
           SgStatement&  sgnode        = mkAdaExitStmt(exitedLoop, exitCondition, loopIsNamed);
@@ -3785,7 +3933,7 @@ namespace // local declarations
       
       case A_Procedure_Call_Statement:          // 6.4
         {
-          SgDeclarationStatement& tgt    = retrieveNode(asisDecls, stmt.Corresponding_Called_Entity);
+          SgDeclarationStatement& tgt    = lookupNode(asisDecls, stmt.Corresponding_Called_Entity);
           SgFunctionDeclaration*  fundcl = isSgFunctionDeclaration(&tgt);
           SgFunctionRefExp&       funref = SG_DEREF(sb::buildFunctionRefExp(fundcl));
           ElemIdRange             range  = idRange(stmt.Call_Statement_Parameters);
@@ -3890,12 +4038,59 @@ namespace // local declarations
     }
   }
 
-  std::string
+  NameInfo
   getName(Element_Struct& elem, AstContext ctx)
   {
+    if (elem.Element_Kind == An_Expression)
+    {
+      Expression_Struct& idex  = elem.The_Union.Expression;
+      
+      ROSE_ASSERT(idex.Expression_Kind = An_Identifier);
+      std::string        ident{idex.Name_Image};
+      
+      return NameInfo{ ident, ident, &ctx.scope(), elem.ID };
+    }
+    
+    if (elem.Element_Kind != A_Defining_Name)
+      logWarn() << "unexpected elem kind (getName)" << elem.Element_Kind << std::endl;
+      
     ROSE_ASSERT(elem.Element_Kind == A_Defining_Name);
-
-    return std::string(elem.The_Union.Defining_Name.Defining_Name_Image);
+    
+    Defining_Name_Struct& asisname = elem.The_Union.Defining_Name;
+    SgScopeStatement*     parent = &ctx.scope();
+    std::string           ident(asisname.Defining_Name_Image);
+    std::string           name(asisname.Defining_Name_Image);
+    
+    switch (asisname.Defining_Name_Kind)
+    {
+      case A_Defining_Expanded_Name:
+        {
+          Element_Struct& nameelem   = retrieveAs<Element_Struct>(asisMap, asisname.Defining_Selector);
+          NameInfo        defname    = getName(nameelem, ctx);
+          Element_Struct& prefixelem = retrieveAs<Element_Struct>(asisMap, asisname.Defining_Prefix);
+          
+          ident  = defname.ident;
+          parent = &getScope(prefixelem, ctx);
+          break;
+        }
+      
+      case A_Defining_Identifier: 
+        break;
+        
+      case Not_A_Defining_Name:
+        /* break; */
+      
+      case A_Defining_Character_Literal:   // 3.5.1(4)
+      case A_Defining_Enumeration_Literal: // 3.5.1(3)
+      case A_Defining_Operator_Symbol:     // 6.1(9)
+      default:
+        logWarn() << "unknown name kind " << asisname.Defining_Name_Kind
+                  << " (" << name << ")"
+                  << std::endl;
+        ROSE_ASSERT(!PRODUCTION_CODE);
+    }    
+    
+    return NameInfo{ ident, name, parent, elem.ID };
   }
 
 
@@ -4004,28 +4199,18 @@ namespace // local declarations
           logTrace() << "A package"
                      << PrnUnitHeader(adaUnit)
                      << std::endl;
-/*
-          SgScopeStatement&     outer     = ctx.scope();
-          SgAdaPackageSpecDecl& pkgdecl   = mkAdaPackageSpecDecl(adaUnit.Unit_Full_Name, outer);
-          SgAdaPackageSpec&     pkgspec   = SG_DEREF(pkgdecl.get_definition());
-          
-          recordNode(asisUnits, adaUnit.ID, pkgdecl);
 
-          outer.append_statement(&pkgdecl);
-*/
           ElemIdRange           elemRange = idRange(adaUnit.Context_Clause_Elements);
           UnitIdRange           unitRange = idRange(adaUnit.Corresponding_Children);
 
           if (elemRange.size() || unitRange.size())
           {
-            logWarn() << "A package"
-                      << PrnUnitHeader(adaUnit)
-                      << "  elems# " << elemRange.size() << std::endl
-                      << "   subs# " << unitRange.size() << std::endl;
+            logWarn() << "   elems# " << elemRange.size()
+                      << "\n    subs# " << unitRange.size() 
+                      << std::endl;
 
             traverseIDs(elemRange, asisMap, ElemCreator(ctx));
-            traverseIDs(unitRange, asisMap, UnitCreator(ctx));
-            //~ traverseIDs(unitRange, asisMap, UnitCreator(ctx.scope(pkgspec)));
+            //~ traverseIDs(unitRange, asisMap, UnitCreator(ctx));
           }
 
           //~ handleElementID(adaUnit.Unit_Declaration, ctx.scope(pkgspec));
@@ -4042,27 +4227,17 @@ namespace // local declarations
                      << PrnUnitHeader(adaUnit)
                      << std::endl;
                      
-          //~ SgScopeStatement&     outer   = ctx.scope();
-          //~ Unit_ID               specID  = adaUnit.Corresponding_Declaration;
-          //~ SgAdaPackageSpecDecl& specdcl = retrieveNodeAs<SgAdaPackageSpecDecl>(asisUnits, specID);
-          //~ SgAdaPackageBodyDecl& pkgdecl = mkAdaPackageBodyDecl(specdcl, outer);
-          //~ SgAdaPackageBody&     pkgbody = SG_DEREF(pkgdecl.get_definition());
-
-          //~ outer.append_statement(&pkgdecl);
-
           ElemIdRange           elemRange = idRange(adaUnit.Context_Clause_Elements);
           UnitIdRange           unitRange = idRange(adaUnit.Corresponding_Children);
           
           if (elemRange.size() || unitRange.size())
           {
-            logWarn() << "A package body "
-                      << PrnUnitHeader(adaUnit)
-                      << "  elems# " << elemRange.size() << std::endl
-                      << "   subs# " << unitRange.size() << std::endl;
+            logWarn() << "   elems# " << elemRange.size()
+                      << "\n    subs# " << unitRange.size() 
+                      << std::endl;
 
             traverseIDs(elemRange, asisMap, ElemCreator(ctx));
-            traverseIDs(unitRange, asisMap, UnitCreator(ctx));
-            //~ traverseIDs(unitRange, asisMap, UnitCreator(ctx.scope(pkgbody)));
+            //~ traverseIDs(unitRange, asisMap, UnitCreator(ctx));
           }
 
           handleElementID(adaUnit.Unit_Declaration, ctx);

@@ -72,6 +72,11 @@ namespace
       type(n.get_base_type());
     }
     
+    void handle(SgTypeDefault& n) 
+    {
+      prn(" private");
+    }
+    
     void handle(SgNamedType& n) 
     { 
       prn(" ");
