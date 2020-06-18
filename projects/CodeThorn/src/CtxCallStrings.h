@@ -315,6 +315,7 @@ struct ContextSequence
     const_iterator         end()     const { return data.end(); }
     const_reverse_iterator rbegin()  const { return data.rbegin(); }
     const_reverse_iterator rend()    const { return data.rend(); }
+    size_t                 size()    const { return data.size(); }
     
     /// adds a call label @ref lbl to the end of the sequence.
     /// if the sequence is at its capacity, the oldest call label will be
@@ -389,7 +390,7 @@ struct ContextSequenceCOW
     typedef typename impl::const_reverse_iterator const_reverse_iterator;
     typedef typename impl::const_iterator         const_iterator;
     
-    static const bool FIXED_LEN_REP = true;
+    static const bool FIXED_LEN_REP = _ImplT::FIXED_LEN_REP;
   
     ContextSequenceCOW()
     : data(new impl(CTX_CALL_STRING_MAX_LENGTH, Label()))
@@ -432,6 +433,7 @@ struct ContextSequenceCOW
     const_iterator         end()     const { return data->end(); }
     const_reverse_iterator rbegin()  const { return data->rbegin(); }
     const_reverse_iterator rend()    const { return data->rend(); }
+    size_t                 size()    const { return data->size(); }
     
     /// adds a call label @ref lbl to the end of the sequence.
     /// if the sequence is at its capacity, the oldest call label will be
@@ -519,6 +521,7 @@ struct FiniteCallString
     const_reverse_iterator rend()   const { return rep.rend(); }
     bool                   empty()  const { return rep.empty(); }  
     Label                  last()   const { return rep.last(); }  
+    size_t                 size()   const { return rep.size(); }  
 
     /// returns true if *this equals that.
     bool operator==(const FiniteCallString& that) const;

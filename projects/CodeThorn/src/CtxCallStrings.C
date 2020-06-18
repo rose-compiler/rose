@@ -419,7 +419,7 @@ bool FiniteCallString::callerOf(const FiniteCallString& target, Label callsite) 
 {
   ROSE_ASSERT(CTX_CALL_STRING_MAX_LENGTH > 0 && target.size());
   
-  constexpr bool fixedLen = FiniteCallString::FIXED_LEN_REP
+  constexpr bool fixedLen = FiniteCallString::FIXED_LEN_REP;
 
   // target is invoked from this, if
   // (1) the target's last label is callsite
