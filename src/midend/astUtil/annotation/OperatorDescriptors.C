@@ -1,12 +1,13 @@
 
 
 #include "OperatorDescriptors.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 #include <string.h>
 
 using namespace std;
 
 extern bool DebugAnnot();
-ReplaceParams:: 
+ReplaceParams::
 ReplaceParams ( const ParamDescriptor& decl, AstInterface::AstNodeList& args,
                 Map2Object<AstInterface*,AstNodePtr,AstNodePtr>* codegen)
 {
@@ -21,9 +22,9 @@ ReplaceParams ( const ParamDescriptor& decl, AstInterface::AstNodeList& args,
   }
 }
 
-SymbolicVal ReplaceParams::operator()( const SymbolicVal& v) 
+SymbolicVal ReplaceParams::operator()( const SymbolicVal& v)
 {
-  cur = SymbolicVal(); 
+  cur = SymbolicVal();
   v.Visit(this);
   return cur;
 }
@@ -41,18 +42,18 @@ void ReplaceParams:: VisitVar( const SymbolicVar &var)
 {
   string varname = var.GetVarName();
   SymbolicAstWrap ast = find(varname);
-  if (ast.get_ast() != AST_NULL) 
+  if (ast.get_ast() != AST_NULL)
     cur = ast;
 }
 
-void ReplaceParams::operator()( SymbolicValDescriptor& v) 
+void ReplaceParams::operator()( SymbolicValDescriptor& v)
 {
   v.replace_val( *this);
 }
 
-bool OperatorDeclaration::unique = false; 
+bool OperatorDeclaration::unique = false;
 //! Get a unique string name for a type, similar to qualified names in C++
-string OperatorDeclaration:: 
+string OperatorDeclaration::
 get_signiture( AstInterface& fa, const std::string& fname,
                                     const AstInterface::AstTypeList& plist)
 {
@@ -62,12 +63,12 @@ get_signiture( AstInterface& fa, const std::string& fname,
           p != plist.end();  ++p) {
       AstNodeType t = *p;
       string name;
-      fa.GetTypeInfo( t, &name); 
+      fa.GetTypeInfo( t, &name);
       r = r + "_" + name;
     }
   return r;
 }
-//! Read in an operator (function) declaration: name + a list of parameter types and names) 
+//! Read in an operator (function) declaration: name + a list of parameter types and names)
 OperatorDeclaration& OperatorDeclaration:: read ( istream& in )
    {
       // Signature is the full function name, possibly with several qualifiers
@@ -105,8 +106,8 @@ OperatorDeclaration& OperatorDeclaration:: read ( istream& in )
         pars.add_param( signiture, "this");
       }
       pars.read(in);
-      
-      
+
+
       for (unsigned i = index; i < pars.num_of_params(); ++i) {
          string partype = pars.get_param_type(i);
          if (!unique)
@@ -122,7 +123,7 @@ void OperatorDeclaration:: write( ostream& out) const
    }
 
 bool OperatorSideEffectDescriptor::read( istream& in, const OperatorDeclaration& op)
-{ 
+{
   param_num = 0;
   if (BaseClass::read(in, op)) {
     for (size_t i = 0; i < decl.num_of_params(); ++i) {
@@ -145,7 +146,7 @@ get_side_effect( AstInterface& fa,
       if (arg != AST_NULL) {  // if it is one of the function arguments, collect it
         collect( arg);
       }
-      else { // otherwise, it is a global variable, create a reference to it. 
+      else { // otherwise, it is a global variable, create a reference to it.
         AstNodePtr var = fa.CreateVarRef(varname);
         collect( var);
       }

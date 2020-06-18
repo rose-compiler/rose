@@ -2,6 +2,7 @@
 #include <PtrMap.h>
 #include <ProcessAstTree.h>
 #include <CommandOptions.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 bool debug_cfg()
 {

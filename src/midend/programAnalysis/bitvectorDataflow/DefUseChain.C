@@ -5,6 +5,7 @@
 #include "CommandOptions.h"
 #include "GraphUtils.h"
 #include "GraphIO.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 #include <vector>
 
@@ -13,7 +14,7 @@
 bool DebugDefUseChain();
 
 template <class Node>
-class BuildDefUseChain 
+class BuildDefUseChain
 {
  protected:
   DefUseChain<Node>* graph;
@@ -41,15 +42,15 @@ class BuildDefUseChain
         assert (def != 0);
         if (known.has_member(i) ||
             (unknown.has_member(i) && alias.may_alias( fa, ref, def->get_ref()) )) {
-          if (DebugDefUseChain()) 
+          if (DebugDefUseChain())
              std::cerr << " creating edge from " << def->toString() << std::endl;
           graph->CreateEdge(def, cur);
         }
         else if (DebugDefUseChain())  {
-          if (!unknown.has_member(i)) 
+          if (!unknown.has_member(i))
              std::cerr << "not in reaching definition: " << def->toString();
-          else if (!alias.may_alias( fa, ref, def->get_ref())) 
-             std::cerr << "not aliased: " << def->toString(); 
+          else if (!alias.may_alias( fa, ref, def->get_ref()))
+             std::cerr << "not aliased: " << def->toString();
         }
     }
   }
@@ -61,7 +62,7 @@ class BuildDefUseChain
 };
 
 template <class Node>
-class ProcessGenInfo 
+class ProcessGenInfo
   : public CollectObject<std::pair<AstNodePtr, AstNodePtr> >,
     public BuildDefUseChain<Node>
 {
@@ -138,7 +139,7 @@ public:
 
 
 
-template <class Node> 
+template <class Node>
 class ProcessUseInfo
   : public CollectObject< std::pair<AstNodePtr, AstNodePtr> >,
     public BuildDefUseChain<Node>
@@ -153,7 +154,7 @@ class ProcessUseInfo
     }
     Node* cur = BuildDefUseChain<Node>::graph->CreateNode( BuildDefUseChain<Node>::fa, read.first, read.second, false);
     if (cur == 0) {
-       if (DebugDefUseChain()) 
+       if (DebugDefUseChain())
            std::cerr << "do not create node in def-use chain \n";
         return false;
     }
@@ -181,7 +182,7 @@ void DumpDefSet( const std::vector<Node*>& defvec, const ReachingDefinitions& in
 }
 template <class Node>
 void DefUseChain<Node>::
-build( AstInterface& fa, AstNodePtr root, AliasAnalysisInterface* alias, 
+build( AstInterface& fa, AstNodePtr root, AliasAnalysisInterface* alias,
        FunctionSideEffectInterface *f)
 {
    StmtVarAliasCollect defaultAlias;
@@ -190,8 +191,8 @@ build( AstInterface& fa, AstNodePtr root, AliasAnalysisInterface* alias,
    reachingDef(fa, root);
    if (alias == 0) {
       alias = &defaultAlias;
-      AstNodePtr defn = fa.GetFunctionDefinition(root); 
-      assert(defn != AST_NULL);    
+      AstNodePtr defn = fa.GetFunctionDefinition(root);
+      assert(defn != AST_NULL);
       defaultAlias(fa, defn);
    }
    build(fa, reachingDef,*alias, f);
@@ -199,7 +200,7 @@ build( AstInterface& fa, AstNodePtr root, AliasAnalysisInterface* alias,
 
 template <class Node>
 void DefUseChain<Node>::
-build( AstInterface& fa, ReachingDefinitionAnalysis& r, 
+build( AstInterface& fa, ReachingDefinitionAnalysis& r,
        AliasAnalysisInterface& alias, FunctionSideEffectInterface* f)
 {
   std::vector <Node*> defvec;
@@ -210,14 +211,14 @@ build( AstInterface& fa, ReachingDefinitionAnalysis& r,
   const ReachingDefinitionBase& base = g->get_base();
   for (ReachingDefinitionBase::iterator p = base.begin(); p != base.end(); ++p) {
     std::pair<AstNodePtr,AstNodePtr> cur = base.get_ref(p);
-    if (DebugDefUseChain()) 
+    if (DebugDefUseChain())
        std::cerr << "creating def node : " << AstInterface::AstToString(cur.first) << " : " << AstInterface::AstToString(cur.second) << std::endl;
     Node* n = CreateNode( fa, cur.first, cur.second, true);
     assert(n != 0);
     defvec.push_back(n);
     defmap[cur.first] = n;
   }
-  for (ReachingDefinitionAnalysis::NodeIterator p = r.GetNodeIterator(); 
+  for (ReachingDefinitionAnalysis::NodeIterator p = r.GetNodeIterator();
        !p.ReachEnd(); ++p) {
       ReachingDefNode* cur = *p;
       if (DebugDefUseChain())  {
@@ -225,7 +226,7 @@ build( AstInterface& fa, ReachingDefinitionAnalysis& r,
          cur->write(std::cerr);
       }
       ReachingDefinitions in = cur->get_entry_defs();
-      if (DebugDefUseChain()) { 
+      if (DebugDefUseChain()) {
          std::cerr << "Reaching definitions: \n";
          DumpDefSet(defvec,in);
          std::cerr << std::endl;
@@ -238,9 +239,9 @@ build( AstInterface& fa, ReachingDefinitionAnalysis& r,
       for (std::list<AstNodePtr>::iterator p = stmts.begin(); p != stmts.end();
            ++p) {
         AstNodePtr cur = *p;
-        if (DebugDefUseChain())  
+        if (DebugDefUseChain())
             std::cerr << "processing stmt : " << AstInterface::AstToString(cur) << std::endl;
-        collect(fa, cur, &opgen, &opread, &opkill); 
+        collect(fa, cur, &opgen, &opread, &opkill);
       }
   }
 
@@ -267,7 +268,7 @@ class AppendWorkListWrap : public CollectObject<Node*>
 };
 
 template<class Node>
-void PropagateDefUseChainUpdate( DefUseChain<Node> *graph, 
+void PropagateDefUseChainUpdate( DefUseChain<Node> *graph,
                                  UpdateDefUseChainNode<Node>& update)
 {
   std::set<Node*> worklist;
@@ -308,7 +309,7 @@ void PropagateDefUseChainUpdate( DefUseChain<Node> *graph,
            Node* def = *defp;
            ++defp;
            if (defp.ReachEnd()) {
-              if (update.update_def_node(def, cur, append)) 
+              if (update.update_def_node(def, cur, append))
                        append(def);
             }
          }
@@ -321,7 +322,7 @@ void PropagateDefUseChainUpdate( DefUseChain<Node> *graph,
 
 void DefUseChainNode::Dump() const
 {
-  if (isdef) 
+  if (isdef)
     std::cerr << "definition: ";
   else
     std::cerr << "use: ";

@@ -1,5 +1,6 @@
 
 #include "broadway.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 using namespace std;
 
@@ -8,9 +9,9 @@ using namespace std;
 // ----------------------------------------------------------------------
 
 setPropertyAnn::setPropertyAnn(const parserID * id,
-			       Direction direction,
-			       SetPropertyKind kind,
-			       MeetFunction meet)
+                               Direction direction,
+                               SetPropertyKind kind,
+                               MeetFunction meet)
   : propertyAnn(id, direction, SetProperty),
     _kind(kind),
     _meet_function(meet),
@@ -85,7 +86,7 @@ void setPropertyAnn::to_bottom(memoryblock_bitset & bits)
  * Meet the src value with the dest value and store the result in dest. */
 
 void setPropertyAnn::meet(memoryblock_bitset & dest,
-			  memoryblock_bitset & src)
+                          memoryblock_bitset & src)
 {
   if (_meet_function == Union)
     dest |= src;
@@ -97,7 +98,7 @@ void setPropertyAnn::meet(memoryblock_bitset & dest,
 /** @brief Lookup set value */
 
 void setPropertyAnn::lookup_set_value(memoryAccess * def_or_use,
-				      memoryblock_bitset & bits)
+                                      memoryblock_bitset & bits)
 {
   set_property_map_p p = _set.find(def_or_use);
 
@@ -110,7 +111,7 @@ void setPropertyAnn::lookup_set_value(memoryAccess * def_or_use,
 /** @brief Update current set value */
 
 bool setPropertyAnn::update_set_value(memoryAccess * def_or_use,
-				      memoryblock_bitset & new_set)
+                                      memoryblock_bitset & new_set)
 {
   if (Annotations::Verbose_properties) {
     cout << "      + Update " << name() << endl;
@@ -154,7 +155,7 @@ bool setPropertyAnn::update_set_value(memoryAccess * def_or_use,
 }
 
 void setPropertyAnn::current_set_value(memoryblock_bitset & bits,
-				       bool & found_reaching_value)
+                                       bool & found_reaching_value)
 {
   if (Annotations::Verbose_properties)
     cout << "        - Lookup value of " << name() << endl;
@@ -182,8 +183,8 @@ void setPropertyAnn::current_set_value(memoryblock_bitset & bits,
       memoryDef * def = use->reaching_def();
 
       if (Annotations::Verbose_properties) {
-	cout << * (use->where()) << endl;
-	cout << "          reaching def at ";
+        cout << * (use->where()) << endl;
+        cout << "          reaching def at ";
       }
 
       // -- If there is a reaching def, look up the value associated with
@@ -191,23 +192,23 @@ void setPropertyAnn::current_set_value(memoryblock_bitset & bits,
 
       if (def) {
 
-	lookup_set_value(def, bits);
+        lookup_set_value(def, bits);
 
-	if (Annotations::Verbose_properties) {
-	  cout << * (def->where()) << endl;
-	  print_memoryblock_bitset("        = ", bits, cout);
-	}
+        if (Annotations::Verbose_properties) {
+          cout << * (def->where()) << endl;
+          print_memoryblock_bitset("        = ", bits, cout);
+        }
       }
       else {
 
-	// -- No reaching def; set the flag and set the value to TOP
+        // -- No reaching def; set the flag and set the value to TOP
 
-	found_reaching_value = false;
+        found_reaching_value = false;
 
-	to_top(bits);
+        to_top(bits);
 
-	if (Annotations::Verbose_properties)
-	  cout << "(no reaching def)" << endl;
+        if (Annotations::Verbose_properties)
+          cout << "(no reaching def)" << endl;
       }
     }
     else {
@@ -216,7 +217,7 @@ void setPropertyAnn::current_set_value(memoryblock_bitset & bits,
       // probably missing an access annotation).
 
       if (Annotations::Verbose_properties)
-	cout << " NO USE " << endl;
+        cout << " NO USE " << endl;
 
       to_bottom(bits);
     }
@@ -234,8 +235,8 @@ void setPropertyAnn::current_set_value(memoryblock_bitset & bits,
     if (current_def) {
 
       if (Annotations::Verbose_properties) {
-	cout << * (current_def->where()) << endl;
-	cout << "          uses reached:" << endl;
+        cout << * (current_def->where()) << endl;
+        cout << "          uses reached:" << endl;
       }
 
       memoryuse_list uses;
@@ -243,39 +244,39 @@ void setPropertyAnn::current_set_value(memoryblock_bitset & bits,
 
       if (uses.empty()) {
 
-	// -- Special case: if the def has no uses (this can happen with
-	// merge points), then return the default value. Also, set the
-	// flag.
+        // -- Special case: if the def has no uses (this can happen with
+        // merge points), then return the default value. Also, set the
+        // flag.
 
-	found_reaching_value = false;
+        found_reaching_value = false;
 
-	to_top(bits);
+        to_top(bits);
 
-	if (Annotations::Verbose_properties)
-	  cout << "              (no uses reached)" << endl;
+        if (Annotations::Verbose_properties)
+          cout << "              (no uses reached)" << endl;
       }
       else {
 
-	to_top(bits);
+        to_top(bits);
 
-	// -- Otherwise, visit all the uses reached by the def
+        // -- Otherwise, visit all the uses reached by the def
 
-	memoryblock_bitset temp;
+        memoryblock_bitset temp;
 
-	for (memoryuse_list_p u = uses.begin();
-	     u != uses.end();
-	     ++u)
-	  {
-	    memoryUse * use = *u;
+        for (memoryuse_list_p u = uses.begin();
+             u != uses.end();
+             ++u)
+          {
+            memoryUse * use = *u;
 
-	    lookup_set_value(use, temp);
-	    meet(bits, temp);
-	    if (Annotations::Verbose_properties)
-	      cout << "              Use at " << * (use->where()) << endl;
-	  }
+            lookup_set_value(use, temp);
+            meet(bits, temp);
+            if (Annotations::Verbose_properties)
+              cout << "              Use at " << * (use->where()) << endl;
+          }
 
-	if (Annotations::Verbose_properties)
-	  print_memoryblock_bitset("        = ", bits, cout);
+        if (Annotations::Verbose_properties)
+          print_memoryblock_bitset("        = ", bits, cout);
       }
     }
     else {
@@ -284,7 +285,7 @@ void setPropertyAnn::current_set_value(memoryblock_bitset & bits,
       // probably missing a modifies annotation).
 
       if (Annotations::Verbose_properties)
-	cout << " NO DEF " << endl;
+        cout << " NO DEF " << endl;
 
       to_bottom(bits);
     }
@@ -338,7 +339,7 @@ bool setPropertyAnn::is_element_of(pointerValue & var)
   bool found_reaching_value;
 
   current_set_value(current_bits,
-		    found_reaching_value);
+                    found_reaching_value);
 
   // -- Perform subset test
 
@@ -362,7 +363,7 @@ bool setPropertyAnn::is_emptyset()
   bool found_reaching_value;
 
   current_set_value(current_bits,
-		    found_reaching_value);
+                    found_reaching_value);
 
   // -- Test for all zeros
 
@@ -389,7 +390,7 @@ void setPropertyAnn::add_elements(pointerValue & var)
   bool found_reaching_value;
 
   current_set_value(current_bits,
-		    found_reaching_value);
+                    found_reaching_value);
 
   if (Annotations::Verbose_properties) {
     cout << "  - Add elements to " << name() << endl;
@@ -417,7 +418,7 @@ void setPropertyAnn::add_elements(pointerValue & var)
  * */
 
 void setPropertyAnn::apply_set_merge(memoryuse_list & phi_uses,
-				     memoryblock_set & changes)
+                                     memoryblock_set & changes)
 {
   // -- Some temporaries
 
@@ -437,7 +438,7 @@ void setPropertyAnn::apply_set_merge(memoryuse_list & phi_uses,
 
     // -- Forward analysis: collect the values that reach the merge uses,
     // meet them together and propagate that value to the def.
-      
+
     // -- Get the old value
 
     memoryDef * def = block->current_def();
@@ -447,45 +448,45 @@ void setPropertyAnn::apply_set_merge(memoryuse_list & phi_uses,
     // -- Merge together the uses that reach this merge point
 
     for (memoryuse_list_p p = phi_uses.begin();
-	 p != phi_uses.end();
-	 ++p)
+         p != phi_uses.end();
+         ++p)
       {
-	memoryUse * phi_use = *p;
-	memoryDef * reaching_def = phi_use->reaching_def();
+        memoryUse * phi_use = *p;
+        memoryDef * reaching_def = phi_use->reaching_def();
 
-	// -- Find the reaching value, handling the default case as well
+        // -- Find the reaching value, handling the default case as well
 
-	if (reaching_def) {
+        if (reaching_def) {
 
-	  // -- There is a reaching def, look it up
+          // -- There is a reaching def, look it up
 
-	  lookup_set_value(reaching_def, reaching_val);
+          lookup_set_value(reaching_def, reaching_val);
 
-	  if (Annotations::Verbose_properties)
-	    cout << "   at " << * (reaching_def->where()) << endl;
-	}
-	else {
+          if (Annotations::Verbose_properties)
+            cout << "   at " << * (reaching_def->where()) << endl;
+        }
+        else {
 
-	  // -- No reaching def, use the default value
+          // -- No reaching def, use the default value
 
-	  to_top(reaching_val);
+          to_top(reaching_val);
 
-	  if (Annotations::Verbose_properties)
-	    cout << "   = top " << endl;
-	}
-	  
-	meet(merged_val, reaching_val);
+          if (Annotations::Verbose_properties)
+            cout << "   = top " << endl;
+        }
+
+        meet(merged_val, reaching_val);
       }
 
     // -- Did anything change?
 
     bool changed = update_set_value(def, merged_val);
     if (changed) {
-      
+
       changes.insert(block);
 
       if (Annotations::Verbose_properties)
-	cout << "   -> merge changed " << name() << endl;
+        cout << "   -> merge changed " << name() << endl;
     }
   }
   else {
@@ -496,24 +497,24 @@ void setPropertyAnn::apply_set_merge(memoryuse_list & phi_uses,
     bool found_reaching_value;
 
     current_set_value(merged_val,
-		      found_reaching_value);
+                      found_reaching_value);
 
     for (memoryuse_list_p p = phi_uses.begin();
-	 p != phi_uses.end();
-	 ++p)
+         p != phi_uses.end();
+         ++p)
       {
-	memoryUse * phi_use = *p;
+        memoryUse * phi_use = *p;
 
-	// -- Update the value and check for changes
+        // -- Update the value and check for changes
 
-	bool changed = update_set_value(phi_use, merged_val);
-	if (changed && phi_use->reaching_def()) {
-	    
-	  changes.insert(block);
-	    
-	  if (Annotations::Verbose_properties)
-	    cout << "   -> merge changed " << name() << endl;
-	}
+        bool changed = update_set_value(phi_use, merged_val);
+        if (changed && phi_use->reaching_def()) {
+
+          changes.insert(block);
+
+          if (Annotations::Verbose_properties)
+            cout << "   -> merge changed " << name() << endl;
+        }
       }
   }
 }
@@ -545,7 +546,7 @@ void setPropertyAnn::to_bottom(memoryblock_bitset_list & bits)
  * Meet the src value with the dest value and store the result in dest. */
 
 void setPropertyAnn::meet(memoryblock_bitset_list & dest,
-			  const memoryblock_bitset_list & src)
+                          const memoryblock_bitset_list & src)
 {
   // -- Visit all the classes in the src and add them to the dest
 
@@ -563,7 +564,7 @@ void setPropertyAnn::meet(memoryblock_bitset_list & dest,
  * into the input bitset_set reference. If none is found, provide top. */
 
 void setPropertyAnn::lookup_equivalence_classes(memoryAccess * def_or_use,
-						memoryblock_bitset_list & bits)
+                                                memoryblock_bitset_list & bits)
 {
   equiv_property_map_p p = _equivalence.find(def_or_use);
 
@@ -580,7 +581,7 @@ void setPropertyAnn::lookup_equivalence_classes(memoryAccess * def_or_use,
  * value in with the existing value, otherwise just overwrite it. */
 
 bool setPropertyAnn::update_equivalence_classes(memoryAccess * def_or_use,
-						memoryblock_bitset_list & new_set)
+                                                memoryblock_bitset_list & new_set)
 {
   if (Annotations::Verbose_properties) {
     cout << "      + Update " << name() << endl;
@@ -620,7 +621,7 @@ bool setPropertyAnn::update_equivalence_classes(memoryAccess * def_or_use,
     print_memoryblock_bitset_list("        old = ", old_set, cout);
   }
 
-  return change;  
+  return change;
 }
 
 /** @brief Current equivalence classes
@@ -632,7 +633,7 @@ bool setPropertyAnn::update_equivalence_classes(memoryAccess * def_or_use,
  * all the uses that are reached by the current def. */
 
 void setPropertyAnn::current_equivalence_classes(memoryblock_bitset_list & bits,
-						 bool & found_reaching_value)
+                                                 bool & found_reaching_value)
 {
   if (Annotations::Verbose_properties)
     cout << "        - Lookup value of " << name() << endl;
@@ -660,8 +661,8 @@ void setPropertyAnn::current_equivalence_classes(memoryblock_bitset_list & bits,
       memoryDef * def = use->reaching_def();
 
       if (Annotations::Verbose_properties) {
-	cout << * (use->where()) << endl;
-	cout << "          reaching def at ";
+        cout << * (use->where()) << endl;
+        cout << "          reaching def at ";
       }
 
       // -- If there is a reaching def, look up the value associated with
@@ -669,23 +670,23 @@ void setPropertyAnn::current_equivalence_classes(memoryblock_bitset_list & bits,
 
       if (def) {
 
-	lookup_equivalence_classes(def, bits);
+        lookup_equivalence_classes(def, bits);
 
-	if (Annotations::Verbose_properties) {
-	  cout << * (def->where()) << endl;
-	  print_memoryblock_bitset_list("        = ", bits, cout);
-	}
+        if (Annotations::Verbose_properties) {
+          cout << * (def->where()) << endl;
+          print_memoryblock_bitset_list("        = ", bits, cout);
+        }
       }
       else {
 
-	// -- No reaching def; set the flag and set the value to TOP
+        // -- No reaching def; set the flag and set the value to TOP
 
-	found_reaching_value = false;
+        found_reaching_value = false;
 
-	to_top(bits);
+        to_top(bits);
 
-	if (Annotations::Verbose_properties)
-	  cout << "(no reaching def)" << endl;
+        if (Annotations::Verbose_properties)
+          cout << "(no reaching def)" << endl;
       }
     }
     else {
@@ -694,7 +695,7 @@ void setPropertyAnn::current_equivalence_classes(memoryblock_bitset_list & bits,
       // probably missing an access annotation).
 
       if (Annotations::Verbose_properties)
-	cout << " NO USE " << endl;
+        cout << " NO USE " << endl;
 
       to_bottom(bits);
     }
@@ -712,8 +713,8 @@ void setPropertyAnn::current_equivalence_classes(memoryblock_bitset_list & bits,
     if (current_def) {
 
       if (Annotations::Verbose_properties) {
-	cout << * (current_def->where()) << endl;
-	cout << "          uses reached:" << endl;
+        cout << * (current_def->where()) << endl;
+        cout << "          uses reached:" << endl;
       }
 
       memoryuse_list uses;
@@ -721,39 +722,39 @@ void setPropertyAnn::current_equivalence_classes(memoryblock_bitset_list & bits,
 
       if (uses.empty()) {
 
-	// -- Special case: if the def has no uses (this can happen with
-	// merge points), then return the default value. Also, set the
-	// flag.
+        // -- Special case: if the def has no uses (this can happen with
+        // merge points), then return the default value. Also, set the
+        // flag.
 
-	found_reaching_value = false;
+        found_reaching_value = false;
 
-	to_top(bits);
+        to_top(bits);
 
-	if (Annotations::Verbose_properties)
-	  cout << "              (no uses reached)" << endl;
+        if (Annotations::Verbose_properties)
+          cout << "              (no uses reached)" << endl;
       }
       else {
 
-	to_top(bits);
+        to_top(bits);
 
-	// -- Otherwise, visit all the uses reached by the def
+        // -- Otherwise, visit all the uses reached by the def
 
-	memoryblock_bitset_list temp;
+        memoryblock_bitset_list temp;
 
-	for (memoryuse_list_p u = uses.begin();
-	     u != uses.end();
-	     ++u)
-	  {
-	    memoryUse * use = *u;
+        for (memoryuse_list_p u = uses.begin();
+             u != uses.end();
+             ++u)
+          {
+            memoryUse * use = *u;
 
-	    lookup_equivalence_classes(use, temp);
-	    meet(bits, temp);
-	    if (Annotations::Verbose_properties)
-	      cout << "              Use at " << * (use->where()) << endl;
-	  }
+            lookup_equivalence_classes(use, temp);
+            meet(bits, temp);
+            if (Annotations::Verbose_properties)
+              cout << "              Use at " << * (use->where()) << endl;
+          }
 
-	if (Annotations::Verbose_properties)
-	  print_memoryblock_bitset_list("        = ", bits, cout);
+        if (Annotations::Verbose_properties)
+          print_memoryblock_bitset_list("        = ", bits, cout);
       }
     }
     else {
@@ -762,11 +763,11 @@ void setPropertyAnn::current_equivalence_classes(memoryblock_bitset_list & bits,
       // probably missing a modifies annotation).
 
       if (Annotations::Verbose_properties)
-	cout << " NO DEF " << endl;
+        cout << " NO DEF " << endl;
 
       to_bottom(bits);
     }
-  }  
+  }
 }
 
 /** @brief Update current set value
@@ -802,7 +803,7 @@ bool setPropertyAnn::update_current_equivalence_classes(memoryblock_bitset_list 
  * */
 
 bool setPropertyAnn::is_equivalent(pointerValue & left,
-				   pointerValue & right)
+                                   pointerValue & right)
 {
   // -- Get the current list of equivalence classes
 
@@ -828,7 +829,7 @@ bool setPropertyAnn::is_equivalent(pointerValue & left,
       const memoryblock_bitset & current_bits = (*p);
 
       if ((var_bits & current_bits) == var_bits)
-	return true;
+        return true;
     }
 
   return false;
@@ -839,7 +840,7 @@ bool setPropertyAnn::is_equivalent(pointerValue & left,
  * */
 
 void setPropertyAnn::add_equivalence(pointerValue & left,
-				     pointerValue & right)
+                                     pointerValue & right)
 {
   // -- Get the current list of equivalence classes
 
@@ -883,7 +884,7 @@ void setPropertyAnn::add_equivalence(pointerValue & left,
  * */
 
 void setPropertyAnn::apply_equivalence_merge(memoryuse_list & phi_uses,
-					     memoryblock_set & changes)
+                                             memoryblock_set & changes)
 {
   // -- Some temporaries
 
@@ -903,7 +904,7 @@ void setPropertyAnn::apply_equivalence_merge(memoryuse_list & phi_uses,
 
     // -- Forward analysis: collect the values that reach the merge uses,
     // meet them together and propagate that value to the def.
-      
+
     // -- Get the old value
 
     memoryDef * def = block->current_def();
@@ -913,45 +914,45 @@ void setPropertyAnn::apply_equivalence_merge(memoryuse_list & phi_uses,
     // -- Merge together the uses that reach this merge point
 
     for (memoryuse_list_p p = phi_uses.begin();
-	 p != phi_uses.end();
-	 ++p)
+         p != phi_uses.end();
+         ++p)
       {
-	memoryUse * phi_use = *p;
-	memoryDef * reaching_def = phi_use->reaching_def();
+        memoryUse * phi_use = *p;
+        memoryDef * reaching_def = phi_use->reaching_def();
 
-	// -- Find the reaching value, handling the default case as well
+        // -- Find the reaching value, handling the default case as well
 
-	if (reaching_def) {
+        if (reaching_def) {
 
-	  // -- There is a reaching def, look it up
+          // -- There is a reaching def, look it up
 
-	  lookup_equivalence_classes(reaching_def, reaching_val);
+          lookup_equivalence_classes(reaching_def, reaching_val);
 
-	  if (Annotations::Verbose_properties)
-	    cout << "   at " << * (reaching_def->where()) << endl;
-	}
-	else {
+          if (Annotations::Verbose_properties)
+            cout << "   at " << * (reaching_def->where()) << endl;
+        }
+        else {
 
-	  // -- No reaching def, use the default value
+          // -- No reaching def, use the default value
 
-	  to_top(reaching_val);
+          to_top(reaching_val);
 
-	  if (Annotations::Verbose_properties)
-	    cout << "   = top " << endl;
-	}
-	  
-	meet(merged_val, reaching_val);
+          if (Annotations::Verbose_properties)
+            cout << "   = top " << endl;
+        }
+
+        meet(merged_val, reaching_val);
       }
 
     // -- Did anything change?
 
     bool changed = update_equivalence_classes(def, merged_val);
     if (changed) {
-      
+
       changes.insert(block);
 
       if (Annotations::Verbose_properties)
-	cout << "   -> merge changed " << name() << endl;
+        cout << "   -> merge changed " << name() << endl;
     }
   }
   else {
@@ -962,26 +963,26 @@ void setPropertyAnn::apply_equivalence_merge(memoryuse_list & phi_uses,
     bool found_reaching_value;
 
     current_equivalence_classes(merged_val,
-				found_reaching_value);
+                                found_reaching_value);
 
     for (memoryuse_list_p p = phi_uses.begin();
-	 p != phi_uses.end();
-	 ++p)
+         p != phi_uses.end();
+         ++p)
       {
-	memoryUse * phi_use = *p;
+        memoryUse * phi_use = *p;
 
-	// -- Update the value and check for changes
+        // -- Update the value and check for changes
 
-	bool changed = update_equivalence_classes(phi_use, merged_val);
-	if (changed && phi_use->reaching_def()) {
-	    
-	  changes.insert(block);
-	    
-	  if (Annotations::Verbose_properties)
-	    cout << "   -> merge changed " << name() << endl;
-	}
+        bool changed = update_equivalence_classes(phi_use, merged_val);
+        if (changed && phi_use->reaching_def()) {
+
+          changes.insert(block);
+
+          if (Annotations::Verbose_properties)
+            cout << "   -> merge changed " << name() << endl;
+        }
       }
-  }  
+  }
 }
 
 
@@ -1016,7 +1017,7 @@ void setPropertyAnn::apply_next(memoryblock_set & changes)
  * */
 
 void setPropertyAnn::apply_merge(memoryuse_list & phi_uses,
-				 memoryblock_set & changes)
+                                 memoryblock_set & changes)
 {
   if (Annotations::Verbose_properties)
     cout << "  + Merge " << name() << endl;
@@ -1049,7 +1050,7 @@ void setPropertyAnn::self_assignment(memoryblock_set & changes)
     bool found_reaching_value;
 
     current_set_value(value,
-		      found_reaching_value);
+                      found_reaching_value);
 
     // -- Assign it to itself
 
@@ -1064,7 +1065,7 @@ void setPropertyAnn::self_assignment(memoryblock_set & changes)
     bool found_reaching_value;
 
     current_equivalence_classes(value,
-				found_reaching_value);
+                                found_reaching_value);
 
     // -- Assign it to itself
 
@@ -1090,7 +1091,7 @@ void setPropertyAnn::report(ostream & out)
  * */
 
 void setPropertyAnn::build_memoryblock_bitset(pointerValue & variables,
-					      memoryblock_bitset & bits)
+                                              memoryblock_bitset & bits)
 {
   // -- For each variable
 
@@ -1103,39 +1104,39 @@ void setPropertyAnn::build_memoryblock_bitset(pointerValue & variables,
       // -- Find it's bit position, or allocate a new position if necessary
 
       int position = 0;
-      
+
       memoryblock_position_map_p q = _position_of_memoryblock.find(block);
 
       if (q == _position_of_memoryblock.end()) {
 
-	// -- Use the current size of the vector to tell us the next
-	// available bit position.
+        // -- Use the current size of the vector to tell us the next
+        // available bit position.
 
-	position = _memoryblock_at_position.size();
+        position = _memoryblock_at_position.size();
 
-	// -- This sucks, but it has to be done...
+        // -- This sucks, but it has to be done...
 
-	if (position == 1024) {
+        if (position == 1024) {
 
-	  // -- Representation is full, so we're in serious trouble
+          // -- Representation is full, so we're in serious trouble
 
-	  cerr << "INTERNAL ERROR: Too many objects in the bitset representation of " << name() << endl;
-	}
-	else {
+          cerr << "INTERNAL ERROR: Too many objects in the bitset representation of " << name() << endl;
+        }
+        else {
 
-	  // -- Add the block to the end vector
+          // -- Add the block to the end vector
 
-	  _memoryblock_at_position.push_back(block);
+          _memoryblock_at_position.push_back(block);
 
-	  // -- Store the information in the map
+          // -- Store the information in the map
 
-	  _position_of_memoryblock[block] = position;
+          _position_of_memoryblock[block] = position;
 
-	  // cout << "Property " << name() << ": position of " << block->name() << " = " << position << endl;
-	}
+          // cout << "Property " << name() << ": position of " << block->name() << " = " << position << endl;
+        }
       }
       else
-	position = (*q).second;
+        position = (*q).second;
 
       // -- Set the bit
 
@@ -1150,7 +1151,7 @@ void setPropertyAnn::build_memoryblock_bitset(pointerValue & variables,
  * classes to accomodate the new information. */
 
 void setPropertyAnn::add_equivalence_class(memoryblock_bitset_list & equiv,
-					   const memoryblock_bitset & new_class)
+                                           const memoryblock_bitset & new_class)
 {
   // -- Algorithm:
   //
@@ -1219,7 +1220,7 @@ void setPropertyAnn::add_equivalence_class(memoryblock_bitset_list & equiv,
  * */
 
 bool setPropertyAnn::is_same_equivalence(memoryblock_bitset_list & equiv1,
-					 memoryblock_bitset_list & equiv2)
+                                         memoryblock_bitset_list & equiv2)
 {
   // -- Quick out
 
@@ -1233,23 +1234,23 @@ bool setPropertyAnn::is_same_equivalence(memoryblock_bitset_list & equiv1,
        ++p)
     {
       memoryblock_bitset & look_for = *p;
-      
+
       bool found = false;
 
       for (memoryblock_bitset_list_p q = equiv2.begin();
-	   q != equiv2.end();
-	   ++q)
-	{
-	  memoryblock_bitset & current = *q;
+           q != equiv2.end();
+           ++q)
+        {
+          memoryblock_bitset & current = *q;
 
-	  if (current == look_for) {
-	    found = true;
-	    break;
-	  }
-	}
+          if (current == look_for) {
+            found = true;
+            break;
+          }
+        }
 
       if ( ! found )
-	return false;
+        return false;
     }
 
   return true;
@@ -1269,8 +1270,8 @@ void setPropertyAnn::print(ostream & o) const
 /** @brief Print out a set or class */
 
 void setPropertyAnn::print_memoryblock_bitset(const string & label,
-					      memoryblock_bitset & bits,
-					      ostream & out)
+                                              memoryblock_bitset & bits,
+                                              ostream & out)
 {
   int size = _memoryblock_at_position.size();
 
@@ -1289,8 +1290,8 @@ void setPropertyAnn::print_memoryblock_bitset(const string & label,
 /** @brief Print out equivalence classes */
 
 void setPropertyAnn::print_memoryblock_bitset_list(const string & label,
-						  memoryblock_bitset_list & bits,
-						  ostream & out)
+                                                  memoryblock_bitset_list & bits,
+                                                  ostream & out)
 {
   int size = _memoryblock_at_position.size();
 
@@ -1305,11 +1306,11 @@ void setPropertyAnn::print_memoryblock_bitset_list(const string & label,
       out << "{";
 
       for (int i = 0; i < size; i++)
-	if (one[i]) {
-	  memoryBlock * block = _memoryblock_at_position[i];
+        if (one[i]) {
+          memoryBlock * block = _memoryblock_at_position[i];
 
-	  out << block->name() << " ";
-	}
+          out << block->name() << " ";
+        }
       out << "} ";
     }
 
