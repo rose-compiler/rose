@@ -1293,6 +1293,11 @@ HEADER_DECLARATION_MODIFIER_START
                e_ms_declspec_thread       = 32, /*!< Microsoft declspec() attributes */
                e_ms_declspec_uuid         = 33, /*!< Microsoft declspec() attributes */
 
+            // PP (6/15/2020): Added support for Ada modifiers
+               e_ada_abstract = 34,         /*!< Ada abstract declaration */
+               e_ada_limited  = 35,         /*!< Ada limited declaration */
+               e_ada_tagged   = 36,         /*!< Ada tagged declaration */
+
                e_last_modifier       /*!< last modifier value (upper bound on range of values, used in error checking) */
              };
 
@@ -1491,6 +1496,19 @@ HEADER_DECLARATION_MODIFIER_START
           bool is_ms_declspec_uuid() const;
           void set_ms_declspec_uuid();
           void unset_ms_declspec_uuid();
+
+       // PP (06/15/2020): Adding Ada declaration modifiers
+          bool isAdaAbstract() const;
+          void setAdaAbstract();
+          void unsetAdaAbstract();
+
+          bool isAdaLimited() const;
+          void setAdaLimited();
+          void unsetAdaLimited();
+
+          bool isAdaTagged() const;
+          void setAdaTagged();
+          void unsetAdaTagged();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -3516,6 +3534,20 @@ bool SgDeclarationModifier::isJovialStatic() const { return checkBit(e_jovial_st
 void SgDeclarationModifier::setJovialStatic()      { setBit(e_jovial_static,p_modifierVector); }
 void SgDeclarationModifier::unsetJovialStatic()    { unsetBit(e_jovial_static,p_modifierVector); }
 
+// PP (6/15/2020): Added support for Ada modifiers
+bool SgDeclarationModifier::isAdaAbstract() const { return checkBit(e_ada_abstract,p_modifierVector); }
+void SgDeclarationModifier::setAdaAbstract()      { setBit(e_ada_abstract,p_modifierVector); }
+void SgDeclarationModifier::unsetAdaAbstract()    { unsetBit(e_ada_abstract,p_modifierVector); }
+
+bool SgDeclarationModifier::isAdaLimited() const  { return checkBit(e_ada_limited,p_modifierVector); }
+void SgDeclarationModifier::setAdaLimited()       { setBit(e_ada_limited,p_modifierVector); }
+void SgDeclarationModifier::unsetAdaLimited()     { unsetBit(e_ada_limited,p_modifierVector); }
+
+bool SgDeclarationModifier::isAdaTagged() const   { return checkBit(e_ada_tagged,p_modifierVector); }
+void SgDeclarationModifier::setAdaTagged()        { setBit(e_ada_tagged,p_modifierVector); }
+void SgDeclarationModifier::unsetAdaTagged()      { unsetBit(e_ada_tagged,p_modifierVector); }
+
+
 // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
 bool SgDeclarationModifier::is_ms_declspec_align() const { return checkBit(e_ms_declspec_align,p_modifierVector); }
 void SgDeclarationModifier::set_ms_declspec_align()      { setBit(e_ms_declspec_align,p_modifierVector); }
@@ -3642,6 +3674,9 @@ SgDeclarationModifier::displayString() const
      s += std::string("isJovialDef() = ")    + std::string(isJovialDef()    ? "true " : "false ");
      s += std::string("isJovialRef() = ")    + std::string(isJovialRef()    ? "true " : "false ");
      s += std::string("isJovialStatic() = ") + std::string(isJovialStatic() ? "true " : "false ");
+     s += std::string("isAdaAbstract() = ")  + std::string(isAdaAbstract()  ? "true " : "false ");
+     s += std::string("isAdaLimited() = ")   + std::string(isAdaLimited()   ? "true " : "false ");
+     s += std::string("isAdaTagged() = ")    + std::string(isAdaTagged()    ? "true " : "false ");
      s += std::string("\n     ") + get_typeModifier().displayString()   + " ";
      s += std::string("\n     ") + get_accessModifier().displayString() + " ";
      s += std::string("\n     ") + get_storageModifier().displayString();
@@ -3665,9 +3700,9 @@ std::ostream & operator<< ( std::ostream & os, const SgDeclarationModifier & m)
 bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
    {
      return
-          (lhs.get_typeModifier()    == rhs.get_typeModifier()   ) &&
-          (lhs.get_accessModifier()  == rhs.get_accessModifier() ) &&
-          (lhs.get_storageModifier() == rhs.get_storageModifier()) &&
+         (lhs.get_typeModifier()    == rhs.get_typeModifier()   ) &&
+         (lhs.get_accessModifier()  == rhs.get_accessModifier() ) &&
+         (lhs.get_storageModifier() == rhs.get_storageModifier()) &&
 	       (lhs.isUnknown()           == rhs.isUnknown()) &&
 	       (lhs.isDefault()           == rhs.isDefault()) &&
 	       (lhs.isFriend()            == rhs.isFriend() ) &&
@@ -3680,6 +3715,9 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isJovialDef()         == rhs.isJovialDef() ) &&
 	       (lhs.isJovialRef()         == rhs.isJovialRef() ) &&
 	       (lhs.isJovialStatic()      == rhs.isJovialStatic() ) &&
+	       (lhs.isAdaAbstract()       == rhs.isAdaAbstract() )  &&
+	       (lhs.isAdaLimited()        == rhs.isAdaLimited() )   &&
+	       (lhs.isAdaTagged()         == rhs.isAdaTagged() )    &&
           true;
    }
 

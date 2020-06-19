@@ -18,7 +18,14 @@ JOVIAL_TESTCODES = \
  1_2_2_procedure-module_b.jov           \
  1_2_2_procedure-module_e.jov           \
  1_2_2_procedure-module_f.jov           \
+ 1_2_3_main-program-module_a.jov        \
+ 1_2_3_main-program-module_b.jov        \
+ 1_2_3_main-program-module_c.jov        \
+ 1_2_3_main-program-module_d.jov        \
  2_1_1_4_bit_type.jov                   \
+ 2_1_2_simple_table_var.jov             \
+ 2_1_2_compound_table_var.jov           \
+ 2_1_3_constant_table_var.jov           \
  4_3_if_stmt_a.jov                      \
  4_3_if_stmt_b.jov                      \
  4_3_if_stmt_c.jov                      \
@@ -37,8 +44,6 @@ JOVIAL_TESTCODES = \
  4_10_abort_stmt_b.jov
 
 # status_enumval.jov                     \
-# 1_2_3_main-program-module_a.jov        \
-# 1_2_3_main-program-module_d.jov        \
 # 1_2_3_program-body_a.jov               \
 # 1_2_3_program-body_b.jov               \
 # 1_2_3_program-body_c.jov               \
@@ -85,7 +90,10 @@ COMPOOL_TESTCODES = \
  rose-issue-2658.cpl                    \
  rose-issue-2683.cpl                    \
  rose-issue-2687.cpl                    \
- rose-issue-2691.cpl
+ rose-issue-2690.cpl                    \
+ rose-issue-2691.cpl                    \
+ rose-issue-2701.cpl                    \
+ rose-issue-2702.cpl
 
 # bit_cast.cpl
 # 9_1_compool_directive.cpl

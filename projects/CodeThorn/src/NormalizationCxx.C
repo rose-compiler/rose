@@ -366,7 +366,6 @@ namespace
     void handle(SgTypedefDeclaration&)   { }
     void handle(SgEnumDeclaration&)      { }
     
-    
     void handle(SgClassDeclaration& n)   
     {
       // this is only concerned about anonymous unions / classes 

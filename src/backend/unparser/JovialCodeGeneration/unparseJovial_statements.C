@@ -73,6 +73,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
        // declarations
 
+          case V_SgEmptyDeclaration:           /* let's ignore it (or print ';') */   break;
           case V_SgEnumDeclaration:            unparseEnumDeclStmt   (stmt, info);    break;
           case V_SgJovialOverlayDeclaration:   unparseOverlayDeclStmt(stmt, info);    break;
           case V_SgJovialTableStatement:       unparseTableDeclStmt  (stmt, info);    break;
@@ -899,6 +900,19 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
            unparseDimInfo(dim_info, info);
         }
 
+  // OptStructureSpecifier
+     if (table_type->get_structure_specifier() == SgJovialTableType::e_parallel) {
+        curprint("PARALLEL ");
+     }
+     else if (table_type->get_structure_specifier() == SgJovialTableType::e_tight) {
+        curprint("T ");
+        if (table_type->get_bits_per_entry() > 0) {
+           std::string value = Rose::StringUtility::numberToString(table_type->get_bits_per_entry());
+           curprint(value);
+           curprint(" ");
+        }
+     }
+
   // WordsPerEntry
      if (table_decl->get_has_table_entry_size())
         {
@@ -953,6 +967,10 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     {
                        unparseVarDeclStmt(item_decl, info);
                     }
+                 else if (SgJovialDirectiveStatement* directive = isSgJovialDirectiveStatement(item_decl))
+                    {
+                       unparseDirectiveStmt(directive, info);
+                    }
                  else if (isSgEmptyDeclaration(item_decl))
                     {
                        // do nothing for a null declaration (may want to unparse ";\n")
@@ -988,13 +1006,6 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
 
      info.set_inVarDecl();
 
-  // Unwrap the base type if there is a modifier for it
-     SgModifierType* modifier_type = isSgModifierType(type);
-     if (modifier_type)
-        {
-           type = modifier_type->get_base_type();
-        }
-
   // pretty printing
      curprint( ws_prefix(info.get_nestingLevel()) );
 
@@ -1014,10 +1025,6 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt);
      ASSERT_not_null(var_decl);
 
-     if (var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst())
-        {
-           curprint("CONSTANT ");
-        }
      if (var_decl->get_declarationModifier().isJovialDef())
         {
            curprint("DEF ");
@@ -1025,6 +1032,10 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      if (var_decl->get_declarationModifier().isJovialRef())
         {
            curprint("REF ");
+        }
+     if (var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst())
+        {
+           curprint("CONSTANT ");
         }
 
      switch (type->variantT())
@@ -1053,16 +1064,15 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      unparseType(type, info);
 
   // OptStructureSpecifier
-     if (modifier_type)
+     if (table_type)
         {
-           SgStructureModifier& struct_modifier = modifier_type->get_typeModifier().get_structureModifier();
-           if (struct_modifier.isParallel()) {
+           if (table_type->get_structure_specifier() == SgJovialTableType::e_parallel) {
               curprint("PARALLEL ");
            }
-           else if (struct_modifier.isTight()) {
+           else if (table_type->get_structure_specifier() == SgJovialTableType::e_tight) {
               curprint("T ");
-              if (struct_modifier.get_bits_per_entry() > 0) {
-                 std::string value = Rose::StringUtility::numberToString(struct_modifier.get_bits_per_entry());
+              if (table_type->get_bits_per_entry() > 0) {
+                 std::string value = Rose::StringUtility::numberToString(table_type->get_bits_per_entry());
                  curprint(value);
                  curprint(" ");
               }
