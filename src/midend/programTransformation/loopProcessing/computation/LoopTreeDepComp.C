@@ -7,6 +7,7 @@
 #include <DomainInfo.h>
 #include <LoopTreeTransform.h>
 #include <GraphIO.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 void LoopTreeDepGraphCreate::AddNode(LoopTreeDepGraphNode* result)
     {
@@ -22,7 +23,7 @@ void LoopTreeDepGraphCreate::AddNode(LoopTreeDepGraphNode* result)
 
 LoopTreeDepGraphNode* LoopTreeDepGraphCreate::
 CreateNode(LoopTreeNode *s, const DomainCond& c)
-   {  
+   {
       LoopTreeDepGraphNode *result = map.GetDepNode(s);
       if (result == 0)  {
          result = new LoopTreeDepGraphNode(this, s, c);
@@ -33,7 +34,7 @@ CreateNode(LoopTreeNode *s, const DomainCond& c)
 
 LoopTreeDepGraphNode* LoopTreeDepGraphCreate::
 CreateNode(LoopTreeNode *s, const DepInfo& m, const DomainCond& c)
-   {  
+   {
       LoopTreeDepGraphNode *result = map.GetDepNode(s);
       if (result == 0) {
          result = new LoopTreeDepGraphNode(this, s, m, c);
@@ -65,7 +66,7 @@ bool LoopTreeDepGraphCreate::DeleteNode( LoopTreeDepGraphNode *n)
 
 DepInfoEdge* LoopTreeDepGraphCreate::
 CreateEdge( LoopTreeDepGraphNode *n1, LoopTreeDepGraphNode *n2, const DepInfo& info)
-   { 
+   {
      //assert(info.GetDepType() != DEPTYPE_NONE);
   if (DebugDep())
  std::cerr << "Creating dep edge from " << n1->toString() << " to " << n2->toString() << ":" << info.toString() << "\n";
@@ -85,25 +86,25 @@ CreateEdgeFromOrigAst( LoopTreeDepGraphNode *n1, LoopTreeDepGraphNode *n2,
     }
 
 
-void LoopTreeDepComp :: DumpTree() const 
+void LoopTreeDepComp :: DumpTree() const
   { GetLoopTreeRoot()->DumpTree(); }
 
-void LoopTreeDepComp :: OutputDep() const 
-{ 
+void LoopTreeDepComp :: OutputDep() const
+{
    for (GraphAccessTemplate<LoopTreeDepGraphNode, DepInfoEdge>::NodeIterator nodes
              = GetDepGraph()->GetNodeIterator();
         !nodes.ReachEnd(); ++nodes) {
       LoopTreeDepGraphNode* n1 = *nodes;
-      std::cerr << "From " << n1->toString() << ":\n"; 
+      std::cerr << "From " << n1->toString() << ":\n";
       for (GraphAccessTemplate<LoopTreeDepGraphNode, DepInfoEdge>::EdgeIterator p=GetDepGraph()->GetNodeEdgeIterator(n1, GraphAccess::EdgeOut);
            !p.ReachEnd(); ++p) {
          LoopTreeDepGraphNode* n2 = GetDepGraph()->GetEdgeEndPoint(*p, GraphAccess::EdgeIn);
          std::cerr << "To " << n2->toString() << ":";
          const DepInfo& info = (*p)->GetInfo();
-         if (info.SrcRef() != AST_NULL) 
+         if (info.SrcRef() != AST_NULL)
            std::cerr << AstInterface::AstToString(info.SrcRef(),false) << AstInterface::getAstLocation(info.SrcRef()) << "->" << AstInterface::AstToString(info.SnkRef(),false) << AstInterface::getAstLocation(info.SnkRef());
          std::cerr  << ": (";
-         
+
          int i;
          for (i = 0; i < info.CommonLevel()-1; i++) {
               std::cerr << info.Entry( i, i).toString(true) << ",";
@@ -116,8 +117,8 @@ void LoopTreeDepComp :: OutputDep() const
    }
 }
 
-void LoopTreeDepComp :: DumpDep() const 
-{ 
+void LoopTreeDepComp :: DumpDep() const
+{
    GraphAccessTemplate<LoopTreeDepGraphNode, DepInfoEdge>::NodeIterator nodes
              = GetDepGraph()->GetNodeIterator();
    assert(!nodes.ReachEnd());
@@ -151,7 +152,7 @@ void LoopTreeDepGraphCreate :: UpdateSplitStmt( const SplitStmtInfo &info)
     cond1 = n1->domain;
   }
   CopySplitNodeEdge( this,n, n1, cond1);
-  DepGraphNodeRestrictDomain (this,n,cond2); 
+  DepGraphNodeRestrictDomain (this,n,cond2);
 }
 
 LoopTreeDepGraphCreate::  ~LoopTreeDepGraphCreate()
@@ -159,7 +160,7 @@ LoopTreeDepGraphCreate::  ~LoopTreeDepGraphCreate()
 }
 
 void LoopTreeDepGraphCreate :: UpdateDeleteNode( const LoopTreeNode* s)
-{ 
+{
   LoopTreeDepGraphNode *n = map.GetDepNode(s);
   if (n != 0) {
     n->GetInfo() = 0;
@@ -167,9 +168,9 @@ void LoopTreeDepGraphCreate :: UpdateDeleteNode( const LoopTreeNode* s)
   }
 }
 
-void LoopTreeDepGraphCreate :: 
+void LoopTreeDepGraphCreate ::
 UpdateDistNode( const DistNodeInfo &info)
-{ 
+{
  const LoopTreeNode* orig = info.GetObserveNode();
  LoopTreeNode *n = info.GetNewNode();
  int level = orig->LoopLevel();
@@ -189,12 +190,12 @@ UpdateDistNode( const DistNodeInfo &info)
           e->GetInfo().DistLoop(level);
        }
     }
- } 
+ }
 }
 
-void LoopTreeDepGraphCreate :: 
+void LoopTreeDepGraphCreate ::
 UpdateInsertLoop( const InsertLoopInfo &info)
-{ 
+{
   PtrSetWrap<LoopTreeDepGraphNode> nodes;
   const LoopTreeNode* l = info.GetObserveNode();
   LoopTreeTraverseSelectStmt iter(const_cast<LoopTreeNode*>(l));
@@ -203,22 +204,22 @@ UpdateInsertLoop( const InsertLoopInfo &info)
      nodes.insert(n);
   }
   SelectPtrSet<LoopTreeDepGraphNode> selnode(nodes);
-  DepGraphInsertLoop( this, selnode, l->LoopLevel()); 
+  DepGraphInsertLoop( this, selnode, l->LoopLevel());
 }
 
 void LoopTreeDepGraphCreate :: UpdateSwapStmtLoop( const SwapStmtLoopInfo &info)
 {
- DepGraphNodeSwapLoop( this, map.GetDepNode(info.GetObserveNode()), 
+ DepGraphNodeSwapLoop( this, map.GetDepNode(info.GetObserveNode()),
                         info.GetLoop1(), info.GetLoop2());
 }
 
-void LoopTreeDepGraphCreate :: 
+void LoopTreeDepGraphCreate ::
 UpdateDeleteStmtLoop( const DeleteStmtLoopInfo &info)
 {
  DepGraphNodeRemoveLoop( this, map.GetDepNode(info.GetObserveNode()), info.GetLoop());
 }
 
-void LoopTreeDepGraphCreate :: 
+void LoopTreeDepGraphCreate ::
 UpdateMergeStmtLoop( const MergeStmtLoopInfo &info)
 {
   LoopTreeDepGraphNode *node = map.GetDepNode(info.GetObserveNode());
@@ -229,15 +230,15 @@ UpdateMergeStmtLoop( const MergeStmtLoopInfo &info)
 
 class BuildLoopDepGraphEdges : public AstTreeDepGraphBuildImpl
 {
-  virtual GraphAccessInterface::Node* 
-  CreateNodeImpl(AstNodePtr start, const DomainCond& c) 
-  { assert(false); return 0; } 
+  virtual GraphAccessInterface::Node*
+  CreateNodeImpl(AstNodePtr start, const DomainCond& c)
+  { assert(false); return 0; }
   virtual void
-          CreateEdgeImpl(GraphAccessInterface::Node *gn1, GraphAccessInterface::Node *gn2, DepInfo info) 
+          CreateEdgeImpl(GraphAccessInterface::Node *gn1, GraphAccessInterface::Node *gn2, DepInfo info)
         { LoopTreeDepGraphNode *n1 = static_cast<LoopTreeDepGraphNode*>(gn1),
                                *n2 = static_cast<LoopTreeDepGraphNode*>(gn2);
           if (info.GetDepType() == DEPTYPE_TRANS) {
-             GraphCrossEdgeIterator<LoopTreeDepGraphCreate> 
+             GraphCrossEdgeIterator<LoopTreeDepGraphCreate>
                      crossIter(&graph,n1, n2);
              for ( ; !crossIter.ReachEnd(); ++crossIter) {
                DepInfoEdge *e = crossIter.Current();
@@ -250,14 +251,14 @@ class BuildLoopDepGraphEdges : public AstTreeDepGraphBuildImpl
           graph.CreateEdgeFromOrigAst(n1,n2,info);
         }
   virtual DepInfoConstIterator
-          GetDepInfoIteratorImpl( GraphAccessInterface::Edge* ge, DepType t) 
+          GetDepInfoIteratorImpl( GraphAccessInterface::Edge* ge, DepType t)
         { DepInfoEdge *e = static_cast<DepInfoEdge*>(ge);
-          return SelectDepType(e->GetInfo(),t)? 
-                DepInfoConstIterator(new SingleIterator<DepInfo>(e->GetInfo())) 
-                 : DepInfoConstIterator(); 
+          return SelectDepType(e->GetInfo(),t)?
+                DepInfoConstIterator(new SingleIterator<DepInfo>(e->GetInfo()))
+                 : DepInfoConstIterator();
         }
-  virtual AstNodePtr GetNodeAst( GraphAccessInterface::Node *gn) 
-        { 
+  virtual AstNodePtr GetNodeAst( GraphAccessInterface::Node *gn)
+        {
             LoopTreeDepGraphNode *n = static_cast<LoopTreeDepGraphNode*>(gn);
             return n->GetInfo()->GetOrigStmt();
         }
@@ -271,7 +272,7 @@ class BuildLoopDepGraphEdges : public AstTreeDepGraphBuildImpl
   BuildLoopDepGraphEdges( LoopTreeDepGraphCreate &c) : graph(c),ga(&c) {}
 };
 
-void LoopTreeDepGraphCreate :: 
+void LoopTreeDepGraphCreate ::
 BuildDep(DepInfoAnal &anal, LoopTreeDepGraphNode *n1,
           LoopTreeDepGraphNode *n2, DepType t)
 {
@@ -346,7 +347,7 @@ LoopTreeDepCompCreate :: ~LoopTreeDepCompCreate()
    DetachDepGraph();
 }
 
-LoopTreeDepCompCreate :: 
+LoopTreeDepCompCreate ::
 LoopTreeDepCompCreate( const AstNodePtr& _top, bool builddep, bool supportNonFortranLoop)
   : anal(LoopTransformInterface::getAstInterface()), depCreate(0), top(_top)
 {
@@ -359,29 +360,29 @@ LoopTreeDepCompCreate( const AstNodePtr& _top, bool builddep, bool supportNonFor
   bool succ = treeproc(fa, top, &treeCreate);
   SetTreeCreate(&treeCreate);
 
-  assert(succ); 
-  if (builddep) 
+  assert(succ);
+  if (builddep)
      BuildDepGraph();
   SetDepGraph( depCreate);
 }
 
 AstNodePtr LoopTreeDepCompCreate :: CodeGen()
-{ 
-  AstNodePtr result = treeCreate.CodeGen(); 
+{
+  AstNodePtr result = treeCreate.CodeGen();
   return result;
 }
 
 void LoopTreeDepCompCreate :: UpdateDeleteNode( const MultiGraphElem *n)
 {
-   const MultiGraphObserveNodeTemplate<LoopTreeNode*> *nn 
+   const MultiGraphObserveNodeTemplate<LoopTreeNode*> *nn
       = static_cast < const MultiGraphObserveNodeTemplate<LoopTreeNode*> * >(n);
    LoopTreeNode *s = nn->GetInfo();
    nodeMap.RemoveMapping(s);
 }
 
-LoopTreeDepCompSubtree :: 
+LoopTreeDepCompSubtree ::
 LoopTreeDepCompSubtree( LoopTreeDepComp &comp, LoopTreeNode *t)
-  : LoopTreeDepComp(comp) 
+  : LoopTreeDepComp(comp)
 {
  SetTreeRoot(t);
  SetDepGraph(new LoopTreeDepGraphSubtree(comp, t, comp.GetDepGraph()));
