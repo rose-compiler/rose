@@ -2845,6 +2845,19 @@ SageBuilder::buildFunctionParameterList_nfi() {
 }
 
 //-----------------------------------------------
+SgCtorInitializerList *
+SageBuilder::buildCtorInitializerList_nfi() {
+  SgCtorInitializerList *ctorInitList = new SgCtorInitializerList();
+  ROSE_ASSERT (ctorInitList);
+  ctorInitList->set_definingDeclaration (NULL);
+  ctorInitList->set_firstNondefiningDeclaration (ctorInitList);
+
+  setOneSourcePositionNull(ctorInitList);
+
+  return ctorInitList;
+}
+
+//-----------------------------------------------
 // no type vs. void type ?
 SgFunctionParameterTypeList *
 SageBuilder::buildFunctionParameterTypeList(SgFunctionParameterList* paralist)
@@ -8696,9 +8709,11 @@ SageBuilder::buildTypeTraitBuiltinOperator(SgName functionName, SgNodePtrList pa
      SgTypeTraitBuiltinOperator * builtin_func_call_expr = new SgTypeTraitBuiltinOperator(functionName);
      ROSE_ASSERT(builtin_func_call_expr != NULL);
 
-  // Note that this is copy by value...on SgNodePtrList (because we have to support both SgExpression and SgType IR nodes as arguments).
-  // In this way this is implemented differently from a SgCallExpression ro SgFunctionCallExp (which uses a SgExprListExp).
-     builtin_func_call_expr->get_args() = parameters;
+     SgNodePtrList & args = builtin_func_call_expr->get_args();
+     for (SgNodePtrList::iterator it = parameters.begin(); it != parameters.end(); ++it) {
+       args.push_back(*it);
+       (*it)->set_parent(builtin_func_call_expr);
+     }
 
      return builtin_func_call_expr;
    }
@@ -10998,6 +11013,13 @@ SgTypeVoid * SageBuilder::buildVoidType()
 SgTypeUnknown * SageBuilder::buildUnknownType()
 {
   SgTypeUnknown * result =SgTypeUnknown::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
+SgAutoType * SageBuilder::buildAutoType()
+{
+  SgAutoType * result =new SgAutoType();
   ROSE_ASSERT(result);
   return result;
 }
