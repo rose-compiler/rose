@@ -347,11 +347,12 @@ F90_TESTCODES_REQUIRED_TO_PASS =  \
      fCaller.f90 \
      rose-1612.f90
 
+# test2020_comment_0.f90 the full test     
 #     test2020_comment_3.f90
-#    test2020_comment_2.f90 
 # Liao: 6/18/2020. tests with comments
 F90_COMMENTS_REQUIRED_TO_PASS  =  \
-    test2020_comment_1.f90 
+    test2020_comment_1.f90 \
+    test2020_comment_2.f90
 
 # result is rose_input.f90
 F90_COMMENTS_REQUIRED_TO_PASS_RESULTS =  $(addprefix rose_, ${F90_COMMENTS_REQUIRED_TO_PASS})    
