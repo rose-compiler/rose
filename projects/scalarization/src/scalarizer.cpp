@@ -167,6 +167,14 @@ map<string,int> scalarizer::getFortranTargetnameList(SgNode* root)
 
   for (vector<SgLocatedNode*>::iterator i = LocatedNodeList.begin(); i != LocatedNodeList.end(); i++)
   {
+    SgFunctionDefinition* funcDef = SageInterface::getEnclosingFunctionDefinition(*i, true);
+    // In certain case, there is subroutine defined inside another subroutine
+    if(funcDef != root)
+    {
+      mlog[DEBUG] << "function definition mismatching" << endl;
+      continue;
+    }
+
     AttachedPreprocessingInfoType* comments = (*i)->getAttachedPreprocessingInfo();
     if(comments)
     {
@@ -351,6 +359,9 @@ int main(int argc, char** argv)
       
       SgFunctionDefinition *defn = isSgFunctionDefinition(*p);
       ROSE_ASSERT (defn != NULL);
+      SgFunctionDeclaration *funcDecl = defn->get_declaration();
+      ROSE_ASSERT (funcDecl);
+      mlog[DEBUG] << "Processing function name: " << funcDecl->get_name() << "\n";
 
       if(isFortran)
         namelist = getFortranTargetnameList(defn);  
