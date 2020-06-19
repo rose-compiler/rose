@@ -33,7 +33,7 @@ void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
   CodeThorn::Normalization lowering;
   lowering.setInliningOption(getInliningOption());
   lowering.normalizeAst(root,getNormalizationLevel());
-  _variableIdMapping=new VariableIdMapping();
+  _variableIdMapping=new VariableIdMappingExtended();
   //getVariableIdMapping()->setModeVariableIdForEachArrayElement(getModeArrayElementVariableId());
   getVariableIdMapping()->computeVariableSymbolMapping(root);
   _labeler=new Labeler(root);
@@ -90,7 +90,7 @@ CodeThorn::Labeler* CodeThorn::ProgramAbstractionLayer::getLabeler(){
   return _labeler;
 }
 
-CodeThorn::VariableIdMapping* CodeThorn::ProgramAbstractionLayer::getVariableIdMapping(){
+CodeThorn::VariableIdMappingExtended* CodeThorn::ProgramAbstractionLayer::getVariableIdMapping(){
   ROSE_ASSERT(_variableIdMapping!=0);
   return _variableIdMapping;
 }
