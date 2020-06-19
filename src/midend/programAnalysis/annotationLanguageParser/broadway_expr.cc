@@ -1,5 +1,6 @@
 
 #include "broadway.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 using namespace std;
 
@@ -15,9 +16,9 @@ void exprAnn::compute_next(procLocation * where, ruleAnn * rule)
 }
 
 void exprAnn::apply_next(procLocation * where,
-			 propertyAnalyzer * property_analyzer,
-			 ruleAnn * rule,
-			 memoryblock_set & changes)
+                         propertyAnalyzer * property_analyzer,
+                         ruleAnn * rule,
+                         memoryblock_set & changes)
 {
   cout << "INTERNAL ERROR at " << * where << ": Invalid expression for update";
 }
@@ -29,9 +30,9 @@ void exprAnn::apply_next(procLocation * where,
 // ------------------------------------------------------------
 
 connectiveExprAnn::connectiveExprAnn(Broadway::Operator op,
-				     exprAnn * lhs,
-				     exprAnn * rhs,
-				     int line)
+                                     exprAnn * lhs,
+                                     exprAnn * rhs,
+                                     int line)
   : exprAnn(op, line),
     _lhs(lhs),
     _rhs(rhs)
@@ -40,7 +41,7 @@ connectiveExprAnn::connectiveExprAnn(Broadway::Operator op,
 #ifdef __PROCLOCATION
 
 bool connectiveExprAnn::test(procLocation * where,
-			     propertyAnalyzer * property_analyzer)  
+                             propertyAnalyzer * property_analyzer)
 {
   bool result = false;
 
@@ -87,18 +88,18 @@ void connectiveExprAnn::diagnostic(ostream & out,
 
 
 void connectiveExprAnn::lookup(propertyAnn * default_property,
-			       procedureAnn * procedure,
-			       Annotations * annotations)
+                               procedureAnn * procedure,
+                               Annotations * annotations)
 {
   if (_lhs)
     _lhs->lookup(default_property,
-		 procedure,
-		 annotations);
+                 procedure,
+                 annotations);
 
   if (_rhs)
     _rhs->lookup(default_property,
-		 procedure,
-		 annotations);
+                 procedure,
+                 annotations);
 }
 
 #ifdef __PROCLOCATION
@@ -139,11 +140,11 @@ void connectiveExprAnn::print(ostream & out)
 // ------------------------------------------------------------
 
 enumPropertyExprAnn::enumPropertyExprAnn(Broadway::FlowSensitivity flow_sensitivity,
-					 const parserID * property,
-					 const parserID * lhs,
-					 Broadway::Operator op,
-					 const parserID * rhs,
-					 int line)
+                                         const parserID * property,
+                                         const parserID * lhs,
+                                         Broadway::Operator op,
+                                         const parserID * rhs,
+                                         int line)
   : exprAnn(op, line),
     _flow_sensitivity(flow_sensitivity),
     _property_name(),
@@ -172,7 +173,7 @@ enumPropertyExprAnn::enumPropertyExprAnn(Broadway::FlowSensitivity flow_sensitiv
 #ifdef __PROCLOCATION
 
 bool enumPropertyExprAnn::test(procLocation * where,
-			       propertyAnalyzer * property_analyzer)
+                               propertyAnalyzer * property_analyzer)
 {
   bool result = false;
 
@@ -200,7 +201,7 @@ bool enumPropertyExprAnn::test(procLocation * where,
     pointerValue & right = _rhs->get_binding(where);
 
     result = _property->test(op(), _flow_sensitivity, where, left, _lhs->name(),
-			     right, _rhs->name());
+                             right, _rhs->name());
   }
 
   return result;
@@ -237,10 +238,10 @@ void enumPropertyExprAnn::compute_next(procLocation * where, ruleAnn * rule)
     // of some other variable, we use the flow-sensitive value:
 
     _rhs_value = _property->compute_next(where, rule, this,
-					 right, _rhs->name(),
-					 _rhs_lost_information,
-					 _complicit_property_blocks,
-					 _rhs_ever_values);
+                                         right, _rhs->name(),
+                                         _rhs_lost_information,
+                                         _complicit_property_blocks,
+                                         _rhs_ever_values);
   }
 
   if (Annotations::Verbose_properties)
@@ -248,9 +249,9 @@ void enumPropertyExprAnn::compute_next(procLocation * where, ruleAnn * rule)
 }
 
 void enumPropertyExprAnn::apply_next(procLocation * where,
-				     propertyAnalyzer * property_analyzer,
-				     ruleAnn * rule,
-				     memoryblock_set & changes)
+                                     propertyAnalyzer * property_analyzer,
+                                     ruleAnn * rule,
+                                     memoryblock_set & changes)
 {
   // -- Get the left-hand-side binding
 
@@ -263,7 +264,7 @@ void enumPropertyExprAnn::apply_next(procLocation * where,
   // actually a right-hand-side or not.
 
   if ( ! _rhs_is_property_value) {
-    
+
     // -- Get the right-hand-side binding
 
     pointerValue & right = _rhs->get_binding(where);
@@ -271,12 +272,12 @@ void enumPropertyExprAnn::apply_next(procLocation * where,
     // -- Apply the right-hand side value
 
     _property->apply_next(where, (stmtLocation *)0,
-			  rule, this,
-			  left, _lhs->name(),
-			  right, _rhs_value,
-			  _rhs_lost_information, rhs_changed,
+                          rule, this,
+                          left, _lhs->name(),
+                          right, _rhs_value,
+                          _rhs_lost_information, rhs_changed,
                           _complicit_property_blocks,
-			  _rhs_ever_values, changes);
+                          _rhs_ever_values, changes);
   }
   else {
 
@@ -287,11 +288,11 @@ void enumPropertyExprAnn::apply_next(procLocation * where,
     // -- Apply the given property value
 
     _property->apply_next(where, (stmtLocation *)0,
-			  rule, this,
-			  left, _lhs->name(),
-			  right, _rhs_value,
-			  false, rhs_changed, _complicit_property_blocks,
-			  _rhs_ever_values, changes);
+                          rule, this,
+                          left, _lhs->name(),
+                          right, _rhs_value,
+                          false, rhs_changed, _complicit_property_blocks,
+                          _rhs_ever_values, changes);
   }
 
   _previous_rhs_value[where] = _rhs_value;
@@ -300,8 +301,8 @@ void enumPropertyExprAnn::apply_next(procLocation * where,
 #endif
 
 void enumPropertyExprAnn::lookup(propertyAnn * default_property,
-				 procedureAnn * procedure,
-				 Annotations * annotations)
+                                 procedureAnn * procedure,
+                                 Annotations * annotations)
 {
   // --- Look up the property definition. Two cases: when no specific
   // property is provided, we assume the property from the enclosing
@@ -324,7 +325,7 @@ void enumPropertyExprAnn::lookup(propertyAnn * default_property,
       (default_property->direction() == Forward) &&
       (_property->direction() == Backward))
     annotations->Error(line(), "NOTE: Results for backward analysis \"" + _property_name +
-		       "\" will not be available yet.");
+                       "\" will not be available yet.");
 
   // --- Lookup the left-hand variable
 
@@ -350,12 +351,12 @@ void enumPropertyExprAnn::lookup(propertyAnn * default_property,
       enumValueAnn * val = 0;
 
       if (_property)
-	val = _property->lookup(_rhs_name);
+        val = _property->lookup(_rhs_name);
 
       if (! val )
-	annotations->Error(line(), string("Unknown value or variable\"") + _rhs_name + "\"");
+        annotations->Error(line(), string("Unknown value or variable\"") + _rhs_name + "\"");
       else
-	_rhs_value = enumvalue_set(val);
+        _rhs_value = enumvalue_set(val);
 
       _rhs_is_property_value = true;
     }
@@ -373,21 +374,21 @@ void enumPropertyExprAnn::lookup(propertyAnn * default_property,
     // -- Forward analysis: the intuitive mode: when we read the value of a
     // property, that generates a use; when we modify the value of a
     // property, that generates a def.
-    
+
     if (_lhs) {
       if (op() == Broadway::Assign) {
 
-	// -- Record that this property is modified on this variable
+        // -- Record that this property is modified on this variable
 
-	procedure->add_property_def(_lhs, _property);
+        procedure->add_property_def(_lhs, _property);
 
-	// -- Check for weak def
+        // -- Check for weak def
 
-	if (is_weak())
-	  procedure->add_property_weak_def(_lhs, _property);
+        if (is_weak())
+          procedure->add_property_weak_def(_lhs, _property);
       }
       else
-	procedure->add_property_use(_lhs, _property);
+        procedure->add_property_use(_lhs, _property);
     }
 
     //     Right hand side is always a use
@@ -403,9 +404,9 @@ void enumPropertyExprAnn::lookup(propertyAnn * default_property,
 
     if (_lhs) {
       if (op() == Broadway::Assign)
-	procedure->add_property_use(_lhs, _property);
+        procedure->add_property_use(_lhs, _property);
       else
-	procedure->add_property_def(_lhs, _property);
+        procedure->add_property_def(_lhs, _property);
     }
 
     //     Right hand side is always a def
@@ -439,7 +440,7 @@ void enumPropertyExprAnn::lookup(propertyAnn * default_property,
   if ((op() == Broadway::Assign) && (_property) &&
       (_property != default_property))
     annotations->Error(line(), string("Actions in this context may only modify property \"")
-		       + _property->name() + "\"");
+                       + _property->name() + "\"");
 
   // --- Semantic check: we are not allowed to change properties inside the
   // constants analysis:
@@ -447,7 +448,7 @@ void enumPropertyExprAnn::lookup(propertyAnn * default_property,
   if ((op() == Broadway::Assign) && (_property) &&
       (_property == annotations->constants_property()))
     annotations->Error(line(), string("Actions in the constant analysis may not change property \"")
-		       + _property->name() + "\"");
+                       + _property->name() + "\"");
 }
 
 #ifdef __PROCLOCATION
@@ -523,11 +524,11 @@ void enumPropertyExprAnn::print(ostream & out)
 // ------------------------------------------------------------
 
 setPropertyExprAnn::setPropertyExprAnn(Broadway::FlowSensitivity flow_sensitivity,
-				       const parserID * setProperty,
-				       const parserID * lhs,
-				       Broadway::Operator op,
-				       const parserID * rhs,
-				       int line)
+                                       const parserID * setProperty,
+                                       const parserID * lhs,
+                                       Broadway::Operator op,
+                                       const parserID * rhs,
+                                       int line)
   : exprAnn(op, line),
     _flow_sensitivity(flow_sensitivity),
     _property_name(),
@@ -550,7 +551,7 @@ setPropertyExprAnn::setPropertyExprAnn(Broadway::FlowSensitivity flow_sensitivit
 #ifdef __PROCLOCATION
 
 bool setPropertyExprAnn::test(procLocation * where,
-			      propertyAnalyzer * property_analyzer)
+                              propertyAnalyzer * property_analyzer)
 {
   bool result = false;
 
@@ -654,9 +655,9 @@ void setPropertyExprAnn::compute_next(procLocation * where, ruleAnn * rule)
 }
 
 void setPropertyExprAnn::apply_next(procLocation * where,
-				    propertyAnalyzer * property_analyzer,
-				    ruleAnn * rule,
-				    memoryblock_set & changes)
+                                    propertyAnalyzer * property_analyzer,
+                                    ruleAnn * rule,
+                                    memoryblock_set & changes)
 {
   // -- Pick up the set property object if changes occured
 
@@ -666,8 +667,8 @@ void setPropertyExprAnn::apply_next(procLocation * where,
 #endif
 
 void setPropertyExprAnn::lookup(propertyAnn * default_property,
-				procedureAnn * procedure,
-				Annotations * annotations)
+                                procedureAnn * procedure,
+                                Annotations * annotations)
 {
   // --- Look up the property definition. Two cases: when no specific
   // property is provided, we assume the property from the enclosing
@@ -697,7 +698,7 @@ void setPropertyExprAnn::lookup(propertyAnn * default_property,
       (default_property->direction() == Forward) &&
       (_property->direction() == Backward))
     annotations->Error(line(), "NOTE: Results for backward analysis \"" + _property_name +
-		       "\" will not be available yet.");
+                       "\" will not be available yet.");
 
   // --- Lookup the left-hand variable, if there is one
 
@@ -731,9 +732,9 @@ void setPropertyExprAnn::lookup(propertyAnn * default_property,
     // -- Forward analysis: the intuitive mode: when we read the value of a
     // property, that generates a use; when we modify the value of a
     // property, that generates a def.
-    
+
     if ((op() == Broadway::Add_Elements) ||
-	(op() == Broadway::Add_Equivalences))
+        (op() == Broadway::Add_Equivalences))
       procedure->add_one_def(property_var);
 
     // -- For the set operations (such as adding an element), we need the
@@ -749,7 +750,7 @@ void setPropertyExprAnn::lookup(propertyAnn * default_property,
     // associate with a use:
 
     if ((op() == Broadway::Add_Elements) ||
-	(op() == Broadway::Add_Equivalences))
+        (op() == Broadway::Add_Equivalences))
       procedure->add_one_use(property_var);
 
     procedure->add_one_def(property_var);
@@ -804,11 +805,11 @@ void setPropertyExprAnn::print(ostream & out)
 // ------------------------------------------------------------
 //  Numeric test
 // ------------------------------------------------------------
-	      
+
 #ifdef __EXPRNODE
 
 numericExprAnn::numericExprAnn(exprNode * expr,
-			       int line)
+                               int line)
   : exprAnn(Broadway::Evaluate, line),
     _lhs_name(),
     _lhs(0),
@@ -818,7 +819,7 @@ numericExprAnn::numericExprAnn(exprNode * expr,
 #endif
 
 numericExprAnn::numericExprAnn(const parserID * lhs,
-			       int line)
+                               int line)
   : exprAnn(Broadway::Is_Constant, line),
     _lhs_name(),
     _lhs(0)
@@ -834,8 +835,8 @@ numericExprAnn::numericExprAnn(const parserID * lhs,
 
 #ifdef __EXPRNODE
 numericExprAnn::numericExprAnn(const parserID * lhs,
-			       exprNode * expr,
-			       int line)
+                               exprNode * expr,
+                               int line)
   : exprAnn(Broadway::Assign, line),
     _lhs_name(),
     _lhs(0),
@@ -850,7 +851,7 @@ numericExprAnn::numericExprAnn(const parserID * lhs,
 #ifdef __PROCLOCATION
 
 bool numericExprAnn::test(procLocation * where,
-			  propertyAnalyzer * property_analyzer)
+                          propertyAnalyzer * property_analyzer)
 {
   if (op() == Broadway::Evaluate) {
 
@@ -871,7 +872,7 @@ bool numericExprAnn::test(procLocation * where,
       const constant * val = property_analyzer->lookup_constant(_lhs, where);
 
       if (val && ( ! val->no_val()))
-	return true;
+        return true;
 
     }
     else
@@ -894,9 +895,9 @@ void numericExprAnn::compute_next(procLocation * where, ruleAnn * rule)
 }
 
 void numericExprAnn::apply_next(procLocation * where,
-				propertyAnalyzer * property_analyzer,
-				ruleAnn * rule,
-				memoryblock_set & changes)
+                                propertyAnalyzer * property_analyzer,
+                                ruleAnn * rule,
+                                memoryblock_set & changes)
 {
   // -- Get the left-hand side bindings
 
@@ -923,7 +924,7 @@ public:
   Annotations * _annotations;
 
   idNodeAnnWalker(procedureAnn * procedure,
-		  Annotations * annotations)
+                  Annotations * annotations)
     : Walker(Preorder, Subtree),
       _procedure(procedure),
       _annotations(annotations)
@@ -938,7 +939,7 @@ public:
 
     if ( ! ida->variable())
       _annotations->Error(ida->line(),
-			  string("Undeclared identifier \"") + ida->name() + "\"");
+                          string("Undeclared identifier \"") + ida->name() + "\"");
 
     // --- Record the variable as a use
 
@@ -951,8 +952,8 @@ public:
 #endif
 
 void numericExprAnn::lookup(propertyAnn * default_property,
-			    procedureAnn * procedure,
-			    Annotations * annotations)
+                            procedureAnn * procedure,
+                            Annotations * annotations)
 {
   if ( ! _lhs_name.empty()) {
 
@@ -961,7 +962,7 @@ void numericExprAnn::lookup(propertyAnn * default_property,
     _lhs = procedure->lookup(_lhs_name, false);
     if ( ! _lhs )
       annotations->Error(line(),
-			 string("Undeclared identifier \"") + _lhs_name + "\"");
+                         string("Undeclared identifier \"") + _lhs_name + "\"");
   }
 
   // --- Left hand side is a def
@@ -1023,15 +1024,15 @@ void numericExprAnn::print(ostream & out)
     _expr->output(ct, (Node *)0);
   }
 #endif
-}   
+}
 
 // ------------------------------------------------------------
 //  Pointer test
 // ------------------------------------------------------------
 
 pointerExprAnn::pointerExprAnn(Broadway::Operator op,
-			       const parserID * lhs,
-			       const parserID * rhs)
+                               const parserID * lhs,
+                               const parserID * rhs)
   : exprAnn(op, lhs->line()),
     _lhs_name(),
     _lhs(0),
@@ -1048,7 +1049,7 @@ pointerExprAnn::pointerExprAnn(Broadway::Operator op,
 #ifdef __PROCLOCATION
 
 bool pointerExprAnn::test(procLocation * where,
-			  propertyAnalyzer * property_analyzer)
+                          propertyAnalyzer * property_analyzer)
 {
   bool result = false;
 
@@ -1070,23 +1071,23 @@ bool pointerExprAnn::test(procLocation * where,
     result = true;
 
     while ((cur_left != left.blocks.end()) &&
-	   (cur_right != right.blocks.end())) {
+           (cur_right != right.blocks.end())) {
       if (*cur_left < *cur_right)
-	cur_left++;
+        cur_left++;
       else
-	if (*cur_right < *cur_left)
-	  cur_right++;
-	else {
-	  result = false;
-	  break;
-	}
+        if (*cur_right < *cur_left)
+          cur_right++;
+        else {
+          result = false;
+          break;
+        }
     }
 
     if (Annotations::Verbose_properties)
       if (result)
-	cout << "      pointerExprAnn : " << _lhs->name() << " aliases " << _rhs->name() << endl;
+        cout << "      pointerExprAnn : " << _lhs->name() << " aliases " << _rhs->name() << endl;
       else
-	cout << "      pointerExprAnn : " << _lhs->name() << " does not alias " << _rhs->name() << endl;
+        cout << "      pointerExprAnn : " << _lhs->name() << " does not alias " << _rhs->name() << endl;
   }
 
   if (op() == Broadway::Is_SameAs) {
@@ -1106,21 +1107,21 @@ bool pointerExprAnn::test(procLocation * where,
       result = true;
 
       while ((cur_left != left.blocks.end()) &&
-	     (cur_right != right.blocks.end())) {
-	if (*cur_left != *cur_right) {
-	  result = false;
-	  break;
-	}
-	cur_left++;
-	cur_right++;
+             (cur_right != right.blocks.end())) {
+        if (*cur_left != *cur_right) {
+          result = false;
+          break;
+        }
+        cur_left++;
+        cur_right++;
       }
     }
 
     if (Annotations::Verbose_properties)
       if (result)
-	cout << "      pointerExprAnn : " << _lhs->name() << " is the same as " << _rhs->name() << endl;
+        cout << "      pointerExprAnn : " << _lhs->name() << " is the same as " << _rhs->name() << endl;
       else
-	cout << "      pointerExprAnn : " << _lhs->name() << " is different from " << _rhs->name() << endl;
+        cout << "      pointerExprAnn : " << _lhs->name() << " is different from " << _rhs->name() << endl;
   }
 
   if (op() == Broadway::Is_Empty) {
@@ -1132,9 +1133,9 @@ bool pointerExprAnn::test(procLocation * where,
 
     if (Annotations::Verbose_properties)
       if (result)
-	cout << "      pointerExprAnn : " << _lhs->name() << " is empty." << endl;
+        cout << "      pointerExprAnn : " << _lhs->name() << " is empty." << endl;
       else
-	cout << "      pointerExprAnn : " << _lhs->name() << " is not empty." << endl;
+        cout << "      pointerExprAnn : " << _lhs->name() << " is not empty." << endl;
   }
 
   return result;
@@ -1143,8 +1144,8 @@ bool pointerExprAnn::test(procLocation * where,
 #endif
 
 void pointerExprAnn::lookup(propertyAnn * default_property,
-			    procedureAnn * procedure,
-			    Annotations * annotations)
+                            procedureAnn * procedure,
+                            Annotations * annotations)
 {
   // --- Lookup the left-hand variable
 
@@ -1200,7 +1201,7 @@ idNodeAnn::idNodeAnn(const parserID * id)
 {}
 
 void idNodeAnn::lookup(procedureAnn * procedure,
-		       Annotations * annotations)
+                       Annotations * annotations)
 {
   _variable = procedure->lookup(name(), false);
 

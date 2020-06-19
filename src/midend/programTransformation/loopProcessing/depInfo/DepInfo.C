@@ -2,6 +2,7 @@
 
 #include <DepInfo.h>
 #include <sstream>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 class DepEDDTypeInfo : public DepInfoImpl
 {
@@ -9,7 +10,7 @@ class DepEDDTypeInfo : public DepInfoImpl
  public:
   DepEDDTypeInfo( DepType _t, int dim1, int dim2, bool p, int cl)  // p: precise or not,  cl: common level
     : DepInfoImpl( dim1, dim2,p, cl) { t = _t; }
-  DepEDDTypeInfo( const DepEDDTypeInfo &that) 
+  DepEDDTypeInfo( const DepEDDTypeInfo &that)
     : DepInfoImpl( that ) { t = that.t; }
   virtual ~DepEDDTypeInfo() {}
   virtual DepInfoImpl* Clone() const { return new DepEDDTypeInfo(*this); }
@@ -24,10 +25,10 @@ protected:
 public:
   virtual AstNodePtr SrcRef() const { return src; }
   virtual AstNodePtr SnkRef() const { return snk; }
-  DepEDDRefInfo( DepType _t, int dim1, int dim2, 
+  DepEDDRefInfo( DepType _t, int dim1, int dim2,
                  AstNodePtr _src, const AstNodePtr& _snk, bool p, int cl) // dim1, dim2 are rows and cols for the matrix, p cl is common level
     : DepEDDTypeInfo(_t, dim1, dim2,p,cl), src(_src),  snk(_snk) {}
-  DepEDDRefInfo( const DepEDDRefInfo &that) : DepEDDTypeInfo(that), 
+  DepEDDRefInfo( const DepEDDRefInfo &that) : DepEDDTypeInfo(that),
        src(that.SrcRef()), snk(that.SnkRef()) {}
   virtual ~DepEDDRefInfo() {}
   virtual DepInfoImpl* Clone() const { return new DepEDDRefInfo(*this); }
@@ -35,15 +36,15 @@ public:
 
 
 DepInfo DepInfoGenerator:: GetTopDepInfo()
-{ 
+{
   return DepInfo();
 }
-                    
+
 DepInfo DepInfoGenerator:: GetBottomDepInfo(int nr, int nc, int commLevel  )
 {
   assert(commLevel <= nr && commLevel <= nc);
-  DepInfoImpl *impl = new DepInfoImpl( nr, nc, false, commLevel); 
-  impl->edd.Initialize(DepRel(DEPDIR_ALL)); 
+  DepInfoImpl *impl = new DepInfoImpl( nr, nc, false, commLevel);
+  impl->edd.Initialize(DepRel(DEPDIR_ALL));
   for (int i = 0; i < commLevel; ++i) {
      impl->Entry(i,i) = DEPDIR_LE;
   }
@@ -66,35 +67,35 @@ DepInfo DepInfoGenerator:: GetDepInfo( int nr, int nc, bool p, int commLevel)
 }
 
 DepInfo DepInfoGenerator:: GetDepInfo( int nr, int nc, DepType t, bool p, int commLevel )
-  { return (t==DEPTYPE_NONE)? DepInfo(new DepInfoImpl( nr, nc, p, commLevel)) 
+  { return (t==DEPTYPE_NONE)? DepInfo(new DepInfoImpl( nr, nc, p, commLevel))
                      : DepInfo(new DepEDDTypeInfo( t, nr, nc, p, commLevel )); }
 
-DepInfo DepInfoGenerator:: 
+DepInfo DepInfoGenerator::
 GetDepInfo( int nr, int nc, DepType t, const AstNodePtr& srcRef, const AstNodePtr& snkRef,
             bool p, int commLevel)
-  { return ( (t & DEPTYPE_DATA) || (t & DEPTYPE_INPUT) )? 
+  { return ( (t & DEPTYPE_DATA) || (t & DEPTYPE_INPUT) )?
                       DepInfo(new DepEDDRefInfo( t, nr, nc, srcRef, snkRef,p, commLevel))
                      :  DepInfo(new DepEDDTypeInfo(t, nr, nc, p, commLevel)) ; }
 
-std::string DepType2String(DepType t) 
+std::string DepType2String(DepType t)
 {
   switch (t) {
-  case DEPTYPE_CTRL: return "CTRL_DEP;"; 
-  case DEPTYPE_TRUE: return  "TRUE_DEP;"; 
-  case DEPTYPE_OUTPUT: return  "OUTPUT_DEP;"; 
-  case DEPTYPE_ANTI: return  "ANTI_DEP;"; 
-  case DEPTYPE_INPUT: return  "INPUT_DEP;"; 
-  case DEPTYPE_SCALAR: return  "SCALAR_DEP;"; 
-  case DEPTYPE_BACKSCALAR: return  "SCALAR_BACK_DEP;"; 
-  case DEPTYPE_IO: return  "IO_DEP;"; 
-  case DEPTYPE_DATA: return  "DATA_DEP;"; 
-  case DEPTYPE_BACKCTRL: return  "BACKCTRL_DEP;";  
-  case DEPTYPE_TRANS: return  "TRANS_DEP;"; 
-  case DEPTYPE_NONE : return  "TYPE_NONE"; 
+  case DEPTYPE_CTRL: return "CTRL_DEP;";
+  case DEPTYPE_TRUE: return  "TRUE_DEP;";
+  case DEPTYPE_OUTPUT: return  "OUTPUT_DEP;";
+  case DEPTYPE_ANTI: return  "ANTI_DEP;";
+  case DEPTYPE_INPUT: return  "INPUT_DEP;";
+  case DEPTYPE_SCALAR: return  "SCALAR_DEP;";
+  case DEPTYPE_BACKSCALAR: return  "SCALAR_BACK_DEP;";
+  case DEPTYPE_IO: return  "IO_DEP;";
+  case DEPTYPE_DATA: return  "DATA_DEP;";
+  case DEPTYPE_BACKCTRL: return  "BACKCTRL_DEP;";
+  case DEPTYPE_TRANS: return  "TRANS_DEP;";
+  case DEPTYPE_NONE : return  "TYPE_NONE";
   default: assert(false);
   }
 }
-  
+
 std::string DepInfo :: toString() const
 {
   int num1, num2;
@@ -103,15 +104,15 @@ std::string DepInfo :: toString() const
   out << " Distance Matrix size:"<< rows() << "*" << cols()<<" ";
   out << DepType2String(GetDepType()) << " commonlevel = " << CommonLevel() << " ";
   out << "CarryLevel = ("<<num1 << "," << num2 << ") \n";
-  if (is_precise()) 
+  if (is_precise())
       out << " Is precise ";
   else
       out<<  " Not precise ";
-  out << AstInterface::AstToString(SrcRef())<<AstInterface::getAstLocation(SrcRef())<<"->" << AstInterface::AstToString(SnkRef())<<AstInterface::getAstLocation(SnkRef())<<"\n"; 
+  out << AstInterface::AstToString(SrcRef())<<AstInterface::getAstLocation(SrcRef())<<"->" << AstInterface::AstToString(SnkRef())<<AstInterface::getAstLocation(SnkRef())<<"\n";
   for (int i = 0; i < rows(); i++) {
     for (int j = 0; j < cols(); j++) {
        out << Entry( i, j).toString() << ";";
-    } 
+    }
     out << "||";
   }
   out << "::";
@@ -290,12 +291,12 @@ void DepInfo::InsertLoop( int level, DepDirection dir)
   if ( level < d1) {
     for ( i = 0; i < level; ++i)  {
       if ( level < d2) {
-         for ( j = 0; j < level; ++j) 
+         for ( j = 0; j < level; ++j)
            Entry(i,j) = tmp.Entry(i,j);
       }
       else
          j = 0;
-      for (; j < d2; ++j) 
+      for (; j < d2; ++j)
          Entry(i,j+incr2) = tmp.Entry(i,j);
     }
   }
@@ -303,7 +304,7 @@ void DepInfo::InsertLoop( int level, DepDirection dir)
     i = 0;
   for (; i < d1; ++i) {
      if (level < d2) {
-        for ( j = 0; j < level; ++j) 
+        for ( j = 0; j < level; ++j)
            Entry(i+incr1,j) = tmp.Entry(i,j);
      }
      else
@@ -312,7 +313,7 @@ void DepInfo::InsertLoop( int level, DepDirection dir)
          Entry(i+incr1,j+incr2) = tmp.Entry(i,j);
   }
   if (incr1) {
-     for ( j = 0; j < d2+incr2; ++j) 
+     for ( j = 0; j < d2+incr2; ++j)
          Entry(level, j) = DEPDIR_ALL;
   }
   if (incr2) {
