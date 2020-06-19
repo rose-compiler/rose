@@ -37,4 +37,3 @@ class RDLattice : public Lattice {
 }
 
 #endif
-

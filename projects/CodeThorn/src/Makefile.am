@@ -137,6 +137,7 @@ CODETHORN_HEADER_FILES=\
   ProgramInfo.h \
   ProgramLocationsReport.h \
   PropertyState.h \
+  PropertyStateFactory.h \
   PropertyValueTable.h \
   PState.h \
   RDAnalysis.h \
@@ -243,6 +244,7 @@ CODETHORN_SOURCE_FILES=\
   ProgramInfo.C \
   ProgramLocationsReport.C \
   PropertyState.C \
+  PropertyStateFactory.C \
   PropertyValueTable.C \
   PState.C \
   RDAnalysis.C \

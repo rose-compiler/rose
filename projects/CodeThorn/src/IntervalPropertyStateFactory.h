@@ -2,6 +2,7 @@
 #define INTERVALPROPERTYSTATEFACTORY_H
 
 #include "PropertyState.h"
+#include "PropertyStateFactory.h"
 
 namespace CodeThorn {
 
