@@ -193,7 +193,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     exit(0);
   } else if(ctOpt.displayVersion) {
     cout << "VxThorn version "<<version<<endl;
-    cout << "Written by Markus Schordan, Marc Jasper\n";
+    cout << "Written by Markus Schordan\n";
     exit(0);
   }
 

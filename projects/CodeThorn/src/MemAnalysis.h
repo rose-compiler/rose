@@ -31,13 +31,7 @@ class MemAnalysis : public DFAnalysisBase {
   MemAnalysis();
   ~MemAnalysis();
   virtual void initializeExtremalValue(Lattice* element);
-
-  void initialize(SgProject* root) {
-    DFAnalysisBase::initialize( root,
-                                nullptr /* no existing abstraction layer */,
-                                false /* id mapping for array elements */
-                                );
-  }
+  void initialize(SgProject* root);
 
  protected:
 };
