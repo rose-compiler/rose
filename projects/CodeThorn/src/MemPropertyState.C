@@ -7,14 +7,14 @@
 using namespace std;
 
 CodeThorn::MemPropertyState::MemPropertyState() {
-  setBot();
+  setBot(true);
 }
 
 CodeThorn::MemPropertyState::~MemPropertyState() {
 }
 
-void CodeThorn::MemPropertyState::setBot() {
-  _bot=true;
+void CodeThorn::MemPropertyState::setBot(bool flag) {
+  _bot=flag;
 }
 
 bool CodeThorn::MemPropertyState::isBot() {
@@ -31,6 +31,9 @@ std::string CodeThorn::MemPropertyState::toString(CodeThorn::VariableIdMapping* 
 void CodeThorn::MemPropertyState::combine(Lattice& b) {
   MemPropertyState* other=dynamic_cast<MemPropertyState*>(&b);
   ROSE_ASSERT(other);
+  if(!isBot()||!other->isBot()) {
+    setBot(false);
+  }
 }
 
 bool CodeThorn::MemPropertyState::approximatedBy(Lattice& b0) {

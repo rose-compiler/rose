@@ -16,7 +16,7 @@ class MemPropertyState : public Lattice {
   virtual std::string toString(CodeThorn::VariableIdMapping* vim=0);
   virtual bool approximatedBy(Lattice& other);
   virtual void combine(Lattice& other);
-  void setBot();
+  void setBot(bool val);
   bool isBot();
  private:
   bool _bot=true;
