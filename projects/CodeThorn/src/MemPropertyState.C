@@ -2,13 +2,23 @@
 
 #include "MemPropertyState.h"
 #include "SetAlgo.h"
+#include <iostream>
+
+using namespace std;
 
 CodeThorn::MemPropertyState::MemPropertyState() {
-  //setBot();
+  setBot();
 }
 
 CodeThorn::MemPropertyState::~MemPropertyState() {
-  //setBot();
+}
+
+void CodeThorn::MemPropertyState::setBot() {
+  _bot=true;
+}
+
+bool CodeThorn::MemPropertyState::isBot() {
+  return _bot;
 }
 
 //void CodeThorn::MemPropertyState::toStream(ostream& os, CodeThorn::VariableIdMapping* vim) {
