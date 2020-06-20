@@ -204,7 +204,6 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
           case V_SgUseStatement:               unparseUseStmt(stmt, info);               break;
 
        // DQ (8/25/2007): Added to support Fortran derived types
-       // case V_SgClassDeclaration:           unparseClassDeclStmt(stmt, info);         break;
           case V_SgDerivedTypeStatement:       unparseClassDeclStmt_derivedType(stmt, info); break;
           case V_SgModuleStatement:            unparseClassDeclStmt_module(stmt, info);      break;
 

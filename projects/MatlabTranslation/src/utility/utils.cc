@@ -150,7 +150,7 @@ Returns a string of types separated by commas from a list of types
   {
     //SgProject *project = SageInterface::getProject();
 
-    std::cout << "looking for " << functionName << " in " << className << std::endl;
+    //~ std::cout << "looking for " << functionName << " in " << className << std::endl;
 
     SgClassSymbol* classSymbol = SageInterface::lookupClassSymbolInParentScopes(className, scope);
     ROSE_ASSERT(classSymbol);

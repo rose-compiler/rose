@@ -681,6 +681,10 @@ HEADER_FLOAT_128_VALUE_EXPRESSION_END
 HEADER_ADA_FLOAT_VALUE_EXPRESSION_START
 HEADER_ADA_FLOAT_VALUE_EXPRESSION_END
 
+HEADER_ADA_TASK_REF_EXPRESSION_START
+//~ SgType* get_type() const $ROSE_OVERRIDE;
+HEADER_ADA_TASK_REF_EXPRESSION_END
+
 HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION_START
 
        // DQ (11/28/2011): Added to support template declarations in the AST.
@@ -894,8 +898,6 @@ HEADER_NARY_BOOLEAN_OP_START
     virtual SgType* get_type() const $ROSE_OVERRIDE;
 HEADER_NARY_BOOLEAN_OP_END
 
-HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
-HEADER_IS_NOT_OP_END
 
 HEADER_AND_OPERATOR_START
           SgType* get_type() const $ROSE_OVERRIDE;
@@ -924,13 +926,15 @@ HEADER_OR_OPERATOR_END
 HEADER_BIT_XOR_OPERATOR_START
 HEADER_BIT_XOR_OPERATOR_END
 
-
 HEADER_BIT_AND_OPERATOR_START
 HEADER_BIT_AND_OPERATOR_END
 
-
 HEADER_BIT_OR_OPERATOR_START
 HEADER_BIT_OR_OPERATOR_END
+
+// Rasmussen (4/28/2020): Added SgBitEqvOp to support the Jovial bitwise operator.
+HEADER_BIT_EQV_OPERATOR_START
+HEADER_BIT_EQV_OPERATOR_END
 
 
 HEADER_COMMA_OPERATOR_EXPRESSION_START
@@ -1485,6 +1489,12 @@ HEADER_THROW_OPERATOR_END
 
 HEADER_CONCATENATION_OPERATOR_START
 HEADER_CONCATENATION_OPERATOR_END
+
+HEADER_REM_OPERATOR_START
+HEADER_REM_OPERATOR_END
+
+HEADER_ABS_OPERATOR_START
+HEADER_ABS_OPERATOR_END
 
 
 HEADER_INITIALIZER_EXPRESSION_START
@@ -2549,51 +2559,6 @@ SgExpression::set_global_qualification_for_pointer_to_member_class_required ( bo
 
 // DQ (9/23/2011): Use the vitual function version so that we can test within ROSE (part of incremental testing of new original expression tree support).
 // DQ (9/19/2011): Put back the original code (non-virtual functions) so that we can test against previously passing tests.
-#if 0
-SgExpression*
-SgExpression::get_originalExpressionTree() const
-   {
-  // DQ (9/19/2011): Note that this function should be virtual (that was a mistake).  But if it is virtual, 
-  // then it has some effect on tests that are run in "make check" and so it appears to fail in both the 
-  // number of nodes counted for one of the variableLiveness tests and also in the variable renaming tests.
-  // So this change may have an effect that causes some problems.
-
-  // DQ (6/21/2011): Get the original expression if this is an IR node where it is defined and it is a valid pointer.
-  // The p_originalExpressionTree datamember exists only on these IR nodes:
-  //    SgBinaryOp
-  //    SgValueExp
-  //    SgFunctionRefExp
-  //    SgValueExp
-  //    SgCastExp
-
-     SgExpression* originalExpressionTree = NULL;
-     switch(variantT())
-        {
-          case V_SgBinaryOp:       originalExpressionTree = isSgBinaryOp(this)->get_originalExpressionTree();       break;
-          case V_SgValueExp:       originalExpressionTree = isSgValueExp(this)->get_originalExpressionTree();       break;
-          case V_SgFunctionRefExp: originalExpressionTree = isSgFunctionRefExp(this)->get_originalExpressionTree(); break;
-          case V_SgCastExp:        originalExpressionTree = isSgCastExp(this)->get_originalExpressionTree();        break;
-
-          default:
-             {
-            // For all other cases do nothing, since there is no originalExpressionTree data member.
-#if 0
-            // DQ (9/16/2011): I think this is failing because variantT() is more specific than V_SgValueExp.
-               ROSE_ASSERT(isSgValueExp(this) == NULL);
-               ROSE_ASSERT(isSgBinaryOp(this) == NULL);
-               ROSE_ASSERT(isSgFunctionRefExp(this) == NULL);
-               ROSE_ASSERT(isSgCastExp(this) == NULL);
-#endif
-             }
-        }
-#if 0
-     printf ("ERROR: base function SgExpression::set_originalExpressionTree() called for %p = %s \n",this,this->class_name().c_str());
-     ROSE_ASSERT(false);
-#endif
-
-     return originalExpressionTree;
-   }
-#else
 SgExpression*
 SgExpression::get_originalExpressionTree() const
    {
@@ -2607,17 +2572,14 @@ SgExpression::get_originalExpressionTree() const
 
      return originalExpressionTree;
    }
-#endif
 
 // DQ (9/19/2011): Put back the original code (non-virtual functions) so that we can test against previously passing tests.
-#if 1
 void
 SgExpression::set_originalExpressionTree(SgExpression* X)
    {
      printf ("ERROR: base function SgExpression::set_originalExpressionTree() called for %p = %s \n",this,this->class_name().c_str());
      ROSE_ASSERT(false);
    }
-#endif
 
 bool
 SgExpression::hasExplicitType()
@@ -4347,6 +4309,13 @@ SOURCE_FLOAT_128_VALUE_EXPRESSION_END
 SOURCE_ADA_FLOAT_VALUE_EXPRESSION_START
 SOURCE_ADA_FLOAT_VALUE_EXPRESSION_END
 
+SOURCE_ADA_TASK_REF_EXPRESSION_START
+SgType* SgAdaTaskRefExp::get_type() const 
+{
+  return SgAdaTaskType::createType(get_decl(), NULL);
+}
+SOURCE_ADA_TASK_REF_EXPRESSION_END
+
 
 SOURCE_TEMPLATE_PARAMETER_VALUE_EXPRESSION_START
 
@@ -5310,13 +5279,15 @@ SOURCE_OR_OPERATOR_EXPRESSION_END
 SOURCE_BIT_XOR_OPERATOR_EXPRESSION_START
 SOURCE_BIT_XOR_OPERATOR_EXPRESSION_END
 
-
 SOURCE_BIT_AND_OPERATOR_EXPRESSION_START
 SOURCE_BIT_AND_OPERATOR_EXPRESSION_END
 
-
 SOURCE_BIT_OR_OPERATOR_EXPRESSION_START
 SOURCE_BIT_OR_OPERATOR_EXPRESSION_END
+
+// Rasmussen (4/28/2020): Added SgBitEqvOp to support the Jovial bitwise operator.
+SOURCE_BIT_EQV_OPERATOR_EXPRESSION_START
+SOURCE_BIT_EQV_OPERATOR_EXPRESSION_END
 
 
 SOURCE_COMMA_OPERATOR_EXPRESSION_START
@@ -7355,6 +7326,12 @@ SOURCE_THROW_OPERATOR_EXPRESSION_END
 SOURCE_CONCATENATION_OPERATOR_EXPRESSION_START
 SOURCE_CONCATENATION_OPERATOR_EXPRESSION_END
 
+SOURCE_REM_OPERATOR_EXPRESSION_START
+SOURCE_REM_OPERATOR_EXPRESSION_END
+
+SOURCE_ABS_OPERATOR_EXPRESSION_START
+SOURCE_ABS_OPERATOR_EXPRESSION_END
+
 
 SOURCE_INITIALIZER_EXPRESSION_START
 SOURCE_INITIALIZER_EXPRESSION_END
@@ -8315,6 +8292,7 @@ SOURCE_INTEGER_OPERATOR_EXPRESSION_END
 // SgBitXorOp
 // SgBitAndOp
 // SgBitOrOp
+// SgBitEqvOp
 SOURCE_BIT_OPERATOR_EXPRESSION_START
 
 #if 0

@@ -66,7 +66,7 @@ DESCRIPTION
        3) "Transport". This is the process of taking a copy of the
           generated installer script that was generated in phase 2 from
           the "source" system to the "target" system. The details of this
-          are not discussed here howerver such transport generally
+          are not discussed here however such transport generally
           involves scp, ftp, curl, CD, DVD, USB-drive, or a download from
           a web site.
 
@@ -126,7 +126,7 @@ DESCRIPTION
        pathname or using the browser button to locate and select a pathname.
 
        To specify an installation prefix on the command line the /D=<pathname>
-       option may be used: 
+       option may be used:
 
           banana-installer.exe /D=E:\opt\banana
 
@@ -285,6 +285,16 @@ OPTIONS
             prefix in the generated script and so the user of that script
             must supply a pathname for the installation prefix.
 
+        --exclude=<pattern>
+
+            Exclude files whose basenames match the given globbing pattern.
+            Note that the pattern almost always needs to be quoted as such
+            patterns typically contain characters that are significant to
+            the shell. For example: --exclude='*.a'
+
+            This option is not well supported on Windows-like hosts at this
+            time.
+
         --fill
 
             On Windows-like platforms the underlying NSIS tool will fail
@@ -320,6 +330,13 @@ OPTIONS
             Assume the tar utility is GNU tar and so supports the z option
             (compress). By default the tar utility is located and tested.
 
+        --keep
+
+            The mkinstaller script normally recursively deletes the various
+            temporary directories that it creates and fills in the process
+            of constructing an installer script. Use of this option prevents
+            this deletion preserving it for a postmortem analysis.
+
         --nofill
 
             Don't add a dummy file (named "dummy.txt") to empty directories.
@@ -334,6 +351,12 @@ OPTIONS
             This is the default behavior.
 
             Note that Windows-like systems do not support symbolic-links.
+
+        --nokeep
+
+            Recursively delete the various temporary directories that are
+            created and filled in the process of constructing an installer
+            script. This is the default behavior (see the --keep option).
 
         --nosha
 
@@ -416,7 +439,7 @@ OPTIONS
             installer before all of the payload directories have been
             extracted and installed.
 
-            Such pre-install Perl scripts are not generally supported
+            Such preinstall Perl scripts are not generally supported
             on Windows systems as Perl is not generally found on Windows
             systems.
 
@@ -491,7 +514,7 @@ OPTIONS
 
                -v3
 
-            is equavalent to:
+            is equivalent to:
 
                -v -v -v
 
@@ -520,7 +543,7 @@ OPTIONS
             <name> in the option name is typically something like bin,
             include, lib, ... and like <pathname> below, may not contain
             any spaces, tabs, or dashes. If such an installation directory
-            hasen't been specified then the appropriate work will be done
+            hasn't been specified then the appropriate work will be done
             so that the installer will have such a directory containing
             the specified file.
 
@@ -543,6 +566,13 @@ OPTIONS
             directory basenames are: bin, include, lib, ... Typical file
             basenames are: README, LICENSE, ... Note that at least one such
             directory pathname is required.
+
+            Note that if such a pathname given on the command line contains
+            any symbolic-links they will be expanded (by following) in order
+            to form a pathname without symbolic-links. This is only done to
+            pathnames on the command line, not those found down in directory
+            trees (where symbolic-links are not permitted by the mkinstaller
+            script).
 
             The basename of this pathname may not contain any spaces, tabs,
             or dashes however the directory components (if any) may.
@@ -589,7 +619,7 @@ EXAMPLE
            -v2 \
 
        The -v2 option indicates (enhanced) verbose output is desired.
-       Note that verbose output is generally benificial. Also note that
+       Note that verbose output is generally beneficial. Also note that
        the trailing backslash was the continuation mark from the above
        very long command above (an honest cut/paste), it is not part
        of this option or any of the following options and parameters.
@@ -661,7 +691,7 @@ ENVIRONMENT
         INEFFECTIVE_mkinstaller
 
             If this environment variable has been set then the generated
-            script will lack a payload and may not even be runable. Note
+            script will lack a payload and may not even be runnable. Note
             that this feature is almost never used except when debugging
             the script generation process.
 
@@ -760,7 +790,7 @@ DETAILS
 
        Details of the installer construction process on UNIX:
 
-          Aside from initalization and command line processing the UNIX
+          Aside from initialization and command line processing the UNIX
           implementation of mkinstaller goes through the following steps:
 
           1) Determination of a suitable temp directory. Much of the work
@@ -833,7 +863,7 @@ DETAILS
              determined at the start of this step (see NOTES).
           3) PREFIX and PREFIX_xxx values are established from command
              line options. If appropriate options aren't supplied to
-             install all directories then the installer script will propmpt
+             install all directories then the installer script will prompt
              for the necessary pathname(s). The installer script will
              create the directories if necessary.
           4) The tarball embedded in the installer script is extracted from
@@ -849,7 +879,7 @@ DETAILS
              supplied and revealed are actually executed in this step. See
              steps (6) and (8).
           6) If (5) revealed a pre-install script then it will be executed
-             by the approptiate interpreter. Note that each of the PREFIX
+             by the appropriate interpreter. Note that each of the PREFIX
              and/or PREFIX_xxx directories will be supplied as an option to
              this pre-install script (such as --prefix_bin=<pathname>). Also
              note at this time the individual tarballs representing the
@@ -858,7 +888,7 @@ DETAILS
              the appropriate PREFIX directory overlying anything already
              there.
           8) If (5) revealed a post-install script then it will be executed
-             by the approptiate interpreter. Note that each of the PREFIX
+             by the appropriate interpreter. Note that each of the PREFIX
              and/or PREFIX_xxx directories will be supplied as an options
              to this post-install script (such as --prefix_bin=<pathname>).
           9) Cleanup.
@@ -874,7 +904,7 @@ DETAILS
 
        Details of the installer construction process on Windows:
 
-          Aside from initalization and command line processing the Windows
+          Aside from initialization and command line processing the Windows
           implementation of mkinstaller goes through the following steps:
 
           1) Determination of a suitable temp directory. Much of the work
@@ -918,21 +948,21 @@ DETAILS
           The default use of the generated installer will produce a new
           directory on the user's desktop.
 
-             circus> installer.exe
+             bigtop> installer.exe
 
           A different prefix may be specified using the /D option:
 
-             circus> installer.exe /D=E:\opt\banana
+             bigtop> installer.exe /D=E:\opt\banana
 
           Note that the prefix directory will be creates as necessary
           however the uninstaller will only (recursively delete) the
           final directory component. In the above example only
-          E:\opt\banana will be (recursivly deleted, but the
+          E:\opt\banana will be (recursively deleted, but the
           directory E:\opt will be left intact.
 
        Note that the generated installer will pop-up a progress bar dialog
        box to indicate the installation progress. The above examples were
-       run by bozo on circus.other.net
+       run by bozo on bigtop.highwire.net
 
 AUTHOR
     Jim Reus (jim.reus@gmail.com)
@@ -949,4 +979,4 @@ CONTACT
 
     Be sure to provide as much information as possible.
 
-    This man page was generated by mkinstaller 2.5.27.1 using the --help option. Revised 26Mar2020,19:43:37z
+    This man page was generated by mkinstaller 2.6.2.2 using the --help option. Revised 13Jun2020,21:23:10z

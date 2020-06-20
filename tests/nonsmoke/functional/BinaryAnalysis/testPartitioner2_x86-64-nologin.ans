@@ -304,3 +304,9 @@
 0x00400735: Outgoing stack delta: +8
 0x00400735: Successor blocks: unknown
 
+0x00400b3c: ================================== Function (call instruction, graph) unknown name
+
+0x00400b3c: Basic block reasons: entry point, CFG head
+0x00400b3c: ff                      |.       |          unknown 
+0x00400b3c: Successor blocks: unknown
+

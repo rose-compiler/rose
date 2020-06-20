@@ -197,8 +197,9 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
       // do not enter in mapping
     }
   }
-  SAWYER_MESG(logger[INFO])<<"Resolved "<<n<<" ("<< percent(n, funCallList.size()) << "%) function calls."<<endl;
-  return;
+  SAWYER_MESG(logger[INFO])<<"Resolved "<<mapping.size()
+                           <<" ("<< percent(mapping.size(), funCallList.size()) << "%) function calls."
+                           <<endl;
 }
 
 std::string FunctionCallMapping::toString() {

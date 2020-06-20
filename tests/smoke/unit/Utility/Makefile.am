@@ -133,6 +133,20 @@ testSourceLocation.passed: $(top_srcdir)/scripts/test_exit_status testSourceLoca
 		CMD="./testSourceLocation"		\
 		$< $@
 
+########################################################################################################################
+# bit operations
+########################################################################################################################
+
+noinst_PROGRAMS += testBitOps
+testBitOps_SOURCES = testBitOps.C
+
+TEST_TARGETS += testBitOps.passed
+testBitOps.passed: $(top_srcdir)/scripts/test_exit_status testBitOps
+	@$(RTH_RUN)					\
+		TITLE="test bit operations [$@]"	\
+		CMD="./testBitOps"			\
+		$< $@
+
 ###############################################################################################################################
 # Boilerplate
 ###############################################################################################################################

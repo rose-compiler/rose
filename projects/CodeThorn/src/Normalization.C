@@ -483,25 +483,25 @@ void hoistBranchInitStatement(GetInitStatement::matched_node n)
 
 void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
 {
-    GetInitStatement::container hoistingTransformationList;
+  GetInitStatement::container hoistingTransformationList;
 
-    RoseAst ast(node);
-    // build list of stmts to transform
-    for (auto i=ast.begin();i!=ast.end();++i) {
-      // TEMPLATESKIP this will skip all templates that are found (mostly in header files). This could also be integrated into the iterator itself.
-      if(isTemplateNode(*i)) {
-        i.skipChildrenOnForward();
-        continue;
-      }
-
-      sg::dispatch(GetInitStatement(hoistingTransformationList), *i);
+  RoseAst ast(node);
+  // build list of stmts to transform
+  for (auto i=ast.begin();i!=ast.end();++i) {
+    // TEMPLATESKIP this will skip all templates that are found (mostly in header files). This could also be integrated into the iterator itself.
+    if(isTemplateNode(*i)) {
+      i.skipChildrenOnForward();
+      continue;
     }
 
-    // transform stmts
-    for (auto match: hoistingTransformationList) {
-      hoistBranchInitStatement(match);
-    }
+    sg::dispatch(GetInitStatement(hoistingTransformationList), *i);
   }
+
+  // transform stmts
+  for (auto match: hoistingTransformationList) {
+    hoistBranchInitStatement(match);
+  }
+}
 
   /***************************************************************************
    * HOISTING OF CONDITION EXPRESSIONS (if, switch, do, do-while)
@@ -573,31 +573,6 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
         cerr<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(stmt)<<endl;
         cerr<<"Error: Normalization: Variable declaration in condition of if statement. Not supported yet."<<endl;
         exit(1);
-
-        // temporary "fix"
-
-        //if (!condExpr && isSgIfStmt(stmt)) {
-          // PP (03/02/20) handle variable declarations in conditions
-        //  SgVariableDeclaration* condVar = isSgVariableDeclaration(condNode);
-
-        //  if (!condVar)
-        //    std::cerr << typeid(*condNode).name() << "\n" << stmt->unparseToString() << std::endl;
-
-        //  ROSE_ASSERT(condVar);
-
-          // \todo do we also have to fix up the symbol scope?
-
-        //  SgVarRefExp*           condRef = SageBuilder::buildVarRefExp(condVar);
-        //  SgExprStatement*       refStmt = SageBuilder::buildExprStatement(condRef);
-
-        //  SageInterface::replaceStatement(condVar, refStmt, true /* movePreprocessingInfo */);
-        //  SageInterface::insertStatementBefore(stmt, condVar);
-        //  return;
-        //}
-
-        //if (!condExpr)
-        //  std::cerr << typeid(*condNode).name() << "\n" << stmt->unparseToString() << std::endl;
-
       } else {
         cerr<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(stmt)<<endl;
         cerr<<"Error: Normalization: Unknown language construct in condition of if statement. Not supported."<<endl;
@@ -1087,12 +1062,15 @@ add
       Normalization::TmpVarNrType rhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
       Normalization::TmpVarNrType lhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList,insideExprToBeEliminated);
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,lhsResultTmpVarNr,rhsResultTmpVarNr,subExprTransformationList);
-    } else if (isNullThrow(expr)) {
+    } else if(options.normalizeCplusplus && isNullThrow(expr)) {
       mostRecentTmpVarNr=0; // PP correct?
     } else if(isSgUnaryOp(expr)) {
       // general case: unary operator
       Normalization::TmpVarNrType unaryResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)),subExprTransformationList,insideExprToBeEliminated);
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,unaryResultTmpVarNr,subExprTransformationList);
+    } else if(options.normalizeCplusplus && isSgNewExp(expr)) {
+      // \todo PP normalize new arguments?
+      mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,subExprTransformationList);
     } else {
       // leave node.
       // MS: 05/09/2019: register tmp var if parent is AndOp or OrOp

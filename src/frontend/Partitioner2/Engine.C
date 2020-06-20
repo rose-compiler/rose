@@ -318,12 +318,12 @@ Engine::partitionerSwitches(PartitionerSettings &settings) {
            "no effect if the input is a ROSE Binary Analysis (RBA) file, since the partitioner steps in such an input "
            "have already been completed.");
 
-    sg.insert(Switch("start")
-              .argument("addresses", listParser(nonNegativeIntegerParser(settings.startingVas)))
+    sg.insert(Switch("function-at")
+              .argument("addresses", listParser(nonNegativeIntegerParser(settings.functionStartingVas)))
               .whichValue(SAVE_ALL)
               .explosiveLists(true)
               .doc("List of addresses where recursive disassembly should start in addition to addresses discovered by "
-                   "other methods. Each address listed by this switch will be considered the entry point of a function. "
+                   "other methods. A function entry point will be insterted at each address listed by this switch. "
                    "This switch may appear multiple times, each of which may have multiple comma-separated addresses."));
 
     sg.insert(Switch("use-semantics")
@@ -374,9 +374,29 @@ Engine::partitionerSwitches(PartitionerSettings &settings) {
 
     sg.insert(Switch("follow-ghost-edges")
               .intrinsicValue(true, settings.followingGhostEdges)
-              .doc("When discovering the instructions for a basic block, treat instructions individually rather than "
-                   "looking for opaque predicates.  The @s{no-follow-ghost-edges} switch turns this off.  The default "
-                   "is " + std::string(settings.followingGhostEdges?"true":"false") + "."));
+              .doc("A \"ghost edge\" is a control flow graph (CFG) edge that would be present if the CFG-building analysis "
+                   "looked only at individual instructions, but would be absent when the analysis looks at coarser units "
+                   "of code.  For instance, consider the following x86 assembly code:"
+
+                   "@numbered{mov eax, 0}"              // 1
+                   "@numbered{cmp eax, 0}"              // 2
+                   "@numbered{jne 5}"                   // 3
+                   "@numbered{nop}"                     // 4
+                   "@numbered{hlt}"                     // 5
+
+                   "If the analysis looks only at instruction 3, then it appears to have two CFG successors: instructions "
+                   "4 and 5. But if the analysis looks at the first three instructions collectively it will ascertain that "
+                   "instruction 3 has an opaque predicate, that the only valid CFG successor is instruction 4, and that the "
+                   "edge from 3 to 5 is a \"ghost\". In fact, if there are no other incoming edges to these instructions, "
+                   "then instructions 1 through 4 will form a basic block with the (unconditional) branch in the interior. "
+                   "The ability to look at larger units of code than single instructions is enabled with the @s{use-semantics} "
+                   "switch.\n\n"
+
+                   "This @s{follow-ghost-edges} switch causes the ghost edges to be added back into the CFG as real edges, which "
+                   "might force a basic block to end. For instance, in this example, turning on @s{follow-ghost-edges} will "
+                   "force the first basic block to end with the \"jne\" instruction. The @s{no-follow-ghost-edges} switch turns "
+                   "this feature off. By default, this feature is " +
+                   std::string(settings.followingGhostEdges?"enabled":"disabled") + "."));
     sg.insert(Switch("no-follow-ghost-edges")
               .key("follow-ghost-edges")
               .intrinsicValue(false, settings.followingGhostEdges)
@@ -427,10 +447,14 @@ Engine::partitionerSwitches(PartitionerSettings &settings) {
 
     sg.insert(Switch("find-dead-code")
               .intrinsicValue(true, settings.findingDeadCode)
-              .doc("Use ghost edges (non-followed control flow from branches with opaque predicates) to locate addresses "
-                   "for unreachable code, then recursively discover basic blocks at those addresses and add them to the "
-                   "same function.  The @s{no-find-dead-code} switch turns this off.  The default is " +
-                   std::string(settings.findingDeadCode?"true":"false") + "."));
+              .doc("If ghost edges are being discovered (see @s{follow-ghost-edges} for the definition of \"ghost "
+                   "edge\") and are not being inserted into the global control flow graph (controlled by "
+                   "@s{follow-ghost-edges}) then the target address of the ghost edge might not be used as a code "
+                   "address during the instruction discovery phase. This switch, @s{find-dead-code}, will cause the "
+                   "target addresses of ghost edges to be used to discover more instructions even though the ghost "
+                   "edges don't appear in the control flow graph. The @s{no-find-dead-code} switch turns this off. "
+                   "The default is that this feature is " +
+                   std::string(settings.findingDeadCode?"enabled":"disabled") + "."));
     sg.insert(Switch("no-find-dead-code")
               .key("find-dead-code")
               .intrinsicValue(false, settings.findingDeadCode)
@@ -1670,7 +1694,7 @@ Engine::runPartitionerInit(Partitioner &partitioner) {
     makeInterruptVectorFunctions(partitioner, settings_.partitioner.interruptVector);
 
     SAWYER_MESG(where) <<"marking user-defined functions\n";
-    makeUserFunctions(partitioner, settings_.partitioner.startingVas);
+    makeUserFunctions(partitioner, settings_.partitioner.functionStartingVas);
 }
 
 void

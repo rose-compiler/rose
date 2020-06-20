@@ -155,12 +155,17 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
   
   for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
     SgNode* callNode=getNode(*i);
+    
+    // filtering for templated code is not strictly necessary
+    //   but it avoids misleading logging output. 
+    if (insideTemplatedCode(callNode))
+      continue;
 
     SgNodeHelper::ExtendedCallInfo callInfo = SgNodeHelper::matchExtendedNormalizedCall(callNode);
     if(!callInfo)
     {
       logger[ERROR] << callNode->unparseToString() << std::endl;
-      throw CodeThorn::Exception("interFlow: unknown call expression");
+      throw CodeThorn::Exception("interFlow2: unknown call expression");
     }
 
     switch(functionResolutionMode) {
@@ -168,16 +173,16 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
       FunctionCallTargetSet funCallTargetSet=determineFunctionDefinition5(*i, callInfo.representativeNode());
       Label callLabel,entryLabel,exitLabel,callReturnLabel;
       if(funCallTargetSet.size()==0) {
-        std::cerr << "undefined call target: " << callNode->unparseToString() << std::endl;
+        logger[INFO] << "undefined call target: " << callNode->unparseToString() << std::endl;
         callLabel=*i;
         entryLabel=Labeler::NO_LABEL;
         exitLabel=Labeler::NO_LABEL;
         callReturnLabel=labeler->functionCallReturnLabel(callNode);
         interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
       } else {
-        std::cerr << "defined call target: " << callNode->unparseToString() 
-                       << " <" << typeid(*callNode).name() << ">"
-                       << std::endl;
+        logger[TRACE] << "defined call target: " << callNode->unparseToString() 
+                     << " <" << typeid(*callNode).name() << ">"
+                     << std::endl;
         for(auto fct : funCallTargetSet) {
           callLabel=*i;
           SgFunctionDefinition* funDef=fct.getDefinition();
@@ -1114,11 +1119,14 @@ namespace
     typedef sg::DispatchHandler<bool> base;
     
     ExcludeFromCfg()
-    : base(false)
+    : base(false /* include in CFG */)
     {}
     
-    void handle(SgNode&) {}
-    void handle(SgUsingDeclarationStatement&) { res = true; }
+    void handle(SgNode&)                             { /* default = false */ }
+    void handle(SgUsingDeclarationStatement&)        { res = true; }
+    void handle(SgUsingDirectiveStatement&)          { res = true; }
+    void handle(SgC_PreprocessorDirectiveStatement&) { res = true; }
+    void handle(SgTypedefDeclaration&)               { res = true; /* includes subclasses */ }    
   };
 }
 
@@ -1502,18 +1510,20 @@ Flow CFAnalysis::flow(SgNode* node) {
     size_t len=std::distance(succ.begin(), pos);
     if(len==0) {
       return edgeSet;
+    } 
+    
+    if(len==1) {
+      SgNode* onlyStmt=succ.at(0);
+      Flow onlyFlow=flow(onlyStmt);
+      edgeSet+=onlyFlow;
     } else {
-      if(len==1) {
-        SgNode* onlyStmt=succ.at(0);
-        Flow onlyFlow=flow(onlyStmt);
-        edgeSet+=onlyFlow;
-      } else {
-        for(size_t i=0;i<len-1;++i) {
-          SgNode* childNode1=succ.at(i);
-          SgNode* childNode2=succ.at(i+1);
-          Flow flow12=flow(childNode1,childNode2);
-          edgeSet+=flow12;
-        }
+      for(size_t i=0;i<len-1;++i) {
+        SgNode* childNode1=succ.at(i);
+        ROSE_ASSERT(!isSgTemplateTypedefDeclaration(childNode1));
+        SgNode* childNode2=succ.at(i+1);
+        ROSE_ASSERT(!isSgTemplateTypedefDeclaration(childNode2));
+        Flow flow12=flow(childNode1,childNode2);
+        edgeSet+=flow12;
       }
     }
     SgNode* firstStmt=succ.at(0);
@@ -1732,8 +1742,8 @@ FunctionCallTargetSet CFAnalysis::determineFunctionDefinition4(SgFunctionCallExp
 
 
 FunctionCallTargetSet CFAnalysis::determineFunctionDefinition5(Label lbl, SgLocatedNode* astnode) {
-  SAWYER_MESG(logger[TRACE])<<"CFAnalysis::determineFunctionDefinition4:"<<astnode->unparseToString()<<": ";
-  ROSE_ASSERT(getFunctionCallMapping());
+  SAWYER_MESG(logger[TRACE])<<"CFAnalysis::determineFunctionDefinition5:"<<astnode->unparseToString()<<": ";
+  ROSE_ASSERT(getFunctionCallMapping2());
   FunctionCallTargetSet res=getFunctionCallMapping2()->resolveFunctionCall(lbl);
 #if 1
   if(res.size()>0) {

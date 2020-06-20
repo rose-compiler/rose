@@ -2,6 +2,8 @@
 #ifndef CTX_TRANSFER_H
 #define CTX_TRANSFER_H 1
 
+/// \author Peter Pirkelbauer
+
 #include <iterator>
 #include <algorithm>
 
@@ -30,8 +32,8 @@ namespace
   //
   // auxiliary functors
 
-  //! calls transfer on the DfItem (data-flow object).
-  //! \tparam DfItem either a data-flow node (source) or a data-flow edge
+  /// calls transfer on the DfItem (data-flow object).
+  /// \tparam DfItem either a data-flow node (source) or a data-flow edge
   template <class DfItem>
   struct ComponentTransfer
   {
@@ -90,9 +92,9 @@ namespace
   }
 }
 
-//! Transfer functions for context-sensitive dataflow analysis.
-//!
-//! \tparam  CallContext an implementation of a CallContext
+/// Transfer functions for context-sensitive dataflow analysis.
+///
+/// \tparam  CallContext an implementation of a CallContext
 template <class CallContext>
 struct CtxTransfer : DFTransferFunctions
 {
@@ -140,7 +142,7 @@ struct CtxTransfer : DFTransferFunctions
     void transfer(Label lbl, ctx_lattice_t& lat);
 
     /// handles transfers on edges
-    /// \note CURRENTLY ONLY CALLED form post-info processing
+    /// \note CURRENTLY ONLY CALLED from post-info processing
     void transfer(Label lbl, Lattice& element) ROSE_OVERRIDE
     {
       ctx_lattice_t& lat = dynamic_cast<ctx_lattice_t&>(element);
@@ -199,9 +201,13 @@ void CtxTransfer<CallContext>::transfer(Label lbl, ctx_lattice_t& lat)
   tmp.swap(lat);
 
   if (labeler.isFunctionCallLabel(lbl))
+  {
     allCallInvoke(tmp, lat, analysis, labeler, lbl);
+  }
   else
+  {
     allCallReturn(tmp, lat, analysis, labeler, lbl);
+  }
 
   // Sub-lattices in tmp WILL BE DELETED !!!
 }
@@ -214,7 +220,12 @@ void CtxTransfer<CallContext>::transfer(Edge edge, Lattice& element)
 
   //~ was: this->transfer(edge.source(), element);
   this->transfer(edge.source(), lat);
+  
   std::for_each(lat.begin(), lat.end(), componentTransfer(component, edge));
+
+  //~ std::cerr << "# tr'd " << getLabeler()->getNode(edge.source())->unparseToString();
+  //~ lat.toStream(std::cerr, NULL);
+  //~ std::cerr << std::endl;
 }
 
 

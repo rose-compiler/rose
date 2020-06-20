@@ -520,7 +520,7 @@ public:
     /** Determine whether a specimen is an RBA file.
      *
      *  Returns true if the name looks like a ROSE Binary Analysis file. Such files are not intended to be passed to ROSE's
-     *  @c frontend function. */
+     *  global @c ::frontend function but may be passed to this Engine's @ref frontent method. */
     virtual bool isRbaFile(const std::string&);
 
     /** Determine whether a specimen name is a non-container.
@@ -1192,14 +1192,20 @@ public:
     virtual void isaName(const std::string &s) { settings_.disassembler.isaName = s; }
     /** @} */
 
+    // This is a list of addresses where functions will be created in addition to those functions discovered by examining the
+    // binary container. Use functionStartingVas instead.
+    // DEPRECATED on 5/27/20
+    const std::vector<rose_addr_t>& startingVas() const ROSE_DEPRECATED("use functionStartingVas") /*final*/ { return settings_.partitioner.functionStartingVas; }
+    std::vector<rose_addr_t>& startingVas() ROSE_DEPRECATED("use functionStartingVas") /*final*/ { return settings_.partitioner.functionStartingVas; }
+
     /** Property: Starting addresses for disassembly.
      *
      *  This is a list of addresses where functions will be created in addition to those functions discovered by examining the
      *  binary container.
      *
      * @{ */
-    const std::vector<rose_addr_t>& startingVas() const /*final*/ { return settings_.partitioner.startingVas; }
-    std::vector<rose_addr_t>& startingVas() /*final*/ { return settings_.partitioner.startingVas; }
+    const std::vector<rose_addr_t>& functionStartingVas() const /*final*/ { return settings_.partitioner.functionStartingVas; }
+    std::vector<rose_addr_t>& functionStartingVas() /*final*/ { return settings_.partitioner.functionStartingVas; }
     /** @} */
 
     /** Property: Whether to use instruction semantics.
@@ -1234,12 +1240,30 @@ public:
     virtual void semanticMemoryParadigm(SemanticMemoryParadigm p) { settings_.partitioner.semanticMemoryParadigm = p; }
     /** @} */
 
-    /**  Property: Whether to follow ghost edges.
+    /** Property: Whether to follow ghost edges.
      *
-     *   If set, then "ghost" edges are followed during disassembly.  A ghost edge is a control flow edge from a branch
-     *   instruction where the partitioner has decided according to instruction semantics that the branch cannot be taken at
-     *   run time.  If semantics are disabled then ghost edges are always followed since its not possible to determine whether
-     *   an edge is a ghost edge.
+     *  A "ghost edge" is a control flow graph (CFG) edge that would be present if the CFG-building analysis looked only
+     *  at individual instructions, but would be absent when the analysis considers coarser units of code.  For instance,
+     *  consider the following x86 instructions:
+     *
+     * @code
+     *  1: mov eax, 0
+     *  2: cmp eax, 0
+     *  3: jne 5
+     *  4: nop
+     *  5: hlt
+     * @endcode
+     *
+     *  If the analysis looks only at instruction 3, then it appears to have two CFG successors: instructions 4 and 5. But if
+     *  the analysis looks at the first three instructions collectively it will ascertain that instruction 3 has an opaque
+     *  predicate, that the only valid CFG successor is instruction 4, and that the edge from 3 to 5 is a \"ghost\". In fact,
+     *  if there are no other incoming edges to these instructions, then instructions 1 through 4 will form a basic block with
+     *  the (unconditional) branch instruction in its interior.  The ability to look at larger units of code than single
+     *  instructions is controlled by the @ref usingSemantics property.
+     *
+     *  If this @ref followingGhostEdges property is true then ghost edges will be added back into the CFG as real edges,
+     *  which might force a basic block to end, as in this example, at the branch instruction and may attempt to disassemble
+     *  additional code by folowing all edges.
      *
      * @{ */
     bool followingGhostEdges() const /*final*/ { return settings_.partitioner.followingGhostEdges; }
@@ -1336,8 +1360,10 @@ public:
 
     /** Property: Whether to find dead code.
      *
-     *  If set, then the partitioner looks for code that is reachable by ghost edges after all other code has been found.  This
-     *  is different than @ref followingGhostEdges in that the former follows those edges immediately.
+     *  If ghost edges are being discovered (see @ref usingSemantics and @ref followingGhostEdges) and are not being inserted
+     *  into the global CFG, then the target address of the ghost edges might not be used as code addresses during the code
+     *  discovery phase.  This property, when true, will cause the target address of ghost edges to be used to discover additional
+     *  instructions even if they have no incoming CFG edges.
      *
      * @{ */
     bool findingDeadCode() const /*final*/ { return settings_.partitioner.findingDeadCode; }

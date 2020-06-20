@@ -952,7 +952,7 @@ void ProcessExpression::processRHS(SgNode *node, struct AliasRelationNode &arNod
     SgVarRefExp *var_exp;
     int derefLevel = 0;
     static int new_index;
-    static unordered_map<SgExpression*, SgVariableSymbol *> new_variables;
+    static boost::unordered_map<SgExpression*, SgVariableSymbol *> new_variables;
     
     switch (node->variantT()) {
     
@@ -1162,7 +1162,7 @@ void CollectAliasRelations::processNode(SgGraphNode* g_node){
 
 }
 
-void CollectAliasRelations::recursiveCollect(SgGraphNode *node, unordered_map<SgGraphNode*, COLOR> &colors){
+void CollectAliasRelations::recursiveCollect(SgGraphNode *node, boost::unordered_map<SgGraphNode*, COLOR> &colors){
 
     if(node == NULL) return;
     
@@ -1193,7 +1193,7 @@ void CollectAliasRelations::run() {
     
     set<SgGraphNode*> allNodes = graph->computeNodeSet();
     
-    unordered_map<SgGraphNode*, COLOR> colors;
+    boost::unordered_map<SgGraphNode*, COLOR> colors;
 
     foreach(SgGraphNode *node, allNodes) {
             colors[node] = WHITE;

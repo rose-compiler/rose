@@ -18,11 +18,10 @@ while (my $filename = $files->next_file) {
   if ($filename=~/\.(C|cpp)$/ && !is_disabled($filename) && open FILE, "<", $filename) {
     my $previous_includes = 0;
     while (<FILE>) {
-      if (/^\s*#\s*include\s*["<](rosePublicConfig\.h|rose_config\.h)[>"]/) {
-	# Including <rosePublicConfig.h> or <rose_config.h> doesn't count. Although it
-	# disables the precompiled header support, it's typically used to enable or disable
-	# entire source files. Doing so can end up being faster even than using precompiled
-	# headers.
+      if (/^\s*#\s*include\s*["<](rosePublicConfig\.h|rose_config\.h|featureTests\.h)[>"]/) {
+	# Including <rosePublicConfig.h>, <rose_config.h>, or <featureTests.h> doesn't count. Although it disables the
+	# precompiled header support, it's typically used to enable or disable entire source files. Doing so can end up
+	# being faster even than using precompiled headers.
       } elsif (/^#\s*include\s*["<]sage3basic\.h[>"]/ && $previous_includes>0) {
 	print $desc unless $nfail++;
 	print "  ", $filename, $warning, "\n";

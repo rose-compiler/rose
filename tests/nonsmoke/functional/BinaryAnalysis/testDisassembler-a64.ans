@@ -1,0 +1,427 @@
+L1    # abs d2, d1
+L2    0x22 0xb8 0xe0 0x5e
+L2    0x00000000: 22 b8 e0 5e               ?? abs      d2, d1                                   ; absolute value
+L3    
+L4    # adc w3, w2, w1
+L5    0x43 0x00 0x01 0x1a
+L5    0x00000000: 43 00 01 1a               ?? adc      w3, w2, w1                               ; add with carry
+L6    
+L7    # adc x3, x2, x1
+L8    0x43 0x00 0x01 0x9a
+L8    0x00000000: 43 00 01 9a               ?? adc      x3, x2, x1                               ; add with carry
+L9    
+L10   # adcs w3, w2, w1
+L11   0x43 0x00 0x01 0x3a
+L11   0x00000000: 43 00 01 3a               ?? adcs     w3, w2, w1                               ; add with carry
+L12   
+L13   # adcs x3, x2, x1
+L14   0x43 0x00 0x01 0xba
+L14   0x00000000: 43 00 01 ba               ?? adcs     x3, x2, x1                               ; add with carry
+L15   
+L16   # add w3, w2, w1, uxtb #2
+L17   0x43 0x08 0x21 0x0b
+L17   0x00000000: 43 08 21 0b               ?? add      w3, w2, uext(trunc(w1, 8), 32) << 2      ; add
+L18   
+L19   # add x3, x2, w1, uxtb #2
+L20   0x43 0x08 0x21 0x8b
+L20   0x00000000: 43 08 21 8b               ?? add      x3, x2, uext(trunc(w1, 8), 32) << 2      ; add
+L21   
+L22   # add x3, x2, x1, sxtx #2
+L23   0x43 0xe8 0x21 0x8b
+L23   0x00000000: 43 e8 21 8b               ?? add      x3, x2, x1 << 2                          ; add
+L24   
+L25   # add sp, x2, x1, sxtx #2
+L26   0x5f 0xe8 0x21 0x8b
+L26   0x00000000: 5f e8 21 8b               ?? add      sp, x2, x1 << 2                          ; add
+L27   
+L28   # add w2, w1, #0xfff
+L29   0x22 0xfc 0x3f 0x11
+L29   0x00000000: 22 fc 3f 11               ?? add      w2, w1, 0x0000000000000fff<4095>         ; add
+L30   
+L31   # add x2, x1, #0xfff
+L32   0x22 0xfc 0x3f 0x91
+L32   0x00000000: 22 fc 3f 91               ?? add      x2, x1, 0x0000000000000fff<4095>         ; add
+L33   
+L34   # add w2, w1, #0xfff, lsl #12
+L35   0x22 0xfc 0x7f 0x11
+L35   0x00000000: 22 fc 7f 11               ?? add      w2, w1, 0x0000000000000fff<4095> << 12   ; add
+L36   
+L37   # add w3, w2, w1, lsl #31
+L38   0x43 0x7c 0x01 0x0b
+L38   0x00000000: 43 7c 01 0b               ?? add      w3, w2, w1 << 0x1f<31>                   ; add
+L39   
+L40   # add x3, x2, x1, lsl #63
+L41   0x43 0xfc 0x01 0x8b
+L41   0x00000000: 43 fc 01 8b               ?? add      x3, x2, x1 << 0x3f<63>                   ; add
+L42   
+L43   # add d3, d2, d1
+L44   0x43 0x84 0xe1 0x5e
+L44   0x00000000: 43 84 e1 5e               ?? add      d3, d2, d1                               ; add
+L45   
+L46   # add v3.2d, v2.2d, v1.2d
+L47   0x43 0x84 0xe1 0x4e
+L47   0x00000000: 43 84 e1 4e               ?? add      v3.2d, v2.2d, v1.2d                      ; add
+L48   
+L49   # add v3.4s, v2.4s, v1.4s
+L50   0x43 0x84 0xa1 0x4e
+L50   0x00000000: 43 84 a1 4e               ?? add      v3.4s, v2.4s, v1.4s                      ; add
+L51   
+L52   # add v3.2d, v2.2d, v1.2d
+L53   0x43 0x84 0xe1 0x4e
+L53   0x00000000: 43 84 e1 4e               ?? add      v3.2d, v2.2d, v1.2d                      ; add
+L54   
+L55   # add v3.8b, v2.8b, v1.8b
+L56   0x43 0x84 0x21 0x0e
+L56   0x00000000: 43 84 21 0e               ?? add      v3.8b, v2.8b, v1.8b                      ; add
+L57   
+L58   # add v3.4h, v2.4h, v1.4h
+L59   0x43 0x84 0x61 0x0e
+L59   0x00000000: 43 84 61 0e               ?? add      v3.4h, v2.4h, v1.4h                      ; add
+L60   
+L61   # add v3.2s, v2.2s, v1.2s
+L62   0x43 0x84 0xa1 0x0e
+L62   0x00000000: 43 84 a1 0e               ?? add      v3.2s, v2.2s, v1.2s                      ; add
+L63   
+L64   # addg x2, x1, #16, #0
+L65   # only valid for ARMv8.5 and later
+L66   # 0x22 0x00 0x81 0x91
+L67   
+L68   # addhn v3.8b, v2.8h, v1.8h
+L69   0x43 0x40 0x21 0x0e
+L69   0x00000000: 43 40 21 0e               ?? addhn    v3.8b, v2.8h, v1.8h                      ; add returning high narrow to lower
+L70   
+L71   # addhn v3.4h, v2.4s, v1.4s
+L72   0x43 0x40 0x61 0x0e
+L72   0x00000000: 43 40 61 0e               ?? addhn    v3.4h, v2.4s, v1.4s                      ; add returning high narrow to lower
+L73   
+L74   # addhn v3.2s, v2.2d, v1.2d
+L75   0x43 0x40 0xa1 0x0e
+L75   0x00000000: 43 40 a1 0e               ?? addhn    v3.2s, v2.2d, v1.2d                      ; add returning high narrow to lower
+L76   
+L77   # addhn2 v3.16b, v2.8h, v1.8h
+L78   0x43 0x40 0x21 0x4e
+L78   0x00000000: 43 40 21 4e               ?? addhn2   v3.16b, v2.8h, v1.8h                     ; add returning high narrow to upper
+L79   
+L80   # addhn2 v3.8h, v2.4s, v1.4s
+L81   0x43 0x40 0x61 0x4e
+L81   0x00000000: 43 40 61 4e               ?? addhn2   v3.8h, v2.4s, v1.4s                      ; add returning high narrow to upper
+L82   
+L83   # addhn2 v3.4s, v2.2d, v1.2d
+L84   0x43 0x40 0xa1 0x4e
+L84   0x00000000: 43 40 a1 4e               ?? addhn2   v3.4s, v2.2d, v1.2d                      ; add returning high narrow to upper
+L85   
+L86   # addp d2, v1.2d
+L87   0x22 0xb8 0xf1 0x5e
+L87   0x00000000: 22 b8 f1 5e               ?? addp     d2, v1.2d                                ; add pair of elements
+L88   
+L89   # addp v3.8b, v2.8b, v1.8b
+L90   0x43 0xbc 0x21 0x0e
+L90   0x00000000: 43 bc 21 0e               ?? addp     v3.8b, v2.8b, v1.8b                      ; add pair of elements
+L91   
+L92   # addp v3.4h, v2.4h, v1.4h
+L93   0x43 0xbc 0x61 0x0e
+L93   0x00000000: 43 bc 61 0e               ?? addp     v3.4h, v2.4h, v1.4h                      ; add pair of elements
+L94   
+L95   # addp v3.2s, v2.2s, v1.2s
+L96   0x43 0xbc 0xa1 0x0e
+L96   0x00000000: 43 bc a1 0e               ?? addp     v3.2s, v2.2s, v1.2s                      ; add pair of elements
+L97   
+L98   # addp v3.16b, v2.16b, v1.16b
+L99   0x43 0xbc 0x21 0x4e
+L99   0x00000000: 43 bc 21 4e               ?? addp     v3.16b, v2.16b, v1.16b                   ; add pair of elements
+L100  
+L101  # addp v3.8h, v2.8h, v1.8h
+L102  0x43 0xbc 0x61 0x4e
+L102  0x00000000: 43 bc 61 4e               ?? addp     v3.8h, v2.8h, v1.8h                      ; add pair of elements
+L103  
+L104  # addp v3.4s, v2.4s, v1.4s
+L105  0x43 0xbc 0xa1 0x4e
+L105  0x00000000: 43 bc a1 4e               ?? addp     v3.4s, v2.4s, v1.4s                      ; add pair of elements
+L106  
+L107  # addp v3.2d, v2.2d, v1.2d
+L108  0x43 0xbc 0xe1 0x4e
+L108  0x00000000: 43 bc e1 4e               ?? addp     v3.2d, v2.2d, v1.2d                      ; add pair of elements
+L109  
+L110  # adds w3, w2, w1, uxtb #4
+L111  0x43 0x10 0x21 0x2b
+L111  0x00000000: 43 10 21 2b               ?? adds     w3, w2, uext(trunc(w1, 8), 32) << 4      ; add
+L112  
+L113  # adds x3, x2, w1, uxtb #4
+L114  0x43 0x10 0x21 0xab
+L114  0x00000000: 43 10 21 ab               ?? adds     x3, x2, uext(trunc(w1, 8), 32) << 4      ; add
+L115  
+L116  # adds w2, w1, #0xfff, lsl #12
+L117  0x22 0xfc 0x7f 0x31
+L117  0x00000000: 22 fc 7f 31               ?? adds     w2, w1, 0x0000000000000fff<4095> << 12   ; add
+L118  
+L119  # adds x2, x1, #0xfff, lsl #12
+L120  0x22 0xfc 0x7f 0xb1
+L120  0x00000000: 22 fc 7f b1               ?? adds     x2, x1, 0x0000000000000fff<4095> << 12   ; add
+L121  
+L122  # adds w3, w2, w1, asr #31
+L123  0x43 0x7c 0x81 0x2b
+L123  0x00000000: 43 7c 81 2b               ?? adds     w3, w2, asr(w1, 0x1f<31>)                ; add
+L124  
+L125  # adds x3, x2, x1, asr #63
+L126  0x43 0xfc 0x81 0xab
+L126  0x00000000: 43 fc 81 ab               ?? adds     x3, x2, asr(x1, 0x3f<63>)                ; add
+L127  
+L128  # addv b2, v1.8b
+L129  0x22 0xb8 0x31 0x0e
+L129  0x00000000: 22 b8 31 0e               ?? addv     b2, v1.8b                                ; add across vector
+L130  
+L131  # addv h2, v1.4h
+L132  0x22 0xb8 0x71 0x0e
+L132  0x00000000: 22 b8 71 0e               ?? addv     h2, v1.4h                                ; add across vector
+L133  
+L134  # addv b2, v1.16b
+L135  0x22 0xb8 0x31 0x4e
+L135  0x00000000: 22 b8 31 4e               ?? addv     b2, v1.16b                               ; add across vector
+L136  
+L137  # addv h2, v1.8h
+L138  0x22 0xb8 0x71 0x4e
+L138  0x00000000: 22 b8 71 4e               ?? addv     h2, v1.8h                                ; add across vector
+L139  
+L140  # addv s2, v1.4s
+L141  0x22 0xb8 0xb1 0x4e
+L141  0x00000000: 22 b8 b1 4e               ?? addv     s2, v1.4s                                ; add across vector
+L142  
+L143  # adr x1, #0xffffffffffffffff
+L144  0xe1 0xff 0xff 0x70
+L144  0x00000000: e1 ff ff 70               ?? adr      x1, 0xffffffffffffffff<18446744073709551615,-1> ; form pc-relative address
+L145  
+L146  # adrp x1, #0xfffffffffffff000
+L147  0xe1 0xff 0xff 0xf0
+L147  0x00000000: e1 ff ff f0               ?? adrp     x1, 0xfffffffffffff000<18446744073709547520,-4096> ; form pc-relative address to 4kB page
+L148  
+L149  # aesd v2.16b, v1.16b
+L150  0x22 0x58 0x28 0x4e
+L150  0x00000000: 22 58 28 4e               ?? aesd     v2.16b, v1.16b                           ; AES single round decryption
+L151  
+L152  # aese v2.16b, v1.16b
+L153  0x22 0x48 0x28 0x4e
+L153  0x00000000: 22 48 28 4e               ?? aese     v2.16b, v1.16b                           ; AES single round encryption
+L154  
+L155  # aesimc v2.16b, v1.16b
+L156  0x22 0x78 0x28 0x4e
+L156  0x00000000: 22 78 28 4e               ?? aesimc   v2.16b, v1.16b                           ; AES inverse mix columns
+L157  
+L158  # aesmc v2.16b, v1.16b
+L159  0x22 0x68 0x28 0x4e
+L159  0x00000000: 22 68 28 4e               ?? aesmc    v2.16b, v1.16b                           ; AES mix columns
+L160  
+L161  # and v3.8b, v2.8b, v1.8b
+L162  0x43 0x1c 0x21 0x0e
+L162  0x00000000: 43 1c 21 0e               ?? and      v3.8b, v2.8b, v1.8b                      ; bitwise AND
+L163  
+L164  # and v3.16b, v2.16b, v1.16b
+L165  0x43 0x1c 0x21 0x4e
+L165  0x00000000: 43 1c 21 4e               ?? and      v3.16b, v2.16b, v1.16b                   ; bitwise AND
+L166  
+L167  # and w2, w1, #1
+L168  0x22 0x00 0x00 0x12
+L168  0x00000000: 22 00 00 12               ?? and      w2, w1, 1                                ; bitwise AND
+L169  
+L170  # and x2, x1, #0x100000001
+L171  0x22 0x00 0x00 0x92
+L171  0x00000000: 22 00 00 92               ?? and      x2, x1, 0x0000000100000001               ; bitwise AND
+L172  
+L173  # and w3, w2, w1, asr #31
+L174  0x43 0x7c 0x81 0x0a
+L174  0x00000000: 43 7c 81 0a               ?? and      w3, w2, asr(w1, 0x1f<31>)                ; bitwise AND
+L175  
+L176  # and x3, x2, x1, asr #63
+L177  0x43 0xfc 0x81 0x8a
+L177  0x00000000: 43 fc 81 8a               ?? and      x3, x2, asr(x1, 0x3f<63>)                ; bitwise AND
+L178  
+L179  # ands w2, w1, #1
+L180  0x22 0x00 0x00 0x72
+L180  0x00000000: 22 00 00 72               ?? ands     w2, w1, 1                                ; bitwise AND
+L181  
+L182  # ands x2, x1, #0x100000001
+L183  0x22 0x00 0x00 0xf2
+L183  0x00000000: 22 00 00 f2               ?? ands     x2, x1, 0x0000000100000001               ; bitwise AND
+L184  
+L185  # ands w3, w2, w1, lsl #31
+L186  0x43 0x7c 0x01 0x6a
+L186  0x00000000: 43 7c 01 6a               ?? ands     w3, w2, w1 << 0x1f<31>                   ; bitwise AND
+L187  
+L188  # ands x3, x2, x1, lsl #63
+L189  0x43 0xfc 0x01 0xea
+L189  0x00000000: 43 fc 01 ea               ?? ands     x3, x2, x1 << 0x3f<63>                   ; bitwise AND
+L190  
+L191  # asr w3, w2, w1
+L192  0x43 0x28 0xc1 0x1a
+L192  0x00000000: 43 28 c1 1a               ?? asr      w3, w2, w1                               ; arithmetic shift right
+L193  
+L194  # asr x3, x2, x1
+L195  0x43 0x28 0xc1 0x9a
+L195  0x00000000: 43 28 c1 9a               ?? asr      x3, x2, x1                               ; arithmetic shift right
+L196  
+L197  # asr w2, w1, #0xf
+L198  0x22 0x7c 0x0f 0x13
+L198  0x00000000: 22 7c 0f 13               ?? asr      w2, w1, 15                               ; arithmetic shift right
+L199  
+L200  # asr x2, x1, #0x3f
+L201  0x22 0xfc 0x7f 0x93
+L201  0x00000000: 22 fc 7f 93               ?? asr      x2, x1, 0x000000000000003f<63>           ; arithmetic shift right
+L202  
+L203  # at s1e1r, x1
+L204  0x01 0x78 0x08 0xd5
+L204  0x00000000: 01 78 08 d5               ?? at       s1e1r, x1                                ; address translate
+L205  
+L206  # autda x2, x1
+L207  # only for ARMv8p3
+L208  # 0x22 0x18 0xc1 0xda
+L209  
+L210  # autdza x1
+L211  # only for ARMv8p3
+L212  #0xe2 0x3b 0xc1 0xda
+L213  
+L214  # autdb x2, sp
+L215  # only for ARMv8p3
+L216  #0xe2 0x1f 0xc1 0xda
+L217  
+L218  # autdzb x2
+L219  # only for ARMv8p3
+L220  #0xe2 0x3f 0xc1 0xda
+L221  
+L222  # autia...
+L223  # only for ARMv8p3
+L224  
+L225  # autia1716...
+L226  # only for ARMv8p3
+L227  
+L228  # autiasp...
+L229  # only for ARMv8p3
+L230  
+L231  # autiaz...
+L232  # only for ARMv8p3
+L233  
+L234  # autiza...
+L235  # only for ARMv8p3
+L236  
+L237  # autib...
+L238  # only for ARMv8p3
+L239  
+L240  # autib1716...
+L241  # only for ARMv8p3
+L242  
+L243  # autibsp...
+L244  # only for ARMv8p3
+L245  
+L246  # autibz...
+L247  # only for ARMv8p3
+L248  
+L249  # autizb...
+L250  # only for ARMv8p3
+L251  
+L252  # AXFlag
+L253  # internal version only
+L254  # 0x5f 0x40 0x00 0xd5
+L255  
+L256  # b.eq #0xfffffffffffffffc
+L257  0xe0 0xff 0xff 0x54
+L257  0x00000000: e0 ff ff 54               ?? b.eq     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L258  
+L259  # b.ne #0xfffffffffffffffc
+L260  0xe1 0xff 0xff 0x54
+L260  0x00000000: e1 ff ff 54               ?? b.ne     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L261  
+L262  # b.hs #0xfffffffffffffffc
+L263  0xe2 0xff 0xff 0x54
+L263  0x00000000: e2 ff ff 54               ?? b.hs     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L264  
+L265  # b.lo #0xfffffffffffffffc
+L266  0xe3 0xff 0xff 0x54
+L266  0x00000000: e3 ff ff 54               ?? b.lo     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L267  
+L268  # b.mi #0xfffffffffffffffc
+L269  0xe4 0xff 0xff 0x54
+L269  0x00000000: e4 ff ff 54               ?? b.mi     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L270  
+L271  # b.pl #0xfffffffffffffffc
+L272  0xe5 0xff 0xff 0x54
+L272  0x00000000: e5 ff ff 54               ?? b.pl     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L273  
+L274  # b.vs #0xfffffffffffffffc
+L275  0xe6 0xff 0xff 0x54
+L275  0x00000000: e6 ff ff 54               ?? b.vs     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L276  
+L277  # b.vc #0xfffffffffffffffc
+L278  0xe7 0xff 0xff 0x54
+L278  0x00000000: e7 ff ff 54               ?? b.vc     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L279  
+L280  # b.hi #0xfffffffffffffffc
+L281  0xe8 0xff 0xff 0x54
+L281  0x00000000: e8 ff ff 54               ?? b.hi     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L282  
+L283  # b.ls #0xfffffffffffffffc
+L284  0xe9 0xff 0xff 0x54
+L284  0x00000000: e9 ff ff 54               ?? b.ls     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L285  
+L286  # b.ge #0xfffffffffffffffc
+L287  0xea 0xff 0xff 0x54
+L287  0x00000000: ea ff ff 54               ?? b.ge     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L288  
+L289  # b.lt #0xfffffffffffffffc
+L290  0xeb 0xff 0xff 0x54
+L290  0x00000000: eb ff ff 54               ?? b.lt     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L291  
+L292  # b.gt #0xfffffffffffffffc
+L293  0xec 0xff 0xff 0x54
+L293  0x00000000: ec ff ff 54               ?? b.gt     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L294  
+L295  # b.le #0xfffffffffffffffc
+L296  0xed 0xff 0xff 0x54
+L296  0x00000000: ed ff ff 54               ?? b.le     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L297  
+L298  # b.al #0xfffffffffffffffc
+L299  0xee 0xff 0xff 0x54
+L299  0x00000000: ee ff ff 54               ?? b.al     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L300  
+L301  # b.nv #0xfffffffffffffffc
+L302  0xef 0xff 0xff 0x54
+L302  0x00000000: ef ff ff 54               ?? b.nv     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L303  
+L304  # b #0xfffffffffffffffc
+L305  0xff 0xff 0xff 0x17
+L305  0x00000000: ff ff ff 17               ?? b        0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L306  
+L307  # bcax...
+L308  # only for ARMv8.2-SHA
+L309  # 0x64 0x08 0x21 0xce
+L310  
+L311  # bfxil w2, w1, #0, #1
+L312  0x22 0x00 0x00 0x33
+L312  0x00000000: 22 00 00 33               ?? bfxil    w2, w1, 0, 1                             ; bifield extract and insert low
+L313  
+L314  # ldr x17, [x16, #3632]
+L315  0x11 0x1a 0x47 0xf9
+L315  0x00000000: 11 1a 47 f9               ?? ldr      x17, u64 [x16 + 0x0000000000000e30<3632>] ; load register
+L316  
+L317  # prfum plil2keep, [x13, #0xf4]
+L318  0xaa 0x41 0x8f 0xf8
+L318  0x00000000: aa 41 8f f8               ?? prfum    plil2keep, u8 [x13 + 0x00000000000000f4<244>] ; prefetch memory
+L319  
+L320  # mrs x23, s3_0_c15_c12_5
+L321  0xb7 0xfc 0x38 0xd5
+L321  0x00000000: b7 fc 38 d5               ?? mrs      x23, s3_0_c15_c12_5                      ; move from system register
+L322  
+L323  # mrs x23, s2_0_c15_c12_5
+L324  # This seems to be disassembled incorrecty by Capstone. Capstone emits
+L325  # s3_0_c15_c12_5 instead of s2_0_c15_c12_5.
+L326  0xb7 0xfc 0x30 0xd5
+L326  0x00000000: b7 fc 30 d5               ?? mrs      x23, s2_0_c15_c12_5                      ; move from system register
+L327  
+L328  # msr s3_2_c3_c8_1, x21
+L329  0x35 0x38 0x1a 0xd5
+L329  0x00000000: 35 38 1a d5               ?? msr      s3_2_c3_c8_1, x21                        ; move to system register
+L330  
+L331  # ubfx w2, w1, #0, #1
+L332  0x22 0x00 0x00 0x53
+L332  0x00000000: 22 00 00 53               ?? ubfx     w2, w1, 0, 1                             ; unsigned bitfield extract
+L333  
+L334  # sys #6, c10, c1, #1, x13
+L335  0x2d 0xa1 0x0e 0xd5
+L335  0x00000000: 2d a1 0e d5               ?? sys      6, c10, c1, 1, x13                       ; system instruction

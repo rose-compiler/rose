@@ -550,7 +550,7 @@ namespace SgNodeHelper {
       {}   
     
       SgLocatedNode*            representativeNode() const;
-      SgCallExpression*         callExpression()     const;              
+      SgFunctionCallExp*        callExpression()     const;              
       SgConstructorInitializer* ctorInitializer()    const;              
       SgPointerDerefExp*        functionPointer()    const; 
       

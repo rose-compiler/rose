@@ -1,25 +1,26 @@
 START
 
-DEFINE PI "3.14" ;
-
 PROGRAM main ;
 BEGIN
   ITEM ia S ;
-  ITEM ib U ;
-  ITEM ff F ;
+  ITEM ib S ;
   ITEM bf B 1 ;
+  ITEM ptr P ;
 
   ia = 1 ;
   ia = ib - 2 ;
   ia = ib * 3 ;
   ia = ib / 4 ;
-  ff = 2*PI ;
   bf = ib < 5 ;
 
-% loc(bf) ; %
-
-%  PROC foo ; %
-%     ;       %
+  ptr = loc(bf);
 
 END
+
+PROC boo (:hoo);
+  BEGIN
+    ITEM hoo U;
+    hoo = 2020;
+  END
+
 TERM

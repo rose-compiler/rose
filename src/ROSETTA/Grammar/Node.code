@@ -44,34 +44,41 @@ class AstAttributeMechanism;
 // #include "ExecGeneric.h"
 
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <Sawyer/Set.h>
+namespace Rose {
+  namespace BinaryAnalysis {
+    typedef Sawyer::Container::Set<rose_addr_t> AddressSet;
+  }
+}
+
 // This is all documented in Rva.C since doxygen can't pick of documentation from this file.
 class ROSE_DLL_API rose_rva_t {
-	public:
-		rose_rva_t();
-		rose_rva_t(const rose_rva_t&);
-		rose_rva_t operator=(const rose_rva_t&);
-		rose_rva_t(rose_addr_t rva, SgAsmGenericSection *section=NULL); //implicit
-		static rose_rva_t section_relative(SgAsmGenericSection *section, rose_addr_t offset);
-		bool is_bound() const;
-		rose_addr_t get_rva() const;
-		rose_rva_t& set_rva(rose_addr_t rva);
-		SgAsmGenericSection *get_section() const;
-		rose_rva_t& set_section(SgAsmGenericSection *section);
-		rose_rva_t& bind(SgAsmGenericHeader*);
-		rose_addr_t get_va() const;
-		rose_addr_t get_rel() const;
-		rose_addr_t get_rel(SgAsmGenericSection*);
-		void increment(rose_addr_t amount);
-		std::string to_string() const;
-	private:
-		rose_addr_t addr;             /* virtual address (relative to section if section is not null) */
-		SgAsmGenericSection *section; /* rva is relative to header base_va if section is null */
+        public:
+                rose_rva_t();
+                rose_rva_t(const rose_rva_t&);
+                rose_rva_t operator=(const rose_rva_t&);
+                rose_rva_t(rose_addr_t rva, SgAsmGenericSection *section=NULL); //implicit
+                static rose_rva_t section_relative(SgAsmGenericSection *section, rose_addr_t offset);
+                bool is_bound() const;
+                rose_addr_t get_rva() const;
+                rose_rva_t& set_rva(rose_addr_t rva);
+                SgAsmGenericSection *get_section() const;
+                rose_rva_t& set_section(SgAsmGenericSection *section);
+                rose_rva_t& bind(SgAsmGenericHeader*);
+                rose_addr_t get_va() const;
+                rose_addr_t get_rel() const;
+                rose_addr_t get_rel(SgAsmGenericSection*);
+                void increment(rose_addr_t amount);
+                std::string to_string() const;
+        private:
+                rose_addr_t addr;             /* virtual address (relative to section if section is not null) */
+                SgAsmGenericSection *section; /* rva is relative to header base_va if section is null */
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-	private:
-		friend class boost::serialization::access;
+        private:
+                friend class boost::serialization::access;
 
-		template<class S>
+                template<class S>
                 void serialize(S &s, const unsigned /*version*/) {
                     s & BOOST_SERIALIZATION_NVP(addr);
                     s & BOOST_SERIALIZATION_NVP(section);
@@ -117,17 +124,17 @@ void Range<rose_addr_t>::print(std::ostream &o) const;
 // deprecated. Use AddressSet instead for all new code.
 class ExtentMap: public RangeMap<Extent> {
 public:
-	ExtentMap(): RangeMap<Extent>() {}
-	template<class Other> ExtentMap(const Other &other): RangeMap<Extent>(other) {}
-	static char category(const Extent &a, const Extent &b);
-	ExtentMap subtract_from(const Extent &e) const {
-		return invert_within<ExtentMap>(e);
+        ExtentMap(): RangeMap<Extent>() {}
+        template<class Other> ExtentMap(const Other &other): RangeMap<Extent>(other) {}
+        static char category(const Extent &a, const Extent &b);
+        ExtentMap subtract_from(const Extent &e) const {
+                return invert_within<ExtentMap>(e);
         }
-	void allocate_at(const Extent &request);
-	Extent allocate_best_fit(const rose_addr_t size);
-	Extent allocate_first_fit(const rose_addr_t size);
-	void dump_extents(std::ostream&, const std::string &prefix="", const std::string &label="") const;
-	void dump_extents(FILE *f, const char *prefix, const char *label, bool pad=true) const;
+        void allocate_at(const Extent &request);
+        Extent allocate_best_fit(const rose_addr_t size);
+        Extent allocate_first_fit(const rose_addr_t size);
+        void dump_extents(std::ostream&, const std::string &prefix="", const std::string &label="") const;
+        void dump_extents(FILE *f, const char *prefix, const char *label, bool pad=true) const;
 };
 
 // deprecated. Conversion functions, to be deleted when the old types are no longer needed.
@@ -152,7 +159,7 @@ struct HexdumpFormat {
     bool multiline;             /**< Emit prefix at beginning and line feed at end of output. */
 
     /* Settings for numeric output of bytes */
-    bool show_numeric;		/**< Show numeric format of bytes (default true). */
+    bool show_numeric;          /**< Show numeric format of bytes (default true). */
     std::string numeric_fmt;    /**< Printf format for bytes (default "%02x"). */
     std::map<unsigned char,std::string> numeric_fmt_special; /**< Special formatting for certain values. */
     std::string numeric_sep;    /**< String to print between numeric values (default " "). */
@@ -450,16 +457,16 @@ typedef Rose_STL_Container<SgAsmExpression*> SgAsmExpressionPtrList;
 typedef SgAsmExpressionPtrList*              SgAsmExpressionPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmIntegerValueExpression*> SgAsmIntegerValuePtrList;
-typedef SgAsmIntegerValuePtrList* 		 SgAsmIntegerValuePtrListPtr;
+typedef SgAsmIntegerValuePtrList*                SgAsmIntegerValuePtrListPtr;
 
 // DQ (3/15/2007): Added support for binaries.
 typedef Rose_STL_Container<SgAsmSynthesizedDeclaration*> SgAsmSynthesizedDeclarationPtrList;
 typedef SgAsmSynthesizedDeclarationPtrList*              SgAsmSynthesizedDeclarationPtrListPtr;
 
-// JJW (3/19/2008): Added support for containers of x86 instructions
 typedef Rose_STL_Container<SgAsmX86Instruction*> SgAsmX86InstructionPtrList;
-// JJW (3/21/2008): Added support for containers of Arm instructions
-typedef Rose_STL_Container<SgAsmArmInstruction*> SgAsmArmInstructionPtrList;
+#ifdef ROSE_ENABLE_ASM_A64
+typedef Rose_STL_Container<SgAsmArm64Instruction*> SgAsmArm64InstructionPtrList;
+#endif
 #endif
 
 // DQ (11/19/2007): Added support for Fortran namelist statement.
@@ -506,7 +513,7 @@ typedef Rose_STL_Container<rose_rva_t>         SgRVAList;
 typedef SgRVAList*                             SgRVAListPtr;
 
 typedef Rose_STL_Container<SgAsmPEExportEntry*> SgAsmPEExportEntryPtrList;
-typedef SgAsmPEExportEntryPtrList*		SgAsmPEExportEntryPtrListPtr;
+typedef SgAsmPEExportEntryPtrList*              SgAsmPEExportEntryPtrListPtr;
 #endif
 
 typedef Rose_STL_Container<unsigned>           SgUnsignedList;
@@ -731,7 +738,7 @@ namespace rose_hash
      struct hash_integer
         {
        // tps (11/17/2009) : Changed this so that it works under Windows.
-       // CH (4/9/2010): Use boost::hash instead	    
+       // CH (4/9/2010): Use boost::hash instead            
           size_t operator()(const int n) const
              {
                return n;
@@ -741,7 +748,7 @@ namespace rose_hash
      struct hash_integer_pair
         {
        // tps (11/17/2009) : Changed this so that it works under Windows.
-       // CH (4/9/2010): Use boost::hash instead	    
+       // CH (4/9/2010): Use boost::hash instead            
           size_t operator()(const std::pair<int,int> & p) const
              {
             // DQ (4/30/2009): This subject should be reviewed!
@@ -779,7 +786,7 @@ namespace rose_hash
      struct hash_graph_node
         {
        // tps (11/17/2009) : Changed this so that it works under Windows.
-       // CH (4/9/2010): Use boost::hash instead	    
+       // CH (4/9/2010): Use boost::hash instead            
           size_t operator()(const SgGraphNode* ptr) const
              {
                return (size_t) ptr;
@@ -794,7 +801,7 @@ namespace rose_hash
 // DQ (8/19/2008): Note that "rose_hash" is a namespace defined above.
 // class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
-// CH (4/9/2010): Use boost::unordered instead	    
+// CH (4/9/2010): Use boost::unordered instead      
 typedef rose_hash::unordered_multimap<std::string, SgGraphNode*> rose_graph_string_node_hash_multimap_base_type;
 
 class rose_graph_string_node_hash_multimap : public rose_graph_string_node_hash_multimap_base_type
@@ -814,7 +821,7 @@ class rose_graph_string_node_hash_multimap : public rose_graph_string_node_hash_
           rose_graph_string_node_hash_multimap()
              : rose_graph_string_node_hash_multimap_base_type(), parent(NULL)
              {}
-			 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
+                         // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 #if 0
           rose_graph_string_node_hash_multimap(int sz) 
              : rose_graph_string_node_hash_multimap_base_type(sz), parent(NULL)
@@ -864,7 +871,7 @@ typedef rose_graph_string_node_hash_multimap rose_graph_hash_multimap;
 
 // DQ (4/29/2009): Added to support ROSE Graph IR nodes
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
-// CH (4/9/2010): Use boost::unordered instead	    
+// CH (4/9/2010): Use boost::unordered instead      
 typedef rose_hash::unordered_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node> rose_graph_node_edge_hash_multimap_base_type;
 class rose_graph_node_edge_hash_multimap : public rose_graph_node_edge_hash_multimap_base_type
    {
@@ -879,7 +886,7 @@ class rose_graph_node_edge_hash_multimap : public rose_graph_node_edge_hash_mult
           rose_graph_node_edge_hash_multimap()
              : rose_graph_node_edge_hash_multimap_base_type()
              {}
-	 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
+         // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 #if 0
           rose_graph_node_edge_hash_multimap(int sz) 
              : rose_graph_node_edge_hash_multimap_base_type(sz)
@@ -922,7 +929,7 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_node_edge_hash_m
 
 // DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
 // typedef rose_hash::unordered_map<int,SgGraphNode*, rose_hash::hash_integer, rose_hash::eqstr_graph_node> rose_graph_integer_node_hash_map_base_type
-// CH (4/9/2010): Use boost::unordered instead	    
+// CH (4/9/2010): Use boost::unordered instead      
 //#ifdef _MSCx_VER
 #if 0
 typedef rose_hash::unordered_map<int, SgGraphNode*, stdext::hash_compare <int, greater<int> > > rose_graph_integer_node_hash_map_base_type;
@@ -984,7 +991,7 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integer_node_has
 
 // DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
 // typedef rose_hash::unordered_map<int,SgGraphEdge*, rose_hash::hash_integer, rose_hash::eqstr_graph_edge> rose_graph_integer_edge_hash_map_base_type;
-// CH (4/9/2010): Use boost::unordered instead	    
+// CH (4/9/2010): Use boost::unordered instead      
 //#ifdef _MSCx_VER
 #if 0
 typedef rose_hash::unordered_map<int,SgGraphEdge*> rose_graph_integer_edge_hash_map_base_type;
@@ -1160,7 +1167,7 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integerpair_edge
 
 // DQ (5/1/2009): This is added to support lookup of indexes based on labels (can be used for nodes or edges).
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
-// CH (4/9/2010): Use boost::unordered instead	    
+// CH (4/9/2010): Use boost::unordered instead      
 typedef rose_hash::unordered_multimap<std::string, int> rose_graph_string_integer_hash_multimap_base_type;
 class rose_graph_string_integer_hash_multimap : public rose_graph_string_integer_hash_multimap_base_type
    {
@@ -1173,7 +1180,7 @@ class rose_graph_string_integer_hash_multimap : public rose_graph_string_integer
           rose_graph_string_integer_hash_multimap()
              : rose_graph_string_integer_hash_multimap_base_type(), parent(NULL)
              {}
- 	 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
+         // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 #if 0
           rose_graph_string_integer_hash_multimap(int sz) 
              : rose_graph_string_integer_hash_multimap_base_type(sz), parent(NULL)
@@ -1503,7 +1510,7 @@ namespace AST_FileIO
 class ROSE_VisitTraversal
    {
      public:
-	  virtual ~ROSE_VisitTraversal() {};
+          virtual ~ROSE_VisitTraversal() {};
           virtual void visit (SgNode* node) = 0;
           void traverseMemoryPool()
              {
@@ -1649,7 +1656,7 @@ HEADER_START
        // numbers are the same, but the enumerator names are different)
           int variant() const ROSE_DEPRECATED_FUNCTION {return (int)this->variantT();}
 
-       // AS (10/22/2007): build function to return class hierachy subtree of a VariantT		  
+       // AS (10/22/2007): build function to return class hierachy subtree of a VariantT                  
           static std::vector<VariantT> getClassHierarchySubTreeFunction( VariantT v);
           static void getClassHierarchySubTreeFunction( VariantT v, std::vector<VariantT>&);
 
@@ -1903,8 +1910,8 @@ HEADER_START
 
       /* name Control flow graph public functions
 
-	  These functions return control flow graph nodes for various positions
-	  around a construct. */
+          These functions return control flow graph nodes for various positions
+          around a construct. */
       /* */
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -1923,7 +1930,7 @@ HEADER_START
              {
              assert (this);
                return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
-	          }
+                  }
       /* */
 #else
      /*! \brief Returns the CFG node for just before this AST node */
@@ -2057,7 +2064,7 @@ HEADER_PARSER_END
 
 SOURCE_START
 
-	          
+                  
 // ########################################
 // Some global variables used within SAGE 3
 // ########################################
@@ -2438,7 +2445,7 @@ SgNode::set_attributeMechanism(AstAttributeMechanism* a)
 #if 0
 void 
 SgNode::print( std::ostream* os,   /* 0 uses the default */
-	       int maxdepth)  /* controlling function*/
+               int maxdepth)  /* controlling function*/
    {
      Sg_print_info().reset(os, maxdepth); 
      this->_print(0); 
@@ -2737,7 +2744,7 @@ $CLASSNAME::buildCommandLineToSubstituteTransformationFile( const vector<string>
        // have to process +w2 (warnings option) on some compilers so include +<option>
           if ( argv[i].size() < 1 || (argv[i][0] != '-') || (argv[i][0] != '+') )
              {
-	       unsigned int length = argv[i].size();
+               unsigned int length = argv[i].size();
             // printf ("Look for file names:  argv[%d] = %s length = %d \n",i,argv[i],length);
 
             // look only for .c and .C files (source code files)
@@ -2766,7 +2773,7 @@ $CLASSNAME::buildCommandLineToSubstituteTransformationFile( const vector<string>
              }
 
        // printf ("In loop: i = %d \n",i);
-	}
+        }
 
   // For now ets only debug the case of a single file specified on the command line
      ROSE_ASSERT (fileNameCounter == 1);

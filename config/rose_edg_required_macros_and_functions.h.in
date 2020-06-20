@@ -824,7 +824,19 @@ ROSE_CONSTEXPR bool            __builtin_is_constant_evaluated  ()              
 
 #endif
 
+#if __GNUC__ >= 10 && __cplusplus 
+template <typename T, typename U>
+struct __rose_is_same_as {
+  static constexpr bool value = false;
+};
 
+template <typename T>
+struct __rose_is_same_as<T,T> {
+  static constexpr bool value = true;
+};
+
+#define __is_same_as(T,U) __rose_is_same_as<T,U>::value
+#endif
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #if 0

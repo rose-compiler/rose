@@ -1,19 +1,19 @@
-#include <rosePublicConfig.h>
+#include <featureTests.h>
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-#include "sage3basic.h"
-#include "Disassembler.h"
+#include <sage3basic.h>
+#include <Disassembler.h>
 
-#include "Assembler.h"
-#include "AssemblerX86.h"
-#include "AsmUnparser_compat.h"
-#include "Diagnostics.h"
-#include "DisassemblerPowerpc.h"
-#include "DisassemblerArm.h"
-#include "DisassemblerM68k.h"
-#include "DisassemblerMips.h"
-#include "DisassemblerX86.h"
-#include "BinaryLoader.h"
-#include "stringify.h"
+#include <Assembler.h>
+#include <AssemblerX86.h>
+#include <AsmUnparser_compat.h>
+#include <Diagnostics.h>
+#include <DisassemblerPowerpc.h>
+#include <DisassemblerArm.h>
+#include <DisassemblerM68k.h>
+#include <DisassemblerMips.h>
+#include <DisassemblerX86.h>
+#include <BinaryLoader.h>
+#include <stringify.h>
 
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
@@ -25,9 +25,6 @@ namespace BinaryAnalysis {
 
 using namespace Diagnostics;
 using namespace StringUtility;
-
-/* See header file for full documentation of all methods in this file. */
-
 
 /* Mutex for class-wide operations (such as adjusting Disassembler::disassemblers) */
 static boost::mutex class_mutex;
@@ -81,9 +78,13 @@ operator<<(std::ostream &o, const Disassembler::Exception &e)
 void
 Disassembler::initclassHelper()
 {
-    registerSubclass(new DisassemblerArm());
-    registerSubclass(new DisassemblerPowerpc(powerpc_32));
-    registerSubclass(new DisassemblerPowerpc(powerpc_64));
+#ifdef ROSE_ENABLE_ASM_A64
+    registerSubclass(new DisassemblerArm(DisassemblerArm::ARCH_ARM64));
+#endif
+    registerSubclass(new DisassemblerPowerpc(powerpc_32, ByteOrder::ORDER_MSB));
+    registerSubclass(new DisassemblerPowerpc(powerpc_32, ByteOrder::ORDER_LSB));
+    registerSubclass(new DisassemblerPowerpc(powerpc_64, ByteOrder::ORDER_MSB));
+    registerSubclass(new DisassemblerPowerpc(powerpc_64, ByteOrder::ORDER_LSB));
     registerSubclass(new DisassemblerM68k(m68k_freescale_isab));
     registerSubclass(new DisassemblerMips());
     registerSubclass(new DisassemblerX86(2)); /*16-bit*/
@@ -178,14 +179,18 @@ std::vector<std::string>
 Disassembler::isaNames() {
     std::vector<std::string> v;
     v.push_back("amd64");
-    v.push_back("arm");
+#ifdef ROSE_ENABLE_ASM_A64
+    v.push_back("a64");         // ARM AArch64 A64
+#endif
     v.push_back("coldfire");
     v.push_back("i386");
     v.push_back("m68040");
     v.push_back("mips-be");
     v.push_back("mips-le");
-    v.push_back("ppc32");
-    v.push_back("ppc64");
+    v.push_back("ppc32-be");
+    v.push_back("ppc32-le");
+    v.push_back("ppc64-be");
+    v.push_back("ppc64-le");
     return v;
 }
 
@@ -199,12 +204,20 @@ Disassembler::lookup(const std::string &name)
         BOOST_FOREACH (const std::string &name, isaNames())
             std::cout <<"  " <<name <<"\n";
         exit(0);
-    } else if (name == "arm") {
-        retval = new DisassemblerArm();
-    } else if (name == "ppc32") {
-        retval = new DisassemblerPowerpc(powerpc_32);
-    } else if (name == "ppc64") {
-        retval = new DisassemblerPowerpc(powerpc_64);
+    } else if (name == "a64") {
+#ifdef ROSE_ENABLE_ASM_A64
+        retval = new DisassemblerArm(DisassemblerArm::ARCH_ARM64);
+#else
+        throw Exception(name + " disassembler is not enabled in this ROSE configuration");
+#endif
+    } else if (name == "ppc32-be") {
+        retval = new DisassemblerPowerpc(powerpc_32, ByteOrder::ORDER_MSB);
+    } else if (name == "ppc32-le") {
+        retval = new DisassemblerPowerpc(powerpc_32, ByteOrder::ORDER_LSB);
+    } else if (name == "ppc64-be") {
+        retval = new DisassemblerPowerpc(powerpc_64, ByteOrder::ORDER_MSB);
+    } else if (name == "ppc64-le") {
+        retval = new DisassemblerPowerpc(powerpc_64, ByteOrder::ORDER_MSB);
     } else if (name == "mips-be") {
         retval = new DisassemblerMips(ByteOrder::ORDER_MSB);
     } else if (name == "mips-le") {
@@ -321,13 +334,13 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
 }
 
 /* Add last instruction's successors to returned successors. */
-Disassembler::AddressSet
-Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
+AddressSet
+Disassembler::get_block_successors(const InstructionMap& insns, bool &complete)
 {
     std::vector<SgAsmInstruction*> block;
     for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
         block.push_back(ii->second);
-    Disassembler::AddressSet successors = block.front()->getSuccessors(block, complete);
+    AddressSet successors = block.front()->getSuccessors(block, complete);
 
     /* For the purposes of disassembly, assume that a CALL instruction eventually executes a RET that causes execution to
      * resume at the address following the CALL. This is true 99% of the time.  Higher software layers (e.g., Partitioner) may
