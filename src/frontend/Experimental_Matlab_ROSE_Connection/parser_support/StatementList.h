@@ -4,22 +4,29 @@
 #include <vector>
 
 /*A simple container to temporarily hold a list of statements.*/
-class StatementList : public SgScopeStatement
+struct StatementList : SgScopeStatement
 {
- public:
-  StatementList();
-  
- StatementList(SgStatement* statement);
+  StatementList()
+  : SgScopeStatement(), statements()
+  {}
 
- void appendStatement(SgStatement* statement);
+  explicit
+  StatementList(SgStatement* stmt)
+  : SgScopeStatement(), statements(1, stmt)
+  {}
 
- SgBasicBlock* getBasicBlock();
+  void appendStatement(SgStatement* stmt)
+  {
+    statements.push_back(stmt);
+  }
 
- void appendAll(SgScopeStatement *scope);
+  SgBasicBlock* getBasicBlock();
 
- void appendAll();
+  void appendAll(SgScopeStatement *scope);
+
+  void appendAll();
 
  private:
-  std::vector<SgStatement*> statements;
+   std::vector<SgStatement*> statements;
 };
 #endif

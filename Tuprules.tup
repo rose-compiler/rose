@@ -183,6 +183,18 @@ ifneq (@(WITH_BINWALK),no)
     BINWALK_ROOT = @(WITH_BINWALK)
 endif
 
+# Capstone disassembler
+ifneq (@(WITH_CAPSTONE),no)
+    CAPSTONE_ROOT = @(WITH_CAPSTONE)
+    ifneq (@(WITH_CAPSTONE),system)
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(CAPSTONE_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(CAPSTONE_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(CAPSTONE_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(CAPSTONE_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)capstone
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)capstone
+endif
+
 # Dlib general-purpose cross platform library
 ifneq (@(WITH_DLIB),no)
     DLIB_ROOT = @(WITH_DLIB)
@@ -956,8 +968,12 @@ tool_compile         = $(COMPILER_RULES) --phase=tool --link=none --begin-deps $
 test = $(TUP_SCRIPTS)/generate-test-rules
 
 # This script actually runs the test. You shouldn't need to call this explicitly -- use "run $(test) ..." instead.
-run_test = $(TUP_SCRIPTS)/run-test --timeout=@(RTH_TIMEOUT) --map=@(ROSE_SOURCE),$(ROOT) @(RTH_FLAGS)
-
+# The ASAN_OPTIONS environment variable controls the address santizer (GCC and LLVM's -fsanitize=address switch) and
+# it doesn't hurt to always define this environment variable even when the address sanitizer isn't enabled. These
+# options are useful:
+#   detect_leaks=0   -- because ROSE leaks huge amounts of memory in the AST
+#   abort_on_error=1 -- because the default is to simply exit, which gives no useful information for debugging.
+run_test = env ASAN_OPTIONS=detect_leaks=0:abort_on_error=1 $(TUP_SCRIPTS)/run-test --timeout=@(RTH_TIMEOUT) --map=@(ROSE_SOURCE),$(ROOT) @(RTH_FLAGS)
 
 ########################################################################################################################
 #                                                 Installation

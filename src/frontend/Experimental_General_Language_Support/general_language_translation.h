@@ -3,22 +3,41 @@
 
 class SgExpression;
 
-namespace General_Language_Translation
+namespace LanguageTranslation
    {
   // Forward declarations
      struct FormalParameter;
      struct LocationSpecifier;
      struct StructureSpecifier;
 
-     enum SubroutineAttribute
+
+     enum FunctionModifier
         {
-           e_subroutine_attr_none = 0,
+           e_function_modifier_none = 0,
+
+           e_function_modifier_reentrant,
+           e_function_modifier_recursive,
 
         // Jovial
-           e_subroutine_attr_rent,
-           e_subroutine_attr_rec,
+           e_function_modifier_definition,
+           e_function_modifier_reference,
 
-           e_subroutine_attr_last
+        // Fortran
+        // e_function_modifier_list,
+           e_function_modifier_elemental,
+           e_function_modifier_impure,
+           e_function_modifier_module,
+           e_function_modifier_pure,
+
+           e_function_modifier_last
+        };
+
+     enum PackingSpecifier
+        {
+           e_packing_spec_unknown = 0,
+           e_packing_spec_none,    // "N" from grammar
+           e_packing_spec_mixed,   // "M" from grammar
+           e_packing_spec_dense,   // "D" from grammar
         };
 
   // Enum for different types of expressions (used with untyped IR nodes).
@@ -53,9 +72,6 @@ namespace General_Language_Translation
           e_type_modifier_intent_inout,
           e_type_modifier_intrinsic,
           e_type_modifier_optional,
-          e_type_modifier_packing_d,
-          e_type_modifier_packing_m,
-          e_type_modifier_packing_n,
           e_type_modifier_pointer,
           e_type_modifier_protected,
           e_type_modifier_round,
@@ -64,17 +80,6 @@ namespace General_Language_Translation
           e_type_modifier_truncate,
           e_type_modifier_volatile,
           e_type_modifier_z,
-
-       // Function modifiers
-       // ------------------
-          e_function_modifier_list,
-          e_function_modifier_none,
-          e_function_modifier_elemental,
-          e_function_modifier_impure,
-          e_function_modifier_module,
-          e_function_modifier_pure,
-          e_function_modifier_recursive,
-          e_function_modifier_reentrant,
 
        // Function formal parameters
        // --------------------------
@@ -229,7 +234,7 @@ namespace General_Language_Translation
       struct FormalParameter
         {
            FormalParameter()
-             : name(std::string("")), output(false), binding(General_Language_Translation::e_none) {} // want to use C++11 = delete
+             : name(std::string("")), output(false), binding(LanguageTranslation::e_none) {} // want to use C++11 = delete
            FormalParameter(const std::string &param_name, bool out, const ExpressionKind &param_binding)
              : name(param_name), output(out), binding(param_binding) {}
            std::string name;
@@ -245,13 +250,20 @@ namespace General_Language_Translation
       };
 
       struct StructureSpecifier {
-         StructureSpecifier()                  : bits_per_entry(NULL), is_parallel(false) {}
-         StructureSpecifier(SgExpression* bpe) : bits_per_entry(bpe),  is_parallel(false) {}
-         StructureSpecifier(bool isp)          : bits_per_entry(NULL), is_parallel(isp)   {}
-         SgExpression* bits_per_entry;
+         StructureSpecifier() : is_parallel(false), is_tight(false), bits_per_entry(0) {}
          bool is_parallel;
+         bool is_tight;
+         int  bits_per_entry;
       };
 
-   } // namespace General_Language_Translation 
+      struct TableSpecifier {
+         TableSpecifier() : packing_spec(e_packing_spec_unknown) {}
+         StructureSpecifier struct_spec;
+         PackingSpecifier packing_spec;
+      };
+
+     typedef std::list<LanguageTranslation::FunctionModifier> FunctionModifierList;
+
+   } // namespace LanguageTranslation
 
 #endif

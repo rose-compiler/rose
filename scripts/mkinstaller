@@ -21,22 +21,22 @@ $Interpreter ||= "/usr/bin/perl";
 # MyUniqueFileId: 05bfd522-45a2-4dfa-ca27-420e6c630546
 
 $mkinstaller_ver_major = "2";
-$mkinstaller_ver_minor = "5";
-$mkinstaller_ver_build = "27";
-$mkinstaller_ver_patch = "1";
-$mkinstaller_ver_name  = "2.5.27.1";
-$mkinstaller_ver_time  = "26Mar2020,19:43:37z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.27.1 - 26Mar2020,19:43:37z";
+$mkinstaller_ver_minor = "6";
+$mkinstaller_ver_build = "2";
+$mkinstaller_ver_patch = "2";
+$mkinstaller_ver_name  = "2.6.2.2";
+$mkinstaller_ver_time  = "13Jun2020,21:23:10z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.2.2 - 13Jun2020,21:23:10z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
 $perl_library_ver_major = "1";
 $perl_library_ver_minor = "6";
-$perl_library_ver_build = "16";
-$perl_library_ver_patch = "2";
-$perl_library_ver_name  = "1.6.16.2";
-$perl_library_ver_time  = "23Mar2020,17:10:34z";
-$perl_library_ver_id    = "@(#)perl_library 1.6.16.2 - 23Mar2020,17:10:34z";
+$perl_library_ver_build = "19";
+$perl_library_ver_patch = "3";
+$perl_library_ver_name  = "1.6.19.3";
+$perl_library_ver_time  = " 5Jun2020,23:51:08z";
+$perl_library_ver_id    = "@(#)perl_library 1.6.19.3 -  5Jun2020,23:51:08z";
 
 #{------------------------------------------------------------------------------
 #
@@ -103,16 +103,16 @@ $foundInDir  = "";
 
 #-------------------------------------------------------------------------------
 #
-#  The DEBUG_mkinstaller (or DEBUG) enviroment variable is used to control the
+#  The DEBUG_mkinstaller (or DEBUG) environment variable is used to control the
 #  production of debugging output.
 #
 #     not set
 #
-#         Don't produce debugging ouput.
+#         Don't produce debugging output.
 #
 #     0
 #
-#         Don't produce debugging ouput.
+#         Don't produce debugging output.
 #
 #     non-zero integer
 #
@@ -210,6 +210,7 @@ if ($valueOfDebugVar ne "") {
    my $CXX_stdcxxlib_libcVersion       = "";
    my @CXX_stdcxxlib_libcVerList       = ( );
 
+   my %adjustedStuff                   = ( );
    my $defaultPrefix                   = "";
    my $devNull                         = nullPathname();
    my %dirBasenames                    = ( );
@@ -217,6 +218,8 @@ if ($valueOfDebugVar ne "") {
    my %dirPathnames                    = ( );
    my @dirPathnames                    = ( );
    my $dirPathnameCount                = 0;
+   my %exclusions                      = ( );
+   my @exclusions                      = ( );
    my %fileBasenames                   = ( );
    my @fileBasenames                   = ( );
    my $fileBasenameCount               = 0;
@@ -232,15 +235,16 @@ if ($valueOfDebugVar ne "") {
    my %givenPathnames                  = ( );
    my @givenPathnames                  = ( );
    my $givenStdNames                   = 0;
-   my %givenStuff                      = ( );
-   my $NgivenStuff                     = 0;
+   my $haveExclusions                  = 0;
    my $here                            = getWorkingDirectory();
    my $HWname                          = "";
    my $intermediateName                = "";
    my $isCompressed                    = "";
    my $keep                            = 0;
+   my $keepOpt                         = "";
    my $libDirBasename                  = "";
-   my $oldOSname                       = ""; # Only for backwards compatability
+   my $NadjustedStuff                  = 0;
+   my $oldOSname                       = ""; # Only for backwards compatibility
    my $OSname                          = lc $^O;
    my $OSversion                       = "";
    my $postInstallBasename             = "";
@@ -506,7 +510,7 @@ if ($valueOfDebugVar ne "") {
                        /^--vernum$/
 
                           && do {
-                             print "$mkinstaller_ver_name\n";
+                             print STDOUT "$mkinstaller_ver_name\n";
                              cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 0;
@@ -515,7 +519,7 @@ if ($valueOfDebugVar ne "") {
                        /^--version$/
 
                           && do {
-                             print "mkinstaller: version $mkinstaller_ver_name rev. $mkinstaller_ver_time\n";
+                             print STDOUT "mkinstaller: version $mkinstaller_ver_name rev. $mkinstaller_ver_time\n";
                              cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 0;
@@ -806,6 +810,58 @@ if ($valueOfDebugVar ne "") {
                              last parseArgs;
                           };
 
+                       /^--exclude=?$/
+
+                          && do {
+                             my $optName = $1;
+                             print STDERR "mkinstaller: error: missing argument to $optName option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                             close DBGOUT if $dbgOutToPathname ne "";
+                             exit 1;
+                          };
+
+                       /^(--exclude)=(.+)$/
+
+                          && do {
+                             my $optName     = $1;
+                             my $given       = $2;
+                             my $globPattern = unquote($given);
+                             print DBGOUT "mkinstaller:    aka. $optName option\n" if $debugging;
+                             print DBGOUT "mkinstaller:    with [$globPattern]\n" if $debugging;
+                             if ($globPattern eq "") {
+                                print STDERR "mkinstaller: error: empty argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                                close DBGOUT if $dbgOutToPathname ne "";
+                                exit 1;
+                             }
+                             my $bn          = basename($globPattern);
+                             if ($globPattern ne $bn) {
+                                print STDERR "mkinstaller: error: invalid argument(=\"".$globPattern."\") to ".$optName." option\n";
+                                print STDERR "mkinstaller: ...pattern must be simple; without directory components\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                                close DBGOUT if $dbgOutToPathname ne "";
+                                exit 1;
+                             }
+                             my $pattern     = translateGlobPatternToRegExp($globPattern);
+                             if ($pattern eq "") {
+                                print STDERR "mkinstaller: error: invalid argument(=\"".$globPattern."\") to ".$optName." option\n";
+                                print STDERR "mkinstaller: ...\"".$globPattern."\" is not a valid globbing pattern\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                                close DBGOUT if $dbgOutToPathname ne "";
+                                exit 1;
+                             }
+                             if ( ! exists $exclusions{$pattern}) {
+                                my $idx               = $#exclusions + 1;
+                                $exclusions[$idx]     = $pattern;
+                                $exclusions{$pattern} = $idx;
+                                $haveExclusions       = 1;
+                             }
+                             else {
+                                print STDERR "mkinstaller: note: redundant ".$optName."=".$given." is ignored\n";
+                             }
+                             last parseArgs;
+                          };
+
                        /^--fill$/
 
                           && do {
@@ -856,6 +912,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              $keep           = 1;
+                             $keepOpt        = $opt;
                              last parseArgs;
                           };
 
@@ -932,6 +989,15 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              $followSymlinks = 0;
+                             last parseArgs;
+                          };
+
+                       /^--nokeep$/
+
+                          && do {
+                             print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
+                             $keep           = 0;
+                             $keepOpt        = $opt;
                              last parseArgs;
                           };
 
@@ -1648,11 +1714,25 @@ if ($valueOfDebugVar ne "") {
                              my $optName     = $1;
                              my $bn          = $2;
                              my $given       = $3;
-                             $given          = absname($given);
+                             my $absname     = absname($given);
+                             my $adjusted;
+                             if ( -l $absname) {
+                                if ( ! -e $absname) {
+                                   print STDERR "mkinstaller: error: \"$given\" is a broken symbolic-link\n";
+                                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                                   close DBGOUT if $dbgOutToPathname ne "";
+                                   exit 1;
+                                }
+                                $adjusted    = realpath($absname);
+                                print STDERR "mkinstaller: note: \"$given\" is a symbolic-link, followed to \"$adjusted\"\n";
+                             }
+                             else {
+                                $adjusted    = $absname;
+                             }
                              print DBGOUT "mkinstaller:    ...dirname  = \"".nativePathname($bn)."\"\n" if $debugging;
-                             print DBGOUT "mkinstaller:    ...pathname = \"".nativePathname($given)."\"\n" if $debugging;
-                             if ( -f $given) {
-                                if ( exists $withFilePathnames{$given}) {
+                             print DBGOUT "mkinstaller:    ...pathname = \"".nativePathname($adjusted)."\"\n" if $debugging;
+                             if ( -f $adjusted) {
+                                if ( exists $withFilePathnames{$adjusted}) {
                                    print STDERR "mkinstaller: error: unexpected $opt\n";
                                    cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
@@ -1665,7 +1745,7 @@ if ($valueOfDebugVar ne "") {
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
-                                $withFilePathnames{$given} = $bn;
+                                $withFilePathnames{$adjusted} = $bn;
                                 if ( ! exists $withFileBasenames{$bn}) {
                                    print DBGOUT "mkinstaller:       new basename \"$bn\"\n" if $debugging;
                                    my $jdx                              = $#withFileBasenames + 1;
@@ -1679,27 +1759,27 @@ if ($valueOfDebugVar ne "") {
                                    print DBGOUT "mkinstaller:       known (file) basename \"$bn\"\n" if $debugging;
                                 }
                                 my $idx               = $#withFilePathnames + 1;
-                                $withFilePathnames[$idx]          = $given;
+                                $withFilePathnames[$idx]          = $adjusted;
                                 $withFilePathnameCount           += 1;
-                                push @{ $withFileBasenames{$bn}{"pathnames"} }, $given;
+                                push @{ $withFileBasenames{$bn}{"pathnames"} }, $adjusted;
                                 push @{ $withFileBasenames{$bn}{"indices"} },   $idx;
                                 $withFileBasenames{$bn}{"count"} += 1;
                                 $withFiles                        = 1;
                              }
                              else {
-                                if ( -e $given) {
-                                   print STDERR "mkinstaller: error: \"".nativePathname($given)."\" is not a file\n";
+                                if ( -e $adjusted) {
+                                   print STDERR "mkinstaller: error: \"".nativePathname($adjusted)."\" is not a file\n";
                                 }
                                 else {
-                                   print STDERR "mkinstaller: error: can't find/read \"".nativePathname($given)."\"\n";
+                                   print STDERR "mkinstaller: error: can't find/read \"".nativePathname($adjusted)."\"\n";
                                 }
                                 cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
-                             if ( ! $givenStuff{$given}) {
-                                $givenStuff{$given} = "file";
-                                $NgivenStuff       += 1;
+                             if ( ! $adjustedStuff{$adjusted}) {
+                                $adjustedStuff{$adjusted}  = "file";
+                                $NadjustedStuff           += 1;
                              }
                              $somethingGiven = 1;
                              last parseArgs;
@@ -2027,47 +2107,53 @@ if ($valueOfDebugVar ne "") {
                              my $given                = unquote($opt);
                              $theCommandLine[$cmdIdx] = quoteIfReqd($given);
                              print DBGOUT "mkinstaller:    ...aka \"".$given."\"\n" if $debugging;
-                             $given                   = absname($given);
-                             print DBGOUT "mkinstaller:    ...aka \"".$given."\"\n" if $debugging;
-
-                             #---------------------------------------
-                             #
-                             #  Links only allowed if --follow was
-                             #  used.
-                             #
-                             #---------------------------------------
-
-                             if ( ! $followSymlinks) {
-                                if ( -l $given) {
-                                   if ( -e $given) {
-                                      print STDERR "mkinstaller: error: \"".nativePathname($given)."\" is a symbolic-link not a directory\n";
-                                   }
-                                   else {
-                                      print STDERR "mkinstaller: error: \"".nativePathname($given)."\" is a broken symbolic-link not a directory\n";
-                                   }
+                             my $absname              = absname($given);
+                             print DBGOUT "mkinstaller:    ...aka \"".$absname."\"\n" if $debugging;
+                             my $adjusted;
+                             if ( -l $absname) {
+                                if ( ! -e $absname) {
+                                   print STDERR "mkinstaller: error: \"$given\" is a broken symbolic-link\n";
                                    cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
+                                $adjusted             = realpath($absname);
+                                print DBGOUT "mkinstaller:    ...aka \"".$adjusted."\"\n" if $debugging;
+                                print STDERR "mkinstaller: note: \"$given\" is a symbolic-link, followed to \"$adjusted\"\n";
                              }
-                             my $bn = basename($given);
+                             else {
+                                $adjusted             = $absname;
+                             }
+                             my $bn                   = basename($adjusted);
                              if ($bn =~ /\s/) {
                                 #---------------------------------------
                                 #
                                 #  No spaces in basename.
                                 #
                                 #---------------------------------------
-                                if ($bn eq $given) {
-                                   print STDERR "mkinstaller: error: \"$given\" contains spaces and/or tabs\n";
+                                if ($bn eq $adjusted) {
+                                   print STDERR "mkinstaller: error: \"$adjusted\" contains spaces and/or tabs\n";
                                 }
                                 else {
-                                   print STDERR "mkinstaller: error: basename of \"".nativePathname($given)."\" contains spaces and/or tabs\n";
+                                   print STDERR "mkinstaller: error: basename of \"".nativePathname($adjusted)."\" contains spaces and/or tabs\n";
                                 }
                                 cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
-                             if ( -d "$given") {
+                             if ( -l "$adjusted") {
+                                if ( -e "$adjusted") {
+                                   print DBGOUT "mkinstaller:    ...a symbolic-link\n" if $debugging;
+                                   print STDERR "mkinstaller: error: \"$adjusted\" is a symbolic-link\n";
+                                   print STDERR "mkinstaller: ...could not be \"adjusted\" to a pathname without symbolic-links\n";
+                                }
+                                else {
+                                   print DBGOUT "mkinstaller:    ...a broken symbolic-link\n" if $debugging;
+                                   print STDERR "mkinstaller: error: \"$adjusted\" is a broken symbolic-link\n";
+                                }
+                                exit 1;
+                             }
+                             elsif ( -d "$adjusted") {
                                 print DBGOUT "mkinstaller:    ...a directory\n" if $debugging;
                                 if ( exists $fileBasenames{$bn}) {
                                    #---------------------------------------
@@ -2077,14 +2163,14 @@ if ($valueOfDebugVar ne "") {
                                    #  prefix directory).
                                    #
                                    #---------------------------------------
-                                   print STDERR "mkinstaller: error: basename of \"".nativePathname($given)."\" is known to be a file basename\n";
+                                   print STDERR "mkinstaller: error: basename of \"".nativePathname($adjusted)."\" is known to be a file basename\n";
                                    cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
-                                if ( exists $dirPathnames{$given}) {
-                                   print STDERR "mkinstaller: warning: unexpected \"$given\"\n";
-                                   print STDERR "mkinstaller: ...already specified \"$given\"\n";
+                                if ( exists $dirPathnames{$adjusted}) {
+                                   print STDERR "mkinstaller: warning: unexpected \"$adjusted\"\n";
+                                   print STDERR "mkinstaller: ...already specified \"$adjusted\"\n";
                                 }
                                 else {
                                    if ( exists $dirBasenames{$bn}) {
@@ -2095,13 +2181,13 @@ if ($valueOfDebugVar ne "") {
                                       #
                                       #---------------------------------------
                                       if ( ! exists $toldSharedDirBasename{$bn}) {
-                                         print STDERR "mkinstaller: note: \"".nativePathname($given)."\" will be merged with other \"".$bn."\" directories\n";
-                                         $toldSharedDirBasename{$bn} = $given;
+                                         print STDERR "mkinstaller: note: \"".nativePathname($adjusted)."\" will be merged with other \"".$bn."\" directories\n";
+                                         $toldSharedDirBasename{$bn} = $adjusted;
                                       }
                                    }
                                    if (($bn =~ /^bin$/i) || ($bn =~ /^lib$/i) || ($bn =~ /^lib64$/i) || ($bn =~ /^include$/i)) {
                                       print DBGOUT "mkinstaller:       has a standard basename(=$bn)\n" if $debugging;
-                                      $givenStdNames     = 1;
+                                      $adjustedStdNames     = 1;
                                       if ($bn =~ /^lib$/i) {
                                          $libDirBasename = "lib";
                                       }
@@ -2111,9 +2197,9 @@ if ($valueOfDebugVar ne "") {
                                    }
                                    else {
                                       print DBGOUT "mkinstaller:       has a non-standard basename(=$bn)\n" if $debugging;
-                                      $givenNonStdNames  = 1;
+                                      $adjustedNonStdNames  = 1;
                                    }
-                                   $dirPathnames{$given} = $bn;
+                                   $dirPathnames{$adjusted} = $bn;
                                    if ( ! exists $dirBasenames{$bn}) {
                                       print DBGOUT "mkinstaller:       new basename \"$bn\"\n" if $debugging;
                                       my $jdx                         = $#dirBasenames + 1;
@@ -2127,24 +2213,24 @@ if ($valueOfDebugVar ne "") {
                                       print DBGOUT "mkinstaller:       known (dir) basename \"$bn\"\n" if $debugging;
                                    }
                                    my $idx                      = $#dirPathnames + 1;
-                                   $dirPathnames[$idx]          = $given;
+                                   $dirPathnames[$idx]          = $adjusted;
                                    $dirPathnameCount           += 1;
-                                   push @{ $dirBasenames{$bn}{"pathnames"} }, $given;
+                                   push @{ $dirBasenames{$bn}{"pathnames"} }, $adjusted;
                                    push @{ $dirBasenames{$bn}{"indices"} },   $idx;
                                    $dirBasenames{$bn}{"count"} += 1;
-                                   if ( ! $givenStuff{$given}) {
-                                      $givenStuff{$given}       = "directory";
-                                      $NgivenStuff             += 1;
+                                   if ( ! $adjustedStuff{$adjusted}) {
+                                      $adjustedStuff{$adjusted}    = "directory";
+                                      $NadjustedStuff          += 1;
                                    }
                                    $somethingGiven              = 1;
                                 }
                              }
-                             elsif ( -f "$given") {
+                             elsif ( -f "$adjusted") {
                                 print DBGOUT "mkinstaller:    ...a file\n" if $debugging;
                                 if ($OSclass eq "UNIX-like") {
-                                   if ( exists $filePathnames{$given}) {
-                                      print STDERR "mkinstaller: warning: unexpected \"$given\"\n";
-                                      print STDERR "mkinstaller: ...already specified \"$given\"\n";
+                                   if ( exists $filePathnames{$adjusted}) {
+                                      print STDERR "mkinstaller: warning: unexpected \"$adjusted\"\n";
+                                      print STDERR "mkinstaller: ...already specified \"$adjusted\"\n";
                                    }
                                    elsif ( exists $dirBasename{$bn}) {
                                       #---------------------------------------
@@ -2154,7 +2240,7 @@ if ($valueOfDebugVar ne "") {
                                       #  prefix directory).
                                       #
                                       #---------------------------------------
-                                      print STDERR "mkinstaller: error: basename of \"".nativePathname($given)."\" is known to be a directory basename\n";
+                                      print STDERR "mkinstaller: error: basename of \"".nativePathname($adjusted)."\" is known to be a directory basename\n";
                                       cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                       close DBGOUT if $dbgOutToPathname ne "";
                                       exit 1;
@@ -2169,7 +2255,7 @@ if ($valueOfDebugVar ne "") {
                                       #  prefix directory.
                                       #
                                       #---------------------------------------
-                                      print STDERR "mkinstaller: error: basename of \"".nativePathname($given)."\" collides with basename of \"".$fileBasenames{$bn}."\"\n";
+                                      print STDERR "mkinstaller: error: basename of \"".nativePathname($adjusted)."\" collides with basename of \"".$fileBasenames{$bn}."\"\n";
                                       cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                       close DBGOUT if $dbgOutToPathname ne "";
                                       exit 1;
@@ -2178,20 +2264,20 @@ if ($valueOfDebugVar ne "") {
                                       print DBGOUT "mkinstaller:       new (file) basename \"$bn\"\n" if $debugging;
                                       my $idx                = $#fileBasenames + 1;
                                       $fileBasenames[$idx]   = $bn;
-                                      $fileBasenames{$bn}    = $given;
+                                      $fileBasenames{$bn}    = $adjusted;
                                       my $jdx                = $#filePathnames + 1;
-                                      $filePathnames[$jdx]   = $given;
-                                      $filePathnames{$given} = $jdx;
+                                      $filePathnames[$jdx]   = $adjusted;
+                                      $filePathnames{$adjusted} = $jdx;
                                       $fileBasenameCount    += 1;
-                                      if ( ! $givenStuff{$given}) {
-                                         $givenStuff{$given} = "file";
-                                         $NgivenStuff       += 1;
+                                      if ( ! $adjustedStuff{$adjusted}) {
+                                         $adjustedStuff{$adjusted} = "file";
+                                         $NadjustedStuff       += 1;
                                       }
                                       $somethingGiven        = 1;
                                    }
                                 }
                                 elsif ($OSclass eq "Windows-like") {
-                                   print STDERR "mkinstaller: error: \"".nativePathname($given)."\" is a file, this isn't supported on Windows-like hosts (yet)\n";
+                                   print STDERR "mkinstaller: error: \"".nativePathname($adjusted)."\" is a file, this isn't supported on Windows-like hosts (yet)\n";
                                    cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
@@ -2507,7 +2593,7 @@ if ($valueOfDebugVar ne "") {
    #  Then copy the individual files to be installed (if any) into appropriate
    #  temporary directories. Note that this process works very much like the
    #  way command-line parameters (directories to be installed) are handled
-   #  during command line processing above. This effectivly "converts" individual
+   #  during command line processing above. This effectively "converts" individual
    #  file installations to the expected directory installations.
    #
    #----------------------------------------------------------------------------
@@ -2722,8 +2808,8 @@ if ($valueOfDebugVar ne "") {
             print STDERR "mkinstaller: error: the --without-payload option is incompatible with supplied directories and/or files\n";
             my $first = 1;
             my $given;
-            foreach $given (sort keys %givenStuff) {
-               my $style = $givenStuff{$given};
+            foreach $given (sort keys %adjustedStuff) {
+               my $style = $adjustedStuff{$given};
                if ($first) {
                   print STDERR "mkinstaller: ...\"$given\"\n";
                   $first = 0;
@@ -2947,7 +3033,9 @@ if ($valueOfDebugVar ne "") {
          $genSHA        = 0;
          print STDERR "mkinstaller: warning: can't generate a hash file\n";
       }
-      print STDERR "mkinstaller: ...using \"".nativePathname($use_hasher)."\"\n" if (1 <= $verbosityLevel);
+      if ($use_hasher ne "") {
+         print STDERR "mkinstaller: ...using \"".nativePathname($use_hasher)."\"\n" if (1 <= $verbosityLevel);
+      }
    }
 
    #----------------------------------------------------------------------------
@@ -3188,10 +3276,10 @@ if ($valueOfDebugVar ne "") {
                         for ($i=0; $i<=$#dirs; $i+=1) {
                            my $pathname = $dirs[$i];
                            if ($i == 0) {
-                              print "mkinstaller:       ...\"".nativePathname($pathname)."\"\n";
+                              print STDOUT "mkinstaller:       ...\"".nativePathname($pathname)."\"\n";
                            }
                            else {
-                              print "mkinstaller:          \"".nativePathname($pathname)."\"\n";
+                              print STDOUT "mkinstaller:          \"".nativePathname($pathname)."\"\n";
                            }
                         }
                      }
@@ -3662,9 +3750,9 @@ if ($valueOfDebugVar ne "") {
                   print DBGOUT "mkinstaller:       \"".nativePathname($pathname)."\"\n" if $debugging;
                }
                if (opendir(DIR,"$pathname")) {
-                  while (defined($tmpName1 = readdir(DIR))) {
-                     if (($tmpName1 ne "" ) && ($tmpName1 ne ".") && ($tmpName1 ne "..")) {
-                        if (($tmpName1 =~ /^bin$/i) || ($tmpName1 =~ /^lib$/i) || ($tmpName1 =~ /^lib64$/i) || ($tmpName1 =~ /^include$/i)) {
+                  while (defined($tmpName3 = readdir(DIR))) {
+                     if (($tmpName3 ne "" ) && ($tmpName3 ne ".") && ($tmpName3 ne "..")) {
+                        if (($tmpName3 =~ /^bin$/i) || ($tmpName3 =~ /^lib$/i) || ($tmpName3 =~ /^lib64$/i) || ($tmpName3 =~ /^include$/i)) {
                            $foundOne          = 1;
                            if ($bn =~ /^lib$/i) {
                               $libDirBasename = "lib";
@@ -3681,9 +3769,9 @@ if ($valueOfDebugVar ne "") {
                if ($foundOne) {
                   print DBGOUT "mkinstaller:          has a subdir with a standard basename\n" if $debugging;
                   if (opendir(DIR,"$pathname")) {
-                     while (defined($tmpName2 = readdir(DIR))) {
-                        if (($tmpName2 ne "" ) && ($tmpName2 ne ".") && ($tmpName2 ne "..")) {
-                           my $joinName = fixpath(joinpath($pathname,$tmpName2));
+                     while (defined($tmpName4 = readdir(DIR))) {
+                        if (($tmpName4 ne "" ) && ($tmpName4 ne ".") && ($tmpName4 ne "..")) {
+                           my $joinName = fixpath(joinpath($pathname,$tmpName4));
                            if ( ! $followSymlinks) {
                               if ( -l $joinName) {
                                  if ( -e $joinName) {
@@ -3813,10 +3901,10 @@ if ($valueOfDebugVar ne "") {
                         for ($i=0; $i<=$#dirs; $i+=1) {
                            my $pathname = $dirs[$i];
                            if ($i == 0) {
-                              print "mkinstaller:       ...\"".nativePathname($pathname)."\"\n";
+                              print STDOUT "mkinstaller:       ...\"".nativePathname($pathname)."\"\n";
                            }
                            else {
-                              print "mkinstaller:          \"".nativePathname($pathname)."\"\n";
+                              print STDOUT "mkinstaller:          \"".nativePathname($pathname)."\"\n";
                            }
                         }
                      }
@@ -4115,9 +4203,15 @@ if ($valueOfDebugVar ne "") {
                exit 1;
             }
          }
-         print STDERR "mkinstaller: ...using \"".nativePathname($use_tar)."\"$style\n" if (2 <= $verbosityLevel);
-         print STDERR "mkinstaller: ...using \"".nativePathname($use_gzcat)."\n" if (2 <= $verbosityLevel);
-         print STDERR "mkinstaller: ...using \"".nativePathname($use_gzip)."\n" if (2 <= $verbosityLevel);
+         if ($use_tar ne "") {
+            print STDERR "mkinstaller: ...using \"".nativePathname($use_tar)."\"$style\n" if (2 <= $verbosityLevel);
+         }
+         if ($use_gzcat ne "") {
+            print STDERR "mkinstaller: ...using \"".nativePathname($use_gzcat)."\"\n" if (2 <= $verbosityLevel);
+         }
+         if ($use_gzip ne "") {
+            print STDERR "mkinstaller: ...using \"".nativePathname($use_gzip)."\"\n" if (2 <= $verbosityLevel);
+         }
       }
       else {
          #---------------------------------------
@@ -4272,10 +4366,11 @@ if ($valueOfDebugVar ne "") {
          print DBGOUT "mkinstaller: ...first tarup to $TmpDirI directory...\n" if $debugging;
          print DBGOUT "mkinstaller:    then untar to $TmpDirA directory (to merge)\n" if $debugging;
          {
+            print STDERR "mkinstaller: working the directories...\n" if (1 <= $verbosityLevel);
             my $bn;
             foreach $bn (sort keys %dirBasenames) {
                my $Tstart = time();
-               print STDERR "mkinstaller: working \"$bn\"\n" if (1 <= $verbosityLevel);
+               print STDERR "mkinstaller: ...working \"$bn\"\n" if (1 <= $verbosityLevel);
                {
                   if ($debugging) {
                      my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
@@ -4286,12 +4381,7 @@ if ($valueOfDebugVar ne "") {
                   for ($i=0; $i<=$#dirs; $i+=1) {
                      my $pathname = $dirs[$i];
                      print DBGOUT "mkinstaller: ...directory \"".nativePathname($pathname)."\"\n" if $debugging;
-                     if ($i == 0) {
-                        print STDERR "mkinstaller: ...\"".nativePathname($pathname)."\"\n" if (2 <= $verbosityLevel);
-                     }
-                     else {
-                        print STDERR "mkinstaller:    \"".nativePathname($pathname)."\"\n" if (2 <= $verbosityLevel);
-                     }
+                     print STDERR "mkinstaller:    \"".nativePathname($pathname)."\"\n" if (2 <= $verbosityLevel);
                      my $dn       = dirname($pathname);
                      my $bn       = basename($pathname);
                      if ( ! chdir($dn)) {
@@ -4499,6 +4589,7 @@ if ($valueOfDebugVar ne "") {
                   print STDERR "mkinstaller: ...done\n" if (3 <= $verbosityLevel);
                }
             }
+            print STDERR "mkinstaller: ...done\n" if (1 <= $verbosityLevel);
             #-------------------------------------------------------------------
             #-------------------------------------------------------------------
             foreach $bn (sort keys %fileBasenames) {
@@ -4565,14 +4656,172 @@ if ($valueOfDebugVar ne "") {
                   print STDERR "mkinstaller: ...done\n" if (3 <= $verbosityLevel);
                }
             }
+
+            if ($haveExclusions) {
+               print DBGOUT "mkinstaller: ...have exclusions, we'll have to scan for files in the accumulator directory\n" if $debugging;
+               #---------------------------------------
+               #
+               #  If there are exclusions then we'll
+               #  have a bit more work to do on the
+               #  payload. We'll scan over the files
+               #  in the accumulator directory tree
+               #  looking for matches with the patterns
+               #  in the exclusions array. Files whose
+               #  basenames match an exclusion pattern
+               #  will be deleted from the accumulator
+               #  directory tree.
+               #
+               #---------------------------------------
+
+               my $wasInDir = `pwd`; chomp $wasInDir; $wasInDir =~ s/\r$//;
+               if ($debugging) {
+                  my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
+                  print DBGOUT "mkinstaller:    was in \"$imInDir\"\n" if $debugging;
+               }
+               if ( ! chdir($TmpDirA)) {
+                  print STDERR "mkinstaller: error: can't cd into \"$TmpDirA\"\n";
+                  cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                  close DBGOUT if $dbgOutToPathname ne "";
+                  exit 1;
+               }
+               {
+                  if ($debugging) {
+                     my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
+                     print DBGOUT "mkinstaller:    now in \"$imInDir\"\n" if $debugging;
+                  }
+                  #---------------------------------------
+                  #
+                  #  Collect a list of pathnames forming
+                  #  the directory tree rooted at the
+                  #  currect directory. Note that symbolic-
+                  #  links are NOT followed.
+                  #
+                  #---------------------------------------
+
+                  my $theRoot            = `pwd`; chomp $theRoot; $theRoot =~ s/\r$//;
+                  print DBGOUT "mkinstaller:    scan directory tree rooted at \"".$theRoot."\"\n" if $debugging;
+                  my @theList            = ();
+                  my $idx                = $#theList +1;
+                  $theList[$idx]{"name"} = ".";
+                  $theList[$idx]{"type"} = "unknown";
+                  {
+                     #  Form the list...
+
+                     print DBGOUT "mkinstaller:    ...form the pathname list\n" if $debugging;
+                     my $i;
+                     for ($i=0; $i<=$#theList; ++$i) {
+                        my $thePathname = $theList[$i]{"name"};
+                        my $theType     = $theList[$i]{"type"};
+                        my $theRealName = fixpath(joinpath($theRoot,$thePathname));
+                        if ( -l "$theRealName" ) {
+                           $theList[$i]{"type"} = "symbolic-link";
+                        }
+                        elsif ( -f "$theRealName" ) {
+                           $theList[$i]{"type"} = "file";
+                        }
+                        elsif ( -d "$theRealName" ) {
+                           $theList[$i]{"type"} = "directory";
+                           if (opendir(DIR,"$theRealName")) {
+                              while (defined($tmpName5 = readdir(DIR))) {
+                                 if (($tmpName5 ne "" ) && ($tmpName5 ne ".") && ($tmpName5 ne "..")) {
+                                    my $joinName         = fixpath(joinpath($thePathname,$tmpName5));
+                                    my $j                = $#theList + 1;
+                                    $theList[$j]{"name"} = $joinName;
+                                    $theList[$j]{"type"} = "unknown";
+                                 }
+                              }
+                              closedir(DIR);
+                           }
+                           else {
+                              print STDERR "mkinstaller: error: can't read directory \"".nativePathname($theRealName)."\"\n";
+                              print STDERR "mkinstaller:    was done from in \"".nativePathname($wasInDir)."\"\n";
+                              cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                              close DBGOUT if $dbgOutToPathname ne "";
+                              exit 1;
+                           }
+                        }
+                        else {
+                           $theList[$i]{"type"} = "other";
+                        }
+                     }
+
+                     #  Scan the list...
+
+                     print DBGOUT "mkinstaller:    ...scan the pathname list\n" if $debugging;
+                     for ($i=0; $i<=$#theList; ++$i) {
+                        my $thePathname = $theList[$i]{"name"};
+                        my $theType     = $theList[$i]{"type"};
+                        my $theRealName = fixpath(joinpath($theRoot,$thePathname));
+                        if ($theType eq "directory") {
+                           print DBGOUT "mkinstaller:       d \"".nativePathname($theRealName)."\"\n" if $debugging;
+                        }
+                        elsif ($theType eq "file") {
+                           my $bn = basename($theRealName);
+                           print DBGOUT "mkinstaller:       f \"".nativePathname($theRealName)."\" ($bn)\n" if $debugging;
+                           my $matched = 0;
+                           my $j;
+                           for ($j=0; $j<=$#exclusions; ++$j) {
+                              my $pattern = $exclusions[$j];
+                              if ($bn =~ /$pattern/) {
+                                 print DBGOUT "mkinstaller:         ...matched [$pattern]\n" if $debugging;
+                                 $matched = 1;
+                                 last;
+                              }
+                           }
+                           if ($matched) {
+                              print DBGOUT "mkinstaller:            delete \"".nativePathname($theRealName)."\"\n" if $debugging;
+                              unlink($theRealName);
+                              if ( -f $theRealName) {
+                                 print DBGOUT "mkinstaller:            ...failed, \"".nativePathname($theRealName)."\" is still there\n" if $debugging;
+                                 print STDERR "mkinstaller: error: can't delete file \"".nativePathname($theRealName)."\"\n";
+                                 cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                                 close DBGOUT if $dbgOutToPathname ne "";
+                                 exit 1;
+                              }
+                              else {
+                                 print DBGOUT "mkinstaller:            ...done\n" if $debugging;
+                                 print STDERR "mkinstaller: note: excluded \"$theRealName\"\n" if 1 <= $verbosityLevel;
+                              }
+                           }
+                        }
+                        elsif ($theType eq "symbolic-link") {
+                           print DBGOUT "mkinstaller:       l \"".nativePathname($theRealName)."\"\n" if $debugging;
+                        }
+                        elsif ($theType eq "other") {
+                           print DBGOUT "mkinstaller:       o \"".nativePathname($theRealName)."\"\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "mkinstaller:       ? \"".nativePathname($theRealName)."\"\n" if $debugging;
+                        }
+                     }
+                  }
+               }
+               if ( ! chdir($wasInDir)) {
+                  print STDERR "mkinstaller: error: can't cd back to \"$wasInDir\"\n";
+                  cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                  close DBGOUT if $dbgOutToPathname ne "";
+                  exit 1;
+               }
+               if ($debugging) {
+                  my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
+                  print DBGOUT "mkinstaller:    back in \"$imInDir\"\n" if $debugging;
+               }
+            }
+
+            #-------------------------------------------------------------------
             #
             #  The merging process is done, now tarup the merged individual
             #  directories from the accumulator directory in to the wrapper
             #  directory TmpDirW
             #
+            #-------------------------------------------------------------------
+
             print DBGOUT "mkinstaller: ...tarup the individual directories into the wrapper directory\n" if $debugging;
+            print DBGOUT "mkinstaller:    cd into \"$TmpDirA\"\n" if $debugging;
             if ( ! chdir($TmpDirA)) {
+               my $fromWithin = `pwd`; chomp $fromWithin; $fromWithin =~ s/\r$//;
                print STDERR "mkinstaller: error: can't cd into \"$TmpDirA\"\n";
+               print STDERR "mkinstaller: ...from within \"$fromWithin\"\n";
                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                close DBGOUT if $dbgOutToPathname ne "";
                exit 1;
@@ -4588,25 +4837,41 @@ if ($valueOfDebugVar ne "") {
                   #  now contains...
                   #
                   my $back = `pwd`; chomp $back; $back =~ s/\r$//;
-                  chdir($TmpDirW);
-                     if (opendir(DIR,$TmpDirW)) {
-                        my $count = 0;
-                        print DBGOUT "mkinstaller:    ...\"".$TmpDirW.$slash."\" now contains\n" if $debugging;
-                        while (defined($tmp = readdir(DIR))) {
-                           if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
-                              print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
-                              $count += 1;
-                           }
-                        }
-                        closedir(DIR);
-                        if ($count <= 0) {
-                           print DBGOUT "mkinstaller:       <nothing>\n" if $debugging;
+                  print DBGOUT "mkinstaller:    cd into \"$TmpDirW\"\n" if $debugging;
+                  if ( ! chdir($TmpDirW)) {
+                     my $fromWithin = `pwd`; chomp $fromWithin; $fromWithin =~ s/\r$//;
+                     print STDERR "mkinstaller: error: can't cd into \"$TmpDirW\"\n";
+                     print STDERR "mkinstaller: ...from within \"$fromWithin\"\n";
+                     cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                     close DBGOUT if $dbgOutToPathname ne "";
+                     exit 1;
+                  }
+                  if (opendir(DIR,$TmpDirW)) {
+                     my $count = 0;
+                     print DBGOUT "mkinstaller:    ...\"".$TmpDirW.$slash."\" now contains\n" if $debugging;
+                     while (defined($tmp = readdir(DIR))) {
+                        if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                           print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
+                           $count += 1;
                         }
                      }
-                     else {
-                        print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirW.$slash."\" contains\n" if $debugging;
+                     closedir(DIR);
+                     if ($count <= 0) {
+                        print DBGOUT "mkinstaller:       <nothing>\n" if $debugging;
                      }
-                  chdir($back);
+                  }
+                  else {
+                     print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirW.$slash."\" contains\n" if $debugging;
+                  }
+                  print DBGOUT "mkinstaller:    cd back to \"$back\"\n" if $debugging;
+                  if ( ! chdir($back)) {
+                     my $fromWithin = `pwd`; chomp $fromWithin; $fromWithin =~ s/\r$//;
+                     print STDERR "mkinstaller: error: can't cd back to \"$back\"\n";
+                     print STDERR "mkinstaller: ...from within \"$fromWithin\"\n";
+                     cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                     close DBGOUT if $dbgOutToPathname ne "";
+                     exit 1;
+                  }
                }
                my $bn;
                foreach $bn (sort keys %dirBasenames) {
@@ -4659,31 +4924,51 @@ if ($valueOfDebugVar ne "") {
                      #  Show what the "wrapper" directory
                      #  now contains...
                      #
-                     my $back = `pwd`; chomp $back; $back = s/\r$//;
-                     chdir($TmpDirW);
-                        if (opendir(DIR,$TmpDirW)) {
-                           my $count = 0;
-                           print DBGOUT "mkinstaller:    ...\"".$TmpDirW.$slash."\" now contains\n" if $debugging;
-                           while (defined($tmp = readdir(DIR))) {
-                              if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
-                                 print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
-                                 $count += 1;
-                              }
-                           }
-                           closedir(DIR);
-                           if ($count <= 0) {
-                              print DBGOUT "mkinstaller:       <nothing>\n" if $debugging;
+                     my $back = `pwd`; chomp $back; $back =~ s/\r$//;
+                     print DBGOUT "mkinstaller:    cd into \"$TmpDirW\"\n" if $debugging;
+                     print DBGOUT "mkinstaller:    ...from \"$back\"\n" if $debugging;
+                     if ( ! chdir($TmpDirW)) {
+                        my $fromWithin = `pwd`; chomp $fromWithin; $fromWithin =~ s/\r$//;
+                        print STDERR "mkinstaller: error: can't cd into \"$TmpDirW\"\n";
+                        print STDERR "mkinstaller: ...from within \"$fromWithin\"\n";
+                        cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                        close DBGOUT if $dbgOutToPathname ne "";
+                        exit 1;
+                     }
+                     if (opendir(DIR,$TmpDirW)) {
+                        my $count = 0;
+                        print DBGOUT "mkinstaller:    ...\"".$TmpDirW.$slash."\" now contains\n" if $debugging;
+                        while (defined($tmp = readdir(DIR))) {
+                           if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                              print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
+                              $count += 1;
                            }
                         }
-                        else {
-                           print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirW.$slash."\" contains\n" if $debugging;
+                        closedir(DIR);
+                        if ($count <= 0) {
+                           print DBGOUT "mkinstaller:       <nothing>\n" if $debugging;
                         }
-                     chdir($back);
+                     }
+                     else {
+                        print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirW.$slash."\" contains\n" if $debugging;
+                     }
+                     print DBGOUT "mkinstaller:    cd back to \"$back\"\n" if $debugging;
+                     if ( ! chdir($back)) {
+                        my $fromWithin = `pwd`; chomp $fromWithin; $fromWithin =~ s/\r$//;
+                        print STDERR "mkinstaller: error: can't cd back to \"$back\"\n";
+                        print STDERR "mkinstaller: ...from within \"$fromWithin\"\n";
+                        cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                        close DBGOUT if $dbgOutToPathname ne "";
+                        exit 1;
+                     }
                   }
                }
             }
+            print DBGOUT "mkinstaller:    cd back to \"$here\"\n" if $debugging;
             if ( ! chdir($here)) {
+               my $fromWithin = `pwd`; chomp $fromWithin; $fromWithin =~ s/\r$//;
                print STDERR "mkinstaller: error: can't cd back to \"$here\"\n";
+               print STDERR "mkinstaller: ...from within \"$fromWithin\"\n";
                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                close DBGOUT if $dbgOutToPathname ne "";
                exit 1;
@@ -4753,6 +5038,7 @@ if ($valueOfDebugVar ne "") {
                   }
                }
             }
+            print DBGOUT "mkinstaller:    cd back to \"$here\"\n" if $debugging;
             if ( ! chdir($here)) {
                print STDERR "mkinstaller: error: can't cd back to \"$here\"\n";
                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
@@ -6198,7 +6484,7 @@ EOF09
          |         given="\${Overide_caret_oh_with}"
          |         if [ "X\${debugging}" != "X0" ]
          |         then
-         |            echo "getOSname: ...used overide" | "\${use_sendStdinTo}" \${debugOpt}
+         |            echo "getOSname: ...used override" | "\${use_sendStdinTo}" \${debugOpt}
          |         fi
          |      else
          |         given=`perl -e 'print \$^O."\\n"'`
@@ -9927,7 +10213,7 @@ EOF20
          |                               echo
          |                               echo "        --enforce-check"
          |                               echo
-         |                               echo "            Enforce compatability. If the source system C and C++"
+         |                               echo "            Enforce compatibility. If the source system C and C++"
          |                               echo "            library versions don't agree then report the problem and"
          |                               echo "            quit. This is the default behavior."
          |                               echo
@@ -9939,7 +10225,7 @@ EOF20
          |                               echo
          |                               echo "        --just-check"
          |                               echo
-         |                               echo "            Don't enforce compatability. If the source system C and C++"
+         |                               echo "            Don't enforce compatibility. If the source system C and C++"
          |                               echo "            library versions don't agree then simply report the problem"
          |                               echo "            then carry-on with the installation."
 EOF21
@@ -10002,7 +10288,7 @@ EOF25
          |                               echo
          |                               echo "               -v3"
          |                               echo
-         |                               echo "            is equavalent to:"
+         |                               echo "            is equivalent to:"
          |                               echo
          |                               echo "               -v -v -v"
          |                               echo
@@ -10170,9 +10456,9 @@ EOF28
          |                               then
          |                                  if [ "X\${IsGNUtarHow}" = "Xtold" ]
          |                                  then
-         |                                     echo "$scriptName: note: overide specified capability of tar" >&2
+         |                                     echo "$scriptName: note: override specified capability of tar" >&2
          |                                  else
-         |                                     echo "$scriptName: note: overide tested capability of tar" >&2
+         |                                     echo "$scriptName: note: override tested capability of tar" >&2
          |                                  fi
          |                               fi
          |                               IsGNUtar="true"
@@ -10195,9 +10481,9 @@ EOF28
          |                               then
          |                                  if [ "X\${IsGNUtarHow}" = "Xtold" ]
          |                                  then
-         |                                     echo "$scriptName: note: overide specified capability of tar" >&2
+         |                                     echo "$scriptName: note: override specified capability of tar" >&2
          |                                  else
-         |                                     echo "$scriptName: note: overide tested capability of tar" >&2
+         |                                     echo "$scriptName: note: override tested capability of tar" >&2
          |                                  fi
          |                               fi
          |                               IsGNUtar="false"
@@ -11774,7 +12060,7 @@ EOF44
          |
          |#-------------------------------------------------------------------------------
          |#
-         |#  Check for compatability...
+         |#  Check for compatibility...
          |#
          |#-------------------------------------------------------------------------------
          |
@@ -11792,7 +12078,7 @@ EOF44
          |
          |#---------------------------------------
          |#
-         |#  Check for HW compatability...
+         |#  Check for HW compatibility...
          |#
          |#---------------------------------------
          |
@@ -11828,7 +12114,7 @@ EOF44
          |
          |#---------------------------------------
          |#
-         |#  Check for OS compatability...
+         |#  Check for OS compatibility...
          |#
          |#---------------------------------------
          |
@@ -11864,7 +12150,7 @@ EOF44
          |
          |#---------------------------------------
          |#
-         |#  Check for libc compatability...
+         |#  Check for libc compatibility...
          |#
          |#---------------------------------------
          |
@@ -11910,7 +12196,7 @@ EOF44
          |
          |#---------------------------------------
          |#
-         |#  Check for Standard C++ library compatability...
+         |#  Check for Standard C++ library compatibility...
          |#
          |#---------------------------------------
          |
@@ -11956,7 +12242,7 @@ EOF44
          |
          |#---------------------------------------
          |#
-         |#  Check for Standard C++ library ABI compatability...
+         |#  Check for Standard C++ library ABI compatibility...
          |#
          |#---------------------------------------
          |
@@ -12782,9 +13068,9 @@ EOF64
          |      echo "$scriptName:" >&2
          |      echo "$scriptName:    You can use echo to quickly determine which shell is in use:" >&2
          |      echo "$scriptName:" >&2
-         |      echo "$scriptName:       circus: echo \\\$0" >&2
+         |      echo "$scriptName:       bigtop: echo \\\$0" >&2
          |      echo "$scriptName:       csh" >&2
-         |      echo "$scriptName:       circus:" >&2
+         |      echo "$scriptName:       bigtop:" >&2
          |      echo "$scriptName:" >&2
          |      echo "$scriptName:    The above echo command should produce one of: bash, csh, sh" >&2
          |      echo "$scriptName:    or tcsh. On some systems it may be shown with a leading dash." >&2
@@ -13538,7 +13824,7 @@ EOF67
 
    #----------------------------------------------------------------------------
    #
-   #  Cleanup any temporaries.
+   #  Cleanup any and all temporaries.
    #
    #  Note that it will issue warnings if content isn't all being deleted.
    #
@@ -13594,6 +13880,12 @@ EOF67
          }
          else {
             print DBGOUT "mkinstaller:    keeping \"$myTmpDirT\"\n" if $debugging;
+            if ( -d $myTmpDirT) {
+               print STDERR "mkinstaller: note: $keepOpt was used, not deleting \"$myTmpDirT\"\n";
+            }
+            else {
+               print STDERR "mkinstaller: note: $keepOpt was used, but can't find \"$myTmpDirT\"\n";
+            }
          }
       }
       else {
@@ -13614,21 +13906,21 @@ EOF67
       my $didOne     = 0;
       my $i;
       if (0 < $Nowners) {
-         print "\n";
+         print STDOUT "\n";
          for ($i=0; $i<$Nowners; $i+=1) {
             print $defaultCopyrightOwners[$i];
          }
          $didOne = 1;
       }
       if (0 < $Nstatement) {
-         print "\n";
+         print STDOUT "\n";
          for ($i=0; $i<$Nstatement; $i+=1) {
             print $defaultCopyrightStatement[$i];
          }
          $didOne = 1;
       }
       if ($didOne) {
-         print "\n";
+         print STDOUT "\n";
       }
    }
 
@@ -15237,7 +15529,7 @@ EOF
                                 s/[^a-zA-Z0-9_]/_/g;
             my $programName_u = $_;
             print DBGOUT "mki_check_prog:           aka. \"$programName_u\"\n" if $debugging;
-            print DBGOUT "mki_check_prog: ...existance of \"$programName\" already known?\n" if $debugging;
+            print DBGOUT "mki_check_prog: ...existence of \"$programName\" already known?\n" if $debugging;
 
             if ( ! exists $check_prog_isSupported{$programName}) {
                $check_prog_isSupported{$programName} = 0;
@@ -17177,7 +17469,6 @@ EOFc
          print DBGOUT "mki_try_c_run:    done\n" if $debugging;
          if ( -f "konftest.out" ) {
             print DBGOUT "mki_try_c_run: ...delete existing \"konftest.out\"\n" if $debugging;
-            print AK_logFile __FILE__,":",__LINE__,"[",AK_whoAmI(),"]: delete \"konftest.out\" first\n";
             while ( -f "konftest.out" ) {
                unlink("konftest.out");
             }
@@ -17627,9 +17918,9 @@ sub basename {
 #     format     One of:
 #
 #                   "dense"     YYYYMMDDhhmmss         similar to: zulu (with no options)
-#                   "std"       DDMMMYYYY hh:mm:ss     similar to: zulu -r
-#                   "std-at"    DDMMMYYYY at hh:mm:ss  similar to: zulu -r but with "at"
-#                   "std-comma" DDMMMYYYY,hh:mm:ss     similar to: zulu -r but with a comma
+#                   "std"       DDMMMYYYY hh:mm:ss     similar to: zulu --revision
+#                   "std-at"    DDMMMYYYY at hh:mm:ss  similar to: zulu --revision but with "at"
+#                   "std-comma" DDMMMYYYY,hh:mm:ss     similar to: zulu --revision but with a comma
 #                   "verbose"   YYYY-MM-DD,hh:mm:ss    similar to: zulu -v
 #
 #     asLocal    A "boolean", if 1 then the output string is to be in local
@@ -17734,7 +18025,7 @@ sub convertTimeToDateTime {
 #  files, and/or symbolic-links. An array of pathnames that could not be
 #  deleted is returned.
 #
-#  Note: This function appears to be a lot more complex than neccessary. It
+#  Note: This function appears to be a lot more complex than necessary. It
 #        not only requests that given pathnames (and recursive contents) be
 #        removed, it also checks to see that it's all gone (returning any
 #        remaining pathnames). The real problem here is that NFS can get in
@@ -17755,6 +18046,7 @@ sub convertTimeToDateTime {
 #        source files:
 #
 #            Generics/for.ale/unconfigure.perl
+#            autokonf/autokonf.pmain
 #            autokonf/example/src/unautokonf.perl
 #            autokonf/example/src/unconfigure.perl
 #            build/runatest
@@ -17772,7 +18064,7 @@ sub deletePathnames {
       if ($rootPathname ne "") {
          #---------------------------------------
          #
-         #  We first recursivly crawl the directory
+         #  We first recursively crawl the directory
          #  tree forming a list of pathnames that
          #  appear to exist. The size of this list
          #  also serves as the initial pathname
@@ -17938,7 +18230,7 @@ sub deletePathnames {
                }
                #---------------------------------------
                #
-               #  We again recursivly crawl the directory
+               #  We again recursively crawl the directory
                #  tree to rebuild the list of pathnames
                #  that still appear to exist. We keep
                #  looping while it continues to shrink.
@@ -18505,7 +18797,7 @@ sub findHomeDirectory {
    #  ...then try HOMEDRIVE and HOMEPATH
    #     environment variables...
    #
-   #     NOTE: The existance of HOMEDRIVE
+   #     NOTE: The existence of HOMEDRIVE
    #           is optional here. If not
    #           defined we'll assume it is
    #           an empty string.
@@ -20875,6 +21167,84 @@ sub isGNUtar {
    return $result;
 }
 
+# MyUniqueFileId: c46cebad-4c13-4c40-e425-038ec4e722bc
+#-------------------------------------------------------------------------------
+#
+#  Is the pathname a root pathname.
+#
+#  This function uses: fixpath(),
+#                      getOSclass()
+#
+#  see: totebag/src/perl-lib/isRoot.psub
+#
+#  Dated: 16Oct2019 isRoot
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
+#
+#-------------------------------------------------------------------------------
+
+sub isRoot {
+   my $pathname = shift;
+   print DBGOUT "isRoot[ pathname=\"$pathname\"...\n" if $debugging;
+   my $result   = 0;
+   my $adjusted = tr/\\/\//;
+   $adjusted    = fixpath($pathname);
+   if ($adjusted ne $pathname) {
+      $pathname = $adjusted;
+      print DBGOUT "isRoot: ...adjusted to \"$pathname\"\n" if $debugging;
+   }
+   my $osClass  = getOSclass();
+   if ($osClass eq "UNIX-like") {
+      print DBGOUT "isRoot: ...host is UNIX-like\n" if $debugging;
+      if ($pathname eq "/") {
+         $result = 1;
+      }
+      else {
+         $result = 0;
+      }
+   }
+   elsif ($osClass eq "Windows-like") {
+      print DBGOUT "isRoot: ...host is Windows-like\n" if $debugging;
+      if ($pathname =~ /^([a-zA-Z]):(.*)$/) {
+         print DBGOUT "isRoot:    with a Windows-style drive letter\n" if $debugging;
+         my $path = $2;
+         if ($path =~ /^\//) {
+            print DBGOUT "isRoot:    ...and slash\n" if $debugging;
+            $result = 1;
+         }
+         else {
+            print DBGOUT "isRoot:    ...but no slash\n" if $debugging;
+            $result = 0;
+         }
+      }
+      elsif ($pathname =~ /^\/([a-zA-Z])(\/.*)$/) {
+         print DBGOUT "isRoot:    with an \"A\" cygwin-style drive letter (has slash)\n" if $debugging;
+         $result = 1;
+      }
+      elsif ($pathname =~ /^\/cygdrive\/([a-zA-Z])(\/.*)$/) {
+         print DBGOUT "isRoot:    with a \"B\" cygwin-style drive letter (has slash)\n" if $debugging;
+         $result = 1;
+      }
+      elsif ($pathname =~ /^\//) {
+         print DBGOUT "isRoot:    with a leading slash\n" if $debugging;
+         $result = 1;
+      }
+      else {
+         print DBGOUT "isRoot:    without a drive letter or leading slash\n" if $debugging;
+         $result = 0;
+      }
+   }
+   else {
+      print DBGOUT "isRoot: ...host is neither UNIX- nor Windows-like\n" if $debugging;
+      $result = 0;
+   }
+   print DBGOUT "isRoot] ...done(=$result)\n" if $debugging;
+   return $result;
+}
+
 # MyUniqueFileId: bc1edfe8-6348-4c37-c288-485eaa0085fd
 #-------------------------------------------------------------------------------
 #
@@ -21637,13 +22007,15 @@ sub mkDirectory {
 #
 #  This subroutine deletes a single pathname (directory, file, or symbolic-link)
 #  If it exists but can't be properly deleted then it will fail with an error
-#  message.
+#  message. Returns 1 on success, 0 on failure.
 #
 #  This function uses: deletePathnames()
 #
 #  see: totebag/src/perl-lib/mustDeletePathname.psub
 #
-#  Dated: 16Oct2019 mustDeletePathname
+#  Dated: 01Jun2020 mustDeletePathname
+#
+#  NOTE: This function is silent if there is no problem.
 #
 #  NOTE: This function is known to be "hand included" in the following
 #        source files:
@@ -21653,8 +22025,9 @@ sub mkDirectory {
 #-------------------------------------------------------------------------------
 
 sub mustDeletePathname {
-   my $callerIs  = shift;
-   my $pathname  = shift;
+   my $callerIs  = shift;   # Something like: "tarup: "
+   my $pathname  = shift;   # The pathname to be deleted.
+   my $noisy     = shift;   # Pass 0 if silent failures.
    my $result    = 1;
    if ($pathname ne "") {
       my $exists = 0;
@@ -21669,24 +22042,22 @@ sub mustDeletePathname {
          my $Nfailures = $#failures + 1;
          if (1 <= $Nfailures) {
             $result = 0;
-            my $count;
-            my $failedOn;
-            foreach $failedOn (@failures) {
-               $count += 1;
-               print STDERR $callerIs."error: can't delete \"$failedOn\"\n";
-               if (10 <= $count) {
-                  print STDERR $callerIs."  :        :     :\n";
-                  my $lastOne = $failures[$#failures];
-                  print STDERR $callerIs."error: can't delete \"$lastOne\"\n";
-                  last;
+            if ($noisy) {
+               my $count;
+               my $failedOn;
+               foreach $failedOn (@failures) {
+                  $count += 1;
+                  print STDERR $callerIs."error: can't delete \"$failedOn\"\n";
+                  if (10 <= $count) {
+                     print STDERR $callerIs."  :        :     :\n";
+                     my $lastOne = $failures[$#failures];
+                     print STDERR $callerIs."error: can't delete \"$lastOne\"\n";
+                     last;
+                  }
                }
             }
-            exit 1;
          }
       }
-   }
-   else {
-      $result = 0;
    }
    return $result;
 }
@@ -21791,6 +22162,58 @@ sub nullPathname {
    else {
       $result = "";
    }
+   return $result;
+}
+
+# MyUniqueFileId: e2fca5a7-5675-40b1-b2a8-4aba77b8d94e
+#-------------------------------------------------------------------------------
+#
+#  Check if pathname exists.
+#
+#  This function is used to check if the given pathname exists. Note that no
+#  other information may be implied from this (the function doesn't particularly
+#  care about what it is -- directory, file, symbolic-link, ...).
+#
+#  see: totebag/src/perl-lib/pathExists.psub
+#
+#  Dated: 01Jun2020 pathExists
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
+#
+#-------------------------------------------------------------------------------
+
+sub pathExists {
+   my $pathname = shift;
+   print DBGOUT "pathExists[ pathname=\"$pathname\"...\n" if $debugging;
+   my $result;
+   if ($osClass eq "UNIX-like") {
+      if ( -l $pathname) {
+         print DBGOUT "pathExists: ...\"$pathname\" is a symbolic-link\n" if $debugging;
+         $result = 1;
+      }
+      elsif ( -e $pathname) {
+         print DBGOUT "pathExists: ...\"$pathname\" exists\n" if $debugging;
+         $result = 1;
+      }
+      else {
+         print DBGOUT "pathExists: ...\"$pathname\" doesn't exist\n" if $debugging;
+         $result = 0;
+      }
+   }
+   else {
+      if ( -e $pathname) {
+         print DBGOUT "pathExists: ...\"$pathname\" exists\n" if $debugging;
+         $result = 1;
+      }
+      else {
+         print DBGOUT "pathExists: ...\"$pathname\" doesn't exist\n" if $debugging;
+         $result = 0;
+      }
+   }
+   print DBGOUT "pathExists] ...done(=$result)\n" if $debugging;
    return $result;
 }
 
@@ -21958,6 +22381,124 @@ sub quoteIfReqd {
          }
       }
    }
+   return $result;
+}
+
+# MyUniqueFileId: 46ad3315-c658-44e1-dd11-0380e9da8bc3
+#-------------------------------------------------------------------------------
+#
+#  Follow/expand symbolic-links in pathname.
+#
+#  All symbolic-links in the given pathname are resolved (followed) constructing
+#  a new return pathname that is "real" (without symbolic-links). An empty string
+#  is returned on failure. On Windows-like hosts
+#
+#  The parameters are: pathname (a string)
+#                      optional OS class
+#                      optional count (limit on hops)
+#
+#  This function uses: basename(),
+#                      dirname(),
+#                      fixpath(),
+#                      getOSclass(),
+#                      isRoot(),
+#                      joinpath(),
+#                      pathExists()
+#
+#  see: totebag/src/perl-lib/realpath.psub
+#
+#  Dated: 01Jun2020 realpath
+#
+#  NOTE: This function is know to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
+#
+#-------------------------------------------------------------------------------
+
+sub realpath {
+   my $pathname = shift;
+   my $osClass  = shift; # optional
+   my $count    = shift; # optional
+   print DBGOUT "realpath[ pathname=\"$pathname\", osClass=\"$osClass\", count=[$count]...\n" if $debugging;
+   if ($osClass eq "") {
+      $osClass  = getOSclass();
+      print DBGOUT "realpath: ...OS class is actually \"$osClass\"\n" if $debugging;
+   }
+   if ( ! ($count =~ /^\d+$/)) {
+      $count    = 32;
+      print DBGOUT "realpath: ...assume count is $count\n" if $debugging;
+   }
+   my $result   = "";
+   if (pathExists($pathname,$osClass)) {
+      print DBGOUT "realpath: ...\"$pathname\" actually exists\n" if $debugging;
+      my $adjusted = fixpath($pathname);
+      if ($adjusted ne $pathname) {
+         $pathname = $adjusted;
+         print DBGOUT "realpath:    pathname adjusted to \"$pathname\"\n" if $debugging;
+      }
+      if ($osClass eq "UNIX-like") {
+         print DBGOUT "realpath: ...host is UNIX-like\n" if $debugging;
+         if ( ! isRoot($pathname)) {
+            print DBGOUT "realpath:    \"$pathname\" isn't root directory\n" if $debugging;
+            my $bn = basename($pathname);
+            if ($bn ne $pathname) {
+               print DBGOUT "realpath:    \"$pathname\" is complex\n" if $debugging;
+               #{---------------------------------------------------------------
+               #
+               #  Recursively consider the directory part.
+               #
+               #----------------------------------------------------------------
+               my $dn = dirname($pathname);
+               my $rp = realpath($dn,$osClass);
+               if ($rp ne $dn) {
+                  $pathname = joinpath($rp,$bn);
+                  print DBGOUT "realpath:    ...adjusted to \"$pathname\"\n" if $debugging;
+               }
+               #}---------------------------------------------------------------
+            }
+            else {
+               print DBGOUT "realpath:    \"$pathname\" is simple\n" if $debugging;
+            }
+            #{------------------------------------------------------------------
+            #
+            #  Problem looks like it is worth doing.
+            #
+            #-------------------------------------------------------------------
+            my $startedWith = $pathname;
+            print DBGOUT "realpath: ...starting with \"$startedWith\"\n" if $debugging;
+            my $count       = 32;
+            while ( -l $pathname) {
+               print DBGOUT "realpath:    \"$pathname\" is a symbolic-link\n" if $debugging;
+               my $target = readlink($pathname);
+               my $dn     = dirname($pathname);
+               $pathname  = joinpath($dn,$target);
+               $count    -= 1;
+               if ($count <= 0) {
+                  print DBGOUT "realpath:    ...symbolic-link chain is too long\n" if $debugging;
+                  $pathname = $startedWith;
+                  print DBGOUT "realpath:       back to \"$pathname\"\n" if $debugging;
+                  last;
+               }
+            }
+            print DBGOUT "realpath:    done\n" if $debugging;
+            $result = fixpath($pathname);
+            #}------------------------------------------------------------------
+         }
+         else {
+            print DBGOUT "realpath: ...is root directory\n" if $debugging;
+         }
+      }
+      else {
+         print DBGOUT "realpath: ...host is not UNIX-like\n" if $debugging;
+         $result = $pathname;
+      }
+   }
+   else {
+      print DBGOUT "realpath: ...\"$pathname\" doesn't actually exist\n" if $debugging;
+      $result = "";
+   }
+   print DBGOUT "realpath] ...done(=\"$result\")\n" if $debugging;
    return $result;
 }
 
@@ -22244,6 +22785,497 @@ sub touchPathname {
    return $result;
 }
 
+# MyUniqueFileId: 20123055-0c01-4dbb-e091-86664b652380
+#-------------------------------------------------------------------------------
+#
+#  This subroutine is used to translate a shell-style globbing pattern to a
+#  regular expression.
+#
+#  see: totebag/src/perl-lib/translateGlobPatternToRegExp.psub
+#
+#  Dated: 16Oct2019 translateGlobPatternToRegExp
+#
+#-------------------------------------------------------------------------------
+
+sub translateGlobPatternToRegExp {
+   my $given = shift;
+   print DBGOUT "translateGlobPatternToRegExp[ given=\"$given\"...\n" if $debugging;
+   my $gives = "\^";
+   my @chars = split(//,$given);
+   my $state = 0;
+   print DBGOUT "translateGlobPatternToRegExp: ...scan\n" if $debugging;
+   my $i;
+   for ($i=0; $i<=$#chars; $i+=1) {
+      my $c = $chars[$i];
+      print DBGOUT "translateGlobPatternToRegExp:    state $state -- got \'$c\'\n" if $debugging;
+      $_    = $state;
+      switch: {
+                /0/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...zero\n" if $debugging;
+                       $_ = $c;
+                       switch_0: {
+                                   /^\*$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...leading star\n" if $debugging;
+                                             $gives = $gives."\.\*";
+                                             $state = 1;
+                                             last switch_0;
+                                          };
+                                   /^\?$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...leading question\n" if $debugging;
+                                             $gives = $gives."\.";
+                                             $state = 1;
+                                             last switch_0;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...leading dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 1;
+                                             last switch_0;
+                                          };
+                                   /^\[$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...leading square\n" if $debugging;
+                                             $gives = $gives."[";
+                                             $state = 6;
+                                             last switch_0;
+                                          };
+                                   /^\]$/ && do {
+                                             print STDERR "p-grep: unexpected ']'\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\{$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...leading curly\n" if $debugging;
+                                             $gives = $gives."(";
+                                             $state = 3;
+                                             last switch_0;
+                                          };
+                                   /^,$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...leading comma\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 1;
+                                             last switch_0;
+                                          };
+                                   /^\}$/ && do {
+                                             print STDERR "p-grep: unexpected '}'\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...leading normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 1;
+                                             last switch_0;
+                                          };
+                       }
+                       last switch;
+                    };
+                /1/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...one\n" if $debugging;
+                       $_ = $c;
+                       switch_1: {
+                                   /^\*$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal star\n" if $debugging;
+                                             $gives = $gives."\.\*";
+                                             $state = 1;
+                                             last switch_1;
+                                          };
+                                   /^\?$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal question\n" if $debugging;
+                                             $gives = $gives."\.";
+                                             $state = 1;
+                                             last switch_1;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 1;
+                                             last switch_1;
+                                          };
+                                   /^\[$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal square\n" if $debugging;
+                                             $gives = $gives."[";
+                                             $state = 6;
+                                             last switch_1;
+                                          };
+                                   /^\]$/ && do {
+                                             print STDERR "p-grep: unexpected ']'\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\{$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal curly\n" if $debugging;
+                                             $gives = $gives."(";
+                                             $state = 3;
+                                             last switch_1;
+                                          };
+                                   /^,$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal comma\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 1;
+                                             last switch_1;
+                                          };
+                                   /^\}$/ && do {
+                                             print STDERR "p-grep: unexpected '}'\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 1;
+                                             last switch_1;
+                                          };
+                       }
+                       last switch;
+                    };
+                /2/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...two\n" if $debugging;
+                       $_ = $c;
+                       switch_2: {
+                                   /^\*$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal star\n" if $debugging;
+                                             $gives = $gives."\.\*";
+                                             $state = 1;
+                                             last switch_2;
+                                          };
+                                   /^\?$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal question\n" if $debugging;
+                                             $gives = $gives."\.";
+                                             $state = 1;
+                                             last switch_2;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 1;
+                                             last switch_2;
+                                          };
+                                   /^\[$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal square\n" if $debugging;
+                                             $gives = $gives."[";
+                                             $state = 6;
+                                             last switch_2;
+                                          };
+                                   /^\]$/ && do {
+                                             print STDERR "p-grep: unexpected ']'\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\{$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal curly\n" if $debugging;
+                                             $gives = $gives."(";
+                                             $state = 3;
+                                             last switch_2;
+                                          };
+                                   /^,$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal comma\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 1;
+                                             last switch_2;
+                                          };
+                                   /^\}$/ && do {
+                                             print STDERR "p-grep: unexpected '}'\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 1;
+                                             last switch_2;
+                                          };
+                       }
+                       last switch;
+                    };
+                /3/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...three\n" if $debugging;
+                       $_ = $c;
+                       switch_3: {
+                                   /^\*$/ && do {
+                                             print STDERR "p-grep: unexpected '*' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\?$/ && do {
+                                             print STDERR "p-grep: unexpected '?' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 4;
+                                             last switch_3;
+                                          };
+                                   /^\[$/ && do {
+                                             print STDERR "p-grep: unexpected '[' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\]$/ && do {
+                                             print STDERR "p-grep: unexpected ']' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\{$/ && do {
+                                             print STDERR "p-grep: unexpected '{' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^,$/  && do {
+                                             print STDERR "p-grep: unexpected ',' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\}$/ && do {
+                                             print STDERR "p-grep: unexpected '}' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 4;
+                                             last switch_3;
+                                          };
+                       }
+                       last switch;
+                    };
+                /4/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...four\n" if $debugging;
+                       $_ = $c;
+                       switch_4: {
+                                   /^\*$/ && do {
+                                             print STDERR "p-grep: unexpected '*' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\?$/ && do {
+                                             print STDERR "p-grep: unexpected '?' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 4;
+                                             last switch_4;
+                                          };
+                                   /^\[$/ && do {
+                                             print STDERR "p-grep: unexpected '[' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\]$/ && do {
+                                             print STDERR "p-grep: unexpected ']' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\{$/ && do {
+                                             print STDERR "p-grep: unexpected '{' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^,$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly comma\n" if $debugging;
+                                             $gives = $gives."|";
+                                             $state = 5;
+                                             last switch_4;
+                                          };
+                                   /^\}$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly curly\n" if $debugging;
+                                             $gives = $gives.")";
+                                             $state = 1;
+                                             last switch_4;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 4;
+                                             last switch_4;
+                                          };
+                       }
+                       last switch;
+                    };
+                /5/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...five\n" if $debugging;
+                       $_ = $c;
+                       switch_5: {
+                                   /^\*$/ && do {
+                                             print STDERR "p-grep: unexpected '*' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\?$/ && do {
+                                             print STDERR "p-grep: unexpected '?' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 4;
+                                             last switch_5;
+                                          };
+                                   /^\[$/ && do {
+                                             print STDERR "p-grep: unexpected '[' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\]$/ && do {
+                                             print STDERR "p-grep: unexpected ']' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\{$/ && do {
+                                             print STDERR "p-grep: unexpected '{' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^,$/  && do {
+                                             print STDERR "p-grep: unexpected ',' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\}$/ && do {
+                                             print STDERR "p-grep: unexpected '}' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                             last switch_5;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 4;
+                                             last switch_5;
+                                          };
+                       }
+                       last switch;
+                    };
+                /6/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...six\n" if $debugging;
+                       $_ = $c;
+                       switch_6: {
+                                   /^\*$/ && do {
+                                             print STDERR "p-grep: unexpected '*' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\?$/ && do {
+                                             print STDERR "p-grep: unexpected '?' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...square dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 7;
+                                             last switch_6;
+                                          };
+                                   /^\[$/ && do {
+                                             print STDERR "p-grep: unexpected '[' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\]$/ && do {
+                                             print STDERR "p-grep: unexpected ']' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\{$/ && do {
+                                             print STDERR "p-grep: unexpected '{' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^,$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...square comma\n" if $debugging;
+                                             $gives = $gives.",";
+                                             $state = 7;
+                                             last switch_6;
+                                          };
+                                   /^\}$/ && do {
+                                             print STDERR "p-grep: unexpected '}' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...square normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 7;
+                                             last switch_6;
+                                          };
+                       }
+                       last switch;
+                    };
+                /7/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...siz\n" if $debugging;
+                       $_ = $c;
+                       switch_7: {
+                                   /^\*$/ && do {
+                                             print STDERR "p-grep: unexpected '*' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\?$/ && do {
+                                             print STDERR "p-grep: unexpected '?' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...square dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 7;
+                                             last switch_7;
+                                          };
+                                   /^\[$/ && do {
+                                             print STDERR "p-grep: unexpected '[' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\]$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...square square\n" if $debugging;
+                                             $gives = $gives."]";
+                                             $state = 1;
+                                             last switch_7;
+                                          };
+                                   /^\{$/ && do {
+                                             print STDERR "p-grep: unexpected '{' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^,$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...square comma\n" if $debugging;
+                                             $gives = $gives.",";
+                                             $state = 7;
+                                             last switch_7;
+                                          };
+                                   /^\}$/ && do {
+                                             print STDERR "p-grep: unexpected '}' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...square normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 7;
+                                             last switch_7;
+                                          };
+                       }
+                       last switch;
+                    };
+      }
+   }
+   print DBGOUT "translateGlobPatternToRegExp:    done in state $state\n" if $debugging;
+   if ($state != 1 && $state != 2) {
+      print STDERR "p-grep: unexpected <end-of-string>\n";
+      close DBGOUT if $dbgOutToPathname ne "";
+      exit 1;
+   }
+   $gives = $gives."\$";
+   print DBGOUT "translateGlobPatternToRegExp] ...done(=\"$gives\")\n" if $debugging;
+   return $gives;
+}
+
 # MyUniqueFileId: 31fb3037-130d-4150-fe5e-d0e8e636135e
 #-------------------------------------------------------------------------------
 #
@@ -22350,7 +23382,7 @@ sub help {
    |       3) "Transport". This is the process of taking a copy of the
    |          generated installer script that was generated in phase 2 from
    |          the "source" system to the "target" system. The details of this
-   |          are not discussed here howerver such transport generally
+   |          are not discussed here however such transport generally
    |          involves scp, ftp, curl, CD, DVD, USB-drive, or a download from
    |          a web site.
    |
@@ -22410,7 +23442,7 @@ sub help {
    |       pathname or using the browser button to locate and select a pathname.
    |
    |       To specify an installation prefix on the command line the /D=<pathname>
-   |       option may be used: 
+   |       option may be used:
    |
    |          banana-installer.exe /D=E:\\opt\\banana
    |
@@ -22569,6 +23601,16 @@ sub help {
    |            prefix in the generated script and so the user of that script
    |            must supply a pathname for the installation prefix.
    |
+   |        --exclude=<pattern>
+   |
+   |            Exclude files whose basenames match the given globbing pattern.
+   |            Note that the pattern almost always needs to be quoted as such
+   |            patterns typically contain characters that are significant to
+   |            the shell. For example: --exclude='*.a'
+   |
+   |            This option is not well supported on Windows-like hosts at this
+   |            time.
+   |
    |        --fill
    |
    |            On Windows-like platforms the underlying NSIS tool will fail
@@ -22604,6 +23646,13 @@ sub help {
    |            Assume the tar utility is GNU tar and so supports the z option
    |            (compress). By default the tar utility is located and tested.
    |
+   |        --keep
+   |
+   |            The mkinstaller script normally recursively deletes the various
+   |            temporary directories that it creates and fills in the process
+   |            of constructing an installer script. Use of this option prevents
+   |            this deletion preserving it for a postmortem analysis.
+   |
    |        --nofill
    |
    |            Don't add a dummy file (named "dummy.txt") to empty directories.
@@ -22618,6 +23667,12 @@ sub help {
    |            This is the default behavior.
    |
    |            Note that Windows-like systems do not support symbolic-links.
+   |
+   |        --nokeep
+   |
+   |            Recursively delete the various temporary directories that are
+   |            created and filled in the process of constructing an installer
+   |            script. This is the default behavior (see the --keep option).
    |
    |        --nosha
    |
@@ -22700,7 +23755,7 @@ sub help {
    |            installer before all of the payload directories have been
    |            extracted and installed.
    |
-   |            Such pre-install Perl scripts are not generally supported
+   |            Such preinstall Perl scripts are not generally supported
    |            on Windows systems as Perl is not generally found on Windows
    |            systems.
    |
@@ -22775,7 +23830,7 @@ sub help {
    |
    |               -v3
    |
-   |            is equavalent to:
+   |            is equivalent to:
    |
    |               -v -v -v
    |
@@ -22804,7 +23859,7 @@ sub help {
    |            <name> in the option name is typically something like bin,
    |            include, lib, ... and like <pathname> below, may not contain
    |            any spaces, tabs, or dashes. If such an installation directory
-   |            hasen't been specified then the appropriate work will be done
+   |            hasn't been specified then the appropriate work will be done
    |            so that the installer will have such a directory containing
    |            the specified file.
    |
@@ -22827,6 +23882,13 @@ sub help {
    |            directory basenames are: bin, include, lib, ... Typical file
    |            basenames are: README, LICENSE, ... Note that at least one such
    |            directory pathname is required.
+   |
+   |            Note that if such a pathname given on the command line contains
+   |            any symbolic-links they will be expanded (by following) in order
+   |            to form a pathname without symbolic-links. This is only done to
+   |            pathnames on the command line, not those found down in directory
+   |            trees (where symbolic-links are not permitted by the mkinstaller
+   |            script).
    |
    |            The basename of this pathname may not contain any spaces, tabs,
    |            or dashes however the directory components (if any) may.
@@ -22873,7 +23935,7 @@ sub help {
    |           -v2 \\
    |
    |       The -v2 option indicates (enhanced) verbose output is desired.
-   |       Note that verbose output is generally benificial. Also note that
+   |       Note that verbose output is generally beneficial. Also note that
    |       the trailing backslash was the continuation mark from the above
    |       very long command above (an honest cut/paste), it is not part
    |       of this option or any of the following options and parameters.
@@ -22945,7 +24007,7 @@ sub help {
    |        INEFFECTIVE_mkinstaller
    |
    |            If this environment variable has been set then the generated
-   |            script will lack a payload and may not even be runable. Note
+   |            script will lack a payload and may not even be runnable. Note
    |            that this feature is almost never used except when debugging
    |            the script generation process.
    |
@@ -23052,7 +24114,7 @@ EOF1
    |
    |       Details of the installer construction process on UNIX:
    |
-   |          Aside from initalization and command line processing the UNIX
+   |          Aside from initialization and command line processing the UNIX
    |          implementation of mkinstaller goes through the following steps:
    |
    |          1) Determination of a suitable temp directory. Much of the work
@@ -23125,7 +24187,7 @@ EOF1
    |             determined at the start of this step (see NOTES).
    |          3) PREFIX and PREFIX_xxx values are established from command
    |             line options. If appropriate options aren't supplied to
-   |             install all directories then the installer script will propmpt
+   |             install all directories then the installer script will prompt
    |             for the necessary pathname(s). The installer script will
    |             create the directories if necessary.
    |          4) The tarball embedded in the installer script is extracted from
@@ -23141,7 +24203,7 @@ EOF1
    |             supplied and revealed are actually executed in this step. See
    |             steps (6) and (8).
    |          6) If (5) revealed a pre-install script then it will be executed
-   |             by the approptiate interpreter. Note that each of the PREFIX
+   |             by the appropriate interpreter. Note that each of the PREFIX
    |             and/or PREFIX_xxx directories will be supplied as an option to
    |             this pre-install script (such as --prefix_bin=<pathname>). Also
    |             note at this time the individual tarballs representing the
@@ -23150,7 +24212,7 @@ EOF1
    |             the appropriate PREFIX directory overlying anything already
    |             there.
    |          8) If (5) revealed a post-install script then it will be executed
-   |             by the approptiate interpreter. Note that each of the PREFIX
+   |             by the appropriate interpreter. Note that each of the PREFIX
    |             and/or PREFIX_xxx directories will be supplied as an options
    |             to this post-install script (such as --prefix_bin=<pathname>).
    |          9) Cleanup.
@@ -23166,7 +24228,7 @@ EOF1
    |
    |       Details of the installer construction process on Windows:
    |
-   |          Aside from initalization and command line processing the Windows
+   |          Aside from initialization and command line processing the Windows
    |          implementation of mkinstaller goes through the following steps:
    |
    |          1) Determination of a suitable temp directory. Much of the work
@@ -23210,21 +24272,21 @@ EOF1
    |          The default use of the generated installer will produce a new
    |          directory on the user's desktop.
    |
-   |             circus> installer.exe
+   |             bigtop> installer.exe
    |
    |          A different prefix may be specified using the /D option:
    |
-   |             circus> installer.exe /D=E:\\opt\\banana
+   |             bigtop> installer.exe /D=E:\\opt\\banana
    |
    |          Note that the prefix directory will be creates as necessary
    |          however the uninstaller will only (recursively delete) the
    |          final directory component. In the above example only
-   |          E:\\opt\\banana will be (recursivly deleted, but the
+   |          E:\\opt\\banana will be (recursively deleted, but the
    |          directory E:\\opt will be left intact.
    |
    |       Note that the generated installer will pop-up a progress bar dialog
    |       box to indicate the installation progress. The above examples were
-   |       run by bozo on circus.other.net
+   |       run by bozo on bigtop.highwire.net
    |
    |AUTHOR
    |    Jim Reus (jim.reus\@gmail.com)
@@ -23379,7 +24441,7 @@ sub html {
    |               <li><b>Transport</b>. This is the process of taking a copy of the
    |                   generated installer script that was produced in phase 2 from
    |                   the <b>source</b> system to the <b>target</b> system. The details of this
-   |                   are not discussed here howerver such transport generally
+   |                   are not discussed here however such transport generally
    |                   involves <i>scp</i>, <i>ftp</i>, <i>curl</i>, CD, DVD, USB-drive, or a download from
    |                   a web site.
    |               </li>
@@ -23641,6 +24703,18 @@ sub html {
    |               must supply a pathname for the installation prefix.
    |            </blockquote>
    |
+   |            <b>--exclude=</b><i>pattern</i>
+   |            <blockquote>
+   |               Exclude files whose basenames match the given globbing pattern.
+   |               Note that the pattern almost always needs to be quoted as such
+   |               patterns typically contain characters that are significant to
+   |               the shell. For example: <b><big><code>--exclude='*.a'</code></big></b>
+   |            </blockquote>
+   |            <blockquote>
+   |               This option is not well supported on Windows-like hosts at this
+   |               time.
+   |            </blockquote>
+   |
    |            <b>--fill</b>
    |            <blockquote>
    |               On Windows-like platforms the underlying <i>NSIS</i> tool will fail
@@ -23682,6 +24756,14 @@ sub html {
    |               (compress). By default the <i>tar</i> utility is located and tested.
    |            </blockquote>
    |
+   |            <b>--keep</b>
+   |            <blockquote>
+   |               The <i>mkinstaller</i> script normally recursively deletes the various
+   |               temporary directories that it creates and fills in the process
+   |               of constructing an installer script. Use of this option prevents
+   |               this deletion preserving it for a postmortem analysis.
+   |            </blockquote>
+   |
    |            <b>--nofill</b>
    |            <blockquote>
    |               Don't add a dummy file (named <b><big><code>dummy.txt</code></big></b>) to empty directories.
@@ -23698,6 +24780,13 @@ sub html {
    |            </blockquote>
    |            <blockquote>
    |               Note that Windows-like systems do not support symbolic-links.
+   |            </blockquote>
+   |
+   |            <b>--nokeep</b>
+   |            <blockquote>
+   |               Recursively delete the various temporary directories that are
+   |               created and filled in the process of constructing an installer
+   |               script. This is the default behavior (see the <b><big><code>--keep</code></big></b> option).
    |            </blockquote>
    |
    |            <b>--nosha</b>
@@ -23882,7 +24971,7 @@ sub html {
    |   -v3
    |</pre>
    |<p>
-   |               is equavalent to: <br>
+   |               is equivalent to: <br>
    |               <p>
    |<p>
    |<pre>
@@ -23917,7 +25006,7 @@ sub html {
    |               <i>name</i> in the option name is typically something like <b><big><code>bin</code></big></b>,
    |               <b><big><code>include</code></big></b>, <b><big><code>lib</code></big></b>, ... and like <i>pathname</i> below, may not contain
    |               any spaces, tabs, or dashes. If such an installation directory
-   |               hasen't been specified then the appropriate work will be done
+   |               hasn't been specified then the appropriate work will be done
    |               so that the installer will have such a directory containing
    |               the specified file.
    |            </blockquote>
@@ -23943,6 +25032,15 @@ sub html {
    |               basenames are: <b><big><code>README</code></big></b>, <b><big><code>LICENSE</code></big></b>, ... Note that at least one such
    |               directory pathname is required.
    |            </blockquote>
+   |            <blockquote>
+   |               Note that if such a pathname given on the command line contains
+   |               any symbolic-links they will be expanded (by following) in order
+   |               to form a pathname without symbolic-links. This is only done to
+   |               pathnames on the command line, not those found down in directory
+   |               trees (where symbolic-links are not permitted by the <i>mkinstaller</i>
+   |               script).
+   |            </blockquote>
+   |
    |            <blockquote>
    |               The basename of this pathname may not contain any spaces, tabs,
    |               or dashes however the directory component (if any) may.
@@ -24005,7 +25103,7 @@ sub html {
    |</pre>
    |            </blockquote>
    |            The <b><big><code>-v2</code></big></b> option indicates (enhanced) verbose output is desired.
-   |            Note that verbose output is generally benificial. Also note that
+   |            Note that verbose output is generally beneficial. Also note that
    |            the trailing backslash was the continuation mark from the above
    |            very long command above (an honest cut/paste), it is not part
    |            of this option or any of the following options and parameters.
@@ -24112,7 +25210,7 @@ sub html {
    |            <b>INEFFECTIVE_mkinstaller</b>
    |            <blockquote>
    |               If this environment variable has been set then the generated
-   |               script will lack a payload and may not even be runable. Note
+   |               script will lack a payload and may not even be runnable. Note
    |               that this feature is almost never used except when debugging
    |               the script generation process.
    |            </blockquote>
@@ -24258,7 +25356,7 @@ EOF1
    |         <blockquote>
    |            <b>Details of the installer construction process on UNIX:</b>
    |            <blockquote>
-   |               Aside from initalization and command line processing the UNIX
+   |               Aside from initialization and command line processing the UNIX
    |               implementation of <i>mkinstaller</i> goes through the following steps:
    |               <ol>
    |                  <li>Determination of a suitable temp directory. Much of the work
@@ -24346,7 +25444,7 @@ EOF1
    |                  </li>
    |                  <li><b><big><code>PREFIX</code></big></b> and <b><big><code>PREFIX_</code></big></b><i>xxx</i> values are established from command
    |                      line options. If appropriate options aren't supplied to
-   |                      install all directories then the installer script will propmpt
+   |                      install all directories then the installer script will prompt
    |                      for the necessary pathname(s). The installer script will
    |                      create the directories if necessary.
    |                  </li>
@@ -24365,18 +25463,18 @@ EOF1
    |                      steps (6) and (8).
    |                  </li>
    |                  <li>If (5) revealed a pre-install script then it will be executed
-   |                      by the approptiate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
+   |                      by the appropriate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
    |                      and/or <b><big><code>PREFIX_</code></big></b><i>xxx</i> directories will be supplied as an option to
    |                      this pre-install script (such as  <b><big><code>--prefix_bin=</code></big></b><i>pathname</i>). Also
    |                      note at this time the individual tarballs representing the
    |                      directories to install have NOT be unwrapped.
    |                  </li>
    |                  <li>Each individual tarball revealed (5) is unwrapped into the
-   |                      approperiate <b><big><code>PREFIX</code></big></b> directory overlying anything already
+   |                      appropriate <b><big><code>PREFIX</code></big></b> directory overlying anything already
    |                      there.
    |                  </li>
    |                  <li>If (5) revealed a post-install script then it will be executed
-   |                      by the approptiate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
+   |                      by the appropriate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
    |                      directories will be supplied as an option to this post-install
    |                      script (such as <b><big><code>--prefix_bin=</code></big></b><i>pathname</i>).
    |                  </li>
@@ -24396,7 +25494,7 @@ EOF1
    |            </blockquote>
    |            <b>Details of the installer construction process on Windows:</b>
    |            <blockquote>
-   |               Aside from initalization and command line processing the Windows
+   |               Aside from initialization and command line processing the Windows
    |               implementation of <i>mkinstaller</i> goes through the following steps:
    |               <ol>
    |                  <li>Determination of a suitable temp directory. Much of the work
@@ -24450,22 +25548,22 @@ EOF1
    |               The default use of the generated installer will produce a new
    |               directory on the user's desktop.
    |               <blockquote>
-   |                  circus> <b><big><code>installer.exe</code></big></b>
+   |                  bigtop> <b><big><code>installer.exe</code></big></b>
    |               </blockquote>
    |               A different prefix may be specified using the <b><big><code>/D</code></big></b> option:
    |               <blockquote>
-   |                  circus> <b><big><code>installer.exe /D=E:\\opt\\banana</code></big></b>
+   |                  bigtop> <b><big><code>installer.exe /D=E:\\opt\\banana</code></big></b>
    |               </blockquote>
    |               Note that the prefix directory will be creates as necessary
    |               however the uninstaller will only (recursively) delete the
    |               final directory component. In the above example only
-   |               <b><big><code>E:\\opt\\banana</code></big></b> will be (recursivly deleted, but the
+   |               <b><big><code>E:\\opt\\banana</code></big></b> will be (recursively deleted, but the
    |               directory <b><big><code>E:\\opt</code></big></b> will be left intact.
    |            </blockquote>
    |            <blockquote>
    |               Note that the generated installer will pop-up a progress bar dialog
    |               box to indicate the installation progress. The above examples were
-   |               run by bozo on circus.other.net
+   |               run by bozo on bigtop.highwire.net
    |            </blockquote>
    |         </blockquote>
    |      </blockquote>

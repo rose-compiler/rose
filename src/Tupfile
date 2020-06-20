@@ -4,25 +4,29 @@ include_rules
 # ROSE library
 ########################################################################################################################
 
-# ROSE shared library
-: | $(ROSE)/<librose> \
-  |> ^ librose LINK %o^ \
-     $(librose_CXX) $(librose_CXXFLAGS) -shared -Wl,--whole-archive %<librose> -Wl,--no-whole-archive \
-     -o %o $(librose_LDFLAGS_SHARED) \
-  |> librose.so $(ROSE)/install-staging/lib/<staging>
+# ROSE shared library. This should be built if the linkage is "shared" or "both" (i.e., not "static")
+ifneq (@(LINKAGE),static)
+    : | $(ROSE)/<librose> \
+      |> ^ librose LINK %o^ \
+         $(librose_CXX) $(librose_CXXFLAGS) -shared -Wl,--whole-archive %<librose> -Wl,--no-whole-archive \
+         -o %o $(librose_LDFLAGS_SHARED) \
+      |> librose.so $(ROSE)/install-staging/lib/<staging>
+endif
 
-# ROSE static library
-: | $(ROSE)/<librose> \
-  |> ^ librose LINK %o^ \
-     ( \
-         echo "create %o"; \
-         echo %<librose> |tr ' ' '\n' |sed 's/^/addlib /'; \
-         echo "save"; \
-         echo "end"; \
-    ) |ar -M \
-  |> librose.a $(ROSE)/install-staging/lib/<staging>
+# ROSE static library. This should be built if the linkage is "static" or "both" (i.e., not "shared")
+ifneq (@(LINKAGE),shared)
+    : | $(ROSE)/<librose> \
+      |> ^ librose LINK %o^ \
+         ( \
+             echo "create %o"; \
+             echo %<librose> |tr ' ' '\n' |sed 's/^/addlib /'; \
+             echo "save"; \
+             echo "end"; \
+        ) |ar -M \
+      |> librose.a $(ROSE)/install-staging/lib/<staging>
+endif
 
-run $(public_header) rose.h roseInternal.h rose_msvc.h msvc_stdint.h
+run $(public_header) featureTests.h rose.h roseInternal.h rose_msvc.h msvc_stdint.h
 
 ########################################################################################################################
 # ROSE configuration information for use by other tools.
@@ -35,19 +39,19 @@ run $(tool_compile_linkexe) rose-config.C -DLIBDIR='"@(INSTALLATION_PREFIX)/lib"
     ( \
         echo "# Things that the 'rose-config' tool can report"; \
         echo "ROSE_CC       = $(tool_CC)"; \
-	echo "ROSE_CC_INFO  = @(C_VENDOR):@(C_LANGUAGE):@(C_VERSION)"; \
+        echo "ROSE_CC_INFO  = @(C_VENDOR):@(C_LANGUAGE):@(C_VERSION)"; \
         echo "ROSE_CXX      = $(tool_CXX)"; \
-	echo "ROSE_CXX_INFO = @(CXX_VENDOR):@(CXX_LANGUAGE):@(CXX_VERSION)"; \
+        echo "ROSE_CXX_INFO = @(CXX_VENDOR):@(CXX_LANGUAGE):@(CXX_VERSION)"; \
         echo "ROSE_CPPFLAGS = -I@(INSTALLATION_PREFIX)/include/rose $(CPPFLAGS)" ; \
         echo "ROSE_CFLAGS   = $(CFLAGS)"; \
         echo "ROSE_CXXFLAGS = $(CXXFLAGS)"; \
         echo "ROSE_LDFLAGS  = -Wl,-rpath,@(INSTALLATION_PREFIX)/lib -L@(INSTALLATION_PREFIX)/lib -lrose $(LDFLAGS_SHARED)"; \
-	echo "ROSE_LDFLAGS_SHARED = \${ROSE_LDFLAGS}"; \
+        echo "ROSE_LDFLAGS_SHARED = \${ROSE_LDFLAGS}"; \
         echo "ROSE_LIBDIRS  = \$(echo $(tool_LDFLAGS) |tr ' ' '\n' |grep '^-L' |tr '\n' ' ')"; \
         echo "ROSE_PREFIX   = @(INSTALLATION_PREFIX)"; \
-	echo "# Additional items useful to include in Makefiels"; \
+        echo "# Additional items useful to include in Makefiels"; \
         echo "ROSE_RPATHS   = $(ALL_LIBDIRS)"; \
-	echo "ROSE_LINK_RPATHS ="; \
+        echo "ROSE_LINK_RPATHS ="; \
     ) |$(ROSE)/scripts/absolute-paths >%o \
   |> rose-config.cfg
 
@@ -70,9 +74,9 @@ export SPOCK_EMPLOYED
         echo "ROSE_SOURCE   = `readlink -f @(ROSE_SOURCE)`"; \
         echo "ROSE_BUILD    = `readlink -f $(ROSE)`"; \
         echo "ROSE_CC       = $(tool_CC)" ; \
-	echo "ROSE_CC_INFO  = @(C_VENDOR):@(C_LANGUAGE):@(C_VERSION)"; \
+        echo "ROSE_CC_INFO  = @(C_VENDOR):@(C_LANGUAGE):@(C_VERSION)"; \
         echo "ROSE_CXX      = $(tool_CXX)"; \
-	echo "ROSE_CXX_INFO = @(CXX_VENDOR):@(CXX_LANGUAGE):@(CXX_VERSION)"; \
+        echo "ROSE_CXX_INFO = @(CXX_VENDOR):@(CXX_LANGUAGE):@(CXX_VERSION)"; \
         echo "ROSE_CPPFLAGS = $(CPPFLAGS) -I@(INSTALLATION_PREFIX)/include @(LIBROSE_CPPFLAGS) @(TOOL_CPPFLAGS)"; \
         echo "ROSE_CFLAGS   = $(tool_CFLAGS)"; \
         echo "ROSE_CXXFLAGS = $(tool_CXXFLAGS)"; \
@@ -99,9 +103,9 @@ run $(public_header) --language=shell -o include rose-installed-make.cfg
         echo "ROSE_VERSION  = ${ROSE_VERSION}"; \
         : no ROSE_PREFIX necessary for in-tree builds; \
         echo "ROSE_CC       = $(tool_CC)"; \
-	echo "ROSE_CC_INFO  = @(C_VENDOR):@(C_LANGUAGE):@(C_VERSION)"; \
+        echo "ROSE_CC_INFO  = @(C_VENDOR):@(C_LANGUAGE):@(C_VERSION)"; \
         echo "ROSE_CXX      = $(tool_CXX)"; \
-	echo "ROSE_CXX_INFO = @(CXX_VENDOR):@(CXX_LANGUAGE):@(CXX_VERSION)"; \
+        echo "ROSE_CXX_INFO = @(CXX_VENDOR):@(CXX_LANGUAGE):@(CXX_VERSION)"; \
         echo "ROSE_CPPFLAGS = $(tool_CPPFLAGS)"; \
         echo "ROSE_CFLAGS   = $(tool_CFLAGS)"; \
         echo "ROSE_CXXFLAGS = $(tool_CXXFLAGS)"; \

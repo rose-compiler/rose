@@ -2,7 +2,7 @@ include_rules
 
 SOURCES = \
     SgAsmBlock.C SgAsmFunction.C                                                                                    \
-    SgAsmInstruction.C SgAsmArmInstruction.C SgAsmPowerpcInstruction.C SgAsmX86Instruction.C SgAsmMipsInstruction.C \
+    SgAsmInstruction.C SgAsmArm64Instruction.C SgAsmPowerpcInstruction.C SgAsmX86Instruction.C SgAsmMipsInstruction.C \
     SgAsmM68kInstruction.C SgAsmExecutableFileFormat.C x86InstructionProperties.C                                   \
     SgAsmInterpretation.C SgAsmIntegerValueExpression.C SgAsmFloatValueExpression.C SgAsmExpression.C SgAsmType.C   \
     Registers.C RegisterDescriptor.C		                                                                \
@@ -16,4 +16,4 @@ run $(librose_compile) $(SOURCES)
 run $(public_header) Registers.h RegisterDescriptor.h BitPattern.h Disassembler.h DisassemblerArm.h \
     DisassemblerMips.h DisassemblerM68k.h DisassemblerPowerpc.h DisassemblerX86.h Assembler.h AssemblerX86.h \
     AssemblerX86Init.h InstructionEnumsX86.h InstructionEnumsMips.h InstructionEnumsM68k.h x86InstructionProperties.h \
-    InstructionEnumsArm.h InstructionEnumsPowerpc.h RegisterParts.h
+    InstructionEnumsArm64.h InstructionEnumsPowerpc.h RegisterParts.h

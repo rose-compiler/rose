@@ -1,0 +1,69 @@
+#!/bin/bash
+set -e
+arg0="${0##*/}"
+
+warning() {
+    echo "$arg0" "$@" >&2
+}
+
+# We can get the deployed installation directory from the command-line.
+prefix=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--prefix-bin=*)
+	    prefix="${1#--prefix-bin=}"
+	    shift
+	    ;;
+	*)
+	    shift
+	    ;;
+    esac
+done
+if [ -z "$prefix" ]; then
+    warning "no installation prefix; nothing for the post installation script to do"
+    exit 0
+fi
+[ -d "$prefix/bin" ] || warning "missing installation directory: $prefix/bin"
+[ -d "$prefix/lib" ] || warning "missing installation directory: $prefix/lib"
+
+# Patch all the libraries and executables so they have the correct rpath.
+for f in "$prefix"/bin/* "$prefix"/lib/lib*.so; do
+    if [ -r "$f" ]; then
+	echo -n "adjusting rpath for $f... " >&2
+        echo $(patchelf --set-rpath "$prefix/lib" "$f" || true)
+    fi
+done
+
+# Patch the rose-*.cfg files by replacing the directories from the build system with those
+# on the deployed system.
+for f in $(find "$prefix" -type f -name 'rose-*.cfg'); do
+    # ROSE installation prefix as deployed, not built
+    sed -i~ -e 's%^ROSE_PREFIX[ \t]*=.*%ROSE_PREFIX = '"$prefix"'%' "$f"
+
+    # These make no sense on the deployed system since there is no source code or build directory.
+    sed -i~ -e '/^ROSE_SOURCE[ \t]*=/ d' "$f"
+    sed -i~ -e '/^ROSE_BUILD[ \t]*=/ d' "$f"
+
+    # Compilers used on the build system are not the same as compilers on the deployed system. The
+    # build system often uses locally installed compilers.
+    sed -i~ -e 's%^ROSE_\(CC\|CXX\)[ \t]*=.*/\([^/]*\)[ \t]*$%ROSE_\1 = \2%' "$f"
+
+    # Replace all the -I switches with just a few
+    sed -i~ -e '/^ROSE_CPPFLAGS[ \t]*=/ s/ -I[^ \t]*//g' "$f"
+    sed -i~ -e '/^ROSE_CPPFLAGS[ \t]*=/ s%[ \t]*$% -I'"$prefix"'/include%' "$f"
+
+    # Replace all the -L and -Wl,-rpath, switches with just a few
+    sed -i~ -e '/^ROSE_LDFLAGS\(\|_STATIC\|_SHARED\)[ \t]*=/ s/ \(-L\|-Wl,-rpath,\)[^ \t]*//g' "$f"
+    sed -i~ -e 's%^\(ROSE_LDFLAGS\(\|_STATIC\|_SHARED\)[ \t]*=\)%\1 -L'"$prefix"'/lib -Wl,-rpath,'"$prefix"'/lib%' "$f"
+
+    # Replace all the library directories with just one
+    sed -i~ -e 's%^ROSE_RPATHS[ \t]*=.*%ROSE_RPATHS = '"$prefix"'/lib%' "$f"
+done
+
+# If the libtool shell script is installed, then fix the compiler names by removing the directory components and relying
+# on the compiler being found in the $PATH search paths.
+if [ -e "$prefix/bin/libtool" ]; then
+    sed -i~ -e '/\.spock/ s%\([^=]*\)=".*/\([^/]*\)"%\1="\2"%' "$prefix/bin/libtool"
+fi
+
+exit 0

@@ -38,6 +38,27 @@ using std::stack;
 using std::list;
 using std::vector;
 
+
+namespace Rose {
+
+struct CaseStmt {
+   CaseStmt() { reset(); }
+
+   SgExprListExp* key;
+   bool isDefault;
+   void reset() {key=NULL; isDefault=false;}
+};
+
+struct CaseValueRange {
+   CaseValueRange() { reset(); }
+
+   int numValues;
+   SgExpression* values[2];
+   void reset() {numValues=0; values[0]=NULL; values[1]=NULL;}
+};
+
+} // namespace Rose
+
 // Class to record Fortran attributes in a type declaration statement or in a derived type statement
 class AttributeRec
 {
@@ -408,13 +429,14 @@ class FortranParserState
           }
 
     // Constructor:
-    //   push "this" object of FortranParserState into the "statesStack"
+    //   push "this" object of FortranParserState onto the "statesStack"
        FortranParserState();
 
        
     // Destructor: 
     //   Pop out the stack, clean all the member stacks 
        ~FortranParserState();
+
    };
 
 #endif /*__FORTRANPARSERSTATE_H_*/

@@ -342,7 +342,7 @@ public:
         }
     }
 
-    /** Insert a value only if it doesn't already exist.
+    /** Insert a value only if its key doesn't already exist.
      *
      *  Returns a reference to the value, which should be used immediately. The reference is valid until the next modifying
      *  operation on this object. */
@@ -354,7 +354,15 @@ public:
             lb = items_.insert(lb, node);
         return lb->value();
     }
-    
+
+    /** Insert a default value if its key doesn't already exist.
+     *
+     *  Returns a reference to the value, which should be used immediately. The reference is value until the next modifying
+     *  operation on this object. */
+    Value& insertMaybeDefault(const Key &item) {
+        return insertMaybe(item, Value());
+    }
+
     /** Erase the specified key if it exists. */
     void erase(const Key &item) {
         update();

@@ -16,6 +16,7 @@ using namespace std;
 
 // set to true for matching C++ ctor calls
 const bool SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL = false;
+//~ const bool SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL = true;
 
 /*!
   * \author Markus Schordan
@@ -1975,9 +1976,9 @@ SgLocatedNode* SgNodeHelper::ExtendedCallInfo::representativeNode() const
   return rep; 
 }
 
-SgCallExpression* SgNodeHelper::ExtendedCallInfo::callExpression() const              
+SgFunctionCallExp* SgNodeHelper::ExtendedCallInfo::callExpression() const              
 { 
-  return isSgCallExpression(rep); 
+  return isSgFunctionCallExp(rep); 
 }
 
 SgConstructorInitializer* SgNodeHelper::ExtendedCallInfo::ctorInitializer() const              
@@ -2024,8 +2025,13 @@ namespace
     void handle(SgNewExp& n)                 { handle(SG_DEREF(n.get_constructor_args())); }
     
     // no matches (root and children)
-    void handle(SgExpression& n)             { /* no match */ }
-    void handle(SgStatement& n)              { /* no match */ }
+    void handle(SgExpression&)               { /* no match */ }
+    void handle(SgStatement&)                { /* no match */ }
+    void handle(SgProject&)                  { /* no match */ }
+    void handle(SgFile&)                     { /* no match */ }
+    void handle(SgFileList&)                 { /* no match */ }
+    void handle(SgInitializedName&)          { /* no match */ }
+    void handle(SgPragma&)                   { /* no match */ }
     
     // intermediate (pass through) nodes
     void handle(SgCastExp& n)                { res = eval(n.get_operand()); }
@@ -2035,18 +2041,25 @@ namespace
     // root nodes (get to the bottom of them)
     void handle(SgExprStatement& n)          { res = eval(n.get_expression()); }
     
+    void handle(SgReturnStmt& n)             { res = eval_nullcheck(n.get_expression()); } 
+    
     void handle(SgVariableDeclaration& n)    
     { 
-      SgInitializedName& dcl = onlyDecl(n);
-      SgInitializer*     ini = dcl.get_initializer();
+      SgInitializedName& var = onlyDecl(n);
+      SgInitializer*     ini = var.get_initializer();
       
       if (ini) res = eval(ini); 
       
       // \todo test for implicit call constructor
     }
     
+    // convenience functions
+    
     static
     ReturnType eval(SgNode* n);
+
+    static
+    ReturnType eval_nullcheck(SgNode* n);
   };
   
   ExtendedCallMatcher::ReturnType
@@ -2054,16 +2067,31 @@ namespace
   {
     return sg::dispatch(ExtendedCallMatcher(), n);
   }
+  
+  ExtendedCallMatcher::ReturnType
+  ExtendedCallMatcher::eval_nullcheck(SgNode* n)
+  {
+    return n ? eval(n) : ExtendedCallMatcher::ReturnType();
+  }
 }     
       
 
 SgNodeHelper::ExtendedCallInfo
 SgNodeHelper::matchExtendedNormalizedCall(SgNode* n)
 {
+  static const bool TEST_EXTENDED_NORMALIZED_CALL = true;
+  
   if (!SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL) 
     return SgNodeHelper::ExtendedCallInfo();
-     
-  return ExtendedCallMatcher::eval(n);
+    
+  SgNodeHelper::ExtendedCallInfo res = ExtendedCallMatcher::eval(n);
+    
+  // for every match of matchFunctionCall, res should also match.  
+  ROSE_ASSERT(  !TEST_EXTENDED_NORMALIZED_CALL 
+             || !SgNodeHelper::Pattern::matchFunctionCall(n) 
+             || res
+             );
+  return res;
 }
 
 std::list<SgVariableDeclaration*> SgNodeHelper::memberVariableDeclarationsList(SgClassType* sgType) {
