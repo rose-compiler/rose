@@ -5227,16 +5227,19 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureCallStatement(ATerm term)
    printf("... traverse_ProcedureCallStatement: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_labels, t_proc_name, t_arg_list, t_abort_phrase, t_abort_name;
+   ATerm t_labels, t_proc_name, t_param_list, t_abort_phrase, t_abort_name;
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
    std::string proc_name;
    std::string abort_stmt_name;
-   SgUntypedExprListExpression* arg_list;
+   SgExprListExp* param_list;
 
-   SgUntypedStatement* stmt = NULL;
+#if 0
+// TODO - create SageTreeBuilder functions
+   SgExprStatement* call_stmt = nullptr;
+#endif
 
-   if (ATmatch(term, "ProcedureCallStatement(<term>,<term>,<term>,<term>)", &t_labels, &t_proc_name, &t_arg_list, &t_abort_phrase)) {
+   if (ATmatch(term, "ProcedureCallStatement(<term>,<term>,<term>,<term>)", &t_labels, &t_proc_name, &t_param_list, &t_abort_phrase)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
@@ -5245,11 +5248,9 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureCallStatement(ATerm term)
          // MATCHED Name
       } else return ATfalse;
 
-      arg_list = new SgUntypedExprListExpression(LanguageTranslation::e_argument_list);
-      ROSE_ASSERT(arg_list);
-      setSourcePosition(arg_list, t_arg_list);
+      param_list = SageBuilder::buildExprListExp_nfi();
 
-      if (traverse_ActualParameterList(t_arg_list, arg_list)) {
+      if (traverse_ActualParameterList(t_param_list, param_list)) {
          // MATCHED ActualParameterList
       } else return ATfalse;
 
@@ -5260,59 +5261,43 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureCallStatement(ATerm term)
             // MATCHED AbortStatementName
          } else return ATfalse;
       } else return ATfalse;
-
-      int expr_enum = LanguageTranslation::e_function_reference;
-      int stmt_enum = LanguageTranslation::e_procedure_call;
-
-      SgUntypedReferenceExpression* func_ref = new SgUntypedReferenceExpression(expr_enum, proc_name);
-      ROSE_ASSERT(func_ref);
-      setSourcePosition(func_ref, t_proc_name);
-
-   // TODO - add abort statement name
-      SgUntypedFunctionCallStatement* func_call_stmt = new SgUntypedFunctionCallStatement("",stmt_enum,func_ref,arg_list,""/*abort_name*/);
-      ROSE_ASSERT(func_call_stmt);
-      setSourcePosition(func_call_stmt, term);
-
-      stmt = convert_Labels(labels, locations, func_call_stmt);
    }
    else return ATfalse;
 
-//TODO_STATEMENTS
 #if 0
-   ROSE_ASSERT(stmt);
+   // Begin SageTreeBuilder
+   sage_tree_builder.Enter(call_stmt, proc_name, param_list, abort_stmt_name);
 
-   stmt_list->get_stmt_list().push_back(stmt);
+   // End SageTreeBuilder
+   sage_tree_builder.Leave(call_stmt);
 #endif
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_ActualParameterList(ATerm term, SgUntypedExprListExpression* arg_list)
+ATbool ATermToSageJovialTraversal::traverse_ActualParameterList(ATerm term, SgExprListExp* param_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ActualParameterList: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_arg_list, t_output;
-   SgUntypedExpression* arg_expr;
-   SgUntypedExprListExpression* param_list = NULL;
-
-// Begin SageTreeBuilder
-   SgExpression* sg_expr = nullptr;
+   ATerm t_param_list, t_output;
+   SgExpression* param = nullptr;
 
    if (ATmatch(term, "no-actual-parameter-list()")) {
       // MATCHED no-actual-parameter-list
    }
-   else if (ATmatch(term, "ActualParameterList(<term>,<term>)" , &t_arg_list, &t_output)) {
-      ATermList tail = (ATermList) ATmake("<term>", t_arg_list);
+   else if (ATmatch(term, "ActualParameterList(<term>,<term>)" , &t_param_list, &t_output)) {
+      ATermList tail = (ATermList) ATmake("<term>", t_param_list);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
-         if (traverse_Formula(head, sg_expr)) {
+         if (traverse_Formula(head, param)) {
             // MATCHED Formula
          } else return ATfalse;
 
-         arg_list->get_expressions().push_back(arg_expr);
+         ROSE_ASSERT(param);
+         param_list->get_expressions().push_back(param);
       }
 
       if (traverse_ActualOutputParameters(t_output, param_list)) {
@@ -5324,20 +5309,17 @@ ATbool ATermToSageJovialTraversal::traverse_ActualParameterList(ATerm term, SgUn
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_ActualOutputParameters(ATerm term, SgUntypedExprListExpression* param_list)
+ATbool ATermToSageJovialTraversal::traverse_ActualOutputParameters(ATerm term, SgExprListExp* param_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ActualOutputParameters: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_output_list, t_param;
-
-// Begin SageTreeBuilder
-   SgExpression* param = nullptr;
+   SgExpression* param;
 
    if (ATmatch(term, "no-actual-output-parameters()")) {
       // MATCHED no-actual-output-parameters
-      std::cout << "NOTE:::: no-actual-output-parameters" << std::endl;
    }
    else if (ATmatch(term, "ActualOutputParameters(<term>)" , &t_output_list)) {
       ATermList tail = (ATermList) ATmake("<term>", t_output_list);
@@ -5347,11 +5329,13 @@ ATbool ATermToSageJovialTraversal::traverse_ActualOutputParameters(ATerm term, S
          if (ATmatch(head, "Variable(<term>)", &t_param)) {
             if (traverse_Variable(t_param, param)) {
                // MATCHED Variable
-
                // Variable                     -> ActualOutputParameter    {cons("Variable"), prefer}
                // BlockReference               -> ActualOutputParameter    {cons("BlockReference")}
             }
          } else return ATfalse;
+
+         ROSE_ASSERT(param);
+         param_list->get_expressions().push_back(param);
       }
    }
    else return ATfalse;
@@ -5543,13 +5527,13 @@ ATbool ATermToSageJovialTraversal::traverse_AbortStatement(ATerm term)
 //========================================================================================
 // 5.0 FORMULAS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_Formula(ATerm term, SgExpression* &sg_expr)
+ATbool ATermToSageJovialTraversal::traverse_Formula(ATerm term, SgExpression* &expr)
 {
-   if (traverse_NumericFormula(term, sg_expr)) {
+   if (traverse_NumericFormula(term, expr)) {
       // MATCHED NumericFormula
-   } else if (traverse_BitFormula(term, sg_expr)) {
+   } else if (traverse_BitFormula(term, expr)) {
       // MATCHED BitFormula
-   } else if (traverse_GeneralFormula(term, sg_expr)) {
+   } else if (traverse_GeneralFormula(term, expr)) {
       // MATCHED GeneralFormula
    } else return ATfalse;
 
@@ -6090,8 +6074,6 @@ ATbool ATermToSageJovialTraversal::traverse_RelationalExpression(ATerm term, SgE
 #endif
 
    ATerm t_lhs, t_operator, t_rhs;
-
-// Begin SageTreeBuilder
    SgExpression *lhs = nullptr, *rhs = nullptr;
 
    if (ATmatch(term, "RelationalExpression(<term>,<term>,<term>)", &t_lhs, &t_operator, &t_rhs)) {
@@ -6357,8 +6339,6 @@ ATbool ATermToSageJovialTraversal::traverse_VariableList(ATerm term, std::vector
 #endif
 
    ATerm t_labels;
-
-// Begin SageTreeBuilder
    SgExpression* var;
 
    if (ATmatch(term, "VariableList(<term>)" , &t_labels)) {
@@ -6443,8 +6423,6 @@ ATbool ATermToSageJovialTraversal::traverse_Subscript(ATerm term, std::vector<Sg
 #endif
 
    ATerm t_index;
-
-// Begin SageTreeBuilder
    SgExpression* index;
 
    if (ATmatch(term, "no-subscript")) {
@@ -6658,28 +6636,42 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
    printf("... traverse_UserDefinedFunctionCall: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_name, t_arg_list;
+   ATerm t_name, t_param_list;
    std::string name;
+   SgExprListExp* param_list = nullptr;
 
    func_call = nullptr;
 
-   if (ATmatch(term, "UserDefinedFunctionCall(<term>,<term>)", &t_name, &t_arg_list)) {
+   if (ATmatch(term, "UserDefinedFunctionCall(<term>,<term>)", &t_name, &t_param_list)) {
       if (traverse_Name(t_name, name)) {
          // MATCHED FunctionName
       } else return ATfalse;
-      cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall for function " << name << endl;
 
-#if 0
-      SgUntypedExprListExpression* arg_list = NULL;
-      arg_list = new SgUntypedExprListExpression(LanguageTranslation::e_argument_list);
-      ROSE_ASSERT(arg_list);
-      setSourcePosition(arg_list, t_arg_list);
+      param_list = SageBuilder::buildExprListExp_nfi();
 
-      if (traverse_ActualParameterList(t_arg_list, arg_list)) {
+      if (traverse_ActualParameterList(t_param_list, param_list)) {
          // MATCHED ActualParameterList
       } else return ATfalse;
-#endif
    } else return ATfalse;
+
+// Begin SageTreeBuilder
+   sage_tree_builder.Enter(func_call, name, param_list);
+
+   if (func_call == nullptr) {
+      // UserDefinedFunctionCall is ambiguous with type conversions
+      cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall masquerading as a type cast for type " << name << endl;
+      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
+      ROSE_ASSERT(symbol);
+#if 0
+      SgTypedefSymbol* typedef_symbol = SageInterface::lookupTypedefSymbolInParentScopes(name, SageBuilder::topScopeStack());
+      SgCastExp* cast_expr = SageBuilder::buildCastExp_nfi(cast_formula, conv_type, SgCastExp::e_default);
+      ROSE_ASSERT(cast_expr);
+      setSourcePosition(cast_expr, term);
+#endif
+   }
+
+// End SageTreeBuilder
+   sage_tree_builder.Leave(func_call);
 
    return ATtrue;
 }

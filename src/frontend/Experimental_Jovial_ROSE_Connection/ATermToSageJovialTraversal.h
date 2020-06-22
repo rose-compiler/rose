@@ -259,8 +259,8 @@ ATbool traverse_CaseIndex       (ATerm term, SgExpression*  &index);
 
 // 4.5 PROCEDURE CALL STATEMENTS
 ATbool traverse_ProcedureCallStatement (ATerm term);
-ATbool traverse_ActualParameterList    (ATerm term, SgUntypedExprListExpression* arg_list);
-ATbool traverse_ActualOutputParameters (ATerm term, SgUntypedExprListExpression* param_list);
+ATbool traverse_ActualParameterList    (ATerm term, SgExprListExp* param_list);
+ATbool traverse_ActualOutputParameters (ATerm term, SgExprListExp* param_list);
 
 // 4.6 RETURN STATEMENTS
 ATbool traverse_ReturnStatement (ATerm term);
