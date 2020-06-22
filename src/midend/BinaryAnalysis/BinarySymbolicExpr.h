@@ -907,7 +907,7 @@ struct ExprExprHashMapCompare {
 /** Compare two expressions for STL containers. */
 class ExpressionLessp {
 public:
-    bool operator()(const Ptr &a, const Ptr &b);
+    bool operator()(const Ptr &a, const Ptr &b) const;
 };
 
 /** Mapping from expression to expression. */
