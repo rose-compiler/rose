@@ -493,12 +493,26 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
 }
 
 void SageTreeBuilder::
-Leave(SgExprStatement* assign_stmt)
+Leave(SgExprStatement* expr_stmt)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgExprStatement*) \n";
-   ROSE_ASSERT(assign_stmt != nullptr);
+   ROSE_ASSERT(expr_stmt != nullptr);
 
-   SageInterface::appendStatement(assign_stmt, SageBuilder::topScopeStack());
+   SageInterface::appendStatement(expr_stmt, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgFunctionCallExp* &func_call, std::string &name, SgExprListExp* params)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionCallExp* &, ...) \n";
+
+   SgFunctionSymbol* func_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   if (func_symbol == nullptr) {
+    // Function calls are ambiguous with arrays in Fortran and type casts (at least) in Jovial
+       return;
+   }
+
+   func_call = SageBuilder::buildFunctionCallExp(func_symbol, params);
 }
 
 void SageTreeBuilder::

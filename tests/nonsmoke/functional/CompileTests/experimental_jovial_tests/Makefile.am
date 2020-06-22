@@ -41,7 +41,9 @@ JOVIAL_TESTCODES = \
  4_9_stop_stmt_b.jov                    \
  4_9_stop_stmt_c.jov                    \
  4_10_abort_stmt_a.jov                  \
- 4_10_abort_stmt_b.jov
+ 4_10_abort_stmt_b.jov                  \
+ rose-issue-1507.jov                    \
+ rose-issue-2775.jov
 
 # status_enumval.jov                     \
 # 1_2_3_program-body_a.jov               \
@@ -78,7 +80,6 @@ JOVIAL_PARSER_TESTCODES = \
  6_3_2_next_function_pointer.jov        \
  6_3_2_next_function_status.jov         \
  9_0_directives.jov                     \
- rose-issue-1507.jov                    \
  rose-issue-1516.jov                    \
  rose-issue-2143.jov
 

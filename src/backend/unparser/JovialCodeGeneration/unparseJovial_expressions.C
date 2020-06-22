@@ -285,6 +285,18 @@ Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
       SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
       ASSERT_not_null(func_call);
 
+      SgFunctionRefExp* func_ref = isSgFunctionRefExp(func_call->get_function());
+      ASSERT_not_null(func_ref);
+
+      SgFunctionSymbol* func_symbol = isSgFunctionSymbol(func_ref->get_symbol());
+      ASSERT_not_null(func_symbol);
+
+      SgFunctionDeclaration* func_decl = func_symbol->get_declaration();
+      SgInitializedNamePtrList& formal_params = func_decl->get_parameterList()->get_args();
+      SgExpressionPtrList& actual_params = func_call->get_args()->get_expressions();
+
+      ROSE_ASSERT(formal_params.size() == actual_params.size());
+
    // function name
       unparseExpression(func_call->get_function(), info);
 
@@ -292,12 +304,26 @@ Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
       SgUnparse_Info ninfo(info);
       curprint("(");
       if (func_call->get_args()) {
-         SgExpressionPtrList& list = func_call->get_args()->get_expressions();
-         SgExpressionPtrList::iterator arg = list.begin();
-         while (arg != list.end()) {
-            unparseExpression((*arg), ninfo);
-            arg++;
-            if (arg != list.end()) {
+         SgInitializedNamePtrList::iterator formal = formal_params.begin();
+         SgExpressionPtrList::iterator actual = actual_params.begin();
+
+         bool firstOutParam = false;
+         bool foundOutParam = false;
+
+         while (actual != actual_params.end()) {
+
+         // TODO - Change temporary hack of using storage modifier isMutable to represent an out parameter
+            if ((*formal)->get_storageModifier().isMutable() && foundOutParam == false)
+               {
+                  firstOutParam = true;
+                  foundOutParam = true;
+                  curprint(":");
+               }
+            formal++;
+
+            unparseExpression((*actual), ninfo);
+            actual++;
+            if (actual != actual_params.end() && firstOutParam == false) {
                curprint(",");
             }
          }

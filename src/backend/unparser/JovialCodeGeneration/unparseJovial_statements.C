@@ -250,7 +250,7 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     {
                        firstOutParam = true;
                        foundOutParam = true;
-                       curprint(" : ");
+                       curprint(":");
                     }
 
               // Don't output comma if this is the first out parameter
