@@ -24,7 +24,7 @@ bool CodeThorn::Lattice::approximatedBy(Lattice& other) {
 }
 #endif
 
-bool CodeThorn::Lattice::approximatedByAsymmetric(Lattice& other) {
+bool CodeThorn::Lattice::approximatedByAsymmetric(Lattice& other) const {
   return approximatedBy(other);
 }
 
@@ -35,6 +35,6 @@ void CodeThorn::Lattice::combineAsymmetric(Lattice& other) {
   combine(other);
 }
 
-bool CodeThorn::Lattice::isBot(){
+bool CodeThorn::Lattice::isBot() const {
   ROSE_ASSERT(false);
 }

@@ -13,7 +13,7 @@ MemTransferFunctions::MemTransferFunctions() {
 
 void MemTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element0) {
   // throws bad_cast exception when downcasting to the wrong type
-  MemLattice& element=dynamic_cast<MemLattice&>(element0);
+  MemPropertyState& element=dynamic_cast<MemPropertyState&>(element0);
   cout<<"DEBUG: transferExpression: "<<node->unparseToString()<<endl;
 }
 
@@ -22,7 +22,7 @@ void MemTransferFunctions::transferExpression(Label lab, SgExpression* node, Lat
   * \date 2013.
  */
 void MemTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declNode, Lattice& element0) {
-  MemLattice& element=dynamic_cast<MemLattice&>(element0);
+  MemPropertyState& element=dynamic_cast<MemPropertyState&>(element0);
   cout<<"DEBUG: transferDeclaration: "<<declNode->unparseToString()<<endl;
 }
 
@@ -31,7 +31,7 @@ void MemTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration*
   * \date 2013.
  */
 void MemTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element0) {
-  MemLattice& element=dynamic_cast<MemLattice&>(element0);
+  MemPropertyState& element=dynamic_cast<MemPropertyState&>(element0);
   cout<<"DEBUG: transferFunctionCall: "<<callExp->unparseToString()<<endl;
 
   // uses and defs in argument-expressions
@@ -44,7 +44,7 @@ void MemTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* ca
 }
 
 void MemTransferFunctions::transferFunctionCallReturn(Label lab, VariableId lhsVarId, SgFunctionCallExp* callExp, Lattice& element0) {
-  MemLattice& element=dynamic_cast<MemLattice&>(element0);
+  MemPropertyState& element=dynamic_cast<MemPropertyState&>(element0);
   cout<<"DEBUG: transferFunctionCallReturn: "<<callExp->unparseToString()<<endl;
   if(lhsVarId.isValid()) {
   } else {
@@ -57,7 +57,7 @@ void MemTransferFunctions::transferFunctionCallReturn(Label lab, VariableId lhsV
   * \date 2013, 2015.
  */
 void MemTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element0) {
-  MemLattice& element=dynamic_cast<MemLattice&>(element0);
+  MemPropertyState& element=dynamic_cast<MemPropertyState&>(element0);
 
   // generate Mems for each parameter variable
   int paramNr=0;
@@ -78,7 +78,7 @@ void MemTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition
   * \date 2013.
  */
 void MemTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, Lattice& element0) {
-  MemLattice& element=dynamic_cast<MemLattice&>(element0);
+  MemPropertyState& element=dynamic_cast<MemPropertyState&>(element0);
 
   // remove all declared variable at function exit (including function parameter variables)
   for(VariableIdSet::iterator i=localVariablesInFunction.begin();i!=localVariablesInFunction.end();++i) {
@@ -87,13 +87,13 @@ void MemTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition*
 }
 
 void MemTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* node, Lattice& element0) {
-  MemLattice& element=dynamic_cast<MemLattice&>(element0);
+  MemPropertyState& element=dynamic_cast<MemPropertyState&>(element0);
   transferExpression(lab,node,element);
   VariableId resVarId=getResultVariableId();
 }
 
 void MemTransferFunctions::initializeExtremalValue(Lattice& element) {
-  MemLattice* rdElement=dynamic_cast<MemLattice*>(&element);
+  MemPropertyState* rdElement=dynamic_cast<MemPropertyState*>(&element);
   //rdElement->setEmptySet();
   cout<<"INFO: initialized extremal value."<<endl;
   rdElement->setBot(false);

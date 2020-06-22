@@ -14,7 +14,7 @@ CodeThorn::MemPropertyStateFactory::MemPropertyStateFactory() {
 }
 
 CodeThorn::PropertyState* CodeThorn::MemPropertyStateFactory::create() {
-  MemLattice* element=new MemLattice();
+  MemPropertyState* element=new MemPropertyState();
   return element;
 }
 

@@ -267,16 +267,16 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*, typename Ca
       context_map::swap(that);
     }
 
-    bool isBot() const { return context_map::size() == 0; }
+    bool isBot() const ROSE_OVERRIDE { return context_map::size() == 0; }
 
-    bool isBot() ROSE_OVERRIDE
+    bool isBot() 
     {
       const CtxLattice<context_t>& self = *this;
 
       return self.isBot();
     }
 
-    bool approximatedBy(Lattice& other) ROSE_OVERRIDE
+    bool approximatedBy(Lattice& other) const ROSE_OVERRIDE
     {
       const CtxLattice<context_t>& that = dynamic_cast<CtxLattice<context_t>& >(other);
 
