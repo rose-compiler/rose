@@ -15,14 +15,6 @@ CodeThorn::ProgramAbstractionLayer::~ProgramAbstractionLayer() {
   delete _cfanalyzer;
 }
 
-//void CodeThorn::ProgramAbstractionLayer::setModeArrayElementVariableId(bool val) {
-//  _modeArrayElementVariableId=val;
-//}
-
-//bool CodeThorn::ProgramAbstractionLayer::getModeArrayElementVariableId() {
-//  return _modeArrayElementVariableId;;
-//}
-
 SgProject* CodeThorn::ProgramAbstractionLayer::getRoot() {
   return _root;
 }

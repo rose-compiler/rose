@@ -36,7 +36,7 @@ class DFAnalysisBase {
 
   // \todo maybe split into initialize(root,variableIdForEachArrayElement)
   //       and initialize(ProgramAbstractionLayer*).
-  virtual void initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer=nullptr, bool variableIdForEachArrayElement = false);
+  virtual void initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer=nullptr);
 
   void setForwardAnalysis();
   void setBackwardAnalysis();

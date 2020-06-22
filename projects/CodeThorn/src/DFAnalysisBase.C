@@ -130,7 +130,7 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
 }
 
 void
-DFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer, bool variableIdForEachArrayElement) {
+DFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
   cout << "INIT: establishing program abstraction layer." << endl;
   if(programAbstractionLayer) {
     ROSE_ASSERT(_programAbstractionLayer==nullptr);
@@ -139,7 +139,6 @@ DFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbst
   } else {
     _programAbstractionLayer=new ProgramAbstractionLayer();
     _programAbstractionLayerOwner=true;
-    //_programAbstractionLayer->setModeArrayElementVariableId(variableIdForEachArrayElement);
     _programAbstractionLayer->initialize(root);
   }
   _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(getVariableIdMapping());
