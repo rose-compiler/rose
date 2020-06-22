@@ -331,7 +331,7 @@ Labeler* DFAnalysisBase::getLabeler() {
 }
 
 
-VariableIdMapping* DFAnalysisBase::getVariableIdMapping() {
+VariableIdMappingExtended* DFAnalysisBase::getVariableIdMapping() {
   return _programAbstractionLayer->getVariableIdMapping();
 }
 
