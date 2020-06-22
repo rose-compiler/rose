@@ -36,7 +36,7 @@ testCompileHelper() {
     // List operators
     {
         TList t1;
-        t1 = t1;
+        t1 = t1; // compiler warning expected -- we're testing self-assignment
 
         UList u1;
         t1 = u1;

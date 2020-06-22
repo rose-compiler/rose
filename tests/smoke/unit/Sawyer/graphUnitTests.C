@@ -1520,10 +1520,15 @@ eraseParallelEdges() {
     g.insertEdge(va, vb, 1);
     g.insertEdge(va, vb, 1);
     ASSERT_always_require(va->nOutEdges() == 5);
+    ASSERT_always_require(vb->nInEdges() == 5);
+    ASSERT_always_require(vc->nOutEdges() == 0);
+    ASSERT_always_require(vc->nInEdges() == 0);
 
     // Remove the parallel edges
     Sawyer::Container::Algorithm::graphEraseParallelEdges(g);
     ASSERT_always_require(va->nOutEdges() == 2);
+    ASSERT_always_require(vc->nOutEdges() == 0);
+    ASSERT_always_require(vc->nInEdges() == 0);
 }
 
 int main() {
