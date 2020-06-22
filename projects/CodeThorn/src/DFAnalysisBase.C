@@ -40,6 +40,10 @@ void DFAnalysisBase::initializeSolver() {
                       *_transferFunctions);
 }
 
+Flow* DFAnalysisBase::getFlow() const {
+  return _flow;
+}
+
 Lattice* DFAnalysisBase::getPreInfo(Label lab) {
   return _analyzerDataPreInfo[lab.getId()];
 }
@@ -302,15 +306,7 @@ DFAnalysisBase::run() {
   solve();
 }
 
-// default identity function
-
-DFAnalysisBase::ResultAccess&
-DFAnalysisBase::getResultAccess() {
-  return _analyzerDataPreInfo;
-}
-
 #include <iostream>
-
 #include "AstAnnotator.h"
 #include <string>
 
