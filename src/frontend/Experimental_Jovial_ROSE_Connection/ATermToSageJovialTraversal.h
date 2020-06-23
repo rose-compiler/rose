@@ -327,8 +327,8 @@ ATbool traverse_ByteFunctionVariable (ATerm term, SgExpression* &var);
 ATbool traverse_NamedConstant        (ATerm term, SgExpression* &var);
 
 // 6.3 FUNCTION CALLS
-ATbool traverse_FunctionCall           (ATerm term, SgFunctionCallExp* &func_call);
-ATbool traverse_UserDefinedFunctionCall(ATerm term, SgFunctionCallExp* &func_call);
+ATbool traverse_FunctionCall           (ATerm term, SgExpression* &expr);
+ATbool traverse_UserDefinedFunctionCall(ATerm term, SgExpression* &expr);
 ATbool traverse_IntrinsicFunctionCall  (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.1 LOC FUNCTION

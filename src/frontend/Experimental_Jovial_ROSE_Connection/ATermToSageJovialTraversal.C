@@ -5615,7 +5615,6 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
    char *literal=nullptr, *var_name=nullptr;
 
    SgExpression *sg_num_term = nullptr, *sg_factor = nullptr, *cast_formula = nullptr;
-   SgFunctionCallExp* func_call = nullptr;
    SgType* conv_type = nullptr;
 
    expr = nullptr;
@@ -5631,10 +5630,6 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
 
    else if (traverse_NumericMachineParameter(term, expr)) {
       // MATCHED NumericMachineParameter
-
-      if (!expr) {
-         cerr << "WARNING UNIMPLEMENTED: NumericPrimary - NumericMachineParameter\n";
-      }
    }
 
    else if (ATmatch(term, "NumericVariable(<term>)", &t_num_var)) {
@@ -5697,12 +5692,8 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
 
    }
 
-   else if (traverse_FunctionCall(term, func_call)) {
-      // MATCHED FunctionCall
-      if (!func_call) {
-         cerr << "WARNING UNIMPLEMENTED: NumericPrimary - FunctionCall\n";
-      }
-      expr = func_call;
+   else if (traverse_FunctionCall(term, expr)) {
+      // MATCHED FunctionCall (or a type conversion)
    }
 
 // Lastly handle names (variable identifiers)
@@ -5724,13 +5715,9 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
       setSourcePosition(expr, term);
    }
 
-// DELETE_ME (temporarily return integer literal expression "54321")
    if (expr == nullptr) {
       cerr << "WARNING UNIMPLEMENTED: NumericPrimary - expr is null \n";
-      expr = SageBuilder::buildIntVal_nfi(std::string("54321"));
-      return ATtrue;
    }
-
    ROSE_ASSERT(expr);
 
    return ATtrue;
@@ -5868,8 +5855,12 @@ ATbool ATermToSageJovialTraversal::traverse_NumericMachineParameter(ATerm term, 
    } else if (traverse_FixedMachineParameter(term, expr)) {
       // MATCHED FixedMachineParameter
    }
-
    else return ATfalse;
+
+   if (expr == nullptr) {
+      cerr << "WARNING UNIMPLEMENTED: NumericMachineParameter\n";
+      ROSE_ASSERT(expr);
+   }
 
    return ATtrue;
 }
@@ -6127,15 +6118,13 @@ ATbool ATermToSageJovialTraversal::traverse_GeneralFormula(ATerm term, SgExpress
    ATerm t_func_const_or_var;
    char* variable;
 
-   SgFunctionCallExp* func_call = nullptr;
-
    if (ATmatch(term, "GeneralFormula(<str>)", &variable)) {
       expr = SageBuilder::buildVarRefExp(variable, SageBuilder::topScopeStack());
       setSourcePosition(expr, term);
    } else if (ATmatch(term, "GeneralFormula(<term>)", &t_func_const_or_var)) {
-      if (traverse_FunctionCall(t_func_const_or_var, func_call)) {
+      if (traverse_FunctionCall(t_func_const_or_var, expr)) {
          // MATCHED FunctionCall
-         expr = func_call;
+         // However, because of ambiguous nature, could be a cast expression
       } else if (traverse_NamedConstant(t_func_const_or_var, expr)) {
          // MATCHED NamedConstant
       } else if (traverse_Variable(t_func_const_or_var, expr)) {
@@ -6611,27 +6600,32 @@ ATbool ATermToSageJovialTraversal::traverse_NamedConstant(ATerm term, SgExpressi
 //========================================================================================
 // 6.3 FUNCTION CALLS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_FunctionCall(ATerm term, SgFunctionCallExp* &func_call)
+ATbool ATermToSageJovialTraversal::traverse_FunctionCall(ATerm term, SgExpression* &expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_FunctionCall: %s\n", ATwriteToString(term));
 #endif
 
-   func_call = nullptr;
+   SgFunctionCallExp* func_call = nullptr;
 
-   if (traverse_UserDefinedFunctionCall(term, func_call)) {
+// UserDefinedFunctionCall is ambiguous with type conversions (casts) in Jovial,
+// so a SgExpression is returned rather than a SgFunctionCallExp.
+   if (traverse_UserDefinedFunctionCall(term, expr)) {
       // MATCHED UserDefinedFunctionCall
    }
    else if (traverse_IntrinsicFunctionCall(term, func_call)) {
-      // MATCHED IntrinsicFunctionCall
-   } else return ATfalse;
+      expr = func_call;
+   }
+   else return ATfalse;
 
    //   MachineSpecificFunctionCall -> FunctionCall
+
+   ROSE_ASSERT(expr);
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, SgFunctionCallExp* &func_call)
+ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, SgExpression* &expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_UserDefinedFunctionCall: %s\n", ATwriteToString(term));
@@ -6640,8 +6634,9 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
    ATerm t_name, t_param_list;
    std::string name;
    SgExprListExp* param_list = nullptr;
+   SgFunctionCallExp* func_call = nullptr;
 
-   func_call = nullptr;
+   expr = nullptr;
 
    if (ATmatch(term, "UserDefinedFunctionCall(<term>,<term>)", &t_name, &t_param_list)) {
       if (traverse_Name(t_name, name)) {
@@ -6658,21 +6653,25 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 // Begin SageTreeBuilder
    sage_tree_builder.Enter(func_call, name, param_list);
 
-   if (func_call == nullptr) {
-      // UserDefinedFunctionCall is ambiguous with type conversions
-      cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall masquerading as a type cast for type " << name << endl;
-      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
-      ROSE_ASSERT(symbol);
-#if 0
-      SgTypedefSymbol* typedef_symbol = SageInterface::lookupTypedefSymbolInParentScopes(name, SageBuilder::topScopeStack());
-      SgCastExp* cast_expr = SageBuilder::buildCastExp_nfi(cast_formula, conv_type, SgCastExp::e_default);
-      ROSE_ASSERT(cast_expr);
-      setSourcePosition(cast_expr, term);
-#endif
+// Check to see if there actually is a function call (ambiguous with type conversion)
+   if (func_call) {
+      sage_tree_builder.Leave(func_call);
+      expr = func_call;
    }
+   else {
+   // This is a type conversion, build a SgCaseExp
+      ROSE_ASSERT(param_list->get_expressions().size() == 1);
 
-// End SageTreeBuilder
-   sage_tree_builder.Leave(func_call);
+      SgExpression* cast_formula = param_list->get_expressions()[0];
+      SgTypedefSymbol* typedef_symbol = SageInterface::lookupTypedefSymbolInParentScopes(name, SageBuilder::topScopeStack());
+      ROSE_ASSERT(typedef_symbol);
+
+      SgType* conv_type = typedef_symbol->get_type();
+      expr = SageBuilder::buildCastExp_nfi(cast_formula, conv_type, SgCastExp::e_default);
+   }
+   ROSE_ASSERT(expr);
+
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }

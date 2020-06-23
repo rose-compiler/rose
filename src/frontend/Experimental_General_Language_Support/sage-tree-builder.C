@@ -509,10 +509,12 @@ Enter(SgFunctionCallExp* &func_call, std::string &name, SgExprListExp* params)
    SgFunctionSymbol* func_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name, SageBuilder::topScopeStack());
    if (func_symbol == nullptr) {
     // Function calls are ambiguous with arrays in Fortran and type casts (at least) in Jovial
+       func_call = nullptr;
        return;
    }
 
    func_call = SageBuilder::buildFunctionCallExp(func_symbol, params);
+   SageInterface::setSourcePosition(func_call);
 }
 
 void SageTreeBuilder::
