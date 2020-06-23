@@ -3704,6 +3704,7 @@ ATbool ATermToSageJovialTraversal::traverse_OverlayExpression(ATerm term, SgExpr
       if (traverse_OverlayString(head, overlay_string)) {
          // MATCHED OverlayString
       } else return ATfalse;
+      ROSE_ASSERT(overlay_string);
 
       overlay_expr->get_expressions().push_back(overlay_string);
    }
@@ -3752,29 +3753,29 @@ ATbool ATermToSageJovialTraversal::traverse_OverlayElement(ATerm term, SgExpress
    ATerm t_expr;
    std::string name;
 
-   // TODO:ROSETTA - new node SgJovialOverlayElement
-   // SgJovialOverlayElement* = element;
+   // Could make a new node, SgJovialOverlayElement. However, following convention used for now:
+   //   1. Spacer is a SgExpression;
+   //   2. DataName is a SgVarRefExp
+   //   3. OverlayExpression is a SgExprListExp
 
    SgExpression* spacer = nullptr;
+   SgVarRefExp* data_name = nullptr;
    SgExprListExp* overlay_expr = nullptr;
 
    if (ATmatch(term, "OverlayElement(<term>)", &t_expr)) {
-      cerr << "WARNING UNIMPLEMENTED: OverElement = OverlayExpression\n";
-      ROSE_ASSERT(false);
       if (traverse_OverlayExpression(t_expr, overlay_expr)) {
          ROSE_ASSERT(overlay_expr);
          overlay_element = overlay_expr;
       } else return ATfalse;
    }
    else if (traverse_Spacer(term, spacer)) {
-      cerr << "WARNING UNIMPLEMENTED: OverElement = Spacer (partial implemented)\n";
       ROSE_ASSERT(spacer);
       overlay_element = spacer;
    }
    else if (traverse_Name(term, name)) {
-      cerr << "WARNING UNIMPLEMENTED: OverElement = Name (partial implemented)\n";
-      SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
-      overlay_element = var_ref;
+      data_name = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+      setSourcePosition(data_name, term);
+      overlay_element = data_name;
    } else return ATfalse;
 
    ROSE_ASSERT(overlay_element);

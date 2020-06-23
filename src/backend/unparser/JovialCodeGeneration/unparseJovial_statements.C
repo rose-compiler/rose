@@ -19,8 +19,6 @@
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
-#define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
-
 #include "sage_support.h"
 
 
@@ -833,32 +831,7 @@ Unparse_Jovial::unparseOverlayDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             curprint(") ");
          }
 
-      int n = overlay->get_expressions().size();
-      foreach(SgExpression* expr, overlay->get_expressions())
-        {
-           SgExprListExp* overlay_expr = isSgExprListExp(expr);
-           ASSERT_not_null(overlay_expr);
-
-           int ns = overlay_expr->get_expressions().size();
-           foreach(SgExpression* overlay_string, overlay_expr->get_expressions())
-             {
-                SgVarRefExp* var = isSgVarRefExp(overlay_string);
-                if (var) unparseExpression(var, info);
-
-                SgIntVal* spacer = isSgIntVal(overlay_string);
-                if (spacer)
-                   {
-                      curprint("W ");
-                      unparseExpression(spacer, info);
-                   }
-                if (var == NULL && spacer == NULL)
-                   {
-                      std::cerr << "WARNING UNIMPLEMENTED: OverlayElement (may be spacer != SgIntVal)\n";
-                   }
-                if (--ns > 0) curprint(", ");
-             }
-           if (--n > 0) curprint(": ");
-        }
+      unparseOverlayExpr(overlay, info);
 
       curprint(";\n");
    }

@@ -1,26 +1,15 @@
-/* unparseJovial_expressions.C
- * 
- *
+/*
+ * unparseJovial_expressions.C
  */
 #include "sage3basic.h"
 #include "unparser.h"
-#include "Utf8.h"
-#include <limits>
 
-using namespace std;
-
-#define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
-#define OUTPUT_HIDDEN_LIST_DATA 0
-#define OUTPUT_DEBUGGING_INFORMATION 0
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 
 #ifdef _MSC_VER
 #include "Cxx_Grammar.h"
 #endif
-
-// DQ (10/14/2010):  This should only be included by source files that require it.
-// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
-// Interestingly it must be at the top of the list of include files.
-#include "rose_config.h"
 
 
 void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info) 
@@ -105,9 +94,9 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
                 case V_SgNullExpression:         break;
 
                 default:
-                     cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << endl;
-                     ROSE_ASSERT(false);
-                     break;
+                   std::cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << std::endl;
+                   ROSE_ASSERT(false);
+                   break;
        }
 
     // If this expression requires closing parentheses, emit them now.
@@ -198,7 +187,7 @@ Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
            curprint(" *)");
            break;
         default:
-           cout << "error: unparseCastExp() is unimplemented for " << type->class_name() << endl;
+           std::cout << "error: unparseCastExp() is unimplemented for " << type->class_name() << std::endl;
            ROSE_ASSERT(false);
            break;
         }
@@ -331,6 +320,53 @@ Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
       curprint(")");
    }
 
+void
+Unparse_Jovial::unparseOverlayExpr(SgExprListExp* overlay, SgUnparse_Info& info)
+  {
+     ROSE_ASSERT(overlay);
+
+  // The OverlayExpression consists of a list of OverlayString expressions.
+  // An OverlayString consists of a list of OverlayElement expressions.
+  // Presently, the following convention is used for an OverlayElement:
+  //   1. Spacer is a SgExpression;
+  //   2. DataName is a SgVarRefExp
+  //   3. OverlayExpression is a SgExprListExp
+
+     SgExpression* spacer;
+     SgVarRefExp* data_name;
+     SgExprListExp* overlay_expr;
+
+     int n = overlay->get_expressions().size();
+     foreach(SgExpression* expr, overlay->get_expressions())
+       {
+          SgExprListExp* overlay_string_list = isSgExprListExp(expr);
+          ASSERT_not_null(overlay_string_list);
+
+          int ns = overlay_string_list->get_expressions().size();
+          foreach(SgExpression* overlay_string, overlay_string_list->get_expressions())
+             {
+               if ( (overlay_expr = isSgExprListExp(overlay_string)) != NULL)
+                  {
+                     curprint("(");
+                     unparseOverlayExpr(overlay_expr, info);
+                     curprint(")");
+                  }
+               else if ( (data_name = isSgVarRefExp(overlay_string)) != NULL)
+                  {
+                     unparseExpression(data_name, info);
+                  }
+               else
+                  {
+                     spacer = overlay_string;
+                     curprint("W ");
+                     unparseExpression(spacer, info);
+                  }
+               if (--ns > 0) curprint(", ");
+             }
+          if (--n > 0) curprint(": ");
+       }
+  }
+
 
 //----------------------------------------------------------------------------
 //  ::<symbol references>
@@ -342,7 +378,7 @@ Unparse_Jovial::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
       SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
       ASSERT_not_null(func_ref);
 
-      string func_name = func_ref->get_symbol()->get_name().str();
+      std::string func_name = func_ref->get_symbol()->get_name().str();
       curprint(func_name);
    }
 
@@ -373,7 +409,7 @@ Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
            unparseVarRef(operand, info);
            break;
         default:
-           cout << "error: unparsePtrDeref() is unimplemented for " << operand->class_name() << endl;
+           std::cout << "error: unparsePtrDeref() is unimplemented for " << operand->class_name() << std::endl;
            ROSE_ASSERT(false);
            break;
         }

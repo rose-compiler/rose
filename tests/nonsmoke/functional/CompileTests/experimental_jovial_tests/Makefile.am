@@ -43,6 +43,7 @@ JOVIAL_TESTCODES = \
  4_10_abort_stmt_a.jov                  \
  4_10_abort_stmt_b.jov                  \
  rose-issue-1507.jov                    \
+ rose-issue-1516.jov                    \
  rose-issue-2775.jov
 
 # status_enumval.jov                     \
@@ -80,7 +81,6 @@ JOVIAL_PARSER_TESTCODES = \
  6_3_2_next_function_pointer.jov        \
  6_3_2_next_function_status.jov         \
  9_0_directives.jov                     \
- rose-issue-1516.jov                    \
  rose-issue-2143.jov
 
 COMPOOL_TESTCODES = \
