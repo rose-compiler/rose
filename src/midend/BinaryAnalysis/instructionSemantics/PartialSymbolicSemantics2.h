@@ -96,6 +96,7 @@ protected:
     SValue(size_t nbits, uint64_t name, uint64_t offset, bool negate)
         : BaseSemantics::SValue(nbits), name(name), offset(offset), negate(negate) {
         this->offset &= IntegerOps::genMask<uint64_t>(nbits);
+        ASSERT_require(nbits <= 64 || name != 0);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -169,8 +170,13 @@ public:
     // Other stuff we inherited from the super class
 public:
     virtual void set_width(size_t nbits) ROSE_OVERRIDE {
-        BaseSemantics::SValue::set_width(nbits);
-        offset &= IntegerOps::genMask<uint64_t>(nbits);
+        if (nbits > 64 && name == 0) {
+            *this = SValue(nbits);
+        } else {
+            ASSERT_require(nbits <= 64 || name != 0);
+            BaseSemantics::SValue::set_width(nbits);
+            offset &= IntegerOps::genMask<uint64_t>(nbits);
+        }
     }
 
     virtual bool may_equal(const BaseSemantics::SValuePtr &other,

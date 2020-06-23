@@ -229,6 +229,8 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &a_, const BaseSemantics::S
     SValuePtr b = SValue::promote(b_);
     if (a->name || b->name)
         return undefined_(a->get_width() + b->get_width());
+    if (a->get_width() + b->get_width() > 64)
+        return undefined_(a->get_width() + b->get_width());
     return number_(a->get_width()+b->get_width(), a->offset | (b->offset << a->get_width()));
 }
 
@@ -456,10 +458,14 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     size_t retwidth = a->get_width() + b->get_width();
-    if (!a->name && !b->name)
+    if (retwidth > 64)
+        return undefined_(retwidth);
+
+    if (!a->name && !b->name) {
         return number_(retwidth,
                        (IntegerOps::signExtend2(a->offset, a->get_width(), 64) *
                         IntegerOps::signExtend2(b->offset, b->get_width(), 64)));
+    }
     if (!b->name) {
         if (0==b->offset)
             return number_(retwidth, 0);
@@ -522,6 +528,8 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     size_t retwidth = a->get_width() + b->get_width();
+    if (retwidth > 64)
+        return undefined_(retwidth);
     if (!a->name && !b->name)
         return number_(retwidth, a->offset * b->offset);
     if (!b->name) {
@@ -543,6 +551,8 @@ BaseSemantics::SValuePtr
 RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 {
     SValuePtr a = SValue::promote(a_);
+    if (new_width > 64)
+        return undefined_(new_width);
     if (new_width==a->get_width())
         return a->copy();
     if (a->name)
