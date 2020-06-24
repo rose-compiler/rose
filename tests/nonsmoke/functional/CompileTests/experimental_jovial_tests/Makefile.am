@@ -8,6 +8,7 @@ LDADD    = $(ROSE_LIBS)
 
 JOVIAL_TESTCODES = \
  tiny.jov                               \
+ bit_conversion.jov                     \
  int_conversion.jov                     \
  item_desc_conversion.jov               \
  parens.jov                             \
