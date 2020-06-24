@@ -2,6 +2,7 @@ include_rules
 ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
 
 tool_CPPFLAGS += -I.
+tool_CXXFLAGS += -Wno-unused-result
 
 run $(public_header)				\
     RSIM_Adapter.h				\

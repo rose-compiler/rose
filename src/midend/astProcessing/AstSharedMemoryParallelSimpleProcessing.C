@@ -10,7 +10,7 @@
 #  ifdef _MSC_VER
 #   pragma message ("POSIX threads are unavailable on this platform.")
 #  else
-#   warning "POSIX threads are unavailable on this platform"
+#   warning "POSIX threads are unavailable on this platform" // blame Gergo Barany prior to 2008-02-15
 #  endif
 # endif
 #endif

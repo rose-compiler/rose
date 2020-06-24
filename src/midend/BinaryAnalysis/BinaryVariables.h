@@ -327,6 +327,13 @@ public:
     /** Construct a new analyzer. */
     explicit VariableFinder(const Settings &settings = Settings());
 
+    /** Settings for this analysis.
+     *
+     * @{ */
+    const Settings& settings() const { return settings_; }
+    Settings& settings() { return settings_; }
+    /** @} */
+
     /** Find local variables in a function.
      *
      *  Analyzes the given function to find the local (stack) variables, caches and returns the list.  If this information

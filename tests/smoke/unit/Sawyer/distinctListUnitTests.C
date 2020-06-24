@@ -36,7 +36,10 @@ testCompileHelper() {
     // List operators
     {
         TList t1;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wself-assign-overloaded"
         t1 = t1; // compiler warning expected -- we're testing self-assignment
+#pragma GCC diagnostic pop
 
         UList u1;
         t1 = u1;
