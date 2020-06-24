@@ -10,22 +10,32 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace PartialSymbolicSemantics {
 
-uint64_t name_counter;
-
 uint64_t
 Formatter::rename(uint64_t orig_name)
 {
     if (0==orig_name)
         return orig_name;
-    std::pair<Map::iterator, bool> inserted = renames.insert(std::make_pair(orig_name, next_name));
-    if (!inserted.second)
-        return orig_name;
-    return next_name++;
+
+    // Previous version of this code was not only thread unsafe, but had a bug that caused it to return the original name
+    // rather than the new name with it encounted the same name twice.
+    Map::iterator found = renames.find(orig_name);
+    if (renames.end() == found)
+        found = renames.insert(std::make_pair(orig_name, SValue::nextName())).first;
+    return found->second;
 }
 
 /*******************************************************************************************************************************
  *                                      SValue
  *******************************************************************************************************************************/
+
+// class method
+uint64_t
+SValue::nextName() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    static uint64_t seq = 0;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+    return ++seq;                                       // first value returned should be one, not zero
+}
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
 SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger,

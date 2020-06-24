@@ -43,8 +43,6 @@ namespace InstructionSemantics2 {       // documented elsewhere
  *  value is negated. */
 namespace PartialSymbolicSemantics {
 
-extern uint64_t name_counter;
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Print formatter
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,14 +79,14 @@ public:
     // Real constructors
 protected:
     explicit SValue(size_t nbits)
-        : BaseSemantics::SValue(nbits), name(++name_counter), offset(0), negate(false) {}
+        : BaseSemantics::SValue(nbits), name(nextName()), offset(0), negate(false) {}
 
     SValue(size_t nbits, uint64_t number)
         : BaseSemantics::SValue(nbits), name(0), offset(number), negate(false) {
         if (nbits <= 64) {
             this->offset &= IntegerOps::genMask<uint64_t>(nbits);
         } else {
-            name = ++name_counter;
+            name = nextName();
             offset = 0;
         }
     }
@@ -98,6 +96,14 @@ protected:
         this->offset &= IntegerOps::genMask<uint64_t>(nbits);
         ASSERT_require(nbits <= 64 || name != 0);
     }
+
+public:
+    /** Returns the next available name.
+     *
+     *  Returns the next available name and increments it.
+     *
+     *  Thread safety: This function is thread safe. */
+    static uint64_t nextName();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
