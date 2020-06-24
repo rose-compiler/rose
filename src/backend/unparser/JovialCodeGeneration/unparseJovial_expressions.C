@@ -160,7 +160,7 @@ Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
 
      SgExpression* size = type->get_type_kind();
 
-  // If there is a size it won't be SgModifierType or SgTypedefType
+  // If there is a size it won't be SgModifierType, SgTypedefType or SgJovialBitType
      if (size) {
         curprint("(* ");
      }
@@ -176,6 +176,7 @@ Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
            unparseType(type, info);
            break;
 
+        case V_SgJovialBitType:
         case V_SgModifierType:
            curprint("(* ");
            unparseType(type, info);

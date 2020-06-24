@@ -5911,11 +5911,6 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
       } else return ATfalse;
    } else return ATfalse;
 
-   if (expr == nullptr) {
-      cerr << "WARNING UNIMPLEMENTED: BitFormula - BitPrimaryConversion or Dereference\n";
-      return ATtrue;
-   }
-
    ROSE_ASSERT(expr);
 
    return ATtrue;
@@ -6001,10 +5996,6 @@ ATbool ATermToSageJovialTraversal::traverse_LogicalOperand(ATerm term, SgExpress
 
    if (traverse_BitPrimary(term, expr)) {
       // MATCHED BitPrimary
-      if (expr == nullptr) {
-         cerr << "WARNING UNIMPLEMENTED: LogicalOperand - BitPrimary - probably BitPrimaryConversion\n";
-         return ATtrue;
-      }
    } else if (traverse_Variable(term, expr)) {
       // MATCHED Variable
    } else if (traverse_RelationalExpression(term, expr)) {
@@ -6022,10 +6013,9 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
    printf("... traverse_BitPrimary: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_bit;
+   ATerm t_bit, t_conv_type, t_formula;
 
    expr = nullptr;
-   SgType* type = nullptr;
 
    if (traverse_BooleanLiteral(term, expr)) {
       // MATCHED BooleanLiteral
@@ -6040,16 +6030,34 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
    else if (traverse_BitLiteral(term, expr)) {
       // MATCHED BitLiteral
    }
-   else if (traverse_BitConversion(term, type)) {
+   else if (ATmatch(term, "BitPrimaryConversion(<term>, <term>)", &t_conv_type, &t_formula)) {
       // MATCHED BitPrimaryConversion
-      cerr << "WARNING UNIMPLEMENTED: BitPrimary - BitPrimaryConversion\n";
-      return ATtrue;
+      SgExpression* cast_formula = nullptr;
+      SgType* conv_type = nullptr;
+
+      if (traverse_BitConversion(t_conv_type, conv_type)) {
+         // MATCHED BitConversion
+      } else return ATfalse;
+
+      if (traverse_Formula(t_formula, cast_formula)) {
+         // MATCHED Formula
+      } else return ATfalse;
+
+      ROSE_ASSERT(conv_type);
+      ROSE_ASSERT(cast_formula);
+
+      //                                      cast_enum? default? ctype? static? dynamic?
+      SgCastExp* cast_expr = SageBuilder::buildCastExp(cast_formula, conv_type, SgCastExp::e_default);
+      ROSE_ASSERT(cast_expr);
+      setSourcePosition(cast_expr, term);
+      expr = cast_expr;
    }
    else return ATfalse;
-      // TODO: create else if for following
-      // BitVariable                   -> BitPrimary {cons("BitVariable")} (not currently working in tests)
-      // NamedBitConstant              -> BitPrimary {cons("NamedBitConstant")} (rejected in grammar)
-      // BitFunctionCall               -> BitPrimary (no cons)
+
+   // TODO: create else if for following (is this still the case)
+   // BitVariable            -> BitPrimary {cons("BitVariable")} (not currently working in tests)
+   // NamedBitConstant       -> BitPrimary {cons("NamedBitConstant")} (rejected in grammar)
+   // BitFunctionCall        -> BitPrimary (no cons)
 
    ROSE_ASSERT(expr != NULL);
 
@@ -6178,7 +6186,7 @@ ATbool ATermToSageJovialTraversal::traverse_CharacterFormula(ATerm term, SgExpre
 
       if (traverse_Formula(t_formula, cast_formula)) {
          // MATCHED Formula
-      }
+      } else return ATfalse;
 
       ROSE_ASSERT(conv_type);
       ROSE_ASSERT(cast_formula);
@@ -7044,27 +7052,31 @@ ATbool ATermToSageJovialTraversal::traverse_BitConversion(ATerm term, SgType* &t
    printf("... traverse_BitConversion: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_conv, t_formula, t_bit_type_desc;
-   SgExpression *formula;
+   ATerm t_bit_type_desc;
    std::string bit_type_name;
 
-   if (ATmatch(term, "BitPrimaryConversion(<term>,<term>)", &t_conv, &t_formula)) {
-      cerr << "WARNING UNIMPLEMENTED: BitPrimaryConversion\n";
-      if (ATmatch(t_conv, "BitTypeConversion(<term>)", &t_bit_type_desc)) {
-         // MATCHED BitTypeConversion
-         cerr << "WARNING UNIMPLEMENTED: BitTypeConversion\n";
-      } else if (ATmatch(t_conv, "BitTypeConversionB()")) {
-         // MATCHED BitTypeConversionB
-         cerr << "WARNING UNIMPLEMENTED: BitTypeConversion - B\n";
-      } else if (traverse_Name(t_conv, bit_type_name)) {
-         // MATCHED BitTypeName
-         cerr << "WARNING UNIMPLEMENTED: BitTypeConversion - BitTypeName \n";
+   if (ATmatch(term, "BitTypeConversion(<term>)", &t_bit_type_desc)) {
+      // MATCHED BitTypeConversion
+
+      if (traverse_BitItemDescription(t_bit_type_desc, type)) {
+         // MATCHED BitItemDescription
       } else return ATfalse;
 
-      if (traverse_Formula(t_formula, formula)) {
-         // MATCHED Formula
-      } else return ATfalse;
-   } else return ATfalse;
+   } else if (ATmatch(term, "BitTypeConversionB()")) {
+      // MATCHED BitTypeConversionB
+
+      SgExpression* size = nullptr;
+      type = SageBuilder::buildJovialBitType(size);
+
+   } else if (traverse_Name(term, bit_type_name)) {
+      // MATCHED BitTypeName
+      // BitTypeName shouldn't be able to happen (parses as UserDefinedFunctionCall)
+      cerr << "WARNING UNIMPLEMENTED: BitTypeConversion - BitTypeName \n";
+      ROSE_ASSERT(false);
+   }
+   else return ATfalse;
+
+   // Note: a RepConversion appears as part of RepFunctionVariable
 
    return ATtrue;
 }
