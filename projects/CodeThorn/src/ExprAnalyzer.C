@@ -406,7 +406,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
           CASE_EXPR_ANALYZER_EVAL(SgPntrArrRefExp,evalArrayReferenceOp);
           CASE_EXPR_ANALYZER_EVAL(SgLshiftOp,evalBitwiseShiftLeftOp);
           CASE_EXPR_ANALYZER_EVAL(SgRshiftOp,evalBitwiseShiftRightOp);
-
+        case V_SgAssignOp: {
+          list<SingleEvalResultConstInt> l=evaluateLExpression(lhs,estate);
+          ROSE_ASSERT(l.size()==1);
+          auto lhsAddress=*l.begin();
+          resultList.splice(resultList.end(),evalAssignOp(isSgAssignOp(node),lhsResult /*ignored*/,rhsResult,estate,mode));
+          break;
+        }
         default:
           cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
           throw CodeThorn::Exception("Error: evaluateExpression::unknown binary operation.");
@@ -751,6 +757,22 @@ ExprAnalyzer::evalGreaterThanOp(SgGreaterThanOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorMore(rhsResult.result));
+  resultList.push_back(res);
+  return resultList;
+}
+
+list<SingleEvalResultConstInt>
+ExprAnalyzer::evalAssignOp(SgAssignOp* node,
+                           SingleEvalResultConstInt lhsResult,
+                           SingleEvalResultConstInt rhsResult,
+                           EState estate, EvalMode mode) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  Edge fakeEdge;
+  std::list<EState> estateList=_analyzer->transferAssignOp(node,fakeEdge,&estate);
+  ROSE_ASSERT(estateList.size()==1);
+  res.result=rhsResult.result; // value result of assignment
+  res.estate=*estateList.begin();
   resultList.push_back(res);
   return resultList;
 }
