@@ -33,14 +33,14 @@ run : force update serial number 1
 # everything. In particular, we don't install those things that RMC itself installs, which basically boils down to
 # any package whose binary interface (ABI) is used by ROSE and depends directly or indirectly on a C++ compiler.
 
-run apt-get -y update
-run apt-get -y install apt-utils
-run apt-get -y install \
+run env DEBIAN_FRONTEND=noninteractive apt-get -y update
+run env DEBIAN_FRONTEND=noninteractive apt-get -y install apt-utils
+run env DEBIAN_FRONTEND=noninteractive apt-get -y install \
     git wget build-essential g++ gfortran libtool automake flex bison graphviz-dev cmake \
     libpqxx-dev ghostscript perl-doc groff libgcrypt20-dev libfcgi-dev libfuse-dev gcc-multilib \
     g++-multilib gfortran-multilib fuse bsdmainutils locales language-pack-en-base jq patchelf rsync
 
-run apt-get -y install \
+run env DEBIAN_FRONTEND=noninteractive apt-get -y install \
     qt5-default '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libfontconfig1-dev \
     libatspi2.0-dev libdbus-1-dev
 
@@ -49,7 +49,7 @@ run apt-get -y install \
 ########################################################################################################################
 
 # Create a user so we don't have to run things as the admin.
-run apt-get -y install sudo && useradd -c "A. User" -d /home/user -m -G sudo -s /bin/bash user
+run env DEBIAN_FRONTEND=noninteractive apt-get -y install sudo && useradd -c "A. User" -d /home/user -m -G sudo -s /bin/bash user
 run (echo password; echo password) |passwd user
 run echo "user ALL = NOPASSWD: ALL" >>/etc/sudoers
 
@@ -69,7 +69,7 @@ run sudo -i -u user bash -c					\
 #   More user-friendly package management system (aptitude)
 #   Ability to SSH-mount files (sshfs)
 #   A way to connect to a running container (openssh-server)
-run apt-get -y install vim aptitude sshfs openssh-server
+run env DEBIAN_FRONTEND=noninteractive apt-get -y install vim aptitude sshfs openssh-server
 
 #########################################################################################################################
 ## Install RMC (when image is run as a container)

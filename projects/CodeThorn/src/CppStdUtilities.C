@@ -56,6 +56,11 @@ namespace CppStdUtilities {
     }
   }
 
+  bool isPrefix(string prefix, string s) {
+    // fast and handles also case that s is shorter than prefix
+    return s.compare(0,prefix.size(),prefix)==0;
+  }
+
   bool isPostfix(std::string const &postfix, std::string const &s) {
     if (s.length() >= postfix.length()) {
       return (0 == s.compare (s.length() - postfix.length(), postfix.length(), postfix));

@@ -15,9 +15,11 @@ namespace BinaryAnalysis {
     void
     AstHash::visit(SgNode* node)
     {
-        //Always include the type of each node in the hash
-        VariantT vType = node->variantT();
-        hasher_->insert(vType);
+        // Always include the type of each node in the hash. We include the type name rather than the enum constant because we
+        // want the hash to be as stable as possible across different ROSE versions. The type name never changes, but the enum
+        // constant can change whenever someone adds a new SgNode type even if that type is completely unrelated to binary
+        // analysis.
+        hasher_->insert(node->class_name());
         
         //If it's an instruction, include the mnemonic, and maybe the address
         SgAsmInstruction* asmInstruction = isSgAsmInstruction(node);

@@ -285,6 +285,24 @@ buildTypeI64() {
 }
 
 SgAsmFloatType*
+buildIeee754Binary16() {
+    static SgAsmFloatType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
+    if (!cached) {
+        SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 16,
+                                                    SgAsmFloatType::BitRange::baseSize(0, 11), // significand
+                                                    SgAsmFloatType::BitRange::baseSize(11, 5), // exponent
+                                                    16,                                        // sign bit
+                                                    15,                                        // exponent bias
+                                                    SgAsmFloatType::ieeeFlags());
+        cached = SgAsmType::registerOrDelete(fpType);
+    }
+    return cached;
+}
+
+SgAsmFloatType*
 buildIeee754Binary32() {
     static SgAsmFloatType *cached = NULL;
     static SAWYER_THREAD_TRAITS::Mutex mutex;
@@ -314,6 +332,24 @@ buildIeee754Binary64() {
                                                     SgAsmFloatType::BitRange::baseSize(52, 11), // exponent
                                                     63,                                         // sign bit
                                                     1023,                                       // exponent bias
+                                                    SgAsmFloatType::ieeeFlags());
+        cached = SgAsmType::registerOrDelete(fpType);
+    }
+    return cached;
+}
+
+SgAsmFloatType*
+buildIeee754Binary128() {
+    static SgAsmFloatType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
+    if (!cached) {
+        SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 128,
+                                                    SgAsmFloatType::BitRange::baseSize(0, 112),  // significand
+                                                    SgAsmFloatType::BitRange::baseSize(112, 15), // exponent
+                                                    127,                                         // sign bit
+                                                    262143,                                      // exponent bias
                                                     SgAsmFloatType::ieeeFlags());
         cached = SgAsmType::registerOrDelete(fpType);
     }
@@ -589,6 +625,21 @@ buildLslExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) 
     return a;
 }
 
+SgAsmBinaryMsl*
+buildMslExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
+    SgAsmBinaryMsl *a = new SgAsmBinaryMsl(lhs, rhs);
+    lhs->set_parent(a);
+    rhs->set_parent(a);
+    if (type) {
+        a->set_type(type);
+    } else if (lhs->get_type()) {
+        a->set_type(lhs->get_type());
+    } else {
+        a->set_type(rhs->get_type());
+    }
+    return a;
+}
+
 SgAsmBinaryLsr*
 buildLsrExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinaryLsr *a = new SgAsmBinaryLsr(lhs, rhs);
@@ -646,11 +697,34 @@ buildRrxExpression(SgAsmExpression *lhs, SgAsmType *type) {
     return a;
 }
 
-SgAsmUnaryArmSpecialRegisterList*
-buildArmSpecialRegisterList(SgAsmExpression *lhs) {
-    SgAsmUnaryArmSpecialRegisterList *a = new SgAsmUnaryArmSpecialRegisterList(lhs);
-    lhs->set_parent(a);
-    return a;
+SgAsmUnaryTruncate*
+buildTruncateExpression(SgAsmExpression *arg, SgAsmType *type) {
+    ASSERT_not_null(arg);
+    ASSERT_not_null(type);
+    SgAsmUnaryTruncate *retval = new SgAsmUnaryTruncate(arg);
+    arg->set_parent(retval);
+    retval->set_type(type);
+    return retval;
+}
+
+SgAsmUnarySignedExtend*
+buildSignedExtendExpression(SgAsmExpression *arg, SgAsmType *type) {
+    ASSERT_not_null(arg);
+    ASSERT_not_null(type);
+    SgAsmUnarySignedExtend *retval = new SgAsmUnarySignedExtend(arg);
+    arg->set_parent(retval);
+    retval->set_type(type);
+    return retval;
+}
+
+SgAsmUnaryUnsignedExtend*
+buildUnsignedExtendExpression(SgAsmExpression *arg, SgAsmType *type) {
+    ASSERT_not_null(arg);
+    ASSERT_not_null(type);
+    SgAsmUnaryUnsignedExtend *retval = new SgAsmUnaryUnsignedExtend(arg);
+    arg->set_parent(retval);
+    retval->set_type(type);
+    return retval;
 }
 
 SgAsmRiscOperation*

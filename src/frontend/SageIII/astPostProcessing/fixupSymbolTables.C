@@ -304,12 +304,16 @@ FixupAstSymbolTables::visit ( SgNode* node )
                                 // There is even an agrument that this is correct as a default for C/C++, but only if it must exist (see test2011_80.C).
                                 // Remove the symbol from the symbol table of the global scope.
 
+#if 0
                                    printf ("Remove the associated symbol in the current symbol table \n");
+#endif
 
                                 // DQ (6/22/2011): This assertion fails for CompileTests/copyAST_tests/copytest2007_24.C
                                 // ROSE_ASSERT (declarationToFindInScope->get_scope() == declarationAssociatedToType->get_scope());
+#if 0
                                    if (declarationToFindInScope->get_scope() != declarationAssociatedToType->get_scope())
                                         printf ("In fixupSymbolTables.C: Note that declarationToFindInScope->get_scope() != declarationAssociatedToType->get_scope() \n");
+#endif
                                  }
                                 else
                                  {

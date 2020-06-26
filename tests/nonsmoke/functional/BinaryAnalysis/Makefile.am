@@ -46,6 +46,11 @@ noinst_PROGRAMS += conditionalDisable
 conditionalDisable_SOURCES = conditionalDisable.C
 conditionalDisable_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
+# Some tests are disabled because the ARM AArch64 A64 support is not enabled in ROSE.
+noinst_PROGRAMS += isA64Disabled
+isA64Disabled_SOURCES = isA64Disabled.C
+isA64Disabled_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+
 ###############################################################################################################################
 # Check parsing of symbolic expressions via Rose::BinaryAnalysis::SymbolicExprParser
 ###############################################################################################################################
@@ -152,7 +157,7 @@ testElfStrtab.passed: $(TEST_EXIT_STATUS) testElfStrtab conditionalDisable
 	@$(RTH_RUN)								\
 		TITLE="ELF string table allocation [$@]"			\
 		DISABLED="$$(./conditionalDisable)"				\
-		CMD="$$(pwd)/testElfStrtab $(SPECIMEN_DIR)/arm-poweroff"	\
+		CMD="$$(pwd)/testElfStrtab $(SPECIMEN_DIR)/i386-poweroff"	\
 		USE_SUBDIR=yes							\
 		$< $@
 
@@ -172,7 +177,7 @@ testElfByteOrder.passed: testElfByteOrder.conf testElfByteOrder execFormatsTest 
 	@$(RTH_RUN)					\
 		TITLE="modification of byte order [$@]"	\
 		DISABLED="$$(./conditionalDisable)"	\
-		INPUT=arm-poweroff			\
+		INPUT=i386-poweroff			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
 		$< $@
 
@@ -192,7 +197,7 @@ testElfWordSize.passed: testElfWordSize.conf testElfWordSize execFormatsTest tes
 	@$(RTH_RUN)					\
 		TITLE="modification of word size [$@]"	\
 		DISABLED="$$(./conditionalDisable)"	\
-		INPUT=arm-poweroff			\
+		INPUT=i386-poweroff			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
 		$< $@
 
@@ -277,7 +282,7 @@ shiftResizeSection.passed: $(TEST_WITH_ANSWER) shiftResizeSection execFormatsTes
 	@$(RTH_RUN)											\
 		TITLE="changing section size and/or location [$@]"					\
 		DISABLED="$$(./conditionalDisable)"							\
-		CMD="$(srcdir)/testShiftResizeSection.sh $(SPECIMEN_DIR)/arm-ctrlaltdel $$(pwd)"	\
+		CMD="$(srcdir)/testShiftResizeSection.sh $(SPECIMEN_DIR)/i386-ctrlaltdel $$(pwd)"	\
 		ANS="$(srcdir)/shiftResizeSection.ans"							\
 		USE_SUBDIR=yes										\
 		$< $@
@@ -870,6 +875,7 @@ $(SMOKE_BLDDIR)/testPartitioner2: $(SMOKE_SRCDIR)/testPartitioner2.C
 testPartitioner2_specimens = $(filter-out		\
 	$(nonsmoke_specimens_binary_any_any_mips)	\
 	$(nonsmoke_specimens_binary_any_any_ppc)	\
+	$(nonsmoke_specimens_binary_any_any_arm)	\
 	$(nonsmoke_specimens_binary_large),		\
 	$(nonsmoke_specimens_binary_any_exe_any))
 
@@ -1383,7 +1389,7 @@ testLazyInitialStates.passed: $(SPECIMEN_DIR)/i386-initialState testLazyInitialS
 		TITLE="lazy symbolic states [$@]"					\
 		DISABLED="$$(./conditionalDisable)"					\
 		USE_SUBDIR=yes								\
-		CMD="$$(pwd)/testLazyInitialStates --isa=i386 --start=0 map:0=rx::$<"	\
+		CMD="$$(pwd)/testLazyInitialStates --isa=i386 --function-at=0 map:0=rx::$<"	\
 		$(top_srcdir)/scripts/test_exit_status $@
 
 
@@ -1426,9 +1432,9 @@ noinst_PROGRAMS += testRandomInput
 testRandomInput_SOURCES = testRandomInput.C
 testRandomInput_LDADD = $(ROSE_SEPARATE_LIBS)
 
-testRandomInput_ISAs = amd64 arm coldfire i386 m68040 mips-be mips-le ppc32
+testRandomInput_ISAs = amd64 coldfire i386 m68040 mips-be mips-le ppc32-be ppc32-le ppc64-be ppc64-le
 testRandomInput_Targets = $(addprefix tri_, $(addsuffix .passed, $(testRandomInput_ISAs)))
-TEST_TARGETS += $(testRandomInput_Targets)
+TEST_TARGETS += $(testRandomInput_Targets) tri_a64.passed
 
 $(testRandomInput_Targets): tri_%.passed: testRandomInput conditionalDisable
 	@$(RTH_RUN)							\
@@ -1437,8 +1443,16 @@ $(testRandomInput_Targets): tri_%.passed: testRandomInput conditionalDisable
 		CMD="$$(pwd)/testRandomInput --size=50000 --isa=$*"	\
 		$(TEST_EXIT_STATUS) $@
 
+tri_a64.passed: testRandomInput conditionalDisable isA64Disabled
+	@$(RTH_RUN)							\
+		TITLE="disassemble random $* input [$@]"		\
+		DISABLED="$$(./conditionalDisable)$$(./isA64Disabled)"	\
+		CMD="$$(pwd)/testRandomInput --size=50000 --isa=$*"	\
+		$(TEST_EXIT_STATUS) $@
+
+
 PHONIES += check-random-input
-check-random-input: $(testRandomInput_Targets)
+check-random-input: $(testRandomInput_Targets) tri_a64.passed
 
 #############################################################################################
 # Serialization of IR nodes related to binary analysis
@@ -1603,7 +1617,8 @@ testDisassembler_LDADD = $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS +=					\
 	testDisassembler-ppc32.passed		\
 	testDisassembler-ppc64a.passed		\
-	testDisassembler-ppc64b.passed
+	testDisassembler-ppc64b.passed		\
+	testDisassembler-a64.passed
 
 # PowerPC-32 decoding PowerPC-32 instructions
 testDisassembler_ppc32_input = $(srcdir)/testDisassembler-ppc32.txt
@@ -1613,7 +1628,7 @@ testDisassembler-ppc32.passed: $(top_srcdir)/scripts/test_with_answer testDisass
 		TITLE="test disassembler PowerPC-32 [$@]"					\
 		DISABLED="$$(./conditionalDisable)"						\
 		USE_SUBDIR=no									\
-		CMD="$$(pwd)/testDisassembler --isa=ppc32 $(testDisassembler_ppc32_input)"	\
+		CMD="$$(pwd)/testDisassembler --isa=ppc32-be $(testDisassembler_ppc32_input)"	\
 		ANS="$(testDisassembler_ppc32_answer)"						\
 		$< $@
 
@@ -1625,7 +1640,7 @@ testDisassembler-ppc64a.passed: $(top_srcdir)/scripts/test_with_answer testDisas
 		TITLE="test disassembler PowerPC-64 [$@]"					\
 		DISABLED="$$(./conditionalDisable)"						\
 		USE_SUBDIR=no									\
-		CMD="$$(pwd)/testDisassembler --isa=ppc64 $(testDisassembler_ppc64a_input)"	\
+		CMD="$$(pwd)/testDisassembler --isa=ppc64-be $(testDisassembler_ppc64a_input)"	\
 		ANS="$(testDisassembler_ppc64a_answer)"						\
 		$< $@
 
@@ -1637,8 +1652,20 @@ testDisassembler-ppc64b.passed: $(top_srcdir)/scripts/test_with_answer testDisas
 		TITLE="test disassembler PowerPC-64 [$@]"					\
 		DISABLED="$$(./conditionalDisable)"						\
 		USE_SUBDIR=no									\
-		CMD="$$(pwd)/testDisassembler --isa=ppc64 $(testDisassembler_ppc64b_input)"	\
+		CMD="$$(pwd)/testDisassembler --isa=ppc64-be $(testDisassembler_ppc64b_input)"	\
 		ANS="$(testDisassembler_ppc64b_answer)"						\
+		$< $@
+
+# ARM AArch64 A64
+testDisassembler_a64_input = $(srcdir)/testDisassembler-a64.txt
+testDisassembler_a64_answer = $(srcdir)/testDisassembler-a64.ans
+testDisassembler-a64.passed: $(top_srcdir)/scripts/test_with_answer testDisassembler isA64Disabled $(testDisassembler_a64_input)
+	@$(RTH_RUN)										\
+		TITLE="test disassembler ARM AArch64 A64 [$@]"					\
+		DISABLED="$$(./isA64Disabled)"							\
+		USE_SUBDIR=no									\
+		CMD="$$(pwd)/testDisassembler --isa=a64 $(testDisassembler_a64_input)"		\
+		ANS="$(testDisassembler_a64_answer)"						\
 		$< $@
 
 

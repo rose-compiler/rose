@@ -27,8 +27,8 @@
 #include <string>
 
 #include "CodeThornException.h"
-#include "CodeThornException.h"
 #include "CommandLineOptions.h"
+#include "CodeThornLib.h"
 
 #include "limits.h"
 #include <cmath>
@@ -67,7 +67,7 @@ size_t numberOfFunctions(SgNode* node) {
 
 void printCodeStatistics(SgNode* root) {
   SgProject* project=isSgProject(root);
-  VariableIdMapping variableIdMapping;
+  VariableIdMappingExtended variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(project);
   VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
   DeadCodeElimination dce;
@@ -84,13 +84,15 @@ void printCodeStatistics(SgNode* root) {
 
 int main(int argc, char* argv[]) {
   ROSE_INITIALIZE;
+  CodeThorn::initDiagnostics();
+  cout<<"Woodpecker diagnostics initialized."<<endl;
   
   Rose::Diagnostics::mprefix->showProgramName(false);
   Rose::Diagnostics::mprefix->showThreadId(false);
   Rose::Diagnostics::mprefix->showElapsedTime(false);
 
-  Sawyer::Message::Facility logger;
-  Rose::Diagnostics::initAndRegister(&logger, "Woodpecker");
+  //Sawyer::Message::Facility logger;
+  //Rose::Diagnostics::initAndRegister(&CodeThorn::logger, "Woodpecker");
 
   try {
     if(argc==1) {
@@ -214,11 +216,10 @@ int main(int argc, char* argv[]) {
 
   VariableIdMappingExtended variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(root);
-  AbstractValue::setVariableIdMapping(&variableIdMapping);
-  variableIdMapping.computeTypeSizes();
-
+  AbstractValue::setVariableIdMapping(&variableIdMapping); // leave it 0 to get default-behavior
+  //variableIdMapping.computeTypeSizes();
   logger[TRACE]<<"STATUS: variable id mapping generated."<<endl;
-  
+
   if(args.isUserProvided("transform-thread-variable")) {
     Threadification* threadTransformation=new Threadification(&variableIdMapping);
     threadTransformation->transform(root);

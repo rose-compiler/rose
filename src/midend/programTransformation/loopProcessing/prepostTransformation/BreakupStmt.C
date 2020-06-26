@@ -4,11 +4,12 @@
 #include <LoopTransformInterface.h>
 #include <assert.h>
 #include <CommandOptions.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 size_t BreakupStatement::breaksize = 0;
 
-std::string BreakupStatement:: cmdline_help() 
-   { 
+std::string BreakupStatement:: cmdline_help()
+   {
     return "-bs <stmtsize> : break up statements in loops at <stmtsize>";
    }
 
@@ -18,7 +19,7 @@ void BreakupStatement:: cmdline_configure(const std::vector<std::string>& argv,
    unsigned index=0;
    if (!cmdline_find(argv,index,"-bs", unknown_args)) return;
    ++index;
-   if (index < argv.size()) 
+   if (index < argv.size())
        breaksize = atoi( argv[index].c_str());
    if (breaksize <= 0) {
          std::cerr << "invalid breaking size. Use default (12)\n";
@@ -32,7 +33,7 @@ void BreakupStatement:: cmdline_configure(const std::vector<std::string>& argv,
          append_args(argv,index,*unknown_args);
 }
 
-bool BreakupStatement::operator() ( AstInterface& fa, const AstNodePtr& s, 
+bool BreakupStatement::operator() ( AstInterface& fa, const AstNodePtr& s,
                                     AstNodePtr &res)
 {
     AstNodePtr lhs, rhs;
@@ -69,7 +70,7 @@ bool BreakupStatement::operator() ( AstInterface& fa, const AstNodePtr& s,
            for (std::list<AstNodePtr>::reverse_iterator p = stmtlist.rbegin(); p != stmtlist.rend(); ++p) {
               AstNodePtr cur = *p;
               fa.InsertStmt(s, cur);
-           }    
+           }
            res = s;
            return true;
     }

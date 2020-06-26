@@ -91,62 +91,62 @@ RiscOperators::get_important_registers()
         const RegisterDictionary *dictionary = currentState()->registerState()->get_register_dictionary();
 
         // General-purpose registers
-        important_registers.push_back(*dictionary->lookup("eax"));
-        important_registers.push_back(*dictionary->lookup("ebx"));
-        important_registers.push_back(*dictionary->lookup("ecx"));
-        important_registers.push_back(*dictionary->lookup("edx"));
-        important_registers.push_back(*dictionary->lookup("esp"));
-        important_registers.push_back(*dictionary->lookup("ebp"));
-        important_registers.push_back(*dictionary->lookup("esi"));
-        important_registers.push_back(*dictionary->lookup("edi"));
-        important_registers.push_back(*dictionary->lookup("eip"));
+        important_registers.push_back(dictionary->findOrThrow("eax"));
+        important_registers.push_back(dictionary->findOrThrow("ebx"));
+        important_registers.push_back(dictionary->findOrThrow("ecx"));
+        important_registers.push_back(dictionary->findOrThrow("edx"));
+        important_registers.push_back(dictionary->findOrThrow("esp"));
+        important_registers.push_back(dictionary->findOrThrow("ebp"));
+        important_registers.push_back(dictionary->findOrThrow("esi"));
+        important_registers.push_back(dictionary->findOrThrow("edi"));
+        important_registers.push_back(dictionary->findOrThrow("eip"));
 
         // Segment registers
-        important_registers.push_back(*dictionary->lookup("cs"));
-        important_registers.push_back(*dictionary->lookup("ds"));
-        important_registers.push_back(*dictionary->lookup("ss"));
-        important_registers.push_back(*dictionary->lookup("es"));
-        important_registers.push_back(*dictionary->lookup("fs"));
-        important_registers.push_back(*dictionary->lookup("gs"));
+        important_registers.push_back(dictionary->findOrThrow("cs"));
+        important_registers.push_back(dictionary->findOrThrow("ds"));
+        important_registers.push_back(dictionary->findOrThrow("ss"));
+        important_registers.push_back(dictionary->findOrThrow("es"));
+        important_registers.push_back(dictionary->findOrThrow("fs"));
+        important_registers.push_back(dictionary->findOrThrow("gs"));
 
         // Treat EFLAGS as individual bits
-        important_registers.push_back(*dictionary->lookup("cf"));
-        important_registers.push_back(*dictionary->lookup("pf"));
-        important_registers.push_back(*dictionary->lookup("af"));
-        important_registers.push_back(*dictionary->lookup("zf"));
-        important_registers.push_back(*dictionary->lookup("sf"));
-        important_registers.push_back(*dictionary->lookup("tf"));
-        important_registers.push_back(*dictionary->lookup("if"));
-        important_registers.push_back(*dictionary->lookup("df"));
-        important_registers.push_back(*dictionary->lookup("of"));
-        important_registers.push_back(*dictionary->lookup("nt"));
-        important_registers.push_back(*dictionary->lookup("iopl"));
-        important_registers.push_back(*dictionary->lookup("rf"));
-        important_registers.push_back(*dictionary->lookup("vm"));
-        important_registers.push_back(*dictionary->lookup("vif"));
-        important_registers.push_back(*dictionary->lookup("vip"));
-        important_registers.push_back(*dictionary->lookup("id"));
+        important_registers.push_back(dictionary->findOrThrow("cf"));
+        important_registers.push_back(dictionary->findOrThrow("pf"));
+        important_registers.push_back(dictionary->findOrThrow("af"));
+        important_registers.push_back(dictionary->findOrThrow("zf"));
+        important_registers.push_back(dictionary->findOrThrow("sf"));
+        important_registers.push_back(dictionary->findOrThrow("tf"));
+        important_registers.push_back(dictionary->findOrThrow("if"));
+        important_registers.push_back(dictionary->findOrThrow("df"));
+        important_registers.push_back(dictionary->findOrThrow("of"));
+        important_registers.push_back(dictionary->findOrThrow("nt"));
+        important_registers.push_back(dictionary->findOrThrow("iopl"));
+        important_registers.push_back(dictionary->findOrThrow("rf"));
+        important_registers.push_back(dictionary->findOrThrow("vm"));
+        important_registers.push_back(dictionary->findOrThrow("vif"));
+        important_registers.push_back(dictionary->findOrThrow("vip"));
+        important_registers.push_back(dictionary->findOrThrow("id"));
 
         // Floating point stuff, probably not handled too well yet.
-        important_registers.push_back(*dictionary->lookup("fpstatus"));
-        important_registers.push_back(*dictionary->lookup("fpctl"));
-        important_registers.push_back(*dictionary->lookup("mxcsr"));
-        important_registers.push_back(*dictionary->lookup("mm0"));
-        important_registers.push_back(*dictionary->lookup("mm1"));
-        important_registers.push_back(*dictionary->lookup("mm2"));
-        important_registers.push_back(*dictionary->lookup("mm3"));
-        important_registers.push_back(*dictionary->lookup("mm4"));
-        important_registers.push_back(*dictionary->lookup("mm5"));
-        important_registers.push_back(*dictionary->lookup("mm6"));
-        important_registers.push_back(*dictionary->lookup("mm7"));
-        important_registers.push_back(*dictionary->lookup("xmm0"));
-        important_registers.push_back(*dictionary->lookup("xmm1"));
-        important_registers.push_back(*dictionary->lookup("xmm2"));
-        important_registers.push_back(*dictionary->lookup("xmm3"));
-        important_registers.push_back(*dictionary->lookup("xmm4"));
-        important_registers.push_back(*dictionary->lookup("xmm5"));
-        important_registers.push_back(*dictionary->lookup("xmm6"));
-        important_registers.push_back(*dictionary->lookup("xmm7"));
+        important_registers.push_back(dictionary->findOrThrow("fpstatus"));
+        important_registers.push_back(dictionary->findOrThrow("fpctl"));
+        important_registers.push_back(dictionary->findOrThrow("mxcsr"));
+        important_registers.push_back(dictionary->findOrThrow("mm0"));
+        important_registers.push_back(dictionary->findOrThrow("mm1"));
+        important_registers.push_back(dictionary->findOrThrow("mm2"));
+        important_registers.push_back(dictionary->findOrThrow("mm3"));
+        important_registers.push_back(dictionary->findOrThrow("mm4"));
+        important_registers.push_back(dictionary->findOrThrow("mm5"));
+        important_registers.push_back(dictionary->findOrThrow("mm6"));
+        important_registers.push_back(dictionary->findOrThrow("mm7"));
+        important_registers.push_back(dictionary->findOrThrow("xmm0"));
+        important_registers.push_back(dictionary->findOrThrow("xmm1"));
+        important_registers.push_back(dictionary->findOrThrow("xmm2"));
+        important_registers.push_back(dictionary->findOrThrow("xmm3"));
+        important_registers.push_back(dictionary->findOrThrow("xmm4"));
+        important_registers.push_back(dictionary->findOrThrow("xmm5"));
+        important_registers.push_back(dictionary->findOrThrow("xmm6"));
+        important_registers.push_back(dictionary->findOrThrow("xmm7"));
     }
     return important_registers;
 }
@@ -211,7 +211,7 @@ RegisterDescriptor
 RiscOperators::get_insn_pointer_register()
 {
     const RegisterDictionary *dictionary = currentState()->registerState()->get_register_dictionary();
-    return *dictionary->lookup("eip");
+    return dictionary->findOrThrow("eip");
 }
 
 SValuePtr

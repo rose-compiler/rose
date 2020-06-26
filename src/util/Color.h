@@ -63,6 +63,9 @@ public:
 
     /** Convert to HTML string. */
     std::string toHtml() const;
+
+    /** Convert to ANSI color escape. */
+    std::string toAnsi() const;
 };
 
 /** Colors in HSV space.
@@ -102,6 +105,9 @@ public:
 
     /** Convert to HTML string. */
     std::string toHtml() const;
+
+    /** Convert to ANSI color escape. */
+    std::string toAnsi() const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -210,6 +216,13 @@ ROSE_UTIL_API HSV fade(const HSV&, double amount);
  *
  *  HTML color strings are of the form "#RRGGBB". */
 ROSE_UTIL_API std::string toHtml(const RGB&);
+
+/** Create an ANSI color escape.
+ *
+ * These characters can be emitted to an ANSI terminal after the appropriate escape sequence in order to change the foreground
+ * or background color.  The escape sequence is usually "\033[38;2;" for the foreground and "\033[48;2;" for the
+ * background. The foreground and background colors can be canceled by emitting "\033[0m". */
+ROSE_UTIL_API std::string toAnsi(const RGB&);
 
 // printing
 std::ostream& operator<<(std::ostream&, const RGB&);

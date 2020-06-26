@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 arg0="${0##*/}"
-source tup-scripts/rose_tool
+dir0="${0%/*}"
+source $dir0/rose_tool
 
 # Command-line defaults
 PROJECT=rose
@@ -26,10 +27,16 @@ help() {
 
 	DESCRIPTION
 
-	     Builds a binary release of all the files under the ROSE installation
-	     prefix, herein called \$ROSE_ROOT. The binary release will also include
-	     copies of various ROSE dependencies as identified by the ROSE Meta
-	     Configuration system.
+	     Builds a binary release of installed ROSE software.  This is typically run
+	     from a project that uses ROSE and therefore most of the information is
+	     obtained from the "rose.cfg" file in the current working directory. The
+	     "rose.cfg" is a copy of (or link to) the installed ROSE configuration file
+	     named either \$ROSE_ROOT/include/rose-installed-make.cfg (Tup builds) or
+	     \$ROSE_ROOT/lib/rose-config.cfg (Automake builds).
+
+	     The binary release that is built is a self-extracting archive containing
+	     all installed ROSE files, all additional software installed in the same
+	     area, and many 3rd party libraries that ROSE depends on.
 
 	     The resulting binary release is named OUTPUT_NAME. If no name is specified
 	     then a name is created based on the project name (see --project), the
@@ -70,9 +77,6 @@ EOF
 	#-------------------------------------------------------------------------------
     ) | "${PAGER-less}"
 }
-
-
-
 
 die() {
     echo "$arg0: error:" "$@" >&2
@@ -126,11 +130,24 @@ parse_command_line() {
     return 0
 }
 
+# Make a relative name absolute
+absolute_name() {
+    local name="$1"
+    case "$name" in
+	/*)
+	    echo "$name"
+	    ;;
+	*)
+	    echo "$(pwd)/$name"
+	    ;;
+    esac
+}
+
 # Retrieve a variable from the rose.cfg file that was copied into this project's source tree.
 rose_config() {
     local var="$1"
     [ -r rose.cfg ] || die "no rose.cfg file; see README.md"
-    sed -nr '/^ROSE_'"$var"'[ \t]*=/ s/^.*?=[ \t]*(.*?)[ \t]*$/\1/p' rose.cfg
+    sed -nr '/^ROSE_'"$var"'[ \t]*=/ s/^[_a-zA-Z0-9]*[ \t]*=[ \t]*(.*?)[ \t]*$/\1/p' rose.cfg
 }
 
 # Obtain a project version number if possible, otherwise the word "unknown".
@@ -194,9 +211,31 @@ mkinstaller_name() {
 libdirs() {
     for arg in $(rose_config LDFLAGS); do
         case "$arg" in
+	    -L/lib*|-L/usr/lib*)
+		# skip these. They should be installed already on the deployment machine and they have symlinks which
+		# cause problems for mkinstaller.
+		: skip
+		;;
             -L*)
                 local libdir="${arg#-L}"
                 echo $libdir
+                ;;
+        esac
+    done
+}
+
+# ROSE prerequisite header files need to be packaged up.
+incdirs() {
+    for arg in $(rose_config CPPFLAGS); do
+        case "$arg" in
+	    -I/usr/include*|-I/include*)
+		# skip these. They should be installed already on the deployment machine and they have symlinks which
+		# cause problems for mkinstaller.
+		: skip
+		;;
+            -I*)
+                local incdir="${arg#-I}"
+                echo $incdir
                 ;;
         esac
     done
@@ -312,15 +351,17 @@ create_installer() {
     mkdir "$tmp"
     trap "rm -rf '$tmp'" EXIT
 
+    rose_config CPPFLAGS
+
     # All paths in the following command need to be CWD independent
     run_and_print -C "$tmp" $mkinstaller \
 		  --create=partial-installer \
 		  --project-name=bat \
 		  --project-version=$project_version \
-		  --postinstall-bin="$(pwd)/post-install-script" \
+		  --postinstall-bin="$(absolute_name "$dir0/post-install-script")" \
 		  --CC="[$(rose_config CC),$(compiler_usual_name c)]" \
 		  --CXX="[$(rose_config CXX),$(compiler_usual_name c++)]" \
-		  $(dedup $(rose_config PREFIX)/* $(libdirs) $(qt5plugins))
+		  $(dedup $(rose_config PREFIX)/* $(incdirs) $(libdirs) $(qt5plugins))
 
     # We don't get here if run_and_print failed.
     mv "$tmp/partial-installer" "$output"
@@ -329,4 +370,6 @@ create_installer() {
 ########################################################################################################################
 
 parse_command_line "$@"
-create_installer "$(output_name)"
+output_name="$(output_name)"
+create_installer "$output_name"
+echo "$arg0: created binary release: $output_name"

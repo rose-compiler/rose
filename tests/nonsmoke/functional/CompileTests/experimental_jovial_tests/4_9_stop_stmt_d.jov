@@ -1,0 +1,9 @@
+START
+PROGRAM teststop ;
+BEGIN
+ label1: label2: Stop ;
+ label3:
+ STOP 1 ;
+ stop -21 ;
+END
+TERM

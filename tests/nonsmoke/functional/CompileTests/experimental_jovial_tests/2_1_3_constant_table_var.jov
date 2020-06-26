@@ -1,0 +1,19 @@
+START
+
+PROGRAM main ;
+BEGIN
+
+CONSTANT TABLE table'var = 13,14 ;
+  BEGIN
+    ITEM xpos U ;
+    ITEM ypos U ;
+  END
+ITEM xx U ;
+ITEM yy U ;
+
+xx = xpos;
+yy = ypos;
+
+END
+
+TERM

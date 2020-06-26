@@ -6,6 +6,7 @@
 #include "AnalysisInterface.h"
 #include <assert.h>
 #include "CommandOptions.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 
 bool DebugLocalInfoCollect ()
@@ -44,7 +45,7 @@ AppendFuncCallArguments( AstInterface& fa, const AstNodePtr& fc)
     AstNodePtr c = *p1;
     if ( c == AstNodePtr())
         continue;
-    operator()(fa, c); 
+    operator()(fa, c);
   }
 }
 
@@ -65,15 +66,15 @@ AppendFuncCallWrite( AstInterface& fa, const AstNodePtr& fc)
 }
 
 void StmtInfoCollect::operator()( AstInterface& fa, const AstNodePtr& h)
-{ 
+{
    AstNodePtr curstmttmp = curstmt;
-   ProcessAstTreeBase::operator()(fa, h); 
+   ProcessAstTreeBase::operator()(fa, h);
    curstmt = curstmttmp;
 }
 
-bool StmtInfoCollect :: 
-ProcessTree( AstInterface &fa, const AstNodePtr& s, 
-                       AstInterface::TraversalVisitType t) 
+bool StmtInfoCollect ::
+ProcessTree( AstInterface &fa, const AstNodePtr& s,
+                       AstInterface::TraversalVisitType t)
 {
  if (t == AstInterface::PreVisit) {
 
@@ -83,7 +84,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
       curstmt = s;
    }
    else  {
-      if (DebugLocalInfoCollect()) 
+      if (DebugLocalInfoCollect())
          std::cerr << "previsiting cur node " << AstInterface::AstToString(s) << "\n";
       if (curstmt == AST_NULL) {
         AstNodePtr s1 = fa.GetParent(s);
@@ -92,8 +93,8 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
            curstmt = s1;
         else if (DebugLocalInfoCollect())
             std::cerr << "curstmt = 0\n";
-           
-      } 
+
+      }
    }
 
    AstNodePtr lhs, rhs;
@@ -105,15 +106,15 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
      ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
      if (mp == 0 || mp->find(lhs) == mp->end()) {
         modstack.push_back(s);
-        modstack.back().modmap[lhs] =  ModRecord( rhs,readlhs); 
+        modstack.back().modmap[lhs] =  ModRecord( rhs,readlhs);
      }
    }
-   else if (fa.IsUnaryOp(s, &opr, &lhs) && 
+   else if (fa.IsUnaryOp(s, &opr, &lhs) &&
            (opr == AstInterface::UOP_INCR1 || opr == AstInterface::UOP_DECR1)){
      ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
      if (mp == 0 || mp->find(lhs) == mp->end()) {
         modstack.push_back(s);
-        modstack.back().modmap[lhs] =  ModRecord( lhs,true); 
+        modstack.back().modmap[lhs] =  ModRecord( lhs,true);
      }
    }
    else if (fa.IsVariableDecl( s, &vars, &args)) {
@@ -136,7 +137,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
    }
    else {
      if (fa.IsFunctionCall(s)) {
-         if (DebugLocalInfoCollect()) 
+         if (DebugLocalInfoCollect())
              std::cerr << " append function call " << AstInterface::AstToString(s) << std::endl;
          AppendFuncCall(fa, s);
          Skip(s);
@@ -149,7 +150,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
         }
         AstNodeList arglist;
         if (fa.IsArrayAccess(s, 0, &arglist))  {
-           for (AstNodeList::const_iterator p = arglist.begin(); 
+           for (AstNodeList::const_iterator p = arglist.begin();
                 p != arglist.end();  ++p) {
                AstNodePtr c = *p;
                operator()(fa, c);
@@ -157,15 +158,15 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
            Skip(s);
         }
       }
-   }   
+   }
  }
  else {
-      if (DebugLocalInfoCollect()) 
+      if (DebugLocalInfoCollect())
          std::cerr << "postvisiting cur node " << AstInterface::AstToString(s) << "\n";
        if (modstack.size() && modstack.back().root == s) {
           const ModMap &modmap = modstack.back().modmap;
           for ( ModMap::const_iterator p = modmap.begin();
-               p != modmap.end(); ++p) { 
+               p != modmap.end(); ++p) {
               std::pair<const AstNodePtr,ModRecord> c = *p;
              AppendModLoc( fa, c.first, c.second.rhs);
           }
@@ -186,24 +187,24 @@ class CollectReadRefWrap : public CollectObject<AstNodePtr>
   AstNodePtr stmt;
   AstInterface& fa;
  public:
-  CollectReadRefWrap( AstInterface& _fa, FunctionSideEffectInterface* f, 
-                      const AstNodePtr& _stmt, 
+  CollectReadRefWrap( AstInterface& _fa, FunctionSideEffectInterface* f,
+                      const AstNodePtr& _stmt,
                       CollectObject< std::pair< AstNodePtr, AstNodePtr> >* c)
     : collect(c), func(f), stmt(_stmt), fa(_fa) {}
   bool operator() ( const AstNodePtr& ref)
    {
       AstNodeList args;
       if (fa.IsFunctionCall(ref))
-         func->get_read(fa, ref, this); 
+         func->get_read(fa, ref, this);
       else if (fa.IsArrayAccess(ref, 0, &args)) {
-        for (AstNodeList::const_iterator p = args.begin(); 
+        for (AstNodeList::const_iterator p = args.begin();
              p != args.end(); ++p) {
                AstNodePtr c = *p;
                operator()(c);
         }
       }
       if (fa.IsMemoryAccess(ref)) {
-        if (DebugLocalInfoCollect()) 
+        if (DebugLocalInfoCollect())
            std::cerr << "appending reading " << AstInterface::AstToString(ref) << " : " << AstInterface::AstToString(stmt) << std::endl;
         if (collect != 0)
           (*collect)( std::pair<AstNodePtr, AstNodePtr>(ref, stmt));
@@ -226,13 +227,13 @@ class CollectModRefWrap : public CollectReadRefWrap
       AstNodeList args;
       if (fa.IsFunctionCall(ref, 0,&args) || fa.IsArrayAccess(ref, 0, &args)) {
         CollectReadRefWrap read(*this);
-        for (AstInterface::AstNodeList::const_iterator p = args.begin(); 
+        for (AstInterface::AstNodeList::const_iterator p = args.begin();
              p != args.end(); ++p) {
                AstNodePtr c = *p;
                read(c);
         }
       }
-      if (DebugLocalInfoCollect()) 
+      if (DebugLocalInfoCollect())
           std::cerr << "appending modifying " << AstInterface::AstToString(ref) << " : " << AstInterface::AstToString(stmt) << std::endl;
       if (mod != 0)
         (*mod)( std::pair<AstNodePtr, AstNodePtr>(ref, stmt));
@@ -242,7 +243,7 @@ class CollectModRefWrap : public CollectReadRefWrap
 
 void StmtSideEffectCollect::
 AppendModLoc( AstInterface& fa, const AstNodePtr& mod, const AstNodePtr& rhs)
-    {  
+    {
       if (DebugLocalInfoCollect()) {
           std::cerr << "appending modifying " << AstInterface::AstToString(mod) << " = " << AstInterface::AstToString(rhs) << std::endl;
       }
@@ -251,16 +252,16 @@ if(curstmt == 0) return;
        if (killcollect != 0 && rhs != AST_NULL)
             (*killcollect)( std::pair<AstNodePtr,AstNodePtr>(mod, curstmt));
        if (modcollect != 0)
-            (*modcollect)( std::pair<AstNodePtr,AstNodePtr>(mod, curstmt)); 
+            (*modcollect)( std::pair<AstNodePtr,AstNodePtr>(mod, curstmt));
     }
 void StmtSideEffectCollect::
 AppendReadLoc( AstInterface& fa, const AstNodePtr& read)
-    {   
+    {
       if (DebugLocalInfoCollect()) {
           std::cerr << "appending reading " << AstInterface::AstToString(read) << std::endl;
       }
        if (readcollect != 0)
-               (*readcollect)(std::pair<AstNodePtr,AstNodePtr>(read, curstmt)); 
+               (*readcollect)(std::pair<AstNodePtr,AstNodePtr>(read, curstmt));
     }
 
 void StmtSideEffectCollect::
@@ -269,14 +270,14 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
  CollectReadRefWrap read(fa, funcanal, curstmt, readcollect);
  if (funcanal == 0 || !funcanal->get_read(fa, fc, &read))  {
       readunknown = true;
-      if (DebugLocalInfoCollect()) 
+      if (DebugLocalInfoCollect())
          std::cerr << "no interprecedural read info for : " << AstInterface::AstToString(fc) << std::endl;
       AppendFuncCallArguments(fa, fc);
   }
 
   CollectModRefWrap mod(fa, funcanal, curstmt, readcollect, modcollect);
   if (funcanal == 0 || !funcanal->get_modify( fa, fc, &mod))  {
-      if (DebugLocalInfoCollect()) 
+      if (DebugLocalInfoCollect())
          std::cerr << "no interprecedural mod info for : " << AstInterface::AstToString(fc) << std::endl;
        AppendFuncCallWrite(fa, fc);
        modunknown = true;
@@ -290,12 +291,12 @@ class ModifyAliasMap : public CollectObject< std::pair<AstNodePtr, int> >
   UF_elem *repr;
   int index;
 public:
-  ModifyAliasMap(AstInterface& _fa, StmtVarAliasCollect::VarAliasMap& m) 
+  ModifyAliasMap(AstInterface& _fa, StmtVarAliasCollect::VarAliasMap& m)
     : fa(_fa), aliasmap(m), repr(0), index(-1) {}
 
-  void reset() 
-  { 
-    index = -1; 
+  void reset()
+  {
+    index = -1;
     repr = 0;
   }
 
@@ -312,9 +313,9 @@ public:
       }
     }
     else {
-      assert( cur.second > index); 
+      assert( cur.second > index);
       repr = aliasmap.get_alias_map(varname, scope);
-      if (DebugAliasAnal()) 
+      if (DebugAliasAnal())
          std::cerr << "cur alias-var repr:" << varname << std::endl;
       index = cur.second;
     }
@@ -324,7 +325,7 @@ public:
 
 Ast2StringMap* Ast2StringMap::handle = 0;
 
-Ast2StringMap* Ast2StringMap::inst() 
+Ast2StringMap* Ast2StringMap::inst()
 {
   if (handle == 0)
     handle = new Ast2StringMap();
@@ -335,8 +336,8 @@ std::string Ast2StringMap :: get_string( const AstNodePtr& s)
 {
   if ( s == AST_NULL) return "";
   MapType::const_iterator p = astmap.find(s);
-  if (p != astmap.end()) 
-    return (*p).second; 
+  if (p != astmap.end())
+    return (*p).second;
   std::stringstream buf;
   ++cur;
   buf <<  cur;
@@ -376,7 +377,7 @@ get_unique_name(AstInterface& fa, const AstNodePtr& exp)
 
 std:: string InterProcVariableUniqueRepr::
 get_unique_name(AstInterface& fa, const AstNodePtr& _scope, const std::string& varname)
-    { 
+    {
       if (_scope == AST_NULL) return varname;
       std::string fname;
       AstNodePtr func = fa.GetFunctionDefinition(_scope, &fname);
@@ -426,7 +427,7 @@ AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
     AstNodeType rhstype;
     AstNodePtr rhsscope;
     if (fa.IsVarRef(rhs, &rhstype, &rhsname, &rhsscope)) {
-      if (!fa.IsScalarType(rhstype)) 
+      if (!fa.IsScalarType(rhstype))
          aliasmap.get_alias_map(modname, modscope)->union_with(aliasmap.get_alias_map(rhsname, rhsscope));
     }
   }
@@ -444,7 +445,7 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
      }
      collect.reset();
      AstInterface::AstNodeList args;
-     if (!fa.IsFunctionCall( fc, 0, &args)) 
+     if (!fa.IsFunctionCall( fc, 0, &args))
          assert(false);
      for (AstInterface::AstNodeList::const_iterator p = args.begin();
            p != args.end(); ++p) {
@@ -454,7 +455,7 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
 }
 
 bool StmtVarAliasCollect::
-may_alias(AstInterface& fa, const AstNodePtr& r1, 
+may_alias(AstInterface& fa, const AstNodePtr& r1,
           const AstNodePtr& r2)
 {
   AstNodeType t1, t2;
@@ -470,7 +471,7 @@ may_alias(AstInterface& fa, const AstNodePtr& r1,
   std::string varname1, varname2;
   AstNodePtr scope1, scope2;
   bool global1, global2;
-  if (!fa.IsVarRef(r1, 0, &varname1, &scope1, &global1) 
+  if (!fa.IsVarRef(r1, 0, &varname1, &scope1, &global1)
       || !fa.IsVarRef(r2, 0, &varname2, &scope2, &global2)) {
     if (DebugAliasAnal()) {
        std::cerr << "no alias analysis between non_variables performed \n";
@@ -500,7 +501,7 @@ may_alias(AstInterface& fa, const AstNodePtr& r1,
 
 void StmtVarAliasCollect::
 operator()( AstInterface& fa, const AstNodePtr& funcdef)
-{ analyze(fa, funcdef); 
+{ analyze(fa, funcdef);
   return; }
 
 

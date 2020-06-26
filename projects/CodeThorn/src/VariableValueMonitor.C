@@ -35,50 +35,6 @@ void VariableValueMonitor::init(const PState* pstate) {
   }
 }
 
-AbstractValueSet VariableValueMonitor::getHotVariables(Analyzer* analyzer, const PState* pstate) {
-  if(pstate->stateSize()!=_variablesMap.size()) {
-    // found a new variable during analysis (e.g. local variable)
-    init(pstate);
-  }
-  AbstractValueSet hotVariables;
-  AbstractValueSet varIdSet=pstate->getVariableIds();
-  for(AbstractValueSet::iterator i=varIdSet.begin(); i!=varIdSet.end(); ++i) {
-    if(isHotVariable(analyzer,*i)) {
-      hotVariables.insert(*i);
-    }
-  }
-  return hotVariables;
-}
-
-AbstractValueSet VariableValueMonitor::getHotVariables(Analyzer* analyzer, const EState* estate) {
-  const PState* pstate=estate->pstate();
-  return getHotVariables(analyzer,pstate);
-}
-
-void VariableValueMonitor::update(Analyzer* analyzer,EState* estate) {
-  AbstractValueSet hotVariables=getHotVariables(analyzer,estate);
-  const PState* pstate=estate->pstate();
-  if(pstate->stateSize()!=_variablesMap.size()) {
-    //cerr<<"WARNING: variable map size mismatch (probably local var)"<<endl;
-    //cerr<<"... reinitializing."<<endl;
-    init(estate);
-  }
-      
-  AbstractValueSet varIdSet=pstate->getVariableIds();
-  for(AbstractValueSet::iterator i=varIdSet.begin(); i!=varIdSet.end(); ++i) {
-    AbstractValue varId=*i;
-    bool isHotVariable=hotVariables.find(varId)!=hotVariables.end();
-    if(!isHotVariable) {
-      if(pstate->varIsConst(varId)) {
-        AbstractValue abstractVal=pstate->varValue(varId);
-        ROSE_ASSERT(abstractVal.isConstInt());
-        int intVal=abstractVal.getIntValue();
-        _variablesMap[varId]->insert(intVal);
-      }
-    }
-  }
-}
-
 AbstractValueSet VariableValueMonitor::getVariables() {
   AbstractValueSet vset;
   for(map<AbstractValue,VariableMode>::iterator i=_variablesModeMap.begin();

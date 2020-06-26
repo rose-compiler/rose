@@ -1,15 +1,16 @@
 
 #include "broadway.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 using namespace std;
 
-annVariable::annVariable(string name, 
-			 string procedure_name,
-			 bool is_new,
-			 bool is_global,
-			 bool is_external,
-			 bool is_formal,
-			 bool is_io)
+annVariable::annVariable(string name,
+                         string procedure_name,
+                         bool is_new,
+                         bool is_global,
+                         bool is_external,
+                         bool is_formal,
+                         bool is_io)
     : _name(name),
 #ifdef __BINDINGS
       _bindings(),
@@ -37,10 +38,10 @@ annVariable::annVariable(string name,
     string variable_name = procedure_name + "::" + name;
 #ifdef __DECL
     _decl = new declNode(variable_name.c_str(),
-			 declNode::NONE,
-			 (typeNode *)0,
-			 (exprNode *)0,
-			 (exprNode *)0);
+                         declNode::NONE,
+                         (typeNode *)0,
+                         (exprNode *)0,
+                         (exprNode *)0);
 
     // -- Set the decl location to BLOCK. This is really important,
     // otherwise memoryModel::lookup_variable won't treat annotation
@@ -72,7 +73,7 @@ pointerValue & annVariable::get_binding(procLocation *where) {
 
 // --- Manage the bindings
 /*
-pointerValue & annVariable::binding(procLocation * loc) 
+pointerValue & annVariable::binding(procLocation * loc)
 {
   if ((loc == 0) &&
       ! _is_global)
@@ -85,7 +86,7 @@ pointerValue & annVariable::binding(procLocation * loc)
 }
 
 void annVariable::create_binding(memoryBlock * mb,
-				 procLocation * loc) 
+                                 procLocation * loc)
 {
   if ((loc == 0) &&
       ! _is_global)

@@ -890,7 +890,7 @@ int main(int argc, char* argv[]) {
   }
   programAbstractionLayer->initialize(root);
   if (args.isDefined("print-varid-mapping-array")) {
-    programAbstractionLayer->getVariableIdMapping()->setModeVariableIdForEachArrayElement(true);
+    //programAbstractionLayer->getVariableIdMapping()->setModeVariableIdForEachArrayElement(true);
   }
 
 #if 0

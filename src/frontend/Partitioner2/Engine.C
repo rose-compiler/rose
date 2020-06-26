@@ -318,12 +318,12 @@ Engine::partitionerSwitches(PartitionerSettings &settings) {
            "no effect if the input is a ROSE Binary Analysis (RBA) file, since the partitioner steps in such an input "
            "have already been completed.");
 
-    sg.insert(Switch("start")
-              .argument("addresses", listParser(nonNegativeIntegerParser(settings.startingVas)))
+    sg.insert(Switch("function-at")
+              .argument("addresses", listParser(nonNegativeIntegerParser(settings.functionStartingVas)))
               .whichValue(SAVE_ALL)
               .explosiveLists(true)
               .doc("List of addresses where recursive disassembly should start in addition to addresses discovered by "
-                   "other methods. Each address listed by this switch will be considered the entry point of a function. "
+                   "other methods. A function entry point will be insterted at each address listed by this switch. "
                    "This switch may appear multiple times, each of which may have multiple comma-separated addresses."));
 
     sg.insert(Switch("use-semantics")
@@ -1694,7 +1694,7 @@ Engine::runPartitionerInit(Partitioner &partitioner) {
     makeInterruptVectorFunctions(partitioner, settings_.partitioner.interruptVector);
 
     SAWYER_MESG(where) <<"marking user-defined functions\n";
-    makeUserFunctions(partitioner, settings_.partitioner.startingVas);
+    makeUserFunctions(partitioner, settings_.partitioner.functionStartingVas);
 }
 
 void

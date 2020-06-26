@@ -14,6 +14,7 @@
 #include <sstream>
 #include <list>
 #include <vector>
+#include <utility>
 
 #include <omp.h>
 
@@ -46,7 +47,7 @@
 // we use INT_MIN, INT_MAX
 #include "limits.h"
 #include "AstNodeInfo.h"
-#include "SgTypeSizeMapping.h"
+#include "TypeSizeMapping.h"
 #include "CallString.h"
 #include "CodeThornOptions.h"
 #include "LTLOptions.h"
@@ -158,6 +159,7 @@ namespace CodeThorn {
     FunctionIdMapping* getFunctionIdMapping();
     FunctionCallMapping* getFunctionCallMapping();
     FunctionCallMapping2* getFunctionCallMapping2();
+    Label getFunctionEntryLabel(SgFunctionRefExp* funRefExp);
     CTIOLabeler* getLabeler() const;
     Flow* getFlow();
     CodeThorn::PStateSet* getPStateSet();
@@ -238,9 +240,6 @@ namespace CodeThorn {
     bool getStdFunctionSemantics();
     void setStdFunctionSemantics(bool flag);
 
-    void setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping);
-    SgTypeSizeMapping* getTypeSizeMapping();
-
     /* command line options provided to analyzed application
        if set they are used to initialize the initial state with argv and argc domain abstractions
     */
@@ -301,8 +300,12 @@ namespace CodeThorn {
     void setLtlOptions(LTLOptions ltlOptions);
     LTLOptions& getLtlOptionsRef();
   protected:
-    // this function is protected to ensure it is not used from outside. It is supposed to be used
-    // only for internal timing managing the max-time option resource.
+    /* these functions are used for the internal timer for resource management
+       this function is protected to ensure it is not used from outside. It is supposed to be used
+       only for internal timing managing the max-time option resource.
+    */
+    void startAnalysisTimer();
+    void stopAnalysisTimer();
     long analysisRunTimeInSeconds();
 
     static Sawyer::Message::Facility logger;
@@ -365,6 +368,11 @@ namespace CodeThorn {
     std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
+
+    // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
+    typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
+    typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
+    MemoryUpdateList  evalAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
 
     // uses ExprAnalyzer to compute the result. Limits the number of results to one result only. Does not permit state splitting.
     // requires normalized AST
@@ -463,7 +471,6 @@ namespace CodeThorn {
     bool _timerRunning = false;
 
     std::vector<string> _commandLineOptions;
-    SgTypeSizeMapping _typeSizeMapping;
     bool _contextSensitiveAnalysis;
     // this is used in abstract mode to hold a pointer to the
     // *current* summary state (more than one may be created to allow
@@ -479,7 +486,7 @@ namespace CodeThorn {
     AnalyzedFunctionsContainerType analyzedFunctions;
     typedef std::unordered_set<SgFunctionCallExp*> ExternalFunctionsContainerType;
     ExternalFunctionsContainerType externalFunctions;
-    
+    //xxx
   private:
     //std::unordered_map<int,const EState*> _summaryStateMap;
     std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;

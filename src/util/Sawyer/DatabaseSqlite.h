@@ -76,7 +76,7 @@ private:
         sqlite3_busy_timeout(connection, 1000 /*ms*/);
     }
 
-    void close() {
+    void close() override {
         if (connection) {
             // Will return SQLITE_BUSY (a.k.a., "database is locked") if there are outstanding prepared statements. Due to
             // reference counting, this "close" function will only be called when none of those statements are in the EXECUTING
@@ -92,9 +92,9 @@ private:
         return "sqlite";
     }
     
-    Statement prepareStatement(const std::string &sql);
+    Statement prepareStatement(const std::string &sql) override;
 
-    size_t lastInsert() const {
+    size_t lastInsert() const override {
         ASSERT_not_null(connection);
         return boost::numeric_cast<size_t>(sqlite3_last_insert_rowid(connection));
     }

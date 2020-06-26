@@ -6194,15 +6194,11 @@ generateQualifiedName(const std::vector<MultipartReferenceType> & qualifiedNameL
 void
 fixup_forward_type_declarations()
    {
-#if 0
-     printf ("Inside of fixup_forward_type_declarations() \n");
-#endif
      SgScopeStatement* currentScope = astScopeStack.front();
-#if 0
-     printf ("Searching declarations in currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
-#endif
      Rose_STL_Container<SgNode*> typeList = NodeQuery::generateListOfTypes(currentScope);
 #if 0
+     printf ("Inside of fixup_forward_type_declarations() \n");
+     printf ("Searching declarations in currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
      printf ("typeList.size() = %" PRIuPTR " \n",typeList.size());
 #endif
 

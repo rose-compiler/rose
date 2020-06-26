@@ -351,11 +351,11 @@ private:
         switch (fpAnalyzer_->settings().nullDeref.mode) {
             case FeasiblePath::MAY:
                 if (solver) {
-                    SymbolicExpr::Ptr assertion = SymbolicExpr::makeEq(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), 0));
+                    SymbolicExpr::Ptr assertion = SymbolicExpr::makeLt(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), fpAnalyzer_->settings().nullDeref.minValid));
                     solver->insert(assertion);
                     retval = SmtSolver::SAT_YES == solver->check();
                 } else {
-                    retval = expr->mayEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 0));
+                    retval = SymbolicExpr::makeLt(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), fpAnalyzer_->settings().nullDeref.minValid))->mayEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 1));
                 }
                 break;
 
@@ -364,11 +364,11 @@ private:
                 // be able to return quickly.
                 if (!fpAnalyzer_->settings().nullDeref.constOnly ||  isConstExpr(expr)) {
                     if (solver) {
-                        SymbolicExpr::Ptr assertion = SymbolicExpr::makeNe(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), 0));
+                        SymbolicExpr::Ptr assertion = SymbolicExpr::makeGe(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), fpAnalyzer_->settings().nullDeref.minValid));
                         solver->insert(assertion);
                         retval = SmtSolver::SAT_NO == solver->check();
                     } else {
-                        retval = expr->mustEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 0));
+                        retval = SymbolicExpr::makeLt(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), fpAnalyzer_->settings().nullDeref.minValid))->mustEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 1));
                     }
                 } else {
                     SAWYER_MESG(debug) <<"          isNullDeref address is not constant as required by settings\n";
@@ -779,6 +779,13 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                                      "setting is ignored when the null-comparison mode is \"may\" since \"may\" implies that "
                                      "you're interested in additional cases where the pointer is not a constant expression.");
 
+    sg.insert(Switch("null-address-min")
+              .argument("n", nonNegativeIntegerParser(settings.nullDeref.minValid))
+              .doc("What is the min address that should not be teated as a null dereference. All memory reads that are less than n "
+                   " are considered a null dereference. This is to find when an offset is used on a null pointer such as accessing "
+                   "a member of a structure. The default is " + boost::lexical_cast<std::string>(settings.nullDeref.minValid) + " which is the default "
+                   "size of the first page on linux which can not be read from."));
+
     CommandLine::insertBooleanSwitch(sg, "ignore-semantic-failure", settings.ignoreSemanticFailure,
                                      "If set, then any instruction for which semantics are not implemented or for which the "
                                      "semantic evaluation fails will be ignored as if the instruction was not present in the "
@@ -838,13 +845,13 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
         // Where are return values stored?  FIXME[Robb Matzke 2015-12-01]: We need to support returning multiple values. We
         // should be using the new calling convention analysis to detect these.
         ASSERT_require(REG_RETURN_.isEmpty());
-        const RegisterDescriptor *r = NULL;
-        if ((r = registers_->lookup("rax")) || (r = registers_->lookup("eax")) || (r = registers_->lookup("ax"))) {
-            REG_RETURN_ = *r;
-        } else if ((r = registers_->lookup("d0"))) {
-            REG_RETURN_ = *r;                           // m68k also typically has other return registers
-        } else if ((r = registers_->lookup("r3"))) {
-            REG_RETURN_ = *r;                           // PowerPC also returns via r4
+        RegisterDescriptor r;
+        if ((r = registers_->find("rax")) || (r = registers_->find("eax")) || (r = registers_->find("ax"))) {
+            REG_RETURN_ = r;
+        } else if ((r = registers_->find("d0"))) {
+            REG_RETURN_ = r;                            // m68k also typically has other return registers
+        } else if ((r = registers_->find("r3"))) {
+            REG_RETURN_ = r;                            // PowerPC also returns via r4
         } else {
             ASSERT_not_implemented("function return value register is not implemented for this ISA/ABI");
         }
@@ -901,8 +908,8 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
     }
 
     // Direction flag (DF) is always set
-    if (const RegisterDescriptor *REG_DF = cpu->get_register_dictionary()->lookup("df"))
-        ops->writeRegister(*REG_DF, ops->boolean_(true));
+    if (const RegisterDescriptor REG_DF = cpu->get_register_dictionary()->findOrThrow("df"))
+        ops->writeRegister(REG_DF, ops->boolean_(true));
 
     initialState_ = ops->currentState()->clone();
 }

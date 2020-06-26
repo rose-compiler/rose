@@ -194,6 +194,10 @@ ROSE_DLL_API SgTypeFloat128* buildFloat128Type();
 //! Build a Jovial fixed type with a fraction specifier and a scale specifier
 ROSE_DLL_API SgTypeFixed* buildFixedType(SgExpression* fraction, SgExpression* scale);
 
+// Rasmussen (5/5/2020): Added builder for Jovial bit type
+//! Build a Jovial bit type of a given size
+ROSE_DLL_API SgJovialBitType* buildJovialBitType(SgExpression* size);
+
 //! DQ (8/21/2010): We want to move to the new buildStringType( SgExpression*,size_t) function over the older buildStringType() function.
 ROSE_DLL_API SgTypeString* buildStringType();
 // SgTypeString* buildStringType( SgExpression* stringLengthExpression, size_t stringLengthLiteral );
@@ -223,6 +227,8 @@ ROSE_DLL_API SgTypeUnsignedLong*    buildUnsignedLongType();
 ROSE_DLL_API SgTypeUnsignedLongLong*    buildUnsignedLongLongType();
 ROSE_DLL_API SgTypeUnsignedShort*    buildUnsignedShortType();
 ROSE_DLL_API SgTypeUnknown * buildUnknownType();
+
+ROSE_DLL_API SgAutoType * buildAutoType();
 
 // Rasmussen (2/20/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
 //! Builder functions for primitive types with type size (kind) expressions
@@ -949,7 +955,7 @@ buildVariableDeclaration(const char* name, SgType *type, SgInitializer *varInit=
 // ROSE_DLL_API SgVariableDeclaration*
 // buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 ROSE_DLL_API SgVariableDeclaration*
-buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope, bool builtFromUseOnly = false);
+buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope, bool builtFromUseOnly = false, SgStorageModifier::storage_modifier_enum sm = SgStorageModifier::e_default);
 
 //! Build variable definition
 ROSE_DLL_API SgVariableDefinition*
@@ -996,6 +1002,7 @@ buildFunctionParameterList(SgFunctionParameterTypeList * paraTypeList);
 ROSE_DLL_API SgFunctionParameterList*
 buildFunctionParameterList_nfi(SgFunctionParameterTypeList * paraTypeList);
 
+SgCtorInitializerList * buildCtorInitializerList_nfi();
 //! DQ (2/11/2012): Added support to set the template name in function template instantiations (member and non-member).
 ROSE_DLL_API void setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* func, const SgName & name );
 
@@ -1016,12 +1023,23 @@ ROSE_DLL_API void setTemplateParametersInDeclaration              ( SgDeclaratio
 
 //! Build a prototype for a function, handle function type, symbol etc transparently
 // DQ (7/26/2012): Changing the API to include template arguments so that we can generate names with and without template arguments (to support name mangiling).
-ROSE_DLL_API SgFunctionDeclaration*
-buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
+ROSE_DLL_API SgFunctionDeclaration * buildNondefiningFunctionDeclaration(
+  const SgName & name,
+  SgType * return_type,
+  SgFunctionParameterList *parlist,
+  SgScopeStatement* scope = NULL,
+  SgExprListExp* decoratorList = NULL,
+  bool buildTemplateInstantiation = false,
+  SgTemplateArgumentPtrList * templateArgumentsList = NULL,
+  SgStorageModifier::storage_modifier_enum sm = SgStorageModifier::e_default
+);
 
-// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
-// We need to decide if the SageBuilder API should include these sorts of functions.
-ROSE_DLL_API SgFunctionDeclaration* buildNondefiningFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope = NULL, SgExprListExp* decoratorList = NULL);
+//! Build a prototype for an existing function declaration (defining or nondefining is fine)
+ROSE_DLL_API SgFunctionDeclaration * buildNondefiningFunctionDeclaration(
+  const SgFunctionDeclaration * funcdecl,
+  SgScopeStatement * scope = NULL,
+  SgExprListExp * decoratorList = NULL
+);
 
 // DQ (8/11/2013): Even though template functions can't use partial specialization, they can be specialized,
 // however the specialization does not define a template and instead defines a template instantiation, so we
@@ -1034,10 +1052,6 @@ buildNondefiningTemplateFunctionDeclaration (const SgName & name, SgType* return
 // DQ (12/1/2011): Adding support for template declarations into the AST.
 ROSE_DLL_API SgTemplateFunctionDeclaration*
 buildDefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, SgTemplateFunctionDeclaration* first_nondefining_declaration);
-
-//! Build a prototype for an existing function declaration (defining or nondefining is fine)
-ROSE_DLL_API SgFunctionDeclaration *
-buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 //! Build a prototype member function declaration
 // SgMemberFunctionDeclaration * buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);

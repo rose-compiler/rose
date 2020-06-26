@@ -4,7 +4,7 @@
  *  \brief Demonstrates the pragma-interface of the Outliner.
  *
  *  \author Richard Vuduc <richie@llnl.gov>
- *
+ *          Chunhua Liao <liao6@llnl.gov>
  *  This utility has a special option, "-rose:outline:preproc-only",
  *  which can be used just to see the results of the outliner's
  *  preprocessing phase.

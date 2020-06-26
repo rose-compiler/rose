@@ -12,7 +12,7 @@
       <h3>
          <center>
             <nobr>
-               mkinstaller (rev. 2.6.0.2)
+               mkinstaller (rev. 2.6.2.2)
             </nobr>
          </center>
       </h3>
@@ -115,7 +115,7 @@
                <li><b>Transport</b>. This is the process of taking a copy of the
                    generated installer script that was produced in phase 2 from
                    the <b>source</b> system to the <b>target</b> system. The details of this
-                   are not discussed here howerver such transport generally
+                   are not discussed here however such transport generally
                    involves <i>scp</i>, <i>ftp</i>, <i>curl</i>, CD, DVD, USB-drive, or a download from
                    a web site.
                </li>
@@ -377,6 +377,18 @@
                must supply a pathname for the installation prefix.
             </blockquote>
 
+            <b>--exclude=</b><i>pattern</i>
+            <blockquote>
+               Exclude files whose basenames match the given globbing pattern.
+               Note that the pattern almost always needs to be quoted as such
+               patterns typically contain characters that are significant to
+               the shell. For example: <b><big><code>--exclude='*.a'</code></big></b>
+            </blockquote>
+            <blockquote>
+               This option is not well supported on Windows-like hosts at this
+               time.
+            </blockquote>
+
             <b>--fill</b>
             <blockquote>
                On Windows-like platforms the underlying <i>NSIS</i> tool will fail
@@ -633,7 +645,7 @@
    -v3
 </pre>
 <p>
-               is equavalent to: <br>
+               is equivalent to: <br>
                <p>
 <p>
 <pre>
@@ -668,7 +680,7 @@
                <i>name</i> in the option name is typically something like <b><big><code>bin</code></big></b>,
                <b><big><code>include</code></big></b>, <b><big><code>lib</code></big></b>, ... and like <i>pathname</i> below, may not contain
                any spaces, tabs, or dashes. If such an installation directory
-               hasen't been specified then the appropriate work will be done
+               hasn't been specified then the appropriate work will be done
                so that the installer will have such a directory containing
                the specified file.
             </blockquote>
@@ -765,7 +777,7 @@
 </pre>
             </blockquote>
             The <b><big><code>-v2</code></big></b> option indicates (enhanced) verbose output is desired.
-            Note that verbose output is generally benificial. Also note that
+            Note that verbose output is generally beneficial. Also note that
             the trailing backslash was the continuation mark from the above
             very long command above (an honest cut/paste), it is not part
             of this option or any of the following options and parameters.
@@ -872,7 +884,7 @@ CXX=g++ \
             <b>INEFFECTIVE_mkinstaller</b>
             <blockquote>
                If this environment variable has been set then the generated
-               script will lack a payload and may not even be runable. Note
+               script will lack a payload and may not even be runnable. Note
                that this feature is almost never used except when debugging
                the script generation process.
             </blockquote>
@@ -1010,7 +1022,7 @@ CXX=g++ \
          <blockquote>
             <b>Details of the installer construction process on UNIX:</b>
             <blockquote>
-               Aside from initalization and command line processing the UNIX
+               Aside from initialization and command line processing the UNIX
                implementation of <i>mkinstaller</i> goes through the following steps:
                <ol>
                   <li>Determination of a suitable temp directory. Much of the work
@@ -1098,7 +1110,7 @@ CXX=g++ \
                   </li>
                   <li><b><big><code>PREFIX</code></big></b> and <b><big><code>PREFIX_</code></big></b><i>xxx</i> values are established from command
                       line options. If appropriate options aren't supplied to
-                      install all directories then the installer script will propmpt
+                      install all directories then the installer script will prompt
                       for the necessary pathname(s). The installer script will
                       create the directories if necessary.
                   </li>
@@ -1117,18 +1129,18 @@ CXX=g++ \
                       steps (6) and (8).
                   </li>
                   <li>If (5) revealed a pre-install script then it will be executed
-                      by the approptiate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
+                      by the appropriate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
                       and/or <b><big><code>PREFIX_</code></big></b><i>xxx</i> directories will be supplied as an option to
                       this pre-install script (such as  <b><big><code>--prefix_bin=</code></big></b><i>pathname</i>). Also
                       note at this time the individual tarballs representing the
                       directories to install have NOT be unwrapped.
                   </li>
                   <li>Each individual tarball revealed (5) is unwrapped into the
-                      approperiate <b><big><code>PREFIX</code></big></b> directory overlying anything already
+                      appropriate <b><big><code>PREFIX</code></big></b> directory overlying anything already
                       there.
                   </li>
                   <li>If (5) revealed a post-install script then it will be executed
-                      by the approptiate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
+                      by the appropriate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
                       directories will be supplied as an option to this post-install
                       script (such as <b><big><code>--prefix_bin=</code></big></b><i>pathname</i>).
                   </li>
@@ -1148,7 +1160,7 @@ CXX=g++ \
             </blockquote>
             <b>Details of the installer construction process on Windows:</b>
             <blockquote>
-               Aside from initalization and command line processing the Windows
+               Aside from initialization and command line processing the Windows
                implementation of <i>mkinstaller</i> goes through the following steps:
                <ol>
                   <li>Determination of a suitable temp directory. Much of the work
@@ -1202,22 +1214,22 @@ CXX=g++ \
                The default use of the generated installer will produce a new
                directory on the user's desktop.
                <blockquote>
-                  circus> <b><big><code>installer.exe</code></big></b>
+                  bigtop> <b><big><code>installer.exe</code></big></b>
                </blockquote>
                A different prefix may be specified using the <b><big><code>/D</code></big></b> option:
                <blockquote>
-                  circus> <b><big><code>installer.exe /D=E:\opt\banana</code></big></b>
+                  bigtop> <b><big><code>installer.exe /D=E:\opt\banana</code></big></b>
                </blockquote>
                Note that the prefix directory will be creates as necessary
                however the uninstaller will only (recursively) delete the
                final directory component. In the above example only
-               <b><big><code>E:\opt\banana</code></big></b> will be (recursivly deleted, but the
+               <b><big><code>E:\opt\banana</code></big></b> will be (recursively deleted, but the
                directory <b><big><code>E:\opt</code></big></b> will be left intact.
             </blockquote>
             <blockquote>
                Note that the generated installer will pop-up a progress bar dialog
                box to indicate the installation progress. The above examples were
-               run by bozo on circus.other.net
+               run by bozo on bigtop.highwire.net
             </blockquote>
          </blockquote>
       </blockquote>
@@ -1248,11 +1260,11 @@ CXX=g++ \
       <h3>
          <center>
             <nobr>
-               mkinstaller (rev. 2.6.0.2)
+               mkinstaller (rev. 2.6.2.2)
             </nobr>
          </center>
       </h3>
 
-      <i>This man page was generated by mkinstaller 2.6.0.2 using the <code>--html</code> option. Revised 27Apr2020,18:36:43z</i>
+      <i>This man page was generated by mkinstaller 2.6.2.2 using the <code>--html</code> option. Revised 13Jun2020,21:23:10z</i>
    </body>
 </html>

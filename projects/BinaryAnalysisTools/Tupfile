@@ -64,6 +64,7 @@ run for iname in $(xml2json_INPUT); do \
         output=${basename}.json; \
         answer=./TestAnswers/${basename}.xml.ans; \
         $(test) rose-xml2json -i ${input} -i ${answer} -o "${basename#xml2json-}" -x ${output} --answer=${answer} --filter='jq .' \
+	    --disabled="`jq -V >/dev/null 2>&1 || echo 'jq not installed'`" \
 	    "./rose-xml2json ${input} ${output} && cat ${output}"; \
     done
 

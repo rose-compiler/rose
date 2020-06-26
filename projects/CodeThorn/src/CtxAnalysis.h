@@ -1,6 +1,7 @@
 #ifndef CTX_ANALYSIS_H
 #define CTX_ANALYSIS_H 1
 
+/// \author Peter Pirkelbauer
 
 #include "CtxLattice.h"
 #include "CtxTransfer.h"
@@ -9,8 +10,8 @@
 namespace CodeThorn
 {
 
-//! implements the Decorator pattern to enhance the
-//!   PropertyStateFactory with context specific functionality
+/// implements the Decorator pattern to enhance the
+///   PropertyStateFactory with context specific functionality
 template <class CallContext>
 struct CtxPropertyStateFactory : PropertyStateFactory
 {
@@ -37,8 +38,8 @@ struct CtxPropertyStateFactory : PropertyStateFactory
 };
 
 
-//! analysis class that wraps a context-sensitive analysis around
-//!   a non-context-sensitive forward analysis.
+/// analysis class that wraps a context-sensitive analysis around
+///   a non-context-sensitive forward analysis.
 template <class CallContext>
 struct CtxAnalysis : DFAnalysisBase
 {
@@ -59,47 +60,6 @@ struct CtxAnalysis : DFAnalysisBase
       _transferFunctions = &ctxTransfer;
       _transferFunctions->setInitialElementFactory(&ctxFactory);
     }
-
-/*
-    void initializeExtremalValue(Lattice* element) ROSE_OVERRIDE
-    {
-      ROSE_ASSERT(element);
-
-      // the initial extremalValue will be set to an empty lattice
-      context_lattice_t& lat = dynamic_cast<context_lattice_t&>(*element);
-      Lattice*           sub = lat.componentFactory().create();
-
-      ROSE_ASSERT(lat.isBot());
-      // subAnalysis.initializeExtremalValue(sub);
-      lat[context_t()] = sub;
-    }
-
-
-    void initializeTransferFunctions() ROSE_OVERRIDE
-    {
-      base::initializeTransferFunctions();
-
-      subAnalysis.initializeTransferFunctions();
-    }
-
-    Lattice* initializeGlobalVariables(SgProject* root) ROSE_OVERRIDE
-    {
-      // subAnalysis.initializeGlobalVariables(root);
-      return base::initializeGlobalVariables(root);
-    }
-*/
-
-/*
-    // shadows non-virtual function in base class
-    void initialize(SgProject* root, bool variableIdForEachArrayElement = false) ROSE_OVERRIDE
-    void initialize(SgProject* root, bool createCFG=true, ProgramAbstractionLayer* programAbstractionLayer=nullptr, bool variableIdForEachArrayElement = false)
-    {
-      base::initialize(root, variableIdForEachArrayElement);
-
-      // \todo do we need to initialize component?
-      subAnalysis.initialize(root, variableIdForEachArrayElement);
-    }
-*/
 
     const CtxLattice<CallContext>&
     getCtxLattice(Label lbl)
@@ -129,13 +89,13 @@ struct CtxAnalysis : DFAnalysisBase
     const CtxLattice<CallContext>&
     getCallSiteLattice(Label lblret)
     {
-      Labeler&     labeler = *getLabeler();
-      ROSE_ASSERT(labeler.isFunctionCallReturnLabel(lblret));
-
-      SgStatement* call = SG_ASSERT_TYPE(SgStatement, astNode(labeler, lblret));
-      return getCallSiteLattice(*call);
+      Labeler& labeler = *getLabeler();
+      ROSE_ASSERT(labeler.isFunctionCallReturnLabel(lblret) && (lblret.getId() > 0));
+      
+      Label    lblcall(lblret.getId()-1);
+      
+      return getCtxLattice(lblcall);
     }
-
 
     CtxPropertyStateFactory<context_t>& factory()  { return ctxFactory;  }
     CtxTransfer<context_t>&             transfer() { return ctxTransfer; }

@@ -24,8 +24,7 @@ BENCH_PASS=0
 BENCH_FAIL=0
 
 function DomainTests {
-testNumbers=`echo {001..027}`
-#testNumbers=`echo 024`
+testNumbers=`echo {001..032}`
 echo "Scheduled tests: $testNumbers"
 for testNumber in $testNumbers; do
     benchmarkprefix=$TESTDIR/DOM${testNumber};
@@ -33,7 +32,7 @@ for testNumber in $testNumbers; do
         benchmarkname=$(basename $benchmark)
         printf "Testing %-35s: " $benchmarkname
         CT_OUTPUT_FILE=$benchmarkname.imout
-        ./codethorn $benchmark --normalize-all=yes --interpreter-mode=1 --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR > /dev/null
+        ./codethorn $benchmark --normalize-all=yes --interpreter-mode=1 --in-state-string-literals --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR > /dev/null
         if [ ! $? -eq 0 ]
         then
 	    echo $COLORED_FAIL
