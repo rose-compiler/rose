@@ -395,6 +395,9 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
    \brief Not sure the classifications right now
  */
 
+  //! Recursively print current and parent nodes. used within gdb to probe the context of a node.
+  void recursivePrintCurrentAndParent (SgNode* n) ;
+
    //! Save AST into a pdf file. Start from a node to find its enclosing file node. The entire file's AST will be saved into a pdf.
    void saveToPDF(SgNode* node, std::string filename);
    void saveToPDF(SgNode* node); // enable calling from gdb

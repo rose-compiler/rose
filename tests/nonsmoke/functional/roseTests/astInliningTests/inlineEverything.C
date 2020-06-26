@@ -29,6 +29,7 @@ isAstContaining(SgNode *haystack, SgNode *needle) {
 
 // only call doInlinine(), without postprocessing or consistency checking. Useful to debugging things. 
 static bool e_inline_only= false; 
+static int e_inline_limit= 99999999; 
 
 int
 main (int argc, char* argv[]) {
@@ -48,6 +49,7 @@ main (int argc, char* argv[]) {
     cout<<" -skip-postprocessing: Skip postprocessing which cleanups code"<<endl;
     cout<<" -process-headers:     Process calls within header files"<<endl;
     cout<<" -verbose:            Printout debugging information"<<endl;
+    cout<<" -limit N:            Outline up to N functions, then stop"<<endl;
     cout<<"----------------------Generic Help for ROSE tools--------------------------"<<endl;
   }
 
@@ -59,6 +61,11 @@ main (int argc, char* argv[]) {
   }
   else 
     e_inline_only = false;
+
+  if (CommandlineProcessing::isOptionWithParameter (argvList,"", "-limit", e_inline_limit, true))
+  {
+    cout<<"Limiting the number of functions to be outlined to be:" << e_inline_limit <<endl;
+  }
 
   // skip calls within headers or not
   if (CommandlineProcessing::isOption (argvList,"-process-headers","", true))
@@ -86,10 +93,22 @@ main (int argc, char* argv[]) {
 // this is essentially recursion by default.
   int call_count =0; 
   size_t nInlined = 0;
-  for (int count=0; count<10; ++count) {
+  for (int count=0; count<10; ++count) 
+  {
     bool changed = false;
-    BOOST_FOREACH (SgFunctionCallExp *call, SageInterface::querySubTree<SgFunctionCallExp>(sageProject)) {
+//    BOOST_FOREACH (SgFunctionCallExp *call, SageInterface::querySubTree<SgFunctionCallExp>(sageProject)) 
+// interesting user loops are often located in the end of the source file    
+    BOOST_REVERSE_FOREACH (SgFunctionCallExp *call, SageInterface::querySubTree<SgFunctionCallExp>(sageProject)) 
+    {
       call_count++; 
+      if (call_count>  e_inline_limit )
+      {
+        if (Inliner::verbose)        
+             std::cout << "Reached the limit of number of functions:" << call_count << std::endl;
+          break; 
+      }
+     if (Inliner::verbose)        
+         std::cout << "Trying to inline the function id (starting from 1):" << call_count << std::endl;
       if (doInline(call)) {
         ASSERT_always_forbid2(isAstContaining(sageProject, call),
             "Inliner says it inlined, but the call expression is still present in the AST.");
