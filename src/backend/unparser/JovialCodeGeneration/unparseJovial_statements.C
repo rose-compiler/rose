@@ -710,7 +710,7 @@ void Unparse_Jovial::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
       SgTypedefDeclaration* typedef_decl = isSgTypedefDeclaration(stmt);
       ROSE_ASSERT(typedef_decl);
 
-      curprint("TYPE ");
+      curprint_indented("TYPE ", info);
 
       SgName name = typedef_decl->get_name();
       curprint(name.str());
@@ -772,7 +772,7 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgName enum_name = enum_decl->get_name();
      SgType* field_type = enum_decl->get_field_type();
 
-     curprint("TYPE ");
+     curprint_indented("TYPE ", info);
      curprint(enum_name.str());
      curprint(" STATUS");
 
@@ -860,7 +860,7 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
       SgJovialTableType* table_type = isSgJovialTableType(type);
       ASSERT_not_null(table_type);
 
-      curprint("TYPE ");
+      curprint_indented("TYPE ", info);
       curprint(table_name);
 
       if (is_block) curprint(" BLOCK ");
@@ -931,9 +931,10 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // Unparse body if present
      if (table_def->get_members().size() > 0)
         {
-           curprint("BEGIN");
-           unp->cur.insert_newline(1);
+           info.inc_nestingLevel();
+           curprint_indented("BEGIN\n", info);
 
+           info.inc_nestingLevel();
            foreach(SgDeclarationStatement* item_decl, table_def->get_members())
               {
                  if (isSgVariableDeclaration(item_decl))
@@ -950,10 +951,11 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     }
                  else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
               }
+           info.dec_nestingLevel();
 
            unp->cur.insert_newline(1);
-           curprint("END");
-           unp->cur.insert_newline(1);
+           curprint_indented("END\n", info);
+           info.dec_nestingLevel();
         }
    }
 

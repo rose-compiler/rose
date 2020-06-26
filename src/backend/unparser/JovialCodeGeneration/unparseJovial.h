@@ -102,7 +102,8 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           void unparseOverlayExpr (SgExprListExp* overlay, SgUnparse_Info& info);
 
        // Initializers
-          virtual void unparseAssnInit       (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseAssnInit    (SgExpression* expr, SgUnparse_Info& info);
+          void         unparseTablePreset (SgExpression* expr, SgUnparse_Info& info);
 
        // Table dimension list
           void unparseDimInfo (SgExprListExp* dim_info, SgUnparse_Info& info);

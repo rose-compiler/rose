@@ -150,11 +150,11 @@ ATbool traverse_ItemPreset            (ATerm term, SgExpression* &preset);
 ATbool traverse_ItemPresetValue       (ATerm term, SgExpression* &preset);
 ATbool traverse_OptItemPresetValue    (ATerm term, SgExpression* &preset);
 ATbool traverse_TablePreset           (ATerm term, SgExpression* &preset);
-ATbool traverse_TablePresetList       (ATerm term, SgExprListExp* preset_list);
-ATbool traverse_DefaultPresetSublist  (ATerm term, SgExprListExp* preset_list);
-ATbool traverse_SpecifiedPresetSublist(ATerm term, SgExprListExp* preset_list);
-ATbool traverse_PresetIndexSpecifier  (ATerm term, SgInitializer* preset_list);
-ATbool traverse_PresetValuesOption    (ATerm term, SgExpression* &preset);
+ATbool traverse_TablePresetList       (ATerm term, SgJovialTablePresetExp* table_preset);
+ATbool traverse_DefaultPresetSublist  (ATerm term, SgExprListExp* default_sublist);
+ATbool traverse_SpecifiedPresetSublist(ATerm term, SgExprListExp* specified_sublist);
+ATbool traverse_PresetIndexSpecifier  (ATerm term, SgExprListExp* index_specifier_list);
+ATbool traverse_PresetValuesOption    (ATerm term, SgExpression*  &preset);
 
 // 2.2 TYPE DECLARATIONS
 ATbool traverse_TypeDeclaration       (ATerm term);

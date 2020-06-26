@@ -932,7 +932,7 @@ HEADER_BIT_AND_OPERATOR_END
 HEADER_BIT_OR_OPERATOR_START
 HEADER_BIT_OR_OPERATOR_END
 
-// Rasmussen (4/28/2020): Added SgBitEqvOp to support the Jovial bitwise operator.
+// CR (4/28/2020): Added SgBitEqvOp to support the Jovial bitwise operator.
 HEADER_BIT_EQV_OPERATOR_START
 HEADER_BIT_EQV_OPERATOR_END
 
@@ -1822,6 +1822,10 @@ HEADER_DESIGNATED_INITIALIZER_START
 #endif
 
 HEADER_DESIGNATED_INITIALIZER_END
+
+// CR (6/25/2020): Added SgJovialTablePreset to support initializers for Jovial tables
+HEADER_JOVIAL_TABLE_PRESET_EXP_START
+HEADER_JOVIAL_TABLE_PRESET_EXP_END
 
 HEADER_UPC_LOCAL_SIZEOF_EXPRESSION_START
 //        virtual unsigned int cfgIndexForEnd() const;
@@ -5285,7 +5289,7 @@ SOURCE_BIT_AND_OPERATOR_EXPRESSION_END
 SOURCE_BIT_OR_OPERATOR_EXPRESSION_START
 SOURCE_BIT_OR_OPERATOR_EXPRESSION_END
 
-// Rasmussen (4/28/2020): Added SgBitEqvOp to support the Jovial bitwise operator.
+// CR (4/28/2020): Added SgBitEqvOp to support the Jovial bitwise operator.
 SOURCE_BIT_EQV_OPERATOR_EXPRESSION_START
 SOURCE_BIT_EQV_OPERATOR_EXPRESSION_END
 
@@ -9357,6 +9361,33 @@ SgDesignatedInitializer::get_next(int& n) const
    }
 
 SOURCE_DESIGNATED_INITIALIZER_END
+
+
+SOURCE_JOVIAL_TABLE_PRESET_EXP_START
+
+void
+SgJovialTablePresetExp::post_construction_initialization()
+   {
+     if (p_default_sublist)
+       {
+          p_default_sublist->set_parent(this);
+       }
+     if (p_specified_sublist)
+       {
+          p_specified_sublist->set_parent(this);
+       }
+   }
+
+SgType*
+SgJovialTablePresetExp::get_type() const
+{
+  SgAssignInitializer* parent = isSgAssignInitializer(get_parent());
+  ROSE_ASSERT(parent);
+
+  return parent->get_type();
+}
+
+SOURCE_JOVIAL_TABLE_PRESET_EXP_END
 
 
 
