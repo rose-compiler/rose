@@ -1633,21 +1633,19 @@ traverse_TableDescriptionName(ATerm term, std::string &type_name, SgType* &type,
          type = symbol->get_type();
       }
       if (type == nullptr) {
-         cerr << "WARNING UNIMPLEMENTED: TableDescriptionName - class symbol is null for type name " << type_name <<  "\n";
+         cerr << "ERROR: TableDescriptionName - class symbol is null for type name " << type_name <<  "\n";
       }
 
       if (traverse_TablePreset(t_preset, preset)) {
          // MATCHED TablePreset
-         //DONE: cerr << "WARNING UNIMPLEMENTED: TableDescriptionName - table preset \n";
       } else return ATfalse;
 
    }
    else return ATfalse;
 
    if (type == nullptr) {
-      cerr << "WARNING UNIMPLEMENTED: TableDescriptionName \n";
-   // TODO_COMPOOL
-   // ROSE_ASSERT(type != nullptr);
+      cerr << "ERROR: TableDescriptionName - type == nullptr\n";
+      ROSE_ASSERT(type);
    }
 
    return ATtrue;
@@ -2592,14 +2590,19 @@ ATbool ATermToSageJovialTraversal::traverse_BlockPresetList(ATerm term, SgExprLi
    printf("... traverse_BlockPresetList: %s\n", ATwriteToString(term));
 #endif
 
+#if 0
    SgExpression* preset = nullptr;
+#endif
 
    ATermList tail = (ATermList) ATmake("<term>", term);
    while (! ATisEmpty(tail)) {
+      cerr << "WARNING UNIMPLEMENTED: BlockPresetList\n";
+      ROSE_ASSERT(false);
+
+#if 0
       ATerm head = ATgetFirst(tail);
       tail = ATgetNext(tail);
-   // TODO
-      ROSE_ASSERT(false);
+
       if (traverse_PresetValuesOption(head, preset)) {
          // MATCHED PresetValuesOption
       }
@@ -2610,6 +2613,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockPresetList(ATerm term, SgExprLi
          // MATCHED OptBlockPresetList
       }
       else return ATfalse;
+#endif
    }
 
    return ATtrue;
@@ -2734,7 +2738,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemPresetValue(ATerm term, SgExpres
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_TablePreset(ATerm term, SgExpression* &table_preset)
+ATbool ATermToSageJovialTraversal::traverse_TablePreset(ATerm term, SgExpression* &preset)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_TablePreset: %s\n", ATwriteToString(term));
@@ -2742,92 +2746,94 @@ ATbool ATermToSageJovialTraversal::traverse_TablePreset(ATerm term, SgExpression
 
    ATerm t_preset_list;
 
-   table_preset = nullptr;
+   preset = nullptr;
 
    if (ATmatch(term, "no-table-preset()")) {
       // MATCHED no-table-preset
    }
    else if (ATmatch(term, "TablePreset(<term>)", &t_preset_list)) {
-      SgExprListExp* preset_list = SageBuilder::buildExprListExp_nfi();
+
+      SgExprListExp* default_sublist = SageBuilder::buildExprListExp_nfi();
+      SgExprListExp* specified_sublist = SageBuilder::buildExprListExp_nfi();
+
+      SgJovialTablePresetExp* table_preset = new SgJovialTablePresetExp(default_sublist, specified_sublist);
+      ROSE_ASSERT(table_preset);
+      setSourcePosition(table_preset, term);
+
+      preset = table_preset;
 
    // Grammar construction in Main.sdf is a bit convoluted here (cons names could be better chosen).
    // DefaultPresetSublist can be reached directly here or optionally in TablePresetList
-      if (traverse_DefaultPresetSublist(t_preset_list, preset_list)) {
+      if (traverse_DefaultPresetSublist(t_preset_list, default_sublist)) {
          // MATCHED DefaultPresetSublist
+         setSourcePosition(default_sublist, t_preset_list);
       }
-      else if (traverse_TablePresetList(t_preset_list, preset_list)) {
+      else if (traverse_TablePresetList(t_preset_list, table_preset)) {
          // MATCHED TablePresetList
       }
       else return ATfalse;
-
-      table_preset = preset_list;
-      setSourcePosition(table_preset, t_preset_list);
    }
    else return ATfalse;
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_TablePresetList(ATerm term, SgExprListExp* preset_list)
+ATbool ATermToSageJovialTraversal::traverse_TablePresetList(ATerm term, SgJovialTablePresetExp* table_preset)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_TablePresetList: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_default_preset_list, t_spec_preset_list;
+   ATerm t_default, t_specified;
 
-   ROSE_ASSERT(preset_list);
+   ROSE_ASSERT(table_preset);
+   SgExprListExp* default_sublist = table_preset->get_default_sublist();
+   SgExprListExp* specified_sublist = table_preset->get_specified_sublist();
 
-   if (ATmatch(term, "TablePresetList(<term>,<term>)", &t_default_preset_list, &t_spec_preset_list)) {
-      // DefaultPresetSublist is optional here
-      if (traverse_DefaultPresetSublist(t_default_preset_list, preset_list)) {
-         // MATCHED DefaultPresetSublist
-      } else return ATfalse;
+   if (ATmatch(term, "TablePresetList(<term>,<term>)", &t_default, &t_specified)) {
 
-#if 1
-      if (traverse_DefaultPresetSublist(t_default_preset_list, preset_list)) {
-         // MATCHED DefaultPresetSublist
-      } else return ATfalse;
-      cerr << "WARNING UNIMPLEMENTED: TablePresetList\n";
-      ROSE_ASSERT(false);
+      // DefaultPresetSublist is optional here so default_sublist may be empty
+      if (ATmatch(term, "DefaultPresetSublist(<term>)", &t_default)) {
+         if (traverse_DefaultPresetSublist(t_default, default_sublist)) {
+            // MATCHED DefaultPresetSublist
+         } else return ATfalse;
+      }
 
-#else
-// TODO_COMPOOL
-// TODO - break into two lists rather than use same list as above?
-      ATermList tail = (ATermList) ATmake("<term>", t_spec_preset_list);
+      ATermList tail = (ATermList) ATmake("<term>", t_specified);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
-         if (traverse_SpecifiedPresetSublist(head, preset_list)) {
+         if (traverse_SpecifiedPresetSublist(head, specified_sublist)) {
             // MATCHED SpecifiedPresetSublist
          } else return ATfalse;
       }
-#endif
    }
    else return ATfalse;
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_DefaultPresetSublist(ATerm term, SgExprListExp* preset_list)
+ATbool ATermToSageJovialTraversal::traverse_DefaultPresetSublist(ATerm term, SgExprListExp* default_sublist)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_DefaultPresetSublist: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_default_preset_list;
-   SgExpression* preset = nullptr;
+   SgExpression* preset;
 
    if (ATmatch(term, "DefaultPresetSublist(<term>)", &t_default_preset_list)) {
       ATermList tail = (ATermList) ATmake("<term>", t_default_preset_list);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
+
+         preset = nullptr;
          if (traverse_PresetValuesOption(head, preset)) {
             // MATCHED PresetValuesOption
             if (preset != nullptr) {
-               preset_list->get_expressions().push_back(preset);
-               preset->set_parent(preset_list);
+               default_sublist->get_expressions().push_back(preset);
+               preset->set_parent(default_sublist);
             }
          } else return ATfalse;
       }
@@ -2840,33 +2846,43 @@ ATbool ATermToSageJovialTraversal::traverse_DefaultPresetSublist(ATerm term, SgE
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_SpecifiedPresetSublist(ATerm term, SgExprListExp* preset_list)
+ATbool ATermToSageJovialTraversal::traverse_SpecifiedPresetSublist(ATerm term, SgExprListExp* specified_sublist)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SpecifiedPresetSublist: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_preset_index_spec, t_preset_values_option;
+   ATerm t_index_spec, t_preset_values_option;
    SgExpression* preset;
 
-   if (ATmatch(term, "SpecifiedPresetSublist(<term>,<term>)", &t_preset_index_spec, &t_preset_values_option)) {
-      SgInitializer* sg_preset = nullptr;
-   // TODO_COMPOOL
-      cerr << "WARNING UNIMPLEMENTED: SpecifiedPresetSublist\n";
+   if (ATmatch(term, "SpecifiedPresetSublist(<term>,<term>)", &t_index_spec, &t_preset_values_option)) {
 
-      if (traverse_PresetIndexSpecifier(t_preset_index_spec, sg_preset)) {
+      SgExprListExp* index_specifier_list = SageBuilder::buildExprListExp_nfi();
+      SgExprListExp*   values_option_list = SageBuilder::buildExprListExp_nfi();
+
+      specified_sublist->get_expressions().push_back(index_specifier_list);
+      specified_sublist->get_expressions().push_back(values_option_list);
+
+      index_specifier_list->set_parent(specified_sublist);
+      values_option_list->set_parent(specified_sublist);
+
+      if (traverse_PresetIndexSpecifier(t_index_spec, index_specifier_list)) {
          // MATCHED PresetIndexSpecifier
       } else return ATfalse;
 
+   // Fill the list of PresetValuesOption(s)
+   //
       ATermList tail = (ATermList) ATmake("<term>", t_preset_values_option);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
+
+         preset = nullptr;
          if (traverse_PresetValuesOption(head, preset)) {
             // MATCHED PresetValuesOption, optional so ok if nullptr
             if (preset != nullptr) {
-               preset_list->get_expressions().push_back(preset);
-               preset->set_parent(preset_list);
+               values_option_list->get_expressions().push_back(preset);
+               preset->set_parent(values_option_list);
             }
          } else return ATfalse;
       }
@@ -2876,7 +2892,7 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedPresetSublist(ATerm term, S
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_PresetIndexSpecifier(ATerm term, SgInitializer* preset)
+ATbool ATermToSageJovialTraversal::traverse_PresetIndexSpecifier(ATerm term, SgExprListExp* index_specifier_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_PresetIndexSpecifier: %s\n", ATwriteToString(term));
@@ -2888,28 +2904,25 @@ ATbool ATermToSageJovialTraversal::traverse_PresetIndexSpecifier(ATerm term, SgI
 
    ATerm t_const_index;
 
-// Begin SageTreeBuilder
-   SgExpression* sg_expr = nullptr;
-
    if (ATmatch(term, "PresetIndexSpecifier(<term>)", &t_const_index)) {
+      SgExpression* constant_index;
+
       ATermList tail = (ATermList) ATmake("<term>", t_const_index);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
-         if (traverse_NumericFormula(head, sg_expr)) {
+
+         constant_index = nullptr;
+         if (traverse_NumericFormula(head, constant_index)) {
             // MATCHED CompileTimeNumericFormula
-         // TODO_COMPOOL
-         // ROSE_ASSERT(sg_expr);
-//DELETE_ME preset->get_expressions().push_back(expr);
-         } else if (traverse_StatusFormula(head, sg_expr)) {
+         } else if (traverse_StatusFormula(head, constant_index)) {
             // MATCHED CompileTimeStatusFormula
-         // TODO_COMPOOL
-         // ROSE_ASSERT(sg_expr);
-//DELETE_ME preset->get_expressions().push_back(expr);
          } else return ATfalse;
+         ROSE_ASSERT(constant_index);
+
+         index_specifier_list->get_expressions().push_back(constant_index);
+         constant_index->set_parent(index_specifier_list);
       }
-   // TODO_COMPOOL
-      cerr << "WARNING UNIMPLEMENTED: PresetIndexSpecifier\n";
    }
    else return ATfalse;
 
@@ -3176,11 +3189,11 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
       else return ATfalse;
 
       if (preset) {
-         cerr << "WARNING UNIMPLEMENTED: TableTypeSpecifier - preset \n";
-         ROSE_ASSERT(preset == nullptr);
+         cerr << "WARNING UNIMPLEMENTED: TableTypeSpecifier - preset (This is likely fixed, please confirm)\n";
+         //ROSE_ASSERT(preset == nullptr);
       }
       if (attr_list) {
-         cerr << "WARNING UNIMPLEMENTED: TableTypeSpecifier - preset \n";
+         cerr << "WARNING UNIMPLEMENTED: TableTypeSpecifier - attr_list \n";
          ROSE_ASSERT(attr_list == nullptr);
       }
    }
@@ -7071,7 +7084,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitConversion(ATerm term, SgType* &t
    } else if (traverse_Name(term, bit_type_name)) {
       // MATCHED BitTypeName
       // BitTypeName shouldn't be able to happen (parses as UserDefinedFunctionCall)
-      cerr << "WARNING UNIMPLEMENTED: BitTypeConversion - BitTypeName \n";
+      cerr << "ERROR: BitTypeConversion - BitTypeName \n";
       ROSE_ASSERT(false);
    }
    else return ATfalse;

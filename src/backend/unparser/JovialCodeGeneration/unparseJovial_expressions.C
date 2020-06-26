@@ -64,39 +64,21 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
 
           case V_SgUnaryAddOp:          unparseUnaryOperator(expr, "+", info);   break;
           case V_SgMinusOp:             unparseUnaryOperator(expr, "-", info);   break;
-          case V_SgNotOp:               unparseUnaryOperator(expr, "NOT ", info); break;
+          case V_SgNotOp:               unparseUnaryOperator(expr, "NOT ", info);break;
 
 
           case V_SgPntrArrRefExp:       unparseArrayOp(expr, info);              break;
 
        // initializers
-          case V_SgAssignInitializer:   unparseAssnInit  (expr, info);           break;
+          case V_SgAssignInitializer:    unparseAssnInit    (expr, info);        break;
+          case V_SgJovialTablePresetExp: unparseTablePreset (expr, info);        break;
 
-#if 0
-                case V_SgAndOp:
-                case V_SgAssignOp:
-                case V_SgDotExp:
-                case V_SgArrowExp:
-                case V_SgJavaUnsignedRshiftOp:
-                case V_SgLshiftOp:
-                case V_SgOrOp:
-                case V_SgRshiftOp:
-                case V_SgCommaOpExp: // charles4 10/14/2011
-                     unparseBinaryOp(isSgBinaryOp(expr), info ); break;
+          case V_SgNullExpression:                                               break;
 
-                case V_SgPlusPlusOp:
-                case V_SgMinusMinusOp:
-                case V_SgBitComplementOp:
-                     unparseUnaryOp(isSgUnaryOp(expr), info ); break;
-                case V_SgMemberFunctionRefExp:  { unparseMFuncRef(expr, info); break; }
-#endif
-
-                case V_SgNullExpression:         break;
-
-                default:
-                   std::cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << std::endl;
-                   ROSE_ASSERT(false);
-                   break;
+          default:
+             std::cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << std::endl;
+             ROSE_ASSERT(false);
+             break;
        }
 
     // If this expression requires closing parentheses, emit them now.
@@ -153,10 +135,10 @@ void
 Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgCastExp* cast_expr = isSgCastExp(expr);
-     ROSE_ASSERT(cast_expr != NULL);
+     ASSERT_not_null(cast_expr);
 
      SgType* type = cast_expr->get_type();
-     ROSE_ASSERT(type);
+     ASSERT_not_null(type);
 
      SgExpression* size = type->get_type_kind();
 
@@ -198,7 +180,7 @@ Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
      }
 
      SgExpression* operand_i = cast_expr->get_operand_i();
-     ROSE_ASSERT(operand_i);
+     ASSERT_not_null(operand_i);
      curprint("(");
      unparseExpression(operand_i, info);
      curprint(")");
@@ -324,7 +306,7 @@ Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseOverlayExpr(SgExprListExp* overlay, SgUnparse_Info& info)
   {
-     ROSE_ASSERT(overlay);
+     ASSERT_not_null(overlay);
 
   // The OverlayExpression consists of a list of OverlayString expressions.
   // An OverlayString consists of a list of OverlayElement expressions.
@@ -398,10 +380,10 @@ void
 Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
    {
      SgPointerDerefExp* deref = isSgPointerDerefExp(expr);
-     ROSE_ASSERT(deref != NULL);
+     ASSERT_not_null(deref);
 
      SgExpression* operand = deref->get_operand();
-     ROSE_ASSERT(operand);
+     ASSERT_not_null(operand);
 
      switch (operand->variantT())
         {
@@ -422,12 +404,45 @@ Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
 
 void
 Unparse_Jovial::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
-   {
+  {
      SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
      ASSERT_not_null(assn_init);
 
      unparseExpression(assn_init->get_operand(), info);
-   }
+  }
+
+void
+Unparse_Jovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info)
+  {
+     SgJovialTablePresetExp* table_preset = isSgJovialTablePresetExp(expr);
+     ASSERT_not_null(table_preset);
+
+     SgExprListExp* default_sublist = table_preset->get_default_sublist();
+     SgExprListExp* specified_sublist = table_preset->get_specified_sublist();
+
+     ASSERT_not_null(default_sublist);
+     ASSERT_not_null(specified_sublist);
+
+     bool has_specified_sublist = (specified_sublist->get_expressions().size() == 2);
+
+  // Unparse the optional DefaultPresetSublist
+     if (default_sublist->get_expressions().size() > 0)
+        {
+           unparseExpression(default_sublist, info);
+           if (has_specified_sublist) curprint(", ");
+        }
+
+     if (has_specified_sublist)
+        {
+        // Unparse the PresetIndexSpecifier
+           curprint("POS(");
+           unparseExpression(specified_sublist->get_expressions()[0], info);
+           curprint("): ");
+
+        // Unparse the PresetValuesOption
+           unparseExpression(specified_sublist->get_expressions()[1], info);
+        }
+  }
 
 //----------------------------------------------------------------------------
 //  Table dimension list

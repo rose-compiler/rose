@@ -136,7 +136,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (BitXorOp,               "BitXorOp",               "BITXOR_OP" );
      NEW_TERMINAL_MACRO (BitAndOp,               "BitAndOp",               "BITAND_OP" );
      NEW_TERMINAL_MACRO (BitOrOp,                "BitOrOp",                "BITOR_OP"  );
-  // Rasmussen (4/28/2020): Added this node to support the Jovial bitwise EQV operator.
+  // CR (4/28/2020): Added this node to support the Jovial bitwise EQV operator.
      NEW_TERMINAL_MACRO (BitEqvOp,               "BitEqvOp",               "BITEQV_OP" );
 
      NEW_TERMINAL_MACRO (CommaOpExp,             "CommaOpExp",             "COMMA_OP" );
@@ -332,6 +332,9 @@ Grammar::setUpExpressions ()
   // SgAggregateInitializer
      NEW_TERMINAL_MACRO (DesignatedInitializer, "DesignatedInitializer", "DESIGNATED_INITIALIZER" );
 
+  // CR (06/24/2020) An initializer for Jovial tables containing two kinds of lists
+     NEW_TERMINAL_MACRO (JovialTablePresetExp, "JovialTablePresetExp", "JOVIAL_TABLE_PRESET_EXP" );
+
      //SK (06/23/2015) SgMatrixExp for Matlab Matrix
      NEW_TERMINAL_MACRO (MatrixExp, "MatrixExp", "MATRIX_EXP");
 
@@ -454,8 +457,7 @@ Grammar::setUpExpressions ()
           RangeExp            | MagicColonExp           | //SK(08/20/2015): RangeExp and MagicColonExp for Matlab
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
           ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | AtExp | FinishExp | NoexceptOp | NonrealRefExp |
-          AdaTaskRefExp, "Expression", "ExpressionTag", false);
-       // ClassExp | FunctionParameterRefExp            | HereExp, "Expression", "ExpressionTag", false);
+          AdaTaskRefExp       | JovialTablePresetExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
   // ***********************************************************************
@@ -982,7 +984,7 @@ Grammar::setUpExpressions ()
      BitXorOp.editSubstitute        ( "PRECEDENCE_VALUE", " 7" );
      BitAndOp.editSubstitute        ( "PRECEDENCE_VALUE", " 8" );
      BitOrOp.editSubstitute         ( "PRECEDENCE_VALUE", " 6" );
-  // Rasmussen (4/28/2020): Added this node to support the Jovial bitwise operator.
+  // CR (4/28/2020): Added this node to support the Jovial bitwise operator.
   // Note that precedence of Jovial bitwise operators must be specified by parens, '(' ')'
   // The PRECEDENCE_VALUE of "6" was chosen so as not to have to change other precedence values.
      BitEqvOp.editSubstitute        ( "PRECEDENCE_VALUE", " 6" );
@@ -2813,6 +2815,10 @@ Grammar::setUpExpressions ()
   // DesignatedInitializer.setDataPrototype("SgExpression*" , "designator", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      DesignatedInitializer.setDataPrototype("SgInitializer*", "memberInit", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // CR (6/24/2020): An initializer for Jovial tables
+     JovialTablePresetExp.setFunctionPrototype ( "HEADER_JOVIAL_TABLE_PRESET_EXP", "../Grammar/Expression.code" );
+     JovialTablePresetExp.setDataPrototype("SgExprListExp*", "default_sublist", "= NULL",   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JovialTablePresetExp.setDataPrototype("SgExprListExp*", "specified_sublist", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
  // TV (04/22/2010): CUDA support
      CudaKernelExecConfig.setFunctionPrototype ( "HEADER_CUDA_KERNEL_EXEC_CONFIG", "../Grammar/Expression.code" );
@@ -3157,6 +3163,8 @@ Grammar::setUpExpressions ()
 
      ActualArgumentExpression.setFunctionSource ( "SOURCE_ACTUAL_ARGUMENT_EXPRESSION", "../Grammar/Expression.code" );
      DesignatedInitializer.setFunctionSource ( "SOURCE_DESIGNATED_INITIALIZER", "../Grammar/Expression.code" );
+
+     JovialTablePresetExp.setFunctionSource ( "SOURCE_JOVIAL_TABLE_PRESET_EXP", "../Grammar/Expression.code" );
 
      //FMZ (2/6/2009): Added for CoArray Reference
      CAFCoExpression.setFunctionSource ( "SOURCE_CO_EXPRESSION", "../Grammar/Expression.code" );
