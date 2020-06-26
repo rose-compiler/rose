@@ -175,6 +175,7 @@ class AbstractValue {
   Label label;
   CodeThorn::TypeSize typeSize=0;
   static CodeThorn::VariableIdMappingExtended* _variableIdMapping;
+  static bool byteMode; // computes byte offset for array and struct elements
 };
 
 // arithmetic operators

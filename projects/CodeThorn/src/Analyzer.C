@@ -959,8 +959,17 @@ const EState* CodeThorn::Analyzer::addToWorkListIfNew(EState estate) {
 
 // set the size of an element determined by this type
 void CodeThorn::Analyzer::setElementSize(VariableId variableId, SgType* elementType) {
-  unsigned int typeSize=getVariableIdMapping()->getTypeSize(variableId);
-  //cout<<"DEBUG: setElementSize: variableId name: "<<variableIdMapping.variableName(variableId)<<" typeSize: "<<typeSize<<" of "<<elementType->unparseToString()<<endl;
+  unsigned int typeSize=getVariableIdMapping()->getTypeSize(elementType);
+  if(getVariableIdMapping()->getElementSize(variableId)!=0
+     && getVariableIdMapping()->getElementSize(variableId)!=typeSize) {
+    logger[WARN]<<"Element type size mismatch: "
+                <<"Analyzer::setElementSize: variableId name: "<<variableIdMapping->variableName(variableId)
+                <<"typesize(from VID):"<<getVariableIdMapping()->getElementSize(variableId)
+                <<" typeSize(fromtype): "<<typeSize<<" of "<<elementType->unparseToString()
+                <<endl;
+    // keep existing size from variableIdMapping
+    return;
+  }
   variableIdMapping->setElementSize(variableId,typeSize);
 }
 
@@ -1336,6 +1345,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         if(variableIdMapping->hasArrayType(initDeclVarId)) {
           // add default array elements to PState
           size_t length=variableIdMapping->getNumberOfElements(initDeclVarId);
+          //cout<<"DEBUG: DECLARING ARRAY: size: "<<decl->unparseToString()<<length<<endl;
           for(size_t elemIndex=0;elemIndex<length;elemIndex++) {
             AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
             // set default init value

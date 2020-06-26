@@ -211,18 +211,18 @@ void PState::combineValueAtAllMemoryLocations(AbstractValue val) {
  */
 void PState::writeValueToAllMemoryLocations(CodeThorn::AbstractValue val) {
   for(PState::iterator i=begin();i!=end();++i) {
-    AbstractValue varId=(*i).first;
-    writeToMemoryLocation(varId,val);
+    AbstractValue av=(*i).first;
+    writeToMemoryLocation(av,val);
   }
 }
 
-void PState::reserveMemoryLocation(AbstractValue varId) {
-  writeUndefToMemoryLocation(varId);
+void PState::reserveMemoryLocation(AbstractValue av) {
+  writeUndefToMemoryLocation(av);
 }
 
-void PState::writeUndefToMemoryLocation(AbstractValue varId) {
+void PState::writeUndefToMemoryLocation(AbstractValue av) {
   AbstractValue undefValue=AbstractValue::createUndefined();
-  writeToMemoryLocation(varId, undefValue);
+  writeToMemoryLocation(av, undefValue);
 }
 
 void PState::writeTopToMemoryLocation(AbstractValue varId) {

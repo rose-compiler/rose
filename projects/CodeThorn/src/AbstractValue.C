@@ -15,12 +15,15 @@
 #include "Miscellaneous2.h"
 #include "CodeThornException.h"
 #include "VariableIdMapping.h"
+#include "CodeThornLib.h"
 
 using namespace std;
 using namespace CodeThorn;
+using namespace Sawyer::Message; // required for logger[WARN]
 
 VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
 bool AbstractValue::strictChecking=true;
+bool AbstractValue::byteMode=true;
 
 istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   value.fromStream(is);
@@ -160,6 +163,13 @@ AbstractValue::createAddressOfArray(CodeThorn::VariableId arrayVarId) {
 AbstractValue 
 AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, 
                                              AbstractValue index) {
+#if 0
+  cout<<"AbstractValue::createAddressOfArrayElement:arrayVariable:"<<arrayVariableId.toString(_variableIdMapping)
+      <<" index:"<<index.toString(_variableIdMapping)
+      <<" #"<<_variableIdMapping->getNumberOfElements(arrayVariableId)
+      <<" elemsize:"<<_variableIdMapping->getElementSize(arrayVariableId)
+      <<endl;
+#endif
   AbstractValue val;
   if(index.isTop()) {
     return Top();
@@ -170,6 +180,11 @@ AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId
     val.variableId=arrayVariableId;
     ROSE_ASSERT(index.isConstInt());
     val.intValue=index.getIntValue();
+    if(AbstractValue::byteMode) {
+      // multiple with type size
+      size_t elemSize=_variableIdMapping->getElementSize(arrayVariableId);
+      val.intValue=index.getIntValue()*elemSize;
+    }
     return val;
   } else {
     cerr<<"Error: createAddressOfArray: unknown index type."<<endl;
@@ -246,7 +261,7 @@ AbstractValue AbstractValue::operatorNot() {
   case AbstractValue::UNDEFINED: tmp=*this;break;
   default:
     // other cases should not appear because there must be a proper cast
-    // TODO: logger[WARN]<<"AbstractValue::operatorNot: unhandled abstract value "<<tmp.toString()<<". Assuming any value as result."<<endl;
+    SAWYER_MESG(logger[WARN])<<"AbstractValue::operatorNot: unhandled abstract value "<<tmp.toString()<<". Assuming any value as result."<<endl;
     tmp=Top();
   }
   return tmp;
@@ -420,7 +435,7 @@ AbstractValue AbstractValue::operatorLess(AbstractValue other) const {
     }
   }
   if(!(isConstInt()&&other.isConstInt())) {
-    cerr<<"WARNING: operatorLess: "<<toString()<<" < "<<other.toString()<<" - assuming arbitrary result."<<endl;
+    SAWYER_MESG(logger[WARN])<<"operatorLess: "<<toString()<<" < "<<other.toString()<<" - assuming arbitrary result."<<endl;
     return AbstractValue::createTop();
   }
   return getIntValue()<other.getIntValue();
@@ -783,11 +798,21 @@ AbstractValue AbstractValue::operatorAdd(AbstractValue& a,AbstractValue& b) {
     return a;
   if(a.isPtr() && b.isConstInt()) {
     AbstractValue val=a;
-    val.intValue+=b.intValue;
+    if(byteMode) {
+      int pointerElementSize=_variableIdMapping->getElementSize(a.getVariableId());
+      val.intValue+=b.intValue*pointerElementSize;
+    } else {
+      val.intValue+=b.intValue;
+    }
     return val;
   } else if(a.isConstInt() && b.isPtr()) {
     AbstractValue val=b;
-    val.intValue+=a.intValue;
+    if(byteMode) {
+      int pointerElementSize=_variableIdMapping->getElementSize(b.getVariableId());
+      val.intValue+=a.intValue*pointerElementSize;
+    } else {
+      val.intValue+=a.intValue;
+    }
     return val;
   } else if(a.isPtr() && b.isPtr()) {
     if(strictChecking)
@@ -811,16 +836,33 @@ AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
   if(a.isPtr() && b.isPtr()) {
     if(a.getVariableId()==b.getVariableId()) {
       AbstractValue val;
-      val.intValue=a.intValue-b.intValue;
-      val.valueType=INTEGER;
-      val.variableId=a.variableId; // same as b.variableId
+      if(byteMode) {
+        int pointerElementSize=_variableIdMapping->getElementSize(a.getVariableId());
+        if((a.intValue-b.intValue)%pointerElementSize!=0) {
+          SAWYER_MESG(CodeThorn::logger[WARN])<<"Byte pointer subtraction gives value non-divisible by element size. Using top as result:"<<a.toString(_variableIdMapping)<<"-"<<b.toString(_variableIdMapping)<<endl;
+          return Top();
+        } else {
+          val.intValue=(a.intValue-b.intValue)/pointerElementSize;
+          val.valueType=INTEGER;
+          val.variableId=a.variableId; // same as b.variableId
+        }
+      } else {
+        val.intValue=a.intValue-b.intValue;
+        val.valueType=INTEGER;
+        val.variableId=a.variableId; // same as b.variableId
+      }
       return val;
     } else {
       return Top(); // subtraction of incompatible pointers gives arbitrary value
     }
   } else if(a.isPtr() && b.isConstInt()) {
     AbstractValue val=a;
-    val.intValue-=b.intValue;
+    if(byteMode) {
+      int pointerElementSize=_variableIdMapping->getElementSize(a.getVariableId());
+      val.intValue-=a.intValue*pointerElementSize;
+    } else {
+      val.intValue-=b.intValue;
+    }
     return val;
   } else if(a.isConstInt() && b.isPtr()) {
     if(strictChecking)
@@ -941,7 +983,8 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
     }
     case PTR: 
     case REF: {
-      if(val1.getVariableId()==val2.getVariableId()) {
+      if(val1.getVariableId()==val2.getVariableId()
+         &&val1.getIntValue()==val2.getIntValue()) {
         return val1;
       } else {
         return createTop();
