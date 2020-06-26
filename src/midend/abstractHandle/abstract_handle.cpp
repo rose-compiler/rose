@@ -1,4 +1,4 @@
-/*! 
+/*!
  * Generic implementation for abstract handles of language constructs
  */
 
@@ -10,6 +10,7 @@
 #include <vector>
 #include <map>
 #include <cstring>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 using namespace std;
 
@@ -23,11 +24,11 @@ static string numberToString ( T x )
 }
 
 namespace AbstractHandle{
-  // maintain a map between nodes and handles, 
+  // maintain a map between nodes and handles,
   // used for fast indexing and avoid redundant creation of handles for nodes
   // Should update the map after each creation
   // TODO Do we allow multiple handles for one node?
-  std::map<abstract_node*, abstract_handle*> handle_map; 
+  std::map<abstract_node*, abstract_handle*> handle_map;
 
  //construct a handle from a handle string  within the scope of an existing handle
 //reverse look up for a handle from a string within a scope specified by phandle
@@ -53,14 +54,14 @@ namespace AbstractHandle{
     // We allow inexact comparison here since source position information can be only partial
     // So comparison only matters if both pos information have non-empty information
     // Otherwise we treat them as equal.
-    bool lineResult = true, colResult = true; 
-    if ((pos1.line !=0 ) && (pos2.line !=0)) 
+    bool lineResult = true, colResult = true;
+    if ((pos1.line !=0 ) && (pos2.line !=0))
       lineResult = (pos1.line == pos2.line);
-    if ((pos1.column !=0 ) && (pos2.column !=0)) 
+    if ((pos1.column !=0 ) && (pos2.column !=0))
       lineResult = (pos1.column== pos2.column);
-    return (lineResult && colResult);      
+    return (lineResult && colResult);
     // exact match cannot handle the case that a compiler provides full source position but
-    // user only provides a line number. 
+    // user only provides a line number.
    // return(( pos1.line == pos2.line )&&(pos1.column == pos2.column ));
   }
   bool isEqual(const source_position_pair &pair1, const source_position_pair &pair2)
@@ -75,7 +76,7 @@ namespace AbstractHandle{
 
   //Create a handle using the source position as the specifier by default
   // Set parent handle to the file's handle.
-  //If source position is not available,then use name or numbering when possible. 
+  //If source position is not available,then use name or numbering when possible.
   //TODO add label specifiers
   abstract_handle::abstract_handle(abstract_node* node)
   {
@@ -89,12 +90,12 @@ namespace AbstractHandle{
       source_position_pair spair = node->getSourcePos();
       svalue.positions=spair;
       m_specifier = new specifier(e_position,svalue);
-   
+
       //a file handle is treated as the parent handle here
       //even other nodes may be the real parent
       p_node = node->getFileNode();
       assert(p_node!=NULL); // a node with source pos info. should have a file node
-    } 
+    }
     else if (node->hasName())
     {
       strcpy(svalue.str_v, (node->getName()).c_str());
@@ -104,10 +105,10 @@ namespace AbstractHandle{
     {
       p_node  = node->getParent();
       // parent can be NULL here
-      svalue.int_v = node->getNumbering(p_node); 
+      svalue.int_v = node->getNumbering(p_node);
       m_specifier = new specifier(e_numbering, svalue);
     }
-        
+
     //set up upstream parent/file handles
     //for all cases
      if (p_node!=NULL)
@@ -118,7 +119,7 @@ namespace AbstractHandle{
          p_handle = new abstract_handle(p_node);
          handle_map[p_node] = p_handle;
        }
-       parent_handle = p_handle;  
+       parent_handle = p_handle;
      }
   }
 
@@ -136,7 +137,7 @@ namespace AbstractHandle{
      {
        abstract_node* p_node = m_node->getParent();
        if (p_node)
-       { 
+       {
          p_handle = handle_map[p_node];
          if (p_handle==NULL)
          {
@@ -183,14 +184,14 @@ namespace AbstractHandle{
          assert(false);
          break;
      }
-     m_node = node; 
+     m_node = node;
      handle_map[node] = this;
      // recursively find parent handles if not provided via parameters
      if (p_handle == NULL)
      {
        abstract_node* p_node = m_node->getParent();
        if (p_node)
-       { 
+       {
          p_handle = handle_map[p_node];
          if (p_handle==NULL)
          {
@@ -215,7 +216,7 @@ namespace AbstractHandle{
      // generate a vector of handles from the current handle to the root parent handle
      std::vector<abstract_handle*> handle_vec;
      abstract_handle* current_handle= this;
-     do 
+     do
      {
        handle_vec.push_back(current_handle);
        current_handle = current_handle->get_parent_handle();
@@ -226,7 +227,7 @@ namespace AbstractHandle{
       //using :: as delimiter in between
       vector<abstract_handle*>::reverse_iterator riter;
       for (riter = handle_vec.rbegin(); riter!=handle_vec.rend(); riter++)
-      { 
+      {
         if (riter!=handle_vec.rbegin())
           result +="::";
         result+= (*riter)->toStringSelf();
@@ -242,14 +243,14 @@ namespace AbstractHandle{
       if (m_specifier!=NULL)
         result += m_specifier->toString();
       return result;
-    } 
+    }
 
  std::string specifier::toString()
  {
      string result;
       result +="<";
       specifier_type_t stype =  this->get_type();
-      specifier_value_t svalue = this->get_value(); 
+      specifier_value_t svalue = this->get_value();
      switch (stype)
       {
         case e_name:
@@ -285,7 +286,7 @@ namespace AbstractHandle{
     result +=numberToString<size_t>(pos.line);
     if (pos.column!=0)
        result +="."+numberToString<size_t>(pos.column);
-    return result;   
+    return result;
   }
 
  std::string toString(const source_position_pair &pospair)
@@ -305,10 +306,10 @@ namespace AbstractHandle{
     pos.column=0;
     istringstream buffer (input);
     if ((buffer >> std::dec >>pos.line).fail())
-    { 
+    {
       //cerr<<"error: fromString(pos,input) when input is:"<<input<<endl;
       //assert(false);// we allow calling this with empty input
-      return; 
+      return;
     }
 
    char dot;
@@ -337,7 +338,7 @@ namespace AbstractHandle{
     //cout<<"debug: fromString(pos_pair,input):"<<toString(pos_pair)<<endl;
   }
 
-  // Parse a string into a specifier 
+  // Parse a string into a specifier
   // such as <numbering,1> <position,1.1-1.9> <name,/home/liao6/svnrepos/mycode/rose/abstracthandle/variable.c> etc
   void fromString(specifier& result, const std::string &input)
   {
@@ -352,16 +353,16 @@ namespace AbstractHandle{
 #ifndef NDEBUG
     char current;
     current = buffer.get();
-    assert (current =='<'); 
+    assert (current =='<');
 #endif
     // get type string and value string
-    buffer.getline(type_str,256,','); 
+    buffer.getline(type_str,256,',');
     buffer.getline(value_str,PATH_MAX+256, '>');
-    
+
    // cout<<"type_str:"<<type_str<<endl;
    // cout<<"value_str:"<<value_str<<endl;
     if (strcmp(type_str,"name")==0)
-    { 
+    {
       stype= e_name;
       strcpy(svalue.str_v,value_str);
     } else
@@ -393,7 +394,7 @@ namespace AbstractHandle{
   }
 
   //------------- abstract_node:default implementation --------------
-  
+
   std::string abstract_node::getConstructTypeName() const
   {
     return "";
@@ -438,7 +439,7 @@ namespace AbstractHandle{
     buffer.getline(specifier_str,PATH_MAX+512,'>');
     // obtain the specifier first from the specifier string
     fromString(mspecifier,specifier_str);
-    
+
     // then use the specifier to guide the find
     return findNode(type_str,mspecifier);
 
@@ -450,7 +451,7 @@ namespace AbstractHandle{
     return NULL;
   }
 
-  
+
   std::string abstract_node::getFileName() const
   {
     abstract_node* file_node = getFileNode();
@@ -470,14 +471,14 @@ namespace AbstractHandle{
 
   source_position abstract_node::getStartPos() const
   {
-     source_position pos; 
+     source_position pos;
      pos.line=0;
      pos.column=0;
      return pos;
   }
   source_position abstract_node::getEndPos() const
   {
-     source_position pos; 
+     source_position pos;
      pos.line=0;
      pos.column=0;
      return pos;
@@ -519,7 +520,7 @@ namespace AbstractHandle{
      buffer.getline(specifier_str,PATH_MAX+512,'>');
      if (m_specifier==NULL)
        m_specifier = new specifier();
-     else 
+     else
      {
        cerr<<"warning:abstract_handle::fromStringSelf(): overwriting existing m_specifier"<<endl;
      }
@@ -541,18 +542,18 @@ namespace AbstractHandle{
       istringstream buffer(handle_str_full);
 
       abstract_node* inParent = inParent_handle->getNode();
-       
+
       char handle_item[256+PATH_MAX+512]; //TODO define max handle length etc in header,
       do {
-        buffer.getline(handle_item, 256+PATH_MAX+512, ':'); 
+        buffer.getline(handle_item, 256+PATH_MAX+512, ':');
         handle_str_vec.push_back(string(handle_item));
         // TODO change to a better delimiter! or configurable!
-        buffer.get();// skip the second ':' 
+        buffer.get();// skip the second ':'
         //buffer.peek();
       } while (!buffer.eof());
 
      // cout<<"vec size is "<<handle_str_vec.size()<<endl;
-     
+
      // set up all parent handles
       for (int i=0;i<(int)(handle_str_vec.size())-1; i++)
       {
@@ -561,7 +562,7 @@ namespace AbstractHandle{
         if(node == NULL) return false;
         //assert (node != NULL);
         if (handle_map[node]==NULL)
-        { 
+        {
           abstract_handle* phandle = new abstract_handle();
           handle_map[node] = phandle;
           phandle->fromStringSelf(inParent_handle,handle_str_vec[i]);
@@ -570,11 +571,11 @@ namespace AbstractHandle{
         else
           parent_handle= handle_map[node];
 
-        if (i==0)  // connect the link between the root and the top parent of the string 
+        if (i==0)  // connect the link between the root and the top parent of the string
         {
-          if (parent_handle->get_parent_handle() == NULL)   
+          if (parent_handle->get_parent_handle() == NULL)
             parent_handle->set_parent_handle(inParent_handle);
-        }   
+        }
       } // end for
 
       // patch up parent handle, if not yet set

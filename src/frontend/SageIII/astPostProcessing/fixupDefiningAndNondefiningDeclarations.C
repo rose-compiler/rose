@@ -182,38 +182,10 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 
                SgScopeStatement* definingScope    =  definingDeclaration->get_scope();
                SgScopeStatement* nondefiningScope =  firstNondefiningDeclaration->get_scope();
-               if (definingScope != nondefiningScope)
+               bool equivalent_scopes = ( definingScope == nondefiningScope ) ||
+                                        ( isSgGlobal(nondefiningScope) && isSgGlobal(definingScope) );
+               if (!equivalent_scopes)
                   {
-                 // This might still leave the scope of a non-defining declaration set incorrectly 
-                 // if the definingDeclaration is not available.
-                    if ( isSgNamespaceDefinitionStatement(definingScope)    == NULL || 
-                         isSgNamespaceDefinitionStatement(nondefiningScope) == NULL )
-                       {
-                      // DQ (7/29/2005): It is so common for non-defining and defining declarations to be 
-                      // declared in the same namespace but different scopes of the same namespace (a namespace 
-                      // can have many different scopes) that we don't need to output any special information 
-                      // about this case!
-#if 0
-                         mfprintf(mlog[WARN]) ("AST Fixup: setting the scope of the nondefining declaration to scope of the defining declaration! \n");
-                         mfprintf(mlog[WARN]) ("definingDeclaration = %s get_scope() = %p = %s name = %s \n",
-                              SageInterface::get_name(definingDeclaration).c_str(),
-                              definingDeclaration->get_scope(),definingDeclaration->get_scope()->class_name().c_str(),
-                              SageInterface::get_name(definingDeclaration->get_scope()).c_str());
-                         mfprintf(mlog[WARN]) ("firstNondefiningDeclaration = %s get_scope() = %p = %s = %s \n",
-                              SageInterface::get_name(firstNondefiningDeclaration).c_str(),
-                              firstNondefiningDeclaration->get_scope(),firstNondefiningDeclaration->get_scope()->class_name().c_str(),
-                              SageInterface::get_name(firstNondefiningDeclaration->get_scope()).c_str());
-#endif
-                       }
-#if 0
-                    mfprintf(mlog[WARN]) ("Resetting scope of firstNondefiningDeclaration = %p = %s old scope = %p = %s new scope = %p = %s \n",
-                         firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),
-                         firstNondefiningDeclaration->get_scope(),firstNondefiningDeclaration->get_scope()->class_name().c_str(),
-                         definingDeclaration->get_scope(),definingDeclaration->get_scope()->class_name().c_str());
-#endif
-                 // DQ (2/25/2007): Need to fixup the symbol table entries.
-                 // firstNondefiningDeclaration->set_scope(definingDeclaration->get_scope());
-
                     SgSymbol* symbolToMove = firstNondefiningDeclaration->get_symbol_from_symbol_table();
 
                  // DQ (2/25/2007): Since this is resetting the non-defining declaration it effects the symbol 
@@ -232,7 +204,6 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                       // DQ (4/18/2018): Modified to avoid removing the symbol if it is not present.  This might be 
                       // related to a bug fix to support symbols in namespaces and record them in both the namespace 
                       // definition where they are placed plus the global copy of the namespace definition.
-                      // nondefiningScope->remove_symbol(symbolToMove);
                          if (nondefiningScope->symbol_exists(symbolToMove) == true)
                             {
                               nondefiningScope->remove_symbol(symbolToMove);
@@ -246,11 +217,6 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 
                       // DQ (2/25/2007): There could be multiple non-defining declarations such that the symbol might 
                       // already exist in the definingScope's symbol table.  (Confirmed to be true).
-                      // ROSE_ASSERT (definingScope->symbol_exists(symbolToMove->get_name()) == false);
-                      // if (definingScope->symbol_exists(symbolToMove->get_name()) == false)
-                      // if (definingScope->symbol_exists(symbolToMove->get_name(),symbolToMove) == false)
-                      // if (definingScope->symbol_exists(symbolToMove->get_name()) == false)
-                      // if (definingScope->symbol_exists(symbolToMove->get_name()) == false)
                          if (definingScope->symbol_exists(symbolToMove->get_name(),symbolToMove) == false)
                             {
 #if 0
@@ -452,7 +418,11 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                mfprintf(mlog[WARN]) ("definingDeclaration->get_scope() = %p firstNondefiningDeclaration->get_scope() = %p \n",
                     definingDeclaration->get_scope(),firstNondefiningDeclaration->get_scope());
 #endif
-               ROSE_ASSERT(definingDeclaration->get_scope() == firstNondefiningDeclaration->get_scope());
+               definingScope = definingDeclaration->get_scope();
+               nondefiningScope = firstNondefiningDeclaration->get_scope();
+               equivalent_scopes = ( definingScope == nondefiningScope ) ||
+                                   ( isSgGlobal(nondefiningScope) && isSgGlobal(definingScope) );
+               ROSE_ASSERT(equivalent_scopes);
              }
         }
 
@@ -527,47 +497,6 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                   }
                ROSE_ASSERT(declaration == definingDeclaration);
 
-            // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
-            // SgScopeStatement* declarationScope = NULL;
-
-               SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(declaration);
-               if (memberFunctionDeclaration != NULL)
-                  {
-                 // DQ (10/12/2007): This uses the previous semantics, this now always returns a valid pointer independent of if the class is defined.
-                 // It also has the consition set backwards.
-#if 0
-                    if (memberFunctionDeclaration->get_associatedClassDeclaration() != NULL)
-                       {
-                         declarationScope = NULL;
-                       }
-                      else
-                       {
-                      // declarationScope = NULL;
-                      // declarationScope = memberFunctionDeclaration->set_associatedClassDeclaration(classDeclaration)->findDefinition();
-                         ROSE_ASSERT(definingDeclaration != NULL);
-                         ROSE_ASSERT(memberFunctionDeclaration->get_associatedClassDeclaration() != NULL);
-                         declarationScope = memberFunctionDeclaration->get_associatedClassDeclaration()->get_definition();
-                         ROSE_ASSERT(declarationScope != NULL);
-                       }
-#else
-                 // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
-                 // DQ (10/12/2007): This should be a better implementation! Will be NULL if the class definition does not exist.
-                 // declarationScope = memberFunctionDeclaration->get_class_scope();
-#endif
-                  }
-                 else
-                  {
-                 // mfprintf(mlog[WARN]) ("Calling declaration->get_startOfConstruct()->display() declaration = %p = %s \n",declaration,declaration->class_name().c_str());
-                 // declaration->get_startOfConstruct()->display("declaration location: debug");
-                 // declarationScope = declaration->get_scope();
-#if 0
-                 // DQ (12/8/2016): This is commented out as part of eliminating warnings we want to have be errors: [-Werror=unused-but-set-variable.
-                    if (declaration->hasExplicitScope() == true)
-                       {
-                         declarationScope = declaration->get_scope();
-                       }
-#endif
-                  }
 #if 0
                mfprintf(mlog[WARN]) ("declaration = %p definingDeclaration = %p \n",declaration,definingDeclaration);
 #endif

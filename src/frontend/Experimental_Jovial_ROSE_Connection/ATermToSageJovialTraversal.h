@@ -10,7 +10,7 @@
 
 namespace ATermSupport {
 
-   using namespace General_Language_Translation;
+   using namespace LanguageTranslation;
 
 class ATermToSageJovialTraversal : public ATermToUntypedTraversal
 {
@@ -71,7 +71,7 @@ ATbool traverse_OptItemSize(ATerm term, Sawyer::Optional<SgExpression*> &size);
 
 // 2.1.1.2 FLOATING TYPE DESCRIPTIONS
 ATbool traverse_FloatingItemDescription(ATerm term, SgType* &type);
-ATbool traverse_OptRoundOrTruncate(ATerm term, Sawyer::Optional<General_Language_Translation::ExpressionKind> &modifier_enum);
+ATbool traverse_OptRoundOrTruncate(ATerm term, Sawyer::Optional<LanguageTranslation::ExpressionKind> &modifier_enum);
 
 // 2.1.1.3 FIXED TYPE DESCRIPTIONS
 ATbool traverse_FixedItemDescription(ATerm term, SgType* &type);
@@ -81,10 +81,11 @@ ATbool traverse_FractionSpecifier(ATerm term, SgExpression* &fraction);
 ATbool traverse_BitItemDescription(ATerm term, SgType* &type);
 
 // 2.1.1.5 CHARACTER TYPE DESCRIPTIONS
-ATbool traverse_CharacterItemDescription  (ATerm term, SgType* & type);
-ATbool traverse_CharacterLiteral          (ATerm term, SgExpression* &expr);
+ATbool traverse_CharacterItemDescription (ATerm term, SgType* & type);
+ATbool traverse_CharacterLiteral         (ATerm term, std::string &str_literal);
 
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
+ATbool    match_StatusItemDescription (ATerm term);
 ATbool traverse_StatusItemDescription (ATerm term, std::list<SgInitializedName*> &status_list, Sawyer::Optional<SgExpression*> &status_size);
 ATbool traverse_StatusConstant        (ATerm term, SgInitializedName* &init_name, SgType* &enum_type, SgExpression* init_expr);
 ATbool traverse_StatusConstant        (ATerm term, SgExpression* &expr);
@@ -98,19 +99,23 @@ ATbool traverse_PointerItemDescription (ATerm term, SgType* & type);
 ATbool traverse_OptTypeName            (ATerm term, SgType* & type, std::string & name);
 
 // 2.1.2 TABLE DECLARATION
-ATbool traverse_TableDeclaration       (ATerm term, int def_or_ref = 0);
+ATbool traverse_TableDeclaration       (ATerm term, int def_or_ref = 0, bool constant = false);
 ATbool traverse_TableDescriptionName   (ATerm term, std::string &type_name, SgType* &sg_type, SgExpression* &preset);
-ATbool traverse_TableDescriptionType   (ATerm term, SgType* &base_type, SgExpression* &preset, SgExprListExp* attr_list);
-ATbool traverse_TableDescriptionBody   (ATerm term, std::string &type_name, SgJovialTableStatement* &sg_table_decl, SgExpression* &preset);
-ATbool traverse_EntrySpecifierType     (ATerm term, SgType* &type, LocationSpecifier &loc_spec, SgExpression* &preset, SgExprListExp* attr_list);
-ATbool traverse_EntrySpecifierBody     (ATerm term, SgJovialTableStatement* table_decl, SgExpression* &preset);
+ATbool traverse_TableDescriptionType   (ATerm term, SgType* &base_type, SgExpression* &preset,
+                                                    SgExprListExp* attr_list, TableSpecifier &table_spec);
+ATbool traverse_TableDescriptionBody   (ATerm term, std::string &type_name, SgJovialTableStatement* &sg_table_decl,
+                                                    SgExpression* &preset, TableSpecifier &table_spec);
+ATbool traverse_EntrySpecifierType     (ATerm term, SgType* &type, LocationSpecifier &loc_spec, SgExpression* &preset,
+                                                    SgExprListExp* attr_list, TableSpecifier &table_spec);
+ATbool traverse_EntrySpecifierBody     (ATerm term, SgJovialTableStatement* table_decl,
+                                                    SgExpression* &preset, TableSpecifier &table_spec);
 
 // 2.1.2.3 ORDINARY TABLE ENTRIES
-ATbool traverse_OrdinaryEntrySpecifierType   (ATerm term, SgType* &type, SgExpression* &preset);
-ATbool traverse_OrdinaryEntrySpecifierBody   (ATerm term, SgExpression* &preset);
+ATbool traverse_OrdinaryEntrySpecifierType   (ATerm term, SgType* &type, SgExpression* &preset, TableSpecifier &table_spec);
+ATbool traverse_OrdinaryEntrySpecifierBody   (ATerm term, SgExpression* &preset, TableSpecifier &table_spec);
 ATbool traverse_OrdinaryTableBody            (ATerm term);
 ATbool traverse_OrdinaryTableItemDeclaration (ATerm term);
-ATbool traverse_OptPackingSpecifier          (ATerm term, Sawyer::Optional<General_Language_Translation::ExpressionKind> &modifier_enum);
+ATbool traverse_OptPackingSpecifier          (ATerm term, PackingSpecifier &packing_spec);
 
 // 2.1.2.1 TABLE DIMENSION LISTS
 ATbool traverse_OptDimensionList (ATerm term, SgExprListExp* sg_shape);
@@ -128,7 +133,7 @@ ATbool traverse_SpecifiedItemDescription      (ATerm term, SgType* &type, Locati
 ATbool traverse_WordsPerEntry                 (ATerm term, Sawyer::Optional<SgExpression*> &words_per_entry);
 
 // 2.1.3 CONSTANT DECLARATIONS
-ATbool traverse_ConstantDeclaration(ATerm term);
+ATbool traverse_ConstantDeclaration(ATerm term, int def_or_ref = 0);
 
 // 2.1.4 BLOCK DECLARATION
 ATbool traverse_BlockDeclaration   (ATerm term, int def_or_ref = 0);
@@ -138,7 +143,7 @@ ATbool traverse_BlockPresetList    (ATerm term, SgExprListExp* preset_list);
 ATbool traverse_OptBlockPresetList (ATerm term, SgExprListExp* preset_list);
 
 // 2.1.5 ALLOCATION OF DATA OBJECTS
-ATbool traverse_OptAllocationSpecifier(ATerm term, Sawyer::Optional<General_Language_Translation::ExpressionKind> &modifier_enum);
+ATbool traverse_OptAllocationSpecifier(ATerm term, Sawyer::Optional<LanguageTranslation::ExpressionKind> &modifier_enum);
 
 // 2.1.6 INITIALIZATION OF DATA OBJECTS
 ATbool traverse_ItemPreset            (ATerm term, SgExpression* &preset);
@@ -183,33 +188,33 @@ ATbool traverse_RefSpecificationChoice(ATerm term);
 
 // 2.6 OVERLAY DECLARATIONS
 ATbool traverse_OverlayDeclaration    (ATerm term);
-ATbool traverse_OverlayExpression     (ATerm term, SgExpression* & expr);
-ATbool traverse_OverlayString         (ATerm term, SgExpression* & expr);
-ATbool traverse_OverlayElement        (ATerm term, SgExpression* & expr);
-ATbool traverse_Spacer                (ATerm term, SgExpression* & expr);
+ATbool traverse_OverlayExpression     (ATerm term, SgExprListExp* &overlay_expr);
+ATbool traverse_OverlayString         (ATerm term, SgExprListExp* &overlay_string);
+ATbool traverse_OverlayElement        (ATerm term, SgExpression*  &expr);
+ATbool traverse_Spacer                (ATerm term, SgExpression*  &expr);
 
 // 3.0 PROCEDURES AND FUNCTIONS
-ATbool traverse_ProcedureDefinition(ATerm term);
-ATbool traverse_SubroutineAttribute(ATerm term, General_Language_Translation::SubroutineAttribute &attr);
+ATbool traverse_ProcedureDefinition(ATerm term, LanguageTranslation::FunctionModifierList &modifiers);
+ATbool traverse_SubroutineAttribute(ATerm term, LanguageTranslation::FunctionModifierList &modifiers);
 ATbool traverse_ProcedureHeading   (ATerm term, std::string & name, std::list<FormalParameter> &param_list,
-                                                General_Language_Translation::SubroutineAttribute &attr);
+                                                LanguageTranslation::FunctionModifierList &modifiers);
 ATbool traverse_SubroutineBody     (ATerm term);
 
 // 3.1 PROCEDURES
-ATbool traverse_ProcedureDeclaration(ATerm term);
+ATbool traverse_ProcedureDeclaration(ATerm term, LanguageTranslation::FunctionModifierList &modifiers);
 
 // 3.2 FUNCTIONS
-ATbool traverse_FunctionDeclaration(ATerm term);
-ATbool traverse_FunctionDefinition (ATerm term);
-ATbool traverse_FunctionHeading    (ATerm term, std::string & name, SgUntypedType* & type,
-                                    SgUntypedExprListExpression* & attrs, SgUntypedInitializedNameList* & params);
+ATbool traverse_FunctionDeclaration(ATerm term, LanguageTranslation::FunctionModifierList &modifiers);
+ATbool traverse_FunctionDefinition (ATerm term, LanguageTranslation::FunctionModifierList &modifiers);
+ATbool traverse_FunctionHeading    (ATerm term, std::string & name, SgType* &type, std::list<FormalParameter> &param_list,
+                                                LanguageTranslation::FunctionModifierList &modifiers);
 
 // 3.3 PARAMETERS OF PROCEDURES AND FUNCTIONS
 ATbool traverse_FormalParameterList   (ATerm term, std::list<FormalParameter> &param_list);
 ATbool traverse_FormalInputParameter  (ATerm term, std::list<FormalParameter> &param_list);
 ATbool traverse_FormalOutputParameters(ATerm term, std::list<FormalParameter> &param_list);
 ATbool traverse_FormalOutputParameter (ATerm term, std::list<FormalParameter> &param_list);
-ATbool traverse_ParameterBinding      (ATerm term, General_Language_Translation::ExpressionKind &binding);
+ATbool traverse_ParameterBinding      (ATerm term, LanguageTranslation::ExpressionKind &binding);
 
 // 3.4 INLINE DECLARATIONS
 ATbool traverse_InlineDeclaration(ATerm term);
@@ -246,11 +251,11 @@ ATbool traverse_IfStatement   (ATerm term);
 
 // 4.4 CASE STATEMENTS
 ATbool traverse_CaseStatement   (ATerm term);
-ATbool traverse_CaseBody        (ATerm term, SgUntypedStatement* &case_body);
+ATbool traverse_CaseBody        (ATerm term);
 ATbool traverse_CaseAlternative (ATerm term);
 ATbool traverse_DefaultOption   (ATerm term);
-ATbool traverse_CaseIndexGroup  (ATerm term, SgUntypedExprListExpression* & case_index_group);
-ATbool traverse_CaseIndex       (ATerm term, SgUntypedExpression* & case_index);
+ATbool traverse_CaseIndexGroup  (ATerm term, SgExprListExp* &key);
+ATbool traverse_CaseIndex       (ATerm term, SgExpression*  &index);
 
 // 4.5 PROCEDURE CALL STATEMENTS
 ATbool traverse_ProcedureCallStatement (ATerm term);
@@ -280,7 +285,7 @@ ATbool traverse_NumericFormula (ATerm term, SgExpression* &expr);
 ATbool traverse_NumericTerm    (ATerm term, SgExpression* &expr);
 ATbool traverse_NumericFactor  (ATerm term, SgExpression* &expr);
 ATbool traverse_NumericPrimary (ATerm term, SgExpression* &expr);
-ATbool traverse_OptSign        (ATerm term, General_Language_Translation::ExpressionKind & op_enum);
+ATbool traverse_OptSign        (ATerm term, LanguageTranslation::ExpressionKind & op_enum);
 ATbool traverse_ExponentiationOp(ATerm term, SgExpression* &expr);
 ATbool traverse_NumericMachineParameter(ATerm term, SgExpression* &expr);
 
@@ -333,25 +338,29 @@ ATbool traverse_LocFunction          (ATerm term, SgFunctionCallExp* &func_call)
 ATbool traverse_NextFunction         (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.4 BYTE FUNCTION
-ATbool traverse_ByteFunction(ATerm term, SgFunctionCallExp* &func_call);
+ATbool traverse_ByteFunction         (ATerm term, SgFunctionCallExp* &func_call);
+
+// 6.3.5 SHIFT FUNCTION
+ATbool traverse_ShiftFunction        (ATerm term, SgFunctionCallExp* &func_call);
+
+// 6.3.6 ABS FUNCTIONS
+ATbool traverse_AbsFunction          (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.7 SIZE FUNCTION
-ATbool traverse_SizeFunction(ATerm term, SgFunctionCallExp* &func_call);
+ATbool traverse_SizeFunction         (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.11 STATUS INVERSE FUNCTIONS
 ATbool traverse_StatusInverseFunction(ATerm term, SgFunctionCallExp* &func_call);
 
 // 7.0 TYPE MATCHING AND TYPE CONVERSIONS
-ATbool traverse_BitConversion        (ATerm term, SgExpression* &expr);
-ATbool traverse_IntegerConversion    (ATerm term, SgExpression* &expr);
-ATbool traverse_GeneralConversion    (ATerm term, SgExpression* &expr);
-ATbool traverse_FloatingConversion   (ATerm term, SgExpression* &expr);
-ATbool traverse_FixedConversion      (ATerm term, SgExpression* &expr);
-ATbool traverse_CharacterConversion  (ATerm term, SgExpression* &expr);
-ATbool traverse_CharacterConversionC (ATerm term, SgExpression* &expr);
-ATbool traverse_StatusConversion     (ATerm term, SgExpression* &expr);
-ATbool traverse_PointerConversion    (ATerm term, SgExpression* &expr);
-ATbool traverse_PointerConversionP   (ATerm term, SgExpression* &expr);
+ATbool traverse_BitConversion        (ATerm term, SgType* &type);
+ATbool traverse_IntegerConversion    (ATerm term, SgType* &type);
+ATbool traverse_TypeNameConversion   (ATerm term, SgType* &type);
+ATbool traverse_FloatingConversion   (ATerm term, SgType* &type);
+ATbool traverse_FixedConversion      (ATerm term, SgType* &type);
+ATbool traverse_CharacterConversion  (ATerm term, SgType* &type);
+ATbool traverse_StatusConversion     (ATerm term, SgType* &type);
+ATbool traverse_PointerConversion    (ATerm term, SgType* &type);
 
 // 8.3.1 NUMERIC LITERAL
 ATbool traverse_FixedOrFloatingLiteral (ATerm term, SgExpression* &expr);

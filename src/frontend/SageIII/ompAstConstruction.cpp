@@ -1942,8 +1942,8 @@ This is no perfect solution until we handle preprocessing information as structu
             }
         }
         setOneSourcePositionForTransformation(omp_stmt);
-        copyStartFileInfo (oa->getNode(), omp_stmt, oa);
-        copyEndFileInfo (oa->getNode(), omp_stmt, oa);
+//        copyStartFileInfo (oa->getNode(), omp_stmt, oa); // these two copy operations cause consistency check failure later on. 
+//        copyEndFileInfo (oa->getNode(), omp_stmt, oa);
         //ROSE_ASSERT (omp_stmt->get_file_info()->isTransformation() != true);
         replaceOmpPragmaWithOmpStatement(decl, omp_stmt);
 

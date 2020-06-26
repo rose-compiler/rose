@@ -2121,9 +2121,20 @@ SgAdaLoopStmt::cfgIsIndexInteresting(unsigned int) const
   return false;
 }
 
+bool
+SgAdaAcceptStmt::cfgIsIndexInteresting(unsigned int idx) const
+{
+  return (idx == 0);
+}
+
 unsigned int
 SgAdaLoopStmt::cfgIndexForEnd() const {
   return 2; 
+}
+
+unsigned int
+SgAdaAcceptStmt::cfgIndexForEnd() const {
+  return 1; 
 }
 
 std::vector<CFGEdge> 
@@ -2139,6 +2150,18 @@ SgAdaLoopStmt::cfgOutEdges(unsigned int idx) {
 }
 
 std::vector<CFGEdge> 
+SgAdaAcceptStmt::cfgOutEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  
+  switch (idx) {
+    case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
+    case 1: makeEdge(CFGNode(this, idx), getNodeJustBeforeInContainer(this),  result); break;
+    default: ROSE_ASSERT (!"Bad index for SgAdaAcceptStmt");
+  }
+  return result;
+}
+
+std::vector<CFGEdge> 
 SgAdaLoopStmt::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   
@@ -2146,6 +2169,18 @@ SgAdaLoopStmt::cfgInEdges(unsigned int idx) {
     case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
     case 1: makeEdge(this->get_body()->cfgForEnd(),      CFGNode(this, idx), result); break; 
     default: ROSE_ASSERT (!"Bad index for SgAdaLoopStmt");
+  }
+  return result;
+}
+
+std::vector<CFGEdge> 
+SgAdaAcceptStmt::cfgInEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  
+  switch (idx) {
+    case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+    case 1: makeEdge(this->get_body()->cfgForEnd(),      CFGNode(this, idx), result); break; 
+    default: ROSE_ASSERT (!"Bad index for SgAdaAcceptStmt");
   }
   return result;
 }

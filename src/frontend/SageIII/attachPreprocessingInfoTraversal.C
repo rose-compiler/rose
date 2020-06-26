@@ -1458,6 +1458,22 @@ AttachPreprocessingInfoTreeTrav::setupPointerToPreviousNode (SgLocatedNode* curr
           previousLocNodePtr = parentStatement;
         }
 
+       // Liao 6/10/2020, special handling for Fortran subroutine init-name, which is compiler generated and cannot be unparsed directly.
+       // It cannot be used as an anchor node for preprocessing information.
+       // In this case, we use SgBasicBlock of the SgFunctionDefinition as the previous located node.
+       // This is to address the lost comment problem as shown in test2020_comment_1.f90 .
+       if (SageInterface::is_Fortran_language ())
+       {
+         if (SgInitializedName * init_name =  isSgInitializedName(currentLocNodePtr))
+         {
+           if (isSgProcedureHeaderStatement(init_name->get_parent()))
+           {
+             previousLocNodePtr = init_name->get_scope();
+             previousLocatedNodeMap[currentFileId] = previousLocNodePtr;
+           }
+         }
+       }
+
   // Nodes that should not have comments attached (since they are not unparsed directly 
   // within the generation of the source code by the unparser (no associated unparse functions))
      ROSE_ASSERT (dynamic_cast<SgForInitStatement*>     (previousLocNodePtr) == NULL);
@@ -3116,6 +3132,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                lineOfClosingBrace = OneBillion;
              }
+
 #if 0
           printf ("isCompilerGeneratedOrTransformation   = %s \n",isCompilerGeneratedOrTransformation ? "true" : "false");
           printf ("currentFileNameId = %d fileIdForOriginOfCurrentLocatedNode = %d \n",currentFileNameId,fileIdForOriginOfCurrentLocatedNode);
@@ -3605,11 +3622,25 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("In case V_SgInitializedName: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
 #endif
+                            // Liao 6/10/2020, Fortran subroutine will have a SgInitializedName generated in AST to represent the subroutine name.
+                            // It is compiler-generated and has no appearance in the original source code. 
+                            // We should not attach comments to it.
+                            if (SageInterface::is_Fortran_language ())
+                            {
+                              if (isSgProcedureHeaderStatement(initializedName->get_parent()))
+                              {
+                            //    cout<<"Found Fortran subroutine init name, skipping attaching comments to it..."<< initializedName <<endl;
+                              }
+                            }
+                            else
+                            {
+
                             bool reset_start_index = false;
                             iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                               ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index, currentListOfAttributes );
 
                             previousLocatedNodeMap[currentFileNameId] = initializedName;
+                            }
                             break;
                           }
 

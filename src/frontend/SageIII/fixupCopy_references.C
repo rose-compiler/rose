@@ -779,6 +779,18 @@ SgAdaExitStmt::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
    }
 
 void
+SgAdaAcceptStmt::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgAdaExitStmt::fixupCopy_references() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+  // Also call the base class version of the fixupCopycopy() member function
+     SgStatement::fixupCopy_references(copy,help);
+   }
+
+
+void
 SgAdaLoopStmt::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
    {
 #if DEBUG_FIXUP_COPY

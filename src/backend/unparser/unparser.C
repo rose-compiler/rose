@@ -1126,10 +1126,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
                Unparse_Ada unparser(this, file->getFileName());
                unparser.unparseAdaFile(file, info);
-
-            // printf ("Error: SgFile::e_Ada_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-            // ROSE_ASSERT(false);
-
                break;
              }
 
@@ -3545,10 +3541,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                     outputFilename = file->get_sourceFileNameWithoutPath();
 
                     printf ("Ada output language: outputFilename = %s \n",outputFilename.c_str());
-
-                    printf ("Error: SgFile::e_Ada_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-
-                 // ROSE_ASSERT(false);
+                    printf ("INFO: SgFile::e_Ada_language detected in unparser (unparsing is experimental) \n");
                     break;
                   }
 

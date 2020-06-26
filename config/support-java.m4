@@ -220,7 +220,6 @@ if test "x$USE_JAVA" = x1; then
   AC_DEFINE([USE_ROSE_JAVA_SUPPORT],[],[Controls use of ROSE support for Java.])
 # DQ (10/18/2010): Renaming this macro to be uniform in ROSE.
   AC_DEFINE([USE_ROSE_INTERNAL_JAVA_SUPPORT],[],[Controls use of ROSE support for Java.])
-fi
 
 # DQ (12/6/2016): In MAC OSX set the LDFLAGS to include the rpath.
 # LDFLAGS="-Xlinker -rpath ${JAVA_HOME}/jre/lib/server"
@@ -230,6 +229,8 @@ fi
 
 # AM_COND_IF([OS_MACOSX],[JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/darwin"],[JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/linux"])
 AM_COND_IF([OS_MACOSX],[LDFLAGS="-Xlinker -rpath ${JAVA_HOME}/jre/lib/server $LDFLAGS"],[])
+
+fi
 
 AC_MSG_NOTICE([in support-java: build_os is "$build_os"])
 AC_MSG_NOTICE([in support-java: LDFLAGS = "$LDFLAGS"])

@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+
 #include <DepRel.h>
 
 #define ALIGN_ALL 32767
@@ -65,7 +67,7 @@ void DepRel::Reset( DepDirType t, int min, int max)
   entryType = t | (size << 3);
 }
 
-DepDirType GetRelType( int entryType ) 
+DepDirType GetRelType( int entryType )
 {
   return static_cast <DepDirType>(entryType & DEPDIR_ALL);
 }
@@ -83,23 +85,23 @@ DepDirType  DepRel :: GetDirType() const
   case DEPDIR_LE: return DEPDIR_LE;
   case DEPDIR_GE: return DEPDIR_GE;
   case DEPDIR_NONE: return DEPDIR_NONE;
-  case DEPDIR_ALL: 
+  case DEPDIR_ALL:
   case DEPDIR_NE:  return DEPDIR_ALL;
   default:
-      assert(false); 
+      assert(false);
   }
   return DEPDIR_NONE;
 }
-        
+
 int DepRel :: GetMinAlign() const
 {
-  DepDirType t = GetRelType( entryType ); 
+  DepDirType t = GetRelType( entryType );
   switch (t) {
-  case DEPDIR_ALL: 
+  case DEPDIR_ALL:
   case DEPDIR_NE:
-  case DEPDIR_LE: 
+  case DEPDIR_LE:
     return NEG_INFTY;
-  case DEPDIR_NONE: 
+  case DEPDIR_NONE:
     return POS_INFTY;
   case DEPDIR_EQ:
   case DEPDIR_GE:
@@ -114,11 +116,11 @@ int DepRel :: GetMaxAlign() const
   int size = AlignRangeSize( entryType );
   DepDirType t = GetRelType( entryType);
   switch (t) {
-  case DEPDIR_ALL: 
+  case DEPDIR_ALL:
   case DEPDIR_NE:
   case DEPDIR_GE:
     return POS_INFTY;
-  case DEPDIR_NONE: 
+  case DEPDIR_NONE:
     return NEG_INFTY;
   case DEPDIR_EQ:
   case DEPDIR_LE:
@@ -138,12 +140,12 @@ bool DepRel :: IsBottom() const
   return GetRelType( entryType ) == DEPDIR_ALL;
 }
 
-std:: string DepRel :: toString(bool dir_only) const 
+std:: string DepRel :: toString(bool dir_only) const
 {
   std:: string res;
   switch ( GetRelType( entryType)) {
   case DEPDIR_NONE:
-    res = res + "(); "; 
+    res = res + "(); ";
     break;
   case DEPDIR_ALL:
     res = res + "*";
@@ -152,18 +154,18 @@ std:: string DepRel :: toString(bool dir_only) const
     res = res + "=";
     break;
   case DEPDIR_LE :
-    if (dir_only && align < 0) res = res + "<"; 
+    if (dir_only && align < 0) res = res + "<";
     else res = res + "<=";
     break;
   case DEPDIR_GE :
-    if (dir_only && align > 0) res = res + ">"; 
+    if (dir_only && align > 0) res = res + ">";
     res = res + ">=";
     break;
   case DEPDIR_NE :
     res = res + "!=";
     break;
   }
-  if (dir_only) return res; 
+  if (dir_only) return res;
   char buf[20];
   if (align != ALIGN_ALL) {
     sprintf(buf, "%d", align);
@@ -230,13 +232,13 @@ bool DepRel::IntersectUpdate (DepRel& e1, const DepRel &e2)
   int min = (a1<a2)?a2 : a1, max = (b1<b2)?b1: b2;
 
   switch (t) {
-  case DEPDIR_NONE: 
-  case DEPDIR_LE:  
-  case DEPDIR_GE:  
+  case DEPDIR_NONE:
+  case DEPDIR_LE:
+  case DEPDIR_GE:
   case DEPDIR_ALL:
     e1.Reset(t, min, max);
     break;
-  case DEPDIR_NE: 
+  case DEPDIR_NE:
     if (min < max)
       e1.Reset(t, min, max);
     break;
@@ -270,9 +272,9 @@ DepRel operator * (const DepRel &e1, const DepRel &e2)
   DepDirType t = static_cast <DepDirType>(t1 | t2);
   int a1 = e1.GetMinAlign(), a2 = e2.GetMinAlign();
   int b1 = e1.GetMaxAlign(), b2 = e2.GetMaxAlign();
- 
+
   return DepRel(t, AddConst(a1,a2), AddConst(b1, b2));
-} 
+}
 
 bool DepRel:: Closure()
 {
@@ -281,15 +283,15 @@ bool DepRel:: Closure()
   if (t == DEPDIR_EQ) {
     if (lo == hi && lo == 0)
       return false;
-    else if (lo >= 0) 
+    else if (lo >= 0)
       Reset(DEPDIR_GE, lo, lo);
     else if (hi <= 0)
       Reset(DEPDIR_LE, hi, hi);
-    else 
+    else
       Reset(DEPDIR_ALL, 0, 0);
     return true;
   }
-  else if (t == DEPDIR_NE || (t == DEPDIR_LE && hi > 0) || 
+  else if (t == DEPDIR_NE || (t == DEPDIR_LE && hi > 0) ||
            (t == DEPDIR_GE && lo < 0) ) {
     Reset(DEPDIR_ALL, 0, 0);
     return true;
@@ -348,7 +350,7 @@ DepRel operator - (const DepRel &e)
   }
 }
 
-DepRel IncreaseAlign( const DepRel &r, int a) 
+DepRel IncreaseAlign( const DepRel &r, int a)
 {
   DepRel result(r);
   result.IncreaseAlign(a);
