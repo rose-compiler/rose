@@ -5,7 +5,9 @@ int main() {
   char* data;
   char dataBuffer[10+1];
   //char dataBufferExp[10+1];
+  //printf("%d\n",dataBuffer);
   data=dataBuffer;
+  //printf("%d\n",data);
   data[0]= '\0';
   const char* stringPtr = "0123456789";
   char source[11] = "0123456789";

@@ -959,8 +959,17 @@ const EState* CodeThorn::Analyzer::addToWorkListIfNew(EState estate) {
 
 // set the size of an element determined by this type
 void CodeThorn::Analyzer::setElementSize(VariableId variableId, SgType* elementType) {
-  unsigned int typeSize=getVariableIdMapping()->getTypeSize(variableId);
-  //cout<<"DEBUG: setElementSize: variableId name: "<<variableIdMapping.variableName(variableId)<<" typeSize: "<<typeSize<<" of "<<elementType->unparseToString()<<endl;
+  unsigned int typeSize=getVariableIdMapping()->getTypeSize(elementType);
+  if(getVariableIdMapping()->getElementSize(variableId)!=0
+     && getVariableIdMapping()->getElementSize(variableId)!=typeSize) {
+    logger[WARN]<<"Element type size mismatch: "
+                <<"Analyzer::setElementSize: variableId name: "<<variableIdMapping->variableName(variableId)
+                <<"typesize(from VID):"<<getVariableIdMapping()->getElementSize(variableId)
+                <<" typeSize(fromtype): "<<typeSize<<" of "<<elementType->unparseToString()
+                <<endl;
+    // keep existing size from variableIdMapping
+    return;
+  }
   variableIdMapping->setElementSize(variableId,typeSize);
 }
 
@@ -1229,8 +1238,6 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
               // handle special cases of: char a[]="abc"; char a[4]="abc";
               // TODO: a[5]="ab";
               SAWYER_MESG(logger[TRACE])<<"Initalizing (array) with string: "<<stringValNode->unparseToString()<<endl;
-              PState newPState=*currentEState.pstate();
-              initializeStringLiteralInState(newPState,stringValNode,initDeclVarId);
               //size_t stringLen=stringValNode->get_value().size();
               if(variableIdMapping->getNumberOfElements(initDeclVarId)==0) {
                 VariableId stringLiteralId=getVariableIdMapping()->getStringLiteralVariableId(stringValNode);
@@ -1242,6 +1249,8 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
               }
               SgType* variableType=initializer->get_type(); // for char and wchar
               setElementSize(initDeclVarId,variableType); // this must be a pointer, if it's not an array
+              PState newPState=*currentEState.pstate();
+              initializeStringLiteralInState(newPState,stringValNode,initDeclVarId);
               ConstraintSet cset=*currentEState.constraints();
               return createEState(targetLabel,cs,newPState,cset);
             }
@@ -1252,7 +1261,8 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
           setElementSize(initDeclVarId,variableType);
 
           // build lhs-value dependent on type of declared variable
-          AbstractValue lhsAbstractAddress=AbstractValue(initDeclVarId); // creates a pointer to initDeclVar
+          //AbstractValue lhsAbstractAddress=AbstractValue(initDeclVarId); // creates a pointer to initDeclVar
+          AbstractValue lhsAbstractAddress=AbstractValue::createAddressOfVariable(initDeclVarId); // creates a pointer to initDeclVar
           list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(rhs,currentEState);
           if(res.size()!=1) {
             if(res.size()>1) {
@@ -1336,6 +1346,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         if(variableIdMapping->hasArrayType(initDeclVarId)) {
           // add default array elements to PState
           size_t length=variableIdMapping->getNumberOfElements(initDeclVarId);
+          //cout<<"DEBUG: DECLARING ARRAY: size: "<<decl->unparseToString()<<length<<endl;
           for(size_t elemIndex=0;elemIndex<length;elemIndex++) {
             AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
             // set default init value
@@ -1363,7 +1374,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
           // all remaining cases. It will become an error-path once
           // all cases are addressed explicitly above.
           SAWYER_MESG(logger[TRACE])<<"declaration of variable (other): "<<variableIdMapping->getVariableDeclaration(initDeclVarId)->unparseToString()<<endl;
-          getExprAnalyzer()->reserveMemoryLocation(label,&newPState,initDeclVarId);
+          getExprAnalyzer()->reserveMemoryLocation(label,&newPState,AbstractValue::createAddressOfVariable(initDeclVarId));
         }
         return createEState(targetLabel,cs,newPState,cset);
       }
@@ -1687,7 +1698,8 @@ void CodeThorn::Analyzer::initializeCommandLineArgumentsInState(PState& initialP
     ROSE_ASSERT(varId.isValid());
     // initialize all formal parameters of function (of extremal label) with top
     //initialPState[varId]=AbstractValue(CodeThorn::Top());
-    initialPState.writeTopToMemoryLocation(varId);
+    AbstractValue address=AbstractValue::createAddressOfVariable(varId);
+    initialPState.writeTopToMemoryLocation(address);
   }
   // if function main exists and has 2 arguments then argcvarid and argvvarid have valid ids now.
   // otherwise the command line options are ignored (because this is the correct behaviour)
@@ -2303,7 +2315,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
       evalResultValue=evalResult.value();
     }
     // above evaluateExpression does not use constraints (par3==false). Therefore top vars remain top vars
-    getExprAnalyzer()->initializeMemoryLocation(currentLabel,&newPState,formalParameterVarId,evalResultValue);
+    getExprAnalyzer()->initializeMemoryLocation(currentLabel,&newPState,AbstractValue::createAddressOfVariable(formalParameterVarId),evalResultValue);
     ++i;++j;
   }
   // assert must hold if #formal-params==#actual-params (TODO: default values)
@@ -2365,7 +2377,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallLocalEdge(Edge edge, 
           PState newPstate  = _pstate;
           //newPstate[globalVarIdByName("output")]=CodeThorn::AbstractValue(rers_result);
           getExprAnalyzer()->writeToMemoryLocation(lab,&newPstate,
-                                                   globalVarIdByName("output"),
+                                                   AbstractValue::createAddressOfVariable(globalVarIdByName("output")),
                                                    CodeThorn::AbstractValue(rers_result));
           EState _eState=createEState(edge.target(),estate->callString,newPstate,_cset,_io);
           return elistify(_eState);
@@ -2384,7 +2396,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallLocalEdge(Edge edge, 
           ROSE_ASSERT(isLhsVar); // must hold
           // logger[DEBUG]<< "lhsvar:rers-result:"<<lhsVarId.toString()<<"="<<rers_result<<endl;
           //_pstate[lhsVarId]=AbstractValue(rers_result);
-          getExprAnalyzer()->writeToMemoryLocation(lab,&_pstate,lhsVarId,AbstractValue(rers_result));
+          getExprAnalyzer()->writeToMemoryLocation(lab,&_pstate,AbstractValue::createAddressOfVariable(lhsVarId),AbstractValue(rers_result));
           ConstraintSet _cset=*estate->constraints();
           //_cset.removeAllConstraintsOfVar(lhsVarId);
           EState _eState=createEState(edge.target(),estate->callString,_pstate,_cset,newio);
@@ -2705,7 +2717,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallExternal(Edge edge, c
       } else {
         //newCSet.removeAllConstraintsOfVar(varId);
         //newPState[varId]=AbstractValue(newValue);
-        getExprAnalyzer()->writeToMemoryLocation(currentEState.label(),&newPState,varId,AbstractValue(newValue));
+        getExprAnalyzer()->writeToMemoryLocation(currentEState.label(),&newPState,AbstractValue::createAddressOfVariable(varId),AbstractValue(newValue));
       }
       newio.recordVariable(InputOutput::STDIN_VAR,varId);
       EState newEState=createEState(edge.target(),cs,newPState,newCSet,newio);
@@ -2733,7 +2745,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallExternal(Edge edge, c
             //newCSet.removeAllConstraintsOfVar(varId);
             // new input value must be const (otherwise constraints must be used)
             //newPState[varId]=AbstractValue(*i);
-            getExprAnalyzer()->writeToMemoryLocation(currentEState.label(),&newPState,varId,AbstractValue(*i));
+            getExprAnalyzer()->writeToMemoryLocation(currentEState.label(),&newPState,AbstractValue::createAddressOfVariable(varId),AbstractValue(*i));
           }
           newio.recordVariable(InputOutput::STDIN_VAR,varId);
           EState newEState=createEState(edge.target(),estate->callString,newPState,newCSet,newio);
@@ -3013,7 +3025,7 @@ list<EState> CodeThorn::Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, E
     }
     //newPState[var]=varVal;
     // TODOREF
-    getExprAnalyzer()->writeToMemoryLocation(estate.label(),&newPState,var,newVarVal);
+    getExprAnalyzer()->writeToMemoryLocation(estate.label(),&newPState,AbstractValue::createAddressOfVariable(var),newVarVal);
 
 #if 0
     if(!(*i).result.isTop())

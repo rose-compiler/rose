@@ -1,9 +1,3 @@
-/*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
- * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
- *************************************************************/
-
 #include "rose.h"
 
 //#include "rose_config.h"
@@ -47,6 +41,7 @@
 #include "ProgramInfo.h"
 #include "FunctionCallMapping.h"
 #include "AstStatistics.h"
+#include "AnalysisReporting.h"
 
 #include "DataRaceDetection.h"
 #include "AstTermRepresentation.h"
@@ -669,24 +664,6 @@ int main( int argc, char * argv[] ) {
       return 0;
     }
 
-    if(ctOpt.info.printAstNodeStats||ctOpt.info.astNodeStatsCSVFileName.size()>0) {
-      // from: src/midend/astDiagnostics/AstStatistics.C
-      if(ctOpt.info.printAstNodeStats) {
-        ROSE_Statistics::AstNodeTraversalStatistics astStats;
-        string s=astStats.toString(sageProject);
-        cout<<s; // output includes newline at the end
-      }
-      if(ctOpt.info.astNodeStatsCSVFileName.size()>0) {
-        ROSE_Statistics::AstNodeTraversalCSVStatistics astCSVStats;
-        string fileName=ctOpt.info.astNodeStatsCSVFileName;
-        astCSVStats.setMinCountToShow(1); // default value is 1
-        if(!CppStdUtilities::writeFile(fileName, astCSVStats.toString(sageProject))) {
-          cerr<<"Error: cannot write AST node statistics to CSV file "<<fileName<<endl;
-          exit(1);
-        }
-      }
-    }
-
     if(ctOpt.status) {
       cout<<"STATUS: analysis started."<<endl;
     }
@@ -771,26 +748,10 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments finished."<<endl;
     }
 
-    if(ctOpt.rers.eliminateArrays) {
-      Specialization speci;
-      speci.transformArrayProgram(sageProject, analyzer);
-      sageProject->unparse(0,0);
-      exit(0);
-    }
+    AnalysisReporting::generateAstNodeStats(ctOpt, sageProject);
 
     timer.start();
-#if 0
-    if(!analyzer->getVariableIdMapping()->isUniqueVariableSymbolMapping()) {
-      logger[WARN] << "Variable<->Symbol mapping not bijective."<<endl;
-      //varIdMap.reportUniqueVariableSymbolMappingViolations();
-    }
-#endif
-#if 0
-    analyzer->getVariableIdMapping()->toStream(cout);
-#endif
-
     SAWYER_MESG(logger[TRACE])<< "INIT: creating solver "<<analyzer->getSolver()->getId()<<"."<<endl;
-
     if(option_specialize_fun_name!="") {
       analyzer->initializeSolver(option_specialize_fun_name,root,true);
     } else {
@@ -820,85 +781,27 @@ int main( int argc, char * argv[] ) {
       ROSE_ASSERT(startFunction!="");
       analyzer->initializeSolver(startFunction,root,false);
     }
+    double initRunTime=timer.getTimeDurationAndStop().milliSeconds();
     // function-id-mapping is initialized in initializeSolver.
     if(ctOpt.info.printFunctionIdMapping) {
       ROSE_ASSERT(analyzer->getCFAnalyzer());
       ROSE_ASSERT(analyzer->getCFAnalyzer()->getFunctionIdMapping());
       analyzer->getCFAnalyzer()->getFunctionIdMapping()->toStream(cout);
     }
-    double initRunTime=timer.getTimeDurationAndStop().milliSeconds();
     
+    analyzer->printStatusMessageLine("==============================================================");
     timer.start();
-    analyzer->printStatusMessageLine("==============================================================");
-    if(!analyzer->getModeLTLDriven() && ctOpt.z3BasedReachabilityAnalysis==false && ctOpt.ssa==false) {
-      analyzer->runSolver();
-    }
+    analyzer->runSolver();
     double analysisRunTime=timer.getTimeDurationAndStop().milliSeconds();
-
     analyzer->printStatusMessageLine("==============================================================");
-
-    if (ctOpt.svcomp.svcompMode && ctOpt.svcomp.witnessFileName.size()>0) {
-      analyzer->writeWitnessToFile(ctOpt.svcomp.witnessFileName);
-    }
-
+    
+    AnalysisReporting::generateAnalysisStatsRawData(ctOpt,analyzer);
+    AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt, analyzer);
     double extractAssertionTracesTime= 0;
-
     double determinePrefixDepthTime= 0; // MJ: Determination of prefix depth currently deactivated.
     int inputSeqLengthCovered = -1;
     double totalInputTracesTime = extractAssertionTracesTime + determinePrefixDepthTime;
-
-    for(auto analysisInfo : ctOpt.analysisList()) {
-      AnalysisSelector analysisSel=analysisInfo.first;
-      string analysisName=analysisInfo.second;
-      if(ctOpt.getAnalysisSelectionFlag(analysisSel)||ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
-        ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getViolatingLocations(analysisSel);
-        if(ctOpt.getAnalysisSelectionFlag(analysisSel)) {
-          cout<<"\nResults for "<<analysisName<<" analysis:"<<endl;
-          if(locations.numTotalLocations()>0) {
-            locations.writeResultToStream(cout,analyzer->getLabeler());
-          } else {
-            cout<<"No violations detected."<<endl;
-          }
-        }
-        if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
-          string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
-          if(!ctOpt.quiet)
-            cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
-          locations.writeResultFile(fileName,analyzer->getLabeler());
-        }
-      }
-    }
-
-    if(ctOpt.analyzedFunctionsCSVFileName.size()>0) {
-      string fileName=ctOpt.analyzedFunctionsCSVFileName;
-      if(!ctOpt.quiet)
-        cout<<"Writing list of analyzed functions to file "<<fileName<<endl;
-      string s=analyzer->analyzedFunctionsToString();
-      if(!CppStdUtilities::writeFile(fileName, s)) {
-        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
-      }
-    }
-
-    if(ctOpt.analyzedFilesCSVFileName.size()>0) {
-      string fileName=ctOpt.analyzedFilesCSVFileName;
-      if(!ctOpt.quiet)
-        cout<<"Writing list of analyzed files to file "<<fileName<<endl;
-      string s=analyzer->analyzedFilesToString();
-      if(!CppStdUtilities::writeFile(fileName, s)) {
-        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
-      }
-    }
-
-    if(ctOpt.externalFunctionsCSVFileName.size()>0) {
-      string fileName=ctOpt.externalFunctionsCSVFileName;
-      if(!ctOpt.quiet)
-        cout<<"Writing list of external functions to file "<<fileName<<endl;
-      string s=analyzer->externalFunctionsToString();
-      if(!CppStdUtilities::writeFile(fileName, s)) {
-        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
-      }
-    }
-
+ 
     long pstateSetSize=analyzer->getPStateSet()->size();
     long pstateSetBytes=analyzer->getPStateSet()->memorySize();
     long pstateSetMaxCollisions=analyzer->getPStateSet()->maxCollisions();
@@ -1112,4 +1015,3 @@ int main( int argc, char * argv[] ) {
   mfacilities.shutdown();
   return 0;
 }
-

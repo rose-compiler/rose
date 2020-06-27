@@ -66,6 +66,7 @@ CODETHORN_HEADER_FILES=\
   AliasAnalysis.h \
   AnalysisAbstractionLayer.h \
   AnalysisAstAnnotator.h \
+  AnalysisReporting.h \
   Analyzer.h \
   ArrayElementAccessData.h \
   AstNodeInfo.h \
@@ -140,6 +141,7 @@ CODETHORN_HEADER_FILES=\
   ProgramAbstractionLayer.h \
   ProgramInfo.h \
   ProgramLocationsReport.h \
+  ProgramLocationsAnalysis.h \
   PropertyState.h \
   PropertyStateFactory.h \
   PropertyValueTable.h \
@@ -178,6 +180,7 @@ CODETHORN_SOURCE_FILES=\
   AliasAnalysis.C \
   AnalysisAbstractionLayer.C \
   AnalysisAstAnnotator.C \
+  AnalysisReporting.C \
   Analyzer.C \
   ArrayElementAccessData.C \
   AstNodeInfo.C \
@@ -251,6 +254,7 @@ CODETHORN_SOURCE_FILES=\
   ProgramAbstractionLayer.C \
   ProgramInfo.C \
   ProgramLocationsReport.C \
+  ProgramLocationsAnalysis.C \
   PropertyState.C \
   PropertyStateFactory.C \
   PropertyValueTable.C \

@@ -87,7 +87,8 @@ struct CodeThornOptions : public Options {
   bool printViolations=false;
   int optionsSet=0;
   int callStringLength=-1; // not used yet
-
+  bool byteMode=false; // switches between byte-addresses and index-based addresses in PState
+  
   // RERS C-subset program options
   struct Rers {
     std::string assertResultsOutputFileName;
