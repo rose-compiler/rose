@@ -557,6 +557,7 @@ int main( int argc, char * argv[] ) {
       return 0;
     }
 
+    AbstractValue::byteMode=ctOpt.byteMode;
     configureOptionSets(ctOpt);
 
     analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;
