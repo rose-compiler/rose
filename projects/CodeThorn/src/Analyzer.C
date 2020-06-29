@@ -2261,6 +2261,43 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
     }
   }
 
+  // cases: get_function() :
+  // C function call        : FunctionRefExp
+  // C function pointer call: VarRefExp
+  // member function call (stack)      : SgDotExp(SgVarRefExp:a,SgMemberFunctionRefExp:m)
+  // member function call (reference)  : SgDotExp(SgVarRefExp:r,SgMemberFunctionRefExp:m)
+  // member functino call (pointer)    : SgArrowExp(SgVarRefExp:p,SgMemberFunctionRefExp:m)
+
+  // check if function pointer call (function=VarRefExp) [otherwise it is a direct function call: function=FunctionRefExp]
+  if(SgExpression* funExp=funCall->get_function()) {
+    if(SgVarRefExp* varRefExp=isSgVarRefExp(funExp)) {
+      //cout<<"Function pointer call: VarRefExp: "<<varRefExp->unparseToString()<<endl;
+      // determine if the edge leads to the called function
+      Label targetLabel=edge.target();
+      VariableId varId=getVariableIdMapping()->variableId(varRefExp);
+      //cout<<"DEBUG: function pointer var id: "<<varId.toString(getVariableIdMapping())<<endl;
+      AbstractValue varAddress=AbstractValue::createAddressOfVariable(varId);
+      //cout<<"DEBUG: function pointer var address: "<<varAddress.toString(getVariableIdMapping())<<endl;
+      AbstractValue funcPtrVal=estate->pstate()->readFromMemoryLocation(varAddress);
+      //cout<<"DEBUG: function pointer value: "<<funcPtrVal.toString(getVariableIdMapping())<<": isFunPtr:"<<funcPtrVal.isFunctionPtr()<<endl;
+      if(funcPtrVal.isFunctionPtr()&&!funcPtrVal.isTop()&&!funcPtrVal.isBot()) {
+       Label  funTargetLabel=funcPtrVal.getLabel();
+       if(funTargetLabel!=targetLabel) {
+          //infeasable path
+         //cout<<"DEBUG: infeasable path: "<<funCall->unparseToString()<<":"<<funcPtrVal.toString(getVariableIdMapping())<<endl;
+         return elistify();
+        } else {
+         // continue on this path, function pointer is referring to the target label's function entry
+         //cout<<"Resolved function pointer"<<endl;
+       }
+      } else {
+        // abort
+        cerr<<"Error: function pointer is top or bot. Not supported: "<<funCall->unparseToString()<<":"<<funcPtrVal.toString(getVariableIdMapping())<<endl;
+        exit(1);
+      }
+    }
+  }
+  
   SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   // ad 2)
   // check for function pointer label

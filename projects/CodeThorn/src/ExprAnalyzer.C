@@ -1490,8 +1490,25 @@ std::list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionRefExp(SgFunctionR
   // create address of function
   SingleEvalResultConstInt res;
   ROSE_ASSERT(_analyzer);
-  Label funLab=_analyzer->getFunctionEntryLabel(node);
+
+  SgFunctionSymbol* functionSym=node->get_symbol_i();
+  ROSE_ASSERT(functionSym);
+  SgFunctionDeclaration* funDecl=functionSym->get_declaration();
+  //SgFunctionDeclaration* funDecl=SgNodeHelper::findFunctionDeclarationWithFunctionSymbol(functionSym);
+  SgDeclarationStatement* defFunDecl=funDecl->get_definingDeclaration();
+  if(defFunDecl) {
+    // if not resolved, funDef will be 0, and functionEntryLabel will be an invalid label id.
+    funDecl=isSgFunctionDeclaration(defFunDecl);
+  }
+  ROSE_ASSERT(funDecl);
+  //cout<<"DEBUG: isForwardDecl:"<<SgNodeHelper::isForwardFunctionDeclaration(funDecl)<<endl;
+  //cout<<"DEBUG: fundecl:"<<funDecl->unparseToString()<<endl;
+  SgFunctionDefinition* funDef=funDecl->get_definition();
+  ROSE_ASSERT(funDef);
+  Label funLab=_analyzer->getLabeler()->functionEntryLabel(funDef);
+  
   // label of corresponding entry label of function of node; if function is external, then label is an invalid label.
+  //cout<<"DEBUG: evalFunctionRefExp: label:"<<funLab.toString()<<endl;
   res.init(estate,AbstractValue::createAddressOfFunction(funLab));
   return listify(res);
 }
