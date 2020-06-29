@@ -263,14 +263,16 @@ private:
      *
      *  This is used mainly for default arguments. */
 public:
-    Type() {
+    Type()
+        : fields_(0) {
         typeClass(INVALID);
         nBits(0);
         secondaryWidth(0);
     }
 
 private:
-    Type(TypeClass tc, size_t w1, size_t w2) {
+    Type(TypeClass tc, size_t w1, size_t w2)
+        : fields_(0) {
         typeClass(tc);
         nBits(w1);
         secondaryWidth(w2);
