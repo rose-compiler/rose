@@ -1215,8 +1215,8 @@ string cfgUtils::genUniqueName()
   Rose_STL_Container<SgNode*> initNames = NodeQuery::querySubTree(project, V_SgInitializedName);
   for(Rose_STL_Container<SgNode*>::iterator it = initNames.begin(); it!= initNames.end(); it++)
   {
-    SgInitializedName *curName;
-    ROSE_ASSERT(curName = isSgInitializedName(*it));
+    SgInitializedName *curName = isSgInitializedName(*it);
+    ROSE_ASSERT(curName);
     // while our chosen "unique" name conflicts with the current SgInitializedName
     // keep adding random numbers to the end of the the "unique" name until it becomes unique
     //          printf("SgInitializedName: name<%s> == curName->get_name().getString()<%s> = %d\n", name.c_str(), curName->get_name().getString().c_str(), name == curName->get_name().getString());
@@ -1227,8 +1227,8 @@ string cfgUtils::genUniqueName()
   Rose_STL_Container<SgNode*> funcDecls = NodeQuery::querySubTree(project, V_SgFunctionDeclaration);
   for(Rose_STL_Container<SgNode*>::iterator it = funcDecls.begin(); it!= funcDecls.end(); it++)
   {
-    SgFunctionDeclaration *curDecl;
-    ROSE_ASSERT(curDecl = isSgFunctionDeclaration(*it));
+    SgFunctionDeclaration *curDecl = isSgFunctionDeclaration(*it);
+    ROSE_ASSERT(curDecl);
     assert(!isSgTemplateFunctionDeclaration(curDecl));
     // while our chosen "unique" name conflicts with the current SgFunctionDeclaration
     // keep adding random numbers to the end of the the "unique" name until it becomes unique
@@ -1245,8 +1245,8 @@ SgFunctionDeclaration* cfgUtils::getFuncDecl(string name)
   Rose_STL_Container<SgNode*> funcDecls = NodeQuery::querySubTree(project, V_SgFunctionDeclaration);
   for(Rose_STL_Container<SgNode*>::iterator it = funcDecls.begin(); it!= funcDecls.end(); it++)
   {
-    SgFunctionDeclaration *curDecl;
-    ROSE_ASSERT(curDecl = isSgFunctionDeclaration(*it));
+    SgFunctionDeclaration *curDecl = isSgFunctionDeclaration(*it);
+    ROSE_ASSERT(curDecl);
     // if we've found our function
     if (!isSgTemplateFunctionDeclaration(*it) && name == curDecl->get_name().getString())
     {
