@@ -183,6 +183,7 @@ namespace
     const size_t ofs     = len-overlap;
     
     ROSE_ASSERT(overlap+1 == callee.size());
+    return std::equal(std::next(caller.begin(), ofs), caller.end(), callee.begin()); 
   }
 
   struct IsCallerCallee

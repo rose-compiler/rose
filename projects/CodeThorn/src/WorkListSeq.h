@@ -8,7 +8,8 @@
  *************************************************************/
 
 #include <set>
-#include <list>
+#include <deque>
+//~ #include <list>
 
 #include "WorkList.h"
 
@@ -25,7 +26,8 @@ namespace CodeThorn {
     Element examine();
     size_t size() { return workList.size(); }
   private:
-    std::list<Element> workList;
+    //~ std::list<Element> workList;
+    std::deque<Element> workList;
   };
   
 } // end of namespace CodeThorn
@@ -60,24 +62,20 @@ void CodeThorn::WorkListSeq<Element>::add(std::set<Element>& elemSet) {
 
 template<typename Element>
 Element CodeThorn::WorkListSeq<Element>::take() {
-  if(workList.size()==0) {
+  if(workList.size()==0) 
     throw CodeThorn::Exception("Error: attempted to take element from empty work list.");
-  }  else {
-    Element co;
-    co=*workList.begin();
-    workList.pop_front();
-    return co;
-  }
+
+  Element co = workList.front();
+  workList.pop_front();
+  return co;
 }
 
 template<typename Element>
 Element CodeThorn::WorkListSeq<Element>::examine() {
   if(workList.size()==0)
     throw CodeThorn::Exception("Error: attempted to examine next element in empty work list.");
-  Element elem;
-  if(workList.size()>0)
-    elem=*workList.begin();
-  return elem;
+    
+  return workList.front();
 }
 
 }
