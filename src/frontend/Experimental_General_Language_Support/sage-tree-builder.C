@@ -397,20 +397,16 @@ Leave(SgFunctionDeclaration* function_decl, SgBasicBlock* param_scope)
    SgBasicBlock* function_body = isSgBasicBlock(SageBuilder::topScopeStack());
    ROSE_ASSERT(function_body);
 
-#if 0
-   std::cout << "---   param_scope " << param_scope << ": case sensitive " << param_scope->isCaseInsensitive() << std::endl;
-   std::cout << "--- function_body " << function_body << ": case sensitive " << function_body->isCaseInsensitive() << std::endl;
-#endif
 // Move all of the statements temporarily stored in the parameter scope
 // into the scope for the function body.
 //
    if (param_scope) {
       SageInterface::moveStatementsBetweenBlocks (param_scope, function_body);
    }
-#if 0
-   std::cout << "---   param_scope " << param_scope << ": case sensitive " << param_scope->isCaseInsensitive() << std::endl;
-   std::cout << "--- function_body " << function_body << ": case sensitive " << function_body->isCaseInsensitive() << std::endl;
-#endif
+// The param_scope (SgBasicBlock) is still connected, so try to set its parent
+// to nullptr and delete it.
+   param_scope->set_parent(nullptr);
+   delete param_scope;
 
    SageBuilder::popScopeStack();  // function body
    SageBuilder::popScopeStack();  // function definition
