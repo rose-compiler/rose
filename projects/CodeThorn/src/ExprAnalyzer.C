@@ -2095,7 +2095,7 @@ void ExprAnalyzer::writeToMemoryLocation(Label lab, PState* pstate, AbstractValu
   } else if(!pstate->memLocExists(memLoc)) {
     if(!newValue.isUndefined()) {
       recordPotentialOutOfBoundsAccessLocation(lab);
-      logger[WARN]<<"writing defined value to memlog not in state: "<<lab.toString()<<":"<<memLoc.toString(_variableIdMapping)<<":="<<newValue.toString(_variableIdMapping)<<endl;
+      logger[WARN]<<"writing defined value to memloc not in state: "<<lab.toString()<<":"<<memLoc.toString(_variableIdMapping)<<":="<<newValue.toString(_variableIdMapping)<<endl;
     }
   }
   pstate->writeToMemoryLocation(memLoc,newValue);

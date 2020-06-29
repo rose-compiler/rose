@@ -195,7 +195,9 @@ void PState::writeTopToAllMemoryLocations() {
 void PState::combineValueAtAllMemoryLocations(AbstractValue val) {
   for(PState::iterator i=begin();i!=end();++i) {
     AbstractValue memLoc=(*i).first;
-    combineAtMemoryLocation(memLoc,val);
+    if(!memLoc.isRef()) {
+      combineAtMemoryLocation(memLoc,val);
+    }
   }
 }
 
@@ -354,7 +356,8 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
     abstractValue=AbstractValue(CodeThorn::Top());
   }
   if(abstractMemLoc.isTop()) {
-    //combineValueAtAllMemoryLocations(abstractValue); // BUG: leads to infinite loop in DOM029
+    combineValueAtAllMemoryLocations(abstractValue); // BUG: leads to infinite loop in DOM029
+    return;
   } else {
     if(AbstractValue::byteMode) {
       VariableId varId=abstractMemLoc.getVariableId();
@@ -396,7 +399,8 @@ void PState::combineAtMemoryLocation(AbstractValue abstractMemLoc,
                                      AbstractValue abstractValue) {
   AbstractValue currentValue=readFromMemoryLocation(abstractMemLoc);
   AbstractValue newValue=AbstractValue::combine(currentValue,abstractValue);
-  writeToMemoryLocation(abstractMemLoc,newValue);
+  if(!abstractMemLoc.isTop()&&!abstractMemLoc.isBot()) 
+    writeToMemoryLocation(abstractMemLoc,newValue);
 }
 
 size_t PState::stateSize() const {
