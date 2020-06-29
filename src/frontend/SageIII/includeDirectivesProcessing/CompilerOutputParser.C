@@ -246,7 +246,11 @@ void CompilerOutputParser::processFile(SgFile* inputFile, bool isVerbose)
         }
 #else
   // DQ (3/14/2020): Output a message until I verify this is no longer required.
-     printf ("In CompilerOutputParser::processFile(): skipping call to buildCompilerCommandLineOptions() and parseIncludedFilesFromCompilerOutput() \n");
+  // DQ (4/6/2020): Added header file unparsing feature specific debug level.
+     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+        {
+          printf ("In CompilerOutputParser::processFile(): skipping call to buildCompilerCommandLineOptions() and parseIncludedFilesFromCompilerOutput() \n");
+        }
 #endif
 
 #if 0

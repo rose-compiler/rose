@@ -2028,7 +2028,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
      if (decl_stmt->get_declarationModifier().get_storageModifier().isStatic())
         {
-#if 1
+#if 0
           printf ("In Unparse_MOD_SAGE::printSpecifier2(): Output the static keyword \n");
 #endif
           curprint("static ");
@@ -2039,7 +2039,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
   // if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && !decl_stmt->get_linkage())
      if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage().empty() == true)
         {
-#if 1
+#if 0
           printf ("In Unparse_MOD_SAGE::printSpecifier2(): Output the extern keyword \n");
 #endif
        // DQ (7/23/2014): Looking for greater precision in the control of the output of the "extern" keyword.
