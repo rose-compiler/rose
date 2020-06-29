@@ -2114,6 +2114,24 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     break;
                   }
 
+            // DQ (5/5/2020): Adding AST visualization support for SgIncludeFile.
+               case V_SgIncludeFile:
+                  {
+                    SgIncludeFile* include_file = isSgIncludeFile(node);
+                    additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+
+                 // DQ (5/6/2020): Trigger the root fo the include tree associated with the input source file to be collored differently.
+                    if (include_file->get_isRootSourceFile() == true)
+                       {
+                         additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                         labelWithSourceCode = string("INCLUDE TREE ROOT\\n");
+                       }
+
+                    labelWithSourceCode += string("\\n  ") + include_file->get_filename() + "  ";
+                    labelWithSourceCode += string("\\n  ") + StringUtility::numberToString(include_file) + "  ";
+                    break;
+                  }
+
                case V_Sg_File_Info:
                   {
                  // DQ (5/11/2006): Skip any IR nodes that are part of a gnu compatability specific subtree of the AST

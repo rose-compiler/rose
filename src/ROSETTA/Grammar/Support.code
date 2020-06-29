@@ -2361,14 +2361,15 @@ $CLASSNAME::displayString() const
 void
 $CLASSNAME::display ( std::string label ) const
    {
-     mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("In $CLASSNAME::display(%s) \n",label.c_str());
 #if 0
      mprintf ("   isUnknown()         = %s \n",isUnknown()  ? "true" : "false");
      mprintf ("   isDefault()         = %s \n",isDefault()  ? "true" : "false");
      mprintf ("   isConst()           = %s \n",isConst()    ? "true" : "false");
      mprintf ("   isVolatile()        = %s \n",isVolatile() ? "true" : "false");
 #else
-     mprintf ("%s \n",displayString().c_str());
+     printf ("%s \n",displayString().c_str());
 #endif
    }
 
@@ -2527,8 +2528,9 @@ $CLASSNAME::displayString() const
 void
 $CLASSNAME::display ( std::string label ) const
    {
-     mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-     mprintf ("%s \n",displayString().c_str());
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("In $CLASSNAME::display(%s) \n",label.c_str());
+     printf ("%s \n",displayString().c_str());
    }
 
 std::ostream & operator<< ( std::ostream & os, const SgStorageModifier & m) 
@@ -2626,8 +2628,9 @@ SgAccessModifier::displayString() const
 void
 SgAccessModifier::display ( std::string label ) const
    {
-     mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-     mprintf ("%s \n",displayString().c_str());
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("In $CLASSNAME::display(%s) \n",label.c_str());
+     printf ("%s \n",displayString().c_str());
    }
 
 std::ostream & operator<< ( std::ostream & os, const SgAccessModifier & m) 
@@ -2916,8 +2919,9 @@ SgFunctionModifier::displayString() const
 void
 SgFunctionModifier::display ( std::string label ) const
    {
-     mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-     mprintf ("%s \n",displayString().c_str());
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("In $CLASSNAME::display(%s) \n",label.c_str());
+     printf ("%s \n",displayString().c_str());
    }
 
 std::ostream & operator<< ( std::ostream & os, const SgFunctionModifier & m) 
@@ -3065,8 +3069,9 @@ $CLASSNAME::displayString() const
 void
 $CLASSNAME::display ( std::string label ) const
    {
-     mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-     mprintf ("%s \n",displayString().c_str());
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("In $CLASSNAME::display(%s) \n",label.c_str());
+     printf ("%s \n",displayString().c_str());
    }
 
 std::ostream & operator<< ( std::ostream & os, const SgUPC_AccessModifier & m) 
@@ -3170,8 +3175,9 @@ $CLASSNAME::displayString() const
 void
 $CLASSNAME::display ( std::string label ) const
    {
-     mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-     mprintf ("%s \n",displayString().c_str());
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("In $CLASSNAME::display(%s) \n",label.c_str());
+     printf ("%s \n",displayString().c_str());
    }
 
 std::ostream & operator<< ( std::ostream & os, const SgSpecialFunctionModifier & m) 
@@ -3428,8 +3434,9 @@ SgDeclarationModifier::displayString() const
 void
 SgDeclarationModifier::display ( std::string label ) const
    {
-     mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-     mprintf ("%s \n",displayString().c_str());
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("In $CLASSNAME::display(%s) \n",label.c_str());
+     printf ("%s \n",displayString().c_str());
    }
 
 std::ostream & operator<< ( std::ostream & os, const SgDeclarationModifier & m) 
@@ -3783,8 +3790,9 @@ $CLASSNAME::displayString() const
 void
 $CLASSNAME::display ( std::string label ) const
    {
-     mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-     mprintf ("%s \n",displayString().c_str());
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("In $CLASSNAME::display(%s) \n",label.c_str());
+     printf ("%s \n",displayString().c_str());
    }
 
 std::ostream& operator<< (std::ostream& os, const SgTypeModifier& tm) 
@@ -3985,8 +3993,9 @@ $CLASSNAME::displayString() const
 void
 $CLASSNAME::display ( std::string label ) const
    {
-     mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-     mprintf ("%s \n",displayString().c_str());
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("In $CLASSNAME::display(%s) \n",label.c_str());
+     printf ("%s \n",displayString().c_str());
    }
 
 std::ostream & operator<< ( std::ostream & os, const SgElaboratedTypeModifier & m) 
@@ -4068,8 +4077,9 @@ $CLASSNAME::displayString() const
 void
 $CLASSNAME::display ( std::string label ) const
    {
-     mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-     mprintf ("%s \n",displayString().c_str());
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("In $CLASSNAME::display(%s) \n",label.c_str());
+     printf ("%s \n",displayString().c_str());
    }
 
 std::ostream & operator<< ( std::ostream & os, const SgLinkageModifier & m) 
@@ -4144,8 +4154,9 @@ $CLASSNAME::displayString() const
 void
 $CLASSNAME::display ( std::string label ) const
    {
-     mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-     mprintf ("%s \n",displayString().c_str());
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("In $CLASSNAME::display(%s) \n",label.c_str());
+     printf ("%s \n",displayString().c_str());
    }
 
 std::ostream & operator<< ( std::ostream & os, const SgBaseClassModifier & m) 
@@ -5181,6 +5192,7 @@ HEADER_NAME_START
        // DQ (11/27/2010): Added to support case sensitive and case insensitive semantics.
           static bool caseInsensitiveEquality ( const SgName & x, const SgName & y );
 
+       // DQ (4/21/2020): I think this might be used but not defined.
        // Added to support assignments to string variables.
           operator std::string () const;
 
@@ -6461,6 +6473,10 @@ HEADER_APPLICATION_PROJECT_START
       //! global concept of verbose level which controls useful output from the compiler (values greater than zero increase output level)
           static int p_verbose;
 
+       // DQ (4/4/2020): Adding support for unparse headers feature specific diagnostics.
+      //! global concept of verbose level which controls useful output from the unparse headers feature (values greater than zero increase output level)
+          static int p_unparseHeaderFilesDebug;
+
       //! Save the command line arguments (argc and argv) for the project (these are needed to process transformations)
        // static int project_argc;
        // static char** project_argv;
@@ -6478,6 +6494,10 @@ HEADER_APPLICATION_PROJECT_START
       //! is zero (quiet).
           static int get_verbose (void);
           static void set_verbose (int);
+
+       // DQ (4/4/2020): Added debugging support for feature specific unparsing of header files.
+          static int get_unparseHeaderFilesDebug (void);
+          static void set_unparseHeaderFilesDebug (int);
 
        // DQ: bool values on the SgFile nodes which can be queried on the SgProject
        // nodes (must be the same across all SgFile nodes in the project).
@@ -12991,6 +13011,38 @@ SOURCE_INITIALIZED_NAME_END
 
 SOURCE_NAME_START
 
+#if 0
+  // DQ (4/21/2020): operator related functions that we declare in the 
+  // header file and need to support with function definitions.
+
+X     SgName();
+X     SgName(const char* str);
+X     SgName(const std::string& str);
+X     SgName(const SgName& n);
+
+X     int operator!=(const SgName& n1) const;
+X     int operator==(const SgName& n1) const;
+X     int operator< (const SgName& n1) const;
+
+  // DQ (4/21/2020): I think this might be used but not defined.
+  // Added to support assignments to string variables.
+     operator std::string () const;
+
+X     SgName& operator<<(const std::string& str);
+
+X     SgName& operator<<(int val);
+     SgName& operator=(const SgName& n1);
+
+X     bool operator== (const int) const { return false; }
+
+  // DQ (9/9/2004): friend function (string concatination)
+X     ROSE_DLL_API friend SgName operator+(const SgName & n1, const SgName & n2);
+
+  // DQ (11/15/2004): Added to support general string operations (first used in the unparser)
+X     SgName & operator+= (const SgName & n1);
+#endif
+
+
 // Added to support assignments to string variables.
 SgName::operator std::string () const
    {
@@ -13761,30 +13813,31 @@ Sg_File_Info::display( const std::string label ) const
    {
      assert(this != NULL);
 
-     mprintf ("Inside of Sg_File_Info::display(%s) of this pointer = %p \n",label.c_str(), this);
-     mprintf ("     isTransformation                      = %s \n",isTransformation()                      == true ? "true (part of a transformation)" : "false");
-     mprintf ("     isCompilerGenerated                   = %s \n",isCompilerGenerated()                   == true ? "true (no position information)" : "false");
-     mprintf ("     isOutputInCodeGeneration              = %s \n",isOutputInCodeGeneration()              == true ? "true (output in code generator)" : "false");
-     mprintf ("     isShared                              = %s \n",isShared()                              == true ? "true (shared within merged AST)" : "false");
-     mprintf ("     isFrontendSpecific                    = %s \n",isFrontendSpecific()                    == true ? "true (part of ROSE support for gnu compatability)" : "false");
-     mprintf ("     isSourcePositionUnavailableInFrontend = %s \n",isSourcePositionUnavailableInFrontend() == true ? "true (source position unavailable in frontend)" : "false");
-     mprintf ("     isCommentOrDirective                  = %s \n",isCommentOrDirective()                  == true ? "true (this is a comment or CPP directive)" : "false");
-     mprintf ("     isToken                               = %s \n",isToken()                               == true ? "true (this is from the token stream woven into the AST)" : "false");
-     mprintf ("     isDefaultArgument                     = %s \n",isDefaultArgument()                     == true ? "true (root of default argument)" : "false");
-     mprintf ("     isImplicitCast                        = %s \n",isImplicitCast()                        == true ? "true (implicit instead of explicit cast)" : "false");
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("Inside of Sg_File_Info::display(%s) of this pointer = %p \n",label.c_str(), this);
+     printf ("     isTransformation                      = %s \n",isTransformation()                      == true ? "true (part of a transformation)" : "false");
+     printf ("     isCompilerGenerated                   = %s \n",isCompilerGenerated()                   == true ? "true (no position information)" : "false");
+     printf ("     isOutputInCodeGeneration              = %s \n",isOutputInCodeGeneration()              == true ? "true (output in code generator)" : "false");
+     printf ("     isShared                              = %s \n",isShared()                              == true ? "true (shared within merged AST)" : "false");
+     printf ("     isFrontendSpecific                    = %s \n",isFrontendSpecific()                    == true ? "true (part of ROSE support for gnu compatability)" : "false");
+     printf ("     isSourcePositionUnavailableInFrontend = %s \n",isSourcePositionUnavailableInFrontend() == true ? "true (source position unavailable in frontend)" : "false");
+     printf ("     isCommentOrDirective                  = %s \n",isCommentOrDirective()                  == true ? "true (this is a comment or CPP directive)" : "false");
+     printf ("     isToken                               = %s \n",isToken()                               == true ? "true (this is from the token stream woven into the AST)" : "false");
+     printf ("     isDefaultArgument                     = %s \n",isDefaultArgument()                     == true ? "true (root of default argument)" : "false");
+     printf ("     isImplicitCast                        = %s \n",isImplicitCast()                        == true ? "true (implicit instead of explicit cast)" : "false");
 
   // if (isCompilerGenerated() == false)
      if (!isTransformation() && !isCompilerGenerated())
         {
-          mprintf ("     (computed) filename = %s \n",get_filename());
-          mprintf ("     (computed) line     = %d  column = %d \n",get_line(),get_col());
+          printf ("     (computed) filename = %s \n",get_filename());
+          printf ("     (computed) line     = %d  column = %d \n",get_line(),get_col());
         }
        else // Liao, 11/12/2012, more information for debugging
         {
-          mprintf ("     Filename and line, column info should be invalid for transformation or compiler generated objects\n");
-          mprintf ("     we print their values anyway for your reference\n");
-          mprintf ("     (computed) filename = %s \n",get_filename());
-          mprintf ("     (computed) line     = %d  column = %d \n",get_line(),get_col());
+          printf ("     Filename and line, column info should be invalid for transformation or compiler generated objects\n");
+          printf ("     we print their values anyway for your reference\n");
+          printf ("     (computed) filename = %s \n",get_filename());
+          printf ("     (computed) line     = %d  column = %d \n",get_line(),get_col());
         }
 
   // DQ (6/17/2005): Way to get extra debugging information, if the
@@ -13792,21 +13845,21 @@ Sg_File_Info::display( const std::string label ) const
   // if (label == "debug")
      if (label.find("debug") != std::string::npos)
         {
-          mprintf ("     (internal) file_id   = %d \n",get_file_id());
-          mprintf ("     (internal) filename  = %s \n",get_raw_filename().c_str());
-          mprintf ("     (internal  line      = %d  column   = %d \n",p_line,p_col);
+          printf ("     (internal) file_id   = %d \n",get_file_id());
+          printf ("     (internal) filename  = %s \n",get_raw_filename().c_str());
+          printf ("     (internal  line      = %d  column   = %d \n",p_line,p_col);
         }
 
-     mprintf ("     (computed) physical_file_id    = %d = %s \n",get_physical_file_id(),get_physical_filename().c_str());
-     mprintf ("     (computed) physical_line       = %d \n",p_physical_line);
+     printf ("     (computed) physical_file_id    = %d = %s \n",get_physical_file_id(),get_physical_filename().c_str());
+     printf ("     (computed) physical_line       = %d \n",p_physical_line);
 
   // DQ (1/23/2013): Added support for source sequence numbering information.
-     mprintf ("     source_sequence_number         = %d \n",p_source_sequence_number);
+     printf ("     source_sequence_number         = %d \n",p_source_sequence_number);
 
   // DQ (5/16/2005): output these values, but I think they might be removed 
   // later since I don't see the point of storing this information!
-  // mprintf ("     isDeclaration    = %s \n",isDeclaration()    == true ? "true" : "false");
-  // mprintf ("     isInitialization = %s \n",isInitialization() == true ? "true" : "false");
+  // printf ("     isDeclaration    = %s \n",isDeclaration()    == true ? "true" : "false");
+  // printf ("     isInitialization = %s \n",isInitialization() == true ? "true" : "false");
    }
 
 string
@@ -13833,23 +13886,24 @@ Sg_File_Info::display_static_data( const std::string label )
    {
   // DQ (6/11/2007): output static data for debugging
 
-     mprintf ("Inside of Sg_File_Info::display_static_data(%s) \n",label.c_str());
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("Inside of Sg_File_Info::display_static_data(%s) \n",label.c_str());
 
   // mprintf ("p_cur_line = %d \n",p_cur_line);
   // mprintf ("p_cur_file = %s \n",p_cur_file.c_str());
 
   // mprintf ("p_max_file_id = %d \n",p_max_file_id);
 
-     mprintf ("p_nametofileid_map: \n");
+     printf ("p_nametofileid_map: \n");
      for (std::map<std::string,int>::iterator i = p_nametofileid_map.begin(); i != p_nametofileid_map.end(); i++)
         {
-          mprintf ("name = %s id = %d \n",i->first.c_str(),i->second);
+          printf ("name = %s id = %d \n",i->first.c_str(),i->second);
         }
 
-     mprintf ("p_fileidtoname_map: \n");
+     printf ("p_fileidtoname_map: \n");
      for (std::map<int,std::string>::iterator i = p_fileidtoname_map.begin(); i != p_fileidtoname_map.end(); i++)
         {
-          mprintf ("id = %d name = %s \n",i->first,i->second.c_str());
+          printf ("id = %d name = %s \n",i->first,i->second.c_str());
         }
    }
 
@@ -15817,6 +15871,9 @@ SgFile::initialization()
   // version                   = false;
   // help                      = false;
 
+  // DQ (4/4/2020): Adding support for unparse headers feature specific diagnostics.
+  // p_unparseHeaderFilesDebug = 0;
+
   // DQ (12/8/2007): use "-Wall" to control output of warnings
      p_output_warnings         = false;
 
@@ -16677,7 +16734,9 @@ void
 SgFile::display ( const std::string & label ) const
    {
   // This function prints out the member data values within the object
-     mprintf ("\nIn SgFile::display(%s) \n",label.c_str());
+
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("\nIn SgFile::display(%s) \n",label.c_str());
 
   // DQ (1/17/2006): test this
   // assert(get_fileInfo() != NULL);
@@ -16693,31 +16752,33 @@ SgFile::display ( const std::string & label ) const
      assert (get_startOfConstruct() != NULL);
      get_startOfConstruct()->display("Called from SgFile::display");
 
-     mprintf ("     p_verbose                                   = %s (value=%d) \n",(p_verbose > 1) ? "true" : "false",p_verbose);
-     mprintf ("     p_output_warnings                           = %s \n",(p_output_warnings == true) ? "true" : "false");
+     printf ("     p_verbose                                   = %s (value=%d) \n",(p_verbose > 1) ? "true" : "false",p_verbose);
+  // printf ("     p_unparseHeaderFilesDebug                   = %s (value=%d) \n",(p_unparseHeaderFilesDebug > 1) ? "true" : "false",p_unparseHeaderFilesDebug);
 
-     mprintf ("     p_C_only()                                  = %s \n",(p_C_only == true)   ? "true" : "false");
-     mprintf ("     p_upc_threads                               = %s (value=%d) \n",  (p_upc_threads > 1) ? "true" : "false",p_upc_threads);
+     printf ("     p_output_warnings                           = %s \n",(p_output_warnings == true) ? "true" : "false");
+
+     printf ("     p_C_only()                                  = %s \n",(p_C_only == true)   ? "true" : "false");
+     printf ("     p_upc_threads                               = %s (value=%d) \n",  (p_upc_threads > 1) ? "true" : "false",p_upc_threads);
 
   // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
-     mprintf ("     p_Cxx_only()                                = %s \n",(p_Cxx_only == true) ? "true" : "false");
-     mprintf ("     p_Java_only()                               = %s \n",(p_Java_only == true) ? "true" : "false");
-     mprintf ("     p_Fortran_only()                            = %s \n",(p_Fortran_only == true) ? "true" : "false");
-     mprintf ("     p_CoArrayFortran_only()                     = %s \n",(p_CoArrayFortran_only == true) ? "true" : "false");
-     mprintf ("     p_PHP_only()                                = %s \n",(p_PHP_only == true) ? "true" : "false");
-     mprintf ("     p_Python_only()                             = %s \n",(p_Python_only == true) ? "true" : "false");
+     printf ("     p_Cxx_only()                                = %s \n",(p_Cxx_only == true) ? "true" : "false");
+     printf ("     p_Java_only()                               = %s \n",(p_Java_only == true) ? "true" : "false");
+     printf ("     p_Fortran_only()                            = %s \n",(p_Fortran_only == true) ? "true" : "false");
+     printf ("     p_CoArrayFortran_only()                     = %s \n",(p_CoArrayFortran_only == true) ? "true" : "false");
+     printf ("     p_PHP_only()                                = %s \n",(p_PHP_only == true) ? "true" : "false");
+     printf ("     p_Python_only()                             = %s \n",(p_Python_only == true) ? "true" : "false");
 
   // DQ (8/25/2017): Added more language support.
-     mprintf ("     p_Csharp_only()                             = %s \n",(p_Csharp_only == true) ? "true" : "false");
-     mprintf ("     p_Ada_only()                                = %s \n",(p_Ada_only == true) ? "true" : "false");
-     mprintf ("     p_Jovial_only()                             = %s \n",(p_Jovial_only == true) ? "true" : "false");
-     mprintf ("     p_Cobol_only()                              = %s \n",(p_Cobol_only == true) ? "true" : "false");
+     printf ("     p_Csharp_only()                             = %s \n",(p_Csharp_only == true) ? "true" : "false");
+     printf ("     p_Ada_only()                                = %s \n",(p_Ada_only == true) ? "true" : "false");
+     printf ("     p_Jovial_only()                             = %s \n",(p_Jovial_only == true) ? "true" : "false");
+     printf ("     p_Cobol_only()                              = %s \n",(p_Cobol_only == true) ? "true" : "false");
 
-     mprintf ("     p_requires_C_preprocessor                   = %s \n",(p_requires_C_preprocessor == true) ? "true" : "false");
+     printf ("     p_requires_C_preprocessor                   = %s \n",(p_requires_C_preprocessor == true) ? "true" : "false");
 
   // DQ (2/5/2009): Putting this back now, so we have one at the SgProject and one at the SgFile.
-     mprintf ("     p_binary_only()                             = %s \n",(p_binary_only == true) ? "true" : "false");
-     mprintf ("     p_isObjectFile()                            = %s \n",(p_isObjectFile == true) ? "true" : "false");
+     printf ("     p_binary_only()                             = %s \n",(p_binary_only == true) ? "true" : "false");
+     printf ("     p_isObjectFile()                            = %s \n",(p_isObjectFile == true) ? "true" : "false");
 
      string inputFormatName;
      switch(p_inputFormat)
@@ -16728,12 +16789,12 @@ SgFile::display ( const std::string & label ) const
 
           default:
              {
-               mprintf ("Error: default reached p_inputFormat = %d \n",p_inputFormat);
+               printf ("Error: default reached p_inputFormat = %d \n",p_inputFormat);
                assert(false);
              }
         }
 
-     mprintf ("     p_inputFormat                               = %s input format \n",inputFormatName.c_str());
+     printf ("     p_inputFormat                               = %s input format \n",inputFormatName.c_str());
 
      string outputFormatName;
      switch(p_outputFormat)
@@ -16744,12 +16805,12 @@ SgFile::display ( const std::string & label ) const
 
           default:
              {
-               mprintf ("Error: default reached p_outputFormat = %d \n",p_outputFormat);
+               printf ("Error: default reached p_outputFormat = %d \n",p_outputFormat);
                assert(false);
              }
         }
 
-     mprintf ("     p_outputFormat                              = %s output format \n",outputFormatName.c_str());
+     printf ("     p_outputFormat                              = %s output format \n",outputFormatName.c_str());
 
      string backendCompileFormatName;
      switch(p_backendCompileFormat)
@@ -16760,116 +16821,116 @@ SgFile::display ( const std::string & label ) const
 
           default:
              {
-               mprintf ("Error: default reached p_backendCompileFormat = %d \n",p_backendCompileFormat);
+               printf ("Error: default reached p_backendCompileFormat = %d \n",p_backendCompileFormat);
                assert(false);
              }
         }
 
-     mprintf ("     p_backendCompileFormat                      = %s output format \n",backendCompileFormatName.c_str());
+     printf ("     p_backendCompileFormat                      = %s output format \n",backendCompileFormatName.c_str());
 
-     mprintf ("     p_fortran_implicit_none                     = %s \n",(p_fortran_implicit_none == true) ? "true" : "false");
-     mprintf ("     p_openmp                                    = %s \n",(p_openmp == true) ? "true" : "false");
-     mprintf ("     p_cray_pointer_support                      = %s \n",(p_cray_pointer_support == true) ? "true" : "false");
-     mprintf ("     p_output_parser_actions                     = %s \n",(p_output_parser_actions == true) ? "true" : "false");
-     mprintf ("     p_exit_after_parser                         = %s \n",(p_exit_after_parser == true) ? "true" : "false");
+     printf ("     p_fortran_implicit_none                     = %s \n",(p_fortran_implicit_none == true) ? "true" : "false");
+     printf ("     p_openmp                                    = %s \n",(p_openmp == true) ? "true" : "false");
+     printf ("     p_cray_pointer_support                      = %s \n",(p_cray_pointer_support == true) ? "true" : "false");
+     printf ("     p_output_parser_actions                     = %s \n",(p_output_parser_actions == true) ? "true" : "false");
+     printf ("     p_exit_after_parser                         = %s \n",(p_exit_after_parser == true) ? "true" : "false");
 
-     mprintf ("     p_skip_syntax_check                         = %s \n",(p_skip_syntax_check      == true) ? "true" : "false");
-     mprintf ("     p_skip_translation_from_edg_ast_to_rose_ast = %s \n",(p_skip_translation_from_edg_ast_to_rose_ast == true) ? "true" : "false");
-     mprintf ("     p_skip_transformation                       = %s \n",(p_skip_transformation    == true) ? "true" : "false");
-     mprintf ("     p_skip_unparse                              = %s \n",(p_skip_unparse           == true) ? "true" : "false");
-     mprintf ("     p_skipfinalCompileStep                      = %s \n",(p_skipfinalCompileStep   == true) ? "true" : "false");
+     printf ("     p_skip_syntax_check                         = %s \n",(p_skip_syntax_check      == true) ? "true" : "false");
+     printf ("     p_skip_translation_from_edg_ast_to_rose_ast = %s \n",(p_skip_translation_from_edg_ast_to_rose_ast == true) ? "true" : "false");
+     printf ("     p_skip_transformation                       = %s \n",(p_skip_transformation    == true) ? "true" : "false");
+     printf ("     p_skip_unparse                              = %s \n",(p_skip_unparse           == true) ? "true" : "false");
+     printf ("     p_skipfinalCompileStep                      = %s \n",(p_skipfinalCompileStep   == true) ? "true" : "false");
 
-     mprintf ("     p_unparse_includes                          = %s \n",(p_unparse_includes                     == true) ? "true" : "false");
-     mprintf ("     p_unparse_line_directives                   = %s \n",(p_unparse_line_directives              == true) ? "true" : "false");
+     printf ("     p_unparse_includes                          = %s \n",(p_unparse_includes                     == true) ? "true" : "false");
+     printf ("     p_unparse_line_directives                   = %s \n",(p_unparse_line_directives              == true) ? "true" : "false");
 
   // DQ (4/14/2013): Added options to permit selection of either overloaded operator names or use of operator syntax 
   // for function calls in the unparsed code.  The default is to reproduce the same use as in the input code.
-     mprintf ("     p_unparse_function_calls_using_operator_syntax = %s \n",(p_unparse_function_calls_using_operator_syntax == true) ? "true" : "false");
-     mprintf ("     p_unparse_function_calls_using_operator_names  = %s \n",(p_unparse_function_calls_using_operator_names  == true) ? "true" : "false");
+     printf ("     p_unparse_function_calls_using_operator_syntax = %s \n",(p_unparse_function_calls_using_operator_syntax == true) ? "true" : "false");
+     printf ("     p_unparse_function_calls_using_operator_names  = %s \n",(p_unparse_function_calls_using_operator_names  == true) ? "true" : "false");
 
-     mprintf ("     p_unparse_instruction_addresses             = %s \n",(p_unparse_instruction_addresses        == true) ? "true" : "false");
-     mprintf ("     p_unparse_raw_memory_contents               = %s \n",(p_unparse_raw_memory_contents          == true) ? "true" : "false");
-     mprintf ("     p_unparse_binary_file_format                = %s \n",(p_unparse_binary_file_format           == true) ? "true" : "false");
+     printf ("     p_unparse_instruction_addresses             = %s \n",(p_unparse_instruction_addresses        == true) ? "true" : "false");
+     printf ("     p_unparse_raw_memory_contents               = %s \n",(p_unparse_raw_memory_contents          == true) ? "true" : "false");
+     printf ("     p_unparse_binary_file_format                = %s \n",(p_unparse_binary_file_format           == true) ? "true" : "false");
 
      string outputLanguageName = get_outputLanguageOptionName(p_outputLanguage);
 
-     mprintf ("     p_outputLanguage                            = %s output language \n",outputLanguageName.c_str());
+     printf ("     p_outputLanguage                            = %s output language \n",outputLanguageName.c_str());
 
-     mprintf ("     p_sourceFileNameWithPath                    = %s \n",p_sourceFileNameWithPath.c_str());
-     mprintf ("     p_sourceFileNameWithoutPath                 = %s \n",p_sourceFileNameWithoutPath.c_str());
-     mprintf ("     p_unparse_output_filename                   = %s \n",p_unparse_output_filename.c_str());
+     printf ("     p_sourceFileNameWithPath                    = %s \n",p_sourceFileNameWithPath.c_str());
+     printf ("     p_sourceFileNameWithoutPath                 = %s \n",p_sourceFileNameWithoutPath.c_str());
+     printf ("     p_unparse_output_filename                   = %s \n",p_unparse_output_filename.c_str());
 
-     mprintf ("     p_useBackendOnly                            = %s \n",(p_useBackendOnly == true) ? "true" : "false");
-     mprintf ("     p_compileOnly                               = %s \n",(p_compileOnly  == true) ? "true" : "false");
+     printf ("     p_useBackendOnly                            = %s \n",(p_useBackendOnly == true) ? "true" : "false");
+     printf ("     p_compileOnly                               = %s \n",(p_compileOnly  == true) ? "true" : "false");
 
-     mprintf ("     p_savedFrontendCommandLine                  = %s \n",p_savedFrontendCommandLine.c_str());
+     printf ("     p_savedFrontendCommandLine                  = %s \n",p_savedFrontendCommandLine.c_str());
 
-     mprintf ("     p_no_implicit_templates                     = %s \n",(p_no_implicit_templates == true) ? "true" : "false");
-     mprintf ("     p_no_implicit_inline_templates              = %s \n",(p_no_implicit_inline_templates == true) ? "true" : "false");
-     mprintf ("     p_skip_commentsAndDirectives                = %s \n",(p_skip_commentsAndDirectives == true) ? "true" : "false");
-     mprintf ("     p_collectAllCommentsAndDirectives           = %s \n",(p_collectAllCommentsAndDirectives == true) ? "true" : "false");
-     mprintf ("     p_unparseHeaderFiles                        = %s \n",(p_unparseHeaderFiles == true) ? "true" : "false");
+     printf ("     p_no_implicit_templates                     = %s \n",(p_no_implicit_templates == true) ? "true" : "false");
+     printf ("     p_no_implicit_inline_templates              = %s \n",(p_no_implicit_inline_templates == true) ? "true" : "false");
+     printf ("     p_skip_commentsAndDirectives                = %s \n",(p_skip_commentsAndDirectives == true) ? "true" : "false");
+     printf ("     p_collectAllCommentsAndDirectives           = %s \n",(p_collectAllCommentsAndDirectives == true) ? "true" : "false");
+     printf ("     p_unparseHeaderFiles                        = %s \n",(p_unparseHeaderFiles == true) ? "true" : "false");
 
-     mprintf ("     p_preprocessorDirectivesAndCommentsList is %s pointer \n",(p_preprocessorDirectivesAndCommentsList != NULL) ? "VALID" : "NULL");
+     printf ("     p_preprocessorDirectivesAndCommentsList is %s pointer \n",(p_preprocessorDirectivesAndCommentsList != NULL) ? "VALID" : "NULL");
 
-     mprintf ("     p_KCC_frontend                              = %s \n",(p_KCC_frontend                         == true) ? "true" : "false");
-     mprintf ("     p_new_frontend                              = %s \n",(p_new_frontend                         == true) ? "true" : "false");
-     mprintf ("     p_disable_edg_backend                       = %s \n",(p_disable_edg_backend                  == true) ? "true" : "false");
-     mprintf ("     p_disable_sage_backend                      = %s \n",(p_disable_sage_backend                 == true) ? "true" : "false");
-     mprintf ("     p_testingLevel                              = %d \n",p_testingLevel);
+     printf ("     p_KCC_frontend                              = %s \n",(p_KCC_frontend                         == true) ? "true" : "false");
+     printf ("     p_new_frontend                              = %s \n",(p_new_frontend                         == true) ? "true" : "false");
+     printf ("     p_disable_edg_backend                       = %s \n",(p_disable_edg_backend                  == true) ? "true" : "false");
+     printf ("     p_disable_sage_backend                      = %s \n",(p_disable_sage_backend                 == true) ? "true" : "false");
+     printf ("     p_testingLevel                              = %d \n",p_testingLevel);
 
-     mprintf ("     p_preinit_il                                = %s \n",(p_preinit_il                           == true) ? "true" : "false");
-     mprintf ("     p_enable_cp_backend                         = %s \n",(p_enable_cp_backend                    == true) ? "true" : "false");
+     printf ("     p_preinit_il                                = %s \n",(p_preinit_il                           == true) ? "true" : "false");
+     printf ("     p_enable_cp_backend                         = %s \n",(p_enable_cp_backend                    == true) ? "true" : "false");
 
 #if 0
-     mprintf ("     p_outputGrammarTreeFiles                    = %s \n",(p_outputGrammarTreeFiles               == true) ? "true" : "false");
-     mprintf ("     p_outputGrammarTreeFilesForHeaderFiles      = %s \n",(p_outputGrammarTreeFilesForHeaderFiles == true) ? "true" : "false");
-     mprintf ("     p_outputGrammarTreeFilesForEDG              = %s \n",(p_outputGrammarTreeFilesForEDG  == true) ? "true" : "false");
+     printf ("     p_outputGrammarTreeFiles                    = %s \n",(p_outputGrammarTreeFiles               == true) ? "true" : "false");
+     printf ("     p_outputGrammarTreeFilesForHeaderFiles      = %s \n",(p_outputGrammarTreeFilesForHeaderFiles == true) ? "true" : "false");
+     printf ("     p_outputGrammarTreeFilesForEDG              = %s \n",(p_outputGrammarTreeFilesForEDG  == true) ? "true" : "false");
 #endif
 
-     mprintf ("     p_markGeneratedFiles                        = %s \n",(p_markGeneratedFiles == true) ? "true" : "false");
-     mprintf ("     p_negative_test                             = %s \n",(p_negative_test == true) ? "true" : "false");
-     mprintf ("     p_strict_language_handling                  = %s \n",(p_strict_language_handling == true) ? "true" : "false");
-     mprintf ("     p_wave                                      = %s \n",(p_wave == true) ? "true" : "false");
-     mprintf ("     p_embedColorCodesInGeneratedCode            = %s \n",(p_embedColorCodesInGeneratedCode == true) ? "true" : "false");
-     mprintf ("     p_generateSourcePositionCodes               = %s \n",(p_generateSourcePositionCodes == true) ? "true" : "false");
-     mprintf ("     p_sourceFileUsesCppFileExtension            = %s \n",(p_sourceFileUsesCppFileExtension == true) ? "true" : "false");
-     mprintf ("     p_sourceFileUsesFortranFileExtension        = %s \n",(p_sourceFileUsesFortranFileExtension == true) ? "true" : "false");
-     mprintf ("     p_sourceFileUsesFortran77FileExtension      = %s \n",(p_sourceFileUsesFortran77FileExtension == true) ? "true" : "false");
-     mprintf ("     p_sourceFileUsesFortran90FileExtension      = %s \n",(p_sourceFileUsesFortran90FileExtension == true) ? "true" : "false");
-     mprintf ("     p_sourceFileUsesFortran95FileExtension      = %s \n",(p_sourceFileUsesFortran95FileExtension == true) ? "true" : "false");
-     mprintf ("     p_sourceFileUsesPHPFileExtension            = %s \n",(p_sourceFileUsesPHPFileExtension == true) ? "true" : "false");
-     mprintf ("     p_sourceFileUsesJavaFileExtension           = %s \n",(p_sourceFileUsesJavaFileExtension == true) ? "true" : "false");
-     mprintf ("     p_sourceFileUsesBinaryFileExtension         = %s \n",(p_sourceFileUsesBinaryFileExtension == true) ? "true" : "false");
-     mprintf ("     p_read_executable_file_format_only          = %s \n",(p_read_executable_file_format_only == true) ? "true" : "false");
-     mprintf ("     p_read_instructions_only                    = %s \n",(p_read_instructions_only == true) ? "true" : "false");
+     printf ("     p_markGeneratedFiles                        = %s \n",(p_markGeneratedFiles == true) ? "true" : "false");
+     printf ("     p_negative_test                             = %s \n",(p_negative_test == true) ? "true" : "false");
+     printf ("     p_strict_language_handling                  = %s \n",(p_strict_language_handling == true) ? "true" : "false");
+     printf ("     p_wave                                      = %s \n",(p_wave == true) ? "true" : "false");
+     printf ("     p_embedColorCodesInGeneratedCode            = %s \n",(p_embedColorCodesInGeneratedCode == true) ? "true" : "false");
+     printf ("     p_generateSourcePositionCodes               = %s \n",(p_generateSourcePositionCodes == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesCppFileExtension            = %s \n",(p_sourceFileUsesCppFileExtension == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesFortranFileExtension        = %s \n",(p_sourceFileUsesFortranFileExtension == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesFortran77FileExtension      = %s \n",(p_sourceFileUsesFortran77FileExtension == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesFortran90FileExtension      = %s \n",(p_sourceFileUsesFortran90FileExtension == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesFortran95FileExtension      = %s \n",(p_sourceFileUsesFortran95FileExtension == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesPHPFileExtension            = %s \n",(p_sourceFileUsesPHPFileExtension == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesJavaFileExtension           = %s \n",(p_sourceFileUsesJavaFileExtension == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesBinaryFileExtension         = %s \n",(p_sourceFileUsesBinaryFileExtension == true) ? "true" : "false");
+     printf ("     p_read_executable_file_format_only          = %s \n",(p_read_executable_file_format_only == true) ? "true" : "false");
+     printf ("     p_read_instructions_only                    = %s \n",(p_read_instructions_only == true) ? "true" : "false");
 
-     mprintf ("     p_unparse_tokens                            = %s \n",(p_unparse_tokens == true) ? "true" : "false");
-     mprintf ("     p_unparse_tokens_testing                    = %d \n",p_unparse_tokens_testing);
+     printf ("     p_unparse_tokens                            = %s \n",(p_unparse_tokens == true) ? "true" : "false");
+     printf ("     p_unparse_tokens_testing                    = %d \n",p_unparse_tokens_testing);
 
   // DQ (11/12/2014): Addded to support test modes for token unparsing.
-     mprintf ("     p_unparse_using_leading_and_trailing_token_mappings = %s \n",(p_unparse_using_leading_and_trailing_token_mappings == true) ? "true" : "false");
+     printf ("     p_unparse_using_leading_and_trailing_token_mappings = %s \n",(p_unparse_using_leading_and_trailing_token_mappings == true) ? "true" : "false");
 
-     mprintf ("     p_detect_dangling_pointers                  = %d \n",p_detect_dangling_pointers);
+     printf ("     p_detect_dangling_pointers                  = %d \n",p_detect_dangling_pointers);
 
-     mprintf ("     p_skipAstConsistancyTests                   = %s \n",(p_skipAstConsistancyTests == true) ? "true" : "false");
+     printf ("     p_skipAstConsistancyTests                   = %s \n",(p_skipAstConsistancyTests == true) ? "true" : "false");
 
   // DQ (6/8/2013): Added support for experimental fortran frontend.
-     mprintf ("     p_experimental_fortran_frontend             = %s \n",(p_experimental_fortran_frontend == true) ? "true" : "false");
-     mprintf ("     p_experimental_fortran_frontend_OFP_test    = %s \n",(p_experimental_fortran_frontend_OFP_test == true) ? "true" : "false");
+     printf ("     p_experimental_fortran_frontend             = %s \n",(p_experimental_fortran_frontend == true) ? "true" : "false");
+     printf ("     p_experimental_fortran_frontend_OFP_test    = %s \n",(p_experimental_fortran_frontend_OFP_test == true) ? "true" : "false");
 
   // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
-     mprintf ("     p_experimental_cuda_fortran_frontend        = %s \n",(p_experimental_cuda_fortran_frontend == true) ? "true" : "false");
+     printf ("     p_experimental_cuda_fortran_frontend        = %s \n",(p_experimental_cuda_fortran_frontend == true) ? "true" : "false");
 
   // DQ (4/17/2015): Adding multifile handling support for commandline generation.
-     mprintf ("     p_multifile_support                         = %s \n",(p_multifile_support == true) ? "true" : "false");
+     printf ("     p_multifile_support                         = %s \n",(p_multifile_support == true) ? "true" : "false");
 
   // DQ (12/11/2015): Option to use the token stream mapping and local tests of the 
   // token sequence, to improve the source position information stored in the AST.
-     mprintf ("     p_use_token_stream_to_improve_source_position_info = %s \n",(p_use_token_stream_to_improve_source_position_info == true) ? "true" : "false");
+     printf ("     p_use_token_stream_to_improve_source_position_info = %s \n",(p_use_token_stream_to_improve_source_position_info == true) ? "true" : "false");
 
   // DQ (12/23/2015): Suppress variable declaration normalizations
-     mprintf ("     p_suppress_variable_declaration_normalization = %s \n",(p_suppress_variable_declaration_normalization == true) ? "true" : "false");
+     printf ("     p_suppress_variable_declaration_normalization = %s \n",(p_suppress_variable_declaration_normalization == true) ? "true" : "false");
 
 #if 0
 // Order of data member entries in support.C, matched against the 
@@ -16951,7 +17012,6 @@ X read_executable_file_format_only
 X read_instructions_only
 X aggressive
 #endif
-
    }
 
 
@@ -17804,31 +17864,32 @@ SgHeaderFileReport::SgHeaderFileReport( SgSourceFile* sourceFile )
 void
 SgHeaderFileReport::display( const string & label) const
    {
-     mprintf ("\nIn HeaderFileReport::display(): label = %s \n",label.c_str());
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("\nIn HeaderFileReport::display(): label = %s \n",label.c_str());
 
      ROSE_ASSERT(this != NULL);
 
 #if 1
-     mprintf ("In HeaderFileReport::display(): p_source_file = %p \n",p_source_file);
+     printf ("In HeaderFileReport::display(): p_source_file = %p \n",p_source_file);
      ROSE_ASSERT(p_source_file != NULL);
-     mprintf ("   --- source filename = %s \n",p_source_file->getFileName().c_str());
-     mprintf ("   --- isHeaderFile = %s \n",p_source_file->get_isHeaderFile() ? "true" : "false");
-     mprintf ("   --- isHeaderFileIncludedMoreThanOnce = %s \n",p_source_file->get_isHeaderFileIncludedMoreThanOnce() ? "true" : "false");
+     printf ("   --- source filename = %s \n",p_source_file->getFileName().c_str());
+     printf ("   --- isHeaderFile = %s \n",p_source_file->get_isHeaderFile() ? "true" : "false");
+     printf ("   --- isHeaderFileIncludedMoreThanOnce = %s \n",p_source_file->get_isHeaderFileIncludedMoreThanOnce() ? "true" : "false");
 
   // DQ (11/15/2018): removed the include list from SgSourceFile so that we could support traversals on the inlcude tree.
-  // mprintf ("   --- include_file_list size = %zu \n",p_source_file->get_include_file_list().size());
-     mprintf ("   --- associated_include_file = %p \n",p_source_file->get_associated_include_file());
+  // printf ("   --- include_file_list size = %zu \n",p_source_file->get_include_file_list().size());
+     printf ("   --- associated_include_file = %p \n",p_source_file->get_associated_include_file());
      ROSE_ASSERT(p_source_file->get_associated_include_file() != NULL);
-     mprintf ("   --- associated_include_file include_file_list size = %zu \n",p_source_file->get_associated_include_file()->get_include_file_list().size());
+     printf ("   --- associated_include_file include_file_list size = %zu \n",p_source_file->get_associated_include_file()->get_include_file_list().size());
 
 #if 0
-     mprintf ("   --- source_file_of_translation_unit = %p = %s \n",
+     printf ("   --- source_file_of_translation_unit = %p = %s \n",
           p_source_file->get_source_file_of_translation_unit(),p_source_file->get_source_file_of_translation_unit()->getFileName().c_str());
-     mprintf ("   --- including_source_file = %p = %s \n",
+     printf ("   --- including_source_file = %p = %s \n",
           p_source_file->get_including_source_file(),p_source_file->get_including_source_file()->getFileName().c_str());
 #endif
 
-     mprintf ("In HeaderFileReport::display(): p_include_file_list.size() = %zu \n",p_include_file_list.size());
+     printf ("In HeaderFileReport::display(): p_include_file_list.size() = %zu \n",p_include_file_list.size());
 
      Rose_STL_Container<SgSourceFile*>::const_iterator i = p_include_file_list.begin();
      while (i != p_include_file_list.end())
@@ -17837,32 +17898,32 @@ SgHeaderFileReport::display( const string & label) const
           SgSourceFile* includedFile = *i;
           ROSE_ASSERT(includedFile != NULL);
 
-          mprintf ("   --- includedFile: name = %s \n",includedFile->getFileName().c_str());
-          mprintf ("   --- --- # of statements in global scope = %zu \n",includedFile->get_globalScope()->get_declarations().size());
-          mprintf ("   --- --- isHeaderFile = %s \n",includedFile->get_isHeaderFile() ? "true" : "false");
-          mprintf ("   --- --- isHeaderFileIncludedMoreThanOnce = %s \n",includedFile->get_isHeaderFileIncludedMoreThanOnce() ? "true" : "false");
+          printf ("   --- includedFile: name = %s \n",includedFile->getFileName().c_str());
+          printf ("   --- --- # of statements in global scope = %zu \n",includedFile->get_globalScope()->get_declarations().size());
+          printf ("   --- --- isHeaderFile = %s \n",includedFile->get_isHeaderFile() ? "true" : "false");
+          printf ("   --- --- isHeaderFileIncludedMoreThanOnce = %s \n",includedFile->get_isHeaderFileIncludedMoreThanOnce() ? "true" : "false");
 
        // DQ (11/15/2018): removed the include list from SgSourceFile so that we could support traversals on the inlcude tree.
-       // mprintf ("   --- --- include_file_list size = %zu \n",includedFile->get_include_file_list().size());
-          mprintf ("   --- --- associated_include_file = %p \n",includedFile->get_associated_include_file());
+       // printf ("   --- --- include_file_list size = %zu \n",includedFile->get_include_file_list().size());
+          printf ("   --- --- associated_include_file = %p \n",includedFile->get_associated_include_file());
           ROSE_ASSERT(includedFile->get_associated_include_file() != NULL);
-          mprintf ("   --- --- associated_include_file include_file_list size = %zu \n",includedFile->get_associated_include_file()->get_include_file_list().size());
+          printf ("   --- --- associated_include_file include_file_list size = %zu \n",includedFile->get_associated_include_file()->get_include_file_list().size());
 
 #if 0
-          mprintf ("   --- --- source_file_of_translation_unit = %p = %s \n",
+          printf ("   --- --- source_file_of_translation_unit = %p = %s \n",
                includedFile->get_source_file_of_translation_unit(),includedFile->get_source_file_of_translation_unit()->getFileName().c_str());
-          mprintf ("   --- --- including_source_file = %p = %s \n",
+          printf ("   --- --- including_source_file = %p = %s \n",
                includedFile->get_including_source_file(),includedFile->get_including_source_file()->getFileName().c_str());
 #endif
 #if 0
-          mprintf ("In SgHeaderFileReport::display(): includedFile         = %p file name = %s \n",includedFile,includedFile->getFileName().c_str());
-          mprintf ("   --- includedFile->get_globalScope()                 = %p \n",includedFile->get_globalScope());
-          mprintf ("   --- includedFile->get_tokenSubsequenceMap().size()  = %zu \n",includedFile->get_tokenSubsequenceMap().size());
+          printf ("In SgHeaderFileReport::display(): includedFile         = %p file name = %s \n",includedFile,includedFile->getFileName().c_str());
+          printf ("   --- includedFile->get_globalScope()                 = %p \n",includedFile->get_globalScope());
+          printf ("   --- includedFile->get_tokenSubsequenceMap().size()  = %zu \n",includedFile->get_tokenSubsequenceMap().size());
 #endif
 #if 0
           ROSE_ASSERT(includedFile->get_tokenSubsequenceMap().find(includedFile->get_globalScope()) != includedFile->get_tokenSubsequenceMap().end());
 
-          mprintf ("In SgHeaderFileReport::display(): Calling display on token sequence for global scope \n");
+          printf ("In SgHeaderFileReport::display(): Calling display on token sequence for global scope \n");
           ROSE_ASSERT(includedFile->get_tokenSubsequenceMap()[includedFile->get_globalScope()] != NULL);
           TokenStreamSequenceToNodeMapping* tokenSequence = includedFile->get_tokenSubsequenceMap()[includedFile->get_globalScope()];
           ROSE_ASSERT(tokenSequence != NULL);
@@ -17997,6 +18058,9 @@ SOURCE_APPLICATION_PROJECT_START
 
 //! (static data) global concept of verbose level which controls useful output from the compiler
 int SgProject::p_verbose = 0;
+
+// DQ (4/4/2020): Adding support for unparse headers feature specific diagnostics.
+int SgProject::p_unparseHeaderFilesDebug = 0;
 
 //! this can constructor can be used but parse(int argc, char** argv) needs to be called
 SgProject::SgProject()
@@ -18536,6 +18600,25 @@ SgProject::set_verbose ( int x )
    {
      p_verbose = x;
    }
+
+// DQ (4/4/2020): Adding support for unparse headers feature specific diagnostics.
+// DQ (1/5/2008): I think this could be an automatically generated function!
+// Unless the point is that it should not trigger a transformation to be recorded on the AST.
+int
+SgProject::get_unparseHeaderFilesDebug (void)
+   {
+     return p_unparseHeaderFilesDebug;
+   }
+
+// DQ (1/5/2008): I think this could be an automatically generated function!
+// Unless the point is that it should not trigger a transformation to be recorded on the AST.
+void
+SgProject::set_unparseHeaderFilesDebug ( int x )
+   {
+     p_unparseHeaderFilesDebug = x;
+   }
+
+
 
 bool
 SgProject::get_skip_translation_from_edg_ast_to_rose_ast (void) const
@@ -19223,89 +19306,94 @@ SgProject::get_detect_dangling_pointers(void) const
 void
 SgProject::display ( const std::string & label ) const
    {
-     mprintf ("In SgProject::display(%s) \n",label.c_str());
+  // DQ (4/4/2020): Fixing this to not use the mprintf, since when called by the user it should output data.
+  // I think this wasa a bit over zellous use of "mprintf" via search and replace.
 
-     mprintf ("   p_verbose                                 = %d \n",p_verbose);
+     printf ("In SgProject::display(%s) \n",label.c_str());
 
-     mprintf ("   p_outputFileName                          = %s \n",p_outputFileName.c_str());
+     printf ("   p_verbose                                 = %d \n",p_verbose);
+     printf ("   p_unparseHeaderFilesDebug                 = %d \n",p_unparseHeaderFilesDebug);
 
-     mprintf ("   p_sourceFileNameList.size()               = %" PRIuPTR " \n", p_sourceFileNameList.size());
-     mprintf ("   p_sourceFileNameList                      = \n      %s \n",Rose::StringUtility::listToString(p_sourceFileNameList).c_str());
+     printf ("   p_outputFileName                          = %s \n",p_outputFileName.c_str());
 
-     mprintf ("   p_objectFileNameList.size()               = %" PRIuPTR " \n", p_objectFileNameList.size());
-     mprintf ("   p_objectFileNameList                      = \n      %s \n",Rose::StringUtility::listToString(p_objectFileNameList).c_str());
+     printf ("   p_sourceFileNameList.size()               = %" PRIuPTR " \n", p_sourceFileNameList.size());
+     printf ("   p_sourceFileNameList                      = \n      %s \n",Rose::StringUtility::listToString(p_sourceFileNameList).c_str());
 
-     mprintf ("   p_libraryFileList.size()                  = %" PRIuPTR " \n", p_libraryFileList.size());
-     mprintf ("   p_libraryFileList                         = \n      %s \n",Rose::StringUtility::listToString(p_libraryFileList).c_str());
+     printf ("   p_objectFileNameList.size()               = %" PRIuPTR " \n", p_objectFileNameList.size());
+     printf ("   p_objectFileNameList                      = \n      %s \n",Rose::StringUtility::listToString(p_objectFileNameList).c_str());
 
-     mprintf ("   p_librarySpecifierList.size()             = %" PRIuPTR " \n", p_librarySpecifierList.size());
-     mprintf ("   p_librarySpecifierList                    = \n      %s \n",Rose::StringUtility::listToString(p_librarySpecifierList).c_str());
+     printf ("   p_libraryFileList.size()                  = %" PRIuPTR " \n", p_libraryFileList.size());
+     printf ("   p_libraryFileList                         = \n      %s \n",Rose::StringUtility::listToString(p_libraryFileList).c_str());
 
-     mprintf ("   p_libraryDirectorySpecifierList.size()    = %" PRIuPTR " \n", p_libraryDirectorySpecifierList.size());
-     mprintf ("   p_libraryDirectorySpecifierList           = \n      %s \n",Rose::StringUtility::listToString(p_libraryDirectorySpecifierList).c_str());
+     printf ("   p_librarySpecifierList.size()             = %" PRIuPTR " \n", p_librarySpecifierList.size());
+     printf ("   p_librarySpecifierList                    = \n      %s \n",Rose::StringUtility::listToString(p_librarySpecifierList).c_str());
 
-     mprintf ("   p_includeDirectorySpecifierList.size()    = %" PRIuPTR " \n", p_includeDirectorySpecifierList.size());
-     mprintf ("   p_includeDirectorySpecifierList           = \n      %s \n",Rose::StringUtility::listToString(p_includeDirectorySpecifierList).c_str());
+     printf ("   p_libraryDirectorySpecifierList.size()    = %" PRIuPTR " \n", p_libraryDirectorySpecifierList.size());
+     printf ("   p_libraryDirectorySpecifierList           = \n      %s \n",Rose::StringUtility::listToString(p_libraryDirectorySpecifierList).c_str());
 
-     mprintf ("   p_compileOnly                             = %s \n",(p_compileOnly == true) ? "true" : "false");
-     mprintf ("   p_prelink                                 = %s \n",(p_prelink     == true) ? "true" : "false");
+     printf ("   p_includeDirectorySpecifierList.size()    = %" PRIuPTR " \n", p_includeDirectorySpecifierList.size());
+     printf ("   p_includeDirectorySpecifierList           = \n      %s \n",Rose::StringUtility::listToString(p_includeDirectorySpecifierList).c_str());
 
-     mprintf ("   p_template_instantiation_mode             = %d \n",p_template_instantiation_mode);
+     printf ("   p_compileOnly                             = %s \n",(p_compileOnly == true) ? "true" : "false");
+     printf ("   p_prelink                                 = %s \n",(p_prelink     == true) ? "true" : "false");
 
-     mprintf ("   p_astMerge                                = %s \n",(p_astMerge == true) ? "true" : "false");
-     mprintf ("   p_astMergeCommandFile                     = %s \n",p_astMergeCommandFile.c_str());
-     mprintf ("   p_projectSpecificDatabaseFile             = %s \n",p_projectSpecificDatabaseFile.c_str());
-     mprintf ("   p_compilationPerformanceFile              = %s \n",p_compilationPerformanceFile.c_str());
+     printf ("   p_template_instantiation_mode             = %d \n",p_template_instantiation_mode);
+
+     printf ("   p_astMerge                                = %s \n",(p_astMerge == true) ? "true" : "false");
+     printf ("   p_astMergeCommandFile                     = %s \n",p_astMergeCommandFile.c_str());
+     printf ("   p_projectSpecificDatabaseFile             = %s \n",p_projectSpecificDatabaseFile.c_str());
+     printf ("   p_compilationPerformanceFile              = %s \n",p_compilationPerformanceFile.c_str());
 
   // DQ (1/16/2008): This is part of a ROSE supported mechanism for the 
   // specification of exclude/include paths/files for interpretation by 
   // the ROSE translator.
-  // mprintf ("   p_lookForIncludePaths                     = %s \n",(p_lookForIncludePaths == true) ? "true" : "false");
-  // mprintf ("   p_lookForExcludePaths                     = %s \n",(p_lookForExcludePaths == true) ? "true" : "false");
+  // printf ("   p_lookForIncludePaths                     = %s \n",(p_lookForIncludePaths == true) ? "true" : "false");
+  // printf ("   p_lookForExcludePaths                     = %s \n",(p_lookForExcludePaths == true) ? "true" : "false");
 
-     mprintf ("   p_includePathList.size()                  = %" PRIuPTR " \n", p_includePathList.size());
-     mprintf ("   p_includePathList                         = \n      %s \n",Rose::StringUtility::listToString(p_includePathList).c_str());
+     printf ("   p_includePathList.size()                  = %" PRIuPTR " \n", p_includePathList.size());
+     printf ("   p_includePathList                         = \n      %s \n",Rose::StringUtility::listToString(p_includePathList).c_str());
 
-     mprintf ("   p_excludePathList.size()                  = %" PRIuPTR " \n", p_excludePathList.size());
-     mprintf ("   p_excludePathList                         = \n      %s \n",Rose::StringUtility::listToString(p_excludePathList).c_str());
+     printf ("   p_excludePathList.size()                  = %" PRIuPTR " \n", p_excludePathList.size());
+     printf ("   p_excludePathList                         = \n      %s \n",Rose::StringUtility::listToString(p_excludePathList).c_str());
 
-     mprintf ("   p_includeFileList.size()                  = %" PRIuPTR " \n", p_includeFileList.size());
-     mprintf ("   p_includeFileList                         = \n      %s \n",Rose::StringUtility::listToString(p_includeFileList).c_str());
+     printf ("   p_includeFileList.size()                  = %" PRIuPTR " \n", p_includeFileList.size());
+     printf ("   p_includeFileList                         = \n      %s \n",Rose::StringUtility::listToString(p_includeFileList).c_str());
 
-     mprintf ("   p_excludeFileList.size()                  = %" PRIuPTR " \n", p_excludeFileList.size());
-     mprintf ("   p_excludeFileList                         = \n      %s \n",Rose::StringUtility::listToString(p_excludeFileList).c_str());
+     printf ("   p_excludeFileList.size()                  = %" PRIuPTR " \n", p_excludeFileList.size());
+     printf ("   p_excludeFileList                         = \n      %s \n",Rose::StringUtility::listToString(p_excludeFileList).c_str());
 
-     mprintf ("   p_preincludeFileList.size()               = %" PRIuPTR " \n", p_preincludeFileList.size());
-     mprintf ("   p_preincludeFileList                      = \n      %s \n",Rose::StringUtility::listToString(p_preincludeFileList).c_str());
+     printf ("   p_preincludeFileList.size()               = %" PRIuPTR " \n", p_preincludeFileList.size());
+     printf ("   p_preincludeFileList                      = \n      %s \n",Rose::StringUtility::listToString(p_preincludeFileList).c_str());
 
-     mprintf ("   p_preincludeDirectoryList.size()          = %" PRIuPTR " \n", p_preincludeDirectoryList.size());
-     mprintf ("   p_preincludeDirectoryList                 = \n      %s \n",Rose::StringUtility::listToString(p_preincludeDirectoryList).c_str());
+     printf ("   p_preincludeDirectoryList.size()          = %" PRIuPTR " \n", p_preincludeDirectoryList.size());
+     printf ("   p_preincludeDirectoryList                 = \n      %s \n",Rose::StringUtility::listToString(p_preincludeDirectoryList).c_str());
 
   // DQ (2/4/2009): Moved from SgFile to SgProject.
-     mprintf ("   p_binary_only()                           = %s \n",(p_binary_only == true) ? "true" : "false");
+     printf ("   p_binary_only()                           = %s \n",(p_binary_only == true) ? "true" : "false");
 
   // DQ (9/15/2013): Added debugging support for a previously missed data member.
-     mprintf ("   p_frontendConstantFolding                 = %s \n",(p_frontendConstantFolding == true) ? "true" : "false");
+     printf ("   p_frontendConstantFolding                 = %s \n",(p_frontendConstantFolding == true) ? "true" : "false");
 
   // DQ (9/15/2013): Added debugging support for a new data member.
-     mprintf ("   p_unparse_in_same_directory_as_input_file = %s \n",(p_unparse_in_same_directory_as_input_file == true) ? "true" : "false");
+     printf ("   p_unparse_in_same_directory_as_input_file = %s \n",(p_unparse_in_same_directory_as_input_file == true) ? "true" : "false");
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error.
-     mprintf ("   p_noclobber_output_file              = %s \n",(p_noclobber_output_file == true) ? "true" : "false");
+     printf ("   p_noclobber_output_file              = %s \n",(p_noclobber_output_file == true) ? "true" : "false");
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
-     mprintf ("   p_noclobber_if_different_output_file = %s \n",(p_noclobber_if_different_output_file == true) ? "true" : "false");
+     printf ("   p_noclobber_if_different_output_file = %s \n",(p_noclobber_if_different_output_file == true) ? "true" : "false");
 
   // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
-     mprintf ("   p_appendPID = %s \n",(p_appendPID == true) ? "true" : "false");
+     printf ("   p_appendPID = %s \n",(p_appendPID == true) ? "true" : "false");
 
-     mprintf ("In this project: numberOfFiles() = %d \n",numberOfFiles());
+     printf ("In this project: numberOfFiles() = %d \n",numberOfFiles());
      for (int i = 0; i < numberOfFiles(); i++)
         {
           SgFile & file = get_file(i);
           file.display("called from SgProject::display()");
         }
    }
+
 
 // Moved to sage_support.cpp: int SgProject::link ( std::string linkerName )
 // Moved to sage_support.cpp: int SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
@@ -19403,8 +19491,6 @@ SgProject::set_excludeFileList ( const SgStringList & excludeFileList )
      
      p_excludeFileList = excludeFileList;
    }
-
-
 
 bool
 SgProject::get_unparse_tokens (void) const
@@ -20531,7 +20617,8 @@ SgUnparse_Info::unset_useAlternativeDefiningDeclaration()
 void
 SgUnparse_Info::display ( const std::string & label ) const
    {
-     mprintf ("\nInside of SgUnparse_Info::display(%s) \n",label.c_str());
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("\nInside of SgUnparse_Info::display(%s) \n",label.c_str());
 
 #if 0
 #define PRINT_INFO_MEMBER_DATA_OUTPUT_MACRO(XX) mprintf (#XX" = %s \n",(XX() == true) ? "true" : "false");
@@ -20569,135 +20656,135 @@ SgUnparse_Info::display ( const std::string & label ) const
      PRINT_INFO_MEMBER_DATA_OUTPUT_MACRO(AddSemiColonAfterDeclaration)
 #else
   // DQ: Note that this provides better formatting of the output!
-     mprintf ("isPointerToSomething                   = %s \n",( isPointerToSomething() == true ) ? "true" : "false");
-     mprintf ("isReferenceToSomething                 = %s \n",( isReferenceToSomething() == true ) ? "true" : "false");
-     mprintf ("inVarDecl                              = %s \n",( inVarDecl() == true ) ? "true" : "false");
-     mprintf ("inArgList                              = %s \n",( inArgList() == true ) ? "true" : "false");
-     mprintf ("SkipSemiColon                          = %s \n",( SkipSemiColon() == true ) ? "true" : "false");
-     mprintf ("inEnumDecl                             = %s \n",( inEnumDecl() == true ) ? "true" : "false");
-     mprintf ("inTemplateList                         = %s \n",( inTemplateList() == true ) ? "true" : "false");
-     mprintf ("SkipBaseType                           = %s \n",( SkipBaseType() == true ) ? "true" : "false");
-     mprintf ("inAggregateInitializer                 = %s \n",( inAggregateInitializer() == true ) ? "true" : "false");
-     mprintf ("isWithType                             = %s \n",( isWithType() == true ) ? "true" : "false");
-     mprintf ("inConditional                          = %s \n",( inConditional() == true ) ? "true" : "false");
-     mprintf ("SkipDefinition                         = %s \n",( SkipDefinition() == true ) ? "true" : "false");
-     mprintf ("SkipClassSpecifier                     = %s \n",( SkipClassSpecifier() == true ) ? "true" : "false");
-     mprintf ("inEmbeddedDecl                         = %s \n",( inEmbeddedDecl() == true ) ? "true" : "false");
-     mprintf ("SkipGlobal                             = %s \n",( SkipGlobal() == true ) ? "true" : "false");
-     mprintf ("SkipAtomic                             = %s \n",( SkipAtomic() == true ) ? "true" : "false");
-     mprintf ("PrintName                              = %s \n",( PrintName() == true ) ? "true" : "false");
-     mprintf ("CheckAccess                            = %s \n",( CheckAccess() == true ) ? "true" : "false");
-     mprintf ("SkipFunctionQualifier                  = %s \n",( SkipFunctionQualifier() == true ) ? "true" : "false");
-     mprintf ("isArrayType                            = %s \n",( isArrayType() == true ) ? "true" : "false");
-     mprintf ("inRhsExpr                              = %s \n",( inRhsExpr() == true ) ? "true" : "false");
-     mprintf ("SkipParen                              = %s \n",( SkipParen() == true ) ? "true" : "false");
-     mprintf ("isTypeSecondPart                       = %s \n",( isTypeSecondPart() == true ) ? "true" : "false");
-     mprintf ("isTypeFirstPart                        = %s \n",( isTypeFirstPart() == true ) ? "true" : "false");
-     mprintf ("SkipInitializer                        = %s \n",( SkipInitializer() == true ) ? "true" : "false");
-     mprintf ("SkipComments                           = %s \n",( SkipComments() == true ) ? "true" : "false");
-     mprintf ("SkipCPPDirectives                      = %s \n",( SkipCPPDirectives() == true ) ? "true" : "false");
-     mprintf ("SkipEnumDefinition                     = %s \n",( SkipEnumDefinition() == true ) ? "true" : "false");
-     mprintf ("SkipFunctionDefinition                 = %s \n",( SkipFunctionDefinition() == true ) ? "true" : "false");
-     mprintf ("SkipClassDefinition                    = %s \n",( SkipClassDefinition() == true ) ? "true" : "false");
-     mprintf ("AddSemiColonAfterDeclaration           = %s \n",( AddSemiColonAfterDeclaration() == true ) ? "true" : "false");
-     mprintf ("SkipWhitespaces                        = %s \n",( SkipWhitespaces() == true ) ? "true" : "false");
-     mprintf ("SkipBasicBlock                         = %s \n",( SkipBasicBlock() == true ) ? "true" : "false");
-     mprintf ("outputClassTemplateName                = %s \n",( outputClassTemplateName() == true ) ? "true" : "false");
-     mprintf ("outputCompilerGeneratedStatements      = %s \n",( outputCompilerGeneratedStatements() == true ) ? "true" : "false");
-     mprintf ("SkipConstantFoldedExpressions          = %s \n",( SkipConstantFoldedExpressions() == true ) ? "true" : "false");
-     mprintf ("forceQualifiedNames                    = %s \n",( forceQualifiedNames() == true ) ? "true" : "false");
-     mprintf ("SkipQualifiedNames                     = %s \n",( SkipQualifiedNames() == true ) ? "true" : "false");
-     mprintf ("skipCheckAccess                        = %s \n",( skipCheckAccess() == true ) ? "true" : "false");
-     mprintf ("requiresGlobalNameQualification        = %s \n",( requiresGlobalNameQualification() == true ) ? "true" : "false");
-     mprintf ("supressArrayBound                      = %s \n",( supressArrayBound() == true ) ? "true" : "false");
-     mprintf ("supressImplicitThisOperator            = %s \n",( supressImplicitThisOperator() == true ) ? "true" : "false");
-     mprintf ("unparsedPartiallyUsingTokenStream      = %s \n",( unparsedPartiallyUsingTokenStream() == true ) ? "true" : "false");
-     mprintf ("skipCompilerGeneratedSubExpressions    = %s \n",( skipCompilerGeneratedSubExpressions() == true ) ? "true" : "false");
+     printf ("isPointerToSomething                   = %s \n",( isPointerToSomething() == true ) ? "true" : "false");
+     printf ("isReferenceToSomething                 = %s \n",( isReferenceToSomething() == true ) ? "true" : "false");
+     printf ("inVarDecl                              = %s \n",( inVarDecl() == true ) ? "true" : "false");
+     printf ("inArgList                              = %s \n",( inArgList() == true ) ? "true" : "false");
+     printf ("SkipSemiColon                          = %s \n",( SkipSemiColon() == true ) ? "true" : "false");
+     printf ("inEnumDecl                             = %s \n",( inEnumDecl() == true ) ? "true" : "false");
+     printf ("inTemplateList                         = %s \n",( inTemplateList() == true ) ? "true" : "false");
+     printf ("SkipBaseType                           = %s \n",( SkipBaseType() == true ) ? "true" : "false");
+     printf ("inAggregateInitializer                 = %s \n",( inAggregateInitializer() == true ) ? "true" : "false");
+     printf ("isWithType                             = %s \n",( isWithType() == true ) ? "true" : "false");
+     printf ("inConditional                          = %s \n",( inConditional() == true ) ? "true" : "false");
+     printf ("SkipDefinition                         = %s \n",( SkipDefinition() == true ) ? "true" : "false");
+     printf ("SkipClassSpecifier                     = %s \n",( SkipClassSpecifier() == true ) ? "true" : "false");
+     printf ("inEmbeddedDecl                         = %s \n",( inEmbeddedDecl() == true ) ? "true" : "false");
+     printf ("SkipGlobal                             = %s \n",( SkipGlobal() == true ) ? "true" : "false");
+     printf ("SkipAtomic                             = %s \n",( SkipAtomic() == true ) ? "true" : "false");
+     printf ("PrintName                              = %s \n",( PrintName() == true ) ? "true" : "false");
+     printf ("CheckAccess                            = %s \n",( CheckAccess() == true ) ? "true" : "false");
+     printf ("SkipFunctionQualifier                  = %s \n",( SkipFunctionQualifier() == true ) ? "true" : "false");
+     printf ("isArrayType                            = %s \n",( isArrayType() == true ) ? "true" : "false");
+     printf ("inRhsExpr                              = %s \n",( inRhsExpr() == true ) ? "true" : "false");
+     printf ("SkipParen                              = %s \n",( SkipParen() == true ) ? "true" : "false");
+     printf ("isTypeSecondPart                       = %s \n",( isTypeSecondPart() == true ) ? "true" : "false");
+     printf ("isTypeFirstPart                        = %s \n",( isTypeFirstPart() == true ) ? "true" : "false");
+     printf ("SkipInitializer                        = %s \n",( SkipInitializer() == true ) ? "true" : "false");
+     printf ("SkipComments                           = %s \n",( SkipComments() == true ) ? "true" : "false");
+     printf ("SkipCPPDirectives                      = %s \n",( SkipCPPDirectives() == true ) ? "true" : "false");
+     printf ("SkipEnumDefinition                     = %s \n",( SkipEnumDefinition() == true ) ? "true" : "false");
+     printf ("SkipFunctionDefinition                 = %s \n",( SkipFunctionDefinition() == true ) ? "true" : "false");
+     printf ("SkipClassDefinition                    = %s \n",( SkipClassDefinition() == true ) ? "true" : "false");
+     printf ("AddSemiColonAfterDeclaration           = %s \n",( AddSemiColonAfterDeclaration() == true ) ? "true" : "false");
+     printf ("SkipWhitespaces                        = %s \n",( SkipWhitespaces() == true ) ? "true" : "false");
+     printf ("SkipBasicBlock                         = %s \n",( SkipBasicBlock() == true ) ? "true" : "false");
+     printf ("outputClassTemplateName                = %s \n",( outputClassTemplateName() == true ) ? "true" : "false");
+     printf ("outputCompilerGeneratedStatements      = %s \n",( outputCompilerGeneratedStatements() == true ) ? "true" : "false");
+     printf ("SkipConstantFoldedExpressions          = %s \n",( SkipConstantFoldedExpressions() == true ) ? "true" : "false");
+     printf ("forceQualifiedNames                    = %s \n",( forceQualifiedNames() == true ) ? "true" : "false");
+     printf ("SkipQualifiedNames                     = %s \n",( SkipQualifiedNames() == true ) ? "true" : "false");
+     printf ("skipCheckAccess                        = %s \n",( skipCheckAccess() == true ) ? "true" : "false");
+     printf ("requiresGlobalNameQualification        = %s \n",( requiresGlobalNameQualification() == true ) ? "true" : "false");
+     printf ("supressArrayBound                      = %s \n",( supressArrayBound() == true ) ? "true" : "false");
+     printf ("supressImplicitThisOperator            = %s \n",( supressImplicitThisOperator() == true ) ? "true" : "false");
+     printf ("unparsedPartiallyUsingTokenStream      = %s \n",( unparsedPartiallyUsingTokenStream() == true ) ? "true" : "false");
+     printf ("skipCompilerGeneratedSubExpressions    = %s \n",( skipCompilerGeneratedSubExpressions() == true ) ? "true" : "false");
 
-     mprintf ("parentStatementListBeingUnparsedUsingPartialTokenSequence = %s \n",( parentStatementListBeingUnparsedUsingPartialTokenSequence() == true ) ? "true" : "false");
+     printf ("parentStatementListBeingUnparsedUsingPartialTokenSequence = %s \n",( parentStatementListBeingUnparsedUsingPartialTokenSequence() == true ) ? "true" : "false");
 
   // DQ (2/3/2019): Ading support to know when we are in a typedef.
-     mprintf ("inTypedefDecl                          = %s \n",( inTypedefDecl() == true ) ? "true" : "false");
+     printf ("inTypedefDecl                          = %s \n",( inTypedefDecl() == true ) ? "true" : "false");
 
   // DQ (4/13/2019): unparsing for generated template instantiations need to sometime skip the initial name qualification.
-     mprintf ("SkipNameQualification                  = %s \n",( SkipNameQualification() == true ) ? "true" : "false");
+     printf ("SkipNameQualification                  = %s \n",( SkipNameQualification() == true ) ? "true" : "false");
 #endif
 
      switch (p_access_attribute)
         {
           case a_unset_access:
-               mprintf ("p_access                               = unset access \n");
+               printf ("p_access                               = unset access \n");
                break;
           case a_private_access:
-               mprintf ("p_access                               = private access \n");
+               printf ("p_access                               = private access \n");
                break;
           case a_protected_access:
-               mprintf ("p_access                               = protected access \n");
+               printf ("p_access                               = protected access \n");
                break;
           case a_public_access:
-               mprintf ("p_access                               = public access \n");
+               printf ("p_access                               = public access \n");
                break;
           default:
-               mprintf ("Error: default reached in switch \n");
+               printf ("Error: default reached in switch \n");
                assert(false);
         }
 
   // DQ (1/26/2006): Modified to handle 64 bit machines
-     mprintf ("p_structureTagProcessingList.size()    = %" PRIuPTR " \n", p_structureTagProcessingList.size());
+     printf ("p_structureTagProcessingList.size()    = %" PRIuPTR " \n", p_structureTagProcessingList.size());
      SgTypePtrList::iterator i;
      for (i = p_structureTagProcessingList.begin(); i != p_structureTagProcessingList.end(); i++)
         {
        // print out the pointer values
-          mprintf ("--- structure tag pointer = %p class name = %s \n",*i,(*i)->sage_class_name());
+          printf ("--- structure tag pointer = %p class name = %s \n",*i,(*i)->sage_class_name());
 
           SgClassType* classType = isSgClassType(*i);
           if (classType != NULL)
              {
-               mprintf ("     Class name = %s \n",classType->get_name().str());
+               printf ("     Class name = %s \n",classType->get_name().str());
             // ROSE_ABORT();
              }
         }
 
-     mprintf ("p_nested_expression                    = %d \n",p_nested_expression);
-     mprintf ("p_operator_name                        = %s \n", p_operator_name.c_str());
-     mprintf ("p_var_name                             = %s \n",(p_var_name.is_null() == false) ? p_var_name.str() : "EmPtY sTrInG");
+     printf ("p_nested_expression                    = %d \n",p_nested_expression);
+     printf ("p_operator_name                        = %s \n", p_operator_name.c_str());
+     printf ("p_var_name                             = %s \n",(p_var_name.is_null() == false) ? p_var_name.str() : "EmPtY sTrInG");
 
-  // mprintf ("p_declstatement_ptr                    = %p \n",p_declstatement_ptr);
-     mprintf ("p_declstatement_ptr                    = %p = %s \n",p_declstatement_ptr,p_declstatement_ptr != NULL ? p_declstatement_ptr->class_name().c_str() : "null");
+  // printf ("p_declstatement_ptr                    = %p \n",p_declstatement_ptr);
+     printf ("p_declstatement_ptr                    = %p = %s \n",p_declstatement_ptr,p_declstatement_ptr != NULL ? p_declstatement_ptr->class_name().c_str() : "null");
      if (p_declstatement_ptr != NULL)
         {
-          mprintf ("   --- firstNondefiningDeclaration = %p \n",p_declstatement_ptr->get_firstNondefiningDeclaration());
-          mprintf ("   --- definingDeclaration         = %p \n",p_declstatement_ptr->get_definingDeclaration());
+          printf ("   --- firstNondefiningDeclaration = %p \n",p_declstatement_ptr->get_firstNondefiningDeclaration());
+          printf ("   --- definingDeclaration         = %p \n",p_declstatement_ptr->get_definingDeclaration());
         }
 
-     mprintf ("p_current_context                      = %p \n",p_current_context);
-     mprintf ("p_array_index_list                     = %s \n",(p_array_index_list.is_null() == false) ? p_array_index_list.str() : "EmPtY sTrInG");
-     mprintf ("p_current_namespace                    = %p \n",p_current_namespace);
-     mprintf ("p_outputCodeGenerationFormatDelimiters = %s \n",p_outputCodeGenerationFormatDelimiters ? "true" : "false");
+     printf ("p_current_context                      = %p \n",p_current_context);
+     printf ("p_array_index_list                     = %s \n",(p_array_index_list.is_null() == false) ? p_array_index_list.str() : "EmPtY sTrInG");
+     printf ("p_current_namespace                    = %p \n",p_current_namespace);
+     printf ("p_outputCodeGenerationFormatDelimiters = %s \n",p_outputCodeGenerationFormatDelimiters ? "true" : "false");
 
-     mprintf ("p_current_function_call                = %p \n",p_current_function_call);
-     mprintf ("p_current_scope                        = %p = %s \n",p_current_scope,p_current_scope != NULL ? p_current_scope->class_name().c_str() : "EmPtY sTrInG");
+     printf ("p_current_function_call                = %p \n",p_current_function_call);
+     printf ("p_current_scope                        = %p = %s \n",p_current_scope,p_current_scope != NULL ? p_current_scope->class_name().c_str() : "EmPtY sTrInG");
 
   // DQ (5/21/2011): Added support for name qualification...
-     mprintf ("p_reference_node_for_qualification     = %p = %s \n",p_reference_node_for_qualification,p_reference_node_for_qualification != NULL ? p_reference_node_for_qualification->class_name().c_str() : "EmPtY sTrInG");
+     printf ("p_reference_node_for_qualification     = %p = %s \n",p_reference_node_for_qualification,p_reference_node_for_qualification != NULL ? p_reference_node_for_qualification->class_name().c_str() : "EmPtY sTrInG");
 
-     mprintf ("p_language (value)                     = %d \n",p_language);
+     printf ("p_language (value)                     = %d \n",p_language);
 
   // DQ (9/24/2013): Added function to output the name of the language for the generated code.
-     mprintf ("p_language (name)                      = %s \n",SgFile::get_outputLanguageOptionName(p_language).c_str());
+     printf ("p_language (name)                      = %s \n",SgFile::get_outputLanguageOptionName(p_language).c_str());
 
   // DQ (1/10/2015): Added support for debugging the SgUnparse_Info object.
-     mprintf ("p_current_source_file                  = %p = %s \n",p_current_source_file,p_current_source_file != NULL ? p_current_source_file->class_name().c_str() : "EmPtY sTrInG");
+     printf ("p_current_source_file                  = %p = %s \n",p_current_source_file,p_current_source_file != NULL ? p_current_source_file->class_name().c_str() : "EmPtY sTrInG");
 
   // DQ (10/23/2018): Output the name of the file to support debugging of the token based unparsing.
      if (p_current_source_file != NULL)
         {
-          mprintf ("   --- p_current_source_file = %s \n",p_current_source_file->getFileName().c_str());
+          printf ("   --- p_current_source_file = %s \n",p_current_source_file->getFileName().c_str());
         }
 
   // DQ (4/28/2017): Added information required for use of generated names in the output of types for template 
   // arguments as used in symbol table lookup.
-     mprintf ("p_use_generated_name_for_template_arguments = %s \n",p_use_generated_name_for_template_arguments ? "true" : "false");
+     printf ("p_use_generated_name_for_template_arguments = %s \n",p_use_generated_name_for_template_arguments ? "true" : "false");
    }
 
 string
@@ -21869,7 +21956,8 @@ SgTemplateArgument::display( const std::string & label) const
                const SgType* type = get_type();
                assert (type != NULL);
 #if 1
-               mprintf ("In SgTemplateArgument::display(): type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
+            // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+               printf ("In SgTemplateArgument::display(): type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
 #endif
                Rose_STL_Container<SgType*> typeChain = type->getInternalTypes();
 
@@ -21878,13 +21966,13 @@ SgTemplateArgument::display( const std::string & label) const
                for (size_t i = 0; i < typeChain.size(); i++)
                   {
                     SgType* element_type = typeChain[i];
-                    mprintf ("   --- element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+                    printf ("   --- element_type = %p = %s \n",element_type,element_type->class_name().c_str());
                     SgModifierType* modifierType = isSgModifierType(element_type);
                     if (modifierType != NULL)
                        {
                       // modifierType->get_typeModifier().display("X type chain");
                          string s = modifierType->get_typeModifier().displayString();
-                         mprintf ("   ------ type chain modifier: %s \n",s.c_str());
+                         printf ("   ------ type chain modifier: %s \n",s.c_str());
                        }
                   }
                break;
@@ -21898,12 +21986,12 @@ SgTemplateArgument::display( const std::string & label) const
             // ROSE_ASSERT(expr != NULL);
 #if 0
             // DQ (12/28/2018): original version of code.
-               mprintf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
+               printf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
 #else
             // DQ (12/28/2018): This is a better implementation (it was here, but commented out).
                if (expr != NULL)
                   {
-                    mprintf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
+                    printf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
                   }
                  else
                   {
@@ -21911,8 +21999,8 @@ SgTemplateArgument::display( const std::string & label) const
                     ROSE_ASSERT(get_initializedName()->get_scope() != NULL);
 
                  // DQ (12/28/2018): original version of code, fixed to output the name.
-                 // mprintf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
-                    mprintf ("SgTemplateArgument::nontype_argument: initializedName = %s \n",get_initializedName()->get_name().str());
+                 // printf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
+                    printf ("SgTemplateArgument::nontype_argument: initializedName = %s \n",get_initializedName()->get_name().str());
                   }
 #endif
                break;
@@ -21923,10 +22011,10 @@ SgTemplateArgument::display( const std::string & label) const
                const SgDeclarationStatement* templateDeclaration = get_templateDeclaration();
                ROSE_ASSERT(templateDeclaration != NULL);
 #if 1
-               mprintf ("In SgTemplateArgument::display(): case SgTemplateArgument::template_template_argument: = %p = %s \n",templateDeclaration,templateDeclaration->class_name().c_str());
+               printf ("In SgTemplateArgument::display(): case SgTemplateArgument::template_template_argument: = %p = %s \n",templateDeclaration,templateDeclaration->class_name().c_str());
 #endif
                SgName mangled_templateDeclaration = templateDeclaration->get_mangled_name();
-               mprintf ("case SgTemplateArgument::template_template_argument: mangled_templateDeclaration = %s \n",mangled_templateDeclaration.str());
+               printf ("case SgTemplateArgument::template_template_argument: mangled_templateDeclaration = %s \n",mangled_templateDeclaration.str());
                break;
              }
 
@@ -21935,20 +22023,20 @@ SgTemplateArgument::display( const std::string & label) const
             // const SgExpression* expr = get_expression();
                assert(get_expression() != NULL);
 #if 1
-               mprintf ("WARNING: In SgTemplateArgument::display(): handling of display for varadic template argument is incomplete! \n");
+               printf ("WARNING: In SgTemplateArgument::display(): handling of display for varadic template argument is incomplete! \n");
 #endif
-               mprintf ("In SgTemplateArgument::display(): case SgTemplateArgument::start_of_pack_expansion_argument: varadic_template_argument \n");
+               printf ("In SgTemplateArgument::display(): case SgTemplateArgument::start_of_pack_expansion_argument: varadic_template_argument \n");
 
             // DQ (12/28/2018): Add support to handle this case.
                const SgExpression* expr = get_expression();
-               mprintf ("SgTemplateArgument::start_of_pack_expansion_argument: expr = %s \n",expr->unparseToString().c_str());
+               printf ("SgTemplateArgument::start_of_pack_expansion_argument: expr = %s \n",expr->unparseToString().c_str());
 
                break;
              }
 
           default:
              {
-               mprintf ("ERROR: In SgTemplateArgument::display(): default reached in switch: get_argumentType() = %d \n",get_argumentType());
+               printf ("ERROR: In SgTemplateArgument::display(): default reached in switch: get_argumentType() = %d \n",get_argumentType());
                ROSE_ASSERT(false);
                break;
              }
@@ -22540,8 +22628,9 @@ $CLASSNAME::displayString() const
 void
 $CLASSNAME::display ( std::string label ) const
    {
-     mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-     mprintf ("%s \n",displayString().c_str());
+  // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
+     printf ("In $CLASSNAME::display(%s) \n",label.c_str());
+     printf ("%s \n",displayString().c_str());
    }
 
 

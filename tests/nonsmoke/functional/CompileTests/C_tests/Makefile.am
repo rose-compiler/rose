@@ -17,6 +17,7 @@ endif
 ##################################################################################
 
 TESTCODES_REQUIRED_TO_PASS = \
+     test2020_03.c \
      test_CplusplusMacro_C.c \
      gconv_info.c \
      testCvsCpp.c \
@@ -577,7 +578,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2019_12.c \
      test2019_13.c \
      test2019_14.c \
-     test2019_15.c 
+     test2019_15.c
 
 
 TESTCODE_CURRENTLY_FAILING = \
@@ -948,7 +949,10 @@ TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 
 # any programs needed by your tests that does not need to be built by make all.
-check_PROGRAMS = $(PASSING_TEST_Executables)
+
+# DQ (6/23/2020): I need to avoid having these run first.
+# check_PROGRAMS = $(PASSING_TEST_Executables)
+
 # a list of programs or scripts to run in order to do the testing 
 TESTS= $(check_PROGRAMS) caller.out 
 

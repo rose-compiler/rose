@@ -1600,6 +1600,57 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
      printf ("In SgLocatedNode::addToAttachedPreprocessingInfo(): locationInList = %s \n",PreprocessingInfo::relativePositionName(locationInList).c_str());
 #endif
 
+#if 0
+       // DQ (4/22/2020): Check to see if we are adding a comment of CPP directive redundantly.
+
+          printf ("Output the associated comments and CPP directives for this IR node: \n");
+
+          AttachedPreprocessingInfoType *tmp_prepInfoPtr = this->getAttachedPreprocessingInfo();
+          AttachedPreprocessingInfoType::iterator i;
+          for (i = tmp_prepInfoPtr->begin(); i != tmp_prepInfoPtr->end(); ++i)
+             {
+            // i is a pointer to the current prepInfo object, print current preprocessing info
+            // Assert that i points to a valid preprocssingInfo object
+               ROSE_ASSERT ((*i) != NULL);
+               ROSE_ASSERT ((*i)->getTypeOfDirective()  != PreprocessingInfo::CpreprocessorUnknownDeclaration);
+               ROSE_ASSERT ((*i)->getRelativePosition() == PreprocessingInfo::before || 
+                            (*i)->getRelativePosition() == PreprocessingInfo::after  ||
+                            (*i)->getRelativePosition() == PreprocessingInfo::inside);
+
+            // DQ (1/28/2013): Fixed to use output of PreprocessingInfo::relativePositionName() and thus provide more accurate debug information.
+               printf (" --- Stored comment: (*i)->getRelativePosition() = %s (*i)->getString() = %s \n",
+                 // ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                    PreprocessingInfo::relativePositionName((*i)->getRelativePosition()).c_str(),
+                    (*i)->getString().c_str());
+
+            // DQ (2/27/2019): Adding support for multi-file handling.
+            // printf (" ---  --- SgUnparse_Info: filename = %s \n",info.get_current_source_file()->getFileName().c_str());
+            // printf (" ---  --- file_id = %d line = %d filename = %s \n",(*i)->getFileId(),(*i)->getLineNumber(),(*i)->getFilename().c_str());
+#if 0
+            // if (prepInfoPtr->getString() ==  "// The use of \"\" instead of <> forces the current directory (where Simple2.h is located) to be used.")
+            // if (prepInfoPtr->getString() ==  "// Test comment")
+            // const size_t found = prepInfoPtr->getString().substr("// Test comment");
+               size_t found = prepInfoPtr->getString().find("// Test comment");
+               if (found != string::npos)
+                  {
+                    printf ("ERROR: found specific comment or CPP directive being added: prepInfoPtr->getString() = %s \n",prepInfoPtr->getString().c_str());
+
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+                  }
+#endif
+#if 1
+               if (prepInfoPtr->getString() == (*i)->getString())
+                  {
+                    printf ("ERROR: redundant comment or CPP directive being added: prepInfoPtr->getString() = %s \n",prepInfoPtr->getString().c_str());
+
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+                  }
+#endif
+             }
+#endif
+
   // Add the current PreprocessingInfo object
      switch (locationInList)
         {
@@ -1623,6 +1674,8 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
                ROSE_ASSERT(false);
         }
    }
+
+
 // Liao 1/27/2015   
 // Insert prepInfo right after (or before) an existing anchor info in the preprocessing info list
 void

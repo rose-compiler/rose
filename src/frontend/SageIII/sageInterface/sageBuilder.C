@@ -15853,7 +15853,7 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
      ROSE_ASSERT(subtreeRoot != NULL);
      ROSE_ASSERT(newFileName != "");
 
-#define DEBUG_FIXUP 1
+#define DEBUG_FIXUP 0
 
 #if DEBUG_FIXUP
      printf ("In SageBuilder::fixupSourcePositionFileSpecification(): newFileName = %s \n",newFileName.c_str());
@@ -15877,7 +15877,7 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
                void visit (SgNode* node)
                   {
 #if DEBUG_FIXUP
-                    printf ("In visit(): node = %p = %s \n",node,node->class_name().c_str());
+                    printf ("In fixupSourcePositionFileSpecification visit(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
 
                     SgLocatedNode* locatedNode = isSgLocatedNode(node);
@@ -16125,7 +16125,7 @@ SageBuilder::fixupSharingSourcePosition(SgNode* subtreeRoot, int new_file_id)
                void visit (SgNode* node)
                   {
 #if 0
-                    printf ("In visit(): node = %p = %s new_file_id = %d \n",node,node->class_name().c_str(),new_file_id);
+                    printf ("In fixupSharingSourcePosition visit(): node = %p = %s new_file_id = %d \n",node,node->class_name().c_str(),new_file_id);
 #endif
 
                     SgStatement* statement = isSgStatement(node);
@@ -16945,12 +16945,20 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
         }
      ROSE_ASSERT (sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
 
+#if 1
+  // DQ (5/22/2020): If this is processing a previously processed file, then this 
+  // will cause comments and CPP directives to be collected twice. This happens
+  // in the case where we build a copy of the source file to support construction 
+  // of a dynamic library.
+     printf ("NOTE: SageBuilder::buildSourceFile(): If this is processing a previously processed source file then this will cause the source file comments and CPP directives to be collected redundently \n");
+#endif
+
   // DQ (11/4/2019): This is a test that is use in attaching CPP directives and comments to the AST.
      ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
      ROSE_ASSERT(filePreprocInfo != NULL);
 #endif
 
-#if 0
+#if 1
      printf ("In SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project): calling attachPreprocessingInfo() \n");
 #endif
 

@@ -214,7 +214,11 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputObjectFileAnalysis.C
 #	./testAnalysis $(AM_CPPFLAGS) -c $(srcdir)/inputFile.C -o alt_Analysis_inputFile.o
 #	./testAnalysis $(AM_CPPFLAGS) -c inputObjectFileAnalysis.C -o alt_Analysis_inputFile.o
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testAnalysis -c inputObjectFileAnalysis.C -o alt_Analysis_inputFile.o
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -223,7 +227,11 @@ testLinkFileAnalysis: testObjectFileAnalysis
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 #	./testAnalysis $(AM_CPPFLAGS) alt_inputFile.o -o alt_inputFile
 #	./testAnalysis $(AM_CPPFLAGS) alt_Analysis_inputFile.o -o testLinkFileAnalysisExecutable
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testAnalysis alt_Analysis_inputFile.o -o testLinkFileAnalysisExecutable
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -231,7 +239,11 @@ endif
 testCppFileAnalysis: testAnalysis
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 #	./testAnalysis -E $(AM_CPPFLAGS) $(srcdir)/inputFile.C
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testAnalysis -E $(srcdir)/inputFile.C
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -240,7 +252,11 @@ testExecutableFileAnalysis: testAnalysis
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputFileAnalysis.C
 #	./testAnalysis $(AM_CPPFLAGS) inputFileAnalysis.C -o testExecutableFileAnalysisExecutable
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testAnalysis inputFileAnalysis.C -o testExecutableFileAnalysisExecutable
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -257,14 +273,22 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputObjectFileCodeGeneration.C
 #	./testCodeGeneration $(AM_CPPFLAGS) -c $(srcdir)/inputFile.C -o alt_CodeGeneration_inputFile.o
 #	./testCodeGeneration $(AM_CPPFLAGS) -c inputObjectFileCodeGeneration.C -o alt_CodeGeneration_inputFile.o
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testCodeGeneration -c inputObjectFileCodeGeneration.C -o alt_CodeGeneration_inputFile.o
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
 
 testLinkFileCodeGeneration: testObjectFileCodeGeneration
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testCodeGeneration -rose:Cxx alt_CodeGeneration_inputFile.o -o testLinkFileCodeGenerationExecutable
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -272,7 +296,11 @@ endif
 testCppFileCodeGeneration: testCodeGeneration
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 #	./testCodeGeneration -E $(AM_CPPFLAGS) $(srcdir)/inputFile.C
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testCodeGeneration -E $(srcdir)/inputFile.C
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -281,7 +309,11 @@ testExecutableFileCodeGeneration: testCodeGeneration
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputFileCodeGeneration.C
 #	./testCodeGeneration $(AM_CPPFLAGS) inputFileCodeGeneration.C -o testExecutableFileCodeGenerationExecutable
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testCodeGeneration inputFileCodeGeneration.C -o testExecutableFileCodeGenerationExecutable
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -298,7 +330,11 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputObjectFileTranslator.C
 #	./testTranslator $(AM_CPPFLAGS) -c $(srcdir)/inputFile.C -o alt_Translator_inputFile.o
 #	./testTranslator $(AM_CPPFLAGS) -c inputObjectFileTranslator.C -o alt_Translator_inputFile.o
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testTranslator -c inputObjectFileTranslator.C -o alt_Translator_inputFile.o
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -306,14 +342,22 @@ endif
 testLinkFileTranslator: testObjectFileTranslator
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 #	./testTranslator $(AM_CPPFLAGS) alt_Translator_inputFile.o -o testLinkFileTranslatorExecutable
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testTranslator alt_Translator_inputFile.o -o testLinkFileTranslatorExecutable
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
 
 testCppFileTranslator: testTranslator
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testTranslator -E $(AM_CPPFLAGS) $(srcdir)/inputFile.C
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -322,7 +366,11 @@ testExecutableFileTranslator: testTranslator
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputFileTranslator.C
 #	./testTranslator $(AM_CPPFLAGS) inputFileTranslator.C -o testExecutableFileTranslatorExecutable
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testTranslator inputFileTranslator.C -o testExecutableFileTranslatorExecutable
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -338,7 +386,11 @@ testObjectFileFileAstFileIO: testAstFileIO
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C alt_AstFileIO_inputFile.C
 #	./testAstFileIO $(AM_CPPFLAGS) -c alt_AstFileIO_inputFile.C -o alt_AstFileIO_inputFile
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testAstFileIO -c alt_AstFileIO_inputFile.C -o alt_AstFileIO_inputFile
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -352,16 +404,23 @@ test_testAstFileIO: testObjectFileFileAstFileIO
 # Note: This executable is tested more extensively in tests/nonsmoke/functional/roseTests/astFileIO/Makefile.am [RPM 2013-09-27]
 testAstRead: testAstFileRead testAstFileIO
 	cp $(srcdir)/inputFile.C alt_AstFileRead_inputFile.C
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testAstFileIO -c alt_AstFileRead_inputFile.C -o alt_AstFileRead_inputFile
 	./testAstFileRead alt_AstFileRead_inputFile.C outputFileName_XXX
-
+endif
 test_testAstFileIO: testObjectFileFileAstFileIO
 
 # Reported failure from Tristan
 testSimpleLinkFileTranslator: testTranslator
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputSimpleLinkFileTranslator.C
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testTranslator inputSimpleLinkFileTranslator.C -lm
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -375,7 +434,11 @@ testObjectFileTokenGeneration: testTokenGeneration
 	cp $(srcdir)/inputFile.C alt_ObjectFileTokenGeneration_inputFile.C
 #	./testTokenGeneration $(AM_CPPFLAGS) -c $(srcdir)/inputFile.C -o alt_TokenGeneration_inputFile.o
 #	./testTokenGeneration $(AM_CPPFLAGS) -c alt_ObjectFileTokenGeneration_inputFile.C -o alt_TokenGeneration_inputFile.o
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testTokenGeneration -c alt_ObjectFileTokenGeneration_inputFile.C -o alt_TokenGeneration_inputFile.o
+endif
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 test_testTokenGeneration: testObjectFileTokenGeneration
@@ -401,10 +464,14 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 BAD_PATH = $(builddir)/XXX
 test_exampleIdentityTranslator: exampleIdentityTranslator
 	cp $(srcdir)/inputFile.C alt_identityTranslator_inputFile.C
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	@echo "Test the identityTranslator distributed in $(top_builddir)/exampleTranslators/documentedExamples/simpleTranslatorExamples"
 	$(top_builddir)/exampleTranslators/documentedExamples/simpleTranslatorExamples/identityTranslator -c alt_identityTranslator_inputFile.C
 	@echo "Test the identityTranslator using a bad path with the -I option (previous failing case)."
 	$(top_builddir)/exampleTranslators/documentedExamples/simpleTranslatorExamples/identityTranslator -I$(BAD_PATH) -c alt_identityTranslator_inputFile.C
+endif
 else
 test_exampleIdentityTranslator:
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
@@ -429,7 +496,11 @@ endif
 # Liao, 4/12/2017 restrict_template_parameter.C will trigger frontend error.
 # __minimal_input_code is defined in input_codes/Makefile.for.input.codes
 testKeepGoingTranslator: $(top_builddir)/exampleTranslators/defaultTranslator/KeepGoingTranslator
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./$(top_builddir)/exampleTranslators/defaultTranslator/KeepGoingTranslator -c $(__minimal_input_code) $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/restrict_template_parameter.C $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_13_Liao.C $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_12_Liao.C
+endif
 
 # DQ (7/2/2015): template test code that marks all template instantiations for output (as a test).
 test_testTemplates: testTemplates

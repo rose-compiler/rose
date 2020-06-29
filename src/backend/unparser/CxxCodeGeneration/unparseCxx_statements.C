@@ -7636,7 +7636,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                        }
                   }
 
-#if DEBUG_VARIABLE_DECLARATION || 1
+#if DEBUG_VARIABLE_DECLARATION || 0
                printf ("Calling unp->u_sage->printSpecifier2 \n");
                curprint ("\n/* Calling unp->u_sage->printSpecifier2() */ \n");
             // printDebugInfo("entering unp->u_sage->printSpecifier2", true);
@@ -8585,7 +8585,13 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint ( string(","));
              }
 
-          unparseAttachedPreprocessingInfo(decl_item, ninfo, PreprocessingInfo::after);    
+#if 0
+          curprint ("\n/* BEFORE: Calling unparseAttachedPreprocessingInfo (after) */ \n");
+#endif
+          unparseAttachedPreprocessingInfo(decl_item, ninfo, PreprocessingInfo::after);
+#if 0
+          curprint ("\n/* AFTER: Calling unparseAttachedPreprocessingInfo (after) */ \n");
+#endif
         }
 
 #if 0

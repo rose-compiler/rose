@@ -105,6 +105,10 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr, std::map<std::string,ROSEAttr
 
 
 #ifndef ROSE_SKIP_COMPILATION_OF_WAVE
+
+// DQ (5/4/2020): Added directly here because it is required for this function.
+typedef std::map<int, ROSEAttributesList*> AttributeMapType;
+
 void
 attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& attributeMapForAllFiles)
    {
@@ -648,14 +652,31 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      printf ("################################################################ \n");
      printf ("In attachPreprocessingInfo(): wave = %s file    = %p = %s \n",sageFilePtr->get_wave() ? "true" : "false",sageFilePtr,sageFilePtr->get_sourceFileNameWithPath().c_str());
      printf (" --- unparse output filename                    = %s \n",sageFilePtr->get_unparse_output_filename().c_str());
+     printf (" --- sageFilePtr->getFileName()                 = %s \n",sageFilePtr->getFileName().c_str());
      printf (" --- sageFilePtr->get_globalScope()             = %p \n",sageFilePtr->get_globalScope());
      printf (" --- sageFilePtr->get_unparse_output_filename() = %s \n",sageFilePtr->get_unparse_output_filename().c_str());
      printf ("################################################################ \n");
      printf ("################################################################ \n");
 #endif
 
+#if 1
+  // Note that this only builds the include graph starting at the first header file not the input source file.
+     string dotgraph_filename = "include_file_graph_from_before_attachPreprocessingInfo";
+     ROSE_ASSERT(sageFilePtr != NULL);
+  // generateGraphOfIncludeFiles(sageFilePtr,dotgraph_filename);
+     ROSE_ASSERT(sageFilePtr->get_parent() != NULL);
+     SgProject* project = SageInterface::getProject(sageFilePtr);
+     ROSE_ASSERT(project != NULL);
+     generateDOTforMultipleFile(*project);
+#endif
+
   // DQ (11/18/2019): Check the flag that indicates that this SgSourceFile has NOT yet had its CPP directives and comments added.
      ROSE_ASSERT(sageFilePtr->get_processedToIncludeCppDirectivesAndComments() == false);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
 #if 0
      if (sageFilePtr->get_sourceFileNameWithPath() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_28.h")
@@ -673,6 +694,31 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
           printf ("WARNING: sageFilePtr->get_unparse_output_filename() is EMPTY \n");
         }
   // ROSE_ASSERT(sageFilePtr->get_unparse_output_filename() != "");
+#endif
+
+  // ROSEAttributesList* headerAttributes = getListOfAttributes(fileNameId);
+  // bool use_Wave = false;
+  // ROSEAttributesList* commentAndCppDirectiveList = buildCommentAndCppDirectiveList(use_Wave, Sg_File_Info::getFilenameFromID(currentFileNameId) );
+  // ROSEAttributesList* commentAndCppDirectiveList = buildCommentAndCppDirectiveList(use_Wave, sageFilePtr->getFileName() );
+     string filename = sageFilePtr->get_sourceFileNameWithPath();
+     ROSEAttributesList* commentAndCppDirectiveList = getPreprocessorDirectives(filename);
+     ROSE_ASSERT(commentAndCppDirectiveList != NULL);
+
+#if 0
+     if ( headerAttributes->size() )
+        {
+       // string filename = sourceFile->get_sourceFileNameWithPath();
+#if 1
+          printf ("Adding list for filename = %s \n",filename.c_str());
+#endif
+          sourceFile->get_preprocessorDirectivesAndCommentsList()->addList(filename, headerAttributes);
+        }
+#endif
+
+#if 0
+  // DQ (5/4/2020): Test the collection of comments and CPP directives seperately from attachng them to the AST.
+     printf ("Skipping attaching the list as a test \n");
+     return;
 #endif
 
 #ifndef  CXX_IS_ROSE_CODE_GENERATION
@@ -749,7 +795,11 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      ROSE_ASSERT(false);
 #endif
 
-     AttachPreprocessingInfoTreeTrav tt(sageFilePtr,processAllFiles);
+  // DQ (6/2/2020): Change the API to pass in the CPP directives and comments list.
+  // Also disable boolean processAllFiles since these are no longer processed in the 
+  // traversal (adding CPP directives and comments from each file is a seperate).
+  // AttachPreprocessingInfoTreeTrav tt(sageFilePtr,processAllFiles);
+     AttachPreprocessingInfoTreeTrav tt(sageFilePtr,commentAndCppDirectiveList);
 
 #if 0
      printf ("Exiting as a test after AttachPreprocessingInfoTreeTrav constructor call! \n");
@@ -760,12 +810,21 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      if ( sageFilePtr->get_wave() == true )
         {
 #ifndef ROSE_SKIP_COMPILATION_OF_WAVE
-          attachPreprocessingInfoUsingWave(sageFilePtr, tt.get_attributeMapForAllFiles() );
+       // DQ (5/4/2020): Disabled use of WAVE (at least for now).
+          printf ("Disabled use of WAVE (at least for now) \n");
+       // attachPreprocessingInfoUsingWave(sageFilePtr, tt.get_attributeMapForAllFiles() );
 #else
           printf ("Boost wave is not available within this configuration \n");
           ROSE_ASSERT(false);
 #endif
         }
+
+#if 0
+  // Note that this only builds the include graph starting at the first header file not the input source file.
+     string dotgraph_filename = "include_file_graph_from_before_attachPreprocessingInfo";
+     ROSE_ASSERT(sageFilePtr != NULL);
+     generateGraphOfIncludeFiles(sageFilePtr,dotgraph_filename);
+#endif
 
   // DQ (12/19/2008): Added support for Fortran CPP files.
   // If this is a Fortran file requiring CPP processing then we want to call traverse, instead of 
@@ -774,7 +833,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
   // marked with a source position from the filename with the "_preprocessed" suffix).
      bool requiresCPP = sageFilePtr->get_requires_C_preprocessor();
 
-#if 0
+#if 1
      printf ("####################################################################### \n");
      printf ("####################################################################### \n");
      printf ("In attachPreprocessingInfo(): processAllFiles = %s requiresCPP = %s \n",processAllFiles ? "true" : "false",requiresCPP ? "true" : "false");
@@ -782,19 +841,37 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      printf ("####################################################################### \n");
 #endif
 
-     if (processAllFiles == true || requiresCPP == true)
+  // DQ (6/23/2020): Procesing the CPP directives from header files requires the use of the traversal over the whole AST.
+  // if (processAllFiles == true || requiresCPP == true)
+     if (processAllFiles == true || requiresCPP == true || true)
         {
-#if 0
+#if 1
           printf ("In attachPreprocessingInfo(): Calling AttachPreprocessingInfoTreeTrav::traverse() (not traverseWithinFile) \n");
 #endif
           tt.traverse(sageFilePtr, inh);
+#if 1
+          printf ("DONE: In attachPreprocessingInfo(): Calling AttachPreprocessingInfoTreeTrav::traverse() (not traverseWithinFile) \n");
+#endif
         }
        else
         {
-#if 0
+#if 1
           printf ("In attachPreprocessingInfo(): Calling AttachPreprocessingInfoTreeTrav::traverseWithinFile() (not traverse) \n");
 #endif
+
+       // DQ (4/25/2020): When traversing a header file, it appears that the whole AST is traversed.
+       // Not clear is that is correct or what we want.
           tt.traverseWithinFile(sageFilePtr,inh);
+#if 1
+          printf ("DONE: In attachPreprocessingInfo(): Calling AttachPreprocessingInfoTreeTrav::traverseWithinFile() (not traverse) \n");
+
+          printf ("################################################### \n");
+          printf ("################################################### \n");
+          printf ("################################################### \n");
+          printf ("################################################### \n");
+          printf ("################################################### \n");
+          printf ("################################################### \n");
+#endif
         }
 
   // endif for ifndef  CXX_IS_ROSE_CODE_GENERATION
@@ -844,7 +921,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 #endif
 
 #if 0
-     // This is pointless since at this point the last step of the traversla has reset the lists (state held in tt).
+     // This is pointless since at this point the last step of the traversal has reset the lists (state held in tt).
      // DQ (10/27/2007): Output debugging information
      if ( SgProject::get_verbose() >= 3 )
         {

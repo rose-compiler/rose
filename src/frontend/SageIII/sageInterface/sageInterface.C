@@ -1272,7 +1272,7 @@ SageInterface::listHeaderFiles ( SgIncludeFile* includeFile )
           public:
                void visit (SgNode* node)
                   {
-                    printf ("In visit(): node = %p = %s \n",node,node->class_name().c_str());
+                    printf ("In listHeaderFiles visit(): node = %p = %s \n",node,node->class_name().c_str());
                     SgIncludeFile* includeFile = isSgIncludeFile(node);
                     if (includeFile != NULL)
                        {
@@ -20026,6 +20026,13 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
     SgExpression* lhs = isSgSubtractOp(current)->get_lhs_operand();
     return convertRefToInitializedName(lhs, coarseGrain);
   }
+// DQ (6/28/2020): Added case for SgFunctionCallExp.
+// I'm not clear on if this is a reasonable fix for this function.
+  else if (isSgFunctionCallExp(current))
+  {
+    SgExpression* func = isSgFunctionCallExp(current)->get_function();
+    return convertRefToInitializedName(func, coarseGrain);
+  }
  else
   {
     // side effect analysis will return rhs of  Class A a = A(); as a read ref exp. SgConstructorInitializer 
@@ -24201,7 +24208,7 @@ SageInterface::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node)
                void visit (SgNode* node)
                   {
 #if 0
-                    printf ("In visit(): node = %p = %s \n",node,node->class_name().c_str());
+                    printf ("In convertFunctionDefinitionsToFunctionPrototypes visit(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
                     SgSourceFile* temp_sourceFile = isSgSourceFile(node);
                     if (temp_sourceFile != NULL)
@@ -24618,7 +24625,7 @@ SageInterface::generateFunctionDefinitionsList(SgNode* node)
                void visit (SgNode* node)
                   {
 #if 0
-                    printf ("In visit(): node = %p = %s \n",node,node->class_name().c_str());
+                    printf ("In generateFunctionDefinitionsList visit(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
 #if 0
                     SgSourceFile* temp_sourceFile = isSgSourceFile(node);
