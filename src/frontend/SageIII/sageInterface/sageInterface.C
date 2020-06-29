@@ -617,7 +617,7 @@ SageInterface::initializeIfStmt(SgIfStmt *ifstmt, SgStatement* conditional, SgSt
      if (ifstmt->get_false_body() == NULL)
           ifstmt->set_false_body(false_body);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
      if (is_language_case_insensitive())
          ifstmt->setCaseInsensitive(true);
 
@@ -633,7 +633,7 @@ SageInterface::initializeSwitchStatement(SgSwitchStatement* switchStatement,SgSt
    {
      ROSE_ASSERT(switchStatement != NULL);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
      if (is_language_case_insensitive())
           switchStatement->setCaseInsensitive(true);
 
@@ -656,7 +656,7 @@ SageInterface::initializeWhileStatement(SgWhileStmt* whileStatement, SgStatement
    {
      ROSE_ASSERT(whileStatement);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
      if (is_language_case_insensitive())
           whileStatement->setCaseInsensitive(true);
 
@@ -1400,7 +1400,7 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                name = isSgClassDeclaration(declaration)->get_name().str();
                break;
 
-       // Rasmussen (8/2/2019): Added SgJovialDefineDeclaration and SgJovialDirectiveStatement
+       // CR (8/2/2019): Added SgJovialDefineDeclaration and SgJovialDirectiveStatement
        // I'm not sure class_name() is correct. Probably get_name() should be fixed.
           case V_SgJovialDefineDeclaration:
                name = isSgJovialDefineDeclaration(declaration)->class_name();
@@ -1826,7 +1826,7 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
 
-          case V_SgJovialForThenStatement: //Rasmussen: Jovial for statement
+          case V_SgJovialForThenStatement: //CR: Jovial for statement
           case V_SgMatlabForStatement: //SK: Matlab for statement
           case V_SgBasicBlock:
           case V_SgCatchOptionStmt:
@@ -4820,7 +4820,7 @@ void SageInterface::addVarRefExpFromArrayDimInfo(SgNode * astNode, Rose_STL_Cont
 }
 
 
-// Rasmussen (4/8/2018): Added Ada
+// CR (4/8/2018): Added Ada
 bool
 SageInterface::is_Ada_language()
    {
@@ -4855,7 +4855,7 @@ SageInterface::is_C_language()
      return returnValue;
    }
 
-// Rasmussen (4/8/2018): Added Cobol
+// CR (4/8/2018): Added Cobol
 bool
 SageInterface::is_Cobol_language()
    {
@@ -5005,7 +5005,7 @@ SageInterface::is_Java_language()
      return returnValue;
    }
 
-// Rasmussen (4/4/2018): Added Jovial
+// CR (4/4/2018): Added Jovial
 bool
 SageInterface::is_Jovial_language()
    {
@@ -5164,7 +5164,7 @@ bool SageInterface::is_mixed_Fortran_and_C_and_Cxx_language()
      return is_Fortran_language() && is_C_language() && is_Cxx_language();
    }
 
-// Rasmussen (3/22/2020): Added this function because ROSE supports multiple
+// CR (3/22/2020): Added this function because ROSE supports multiple
 // languages that are case insensitive. Warning, this doesn't work for mixed languages.
 bool SageInterface::is_language_case_insensitive()
    {
@@ -5173,7 +5173,7 @@ bool SageInterface::is_language_case_insensitive()
       return symbol_table_case_insensitive_semantics == true;
    }
 
-// Rasmussen (3/28/2020): Collecting all languages that may have scopes that contain
+// CR (3/28/2020): Collecting all languages that may have scopes that contain
 // statements that are not only declarations here. For Fortran (at least), function
 // definitions may be declared at the end of other procedures.
 bool SageInterface::language_may_contain_nondeclarations_in_scope()
@@ -14396,7 +14396,7 @@ void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value,
      ROSE_ASSERT (stmt != NULL);
      ROSE_ASSERT (label_value >0 && label_value <=99999); //five digits for Fortran label
 
-  // Added optional label_type and label_scope [Rasmussen 2019.01.20]
+  // Added optional label_type and label_scope [CR 2019.01.20]
      if (label_scope == NULL)
         {
            label_scope = getEnclosingFunctionDefinition(stmt);
@@ -14502,7 +14502,7 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
 
   // Liao 4/23/2010,  Fix function symbol
   // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
-  // Added SgProgramHeaderStatement [Rasmussen, 2020.01.19]
+  // Added SgProgramHeaderStatement [CR, 2020.01.19]
      SgFunctionDeclaration               * func         = isSgFunctionDeclaration(stmt);
      SgMemberFunctionDeclaration         * mfunc        = isSgMemberFunctionDeclaration(stmt);
      SgTemplateFunctionDeclaration       * tfunc        = isSgTemplateFunctionDeclaration(stmt);
@@ -19815,19 +19815,25 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
 
                            SgInitializedName * init_name = (*ii);
 
-// Rasmussen (3/25/2020): I don't think anonymous types are moved!!!
-// They should be, this should be fixed.
-#if 0
-                           std::cout << "--! moveStatements... var is  " << init_name->get_name() << ": var_decl is " << varDecl << ": " << varDecl->class_name() << std::endl;
-                           std::cout << "--! moveStatements... type is " << init_name->get_type() << ": " << init_name->get_type()->class_name() << std::endl;
-                           std::cout << "--! moveStatements... def  is " << init_name->get_definition() << ": " << init_name->get_definition()->class_name() << std::endl;
-                           std::cout << "--! moveStatements... parent  " << varDecl->get_parent() << ": " << varDecl->get_parent()->class_name() << std::endl;
-                         //std::cout << "--! moveStatements... scope  "  << varDecl->get_parent()->get_scope() std::endl;
-#endif
+                           // CR (6/29/2020): Variable declarations related to Jovial anonymous table types are not
+                           // moved. This is fixed below. SgJovialTableType derives from SgClassType, it may be that
+                           // class types are not moved correctly either.
 
-//                         ROSE_ASSERT(init_name ->get_scope() == sourceBlock); // the sourceBlock is transformation generated basic block. the original scope of init_name is the one in the original scource code.
-//                           SgSymbol* symbol = s_table->find(init_name); // this will not return the right symbol
- //                          ROSE_ASSERT (symbol != NULL);
+                           SgType* var_type = init_name->get_type();
+                           SgJovialTableType* table_type = isSgJovialTableType(init_name->get_type());
+                           if (table_type)
+                              {
+                                 SgDeclarationStatement* decl = table_type->get_declaration();
+                                 SgDeclarationStatement* def_decl = decl->get_definingDeclaration();
+                                 SgDeclarationStatement* nondef_decl = decl->get_firstNondefiningDeclaration();
+                                 SgNode* decl_parent = decl->get_parent();
+
+                                 nondef_decl->set_parent(targetBlock);
+                                 nondef_decl->set_scope(targetBlock);
+
+                                 def_decl->set_scope(targetBlock);
+                                 def_decl->set_parent(varDecl);
+                              }
 
                            // Must also move the symbol into the source block, Liao 2019/8/14
                            SgVariableSymbol* var_sym = isSgVariableSymbol(init_name -> search_for_symbol_from_symbol_table ()) ;

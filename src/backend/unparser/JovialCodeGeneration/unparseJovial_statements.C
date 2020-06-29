@@ -216,6 +216,12 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgProcedureHeaderStatement* func = isSgProcedureHeaderStatement(stmt);
      ROSE_ASSERT(func);
 
+     SgFunctionDefinition* func_def = func->get_definition();
+     ROSE_ASSERT(func_def);
+
+     SgBasicBlock* func_body = func_def->get_body();
+     ROSE_ASSERT(func_body);
+
      bool isDefiningDeclaration = (func->get_declarationModifier().isJovialRef() == false);
 
   // unparse the declaration modifiers
@@ -283,12 +289,13 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
            info.inc_nestingLevel();
            foreach(SgInitializedName* arg, args)
               {
-                 curprint( ws_prefix(info.get_nestingLevel()) );
-                 curprint("ITEM ");
-                 curprint(arg->get_name());
-                 curprint(" ");
-                 unparseType(arg->get_type(), ninfo);
-                 curprint(" ;\n");
+                 SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(arg->get_name(), func_body);
+                 SgInitializedName* var_init_name = var_sym->get_declaration();
+                 ROSE_ASSERT(var_init_name);
+                 SgVariableDeclaration* var_decl = isSgVariableDeclaration(var_init_name->get_declaration());
+                 ROSE_ASSERT(var_decl);
+
+                 unparseVarDeclStmt(var_decl, info);
               }
            info.dec_nestingLevel();
 
