@@ -35,11 +35,11 @@ SgArithmeticIfStatement
 SgArrayType
 SgArrowExp
 SgArrowStarOp
-SgAsmArm64AtOperand
-SgAsmArm64CImmediateOperand
-SgAsmArm64Instruction
-SgAsmArm64PrefetchOperand
-SgAsmArm64SysMoveOperand
+SgAsmA64AtOperand
+SgAsmA64CImmediateOperand
+SgAsmA64Instruction
+SgAsmA64PrefetchOperand
+SgAsmA64SysMoveOperand
 SgAsmBasicString
 SgAsmBinaryAdd
 SgAsmBinaryAddPostupdate

@@ -54435,7 +54435,7 @@ namespace stringify {
             case 11L: return "T_ARRAY";
             case 12L: return "POINTST_OP";
             case 13L: return "ARROWSTAR_OP";
-            case 14L: return "AsmArmInstructionTag";
+            case 14L: return "AsmA64InstructionTag";
             case 15L: return "AsmBasicStringTag";
             case 16L: return "AsmBinaryAddTag";
             case 17L: return "AsmBinaryAddPostupdateTag";
@@ -56307,7 +56307,7 @@ namespace stringify {
             case 11L: return "V_SgArrayType";
             case 12L: return "V_SgArrowExp";
             case 13L: return "V_SgArrowStarOp";
-            case 14L: return "V_SgAsmArmInstruction";
+            case 14L: return "V_SgAsmA64Instruction";
             case 15L: return "V_SgAsmBasicString";
             case 16L: return "V_SgAsmBinaryAdd";
             case 17L: return "V_SgAsmBinaryAddPostupdate";
@@ -87332,24 +87332,24 @@ namespace Rose {
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1374
 namespace stringify {
-    const char* E_SgAsmArmInstruction(int64_t i) {
+    const char* E_SgAsmA64Instruction(int64_t i) {
         switch (i) {
-            case 0L: return "SgAsmArmInstruction_operandList";
-            case 1L: return "SgAsmArmInstruction_semantics";
+            case 0L: return "SgAsmA64Instruction_operandList";
+            case 1L: return "SgAsmA64Instruction_semantics";
             default: return "";
         }
     }
 
-    std::string E_SgAsmArmInstruction(int64_t i, const std::string &strip) {
-        std::string s = E_SgAsmArmInstruction(i);
+    std::string E_SgAsmA64Instruction(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmA64Instruction(i);
         if (s.empty())
-            s = "(E_SgAsmArmInstruction)" + boost::lexical_cast<std::string>(i);
+            s = "(E_SgAsmA64Instruction)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
     }
 
-    const std::vector<int64_t>& E_SgAsmArmInstruction() {
+    const std::vector<int64_t>& E_SgAsmA64Instruction() {
         static const int64_t values[] = {
             0L,
             1L
@@ -87361,21 +87361,21 @@ namespace stringify {
 }
 
 namespace Rose {
-    std::string stringifyE_SgAsmArmInstruction(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::E_SgAsmArmInstruction(i);
+    std::string stringifyE_SgAsmA64Instruction(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmA64Instruction(i);
         if (retval.empty()) {
-            retval = "(E_SgAsmArmInstruction)" + boost::lexical_cast<std::string>(i);
+            retval = "(E_SgAsmA64Instruction)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "E_SgAsmArmInstruction::" + retval;
+                retval = "E_SgAsmA64Instruction::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyE_SgAsmArmInstruction() {
-        return stringify::E_SgAsmArmInstruction();
+    const std::vector<int64_t>& stringifyE_SgAsmA64Instruction() {
+        return stringify::E_SgAsmA64Instruction();
     }
 }
 
