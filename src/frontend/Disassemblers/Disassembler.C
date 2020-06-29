@@ -8,7 +8,7 @@
 #include <AsmUnparser_compat.h>
 #include <Diagnostics.h>
 #include <DisassemblerPowerpc.h>
-#include <DisassemblerArm.h>
+#include <DisassemblerA64.h>
 #include <DisassemblerM68k.h>
 #include <DisassemblerMips.h>
 #include <DisassemblerX86.h>
