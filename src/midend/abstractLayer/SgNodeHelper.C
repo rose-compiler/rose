@@ -15,8 +15,8 @@
 using namespace std;
 
 // set to true for matching C++ ctor calls
-const bool SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL = false;
-//~ const bool SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL = true;
+//~ const bool SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL = false;
+const bool SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL = true;
 
 /*!
   * \author Markus Schordan
