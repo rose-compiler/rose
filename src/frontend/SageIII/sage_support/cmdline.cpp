@@ -8020,7 +8020,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // DQ (6/19/2020): Remove the ROSE tool name that is the first parameter.
   // argcArgvList[0] = "";
   // printf ("BEFORE: argcArgvList.size() = %zu \n",argcArgvList.size());
-     printf ("*************** Erasing first entry: argcArgvList[0] = %s \n",argcArgvList[0].c_str());
+  // printf ("*************** Erasing first entry: argcArgvList[0] = %s \n",argcArgvList[0].c_str());
      argcArgvList.erase(argcArgvList.begin());
   // printf ("AFTER: argcArgvList.size() = %zu \n",argcArgvList.size());
 
@@ -8033,7 +8033,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      ROSE_ASSERT(substringPosition == string::npos);
 #endif
 
-#define DEBUG_INCLUDE_PATHS 1
+#define DEBUG_INCLUDE_PATHS 0
 
   // DQ (11/7/2018): I need to add some additional include directories to the generate backed compiler command line.
   // This is to support where #include "../file.h" are used and we need to specify the directory of the original source 
@@ -8096,7 +8096,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                   }
              }
 
-#if 1
+#if 0
        // DQ (6/27/2020): Compress to just the unique elements.
           ROSE_ASSERT(project != NULL);
           printf ("(After removing duplicate paths) project->get_extraIncludeDirectorySpecifierList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierList().size());
@@ -8107,9 +8107,25 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
 
 #if 0
-          printf ("project->get_extraIncludeDirectorySpecifierList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierList().size());
+          printf ("Before reserve(): \n");
+          printf (" --- argcArgvList.size() = %zu \n",argcArgvList.size());
+          printf (" --- project->get_extraIncludeDirectorySpecifierList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierList().size());
 #endif
           argcArgvList.reserve(argcArgvList.size()+project->get_extraIncludeDirectorySpecifierList().size());
+
+#if 0
+          printf ("After reserve(): \n");
+          printf (" --- argcArgvList.size() = %zu \n",argcArgvList.size());
+#endif
+#if 0
+       // DQ (6/29/2020): Debugging.
+          ROSE_ASSERT(project != NULL);
+          printf ("After reserve(): argcArgvList.size() = %zu \n",argcArgvList.size());
+          for (size_t i = 0; i < argcArgvList.size(); i++)
+             {
+               printf ("argcArgvList()[%zu] = %s \n",i,argcArgvList[i].c_str());
+             }
+#endif
 
        // DQ (3/16/2020): Need to change the locations in the argcArgvList where we insert the added 
        // include paths (must be added before those specified on the original command line).
@@ -8135,8 +8151,28 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
              }
 
+#if 0
+       // DQ (6/29/2020): Debugging.
+          ROSE_ASSERT(project != NULL);
+          printf ("Before insert(): argcArgvList.size() = %zu \n",argcArgvList.size());
+          for (size_t i = 0; i < argcArgvList.size(); i++)
+             {
+               printf ("argcArgvList()[%zu] = %s \n",i,argcArgvList[i].c_str());
+             }
+#endif
+
           ROSE_ASSERT(positionForIncludes != argcArgvList.end());
           argcArgvList.insert(positionForIncludes,project->get_extraIncludeDirectorySpecifierList().begin(),project->get_extraIncludeDirectorySpecifierList().end());
+
+#if 0
+       // DQ (6/29/2020): Debugging.
+          ROSE_ASSERT(project != NULL);
+          printf ("After insert(): argcArgvList.size() = %zu \n",argcArgvList.size());
+          for (size_t i = 0; i < argcArgvList.size(); i++)
+             {
+               printf ("argcArgvList()[%zu] = %s \n",i,argcArgvList[i].c_str());
+             }
+#endif
 
 #if 0
 #if 0
@@ -8146,7 +8182,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // argcArgvList = sourceFile->get_extraIncludeDirectorySpecifierList();
           argcArgvList.insert(argcArgvList.end(),sourceFile->get_extraIncludeDirectorySpecifierList().begin(),sourceFile->get_extraIncludeDirectorySpecifierList().end());
 #else
-          printf ("In buildCompilerCommandLineOptions: Skipping addition of the sourceFile->get_extraIncludeDirectorySpecifierList() \n");
+       // printf ("In buildCompilerCommandLineOptions: Skipping addition of the sourceFile->get_extraIncludeDirectorySpecifierList() \n");
 #endif
         }
 
@@ -8163,9 +8199,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // DQ (9/25/2007): Moved to std::vector from std::list uniformly within ROSE.
   // Remove the first argument (argv[0])
   // argcArgvList.pop_front();
-     argcArgvList.erase(argcArgvList.begin());
+  // argcArgvList.erase(argcArgvList.begin());
 
-#if DEBUG_COMPILER_COMMAND_LINE || 1
+#if DEBUG_COMPILER_COMMAND_LINE || 0
      printf ("In buildCompilerCommandLineOptions: After argcArgvList.erase(argcArgvList.begin()): argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
 #endif
 
@@ -8262,7 +8298,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
         }
 
-#if 1
+#if 0
      printf ("In buildCompilerCommandLineOptions(): After adding options from Rose::global_options: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",
           argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
 #endif

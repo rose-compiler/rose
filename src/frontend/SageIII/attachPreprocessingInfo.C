@@ -833,7 +833,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
   // marked with a source position from the filename with the "_preprocessed" suffix).
      bool requiresCPP = sageFilePtr->get_requires_C_preprocessor();
 
-#if 1
+#if 0
      printf ("####################################################################### \n");
      printf ("####################################################################### \n");
      printf ("In attachPreprocessingInfo(): processAllFiles = %s requiresCPP = %s \n",processAllFiles ? "true" : "false",requiresCPP ? "true" : "false");
@@ -841,28 +841,32 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      printf ("####################################################################### \n");
 #endif
 
+#if 1
+  // DQ (6/29/2020): This is now a simple traversal over the whole of the AST.
+     tt.traverse(sageFilePtr, inh);
+#else
   // DQ (6/23/2020): Procesing the CPP directives from header files requires the use of the traversal over the whole AST.
   // if (processAllFiles == true || requiresCPP == true)
-     if (processAllFiles == true || requiresCPP == true || true)
+     if (processAllFiles == true || requiresCPP == true)
         {
-#if 1
+#if 0
           printf ("In attachPreprocessingInfo(): Calling AttachPreprocessingInfoTreeTrav::traverse() (not traverseWithinFile) \n");
 #endif
           tt.traverse(sageFilePtr, inh);
-#if 1
+#if 0
           printf ("DONE: In attachPreprocessingInfo(): Calling AttachPreprocessingInfoTreeTrav::traverse() (not traverseWithinFile) \n");
 #endif
         }
        else
         {
-#if 1
+#if 0
           printf ("In attachPreprocessingInfo(): Calling AttachPreprocessingInfoTreeTrav::traverseWithinFile() (not traverse) \n");
 #endif
 
        // DQ (4/25/2020): When traversing a header file, it appears that the whole AST is traversed.
        // Not clear is that is correct or what we want.
           tt.traverseWithinFile(sageFilePtr,inh);
-#if 1
+#if 0
           printf ("DONE: In attachPreprocessingInfo(): Calling AttachPreprocessingInfoTreeTrav::traverseWithinFile() (not traverse) \n");
 
           printf ("################################################### \n");
@@ -873,6 +877,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
           printf ("################################################### \n");
 #endif
         }
+#endif
 
   // endif for ifndef  CXX_IS_ROSE_CODE_GENERATION
 #endif

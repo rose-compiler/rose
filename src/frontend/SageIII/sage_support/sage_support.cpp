@@ -3674,11 +3674,11 @@ SgFile::secondaryPassOverSourceFile()
 #endif
                  // ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
 
-#if 1
+#if 0
                     printf ("@@@@@@@@@@@@@@ In SgFile::secondaryPassOverSourceFile(): Calling attachPreprocessingInfo(): sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
 #endif
                     attachPreprocessingInfo(sourceFile);
-#if 1
+#if 0
                     printf ("@@@@@@@@@@@@@@ DONE: In SgFile::secondaryPassOverSourceFile(): Calling attachPreprocessingInfo(): sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
 #endif
 #if 0
@@ -6654,7 +6654,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 
   // Now call the compiler that rose is replacing
   // if (get_useBackendOnly() == false)
-     if ( SgProject::get_verbose() >= 0 )
+     if ( SgProject::get_verbose() >= 1 )
         {
           printf ("Now call the backend (vendor's) compiler compilerNameOrig = %s for file = %s \n",compilerNameOrig.c_str(),get_unparse_output_filename().c_str());
         }
@@ -6662,7 +6662,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // Build the commandline to hand off to the C++/C compiler
      vector<string> compilerCmdLine = buildCompilerCommandLineOptions (argv,fileNameIndex, compilerName );
 
-#if 1
+#if 0
   // DQ (3/15/2020): There are only two places where this is called (here and in the CompilerOutputParser::processFile() function).
      printf ("In SgFile::compileOutput(): After buildCompilerCommandLineOptions(): compilerCmdLine.size() = %" PRIuPTR " compilerCmdLine = %s \n",compilerCmdLine.size(),StringUtility::listToString(compilerCmdLine).c_str());
 #endif
@@ -6691,7 +6691,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
      if (get_skipfinalCompileStep() == false)
         {
        // Debugging code
-          if ( get_verbose() >= 0 )
+          if ( get_verbose() >= 1 )
              {
                printf ("calling systemFromVector() \n");
                printf ("Number of command line arguments: %" PRIuPTR "\n", compilerCmdLine.size());
@@ -6715,7 +6715,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
             // I need the exact command line used to compile the generate code with the backendcompiler (so that I can reuse it to test the generated code).
                printf ("SgFile::compileOutput(): get_skipfinalCompileStep() == false: compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
              }
-#if 1
+#if 0
           printf ("In SgFile::compileOutput(): get_compileOnly() = %s \n",get_compileOnly() ? "true" : "false");
 #endif
        // DQ (4/18/2015): Adding support to add compile only mode to the processing of each file when multiple files are processed.
@@ -6798,7 +6798,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   }
              }
 
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 1
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 0
           printf ("In SgFile::compileOutput(): Calling systemFromVector(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
 #endif
 
@@ -6806,7 +6806,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
        // CAVE3 double check that is correct and shouldn't be compilerCmdLine
           returnValueForCompiler = systemFromVector (compilerCmdLine);
 
-#if 1
+#if 0
           printf ("In SgFile::compileOutput(): Calling systemFromVector(): returnValueForCompiler = %d \n",returnValueForCompiler);
 #endif
 
