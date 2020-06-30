@@ -619,12 +619,19 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
     const P2::Partitioner &partitioner = ops->partitioner();
     SmtSolver::Ptr solver = SmtSolver::instance("best");
 
-    // Process instructions in execution order starting at startVa
+    // Process instructions in execution order
     rose_addr_t executionVa = cpu->concreteInstructionPointer();
     while (!cpu->isTerminated()) {
         SgAsmInstruction *insn = partitioner.instructionProvider()[executionVa];
-        ASSERT_not_null2(insn, StringUtility::addrToString(executionVa) + " is not a valid execution address");
-        SAWYER_MESG_OR(trace, debug) <<"executing " <<partitioner.unparse(insn) <<"\n";
+        if (insn) {
+            SAWYER_MESG_OR(trace, debug) <<"executing " <<partitioner.unparse(insn) <<"\n";
+        } else {
+            SAWYER_MESG_OR(trace, debug) <<"executing " <<StringUtility::addrToString(executionVa)
+                                         <<": not mapped or not executable\n";
+            // FIXME[Robb Matzke 2020-06-26]: we need a better way to handle this
+            ASSERT_always_not_null2(insn, StringUtility::addrToString(executionVa) + " is not a valid execution address");
+        }
+
         try {
             cpu->processInstruction(insn);
         } catch (const Emulation::Exit &e) {
