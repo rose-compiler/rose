@@ -1632,7 +1632,7 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
      ROSEAttributesList *preprocessorInfoList = new ROSEAttributesList; // create a new list
      ROSE_ASSERT (preprocessorInfoList != NULL);
 
-#if 1
+#if 0
   // DQ (8/18/2019): Debugging the performance overhead of the header file unparsing support.
      printf ("&&&&&&&&&&&&&&&&&&& Inside of lex file: getPreprocessorDirectives(): fileName = %s \n",fileName.c_str());
 #endif
@@ -1640,7 +1640,7 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
 #if 0
      printf ("Saving list of processed files to insure that files are not processed more than once! \n");
 #endif
-#if 1
+#if 0
      static std::set<std::string> file_set;
      if (file_set.find(fileName) == file_set.end())
         {

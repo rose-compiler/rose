@@ -4387,14 +4387,13 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
   // building the include list for each file we can first (or second) include the paths from the SgProject's extra 
   // include paths list before adding those specific to the SgSourceFile.
 
-
-#if 1
+#if 0
      printf ("In unparseIncludedFiles(): project = %p \n",project);
 #endif
 
 #define DEBUG_UNPARSE_INCLUDE_FILES 0
 
-#if 1
+#if 0
      string dotgraph_filename = "include_file_graph_from_top_of_unparseIncludedFiles";
      generateGraphOfIncludeFiles(project,dotgraph_filename);
 #endif

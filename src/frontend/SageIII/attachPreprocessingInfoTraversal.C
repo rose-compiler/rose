@@ -178,7 +178,7 @@ AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* 
   // target_source_file_id = sourceFile->get_file_info()->get_physical_file_id();
      target_source_file_id = sourceFile->get_file_info()->get_physical_file_id();
 
-#if 1
+#if 0
      printf ("In AttachPreprocessingInfoTreeTrav constructor: target_source_file_id = %d \n",target_source_file_id);
 #endif
 
@@ -616,7 +616,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #endif
                if ( attachCommentOrDirective == true )
                   {
-#if DEBUG_ATTACH_PREPROCESSING_INFO || 1
+#if DEBUG_ATTACH_PREPROCESSING_INFO || 0
                     printf ("Attaching \"%s\" (from file = %s file_id = %d line# %d) to %s locatedNode = %p = %s = %s at line %d position = %s \n",
                          currentPreprocessingInfoPtr->getString().c_str(),
                          currentPreprocessingInfoPtr->getFilename().c_str(),
@@ -764,7 +764,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                          if (currentPreprocessingInfoPtr->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration)
                             {
                               string includedFileName = sourceFile->get_project()->findIncludedFile(currentPreprocessingInfoPtr);
-#if 1
+#if 0
                               printf ("))))))))))))))))))))))))))) sourceFile->get_unparseHeaderFiles() == true: includedFileName = %s \n",includedFileName.c_str());
                            // printf ("   --- includedFileName.length() = %zu \n",includedFileName.length());
 #endif
@@ -2536,7 +2536,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #endif
 #endif
 
-#if 1
+#if 0
           printf ("(SgSourceFile) currentFileNameId                                          = %d \n",currentFileNameId);
           printf ("(SgSourceFile) currentFileName for currentFileNameId: filename            = %s \n",Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
           printf (" --- currentFilePtr->get_header_file_unparsing_optimization_header_file() = %s \n",currentFilePtr->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
@@ -2544,7 +2544,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
           printf (" --- currentFilePtr->get_requires_C_preprocessor()                        = %s \n",currentFilePtr->get_requires_C_preprocessor() ? "true" : "false");
 #endif
 
-       // Temporary code (testing this)
+       // DQ (6/29/2020): We should not be adding comments and/or CPP directives to IR nodes that don't have a source position.
           ROSE_ASSERT(currentFileNameId >= 0);
 
 #if 0
