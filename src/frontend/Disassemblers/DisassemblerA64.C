@@ -46,7 +46,7 @@ DisassemblerArm::init() {
             name = "a64";
             wordSizeBytes(8);
             byteOrder(ByteOrder::ORDER_LSB);
-            registerDictionary(RegisterDictionary::dictionary_aarch64());
+            registerDictionary(RegisterDictionary::dictionary_a64());
             callingConventions(CallingConvention::dictionaryArm64());
             break;
     }
@@ -282,6 +282,8 @@ DisassemblerArm::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
             break;
 
         case ARM64_OP_BARRIER:  // memory barrier operand for ISB/DMB/DSB instruction
+            retval = new SgAsmA64BarrierOperand(op.barrier);
+            retval->set_type(SageBuilderAsm::buildTypeU(4)); // the operation is just a constant from 0 through 16
             break;
     }
     ASSERT_not_null(retval);

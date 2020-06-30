@@ -700,7 +700,7 @@ RegisterDictionary::dictionary_a64() {
         regs->insert("lr", arm_regclass_gpr, 30, 0, 64);
 
         // Another name for "x29" is "fp", the frame pointer. [2, p 4-2]
-        regs->insert("lr", arm_regclass_gpr, 30, 0, 64);
+        regs->insert("fp", arm_regclass_gpr, 29, 0, 64);
 
         // One program counter. Not a general purpose register. [1. p. A3-78]
         regs->insert("pc", arm_regclass_pc, 0, 0, 64);

@@ -10,22 +10,25 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 using ::arm64_insn;
-using A64InstructionKind = ::arm64_insn;                /**< AArch64 instruction types. */
+using A64InstructionKind = ::arm64_insn;                /**< A64 instruction types. */
 
 using ::arm64_cc;
-using A64InstructionCondition = ::arm64_cc;             /**< AArch64 condition codes. */
+using A64InstructionCondition = ::arm64_cc;             /**< A64 condition codes. */
 
 using ::arm64_extender;
-using A64Extender = ::arm64_extender;                   /**< AArch64 operand extenders. */
+using A64Extender = ::arm64_extender;                   /**< A64 operand extenders. */
 
 using ::arm64_vas;
-using A64VectorArrangement = ::arm64_vas;               /**< AArch64 vector arrangement specifier. */
+using A64VectorArrangement = ::arm64_vas;               /**< A64 vector arrangement specifier. */
 
 using ::arm64_at_op;
-using A64AtOperation = ::arm64_at_op;                   /**< AArch64 AT instruction operand. */
+using A64AtOperation = ::arm64_at_op;                   /**< A64 AT instruction operand. */
 
 using ::arm64_prefetch_op;
-using A64PrefetchOperation = ::arm64_prefetch_op;       /**< AArch64 operand for prefetch instructions. */
+using A64PrefetchOperation = ::arm64_prefetch_op;       /**< A64 operand for prefetch instructions. */
+
+using ::arm64_barrier_op;
+using A64BarrierOperation = ::arm64_barrier_op;         /**< A64 operand for barrier instructions. */
 
 /** Major register numbers for AArch64. */
 enum A64RegisterClass {

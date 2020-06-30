@@ -36,6 +36,7 @@ SgArrayType
 SgArrowExp
 SgArrowStarOp
 SgAsmA64AtOperand
+SgAsmA64BarrierOperand
 SgAsmA64CImmediateOperand
 SgAsmA64Instruction
 SgAsmA64PrefetchOperand

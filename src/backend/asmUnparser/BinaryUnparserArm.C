@@ -256,6 +256,52 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
     } else if (SgAsmA64CImmediateOperand *op = isSgAsmA64CImmediateOperand(expr)) {
         out <<"c" <<op->immediate();
 
+    } else if (SgAsmA64BarrierOperand *op = isSgAsmA64BarrierOperand(expr)) {
+        switch (op->operation()) {
+            case ARM64_BARRIER_INVALID:
+                out <<"barrier invalid";
+                break;
+            case ARM64_BARRIER_OSHLD:
+                out <<"barrier oshld";
+                break;
+            case ARM64_BARRIER_OSHST:
+                out <<"barrier oshst";
+                break;
+            case ARM64_BARRIER_OSH:
+                out <<"barrier osh";
+                break;
+            case ARM64_BARRIER_NSHLD:
+                out <<"barrier nshld";
+                break;
+            case ARM64_BARRIER_NSHST:
+                out <<"barrier nshst";
+                break;
+            case ARM64_BARRIER_NSH:
+                out <<"barrier nsh";
+                break;
+            case ARM64_BARRIER_ISHLD:
+                out <<"barrier ishld";
+                break;
+            case ARM64_BARRIER_ISHST:
+                out <<"barrier ishst";
+                break;
+            case ARM64_BARRIER_ISH:
+                out <<"barrier ish";
+                break;
+            case ARM64_BARRIER_LD:
+                out <<"barrier ld";
+                break;
+            case ARM64_BARRIER_ST:
+                out <<"barrier st";
+                break;
+            case ARM64_BARRIER_SY:
+                out <<"barrier sy";
+                break;
+            default:
+                out <<"barrier " <<(unsigned)op->operation();
+                break;
+        }
+
     } else {
         ASSERT_not_implemented(expr->class_name());
     }
