@@ -2065,11 +2065,62 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef ROSE_ENABLE_ASM_A64
+    DECLARE_LEAF_CLASS(AsmA64BarrierOperand);
+    IS_SERIALIZABLE(AsmA64BarrierOperand);
+
+#ifdef DOCUMENTATION
+    /** Barriar operation operand for ISB, DMB, and DSB instructions. */
+    class SgAsmA64BarrierOperand: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmA64BarrierOperand);
+#if defined(SgAsmA64BarrierOperand_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_NVP(operation_);
+        }
+#endif
+
+    private:
+        Rose::BinaryAnalysis::A64BarrierOperation operation_;
+
+    public:
+        /** Construct a unary expression for the C-immediate. */
+        explicit SgAsmA64BarrierOperand(Rose::BinaryAnalysis::A64BarrierOperation operation)
+            : operation_(operation) {}
+
+        /** Property: Barrier operation.
+         *
+         *  @{ */
+        Rose::BinaryAnalysis::A64BarrierOperation operation() const {
+            return operation_;
+        }
+        void operation(Rose::BinaryAnalysis::A64BarrierOperation op) {
+            operation_ = op;
+        }
+        /** @} */
+#endif // SgAsmA64BarrierOperand_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     NEW_NONTERMINAL_MACRO(AsmUnaryExpression,
                           AsmUnaryPlus | AsmUnaryMinus | AsmUnaryRrx | AsmUnaryTruncate | AsmUnarySignedExtend
                           | AsmUnaryUnsignedExtend
 #ifdef ROSE_ENABLE_ASM_A64
                           | AsmA64AtOperand | AsmA64PrefetchOperand | AsmA64SysMoveOperand | AsmA64CImmediateOperand
+                          | AsmA64BarrierOperand
 #endif
                           , "AsmUnaryExpression", "AsmUnaryExpressionTag", false);
     AsmUnaryExpression.setCppCondition("!defined(DOCUMENTATION)");
