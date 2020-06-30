@@ -5,6 +5,7 @@
 #include <BitOps.h>
 #include <DisassemblerA64.h>
 #include <BinaryUnparserArm.h>
+#include <DispatcherA64.h>
 
 using namespace Rose::Diagnostics;
 
@@ -48,6 +49,7 @@ DisassemblerArm::init() {
             byteOrder(ByteOrder::ORDER_LSB);
             registerDictionary(RegisterDictionary::dictionary_a64());
             callingConventions(CallingConvention::dictionaryArm64());
+            p_proto_dispatcher = InstructionSemantics2::DispatcherA64::instance();
             break;
     }
     if (name.empty())
