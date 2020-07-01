@@ -770,7 +770,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
           if (currentFileItr != mapFilenameToAttributes.end())
              {
             // If there already exists a list for the current file then get that list.
-               ASSERT_not_null( currentFileItr->second);
+               ASSERT_not_null(currentFileItr->second);
 
                ROSEAttributesList* existingReturnListOfAttributes = currentFileItr->second;
 
@@ -1479,7 +1479,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 #endif
 
   // If there already exists a list for the current file then get that list.
-     ASSERT_not_null( currentFileItr->second);
+     ASSERT_not_null(currentFileItr->second);
 
      ROSEAttributesList* existingListOfAttributes = currentFileItr->second;
 #if 0
@@ -1677,7 +1677,7 @@ Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
      if ( SgProject::get_verbose() > 0 )
           printf ("In Unparser::unparseAsmFile... file = %p = %s \n",file,file->class_name().c_str());
 
-    ASSERT_not_null(file!=NULL);
+    ASSERT_not_null(file);
 
     /* Genenerate an ASCII dump of the entire file contents.  Generate the dump before unparsing because unparsing may perform
      * certain relocations and normalization to the AST. */
@@ -1732,7 +1732,7 @@ Unparser::unparseFile(SgBinaryComposite *binary, SgUnparse_Info &info)
             char interp_name[64];
             sprintf(interp_name, "interp-%03zu.dump", nwritten++);
             FILE *interp_file = fopen(interp_name, "wb");
-            ASSERT_not_null(interp_file!=NULL);
+            ASSERT_not_null(interp_file);
             fprintf(interp_file, "Interpretation spanning these input files:\n");
             for (size_t j=0; j<interp_files.size(); j++) {
                 fprintf(interp_file, "  %s\n", interp_files[j]->get_name().c_str());

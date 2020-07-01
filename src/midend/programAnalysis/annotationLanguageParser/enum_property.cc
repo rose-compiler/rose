@@ -4,6 +4,8 @@
 #include "diagnostic.h"
 #endif
 
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+
 using namespace std;
 
 // ---------------------------------------------------------------------
@@ -12,7 +14,7 @@ using namespace std;
 // ---------------------------------------------------------------------
 
 enumValueAnn::enumValueAnn(const parserID * id,
-			   enumvalue_list * more_specific)
+                           enumvalue_list * more_specific)
   : Ann(id->line()),
     _name(id->name()),
     _more_general(0),
@@ -24,8 +26,8 @@ enumValueAnn::enumValueAnn(const parserID * id,
     _more_specific.swap(* more_specific);
 
     for (enumvalue_list_p p = _more_specific.begin();
-	 p != _more_specific.end();
-	 ++p)
+         p != _more_specific.end();
+         ++p)
       (*p)->_more_general = this;
   }
   else
@@ -51,21 +53,21 @@ void enumValueAnn::collect_atleast_values(enumvalue_set & collect)
   // -- Visit the values above
 
   for (enumvalue_list_p p = _more_specific.begin();
-	 p != _more_specific.end();
-	 ++p)
+         p != _more_specific.end();
+         ++p)
     (*p)->collect_atleast_values(collect);
 }
-  
+
 
 // ---------------------------------------------------------------------
 //  Analysis property
 // ---------------------------------------------------------------------
 
 enumPropertyAnn::enumPropertyAnn(const parserID * id,
-				 Direction direction,
-				 bool is_may_property,
-				 const parserID * default_name,
-				 enumvalue_list * lowest_values,
+                                 Direction direction,
+                                 bool is_may_property,
+                                 const parserID * default_name,
+                                 enumvalue_list * lowest_values,
                                  parserid_list * diagnostic_values)
   : propertyAnn(id, direction, EnumProperty),
     _is_may_property(is_may_property),
@@ -146,7 +148,7 @@ enumPropertyAnn::enumPropertyAnn(const parserID * id,
 }
 
 void enumPropertyAnn::number_values(enumValueAnn * prop,
-				    int & cur_index, int height, int & max_height)
+                                    int & cur_index, int height, int & max_height)
 {
   // -- Set the height and index fields for the current property value
 
@@ -179,8 +181,8 @@ void enumPropertyAnn::number_values(enumValueAnn * prop,
   // -- Visit the more specific values, increasing the height by one
 
     for (enumvalue_list_p p = more_specific.begin();
-	 p != more_specific.end();
-	 ++p)
+         p != more_specific.end();
+         ++p)
       number_values(*p, cur_index, height+1, max_height);
   }
 }
@@ -196,7 +198,7 @@ void enumPropertyAnn::clear()
   _input_to_values.clear();
 }
 
-#endif 
+#endif
 
 enumValueAnn * enumPropertyAnn::lookup(const string & name)
 {
@@ -212,7 +214,7 @@ enumValueAnn * enumPropertyAnn::lookup(const string & name)
 #ifdef __FOO
 
 enumValueAnn * enumPropertyAnn::meet(enumValueAnn * one,
-				     enumValueAnn * two)
+                                     enumValueAnn * two)
 {
   // X ^ BOTTOM == BOTTOM
 
@@ -251,7 +253,7 @@ enumValueAnn * enumPropertyAnn::meet(enumValueAnn * one,
  * the value of the first parameter. */
 
 void enumPropertyAnn::meet_with(enumvalue_set & first,
-				const enumvalue_set & second)
+                                const enumvalue_set & second)
 {
   if (_is_may_property)
     first.set_union(second);
@@ -261,7 +263,7 @@ void enumPropertyAnn::meet_with(enumvalue_set & first,
 
 
 bool enumPropertyAnn::at_least(enumValueAnn * left,
-			       enumValueAnn * right)
+                               enumValueAnn * right)
 {
   // left >= right  <=> left ^ right == right
   // Also, we'll exclude top because it seems non-intuitive
@@ -270,7 +272,7 @@ bool enumPropertyAnn::at_least(enumValueAnn * left,
 }
 
 bool enumPropertyAnn::at_most(enumValueAnn * left,
-			      enumValueAnn * right)
+                              enumValueAnn * right)
 {
   // left <= right  <=> left ^ right == left
 
@@ -309,9 +311,9 @@ void enumPropertyAnn::add_property_block(memoryBlock * real_block, memoryBlock *
 bool TB_changes = false; // TB
 
 bool enumPropertyAnn::test(Broadway::Operator op, Broadway::FlowSensitivity flow_sensitivity,
-			   Location * where,
-			   pointerValue & lhs, string & lhs_name,
-			   pointerValue & rhs, string & rhs_name)
+                           Location * where,
+                           pointerValue & lhs, string & lhs_name,
+                           pointerValue & rhs, string & rhs_name)
 {
   bool result = false;
   enumvalue_set rhs_value_set;
@@ -343,7 +345,7 @@ bool enumPropertyAnn::test(Broadway::Operator op, Broadway::FlowSensitivity flow
 
   case Broadway::Always:
     rhs_value_set = construct_ever_value(rhs, rhs_name);
-    result = test(op, flow_sensitivity, where, lhs, lhs_name, rhs_value_set);    
+    result = test(op, flow_sensitivity, where, lhs, lhs_name, rhs_value_set);
     break;
 
   case Broadway::Ever:
@@ -351,17 +353,17 @@ bool enumPropertyAnn::test(Broadway::Operator op, Broadway::FlowSensitivity flow
       rhs_value_set = construct_ever_value(rhs, rhs_name);
 
       for (int i = 0; i < rhs_value_set.size(); i++)
-	{
-	  if (rhs_value_set.test(i)) {
+        {
+          if (rhs_value_set.test(i)) {
 
-	    enumValueAnn * value = _value_index[i];
+            enumValueAnn * value = _value_index[i];
 
-	    enumvalue_set temp(value);
+            enumvalue_set temp(value);
 
-	    bool one_result = test(op, flow_sensitivity, where, lhs, lhs_name, temp);
-	    result = result || one_result;
-	  }
-	}
+            bool one_result = test(op, flow_sensitivity, where, lhs, lhs_name, temp);
+            result = result || one_result;
+          }
+        }
     }
     break;
 
@@ -373,9 +375,9 @@ bool enumPropertyAnn::test(Broadway::Operator op, Broadway::FlowSensitivity flow
 }
 
 bool enumPropertyAnn::test(Broadway::Operator op, Broadway::FlowSensitivity flow_sensitivity,
-			   Location * where,
-			   pointerValue & lhs, string & lhs_name,
-			   enumvalue_set rhs_value_set)
+                           Location * where,
+                           pointerValue & lhs, string & lhs_name,
+                           enumvalue_set rhs_value_set)
 {
   bool result = false;
   enumvalue_set lhs_value_set;
@@ -407,7 +409,7 @@ bool enumPropertyAnn::test(Broadway::Operator op, Broadway::FlowSensitivity flow
 
   case Broadway::Always:
     lhs_value_set = construct_ever_value(lhs, lhs_name);
-    result = test(op, lhs_value_set, rhs_value_set);    
+    result = test(op, lhs_value_set, rhs_value_set);
     break;
 
   case Broadway::Ever:
@@ -415,17 +417,17 @@ bool enumPropertyAnn::test(Broadway::Operator op, Broadway::FlowSensitivity flow
       lhs_value_set = construct_ever_value(lhs, lhs_name);
 
       for (int i = 0; i < lhs_value_set.size(); i++)
-	{
-	  if (lhs_value_set.test(i)) {
+        {
+          if (lhs_value_set.test(i)) {
 
-	    enumValueAnn * value = _value_index[i];
+            enumValueAnn * value = _value_index[i];
 
-	    enumvalue_set temp(value);
+            enumvalue_set temp(value);
 
-	    bool one_result = test(op, temp, rhs_value_set);
-	    result = result || one_result;
-	  }
-	}
+            bool one_result = test(op, temp, rhs_value_set);
+            result = result || one_result;
+          }
+        }
     }
     break;
 
@@ -437,7 +439,7 @@ bool enumPropertyAnn::test(Broadway::Operator op, Broadway::FlowSensitivity flow
 }
 
 bool enumPropertyAnn::test(Broadway::Operator op,
-			   enumvalue_set lhs_value_set, enumvalue_set rhs_value_set)
+                           enumvalue_set lhs_value_set, enumvalue_set rhs_value_set)
 {
   bool result = false;
 
@@ -497,7 +499,7 @@ bool enumPropertyAnn::test(Broadway::Operator op,
   default:
     cerr << "ERROR: enumPropertyAnn: invalid operator passed to test()" << endl;
   }
-  
+
   if (Annotations::Verbose_properties) {
     cout << " == ";
     if (result)
@@ -511,7 +513,7 @@ bool enumPropertyAnn::test(Broadway::Operator op,
 }
 
 enumvalue_set enumPropertyAnn::lookup_now_value(memoryBlock * property_block,
-						memoryAccess * def_or_use)
+                                                memoryAccess * def_or_use)
 {
   // -- Look up this def or use
 
@@ -524,10 +526,10 @@ enumvalue_set enumPropertyAnn::lookup_now_value(memoryBlock * property_block,
 }
 
 bool enumPropertyAnn::update_now_value(Location * where,
-				       memoryBlock * property_block,
-				       memoryAccess * def_or_use,
-				       enumvalue_set proposed_newval,
-				       bool & lost_information)
+                                       memoryBlock * property_block,
+                                       memoryAccess * def_or_use,
+                                       enumvalue_set proposed_newval,
+                                       bool & lost_information)
 {
   bool changed = false;
   lost_information = false;
@@ -554,11 +556,11 @@ bool enumPropertyAnn::update_now_value(Location * where,
 
   if (Annotations::Verbose_properties) {
     cout << "      + Set \"now\" " << property_block->name() << " : "
-	 << to_string(oldval) << " => " << to_string(newval);
-    
+         << to_string(oldval) << " => " << to_string(newval);
+
     if (def_or_use->is_weak())
       cout << " (weak)";
-    
+
     if (changed)
       cout << " -- changed" << endl;
     else
@@ -568,7 +570,7 @@ bool enumPropertyAnn::update_now_value(Location * where,
   // -- Monitor: information is lost when the combination of the old value
   // and the new proposed value is larger (more conservative) than either
   // one.
-  
+
   int old_count = oldval.count();
 
   if ((old_count > 0) &&
@@ -580,7 +582,7 @@ bool enumPropertyAnn::update_now_value(Location * where,
 }
 
 bool enumPropertyAnn::update_ever_value(memoryBlock * property_block,
-					enumvalue_set newval)
+                                        enumvalue_set newval)
 {
   enumvalue_set cur_vals = _ever_values[property_block];
   enumvalue_set temp = cur_vals;
@@ -588,7 +590,7 @@ bool enumPropertyAnn::update_ever_value(memoryBlock * property_block,
   bool result = false;
 
   // -- Add in the new values
-    
+
   meet_with(temp, newval);
 
   // -- Check for change
@@ -602,13 +604,13 @@ bool enumPropertyAnn::update_ever_value(memoryBlock * property_block,
   }
 
   return result;
-} 
+}
 
 enumvalue_set enumPropertyAnn::construct_now_value(Location * where,
-						   pointerValue & variable,
-						   string & variable_name,
-						   bool & lost_information,
-						   memoryblock_set & complicit_property_blocks)
+                                                   pointerValue & variable,
+                                                   string & variable_name,
+                                                   bool & lost_information,
+                                                   memoryblock_set & complicit_property_blocks)
 {
   enumvalue_set result;
 
@@ -625,28 +627,28 @@ enumvalue_set enumPropertyAnn::construct_now_value(Location * where,
     enumValueAnn * highest_value = 0;
 
     for (memoryblock_set_p p = variable.blocks.begin();
-	 p != variable.blocks.end();
-	 ++p)
+         p != variable.blocks.end();
+         ++p)
       {
-	memoryBlock * real_block = *p;
-	memoryBlock * property_block = lookup_property_block(real_block);
+        memoryBlock * real_block = *p;
+        memoryBlock * property_block = lookup_property_block(real_block);
 
-	if (property_block) {
-	  enumvalue_set local_val = construct_now_value(where, property_block, false);
+        if (property_block) {
+          enumvalue_set local_val = construct_now_value(where, property_block, false);
 
-	  // -- Monitor: the best value is the lowest count
+          // -- Monitor: the best value is the lowest count
 
-	  int count = local_val.count();
-	  if (// (count != 0) && 
-	      (count < min_local_count))
-	    min_local_count = count;
+          int count = local_val.count();
+          if (// (count != 0) &&
+              (count < min_local_count))
+            min_local_count = count;
 
-	  if (count > 1)
-	    complicit_property_blocks.insert(property_block);
+          if (count > 1)
+            complicit_property_blocks.insert(property_block);
 
-	  // -- Add into the result
-	  
-	  meet_with(result, local_val);
+          // -- Add into the result
+
+          meet_with(result, local_val);
         } else if (default_val() != top())
           meet_with(result, default_val()); // TB
       }
@@ -668,15 +670,15 @@ enumvalue_set enumPropertyAnn::construct_now_value(Location * where,
 }
 
 enumvalue_set enumPropertyAnn::construct_now_value(Location * where,
-						   memoryBlock * property_block,
-						   bool default_to_top)
+                                                   memoryBlock * property_block,
+                                                   bool default_to_top)
 {
   enumvalue_set result;
 
   if (Annotations::Verbose_properties)
     cout << "        - Lookup \"Now\" value of " << property_block->name()
-	 << " real block = " << property_block->container()
-	 << " real decl = " << property_block->container()->decl() << endl;
+         << " real block = " << property_block->container()
+         << " real decl = " << property_block->container()->decl() << endl;
 
   // -- Forward or backward
 
@@ -693,34 +695,34 @@ enumvalue_set enumPropertyAnn::construct_now_value(Location * where,
       memoryDef * def = use->reaching_def();
 
       if (Annotations::Verbose_properties) {
-	cout << * (use->where()) << endl;
-	cout << "          reaching def at ";
+        cout << * (use->where()) << endl;
+        cout << "          reaching def at ";
       }
 
       // -- If the def has a property value, look it up. If there is no
       // reaching def, use the default value.
 
       if (def) {
-	result = lookup_now_value(property_block, def);
+        result = lookup_now_value(property_block, def);
 
-	if (Annotations::Verbose_properties) {
-	  cout << * (def->where()) << endl;
-	  cout << "         = " << to_string(result) << endl;
-	}
+        if (Annotations::Verbose_properties) {
+          cout << * (def->where()) << endl;
+          cout << "         = " << to_string(result) << endl;
+        }
       }
       else {
 
-	if (Annotations::Verbose_properties) {
-	  cout << "(no reaching def)" << endl;
-	  cout << "         = " << to_string(result) << endl;
-	}
+        if (Annotations::Verbose_properties) {
+          cout << "(no reaching def)" << endl;
+          cout << "         = " << to_string(result) << endl;
+        }
 
-	// -- Weird special case: when a write-protected object has no
-	// reaching def (for example, the null object), then we'll return
-	// top.
+        // -- Weird special case: when a write-protected object has no
+        // reaching def (for example, the null object), then we'll return
+        // top.
 
-	// if (property_block->container()->write_protected())
-	//  result = top();
+        // if (property_block->container()->write_protected())
+        //  result = top();
       }
     }
     else {
@@ -729,7 +731,7 @@ enumvalue_set enumPropertyAnn::construct_now_value(Location * where,
       // probably missing an access annotation).
 
       if (Annotations::Verbose_properties)
-	cout << " NO USE " << endl;
+        cout << " NO USE " << endl;
 
       // result = 0;
     }
@@ -747,8 +749,8 @@ enumvalue_set enumPropertyAnn::construct_now_value(Location * where,
     if (current_def) {
 
       if (Annotations::Verbose_properties) {
-	cout << * (current_def->where()) << endl;
-	cout << "          uses reached:" << endl;
+        cout << * (current_def->where()) << endl;
+        cout << "          uses reached:" << endl;
       }
 
       memoryuse_list uses;
@@ -756,36 +758,36 @@ enumvalue_set enumPropertyAnn::construct_now_value(Location * where,
 
       if (uses.empty()) {
 
-	// -- Special case: if the def has no uses (this can happen with
-	// merge points), then return the default value.
+        // -- Special case: if the def has no uses (this can happen with
+        // merge points), then return the default value.
 
-	// result = 0;
+        // result = 0;
 
-	if (Annotations::Verbose_properties)
-	  cout << "              (no uses reached)" << endl;
+        if (Annotations::Verbose_properties)
+          cout << "              (no uses reached)" << endl;
 
-	// -- Weird special case: when a write-protected object has no
-	// reaching def (for example, the null object), then we'll return
-	// top.
+        // -- Weird special case: when a write-protected object has no
+        // reaching def (for example, the null object), then we'll return
+        // top.
 
-	// if (property_block->container()->write_protected())
-	//  result = top();
+        // if (property_block->container()->write_protected())
+        //  result = top();
       }
       else {
 
-	// -- Otherwise, visit all the uses reached by the def
+        // -- Otherwise, visit all the uses reached by the def
 
-	for (memoryuse_list_p u = uses.begin();
-	     u != uses.end();
-	     ++u)
-	  {
-	    memoryUse * use = *u;
+        for (memoryuse_list_p u = uses.begin();
+             u != uses.end();
+             ++u)
+          {
+            memoryUse * use = *u;
 
-	    enumvalue_set local_val = lookup_now_value(property_block, use);
-	    meet_with(result, local_val);
-	    if (Annotations::Verbose_properties)
-	      cout << "              Use at " << * (use->where()) << " value = " << to_string(local_val) << endl;
-	  }
+            enumvalue_set local_val = lookup_now_value(property_block, use);
+            meet_with(result, local_val);
+            if (Annotations::Verbose_properties)
+              cout << "              Use at " << * (use->where()) << " value = " << to_string(local_val) << endl;
+          }
       }
     }
     else {
@@ -794,7 +796,7 @@ enumvalue_set enumPropertyAnn::construct_now_value(Location * where,
       // probably missing a modifies annotation).
 
       if (Annotations::Verbose_properties)
-	cout << " NO DEF " << endl;
+        cout << " NO DEF " << endl;
       // result = 0;
     }
   }
@@ -818,7 +820,7 @@ enumvalue_set enumPropertyAnn::construct_now_value(Location * where,
 }
 
 enumvalue_set enumPropertyAnn::construct_after_value(pointerValue & variable,
-						     string & name)
+                                                     string & name)
 {
   enumvalue_set result;
 
@@ -835,8 +837,8 @@ enumvalue_set enumPropertyAnn::construct_after_value(pointerValue & variable,
       memoryBlock * property_block = lookup_property_block(real_block);
 
       if (property_block) {
-	enumvalue_set local_val = construct_after_value(property_block);
-	meet_with(result, local_val);
+        enumvalue_set local_val = construct_after_value(property_block);
+        meet_with(result, local_val);
       }
     }
 
@@ -870,16 +872,16 @@ enumvalue_set enumPropertyAnn::construct_after_value(memoryBlock * property_bloc
 
     if (def) {
       if (Annotations::Verbose_properties)
-	cout << * (def->where()) << endl;
- 
+        cout << * (def->where()) << endl;
+
       enumvalue_set val = lookup_now_value(property_block, def);
       meet_with(result, val);
     }
     else {
 
       if (Annotations::Verbose_properties)
-	cout << "NO CURRENT DEF" << endl;
- 
+        cout << "NO CURRENT DEF" << endl;
+
       // -- This is bad: the variable has no def here (i.e., it is
       // probably missing a modify annotation).
     }
@@ -899,7 +901,7 @@ enumvalue_set enumPropertyAnn::construct_after_value(memoryBlock * property_bloc
 
     if (use) {
       if (Annotations::Verbose_properties)
-	cout << * (use->where()) << endl;
+        cout << * (use->where()) << endl;
 
       enumvalue_set temp = lookup_now_value(property_block, use);
       meet_with(result, temp);
@@ -907,8 +909,8 @@ enumvalue_set enumPropertyAnn::construct_after_value(memoryBlock * property_bloc
     else {
 
       if (Annotations::Verbose_properties)
-	cout << "NO CURRENT USE" << endl;
- 
+        cout << "NO CURRENT USE" << endl;
+
       // -- This is bad: the variable has no use here (i.e., it is
       // probably missing an access annotation).
     }
@@ -918,7 +920,7 @@ enumvalue_set enumPropertyAnn::construct_after_value(memoryBlock * property_bloc
 }
 
 enumvalue_set enumPropertyAnn::construct_ever_value(pointerValue & variable,
-						    string & name)
+                                                    string & name)
 {
   enumvalue_set result;
 
@@ -936,27 +938,27 @@ enumvalue_set enumPropertyAnn::construct_ever_value(pointerValue & variable,
 
       if (property_block) {
 
-	if (Annotations::Verbose_properties)
-	  cout << "        - Lookup \"Ever\" value of " << property_block->name()
-	       << " = { ";
+        if (Annotations::Verbose_properties)
+          cout << "        - Lookup \"Ever\" value of " << property_block->name()
+               << " = { ";
 
-	// -- Look up the set of values
+        // -- Look up the set of values
 
-	block_propertyset_map_p q = _ever_values.find(property_block);
-	if (q != _ever_values.end()) {
-	  enumvalue_set & vals = (*q).second;
+        block_propertyset_map_p q = _ever_values.find(property_block);
+        if (q != _ever_values.end()) {
+          enumvalue_set & vals = (*q).second;
 
-	  // -- Collect those values into the return set
+          // -- Collect those values into the return set
 
-	  meet_with(result, vals);
+          meet_with(result, vals);
 
-	  if (Annotations::Verbose_properties) {
-	    cout << to_string(vals);
-	  }
-	}
+          if (Annotations::Verbose_properties) {
+            cout << to_string(vals);
+          }
+        }
 
-	if (Annotations::Verbose_properties)
-	  cout << "}" << endl;
+        if (Annotations::Verbose_properties)
+          cout << "}" << endl;
       }
     }
 
@@ -968,7 +970,7 @@ enumvalue_set enumPropertyAnn::construct_ever_value(pointerValue & variable,
 }
 
 enumvalue_set enumPropertyAnn::construct_weak_now_value(Location * where,
-							pointerValue & variable, string & name)
+                                                        pointerValue & variable, string & name)
 {
   enumvalue_set result;
 
@@ -986,25 +988,25 @@ enumvalue_set enumPropertyAnn::construct_weak_now_value(Location * where,
 
       if (property_block) {
 
-	enumvalue_set local_val;
+        enumvalue_set local_val;
 
-	// -- Get the now value
+        // -- Get the now value
 
-	local_val = construct_now_value(where, property_block, false);
+        local_val = construct_now_value(where, property_block, false);
 
-	// -- Add it in the collected value
+        // -- Add it in the collected value
 
-	meet_with(result, local_val);
+        meet_with(result, local_val);
 
-	// -- If the block was weakly updated, then add in the after value
+        // -- If the block was weakly updated, then add in the after value
 
-	if (property_block->current_def() &&
-	    property_block->current_def()->is_weak()) {
+        if (property_block->current_def() &&
+            property_block->current_def()->is_weak()) {
 
-	  local_val = construct_after_value(property_block);
+          local_val = construct_after_value(property_block);
 
-	  meet_with(result, local_val);
-	}
+          meet_with(result, local_val);
+        }
       }
     }
 
@@ -1022,18 +1024,18 @@ enumvalue_set enumPropertyAnn::construct_weak_now_value(Location * where,
  * addition of the assignment management. */
 
 enumvalue_set enumPropertyAnn::compute_next(Location * where,
-					    ruleAnn * rule,
-					    exprAnn * expr,
-					    pointerValue & right,
-					    string & right_name,
-					    bool & rhs_lost_information,
-					    memoryblock_set & complicit_property_blocks,
-					    enumvalue_set & ever_values)
+                                            ruleAnn * rule,
+                                            exprAnn * expr,
+                                            pointerValue & right,
+                                            string & right_name,
+                                            bool & rhs_lost_information,
+                                            memoryblock_set & complicit_property_blocks,
+                                            enumvalue_set & ever_values)
 {
   // -- The new property value is just the value of the right-hand side
 
   enumvalue_set result = construct_now_value(where, right, right_name,
-					     rhs_lost_information,
+                                             rhs_lost_information,
                                              complicit_property_blocks);
 
   // -- Also, collect the ever values
@@ -1053,17 +1055,17 @@ enumvalue_set enumPropertyAnn::compute_next(Location * where,
 //extern cbzTimer r_timer2;
 
 void enumPropertyAnn::apply_next(Location * where,
-				 stmtLocation * parameter_callsite,
-				 ruleAnn * rule, enumPropertyExprAnn * expr,
-				 pointerValue & left,
-				 string & left_name,
-				 pointerValue & right,
-				 enumvalue_set proposed_new_value,
-				 bool rhs_lost_information,
-				 bool rhs_changed,
-				 memoryblock_set & complicit_property_blocks,
-				 enumvalue_set ever_values,
-				 memoryblock_set & changes)
+                                 stmtLocation * parameter_callsite,
+                                 ruleAnn * rule, enumPropertyExprAnn * expr,
+                                 pointerValue & left,
+                                 string & left_name,
+                                 pointerValue & right,
+                                 enumvalue_set proposed_new_value,
+                                 bool rhs_lost_information,
+                                 bool rhs_changed,
+                                 memoryblock_set & complicit_property_blocks,
+                                 enumvalue_set ever_values,
+                                 memoryblock_set & changes)
 {
   memoryblock_set right_property_blocks;
 
@@ -1084,88 +1086,88 @@ void enumPropertyAnn::apply_next(Location * where,
       // -- Skip write-protected objects
 
       if ( ! real_block->write_protected()) {
-	
-	memoryBlock * property_block = lookup_property_block(real_block);
 
-	if (property_block) {
+        memoryBlock * property_block = lookup_property_block(real_block);
 
-	  if (Annotations::Verbose_properties) {
-	    cout << "    + Apply: " << property_block->name()
-		 << " <- " << to_string(new_value) << endl;
-	    cout << "       Real block: " << real_block << endl;
-	  }
-	  
-	  // -- Record this right-hand side
+        if (property_block) {
 
-	  right_property_blocks.insert(property_block);
+          if (Annotations::Verbose_properties) {
+            cout << "    + Apply: " << property_block->name()
+                 << " <- " << to_string(new_value) << endl;
+            cout << "       Real block: " << real_block << endl;
+          }
 
-	  // -- Set up forward or backward update
+          // -- Record this right-hand side
 
-	  if (direction() == Forward) {
+          right_property_blocks.insert(property_block);
 
-	    // -- Forward analysis: propagate the new states to the current
-	    // definition
+          // -- Set up forward or backward update
 
-	    memoryDef * def = property_block->current_def();
-	      
-	    change_def = def;
-	    attach_value_to = def;
-	  }
-	  else {
+          if (direction() == Forward) {
 
-	    // -- Backward analysis: propagate the new states to the
-	    // current use.
+            // -- Forward analysis: propagate the new states to the current
+            // definition
 
-	    memoryUse * use = property_block->current_use();
+            memoryDef * def = property_block->current_def();
 
-	    // -- We record the reaching def as the changed definition
+            change_def = def;
+            attach_value_to = def;
+          }
+          else {
 
-	    change_def = use->reaching_def();
-	
-	    // -- Attach the value to the use
+            // -- Backward analysis: propagate the new states to the
+            // current use.
 
-	    attach_value_to = use;
-	  }
+            memoryUse * use = property_block->current_use();
 
-	  bool weak_update_lost_information = false;
+            // -- We record the reaching def as the changed definition
+
+            change_def = use->reaching_def();
+
+            // -- Attach the value to the use
+
+            attach_value_to = use;
+          }
+
+          bool weak_update_lost_information = false;
 
 // begin TB new
           bool any_rhs_diagnostic_value = false; // verify
 // end TB new
 
-	  if (enforce_weak_updates()) {
+          if (enforce_weak_updates()) {
 
-	    // -- Handle weak updates. Special case: never apply a weak
-	    // update when there is no "now" value (in other words, don't
-	    // just mindlessly merge in the default value). If there are no
-	    // reaching defs/uses, then just leave the value alone.
+            // -- Handle weak updates. Special case: never apply a weak
+            // update when there is no "now" value (in other words, don't
+            // just mindlessly merge in the default value). If there are no
+            // reaching defs/uses, then just leave the value alone.
 
-	    if (attach_value_to->is_weak()) {
+            if (attach_value_to->is_weak()) {
 
-	      // -- Get the value that reaches this location (the previous value)
+              // -- Get the value that reaches this location (the previous value)
 
-	      enumvalue_set previous_value = construct_now_value(where, property_block, true);
+              enumvalue_set previous_value = construct_now_value(where, property_block, true);
 
-	      // -- Meet it in with the new value
+              // -- Meet it in with the new value
 
-	      meet_with(new_value, previous_value);
+              meet_with(new_value, previous_value);
 
-	      // -- Check to see if the weak update lost information
+              // -- Check to see if the weak update lost information
 
-	      if (new_value.count() > proposed_new_value.count())
-		weak_update_lost_information = true;
+              if (new_value.count() > proposed_new_value.count())
+                weak_update_lost_information = true;
 
 // begin TB new
               if(_diagnostic &&
                  _diagnostic->contain_diagnostic_value(previous_value))
                 any_rhs_diagnostic_value = true;
 // end TB new
-	    }
-	  }
+            }
+          }
 
-	  // -- Set the "now" value
+          // -- Set the "now" value
 
-	  bool change_now = update_now_value(where, property_block, attach_value_to, new_value, lost_information);
+          bool change_now = update_now_value(where, property_block, attach_value_to, new_value, lost_information);
 if (Annotations::Verbose_properties) { // debug
   cout << "  inside apply_next, attach_value_to= " << attach_value_to
        << " def=" << property_block->current_def() << " use="
@@ -1238,151 +1240,151 @@ if(def->where() != loc) {
 
 // end TB new
 
-	  // -- Update the flow-insensitive "ever" value
+          // -- Update the flow-insensitive "ever" value
 
-	  bool change_ever = update_ever_value(property_block, new_value);
+          bool change_ever = update_ever_value(property_block, new_value);
 
-	  // -- Pass on any "ever" values
+          // -- Pass on any "ever" values
 
-	  // bool pass_evers = false;
-	  bool pass_evers = update_ever_value(property_block, ever_values);
+          // bool pass_evers = false;
+          bool pass_evers = update_ever_value(property_block, ever_values);
 
-	  // -- If anything changed, record where it happened
+          // -- If anything changed, record where it happened
 
           // TB_unify: enforce rhs_changed? No need if lhs is not unified.
           if(rhs_changed && !change_now && !real_block->unifyType())
             rhs_changed = false;
 
           // TB_unify: add rhs_changed below
-	  if ((change_now || rhs_changed) && change_def) { // || change_always || change_ever || pass_evers) && change_def)
+          if ((change_now || rhs_changed) && change_def) { // || change_always || change_ever || pass_evers) && change_def)
             if (Annotations::Verbose_properties)
               if(rhs_changed)
                 cout << "      - but rhs value changed, forced changed.\n";
-	    changes.insert(property_block);
+            changes.insert(property_block);
           }
 
-	  // -- Monitor: Diagnose the information loss
+          // -- Monitor: Diagnose the information loss
 
-	  if (pointerOptions::Monitor_precision) {
+          if (pointerOptions::Monitor_precision) {
 
-	    // -- If this is a parameter being passed, then record the
-	    // reaching defs.
+            // -- If this is a parameter being passed, then record the
+            // reaching defs.
 
-	    if ((parameter_callsite) &&
-		(where->kind() == Location::Procedure))
-	      {
-		procLocation * procloc = (procLocation *) where;
+            if ((parameter_callsite) &&
+                (where->kind() == Location::Procedure))
+              {
+                procLocation * procloc = (procLocation *) where;
 
-		memorydef_set reaching_defs;
+                memorydef_set reaching_defs;
 
-		property_block->add_parameter_assignment(procloc->proc(),
-							 parameter_callsite,
-							 right_property_blocks);
-	      }
-	    
-      	    // -- If the right-hand-side pointer dereference lost
-	    // information, then add the complicit assignment information.
+                property_block->add_parameter_assignment(procloc->proc(),
+                                                         parameter_callsite,
+                                                         right_property_blocks);
+              }
 
-	    if (rhs_lost_information)
-	      property_block->add_complicit_assignment(where, right.dereferenced);
+                  // -- If the right-hand-side pointer dereference lost
+            // information, then add the complicit assignment information.
 
-	    if (proposed_new_value.count() > 1) {
+            if (rhs_lost_information)
+              property_block->add_complicit_assignment(where, right.dereferenced);
 
-	      // -- Add complicit objects from the RHS
+            if (proposed_new_value.count() > 1) {
 
-	      property_block->add_complicit_assignment(where, complicit_property_blocks);
-	    }
+              // -- Add complicit objects from the RHS
 
-	    // -- Override when weak-update is forced
+              property_block->add_complicit_assignment(where, complicit_property_blocks);
+            }
 
-	    bool forced_weak = false;
+            // -- Override when weak-update is forced
 
-	    if ( expr &&
-		 expr->is_weak())
-	      forced_weak = true;
+            bool forced_weak = false;
 
-	    // -- Check if a weak update lost precision
+            if ( expr &&
+                 expr->is_weak())
+              forced_weak = true;
 
-	    if (weak_update_lost_information && ! forced_weak) {
+            // -- Check if a weak update lost precision
 
-	      // -- If a weak update occured, check to see if it was caused by
-	      // multiple left-hand-sides or by multiplicity.
+            if (weak_update_lost_information && ! forced_weak) {
 
-	      Multiplicity multiplicity = Unallocated;
+              // -- If a weak update occured, check to see if it was caused by
+              // multiple left-hand-sides or by multiplicity.
 
-	      // -- Estimate multiplicity:
+              Multiplicity multiplicity = Unallocated;
 
-	      if (real_block->is_indexed())
-		multiplicity = Bounded;
-	      else {
-		if (real_block->is_heap_object())
-		  multiplicity = Unbounded;
-		else
-		  multiplicity = Single;
-	      }
+              // -- Estimate multiplicity:
 
-	      if ((multiplicity == Single) &&
-		  (left.blocks.size() > 1))
-		{
+              if (real_block->is_indexed())
+                multiplicity = Bounded;
+              else {
+                if (real_block->is_heap_object())
+                  multiplicity = Unbounded;
+                else
+                  multiplicity = Single;
+              }
 
-		  // -- Multiple left-hand-sides: the problem is the
-		  // left-hand dereferenced pointers.
-		  
-		  property_block->add_complicit_assignment(where, left.dereferenced);
-		}
-	      else {
+              if ((multiplicity == Single) &&
+                  (left.blocks.size() > 1))
+                {
 
-		// -- High multiplicity: if it wasn't a pointer-induced
-		// weak update, then it must have been caused by
-		// multiplicity. If it's a heap block, then blame the
-		// alloc object.
+                  // -- Multiple left-hand-sides: the problem is the
+                  // left-hand dereferenced pointers.
 
-		memoryBlock * alloc_object = property_block->allocation_object();
-		if (alloc_object)
-		  property_block->add_complicit_assignment(where, alloc_object);
-		  
-		// -- NOTE: We always add the destructive assignment to
-		// force this object to become flow
-		// sensitive. Otherwise we'll never track the
-		// multiplcity accurately.
-		  
-		property_block->add_destructive_assignment(where, memoryBlock::Weak_update);
-	      }
+                  property_block->add_complicit_assignment(where, left.dereferenced);
+                }
+              else {
 
-	      // -- See if the update itself lost information
+                // -- High multiplicity: if it wasn't a pointer-induced
+                // weak update, then it must have been caused by
+                // multiplicity. If it's a heap block, then blame the
+                // alloc object.
 
-	      if (lost_information) {
+                memoryBlock * alloc_object = property_block->allocation_object();
+                if (alloc_object)
+                  property_block->add_complicit_assignment(where, alloc_object);
 
-		// -- Strong update
+                // -- NOTE: We always add the destructive assignment to
+                // force this object to become flow
+                // sensitive. Otherwise we'll never track the
+                // multiplcity accurately.
 
-		if ((where->kind() == Location::Statement) ||
-		    (rule != 0)) {
+                property_block->add_destructive_assignment(where, memoryBlock::Weak_update);
+              }
 
-		  // -- Regular statement: this can only happend with an
-		  // additive assignment caused by flow-insensitivity.
-		    
-		  property_block->add_destructive_assignment(where, memoryBlock::Additive);
-		}
-		else {
+              // -- See if the update itself lost information
 
-		  // -- Parameter pass: this happens when the procedure
-		  // is context-insensitive and it gets different values
-		  // in the different contexts.
-		  
-		  property_block->add_destructive_assignment(where, memoryBlock::Parameter_pass);
-		}
-	      }
-	    }
-	  } // -- END monitor
-	} // -- END if property_block
+              if (lost_information) {
+
+                // -- Strong update
+
+                if ((where->kind() == Location::Statement) ||
+                    (rule != 0)) {
+
+                  // -- Regular statement: this can only happend with an
+                  // additive assignment caused by flow-insensitivity.
+
+                  property_block->add_destructive_assignment(where, memoryBlock::Additive);
+                }
+                else {
+
+                  // -- Parameter pass: this happens when the procedure
+                  // is context-insensitive and it gets different values
+                  // in the different contexts.
+
+                  property_block->add_destructive_assignment(where, memoryBlock::Parameter_pass);
+                }
+              }
+            }
+          } // -- END monitor
+        } // -- END if property_block
       } // -- END not write-protected
     } // -- END for all objects
 }
 
 void enumPropertyAnn::apply_merge(Location * where,
-				  memoryBlock * property_block,
-				  memoryuse_list & phi_uses,
-				  memoryblock_set & changes)
+                                  memoryBlock * property_block,
+                                  memoryuse_list & phi_uses,
+                                  memoryblock_set & changes)
 {
   if (Annotations::Verbose_properties)
     cout << "  + Merge " << property_block->name() << endl;
@@ -1414,41 +1416,41 @@ void enumPropertyAnn::apply_merge(Location * where,
     int min_reaching_count = 9999;
 
     for (memoryuse_list_p p = phi_uses.begin();
-	 p != phi_uses.end();
-	 ++p)
+         p != phi_uses.end();
+         ++p)
       {
-	memoryUse * phi_use = *p;
-	memoryDef * reaching_def = phi_use->reaching_def();
+        memoryUse * phi_use = *p;
+        memoryDef * reaching_def = phi_use->reaching_def();
 
-	// -- Find the reaching value, handling the default case as well
+        // -- Find the reaching value, handling the default case as well
 
-	enumvalue_set reaching_val;
+        enumvalue_set reaching_val;
 
-	if (reaching_def) {
+        if (reaching_def) {
 
-	  // -- There is a reaching def, look it up
+          // -- There is a reaching def, look it up
 
-	  reaching_val = lookup_now_value(property_block, reaching_def);
+          reaching_val = lookup_now_value(property_block, reaching_def);
 
-	  if (Annotations::Verbose_properties)
-	    cout << "   = " << to_string(reaching_val) << " at " << * (reaching_def->where()) << endl;
-	}
-	else {
+          if (Annotations::Verbose_properties)
+            cout << "   = " << to_string(reaching_val) << " at " << * (reaching_def->where()) << endl;
+        }
+        else {
 
-	  // -- No reaching def, use the default value
+          // -- No reaching def, use the default value
 
-	  if (default_val() != top())
-	    reaching_val = enumvalue_set(default_val());
+          if (default_val() != top())
+            reaching_val = enumvalue_set(default_val());
 
-	  if (Annotations::Verbose_properties)
-	    cout << "   = default value " << to_string(reaching_val) << endl;
-	}
+          if (Annotations::Verbose_properties)
+            cout << "   = default value " << to_string(reaching_val) << endl;
+        }
 
-	int count = reaching_val.count();
-	if (count < min_reaching_count)
-	  min_reaching_count = count;
+        int count = reaching_val.count();
+        if (count < min_reaching_count)
+          min_reaching_count = count;
 
-	meet_with(merged_val, reaching_val);
+        meet_with(merged_val, reaching_val);
 
 // begin TB new
         if(_diagnostic) { // note: check with reaching_val, not merged_val
@@ -1478,7 +1480,7 @@ if(def->where() != loc) {
     // -- Check for information loss
 
     if ((min_reaching_count == 1) &&
-	(merged_val.count() > 1))
+        (merged_val.count() > 1))
       lost_information = true;
 
     // -- Did anything change?
@@ -1489,7 +1491,7 @@ if(def->where() != loc) {
       changes.insert(property_block);
 
       if (Annotations::Verbose_properties)
-	cout << "   -> merge changed " << property_block->name() << endl;
+        cout << "   -> merge changed " << property_block->name() << endl;
     }
 
   }
@@ -1517,23 +1519,23 @@ if(loc->kind() != Location::BasicBlock) { // hack
 // end TB new
 
     for (memoryuse_list_p p = phi_uses.begin();
-	 p != phi_uses.end();
-	 ++p)
+         p != phi_uses.end();
+         ++p)
       {
-	memoryUse * phi_use = *p;
+        memoryUse * phi_use = *p;
 
-	// oldval = lookup_now_value(block, phi_use);
+        // oldval = lookup_now_value(block, phi_use);
 
-	// -- Did anything change?
+        // -- Did anything change?
 
-	bool changed = update_now_value(where, property_block, phi_use, merged_val, lost_information);
-	if (changed && phi_use->reaching_def()) {
+        bool changed = update_now_value(where, property_block, phi_use, merged_val, lost_information);
+        if (changed && phi_use->reaching_def()) {
 
-	  changes.insert(property_block);
+          changes.insert(property_block);
 
-	  if (Annotations::Verbose_properties)
-	    cout << "   -> merge changed " << property_block->name() << endl;
-	}
+          if (Annotations::Verbose_properties)
+            cout << "   -> merge changed " << property_block->name() << endl;
+        }
 
 // begin TB new
         if(any_diagnostic_value) {
@@ -1571,11 +1573,11 @@ if(def->where() != loc) {
  * apply_next() method. */
 
 void enumPropertyAnn::apply_assignment(Location * where,
-				       stmtLocation * parameter_callsite,
-				       pointerValue & left,
-				       pointerValue & right,
-				       bool is_parameter,
-				       memoryblock_set & changes)
+                                       stmtLocation * parameter_callsite,
+                                       pointerValue & left,
+                                       pointerValue & right,
+                                       bool is_parameter,
+                                       memoryblock_set & changes)
 {
 /*static bool called = false; // hack
 if(!called) {
@@ -1612,12 +1614,12 @@ if(!called) {
       // -- Perform the actual update
 
       apply_next(where, parameter_callsite,
-		 (ruleAnn *)0, (enumPropertyExprAnn *)0,
-		 left, lhs_name,
-		 right, new_value,
-		 rhs_lost_information, false,
+                 (ruleAnn *)0, (enumPropertyExprAnn *)0,
+                 left, lhs_name,
+                 right, new_value,
+                 rhs_lost_information, false,
                  complicit_property_blocks,
-		 ever_values, changes);
+                 ever_values, changes);
     }
     else {
 
@@ -1631,11 +1633,11 @@ if(!called) {
       // -- Perform the actual update
 
       apply_next(where, parameter_callsite,
-		 (ruleAnn *)0, (enumPropertyExprAnn *)0,
-		 right, rhs_name,
-		 left, new_value,
-		 rhs_lost_information, false, complicit_property_blocks,
-		 ever_values, changes);
+                 (ruleAnn *)0, (enumPropertyExprAnn *)0,
+                 right, rhs_name,
+                 left, new_value,
+                 rhs_lost_information, false, complicit_property_blocks,
+                 ever_values, changes);
     }
   }
 //r_timer2.stop();
@@ -1648,9 +1650,9 @@ if(!called) {
  * external inputs and outputs. */
 
 void enumPropertyAnn::self_assignment(Location * source,
-				      Location * target,
-				      memoryBlock * property_block, 
-				      memoryblock_set & changes,
+                                      Location * target,
+                                      memoryBlock * property_block,
+                                      memoryblock_set & changes,
               bool is_input)
 {
   if (Annotations::Verbose_properties)
@@ -1660,7 +1662,7 @@ void enumPropertyAnn::self_assignment(Location * source,
 
   enumvalue_set current_value = construct_now_value(source, property_block, true);
 
-  // -- Figure out the direction 
+  // -- Figure out the direction
 
   memoryAccess * attach_value_to = 0;
 
@@ -1674,7 +1676,7 @@ void enumPropertyAnn::self_assignment(Location * source,
   else {
 
     // -- Backward analysis: propagate the new states to the current
-    // use. 
+    // use.
 
     attach_value_to = property_block->current_use();
   }
@@ -1761,8 +1763,8 @@ if(def->where() != loc) {
  * purposes. */
 
 void enumPropertyAnn::conservative_procedure_call(stmtLocation * current,
-						  pointerValue & reachable,
-						  memoryblock_set & changes)
+                                                  pointerValue & reachable,
+                                                  memoryblock_set & changes)
 {
   // -- Conservative call: set everything to bottom
   /*
@@ -1780,10 +1782,10 @@ void enumPropertyAnn::conservative_procedure_call(stmtLocation * current,
 }
 
 void enumPropertyAnn::report(ostream & out,
-			     bool is_error,
-			     procLocation * where, 
-			     Broadway::FlowSensitivity flow_sensitivity,
-			     pointerValue & lhs, string & lhs_name)
+                             bool is_error,
+                             procLocation * where,
+                             Broadway::FlowSensitivity flow_sensitivity,
+                             pointerValue & lhs, string & lhs_name)
 {
   enumvalue_set lhs_value_set;
   enumValueAnn * lhs_value = 0;
@@ -1832,7 +1834,7 @@ void enumPropertyAnn::report(ostream & out,
       lhs_value_set = construct_ever_value(lhs, lhs_name);
 
       if (! Annotations::Quiet_reports || is_error) {
-	out << to_string(lhs_value_set);
+        out << to_string(lhs_value_set);
       }
     }
     break;
@@ -1840,25 +1842,25 @@ void enumPropertyAnn::report(ostream & out,
   case Broadway::Trace:
     {
       if (Annotations::Skip_traces)
-	out << "(skipping trace)";
+        out << "(skipping trace)";
       else {
 
-	for (memoryblock_set_p p = lhs.blocks.begin();
-	     p != lhs.blocks.end();
-	     ++p)
-	  {
-	    memoryBlock * real_block = *p;
-	    memoryBlock * property_block = lookup_property_block(real_block);
+        for (memoryblock_set_p p = lhs.blocks.begin();
+             p != lhs.blocks.end();
+             ++p)
+          {
+            memoryBlock * real_block = *p;
+            memoryBlock * property_block = lookup_property_block(real_block);
 
-	    if (! Annotations::Quiet_reports || is_error) {
-	      out << endl << "TRACE: " << property_block->name() << endl;
+            if (! Annotations::Quiet_reports || is_error) {
+              out << endl << "TRACE: " << property_block->name() << endl;
 
-	      memoryblock_set already_seen;
-	      string indent = "  ";
-	    
-	      trace_object(out, property_block, already_seen, indent);
-	    }
-	  }
+              memoryblock_set already_seen;
+              string indent = "  ";
+
+              trace_object(out, property_block, already_seen, indent);
+            }
+          }
       }
     }
     break;
@@ -1877,36 +1879,36 @@ void enumPropertyAnn::report(ostream & out,
       double confidence;
 
       if (dsize == 0)
-	confidence = 0.0;
+        confidence = 0.0;
       else {
-	confidence = (_number_of_flowvalues - dsize) / (_number_of_flowvalues - 1.0);
-	// OLD value confidence = (1.0 / dsize );
+        confidence = (_number_of_flowvalues - dsize) / (_number_of_flowvalues - 1.0);
+        // OLD value confidence = (1.0 / dsize );
       }
 
       if (! Annotations::Quiet_reports || is_error) {
-	out << confidence;
+        out << confidence;
       }
 
       if (dsize != 0) {
-	
-	// -- Also, store the confidence values in order to compute accuracy
 
-	accuracy_map_p p = _accuracy.find(where);
-	if (p == _accuracy.end()) {
+        // -- Also, store the confidence values in order to compute accuracy
 
-	  _accuracy[where] = count_accuracy_pair(1, confidence);
-	}
-	else {
-	  count_accuracy_pair & cap = (*p).second;
-	  cap.first++;
-	  cap.second += confidence;
-	}
+        accuracy_map_p p = _accuracy.find(where);
+        if (p == _accuracy.end()) {
 
-	// -- If this is an error report, record the statement where it
-	// occured
+          _accuracy[where] = count_accuracy_pair(1, confidence);
+        }
+        else {
+          count_accuracy_pair & cap = (*p).second;
+          cap.first++;
+          cap.second += confidence;
+        }
 
-	if (is_error)
-	  _error_statements.insert(where->stmt_location()->stmt());
+        // -- If this is an error report, record the statement where it
+        // occured
+
+        if (is_error)
+          _error_statements.insert(where->stmt_location()->stmt());
       }
     }
     break;
@@ -1955,7 +1957,7 @@ enumValueAnn * enumPropertyAnn::merge_enumvalue_set(enumvalue_set value_set)
   // -- Visit all the values in the set and meet them together
 
   for (int i = 0; i < value_set.size(); i++) {
-      
+
     if (value_set.test(i)) {
 
       enumValueAnn * value = _value_index[i];
@@ -1982,16 +1984,16 @@ string enumPropertyAnn::to_string(enumvalue_set value_set)
 
       if (value_set.test(i)) {
 
-	enumValueAnn * value = _value_index[i];
-	if ( ! first ) s += ", ";
-	s += value->name();
-	first = false;
+        enumValueAnn * value = _value_index[i];
+        if ( ! first ) s += ", ";
+        s += value->name();
+        first = false;
       }
     }
   }
 
   return s;
-}  
+}
 
 // ----------------------------------------------------------------------
 //  Adaptive algorithm
@@ -2068,7 +2070,7 @@ memoryblock_set tested_objs;
           procLocation * target_proc_loc = Location::procedure(Location::procedure(target)->stmt_location());
           procNode * target_proc = target_proc_loc->proc();
           procedureInfo * target_info = analyzer->lookup_procedure(target_proc);
-          
+
           _error_procedures.insert(target_info);
 if(! p->second.empty()) {
   locs++;
@@ -2338,7 +2340,7 @@ double enumPropertyAnn::compute_accuracy(Analyzer * analyzer)
       procLocation * cur = where;
 
       while (cur->stmt_location())
-	cur = cur->stmt_location()->block_location()->proc_location();
+        cur = cur->stmt_location()->block_location()->proc_location();
 
       // -- Look up the procedure
 
@@ -2364,12 +2366,12 @@ double enumPropertyAnn::compute_accuracy(Analyzer * analyzer)
 
       stmt_accuracy_map_p w = by_statement.find(stmt);
       if (w == by_statement.end())
-	by_statement[stmt] = new_cap;
+        by_statement[stmt] = new_cap;
       else {
-	count_accuracy_pair & existing_cap = (*w).second;
+        count_accuracy_pair & existing_cap = (*w).second;
 
-	existing_cap.first  += new_cap.first;
-	existing_cap.second += new_cap.second;
+        existing_cap.first  += new_cap.first;
+        existing_cap.second += new_cap.second;
       }
     }
 
@@ -2383,14 +2385,14 @@ double enumPropertyAnn::compute_accuracy(Analyzer * analyzer)
   int error_count = 0;
 
   for (stmt_accuracy_map_p p = by_statement.begin();
-	 p != by_statement.end();
+         p != by_statement.end();
        ++p)
     {
       stmtNode * stmt = (*p).first;
       count_accuracy_pair & cap = (*p).second;
 
       // TB remove: callNode * call = findCallNodeWalker::find(stmt);
-      
+
       double local_accuracy = (cap.second / ((double) cap.first));
 
       // cout << "ACCURACY: " << name() <<  " at " << call->coord() << " = " << local_accuracy << endl;
@@ -2402,8 +2404,8 @@ double enumPropertyAnn::compute_accuracy(Analyzer * analyzer)
       // -- Sum up error accuracy separately
 
       if (_error_statements.find(stmt) != _error_statements.end()) {
-	error_count++;
-	error_total += local_accuracy;
+        error_count++;
+        error_total += local_accuracy;
       }
     }
 
@@ -2415,7 +2417,7 @@ double enumPropertyAnn::compute_accuracy(Analyzer * analyzer)
 
     cout << "STAT-accuracy-property-all-" << name() << " " << overall_accuracy << endl;
   }
-  
+
   if (error_count > 0)
     cout << "STAT-accuracy-property-errors-" << name() << " " << (error_total / ((double)error_count)) << endl;
 
@@ -2471,9 +2473,9 @@ void enumPropertyAnn::set_flow_sensitivity(memoryBlock * real_block)
       // -- Not found: inherit from the real_block
 
       if (real_block->is_flow_sensitive())
-	property_block->set_flow_sensitive();
+        property_block->set_flow_sensitive();
       else
-	property_block->set_flow_insensitive();
+        property_block->set_flow_insensitive();
     }
   }
   else {
@@ -2486,27 +2488,27 @@ void enumPropertyAnn::set_flow_sensitivity(memoryBlock * real_block)
       property_block->set_flow_sensitive();
   }
 }
-    
+
 
 /** @brief Track destructive assignments
  */
 
 void enumPropertyAnn::track_destructive_assignments(Analyzer * analyzer,
-						    Location * target,
-						    memoryBlock * block,
-						    bool disallow_context_sensitivity,
-						    block_loc_set & already_seen,
-						    block_loc_set seen_stack,
-						    memoryblock_set & made_flow_sensitive,
-						    memoryblock_set & made_fs_destructive,
-						    block_loc_set & made_context_sensitive,
+                                                    Location * target,
+                                                    memoryBlock * block,
+                                                    bool disallow_context_sensitivity,
+                                                    block_loc_set & already_seen,
+                                                    block_loc_set seen_stack,
+                                                    memoryblock_set & made_flow_sensitive,
+                                                    memoryblock_set & made_fs_destructive,
+                                                    block_loc_set & made_context_sensitive,
                                                     block_proc_set & eval_cs_seen_destructive,
                                                     block_proc_set & eval_cs_seen_complicit,
                                                     block_proc_set & eval_made_cs,
-						    bool & make_chain_flow_sensitive,
-						    bool & make_chain_context_sensitive,
-						    memoryblock_vector & chain,
-						    string & indent)
+                                                    bool & make_chain_flow_sensitive,
+                                                    bool & make_chain_context_sensitive,
+                                                    memoryblock_vector & chain,
+                                                    string & indent)
 {
   if(pointerOptions::Slice_analysis) {
     memoryBlock *B = block;
@@ -2563,12 +2565,12 @@ void enumPropertyAnn::track_destructive_assignments(Analyzer * analyzer,
 
     if (Annotations::Show_adaptivity) {
       if (fs)
-	cout << indent << "+ (Already made FS: block " << block->name() << ")" << endl;
+        cout << indent << "+ (Already made FS: block " << block->name() << ")" << endl;
       if(TB_changes) {
       if (cs)
-	cout << indent << "+ (Already made CS: block " << block->name() << ")" << endl;
+        cout << indent << "+ (Already made CS: block " << block->name() << ")" << endl;
       if (!fs && !cs)
-	cout << indent << "+ (Already seen: block " << block->name() << ")" << endl;
+        cout << indent << "+ (Already seen: block " << block->name() << ")" << endl;
       }
     }
 #if 0
@@ -2594,7 +2596,7 @@ for (memoryBlock::complicit_assignment_map_cp p = complicit.begin();
   } * /
 }
 } // end debug
-*/ 
+*/
 #endif
 
     make_chain_flow_sensitive = fs;
@@ -2657,63 +2659,63 @@ cout << " add " << block << endl;
       switch (kind) {
 
       case memoryBlock::Control_flow:
-	{
-	  if (Annotations::Show_adaptivity)
-	    cout << indent << "  --> needs path sensitivity at " << *where << endl;
+        {
+          if (Annotations::Show_adaptivity)
+            cout << indent << "  --> needs path sensitivity at " << *where << endl;
 
-	  // -- Find and record the controlling branch
+          // -- Find and record the controlling branch
 
-	  basicblockLocation * basicblock_loc = (basicblockLocation *) where;
-	  basicblockNode * basicblock = basicblock_loc->block();
+          basicblockLocation * basicblock_loc = (basicblockLocation *) where;
+          basicblockNode * basicblock = basicblock_loc->block();
 
-	  pointerOptions::Path_sensitive_branches.insert(basicblock);
+          pointerOptions::Path_sensitive_branches.insert(basicblock);
 
-	  // make_flow_sensitive = true;
-	}
-	break;
+          // make_flow_sensitive = true;
+        }
+        break;
 
       case memoryBlock::Parameter_pass:
-	{
-	  procLocation * procloc = 0;
+        {
+          procLocation * procloc = 0;
 
-	  // -- Make sure to handle external outputs correctly
+          // -- Make sure to handle external outputs correctly
 
-	  if (where->kind() == Location::Statement) {
+          if (where->kind() == Location::Statement) {
 
-	    // -- External outputs are assigned at the call site
+            // -- External outputs are assigned at the call site
 
-	    stmtLocation * callsite = (stmtLocation *) where;
-	    procloc = callsite->calls();
-	  }
-	  else {
+            stmtLocation * callsite = (stmtLocation *) where;
+            procloc = callsite->calls();
+          }
+          else {
 
-	    // -- Inputs 
+            // -- Inputs
 
-	    procloc = Location::procedure(where);
-	    if ( ! disallow_context_sensitivity) {
-	      bool m = evaluate_context_sensitivity(analyzer, target, block,
+            procloc = Location::procedure(where);
+            if ( ! disallow_context_sensitivity) {
+              bool m = evaluate_context_sensitivity(analyzer, target, block,
                                                     /*already_seen,*/ procloc,
                                                     true,
                                                     eval_cs_seen_destructive,
                                                     eval_cs_seen_complicit,
                                                     eval_made_cs, indent);
-	      make_context_sensitive = make_context_sensitive || m;
+              make_context_sensitive = make_context_sensitive || m;
 if (Annotations::Show_adaptivity) // debug
   cout<<"Parameter_pass(" << block->name() << ") make_context_sensitive("
       << procloc->proc()->decl()->name() <<")="<< make_context_sensitive<<endl;
               if(m && Annotations::Adaptor_statistics)
                 Annotations::Adaptor_statistics->make_CS
-                                (block, 
+                                (block,
                                  analyzer->lookup_procedure(procloc->proc()),
                                  where,
                                  memoryBlock::Parameter_pass);
             }
-	  }
-	}
-	break;
+          }
+        }
+        break;
 
       case memoryBlock::Weak_update:
-	{
+        {
           if (! already_made_FS) {
             if (Annotations::Show_adaptivity) {
               cout << indent << "  --> needs lower multiplicity at " << *where << endl;
@@ -2731,7 +2733,7 @@ cout << "Weak_update " << block << endl;
 }
           }
           if ( TB_changes && ! disallow_context_sensitivity) {
-	    procLocation *procloc = Location::procedure(where);
+            procLocation *procloc = Location::procedure(where);
 block_proc_pair p(block, procloc->proc()); // debug
 bool previously_cs = eval_made_cs.find(p) != eval_made_cs.end();
             bool m = evaluate_context_sensitivity(analyzer, target, block,
@@ -2753,13 +2755,13 @@ assert(! m || previously_cs ||
     analyzer->annotations()->lookup_procedure(procloc->proc()->decl()->name()));
             if(m && Annotations::Adaptor_statistics)
               Annotations::Adaptor_statistics->make_CS
-                                (block, 
+                                (block,
                                  analyzer->lookup_procedure(procloc->proc()),
                                  where,
                                  memoryBlock::Weak_update);
           }
-	}
-	break;
+        }
+        break;
 
       case memoryBlock::Additive:
 
@@ -2773,26 +2775,26 @@ cout << "Additive " << block << endl;
         }
 
 
-	/*
-	if ( ! block->property) {
+        /*
+        if ( ! block->property) {
 
-	  // -- It's a pointer, make sure FS helps:
+          // -- It's a pointer, make sure FS helps:
 
-	  if (where->kind() == Location::Statement) {
+          if (where->kind() == Location::Statement) {
 
-	    // -- External outputs are assigned at the call site
-	      
-	    stmtLocation * assignment_loc = (stmtLocation *) where;  
-	    make_flow_sensitive = validate_pointer_fs(block, assignment_loc, indent);
-	  }
-	}
-	*/
+            // -- External outputs are assigned at the call site
 
-	break;
+            stmtLocation * assignment_loc = (stmtLocation *) where;
+            make_flow_sensitive = validate_pointer_fs(block, assignment_loc, indent);
+          }
+        }
+        */
+
+        break;
 
       default:
-	if (Annotations::Show_adaptivity)
-	  cout << indent << "  --> cause unknown at " << * where << endl;
+        if (Annotations::Show_adaptivity)
+          cout << indent << "  --> cause unknown at " << * where << endl;
       }
     }
   if(make_flow_sensitive)
@@ -2817,7 +2819,7 @@ cout << "Additive " << block << endl;
 
   if (Annotations::Show_adaptivity)
     cout << indent << " CS control: disallow = " << disallow_context_sensitivity
-	 << ", throttle = " << throttle_context_sensitivity << endl;
+         << ", throttle = " << throttle_context_sensitivity << endl;
 
   // -- Follow all the complicit assignments...
 
@@ -2832,53 +2834,53 @@ cout << "Additive " << block << endl;
     // -- Make the whole chain flow-sensitive
 
     for (memoryblock_vector_p p = chain.begin();
-	 p != chain.end();
-	 ++p)
+         p != chain.end();
+         ++p)
       {
-	memoryBlock * make_fs_block = (*p);
+        memoryBlock * make_fs_block = (*p);
 
-	// -- Avoid making blocks flow sensitive if they have only one
-	// assignment:
+        // -- Avoid making blocks flow sensitive if they have only one
+        // assignment:
 
-	if ( ! make_fs_block->is_single_assignment()) {
+        if ( ! make_fs_block->is_single_assignment()) {
 
-	  if (Annotations::Show_adaptivity)
-	    cout << indent << " --> set flow-sensitive " << make_fs_block->name() << endl;
+          if (Annotations::Show_adaptivity)
+            cout << indent << " --> set flow-sensitive " << make_fs_block->name() << endl;
 
 /*if (make_fs_block->name() == "upper::s")
     make_fs_block->print_def_use(cout);*/
 
-	  // -- Make the block flow-sensitive: this depends on whether it is a
-	  // property block or a real block.
-	
-	  if (make_fs_block->property) {
+          // -- Make the block flow-sensitive: this depends on whether it is a
+          // property block or a real block.
 
-	    // -- Make a property block flow sensitive. NOTE: it might not be
-	    // this property!
+          if (make_fs_block->property) {
 
-	    make_fs_block->property->add_flow_sensitive_object(make_fs_block);
-	  }
-	  else {
-	    
-	    // -- Regular object: make it flow sensitive in the global list
+            // -- Make a property block flow sensitive. NOTE: it might not be
+            // this property!
 
-	    make_fs_block->add_to_flow_sensitive_list(pointerOptions::Flow_sensitive_objects);
-	  }
-	  
-	  if (make_fs_block->is_heap_object()) {
-	    memoryBlock * alloc_object = make_fs_block->allocation_object();
-	    alloc_object->add_to_flow_sensitive_list(pointerOptions::Flow_sensitive_allocation_objects);
-	  }
+            make_fs_block->property->add_flow_sensitive_object(make_fs_block);
+          }
+          else {
 
-	  // -- Keep a list of objects that we make flow sensitive
+            // -- Regular object: make it flow sensitive in the global list
 
-	  made_flow_sensitive.insert(make_fs_block);
-	}
-	else {
+            make_fs_block->add_to_flow_sensitive_list(pointerOptions::Flow_sensitive_objects);
+          }
 
-	  if (Annotations::Show_adaptivity)
-	    cout << indent << " --> skip single-assign " << make_fs_block->name() << endl;
-	}
+          if (make_fs_block->is_heap_object()) {
+            memoryBlock * alloc_object = make_fs_block->allocation_object();
+            alloc_object->add_to_flow_sensitive_list(pointerOptions::Flow_sensitive_allocation_objects);
+          }
+
+          // -- Keep a list of objects that we make flow sensitive
+
+          made_flow_sensitive.insert(make_fs_block);
+        }
+        else {
+
+          if (Annotations::Show_adaptivity)
+            cout << indent << " --> skip single-assign " << make_fs_block->name() << endl;
+        }
       }
   }
 
@@ -2907,17 +2909,17 @@ cout << "Additive " << block << endl;
       }
 
       for (memoryblock_set_cp q = blocks.begin();
-	   q != blocks.end();
-	   ++q)
-	{
-	  memoryBlock * comp = *q;
+           q != blocks.end();
+           ++q)
+        {
+          memoryBlock * comp = *q;
 
           // TB_unify
           if(/*Annotations::Adapt_uses_uba &&*/ comp == block) continue;
 
-	  if (Annotations::Show_adaptivity)
-	    cout << indent << "  - Complicit at " << *where 
-		 << ": assignment \"" << block->name() << " = " << comp->name() << "\"" << endl;
+          if (Annotations::Show_adaptivity)
+            cout << indent << "  - Complicit at " << *where
+                 << ": assignment \"" << block->name() << " = " << comp->name() << "\"" << endl;
 
           // TB 20030725 short-circuit
           { block_loc_pair sp(comp,target);
@@ -2965,7 +2967,7 @@ cout << block << " seen complicit comp=" << comp << " " << comp->name() << endl;
                                                    eval_made_cs, indent);
                     if(m && Annotations::Adaptor_statistics)
                       Annotations::Adaptor_statistics->make_CS
-                                  (block, 
+                                  (block,
                                    analyzer->lookup_procedure(procloc->proc()),
                                    where,
                                    comp);
@@ -2977,78 +2979,78 @@ cout << block << " seen complicit comp=" << comp << " " << comp->name() << endl;
             }
           }
 
-	  if (comp == block) {
+          if (comp == block) {
 
-	    if (Annotations::Show_adaptivity) {
+            if (Annotations::Show_adaptivity) {
 
-	      cout << indent << "    + SKIP self-assignment." << endl;
-	    }
-	  }
-	  else {
+              cout << indent << "    + SKIP self-assignment." << endl;
+            }
+          }
+          else {
 
-	    // -- Test reachability
+            // -- Test reachability
 
-	    bool reachable = true;
-	    
-	    if (Annotations::Aggressive_pruning)
-	      reachable = is_location_reachable(where, target, comp);
+            bool reachable = true;
 
-	    /*
-	    if (Annotations::Show_adaptivity) {
-	      if (reachable)
-		cout << indent << "    [ " << * target << " is reachable from " << * where << " ]" << endl;
-	      else
-		cout << indent << "    [ " << * target << " is NOT reachable from " << * where << " ]" << endl;
-	    }
-	    */
+            if (Annotations::Aggressive_pruning)
+              reachable = is_location_reachable(where, target, comp);
 
-	    if (reachable) {
+            /*
+            if (Annotations::Show_adaptivity) {
+              if (reachable)
+                cout << indent << "    [ " << * target << " is reachable from " << * where << " ]" << endl;
+              else
+                cout << indent << "    [ " << * target << " is NOT reachable from " << * where << " ]" << endl;
+            }
+            */
+
+            if (reachable) {
               if(make_context_sensitive) // 20030912
                 made_context_sensitive.insert(blp);
 
-	      bool chain_flow_sensitivity = false;
-	      bool chain_context_sensitivity = false;
-	      
-	      track_destructive_assignments(analyzer, target /* where */, comp,
-					    throttle_context_sensitivity,
-					    already_seen, seen_stack, made_flow_sensitive,
+              bool chain_flow_sensitivity = false;
+              bool chain_context_sensitivity = false;
+
+              track_destructive_assignments(analyzer, target /* where */, comp,
+                                            throttle_context_sensitivity,
+                                            already_seen, seen_stack, made_flow_sensitive,
                                             made_fs_destructive,
                                             made_context_sensitive,
                                             eval_cs_seen_destructive,
                                             eval_cs_seen_complicit,
                                             eval_made_cs,
-					    chain_flow_sensitivity,
-					    chain_context_sensitivity,
-					    chain,
-					    new_indent);
-	      if (chain_flow_sensitivity) {
+                                            chain_flow_sensitivity,
+                                            chain_context_sensitivity,
+                                            chain,
+                                            new_indent);
+              if (chain_flow_sensitivity) {
 if (Annotations::Show_adaptivity)
 cout << "chain " << block << " comp=" << comp << endl;
-		make_flow_sensitive = true;
-		/*
-		if ( ! block->property) {
+                make_flow_sensitive = true;
+                /*
+                if ( ! block->property) {
 
-		  // -- It's a pointer, make sure FS helps:
-		  
-		  if (where->kind() == Location::Statement) {
+                  // -- It's a pointer, make sure FS helps:
 
-		    // -- External outputs are assigned at the call site
-	      
-		    stmtLocation * assignment_loc = (stmtLocation *) where;  
-		    make_flow_sensitive = validate_pointer_fs(block, assignment_loc, indent);
-		  }
-		}
-		*/
-	      }
+                  if (where->kind() == Location::Statement) {
 
-	      if (chain_context_sensitivity) {
+                    // -- External outputs are assigned at the call site
 
-		// -- First, make sure it would help:
+                    stmtLocation * assignment_loc = (stmtLocation *) where;
+                    make_flow_sensitive = validate_pointer_fs(block, assignment_loc, indent);
+                  }
+                }
+                */
+              }
+
+              if (chain_context_sensitivity) {
+
+                // -- First, make sure it would help:
 
                 bool m = false;
                 procLocation * procloc = Location::procedure(where);
                 procNode * proc = procloc->proc();
-		if ( ! disallow_context_sensitivity) {
+                if ( ! disallow_context_sensitivity) {
                   procedureInfo * info = analyzer->lookup_procedure(proc);
 
                   m = evaluate_context_sensitivity(analyzer, target,
@@ -3060,7 +3062,7 @@ cout << "chain " << block << " comp=" << comp << endl;
                                                  eval_made_cs, indent);
                   if(m && Annotations::Adaptor_statistics)
                     Annotations::Adaptor_statistics->make_CS
-                                (block, 
+                                (block,
                                  analyzer->lookup_procedure(procloc->proc()),
                                  where,
                                  comp);
@@ -3070,26 +3072,26 @@ cout << "chain " << block << " comp=" << comp << endl;
                 make_context_sensitive = make_context_sensitive || m; // TB
                 else
                 make_context_sensitive = m;
-		if (m) {
+                if (m) {
 
-		  // -- Chain context-sensitivity: make the procedure
-		  // containing the complicit assignment context-sensitive.
-	      
-		  if (Annotations::Show_adaptivity)
-		    cout << indent << "  --> Chain context-sensitivity of " << proc->decl()->name()
-			 << " for assignment \"" << block->name() << " = " << comp->name() << "\"" << endl;
+                  // -- Chain context-sensitivity: make the procedure
+                  // containing the complicit assignment context-sensitive.
 
-		  /* Handled inside evaluate_context_sensitivity...
-		     if ( ! info->is_library_routine())
-		     pointerOptions::Context_sensitive_procedures.insert(info->name());
-		  */
-		}
-	      }
-	    }
-	  }
-	}
+                  if (Annotations::Show_adaptivity)
+                    cout << indent << "  --> Chain context-sensitivity of " << proc->decl()->name()
+                         << " for assignment \"" << block->name() << " = " << comp->name() << "\"" << endl;
+
+                  /* Handled inside evaluate_context_sensitivity...
+                     if ( ! info->is_library_routine())
+                     pointerOptions::Context_sensitive_procedures.insert(info->name());
+                  */
+                }
+              }
+            }
+          }
+        }
     }
-  
+
   if (!already_made_FS && make_flow_sensitive) {
 
     // -- Avoid making blocks flow sensitive if they have only one
@@ -3098,41 +3100,41 @@ cout << "chain " << block << " comp=" << comp << endl;
     if ( ! block->is_single_assignment()) {
 
       if (Annotations::Show_adaptivity)
-	cout << indent << " --> set flow-sensitive " << block->name() << endl;
+        cout << indent << " --> set flow-sensitive " << block->name() << endl;
 
 /*if (block->name() == "upper::s")
   block->print_def_use(cout); */
 
       // -- Make the block flow-sensitive: this depends on whether it is a
       // property block or a real block.
-	
+
       if (block->property) {
 
-	// -- Make a property block flow sensitive. NOTE: it might not be
-	// this property!
-	
-	block->property->add_flow_sensitive_object(block);
+        // -- Make a property block flow sensitive. NOTE: it might not be
+        // this property!
+
+        block->property->add_flow_sensitive_object(block);
       }
       else {
-	
-	// -- Regular object: make it flow sensitive in the global list
-	
-	block->add_to_flow_sensitive_list(pointerOptions::Flow_sensitive_objects);
+
+        // -- Regular object: make it flow sensitive in the global list
+
+        block->add_to_flow_sensitive_list(pointerOptions::Flow_sensitive_objects);
       }
-      
+
       if (block->is_heap_object()) {
-	memoryBlock * alloc_object = block->allocation_object();
-	alloc_object->add_to_flow_sensitive_list(pointerOptions::Flow_sensitive_allocation_objects);
+        memoryBlock * alloc_object = block->allocation_object();
+        alloc_object->add_to_flow_sensitive_list(pointerOptions::Flow_sensitive_allocation_objects);
       }
-      
+
       // -- Keep a list of objects that we make flow sensitive
-      
+
       made_flow_sensitive.insert(block);
     }
     else {
-      
+
       if (Annotations::Show_adaptivity)
-	cout << indent << " --> skip single-assign " << block->name() << endl;
+        cout << indent << " --> skip single-assign " << block->name() << endl;
     }
   }
 
@@ -3173,9 +3175,9 @@ cout << indent << "--> " << block->name()
  * adaptation process. */
 
 void enumPropertyAnn::record_tested_objects(Location * where,
-					    pointerValue & ptr,
-					    enumvalue_set & value_set,
-					    memoryblock_set & complicit_property_blocks)
+                                            pointerValue & ptr,
+                                            enumvalue_set & value_set,
+                                            memoryblock_set & complicit_property_blocks)
 {
   if ((Annotations::Adaptivity == 3) &&
       Annotations::Record_tested_objects) {
@@ -3183,28 +3185,28 @@ void enumPropertyAnn::record_tested_objects(Location * where,
     // -- Remember that these objects were tested
 
     for (memoryblock_set_p q = complicit_property_blocks.begin();
-	 q != complicit_property_blocks.end();
-	 ++q)
+         q != complicit_property_blocks.end();
+         ++q)
       {
-	memoryBlock * property_block = *q;
-	memoryBlock * real_block = property_block->container();
+        memoryBlock * property_block = *q;
+        memoryBlock * real_block = property_block->container();
 
-	_tested_objects[where].insert(real_block);
+        _tested_objects[where].insert(real_block);
       }
-    
+
     if (value_set.count() > 1) {
 
       // -- If constructing the value lost information, then record that fact
 
       for (memoryblock_set_p p = ptr.blocks.begin();
-	   p != ptr.blocks.end();
-	   ++p)
-	{
-	  memoryBlock * real_block = *p;
-	  memoryBlock * property_block = lookup_property_block(real_block);
-	  
-	  property_block->add_complicit_assignment(where, ptr.dereferenced);
-	}
+           p != ptr.blocks.end();
+           ++p)
+        {
+          memoryBlock * real_block = *p;
+          memoryBlock * property_block = lookup_property_block(real_block);
+
+          property_block->add_complicit_assignment(where, ptr.dereferenced);
+        }
     }
   }
 }
@@ -3215,9 +3217,9 @@ void enumPropertyAnn::record_tested_objects(Location * where,
  * Trace the assignments to a property, generate a report. */
 
 void enumPropertyAnn::trace_object(ostream & out,
-				   memoryBlock * property_block,
-				   memoryblock_set & already_seen,
-				   string & indent)
+                                   memoryBlock * property_block,
+                                   memoryblock_set & already_seen,
+                                   string & indent)
 {
   // -- Check for cycles
 
@@ -3235,9 +3237,9 @@ void enumPropertyAnn::trace_object(ostream & out,
   // -- Get the complicit assignment list
 
   const memoryBlock::complicit_assignment_map & complicit = property_block->complicit_assignments();
-  
+
   // -- Visit all the defs and report
-  
+
   const memorydef_list defs = property_block->defs();
   for (memorydef_list_cp mp = defs.begin();
        mp != defs.end();
@@ -3246,7 +3248,7 @@ void enumPropertyAnn::trace_object(ostream & out,
       memorydef_key mlp = (*mp);
       Location * where = mlp.location;
       memoryDef * def = mlp.def;
-      
+
       enumvalue_set val = lookup_now_value(property_block, def);
 
       out << indent << " + ";
@@ -3255,19 +3257,19 @@ void enumPropertyAnn::trace_object(ostream & out,
 
       memoryBlock::destructive_assignment_map_cp dp = destructive.find(where);
       if (dp != destructive.end()) {
-	memoryBlock::DestructiveKind kind = (*dp).second;
-	switch (kind) {
-	case memoryBlock::Control_flow:   out << "[D: phi]";
-	  break;
-	case memoryBlock::Parameter_pass: out << "[D: par]";
-	  break;
-	case memoryBlock::Weak_update:    out << "[D: mul]";
-	  break;
-	case memoryBlock::Additive:       out << "[D: fi ]";
-	  break;
-	default:
-	  break;
-	}
+        memoryBlock::DestructiveKind kind = (*dp).second;
+        switch (kind) {
+        case memoryBlock::Control_flow:   out << "[D: phi]";
+          break;
+        case memoryBlock::Parameter_pass: out << "[D: par]";
+          break;
+        case memoryBlock::Weak_update:    out << "[D: mul]";
+          break;
+        case memoryBlock::Additive:       out << "[D: fi ]";
+          break;
+        default:
+          break;
+        }
       }
 
       // -- Print out the location and value
@@ -3279,24 +3281,24 @@ void enumPropertyAnn::trace_object(ostream & out,
       memoryBlock::complicit_assignment_map_cp cp = complicit.find(where);
       if (cp != complicit.end()) {
 
-	string new_indent = indent + "    ";
+        string new_indent = indent + "    ";
 
-	const memoryblock_set & blocks = (*cp).second;
+        const memoryblock_set & blocks = (*cp).second;
 
-	for (memoryblock_set_cp q = blocks.begin();
-	     q != blocks.end();
-	     ++q)
-	  {
-	    memoryBlock * cblock = (*q);
+        for (memoryblock_set_cp q = blocks.begin();
+             q != blocks.end();
+             ++q)
+          {
+            memoryBlock * cblock = (*q);
 
-	    if (cblock->property == this) {
-	      out << indent << "    = " << cblock->name() << endl;
+            if (cblock->property == this) {
+              out << indent << "    = " << cblock->name() << endl;
 
-	      trace_object(out, cblock, already_seen, new_indent);
-	    }
-	    else
-	      out << indent << "    Complicit: " << cblock->name() << endl;
-	  }
+              trace_object(out, cblock, already_seen, new_indent);
+            }
+            else
+              out << indent << "    Complicit: " << cblock->name() << endl;
+          }
       }
     }
 }
@@ -3307,14 +3309,14 @@ void enumPropertyAnn::trace_object(ostream & out,
  * it actually made the procedure context sensitive.*/
 
 bool enumPropertyAnn::evaluate_context_sensitivity(Analyzer * analyzer,
-						   Location * target,
-						   memoryBlock * block,
-						   procLocation * procloc,
+                                                   Location * target,
+                                                   memoryBlock * block,
+                                                   procLocation * procloc,
                                                    bool destructive,
                                                    block_proc_set & eval_cs_seen_destructive,
                                                    block_proc_set & eval_cs_seen_complicit,
                                                    block_proc_set & evaled_cs,
-						   string & indent)
+                                                   string & indent)
 {
   procNode * proc = procloc->proc();
 
@@ -3347,7 +3349,7 @@ bool enumPropertyAnn::evaluate_context_sensitivity(Analyzer * analyzer,
 
   if (Annotations::Show_adaptivity)
     cout << indent << "  --> procedure " << proc->decl()->name() << " needs context-sensitivity;"
-	 << " parameter passed at " << *procloc << endl;
+         << " parameter passed at " << *procloc << endl;
 if (Annotations::Show_adaptivity) // debug
 cout << "block is " << block << " " << block->name() << endl;
 
@@ -3355,7 +3357,7 @@ cout << "block is " << block << " " << block->name() << endl;
 
   if (Annotations::Show_adaptivity && (destructive || !TB_changes))
     cout << indent << "    Callsites:" << endl;
-  
+
   /*if(block->property && ! block->is_flow_sensitive())
     assert( block->parameter_assignments(proc).empty() ); // ?? debug*/
 
@@ -3392,7 +3394,7 @@ cout << "block is " << block << " " << block->name() << endl;
         cout << indent << "    ==> (No callsite: leave it context-insensitive)" << endl;
 
     }/* else if (assignments.size() <= 1) {
-      
+
       // TB new condition
       bool is_recursive_context = info->is_recursive();
       if(! is_recursive_context && assignments.size()==1) {
@@ -3405,9 +3407,9 @@ cout << "is_recursive_context = " << is_recursive_context << " caller is "
       }
       if(! is_recursive_context) {
 cout << "#assignments = " << assignments.size() << endl;
-		
+
         make_context_sensitive = false;
-        
+
         if (Annotations::Show_adaptivity)
           cout << indent << "    ==> (One callsite: leave it context-insensitive)" << endl;
       } else
@@ -3418,25 +3420,25 @@ cout << "#assignments = " << assignments.size() << endl;
       if (info->is_recursive() &&
           !pointerOptions::Recursion_Context_sensitive /* TB */ ) {
 
-	// Corollary: since we can't make recursive procedures
-	// context-sensitive, don't bother testing them.
-	
-	make_context_sensitive = false;
-	
-	if (Annotations::Show_adaptivity)
-	  cout << indent << "    ==> (Recursive: leave it context-insensitive)" << endl;
+        // Corollary: since we can't make recursive procedures
+        // context-sensitive, don't bother testing them.
+
+        make_context_sensitive = false;
+
+        if (Annotations::Show_adaptivity)
+          cout << indent << "    ==> (Recursive: leave it context-insensitive)" << endl;
       }
       else {
 
-	make_context_sensitive = true;
+        make_context_sensitive = true;
 
-	// -- Re-check for information loss depending on the kind of block:
+        // -- Re-check for information loss depending on the kind of block:
 
         if(destructive || !TB_changes) { // TB 20030910
           if (block->property) {
 
             // -- Property block
-            
+
             make_context_sensitive = validate_property_cs(block, assignments,
                                                           info, indent);
           }
@@ -3486,21 +3488,21 @@ cout << "#assignments = " << assignments.size() << endl;
 
     /* 20030903
     for (procedureinfo_set_p pi = _error_procedures.begin();
-	 pi != _error_procedures.end();
-	 ++pi)
+         pi != _error_procedures.end();
+         ++pi)
       {
-	rocedureInfo * target_info = *pi; */
+        rocedureInfo * target_info = *pi; */
 
-	if (Annotations::Show_adaptivity)
-	  cout << indent << "      Error-oriented check: is " << info->name() << " an ancestor of " 
-	       << target_info->name() << endl;
+        if (Annotations::Show_adaptivity)
+          cout << indent << "      Error-oriented check: is " << info->name() << " an ancestor of "
+               << target_info->name() << endl;
 
-	// -- See if the current procedure is an ancestor of the target
+        // -- See if the current procedure is an ancestor of the target
 
-	const procedureinfo_set & ancestors = target_info->ancestors();
-	if ((info == target_info) ||
-	    (ancestors.find(info) != ancestors.end()))
-	  is_ancestor = true;
+        const procedureinfo_set & ancestors = target_info->ancestors();
+        if ((info == target_info) ||
+            (ancestors.find(info) != ancestors.end()))
+          is_ancestor = true;
         /* TB
         if ( make_context_sensitive && ! target_info->is_library_routine() &&
              pointerOptions::Recursion_Context_sensitive) {
@@ -3520,11 +3522,11 @@ cout << "#assignments = " << assignments.size() << endl;
       make_context_sensitive = false;
 
       if (Annotations::Show_adaptivity)
-	cout << " ... Yes, override CS" << endl;
+        cout << " ... Yes, override CS" << endl;
     }
     else
       if (Annotations::Show_adaptivity)
-	cout << " ... No" << endl;
+        cout << " ... No" << endl;
   }
 
   // -- Make the procedure context-sensitive
@@ -3542,92 +3544,92 @@ cout << "#assignments = " << assignments.size() << endl;
     procedureinfo_set descendants;
 
     if (0) {
-      
+
       add_context_sensitive_proc(info, already_seen, descendants);
 
       if (Annotations::Show_adaptivity)
-	cout << indent << "      * Procedure " << proc->decl()->name()
-	     << " has " << descendants.size() << " descendants." << endl;
+        cout << indent << "      * Procedure " << proc->decl()->name()
+             << " has " << descendants.size() << " descendants." << endl;
     }
 
     if ( ! info->is_library_routine())
       pointerOptions::Context_sensitive_procedures.insert(info->name());
 
-    
+
     if (0) {
-      
+
       if (1) {
 
-	// -- New idea: make context-sensitive any descendant that
-	// modifies the value of the given block.
+        // -- New idea: make context-sensitive any descendant that
+        // modifies the value of the given block.
 
-	for (procedureinfo_set_p pp = descendants.begin();
-	     pp != descendants.end();
-	     ++pp)
-	  {
-	    procedureInfo * des = *pp;
-	    const string & name = (*pp)->proc()->decl()->name();
-	    
-	    // -- Get the external outputs of the descendant
-	    
-	    const memoryblock_set & outputs = des->external_outputs();
-	    
-	    // -- If the current block is among them, then make the
-	    // descendant context-sensitive.
-	    
-	    if (outputs.find(block) != outputs.end()) {
-	      if (Annotations::Show_adaptivity)
-		cout << indent << "        + " << name << " modifies " << block->name() << endl;
-	      pointerOptions::Context_sensitive_procedures.insert(name);
-	    }
-	  }
+        for (procedureinfo_set_p pp = descendants.begin();
+             pp != descendants.end();
+             ++pp)
+          {
+            procedureInfo * des = *pp;
+            const string & name = (*pp)->proc()->decl()->name();
+
+            // -- Get the external outputs of the descendant
+
+            const memoryblock_set & outputs = des->external_outputs();
+
+            // -- If the current block is among them, then make the
+            // descendant context-sensitive.
+
+            if (outputs.find(block) != outputs.end()) {
+              if (Annotations::Show_adaptivity)
+                cout << indent << "        + " << name << " modifies " << block->name() << endl;
+              pointerOptions::Context_sensitive_procedures.insert(name);
+            }
+          }
       }
       else {
-	
-	// -- Build a set that represents all procedures in this
-	// calling sequence: the union of the ancestors and
-	// descendants of the procedure.
-	
-	procedureinfo_set subtree = info->ancestors();
-	subtree.insert(info);
-	subtree.insert(descendants.begin(),
-		       descendants.end());
-	
-	// -- Special test: only make a descendant CS if it can be
-	// called outside this subtree.
-	
-	typedef list< procedureInfo * > procedureinfo_list;
-	typedef procedureinfo_list::iterator procedureinfo_list_p;
-	
-	for (procedureinfo_set_p pp = descendants.begin();
-	     pp != descendants.end();
-	     ++pp)
-	  {
-	    procedureInfo * des = *pp;
-	    const string & name = (*pp)->proc()->decl()->name();
-	    
-	    // -- Compute the set of procedures that are in the
-	    // ancestors set of descendant, but not in the subtree.
-	    
-	    const procedureinfo_set & des_ancestors = des->ancestors();
-	    
-	    procedureinfo_list diffs;
-	    set_difference(des_ancestors.begin(), des_ancestors.end(),
-			   subtree.begin(), subtree.end(),
-			   back_inserter(diffs));
-	    
-	    if (Annotations::Show_adaptivity) {
-	      cout << indent << "        + " << name << " has " 
-		   << diffs.size() << " other contexts." << endl;
-	      if (diffs.size() == 1)
-		cout << indent << "          - Diff is " << diffs.front()->proc()->decl()->name() << endl;
-	    }
-	    
-	    // -- If the set is non-empty, then make the descendant CS
-	    
-	    if ( ! diffs.empty())
-	      pointerOptions::Context_sensitive_procedures.insert(name);
-	  }
+
+        // -- Build a set that represents all procedures in this
+        // calling sequence: the union of the ancestors and
+        // descendants of the procedure.
+
+        procedureinfo_set subtree = info->ancestors();
+        subtree.insert(info);
+        subtree.insert(descendants.begin(),
+                       descendants.end());
+
+        // -- Special test: only make a descendant CS if it can be
+        // called outside this subtree.
+
+        typedef list< procedureInfo * > procedureinfo_list;
+        typedef procedureinfo_list::iterator procedureinfo_list_p;
+
+        for (procedureinfo_set_p pp = descendants.begin();
+             pp != descendants.end();
+             ++pp)
+          {
+            procedureInfo * des = *pp;
+            const string & name = (*pp)->proc()->decl()->name();
+
+            // -- Compute the set of procedures that are in the
+            // ancestors set of descendant, but not in the subtree.
+
+            const procedureinfo_set & des_ancestors = des->ancestors();
+
+            procedureinfo_list diffs;
+            set_difference(des_ancestors.begin(), des_ancestors.end(),
+                           subtree.begin(), subtree.end(),
+                           back_inserter(diffs));
+
+            if (Annotations::Show_adaptivity) {
+              cout << indent << "        + " << name << " has "
+                   << diffs.size() << " other contexts." << endl;
+              if (diffs.size() == 1)
+                cout << indent << "          - Diff is " << diffs.front()->proc()->decl()->name() << endl;
+            }
+
+            // -- If the set is non-empty, then make the descendant CS
+
+            if ( ! diffs.empty())
+              pointerOptions::Context_sensitive_procedures.insert(name);
+          }
       }
     }
   }
@@ -3647,13 +3649,13 @@ typedef stmt_value_map::iterator stmt_value_map_p;
  * */
 
 bool enumPropertyAnn::validate_property_cs(memoryBlock * block,
-					   const callsite_objects_map & assignments,
+                                           const callsite_objects_map & assignments,
                                            procedureInfo *procedure, // TB
-					   string & indent)
+                                           string & indent)
 {
   int min = 999999;
   enumValueAnn * highest_value = 0;
-  
+
   enumvalue_set collected_vals;
 
   if (Annotations::Show_adaptivity)
@@ -3663,8 +3665,8 @@ bool enumPropertyAnn::validate_property_cs(memoryBlock * block,
 
   stmt_value_map stmt_values;
 
-  // -- Visit each callsite 
-		  
+  // -- Visit each callsite
+
   for (callsite_objects_map_cp rdp = assignments.begin();
        rdp != assignments.end();
        ++rdp)
@@ -3681,22 +3683,22 @@ bool enumPropertyAnn::validate_property_cs(memoryBlock * block,
       enumvalue_set vals;
 
       for (memoryblock_set_cp mdp = reaching_blocks.begin();
-	   mdp != reaching_blocks.end();
-	   ++mdp)
-	{
-	  memoryBlock * property_block = (*mdp);
+           mdp != reaching_blocks.end();
+           ++mdp)
+        {
+          memoryBlock * property_block = (*mdp);
 
-	  property_block->set_current_def_use(attach_to);
-	  enumvalue_set local_val = construct_now_value(attach_to, property_block, false);
+          property_block->set_current_def_use(attach_to);
+          enumvalue_set local_val = construct_now_value(attach_to, property_block, false);
 
-	  meet_with(vals, local_val);
+          meet_with(vals, local_val);
 
-	  if (Annotations::Show_adaptivity) {
-	    cout << indent << "      Callsite " << * callsite
-		 << "  block " << property_block->name()
-		 << " = " <<  property_block->property->to_string(local_val) << endl;
-	  }		      
-	}
+          if (Annotations::Show_adaptivity) {
+            cout << indent << "      Callsite " << * callsite
+                 << "  block " << property_block->name()
+                 << " = " <<  property_block->property->to_string(local_val) << endl;
+          }
+        }
 
       // -- Store according to stmt
 
@@ -3711,28 +3713,28 @@ bool enumPropertyAnn::validate_property_cs(memoryBlock * block,
       enumvalue_set vals = (*p).second;
 
       if (Annotations::Show_adaptivity) {
-	cout << indent << "      Statement " << stmt->coord() << " reaching values = "
-	     << to_string(vals) << endl;
+        cout << indent << "      Statement " << stmt->coord() << " reaching values = "
+             << to_string(vals) << endl;
       }
 
       // -- Add the values from this callsite into the collected set
-		      
+
       meet_with(collected_vals, vals);
-		      
+
       // -- Keep track of the callsite with the best information
-      
+
       int count = vals.count();
       if ((count > 0) &&
-	  (count < min)) min = count;
+          (count < min)) min = count;
     }
-		  
+
   if (Annotations::Show_adaptivity)
-    cout << indent << "    ==> Property " << block->property->name() 
-	 << " : Min = " << min << " , Vals = " 
-	 << to_string(collected_vals) << endl;
+    cout << indent << "    ==> Property " << block->property->name()
+         << " : Min = " << min << " , Vals = "
+         << to_string(collected_vals) << endl;
 
   bool result;
-  
+
   if (collected_vals.count() > min)
     result = true;
   else
@@ -3753,9 +3755,9 @@ bool enumPropertyAnn::validate_property_cs(memoryBlock * block,
  * */
 
 bool enumPropertyAnn::validate_multiplicity_cs(memoryBlock * block,
-					       const callsite_objects_map & assignments,
+                                               const callsite_objects_map & assignments,
                                                procedureInfo *procedure, // TB
-					       string & indent)
+                                               string & indent)
 {
   bool any_single = false;
   bool any_unbounded = false;
@@ -3778,41 +3780,41 @@ bool enumPropertyAnn::validate_multiplicity_cs(memoryBlock * block,
       Multiplicity reaching_multiplicity = Unallocated;
 
       for (memoryblock_set_cp mdp = reaching_blocks.begin();
-	   mdp != reaching_blocks.end();
-	   ++mdp)
-	{
-	  memoryBlock * reaching_block = (*mdp);
+           mdp != reaching_blocks.end();
+           ++mdp)
+        {
+          memoryBlock * reaching_block = (*mdp);
 
-	  reaching_block->set_current_def_use(attach_to);
+          reaching_block->set_current_def_use(attach_to);
 
-	  memoryUse * use = reaching_block->current_use();
-	  if (use &&
-	      use->reaching_def()) {
+          memoryUse * use = reaching_block->current_use();
+          if (use &&
+              use->reaching_def()) {
 
-	    memoryDef * reaching_def = use->reaching_def();
+            memoryDef * reaching_def = use->reaching_def();
 
-	    if (Annotations::Show_adaptivity) {
-	      cout << indent << "      Callsite " << * callsite;
-	      if (reaching_def)
-		cout << " reached by " << * (reaching_def->where()) << endl;
-	      else
-		cout << " (no reaching def)" << endl;
-	    }
-	    
-	    reaching_multiplicity = reaching_def->multiplicity();
-	    
-	    if (reaching_multiplicity == Unbounded)
-	      any_unbounded = true;
+            if (Annotations::Show_adaptivity) {
+              cout << indent << "      Callsite " << * callsite;
+              if (reaching_def)
+                cout << " reached by " << * (reaching_def->where()) << endl;
+              else
+                cout << " (no reaching def)" << endl;
+            }
 
-	    if (reaching_multiplicity == Single)
-	      any_single = true;
-	  }
-	}
+            reaching_multiplicity = reaching_def->multiplicity();
+
+            if (reaching_multiplicity == Unbounded)
+              any_unbounded = true;
+
+            if (reaching_multiplicity == Single)
+              any_single = true;
+          }
+        }
     }
-  
+
   if (Annotations::Show_adaptivity)
-    cout << indent << "    ==> Any single = " << any_single 
-	 << ", any unbounded = " << any_unbounded << endl;
+    cout << indent << "    ==> Any single = " << any_single
+         << ", any unbounded = " << any_unbounded << endl;
 
   bool result;
 
@@ -3839,9 +3841,9 @@ typedef map< stmtNode *, memoryblock_set > stmt_memoryblock_set_map;
 typedef stmt_memoryblock_set_map::iterator stmt_memoryblock_set_map_p;
 
 bool enumPropertyAnn::validate_pointer_cs(memoryBlock * block,
-					  const callsite_objects_map & assignments,
+                                          const callsite_objects_map & assignments,
                                           procedureInfo *procedure,
-					  string & indent)
+                                          string & indent)
 {
 #if 0
     memoryblock_set master;
@@ -3853,81 +3855,81 @@ bool enumPropertyAnn::validate_pointer_cs(memoryBlock * block,
       cout << indent << "    Points-to validation for block " << block->name() << endl;
 
     for (callsite_objects_map_cp rdp = assignments.begin();
-	 rdp != assignments.end();
-	 ++rdp)
+         rdp != assignments.end();
+         ++rdp)
       {
-	stmtLocation * callsite = (*rdp).first;
+        stmtLocation * callsite = (*rdp).first;
 
-	const memoryblock_set & reaching_blocks = (*rdp).second;
+        const memoryblock_set & reaching_blocks = (*rdp).second;
 
-	// -- Find the points-to sets
+        // -- Find the points-to sets
 
-	memoryblock_set local_set;
+        memoryblock_set local_set;
 
-	for (memoryblock_set_cp m = reaching_blocks.begin();
-	     m != reaching_blocks.end();
-	     ++m)
-	  {
-	    memoryBlock * one = (*m);
-	    memoryUse * use = one->find_use_at(callsite);
-	    if (use) {
-	      memoryDef * def = use->reaching_def();
-	      if (def) {
-		const memoryblock_set & points_to = def->points_to();
-		local_set.insert(points_to.begin(),
-				 points_to.end());
-	      }
-	    }
-	  }
+        for (memoryblock_set_cp m = reaching_blocks.begin();
+             m != reaching_blocks.end();
+             ++m)
+          {
+            memoryBlock * one = (*m);
+            memoryUse * use = one->find_use_at(callsite);
+            if (use) {
+              memoryDef * def = use->reaching_def();
+              if (def) {
+                const memoryblock_set & points_to = def->points_to();
+                local_set.insert(points_to.begin(),
+                                 points_to.end());
+              }
+            }
+          }
 
-	if (Annotations::Show_adaptivity) {
-	  cout << indent << "      Callsite " << * callsite
-	       << " : blocks = ";
-	  for (memoryblock_set_cp mbp = local_set.begin();
-	       mbp != local_set.end();
-	       ++mbp)
-	    cout << (*mbp)->name() << " ";
-	  cout << endl;
-	}
+        if (Annotations::Show_adaptivity) {
+          cout << indent << "      Callsite " << * callsite
+               << " : blocks = ";
+          for (memoryblock_set_cp mbp = local_set.begin();
+               mbp != local_set.end();
+               ++mbp)
+            cout << (*mbp)->name() << " ";
+          cout << endl;
+        }
 
-	// -- Store according to stmt
+        // -- Store according to stmt
 
-	stmt_values[callsite->stmt()].insert(local_set.begin(),
-					   local_set.end());
+        stmt_values[callsite->stmt()].insert(local_set.begin(),
+                                           local_set.end());
       }
 
     for (stmt_memoryblock_set_map_p p = stmt_values.begin();
-	 p != stmt_values.end();
-	 ++p)
+         p != stmt_values.end();
+         ++p)
       {
-	stmtNode * stmt = (*p).first;
-	const memoryblock_set & local_set = (*p).second;
-	
-	if (Annotations::Show_adaptivity) {
-	  cout << indent << "      Statement " << stmt->coord() << ": blocks = ";
-	  for (memoryblock_set_cp mbp = local_set.begin();
-	       mbp != local_set.end();
-	       ++mbp)
-	    cout << (*mbp)->name() << " ";
-	  cout << endl;
-	}
-	
-	if (! local_set.empty()) {
-	  if (master.empty())
-	    master = local_set;
-	  else
-	    if (master != local_set)
-	      result = true;
-	}
+        stmtNode * stmt = (*p).first;
+        const memoryblock_set & local_set = (*p).second;
+
+        if (Annotations::Show_adaptivity) {
+          cout << indent << "      Statement " << stmt->coord() << ": blocks = ";
+          for (memoryblock_set_cp mbp = local_set.begin();
+               mbp != local_set.end();
+               ++mbp)
+            cout << (*mbp)->name() << " ";
+          cout << endl;
+        }
+
+        if (! local_set.empty()) {
+          if (master.empty())
+            master = local_set;
+          else
+            if (master != local_set)
+              result = true;
+        }
       }
-    
+
     if (Annotations::Show_adaptivity) {
       if (result)
-	cout << indent << "      -> Validated" << endl;
+        cout << indent << "      -> Validated" << endl;
       else
-	cout << indent << "      -> Prune" << endl;
+        cout << indent << "      -> Prune" << endl;
     }
-    
+
     return result;
 
 #endif
@@ -3935,76 +3937,76 @@ bool enumPropertyAnn::validate_pointer_cs(memoryBlock * block,
 #if 1
     // memoryblock_set collected_points_to;
     enumvalue_set collected_vals;
-    
+
     int min_size = 99999;
     int min = 99999;
     enumValueAnn * highest_value = 0;
-    
+
     if (Annotations::Show_adaptivity)
       cout << indent << "    Points-to validation for block " << block->name() << endl;
-    
+
     // memoryblock_set flow_insensitive;
-    
+
     // -- Store the values according to non-context-sensitive callsite
-    
+
     stmt_value_map stmt_values;
-    
+
     for (callsite_objects_map_cp rdp = assignments.begin();
-	 rdp != assignments.end();
-	 ++rdp)
+         rdp != assignments.end();
+         ++rdp)
       {
-	stmtLocation * callsite = (*rdp).first;
-	procLocation * attach_to = procedure->procedure_location(callsite);
+        stmtLocation * callsite = (*rdp).first;
+        procLocation * attach_to = procedure->procedure_location(callsite);
         assert( attach_to ); // debug
-	
-	const memoryblock_set & reaching_blocks = (*rdp).second;
-	
-	// -- Add the values from this callsite into the collected set
-	
-	enumvalue_set vals = reachable_values(callsite, reaching_blocks,
+
+        const memoryblock_set & reaching_blocks = (*rdp).second;
+
+        // -- Add the values from this callsite into the collected set
+
+        enumvalue_set vals = reachable_values(callsite, reaching_blocks,
                                               procedure);
-	
-	if (Annotations::Show_adaptivity) {
-	  cout << indent << "      Callsite " << * callsite
-	       << " : [ Values = " << to_string(vals) << " -- blocks = ";
-	  for (memoryblock_set_cp mbp = reaching_blocks.begin();
-	       mbp != reaching_blocks.end();
-	       ++mbp)
-	    cout << (*mbp)->name() << " ";
-	  cout << "]" << endl;
-	}
-	
-	// -- Store according to stmt
-	
-	meet_with(stmt_values[callsite->stmt()], vals);
+
+        if (Annotations::Show_adaptivity) {
+          cout << indent << "      Callsite " << * callsite
+               << " : [ Values = " << to_string(vals) << " -- blocks = ";
+          for (memoryblock_set_cp mbp = reaching_blocks.begin();
+               mbp != reaching_blocks.end();
+               ++mbp)
+            cout << (*mbp)->name() << " ";
+          cout << "]" << endl;
+        }
+
+        // -- Store according to stmt
+
+        meet_with(stmt_values[callsite->stmt()], vals);
       }
-    
+
     for (stmt_value_map_p p = stmt_values.begin();
-	 p != stmt_values.end();
-	 ++p)
+         p != stmt_values.end();
+         ++p)
       {
-	stmtNode * stmt = (*p).first;
-	enumvalue_set vals = (*p).second;
-	
-	if (Annotations::Show_adaptivity) {
-	  cout << indent << "      Statement " << stmt->coord() << " reaching values = "
-	       << to_string(vals) << endl;
-	}
-	
-	meet_with(collected_vals, vals);
-	
-	// -- Keep track of the callsite with the best information
-	
-	int count = vals.count();
-	if ((count > 0) &&
-	    (count < min)) min = count;
+        stmtNode * stmt = (*p).first;
+        enumvalue_set vals = (*p).second;
+
+        if (Annotations::Show_adaptivity) {
+          cout << indent << "      Statement " << stmt->coord() << " reaching values = "
+               << to_string(vals) << endl;
+        }
+
+        meet_with(collected_vals, vals);
+
+        // -- Keep track of the callsite with the best information
+
+        int count = vals.count();
+        if ((count > 0) &&
+            (count < min)) min = count;
       }
-    
+
     if (Annotations::Show_adaptivity)
       cout << indent << "    ==> [ Values = " << to_string(collected_vals) << " ]" << endl;
-    
+
     bool result;
-          
+
     if (collected_vals.count() > min)
       result = true;
     else
@@ -4012,11 +4014,11 @@ bool enumPropertyAnn::validate_pointer_cs(memoryBlock * block,
 
     if (Annotations::Show_adaptivity) {
       if (result)
-	cout << indent << "      -> Validated" << endl;
+        cout << indent << "      -> Validated" << endl;
       else
-	cout << indent << "      -> Prune" << endl;
+        cout << indent << "      -> Prune" << endl;
     }
-    
+
     return result;
 #endif
 }
@@ -4027,8 +4029,8 @@ bool enumPropertyAnn::validate_pointer_cs(memoryBlock * block,
  * actually help. */
 
 bool enumPropertyAnn::validate_pointer_fs(memoryBlock * block,
-					  stmtLocation * where,
-					  string & indent)
+                                          stmtLocation * where,
+                                          string & indent)
 {
   // memoryblock_set collected_points_to;
   enumvalue_set collected_vals;
@@ -4059,24 +4061,24 @@ bool enumPropertyAnn::validate_pointer_fs(memoryBlock * block,
 
       if ( ! target->write_protected()) {
 
-	// -- Get the values of the reachable blocks from this target:
+        // -- Get the values of the reachable blocks from this target:
 
-	memoryblock_set target_set;
-	target_set.insert(target);
-	enumvalue_set vals = reachable_values(where, target_set);
+        memoryblock_set target_set;
+        target_set.insert(target);
+        enumvalue_set vals = reachable_values(where, target_set);
 
-	meet_with(collected_vals, vals);
+        meet_with(collected_vals, vals);
 
-	if (Annotations::Show_adaptivity) {
-	  cout << indent << "      Target " << target->name()
-	       << " : [ Values = " << to_string(vals) << "]" << endl;
-	}
+        if (Annotations::Show_adaptivity) {
+          cout << indent << "      Target " << target->name()
+               << " : [ Values = " << to_string(vals) << "]" << endl;
+        }
 
-	// -- Keep track of the callsite with the best information
-	
-	int count = vals.count();
-	if ((count > 0) &&
-	    (count < min)) min = count;
+        // -- Keep track of the callsite with the best information
+
+        int count = vals.count();
+        if ((count > 0) &&
+            (count < min)) min = count;
       }
     }
 
@@ -4130,20 +4132,20 @@ bool enumPropertyAnn::is_location_reachable(Location * source, Location * target
     // (presumably, the right-hand sides)
 
     for (memorydef_set_p p = defs.begin();
-	 p != defs.end();
-	 p++)
+         p != defs.end();
+         p++)
       {
-	memoryDef * cur_def = *p;
+        memoryDef * cur_def = *p;
 
-	// -- Find all the right-hand-side uses
+        // -- Find all the right-hand-side uses
 
-	block->find_uses_at(cur_def->where(), uses);
+        block->find_uses_at(cur_def->where(), uses);
 
-	memoryUse * use = cur_def->self_assign_use();
-	if (use)
-	  uses.insert(use);
+        memoryUse * use = cur_def->self_assign_use();
+        if (use)
+          uses.insert(use);
       }
-    
+
     // -- Clear the set of defs
 
     defs.clear();
@@ -4151,30 +4153,30 @@ bool enumPropertyAnn::is_location_reachable(Location * source, Location * target
     // -- For each use, get it's reaching definition
 
     for (memoryuse_set_p w = uses.begin();
-	 w != uses.end();
-	 ++w)
+         w != uses.end();
+         ++w)
       {
-	memoryUse * cur_use = *w;
-	memoryDef * cur_def = cur_use->reaching_def();
+        memoryUse * cur_use = *w;
+        memoryDef * cur_def = cur_use->reaching_def();
 
-	if (cur_def) {
+        if (cur_def) {
 
-	  // -- If this is the def we're looking for, then exit
+          // -- If this is the def we're looking for, then exit
 
-	  if (cur_def == source_def)
-	    return true;
+          if (cur_def == source_def)
+            return true;
 
-	  if (already_seen.find(cur_def) == already_seen.end()) {
+          if (already_seen.find(cur_def) == already_seen.end()) {
 
-	    // -- Found a new def, keep going
+            // -- Found a new def, keep going
 
-	    already_seen.insert(cur_def);
+            already_seen.insert(cur_def);
 
-	    defs.insert(cur_def);
+            defs.insert(cur_def);
 
-	    not_done = true;
-	  }
-	}
+            not_done = true;
+          }
+        }
       }
 
     // -- Clear the uses and continue
@@ -4188,7 +4190,7 @@ bool enumPropertyAnn::is_location_reachable(Location * source, Location * target
 }
 
 enumvalue_set enumPropertyAnn::reachable_values(stmtLocation * where,
-						const memoryblock_set & blocks,
+                                                const memoryblock_set & blocks,
                                                 procedureInfo *callee)
 {
   enumvalue_set result;
@@ -4213,7 +4215,7 @@ enumvalue_set enumPropertyAnn::reachable_values(stmtLocation * where,
     worklist.pop_front();
 
     // -- Add all the immediately reachable blocks (that we haven't seen yet)
-    
+
     if(mb->is_flow_sensitive() || !callee || !callee->is_context_insensitive()){
       // TB
       mb->reachable_blocks(where, true, worklist, found, (memoryBlock *)0);
@@ -4233,7 +4235,7 @@ enumvalue_set enumPropertyAnn::reachable_values(stmtLocation * where,
   // -- Include the blocks themselves
 
   found.insert(blocks.begin(),
-	       blocks.end());
+               blocks.end());
 
   // -- Collect all the property blocks...
 
@@ -4248,13 +4250,13 @@ enumvalue_set enumPropertyAnn::reachable_values(stmtLocation * where,
 
       if (property_block) {
 
-	// -- Make sure this is a block we care about
+        // -- Make sure this is a block we care about
 
-	// memoryblock_set_p found = already_seen.find(property_block);
+        // memoryblock_set_p found = already_seen.find(property_block);
 
-	//if (found != already_seen.end())
+        //if (found != already_seen.end())
 
-	property_blocks.insert(property_block);
+        property_blocks.insert(property_block);
       } /*else if (default_val() != top())
         meet_with(result, default_val()); // TB*/
     }
@@ -4281,8 +4283,8 @@ enumvalue_set enumPropertyAnn::reachable_values(stmtLocation * where,
  * Make the given procedure context sensitive. */
 
 bool enumPropertyAnn::add_context_sensitive_proc(procedureInfo * info,
-						 procedureinfo_set & already_seen,
-						 procedureinfo_set & make_cs)
+                                                 procedureinfo_set & already_seen,
+                                                 procedureinfo_set & make_cs)
 {
   // -- Visit all of it's descendants
 
@@ -4298,21 +4300,21 @@ bool enumPropertyAnn::add_context_sensitive_proc(procedureInfo * info,
 
       if (already_seen.find(cur) == already_seen.end()) {
 
-	already_seen.insert(cur);
+        already_seen.insert(cur);
 
-	// -- Add this procedure, but skip recursive procedures
+        // -- Add this procedure, but skip recursive procedures
 
-	bool cur_recursive = add_context_sensitive_proc(cur, already_seen, make_cs);
+        bool cur_recursive = add_context_sensitive_proc(cur, already_seen, make_cs);
 
-	if ( ! cur->is_recursive() && ! cur_recursive) {
+        if ( ! cur->is_recursive() && ! cur_recursive) {
 
-	  const string & name = info->proc()->decl()->name();
+          const string & name = info->proc()->decl()->name();
 
-	  // -- Don't add library routines:
+          // -- Don't add library routines:
 
-	  if (cur->proc()->decl()->decl_location() != declNode::UNKNOWN)
-	    make_cs.insert(cur);
-	}
+          if (cur->proc()->decl()->decl_location() != declNode::UNKNOWN)
+            make_cs.insert(cur);
+        }
       }
     }
 

@@ -4079,6 +4079,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // add option to specify preprocessing only
 #if BACKEND_FORTRAN_IS_GNU_COMPILER
           fortran_C_preprocessor_commandLine.push_back("-E");
+      // Pei-Hung (06/18/2020) gfortran option to inhibit generation of linemarkers in the output from the preprocessor. 
+          fortran_C_preprocessor_commandLine.push_back("-P");
 #elif BACKEND_FORTRAN_IS_PGI_COMPILER
      // Pei-Hung 12/09/2019 This is for PGI Fortran compiler, add others if necessary
           fortran_C_preprocessor_commandLine.push_back("-Mcpp");

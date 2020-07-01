@@ -13,7 +13,7 @@
 #                                                    #
 ######################################################
 
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
+EXAMPLE_CXX_TESTS_REQUIRED_TO_PASS = \
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
 test2001_02.C \
@@ -635,7 +635,7 @@ X.C \
 inputBug317.C
 
 if !USING_CLANG_COMPILER
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+EXAMPLE_CXX_TESTS_REQUIRED_TO_PASS += \
    test2004_76.C \
    test2005_03.C \
    test2005_11.C \
@@ -652,7 +652,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
 endif
 
 
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT = \
+EXAMPLE_CXX_TESTS_REQUIRED_TO_PASS_SHORT = \
 test2001_02.C \
 test2001_03.C \
 test2004_116.C
