@@ -1,12 +1,13 @@
 
 #include "broadway.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 using namespace std;
 
 analyzeAnn::analyzeAnn(Annotations * anns,
-		       const parserID * property,
-		       rule_list * rules,
-		       int line)
+                       const parserID * property,
+                       rule_list * rules,
+                       int line)
   : Ann(line),
     _property(0),
     _rules(),
@@ -39,10 +40,10 @@ analyzeAnn::analyzeAnn(Annotations * anns,
 
       if ( ! rule->has_condition() ) {
 
-	if (_default)
-	  anns->Error(line, "Each analyze annotation may only have one default rule.");
-	else
-	  _default = rule;
+        if (_default)
+          anns->Error(line, "Each analyze annotation may only have one default rule.");
+        else
+          _default = rule;
       }
     }
 }
@@ -50,7 +51,7 @@ analyzeAnn::analyzeAnn(Annotations * anns,
 #ifdef __PROCLOCATION
 
 void analyzeAnn::test(procLocation * where,
-		      propertyAnalyzer * property_analyzer)
+                      propertyAnalyzer * property_analyzer)
 {
   // -- Make sure we only analyze properties that have the same direction
   // as the current analysis.
@@ -62,14 +63,14 @@ void analyzeAnn::test(procLocation * where,
       cout << "- Test rules for \"" << property()->name() << "\"" << endl;
 
     for (rule_list_p p = _rules.begin();
-	 p != _rules.end();
-	 ++p)
+         p != _rules.end();
+         ++p)
       (*p)->test(where, property_analyzer);
   }
 }
 
 void analyzeAnn::compute_next(procLocation * where,
-			      propertyAnalyzer * property_analyzer)
+                              propertyAnalyzer * property_analyzer)
 {
   // -- Make sure we only analyze properties that have the same direction
   // as the current analysis.
@@ -81,24 +82,24 @@ void analyzeAnn::compute_next(procLocation * where,
 
     bool found_non_default = false;
     for (rule_list_p p = _rules.begin();
-	 p != _rules.end();
-	 ++p)
+         p != _rules.end();
+         ++p)
       {
-	ruleAnn * rule = *p;
+        ruleAnn * rule = *p;
 
-	if ((rule != _default) &&
-	    rule->is_condition_true()) {
+        if ((rule != _default) &&
+            rule->is_condition_true()) {
 
-	  if (Annotations::Verbose_properties)
-	    cout << "- Proposed updates to \"" << property()->name() << "\"" << endl;
+          if (Annotations::Verbose_properties)
+            cout << "- Proposed updates to \"" << property()->name() << "\"" << endl;
 
-	  rule->compute_next(where);
-	  found_non_default = true;
+          rule->compute_next(where);
+          found_non_default = true;
 
-	  _applicable_rule = rule;
+          _applicable_rule = rule;
 
-	  break;
-	}
+          break;
+        }
       }
 
     // -- If no non-default rule is true, then compute next on the default
@@ -106,7 +107,7 @@ void analyzeAnn::compute_next(procLocation * where,
 
     if (_default && ( ! found_non_default )) {
       if (Annotations::Verbose_properties)
-	cout << "- Proposed updates to \"" << property()->name() << "\"" << endl;
+        cout << "- Proposed updates to \"" << property()->name() << "\"" << endl;
 
       _default->compute_next(where);
 
@@ -121,8 +122,8 @@ void analyzeAnn::compute_next(procLocation * where,
  * variables. Store the changed blocks in the changes set. */
 
 void analyzeAnn::apply_next(procLocation * where,
-			    propertyAnalyzer * property_analyzer,
-			    memoryblock_set & changes)
+                            propertyAnalyzer * property_analyzer,
+                            memoryblock_set & changes)
 {
   // -- If a rule was applicable, call apply_next() on the actions
 
@@ -135,7 +136,7 @@ void analyzeAnn::apply_next(procLocation * where,
 #endif /* __PROCLOCATION */
 
 void analyzeAnn::lookup(procedureAnn * procedure,
-			Annotations * annotations)
+                        Annotations * annotations)
 {
   // -- Call look up on each of the rules
 

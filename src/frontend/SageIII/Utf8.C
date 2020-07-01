@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <string.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 #include "Utf8.h"
 
 // Define static member variables
@@ -23,7 +24,7 @@ int Utf8::getUnicodeValue(const char *bytes, int size) {
              break;
         case 1: // ASCII character
              break;
-        default: 
+        default:
         {
              code &= (0xFF >> (size + 1));
              for (int k = 1; k < size; k++) {
@@ -118,7 +119,7 @@ int Utf8::getCharSize(int val) {
         return 6;
 
     //
-    // The characters 
+    // The characters
     //
     //    0B11111110 and 0B11111111
     //
@@ -162,7 +163,7 @@ string Utf8::getUtf8String(int value) {
         result += (char) (0x00000080 | (value & 0x0000003F));
     }
 
-    return result;        
+    return result;
 }
 
 /**
@@ -251,5 +252,5 @@ cout << "Output string: \"" << result << "\" with length " << result.size() << "
 cout.flush();
 */
 
-    return result;        
+    return result;
 }

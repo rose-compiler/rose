@@ -73,6 +73,7 @@ namespace Outliner
   ROSE_DLL_API extern bool use_dlopen; // Outlining the target to a separated file and calling it using a dlopen() scheme. It turns on useNewFile.
 
   ROSE_DLL_API extern bool enable_template;  // Enabling outlining code blocks inside template functions
+  ROSE_DLL_API extern bool select_omp_loop;  // Find OpenMP for loops and outline them. This is used for testing purposes.
   
   ROSE_DLL_API extern std::string output_path; // where to save the new file containing the outlined function
 

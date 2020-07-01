@@ -1,5 +1,6 @@
 #include "DataFlowAnalysis.h"
 #include "DGBaseGraphImpl.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 template<class Node, class Data>
 DataFlowAnalysis<Node, Data>::DataFlowAnalysis()
@@ -35,6 +36,6 @@ operator()( AstInterface& fa, const AstNodePtr& head)
         if (outOrig != cur->get_exit_data())
           change = true;
       }
-    }  
+    }
   }
 }
