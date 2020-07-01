@@ -1063,13 +1063,13 @@ HEADER_ADA_FLOAT_TYPE_START
 
 HEADER_ADA_FLOAT_TYPE_END
 
-// Rasmussen (4/4/2020): Added SgJovialBitType for Jovial. This type participates in logical
+// CR (4/4/2020): Added SgJovialBitType for Jovial. This type participates in logical
 //                       operations with literals TRUE and FALSE.
 HEADER_JOVIAL_BIT_TYPE_START
           SgName get_name() const;
 HEADER_JOVIAL_BIT_TYPE_END
 
-// Rasmussen (2/19/2020): Added SgTypedFixed for Jovial. Don't really know what to do here.
+// CR (2/19/2020): Added SgTypedFixed for Jovial. Don't really know what to do here.
 HEADER_TYPE_FIXED_TYPE_START
       // SgName get_name() const;
 HEADER_TYPE_FIXED_TYPE_END
@@ -1104,7 +1104,7 @@ $CLASSNAME::get_mangled (void) const
      ROSE_ASSERT(this != NULL);
 
   // DQ (10/4/2010): Modified to provide Fortran support (type_kind is a data member used for Fortran only, it is always NULL for other languages)
-  // Rasmussen (3/6/2020): Now type_kind is also used for Jovial.
+  // CR (3/6/2020): Now type_kind is also used for Jovial.
      SgName name = "MANGLED_ID_STRING";
      if (get_type_kind() != NULL)
         {
@@ -1132,7 +1132,7 @@ $CLASSNAME::get_mangled (void) const
              }
         }
 
-  // Rasmussen (3/6/2020): This is a hack but I can't get SgTypeFixed::get_mangled() to work
+  // CR (3/6/2020): This is a hack but I can't get SgTypeFixed::get_mangled() to work
   // REMOVE_ME please!
      if (isSgTypeFixed(this))
         {
@@ -1377,7 +1377,7 @@ SgTypeString::get_mangled (void) const
 
 SOURCE_GET_MANGLED_STRING_TYPE_END
 
-// Rasmussen (3/6/2020): Added get_mangled for SgTypedFixed (primitive type in Jovial)
+// CR (3/6/2020): Added get_mangled for SgTypedFixed (primitive type in Jovial)
 SOURCE_GET_MANGLED_TYPE_FIXED_START
 
 SgName
@@ -2483,7 +2483,7 @@ SgType::getCurrentScope()
        // Fortran state stack from tests run earlier in the parent Fortran test directory.
        // WARNING, the following relies on short circuiting and emptyFortranStateStack() == false
        // must be checked before emptyFortranScopeStack() == false.
-       // Apparently Java is also examining the Fortran stack! [Rasmussen 2019-7-18].
+       // Apparently Java is also examining the Fortran stack! [CR 2019-7-18].
           if (SageInterface::is_Fortran_language() && emptyFortranStateStack() == false && emptyFortranScopeStack() == false)
              {
             // Fortran AST being generated
@@ -7953,7 +7953,7 @@ SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETER_TYPE_END
 SOURCE_CREATE_TYPE_FOR_JOVIAL_TABLE_TYPE_START
 
 // SgClassType* SgClassType::createType(SgClassDeclaration * cd)
-// Rasmussen - why is optional_fortran_type_kind a parameter?
+// CR - why is optional_fortran_type_kind a parameter?
 SgJovialTableType*
 SgJovialTableType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
    {
@@ -8834,7 +8834,7 @@ SgJovialBitType::createType (SgExpression* size, SgExpression* /*optional_fortra
 }
 SOURCE_CREATE_TYPE_FOR_JOVIAL_BIT_TYPE_END
 
-// Rasmussen (2/19/2020): Added SgTypedFixed (primitive type in Jovial)
+// CR (2/19/2020): Added SgTypedFixed (primitive type in Jovial)
 SOURCE_CREATE_TYPE_FOR_TYPE_FIXED_START
 
 SgTypeFixed*

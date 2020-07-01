@@ -11,6 +11,8 @@
 #include "timing.h"
 #endif
 
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+
 #define DEBUG
 
 ArrayAbstractionInterface* AutoTuningInterface::arrayInfo = 0;
@@ -26,33 +28,33 @@ LocalVar* HandleMap:: NewLoopHandle()
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
-  return 0; 
+  return 0;
 }
 
 LocalVar* HandleMap:: NewBodyHandle()
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
-  return 0; 
+  return 0;
 }
 
-LocalVar* HandleMap:: 
+LocalVar* HandleMap::
 GetLoopHandle(AstInterface &fa, const AstNodePtr& loop)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
-  return 0; 
+  return 0;
 }
- 
+
 LocalVar* HandleMap:: GetBodyHandle(LoopTreeNode* loop, LocalVar* loophandle)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
-  return 0; 
+  return 0;
 }
 
 void HandleMap::
-ObserveCopyAst(AstInterfaceImpl& fa, 
+ObserveCopyAst(AstInterfaceImpl& fa,
       const AstNodePtr& orig, const AstNodePtr& n)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
@@ -95,35 +97,35 @@ void HandleMap::GenTraceHandles(POETProgram& poet, LoopTreeNode* r)
 }
 
 LocalVar* HandleMap:: GetTraceTop(const std::string& handleName)
-{ 
+{
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
   return 0;
 }
 
 LocalVar* HandleMap:: GetTraceDecl(LocalVar* top)
-{ 
+{
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
   return 0;
 }
 
 LocalVar* HandleMap:: GetTracePrivate(LocalVar* top)
-{ 
+{
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
   return 0;
 }
 
 LocalVar* HandleMap:: FindTracePrivate(LocalVar* top)
-{ 
+{
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
   return 0;
 }
 
 LocalVar* HandleMap:: GetTraceInclude()
-{ 
+{
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
   return 0;
@@ -199,38 +201,38 @@ POETCode* AutoTuningInterface:: CreateArrayRef(POETProgram& poet, POETCode* arr,
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
   return 0;
-} 
+}
 POETCode* AutoTuningInterface:: Access2Array(POETProgram& poet, POETCode* ref,int dim)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
   return 0;
-} 
+}
 
 void AutoTuningInterface:: BuildPOETProgram()
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
-} 
+}
 
 void AutoTuningInterface:: Gen_POET_opt()
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
-} 
+}
 
 void AutoTuningInterface::GenOutput()
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
-} 
+}
 
 bool AutoTuningInterface::ApplyOpt(LoopTreeNode* r)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
   return true;
-} 
+}
 
 bool AutoTuningInterface::ApplyOpt(AstInterface& fa)
 {
@@ -254,13 +256,13 @@ ParallelizeLoop(LoopTreeNode* outerLoop, int bsize)
 }
 
 void AutoTuningInterface::
-BlockLoops(LoopTreeNode* outerLoop, LoopTreeNode* innerLoop, 
+BlockLoops(LoopTreeNode* outerLoop, LoopTreeNode* innerLoop,
       LoopBlocking* config, const std::vector<FuseLoopInfo>* nonperfect)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
 }
-AutoTuningInterface:: ~AutoTuningInterface() 
+AutoTuningInterface:: ~AutoTuningInterface()
      { }
 
 BlockSpec* AutoTuningInterface:: LoopBlocked(LocalVar* loop, unsigned *index)
@@ -299,7 +301,7 @@ std::string UnrollSpec:: to_string(OptLevel level)
   return "";
 }
 
-UnrollSpec :: UnrollSpec (LocalVar* handle, int unrollSize) 
+UnrollSpec :: UnrollSpec (LocalVar* handle, int unrollSize)
   : OptSpec(0,"")
 {
   std::cerr << "POET needs to be installed for this to work!\n";
@@ -308,7 +310,7 @@ UnrollSpec :: UnrollSpec (LocalVar* handle, int unrollSize)
 
 
 POETCode* UnrollSpec::
-insert_paramDecl(AutoTuningInterface& tune, POETProgram& poet, 
+insert_paramDecl(AutoTuningInterface& tune, POETProgram& poet,
                  OptLevel optLevel, int& lineNo)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
@@ -317,8 +319,8 @@ insert_paramDecl(AutoTuningInterface& tune, POETProgram& poet,
 }
 
 POETCode* UnrollSpec::
-gen_xformEval(POETProgram& poet, LocalVar* top, 
-                   POETCode* traceMod, OptLevel optLevel, int& lineNo) 
+gen_xformEval(POETProgram& poet, LocalVar* top,
+                   POETCode* traceMod, OptLevel optLevel, int& lineNo)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
@@ -336,7 +338,7 @@ std::string ParLoopSpec:: to_string(OptLevel level)
   return "";
 }
 
-ParLoopSpec :: ParLoopSpec(LocalVar* handle, LoopTreeNode* outerLoop,int bsize) 
+ParLoopSpec :: ParLoopSpec(LocalVar* handle, LoopTreeNode* outerLoop,int bsize)
    : OptSpec(0, "")
 {
   std::cerr << "POET needs to be installed for this to work!\n";
@@ -344,7 +346,7 @@ ParLoopSpec :: ParLoopSpec(LocalVar* handle, LoopTreeNode* outerLoop,int bsize)
 }
 
 POETCode* ParLoopSpec::
-insert_paramDecl(AutoTuningInterface& tune, POETProgram& poet, 
+insert_paramDecl(AutoTuningInterface& tune, POETProgram& poet,
                  OptLevel optLevel, int& lineNo)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
@@ -361,7 +363,7 @@ insert_xformDecl(POETProgram& poet, LocalVar* top, POETCode*& traceMod, int& lin
 
 
 POETCode* ParLoopSpec::
-gen_xformEval(POETProgram& poet, LocalVar* top, 
+gen_xformEval(POETProgram& poet, LocalVar* top,
                    POETCode* traceMod, OptLevel optLevel, int& lineNo)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
@@ -426,10 +428,10 @@ POETCode* FuseLoopInfo::toPOET(HandleMap& handleMap, const FuseLoopInfo& info)
   return 0;
 }
 
-BlockSpec::BlockSpec(HandleMap& _handleMap, 
-            LocalVar* outerHandle, LoopTreeNode* _innerLoop, 
-            LoopBlocking* config, 
-            const std::vector<FuseLoopInfo>* _nonperfect) 
+BlockSpec::BlockSpec(HandleMap& _handleMap,
+            LocalVar* outerHandle, LoopTreeNode* _innerLoop,
+            LoopBlocking* config,
+            const std::vector<FuseLoopInfo>* _nonperfect)
    : OptSpec(0, ""), handleMap(_handleMap)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
@@ -460,7 +462,7 @@ POETCode* BlockSpec::compute_blockDim(LocalVar* paramVar)
 }
 
 POETCode* BlockSpec::
-insert_paramDecl(AutoTuningInterface& tune, POETProgram& poet, 
+insert_paramDecl(AutoTuningInterface& tune, POETProgram& poet,
                  OptLevel optLevel, int& lineNo)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
@@ -475,7 +477,7 @@ insert_xformDecl(POETProgram& poet, LocalVar* top, POETCode*& traceMod, int& lin
   assert(0);
 }
 
-POETCode* BlockSpec::gen_xformEval(POETProgram& poet, LocalVar* top, 
+POETCode* BlockSpec::gen_xformEval(POETProgram& poet, LocalVar* top,
                    POETCode* traceMod, OptLevel optLevel, int& lineNo)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
@@ -501,7 +503,7 @@ int CopyArraySpec::get_loopLevel(const SelectArray::ArrayDim& cur)
   return 0;
 }
 
-CopyArraySpec::  
+CopyArraySpec::
 CopyArraySpec(HandleMap& handleMap, POETCode* target, const std::string& targetName, CopyArrayConfig& config, LoopTreeNode* root)
      : OptSpec(target,targetName), sel(config.get_arr()), opt(config.get_opt()),permute(0)
 {
@@ -510,8 +512,8 @@ CopyArraySpec(HandleMap& handleMap, POETCode* target, const std::string& targetN
 }
 
 /* QY: return variable name  used to trace array dimension to be copied */
-LocalVar* CopyArraySpec:: 
-get_dimVar (POETProgram& poet, const std::string& arrname) 
+LocalVar* CopyArraySpec::
+get_dimVar (POETProgram& poet, const std::string& arrname)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
@@ -529,21 +531,21 @@ LocalVar* CopyArraySpec:: get_arrVar
 }
 
 
-void CopyArraySpec:: 
+void CopyArraySpec::
 insert_xformDecl(POETProgram& poet, LocalVar* top, POETCode*& traceMod, int& lineNo)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
 }
 
-void CopyArraySpec:: compute_copySubscript(LocalVar* dimVar) 
+void CopyArraySpec:: compute_copySubscript(LocalVar* dimVar)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
 }
 
 POETCode* CopyArraySpec::
-compute_copySubscript(POETProgram& poet, bool afterCopy) 
+compute_copySubscript(POETProgram& poet, bool afterCopy)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   assert(0);
@@ -566,7 +568,7 @@ void CopyArraySpec:: compute_config()
 }
 
 POETCode* CopyArraySpec:: gen_cpIvarDecl
-  (POETProgram& poet, LocalVar* top, 
+  (POETProgram& poet, LocalVar* top,
   const std::string& arrname, int dim, bool cpblock)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
@@ -574,10 +576,10 @@ POETCode* CopyArraySpec:: gen_cpIvarDecl
   return 0;
 }
 
-POETCode* CopyArraySpec:: 
+POETCode* CopyArraySpec::
 gen_copyInvoke(POETProgram& poet, POETCode* cploc, LocalVar* top,
-        const std::string& arrname, 
-        POETCode* arrelemType, CopyArrayOpt opt, 
+        const std::string& arrname,
+        POETCode* arrelemType, CopyArrayOpt opt,
         POETCode* cpDim, POETCode* cpblock, bool scalar, POETCode* traceMod)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
@@ -592,8 +594,8 @@ LocalVar* BlockCopyArraySpec::scalarRepl_handle(POETProgram& poet)
   return 0;
 }
 
-BlockCopyArraySpec::  
-BlockCopyArraySpec(LocalVar* handle, CopyArrayConfig& config, 
+BlockCopyArraySpec::
+BlockCopyArraySpec(LocalVar* handle, CopyArrayConfig& config,
                      BlockSpec& _block)
      : CopyArraySpec(0,"",config)
 {
@@ -609,8 +611,8 @@ compute_copyBlock(POETProgram& poet)
   return 0;
 }
 
-POETCode* CopyArraySpec:: 
-insert_paramDecl(AutoTuningInterface& tune, POETProgram& poet, 
+POETCode* CopyArraySpec::
+insert_paramDecl(AutoTuningInterface& tune, POETProgram& poet,
                  OptLevel optLevel, int& lineNo)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
@@ -619,7 +621,7 @@ insert_paramDecl(AutoTuningInterface& tune, POETProgram& poet,
 }
 
 POETCode* CopyArraySpec::
-gen_copyInvoke(POETProgram& poet, POETCode* cphandle, LocalVar* top, 
+gen_copyInvoke(POETProgram& poet, POETCode* cphandle, LocalVar* top,
         POETCode* cpblock, bool scalar, POETCode* traceMod, int& lineNo)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
@@ -628,7 +630,7 @@ gen_copyInvoke(POETProgram& poet, POETCode* cphandle, LocalVar* top,
 }
 
 POETCode* CopyArraySpec::
-gen_xformEval(POETProgram& poet, LocalVar* top, 
+gen_xformEval(POETProgram& poet, LocalVar* top,
                    POETCode* traceMod, OptLevel optLevel, int& lineNo)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
@@ -637,7 +639,7 @@ gen_xformEval(POETProgram& poet, LocalVar* top,
 }
 
 POETCode* BlockCopyArraySpec::
-gen_xformEval(POETProgram& poet, LocalVar* top, 
+gen_xformEval(POETProgram& poet, LocalVar* top,
                    POETCode* traceMod, OptLevel optLevel, int& lineNo)
 {
   std::cerr << "POET needs to be installed for this to work!\n";

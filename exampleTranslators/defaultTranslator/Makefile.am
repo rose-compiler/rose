@@ -3,13 +3,15 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS = $(ROSE_RPATHS)
 
-bin_PROGRAMS = defaultTranslator preprocessingInfoDumper mangledNameDumper qualifiedNameDumper KeepGoingTranslator
+bin_PROGRAMS = defaultTranslator preprocessingInfoDumper mangledNameDumper qualifiedNameDumper KeepGoingTranslator fileInfoDumper
 
 defaultTranslator_SOURCES = defaultTranslator.C 
 preprocessingInfoDumper_SOURCES = preprocessingInfoDumper.C
 mangledNameDumper_SOURCES = mangledNameDumper.C
 qualifiedNameDumper_SOURCES = qualifiedNameDumper.C
 KeepGoingTranslator_SOURCES = KeepGoingTranslator.cpp
+
+fileInfoDumper_SOURCES= fileInfoDumper.C
 
 LDADD = $(ROSE_LIBS)
 

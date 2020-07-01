@@ -4,6 +4,7 @@
 
 #include <CommandOptions.h>
 #include <PtrAnal.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 using namespace std;
 
@@ -22,7 +23,7 @@ inline PtrAnal::Stmt stmts_back(std::vector<PtrAnal::Stmt>& stmts)
   return 0;
 }
 
-static std::string func_return_name(const std::string fname)  
+static std::string func_return_name(const std::string fname)
    { return InterProcVariableUniqueRepr::get_unique_name(fname,0); }
 
 #if 0
@@ -39,7 +40,7 @@ static bool is_constant(const std::string& name)
 }
 #endif
 
-static std::string 
+static std::string
 Local_GetFieldName(AstInterface& fa, const AstNodePtr& field)
 {
    std::string name;
@@ -51,14 +52,14 @@ Local_GetFieldName(AstInterface& fa, const AstNodePtr& field)
     assert(false);
 }
 
-static std::string 
+static std::string
 Local_GetVarName(AstInterface& fa, const AstNodePtr& scope, std::string name)
 {
    assert(name != "");
    return "v:"+InterProcVariableUniqueRepr::get_unique_name (fa, scope, name);
 }
 
-static std::string 
+static std::string
 Local_GetConstName(AstInterface& fa, std::string val)
 {
    return "c:"+val;
@@ -86,16 +87,16 @@ PtrAnal::StmtRef PtrAnal::translate_stmt(const AstNodePtr& s) const
   }
   return cur;
 }
-    
-static std::string 
+
+static std::string
 Local_GetVarName(AstInterface& fa, const AstNodePtr& var)
 {
-   std::string res = 
+   std::string res =
     "v:"+InterProcVariableUniqueRepr::get_unique_name (fa, var);
   return res;
 }
 
-std::string PtrAnal:: 
+std::string PtrAnal::
 Get_VarName(AstInterface& fa, const AstNodePtr& rhs)
 {
   NameMap::const_iterator p = namemap.find(rhs.get_ptr());
@@ -105,13 +106,13 @@ Get_VarName(AstInterface& fa, const AstNodePtr& rhs)
   }
 
    std::string readname, res;
-   AstNodePtr readscope; 
+   AstNodePtr readscope;
    AstNodePtr lhs1, rhs1;
    bool readlhs;
 
    if (fa.IsVarRef(rhs, 0, &readname, &readscope))  {
        assert(readname != "");
-       res = Local_GetVarName(fa, readscope, readname); 
+       res = Local_GetVarName(fa, readscope, readname);
     }
    else if (fa.IsConstant(rhs,&res,&readname)) {
       if (res == "string") {
@@ -162,22 +163,22 @@ ProcessExpression( AstInterface& fa, const std::string& _modname, const AstNodeP
      std::string fname = Get_VarName(fa,p);
      refs.push_back(RefRec(p,fname));
      std::list<std::string> pargs, pres;
-     for (AstInterface::AstNodeList::const_iterator p = args.begin(); 
+     for (AstInterface::AstNodeList::const_iterator p = args.begin();
           p != args.end(); ++p) {
          AstNodePtr cur = *p;
-         std::string curname = Get_VarName(fa, cur); 
+         std::string curname = Get_VarName(fa, cur);
          pargs.push_back(curname);
          refs.push_back(RefRec(cur,curname));
      }
      pres.push_back(modname);
-     for (AstInterface::AstNodeList::const_iterator p2 = out.begin(); 
+     for (AstInterface::AstNodeList::const_iterator p2 = out.begin();
           p2 != out.end(); ++p2) {
          AstNodePtr cur = *p2;
-         std::string curname = Get_VarName(fa, cur); 
+         std::string curname = Get_VarName(fa, cur);
          pres.push_back(curname);
          refs.push_back(RefRec(cur,curname));
      }
-     Stmt stmt = funccall_x(fname, pargs, pres); 
+     Stmt stmt = funccall_x(fname, pargs, pres);
      stmts_pushback(stmts,stmt);
      for (std::list<RefRec>::const_iterator p3 = refs.begin();
           p3 != refs.end(); ++p3) {
@@ -192,15 +193,15 @@ ProcessExpression( AstInterface& fa, const std::string& _modname, const AstNodeP
         }
         switch (op) {
         case AstInterface::UOP_ADDR: {
-           readname= Get_VarName(fa, p); 
-           Stmt stmt = x_eq_addr_y(modname, readname); 
+           readname= Get_VarName(fa, p);
+           Stmt stmt = x_eq_addr_y(modname, readname);
            stmts_pushback(stmts,stmt);
            namemap[p.get_ptr()] = VarRef(stmt,readname);
            namemap[rhs.get_ptr()] = VarRef(stmt,modname);
            break;
         }
         case AstInterface::UOP_DEREF:  {
-           readname= Get_VarName(fa, p); 
+           readname= Get_VarName(fa, p);
            Stmt stmt = x_eq_deref_y(modname, "", readname);
            stmts_pushback(stmts,stmt);
            namemap[p.get_ptr()] = VarRef(stmt,readname);
@@ -208,7 +209,7 @@ ProcessExpression( AstInterface& fa, const std::string& _modname, const AstNodeP
            break;
         }
         case AstInterface::UOP_ALLOCATE: {
-           Stmt stmt = allocate_x(modname) ; 
+           Stmt stmt = allocate_x(modname) ;
            stmts_pushback(stmts,stmt);
            break;
          }
@@ -272,8 +273,8 @@ ProcessExpression( AstInterface& fa, const std::string& _modname, const AstNodeP
    else {
       std::string cur = Get_VarName(fa, rhs);
       assert  (cur != "");
-      if (modname != "") { 
-         Stmt stmt_last = x_eq_y(modname, cur); 
+      if (modname != "") {
+         Stmt stmt_last = x_eq_y(modname, cur);
          stmts_pushback(stmts,stmt_last);
          namemap[rhs.get_ptr()] = VarRef(stmt_last,cur);
       }
@@ -281,7 +282,7 @@ ProcessExpression( AstInterface& fa, const std::string& _modname, const AstNodeP
 }
 
 void PtrAnal::
-ProcessMod(AstInterface& fa, const std::string& readname, 
+ProcessMod(AstInterface& fa, const std::string& readname,
           std::list<std::string>& fields, const AstNodePtr& mod)
 {
   std::string modname;
@@ -298,13 +299,13 @@ ProcessMod(AstInterface& fa, const std::string& readname,
      AstInterface::OperatorEnum op;
      AstNodePtr p2;
      if (fa.IsUnaryOp(mod,&op, &p) && op == AstInterface::UOP_DEREF) {
-            std::string lhs = Get_VarName(fa,p); 
-            Stmt stmt_last  = deref_x_eq_y(lhs, fields, readname); 
+            std::string lhs = Get_VarName(fa,p);
+            Stmt stmt_last  = deref_x_eq_y(lhs, fields, readname);
             stmts_pushback(stmts,stmt_last);
             namemap[p.get_ptr()] = VarRef(stmt_last,lhs);
             namemap[mod.get_ptr()] = VarRef(stmt_last, readname);
      }
-    else if (fa.IsBinaryOp(mod,&op,&p,&p2)) { 
+    else if (fa.IsBinaryOp(mod,&op,&p,&p2)) {
          if (op==AstInterface::BOP_DOT_ACCESS) {
             std::string field = Local_GetFieldName(fa, p2);
             fields.push_front(field);
@@ -322,7 +323,7 @@ ProcessMod(AstInterface& fa, const std::string& readname,
          }
          else {
             std::cerr << "can't handle " << AstInterface::AstToString(mod) << "\n";
-            assert(false); // other operations? to be handled later  
+            assert(false); // other operations? to be handled later
          }
      }
      else if (fa.IsFunctionCall(mod)) {
@@ -333,7 +334,7 @@ ProcessMod(AstInterface& fa, const std::string& readname,
      }
      else {
        std::cerr << "cannot process " << AstInterface::AstToString(mod) << "\n";
-       assert(false); // other operations? to be handled later  
+       assert(false); // other operations? to be handled later
     }
   }
 }
@@ -343,8 +344,8 @@ ProcessAssign( AstInterface& fa, const AstNodePtr& mod, const AstNodePtr& rhs, b
 {
   std::string modname, readname;
   AstNodePtr modscope, readscope;
-  readname = Get_VarName(fa, rhs); 
- 
+  readname = Get_VarName(fa, rhs);
+
   if (!fa.IsVarRef(mod, 0, &modname, &modscope) )  {
      if (readlhs)  {
           modname = Get_VarName(fa,mod);
@@ -364,7 +365,7 @@ ProcessAssign( AstInterface& fa, const AstNodePtr& mod, const AstNodePtr& rhs, b
        modname = Local_GetVarName(fa, modscope, modname);
        ProcessExpression(fa, modname, rhs);
        Stmt stmt_last = stmts_back(stmts);
-       namemap[mod.get_ptr()] = VarRef(stmt_last,modname);    
+       namemap[mod.get_ptr()] = VarRef(stmt_last,modname);
   }
   else {
        modname = Local_GetVarName(fa, modscope, modname);
@@ -410,7 +411,7 @@ void PtrAnal:: operator()( AstInterface& fa, const AstNodePtr& funcdef)
        refs.push_back(RefRec(*p, curname));
   }
   pres.push_back( func_return_name(fname));
-  for (AstInterface::AstNodeList::const_iterator p2 = outpars.begin(); 
+  for (AstInterface::AstNodeList::const_iterator p2 = outpars.begin();
         p2 != outpars.end(); ++p2) {
        std::string curname = Get_VarName(fa, *p2);
        pres.push_back(curname);
@@ -434,14 +435,14 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s, AstInterface::TraversalVisit
     AstNodePtr lhs, rhs;
     AstInterface::AstNodeList vars, args;
     if (fa.IsStatement(s)) {
-       if (DebugAliasAnal()) 
+       if (DebugAliasAnal())
            std::cerr << "pre visiting " << AstInterface::AstToString(s) << "\n";
       stmt_active.push_back(stmts.size());
     }
 
     if (fa.IsReturn(s,&rhs)) {
        // size_t stmt_firstIndex = stmts.size();
-       std::string fname = fdefined.back(); 
+       std::string fname = fdefined.back();
        if (rhs != AST_NULL) {
           std::string rhsname = Get_VarName(fa, rhs);
           Stmt stmt_last = x_eq_y(func_return_name(fname), rhsname);
@@ -473,19 +474,19 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s, AstInterface::TraversalVisit
    }
  }
  else {
-   if (DebugAliasAnal()) 
+   if (DebugAliasAnal())
       std::cerr << "post visiting " << AstInterface::AstToString(s) << "\n";
    if (fa.IsStatement(s)) {
        size_t stmt_firstIndex = stmt_active.back();
        stmt_active.pop_back();
        if (stmt_firstIndex < stmts.size()) {
-          if (DebugAliasAnal()) 
+          if (DebugAliasAnal())
               std::cerr << "setting stmt mapping \n";
           stmtmap[s.get_ptr()] = pair<size_t,size_t>(stmt_firstIndex, stmts.size()-1);
        }
        else
-          if (DebugAliasAnal()) 
-             std::cerr << "no translation: " << AstInterface::AstToString(s) << "\n"; 
+          if (DebugAliasAnal())
+             std::cerr << "no translation: " << AstInterface::AstToString(s) << "\n";
   }
  }
  return true;

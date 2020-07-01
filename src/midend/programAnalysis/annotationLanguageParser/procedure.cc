@@ -1,6 +1,8 @@
 
 #include "broadway.h"
 #include <cassert>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+
 using namespace std;
 
 // ------------------------------------------------------------
@@ -10,7 +12,7 @@ using namespace std;
 procedureAnn * procedureAnn::Current = 0;
 
 procedureAnn::procedureAnn(parserID * id, parserid_list * params,
-			   Annotations * anns, int line)
+                           Annotations * anns, int line)
   : Ann(line),
     _name(id->name()),
     _variables(),
@@ -53,15 +55,15 @@ procedureAnn::procedureAnn(parserID * id, parserid_list * params,
   if (params) {
     int count = 0;
     for (parserid_list_p p = params->begin();
-	 p != params->end();
-	 ++p)
+         p != params->end();
+         ++p)
       {
-	parserID & id = *p;
-	string & formal_param = id.name();
-	annVariable * formal = lookup(formal_param, true);
-	formal->set_formal();
-	_formal_params.push_back(formal);
-	count++;
+        parserID & id = *p;
+        string & formal_param = id.name();
+        annVariable * formal = lookup(formal_param, true);
+        formal->set_formal();
+        _formal_params.push_back(formal);
+        count++;
       }
   }
 
@@ -86,9 +88,9 @@ procedureAnn::procedureAnn(parserID * id, parserid_list * params,
   basicblockNode * block = new basicblockNode(0, 0);
   body->stmts().push_back(block);
 
-  block->stmts().push_back(new exprstmtNode(0));  
-  block->stmts().push_back(new exprstmtNode(0));  
-  block->stmts().push_back(new exprstmtNode(0));  
+  block->stmts().push_back(new exprstmtNode(0));
+  block->stmts().push_back(new exprstmtNode(0));
+  block->stmts().push_back(new exprstmtNode(0));
 
   // Create a declaration for the procedure: VERY IMPORTANT: the
   // decl_location needs to be UNKNOWN so that we can easily tell which
@@ -163,7 +165,7 @@ procedureAnn::~procedureAnn()
 // ----------------------------------------------------------------------
 
 annVariable * procedureAnn::lookup(const string & variable, bool create,
-				     bool is_new)
+                                     bool is_new)
 {
   // --- Lookup the variable name
 
@@ -182,7 +184,7 @@ annVariable * procedureAnn::lookup(const string & variable, bool create,
       bool is_io = false;
 
       annVariable * new_var = new annVariable(variable, name(), is_new, is_global,
-					      is_external, is_formal, is_io);
+                                              is_external, is_formal, is_io);
 
       _variables[variable] = new_var;
       return new_var;
@@ -193,9 +195,9 @@ annVariable * procedureAnn::lookup(const string & variable, bool create,
 
       annVariable * glob = _annotations->lookup_global(variable);
       if (glob)
-	return glob;
+        return glob;
       else
-	return 0;
+        return 0;
     }
   }
   else
@@ -301,9 +303,9 @@ void procedureAnn::postprocess()
 
       annVariable * var = lookup(varname, false);
       if (var)
-	var->set_deleted();
+        var->set_deleted();
       else
-	_annotations->Error(line, string("Undefined variable ") + varname);
+        _annotations->Error(line, string("Undefined variable ") + varname);
     }
 
   delete _temp_deletes;
@@ -342,10 +344,10 @@ void procedureAnn::postprocess()
       annVariable * var = (*p).second;
 
       if (var->is_new())
-	_allocates_memory = true;
+        _allocates_memory = true;
 
       if (var->is_deleted())
-	_deallocates_memory = true;
+        _deallocates_memory = true;
     }
 
   //     Look for modified globals
@@ -359,13 +361,13 @@ void procedureAnn::postprocess()
        p != _global_defs.end();
        ++p)
     if ((*p)->is_io())
-	_accesses_io = true;
+        _accesses_io = true;
 
   for (var_set_p p = _global_uses.begin();
        p != _global_uses.end();
        ++p)
     if ((*p)->is_io())
-	_accesses_io = true;
+        _accesses_io = true;
 
   if ( ! _allocates_memory &&
        ! _deallocates_memory &&
@@ -380,7 +382,7 @@ void procedureAnn::postprocess()
 }
 
 void procedureAnn::postprocess_variables(parserid_list & uses_or_defs,
-					 bool is_defs)
+                                         bool is_defs)
 {
   // Visit all uses and defs and mark the corresponding variables.
 
@@ -394,13 +396,13 @@ void procedureAnn::postprocess_variables(parserid_list & uses_or_defs,
 
       annVariable * var = lookup(varname, false);
       if (var) {
-	if (is_defs)
-	  add_one_def(var);
-	else
-	  add_one_use(var);
+        if (is_defs)
+          add_one_def(var);
+        else
+          add_one_use(var);
       }
       else
-	_annotations->Error(line, string("Undefined variable ") + varname);
+        _annotations->Error(line, string("Undefined variable ") + varname);
     }
 }
 
@@ -532,20 +534,20 @@ void procedureAnn::add_on_entry(structuretree_list * structures)
 {
   if (structures) {
     for (structuretree_list_p p = structures->begin();
-	 p != structures->end();
-	 ++p)
+         p != structures->end();
+         ++p)
       {
-	structureTreeAnn * top_node = *p;
+        structureTreeAnn * top_node = *p;
 
-	annVariable * top_var = lookup(top_node->name(), false, false);
-	if (top_var)
-	  add_structures(true, _on_entry, top_var, top_node);
-	else
-	  _annotations->Error(top_node->line(),
-			      string("Could not find target \"") + top_node->name() +
-			      string("\""));
+        annVariable * top_var = lookup(top_node->name(), false, false);
+        if (top_var)
+          add_structures(true, _on_entry, top_var, top_node);
+        else
+          _annotations->Error(top_node->line(),
+                              string("Could not find target \"") + top_node->name() +
+                              string("\""));
 
-	delete top_node;
+        delete top_node;
       }
   }
 }
@@ -554,20 +556,20 @@ void procedureAnn::add_on_exit(structuretree_list * structures)
 {
   if (structures) {
     for (structuretree_list_p p = structures->begin();
-	 p != structures->end();
-	 ++p)
+         p != structures->end();
+         ++p)
       {
-	structureTreeAnn * top_node = *p;
+        structureTreeAnn * top_node = *p;
 
-	annVariable * top_var = lookup(top_node->name(), false, false);
-	if (top_var)
-	  add_structures(false, _on_exit, top_var, top_node);
-	else
-	  _annotations->Error(top_node->line(),
-			      string("Could not find target \"") + top_node->name() +
-			      string("\""));
+        annVariable * top_var = lookup(top_node->name(), false, false);
+        if (top_var)
+          add_structures(false, _on_exit, top_var, top_node);
+        else
+          _annotations->Error(top_node->line(),
+                              string("Could not find target \"") + top_node->name() +
+                              string("\""));
 
-	delete top_node;
+        delete top_node;
       }
   }
 }
@@ -585,18 +587,18 @@ void procedureAnn::add_on_exit(pointerRuleAnn * pointer_rule)
 
   if (structures) {
     for (structuretree_list_p p = structures->begin();
-	 p != structures->end();
-	 ++p)
+         p != structures->end();
+         ++p)
       {
-	structureTreeAnn * top_node = *p;
+        structureTreeAnn * top_node = *p;
 
-	annVariable * top_var = lookup(top_node->name(), false, false);
-	if (top_var)
-	  add_structures(false, the_list, top_var, top_node);
-	else
-	  _annotations->Error(top_node->line(),
-			      string("Could not find target \"") + top_node->name() +
-			      string("\""));
+        annVariable * top_var = lookup(top_node->name(), false, false);
+        if (top_var)
+          add_structures(false, the_list, top_var, top_node);
+        else
+          _annotations->Error(top_node->line(),
+                              string("Could not find target \"") + top_node->name() +
+                              string("\""));
       }
   }
 
@@ -606,7 +608,7 @@ void procedureAnn::add_on_exit(pointerRuleAnn * pointer_rule)
 
     if (_default_pointer_rule)
       _annotations->Error(pointer_rule->line(),
-			  "Each on_exit annotation may only have one default rule.");
+                          "Each on_exit annotation may only have one default rule.");
     else
       _default_pointer_rule = pointer_rule;
   }
@@ -621,9 +623,9 @@ void procedureAnn::add_on_exit(pointerRuleAnn * pointer_rule)
 }
 
 void procedureAnn::add_structures(bool is_on_entry,
-				  structure_list & the_list,
-				  annVariable * parent_var,
-				  structureTreeAnn * parent_node)
+                                  structure_list & the_list,
+                                  annVariable * parent_var,
+                                  structureTreeAnn * parent_node)
 {
   structureAnn * new_struc = 0;
   annVariable * child_var = 0;
@@ -654,9 +656,9 @@ void procedureAnn::add_structures(bool is_on_entry,
       // we look up the target and then create a new structureAnn.
 
       if (parent_node->op() == structureTreeAnn::Arrow) {
-	child_var = lookup(child_node->name(), create, is_target_new);
-	if (child_var)
-	  new_struc = new structureAnn(parent_var, child_var, 0, child_node->line());
+        child_var = lookup(child_node->name(), create, is_target_new);
+        if (child_var)
+          new_struc = new structureAnn(parent_var, child_var, 0, child_node->line());
       }
 
       // -- CASE 2: This is the target of a dot operator. The target name
@@ -668,11 +670,11 @@ void procedureAnn::add_structures(bool is_on_entry,
       create = create || parent_var->is_new();
 
       if (parent_node->op() == structureTreeAnn::Dot) {
-	string child_name = parent_var->name() + "." + child_node->name();
-	child_var = lookup(child_name, create, parent_var->is_new());
-	if (child_var)
-	  new_struc = new structureAnn(parent_var, child_var,
-				       & child_node->name(), child_node->line());
+        string child_name = parent_var->name() + "." + child_node->name();
+        child_var = lookup(child_name, create, parent_var->is_new());
+        if (child_var)
+          new_struc = new structureAnn(parent_var, child_var,
+                                       & child_node->name(), child_node->line());
       }
 
       // -- If we successfully created an entry, then add it to the
@@ -680,48 +682,48 @@ void procedureAnn::add_structures(bool is_on_entry,
 
       if (new_struc) {
 
-	// -- Error check: cannot use "new" inside an on_entry annotation
+        // -- Error check: cannot use "new" inside an on_entry annotation
 
-	if (is_on_entry && child_var->is_new())
-	  _annotations->Error(child_node->line(),
-			      string("Use of new operator on \"") + child_node->name() +
-			      string("\" is not allowed inside on_entry."));
+        if (is_on_entry && child_var->is_new())
+          _annotations->Error(child_node->line(),
+                              string("Use of new operator on \"") + child_node->name() +
+                              string("\" is not allowed inside on_entry."));
 
-	// -- Error check: "null" cannot be a source
+        // -- Error check: "null" cannot be a source
 
-	if ( parent_var->name() == "null")
-	  _annotations->Error(child_node->line(),
-			      string("the \"null\" object cannot point to anything or be decomposed."));
+        if ( parent_var->name() == "null")
+          _annotations->Error(child_node->line(),
+                              string("the \"null\" object cannot point to anything or be decomposed."));
 
-	// -- Error check: "return" cannot be pointed to
+        // -- Error check: "return" cannot be pointed to
 
-	if ( child_var->name() == "return")
-	  _annotations->Error(child_node->line(),
-			      string("the \"return\" object cannot be a target."));	  
+        if ( child_var->name() == "return")
+          _annotations->Error(child_node->line(),
+                              string("the \"return\" object cannot be a target."));
 
-	// -- All check pass, add the new structure. Also record the fact
-	// that the source will be a use or a def, depending on whether we
-	// are processing on_entry or on_exit, respectively.
+        // -- All check pass, add the new structure. Also record the fact
+        // that the source will be a use or a def, depending on whether we
+        // are processing on_entry or on_exit, respectively.
 
-	the_list.push_back(new_struc);
+        the_list.push_back(new_struc);
 
-	if (is_on_entry)
-	  add_one_use(parent_var);
-	else
-	  add_one_def(parent_var);
+        if (is_on_entry)
+          add_one_use(parent_var);
+        else
+          add_one_def(parent_var);
 
-	if (child_node->targets())
-	  add_structures(is_on_entry, the_list, child_var, child_node);
+        if (child_node->targets())
+          add_structures(is_on_entry, the_list, child_var, child_node);
       }
       else {
 
-	// -- ERROR: Couldn't find the target child
+        // -- ERROR: Couldn't find the target child
 
-	_annotations->Error(child_node->line(),
-			    string("Could not find target \"") + child_node->name() +
-			    string("\""));
+        _annotations->Error(child_node->line(),
+                            string("Could not find target \"") + child_node->name() +
+                            string("\""));
 
-	return;
+        return;
       }
     }
 }
@@ -737,8 +739,8 @@ void procedureAnn::add_structures(bool is_on_entry,
  * up. */
 
 void procedureAnn::add_global_structures(Annotations * annotations,
-					 annVariable * parent_var,
-					 structureTreeAnn * parent_node)
+                                         annVariable * parent_var,
+                                         structureTreeAnn * parent_node)
 {
   structureAnn * new_struc = NULL;
   annVariable * child_var = NULL;
@@ -752,7 +754,7 @@ void procedureAnn::add_global_structures(Annotations * annotations,
     // -- This is just to hold the effects
 
     _default_pointer_rule = new pointerRuleAnn((exprAnn *)0,
-					       (structuretree_list *)0, parent_node->line());
+                                               (structuretree_list *)0, parent_node->line());
 
     pointer_rule = _default_pointer_rule;
 
@@ -775,17 +777,17 @@ void procedureAnn::add_global_structures(Annotations * annotations,
       // we look up the target and then create a new structureAnn.
 
       if (parent_node->op() == structureTreeAnn::Arrow) {
-	child_var = annotations->add_one_global(child_node->name(),
-						child_node->is_io());
-	new_struc = new structureAnn(parent_var, child_var, 0, child_node->line());
+        child_var = annotations->add_one_global(child_node->name(),
+                                                child_node->is_io());
+        new_struc = new structureAnn(parent_var, child_var, 0, child_node->line());
 
-	// -- This is automatically a def
+        // -- This is automatically a def
 
-	add_one_def(parent_var);
+        add_one_def(parent_var);
 
-	// -- All arrow operators go into the on_exit annotations
+        // -- All arrow operators go into the on_exit annotations
 
-	pointer_rule->effects().push_back(new_struc);
+        pointer_rule->effects().push_back(new_struc);
       }
 
       // -- CASE 2: This is the target of a dot operator. The target name
@@ -794,19 +796,19 @@ void procedureAnn::add_global_structures(Annotations * annotations,
 
       if (parent_node->op() == structureTreeAnn::Dot) {
         assert (parent_var != NULL);
-	string child_name = parent_var->name() + "." + child_node->name();
-	child_var = annotations->add_one_global(child_name,
-						child_node->is_io());
-	new_struc = new structureAnn(parent_var, child_var,
-				     & child_node->name(), child_node->line());
+        string child_name = parent_var->name() + "." + child_node->name();
+        child_var = annotations->add_one_global(child_name,
+                                                child_node->is_io());
+        new_struc = new structureAnn(parent_var, child_var,
+                                     & child_node->name(), child_node->line());
 
-	// -- This is automatically a use
+        // -- This is automatically a use
 
-	add_one_use(parent_var);
+        add_one_use(parent_var);
 
-	// -- All dot operators go into the on_entry annotations
+        // -- All dot operators go into the on_entry annotations
 
-	_on_entry.push_back(new_struc);
+        _on_entry.push_back(new_struc);
       }
 
    // DQ (9/12/2011): Static analysis reports that this could be NULL, check for it explicitly.
@@ -926,26 +928,26 @@ void procedureAnn::process_reports(Analyzer * analyzer)
       // -- And for each context that reaches this callsite...
 
       for (proclocation_set_cp pp = proclocations.begin();
-	   pp != proclocations.end();
-	   ++pp)
-	{
-	  procLocation * libproc_location = *pp;
+           pp != proclocations.end();
+           ++pp)
+        {
+          procLocation * libproc_location = *pp;
 
-	  // -- Make sure all the defs and uses are set
+          // -- Make sure all the defs and uses are set
 
-	  analyzer->setup_all_bindings(this, call, call_args, libproc_location);
+          analyzer->setup_all_bindings(this, call, call_args, libproc_location);
 
-	  // -- Now it's safe to call compute_all_constants
+          // -- Now it's safe to call compute_all_constants
 
-	  property_analyzer->compute_all_constants(libproc_location, this);
+          property_analyzer->compute_all_constants(libproc_location, this);
 
-	  // -- Invoke each report
+          // -- Invoke each report
 
-	  for (report_list_cp p = reports().begin();
-	       p != reports().end();
-	       ++p)
-	    (*p)->report(cout, analyzer, libproc_location, property_analyzer);
-	}
+          for (report_list_cp p = reports().begin();
+               p != reports().end();
+               ++p)
+            (*p)->report(cout, analyzer, libproc_location, property_analyzer);
+        }
     }
 }
 
@@ -971,26 +973,26 @@ void procedureAnn::test_actions(Analyzer * analyzer)
       // -- And for each context that reaches this callsite...
 
       for (proclocation_set_cp pp = proclocations.begin();
-	   pp != proclocations.end();
-	   ++pp)
-	{
-	  procLocation * libproc_location = *pp;
+           pp != proclocations.end();
+           ++pp)
+        {
+          procLocation * libproc_location = *pp;
 
-	  // -- Make sure all the defs and uses are set
+          // -- Make sure all the defs and uses are set
 
-	  analyzer->setup_all_bindings(this, call, call_args, libproc_location);
+          analyzer->setup_all_bindings(this, call, call_args, libproc_location);
 
-	  // -- Now it's safe to call compute_all_constants
+          // -- Now it's safe to call compute_all_constants
 
-	  property_analyzer->compute_all_constants(libproc_location, this);
+          property_analyzer->compute_all_constants(libproc_location, this);
 
-	  // -- Test each action annotation
+          // -- Test each action annotation
 
-	  for (action_list_cp p = actions().begin();
-	       p != actions().end();
-	       ++p)
-	    (*p)->test(callsite, libproc_location, property_analyzer);	      
-	}
+          for (action_list_cp p = actions().begin();
+               p != actions().end();
+               ++p)
+            (*p)->test(callsite, libproc_location, property_analyzer);
+        }
     }
 }
 
@@ -1004,13 +1006,13 @@ actionAnn * procedureAnn::find_applicable_action(threeAddrNode * stmt)
     // -- Look for an action that applies here
 
     for (action_list_cp p = actions().begin();
-	 p != actions().end();
-	 ++p)
+         p != actions().end();
+         ++p)
       {
-	actionAnn * action = *p;
+        actionAnn * action = *p;
 
-	if (action->is_applicable(callsite))
-	  return action;
+        if (action->is_applicable(callsite))
+          return action;
       }
   }
 
@@ -1037,7 +1039,7 @@ void procedureAnn::print(ostream & o) const
     {
       annVariable * decl = *p;
       if (p != _formal_params.begin())
-	o << ", ";
+        o << ", ";
       o << decl->name();
     }
   o << ")" << endl;
@@ -1060,7 +1062,7 @@ void procedureAnn::print(ostream & o) const
     {
       annVariable * decl = *p;
       if (p != _uses.begin())
-	o << ", ";
+        o << ", ";
       o << decl->name();
     }
   o << "  }" << endl;
@@ -1072,7 +1074,7 @@ void procedureAnn::print(ostream & o) const
     {
       annVariable * decl = *p;
       if (p != _defs.begin())
-	o << ", ";
+        o << ", ";
       o << decl->name();
     }
   o << "  }" << endl;
