@@ -297,6 +297,8 @@ struct ContextSequence
     typedef typename impl::const_reference        const_reference;
     typedef typename impl::const_reverse_iterator const_reverse_iterator;
     typedef typename impl::const_iterator         const_iterator;
+    
+    static const bool FIXED_LEN_REP = true;
   
     ContextSequence()
     : data(CTX_CALL_STRING_MAX_LENGTH, Label())
@@ -313,6 +315,7 @@ struct ContextSequence
     const_iterator         end()     const { return data.end(); }
     const_reverse_iterator rbegin()  const { return data.rbegin(); }
     const_reverse_iterator rend()    const { return data.rend(); }
+    size_t                 size()    const { return data.size(); }
     
     /// adds a call label @ref lbl to the end of the sequence.
     /// if the sequence is at its capacity, the oldest call label will be
@@ -386,6 +389,8 @@ struct ContextSequenceCOW
     typedef typename impl::const_reference        const_reference;
     typedef typename impl::const_reverse_iterator const_reverse_iterator;
     typedef typename impl::const_iterator         const_iterator;
+    
+    static const bool FIXED_LEN_REP = _ImplT::FIXED_LEN_REP;
   
     ContextSequenceCOW()
     : data(new impl(CTX_CALL_STRING_MAX_LENGTH, Label()))
@@ -428,6 +433,7 @@ struct ContextSequenceCOW
     const_iterator         end()     const { return data->end(); }
     const_reverse_iterator rbegin()  const { return data->rbegin(); }
     const_reverse_iterator rend()    const { return data->rend(); }
+    size_t                 size()    const { return data->size(); }
     
     /// adds a call label @ref lbl to the end of the sequence.
     /// if the sequence is at its capacity, the oldest call label will be
@@ -487,21 +493,26 @@ struct ContextSequenceCOW
 // \todo the base rep could be replaced by a ring-buffer for efficiency
 struct FiniteCallString 
 {
-    // pick your underlying sequence representation
-    //~ typedef SimpleString<Label>                       sequence; // 0.2% (1s/475s)faster than vector (on some whole application)
-    typedef ext_sequence< std::vector<Label> >        sequence; // seems slightly faster than alternatives below
-    //~ typedef cowbasic_string<Label>                    sequence; // wip
+    // pick the underlying sequence representation
+    typedef SimpleString<Label>                       sequence; // 0.2% (1s/475s)faster than vector (on some whole application)
+    //~ typedef ext_sequence< std::vector<Label> >        sequence; // seems slightly faster than alternatives below
     //~ typedef ext_sequence< std::basic_string<Label> >  sequence;
     //~ typedef std::deque<Label>                         sequence;
     //~ typedef std::list<Label>                          sequence;
     
-    typedef FiniteCallStringComparator                comparator;
     typedef ContextSequence< sequence >               context_string;
     //~ typedef ContextSequenceCOW< sequence >            context_string; // COW wrapper makes things slightly slower...
+    
+    // string comparison reverses "normal" sort to place NO_LABEL first.
+    //   (required by callsite merging in FiniteReturnHandler)
+    typedef FiniteCallStringComparator                comparator;
     
     // "inherited" types
     typedef context_string::const_reverse_iterator    const_reverse_iterator;
     typedef context_string::const_iterator            const_iterator;
+    
+    // true, if the underlying representation is fixed length.
+    static constexpr bool FIXED_LEN_REP = context_string::FIXED_LEN_REP;
     
     // "inherited" functions 
     const_iterator         begin()  const { return rep.begin(); }
@@ -510,6 +521,7 @@ struct FiniteCallString
     const_reverse_iterator rend()   const { return rep.rend(); }
     bool                   empty()  const { return rep.empty(); }  
     Label                  last()   const { return rep.last(); }  
+    size_t                 size()   const { return rep.size(); }  
 
     /// returns true if *this equals that.
     bool operator==(const FiniteCallString& that) const;

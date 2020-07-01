@@ -149,6 +149,10 @@ public:
 
    SgEnumVal* ReplaceEnumVal(SgEnumType*, const std::string &);
 
+// Expressions
+//
+   void Enter(SgFunctionCallExp* &, std::string &name, SgExprListExp* params);
+
 // Jovial specific nodes
 //
    void Enter(SgJovialDefineDeclaration* &, const std::string &define_string);
