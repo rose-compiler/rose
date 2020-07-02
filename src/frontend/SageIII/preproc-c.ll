@@ -1745,6 +1745,7 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
 #if DEBUG_LEX_PASS || 0
      printf ("Leaving getPreprocessorDirectives(fileName = %s): preprocessorInfoList->size() = %d \n",fileName.c_str(),(int)preprocessorInfoList->size());
      printf (" --- preprocessorInfoList->getFileName() = %s \n",preprocessorInfoList->getFileName().c_str());
+     printf (" --- preprocessorInfoList->getList().size() = %zu \n",preprocessorInfoList->getList().size());
 #endif
 
   // DQ (9/29/2013): Added assertion (debugging token handling in ROSE).
@@ -1753,6 +1754,11 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
 #if DEBUG_LEX_PASS || 0
      printf ("Leaving getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream() = %p \n",preprocessorInfoList->get_rawTokenStream());
      printf ("Leaving getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream()->size() = %" PRIuPTR " \n",preprocessorInfoList->get_rawTokenStream()->size());
+#endif
+
+#if 0
+     printf ("Exiting in getPreprocessorDirectives() \n");
+     ROSE_ASSERT(false);
 #endif
 
      return preprocessorInfoList;

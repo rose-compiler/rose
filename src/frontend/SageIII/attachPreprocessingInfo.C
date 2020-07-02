@@ -659,7 +659,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      printf ("################################################################ \n");
 #endif
 
-#if 1
+#if 0
   // Note that this only builds the include graph starting at the first header file not the input source file.
      string dotgraph_filename = "include_file_graph_from_before_attachPreprocessingInfo";
      ROSE_ASSERT(sageFilePtr != NULL);
@@ -704,11 +704,35 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      ROSEAttributesList* commentAndCppDirectiveList = getPreprocessorDirectives(filename);
      ROSE_ASSERT(commentAndCppDirectiveList != NULL);
 
+  // sageFilePtr->get_preprocessorDirectivesAndCommentsList().insert()
+#if 0
+     printf ("Adding list for filename = %s \n",filename.c_str());
+#endif
+     sageFilePtr->get_preprocessorDirectivesAndCommentsList()->addList(filename, commentAndCppDirectiveList);
+
+#if 1
+  // DQ (6/30/2020): Testing for token-based unparsing.
+     ROSE_ASSERT(sageFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
+     ROSEAttributesListContainerPtr filePreprocInfo = sageFilePtr->get_preprocessorDirectivesAndCommentsList();
+
+#if 0
+     printf ("filePreprocInfo->getList().size() = %zu \n",filePreprocInfo->getList().size());
+#endif
+
+  // We should at least have the current files CPP/Comment/Token information (even if it is an empty file).
+     ROSE_ASSERT(filePreprocInfo->getList().size() > 0);
+#endif
+
+#if 0
+     printf ("sageFilePtr->get_token_list().size() = %zu \n",sageFilePtr->get_token_list().size());
+     printf ("commentAndCppDirectiveList->get_rawTokenStream()->size() = %zu \n",commentAndCppDirectiveList->get_rawTokenStream()->size());
+#endif
+
 #if 0
      if ( headerAttributes->size() )
         {
        // string filename = sourceFile->get_sourceFileNameWithPath();
-#if 1
+#if 0
           printf ("Adding list for filename = %s \n",filename.c_str());
 #endif
           sourceFile->get_preprocessorDirectivesAndCommentsList()->addList(filename, headerAttributes);

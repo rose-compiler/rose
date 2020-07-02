@@ -1529,6 +1529,10 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #endif
 
 #if 1
+#if 1
+                                   printf ("In iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): calling buildTokenStreamMapping(): filename = %s \n",
+                                        include_sourceFile->get_filename().c_str());
+#endif
                                 // void buildTokenStreamMapping(SgSourceFile* sourceFile);
                                    buildTokenStreamMapping(include_sourceFile);
 

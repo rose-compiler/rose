@@ -4131,14 +4131,14 @@ SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFi
 
      include_sourceFile = include_file->get_source_file();
 
-#if 1
+#if 0
      printf ("include_sourceFile = %p include_file = %p include_file->get_filename() = %s \n",include_sourceFile,include_file,include_file->get_filename().str());
 #endif
 
   // DQ (10/26/2019): Added debugging code.
      if (include_sourceFile == NULL)
         {
-#if 1
+#if 0
           printf ("include_sourceFile == NULL: include_file = %p include_file->get_filename() = %s \n",include_file,include_file->get_filename().str());
 #endif
        // DQ (10/26/2019): If it does not exist, then add one here.
@@ -4354,7 +4354,7 @@ SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFi
   // include_sourceFile->set_unparseHeaderFiles(true);
   // ROSE_ASSERT(include_sourceFile->get_unparseHeaderFiles() == true);
 
-#if 1
+#if 0
      printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Leaving buildSourceFileForHeaderFile(): return include_sourceFile = %p \n",include_sourceFile);
 #endif
 
@@ -5285,7 +5285,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
                  // DQ (5/19/2020): Need to insert comments and CPP directives for this header file.
                  // It is also required to add the source position information to the include directives.
-#if 1
+#if 0
                     printf ("**************************************************************************************** \n");
                     printf ("**************************************************************************************** \n");
                     printf ("Need to insert comment and CPP directives, and set source position on include directives \n");
@@ -5307,7 +5307,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                  // string filename = unparseScopesMap[
                  // SgIncludeFile* include_file = Rose::includeFileMapForUnparsing[filename];
                     const string filename = unparsedFile->getFileName();
-#if 1
+#if 0
                     printf ("In unparseIncludedFiles(): filename = %s \n",filename.c_str());
 #endif
                     ROSE_ASSERT(unparseScopesMap.find(filename) != unparseScopesMap.end());
@@ -5319,7 +5319,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                  // const SgScopeStatement* header_file_associated_scope = unparseScopesMapEntry->second;
                     SgScopeStatement* header_file_associated_scope = unparseScopesMapEntry->second;
                     ROSE_ASSERT(header_file_associated_scope != NULL);
-#if 1
+#if 0
                     printf ("header_file_associated_scope   = %p = %s \n",header_file_associated_scope,header_file_associated_scope->class_name().c_str());
                     printf ("   --- unparsedFile->getFileName()  = %s \n",unparsedFile->getFileName().c_str());
                     printf ("   --- header_file_associated_scope = %p \n",header_file_associated_scope);
