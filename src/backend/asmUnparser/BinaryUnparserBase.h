@@ -109,6 +109,7 @@ private:
 
 public:
     State(const Partitioner2::Partitioner&, const Settings&, const Base &frontUnparser);
+    State(const Partitioner2::Partitioner&, const RegisterDictionary*, const Settings&, const Base &frontUnparser);
     virtual ~State();
 
     const Partitioner2::Partitioner& partitioner() const;
