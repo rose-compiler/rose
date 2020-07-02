@@ -187,6 +187,7 @@ main(int argc, char *argv[]) {
         engine.memoryMap(newMap);
     }
 
+    mlog[INFO] <<"using the " <<engine.obtainDisassembler()->name() <<" disassembler\n";
     P2::Partitioner partitioner;
     if (settings.doDisassemble) {
         partitioner = engine.partition(specimen);

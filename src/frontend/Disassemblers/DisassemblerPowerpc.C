@@ -36,15 +36,28 @@ namespace BinaryAnalysis {
 
 bool
 DisassemblerPowerpc::canDisassemble(SgAsmGenericHeader *header) const {
+    // Check the architecture and word size
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     switch (wordSize_) {
         case powerpc_32:
-            return isa == SgAsmExecutableFileFormat::ISA_PowerPC;
+            if (SgAsmExecutableFileFormat::ISA_PowerPC != isa)
+                return false;
+            break;
         case powerpc_64:
-            return isa == SgAsmExecutableFileFormat::ISA_PowerPC_64bit;
+            if (SgAsmExecutableFileFormat::ISA_PowerPC_64bit != isa)
+                return false;
+            break;
         default:
             return false;
     }
+
+    // Check the byte order
+    SgAsmGenericFormat *fmt = header->get_exec_format();
+    ASSERT_not_null(fmt);
+    if (fmt->get_sex() != sex_)
+        return false;
+
+    return true;
 }
 
 Unparser::BasePtr
