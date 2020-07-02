@@ -3,6 +3,7 @@
 #include <CompSliceLocality.h>
 #include <FusionAnal.h>
 #include <CommandOptions.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 //#define DEBUG 1
 
@@ -10,7 +11,7 @@ bool DebugFusion()
 {
   static int r = 0;
   if (r == 0)
-     r = (CmdOptions::GetInstance()->HasOption("-debugfusion")?2 : 1); 
+     r = (CmdOptions::GetInstance()->HasOption("-debugfusion")?2 : 1);
   return r == 2;
 }
 
@@ -29,10 +30,10 @@ std::cerr << "FuseSliceNests\n";
     if (fuse.align != 0)
       g2.AlignEntry(j, -fuse.align);
   }
-  const CompSlice* slice1=g1[0]; 
+  const CompSlice* slice1=g1[0];
   for (int k1 = num1-1; k1 >= j; k1--)
      g1.DeleteEntry(k1,!g1[k1]->SliceCommonLoop(slice1));
-  const CompSlice* slice2=g2[0]; 
+  const CompSlice* slice2=g2[0];
   for ( int k2 = num2-1; k2 >= j; k2--)
      g2.DeleteEntry(k2,!g2[k2]->SliceCommonLoop(slice2));
   g1.AppendNest(g2);
@@ -60,7 +61,7 @@ std::cerr << "GetFusionInfo\n";
 }
 
 FusionInfo LoopFusionAnal::
-operator()( CompSliceLocalityRegistry *reg, CompSliceNest& n1, CompSliceNest& n2, 
+operator()( CompSliceLocalityRegistry *reg, CompSliceNest& n1, CompSliceNest& n2,
              int j, int k, const DepInfo& e)
 {
 #ifdef DEBUG
@@ -69,8 +70,8 @@ std::cerr << "LoopFusionAnal\n";
   FusionInfo result = GetFusionInfo(e, j, k);
   if (result) {
      LoopStepInfo step1 = SliceLoopStep(n1[j]), step2 = SliceLoopStep(n2[k]);
-     if ( step1.step == step2.step || 
-          (step1.step == -step2.step && 
+     if ( step1.step == step2.step ||
+          (step1.step == -step2.step &&
               (step1.reversible || step2.reversible)) ) {
          return result;
      }
@@ -136,22 +137,22 @@ std::cerr << "OrigLoopFusionAnal\n";
     return GetFusionInfo(e, j, k);
 }
 
-FusionInfo InnermostLoopFission:: 
+FusionInfo InnermostLoopFission::
 operator()(CompSliceLocalityRegistry *anal, CompSliceNest& n1, CompSliceNest& n2, int j, int k, const DepInfo& e)
 {
 #ifdef DEBUG
 std::cerr << "InnermostLoopFission\n";
 #endif
-   FusionInfo result = OrigLoopFusionAnal::operator()(anal, n1, n2, j, k, e); 
+   FusionInfo result = OrigLoopFusionAnal::operator()(anal, n1, n2, j, k, e);
    if (result) {
       CompSlice::ConstLoopIterator iter1 = n1[j]->GetConstLoopIterator();
       LoopTreeNode* l = iter1.Current();
-      LoopTreeTraverse p(l); 
+      LoopTreeTraverse p(l);
       for (p.Advance(); !p.ReachEnd(); p.Advance()) {
          if (LoopTreeInterface().IsLoop(p.Current()))
             return result;
-      } 
-      return false; 
+      }
+      return false;
    }
    return false;
 }
@@ -209,12 +210,12 @@ Fusible( CompSliceLocalityRegistry *reg, CompSliceNest &n1, CompSliceNest &n2, c
 #ifdef DEBUG
 std::cerr << "SameLevelFusion:Fusible\n";
 #endif
-  return n1.NumberOfEntries() && n2.NumberOfEntries() 
+  return n1.NumberOfEntries() && n2.NumberOfEntries()
          && (*anal)(reg, n1,n2,0,0,e);
 }
 
 void SameLevelFusion ::
-Fuse( CompSliceLocalityRegistry *reg, CompSliceNest& n1, CompSliceNest& n2, DepInfo& e) const 
+Fuse( CompSliceLocalityRegistry *reg, CompSliceNest& n1, CompSliceNest& n2, DepInfo& e) const
 {
 #ifdef DEBUG
 std::cerr << "SameLevelFusion:Fuse\n";

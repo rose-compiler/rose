@@ -13,6 +13,8 @@
 #include <CommandOptions.h>
 #include <fstream>
 
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+
 #ifdef BD_OMEGA
 #include <PlatoOmegaInterface.h>
 #include <DepTestStatistics.h>
@@ -44,15 +46,15 @@ class AccuAstRefs : public CollectObject<std::pair<AstNodePtr,AstNodePtr> >
 {
    CollectObject<AstNodePtr> &col;
   public:
-   AccuAstRefs( CollectObject<AstNodePtr> &_col) 
+   AccuAstRefs( CollectObject<AstNodePtr> &_col)
       :  col(_col) {}
    bool operator()(const std::pair<AstNodePtr,AstNodePtr>& n)
    {
       return col(n.first);
    }
 };
-bool AnalyzeStmtRefs( AstInterface& fa, const AstNodePtr& n, 
-                      CollectObject<AstNodePtr> &wRefs, 
+bool AnalyzeStmtRefs( AstInterface& fa, const AstNodePtr& n,
+                      CollectObject<AstNodePtr> &wRefs,
                       CollectObject<AstNodePtr> &rRefs)
 {
   AccuAstRefs colw(wRefs);
@@ -77,7 +79,7 @@ std::string toString( std::vector< std::vector<SymbolicVal> > & analMatrix)
 }
 
 DepInfo ComputePrivateDep( DepInfoAnal& anal,
-                          const DepInfoAnal::StmtRefDep& ref, 
+                          const DepInfoAnal::StmtRefDep& ref,
                           DepType t, int pos)
   {
      const DepInfoAnal::LoopDepInfo& info1 = anal.GetStmtInfo(ref.r1.stmt);
@@ -86,25 +88,25 @@ DepInfo ComputePrivateDep( DepInfoAnal& anal,
 
      if (! ref.commLevel && pos <= 0)
        return DepInfo();
-     DepInfo result=DepInfoGenerator::GetDepInfo( dim1, dim2, t, 
+     DepInfo result=DepInfoGenerator::GetDepInfo( dim1, dim2, t,
                                    ref.r1.ref, ref.r2.ref, false,ref.commLevel);
      int i;
      for ( i = 0; i < ref.commLevel-1; i++) {
         result.Entry( i,i) = DepRel(DEPDIR_EQ, 0);
      }
      if (ref.commLevel > 0) {
-       if (pos >= 0) 
+       if (pos >= 0)
          result.Entry( i,i) = DepRel(DEPDIR_EQ, 0);
-       else 
+       else
          result.Entry( i,i) = DepRel(DEPDIR_LE, -1);
      }
      info2.domain.RestrictDepInfo( result, DEP_SINK);
      info1.domain.RestrictDepInfo( result, DEP_SRC);
      return result;
   }
-      
+
 DepInfo ComputeGlobalDep( DepInfoAnal& anal,
-                          const DepInfoAnal::StmtRefDep& ref, 
+                          const DepInfoAnal::StmtRefDep& ref,
                           DepType t, int pos)
   {
      const DepInfoAnal::LoopDepInfo& info1 = anal.GetStmtInfo(ref.r1.stmt);
@@ -113,7 +115,7 @@ DepInfo ComputeGlobalDep( DepInfoAnal& anal,
      int  dim2 = info2.domain.NumOfLoops();
      if (! ref.commLevel && pos <= 0)
        return DepInfo();
-     DepInfo result =  DepInfoGenerator::GetDepInfo(dim1, dim2, t, 
+     DepInfo result =  DepInfoGenerator::GetDepInfo(dim1, dim2, t,
                                  ref.r1.ref, ref.r2.ref, false, ref.commLevel );
      if (ref.commLevel > 0) {
        if (pos >= 0)
@@ -153,12 +155,12 @@ GetLoopInfo( const AstNodePtr& s)
          for (int k = j+1; k < dim1; ++k)
             info.domain.SetLoopRel(j,k,info1.domain.Entry(j,k));
        }
-       info.ivars.push_back(ivar); 
-       SymbolicConstBoundAnalysis<AstNodePtr,DepInfoAnalInterface> 
+       info.ivars.push_back(ivar);
+       SymbolicConstBoundAnalysis<AstNodePtr,DepInfoAnalInterface>
             boundop( DepInfoAnalInterface(*this), s, AST_NULL);
        info.ivarbounds.push_back(boundop.GetConstBound(ivar));
        std::vector<SymbolicVal>  lbvec, ubvec;
-       SymbolicVal lbleft = 
+       SymbolicVal lbleft =
          DecomposeAffineExpression(lb,info1.ivars,lbvec,dim1);
        lbvec.push_back(-1);
        lbvec.push_back(-lbleft);
@@ -166,11 +168,11 @@ GetLoopInfo( const AstNodePtr& s)
        if (!AnalyzeEquation(lbvec, info.ivarbounds, boundop, op, DepRel(DEPDIR_LE, 0)))
          if (DebugDep())
             std::cerr << "unable to analyze equation: " << toString(lbvec) << std::endl;
-       SymbolicVal ubleft = 
+       SymbolicVal ubleft =
          DecomposeAffineExpression(ub,info1.ivars,ubvec,dim1);
        ubvec.push_back(-1);
        ubvec.push_back(-ubleft);
-       if (!AnalyzeEquation(ubvec, info.ivarbounds, boundop, op, DepRel(DEPDIR_GE, 0))) 
+       if (!AnalyzeEquation(ubvec, info.ivarbounds, boundop, op, DepRel(DEPDIR_GE, 0)))
           if (DebugDep())
              std::cerr << "unable to analyze equation: " << toString(ubvec) << std::endl;
        info.domain = op.get_domain1();
@@ -182,7 +184,7 @@ GetLoopInfo( const AstNodePtr& s)
     return info;
 }
 
-void DepInfoAnal :: 
+void DepInfoAnal ::
 ComputePrivateScalarDep( const StmtRefDep& ref,
                              DepInfoCollect &outDeps, DepInfoCollect &inDeps)
 {
@@ -200,7 +202,7 @@ ComputePrivateScalarDep( const StmtRefDep& ref,
   }
 }
 
-void DepInfoAnal :: 
+void DepInfoAnal ::
 ComputeGlobalScalarDep( const StmtRefDep& ref,
                              DepInfoCollect &outDeps, DepInfoCollect &inDeps)
 {
@@ -214,7 +216,7 @@ ComputeGlobalScalarDep( const StmtRefDep& ref,
       StmtRefDep ref2(ref.r2, ref.r1, ref.commLoop, ref.commLevel);
       DepInfo d1 = ComputeGlobalDep(*this, ref2, t2, -1);
       assert(!d1.IsTop());
-      inDeps(d1); 
+      inDeps(d1);
    }
 }
 
@@ -250,7 +252,7 @@ DepInfoAnal :: DepInfoAnal(AstInterface& fa)
 }
 
 DepInfoAnal :: DepInfoAnal( AstInterface& fa, DependenceTesting& h)
-  : handle(h), 
+  : handle(h),
    varmodInfo(fa, SelectLoop(),
               LoopTransformInterface::getSideEffectInterface())
 {
@@ -259,8 +261,8 @@ DepInfoAnal :: DepInfoAnal( AstInterface& fa, DependenceTesting& h)
 }
 
 void DepInfoAnal :: ComputeArrayDep( const StmtRefDep& ref,
-                           DepType deptype, 
-                           DepInfoCollect &outDeps, DepInfoCollect &inDeps) 
+                           DepType deptype,
+                           DepInfoCollect &outDeps, DepInfoCollect &inDeps)
 {
         DepInfo d;
 
@@ -319,7 +321,7 @@ void DepInfoAnal :: ComputeArrayDep( const StmtRefDep& ref,
                                 handle = AdhocTest;
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
                                 d = handle.ComputeArrayDep(fa, *this, ref, deptype);
-                                
+
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::OMEGA);
                                 omega_d = OmegaTest.ComputeArrayDep(fa, *this, ref, deptype);
                         }
@@ -328,7 +330,7 @@ void DepInfoAnal :: ComputeArrayDep( const StmtRefDep& ref,
                         {
                                 handle = AdhocTest;
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
-                                d = handle.ComputeArrayDep(fa, *this, ref, deptype);                                
+                                d = handle.ComputeArrayDep(fa, *this, ref, deptype);
 
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
                                 plato_d = PlatoTest.ComputeArrayDep(fa, *this, ref, deptype);
@@ -338,7 +340,7 @@ void DepInfoAnal :: ComputeArrayDep( const StmtRefDep& ref,
                         {
                                 handle = OmegaTest;
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::OMEGA);
-                                d = omega_d=OmegaTest.ComputeArrayDep(fa, *this, ref, deptype);                
+                                d = omega_d=OmegaTest.ComputeArrayDep(fa, *this, ref, deptype);
 
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
                                 plato_d = PlatoTest.ComputeArrayDep(fa, *this, ref, deptype);
@@ -352,7 +354,7 @@ void DepInfoAnal :: ComputeArrayDep( const StmtRefDep& ref,
 
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::OMEGA);
                                 omega_d = OmegaTest.ComputeArrayDep(fa, *this, ref, deptype);
-                                
+
                                 PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
                                 plato_d = PlatoTest.ComputeArrayDep(fa, *this, ref, deptype);
 
@@ -405,9 +407,9 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
   std::string filename;
   // double t0, adhocTime;
   std::stringstream buffer;
-  
+
   std::vector<SymbolicBound> bounds;
-  for (i = 0; i < dim1; ++i) 
+  for (i = 0; i < dim1; ++i)
      bounds.push_back(info1.ivarbounds[i]);
   for (i = 0 ; i < dim2; ++i)
      bounds.push_back(info2.ivarbounds[i]);
@@ -440,25 +442,25 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
     s1 = *iter1; s2 = *iter2;
     SymbolicVal val1 = SymbolicValGenerator::GetSymbolicVal(fa, s1);
     SymbolicVal val2 = SymbolicValGenerator::GetSymbolicVal(fa, s2);
-      /* here try to handle a special case */ 
-    if (val1 == val2 && 
+      /* here try to handle a special case */
+    if (val1 == val2 &&
         fa.IsArrayAccess(s1, &s2) && LoopTransformInterface::IsUniqueArray(s2)) {
           std::cerr << "Skipping unique array dependence!\n";
           return false;
     }
     std::vector<SymbolicVal> cur;
-    SymbolicVal left1 = DecomposeAffineExpression(val1, info1.ivars, cur,dim1); 
-    SymbolicVal left2 = DecomposeAffineExpression(-val2, info2.ivars,cur,dim2); 
+    SymbolicVal left1 = DecomposeAffineExpression(val1, info1.ivars, cur,dim1);
+    SymbolicVal left2 = DecomposeAffineExpression(-val2, info2.ivars,cur,dim2);
     if (left1.IsNIL() || left2.IsNIL()) {
          precise = false;
          continue;
     }
     assert (cur.size() == dim);
     for (i = 0; i < dim1;  ++i) {
-       cur[i] = varop(ref.commLoop, ref.r1.ref, cur[i], varpostfix1.str()); 
+       cur[i] = varop(ref.commLoop, ref.r1.ref, cur[i], varpostfix1.str());
     }
     for (; i < dim; ++i) {
-       cur[i] = varop(ref.commLoop, ref.r2.ref, cur[i], varpostfix2.str()); 
+       cur[i] = varop(ref.commLoop, ref.r2.ref, cur[i], varpostfix2.str());
     }
     if (DebugDep()) {
        std::cerr << "analyzing array subscripts: " << val1.toString() << " .vs. " << val2.toString() << "\n";
@@ -467,11 +469,11 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
     left1 = varop(ref.commLoop, ref.r1.ref, left1, varpostfix1.str());
     left2 = varop(ref.commLoop, ref.r2.ref, left2, varpostfix2.str());
     SymbolicVal leftVal = -left2 - left1;
-    cur.push_back(leftVal);  
+    cur.push_back(leftVal);
     assert(dim+1 == cur.size());
     if (DebugDep()) {
        std::cerr << "coefficients for induction variables (" << dim1 << " + " << dim2 << "+ 1)\n";
-       for (size_t i = 0; i < dim; ++i) 
+       for (size_t i = 0; i < dim; ++i)
          std::cerr << cur[i].toString() << bounds[i].toString() << "\n" ;
        std::cerr << cur[dim].toString() << std::endl;
     }
@@ -481,12 +483,12 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
         if (cut == 1 || cut == 0 || cut == -1)
              continue;
         std::vector<SymbolicVal> split;
-        if (SplitEquation(cur, cut, bounds, boundop, split)) 
+        if (SplitEquation(cur, cut, bounds, boundop, split))
              analMatrix.push_back(split);
     }
     analMatrix.push_back(cur);
   }
-  if (DebugDep()) 
+  if (DebugDep())
       std::cerr << "analyzing relation matrix : \n" <<  toString(analMatrix) << std::endl;
 
 #ifdef OMEGA
@@ -494,10 +496,10 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
 #endif
 
   if (! NormalizeMatrix(analMatrix, analMatrix.size(), dim+1) )
-  {  
+  {
         return false;
   }
-  if (DebugDep()) 
+  if (DebugDep())
       std::cerr << "after normalization, relation matrix = \n" << toString(analMatrix) << std::endl;
    DepInfo result=DepInfoGenerator::GetDepInfo(dim1, dim2, deptype, ref.r1.ref, ref.r2.ref, false, ref.commLevel);
   SetDep setdep( info1.domain, info2.domain, &result);
@@ -520,7 +522,7 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
   }
 
 #ifdef OMEGA
-  DepStats.SetAdhocTime();  
+  DepStats.SetAdhocTime();
 
   AstInterface *temp = (AstInterface*) &fa;
   std::string adhocDV;
@@ -538,9 +540,9 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
 
   if (!setdep)
       return DepInfo();
-  if (precise) 
-      result.set_precise(); 
-  if (DebugDep()) 
+  if (precise)
+      result.set_precise();
+  if (DebugDep())
        std::cerr << "after analyzing relation matrix, result =: \n" << result.toString() << std::endl;
   setdep.finalize();
   if (DebugDep())
@@ -602,23 +604,23 @@ ComputeCtrlDep( const AstNodePtr& s1,  const AstNodePtr& s2,
 }
 
 
-void ComputeRefSetDep( DepInfoAnal& anal, 
+void ComputeRefSetDep( DepInfoAnal& anal,
                        DepInfoAnal::StmtRefDep& ref,
-                       DoublyLinkedListWrap<AstNodePtr> *rs1, 
+                       DoublyLinkedListWrap<AstNodePtr> *rs1,
                        DoublyLinkedListWrap<AstNodePtr> *rs2,
-                       DepType t, CollectObject<DepInfo> &outDeps, 
+                       DepType t, CollectObject<DepInfo> &outDeps,
                        CollectObject<DepInfo> &inDeps)
 {
   AstInterface& fa = anal.get_astInterface();
-  for (DoublyLinkedListWrap<AstNodePtr>::iterator iter1 = rs1->begin(); 
+  for (DoublyLinkedListWrap<AstNodePtr>::iterator iter1 = rs1->begin();
       iter1 != rs1->end(); ++iter1) {
     AstNodePtr r1 = *iter1, array1;
     bool b1 = LoopTransformInterface::IsArrayAccess(r1, &array1);
     if (!b1)
-       array1 = r1; 
+       array1 = r1;
 
     ref.r1.ref = r1;
-    for (DoublyLinkedListWrap<AstNodePtr>::iterator  iter2 = 
+    for (DoublyLinkedListWrap<AstNodePtr>::iterator  iter2 =
               (rs1 == rs2)? iter1 : rs2->begin();
          iter2 != rs2->end(); ++iter2) {
        AstNodePtr r2 = *iter2, array2;
@@ -628,15 +630,15 @@ void ComputeRefSetDep( DepInfoAnal& anal,
 
        ref.r2.ref = r2;
        if (CmdOptions::GetInstance()->HasOption("-very_conserv") && LoopTransformInterface::IsAliasedRef( array1, array2)) {
-          anal.ComputeGlobalScalarDep( ref, outDeps, inDeps); 
+          anal.ComputeGlobalScalarDep( ref, outDeps, inDeps);
        }
-       else if ( fa.IsSameVarRef( array1, array2) || 
+       else if ( fa.IsSameVarRef( array1, array2) ||
             LoopTransformInterface::IsAliasedRef( array1, array2)) {
-           if (b1 && b2) 
+           if (b1 && b2)
                anal.ComputeArrayDep( ref, t, outDeps, inDeps);
-           else if (b1 || b2) 
+           else if (b1 || b2)
                anal.ComputeGlobalScalarDep( ref, outDeps, inDeps);
-           else 
+           else
                anal.ComputePrivateScalarDep( ref, outDeps, inDeps);
        }
     }
@@ -654,12 +656,12 @@ void RemoveIvars( AstInterface& ai, DoublyLinkedListWrap<AstNodePtr>& refs,
      AstNodePtr scope;
      if (cur != AST_NULL && ai.IsVarRef(cur, 0,&name, &scope)) {
          SymbolicVar curvar(name, scope);
-         for (size_t i = 0; i < ignore.size(); ++i) 
+         for (size_t i = 0; i < ignore.size(); ++i)
              if (ignore[i] == curvar) {
                 refs.Delete(p1);
                 break;
              }
-     } 
+     }
    }
 }
 
@@ -670,7 +672,7 @@ ComputeDataDep( const AstNodePtr& s1,  const AstNodePtr& s2,
   AstInterface& fa = get_astInterface();
   DoublyLinkedListWrap<AstNodePtr> rRef1, wRef1, rRef2, wRef2;
   CollectDoublyLinkedList<AstNodePtr> crRef1(rRef1),cwRef1(wRef1),crRef2(rRef2),cwRef2(wRef2);
-  if (!AnalyzeStmtRefs( fa, s1, cwRef1, crRef1) || 
+  if (!AnalyzeStmtRefs( fa, s1, cwRef1, crRef1) ||
         (s1 != s2 && !AnalyzeStmtRefs( fa, s2, cwRef2, crRef2))) {
        if (DebugDep())
           std::cerr << "cannot determine side effects of statements: " << AstInterface::AstToString(s1) << "; or " << AstInterface::AstToString(s2) << std::endl;
@@ -684,13 +686,13 @@ ComputeDataDep( const AstNodePtr& s1,  const AstNodePtr& s2,
      RemoveIvars( fa, rRef1, GetStmtInfo(s1).ivars);
      RemoveIvars( fa, wRef1, GetStmtInfo(s1).ivars);
      if (t & DEPTYPE_OUTPUT)
-          ComputeRefSetDep( *this, ref, &wRef1, &wRef1, 
+          ComputeRefSetDep( *this, ref, &wRef1, &wRef1,
                             DEPTYPE_OUTPUT, outDeps, inDeps);
      if (t & DEPTYPE_TRUE || t & DEPTYPE_ANTI)
-          ComputeRefSetDep( *this, ref, &rRef1, &wRef1, 
+          ComputeRefSetDep( *this, ref, &rRef1, &wRef1,
                             DEPTYPE_ANTI, outDeps, inDeps);
      if (t & DEPTYPE_INPUT)
-          ComputeRefSetDep( *this, ref, &rRef1, &rRef1, 
+          ComputeRefSetDep( *this, ref, &rRef1, &rRef1,
                             DEPTYPE_INPUT, outDeps, inDeps);
   }
   else {
@@ -699,16 +701,16 @@ ComputeDataDep( const AstNodePtr& s1,  const AstNodePtr& s2,
      RemoveIvars(fa, wRef1, GetStmtInfo(s1).ivars);
      RemoveIvars(fa, wRef2, GetStmtInfo(s2).ivars);
      if (t & DEPTYPE_OUTPUT)
-          ComputeRefSetDep( *this, ref, &wRef1, &wRef2, 
+          ComputeRefSetDep( *this, ref, &wRef1, &wRef2,
                             DEPTYPE_OUTPUT, outDeps, inDeps);
      if (t & DEPTYPE_TRUE)
-          ComputeRefSetDep( *this, ref, &wRef1, &rRef2, 
+          ComputeRefSetDep( *this, ref, &wRef1, &rRef2,
                             DEPTYPE_TRUE, outDeps, inDeps);
      if (t & DEPTYPE_ANTI)
-          ComputeRefSetDep( *this, ref, &rRef1, &wRef2, 
+          ComputeRefSetDep( *this, ref, &rRef1, &wRef2,
                             DEPTYPE_ANTI, outDeps, inDeps);
      if (t & DEPTYPE_INPUT)
-          ComputeRefSetDep( *this, ref, &rRef1, &rRef2, 
+          ComputeRefSetDep( *this, ref, &rRef1, &rRef2,
                             DEPTYPE_INPUT, outDeps, inDeps);
    }
 }

@@ -916,6 +916,61 @@ public:
         return *this;
     }
 
+    /** Multiply two bit vectors.
+     *
+     *  Multiplies @p this bit vector with @p other, both interpreted as unsigned integer, to produce a result bit vector whose
+     *  width is the sum of the two input widths. */
+    BitVector multiply(const BitVector &other) const {
+        BitVector product(size() + other.size());
+        BitVector addend = other;
+        addend.resize(product.size());
+        for (size_t i = 0; i < size(); ++i) {
+            if (get(i))
+                product.add(addend);
+            addend.shiftLeft(1);
+        }
+        return product;
+    }
+
+    /** Multiply two signed integers.
+     *
+     *  Multiplies this bit vector with @p other, both interpreted as signed integers, to produce a result bit vector whose
+     *  width is the sum of the two input widths. */
+    BitVector multiplySigned(const BitVector &other) const {
+        // Unoptimized version using simple elementary school long multiply. The Wikipedia "Binary multiplier" article has a good
+        // description of a more optimized approach.
+        BitVector product(size() + other.size());
+
+        // Absolute value of A
+        BitVector a = *this;
+        bool aIsNeg = false;
+        if (a.size() > 1 && a.get(a.size()-1)) {
+            aIsNeg = true;
+            a.negate();
+        }
+
+        // Absolute value of B, and extended to result width
+        BitVector b = other;
+        bool bIsNeg = false;
+        if (b.size() > 1 && b.get(b.size()-1)) {
+            bIsNeg = true;
+            b.negate();
+        }
+        b.resize(product.size());
+
+        // Long multiplication
+        for (size_t i = 0; i < a.size(); ++i) {
+            if (a.get(i))
+                product.add(b);
+            b.shiftLeft(1);
+        }
+
+        // Correct the result sign
+        if (aIsNeg != bIsNeg)
+            product.negate();
+
+        return product;
+    }
 
     // FIXME[Robb Matzke 2014-05-01]: we should also have zeroExtend, which is like copy but allows the source and destination
     // to be different sizes.

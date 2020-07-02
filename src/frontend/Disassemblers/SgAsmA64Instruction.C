@@ -1,4 +1,4 @@
-/* SgAsmArm64Instruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code file)
+/* SgAsmA64Instruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code file)
  * because then they won't get indexed/formatted/etc. by C-aware tools. */
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_A64
@@ -10,7 +10,7 @@ using namespace Rose;                                   // temporary until this 
 using namespace Rose::BinaryAnalysis;                   // temporary
 
 unsigned
-SgAsmArm64Instruction::get_anyKind() const {
+SgAsmA64Instruction::get_anyKind() const {
     return p_kind;
 }
 
@@ -18,8 +18,8 @@ SgAsmArm64Instruction::get_anyKind() const {
 // advancing it to the fall-through address (the instruction at the following memory address), in which this function returns
 // false. This function returns true if @c this instruction can cause the instruction pointer to point somewhere other than the
 // following instruction.
-static bool modifies_ip(SgAsmArm64Instruction *insn) {
-    using Kind = ::Rose::BinaryAnalysis::Arm64InstructionKind;
+static bool modifies_ip(SgAsmA64Instruction *insn) {
+    using Kind = ::Rose::BinaryAnalysis::A64InstructionKind;
 
     switch (insn->get_kind()) {
         case Kind::ARM64_INS_INVALID:
@@ -46,8 +46,8 @@ static bool modifies_ip(SgAsmArm64Instruction *insn) {
 }
 
 AddressSet
-SgAsmArm64Instruction::getSuccessors(bool &complete) {
-    using Kind = ::Rose::BinaryAnalysis::Arm64InstructionKind;
+SgAsmA64Instruction::getSuccessors(bool &complete) {
+    using Kind = ::Rose::BinaryAnalysis::A64InstructionKind;
     complete = true;           // set to true for now, change below if necessary
 
     AddressSet retval;
@@ -117,22 +117,22 @@ SgAsmArm64Instruction::getSuccessors(bool &complete) {
 
 // Does instruction terminate basic block? See base class for full documentation.
 bool
-SgAsmArm64Instruction::terminatesBasicBlock() {
-    if (get_kind()==Arm64InstructionKind::ARM64_INS_INVALID)
+SgAsmA64Instruction::terminatesBasicBlock() {
+    if (get_kind()==A64InstructionKind::ARM64_INS_INVALID)
         return true;
     return modifies_ip(this);
 }
 
 // Determines whether this is the special ARM "unkown" instruction. See base class for documentation.
 bool
-SgAsmArm64Instruction::isUnknown() const {
-    return Arm64InstructionKind::ARM64_INS_INVALID == get_kind();
+SgAsmA64Instruction::isUnknown() const {
+    return A64InstructionKind::ARM64_INS_INVALID == get_kind();
 }
 
 std::string
-SgAsmArm64Instruction::description() const {
+SgAsmA64Instruction::description() const {
     // The commented out cases are not present in Capstone at this time. Parenthesized reasons are given when available.
-    using Kind = ::Rose::BinaryAnalysis::Arm64InstructionKind;
+    using Kind = ::Rose::BinaryAnalysis::A64InstructionKind;
     switch (get_kind()) {
         case Kind::ARM64_INS_INVALID:           return "";
         case Kind::ARM64_INS_ABS:               return "absolute value";

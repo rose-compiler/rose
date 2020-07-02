@@ -30,6 +30,7 @@ EXTRA_DIST += README test_status.txt internal_tests.conf syscall_tests.conf pthr
 
 lib_LTLIBRARIES = libRSIM.la
 libRSIM_la_CPPFLAGS = $(ROSE_INCLUDES)
+libRSIM_la_CXXFLAGS = $(AM_CXXFLAGS) -Wno-unused-result
 libRSIM_la_SOURCES =				\
 	RSIM_Adapter.C				\
 	RSIM_Callbacks.C			\

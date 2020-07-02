@@ -397,20 +397,16 @@ Leave(SgFunctionDeclaration* function_decl, SgBasicBlock* param_scope)
    SgBasicBlock* function_body = isSgBasicBlock(SageBuilder::topScopeStack());
    ROSE_ASSERT(function_body);
 
-#if 0
-   std::cout << "---   param_scope " << param_scope << ": case sensitive " << param_scope->isCaseInsensitive() << std::endl;
-   std::cout << "--- function_body " << function_body << ": case sensitive " << function_body->isCaseInsensitive() << std::endl;
-#endif
 // Move all of the statements temporarily stored in the parameter scope
 // into the scope for the function body.
 //
    if (param_scope) {
       SageInterface::moveStatementsBetweenBlocks (param_scope, function_body);
    }
-#if 0
-   std::cout << "---   param_scope " << param_scope << ": case sensitive " << param_scope->isCaseInsensitive() << std::endl;
-   std::cout << "--- function_body " << function_body << ": case sensitive " << function_body->isCaseInsensitive() << std::endl;
-#endif
+// The param_scope (SgBasicBlock) is still connected, so try to set its parent
+// to nullptr and delete it.
+   param_scope->set_parent(nullptr);
+   delete param_scope;
 
    SageBuilder::popScopeStack();  // function body
    SageBuilder::popScopeStack();  // function definition
@@ -493,12 +489,28 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
 }
 
 void SageTreeBuilder::
-Leave(SgExprStatement* assign_stmt)
+Leave(SgExprStatement* expr_stmt)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgExprStatement*) \n";
-   ROSE_ASSERT(assign_stmt != nullptr);
+   ROSE_ASSERT(expr_stmt != nullptr);
 
-   SageInterface::appendStatement(assign_stmt, SageBuilder::topScopeStack());
+   SageInterface::appendStatement(expr_stmt, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgFunctionCallExp* &func_call, std::string &name, SgExprListExp* params)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionCallExp* &, ...) \n";
+
+   SgFunctionSymbol* func_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   if (func_symbol == nullptr) {
+    // Function calls are ambiguous with arrays in Fortran and type casts (at least) in Jovial
+       func_call = nullptr;
+       return;
+   }
+
+   func_call = SageBuilder::buildFunctionCallExp(func_symbol, params);
+   SageInterface::setSourcePosition(func_call);
 }
 
 void SageTreeBuilder::

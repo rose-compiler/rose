@@ -3,7 +3,7 @@
 #include "AnnotExpr.h"
 #include <sstream>
 #include <list>
-
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -16,20 +16,20 @@ class ReadAnnotCollectionWrap {
   ReadAnnotCollection<TargetInfo, sep1, sep2, end>& op;
 
  public:
-  ReadAnnotCollectionWrap(const TargetInfo& t, 
-                          ReadAnnotCollection<TargetInfo,sep1,sep2,end>& _op) 
+  ReadAnnotCollectionWrap(const TargetInfo& t,
+                          ReadAnnotCollection<TargetInfo,sep1,sep2,end>& _op)
         : target(t), op(_op) {}
   bool read (istream& in)
-   { 
+   {
       if (peek_ch(in) == end)
           return false;
-      // Read in the next identifier as the annotation type name          
+      // Read in the next identifier as the annotation type name
       string annot = read_id(in);
       if (annot == "")
          return false;
       AnnotCollectionBase<TargetInfo> * cur = 0;
-      for (typename ReadAnnotCollection<TargetInfo,sep1,sep2,end>::iterator 
-             p = op.begin(); 
+      for (typename ReadAnnotCollection<TargetInfo,sep1,sep2,end>::iterator
+             p = op.begin();
            p != op.end(); ++p) {
          cur = *p;
          if (cur->read_annot_name(annot)) {
@@ -57,7 +57,7 @@ void ReadAnnotCollection<TargetInfo,sep1,sep2,e>:: read( istream& in)
      // Read in the start character for annotation collections
      if (sep1 != 0)
         read_ch(in, sep1);
-        
+
      ReadAnnotCollectionWrap<TargetInfo,sep1,sep2,e> op(target, *this);
      read_list( in, op, sep2);
      // Read in the end character.
@@ -88,21 +88,21 @@ void TypeCollection<Descriptor>:: Dump() const
 template <class Descriptor>
 bool TypeCollection<Descriptor>::
    known_type( const TypeDescriptor &name, Descriptor* desc)  const
-     { 
-       const_iterator p = typemap.find(name); 
+     {
+       const_iterator p = typemap.find(name);
        if (p != typemap.end()) {
          if (desc != 0)
             *desc = (*p).second;
-         if (DebugAnnot()) 
+         if (DebugAnnot())
             cerr << "recognized type: " << name.get_string() << endl;
          return true;
        }
-       if (DebugAnnot()) 
+       if (DebugAnnot())
             cerr << "not recognize type: " << name.get_string() << endl;
        return false;
      }
 template <class Descriptor>
-bool TypeCollection<Descriptor>:: 
+bool TypeCollection<Descriptor>::
   known_type( AstInterface& fa, const AstNodePtr& exp, Descriptor* desc) const
     {
       AstNodeType type;
@@ -114,7 +114,7 @@ bool TypeCollection<Descriptor>::
 
     }
 template <class Descriptor>
-bool TypeCollection<Descriptor>:: 
+bool TypeCollection<Descriptor>::
   known_type( AstInterface& fa, const AstNodeType& type, Descriptor* desc) const
     {
       std::string tname;
@@ -123,8 +123,8 @@ bool TypeCollection<Descriptor>::
     }
 
 template <class Descriptor>
-void TypeAnnotCollection<Descriptor>:: 
-read_descriptor( const TypeDescriptor& name, const string& annotName, 
+void TypeAnnotCollection<Descriptor>::
+read_descriptor( const TypeDescriptor& name, const string& annotName,
                  istream& in)
 {
    Descriptor d;

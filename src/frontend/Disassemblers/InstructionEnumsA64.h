@@ -10,25 +10,28 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 using ::arm64_insn;
-using Arm64InstructionKind = ::arm64_insn;           /**< AArch64 instruction types. */
+using A64InstructionKind = ::arm64_insn;                /**< A64 instruction types. */
 
 using ::arm64_cc;
-using Arm64InstructionCondition = ::arm64_cc;        /**< AArch64 condition codes. */
+using A64InstructionCondition = ::arm64_cc;             /**< A64 condition codes. */
 
 using ::arm64_extender;
-using Arm64Extender = ::arm64_extender;              /**< AArch64 operand extenders. */
+using A64Extender = ::arm64_extender;                   /**< A64 operand extenders. */
 
 using ::arm64_vas;
-using Arm64VectorArrangement = ::arm64_vas;          /**< AArch64 vector arrangement specifier. */
+using A64VectorArrangement = ::arm64_vas;               /**< A64 vector arrangement specifier. */
 
 using ::arm64_at_op;
-using Arm64AtOperation = ::arm64_at_op;              /**< AArch64 AT instruction operand. */
+using A64AtOperation = ::arm64_at_op;                   /**< A64 AT instruction operand. */
 
 using ::arm64_prefetch_op;
-using Arm64PrefetchOperation = ::arm64_prefetch_op;  /**< AArch64 operand for prefetch instructions. */
+using A64PrefetchOperation = ::arm64_prefetch_op;       /**< A64 operand for prefetch instructions. */
+
+using ::arm64_barrier_op;
+using A64BarrierOperation = ::arm64_barrier_op;         /**< A64 operand for barrier instructions. */
 
 /** Major register numbers for AArch64. */
-enum Arm64RegisterClass {
+enum A64RegisterClass {
     arm_regclass_gpr,                                 // general purpose registers
     arm_regclass_sp,                                  // stack pointer registers
     arm_regclass_ext,                                 // SIMD and FP registers, so-called "extension" registers
@@ -43,7 +46,7 @@ enum Arm64RegisterClass {
  * numbers for the registers, but 1024 minor numbers, we use a single major number for all the system registers and use the
  * minor numbers for the different system registers.  For simplicity, we reserve four minor numbers for each type of system
  * register, although this might change in the future. */
-enum Arm64SystemRegisters {
+enum A64SystemRegisters {
     arm_system_actlr     = 0,                         // auxiliary control registers
     arm_system_ccsidr    = 4,                         // current cache size ID registers
     arm_system_clidr     = 8,                         // cache level ID registers

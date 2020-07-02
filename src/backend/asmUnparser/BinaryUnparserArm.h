@@ -40,7 +40,7 @@ protected:
     void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const ROSE_OVERRIDE;
 
 protected:
-    static std::string unparseArmCondition(Arm64InstructionCondition);
+    static std::string unparseArmCondition(A64InstructionCondition);
     void outputExpr(std::ostream&, SgAsmExpression*, State&) const;
     void outputRegister(std::ostream&, SgAsmRegisterReferenceExpression*, State&) const;
 };

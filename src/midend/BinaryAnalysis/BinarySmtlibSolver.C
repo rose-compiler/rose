@@ -627,6 +627,9 @@ SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
             case SymbolicExpr::OP_ZEROP:
                 retval = outputZerop(inode);
                 break;
+            default:
+                // to suppress warnings since an error follows. Please remove this when floating-point is implemented
+                break;
         }
     }
     ASSERT_not_null(retval.first);

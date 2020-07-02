@@ -227,7 +227,10 @@ static void assignment_self() {
     MonitoredObject *obj = new MonitoredObject(stats);
     {
         SharedPointer<MonitoredObject> dst(obj);
-        dst = dst;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wself-assign-overloaded"
+        dst = dst; // compiler warning expected -- we're testing self-assignment
+#pragma GCC diagnostic pop
         ASSERT_always_forbid(stats.deleted);
         ASSERT_always_require(getRawPointer(dst)==obj);
         ASSERT_always_require(ownershipCount(dst)==1);
