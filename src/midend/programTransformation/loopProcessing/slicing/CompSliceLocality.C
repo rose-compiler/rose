@@ -2,6 +2,7 @@
 #include <CompSliceLocality.h>
 #include <CompSliceRegistry.h>
 #include <ReuseAnalysis.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 //not precise since inter-statement spatial reuses not considered
 float CompSliceLocalityAnal::
@@ -42,7 +43,7 @@ class CollectArrayNames : public CollectObject<AstNodePtr>
   StringSet&  result;
  public:
   CollectArrayNames(StringSet& r) : result(r) {}
-   bool operator()(const AstNodePtr& r) 
+   bool operator()(const AstNodePtr& r)
    {
       AstNodePtr arr;
       std::string arrname;
@@ -61,8 +62,8 @@ class CollectRegisteredArrayRefs : public CollectObject<AstNodePtr>
   StringSet&  reg;
   CompSliceLocalityAnal::AstNodeSet& refset;
  public:
-  CollectRegisteredArrayRefs(StringSet& r, 
-                            CompSliceLocalityAnal::AstNodeSet& s) 
+  CollectRegisteredArrayRefs(StringSet& r,
+                            CompSliceLocalityAnal::AstNodeSet& s)
       : reg(r), refset(s){}
    bool operator()(const AstNodePtr& r) {
       AstNodePtr arr;
@@ -99,18 +100,18 @@ SpatialReuses( const CompSlice *slice1, const CompSlice *slice2,
   return refSet.size();
 }
 
-inline std::string toString( const CompSliceLocalityRegistry::SliceSelfInfo& info) 
+inline std::string toString( const CompSliceLocalityRegistry::SliceSelfInfo& info)
   { return info.toString(); }
 
-inline std::string toString( const CompSliceLocalityRegistry::SliceRelInfo& info) 
+inline std::string toString( const CompSliceLocalityRegistry::SliceRelInfo& info)
   { return info.toString(); }
 
 class CompSliceLocalityRegistry::Impl
-   : public CompSliceRegistry<SliceSelfInfo,SliceRelInfo, 
-                              CompSliceLocalityAnal> 
+   : public CompSliceRegistry<SliceSelfInfo,SliceRelInfo,
+                              CompSliceLocalityAnal>
 {
   public:
-    Impl( CompSliceLocalityAnal& a) 
+    Impl( CompSliceLocalityAnal& a)
        : CompSliceRegistry<SliceSelfInfo,SliceRelInfo,
                            CompSliceLocalityAnal>(a) {}
 };
@@ -143,9 +144,9 @@ SpatialReuses(const CompSlice *slice1, const CompSlice *slice2)
 
 float CompSliceLocalityRegistry::SpatialReuses( const CompSlice *slice)
 {
-  return impl->CreateNode(slice)->GetInfo().SpatialReuses(); 
+  return impl->CreateNode(slice)->GetInfo().SpatialReuses();
 }
-  
+
 int CompSliceLocalityRegistry::TemporaryReuses( const CompSlice *slice)
 {
   return impl->CreateNode(slice)->GetInfo().TemporaryReuses();

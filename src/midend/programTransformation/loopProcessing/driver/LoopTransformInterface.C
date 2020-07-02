@@ -9,6 +9,7 @@
 #include <LoopUnroll.h>
 #include <CommandOptions.h>
 #include <AutoTuningInterface.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 //#define DEBUG 1
 
@@ -22,27 +23,27 @@ AutoTuningInterface* LoopTransformInterface::tuning = 0;
 using namespace std;
 
 // This function is defined in TransformComputation.C.
-extern bool LoopTransformation(const AstNodePtr& head, AstNodePtr& result);  
+extern bool LoopTransformation(const AstNodePtr& head, AstNodePtr& result);
 
 
 //////////////////////
 // Helper Functions //
 //////////////////////
 
-bool ArrayUseAccessFunction:: 
+bool ArrayUseAccessFunction::
 IsUniqueArray( AstInterface& fa, const AstNodePtr& array)
 {
   if (prev != 0 &&  prev->IsUniqueArray(fa, array))
        return true;
   AstNodeType t;
   if (!fa.IsVarRef(array, &t)) assert(0);
-  
+
   return false;
 }
 
 bool ArrayUseAccessFunction::
-IsArrayAccess( AstInterface& fa, const AstNodePtr& s, AstNodePtr* array, 
-                                 AstInterface::AstNodeList* index) 
+IsArrayAccess( AstInterface& fa, const AstNodePtr& s, AstNodePtr* array,
+                                 AstInterface::AstNodeList* index)
 {
   AstInterface::AstNodeList args;
   if (prev != 0 &&  prev->IsArrayAccess(fa, s, array, index))
@@ -107,21 +108,21 @@ bool ArrayUseAccessFunction::get_read(AstInterface& fa, const AstNodePtr& fc,
 }
 
 SymbolicVal ArrayUseAccessFunction::
-CreateArrayAccess( const SymbolicVal& arr, const SymbolicVal& index) 
+CreateArrayAccess( const SymbolicVal& arr, const SymbolicVal& index)
 {
    return SymbolicFunction(AstInterface::OP_ARRAY_ACCESS,funcname, arr,index);
 }
 
 AstNodePtr LoopTransformInterface::
-CreateArrayAccess( const AstNodePtr& arr, AstInterface::AstList& index) 
+CreateArrayAccess( const AstNodePtr& arr, AstInterface::AstList& index)
   { assert(fa != 0);
     AstNodePtr res;
-    if (arrayInfo != 0){ 
+    if (arrayInfo != 0){
         res = arrayInfo->CreateArrayAccess(*fa,arr,index); }
     if (res == AST_NULL) {
        res = arr;
-       for (AstNodeList::const_reverse_iterator p = index.rbegin(); 
-            p != index.rend(); ++p) 
+       for (AstNodeList::const_reverse_iterator p = index.rbegin();
+            p != index.rend(); ++p)
          { res = AstInterface::CreateArrayAccess(res, *p); }
     }
     return res;
@@ -137,7 +138,7 @@ CreateArrayAccess( AstInterface& fa, const AstNodePtr& arr,
   if (r == AST_NULL) {
     AstNodeList nindex;
     nindex.push_back(arr.get_ptr());
-    for (AstNodeList::const_iterator p = index.begin(); p != index.end(); ++p) 
+    for (AstNodeList::const_iterator p = index.begin(); p != index.end(); ++p)
        nindex.push_back(*p);
     r = fa.CreateFunctionCall(funcname,nindex.begin(), nindex.end()) ;
   }
@@ -145,8 +146,8 @@ CreateArrayAccess( AstInterface& fa, const AstNodePtr& arr,
 }
 
 AstNodePtr LoopTransformInterface::
-CreateArrayAccess(const std::string& arrname, 
-                            const std::vector<SymbolicVal>& arrindex) 
+CreateArrayAccess(const std::string& arrname,
+                            const std::vector<SymbolicVal>& arrindex)
   {
      assert(fa != 0);
      AstNodePtr res = fa->CreateVarRef(arrname);
@@ -163,7 +164,7 @@ class LoopTransformationWrap : public TransformAstTree
 {
  public:
   bool operator()( AstInterface& fa, const AstNodePtr& head, AstNodePtr& result)
-  {  
+  {
 #ifdef DEBUG
 std::cerr << "LoopTransformationWrap:operator()\n";
 #endif
@@ -179,8 +180,8 @@ void LoopTransformInterface:: set_astInterface( AstInterface& _fa)
 
 void LoopTransformInterface::
 set_tuningInterface(AutoTuningInterface* _tuning)
-{ tuning = _tuning;  
-  if (arrayInfo != 0) tuning->set_arrayInfo(*arrayInfo); 
+{ tuning = _tuning;
+  if (arrayInfo != 0) tuning->set_arrayInfo(*arrayInfo);
 }
 
 void LoopTransformInterface::
@@ -194,14 +195,14 @@ cmdline_configure(std::vector<std::string>& argv)
   argv.clear();
   BreakupStatement::cmdline_configure(unknown,&argv);
   unknown.clear();
-  LoopTransformOptions::GetInstance()->SetOptions(argv,&unknown) ; 
+  LoopTransformOptions::GetInstance()->SetOptions(argv,&unknown) ;
   argv.clear();
 
   for (unsigned index=0; index < unknown.size(); ++index) {
-        std::string opt=unknown[index]; 
+        std::string opt=unknown[index];
         if (opt == "-arracc") {
            std::string name;
-           if (index < unknown.size() && opt.size() == 7) 
+           if (index < unknown.size() && opt.size() == 7)
              name =  unknown[++index];
            else name = opt.substr(7);
            ArrayUseAccessFunction* r = new ArrayUseAccessFunction(name, arrayInfo, funcInfo);
@@ -211,17 +212,17 @@ cmdline_configure(std::vector<std::string>& argv)
            if (tuning != 0) tuning->set_arrayInfo(*r);
         }
         else if (opt == "-poet");
-        else 
+        else
         {
            argv.push_back(opt);
         }
       }
-} 
+}
 
 AstNodePtr LoopTransformInterface::
 TransformTraverse(AstInterfaceImpl& scope,const AstNodePtr& head)
 {
-  assert(aliasInfo!=0);  /*QY: alias analysis should never be null*/ 
+  assert(aliasInfo!=0);  /*QY: alias analysis should never be null*/
   AstInterface _fa(&scope);
   if (tuning != 0) tuning->set_astInterface(_fa);
 
@@ -239,7 +240,7 @@ TransformTraverse(AstInterfaceImpl& scope,const AstNodePtr& head)
 /* QY 11/8/05 privatizeScalar should be initialized somewhere else
   PrivatizeScalar ps;
   result = head;
-  if (ps.cmdline_configure()) 
+  if (ps.cmdline_configure())
        result = ps(l,head);
   _fa.SetRoot(result);
 */
@@ -280,19 +281,19 @@ GetFunctionCallSideEffect( const AstNodePtr& fc,
     assert(fa != 0);
     return funcInfo!= 0
            && funcInfo->get_modify(*fa, fc, &collectmod)
-           && funcInfo->get_read(*fa, fc, &collectread); 
+           && funcInfo->get_read(*fa, fc, &collectread);
 }
 
 
-AstNodePtr LoopTransformInterface:: 
+AstNodePtr LoopTransformInterface::
 CreateDynamicFusionConfig( const AstNodePtr& groupNum, AstInterface::AstNodeList& args, int &id)
-{ assert(fa != 0); 
+{ assert(fa != 0);
   std::string name = "DynamicFusionConfig";
   ++configIndex;
   args.push_back( fa->CreateConstInt(configIndex).get_ptr() );
   args.push_back( fa->CreateConstInt( args.size() ).get_ptr() );
   std::string funname = "DynamicFusionConfig";
-  AstNodePtr invoc = fa->CreateFunctionCall( funname,  args.begin(), args.end()); 
+  AstNodePtr invoc = fa->CreateFunctionCall( funname,  args.begin(), args.end());
   return fa->CreateAssignment ( groupNum, invoc) ;
 }
 
@@ -321,10 +322,10 @@ IsDynamicFusionConfig( const AstNodePtr& n, AstNodePtr* configvar, int* configID
       AstNodePtr idnode = args.front();
       bool isconst = fa->IsConstInt( idnode, configID);
       assert(isconst);
-    } 
+    }
     if (params != 0) {
       *params = args;
-      params->erase(params->begin()); 
+      params->erase(params->begin());
       params->erase(params->begin());
     }
    return true;
@@ -346,7 +347,7 @@ bool
 LoopTransformInterface::
 IsLoop(const AstNodePtr& s, SymbolicVal* init , SymbolicVal* cond,
         SymbolicVal* incr, AstNodePtr* body)
-{ 
+{
   assert(fa != 0);
 std::cerr << "### "  <<"--"<<init->toString()<<std::endl;
   AstNodePtr initast, condast, incrast;
@@ -356,7 +357,7 @@ std::cerr << "### "  <<"--"<<init->toString()<<std::endl;
      *init = SymbolicValGenerator::GetSymbolicVal(*fa,initast);
   if (cond != 0 && condast != AST_NULL)
      *cond = SymbolicValGenerator::GetSymbolicVal(*fa,condast);
-  if (incr != 0 && incrast != AST_NULL) 
+  if (incr != 0 && incrast != AST_NULL)
        *incr = SymbolicValGenerator::GetSymbolicVal(*fa,incrast);
   return true;
 }
