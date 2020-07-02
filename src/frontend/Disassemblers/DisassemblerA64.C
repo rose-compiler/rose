@@ -193,8 +193,10 @@ DisassemblerArm::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
 
         case ARM64_OP_REG: {    // register operand
             RegisterDescriptor reg = makeRegister(op.reg);
+            reg = subRegister(reg, op.vector_index, op.vess);
             retval = new SgAsmDirectRegisterExpression(reg);
-            retval->set_type(registerType(op.reg, op.vas));
+            retval->set_type(registerType(reg, op.vas));
+            //retval = extractElement(retval, op.vess, op.vector_index);
             retval = extendOperand(retval, op.ext, retval->get_type(), op.shift.type, op.shift.value);
             break;
         }
@@ -208,14 +210,16 @@ DisassemblerArm::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
             break;
 
         case ARM64_OP_MEM: {    // memory operand
-            auto base = new SgAsmDirectRegisterExpression(makeRegister(op.mem.base));
-            base->set_type(registerType(op.mem.base, ARM64_VAS_INVALID));
+            RegisterDescriptor reg = makeRegister(op.mem.base);
+            auto base = new SgAsmDirectRegisterExpression(reg);
+            base->set_type(registerType(reg, ARM64_VAS_INVALID));
             SgAsmExpression *addr = base;
             SgAsmType *u64 = SageBuilderAsm::buildTypeU64();
 
             if (op.mem.index != ARM64_REG_INVALID) {
-                auto index = new SgAsmDirectRegisterExpression(makeRegister(op.mem.index));
-                index->set_type(registerType(op.mem.index, ARM64_VAS_INVALID));
+                RegisterDescriptor indexReg = makeRegister(op.mem.index);
+                auto index = new SgAsmDirectRegisterExpression(indexReg);
+                index->set_type(registerType(indexReg, ARM64_VAS_INVALID));
 
                 if (op.mem.disp != 0) {
                     auto disp = new SgAsmIntegerValueExpression(op.mem.disp, u64);
@@ -292,6 +296,73 @@ DisassemblerArm::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
     ASSERT_not_null(retval->get_type());
     return retval;
 }
+
+RegisterDescriptor
+DisassemblerArm::subRegister(RegisterDescriptor reg, int idx, arm64_vess elmtSize) {
+    size_t nBits = reg.nBits();
+    switch (elmtSize) {
+        case ARM64_VESS_INVALID:
+            break;
+        case ARM64_VESS_B:
+            nBits = 8;
+            break;
+        case ARM64_VESS_H:
+            nBits = 16;
+            break;
+        case ARM64_VESS_S:
+            nBits = 32;
+            break;
+        case ARM64_VESS_D:
+            nBits = 64;
+            break;
+    }
+
+    size_t offset = 0;
+    if (idx > 0)
+        offset = nBits * idx;
+
+    ASSERT_require(offset + nBits <= reg.nBits());
+    return RegisterDescriptor(reg.majorNumber(), reg.minorNumber(), offset, nBits);
+}
+
+//SgAsmExpression*
+//DisassemblerArm::extractElement(SgAsmExpression *expr, arm64_vess elmtSizeSpec, int idx) {
+//    ASSERT_not_null(expr);
+//    ASSERT_not_null(expr->get_type());
+//    if (idx < 0)
+//        return expr;
+//    size_t elmtNBits = 0;
+//    switch (elmtSizeSpec) {
+//        case ARM64_VESS_INVALID:
+//            ASSERT_not_reachable("invalid vector element size specifier when index is present");
+//        case ARM64_VESS_B:
+//            elmtNBits = 8;
+//            break;
+//        case ARM64_VESS_H:
+//            elmtNBits = 16;
+//            break;
+//        case ARM64_VESS_S:
+//            elmtNBits = 32;
+//            break;
+//        case ARM64_VESS_D:
+//            elmtNBits = 64;
+//            break;
+//    }
+//
+//    size_t offset = idx * elmtNBits;
+//    size_t end = offset + elmtNBits;
+//    ASSERT_require(end <= expr->get_nBits());
+//
+//    if (offset > 0) {
+//        expr = SageBuilderAsm::buildLsrExpression(expr, SageBuilderAsm::buildValueU8(offset),
+//                                                  SageBuilderAsm::buildTypeU(expr->get_nBits()));
+//    }
+//
+//    if (elmtNBits < expr->get_nBits())
+//        expr = SageBuilderAsm::buildTruncateExpression(expr, SageBuilderAsm::buildTypeU(elmtNBits));
+//
+//    return expr;
+//}
 
 SgAsmExpression*
 DisassemblerArm::extendOperand(SgAsmExpression *expr, arm64_extender extender, SgAsmType *dstType, arm64_shifter shifter,
@@ -811,11 +882,11 @@ DisassemblerArm::typeForMemoryRead(const cs_insn &insn) {
 }
 
 SgAsmType*
-DisassemblerArm::registerType(arm64_reg reg, arm64_vas arrangement) {
+DisassemblerArm::registerType(RegisterDescriptor reg, arm64_vas arrangement) {
     SgAsmType *type = nullptr;
     switch (arrangement) {
         case ARM64_VAS_INVALID:
-            type = SageBuilderAsm::buildTypeU(makeRegister(reg).nBits());
+            type = SageBuilderAsm::buildTypeU(reg.nBits());
             break;
         case ARM64_VAS_8B:
             type = SageBuilderAsm::buildTypeVector(8, SageBuilderAsm::buildTypeU8());

@@ -83,12 +83,18 @@ private:
     // Make a ROSE register descriptor from a Capstone register enum constant.
     RegisterDescriptor makeRegister(arm64_reg);
 
+    // Restrict a register to just part of a register
+    RegisterDescriptor subRegister(RegisterDescriptor reg, int idx, arm64_vess elmtSize);
+
+//    // Extract a particular element out of the expression and return a new expression.
+//    SgAsmExpression* extractElement(SgAsmExpression*, arm64_vess elmtSizeSpec, int idx);
+
     // Extend an expression. Given an expression of some integer type, and given a destination type and an ARM extender function, generate a new expression (if necessary)
     // that represents the ARM extender function. This may consist of an truncation and/or a signed or unsigned extend operation.
     SgAsmExpression* extendOperand(SgAsmExpression*, arm64_extender, SgAsmType*, arm64_shifter, unsigned shiftAmount) const;
 
     // Return a type for register.
-    SgAsmType* registerType(arm64_reg, arm64_vas);
+    SgAsmType* registerType(RegisterDescriptor, arm64_vas);
 
     // Capstone doesn't return information about how much memory is read for a memory read operand. Therefore, we need to
     // partially decode instructions ourselves to get this information.
