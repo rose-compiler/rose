@@ -3732,7 +3732,7 @@ namespace // local declarations
     SgBasicBlock&            body    = mkBasicBlock();
     
     ROSE_ASSERT(lst.size() == 1);
-    SgCatchOptionStmt& 	     sgnode  = mkExceptionHandler(SG_DEREF(lst[0]), body);
+    SgCatchOptionStmt&       sgnode  = mkExceptionHandler(SG_DEREF(lst[0]), body);
     ElemIdRange              range   = idRange(ex.Handler_Statements);
     
     logWarn() << "catch handler" << std::endl;

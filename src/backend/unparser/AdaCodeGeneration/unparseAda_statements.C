@@ -825,7 +825,7 @@ namespace
   
   bool AdaStatementUnparser::requiresNew(SgType* n)
   {
-    return isSgTypeDefault(n) == nullptr;
+    return isSgTypeDefault(n) == NULL;
   }
   
   bool isPrivate(SgDeclarationStatement& dcl)
