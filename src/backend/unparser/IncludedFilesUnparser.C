@@ -179,6 +179,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
   // DQ (4/8/2020): if we are not using the defered evaluation (default) then the default behavior is to unparse all header files.
      if (unparseAllHeaderFiles == true)
         {
+#if 0
        // DQ (4/13/2020): Added debugging code.
           if (modifiedFiles.empty() == false)
             {
@@ -188,6 +189,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
                    printf (" --- *i = %s \n",(*i).c_str());
                  }
             }
+#endif
        // DQ (4/14/2020): Commented out (valid for test6 but not test0.
        // ROSE_ASSERT(modifiedFiles.empty() == true);
 
@@ -425,7 +427,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
                   }
 #endif
              }
-#if 1
+#if 0
           printf ("In IncludedFilesUnparser::figureOutWhichFilesToUnparse(): END OF LOOP: tmp_counter = %d \n",tmp_counter);
 #endif
 
@@ -526,7 +528,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
              }
 
        // DQ (4/14/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 0)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 1)
              {
                printf ("In IncludedFilesUnparser::figureOutWhichFilesToUnparse(): calling applyFunctionToIncludingPreprocessingInfos(filesToUnparse) \n");
              }
@@ -538,7 +540,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
           collectIncludeCompilerPaths();
 
        // DQ (4/14/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 0)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 1)
              {
                printf ("In IncludedFilesUnparser::figureOutWhichFilesToUnparse(): calling applyFunctionToIncludingPreprocessingInfos(allFiles) \n");
              }
@@ -1073,7 +1075,7 @@ void IncludedFilesUnparser::collectIncludingPathsFromUnaffectedFiles(const strin
 void
 IncludedFilesUnparser::initializeFilesToUnparse()
    {
-#if 1
+#if 0
      printf ("In initializeFilesToUnparse(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
      printf (" --- modifiedFiles.size()        = %zu \n",modifiedFiles.size());
 #endif
@@ -1109,7 +1111,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
           while (i != modifiedFiles.end())
              {
                string filename = *i;
-#if 1
+#if 0
                printf ("Iterating over modifiedFiles: Calling function to collect comments and CPP directives from filename = %s \n",filename.c_str());
 #endif
                if (unparseScopesMap.find(filename) != unparseScopesMap.end())
@@ -1329,12 +1331,12 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                          printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): filePreprocInfo == NULL \n");
                        }
 #endif
-#if 1
+#if 0
                     printf ("In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
                  // DQ (4/22/2020): Location of call to insert redundant comments and CPP directives.
                     sourceFile->secondaryPassOverSourceFile();
-#if 1
+#if 0
                     printf ("DONE: In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
                     includeFileIterator++;
@@ -1706,7 +1708,7 @@ IncludedFilesUnparser::applyFunctionToIncludingPreprocessingInfos(
    const set<string>& includedFiles, 
    void (IncludedFilesUnparser::*funPtr)(const string& includedFile, PreprocessingInfo* includingPreprocessingInfo) ) 
    {
-#if 1
+#if 0
      printf ("In applyFunctionToIncludingPreprocessingInfos(): includedFiles.size() = %zu \n",includedFiles.size());
      set<string>::iterator i = includedFiles.begin();
      while (i != includedFiles.end())
@@ -1716,7 +1718,7 @@ IncludedFilesUnparser::applyFunctionToIncludingPreprocessingInfos(
         }
 #endif
 
-#if 1
+#if 0
      const map<string, set<PreprocessingInfo*> > & temp_includingPreprocessingInfosMap = projectNode -> get_includingPreprocessingInfosMap();
      printf ("In applyFunctionToIncludingPreprocessingInfos(): temp_includingPreprocessingInfosMap.size() = %zu \n",temp_includingPreprocessingInfosMap.size());
      map<string, set<PreprocessingInfo*> >::const_iterator j = temp_includingPreprocessingInfosMap.begin();
@@ -1755,7 +1757,7 @@ IncludedFilesUnparser::applyFunctionToIncludingPreprocessingInfos(
              }
         }
 
-#if 1
+#if 0
      printf ("Leaving applyFunctionToIncludingPreprocessingInfos(): includedFiles.size() = %zu \n",includedFiles.size());
 #endif
 #if 0
