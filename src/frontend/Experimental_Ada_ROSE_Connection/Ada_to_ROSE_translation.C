@@ -172,36 +172,35 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 #if 0
           printf ("Initial traversal: current_unit: Next_Count = %d \n",current_unit->Next_Count);
 #endif
-       // if (current_node->Node.Node_Kind == A_Unit_Node)
-             {
-               Unit_Struct & unit = current_unit->Unit;
-            // globalUnit = &unit;
-#if 0
-               printf ("Initialize Unit: filename = %s \n",unit.Text_Name);
-               printf ("Initialize Unit: Declaration_ID = %d \n",unit.Unit_Declaration);
-#endif
-            // This code treats duplicate entries as a warning and skips the redundant entry.
-               int unit_id = unit.ID;
+          //~ if (current_node->Node.Node_Kind == A_Unit_Node)
+          {
+            Unit_Struct & unit = current_unit->Unit;
+        
+            std::cerr << "Initialize Unit: filename = " << unit.Text_Name;
+            
+          // This code treats duplicate entries as a warning and skips the redundant entry.
+            int unit_id = unit.ID;
 
-            // We are using the unit id for the key into the element list (messy).
-               ROSE_ASSERT(unit_id > 0);
-               ROSE_ASSERT(unit_id <= MAX_NUMBER_OF_UNITS);
+          // We are using the unit id for the key into the element list (messy).
+            ROSE_ASSERT(unit_id > 0);
+            ROSE_ASSERT(unit_id <= MAX_NUMBER_OF_UNITS);
 
-               if (asisMap.find(unit_id) == asisMap.end())
-                  {
-                    std::cerr << "***** adding unit (element) " << unit_id << std::endl;
-                    asisMap[unit_id] = (Element_Struct*) (&unit);
-                  }
-                 else
-                  {
-                    printf ("ERROR: element_id = %d already processed (skipping additional instance) \n",unit_id);
-                  }
+            if (asisMap.find(unit_id) == asisMap.end())
+            {
+              std::cerr << "***** adding unit (element) " << unit_id << std::endl;
+              asisMap[unit_id] = (Element_Struct*) (&unit);
+            }
+            else
+            {
+              std::cerr << "ERROR: element_id = " << unit_id
+                        << " already processed (skipping additional instance) "
+                        << std::endl;
+            }
 
-               ROSE_ASSERT(asisMap.find(unit_id) != asisMap.end());
-             }
-#if 0
-          printf ("current_unit->Next = %p \n",current_unit->Next);
-#endif
+            ROSE_ASSERT(asisMap.find(unit_id) != asisMap.end());
+          }
+          
+          std::cerr << "current_unit->Next = " << current_unit->Next << std::endl;
           current_unit = current_unit->Next;
         }
 
@@ -621,7 +620,11 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                          int statement_id = privatePartDeclarativeItems.IDs[i];
                          printf ("i = %d statement_id = %d \n",i,statement_id);
 
-                         ROSE_ASSERT(untypedNodeMap.find(statement_id) != untypedNodeMap.end());
+                         if (untypedNodeMap.find(statement_id) == untypedNodeMap.end())
+                         {
+                           printf ("unhandled\n"); 
+                           continue;
+                         }
 
                          SgUntypedNode* private_untypedNode = untypedNodeMap[statement_id];
                          ROSE_ASSERT(private_untypedNode != NULL);
@@ -1491,7 +1494,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
           case A_Private_Type_Definition:
              {
             // processPrivateTypeDefinition(definition.The_Union.The_Private_Type_Definition);
-#if 1
+#if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
@@ -3318,7 +3321,7 @@ void
                printf ("     correspondingLastConstraint = %d \n",correspondingLastConstraint);
                printf ("     correspondingLastSubtype    = %d \n",correspondingLastSubtype);
 
-#if DEBUG_UNTYPED_NODE_GENERATION
+#if 0 /*DEBUG_UNTYPED_NODE_GENERATION*/
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
@@ -4425,7 +4428,7 @@ void
                bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
                printf ("      isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
 
-#if DEBUG_UNTYPED_NODE_GENERATION
+#if 0 /* DEBUG_UNTYPED_NODE_GENERATION */
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
@@ -4764,7 +4767,7 @@ void
                Expression_ID correspondingBaseEntity = declaration.Corresponding_Base_Entity;
                printf ("      correspondingBaseEntity = %d \n",correspondingBaseEntity);
 
-#if DEBUG_UNTYPED_NODE_GENERATION
+#if 0 /*DEBUG_UNTYPED_NODE_GENERATION*/
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
@@ -5978,7 +5981,7 @@ void
                Expression_Path_List & expressionPaths = expression.Expression_Paths;
                printf ("     expressionPaths: \n");
                processPathList(expressionPaths);
-#if 1
+#if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
@@ -6573,7 +6576,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
 
                Component_Definition arrayComponentDefinition = x.Array_Component_Definition;
                printf ("   arrayComponentDefinition = %d \n",arrayComponentDefinition);
-#if 1
+#if 0
                printf ("Not implemented! \n");
                ROSE_ASSERT(false);
 #endif
@@ -6587,7 +6590,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
 
                Component_Definition arrayComponentDefinition = x.Array_Component_Definition;
                printf ("   arrayComponentDefinition = %d \n",arrayComponentDefinition);
-#if 1
+#if 0
                printf ("Not implemented! \n");
                ROSE_ASSERT(false);
 #endif
@@ -7073,7 +7076,7 @@ Ada_ROSE_Translation::processPrivateTypeDefinition ( Private_Type_Definition_Str
   // Documentation for x
 #endif
 
-#if 1
+#if 0
      printf ("ERROR: not implemented! \n");
      ROSE_ASSERT(false);
 #endif
