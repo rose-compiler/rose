@@ -367,30 +367,36 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
       long int inStateElemSize=(long int)AbstractValue::_variableIdMapping->getElementSize(varId);
       abstractMemLoc.setElementTypeSize(inStateElemSize); // adapt element size when storing in state
       if(pointerValueElemSize!=inStateElemSize) {
-        // create new abstractMemLoc
-        //cout<<"memloc:"<<abstractMemLoc.toString(AbstractValue::_variableIdMapping)<<endl;
-        //cout<<"elemSize: "<<elemSize<<endl;
+        //cout<<"DEBUG: memloc:"<<abstractMemLoc.toString(AbstractValue::_variableIdMapping)<<endl;
+        //cout<<"DEBUG: elemSize: "<<elemSize<<endl;
         if(inStateElemSize!=0) {
           //cout<<"DEBUG: offset     : "<<offset<<endl;
           long int withinElementOffset=offset%inStateElemSize;
           //cout<<"DEBUG: withinElementOffset: "<<withinElementOffset<<endl;
           if(withinElementOffset!=0) {
             // TODO: access within element with mod as byte offset
-            // need to know the element size of the pointer to mask it properly
             offset-=withinElementOffset;
-            //cout<<"DEBUG: adj. offset: "<<offset;
-            abstractMemLoc.setValue(offset); // adjustment to element-aligned offset
-            operator[](abstractMemLoc)=abstractValue; // TODO: write target size and value must be masked!
+            abstractMemLoc.setValue(offset); // adjustment of address to element-aligned offset
           }
-          operator[](abstractMemLoc)=abstractValue; // TODO: write value must be masked!
+          // conservative destruction of values if unaligned write
+          operator[](abstractMemLoc)=AbstractValue::createTop(); // loosing value, loosing precision
+          if(withinElementOffset+pointerValueElemSize>inStateElemSize) {
+            int long numModifiedElements=(pointerValueElemSize/inStateElemSize); // one is already modifed above
+            for(int i=0;i<numModifiedElements;i++) {
+              AbstractValue change=AbstractValue(inStateElemSize);
+              abstractMemLoc=AbstractValue::operatorAdd(abstractMemLoc,change); // advance pointer
+              // TODO: check for memory bound
+              operator[](abstractMemLoc)=AbstractValue::createTop();
+            }
+          }
         } else {
           operator[](abstractMemLoc)=abstractValue; // should not happen (elemsize=0)
         }
       } else {
-        operator[](abstractMemLoc)=abstractValue; // elem size is the same
+        operator[](abstractMemLoc)=abstractValue; // elem size is the same, keeping precision
       }
     } else {
-      operator[](abstractMemLoc)=abstractValue; // not in bytemode
+      operator[](abstractMemLoc)=abstractValue; // not in bytemode (cannot handle unaligend access)
     }
   }
 }
