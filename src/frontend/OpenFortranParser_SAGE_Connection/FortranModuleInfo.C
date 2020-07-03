@@ -324,32 +324,6 @@ FortranModuleInfo::createSgSourceFile(string modName)
    }
 
 
-#if 0
-// DQ (10/1/2010): This support is now better implemented directly in the FortranModuleInfo::getModule() function.
-void
-FortranModuleInfo::addMapping(string modName,SgModuleStatement* modNode)
-   {
-     printf ("In FortranModuleInfo::addMapping() modName = %s modNode = %p \n",modName.c_str(),modNode);
-     ROSE_ASSERT(modNode != NULL);
-
-     if ( moduleNameAstMap[modName] == NULL ) 
-        {
-          moduleNameAstMap[modName] = modNode;
-        }
-       else
-        {
-          cerr << "Warning: The map entry for " << modName << " is not empty. " << endl;
-        }
-
-// #ifdef USE_STMT_DEBUG
-     printf ("In FortranModuleInfo::addMapping(%s,%p): display the moduleNameAstMap \n",modName.c_str(),modNode);
-     dumpMap();
-     printf ("DONE: In FortranModuleInfo::addMapping(%s,%p): display the moduleNameAstMap \n\n",modName.c_str(),modNode);
-// #endif
-  }
-#endif
-
-
 void
 FortranModuleInfo::clearMap()
    {

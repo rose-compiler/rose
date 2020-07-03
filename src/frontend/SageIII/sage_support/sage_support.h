@@ -27,10 +27,6 @@
 
 #include "attachPreprocessingInfo.h"
 
-#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-   #include "astMergeAPI.h"
-#endif
-
 #include "BinaryLoader.h"
 #include "sageBuilder.h"
 

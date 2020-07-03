@@ -204,10 +204,10 @@ void
 FortranCodeGeneration_locatedNode::unparseLabelRefExp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgLabelRefExp* labelRefExp = isSgLabelRefExp(expr);
-     ROSE_ASSERT(labelRefExp != NULL);
+     ASSERT_not_null(labelRefExp);
 
      SgLabelSymbol* labelSymbol = labelRefExp->get_symbol();
-     ROSE_ASSERT(labelSymbol != NULL);
+     ASSERT_not_null(labelSymbol);
 
      int numericLabel = labelSymbol->get_numeric_label_value();
      ROSE_ASSERT(numericLabel >= 0);
@@ -231,7 +231,7 @@ FortranCodeGeneration_locatedNode::unparseLabelRefExp(SgExpression* expr, SgUnpa
   // curprint("*");
 
      SgStatement* tmp_statement = SageInterface::getEnclosingStatement(labelRefExp);
-     ROSE_ASSERT(tmp_statement != NULL);
+     ASSERT_not_null(tmp_statement);
 
   // Check for either a SgIOStatement or a SgReturnStatement (not the special case we are looking for)
      if (isSgIOStatement(tmp_statement) == NULL && isSgReturnStmt(tmp_statement) == NULL)
@@ -256,10 +256,10 @@ FortranCodeGeneration_locatedNode::unparseLabelRefExp(SgExpression* expr, SgUnpa
 
             // Note that this code is similar (copyied from) to R1236 c_action_return_stmt() in the ROSE Fortran support.
                SgFunctionDefinition* functionDefinition = SageInterface::getEnclosingFunctionDefinition(tmp_statement, /* includingSelf= */ true);
-               ROSE_ASSERT(functionDefinition != NULL);
+               ASSERT_not_null(functionDefinition);
 
                SgFunctionDeclaration* functionDeclaration = functionDefinition->get_declaration();
-               ROSE_ASSERT(functionDeclaration != NULL);
+               ASSERT_not_null(functionDeclaration);
 
                SgInitializedNamePtrList & args = functionDeclaration->get_args();
                ROSE_ASSERT(alternativeReturnValue < args.size());
@@ -326,7 +326,7 @@ FortranCodeGeneration_locatedNode::unparseFuncCall(SgExpression* expr, SgUnparse
 {
   // Sage node corresponds to a Fortran function/subroutine call
   SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
-  ROSE_ASSERT(func_call != NULL);
+  ASSERT_not_null(func_call);
 
   // Two cases: operator overloading (in-order unparsing) vs. the
   // typical pre-order function call syntax.
@@ -401,7 +401,7 @@ void
 FortranCodeGeneration_locatedNode::unparseIntrinsic(SgExpression* expr, SgUnparse_Info& info) 
    {
      SgIntrinsicFn* intrn = isSgIntrinsicFn(expr);
-     ROSE_ASSERT(intrn != NULL);
+     ASSERT_not_null(intrn);
   
   // intrinsic name
      curprint(intrn->get_name().str());
@@ -423,7 +423,7 @@ void
 FortranCodeGeneration_locatedNode::unparseUnaryExpr(SgExpression* expr, SgUnparse_Info& info) 
 {
   SgUnaryOp* unary_op = isSgUnaryOp(expr);
-  ROSE_ASSERT(unary_op != NULL);
+  ASSERT_not_null(unary_op);
   
   // A name-operator is an operator that is formed using the
   // .name. syntax (e.g., .gt.) as opposed to 'symbolic' characters
@@ -450,7 +450,7 @@ FortranCodeGeneration_locatedNode::unparseBinaryExpr(SgExpression* expr, SgUnpar
      printDebugInfo("entering unparseBinaryExpr", true);
 
      SgBinaryOp* binary_op = isSgBinaryOp(expr);
-     ROSE_ASSERT(binary_op != NULL);
+     ASSERT_not_null(binary_op);
 
      info.set_nested_expression();
   
@@ -546,7 +546,7 @@ outputLogicalOperator(SgExpression* expr)
                if (isSgTypeBool(rhs_type) == NULL)
                {
                  printf ("Error: outputLogicalOperator(). Found a boolean lhs operand paired with a non-boolean rhs operand for SgExpression:%s\n",expr->class_name().c_str());
-                 ROSE_ASSERT(isSgTypeBool(rhs_type) != NULL);
+                 ASSERT_not_null(isSgTypeBool(rhs_type));
                }
                outputLogicalOperator = true;
              }
@@ -564,7 +564,7 @@ void
 FortranCodeGeneration_locatedNode::unparseEqOp(SgExpression* expr, SgUnparse_Info& info)
    { 
   // Sage node corresponds to Fortran equals operator
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
   // printf ("In FortranCodeGeneration_locatedNode::unparseEqOp(): type = %s ",expr->get_type()->class_name().c_str());
 
      
@@ -583,7 +583,7 @@ FortranCodeGeneration_locatedNode::unparseEqOp(SgExpression* expr, SgUnparse_Inf
 void
 FortranCodeGeneration_locatedNode::unparseNeOp(SgExpression* expr, SgUnparse_Info& info)
    { 
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
   // Sage node corresponds to Fortran not-equals operator
   // unparseBinaryOperator(expr, "/=", info);
 
@@ -805,7 +805,7 @@ FortranCodeGeneration_locatedNode::unparseCastOp(SgExpression* expr, SgUnparse_I
   // ROSE_ASSERT(false);
 
      SgCastExp* cast_op = isSgCastExp(expr);
-     ROSE_ASSERT(cast_op != NULL);
+     ASSERT_not_null(cast_op);
 
      SgUnparse_Info ninfo(info);
      ninfo.unset_PrintName();
@@ -912,7 +912,7 @@ FortranCodeGeneration_locatedNode::unparseNewOp(SgExpression* expr, SgUnparse_In
 #if 0
   // FIXME:eraxxon
   SgNewExp* new_op = isSgNewExp(expr);
-  ROSE_ASSERT(new_op != NULL);
+  ASSERT_not_null(new_op);
 
   ROSE_ASSERT(false && "FortranCodeGeneration_locatedNode::unparseNewOp");
 
@@ -948,7 +948,7 @@ FortranCodeGeneration_locatedNode::unparseDeleteOp(SgExpression* expr, SgUnparse
 #if 0
   // FIXME:eraxxon
   SgDeleteExp* delete_op = isSgDeleteExp(expr);
-  ROSE_ASSERT(delete_op != NULL);
+  ASSERT_not_null(delete_op);
 
   ROSE_ASSERT(false && "FortranCodeGeneration_locatedNode::unparseDeleteOp");
   
@@ -992,7 +992,7 @@ FortranCodeGeneration_locatedNode::unparseTypeRef(SgExpression* expr, SgUnparse_
    {
   // FIXME:eraxxon
      SgRefExp* type_ref = isSgRefExp(expr);
-     ROSE_ASSERT(type_ref != NULL);
+     ASSERT_not_null(type_ref);
 
      SgUnparse_Info ninfo(info);
      ninfo.unset_PrintName();
@@ -1005,13 +1005,13 @@ void
 FortranCodeGeneration_locatedNode::unparseSubscriptExpr(SgExpression* expr, SgUnparse_Info& info) 
    {
      SgSubscriptExpression* sub_expr = isSgSubscriptExpression(expr);
-     ROSE_ASSERT(sub_expr != NULL);
+     ASSERT_not_null(sub_expr);
 
   // printf ("In FortranCodeGeneration_locatedNode::unparseSubscriptExpr(%p) \n",expr);
 
-     ROSE_ASSERT(sub_expr->get_lowerBound() != NULL);
-     ROSE_ASSERT(sub_expr->get_upperBound() != NULL);
-     ROSE_ASSERT(sub_expr->get_stride() != NULL);
+     ASSERT_not_null(sub_expr->get_lowerBound());
+     ASSERT_not_null(sub_expr->get_upperBound());
+     ASSERT_not_null(sub_expr->get_stride());
 
      if (isSgNullExpression(sub_expr->get_lowerBound()) == NULL)
         {
@@ -1038,7 +1038,7 @@ FortranCodeGeneration_locatedNode::unparseSubscriptExpr(SgExpression* expr, SgUn
         }
 #else
      SgExpression* strideExpression = sub_expr->get_stride();
-     ROSE_ASSERT(strideExpression != NULL);
+     ASSERT_not_null(strideExpression);
      ROSE_ASSERT(isSgNullExpression(strideExpression) == NULL);
 
   // DQ (11/18/2007): If this is a SgNullExpression, then ignore the second colon
@@ -1051,7 +1051,7 @@ FortranCodeGeneration_locatedNode::unparseSubscriptExpr(SgExpression* expr, SgUn
      if (defaultValue == false)
         {
           curprint(":");
-          ROSE_ASSERT(sub_expr->get_stride() != NULL);
+          ASSERT_not_null(sub_expr->get_stride());
           unparseExpression(sub_expr->get_stride(), info);
         }
   //    }
@@ -1063,7 +1063,7 @@ void
 FortranCodeGeneration_locatedNode::unparseColonShapeExp(SgExpression* expr, SgUnparse_Info& info) 
    {
      SgColonShapeExp* colon = isSgColonShapeExp(expr);
-     ROSE_ASSERT(colon != NULL);
+     ASSERT_not_null(colon);
 
      curprint(":");
    }
@@ -1072,7 +1072,7 @@ void
 FortranCodeGeneration_locatedNode::unparseAsteriskShapeExp(SgExpression* expr, SgUnparse_Info& info) 
    {
      SgAsteriskShapeExp* sub_ast = isSgAsteriskShapeExp(expr);
-     ROSE_ASSERT(sub_ast != NULL);
+     ASSERT_not_null(sub_ast);
 
      curprint("*");
    }
@@ -1143,7 +1143,7 @@ FortranCodeGeneration_locatedNode::unparseAggrInit(SgExpression* expr, SgUnparse
   // ROSE_ASSERT(false);
 
      SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
-     ROSE_ASSERT(aggr_init != NULL);
+     ASSERT_not_null(aggr_init);
 
   // printf ("In unparseAggrInit(): aggr_init->get_type() = %p = %s \n",aggr_init->get_type(),(aggr_init->get_type() != NULL) ? aggr_init->get_type()->class_name().c_str() : "NULL");
 
@@ -1189,18 +1189,18 @@ FortranCodeGeneration_locatedNode::unparseConInit(SgExpression* expr, SgUnparse_
   // ROSE_ASSERT(false);
 
      SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(expr);
-     ROSE_ASSERT(constructorInitializer != NULL);
+     ASSERT_not_null(constructorInitializer);
 
      SgType* type = constructorInitializer->get_expression_type();
      SgClassType* classType = isSgClassType(type);
-     ROSE_ASSERT(classType != NULL);
+     ASSERT_not_null(classType);
 
      string className = classType->get_name().getString();
      curprint(className);
 
      curprint("(");
 
-     ROSE_ASSERT(constructorInitializer->get_args() != NULL);
+     ASSERT_not_null(constructorInitializer->get_args());
   // unparseInitializerList(constructorInitializer->get_args(), info);
      unparseExpression(constructorInitializer->get_args(), info);
 
@@ -1213,11 +1213,11 @@ FortranCodeGeneration_locatedNode::unparseAssnInit(SgExpression* expr, SgUnparse
    {
   // DQ (4/28/2008): This is used for simple initializers and we use the SgAggregateInitializer for structures!
      SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
-     ROSE_ASSERT(assn_init != NULL);
+     ASSERT_not_null(assn_init);
 
 #if 0
      SgExprListExp* exprListExp = isSgExprListExp(assn_init->get_operand());
-  // ROSE_ASSERT(exprListExp != NULL);
+  // ASSERT_not_null(exprListExp);
 
      int numberOfInitializers = exprListExp != NULL ? exprListExp->get_expressions().size() : 1;
      if (numberOfInitializers > 1)
@@ -1249,7 +1249,7 @@ FortranCodeGeneration_locatedNode::unparseUseRename(SgExpression* expr, SgUnpars
 {
   // Sage node corresponds to a Fortran rename expression ('use a => a_old')
   SgUseRenameExpression* rename_expr = isSgUseRenameExpression(expr);
-  ROSE_ASSERT(rename_expr != NULL);
+  ASSERT_not_null(rename_expr);
 
   SgExpression* oldnm = rename_expr->get_oldname();
   SgExpression* newnm = rename_expr->get_newname();
@@ -1268,7 +1268,7 @@ FortranCodeGeneration_locatedNode::unparseUseOnly(SgExpression* expr, SgUnparse_
    {
   // Sage node corresponds to a Fortran 'use, only' expression
      SgUseOnlyExpression* only_expr = isSgUseOnlyExpression(expr);
-     ROSE_ASSERT(only_expr != NULL);
+     ASSERT_not_null(only_expr);
 
      SgExprListExp* lst = only_expr->get_access_list();
      curprint(", ONLY: ");
@@ -1287,7 +1287,7 @@ FortranCodeGeneration_locatedNode::unparseIOItemExpr(SgExpression* expr, SgUnpar
 {
   // Sage node represents Fortran IO
   SgIOItemExpression* ioitem_expr = isSgIOItemExpression(expr);
-  ROSE_ASSERT(ioitem_expr != NULL);
+  ASSERT_not_null(ioitem_expr);
 
   SgExpression* ioitem = ioitem_expr->get_io_item();
 
@@ -1305,7 +1305,7 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
    {
   // Sage node corresponds to a Fortran implied do
      SgImpliedDo* ioitem_expr = isSgImpliedDo(expr);
-     ROSE_ASSERT(ioitem_expr != NULL);
+     ASSERT_not_null(ioitem_expr);
 
      SgExprListExp* object_list = ioitem_expr->get_object_list();
 
@@ -1338,7 +1338,7 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
                if ( pointerArrayRef != NULL)
                   {
                     SgExprListExp* indexListExp = isSgExprListExp(pointerArrayRef->get_rhs_operand());
-                    ROSE_ASSERT(indexListExp != NULL);
+                    ASSERT_not_null(indexListExp);
 
                     SgExpressionPtrList & indexList = indexListExp->get_expressions();
                     SgExpressionPtrList::iterator j = indexList.begin();
@@ -1355,7 +1355,7 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
                          j++;
                        }
 
-                    ROSE_ASSERT(indexVariable != NULL);
+                    ASSERT_not_null(indexVariable);
                   }
                  else
                   {
@@ -1365,16 +1365,16 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
                i++;
              }
 
-          ROSE_ASSERT(indexVariable != NULL);
+          ASSERT_not_null(indexVariable);
           indexExpression = indexVariable;
         }
 
-     ROSE_ASSERT(indexExpression != NULL);
+     ASSERT_not_null(indexExpression);
 #endif
 
-     ROSE_ASSERT(lb != NULL);
-     ROSE_ASSERT(ub != NULL);
-     ROSE_ASSERT(step != NULL);
+     ASSERT_not_null(lb);
+     ASSERT_not_null(ub);
+     ASSERT_not_null(step);
 
      curprint("(");
      if (object_list != NULL)
@@ -1395,7 +1395,7 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
   // Unparse the lhs and rhs separately to about extra "()".  A little later this will be a 
   // variable declaration, but we will not be able to unparse it as such since the type 
   // (integer) is not explicitly represented.
-     ROSE_ASSERT(lb != NULL);
+     ASSERT_not_null(lb);
      SgBinaryOp* binaryExpression = isSgBinaryOp(lb);
      if (binaryExpression == NULL)
         {
@@ -1406,11 +1406,11 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
         }
        else
         {
-     ROSE_ASSERT(binaryExpression != NULL);
-     ROSE_ASSERT(binaryExpression->get_lhs_operand() != NULL);
+     ASSERT_not_null(binaryExpression);
+     ASSERT_not_null(binaryExpression->get_lhs_operand());
      unparseExpression(binaryExpression->get_lhs_operand(), info);
      curprint(" = ");
-     ROSE_ASSERT(binaryExpression->get_rhs_operand() != NULL);
+     ASSERT_not_null(binaryExpression->get_rhs_operand());
      unparseExpression(binaryExpression->get_rhs_operand(), info);
         }
 #endif
@@ -1437,11 +1437,11 @@ FortranCodeGeneration_locatedNode::unparseVarRef(SgExpression* expr, SgUnparse_I
    {
   // Sage node corresponds to a Fortran variable reference
      SgVarRefExp* var_ref = isSgVarRefExp(expr);
-     ROSE_ASSERT(var_ref != NULL);
-     ROSE_ASSERT(var_ref->get_symbol() != NULL);
+     ASSERT_not_null(var_ref);
+     ASSERT_not_null(var_ref->get_symbol());
   
      SgInitializedName* decl = var_ref->get_symbol()->get_declaration();
-     ROSE_ASSERT (decl != NULL);
+     ASSERT_not_null(decl);
      SgVariableDeclaration* vd = isSgVariableDeclaration(decl->get_declaration());
 
      if (false /*vd != NULL*/)
@@ -1471,7 +1471,7 @@ FortranCodeGeneration_locatedNode::unparseFuncRef(SgExpression* expr, SgUnparse_
 {
   // Sage node corresponds to a Fortran function reference
   SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
-  ROSE_ASSERT(func_ref != NULL);
+  ASSERT_not_null(func_ref);
   string func_name = func_ref->get_symbol()->get_name().str();
   curprint(func_name);
 }
@@ -1487,7 +1487,7 @@ FortranCodeGeneration_locatedNode::unparseMFuncRef(SgExpression* expr, SgUnparse
   // FIXME:eraxxon
 
   SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
-  ROSE_ASSERT(mfunc_ref != NULL);
+  ASSERT_not_null(mfunc_ref);
   
   SgMemberFunctionDeclaration* mfd  = mfunc_ref->get_symbol_i()->get_declaration();
 
@@ -1495,14 +1495,14 @@ FortranCodeGeneration_locatedNode::unparseMFuncRef(SgExpression* expr, SgUnparse
   // SgClassDefinition*           cdef = mfd->get_scope();
      SgClassDefinition*           cdef = isSgClassDefinition(mfd->get_scope());
 
-  ROSE_ASSERT (cdef != NULL);
+  ASSERT_not_null(cdef);
   SgClassDeclaration* cdecl = cdef->get_declaration();
 
   // qualified name is always outputed except when the p_need_qualifier is
   // set to 0 (when the naming class is identical to the selection class, and
   // and when we aren't suppressing the virtual function mechanism).  
-  ROSE_ASSERT(cdecl != NULL);
-  ROSE_ASSERT(cdecl->get_parent() != NULL);
+  ASSERT_not_null(cdecl);
+  ASSERT_not_null(cdecl->get_parent());
 
      bool print_colons = false;
      if (mfunc_ref->get_need_qualifier())
@@ -1550,7 +1550,7 @@ FortranCodeGeneration_locatedNode::unparseClassRef(SgExpression* expr, SgUnparse
   // Sage node has no Fortran correspondence (unless semantics are twisted)
   // FIXME:eraxxon
      SgClassNameRefExp* classname_ref = isSgClassNameRefExp(expr);
-     ROSE_ASSERT(classname_ref != NULL);
+     ASSERT_not_null(classname_ref);
      curprint(classname_ref->get_symbol()->get_declaration()->get_name().str());
 #endif
    }
@@ -1563,7 +1563,7 @@ FortranCodeGeneration_locatedNode::unparseStringVal(SgExpression* expr, SgUnpars
 
   // Sage node corresponds to a Fortran string constant
      SgStringVal* str_val = isSgStringVal(expr);
-     ROSE_ASSERT(str_val != NULL);
+     ASSERT_not_null(str_val);
 
   // DQ (1/30/2011): It is OK to have an empty string value (see test2010_156.f90).
   // ROSE_ASSERT(str_val->get_value().empty() == false);      
@@ -1596,7 +1596,7 @@ FortranCodeGeneration_locatedNode::unparseBoolVal(SgExpression* expr, SgUnparse_
    {
   // Sage node corresponds to a Fortran logical constant
      SgBoolValExp* bool_val = isSgBoolValExp(expr);
-     ROSE_ASSERT(bool_val != NULL);
+     ASSERT_not_null(bool_val);
 
      if (bool_val->get_value() == true)
         {
@@ -1617,7 +1617,7 @@ FortranCodeGeneration_locatedNode::unparseCharVal(SgExpression* expr, SgUnparse_
    {
   // Sage node corresponds to a Fortran character constant
      SgCharVal* char_val = isSgCharVal(expr);
-     ROSE_ASSERT(char_val != NULL);
+     ASSERT_not_null(char_val);
   // curprint(char_val->get_value());
   // const string value = char_val->get_value();
      char value[2];
@@ -1631,7 +1631,7 @@ FortranCodeGeneration_locatedNode::unparseUCharVal(SgExpression* expr, SgUnparse
    {
   // Sage node corresponds to a Fortran integer constant
      SgUnsignedCharVal* uchar_val = isSgUnsignedCharVal(expr);
-     ROSE_ASSERT(uchar_val != NULL);
+     ASSERT_not_null(uchar_val);
   // curprint(uchar_val->get_value());
   // string value = char_val->get_value();
      char value[2];
@@ -1649,7 +1649,7 @@ FortranCodeGeneration_locatedNode::unparseWCharVal(SgExpression* expr, SgUnparse
 #if 0
   // Sage node has no Fortran correspondence
      SgWcharVal* wchar_val = isSgWcharVal(expr);
-     ROSE_ASSERT(wchar_val != NULL);
+     ASSERT_not_null(wchar_val);
      ROSE_ASSERT(false && "FortranCodeGeneration_locatedNode::unparseWCharVal");
      curprint((int) wchar_val->get_value());
 #endif
@@ -1660,7 +1660,7 @@ FortranCodeGeneration_locatedNode::unparseShortVal(SgExpression* expr, SgUnparse
 {
   // Sage node corresponds to a Fortran integer constant
   SgShortVal* short_val = isSgShortVal(expr);
-  ROSE_ASSERT(short_val != NULL);
+  ASSERT_not_null(short_val);
   curprint(short_val->get_value());
 }
 
@@ -1669,7 +1669,7 @@ FortranCodeGeneration_locatedNode::unparseUShortVal(SgExpression* expr, SgUnpars
 {
   // Sage node corresponds to a Fortran integer constant
   SgUnsignedShortVal* ushort_val = isSgUnsignedShortVal(expr);
-  ROSE_ASSERT(ushort_val != NULL);
+  ASSERT_not_null(ushort_val);
   curprint(ushort_val->get_value());
 }
 
@@ -1678,7 +1678,7 @@ FortranCodeGeneration_locatedNode::unparseEnumVal(SgExpression* expr, SgUnparse_
 {
   // Sage node has no Fortran correspondence
   SgEnumVal* enum_val = isSgEnumVal(expr);
-  ROSE_ASSERT(enum_val != NULL);
+  ASSERT_not_null(enum_val);
   
   // FIXME:eraxxon [could be Fortran parameter]
   ROSE_ASSERT(false && "FortranCodeGeneration_locatedNode::unparseEnumVal");
@@ -1692,7 +1692,7 @@ FortranCodeGeneration_locatedNode::unparseEnumVal(SgExpression* expr, SgUnparse_
       cur << classdefn->get_qualified_name().str() <<  "::";
     }
     
-    // ROSE_ASSERT (enum_val->get_name().str() != NULL);
+    // ASSERT_not_null(enum_val->get_name().str());
     cur << enum_val->get_name().str();
   }
 }
@@ -1702,7 +1702,7 @@ FortranCodeGeneration_locatedNode::unparseIntVal(SgExpression* expr, SgUnparse_I
 {
   // Sage node corresponds to a Fortran integer constant
   SgIntVal* int_val = isSgIntVal(expr);
-  ROSE_ASSERT(int_val != NULL);
+  ASSERT_not_null(int_val);
   cur << int_val->get_value();
 }
 
@@ -1711,7 +1711,7 @@ FortranCodeGeneration_locatedNode::unparseUIntVal(SgExpression* expr, SgUnparse_
 {
   // Sage node corresponds to a Fortran integer constant
   SgUnsignedIntVal* uint_val = isSgUnsignedIntVal(expr);
-  ROSE_ASSERT(uint_val != NULL);
+  ASSERT_not_null(uint_val);
   cur << uint_val->get_value();
 }
 
@@ -1720,7 +1720,7 @@ FortranCodeGeneration_locatedNode::unparseLongIntVal(SgExpression* expr, SgUnpar
 {
   // Sage node corresponds to a Fortran integer constant
   SgLongIntVal* longint_val = isSgLongIntVal(expr);
-  ROSE_ASSERT(longint_val != NULL);
+  ASSERT_not_null(longint_val);
   cur << longint_val->get_value();
 }
 
@@ -1729,7 +1729,7 @@ FortranCodeGeneration_locatedNode::unparseULongIntVal(SgExpression* expr, SgUnpa
 {
   // Sage node corresponds to a Fortran integer constant
   SgUnsignedLongVal* ulongint_val = isSgUnsignedLongVal(expr);
-  ROSE_ASSERT(ulongint_val != NULL);
+  ASSERT_not_null(ulongint_val);
   cur << ulongint_val->get_value();
 }
 
@@ -1738,7 +1738,7 @@ FortranCodeGeneration_locatedNode::unparseLongLongIntVal(SgExpression* expr, SgU
 {
   // Sage node corresponds to a Fortran integer constant
   SgLongLongIntVal* longlongint_val = isSgLongLongIntVal(expr);
-  ROSE_ASSERT(longlongint_val != NULL);
+  ASSERT_not_null(longlongint_val);
   cur << longlongint_val->get_value();
 }
 
@@ -1747,7 +1747,7 @@ FortranCodeGeneration_locatedNode::unparseULongLongIntVal(SgExpression* expr, Sg
 {
   // Sage node corresponds to a Fortran integer constant
   SgUnsignedLongLongIntVal* ulonglongint_val = isSgUnsignedLongLongIntVal(expr);
-  ROSE_ASSERT(ulonglongint_val != NULL);
+  ASSERT_not_null(ulonglongint_val);
   cur << ulonglongint_val->get_value();
 }
 
@@ -1756,7 +1756,7 @@ FortranCodeGeneration_locatedNode::unparseFLoatVal(SgExpression* expr, SgUnparse
 {
   // Sage node corresponds to a Fortran real constant
   SgFloatVal* float_val = isSgFloatVal(expr);
-  ROSE_ASSERT(float_val != NULL);
+  ASSERT_not_null(float_val);
   cur << float_val->get_value();
 }
 
@@ -1765,7 +1765,7 @@ FortranCodeGeneration_locatedNode::unparseDblVal(SgExpression* expr, SgUnparse_I
 {
   // Sage node corresponds to a Fortran real constant
   SgDoubleVal* dbl_val = isSgDoubleVal(expr);
-  ROSE_ASSERT(dbl_val != NULL);
+  ASSERT_not_null(dbl_val);
   cur << dbl_val->get_value(); 
 }
 
@@ -1774,7 +1774,7 @@ FortranCodeGeneration_locatedNode::unparseLongDblVal(SgExpression* expr, SgUnpar
 {
   // Sage node corresponds to a Fortran real constant
   SgLongDoubleVal* longdbl_val = isSgLongDoubleVal(expr);
-  ROSE_ASSERT(longdbl_val != NULL);
+  ASSERT_not_null(longdbl_val);
   cur << longdbl_val->get_value();
 }
 
@@ -1830,7 +1830,7 @@ FortranCodeGeneration_locatedNode::isSubroutineCall(SgFunctionCallExp* fcall)
 
   // SgFunctionType* ftype = funcref->get_function_type();
      SgFunctionType* ftype = isSgFunctionType(funcref->get_type());
-     ROSE_ASSERT(ftype != NULL);
+     ASSERT_not_null(ftype);
      SgType* rtype = ftype->get_return_type();
 
   // Note: 'rtype' should be equivalent to 'fcall->get_type()'
@@ -1849,20 +1849,20 @@ FortranCodeGeneration_locatedNode::isSubroutineCall(SgFunctionCallExp* fcall)
   // getting the return type.
 
      SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(fcall->get_function());
-     ROSE_ASSERT(functionRefExp != NULL);
+     ASSERT_not_null(functionRefExp);
 
 
      SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
-     ROSE_ASSERT(functionSymbol != NULL);
+     ASSERT_not_null(functionSymbol);
      //cout << "function name is : " << functionSymbol->get_name().str()<<endl;
 
      SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
-     ROSE_ASSERT(functionDeclaration != NULL);
+     ASSERT_not_null(functionDeclaration);
 
      //printf ("functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
 
      SgProcedureHeaderStatement* procedureHeaderStatement = isSgProcedureHeaderStatement(functionDeclaration);
-     ROSE_ASSERT(procedureHeaderStatement != NULL);
+     ASSERT_not_null(procedureHeaderStatement);
 
      return (procedureHeaderStatement->get_subprogram_kind() == SgProcedureHeaderStatement::e_subroutine_subprogram_kind);
 #endif

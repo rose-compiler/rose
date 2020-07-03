@@ -54,7 +54,7 @@ class MatchStatus {
   /* adds a single var binding to map of var bindings */
   void addVarBinding(std::string varname,SgNode* node);
   /* adds a single marked location to set of marked locations */
-  void addMarkedLocation(SgNode* node);
+  void addMarkedLocation(SingleMatchMarkedLocation locIter);
   
   /* updates state to include new match result and resets all data
      to be ready for new match */

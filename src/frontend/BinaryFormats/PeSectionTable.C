@@ -7,6 +7,10 @@
 #include "MemoryMap.h"
 #include "Diagnostics.h"
 
+// In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
+// need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 using namespace Rose;
 using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis;

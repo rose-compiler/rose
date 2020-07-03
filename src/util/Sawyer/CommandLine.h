@@ -740,6 +740,13 @@ struct LexicalCast {
 };
 
 template<>
+struct LexicalCast<boost::regex> {
+    static boost::regex convert(const std::string &src) {
+        return boost::regex(src);
+    }
+};
+
+template<>
 struct LexicalCast<boost::any> {
     static boost::any convert(const std::string &src) {
         return src;

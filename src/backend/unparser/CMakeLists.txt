@@ -55,6 +55,7 @@ add_library (unparser OBJECT
   AdaCodeGeneration/unparseAda_statements.C
   AdaCodeGeneration/unparseAda_types.C
   JovialCodeGeneration/unparseJovial_expressions.C
+  JovialCodeGeneration/unparseJovial_modfile.C
   JovialCodeGeneration/unparseJovial_statements.C
   JovialCodeGeneration/unparseJovial_types.C)
 add_dependencies(unparser rosetta_generated)

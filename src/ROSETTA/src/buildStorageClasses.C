@@ -797,7 +797,8 @@ AstNodeClass::evaluateType(std::string& varTypeString)
               varTypeString == "SgStorageModifier" || 
               varTypeString == "SgElaboratedTypeModifier" ||
               varTypeString == "SgUPC_AccessModifier" ||
-              varTypeString == "SgConstVolatileModifier")
+              varTypeString == "SgConstVolatileModifier" ||
+              varTypeString == "SgStructureModifier")
              {
                returnType = MODIFIERCLASS_WITHOUTEASYSTORAGE;
              }
@@ -829,6 +830,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgStorageModifier::storage_modifier_enum" ) ||
                  ( varTypeString == "SgAccessModifier::access_modifier_enum" ) ||
                  ( varTypeString == "SgUPC_AccessModifier::upc_access_modifier_enum" ) ||
+                 ( varTypeString == "SgStructureModifier::jovial_structure_modifier_enum" ) ||
                  ( varTypeString == "SgElaboratedTypeModifier::elaborated_type_modifier_enum" ) ||
                  ( varTypeString == "SgDeclarationStatement::template_specialization_enum" ) ||
                  ( varTypeString == "SgDeclarationModifier::gnu_declaration_visability_enum" ) ||
@@ -878,8 +880,8 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "X86RepeatPrefix" ) || "Rose::BinaryAnalysis::X86RepeatPrefix" == varTypeString ||
                  ( varTypeString == "X86PositionInRegister" ) || "Rose::BinaryAnalysis::X86PositionInRegister" == varTypeString ||
                  ( varTypeString == "X86InstructionSize" ) || "Rose::BinaryAnalysis::X86InstructionSize" == varTypeString ||
-                 ( varTypeString == "ArmInstructionKind" ) || "Rose::BinaryAnalysis::ArmInstructionKind" == varTypeString ||
-                 ( varTypeString == "ArmInstructionCondition" ) || "Rose::BinaryAnalysis::ArmInstructionCondition" == varTypeString ||
+                 ( varTypeString == "A64InstructionKind" ) || "Rose::BinaryAnalysis::A64InstructionKind" == varTypeString ||
+                 ( varTypeString == "A64InstructionCondition" ) || "Rose::BinaryAnalysis::A64InstructionCondition" == varTypeString ||
                  ( varTypeString == "PowerpcInstructionKind" ) || "Rose::BinaryAnalysis::PowerpcInstructionKind" == varTypeString ||
                  ( varTypeString == "PowerpcRegisterClass" ) || "Rose::BinaryAnalysis::PowerpcRegisterClass" == varTypeString ||
                  ( varTypeString == "PowerpcConditionRegisterAccessGranularity" ) || "Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity" == varTypeString ||
@@ -917,6 +919,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgToken::ROSE_Fortran_Keywords" ) ||
               // DQ (12/9/2015): Added to support use of enums from SgUntypedType class.
                  ( varTypeString == "SgUntypedType::type_enum" ) ||
+                 ( varTypeString == "SgFile::standard_enum" ) ||
                  false 
               )
        {
