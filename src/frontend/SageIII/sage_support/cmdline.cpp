@@ -8081,7 +8081,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // DQ (6/27/2020): Remove the duplicate paths in project->get_extraIncludeDirectorySpecifierList();
        // std::unordered_set<std::string> encounters;
           std::set<std::string> encounters;
-          for (auto i = 0u; i < project->get_extraIncludeDirectorySpecifierList().size(); ++i)
+          for (size_t i = 0; i < project->get_extraIncludeDirectorySpecifierList().size(); ++i)
              {
                if (!encounters.insert(project->get_extraIncludeDirectorySpecifierList()[i]).second)
                   {
