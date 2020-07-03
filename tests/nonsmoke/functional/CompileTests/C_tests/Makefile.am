@@ -951,10 +951,10 @@ PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 # any programs needed by your tests that does not need to be built by make all.
 
 # DQ (6/23/2020): I need to avoid having these run first.
-# check_PROGRAMS = $(PASSING_TEST_Executables)
+check_PROGRAMS = $(PASSING_TEST_Executables)
 
 # a list of programs or scripts to run in order to do the testing 
-TESTS= $(check_PROGRAMS) caller.out 
+TESTS= $(check_PROGRAMS) caller.out
 
 # DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
 # this, this implementation needs review).  It might be better to prepend the information to the 
@@ -1083,7 +1083,9 @@ test_link_using_asm_symbol_injection: $(TEST_TRANSLATOR)
 caller.o: $(srcdir)/callee.c $(srcdir)/caller.c
 	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $^
 # default case: generate executable a.out from any number of input files	
+
 caller.out: $(srcdir)/callee.c $(srcdir)/caller.c
+#	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $^ -o caller.out
 	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $^ -o caller.out
 # DQ (4/18/2015): Add the execution of the generated executable.
 	./caller.out
