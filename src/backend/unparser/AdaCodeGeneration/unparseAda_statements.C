@@ -191,7 +191,7 @@ namespace
     typedef std::vector<std::string> ScopePath;
     
     AdaStatementUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
-    : unparser(unp), info(inf), os(outp)
+    : unparser(unp), info(inf), os(outp), publicMode(true)
     {}
     
     template <class SageStmtList>
@@ -218,6 +218,9 @@ namespace
     void handleFunctionEntryDecl(SgFunctionDeclaration&, std::string keyword, bool hasReturn = false);
     
     void handleParameterList(SgInitializedNamePtrList& params);
+    
+    bool requiresNew(SgType* n);
+    void startPrivateIfNeeded(SgDeclarationStatement* n);
     
     //
     // handlers 
@@ -305,12 +308,14 @@ namespace
     void handle(SgAdaPackageSpecDecl& n)
     {
       prn("package ");
-      prn(n.get_name());
+      prnPrefix(n, SG_DEREF(n.get_scope()));
+      prn(n.get_name());      
       prn(" is\n");
       
       stmt(n.get_definition());
       
       prn("end ");
+      prnPrefix(n, SG_DEREF(n.get_scope()));
       prn(n.get_name());
       prn(EOS_NL);
     }
@@ -342,7 +347,10 @@ namespace
     {
       prn("type ");
       prn(n.get_name());
-      prn(" is new ");
+      prn(" is");
+      
+      if (requiresNew(n.get_base_type())) prn(" new");
+      
       type(n.get_base_type());
       prn(EOS_NL);
     }
@@ -572,26 +580,7 @@ namespace
     ScopePath pathToGlobal(SgStatement& n);
     //~ std::string recoverScopeName(SgLocatedNode& n);
     
-    void prnPackagePrefix(SgStatement& local, SgStatement& remote)
-    {
-      typedef ScopePath::reverse_iterator PathIterator;
-      
-      ScopePath localPath  = pathToGlobal(local);
-      ScopePath remotePath = pathToGlobal(remote);
-      size_t    pathlen = std::min(localPath.size(), remotePath.size());
-      
-      PathIterator remit = std::mismatch( localPath.rbegin(), localPath.rbegin() + pathlen,
-                                          remotePath.rbegin() 
-                                        ).second;
-                                        
-      while (remit != remotePath.rend())
-      {
-        prn(*remit);
-        prn(".");
-        
-        ++remit;
-      }
-    }
+    void prnPrefix(SgStatement& local, SgStatement& remote);
     
     void parentRecord(SgClassDefinition& def)
     {
@@ -603,7 +592,7 @@ namespace
       SgClassDeclaration& decl   = SG_DEREF(parent.get_base_class());
       
       prn(" new ");
-      prnPackagePrefix(def, decl);
+      prnPrefix(def, decl);
       prn(decl.get_name());
     }
     
@@ -635,12 +624,49 @@ namespace
     void handle(SgClassDefinition& n)
     {
       list(n.get_members());
+    }
+    
+    void handle(SgTryStmt& n)
+    {
+      // skip the block, just print the statements
+      SgBasicBlock& blk = SG_DEREF(isSgBasicBlock(n.get_body()));
+      
+      list(blk.get_statements());
+      prn("exception\n");
+      stmt(n.get_catch_statement_seq_root());
     } 
+    
+    void handle(SgCatchStatementSeq& n)
+    {
+      list(n.get_catch_statement_seq());
+    }
+    
+    void handle(SgCatchOptionStmt& n)
+    {
+      prn("when ");
+      
+      SgVariableDeclaration&    dcl   = SG_DEREF(n.get_condition());
+      SgInitializedNamePtrList& vars  = dcl.get_variables();
+      ROSE_ASSERT(vars.size() == 1);
+      SgInitializedName&        exvar = SG_DEREF(vars[0]);
+      std::string               name  = exvar.get_name();
+      
+      if (name.size())
+      {
+        prn(name);
+        prn(": ");
+      }
+      
+      type(exvar.get_type());
+      prn(" =>\n");
+    
+      stmt(n.get_body());
+    }
     
     void handle(SgFunctionDeclaration& n) 
     {
-      SgFunctionType& ty     = SG_DEREF(n.get_type());
-      const bool      isFunc = isAdaFunction(ty);
+      SgFunctionType& ty      = SG_DEREF(n.get_type());
+      const bool      isFunc  = isAdaFunction(ty);
       std::string     keyword = isFunc ? "function" : "procedure";
       
       if (n.get_declarationModifier().isOverride())
@@ -654,10 +680,7 @@ namespace
       handleFunctionEntryDecl(n, "entry");
     }
     
-    void stmt(SgStatement* s)
-    {
-      sg::dispatch(*this, s);
-    }
+    void stmt(SgStatement* s);
     
     void expr(SgExpression* e)
     {
@@ -684,6 +707,7 @@ namespace
     Unparse_Ada&    unparser;
     SgUnparse_Info& info;
     std::ostream&   os;
+    bool            publicMode;
   };
   
   bool isNormalStatement(const SgStatement* s)
@@ -799,6 +823,31 @@ namespace
     list(lst.begin(), lst.end());
   }
   
+  bool AdaStatementUnparser::requiresNew(SgType* n)
+  {
+    return isSgTypeDefault(n) == NULL;
+  }
+  
+  bool isPrivate(SgDeclarationStatement& dcl)
+  {
+    return dcl.get_declarationModifier().get_accessModifier().isPrivate();
+  }
+  
+  void AdaStatementUnparser::startPrivateIfNeeded(SgDeclarationStatement* n)
+  {
+    if (!publicMode || !n || !isPrivate(*n)) return;
+     
+    prn("private\n");
+    publicMode = false;
+  }
+  
+  void AdaStatementUnparser::stmt(SgStatement* s)
+  {
+    startPrivateIfNeeded(isSgDeclarationStatement(s));
+    
+    sg::dispatch(*this, s);
+  }
+  
   /*
   struct RecoverScopeName : sg::DispatchHandler<std::string>
   {
@@ -841,6 +890,9 @@ namespace
   AdaStatementUnparser::pathToGlobal(SgStatement& n)
   {
     ScopePath res;
+    
+    if (isSgGlobal(&n)) return res;
+    
     SgNode*   curr = n.get_parent();
     
     ROSE_ASSERT(curr);
@@ -856,6 +908,25 @@ namespace
     }
     
     return res;
+  }
+  
+  void 
+  AdaStatementUnparser::prnPrefix(SgStatement& local, SgStatement& remote)
+  {
+    typedef ScopePath::reverse_iterator PathIterator;
+    
+    ScopePath    localPath  = pathToGlobal(local);
+    ScopePath    remotePath = pathToGlobal(remote);
+    size_t       pathlen = std::min(localPath.size(), remotePath.size());
+    PathIterator pathit = std::mismatch( localPath.rbegin(), localPath.rbegin() + pathlen,
+                                         remotePath.rbegin() 
+                                       ).second;
+                 
+    for (; pathit != remotePath.rend(); ++pathit)
+    {
+      prn(*pathit);
+      prn(".");
+    }
   }
 }
 
