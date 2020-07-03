@@ -1191,7 +1191,8 @@ int main( int argc, char * argv[] ) {
         }
         if (ltlOpt.cegpra.checkAllProperties) {
           ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlInAlphabet, ltlOutAlphabet);
-        } else {  // cegpra for single LTL property
+        } else {
+          // cegpra for single LTL property
           //ROSE_ASSERT(ltlOpt.cegpra.ltlPropertyNr!=-1);
           int property = ltlOpt.cegpra.ltlPropertyNr;
           ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);
