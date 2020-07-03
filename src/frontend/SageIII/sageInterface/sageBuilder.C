@@ -16758,6 +16758,9 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      fixupSourcePositionFileSpecification(result,outputFileName);
 #endif
 
+  // DQ (7/2/2020): Added assertion (fails for snippet tests).
+     ROSE_ASSERT(result->get_preprocessorDirectivesAndCommentsList() != NULL);
+
      return result;
 #else
 

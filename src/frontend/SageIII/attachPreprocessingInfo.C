@@ -708,6 +708,10 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 #if 0
      printf ("Adding list for filename = %s \n",filename.c_str());
 #endif
+
+  // DQ (7/2/2020): Added assertion (fails for snippet tests).
+     ROSE_ASSERT(sageFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
+
      sageFilePtr->get_preprocessorDirectivesAndCommentsList()->addList(filename, commentAndCppDirectiveList);
 
 #if 1
