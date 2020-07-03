@@ -1572,6 +1572,13 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
      ROSE_ASSERT(isSgProject(file->get_parent()) != NULL);
      ROSE_ASSERT(file->get_parent() == project);
 
+  // DQ (7/2/2020): Added assertion (fails for snippet tests).
+     if (file->get_preprocessorDirectivesAndCommentsList() == NULL)
+       {
+         file->set_preprocessorDirectivesAndCommentsList(new ROSEAttributesListContainer());
+       }
+     ROSE_ASSERT(file->get_preprocessorDirectivesAndCommentsList() != NULL);
+
      return file;
    }
 

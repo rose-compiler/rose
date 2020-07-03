@@ -21894,6 +21894,9 @@ SgFile* SageInterface::processFile(SgProject *project, string filename, bool unp
         ROSE_ASSERT(sourcefile != isSgSourceFile((*project)[filename]));
     }
 
+  // DQ (7/2/2020): Added assertion (fails for snippet tests).
+     ROSE_ASSERT(file->get_preprocessorDirectivesAndCommentsList() != NULL);
+
     return file;
 }
 
