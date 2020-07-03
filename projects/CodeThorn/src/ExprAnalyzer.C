@@ -1271,7 +1271,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPreComputationOp(EState estate, AbstractValue address, AbstractValue change) {
   SingleEvalResultConstInt res;
   AbstractValue oldValue=readFromMemoryLocation(estate.label(),estate.pstate(),address);
-  AbstractValue newValue=oldValue+change;
+  AbstractValue newValue=AbstractValue::operatorAdd(oldValue,change);
   CallString cs=estate.callString;
   PState newPState=*estate.pstate();
   writeToMemoryLocation(estate.label(),&newPState,address,newValue);

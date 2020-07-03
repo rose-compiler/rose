@@ -692,7 +692,7 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain unit-test check-normalization check-vxthorn check-equivalence check-par-cfg
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain unit-test check-normalization check-equivalence check-par-cfg
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
@@ -842,9 +842,6 @@ check-ltl-driven-reset-analyzer:
 
 check-svcomp-witness:
 	./codethorn $(srcdir)/tests/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c --svcomp-mode --input-values="{1,2,3,4,5,6}" --witness-file=toBeImplemented.witness --with-counterexamples
-
-check-vxthorn:
-	./vxthorn $(srcdir)/tests/DOM009_sequence_arrayinits.C
 
 check-equivalence:
 	@rm -f tmp.nsdump
