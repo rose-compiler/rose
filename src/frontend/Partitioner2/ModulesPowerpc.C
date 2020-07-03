@@ -77,7 +77,7 @@ matchElfDynamicStub(const Partitioner &partitioner, const Function::Ptr &functio
     if (!addis || addis->get_kind() != powerpc_addis || addis->get_operandList()->get_operands().size() != 3)
         return Sawyer::Nothing();
     SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(addis->get_operandList()->get_operands()[0]);
-    const RegisterDescriptor REG_R11 = *partitioner.instructionProvider().registerDictionary()->lookup("r11");
+    const RegisterDescriptor REG_R11 = partitioner.instructionProvider().registerDictionary()->findOrThrow("r11");
     if (!rre || rre->get_descriptor() != REG_R11)
         return Sawyer::Nothing();
     SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(addis->get_operandList()->get_operands()[1]);
@@ -115,7 +115,7 @@ matchElfDynamicStub(const Partitioner &partitioner, const Function::Ptr &functio
     if (!mtspr || mtspr->get_kind() != powerpc_mtspr || mtspr->get_operandList()->get_operands().size() != 2)
         return Sawyer::Nothing();
     rre = isSgAsmDirectRegisterExpression(mtspr->get_operandList()->get_operands()[0]);
-    const RegisterDescriptor REG_CTR = *partitioner.instructionProvider().registerDictionary()->lookup("ctr");
+    const RegisterDescriptor REG_CTR = partitioner.instructionProvider().registerDictionary()->findOrThrow("ctr");
     if (!rre || rre->get_descriptor() != REG_CTR)
         return Sawyer::Nothing();
     rre = isSgAsmDirectRegisterExpression(mtspr->get_operandList()->get_operands()[1]);

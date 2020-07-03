@@ -36,29 +36,25 @@ DataRaceDetection::Options::Options():active(false),
 
 void DataRaceDetection::handleCommandLineOptions(Analyzer& analyzer) {
   //cout<<"DEBUG: initializing data race detection"<<endl;
-  if(args.getBool("data-race-fail")) {
-    args.setOption("data-race",true);
+  if(analyzer.getOptionsRef().dr.failOnError || (analyzer.getOptionsRef().dr.csvResultsFile.size()>0)) {
+    analyzer.getOptionsRef().dr.detection=true;
   }
-  if(args.isDefined("data-race-csv")) {
-    options.dataRaceCsvFileName=args.getString("data-race-csv");
-    args.setOption("data-race",true);
-  }
-  if(args.getBool("data-race")) {
+  if(analyzer.getOptionsRef().dr.detection) {
     options.active=true;
     //cout<<"INFO: ignoring lhs-array accesses"<<endl;
     analyzer.setSkipArrayAccesses(true);
-    options.useConstSubstitutionRule=args.getBool("rule-const-subst");
+    options.useConstSubstitutionRule=analyzer.getOptionsRef().equiCheck.ruleConstSubst;
     options.maxFloatingPointOperations=0; // not used yet
   }
-  if (args.getBool("visualize-read-write-sets")) {
+  if(analyzer.getOptionsRef().visualization.visualizeRWSets) {
     options.visualizeReadWriteSets=true;
   }
-  if(args.getBool("print-update-infos")) {
+  if(analyzer.getOptionsRef().equiCheck.printUpdateInfos) {
     options.printUpdateInfos=true;
   }
-  options.useConstSubstitutionRule=args.getBool("rule-const-subst");
-  if(args.isDefined("max-extracted-updates")) {
-    options.maxNumberOfExtractedUpdates=args.getInt("max-extracted-updates");
+  options.useConstSubstitutionRule=analyzer.getOptionsRef().equiCheck.ruleConstSubst;
+  if(analyzer.getOptionsRef().equiCheck.maxExtractedUpdates!=-1) {
+    options.maxNumberOfExtractedUpdates=analyzer.getOptionsRef().equiCheck.maxExtractedUpdates;
   }
 }
 
@@ -499,10 +495,10 @@ int DataRaceDetection::numberOfRacyThreadPairs(IndexToReadWriteDataMap& indexToR
     string filename = "readWriteSetGraph.dot";
     Visualizer visualizer;
     string dotGraph = visualizer.visualizeReadWriteAccesses(indexToReadWriteDataMap, variableIdMapping, 
-							    arrayReadWriteRaces, arrayWriteWriteRaces, 
-							    !args.getBool("rw-data"), 
-							    args.getBool("rw-clusters"),
-							    args.getBool("rw-highlight-races"));
+                                                            arrayReadWriteRaces, arrayWriteWriteRaces, 
+                                                            !_ctOpt.visualization.rwData, 
+                                                            _ctOpt.visualization.rwClusters,
+                                                            _ctOpt.visualization.rwHighlightRaces);
     write_file(filename, dotGraph);
     logger[TRACE] << "STATUS: written graph that illustrates read and write accesses to file: " << filename << endl;
   }
@@ -576,4 +572,8 @@ std::string DataRaceDetection::arrayElementAccessDataSetToString(ArrayElementAcc
     ss<<(*i).toString(vim);
   }
   return ss.str();
+}
+
+void DataRaceDetection::setOptions(CodeThornOptions ctOpt) {
+  _ctOpt=ctOpt;
 }

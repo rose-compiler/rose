@@ -1,31 +1,20 @@
-/* unparseJovial_expressions.C
- * 
- *
+/*
+ * unparseJovial_expressions.C
  */
 #include "sage3basic.h"
 #include "unparser.h"
-#include "Utf8.h"
-#include <limits>
 
-using namespace std;
-
-#define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
-#define OUTPUT_HIDDEN_LIST_DATA 0
-#define OUTPUT_DEBUGGING_INFORMATION 0
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 
 #ifdef _MSC_VER
 #include "Cxx_Grammar.h"
 #endif
 
-// DQ (10/14/2010):  This should only be included by source files that require it.
-// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
-// Interestingly it must be at the top of the list of include files.
-#include "rose_config.h"
-
 
 void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info) 
    {
-      ROSE_ASSERT(expr != NULL);
+      ASSERT_not_null(expr);
 
     // Check if this expression requires parentheses.  If so, process the opening parentheses now.
     //
@@ -48,10 +37,13 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
        // symbol references
           case V_SgFunctionRefExp:      unparseFuncRef    (expr, info);          break;
           case V_SgVarRefExp:           unparseVarRef     (expr, info);          break;
+          case V_SgPointerDerefExp:     unparsePtrDeref   (expr, info);          break;
 
        // operators
           case V_SgUnaryOp:             unparseUnaryExpr  (expr, info);          break;
           case V_SgBinaryOp:            unparseBinaryExpr (expr, info);          break;
+          case V_SgCastExp:             unparseCastExp    (expr, info);          break;
+
           case V_SgAssignOp:            unparseAssignOp   (expr, info);          break;
 
           case V_SgAddOp:               unparseBinaryOperator(expr, "+", info);  break;
@@ -66,44 +58,27 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
           case V_SgGreaterOrEqualOp:    unparseBinaryOperator(expr,">=", info);  break;
           case V_SgEqualityOp:          unparseBinaryOperator(expr, "=", info);  break;
           case V_SgNotEqualOp:          unparseBinaryOperator(expr,"<>", info);  break;
+          case V_SgBitAndOp:            unparseBinaryOperator(expr,"AND", info); break;
+          case V_SgBitOrOp:             unparseBinaryOperator(expr,"OR", info);  break;
+          case V_SgBitXorOp:            unparseBinaryOperator(expr,"XOR", info); break;
 
           case V_SgUnaryAddOp:          unparseUnaryOperator(expr, "+", info);   break;
           case V_SgMinusOp:             unparseUnaryOperator(expr, "-", info);   break;
+          case V_SgNotOp:               unparseUnaryOperator(expr, "NOT ", info);break;
+
 
           case V_SgPntrArrRefExp:       unparseArrayOp(expr, info);              break;
 
        // initializers
-          case V_SgAssignInitializer:   unparseAssnInit  (expr, info);           break;
+          case V_SgAssignInitializer:    unparseAssnInit    (expr, info);        break;
+          case V_SgJovialTablePresetExp: unparseTablePreset (expr, info);        break;
 
-#if 0
-                case V_SgAndOp:
-                case V_SgAssignOp:
-                case V_SgBitAndOp:
-                case V_SgBitOrOp:
-                case V_SgBitXorOp:
-                case V_SgDotExp:
-                case V_SgArrowExp:
-                case V_SgJavaUnsignedRshiftOp:
-                case V_SgLshiftOp:
-                case V_SgOrOp:
-                case V_SgRshiftOp:
-                case V_SgCommaOpExp: // charles4 10/14/2011
-                     unparseBinaryOp(isSgBinaryOp(expr), info ); break;
+          case V_SgNullExpression:                                               break;
 
-                case V_SgPlusPlusOp:
-                case V_SgMinusMinusOp:
-                case V_SgNotOp:
-                case V_SgBitComplementOp:
-                     unparseUnaryOp(isSgUnaryOp(expr), info ); break;
-                case V_SgMemberFunctionRefExp:  { unparseMFuncRef(expr, info); break; }
-#endif
-
-                case V_SgNullExpression:         break;
-
-                default:
-                     cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << endl;
-                     ROSE_ASSERT(false);
-                     break;
+          default:
+             std::cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << std::endl;
+             ROSE_ASSERT(false);
+             break;
        }
 
     // If this expression requires closing parentheses, emit them now.
@@ -121,7 +96,7 @@ void
 Unparse_Jovial::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
   {
      SgStringVal* string_val = isSgStringVal(expr);
-     ROSE_ASSERT(string_val != NULL);
+     ASSERT_not_null(string_val);
      curprint(string_val->get_value());
   }
 
@@ -129,7 +104,7 @@ void
 Unparse_Jovial::unparseAssignOp(SgExpression* expr, SgUnparse_Info& info) 
   {
      SgBinaryOp* op = isSgBinaryOp(expr);
-     ROSE_ASSERT(op != NULL);
+     ASSERT_not_null(op);
 
      unparseExpression(op->get_lhs_operand(), info);
      curprint(" = ");
@@ -154,6 +129,64 @@ Unparse_Jovial::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnpar
    }
 
 //----------------------------------------------------------------------------
+//  cast expr
+//----------------------------------------------------------------------------
+void
+Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgCastExp* cast_expr = isSgCastExp(expr);
+     ASSERT_not_null(cast_expr);
+
+     SgType* type = cast_expr->get_type();
+     ASSERT_not_null(type);
+
+     SgExpression* size = type->get_type_kind();
+
+  // If there is a size it won't be SgModifierType, SgTypedefType or SgJovialBitType
+     if (size) {
+        curprint("(* ");
+     }
+
+     switch(type->variantT())
+        {
+     // Note fall through
+        case V_SgTypeInt:
+        case V_SgTypeUnsignedInt:
+        case V_SgTypeChar:
+        case V_SgTypeFloat:
+        case V_SgPointerType:
+           unparseType(type, info);
+           break;
+
+        case V_SgJovialBitType:
+        case V_SgModifierType:
+           curprint("(* ");
+           unparseType(type, info);
+           curprint(" *)");
+           break;
+        case V_SgTypedefType:
+           curprint("(* ");
+           unparseJovialType(isSgTypedefType(type), info);
+           curprint(" *)");
+           break;
+        default:
+           std::cout << "error: unparseCastExp() is unimplemented for " << type->class_name() << std::endl;
+           ROSE_ASSERT(false);
+           break;
+        }
+
+     if (size) {
+        curprint(" *)");
+     }
+
+     SgExpression* operand_i = cast_expr->get_operand_i();
+     ASSERT_not_null(operand_i);
+     curprint("(");
+     unparseExpression(operand_i, info);
+     curprint(")");
+   }
+
+//----------------------------------------------------------------------------
 //  Table/array subscripts
 //----------------------------------------------------------------------------
 
@@ -161,11 +194,11 @@ void
 Unparse_Jovial::unparseSubscriptExpr(SgExpression* expr, SgUnparse_Info& info) 
    {
      SgSubscriptExpression* sub_expr = isSgSubscriptExpression(expr);
-     ROSE_ASSERT(sub_expr != NULL);
+     ASSERT_not_null(sub_expr);
 
-     ROSE_ASSERT(sub_expr->get_lowerBound() != NULL);
-     ROSE_ASSERT(sub_expr->get_upperBound() != NULL);
-     ROSE_ASSERT(sub_expr->get_stride() != NULL);
+     ASSERT_not_null(sub_expr->get_lowerBound());
+     ASSERT_not_null(sub_expr->get_upperBound());
+     ASSERT_not_null(sub_expr->get_stride());
 
      if (isSgNullExpression(sub_expr->get_lowerBound()) == NULL)
         {
@@ -180,10 +213,10 @@ Unparse_Jovial::unparseSubscriptExpr(SgExpression* expr, SgUnparse_Info& info)
         }
 
      SgExpression* strideExpression = sub_expr->get_stride();
-     ROSE_ASSERT(strideExpression != NULL);
+     ASSERT_not_null(strideExpression);
 
      SgIntVal* integerValue = isSgIntVal(strideExpression);
-     ROSE_ASSERT(integerValue != NULL);
+     ASSERT_not_null(integerValue);
 
   // See if this is the default value for the stride (unit stride) and skip the output in this case.
      bool defaultValue = (integerValue->get_value() == 1) ? true : false;
@@ -213,7 +246,7 @@ Unparse_Jovial::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseAsteriskShapeExpr(SgExpression* expr, SgUnparse_Info& info) 
    {
-     ROSE_ASSERT( isSgAsteriskShapeExp(expr) != NULL );
+     ASSERT_not_null( isSgAsteriskShapeExp(expr));
 
      curprint("*");
    }
@@ -222,7 +255,19 @@ void
 Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
    {
       SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
-      ROSE_ASSERT(func_call != NULL);
+      ASSERT_not_null(func_call);
+
+      SgFunctionRefExp* func_ref = isSgFunctionRefExp(func_call->get_function());
+      ASSERT_not_null(func_ref);
+
+      SgFunctionSymbol* func_symbol = isSgFunctionSymbol(func_ref->get_symbol());
+      ASSERT_not_null(func_symbol);
+
+      SgFunctionDeclaration* func_decl = func_symbol->get_declaration();
+      SgInitializedNamePtrList& formal_params = func_decl->get_parameterList()->get_args();
+      SgExpressionPtrList& actual_params = func_call->get_args()->get_expressions();
+
+      ROSE_ASSERT(formal_params.size() == actual_params.size());
 
    // function name
       unparseExpression(func_call->get_function(), info);
@@ -231,18 +276,79 @@ Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
       SgUnparse_Info ninfo(info);
       curprint("(");
       if (func_call->get_args()) {
-         SgExpressionPtrList& list = func_call->get_args()->get_expressions();
-         SgExpressionPtrList::iterator arg = list.begin();
-         while (arg != list.end()) {
-            unparseExpression((*arg), ninfo);
-            arg++;
-            if (arg != list.end()) {
+         SgInitializedNamePtrList::iterator formal = formal_params.begin();
+         SgExpressionPtrList::iterator actual = actual_params.begin();
+
+         bool firstOutParam = false;
+         bool foundOutParam = false;
+
+         while (actual != actual_params.end()) {
+
+         // TODO - Change temporary hack of using storage modifier isMutable to represent an out parameter
+            if ((*formal)->get_storageModifier().isMutable() && foundOutParam == false)
+               {
+                  firstOutParam = true;
+                  foundOutParam = true;
+                  curprint(":");
+               }
+            formal++;
+
+            unparseExpression((*actual), ninfo);
+            actual++;
+            if (actual != actual_params.end() && firstOutParam == false) {
                curprint(",");
             }
          }
       }
       curprint(")");
    }
+
+void
+Unparse_Jovial::unparseOverlayExpr(SgExprListExp* overlay, SgUnparse_Info& info)
+  {
+     ASSERT_not_null(overlay);
+
+  // The OverlayExpression consists of a list of OverlayString expressions.
+  // An OverlayString consists of a list of OverlayElement expressions.
+  // Presently, the following convention is used for an OverlayElement:
+  //   1. Spacer is a SgExpression;
+  //   2. DataName is a SgVarRefExp
+  //   3. OverlayExpression is a SgExprListExp
+
+     SgExpression* spacer;
+     SgVarRefExp* data_name;
+     SgExprListExp* overlay_expr;
+
+     int n = overlay->get_expressions().size();
+     foreach(SgExpression* expr, overlay->get_expressions())
+       {
+          SgExprListExp* overlay_string_list = isSgExprListExp(expr);
+          ASSERT_not_null(overlay_string_list);
+
+          int ns = overlay_string_list->get_expressions().size();
+          foreach(SgExpression* overlay_string, overlay_string_list->get_expressions())
+             {
+               if ( (overlay_expr = isSgExprListExp(overlay_string)) != NULL)
+                  {
+                     curprint("(");
+                     unparseOverlayExpr(overlay_expr, info);
+                     curprint(")");
+                  }
+               else if ( (data_name = isSgVarRefExp(overlay_string)) != NULL)
+                  {
+                     unparseExpression(data_name, info);
+                  }
+               else
+                  {
+                     spacer = overlay_string;
+                     curprint("W ");
+                     unparseExpression(spacer, info);
+                  }
+               if (--ns > 0) curprint(", ");
+             }
+          if (--n > 0) curprint(": ");
+       }
+  }
 
 
 //----------------------------------------------------------------------------
@@ -253,9 +359,9 @@ void
 Unparse_Jovial::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
    {
       SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
-      ROSE_ASSERT(func_ref != NULL);
+      ASSERT_not_null(func_ref);
 
-      string func_name = func_ref->get_symbol()->get_name().str();
+      std::string func_name = func_ref->get_symbol()->get_name().str();
       curprint(func_name);
    }
 
@@ -264,10 +370,32 @@ Unparse_Jovial::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
    {
      SgVarRefExp* var_ref = isSgVarRefExp(expr);
 
-     ROSE_ASSERT(var_ref != NULL);
-     ROSE_ASSERT(var_ref->get_symbol() != NULL);
+     ASSERT_not_null(var_ref);
+     ASSERT_not_null(var_ref->get_symbol());
 
      curprint(var_ref->get_symbol()->get_name().str());
+   }
+
+void
+Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgPointerDerefExp* deref = isSgPointerDerefExp(expr);
+     ASSERT_not_null(deref);
+
+     SgExpression* operand = deref->get_operand();
+     ASSERT_not_null(operand);
+
+     switch (operand->variantT())
+        {
+        case V_SgVarRefExp:
+           curprint("@");
+           unparseVarRef(operand, info);
+           break;
+        default:
+           std::cout << "error: unparsePtrDeref() is unimplemented for " << operand->class_name() << std::endl;
+           ROSE_ASSERT(false);
+           break;
+        }
    }
 
 //----------------------------------------------------------------------------
@@ -276,12 +404,45 @@ Unparse_Jovial::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
 
 void
 Unparse_Jovial::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
-   {
+  {
      SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
-     ROSE_ASSERT(assn_init != NULL);
+     ASSERT_not_null(assn_init);
 
      unparseExpression(assn_init->get_operand(), info);
-   }
+  }
+
+void
+Unparse_Jovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info)
+  {
+     SgJovialTablePresetExp* table_preset = isSgJovialTablePresetExp(expr);
+     ASSERT_not_null(table_preset);
+
+     SgExprListExp* default_sublist = table_preset->get_default_sublist();
+     SgExprListExp* specified_sublist = table_preset->get_specified_sublist();
+
+     ASSERT_not_null(default_sublist);
+     ASSERT_not_null(specified_sublist);
+
+     bool has_specified_sublist = (specified_sublist->get_expressions().size() == 2);
+
+  // Unparse the optional DefaultPresetSublist
+     if (default_sublist->get_expressions().size() > 0)
+        {
+           unparseExpression(default_sublist, info);
+           if (has_specified_sublist) curprint(", ");
+        }
+
+     if (has_specified_sublist)
+        {
+        // Unparse the PresetIndexSpecifier
+           curprint("POS(");
+           unparseExpression(specified_sublist->get_expressions()[0], info);
+           curprint("): ");
+
+        // Unparse the PresetValuesOption
+           unparseExpression(specified_sublist->get_expressions()[1], info);
+        }
+  }
 
 //----------------------------------------------------------------------------
 //  Table dimension list
@@ -290,7 +451,7 @@ Unparse_Jovial::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseDimInfo(SgExprListExp* dim_info, SgUnparse_Info& info)
    {
-      ROSE_ASSERT(dim_info != NULL);
+      ASSERT_not_null(dim_info);
 
    // If this is a scalar don't print the parens
       if (dim_info->get_expressions().size() < 1) return;

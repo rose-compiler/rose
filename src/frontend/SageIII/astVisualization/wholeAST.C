@@ -2761,7 +2761,6 @@ class SimpleColorMemoryPoolTraversal
      public ROSE_VisitTraversal
    {
      public:
-       // MangledNameMapTraversal::SetOfNodesType     & setOfIRnodes;
           static const set<SgNode*> defaultSetOfIRnodes;
           const set<SgNode*> & setOfIRnodes;
 
@@ -3255,9 +3254,6 @@ generateWholeGraphOfAST( string filename)
 void
 generateWholeGraphOfAST( string filename, CustomMemoryPoolDOTGeneration::s_Filter_Flags* flags/*= NULL*/)
    {
-  // set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();
-  // SimpleColorMemoryPoolTraversal::generateGraph(filename+"_beforeMergeWholeAST",skippedNodeSet);
-
   // DQ (10/29/2009): Added code to output the default flag setting...
   // CustomMemoryPoolDOTGeneration::print_filter_flags();
   // CustomMemoryPoolDOTGeneration::init_filters();
@@ -3291,33 +3287,7 @@ generateWholeGraphOfAST( string filename, CustomMemoryPoolDOTGeneration::s_Filte
 void
 generateWholeGraphOfAST_filteredFrontendSpecificNodes( string filename, CustomMemoryPoolDOTGeneration::s_Filter_Flags* flags)
    {
-#ifdef _MSC_VER
-  // DQ (11/27/2009): This appears to be required for MSVC (I think it is correct for GNU as well).
-     extern set<SgNode*> getSetOfFrontendSpecificNodes();
-#endif
-
-#if 1
-  // Normally we want to skip the frontend IR nodes so avoid cluttering the graphs for users.
-#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-  // DQ (2/20/2012): This(fails when compiled with ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT.
-  // This is because with this option the the getSetOfFrontendSpecificNodes() function is not seen.
-  // To eliminate the frontend specific nodes we turn off the processing of them in the header file directly.
-     set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();
-#else
-     set<SgNode*> skippedNodeSet;
-     printf ("ROSE configured for internal frontend development \n");
-
-  // This is OK to still proceed, just that front-end IR nodes will not be filtered.
-  // They can however be skipped in rose_edg_required_macros_and_functions.h directly.
-  // ROSE_ASSERT(false);
-#endif
-
-#else
-  // DQ (7/26/2010): We want to include the frontend IR nodes so that we can debug the type table.
-     printf ("Generating an empty set of Frontend specific IR nodes to skip \n");
-     set<SgNode*> skippedNodeSet;
-#endif
-
+     std::set<SgNode*> skippedNodeSet = SageInterface::getFrontendSpecificNodes();
      SimpleColorMemoryPoolTraversal::generateGraph(filename,skippedNodeSet, flags);
    }
 

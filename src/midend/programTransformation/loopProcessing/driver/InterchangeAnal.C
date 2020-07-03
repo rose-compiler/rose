@@ -1,6 +1,7 @@
 
 #include <CompSliceLocality.h>
 #include <InterchangeAnal.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 #define MAXDEPTH 20
 
@@ -15,7 +16,7 @@ float SliceNestingLevel( const CompSlice *slice)
   return level*1.0 / num;
 }
 
-void ArrangeNestingOrder :: 
+void ArrangeNestingOrder ::
 RearrangeSliceNest( CompSliceNest &g, float *weightvec)
 {
   int num = g.NumberOfEntries();
@@ -35,7 +36,7 @@ RearrangeSliceNest( CompSliceNest &g, float *weightvec)
      if (index != j) {
        weightvec[index] = weightvec[j];
        weightvec[j] = w;
-       g.SwapEntry(j,index); 
+       g.SwapEntry(j,index);
      }
   }
 }
@@ -47,7 +48,7 @@ void ArrangeNestingOrder :: operator()( CompSliceLocalityRegistry *anal,CompSlic
   RearrangeSliceNest( g, weightvec );
 }
 
-void ArrangeOrigNestingOrder :: 
+void ArrangeOrigNestingOrder ::
 SetNestingWeight( CompSliceLocalityRegistry *anal, CompSliceNest &g, float *weightvec )
 {
    for (int i = 0; i < g.NumberOfEntries(); i++) {
@@ -55,7 +56,7 @@ SetNestingWeight( CompSliceLocalityRegistry *anal, CompSliceNest &g, float *weig
    }
 }
 
-void ArrangeReuseOrder :: 
+void ArrangeReuseOrder ::
 SetNestingWeight( CompSliceLocalityRegistry *anal, CompSliceNest &g, float *weightvec )
 {
   for (int i = 0; i < g.NumberOfEntries(); i++) {

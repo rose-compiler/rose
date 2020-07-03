@@ -1,7 +1,6 @@
 #ifndef ROSE_DISASSEMBLER_H
 #define ROSE_DISASSEMBLER_H
-
-#include <rosePublicConfig.h>
+#include <featureTests.h>
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "BinaryCallingConvention.h"
@@ -86,10 +85,6 @@ public:
                                          *   index into the "bytes" list, while bit%8 is the bit within that byte. */
         SgAsmInstruction *insn;         /**< Instruction associated with an assembly error. */
     };
-
-    /** An AddressSet contains virtual addresses (alternatively, relative virtual addresses) for such things as specifying
-     *  which virtual addresses should be disassembled. */
-    typedef std::set<rose_addr_t> AddressSet;
 
     /** The InstructionMap is a mapping from (absolute) virtual address to disassembled instruction. */
     typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
@@ -185,7 +180,8 @@ public:
 
     /** List of names recognized by @ref lookup.
      *
-     *  Returns the list of names that the @ref lookup method recognizes. */
+     *  Returns the list of names that the @ref lookup method recognizes. These are the disassemblers that are actually
+     *  enabled in this configuration of ROSE. */
     static std::vector<std::string> isaNames();
 
     /** Finds a suitable disassembler. Looks through the list of registered disassembler instances (from most recently
@@ -347,7 +343,7 @@ public:
      *  complete to true before returning.
      *
      *  Thread safety: Thread safe provided no other thread is modifying the specified instruction map. */
-    AddressSet get_block_successors(const InstructionMap&, bool *complete);
+    AddressSet get_block_successors(const InstructionMap&, bool &complete/*out*/);
 
 private:
     /** Initialize class (e.g., register built-in disassemblers). This class method is thread safe, using class_mutex. */

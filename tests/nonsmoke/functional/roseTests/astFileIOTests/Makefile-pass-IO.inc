@@ -1,31 +1,5 @@
-######################################################
-# These are C+ testcodes targeting aspects of both C #
-# and C++ that can be compiled using a C++ compiler  #
-#                                                    #
-# This Makefile stub defines the macro:              #
-#                                                    #
-#   EXAMPLE_TESTCODES_REQUIRED_TO_PASS               #
-#     A list of all possible example test codes that #
-#     should pass.                                   #
-#                                                    #
-#   EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT         #
-#     A shorter list for faster testing.             #
-#                                                    #
-######################################################
 
-# 
-#  test2010_17.C 
-# $(NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
-
-# The default set of tests include both tests for contant folding and using the original expression tree (default).
-# But since a few tests fail when the constant folded values are used for unparsing, we have to separate out a few tests.
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-$(EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS) \
-$(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_ORIGINAL_EXPRESSION_TREE_ELIMINATION) \
-test2003_24.C
-
-
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS = \
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
 test2001_02.C \
@@ -389,13 +363,13 @@ test2005_191.C \
 test2005_192.C \
 test2005_193.C \
 test2005_195.C \
-   test2005_196.C \
+test2005_196.C \
 test2005_197.C \
 test2005_198.C \
 test2005_202.C \
 test2005_203.C \
-   test2005_206.C \
-   test2005_207.C \
+test2005_206.C \
+test2005_207.C \
 test2005_208.C \
 test2005_209.C \
 test2006_01.C \
@@ -505,10 +479,10 @@ test2006_150.C \
 test2006_152.C \
 test2006_153.C \
 test2006_154.C \
-   test2006_155.C \
-   test2006_156.C \
-   test2006_157.C \
-   test2006_158.C \
+test2006_155.C \
+test2006_156.C \
+test2006_157.C \
+test2006_158.C \
 test2006_160.C \
 test2006_161.C \
 test2006_162.C \
@@ -534,7 +508,7 @@ test2007_10.C \
 test2007_11.C \
 test2007_12.C \
 test2007_14.C \
-   test2007_15.C \
+test2007_15.C \
 test2007_16.C \
 test2007_21.C \
 test2007_23.C \
@@ -578,7 +552,7 @@ test2007_133.C \
 test2007_135.C \
 test2007_137.C \
 test2007_140.C \
-   test2007_142.C \
+test2007_142.C \
 test2007_147.C \
 test2007_150.C \
 test2007_151.C \
@@ -742,26 +716,38 @@ test2011_139.C \
 test2011_140.C \
 test2011_143.C \
 test2011_147.C \
-   test2005_112.C \
-   test2005_117.C \
-   test2005_154.C \
-   test2005_163.C \
-   test2005_179.C \
-   test2005_183.C \
-   test2005_194.C \
-   test2005_199.C \
-   test2006_86.C \
-   test2006_121.C \
-   test2006_139.C \
-   test2006_147.C \
-   test2006_151.C \
-   test2006_159.C \
-   test2007_01.C \
-   test2007_13.C \
-   test2007_17.C \
-   test2007_55.C \
-   test2007_78.C \
-   test2008_04.C \
+test2005_112.C \
+test2005_117.C \
+test2005_154.C \
+test2005_163.C \
+test2005_179.C \
+test2005_183.C \
+test2005_194.C \
+test2005_199.C \
+test2006_86.C \
+test2006_121.C \
+test2006_139.C \
+test2006_147.C \
+test2006_151.C \
+test2006_159.C \
+test2007_01.C \
+test2007_13.C \
+test2007_17.C \
+test2007_55.C \
+test2007_78.C \
+test2008_04.C \
+test2005_09.C \
+test2005_104.C \
+test2007_05.C \
+test2009_37.C \
+test2009_31.C \
+test2011_65.C \
+test2011_66.C \
+test2011_89.C  \
+test2006_125.C \
+test2006_112.C \
+test2010_25.C  \
+test2003_24.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -769,98 +755,5 @@ test_wchars.C \
 lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C \
-X.C \
-test2005_09.C \
-test2005_104.C \
-$(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION) \
-$(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS)
+X.C
 
-# DQ (1/19/2017): This ia a problem for the generation of a binary AST in the file I/O tests.
-NEW_COMPILER_5_1_SPECIFIC_FAILING_TESTS_WITH_CONSTANT_FOLDING = \
-test2005_32.C \
-test2005_135.C \
-test2005_138.C \
-test2005_156.C \
-test2007_48.C 
-
-# DQ (1/19/2017): This ia a problem for the generation of a binary AST in the file I/O tests.
-NEW_COMPILER_6_1_SPECIFIC_FAILING_TESTS_WITH_CONSTANT_FOLDING = \
-test2005_189.C \
-test2006_13.C 
-
-# DQ (1/28/2014): Failing test (likely due to new nodes in AST 
-# from construction of expression trees from costants).
-# test2005_42.C (fails with gnu g++ 4.2.4 compiler)
-# test2004_35.C (fails with gnu 4.4.5 compiler, passes with g++ 4.2.4)
-
-# These all faile with g++ 4.4.5, but pass with g++ 4.2.4
-NEW_COMPILER_4_4_5_SPECIFIC_FAILING_TESTS_WITH_CONSTANT_FOLDING = \
- test2004_35.C \
- test2004_77.C \
- test2004_143.C \
- test2004_149.C \
- test2005_28.C \
- test2005_39.C \
- test2005_82.C \
- test2005_93.C \
- test2005_98.C \
- test2005_129.C \
- test2005_130.C \
- test2005_131.C \
- test2005_132.C \
- test2005_133.C \
- test2005_181.C \
- test2006_20.C \
- test2006_79.C \
- test2007_141.C \
- test2009_40.C \
- test2011_06.C \
- inputBug327.C\
- test2010_24.C 
-
-
-# DQ (9/17/2011): Failing name qualification...fix after fixing original expression tree AST consistancy.
-FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION = \
- test2007_05.C \
- test2009_37.C \
- test2009_31.C \
- test2011_65.C \
- test2011_66.C \
- test2011_89.C
-
-
-# DQ (9/17/2011): Failing tests for constant folding AST consitancy support.
-FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_ORIGINAL_EXPRESSION_TREE_ELIMINATION = \
-test2006_112.C \
-test2010_25.C 
-
-
-# DQ (9/24/2011): Failing astFileIO test as a result of making replacing constant folded values with the original expression trees.
-FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS = \
- test2006_125.C
- 
-FAILING_FILE_IO_WITH_EDG_47_FROM_MAIN_LIST = \
- test2004_85.C \
- test2004_120.C \
- test2004_127.C \
- test2004_129.C \
- test2005_34.C \
- test2005_35.C \
- test2005_103.C \
- test2005_128.C \
- test2005_142.C \
- test2006_124.C \
- test2006_141.C \
- test2009_41.C \
- test2011_141.C \
- test2011_142.C \
- test2011_146.C \
- test2006_84.C
-   
-FAILING_FILE_IO_WITH_EDG_47_FROM_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION = \
- test2004_130.C \
- test2005_161.C \
- inputBug317.C
-
-FAILING_FILE_IO_WITH_EDG_47_FROM_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS = \
- test2011_121.C

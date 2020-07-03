@@ -1006,10 +1006,10 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level pr
     } else {
         // We don't have semantics, so naively look at just the last instruction.
         bool complete = true;
-        std::set<rose_addr_t> successorVas = lastInsn->getSuccessors(&complete);
+        AddressSet successorVas = lastInsn->getSuccessors(complete/*out*/);
 
         BaseSemantics::RiscOperatorsPtr ops = newOperators();
-        BOOST_FOREACH (rose_addr_t va, successorVas)
+        BOOST_FOREACH (rose_addr_t va, successorVas.values())
             successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->number_(REG_IP.nBits(), va))));
         if (!complete)
             successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->undefined_(REG_IP.nBits()))));
@@ -1052,7 +1052,8 @@ Partitioner::basicBlockGhostSuccessors(const BasicBlock::Ptr &bb) const {
     const BasicBlock::Successors &bblockSuccessors = basicBlockSuccessors(bb);
     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
         bool complete = true;
-        BOOST_FOREACH (rose_addr_t naiveSuccessor, insn->getSuccessors(&complete)) {
+        AddressSet vas = insn->getSuccessors(complete/*out*/);
+        BOOST_FOREACH (rose_addr_t naiveSuccessor, vas.values()) {
             if (!insnVas.exists(naiveSuccessor)) {
                 // Is naiveSuccessor also a basic block successor?
                 bool found = false;
@@ -1265,8 +1266,8 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
         if (i1->get_kind() == x86_call) {
             rose_addr_t callFallThroughVa = i1->get_address() + i1->get_size();
             bool complete = true;
-            std::set<rose_addr_t> callSuccVas = i1->getSuccessors(&complete);
-            if (callSuccVas.size() == 1 && *callSuccVas.begin() == callFallThroughVa) {
+            AddressSet callSuccVas = i1->getSuccessors(complete/*out*/);
+            if (callSuccVas.size() == 1 && callSuccVas.least() == callFallThroughVa) {
                 if (SgAsmX86Instruction *i2 = isSgAsmX86Instruction(discoverInstruction(callFallThroughVa))) {
                     if (i2->get_kind() == x86_pop) {
                         bb->isFunctionCall() = false;
@@ -2837,8 +2838,15 @@ Partitioner::cfgGraphViz(std::ostream &out, const AddressInterval &restrict,
 
 std::vector<Function::Ptr>
 Partitioner::nextFunctionPrologue(rose_addr_t startVa) {
+    return nextFunctionPrologue(startVa, startVa);
+}
+
+std::vector<Function::Ptr>
+Partitioner::nextFunctionPrologue(rose_addr_t startVa, rose_addr_t &lastSearchedVa) {
+    lastSearchedVa = startVa;
     while (memoryMap_->atOrAfter(startVa).require(MemoryMap::EXECUTABLE).next().assignTo(startVa)) {
         Sawyer::Optional<rose_addr_t> unmappedVa = aum_.leastUnmapped(startVa);
+        lastSearchedVa = startVa;
         if (!unmappedVa)
             return std::vector<Function::Ptr>();        // empty; no higher unused address
         if (startVa == *unmappedVa) {

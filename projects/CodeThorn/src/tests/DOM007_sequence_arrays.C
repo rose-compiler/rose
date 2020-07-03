@@ -2,7 +2,10 @@
 int main() {
   int a[2]={1,2};
   // arithmetic with array elements
+  printf("a[0]:%d\n",a[0]);
+  printf("a[1]:%d\n",a[1]);
   a[0]=a[0]+1;
+  printf("a[0]:%d\n",a[0]);
   int* p;
   p=a;
   // dereference of pointers to arrays

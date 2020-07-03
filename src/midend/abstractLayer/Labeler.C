@@ -8,10 +8,10 @@
 #include "Labeler.h"
 #include "SgNodeHelper.h"
 #include "sageInterface.h"
-#include "sageGeneric.h"
 
 //#include "AstTerm.h"
 #include <sstream>
+#include <numeric>
 
 using namespace std;
 using namespace CodeThorn;
@@ -223,11 +223,37 @@ Labeler::Labeler(SgNode* start) {
 
 Labeler::~Labeler(){}
 
+#if OBSOLETE_CODE
+// C++ initializer lists will be normalized
+namespace 
+{
+  struct InitListLabelCounter
+  {
+    int operator()(int total, SgInitializedName* el) const
+    {
+      ROSE_ASSERT(el);
+      
+      // count 1 label for AssignInitializer and 2 for SgConstructorInitializer
+      if (isSgConstructorInitializer(el->get_initializer())) ++total;      
+  
+      return ++total;
+    }
+  };
+  
+  int countLabels(SgCtorInitializerList* n)
+  {
+    SgInitializedNamePtrList& inits = n->get_ctors();
+    
+    return std::accumulate(inits.begin(), inits.end(), 0, InitListLabelCounter());
+  }
+}
+#endif /* OBSOLETE_CODE */
+
 // returns number of labels to be associated with node
 int Labeler::numberOfAssociatedLabels(SgNode* node) {
   if(node==0)
     return 0;
-
+    
   /* special case: the incExpr in a SgForStatement is a raw SgExpression
    * hence, the root can be any unary or binary node. We therefore perform
    * a lookup in the AST to check whether we are inside a SgForStatement
@@ -242,7 +268,7 @@ int Labeler::numberOfAssociatedLabels(SgNode* node) {
   }
 
   //special case of FunctionCall is matched as : f(), x=f(); T x=f();
-  if(SgNodeHelper::Pattern::matchFunctionCall(node)) {
+  if(SgNodeHelper::matchExtendedNormalizedCall(node) || SgNodeHelper::Pattern::matchFunctionCall(node)) {
     //cout << "DEBUG: Labeler: assigning 2 labels for SgFunctionCallExp"<<endl;
     return 2;
   }
@@ -250,17 +276,12 @@ int Labeler::numberOfAssociatedLabels(SgNode* node) {
   switch(node->variantT()) {
     //  case V_SgFunctionCallExp:
   case V_SgBasicBlock:
+  case V_SgTryStmt:
     return 1;
   case V_SgFunctionDefinition:
     return 2;
   case V_SgExprStatement:
-    //special case of FunctionCall inside expression
-    if(SgNodeHelper::matchExtendedNormalizedCall(node) || SgNodeHelper::Pattern::matchFunctionCall(node)) {
-      //cout << "DEBUG: Labeler: assigning 2 labels for SgFunctionCallExp"<<endl;
-      return 2;
-    }
-    else
-      return 1;
+    return 1;
   case V_SgIfStmt:
   case V_SgWhileStmt:
   case V_SgDoWhileStmt:
@@ -279,10 +300,6 @@ int Labeler::numberOfAssociatedLabels(SgNode* node) {
 
     // declarations
   case V_SgVariableDeclaration:
-    if (SgNodeHelper::matchExtendedNormalizedCall(node))
-      return 2;
-    /* fallthrough */
-    // C++17 [[fallthrough]];
   case V_SgClassDeclaration:
   case V_SgEnumDeclaration:
   case V_SgTypedefDeclaration:
@@ -317,6 +334,11 @@ int Labeler::numberOfAssociatedLabels(SgNode* node) {
 
   case V_SgReturnStmt:
       return 1;
+#if OBSOLETE_CODE      
+  case V_SgCtorInitializerList:
+      return countLabels(isSgCtorInitializerList(node));
+#endif /* OBSOLETE_CODE */
+          
   default:
     return 0;
   }
@@ -367,6 +389,25 @@ void Labeler::createLabels(SgNode* root) {
         assert(num==2);
         registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALL));
         registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALLRETURN));
+#if OBSOLETE_CODE
+      } else if (SgCtorInitializerList* inilst = isSgCtorInitializerList(*i)) {
+        SgInitializedNamePtrList& lst = inilst->get_ctors();
+        
+        for (size_t i = 0; i < lst.size(); ++i) {
+          SgInitializer* ini = lst[i]->get_initializer();  
+          ROSE_ASSERT(ini);
+       
+          if (isSgConstructorInitializer(ini)) {
+            registerLabel(LabelProperty(ini,LabelProperty::LABEL_FUNCTIONCALL));
+            registerLabel(LabelProperty(ini,LabelProperty::LABEL_FUNCTIONCALLRETURN));        
+          } else {
+            ROSE_ASSERT(isSgAssignInitializer(ini));
+            
+            registerLabel(LabelProperty(ini));
+          }
+        }
+        // std::cerr << "- " << typeid(**i).name() << ": " << num << std::endl;
+#endif /* OBSOLETE_CODE */
       } else {
         // all other cases
         for(int j=0;j<num;j++) {
@@ -470,7 +511,7 @@ long Labeler::numberOfLabels() {
 }
 
 Label Labeler::functionCallLabel(SgNode* node) {
-  ROSE_ASSERT(SgNodeHelper::Pattern::matchFunctionCall(node));
+  ROSE_ASSERT(SgNodeHelper::Pattern::matchFunctionCall(node) || SgNodeHelper::matchExtendedNormalizedCall(node));
   return getLabel(node);
 }
 

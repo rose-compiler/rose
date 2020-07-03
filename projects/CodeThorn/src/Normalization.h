@@ -83,6 +83,8 @@ namespace CodeThorn {
       bool normalizeVariableDeclarations=false;
       bool normalizeVariableDeclarationsWithFunctionCalls=true;
 
+      bool normalizeCplusplus=true;
+
       // puts the sequence of normalized expressions in a block. This
       // way the scope of temporary variables ends right after the
       // last initialization (or assignment) of the normalized
@@ -169,13 +171,14 @@ namespace CodeThorn {
     static SgGotoStatement* createGotoStmtAndInsertLabel(SgLabelStatement* newLabel, SgStatement* target);
     // transforms Label1: Label2: LabelN: Stmt; ==> Label1:; Label2:; LabelN:; Stmt;
     // requires: normalizeSingleStatementsToBlocks()
+    
+    // used to exclude templates from normalization (not excluding template instantiations!)
+    // PP (04/06/20) made functions public so they can be accessed from outside normalization
+    static bool isTemplateInstantiationNode(SgNode* node);
+    static SgClassDeclaration* isSpecialization(SgNode* node);
+    static bool isTemplateNode(SgNode* node);
 
   private:
-    // used to exclude templates from normalization (not excluding template instantiations!)
-    bool isTemplateInstantiationNode(SgNode* node);
-    SgClassDeclaration* isSpecialization(SgNode* node);
-    bool isTemplateNode(SgNode* node);
-
     /* normalize all Expressions in AST. The original variables remain
      * in the program and are assign the last value of the sequence of
      * operations of an expression. */

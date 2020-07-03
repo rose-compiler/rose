@@ -4,7 +4,7 @@
  *  \brief Demonstrates the pragma-interface of the Outliner.
  *
  *  \author Richard Vuduc <richie@llnl.gov>
- *
+ *          Chunhua Liao <liao6@llnl.gov>
  *  This utility has a special option, "-rose:outline:preproc-only",
  *  which can be used just to see the results of the outliner's
  *  preprocessing phase.
@@ -83,10 +83,7 @@ main (int argc, char* argv[])
           SgFile* originalSourceFile = project->get_fileList()[0];
           ROSE_ASSERT(originalSourceFile != NULL);
 
-       // Getting all the AST nodes is not enough, so use the mechanism from AST 
-       // merge to get all nodes that can be reached from the AST nodes.
-       // set<SgNode*> originalSourceFileNodes = getAllNodes(originalSourceFile);
-          set<SgNode*> originalSourceFileNodes = buildRequiredNodeList(originalSourceFile);
+          set<SgNode*> originalSourceFileNodes = getAllNodes(originalSourceFile);
 
           graphNodesAfterCopy(originalSourceFileNodes, filename );
         }

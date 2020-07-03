@@ -348,7 +348,6 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:excludePath" ||
           argument == "-rose:includeFile" ||
           argument == "-rose:excludeFile" ||
-          argument == "-rose:astMergeCommandFile" ||
           argument == "-rose:projectSpecificDatabaseFile" ||
 
           // AST I/O
@@ -443,6 +442,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "--param" ||    // --param variable=value
 
        // Peihung (03/09/2020): Add support for ifort v.19
+          argument == "-align"  ||
           argument == "-warn"  ||
           argument == "-check"  ||
           argument == "-debug"  ||
@@ -1501,18 +1501,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              }
         }
 
-  // DQ (6/17/2005): Added support for AST merging (sharing common parts of the AST most often represented in common header files of a project)
-  //
-  // specify AST merge option
-  //
-  // if ( CommandlineProcessing::isOption(argc,argv,"-rose:","(astMerge)",true) == true )
-     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(astMerge)",true) == true )
-        {
-       // printf ("-rose:astMerge option found \n");
-       // set something not yet defined!
-          p_astMerge = true;
-        }
-
   // DQ (9/15/2018): Adding support for output of report on the header file unparsing (for debugging).
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(headerFileUnparsingReport)",true) == true )
         {
@@ -1520,20 +1508,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           printf ("-rose:headerFileUnparsingReport option found \n");
 #endif
           set_reportOnHeaderFileUnparsing(true);
-        }
-
-  // DQ (6/17/2005): Added support for AST merging (sharing common parts of the AST most often represented in common header files of a project)
-  //
-  // specify AST merge command file option
-  //
-     std::string astMergeFilenameParameter;
-     if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,
-          "-rose:","(astMergeCommandFile)",astMergeFilenameParameter,true) == true )
-        {
-          printf ("-rose:astMergeCommandFile %s \n",astMergeFilenameParameter.c_str());
-       // Make our own copy of the filename string
-       // set_astMergeCommandLineFilename(xxx);
-          p_astMergeCommandFile = astMergeFilenameParameter;
         }
 
    // Milind Chabbi (9/9/2013): Added an option to store all files compiled by a project.
@@ -1586,12 +1560,19 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        }
        std::string astfile = rose_ast_option_param.substr(prev, pos-prev);
        p_astfiles_in.push_back(astfile);
+
+       p_ast_merge = true;
      }
 
      // `-rose:ast:write out.ast` (extension does not matter)
      rose_ast_option_param = "";
      if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:", "(ast:write)", rose_ast_option_param, true) == true ) {
        p_astfile_out = rose_ast_option_param;
+     }
+
+     // `-rose:ast:merge`
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(ast:merge)",true) == true ) {
+       p_ast_merge = true;
      }
 
   // Verbose ?
@@ -3256,10 +3237,6 @@ SgFile::usage ( int status )
 "                             ambiguity when ROSE might want to assume linking instead)\n"
 "     -rose:FailSafe, -rose:failsafe\n"
 "                             Enable experimental processing of resilience directives defined by FAIL-SAFE annotation language specification.\n"
-"     -rose:astMerge          merge ASTs from different files\n"
-"     -rose:astMergeCommandFile FILE\n"
-"                             filename where compiler command lines are stored\n"
-"                             for later processing (using AST merge mechanism)\n"
 "     -rose:projectSpecificDatabaseFile FILE\n"
 "                             filename where a database of all files used in a project are stored\n"
 "                             for producing unique trace ids and retrieving the reverse mapping from trace to files"
@@ -3326,6 +3303,7 @@ SgFile::usage ( int status )
 "     -rose:ast:write out.ast\n"
 "                             Output AST file (extension does *not* matter).\n"
 "                             Evaluated in the backend before any file unparsing or backend compiler calls.\n"
+"     -rose:ast:merge         Merges ASTs from different source files (always true when -rose:ast:read is used)\n"
 "\n"
 "Plugin Mode:\n"
 "     -rose:plugin_lib <shared_lib_filename>\n"
@@ -4176,7 +4154,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
           } else if ( argv[i] == "-std=f2018" || argv[i] == "-std=f2008ts" ) {
             set_F2018_only();
+#if BACKEND_FORTRAN_IS_INTEL_COMPILER
+          } else if ( argv[i] == "-std" ) {
+            set_F2003_only();
 
+          } else if ( argv[i] == "-std90" ) {
+            set_F90_only();
+
+          } else if ( argv[i] == "-std95" ) {
+            set_F95_only();
+
+          } else if ( argv[i] == "-std03" ) {
+            set_F2003_only();
+#endif
           }
         }
 
@@ -4455,21 +4445,16 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // DQ (28/8/17): Jovial support
      if ( CommandlineProcessing::isOption(argv,"-rose:","(jovial|Jovial)",true) == true )
         {
-          if ( SgProject::get_verbose() >= 0 )
-               printf ("Jovial mode ON \n");
-          set_Jovial_only(true);
+          if ( SgProject::get_verbose() > 0 )
+             std::cout << "Jovial mode ON \n";
           if (get_sourceFileUsesJovialFileExtension() == false)
              {
                printf ("Warning, Non Jovial source file name specificed with explicit -rose:jovial Jovial language option! \n");
                set_Jovial_only(false);
              }
 
-       // DQ (30/8/2017): For Jovial we need to only compile and not link (at least while debugging initial support).
-          printf ("NOTE: For Jovial support disable link step, at least while debugging initial support \n");
-
+          set_Jovial_only(true);
           set_compileOnly(true);
-
-          ROSE_ASSERT(get_compileOnly() == true);
         }
 
   // DQ (28/8/17): Cobol support
@@ -5504,7 +5489,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(relax_syntax_check)",1);
 
   // DQ (8/11/2007): Support for Fortran and its different flavors
-     optionCount = sla(argv, "-rose:", "($)", "(f|F|Fortran)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(f|F|Fortran|fortran)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f77|F77|Fortran77)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f90|F90|Fortran90)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f95|F95|Fortran95)",1);
@@ -7602,13 +7587,16 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
                compilerNameString[0] = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
 
-#if BACKEND_FORTRAN_IS_GNU_COMPILER
                if (get_backendCompileFormat() == e_fixed_form_output_format)
                   {
                  // If backend compilation is specificed to be fixed form, then allow any line length (to simplify code generation for now)
                  // compilerNameString += "-ffixed-form ";
                  // compilerNameString += "-ffixed-line-length- "; // -ffixed-line-length-<n>
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
                     compilerNameString.push_back("-ffixed-line-length-none");
+#elif BACKEND_FORTRAN_IS_INTEL_COMPILER
+                    compilerNameString.push_back("-fixed");
+#endif
                   }
                  else
                   {
@@ -7621,10 +7609,14 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                       // compilerNameString.push_back("-ffree-line-length-none");
 
                       // DQ (9/16/2009): This option is not available in gfortran version 4.0.x (wonderful).
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
                          if ((BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER >= 1))
                             {
                               compilerNameString.push_back("-ffree-line-length-none");
                             }
+#elif BACKEND_FORTRAN_IS_INTEL_COMPILER
+                         compilerNameString.push_back("-free");
+#endif
                        }
                       else
                        {
@@ -7636,10 +7628,13 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                               printf ("Compiling generated code using gfortran -ffixed-line-length-none to avoid 72 column limit in code generation\n");
                             }
 
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
                          compilerNameString.push_back("-ffixed-line-length-none");
+#elif BACKEND_FORTRAN_IS_INTEL_COMPILER
+                         compilerNameString.push_back("-fixed");
+#endif
                        }
                   }
-#endif
                break;
              }
 
@@ -8297,7 +8292,25 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
             // X10 command line generation using "-w" will cause X10 compiler to fail.
              }
         }
-
+// Pei-Hung (05/08/2020) Fortran output might not fulfill standard requirement.-
+// "std" option needs to be removed for Intel compiler commmand line
+#if BACKEND_FORTRAN_IS_INTEL_COMPILER
+     std::vector<string> deleteList;
+     for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
+        {
+          if (i->substr(0,2) != "-std")
+             {
+                deleteList.push_back(*i);
+             }
+        }
+        for (std::vector<string>::iterator i = deleteList.begin(); i != deleteList.end(); i++)
+           {
+             argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
+           }
+#if DEBUG_COMPILER_COMMAND_LINE
+     printf ("In buildCompilerCommandLineOptions: After removing -std option for Intel compiler,  argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
+#endif
+#endif
 #if 0
      printf ("In buildCompilerCommandLineOptions(): After adding options from Rose::global_options: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",
           argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());

@@ -28,7 +28,7 @@ if test "x$CONFIG_HAS_ROSE_ENABLE_CLANG_FRONTEND" = "xyes"; then
      AC_MSG_CHECKING([for Clang ld flags])
          if test -z "$CLANG_LDFLAGS"; then
              llvm_ldflags="`$LLVM_CONFIG --ldflags` -lclangFrontendTool -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCheckers -lclangStaticAnalyzerCore -lclangIndex -lclangFrontend -lclangCodeGen  -lclangARCMigrate -lclangRewrite -lclangSerialization -lclangDriver -lclangParse -lclangSema -lclangAnalysis -lclangAST -lclangLex -lclangBasic -lclangEdit -lclangLex "
-             llvm_ldflags+=`$LLVM_CONFIG --libs engine ipo bitwriter linker asmparser instrumentation option`
+             llvm_ldflags+=`$LLVM_CONFIG --libs engine ipo bitwriter linker asmparser instrumentation option frontendopenmp`
              if test -n "${llvm_ldflags}"; then
                  llvm_ldflags="$llvm_ldflags"
              fi

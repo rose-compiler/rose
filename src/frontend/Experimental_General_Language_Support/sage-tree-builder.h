@@ -8,26 +8,38 @@
 // WARNING: This file has been designed to compile with -std=c++17
 // This limits the use of ROSE header files at the moment.
 //
+class SgBasicBlock;
+class SgCaseOptionStmt;
+class SgDefaultOptionStmt;
 class SgDerivedTypeStatement;
 class SgEnumDeclaration;
+class SgEnumType;
+class SgEnumVal;
 class SgExpression;
+class SgExprListExp;
 class SgExprStatement;
 class SgFunctionDeclaration;
 class SgFunctionDefinition;
+class SgFunctionParameterList;
 class SgFunctionParameterScope;
 class SgGlobal;
 class SgInitializedName;
-class SgJovialDefineDeclaration;
-class SgJovialDirectiveStatement;
 class SgLocatedNode;
+class SgNamespaceDeclarationStatement;
 class SgProgramHeaderStatement;
 class SgScopeStatement;
 class SgSourceFile;
+class SgStopOrPauseStatement;
+class SgSwitchStatement;
 class SgType;
+class SgTypedefDeclaration;
 class SgVariableDeclaration;
 
 // Jovial specific classes
 class SgJovialCompoolStatement;
+class SgJovialDefineDeclaration;
+class SgJovialDirectiveStatement;
+class SgJovialOverlayDeclaration;
 class SgJovialTableStatement;
 
 
@@ -79,6 +91,9 @@ public:
 
    void Leave(SgScopeStatement* &);
 
+   void Enter(SgBasicBlock* &);
+   void Leave(SgBasicBlock*);
+
    void Enter(SgProgramHeaderStatement* &,
               const boost::optional<std::string> &, const std::list<std::string> &, const SourcePositions &);
    void Leave(SgProgramHeaderStatement*);
@@ -87,13 +102,12 @@ public:
                                  const boost::optional<std::string> &,
                                  const boost::optional<std::string> &);
 
-   void Enter(SgFunctionParameterScope* &);
-   void Leave(SgFunctionParameterScope*);
+   void Enter(SgFunctionParameterList* &, SgBasicBlock* &);
+   void Leave(SgFunctionParameterList*, SgBasicBlock*, const std::list<LanguageTranslation::FormalParameter> &);
 
-   void Enter(SgFunctionDeclaration* &, const std::string &,
-                                        const std::list<General_Language_Translation::FormalParameter> &,
-                                        const General_Language_Translation::SubroutineAttribute &);
-   void Leave(SgFunctionDeclaration*);
+   void Enter(SgFunctionDeclaration* &, const std::string &, SgType*, SgFunctionParameterList*,
+                                        const LanguageTranslation::FunctionModifierList &);
+   void Leave(SgFunctionDeclaration*, SgBasicBlock*);
 
    void Enter(SgFunctionDefinition* &);
    void Leave(SgFunctionDefinition*);
@@ -107,38 +121,81 @@ public:
    void Enter(SgEnumDeclaration* &, const std::string &, std::list<SgInitializedName*> &);
    void Leave(SgEnumDeclaration*);
 
+   void Enter(SgTypedefDeclaration* &, const std::string &, SgType*);
+   void Leave(SgTypedefDeclaration*);
+
 // Statements
 //
+   void Enter(SgNamespaceDeclarationStatement* &, const std::string &, const SourcePositionPair &);
+   void Leave(SgNamespaceDeclarationStatement*);
+
    void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &, const std::string &);
    void Leave(SgExprStatement*);
 
-   SgEnumVal* ReplaceEnumVal(SgEnumType*, SgName);
+   void Enter(SgIfStmt* &, SgExpression*, SgBasicBlock*, SgBasicBlock*);
+   void Leave(SgIfStmt*);
+
+   void Enter(SgStopOrPauseStatement* &, const boost::optional<SgExpression*> &, const std::string &);
+   void Leave(SgStopOrPauseStatement*);
+
+   void Enter(SgSwitchStatement* &, SgExpression*, const SourcePositionPair &);
+   void Leave(SgSwitchStatement*);
+
+   void Enter(SgCaseOptionStmt* &, SgExprListExp*);
+   void Leave(SgCaseOptionStmt*);
+
+   void Enter(SgDefaultOptionStmt* &);
+   void Leave(SgDefaultOptionStmt*);
+
+   SgEnumVal* ReplaceEnumVal(SgEnumType*, const std::string &);
+
+// Expressions
+//
+   void Enter(SgFunctionCallExp* &, std::string &name, SgExprListExp* params);
 
 // Jovial specific nodes
 //
    void Enter(SgJovialDefineDeclaration* &, const std::string &define_string);
    void Leave(SgJovialDefineDeclaration*);
 
-   void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, SgJovialDirectiveStatement::directive_types);
+   void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, bool is_compool=false);
    void Leave(SgJovialDirectiveStatement*);
 
-   void Enter(SgJovialCompoolStatement* &,
-              const std::string &, const SourcePositionPair &);
-   void Enter(SgJovialTableStatement* &,
-              const std::string &, const SourcePositionPair &, bool is_block=false);
+   void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);
+   void Leave(SgJovialCompoolStatement*);
+
+   void Enter(SgJovialOverlayDeclaration* &, SgExpression* address, SgExprListExp* overlay);
+   void Leave(SgJovialOverlayDeclaration*);
+
+   void Enter(SgJovialTableStatement* &, const std::string &, const SourcePositionPair &, bool is_block=false);
    void Leave(SgJovialTableStatement*);
 
 private:
    TraversalContext context_;
 
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
+   void importModule(const std::string &module_name);
 
 public:
    const TraversalContext & get_context(void) {return context_;}
    void setContext(SgType* type) {context_.type = type;}
    void setActualFunctionParameterScope(SgScopeStatement* scope) {context_.actual_function_param_scope = scope;}
+
+// Helper function
+   bool list_contains(const std::list<LanguageTranslation::FunctionModifier>& lst, const LanguageTranslation::FunctionModifier& item)
+     {
+        return (std::find(lst.begin(), lst.end(), item) != lst.end());
+     }
+
 };
 
+// Temporary wrappers for SageInterface functions (needed until ROSE builds with C++17)
+//
+namespace SageBuilderCpp17 {
+
+   SgType* buildIntType();
+
+} // namespace SageBuilderCpp17
 } // namespace builder
 } // namespace Rose
 

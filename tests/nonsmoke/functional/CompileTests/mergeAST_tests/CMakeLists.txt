@@ -27,7 +27,7 @@ set(TESTCODES
   mergeTest_131.C mergeTest_133.C mergeTest_134.C mergeTest_90.C
   mergeTest_124.C)
 
-set(ROSE_FLAGS --edg:no_warnings -w --edg:restrict -rose:astMerge)
+set(ROSE_FLAGS --edg:no_warnings -w --edg:restrict -rose:ast:merge)
 
 foreach(file_to_test ${TESTCODES})
   add_test(

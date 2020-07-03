@@ -96,15 +96,6 @@ rose_string_decoder_LDFLAGS = $(ROSE_RPATHS)
 rose_string_decoder_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
-# Find code that cannot be reached according to static analysis
-
-bin_PROGRAMS += rose-find-dead-code
-rose_find_dead_code_SOURCES = findDeadCode.C
-rose_find_dead_code_CPPFLAGS = $(ROSE_INCLUDES)
-rose_find_dead_code_LDFLAGS = $(ROSE_RPATHS)
-rose_find_dead_code_LDADD = $(ROSE_LIBS)
-
-#------------------------------------------------------------------------------------------------------------------------
 # Parse and simplify symbolic expressions
 
 bin_PROGRAMS += rose-symbolic-simplifier
@@ -130,6 +121,15 @@ rose_trace_SOURCES = trace.C
 rose_trace_CPPFLAGS = $(ROSE_INCLUDES)
 rose_trace_LDFLAGS = $(ROSE_RPATHS)
 rose_trace_LDADD = $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
+# Experimental tool for parallel disassembly
+
+bin_PROGRAMS += rose-pardis
+rose_pardis_SOURCES = pardis.C
+rose_pardis_CPPFLAGS = $(ROSE_INCLUDES)
+rose_pardis_LDFLAGS = $(ROSE_RPATHS)
+rose_pardis_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Monitor execution and estimate number of unique instructions

@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS =
 
-PHONY: test test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator
+PHONY: test test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator
 
 include $(top_srcdir)/tests/nonsmoke/functional/input_codes/Makefile.for.input.codes
 
@@ -73,8 +73,6 @@ noinst_PROGRAMS = \
    testTranslator \
    testTranslatorUnfoldedConstants \
    testTranslatorFoldedConstants \
-   testAstFileRead \
-   parallelASTMerge \
    testGraphGeneration \
    testTokenGeneration \
    testTemplates \
@@ -87,11 +85,6 @@ endif
 
 if ROSE_WITH_ATERM
    noinst_PROGRAMS += testAtermGraphGeneration
-endif
-
-# DQ (1/16/2012): This test code is not supported when compiling for simple front-end testing (smallest subset of ROSE that can be built).
-if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-   noinst_PROGRAMS += testAstFileIO 
 endif
 
 # Phase 0 tests code:
@@ -125,25 +118,6 @@ testTranslator_SOURCES = testTranslator.C
 # These tests an option to use frontend specific constant folding or the original expression trees (default is no constnt folding).
 testTranslatorUnfoldedConstants_SOURCES = testTranslatorUnfoldedConstants.C
 testTranslatorFoldedConstants_SOURCES   = testTranslatorFoldedConstants.C
-
-# This tests the ability to generate a compressed binary file representation of the AST.
-# This is a special format of the ROSE AST build for performance File I/O (to address the
-# requirements of large scale applications and their analysis).
-#
-# This executable is tested in tests/nonsmoke/functional/roseTests/astFileIO/Makefile.am. I'm not sure why it's tested down there
-# instead of here [RPM 2013-09-27].
-testAstFileIO_SOURCES = testAstFileIO.C
-
-# This tests the ability to read one or more of the binary AST files generated from the AST write.
-#
-# This executable is tested in tests/nonsmoke/functional/roseTests/astFileIO/Makefile.am.  I'm not sure why it's tested down there
-# instead of here [RPM 2013-09-27].
-testAstFileRead_SOURCES = testAstFileRead.C
-
-# This test the parallel merge of AST files using Cong's threaded implmentation of the merge infrastructure.
-#
-# This seems to be similar to the version in tests/nonsmoke/functional/roseTests/astFileIO.
-parallelASTMerge_SOURCES = parallelASTMerge.C
 
 # This tests the ability to generate dot file (AST and WholeGraph) for the input application.
 testGraphGeneration_SOURCES = testGraphGeneration.C
@@ -377,41 +351,6 @@ endif
 
 test_testTranslator: testObjectFileTranslator testLinkFileTranslator testCppFileTranslator testExecutableFileTranslator
 
-# ************************************
-# *******  AST File I/O Tests  *******
-# ************************************
-
-# Note: This executable is tested more extensively in tests/nonsmoke/functional/roseTests/astFileIO/Makefile.am [RPM 2013-09-27]
-testObjectFileFileAstFileIO: testAstFileIO
-if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-	cp $(srcdir)/inputFile.C alt_AstFileIO_inputFile.C
-#	./testAstFileIO $(AM_CPPFLAGS) -c alt_AstFileIO_inputFile.C -o alt_AstFileIO_inputFile
-if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
-else
-	./testAstFileIO -c alt_AstFileIO_inputFile.C -o alt_AstFileIO_inputFile
-endif
-else
-	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
-endif
-
-test_testAstFileIO: testObjectFileFileAstFileIO
-
-# *************************************
-# *******  AST File Read Tests  *******
-# *************************************
-
-# Note: This executable is tested more extensively in tests/nonsmoke/functional/roseTests/astFileIO/Makefile.am [RPM 2013-09-27]
-testAstRead: testAstFileRead testAstFileIO
-	cp $(srcdir)/inputFile.C alt_AstFileRead_inputFile.C
-if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
-else
-	./testAstFileIO -c alt_AstFileRead_inputFile.C -o alt_AstFileRead_inputFile
-	./testAstFileRead alt_AstFileRead_inputFile.C outputFileName_XXX
-endif
-test_testAstFileIO: testObjectFileFileAstFileIO
-
 # Reported failure from Tristan
 testSimpleLinkFileTranslator: testTranslator
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
@@ -478,7 +417,7 @@ test_exampleIdentityTranslator:
 endif
 
 # Rule to run all the example translator tests
-# test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
+# test: test_testAnalysis test_testCodeGeneration test_testTranslator testSimpleLinkFileTranslator
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 if ROSE_WITH_LIBHARU
    test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_readFileTwice
@@ -487,9 +426,9 @@ else
 endif
 else
 if ROSE_WITH_LIBHARU
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator test_readFileTwice
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator test_readFileTwice
 else
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator test_readFileTwice
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator test_readFileTwice
 endif
 endif
 
@@ -532,11 +471,11 @@ check-local: conditional-check-local
 clean-local: myCleanRule
 
 myCleanRule:
-	rm -f testLinkFileAnalysisExecutable testLinkFileCodeGenerationExecutable testLinkFileTranslatorExecutable testExecutableFileAstFileIOExecutable
+	rm -f testLinkFileAnalysisExecutable testLinkFileCodeGenerationExecutable testLinkFileTranslatorExecutable 
 	rm -f testExecutableFileAnalysisExecutable testExecutableFileCodeGenerationExecutable testExecutableFileTranslatorExecutable
-	rm -f rose_*.C inputFileTranslator.C inputFileCodeGeneration.C inputFileAnalysis.C inputSimpleLinkFileTranslator.C inputFileAstFileIO.C
+	rm -f rose_*.C inputFileTranslator.C inputFileCodeGeneration.C inputFileAnalysis.C inputSimpleLinkFileTranslator.C
 	rm -f inputObjectFileAnalysis.C inputObjectFileCodeGeneration.C inputObjectFileTranslator.C alt_ObjectFileTokenGeneration_inputFile.C
-	rm -f alt_AstFileIO_inputFile* alt_AstFileRead_inputFile* a.out *.dot *.binary
+	rm -f a.out *.dot *.binary
 	rm -f *.C_identity
 	rm -rf rose_minimal.cpp rose-passed_files.txt rose-failed_files.txt
 

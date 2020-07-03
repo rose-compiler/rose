@@ -1500,6 +1500,37 @@ vertexIteratorSet() {
     }
 }
 
+static void
+eraseParallelEdges() {
+    std::cout <<"erase parallel edges\n";
+
+    typedef Sawyer::Container::Graph<std::string, int> Graph;
+    typedef Graph::VertexIterator Vertex;
+
+    // Create the vertices
+    Graph g;
+    Vertex va = g.insertVertex("A");
+    Vertex vb = g.insertVertex("B");
+    Vertex vc = g.insertVertex("C");
+
+    // Create some parellel edges between the vertices
+    g.insertEdge(va, vb, 0);
+    g.insertEdge(va, vb, 1);
+    g.insertEdge(va, vb, 0);
+    g.insertEdge(va, vb, 1);
+    g.insertEdge(va, vb, 1);
+    ASSERT_always_require(va->nOutEdges() == 5);
+    ASSERT_always_require(vb->nInEdges() == 5);
+    ASSERT_always_require(vc->nOutEdges() == 0);
+    ASSERT_always_require(vc->nInEdges() == 0);
+
+    // Remove the parallel edges
+    Sawyer::Container::Algorithm::graphEraseParallelEdges(g);
+    ASSERT_always_require(va->nOutEdges() == 2);
+    ASSERT_always_require(vc->nOutEdges() == 0);
+    ASSERT_always_require(vc->nInEdges() == 0);
+}
+
 int main() {
     Sawyer::initializeLibrary();
     typedef Sawyer::Container::Graph<std::string, std::string> G1;
@@ -1526,5 +1557,5 @@ int main() {
     graphDominators02();
     graphDominators03();
     vertexIteratorSet();
-
+    eraseParallelEdges();
 }

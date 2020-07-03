@@ -4951,11 +4951,23 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
        // it was a procedure name or a procedure declaration to be abstracted away and saves 
        // this detail of how it was structured in the source code in the AST (for the unparser).
           SgName name = procedureDeclaration->get_name();
-          SgInterfaceBody* interfaceBody = new SgInterfaceBody(name,procedureDeclaration,/*use_function_name*/ false);
-          procedureDeclaration->set_parent(interfaceStatement);
-          interfaceStatement->get_interface_body_list().push_back(interfaceBody);
-          interfaceBody->set_parent(interfaceStatement);
-          setSourcePosition(interfaceBody);
+       // Pei-Hung (04/07/2020): procedureDeclaration from other modules should not be added into
+       // the SgInterfaceBody.  Check if interfaceStatement and the procedureDeclaration are in
+       // the same scope.
+          SgScopeStatement* interfaceStmtScope = interfaceStatement->get_scope();
+          if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+             {
+               printf("interfacestmt %p scope: %p\n",interfaceStatement, interfaceStmtScope);
+               printf("procedure %p scope: %p\n",procedureDeclaration, currentScopeOfFunctionDeclaration);
+             }
+          if (interfaceStmtScope == currentScopeOfFunctionDeclaration)
+             {
+               SgInterfaceBody* interfaceBody = new SgInterfaceBody(name,procedureDeclaration,/*use_function_name*/ false);
+               procedureDeclaration->set_parent(interfaceStatement);
+               interfaceStatement->get_interface_body_list().push_back(interfaceBody);
+               interfaceBody->set_parent(interfaceStatement);
+               setSourcePosition(interfaceBody);
+            }
         }
        else
         {
@@ -6182,15 +6194,11 @@ generateQualifiedName(const std::vector<MultipartReferenceType> & qualifiedNameL
 void
 fixup_forward_type_declarations()
    {
-#if 0
-     printf ("Inside of fixup_forward_type_declarations() \n");
-#endif
      SgScopeStatement* currentScope = astScopeStack.front();
-#if 0
-     printf ("Searching declarations in currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
-#endif
      Rose_STL_Container<SgNode*> typeList = NodeQuery::generateListOfTypes(currentScope);
 #if 0
+     printf ("Inside of fixup_forward_type_declarations() \n");
+     printf ("Searching declarations in currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
      printf ("typeList.size() = %" PRIuPTR " \n",typeList.size());
 #endif
 

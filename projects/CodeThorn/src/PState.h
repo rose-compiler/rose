@@ -40,9 +40,9 @@ namespace CodeThorn {
     friend std::istream& operator>>(std::istream& os, PState& value);
     friend class PStateHashFun;
     friend class PStateEqualToPred;
-    friend bool CodeThorn::operator==(const PState& c1, const PState& c2);
-    friend bool CodeThorn::operator!=(const PState& c1, const PState& c2);
-    friend bool CodeThorn::operator<(const PState& s1, const PState& s2);
+    friend bool operator==(const PState& c1, const PState& c2);
+    friend bool operator!=(const PState& c1, const PState& c2);
+    friend bool operator<(const PState& s1, const PState& s2);
     PState();
     bool varIsConst(AbstractValue varId) const;
     // deprecated
@@ -62,6 +62,8 @@ namespace CodeThorn {
     void writeTopToAllMemoryLocations();
     void combineValueAtAllMemoryLocations(CodeThorn::AbstractValue val);
     void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);  
+    void reserveMemoryLocation(AbstractValue varId);
+    void writeUndefToMemoryLocation(AbstractValue varId);
     void writeTopToMemoryLocation(AbstractValue varId);
     AbstractValue readFromMemoryLocation(AbstractValue abstractMemLoc) const;
     void combineAtMemoryLocation(AbstractValue abstractMemLoc,

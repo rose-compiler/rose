@@ -38,6 +38,22 @@ Z3Solver::reset() {
         delete ctx_;
         ctx_ = new z3::context;
         solver_ = new z3::solver(*ctx_);
+        if (timeout_) {
+            // It's not well documented. Experimentally determined to be milliseconds.
+            ctx_->set("timeout", boost::lexical_cast<std::string>((unsigned)::round(timeout_->count()*1000)).c_str());
+        }
+    }
+#endif
+}
+
+void
+Z3Solver::timeout(boost::chrono::duration<double> seconds) {
+#ifdef ROSE_HAVE_Z3
+    timeout_ = seconds;
+    if (linkage() == LM_LIBRARY) {
+        ASSERT_not_null(ctx_);
+        // It's not well documented. Experimentally determined to be milliseconds.
+        ctx_->set("timeout", boost::lexical_cast<std::string>((unsigned)::round(seconds.count()*1000)).c_str());
     }
 #endif
 }
@@ -319,6 +335,9 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 break;
             case SymbolicExpr::OP_ZEROP:
                 retval = outputZerop(inode);
+                break;
+            default:
+                // to suppress warnings since an error follows. Please remove this when floating-point is implemented
                 break;
         }
     }
@@ -652,6 +671,9 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                 return ctxWrite(inode);
             case SymbolicExpr::OP_ZEROP:
                 return ctxZerop(inode);
+            default:
+                // to suppress warnings since an error follows. Please remove this when floating-point is implemented
+                break;
         }
     }
     ASSERT_not_reachable("unhandled case " + stringify::Rose::BinaryAnalysis::SymbolicExpr::Operator(inode->getOperator(), "") +

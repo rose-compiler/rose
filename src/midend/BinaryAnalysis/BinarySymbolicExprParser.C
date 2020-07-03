@@ -892,16 +892,16 @@ SymbolicExpr::Ptr
 SymbolicExprParser::RegisterToValue::immediateExpansion(const Token &token) {
     using namespace Rose::BinaryAnalysis::InstructionSemantics2;
     BaseSemantics::RegisterStatePtr regState = ops_->currentState()->registerState();
-    const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(token.lexeme());
-    if (NULL == regp)
+    const RegisterDescriptor regp = regState->get_register_dictionary()->find(token.lexeme());
+    if (!regp)
         return SymbolicExpr::Ptr();
-    if (token.exprType().nBits() != 0 && token.exprType().nBits() != regp->nBits()) {
+    if (token.exprType().nBits() != 0 && token.exprType().nBits() != regp.nBits()) {
         throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.exprType().nBits()) +
-                                ", actual=" + StringUtility::numberToString(regp->nBits()) + ")");
+                                ", actual=" + StringUtility::numberToString(regp.nBits()) + ")");
     }
     if (token.exprType().typeClass() == SymbolicExpr::Type::MEMORY)
         throw token.syntaxError("register width must be scalar");
-    BaseSemantics::SValuePtr regValue = regState->peekRegister(*regp, ops_->undefined_(regp->nBits()), ops_.get());
+    BaseSemantics::SValuePtr regValue = regState->peekRegister(regp, ops_->undefined_(regp.nBits()), ops_.get());
     return SymbolicSemantics::SValue::promote(regValue)->get_expression();
 }
 
@@ -930,25 +930,25 @@ SymbolicExprParser::RegisterSubstituter::immediateExpansion(const Token &token) 
 
     // Look up either the full name, or without the "_0" suffix
     std::string registerName = token.lexeme();
-    const RegisterDescriptor *regp = regdict_->lookup(registerName);
+    RegisterDescriptor regp = regdict_->find(registerName);
     if (!regp && boost::ends_with(registerName, "_0"))
-        regp = regdict_->lookup(boost::erase_tail_copy(registerName, 2));
+        regp = regdict_->find(boost::erase_tail_copy(registerName, 2));
 
-    if (NULL == regp)
+    if (!regp)
         return SymbolicExpr::Ptr();
-    if (token.exprType().nBits() != 0 && token.exprType().nBits() != regp->nBits()) {
+    if (token.exprType().nBits() != 0 && token.exprType().nBits() != regp.nBits()) {
         throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.exprType().nBits()) +
-                                ", actual=" + StringUtility::numberToString(regp->nBits()) + ")");
+                                ", actual=" + StringUtility::numberToString(regp.nBits()) + ")");
     }
     if (token.exprType().typeClass() == SymbolicExpr::Type::MEMORY)
         throw token.syntaxError("register width must be scalar");
 
     SymbolicExpr::Ptr retval;
-    if (reg2var_.forward().getOptional(*regp).assignTo(retval))
+    if (reg2var_.forward().getOptional(regp).assignTo(retval))
         return retval;
 
-    retval = SymbolicExpr::makeIntegerVariable(regp->nBits(), token.lexeme());
-    reg2var_.insert(*regp, retval);
+    retval = SymbolicExpr::makeIntegerVariable(regp.nBits(), token.lexeme());
+    reg2var_.insert(regp, retval);
     return retval;
 }
 

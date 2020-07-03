@@ -7,22 +7,21 @@
 namespace CodeThorn
 {
 
-class RDTransferFunctions : public CodeThorn::DFTransferFunctions {
+class RDTransferFunctions : public DFTransferFunctions {
 public:
   RDTransferFunctions();
-  void transferExpression(CodeThorn::Label label, SgExpression* expr, CodeThorn::Lattice& element);
-  void transferDeclaration(CodeThorn::Label label, SgVariableDeclaration* decl, CodeThorn::Lattice& element);
-  void transferReturnStmtExpr(CodeThorn::Label label, SgExpression* expr, CodeThorn::Lattice& element);
-  void transferFunctionCall(CodeThorn::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, CodeThorn::Lattice& element);
-  //void transferFunctionCallReturn(CodeThorn::Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, CodeThorn::Lattice& element);
-  void transferFunctionCallReturn(CodeThorn::Label lab, CodeThorn::VariableId lhsVarId, SgFunctionCallExp* callExp, CodeThorn::Lattice& element);
-  void transferFunctionEntry(CodeThorn::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, CodeThorn::Lattice& element);
-  void transferFunctionExit(CodeThorn::Label lab, SgFunctionDefinition* funDef, CodeThorn::VariableIdSet& localVariablesInFunction, CodeThorn::Lattice& element);
-  void initializeExtremalValue(CodeThorn::Lattice& element);
+  void transferExpression(Label label, SgExpression* expr, Lattice& element) ROSE_OVERRIDE;
+  void transferDeclaration(Label label, SgVariableDeclaration* decl, Lattice& element) ROSE_OVERRIDE;
+  void transferReturnStmtExpr(Label label, SgExpression* expr, Lattice& element) ROSE_OVERRIDE;
+  void transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element) ROSE_OVERRIDE;
+  void transferFunctionCallReturn(Label lab, VariableId lhsVarId, SgFunctionCallExp* callExp, Lattice& element) ROSE_OVERRIDE;
+  void transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element) ROSE_OVERRIDE;
+  void transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element) ROSE_OVERRIDE;
+  void initializeExtremalValue(Lattice& element) ROSE_OVERRIDE;
 };
 
 }
 
-//~ using CodeThorn::RDTransferFunctions;
+//~ using RDTransferFunctions;
 
 #endif

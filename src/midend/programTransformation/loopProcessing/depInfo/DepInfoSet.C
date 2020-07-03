@@ -1,5 +1,7 @@
 #include <stdlib.h>
 
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+
 #include <DepRel.h>
 #include <DepInfoSet.h>
 
@@ -8,8 +10,8 @@ typedef LatticeElemList<DepInfo>::iterator DepInfoSetIterator;
 DepInfoConstIterator DepInfoSet :: GetConstIterator() const
 { if (ConstPtr() == 0)
        return DepInfoConstIterator();
-  else 
-     return  new IteratorImplTemplate<DepInfo,DepInfoSetIterator>( DepInfoSetIterator(ConstRef())); 
+  else
+     return  new IteratorImplTemplate<DepInfo,DepInfoSetIterator>( DepInfoSetIterator(ConstRef()));
 }
 
 DepInfoUpdateIterator DepInfoSet :: GetUpdateIterator()
@@ -17,7 +19,7 @@ DepInfoUpdateIterator DepInfoSet :: GetUpdateIterator()
        return DepInfoUpdateIterator();
   else
      return  new IteratorImplTemplate<DepInfo&,DepInfoSetIterator>( DepInfoSetIterator(UpdateRef()));
-} 
+}
 
 DepInfoSet:: DepInfoSet() : CountRefHandle <DepInfoSetImpl>( new DepInfoSetImpl() )
 {}
@@ -28,7 +30,7 @@ void DepInfoSet :: UpdateDepInfo( bool (*Update)(DepInfo &info) )
 int DepInfoSet :: NumOfDeps() const { return ConstRef().NumberOfEntries(); }
 
 std::string DepInfoSet :: toString() const
- { 
+ {
    std::string r;
    for (DepInfoSetIterator iter(ConstRef()); !iter.ReachEnd(); iter.Advance()) {
      r = r + iter.Current().toString();
@@ -39,7 +41,7 @@ std::string DepInfoSet :: toString() const
 bool DepInfoSet :: operator |= (const DepInfoSet &that)
 {
   bool mod = false;
-  for (DepInfoSetIterator iter(that.ConstRef()); !iter.ReachEnd(); 
+  for (DepInfoSetIterator iter(that.ConstRef()); !iter.ReachEnd();
        iter.Advance()) {
      bool tmp = AddDep(iter.Current());
      mod = mod || tmp;
@@ -53,7 +55,7 @@ bool DepInfoSet :: operator &= ( const DepInfoSet &dm2)
   DepInfoSet result(DepInfoSetGenerator::GetTopInfoSet());
   for (DepInfoSetIterator iter1(ConstRef()); !iter1.ReachEnd(); iter1++) {
       DepInfo c1 = iter1.Current();
-      DepInfoSetIterator iter2(dm2.ConstRef()); 
+      DepInfoSetIterator iter2(dm2.ConstRef());
       for ( ; !iter2.ReachEnd(); ++iter2) {
          DepInfo d = c1 &  iter2.Current();
          result.AddDep( d );
@@ -150,16 +152,16 @@ bool MergeElem( const DepInfo &d1, const DepInfo& d2, DepInfo &result)
      result = d1;
   else if (iref == 2)
       result = d2;
-  else if (iref == 3) 
+  else if (iref == 3)
      result = d1 | d2;
   return true;
  }
 };
 
 bool DepInfoSet :: AddDep( const DepInfo &c)
-  { 
+  {
     MergeDepInfo merge;
-    return UpdateRef().AddElem(c, &merge); 
+    return UpdateRef().AddElem(c, &merge);
   }
 
 DepInfoSet operator & ( const DepInfoSet &dm1, const DepInfoSet &dm2)
@@ -181,7 +183,7 @@ DepInfoSet Closure( DepInfoSet t )
   DepInfoSet result(DepInfoSetGenerator::GetTopInfoSet());
   for (DepInfoConstIterator iter = t.GetConstIterator(); !iter.ReachEnd(); iter++) {
        result.AddDep( Closure(iter.Current()));
-  } 
+  }
 
   bool change = true;
   while (change) {
@@ -195,7 +197,7 @@ DepInfoSet Closure( DepInfoSet t )
       }
     }
     result = tmp;
-  } 
+  }
   return result;
 }
 

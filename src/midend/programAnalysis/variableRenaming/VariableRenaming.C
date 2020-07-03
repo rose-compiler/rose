@@ -424,11 +424,11 @@ void VariableRenaming::insertDefsForExternalVariables(SgFunctionDeclaration* fun
                 if(SgVariableDeclaration* varDecl = isSgVariableDeclaration(rootName[0]->get_parent())){
                     ROSE_ASSERT(varDecl->get_declarationModifier().get_storageModifier().isExtern());
                     continue;
-                } else if (SgFunctionParameterList *params = isSgFunctionParameterList(rootName[0]->get_parent())) {
+                } else if (isSgFunctionParameterList(rootName[0]->get_parent())) {
                     // x can also have global scope when it appears as a formal parameter in an extern function declaration,
                     // as in:  void f() { void g(int x); ... }
 #ifndef NDEBUG
-                    SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(params->get_parent());
+                    SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(rootName[0]->get_parent()->get_parent());
                     assert(fdecl!=NULL);
                     assert(fdecl!=function);
 #endif

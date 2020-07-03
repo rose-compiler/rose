@@ -349,18 +349,18 @@ public:
                 regname=="fioff" || regname=="foseg" || regname=="fooff" || regname=="fop"   ||
                 regname=="mxcsr")
                 continue;                               // don't compare some registers
-            const RegisterDescriptor *reg = thread->get_process()->disassembler()->registerDictionary()->lookup(regname);
+            const RegisterDescriptor reg = thread->get_process()->disassembler()->registerDictionary()->find(regname);
             if (!reg)
                 throw std::runtime_error("unknown register \"" + StringUtility::cEscape(regname) + "\"");
             rose_addr_t gdbRegValue = parseInteger(words[1]);
-            rose_addr_t simRegValue = thread->operators()->readRegister(*reg)->get_number();
+            rose_addr_t simRegValue = thread->operators()->readRegister(reg)->get_number();
             if (gdbRegValue != simRegValue) {
                 out_ <<"*** MISMATCH for \"" <<StringUtility::cEscape(regname) <<"\""
-                     <<" gdb=" <<StringUtility::toHex2(gdbRegValue, reg->nBits())
-                     <<" sim=" <<StringUtility::toHex2(simRegValue, reg->nBits()) <<"\n";
+                     <<" gdb=" <<StringUtility::toHex2(gdbRegValue, reg.nBits())
+                     <<" sim=" <<StringUtility::toHex2(simRegValue, reg.nBits()) <<"\n";
                 ++nMismatches;
                 if (fix)
-                    thread->operators()->writeRegister(*reg, thread->operators()->number_(reg->nBits(), gdbRegValue));
+                    thread->operators()->writeRegister(reg, thread->operators()->number_(reg.nBits(), gdbRegValue));
             }
         }
         if (0==nMismatches)
@@ -379,7 +379,7 @@ public:
             cmd.erase(cmd.begin());
             registerCheckGdbCommand(thread, cmd);
         } else {
-            const RegisterDescriptor *reg = thread->get_process()->disassembler()->registerDictionary()->lookup(cmd[0]);
+            const RegisterDescriptor reg = thread->get_process()->disassembler()->registerDictionary()->find(cmd[0]);
             if (!reg) {
                 out_ <<"no such register \"" <<StringUtility::cEscape(cmd[0]) <<"\"\n";
                 return;
@@ -387,11 +387,11 @@ public:
 
             if (cmd.size() > 1) {
                 rose_addr_t n = parseInteger(cmd[1]);
-                BaseSemantics::SValuePtr value = thread->operators()->number_(reg->nBits(), n);
-                thread->operators()->writeRegister(*reg, value);
+                BaseSemantics::SValuePtr value = thread->operators()->number_(reg.nBits(), n);
+                thread->operators()->writeRegister(reg, value);
             }
 
-            out_ <<*thread->operators()->readRegister(*reg) <<"\n";
+            out_ <<*thread->operators()->readRegister(reg) <<"\n";
         }
     }
 

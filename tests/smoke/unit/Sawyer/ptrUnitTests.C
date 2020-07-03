@@ -227,7 +227,10 @@ static void assignment_self() {
     MonitoredObject *obj = new MonitoredObject(stats);
     {
         SharedPointer<MonitoredObject> dst(obj);
-        dst = dst;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wself-assign-overloaded"
+        dst = dst; // compiler warning expected -- we're testing self-assignment
+#pragma GCC diagnostic pop
         ASSERT_always_forbid(stats.deleted);
         ASSERT_always_require(getRawPointer(dst)==obj);
         ASSERT_always_require(ownershipCount(dst)==1);
@@ -283,6 +286,7 @@ static void arrow_null() {
 
 // Tests that we can say things like "if (ptr)"
 static void implicit_bool() {
+    ObjectStats stats;
     SharedPointer<Subclass> ptr;
     ASSERT_always_forbid(ptr);
     ASSERT_always_require(!ptr);
@@ -299,7 +303,6 @@ static void implicit_bool() {
         ASSERT_always_require2(ss.str()=="0" || ss.str()=="0x0", "ss.str()==" + ss.str());
     }
     
-    ObjectStats stats;
     Subclass *obj = new Subclass(stats, 123);
     ptr = SharedPointer<Subclass>(obj);
     ASSERT_always_require(ptr);

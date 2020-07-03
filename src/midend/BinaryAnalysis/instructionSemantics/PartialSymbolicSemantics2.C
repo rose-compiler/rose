@@ -10,22 +10,32 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace PartialSymbolicSemantics {
 
-uint64_t name_counter;
-
 uint64_t
 Formatter::rename(uint64_t orig_name)
 {
     if (0==orig_name)
         return orig_name;
-    std::pair<Map::iterator, bool> inserted = renames.insert(std::make_pair(orig_name, next_name));
-    if (!inserted.second)
-        return orig_name;
-    return next_name++;
+
+    // Previous version of this code was not only thread unsafe, but had a bug that caused it to return the original name
+    // rather than the new name with it encounted the same name twice.
+    Map::iterator found = renames.find(orig_name);
+    if (renames.end() == found)
+        found = renames.insert(std::make_pair(orig_name, SValue::nextName())).first;
+    return found->second;
 }
 
 /*******************************************************************************************************************************
  *                                      SValue
  *******************************************************************************************************************************/
+
+// class method
+uint64_t
+SValue::nextName() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    static uint64_t seq = 0;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+    return ++seq;                                       // first value returned should be one, not zero
+}
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
 SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger,
@@ -228,6 +238,8 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &a_, const BaseSemantics::S
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     if (a->name || b->name)
+        return undefined_(a->get_width() + b->get_width());
+    if (a->get_width() + b->get_width() > 64)
         return undefined_(a->get_width() + b->get_width());
     return number_(a->get_width()+b->get_width(), a->offset | (b->offset << a->get_width()));
 }
@@ -456,10 +468,14 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     size_t retwidth = a->get_width() + b->get_width();
-    if (!a->name && !b->name)
+    if (retwidth > 64)
+        return undefined_(retwidth);
+
+    if (!a->name && !b->name) {
         return number_(retwidth,
                        (IntegerOps::signExtend2(a->offset, a->get_width(), 64) *
                         IntegerOps::signExtend2(b->offset, b->get_width(), 64)));
+    }
     if (!b->name) {
         if (0==b->offset)
             return number_(retwidth, 0);
@@ -522,6 +538,8 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     size_t retwidth = a->get_width() + b->get_width();
+    if (retwidth > 64)
+        return undefined_(retwidth);
     if (!a->name && !b->name)
         return number_(retwidth, a->offset * b->offset);
     if (!b->name) {
@@ -543,6 +561,8 @@ BaseSemantics::SValuePtr
 RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 {
     SValuePtr a = SValue::promote(a_);
+    if (new_width > 64)
+        return undefined_(new_width);
     if (new_width==a->get_width())
         return a->copy();
     if (a->name)

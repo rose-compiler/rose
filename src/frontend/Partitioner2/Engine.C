@@ -251,6 +251,28 @@ Engine::loaderSwitches(LoaderSettings &settings) {
                    "and archive files are processed without linking.  The default link command is \"" +
                    StringUtility::cEscape(settings.linker) + "\"."));
 
+    sg.insert(Switch("env-erase-name")
+              .argument("variable", anyParser(settings.envEraseNames))
+              .whichValue(SAVE_ALL)
+              .doc("Remove the specified variable from the environment when processing specimens with the \"run:\" schema. This "
+                   "switch may appear multiple times to remove multiple variables. The default is to not erase any variables. "
+                   "See also, @s{env-erase-pattern}."));
+
+    sg.insert(Switch("env-erase-pattern")
+              .argument("regular-expression", anyParser(settings.envErasePatterns))
+              .whichValue(SAVE_ALL)
+              .doc("Remove variables whose names match the specified regular expression when processing specimens with the "
+                   "\"run:\" schema. You must specify \"^\" and/or \"$\" if you want the regular expression anchored to the "
+                   "beginning and/or end of names. This switch may appear multiple times to supply multiple regular expressions. "
+                   "See also, @s{env-erase-name}."));
+
+    sg.insert(Switch("env-insert")
+              .argument("name=value", anyParser(settings.envInsert))
+              .whichValue(SAVE_ALL)
+              .doc("Add the specified variable and value to the environment when processing specimens with the \"run:\" schema. "
+                   "Insertions occur after all environment variable erasures. This switch may appear multiple times to specify "
+                   "multiple environment variables."));
+
     return sg;
 }
 
@@ -296,12 +318,12 @@ Engine::partitionerSwitches(PartitionerSettings &settings) {
            "no effect if the input is a ROSE Binary Analysis (RBA) file, since the partitioner steps in such an input "
            "have already been completed.");
 
-    sg.insert(Switch("start")
-              .argument("addresses", listParser(nonNegativeIntegerParser(settings.startingVas)))
+    sg.insert(Switch("function-at")
+              .argument("addresses", listParser(nonNegativeIntegerParser(settings.functionStartingVas)))
               .whichValue(SAVE_ALL)
               .explosiveLists(true)
               .doc("List of addresses where recursive disassembly should start in addition to addresses discovered by "
-                   "other methods. Each address listed by this switch will be considered the entry point of a function. "
+                   "other methods. A function entry point will be insterted at each address listed by this switch. "
                    "This switch may appear multiple times, each of which may have multiple comma-separated addresses."));
 
     sg.insert(Switch("use-semantics")
@@ -352,9 +374,29 @@ Engine::partitionerSwitches(PartitionerSettings &settings) {
 
     sg.insert(Switch("follow-ghost-edges")
               .intrinsicValue(true, settings.followingGhostEdges)
-              .doc("When discovering the instructions for a basic block, treat instructions individually rather than "
-                   "looking for opaque predicates.  The @s{no-follow-ghost-edges} switch turns this off.  The default "
-                   "is " + std::string(settings.followingGhostEdges?"true":"false") + "."));
+              .doc("A \"ghost edge\" is a control flow graph (CFG) edge that would be present if the CFG-building analysis "
+                   "looked only at individual instructions, but would be absent when the analysis looks at coarser units "
+                   "of code.  For instance, consider the following x86 assembly code:"
+
+                   "@numbered{mov eax, 0}"              // 1
+                   "@numbered{cmp eax, 0}"              // 2
+                   "@numbered{jne 5}"                   // 3
+                   "@numbered{nop}"                     // 4
+                   "@numbered{hlt}"                     // 5
+
+                   "If the analysis looks only at instruction 3, then it appears to have two CFG successors: instructions "
+                   "4 and 5. But if the analysis looks at the first three instructions collectively it will ascertain that "
+                   "instruction 3 has an opaque predicate, that the only valid CFG successor is instruction 4, and that the "
+                   "edge from 3 to 5 is a \"ghost\". In fact, if there are no other incoming edges to these instructions, "
+                   "then instructions 1 through 4 will form a basic block with the (unconditional) branch in the interior. "
+                   "The ability to look at larger units of code than single instructions is enabled with the @s{use-semantics} "
+                   "switch.\n\n"
+
+                   "This @s{follow-ghost-edges} switch causes the ghost edges to be added back into the CFG as real edges, which "
+                   "might force a basic block to end. For instance, in this example, turning on @s{follow-ghost-edges} will "
+                   "force the first basic block to end with the \"jne\" instruction. The @s{no-follow-ghost-edges} switch turns "
+                   "this feature off. By default, this feature is " +
+                   std::string(settings.followingGhostEdges?"enabled":"disabled") + "."));
     sg.insert(Switch("no-follow-ghost-edges")
               .key("follow-ghost-edges")
               .intrinsicValue(false, settings.followingGhostEdges)
@@ -405,10 +447,14 @@ Engine::partitionerSwitches(PartitionerSettings &settings) {
 
     sg.insert(Switch("find-dead-code")
               .intrinsicValue(true, settings.findingDeadCode)
-              .doc("Use ghost edges (non-followed control flow from branches with opaque predicates) to locate addresses "
-                   "for unreachable code, then recursively discover basic blocks at those addresses and add them to the "
-                   "same function.  The @s{no-find-dead-code} switch turns this off.  The default is " +
-                   std::string(settings.findingDeadCode?"true":"false") + "."));
+              .doc("If ghost edges are being discovered (see @s{follow-ghost-edges} for the definition of \"ghost "
+                   "edge\") and are not being inserted into the global control flow graph (controlled by "
+                   "@s{follow-ghost-edges}) then the target address of the ghost edge might not be used as a code "
+                   "address during the instruction discovery phase. This switch, @s{find-dead-code}, will cause the "
+                   "target addresses of ghost edges to be used to discover more instructions even though the ghost "
+                   "edges don't appear in the control flow graph. The @s{no-find-dead-code} switch turns this off. "
+                   "The default is that this feature is " +
+                   std::string(settings.findingDeadCode?"enabled":"disabled") + "."));
     sg.insert(Switch("no-find-dead-code")
               .key("find-dead-code")
               .intrinsicValue(false, settings.findingDeadCode)
@@ -1208,7 +1254,7 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             bool doReplace = false;
             if (colon2 == std::string::npos) {
                 // [Robb Matzke 2017-07-24]: deprecated. ROSE used to accept "run:/name/of/executable" which is a
-                // different syntax than what all the other methods accept (the others all have two colons).
+                // different syntax than what all the other methods accept (the others all have at least two colons).
                 exeName = fileName.substr(colon1+1);
             } else {
                 std::string optionsStr = fileName.substr(colon1+1, colon2-(colon1+1));
@@ -1232,6 +1278,18 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
                 .set(Debugger::REDIRECT_INPUT)
                 .set(Debugger::REDIRECT_OUTPUT)
                 .set(Debugger::REDIRECT_ERROR);
+            BOOST_FOREACH (const std::string &name, settings_.loader.envEraseNames)
+                subordinate.eraseEnvironmentVariable(name);
+            BOOST_FOREACH (const boost::regex &re, settings_.loader.envErasePatterns)
+                subordinate.eraseMatchingEnvironmentVariables(re);
+            BOOST_FOREACH (const std::string &var, settings_.loader.envInsert) {
+                size_t eq = var.find('=');
+                if (std::string::npos == eq)
+                    throw std::runtime_error("no '=' in NAME=VALUE: \"" + StringUtility::cEscape(var) + "\"");
+                if (eq == 0)
+                    throw std::runtime_error("empty name in NAME=VALUE: \"" + StringUtility::cEscape(var) + "\"");
+                subordinate.insertEnvironmentVariable(var.substr(0, eq), var.substr(eq+1));
+            }
             Debugger::Ptr debugger = Debugger::instance(subordinate);
 
             // Set breakpoints for all executable addresses in the memory map created by the Linux kernel. Since we're doing
@@ -1636,7 +1694,7 @@ Engine::runPartitionerInit(Partitioner &partitioner) {
     makeInterruptVectorFunctions(partitioner, settings_.partitioner.interruptVector);
 
     SAWYER_MESG(where) <<"marking user-defined functions\n";
-    makeUserFunctions(partitioner, settings_.partitioner.startingVas);
+    makeUserFunctions(partitioner, settings_.partitioner.functionStartingVas);
 }
 
 void
@@ -2109,7 +2167,12 @@ Engine::makeCalledFunctions(Partitioner &partitioner) {
 
 std::vector<Function::Ptr>
 Engine::makeNextPrologueFunction(Partitioner &partitioner, rose_addr_t startVa) {
-    std::vector<Function::Ptr> functions = partitioner.nextFunctionPrologue(startVa);
+    return makeNextPrologueFunction(partitioner, startVa, startVa);
+}
+
+std::vector<Function::Ptr>
+Engine::makeNextPrologueFunction(Partitioner &partitioner, rose_addr_t startVa, rose_addr_t &lastSearchedVa) {
+    std::vector<Function::Ptr> functions = partitioner.nextFunctionPrologue(startVa, lastSearchedVa /*out*/);
     BOOST_FOREACH (const Function::Ptr &function, functions)
         partitioner.attachOrMergeFunction(function);
     return functions;
@@ -2287,11 +2350,9 @@ Engine::discoverFunctions(Partitioner &partitioner) {
 
         // No pending basic blocks, so look for a function prologue. This creates a pending basic block for the function's
         // entry block, so go back and look for more basic blocks again.
-        std::vector<Function::Ptr> newFunctions = makeNextPrologueFunction(partitioner, nextPrologueVa);
-        if (!newFunctions.empty()) {
-            nextPrologueVa = newFunctions[0]->address();   // avoid "+1" because it may overflow
+        std::vector<Function::Ptr> newFunctions = makeNextPrologueFunction(partitioner, nextPrologueVa, nextPrologueVa /*out*/);
+        if (!newFunctions.empty())
             continue;
-        }
 
         // Scan inter-function code areas to find basic blocks that look reasonable and process them with instruction semantics
         // to find calls to functions that we don't know about yet.

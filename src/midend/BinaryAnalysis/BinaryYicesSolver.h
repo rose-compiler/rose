@@ -95,6 +95,7 @@ public:
     virtual void clearEvidence() ROSE_OVERRIDE;
     virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;
     virtual SymbolicExpr::Ptr evidenceForName(const std::string&) ROSE_OVERRIDE;
+    virtual void timeout(boost::chrono::duration<double>) ROSE_OVERRIDE;
 
 protected:
     virtual Satisfiable checkLib() ROSE_OVERRIDE;

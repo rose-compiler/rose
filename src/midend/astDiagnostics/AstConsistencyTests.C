@@ -330,7 +330,7 @@ AstTests::runAllTests(SgProject* sageProject)
   // DQ (9/21/2013): Force this to be skipped where ROSE's AST merge feature is active (since the point of 
   // merge is to share IR nodes, it is pointless to detect sharing and generate output for each identified case).
   // if (sageProject->get_astMerge() == false)
-     if (sageProject->get_astMerge() == false && sageProject->get_Fortran_only() == false)
+     if (sageProject->get_ast_merge() == false && sageProject->get_Fortran_only() == false)
         {
        // DQ (4/2/2012): Added test for unique IR nodes in the AST.
           if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
@@ -821,7 +821,7 @@ AstTests::runAllTests(SgProject* sageProject)
   // DQ (9/21/2013): Force this to be skipped where ROSE's AST merge feature is active (since the point of 
   // detect inconsistancy in parent child relationships and these will be present when astMerge is active.
   // if (sageProject->get_astMerge() == false)
-     if (sageProject->get_astMerge() == false && sageProject->get_Fortran_only() == false)
+     if (sageProject->get_ast_merge() == false && sageProject->get_Fortran_only() == false)
         {
        // DQ (3/19/2012): Added test from Robb for parents of the IR nodes in the AST.
           TestForParentsMatchingASTStructure::test(sageProject);
@@ -1386,11 +1386,14 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          SgInitializedNamePtrList::const_iterator result = std::find(initNameList.begin(), initNameList.end(), initializedName);
                          ROSE_ASSERT(result != initNameList.end());
                        }
-                      else
+                      else if (isSgTemplateDeclaration(parentParameterList->get_parent()))
                        {
                       // DQ (12/6/2011): Now that we have the template declarations in the AST, this could be a SgTemplateDeclaration.
-                         ROSE_ASSERT(isSgTemplateDeclaration(parentParameterList->get_parent()) != NULL);
                          printf ("WARNING: There are tests missing for the case of a parentParameterList->get_parent() that is a SgTemplateDeclaration \n");
+                       }
+                       else
+                       {
+                         ROSE_ASSERT(isSgAdaAcceptStmt(parentParameterList->get_parent()));
                        }
                   }
                  else
@@ -2814,8 +2817,24 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // build a special non-defining declaration for these declarations.
                if (declaration != definingDeclaration)
                   {
-                    printf ("Warning: declaration %p = %s not equal to definingDeclaration = %p \n",
-                         declaration,declaration->sage_class_name(),definingDeclaration);
+                    printf ("declaration = %p (%s)\n",
+                                 declaration,
+                                 declaration->class_name().c_str());
+                    if (definingDeclaration) {
+                      printf ("definingDeclaration = %p (%s)\n",
+                                   definingDeclaration,
+                                   definingDeclaration->class_name().c_str());
+                    }
+                    if (declaration->get_definingDeclaration()) {
+                      printf ("declaration->get_definingDeclaration() = %p (%s)\n",
+                                   declaration->get_definingDeclaration(),
+                                   declaration->get_definingDeclaration()->class_name().c_str());
+                    }
+                    if (declaration->get_firstNondefiningDeclaration()) {
+                      printf ("declaration->get_firstNondefiningDeclaration() = %p (%s)\n",
+                                   declaration->get_firstNondefiningDeclaration(),
+                                   declaration->get_firstNondefiningDeclaration()->class_name().c_str());
+                    }
                   }
                ROSE_ASSERT(declaration == definingDeclaration);
                break;
@@ -3408,6 +3427,27 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(aliasSymbol->get_alias() != NULL);
                          break;
                        }
+                       
+                    case V_SgAdaPackageSymbol:
+                       {
+                      // This is an alias for a symbol injected from another scope as part of a Fortran "use" statement
+                      // (or perhaps eventually a C++ using declaration or using directive).
+                         SgAdaPackageSymbol* sy = isSgAdaPackageSymbol(symbol);
+                         ROSE_ASSERT(sy != NULL);
+                         ROSE_ASSERT(sy->get_declaration() != NULL);
+                         break;
+                       }
+                       
+                    case V_SgAdaTaskSymbol:
+                       {
+                      // This is an alias for a symbol injected from another scope as part of a Fortran "use" statement
+                      // (or perhaps eventually a C++ using declaration or using directive).
+                         SgAdaTaskSymbol* sy = isSgAdaTaskSymbol(symbol);
+                         ROSE_ASSERT(sy != NULL);
+                         ROSE_ASSERT(sy->get_declaration() != NULL);
+                         break;
+                       }   
+
 
                     case V_SgNonrealSymbol:
                        {

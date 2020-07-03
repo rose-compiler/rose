@@ -87,11 +87,11 @@ AM_CPPFLAGS = $(ROSE_INCLUDES) $(OUTLINER_INCS)
 AM_LDFLAGS = $(ROSE_RPATHS)
 
 # We install a copy
-bin_PROGRAMS = outline
+bin_PROGRAMS = outlineTutorial
 noinst_PROGRAMS = outlineIfs outlinePreproc outlineIfs2
 
-outline_SOURCES = outline.cc
-outline_LDADD = $(OUTLINER_LIBS)
+outlineTutorial_SOURCES = outlineTutorial.cc
+outlineTutorial_LDADD = $(OUTLINER_LIBS)
 
 outlineIfs_SOURCES = outlineIfs.cc
 outlineIfs_LDADD = $(OUTLINER_LIBS)
@@ -109,9 +109,9 @@ outlinePreproc_LDADD = $(OUTLINER_LIBS)
 inputCode_OutlineLoop$(EXEEXT): rose_inputCode_OutlineLoop.cc
 	$(CXX) -o $@ $<
 
-rose_inputCode_OutlineLoop.cc: outline$(EXEEXT) \
+rose_inputCode_OutlineLoop.cc: outlineTutorial$(EXEEXT) \
 		$(srcdir)/inputCode_OutlineLoop.cc
-	./outline$(EXEEXT) -c $(srcdir)/inputCode_OutlineLoop.cc
+	./outlineTutorial$(EXEEXT) -c $(srcdir)/inputCode_OutlineLoop.cc
 
 inputCode_OutlineLoop.out: inputCode_OutlineLoop$(EXEEXT)
 	./$< > $@
@@ -121,9 +121,9 @@ outlined-inputCode_OutlineLoop.cc: \
 		$(srcdir)/inputCode_OutlineLoop.cc
 	cp $< $@
 
-rose_outlined-inputCode_OutlineLoop.cc: outline$(EXEEXT) \
+rose_outlined-inputCode_OutlineLoop.cc: outlineTutorial$(EXEEXT) \
 		outlined-inputCode_OutlineLoop.cc
-	./outline$(EXEEXT) -c outlined-inputCode_OutlineLoop.cc
+	./outlineTutorial$(EXEEXT) -c outlined-inputCode_OutlineLoop.cc
 	test -f $@
 	if which $(INDENT_BIN); then \
 	  $(INDENT_BIN) $(INDENT_ARGS) $@; \
@@ -140,13 +140,13 @@ else
 	$(CXX) -o $@ $<
 endif
 
-rose_inputCode_OutlineNonLocalJumps.cc : outline$(EXEEXT) $(srcdir)/inputCode_OutlineNonLocalJumps.cc
-#	./outline$(EXEEXT) -o inputCode_OutlineNonLocalJumps$(EXEEXT) $(srcdir)/inputCode_OutlineNonLocalJumps.cc
+rose_inputCode_OutlineNonLocalJumps.cc : outlineTutorial$(EXEEXT) $(srcdir)/inputCode_OutlineNonLocalJumps.cc
+#	./outlineTutorial$(EXEEXT) -o inputCode_OutlineNonLocalJumps$(EXEEXT) $(srcdir)/inputCode_OutlineNonLocalJumps.cc
 if USING_CLANG_COMPILER
 # DQ (4/19/2016): This is required for use with clang (not clear how to compile ROSE with out it).
-	./outline$(EXEEXT) -o inputCode_OutlineNonLocalJumps$(EXEEXT) $(srcdir)/inputCode_OutlineNonLocalJumps.cc -lstdc++ 
+	./outlineTutorial$(EXEEXT) -o inputCode_OutlineNonLocalJumps$(EXEEXT) $(srcdir)/inputCode_OutlineNonLocalJumps.cc -lstdc++ 
 else
-	./outline$(EXEEXT) -o inputCode_OutlineNonLocalJumps$(EXEEXT) $(srcdir)/inputCode_OutlineNonLocalJumps.cc
+	./outlineTutorial$(EXEEXT) -o inputCode_OutlineNonLocalJumps$(EXEEXT) $(srcdir)/inputCode_OutlineNonLocalJumps.cc
 endif
 
 inputCode_OutlineNonLocalJumps.out: inputCode_OutlineNonLocalJumps$(EXEEXT)
@@ -156,9 +156,9 @@ inputCode_OutlineNonLocalJumps.out: inputCode_OutlineNonLocalJumps$(EXEEXT)
 outlined-inputCode_OutlineNonLocalJumps.cc: $(srcdir)/inputCode_OutlineNonLocalJumps.cc
 	cp $< $@
 
-rose_outlined-inputCode_OutlineNonLocalJumps.cc: outline$(EXEEXT) \
+rose_outlined-inputCode_OutlineNonLocalJumps.cc: outlineTutorial$(EXEEXT) \
 		outlined-inputCode_OutlineNonLocalJumps.cc
-	./outline$(EXEEXT) -c outlined-inputCode_OutlineNonLocalJumps.cc
+	./outlineTutorial$(EXEEXT) -c outlined-inputCode_OutlineNonLocalJumps.cc
 	test -f $@
 	if which $(INDENT_BIN); then \
 	  $(INDENT_BIN) $(INDENT_ARGS) $@ ; \
@@ -213,19 +213,19 @@ rose_outlined_pp-inputCode_OutlineNonLocalJumps.cc: outlinePreproc$(EXEEXT) \
 #========================================================================
 # example 5: abstract handle demo	
 # using source file location : a for loop at line 12,
-rose_inputCode_OutlineLoop2.c: outline$(EXEEXT) \
+rose_inputCode_OutlineLoop2.c: outlineTutorial$(EXEEXT) \
 		$(srcdir)/inputCode_OutlineLoop.cc
-	./outline$(EXEEXT) -rose:outline:enable_debug -rose:outline:enable_classic -rose:outline:abstract_handle "ForStatement<position,12>" -c $(srcdir)/inputCode_OutlineLoop2.c
+	./outlineTutorial$(EXEEXT) -rose:outline:enable_debug -rose:outline:enable_classic -rose:outline:abstract_handle "ForStatement<position,12>" -c $(srcdir)/inputCode_OutlineLoop2.c
 # using name and relative numbering: the second loop within a function named initialize()	
-rose_inputCode_OutlineLoop2b.c: outline$(EXEEXT) \
+rose_inputCode_OutlineLoop2b.c: outlineTutorial$(EXEEXT) \
 		$(srcdir)/inputCode_OutlineLoop.cc
-	./outline$(EXEEXT) -rose:outline:enable_classic -rose:outline:enable_debug -rose:outline:abstract_handle "FunctionDeclaration<name,initialize>::ForStatement<numbering,2>" -c $(srcdir)/inputCode_OutlineLoop2.c -rose:output rose_inputCode_OutlineLoop2b.c
+	./outlineTutorial$(EXEEXT) -rose:outline:enable_classic -rose:outline:enable_debug -rose:outline:abstract_handle "FunctionDeclaration<name,initialize>::ForStatement<numbering,2>" -c $(srcdir)/inputCode_OutlineLoop2.c -rose:output rose_inputCode_OutlineLoop2b.c
 
-rose_declarations.c:outline$(EXEEXT)
-	./outline$(EXEEXT)  -rose:outline:preproc-only -rose:outline:abstract_handle "Statement<position,5>" -c $(srcdir)/declarations.c
+rose_declarations.c:outlineTutorial$(EXEEXT)
+	./outlineTutorial$(EXEEXT)  -rose:outline:preproc-only -rose:outline:abstract_handle "Statement<position,5>" -c $(srcdir)/declarations.c
 
-rose_thisExpression.cpp:outline$(EXEEXT)
-	./outline$(EXEEXT) -c $(srcdir)/thisExpression.cpp
+rose_thisExpression.cpp:outlineTutorial$(EXEEXT)
+	./outlineTutorial$(EXEEXT) -c $(srcdir)/thisExpression.cpp
 
 
 #==========================================================================

@@ -36,6 +36,11 @@ YicesSolver::reset() {
     varsForSets_.clear();
 }
 
+void
+YicesSolver::timeout(boost::chrono::duration<double> seconds) {
+    mlog[WARN] <<"Yices timeout value is ignored\n";
+}
+
 // class method
 unsigned
 YicesSolver::availableLinkages()
@@ -615,6 +620,9 @@ YicesSolver::out_expr(const SymbolicExpr::Ptr &tn) {
             }
             case SymbolicExpr::OP_ZEROP:
                 return out_zerop(in);
+            default:
+                // to suppress warnings since an error follows. Please remove this when floating-point is implemented
+                break;
         }
     }
     ASSERT_not_reachable("expression type not handled");
@@ -1153,6 +1161,9 @@ YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn) {
             }
             case SymbolicExpr::OP_ZEROP:
                 return ctx_zerop(in);
+            default:
+                // to suppress warnings since an error follows. Please remove this when floating-point is implemented
+                break;
         }
     }
     ASSERT_not_reachable("expression type not handled");

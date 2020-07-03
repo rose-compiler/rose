@@ -92,7 +92,7 @@ noinst_LTLIBRARIES=\
 lib_LTLIBRARIES=\
 	$(mProgramTransformation_lib_ltlibraries)
 
-BUILT_SOURCES = $(mAstMatching_built_sources)
+#BUILT_SOURCES = $(mAstMatching_built_sources)
 
 libmidend_la_SOURCES=\
 	$(mAbstractHandle_la_sources) \
@@ -109,11 +109,6 @@ libmidend_la_SOURCES+=\
 	$(mAstUtil_la_sources) \
 	$(mProgramTransformation_la_sources)
 endif
-
-# astProcessing _la_LIBADD = $(CXX_TEMPLATE_OBJECTS)
-libmidend_la_LIBADD=\
-	$(mAstProcessing_libadd) \
-	$(mAstMatching_libadd)
 
 libmidend_la_DEPENDENCIES=\
 	$(mAstQuery_la_dependencies)
@@ -166,3 +161,18 @@ distclean-local:
 	$(mAstQuery_distCleanLocal)
 	$(mAstUtil_distCleanLocal)
 
+# Explicit rules because of multiple bison parsers in the
+# library. These rules generate a unique name for the parser to avoid
+# name conflicts with the default naming scheme. The generated parser
+# is a tracked file. It's part of development to regenerate it if the
+# parser is changed. This rule is in this Makefile.am because we only use
+# variables from the subdirectory make files here.
+regenerateparser:
+#$(srcdir)/$(mAstMatchingPath)matcherparser.C: $(srcdir)/$(mAstMatchingPath)/matcherlexer.ll $(srcdir)/$(mAstMatchingPath)/matcherparser.yy
+	$(AM_V_GEN)
+	@$(YACC) $(YFLAGS) -d -p matcherparser $(srcdir)/$(mAstMatchingPath)/matcherparser.yy # generates y.tab.h/c
+	@$(LEX) $(LFLAGS) $(AM_LFLAGS) -Pmatcherparser $(srcdir)/$(mAstMatchingPath)/matcherlexer.ll
+	@mv y.tab.h $(srcdir)/$(mAstMatchingPath)/matcherparser.h
+	@cat lex.yy.c y.tab.c > $(srcdir)/$(mAstMatchingPath)/matcherparser.C
+	@rm lex.yy.c y.tab.c
+$(srcdir)/$(mAstMatchingPath)/matcherparser.h: $(srcdir)/$(mAstMatchingPath)/matcherparser.C

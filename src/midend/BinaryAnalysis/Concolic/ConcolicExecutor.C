@@ -153,11 +153,11 @@ RiscOperators::systemCall() {
 #ifdef __linux__
     if (32 == partitioner_.instructionProvider().instructionPointerRegister().nBits()) {
         // 32-bit Linux
-        const RegisterDescriptor REG_AX = *regdict->lookup("rax");
+        const RegisterDescriptor REG_AX = regdict->findOrThrow("rax");
         IS::BaseSemantics::SValuePtr ax = peekRegister(REG_AX, undefined_(REG_AX.nBits()));
         if (ax->is_number()) {
             if (1 == ax->get_number() || 252 == ax->get_number()) {
-                const RegisterDescriptor REG_BX = *regdict->lookup("ebx");
+                const RegisterDescriptor REG_BX = regdict->findOrThrow("ebx");
                 SValuePtr arg1 = SValue::promote(peekRegister(REG_BX, undefined_(REG_BX.nBits())));
                 if (arg1->is_number()) {
                     int exitValue = arg1->get_number();
@@ -175,11 +175,11 @@ RiscOperators::systemCall() {
         }
     } else {
         // 64-bit Linux
-        const RegisterDescriptor REG_AX = *regdict->lookup("rax");
+        const RegisterDescriptor REG_AX = regdict->findOrThrow("rax");
         IS::BaseSemantics::SValuePtr ax = peekRegister(REG_AX, undefined_(REG_AX.nBits()));
         if (ax->is_number()) {
             if (60 == ax->get_number() || 231 == ax->get_number()) {
-                const RegisterDescriptor REG_DI = *regdict->lookup("edi");
+                const RegisterDescriptor REG_DI = regdict->findOrThrow("edi");
                 SValuePtr arg1 = SValue::promote(peekRegister(REG_DI, undefined_(REG_DI.nBits())));
                 if (arg1->is_number()) {
                     int exitValue = arg1->get_number();
@@ -619,12 +619,19 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
     const P2::Partitioner &partitioner = ops->partitioner();
     SmtSolver::Ptr solver = SmtSolver::instance("best");
 
-    // Process instructions in execution order starting at startVa
+    // Process instructions in execution order
     rose_addr_t executionVa = cpu->concreteInstructionPointer();
     while (!cpu->isTerminated()) {
         SgAsmInstruction *insn = partitioner.instructionProvider()[executionVa];
-        ASSERT_not_null2(insn, StringUtility::addrToString(executionVa) + " is not a valid execution address");
-        SAWYER_MESG_OR(trace, debug) <<"executing " <<partitioner.unparse(insn) <<"\n";
+        if (insn) {
+            SAWYER_MESG_OR(trace, debug) <<"executing " <<partitioner.unparse(insn) <<"\n";
+        } else {
+            SAWYER_MESG_OR(trace, debug) <<"executing " <<StringUtility::addrToString(executionVa)
+                                         <<": not mapped or not executable\n";
+            // FIXME[Robb Matzke 2020-06-26]: we need a better way to handle this
+            ASSERT_always_not_null2(insn, StringUtility::addrToString(executionVa) + " is not a valid execution address");
+        }
+
         try {
             cpu->processInstruction(insn);
         } catch (const Emulation::Exit &e) {

@@ -39,23 +39,22 @@ SgAsmInstruction::get_anyKind() const {
     ASSERT_not_reachable("SgAsmInstruction::get_kind() should have been implemented in " + class_name());
 }
 
-std::set<rose_addr_t>
-SgAsmInstruction::getSuccessors(bool *complete) {
+AddressSet
+SgAsmInstruction::getSuccessors(bool &complete) {
     abort();
     // tps (12/9/2009) : MSC requires a return value
-    std::set<rose_addr_t> t;
-    return t;
+    return AddressSet();
 }
 
-std::set<rose_addr_t>
-SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& basic_block, bool *complete/*out*/,
+AddressSet
+SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& basic_block, bool &complete/*out*/,
                                 const MemoryMap::Ptr &initial_memory/*=NULL*/)
 {
     if (basic_block.size()==0) {
-        if (complete) *complete = true;
-        return std::set<rose_addr_t>();
+        complete = true;
+        return AddressSet();
     }
-    return basic_block.back()->getSuccessors(complete);
+    return basic_block.back()->getSuccessors(complete/*out*/);
 }
 
 bool
@@ -253,6 +252,24 @@ void
 SgAsmInstruction::incrementSemanticFailure() {
     SAWYER_THREAD_TRAITS::LockGuard lock(semanticFailureMutex);
     ++semanticFailure_.n;
+}
+
+size_t
+SgAsmInstruction::cacheLockCount() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return p_cacheLockCount;
+}
+
+void
+SgAsmInstruction::adjustCacheLockCount(int amount) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    if (amount >= 0) {
+        p_cacheLockCount += amount;
+    } else {
+        size_t decrement = -amount;
+        ASSERT_require(p_cacheLockCount >= decrement);
+        p_cacheLockCount -= decrement;
+    }
 }
 
 #endif

@@ -32,11 +32,37 @@ namespace CallTargetSet
 {
   typedef Rose_STL_Container<SgFunctionDeclaration *> SgFunctionDeclarationPtrList;
   typedef Rose_STL_Container<SgClassDefinition *> SgClassDefinitionPtrList;
-  // returns the list of declarations of all functions that may get called via the specified pointer
-  std::vector<SgFunctionDeclaration*> solveFunctionPointerCall ( SgPointerDerefExp *, SgProject * );
+  /**
+   * CallTargetSet::solveFunctionPointerCall
+   *
+   * \brief Finds all functions that match the function type of pointerDerefExp
+   *
+   * Resolving function pointer calls is hard, so the CallGraph generator doesn't
+   * try very hard at it.  When asked to resolve a function pointer call, it simply
+   * finds all functions that match that type in the memory pool a returns a list of them.
+   *
+   * @param[in] pointerDerefExp : A function pointer dereference.  
+   * @return: A vector of all functionDeclarations that match the type of the function dereferenced in pointerDerefExp
+   **/
+  std::vector<SgFunctionDeclaration*> solveFunctionPointerCall ( SgPointerDerefExp *);
 
   // returns the list of declarations of all functions that may get called via a member function pointer
   std::vector<SgFunctionDeclaration*> solveMemberFunctionPointerCall ( SgExpression *,ClassHierarchyWrapper * );
+
+  /**
+   * CallTargetSet::solveFunctionPointerCallsFunctional
+   *
+   * \brief Checks if the functionDeclaration (node) matches functionType
+   *
+   * This is a filter called by solveFunctionPointerCall. It checks that node is
+   * a functiondeclaration (or template instantiation) of type functionType.
+   * If it does, it is added to a functionList and returned.  So function list can
+   * have at most 1 entry.
+   * 
+   * @param[in] node : The node we are checking.  It must be an SgFunctionDeclaration
+   * @param[in] functionType : The function type being checked.  
+   * @return: If node matched functionType, it is added on functionList and returned.  Otherwise functionList is empty.
+   **/
   Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType* functionType );
 
   // returns the list of declarations of all functions that may get called via a
@@ -133,7 +159,9 @@ class ROSE_DLL_API CallGraphBuilder
     //We map each function to the corresponding graph node
     boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*>& getGraphNodesMapping(){ return graphNodes; }
 
-    //! Retrieve the node matching a function declaration (using mangled name to resolve accross translation units)
+    //! Retrieve the node matching a function declaration using firstNondefiningDeclaration (does not work across translation units)
+    SgGraphNode * hasGraphNodeFor(SgFunctionDeclaration * fdecl) const;
+    //! Retrieve the node matching a function declaration (using mangled name to resolve across translation units)
     SgGraphNode * getGraphNodeFor(SgFunctionDeclaration * fdecl) const;
 
   private:
@@ -193,7 +221,7 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
         printf ("In buildCallGraph(): loop over functions from memory pool: fdecl  = %p = %s name = %s \n",fdecl,fdecl->class_name().c_str(),fdecl->get_name().str());
         printf ("In buildCallGraph(): loop over functions from memory pool: unique = %p = %s name = %s \n",unique,unique->class_name().c_str(),unique->get_name().str());
 #endif
-        if (isSelected(pred)(unique) && getGraphNodeFor(unique) == NULL)
+        if (isSelected(pred)(unique) && hasGraphNodeFor(unique) == NULL)
            {
 #if 0
             printf ("Collect function calls in unique function: unique = %p \n",unique);
@@ -218,12 +246,12 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
 
     // Add edges to the graph
     BOOST_FOREACH(FunctionData &currentFunction, callGraphData) {
-        SgGraphNode * srcNode = getGraphNodeFor(currentFunction.functionDeclaration);
+        SgGraphNode * srcNode = hasGraphNodeFor(currentFunction.functionDeclaration);
         ROSE_ASSERT(srcNode != NULL);
         std::vector<SgFunctionDeclaration*> & callees = currentFunction.functionList;
         BOOST_FOREACH(SgFunctionDeclaration * callee, callees) {
             if (isSelected(pred)(callee)) {
-                SgGraphNode * dstNode = getGraphNodeFor(callee);
+                SgGraphNode * dstNode = getGraphNodeFor(callee); //getGraphNode here, see function comment
                 ROSE_ASSERT(dstNode != NULL);
                 if (graph->checkIfDirectedGraphEdgeExists(srcNode, dstNode) == false)
                     graph->addDirectedEdge(srcNode, dstNode);

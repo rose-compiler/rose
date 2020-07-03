@@ -393,6 +393,19 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
   gfortran*)
      AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [1], [Mark that GFORTRAN is used in backend])
      ;;
+  ifort*)
+     AC_DEFINE([BACKEND_FORTRAN_IS_INTEL_COMPILER], [1], [Mark that Intel Fortran is used in backend])
+     AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [0], [Mark that GFORTRAN is not used in backend ])
+     AC_CHECK_TOOL(INTEL_FPP_PATH, [fpp], [no])
+     if test "$INTEL_FPP_PATH" != "no"; then
+       AC_DEFINE([ROSE_USE_INTEL_FPP], [1], [Mark that Intel FPP is used in backend ])
+       AC_DEFINE_UNQUOTED([INTEL_FPP_PATH],"$INTEL_FPP_PATH",[Name of Intel Fortran preprocessor])
+     fi
+     ;;
+  pgf*)
+     AC_DEFINE([BACKEND_FORTRAN_IS_PGI_COMPILER], [1], [Mark that PGI Fortran is used in backend])
+     AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [0], [Mark that GFORTRAN is not used in backend ])
+     ;;
   *)
      AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [0], [Mark that GFORTRAN is not used in backend ])
      ;;

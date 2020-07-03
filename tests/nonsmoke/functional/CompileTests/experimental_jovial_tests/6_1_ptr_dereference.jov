@@ -1,0 +1,16 @@
+START
+PROGRAM testPtrDereference ;
+BEGIN
+
+  TYPE my'int U;
+
+  ITEM int'var'1 my'int;
+  ITEM int'var'2 my'int;
+  ITEM ptr'var'1 P my'int;
+
+  int'var'1 = 10;
+  ptr'var'1 = LOC(int'var'1);
+
+  int'var'2 = @ ptr'var'1;
+END
+TERM

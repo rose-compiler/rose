@@ -1,0 +1,14 @@
+START
+PROGRAM shiftFunction;
+BEGIN
+
+ITEM bit'var'1 B 5 = 1B'10101';
+ITEM bit'var'2 B 8 = 1B'10101001';
+
+ITEM shift'result'1 B 5;
+ITEM shift'result'2 B 8 = SHIFTR(bit'var'2, 3);
+
+shift'result'1 = SHIFTL(bit'var'1, 1);
+
+END
+TERM

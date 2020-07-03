@@ -1,0 +1,13 @@
+START
+PROGRAM testparens ;
+BEGIN
+  ITEM bool'1 B;
+  ITEM ivar S;
+
+  bool'1 = (TRUE AND TRUE) AND TRUE;
+  bool'1 = TRUE AND (TRUE AND TRUE);
+  ivar = (1 + 2) + (3);
+  ivar = 1 + (2*3);
+
+END
+TERM

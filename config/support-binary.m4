@@ -166,6 +166,9 @@ fi,
 AM_CONDITIONAL(ROSE_USE_TEST_SMT_SOLVER,test ! "$TEST_SMT_SOLVER" = "")
 AC_SUBST(TEST_SMT_SOLVER)
 
+# Whether the Capstone disassembler is available
+ROSE_SUPPORT_CAPSTONE
+
 dnl A blank line to separate binary analysis from some miscellaneous tests in support-rose.m4 that don't have a heading.
 AC_MSG_NOTICE([all seems good for binary analysis if it's enabled.
 ])

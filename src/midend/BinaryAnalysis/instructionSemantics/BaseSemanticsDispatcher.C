@@ -125,24 +125,22 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool al
     if (!regdict)
         throw Exception("no register dictionary", currentInstruction());
 
-    const RegisterDescriptor *reg = regdict->lookup(regname);
+    const RegisterDescriptor reg = regdict->find(regname);
     if (!reg) {
-        if (allowMissing) {
-            static const RegisterDescriptor invalidRegister;
-            return invalidRegister;
-        }
+        if (allowMissing)
+            return reg;
         std::ostringstream ss;
         ss <<"Invalid register \"" <<regname <<"\" in dictionary \"" <<regdict->get_architecture_name() <<"\"";
         throw Exception(ss.str(), currentInstruction());
     }
 
-    if (nbits>0 && reg->nBits()!=nbits) {
+    if (nbits>0 && reg.nBits()!=nbits) {
         std::ostringstream ss;
         ss <<"Invalid " <<nbits <<"-bit register: \"" <<regname <<"\" is "
-           <<reg->nBits() <<" " <<(1==reg->nBits()?"byte":"bytes");
+           <<reg.nBits() <<" " <<(1==reg.nBits()?"byte":"bytes");
         throw Exception(ss.str(), currentInstruction());
     }
-    return *reg;
+    return reg;
 }
 
 void
@@ -207,12 +205,33 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
         BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators->add(lhs, rhs);
+    } else if (SgAsmBinaryAddPreupdate *op = isSgAsmBinaryAddPreupdate(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        retval = operators->add(lhs, rhs);
+    } else if (SgAsmBinaryAddPostupdate *op = isSgAsmBinaryAddPostupdate(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        retval = operators->add(lhs, rhs);
     } else if (SgAsmBinaryMultiply *op = isSgAsmBinaryMultiply(e)) {
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
         BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators->unsignedMultiply(lhs, rhs);
     } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(e)) {
         retval = operators->number_(ival->get_significantBits(), ival->get_value());
+    } else if (SgAsmUnaryUnsignedExtend *op = isSgAsmUnaryUnsignedExtend(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_operand(), nbits);
+        retval = operators->unsignedExtend(lhs, op->get_nBits());
+    } else if (SgAsmUnarySignedExtend *op = isSgAsmUnarySignedExtend(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_operand(), nbits);
+        retval = operators->signExtend(lhs, op->get_nBits());
+    } else if (SgAsmUnaryTruncate *op = isSgAsmUnaryTruncate(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_operand(), nbits);
+        retval = operators->unsignedExtend(lhs, op->get_nBits()); // yes, can be used for truncation
+    } else if (SgAsmBinaryLsl *op = isSgAsmBinaryLsl(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        retval = operators->shiftRight(lhs, rhs);
     }
 
     ASSERT_not_null(retval);

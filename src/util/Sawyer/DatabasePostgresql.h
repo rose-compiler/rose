@@ -103,7 +103,7 @@ private:
         transaction = std::unique_ptr<pqxx::work>(new pqxx::work(*connection));
     }
 
-    void close() {
+    void close() override {
         if (connection && connection->is_open() && transaction)
             transaction->commit();
         transaction.reset();
@@ -114,9 +114,9 @@ private:
         return "postgresql";
     }
     
-    Statement prepareStatement(const std::string &sql);
+    Statement prepareStatement(const std::string &sql) override;
 
-    size_t lastInsert() const {
+    size_t lastInsert() const override {
         throw Exception("last inserted row ID not supported; suggestion: use UUIDs instead");
     }
 };
