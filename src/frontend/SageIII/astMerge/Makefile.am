@@ -11,7 +11,7 @@ $(GENERATED_SOURCE):
 
 noinst_LTLIBRARIES = libastMerge.la
 
-libastMerge_la_SOURCES = merge.C fixupTraversal.C link.C delete.C share.C load.C
+libastMerge_la_SOURCES = merge.C fixupTraversal.C link-function.C link-variable.C link-class.C link-namespace.C delete.C share.C load.C
 libastMerge_la_LIBADD = 
 libastMerge_la_DEPENDENCIES = $(GENERATED_SOURCE)
 
