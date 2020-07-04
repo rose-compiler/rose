@@ -701,7 +701,13 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
   // ROSEAttributesList* commentAndCppDirectiveList = buildCommentAndCppDirectiveList(use_Wave, Sg_File_Info::getFilenameFromID(currentFileNameId) );
   // ROSEAttributesList* commentAndCppDirectiveList = buildCommentAndCppDirectiveList(use_Wave, sageFilePtr->getFileName() );
      string filename = sageFilePtr->get_sourceFileNameWithPath();
-     ROSEAttributesList* commentAndCppDirectiveList = getPreprocessorDirectives(filename);
+     ROSEAttributesList* commentAndCppDirectiveList = NULL;
+
+#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
+  // DQ (7/4/2020): This function should not be called for binaries (only for C/C++ code).
+     commentAndCppDirectiveList = getPreprocessorDirectives(filename);
+#endif
+
      ROSE_ASSERT(commentAndCppDirectiveList != NULL);
 
   // sageFilePtr->get_preprocessorDirectivesAndCommentsList().insert()
