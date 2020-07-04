@@ -4191,7 +4191,11 @@ SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFi
 
        // DQ (5/20/2020): Collect the Comments and CPP directives so that can be inserted into 
        // the AST as part of building the source file fro this include file.
-          ROSEAttributesList* returnListOfAttributes = getPreprocessorDirectives(filename);
+          ROSEAttributesList* returnListOfAttributes = NULL;
+#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
+       // DQ (7/4/2020): This function should not be called for binaries (only for C/C++ code).
+          returnListOfAttributes = getPreprocessorDirectives(filename);
+#endif
 
 #if 1
           printf ("Exiting as a test! \n");
