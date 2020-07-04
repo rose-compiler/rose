@@ -1194,7 +1194,8 @@ EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
         test2015_154.h \
         test2015_156.h \
         test2015_157.h \
-        test2015_159.h
+        test2015_159.h \
+        test2020_03.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests
