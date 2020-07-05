@@ -1480,8 +1480,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
       if (table_type == nullptr) {
          cerr << "WARNING UNIMPLEMENTED: TableDeclaration - TableDescriptionName returns NULL type for name " << table_type_name << "\n";
          // TODO_COMPOOL
-         // ROSE_ASSERT(type);
-         return ATtrue;
+         ROSE_ASSERT(table_type);
       }
       type = SageBuilder::buildJovialTableType(table_type_name, table_type->get_base_type(), dim_info, SageBuilder::topScopeStack());
       ROSE_ASSERT(type);
@@ -5603,13 +5602,11 @@ ATbool ATermToSageJovialTraversal::traverse_NumericFormula(ATerm term, SgExpress
       } else return ATfalse;
 
       if (ATmatch(t_op, "AddOp()")) {
-         expr = new SgAddOp(sg_lhs, sg_rhs, NULL);
-         ROSE_ASSERT(expr != nullptr);
+         expr = SageBuilder::buildAddOp_nfi(sg_lhs, sg_rhs);
          setSourcePosition(expr, term);
       }
       else if (ATmatch(t_op, "SubtractOp()")) {
-         expr = new SgSubtractOp(sg_lhs, sg_rhs, NULL);
-         ROSE_ASSERT(expr != nullptr);
+         expr = SageBuilder::buildSubtractOp_nfi(sg_lhs, sg_rhs);
          setSourcePosition(expr, term);
       } else return ATfalse;
    }
@@ -5777,13 +5774,13 @@ ATbool ATermToSageJovialTraversal::traverse_NumericTerm(ATerm term, SgExpression
       ROSE_ASSERT(lhs && rhs);
 
       if (ATmatch(t_op, "MultiplyOp()")) {
-         expr = new SgMultiplyOp(lhs, rhs, NULL);
+         expr = SageBuilder::buildMultiplyOp_nfi(sg_lhs, sg_rhs);
       }
       else if (ATmatch(t_op, "DivideOp()")) {
-         expr = new SgDivideOp(lhs, rhs, NULL);
+         expr = SageBuilder::buildDivideOp_nfi(sg_lhs, sg_rhs);
       }
       else if (ATmatch(t_op, "ModOp()")) {
-         expr = new SgModOp(lhs, rhs, NULL);
+         expr = SageBuilder::buildModOp_nfi(sg_lhs, sg_rhs);
       }
       else return ATfalse;
 

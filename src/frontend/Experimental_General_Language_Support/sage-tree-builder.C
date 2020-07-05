@@ -963,7 +963,55 @@ importModule(const std::string &module_name)
 //
 namespace SageBuilderCpp17 {
 
-   SgType* buildIntType() { return SageBuilder::buildIntType(); }
+SgType* buildIntType()
+{
+   return SageBuilder::buildIntType();
+}
+
+SgExpression* buildExprListExp_nfi()
+{
+   return SageBuilder::buildExprListExp_nfi();
+}
+
+SgExpression* buildIntVal_nfi(int value = 0)
+{
+   return SageBuilder::buildIntVal_nfi(value);
+}
+
+SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope)
+{
+   return SageBuilder::buildVarRefExp_nfi(name, scope);
+}
+
+SgExpression* buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildAddOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildSubtractOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildMultiplyOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildMultiplyOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildDivideOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildDivideOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride)
+{
+   return SageBuilder::buildSubscriptExpression_nfi(lower_bound, upper_bound, stride);
+}
+
+SgExpression* buildNullExpression_nfi()
+{
+   return SageBuilder::buildNullExpression_nfi();
+}
 
 } // namespace SageBuilderCpp17
 
