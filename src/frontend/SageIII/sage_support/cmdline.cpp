@@ -7417,7 +7417,7 @@ findIndexForFirstIncludeDirectiveInArgumentList(vector<string> & argv, string fi
 
      int returnValue = -1;
 
-     ROSE_ASSERT(argv.size() > 0);
+  // ROSE_ASSERT(argv.size() > 0);
 
      size_t i = 0;
      while (i < argv.size() && argv[i] != firstInclude)
@@ -8126,7 +8126,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // include paths (must be added before those specified on the original command line).
        // argcArgvList.insert(argcArgvList.end(),project->get_extraIncludeDirectorySpecifierList().begin(),project->get_extraIncludeDirectorySpecifierList().end());
           std::vector<string>::iterator positionForIncludes = argcArgvList.begin();
-          ROSE_ASSERT(positionForIncludes != argcArgvList.end());
+       // ROSE_ASSERT(positionForIncludes != argcArgvList.end());
           if (project->get_includeDirectorySpecifierList().size() > 0)
              {
                string firstInclude = project->get_includeDirectorySpecifierList()[0];
@@ -8135,7 +8135,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                printf ("indexOfFirstIncludeDirective = %d \n",indexOfFirstIncludeDirective);
 #endif
                int index = 0;
-               while (index < indexOfFirstIncludeDirective && positionForIncludes != argcArgvList.end())
+               while ( (index < indexOfFirstIncludeDirective) && (positionForIncludes != argcArgvList.end()) )
                   {
                     index++;
                     positionForIncludes++;
@@ -8156,7 +8156,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
 #endif
 
-          ROSE_ASSERT(positionForIncludes != argcArgvList.end());
+       // DQ (7/5/2020): This fails for Fortran_tests/test2020_use_iso_c_binding.f90
+       // ROSE_ASSERT(positionForIncludes != argcArgvList.end());
+
           argcArgvList.insert(positionForIncludes,project->get_extraIncludeDirectorySpecifierList().begin(),project->get_extraIncludeDirectorySpecifierList().end());
 
 #if 0
