@@ -194,9 +194,12 @@ class AttachPreprocessingInfoTreeTrav
        // output for debugging.
        // void display_static_data( const std::string & label ) const;
 
+       // DQ (7/4/2020): Make this a static function to support Fortran handling.
        // DQ (11/30/2008): Refactored code to isolate this from the inherited attribute evaluation.
        // static ROSEAttributesList* buildCommentAndCppDirectiveList ( SgFile *currentFilePtr, std::map<std::string,ROSEAttributesList*>* mapOfAttributes, bool use_Wave );
-          ROSEAttributesList* buildCommentAndCppDirectiveList ( bool use_Wave, std::string currentFilename );
+       // ROSEAttributesList* buildCommentAndCppDirectiveList ( bool use_Wave, std::string currentFilename );
+       // static ROSEAttributesList* buildCommentAndCppDirectiveList ( bool use_Wave, std::string currentFilename );
+          static ROSEAttributesList* buildCommentAndCppDirectiveList ( bool use_Wave, SgSourceFile* sourceFile, std::string currentFilename );
    };
 
 #endif
