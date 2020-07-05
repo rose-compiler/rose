@@ -1814,13 +1814,14 @@ AttachPreprocessingInfoTreeTrav::setupPointerToPreviousNode (SgLocatedNode* curr
    }
 
 
+// ROSEAttributesList* AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave, std::string fileNameForDirectivesAndComments )
 ROSEAttributesList* 
-AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave, std::string fileNameForDirectivesAndComments )
+AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave, SgSourceFile* sourceFile, std::string fileNameForDirectivesAndComments )
    {
   // This function abstracts the collection of comments and CPP directives into a list.  
   // The list is then used to draw from as the AST is traversed and the list elements 
   // are woven into the AST.
-#if 1
+#if 0
      printf ("Inside of AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(use_Wave = %s) file = %s \n",use_Wave ? "true" : "false",fileNameForDirectivesAndComments.c_str());
 #endif
 
@@ -2209,7 +2210,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #endif
         }
 
-#if 1
+#if 0
      printf ("Leaving AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(use_Wave = %s) file = %s \n",use_Wave ? "true" : "false",fileNameForDirectivesAndComments.c_str());
 #endif
 
@@ -2576,7 +2577,9 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 
           if (currentFileNameId != target_source_file_id)
              {
+#if 0
                printf ("currentFileNameId != target_source_file_id: currentFileNameId = %d target_source_file_id = %d \n",currentFileNameId,target_source_file_id);
+#endif
                return inheritedAttribute;
              }
 

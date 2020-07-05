@@ -703,9 +703,118 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      string filename = sageFilePtr->get_sourceFileNameWithPath();
      ROSEAttributesList* commentAndCppDirectiveList = NULL;
 
-#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
+#if 1
   // DQ (7/4/2020): This function should not be called for binaries (only for C/C++ code).
-     commentAndCppDirectiveList = getPreprocessorDirectives(filename);
+  // commentAndCppDirectiveList = getPreprocessorDirectives(filename);
+     bool usingWave = false;
+  // commentAndCppDirectiveList = AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(usingWave,filename);
+     commentAndCppDirectiveList = AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(usingWave,sageFilePtr,filename);
+#else
+     SgSourceFile* sourceFile = sageFilePtr;
+     if (sourceFile->get_Fortran_only() == true)
+        {
+          string fileNameForDirectivesAndComments = filename;
+          string fileNameForTokenStream = fileNameForDirectivesAndComments;
+
+       // For Fortran CPP code you need to preprocess the code into an intermediate file in order to pass it through
+       // the Fortran frontend. This is because for Fortan everything is ONE file. 
+          if (sourceFile->get_requires_C_preprocessor() == true)
+             {
+               fileNameForDirectivesAndComments = sourceFile->generate_C_preprocessor_intermediate_filename(fileNameForDirectivesAndComments);
+             }
+
+               if (sourceFile->get_inputFormat() == SgFile::e_fixed_form_output_format)
+                  {
+                    if ( SgProject::get_verbose() > 1 )
+                       {
+                         printf ("Fortran code assumed to be in fixed format form (skipping translation of tokens) \n");
+                       }
+
+                 // For now we call the lexical pass on the fortran file, but we don't yet translate the tokens.
+                 // returnListOfAttributes       = getPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
+                 // getFortranFixedFormatPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
+                 // LexTokenStreamTypePointer lex_token_stream = getFortranFixedFormatPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
+                    LexTokenStreamTypePointer lex_token_stream = NULL;
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+                    lex_token_stream = getFortranFixedFormatPreprocessorDirectives( fileNameForTokenStream );
+#endif
+                    ROSE_ASSERT(lex_token_stream != NULL);
+
+                    if ( SgProject::get_verbose() > 1 )
+                       {
+                         printf ("DONE: getFortranFixedFormatPreprocessorDirectives() \n");
+                       }
+
+                 // Attach the token stream to the AST
+                    returnListOfAttributes->set_rawTokenStream(lex_token_stream);
+#if 1
+                 // DQ (11/23/2008): This is the new support to collect CPP directives and comments from Fortran applications.
+                 // printf ("Calling collectPreprocessorDirectivesAndCommentsForAST() to collect CPP directives for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
+                    returnListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_Fortran77_language);
+                 // printf ("DONE: Calling collectPreprocessorDirectivesAndCommentsForAST() to collect CPP directives for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
+#endif
+#if 0
+                 // DQ (11/19/2008): This code has been replaced by collectPreprocessorDirectivesAndCommentsForAST().
+                 // Process the raw token stream into the PreprocessorDirectives and Comment list required to be inserted into the AST.
+                 // returnListOfAttributes->collectFixedFormatPreprocessorDirectivesAndCommentsForAST(currentFilePtr->get_sourceFileNameWithPath());
+                    returnListOfAttributes->collectFixedFormatPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments);
+#endif
+                  }
+                 else
+                  {
+                 // int currentFileNameId = currentFilePtr->get_file_info()->get_file_id();
+                 // For now we call the lexical pass on the fortran file, but we don't yet translate the tokens.
+                 // returnListOfAttributes       = getPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
+                 // getFortranFreeFormatPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
+                 // string fileNameForTokenStream = Sg_File_Info::getFilenameFromID(currentFileNameId);
+
+                    LexTokenStreamTypePointer lex_token_stream = NULL;
+#if 0
+                    printf ("fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
+                    printf (" --- returnListOfAttributes->getList().size() = %" PRIuPTR " \n",returnListOfAttributes->getList().size());
+#endif
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+                    lex_token_stream = getFortranFreeFormatPreprocessorDirectives( fileNameForTokenStream );
+#endif
+                    ROSE_ASSERT(lex_token_stream != NULL);
+
+                 // DQ (12/3/2019): Added test to support debugging Fortran support.
+                    ROSE_ASSERT(returnListOfAttributes != NULL);
+
+                 // Attach the token stream to the AST
+                    returnListOfAttributes->set_rawTokenStream(lex_token_stream);
+                    ROSE_ASSERT(returnListOfAttributes->get_rawTokenStream() != NULL);
+#if 0
+                    printf ("Fortran Token List Size: returnListOfAttributes->get_rawTokenStream()->size() = %" PRIuPTR " \n",returnListOfAttributes->get_rawTokenStream()->size());
+                    printf (" --- returnListOfAttributes->getList().size() = %" PRIuPTR " \n",returnListOfAttributes->getList().size());
+#endif
+                 // DQ (11/23/2008): This is the new support to collect CPP directives and comments from Fortran applications.
+                 // printf ("Calling collectPreprocessorDirectivesAndCommentsForAST() to collect CPP directives for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
+                    returnListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_Fortran9x_language);
+
+#if 0
+                    printf ("Done with processing of separate lexical pass to gather comments and CPP directives \n");
+                    ROSE_ASSERT(false);
+#endif
+#if 0
+                 // DQ (11/19/2008): This code has been replaced by collectPreprocessorDirectivesAndCommentsForAST().
+                    printf ("Calling generatePreprocessorDirectivesAndCommentsForAST() for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
+                    returnListOfAttributes->generatePreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments);
+#endif
+                  }
+
+#if 1
+               printf ("Done with processing of separate lexical pass to gather Fortran specific CPP directives and comments from the token stream \n");
+               ROSE_ASSERT(false);
+#endif
+        }
+       else
+        {
+#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
+       // DQ (7/4/2020): This function should not be called for binaries (only for C/C++ code).
+          commentAndCppDirectiveList = getPreprocessorDirectives(filename);
+#endif
+        }
 #endif
 
      ROSE_ASSERT(commentAndCppDirectiveList != NULL);
