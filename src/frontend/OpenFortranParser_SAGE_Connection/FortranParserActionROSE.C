@@ -11486,36 +11486,66 @@ void c_action_case_selector(Token_t *defaultToken)
       }
  }
 
-/**
- * R814
+/** R814
  * case_value_range
+ *
+ * @param hasColon True if there is a colon (will have an upper-bound)
  */
-void c_action_case_value_range()
+void c_action_case_value_range(ofp_bool hasColon)
  {
-    mlog[TRACE] << "In c_action_case_value_range() \n";
+    mlog[TRACE] << "In c_action_case_value_range(): hasColon = " << hasColon << "\n";;
+
+    SgExpression* lowerBound = NULL;
+    SgExpression* upperBound = NULL;
+    SgExpression* range = NULL;
 
     CaseValueRange* caseValueRange = getCaseValueRange();
 
-    SgExpression* lowerBound = caseValueRange->values[0];
-    SgExpression* upperBound = caseValueRange->values[1];
-
- // Add range expressions to key list
- // WARNIBG: this will need to change once COLON's in parser are figured out
-    if (caseValueRange->numValues == 1) {
-       getCaseStmt()->key->get_expressions().push_back(lowerBound);
-    }
-    else {
-        if (upperBound == NULL) {
-            upperBound = SageBuilder::buildNullExpression_nfi();
-        }
-        SgExpression* stride = new SgIntVal(1,"1");
-        SageInterface::setSourcePosition(stride);
-
-        SgExpression* range = SageBuilder::buildSubscriptExpression_nfi(lowerBound, upperBound, stride);
-        getCaseStmt()->key->get_expressions().push_back(range);
+    if (caseValueRange->hasSuffix) {
+    // If c_action_case_value_range_suffix is called there is a colon
+       hasColon = true;
     }
 
- // finished with this CaseValueRange instance
+    if (hasColon == false)
+      {
+      // There is only a lower-bound (lb)
+         range = caseValueRange->values[0];
+      }
+    else
+      {
+      // There is a colon, could be (lb:), (:ub), or (lb:ub)
+
+      // A stride is necessary to build an SgSubscriptExpression
+         SgExpression* stride = new SgIntVal(1,"1");
+         SageInterface::setSourcePosition(stride);
+
+         if (caseValueRange->hasSuffix == false)
+           {
+            // There is no lower-bound (:ub)
+              ROSE_ASSERT(caseValueRange->numValues == 1);
+              lowerBound = SageBuilder::buildNullExpression_nfi();
+              upperBound = caseValueRange->values[0];
+           }
+         else if (caseValueRange->hasSuffix && (caseValueRange->hasSuffixExpr == false))
+           {
+              ROSE_ASSERT(caseValueRange->numValues == 1);
+              lowerBound = caseValueRange->values[0];
+              upperBound = SageBuilder::buildNullExpression_nfi();
+           }
+         else
+           {
+              ROSE_ASSERT(caseValueRange->numValues == 2);
+              lowerBound = caseValueRange->values[0];
+              upperBound = caseValueRange->values[1];
+           }
+
+         range = SageBuilder::buildSubscriptExpression_nfi(lowerBound, upperBound, stride);
+      }
+
+    ROSE_ASSERT(range);
+    getCaseStmt()->key->get_expressions().push_back(range);
+
+ // Finished with this CaseValueRange instance
     caseValueRange->reset();
  }
 
@@ -11539,16 +11569,16 @@ void c_action_case_value_range_list(int count)
  }
 
 /**
- * Unknown rule.
+ * Internal rule.
  * case_value_range_suffix
  *
+ * @param hasSuffixExpr True if there is an upper-bound expression
  */
-void c_action_case_value_range_suffix()
+void c_action_case_value_range_suffix(ofp_bool hasSuffixExpr)
  {
-  // This function needs to be modified in the parser to provide
-  // information on colons in the ranges
-  //
     mlog[TRACE] << "In c_action_case_value_range_suffix() \n";
+    getCaseValueRange()->hasSuffix = true;
+    getCaseValueRange()->hasSuffixExpr = hasSuffixExpr;
  }
 
 /**
