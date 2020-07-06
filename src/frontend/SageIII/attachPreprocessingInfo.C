@@ -59,7 +59,6 @@ void generateGraphOfIncludeFiles( SgSourceFile* sourceFile, std::string filename
 
 #if 0
 // DQ (11/30/2008): This does not appear to be used!
-
 std::list<SgNode*>
 findNodes(SgNode* astNode)
    {
