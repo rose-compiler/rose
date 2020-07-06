@@ -12,7 +12,7 @@
 #include <cstring>
 #include <map>
 
-#include "VxThornCommandLineOptions.h"
+#include "MemThornCommandLineOptions.h"
 #include "RewriteSystem.h"
 
 #include "InternalChecks.h"
