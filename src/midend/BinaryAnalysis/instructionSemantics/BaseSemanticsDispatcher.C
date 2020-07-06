@@ -205,12 +205,33 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
         BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators->add(lhs, rhs);
+    } else if (SgAsmBinaryAddPreupdate *op = isSgAsmBinaryAddPreupdate(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        retval = operators->add(lhs, rhs);
+    } else if (SgAsmBinaryAddPostupdate *op = isSgAsmBinaryAddPostupdate(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        retval = operators->add(lhs, rhs);
     } else if (SgAsmBinaryMultiply *op = isSgAsmBinaryMultiply(e)) {
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
         BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators->unsignedMultiply(lhs, rhs);
     } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(e)) {
         retval = operators->number_(ival->get_significantBits(), ival->get_value());
+    } else if (SgAsmUnaryUnsignedExtend *op = isSgAsmUnaryUnsignedExtend(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_operand(), nbits);
+        retval = operators->unsignedExtend(lhs, op->get_nBits());
+    } else if (SgAsmUnarySignedExtend *op = isSgAsmUnarySignedExtend(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_operand(), nbits);
+        retval = operators->signExtend(lhs, op->get_nBits());
+    } else if (SgAsmUnaryTruncate *op = isSgAsmUnaryTruncate(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_operand(), nbits);
+        retval = operators->unsignedExtend(lhs, op->get_nBits()); // yes, can be used for truncation
+    } else if (SgAsmBinaryLsl *op = isSgAsmBinaryLsl(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        retval = operators->shiftRight(lhs, rhs);
     }
 
     ASSERT_not_null(retval);

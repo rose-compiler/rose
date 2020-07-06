@@ -269,7 +269,7 @@ RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitec
 
 #ifdef ROSE_ENABLE_ASM_A64
         case EFF::ISA_ARM_Family:
-            return dictionary_aarch64();
+            return dictionary_a64();
 #endif
 
         case EFF::ISA_PowerPC:
@@ -672,7 +672,7 @@ RegisterDictionary::dictionary_amd64() {
 
 #ifdef ROSE_ENABLE_ASM_A64
 const RegisterDictionary*
-RegisterDictionary::dictionary_aarch64() {
+RegisterDictionary::dictionary_a64() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
     static RegisterDictionary *regs = NULL;
@@ -680,7 +680,7 @@ RegisterDictionary::dictionary_aarch64() {
         // References:
         //   [1] "Arm Instruction Set Version 1.0 Reference Guide" copyright 2018 Arm Limited.
         //   [2] "ARM Cortex-A Series Version 1.0 Programmer's Guide for ARMv8-A" copyright 2015 ARM.
-        regs = new RegisterDictionary("aarch64");
+        regs = new RegisterDictionary("A64");
 
         // 31 64-bit general-purpose registers "x0" through "x30". The names "w0" through "w30" refer to the low-order 32 bits
         // of the corresponding "x" register in that read operations read only the low-order 32 bits and write operations write
@@ -700,7 +700,7 @@ RegisterDictionary::dictionary_aarch64() {
         regs->insert("lr", arm_regclass_gpr, 30, 0, 64);
 
         // Another name for "x29" is "fp", the frame pointer. [2, p 4-2]
-        regs->insert("lr", arm_regclass_gpr, 30, 0, 64);
+        regs->insert("fp", arm_regclass_gpr, 29, 0, 64);
 
         // One program counter. Not a general purpose register. [1. p. A3-78]
         regs->insert("pc", arm_regclass_pc, 0, 0, 64);

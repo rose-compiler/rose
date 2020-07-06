@@ -227,16 +227,22 @@ void merge(SgProject * project) {
 
   int nodes_start = numberOfNodes();
 #if ENABLE_plot_links
-  std::ofstream ofs_in("linking-before.dot");
+  std::ofstream ofs_in("merging-before.dot");
   plot_links(ofs_in);
 #endif
 
   shareRedundantNodes(project);
   deleteIslands(project);
+
+#if ENABLE_plot_links
+  std::ofstream ofs_mid("merging-middle.dot");
+  plot_links(ofs_mid);
+#endif
+
   link(project);
 
 #if ENABLE_plot_links
-  std::ofstream ofs_out("linking-after.dot");
+  std::ofstream ofs_out("merging-after.dot");
   plot_links(ofs_out);
 #endif
 

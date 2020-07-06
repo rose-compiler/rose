@@ -12,7 +12,7 @@ namespace Unparser {
 
 // class method
 std::string
-Arm::unparseArmCondition(Arm64InstructionCondition cond) {
+Arm::unparseArmCondition(A64InstructionCondition cond) {
     // These constants come from capstone, so we don't have any easy stringification mechanism for them like we do for ROSE
     // enums.
     switch (cond) {
@@ -39,7 +39,7 @@ Arm::unparseArmCondition(Arm64InstructionCondition cond) {
 
 void
 Arm::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_, State&) const {
-    SgAsmArm64Instruction *insn = isSgAsmArm64Instruction(insn_);
+    SgAsmA64Instruction *insn = isSgAsmA64Instruction(insn_);
     ASSERT_not_null2(insn, "not an ARM instruction");
     std::string result = insn->get_mnemonic();
     out <<result;
@@ -179,7 +179,7 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
         outputExpr(out, op->get_rhs(), state);
         out <<")";
 
-    } else if (SgAsmArm64AtOperand *op = isSgAsmArm64AtOperand(expr)) {
+    } else if (SgAsmA64AtOperand *op = isSgAsmA64AtOperand(expr)) {
         switch (op->operation()) {
             case ARM64_AT_S1E1R:
                 out <<"s1e1r";
@@ -221,7 +221,7 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
                 ASSERT_not_reachable("invalid AT operand");
         }
 
-    } else if (SgAsmArm64PrefetchOperand *op = isSgAsmArm64PrefetchOperand(expr)) {
+    } else if (SgAsmA64PrefetchOperand *op = isSgAsmA64PrefetchOperand(expr)) {
         switch (op->operation()) {
             case ARM64_PRFM_PLDL1KEEP:  out <<"pldl1keep"; break;
             case ARM64_PRFM_PLDL1STRM:  out <<"pldl1strm"; break;
@@ -245,7 +245,7 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
                 ASSERT_not_reachable("invalid prefetch command");
         }
 
-    } else if (SgAsmArm64SysMoveOperand *op = isSgAsmArm64SysMoveOperand(expr)) {
+    } else if (SgAsmA64SysMoveOperand *op = isSgAsmA64SysMoveOperand(expr)) {
         unsigned op0 = (op->access() >> 14) & 1;
         unsigned op1 = (op->access() >> 11) & 7;
         unsigned crn = (op->access() >>  7) & 0xf;
@@ -253,8 +253,54 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
         unsigned op2 = op->access() & 7;
         out <<"s" <<(op0 + 2) <<"_" <<op1 <<"_c" <<crn <<"_c" <<crm <<"_" <<op2;
 
-    } else if (SgAsmArm64CImmediateOperand *op = isSgAsmArm64CImmediateOperand(expr)) {
+    } else if (SgAsmA64CImmediateOperand *op = isSgAsmA64CImmediateOperand(expr)) {
         out <<"c" <<op->immediate();
+
+    } else if (SgAsmA64BarrierOperand *op = isSgAsmA64BarrierOperand(expr)) {
+        switch (op->operation()) {
+            case ARM64_BARRIER_INVALID:
+                out <<"barrier invalid";
+                break;
+            case ARM64_BARRIER_OSHLD:
+                out <<"barrier oshld";
+                break;
+            case ARM64_BARRIER_OSHST:
+                out <<"barrier oshst";
+                break;
+            case ARM64_BARRIER_OSH:
+                out <<"barrier osh";
+                break;
+            case ARM64_BARRIER_NSHLD:
+                out <<"barrier nshld";
+                break;
+            case ARM64_BARRIER_NSHST:
+                out <<"barrier nshst";
+                break;
+            case ARM64_BARRIER_NSH:
+                out <<"barrier nsh";
+                break;
+            case ARM64_BARRIER_ISHLD:
+                out <<"barrier ishld";
+                break;
+            case ARM64_BARRIER_ISHST:
+                out <<"barrier ishst";
+                break;
+            case ARM64_BARRIER_ISH:
+                out <<"barrier ish";
+                break;
+            case ARM64_BARRIER_LD:
+                out <<"barrier ld";
+                break;
+            case ARM64_BARRIER_ST:
+                out <<"barrier st";
+                break;
+            case ARM64_BARRIER_SY:
+                out <<"barrier sy";
+                break;
+            default:
+                out <<"barrier " <<(unsigned)op->operation();
+                break;
+        }
 
     } else {
         ASSERT_not_implemented(expr->class_name());

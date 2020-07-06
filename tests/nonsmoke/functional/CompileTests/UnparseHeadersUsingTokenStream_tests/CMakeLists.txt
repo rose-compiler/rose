@@ -13,10 +13,14 @@ target_link_libraries(whiteSpaceTransformation ROSE_DLL EDG ${link_with_librarie
 
 set(TESTCODES
   test1/Simple1.C test2/Simple2.C test3/Simple3.C test4/Simple4.C
-  test5/Simple5.C test9/Simple9.C test10/Simple10.C test11/Simple11.C
+  test5/Simple5.C test9/Simple9.C test11/Simple11.C
   test12/Simple12.C test13/Simple13.C test14/Simple14.C test15/Simple15.C 
   test16/Simple16.C
 )
+
+# DQ (7/4/2020): This test does is not supported since it includes the same header twice (this would 
+# require a modified algorithm to support attaching comments and CPP directives for this case).
+# test10/Simple10.C
 
 set(TESTCODES_FOR_DEFAULT_UNPARSE_FOLDER test0/Simple0.C)
 

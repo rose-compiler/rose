@@ -210,7 +210,18 @@ static SgSymbol * select_shared_variable_symbol(
     bool is_static_decl = iname->get_storageModifier().isStatic();
     bool has_file_visibility = ( isSgGlobal(scope) || isSgNamespaceDefinitionStatement(scope) ) && is_static_decl;
     return has_file_visibility ? NULL : sym_map.begin()->first;
-  } else { // Duplication: select any symbol. TODO: better choice
+  } else {
+    // Duplication:
+    //  - select first symbol whose symbol basis is the first iname in the chain of decls
+    // FIXME: better choice ??
+
+    for (auto p: sym_map) {
+      SgInitializedName * iname = isSgInitializedName(p.first->get_symbol_basis());
+      ROSE_ASSERT(iname != NULL);
+      if (iname->get_prev_decl_item() == NULL) {
+        return p.first;
+      }
+    }
     return sym_map.begin()->first;
   }
 }
@@ -257,6 +268,12 @@ class LinkVariableAcrossFiles {
     ) {
       std::set<SgInitializedName *> seens;
       std::map<SgInitializedName *, std::vector<SgInitializedName *> > first_to_rlist;
+
+      // Following map is used when symbol does not point to the first declaration on the chain
+      // This happen when a variable is declared in two headers (extern) and each header include the other header.
+      // Then, when the AST from two files that include one of the header are merged, the sharing will make the symbol point to a iname that is not the first in the chain.
+      // FIXME if performance issue it might be faster to preserve the other iname during sharing
+      std::map<SgInitializedName *, SgInitializedName *> any_to_first;
       for (auto iname: inames.inames) {
         // skip if already seen in any list
         if (!seens.insert(iname).second) continue;
@@ -270,12 +287,21 @@ class LinkVariableAcrossFiles {
           seens.insert(prev);
           rlist.push_back(prev);
         }
-        first_to_rlist[rlist.back()] = rlist;
+        SgInitializedName * first_iname = rlist.back();
+        first_to_rlist[first_iname] = rlist;
+
+        for (auto i: rlist) {
+          any_to_first[i] = first_iname;
+        }
       }
 
       for (auto sym: symbols.symbols) {
         SgInitializedName * iname = isSgInitializedName(sym->get_symbol_basis());
         ROSE_ASSERT(iname != NULL);
+
+        iname = any_to_first[iname];
+        ROSE_ASSERT(iname != NULL);
+
         std::vector<SgInitializedName *> & rlist = first_to_rlist[iname];
         ROSE_ASSERT(rlist.size() > 0);
         std::pair<SgInitializedName *, SgInitializedName *> p(rlist.back(), rlist[0]);
@@ -329,8 +355,18 @@ class LinkVariableAcrossFiles {
           if (q.first != symbol) {
             sym_repl_map[q.first] = symbol;
             sym_del_set.insert(q.first);
-            q.second.first->set_prev_decl_item(last_iname);
-            last_iname = q.second.second;
+
+            // We only concatenate the chain of inames associated with this symbol if the
+            // symbol's basis is actually the first item of that chain. Other cases are due
+            // to multiple extern declaration being seen from headers (which are read in
+            // various orders) and eliminated by sharing. The result is a single chain with
+            // symbols pointing to various point of that chain.
+            SgInitializedName * base_iname = isSgInitializedName(q.first->get_symbol_basis());
+            ROSE_ASSERT(base_iname != NULL);
+            if (base_iname == q.second.first && base_iname->get_prev_decl_item() == NULL) {
+              q.second.first->set_prev_decl_item(last_iname);
+              last_iname = q.second.second;
+            }
           }
         }
       }

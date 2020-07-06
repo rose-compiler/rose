@@ -2838,8 +2838,15 @@ Partitioner::cfgGraphViz(std::ostream &out, const AddressInterval &restrict,
 
 std::vector<Function::Ptr>
 Partitioner::nextFunctionPrologue(rose_addr_t startVa) {
+    return nextFunctionPrologue(startVa, startVa);
+}
+
+std::vector<Function::Ptr>
+Partitioner::nextFunctionPrologue(rose_addr_t startVa, rose_addr_t &lastSearchedVa) {
+    lastSearchedVa = startVa;
     while (memoryMap_->atOrAfter(startVa).require(MemoryMap::EXECUTABLE).next().assignTo(startVa)) {
         Sawyer::Optional<rose_addr_t> unmappedVa = aum_.leastUnmapped(startVa);
+        lastSearchedVa = startVa;
         if (!unmappedVa)
             return std::vector<Function::Ptr>();        // empty; no higher unused address
         if (startVa == *unmappedVa) {

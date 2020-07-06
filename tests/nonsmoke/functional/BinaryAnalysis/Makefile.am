@@ -1447,7 +1447,7 @@ tri_a64.passed: testRandomInput conditionalDisable isA64Disabled
 	@$(RTH_RUN)							\
 		TITLE="disassemble random $* input [$@]"		\
 		DISABLED="$$(./conditionalDisable)$$(./isA64Disabled)"	\
-		CMD="$$(pwd)/testRandomInput --size=50000 --isa=$*"	\
+		CMD="$$(pwd)/testRandomInput --size=50000 --isa=a64"	\
 		$(TEST_EXIT_STATUS) $@
 
 

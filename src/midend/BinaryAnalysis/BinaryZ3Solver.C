@@ -336,6 +336,9 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
             case SymbolicExpr::OP_ZEROP:
                 retval = outputZerop(inode);
                 break;
+            default:
+                // to suppress warnings since an error follows. Please remove this when floating-point is implemented
+                break;
         }
     }
 
@@ -668,6 +671,9 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                 return ctxWrite(inode);
             case SymbolicExpr::OP_ZEROP:
                 return ctxZerop(inode);
+            default:
+                // to suppress warnings since an error follows. Please remove this when floating-point is implemented
+                break;
         }
     }
     ASSERT_not_reachable("unhandled case " + stringify::Rose::BinaryAnalysis::SymbolicExpr::Operator(inode->getOperator(), "") +
