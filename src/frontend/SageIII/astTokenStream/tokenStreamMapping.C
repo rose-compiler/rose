@@ -5755,7 +5755,7 @@ getTokenStream( SgSourceFile* file )
      string fileNameForTokenStream = file->getFileName();
 
 #if 0
-     printf ("In Unparser::unparseFile(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
+     printf ("In getTokenStream(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
 #endif
 
      ROSE_ASSERT(file->get_preprocessorDirectivesAndCommentsList() != NULL);
@@ -5812,7 +5812,7 @@ getTokenStream( SgSourceFile* file )
      printf ("Output token list (number of tokens = %zu): \n",tokenList.size());
 #endif
 
-#if 1
+#if 0
      int counter = 0;
      for (LexTokenStreamType::iterator i = tokenList.begin(); i != tokenList.end(); i++)
         {
@@ -6432,11 +6432,17 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
   // DQ (9/5/2018): We should have already set the preprocessorDirectivesAndCommentsList, checked in getTokenStream().
      ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
 
+#if 0
+     printf ("In buildTokenStreamMapping() \n");
+#endif
+
      vector<stream_element*> tokenVector = getTokenStream(sourceFile);
 
   // DQ (11/29/2018): Debugging the token stream (for form-feeds).
 #if 0
      printf ("In buildTokenStreamMapping(): (after getTokenStream()): tokenVector = %zu sourceFile->getFileName() = %s \n",tokenVector.size(),sourceFile->getFileName().c_str());
+#endif
+#if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif

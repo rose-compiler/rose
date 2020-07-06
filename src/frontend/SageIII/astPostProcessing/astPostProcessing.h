@@ -84,6 +84,8 @@
 // DQ (2/25/2019): Adding support for marking shared defining declarations across multiple files.
 #include "markSharedDeclarationsForOutputInCodeGeneration.h"
 
+// DQ (5/7/2020): Added support to interleaving include directives into the code.
+#include "addIncludeDirectives.h"
 
 /*! \brief Postprocessing that is not likely to be handled in the EDG/Sage III translation.
  */

@@ -649,8 +649,20 @@ CallGraphBuilder::getGraph()
 }
 
 
-
-
+/**
+ * CallTargetSet::solveFunctionPointerCallsFunctional
+ *
+ * \brief Checks if the functionDeclaration (node) matches functionType
+ *
+ * This is a filter called by solveFunctionPointerCall. It checks that node is
+ * a functiondeclaration (or template instantiation) of type functionType.
+ * If it does, it is added to a functionList and returned.  So function list can
+ * have at most 1 entry.
+ * 
+ * @param[in] node : The node we are checking.  It must be an SgFunctionDeclaration
+ * @param[in] functionType : The function type being checked.  
+ * @return: If node matched functionType, it is added on functionList and returned.  Otherwise functionList is empty.
+ **/
 Rose_STL_Container<SgFunctionDeclaration*>
 CallTargetSet::solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType* functionType )
 {
@@ -658,63 +670,65 @@ CallTargetSet::solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType*
 
   SgFunctionDeclaration* fctDecl = isSgFunctionDeclaration(node);
   ROSE_ASSERT( fctDecl != NULL );
-  assert(!isSgTemplateFunctionDeclaration(fctDecl));
-  //if ( functionType == fctDecl->get_type() )
+  assert(!isSgTemplateFunctionDeclaration(fctDecl)); //Should only be SgTemplateInstantiationFunctionDecl
+
   //Find all function declarations which is both first non-defining declaration and
   //has a mangled name which is equal to the mangled name of 'functionType'
   if( functionType->get_mangled().getString() == fctDecl->get_type()->get_mangled().getString() )
   {
-    //ROSE_ASSERT( functionType->get_mangled().getString() == fctDecl->get_mangled().getString() );
-
     SgFunctionDeclaration *nonDefDecl =
       isSgFunctionDeclaration( fctDecl->get_firstNondefiningDeclaration() );
     assert(!isSgTemplateFunctionDeclaration(nonDefDecl));
 
     //The ROSE AST normalizes functions so that there should be a nondef function decl for
     //every function
-    //ROSE_ASSERT( nonDefDecl != NULL );
     if( fctDecl == nonDefDecl )
       functionList.push_back( nonDefDecl );
     else
       functionList.push_back( fctDecl );
-  }//else
-  //ROSE_ASSERT( functionType->get_mangled().getString() != fctDecl->get_type()->get_mangled().getString() );
-
+  }
   return functionList;
 }
 
 
-
+/**
+ * CallTargetSet::solveFunctionPointerCall
+ *
+ * \brief Finds all functions that match the function type of pointerDerefExp
+ *
+ * Resolving function pointer calls is hard, so the CallGraph generator doesn't
+ * try very hard at it.  When asked to resolve a function pointer call, it simply
+ * finds all functions that match that type in the memory pool a returns a list of them.
+ *
+ * @param[in] pointerDerefExp : A function pointer dereference.  
+ * @return: A vector of all functionDeclarations that match the type of the function dereferenced in pointerDerefExp
+ **/
 std::vector<SgFunctionDeclaration*>
-CallTargetSet::solveFunctionPointerCall( SgPointerDerefExp *pointerDerefExp, SgProject *project )
+CallTargetSet::solveFunctionPointerCall( SgPointerDerefExp *pointerDerefExp)
 {
   SgFunctionDeclarationPtrList functionList;
 
   SgFunctionType *fctType = isSgFunctionType( pointerDerefExp->get_type()->findBaseType() );
   ROSE_ASSERT ( fctType );
-  ROSE_ASSERT ( project );
+  
   // SgUnparse_Info ui;
   // string type1str = fctType->get_mangled( ui ).str();
-  string type1str = fctType->get_mangled().str();
+  // string type1str = fctType->get_mangled().str();
   // cout << "Return type of function pointer " << type1str << "\n";
-
   // cout << " Line: " << pointerDerefExp->get_file_info()->get_filenameString() <<
   //  " l" << pointerDerefExp->get_file_info()->get_line() <<
   //  " c" << pointerDerefExp->get_file_info()->get_col()  << std::endl;
   // getting all possible functions with the same type
+
   // DQ (1/31/2006): Changed name and made global function type symbol table a static data member.
-  // SgType *ty = Sgfunc_type_table.lookup_function_type( fctType->get_mangled( ui ) );
   ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
-  // SgType *ty = SgNode::get_globalFunctionTypeTable()->lookup_function_type( fctType->get_mangled( ui ) );
-  // ROSE_ASSERT ( ty->get_mangled( ui ) == type1str );
 
   // if there are multiple forward declarations of the same function
   // there will be multiple nodes in the AST containing them
   // but just one link in the call graph
-  //  list<SgNode *> fctDeclarationList = NodeQuery::querySubTree( project, V_SgFunctionDeclaration );
+
   //AS (09/23/06) Query the memory pool instead of subtree of project
   //AS (10/2/06)  Modified query to only query for functions or function templates
-  //VariantVector vv = V_SgFunctionDeclaration;
   VariantVector vv;
   vv.push_back(V_SgFunctionDeclaration);
   vv.push_back(V_SgTemplateInstantiationFunctionDecl);
@@ -723,6 +737,8 @@ CallTargetSet::solveFunctionPointerCall( SgPointerDerefExp *pointerDerefExp, SgP
 
   return functionList;
 }
+
+
 
 std::vector<SgFunctionDeclaration*>
 CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHierarchyWrapper *classHierarchy)
@@ -1253,7 +1269,7 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
                 // We don't know what function is being called, only its type.  So assume that all functions whose type matches
                 // could be called. [Robb Matzke 2012-12-28]
                 std::vector<SgFunctionDeclaration*> fD =
-                    CallTargetSet::solveFunctionPointerCall(isSgPointerDerefExp(functionExp), SageInterface::getProject());
+                    CallTargetSet::solveFunctionPointerCall(isSgPointerDerefExp(functionExp));
                 functionList.insert(functionList.end(), fD.begin(), fD.end());
                 break;
             } else {

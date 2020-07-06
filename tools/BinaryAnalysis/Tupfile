@@ -2,25 +2,25 @@ include_rules
 ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
 
 # BAT support library. This is also used by tools outside ROSE
-run $(tool_compile_linklib) --install -I. -o libbat batSupport.C ../../src/librose
+run $(tool_compile_linklib) --install -I. -o libbatSupport batSupport.C ../../src/librose
 run $(public_header) batSupport.h
 
 # Tools
-run $(tool_compile_linkexe) --install -I. bat-ana.C          libbat
-run $(tool_compile_linkexe) --install -I. bat-cc.C           libbat
-run $(tool_compile_linkexe) --install -I. bat-cfg.C          libbat
-run $(tool_compile_linkexe) --install -I. bat-cg.C           libbat
-run $(tool_compile_linkexe) --install -I. bat-container.C    libbat
-run $(tool_compile_linkexe) --install -I. bat-dis.C          libbat
-run $(tool_compile_linkexe) --install -I. bat-entropy.C      libbat
-run $(tool_compile_linkexe) --install -I. bat-linear.C       libbat
-run $(tool_compile_linkexe) --install -I. bat-lsb.C          libbat
-run $(tool_compile_linkexe) --install -I. bat-lsd.C          libbat
-run $(tool_compile_linkexe) --install -I. bat-lsf.C          libbat
-run $(tool_compile_linkexe) --install -I. bat-mem.C          libbat
-run $(tool_compile_linkexe) --install -I. bat-prop.C         libbat
-run $(tool_compile_linkexe) --install -I. bat-stack-deltas.C libbat
-run $(tool_compile_linkexe) --install -I. bat-trace.C        libbat
+run $(tool_compile_linkexe) --install -I. bat-ana.C          libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-cc.C           libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-cfg.C          libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-cg.C           libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-container.C    libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-dis.C          libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-entropy.C      libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-linear.C       libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-lsb.C          libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-lsd.C          libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-lsf.C          libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-mem.C          libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-prop.C         libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-stack-deltas.C libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-trace.C        libbatSupport
 : bat-dis |> cp -p %f %o |> bat-dis-simple $(ROOT)/$(INSTALL_STAGING)/bin/<staging>
 
 # Tests
