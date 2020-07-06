@@ -895,6 +895,7 @@ clean-local:
 	rm -f *.exe
 	rm -f *.imout.check
 	rm -Rf make_check_log_*
+	rm -f *-LTLParser.c++
 
 distclean-local: clean
 	rm -f *.tgz
