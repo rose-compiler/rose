@@ -24,41 +24,44 @@ BENCH_PASS=0
 BENCH_FAIL=0
 
 function DomainTests {
-testNumbers=`echo {001..032}`
-echo "Scheduled tests: $testNumbers"
-for testNumber in $testNumbers; do
-    benchmarkprefix=$TESTDIR/DOM${testNumber};
-    for benchmark in ${benchmarkprefix}*.[Cc]; do
-        benchmarkname=$(basename $benchmark)
-        printf "Testing %-35s: " $benchmarkname
-        CT_OUTPUT_FILE=$benchmarkname.imout
-        ./codethorn $benchmark --normalize-all=yes --interpreter-mode=1 --in-state-string-literals --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR > /dev/null
-        if [ ! $? -eq 0 ]
-        then
-	    echo $COLORED_FAIL
-            exit 1
-        else
-            echo -n "$COLORED_PASS "
-            EXEFILE=${benchmarkname}.exe
-            g++ $benchmark -o$EXEFILE -I $TESTDIR 
-            GCC_OUTPUT_FILE="${CT_OUTPUT_FILE}.check"
-            if [ -f $TESTDIR/${benchmarkname}.testinput ]; then
-                # run with test input from file
-                ./$EXEFILE > $GCC_OUTPUT_FILE < $TESTDIR/${benchmarkname}.testinput
-            else
-                ./$EXEFILE > $GCC_OUTPUT_FILE
-            fi
-            DIFF=$(diff $GCC_OUTPUT_FILE $CT_OUTPUT_FILE) 
-            if [ "$DIFF" != "" ] 
+    testNumbers=`echo {001..028}`
+    testNumbers2=`echo {030..032}`
+    testNumbers+=" $testNumbers2"
+    echo "Scheduled tests: $testNumbers"
+    echo "Skipping 029"
+    for testNumber in $testNumbers; do
+        benchmarkprefix=$TESTDIR/DOM${testNumber};
+        for benchmark in ${benchmarkprefix}*.[Cc]; do
+            benchmarkname=$(basename $benchmark)
+            printf "Testing %-35s: " $benchmarkname
+            CT_OUTPUT_FILE=$benchmarkname.imout
+            ./codethorn $benchmark --normalize-all=yes --interpreter-mode=1 --in-state-string-literals --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR > /dev/null
+            if [ ! $? -eq 0 ]
             then
-                echo $COLORED_WARN
-#                echo "Diff: $DIFF"
+	            echo $COLORED_FAIL
+                exit 1
             else
-                echo $COLORED_PASS
+                echo -n "$COLORED_PASS "
+                EXEFILE=${benchmarkname}.exe
+                g++ $benchmark -o$EXEFILE -I $TESTDIR 
+                GCC_OUTPUT_FILE="${CT_OUTPUT_FILE}.check"
+                if [ -f $TESTDIR/${benchmarkname}.testinput ]; then
+                    # run with test input from file
+                    ./$EXEFILE > $GCC_OUTPUT_FILE < $TESTDIR/${benchmarkname}.testinput
+                else
+                    ./$EXEFILE > $GCC_OUTPUT_FILE
+                fi
+                DIFF=$(diff $GCC_OUTPUT_FILE $CT_OUTPUT_FILE) 
+                if [ "$DIFF" != "" ] 
+                then
+                    echo $COLORED_WARN
+                    #                echo "Diff: $DIFF"
+                else
+                    echo $COLORED_PASS
+                fi
             fi
-        fi
+        done
     done
-done
 }
 
 DomainTests

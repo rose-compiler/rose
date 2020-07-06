@@ -1,5 +1,5 @@
-#ifndef RDANALYSIS_H
-#define RDANALYSIS_H
+#ifndef MemANALYSIS_H
+#define MemANALYSIS_H
 
 // Author: Markus Schordan, 2013.
 
@@ -7,38 +7,33 @@
 #include "VariableIdMapping.h"
 #include "Labeler.h"
 #include "CFAnalysis.h"
-#include "RDLattice.h"
+#include "MemPropertyState.h"
 #include "DFAnalysisBase.h"
-#include "WorkList.h"
 #include "AnalysisAbstractionLayer.h"
 #include "DFAstAttribute.h"
-#include "RDTransferFunctions.h"
+#include "MemTransferFunctions.h"
 
 namespace CodeThorn {
 
-class RDPropertyStateFactory : public PropertyStateFactory {
+class MemPropertyStateFactory : public PropertyStateFactory {
  public:
-  RDPropertyStateFactory();
+  MemPropertyStateFactory();
   virtual PropertyState* create();
-  virtual ~RDPropertyStateFactory();
+  virtual ~MemPropertyStateFactory();
 };
 
 /*!
   * \author Markus Schordan
   * \date 2013.
  */
-class RDAnalysis : public DFAnalysisBase {
+class MemAnalysis : public DFAnalysisBase {
  public:
-  RDAnalysis();
-  ~RDAnalysis();
-  CodeThorn::LabelSet getPreRDs(Label lab, VariableId);
-  CodeThorn::LabelSet getPostRDs(Label lab, VariableId);
+  MemAnalysis();
+  ~MemAnalysis();
   virtual void initializeExtremalValue(Lattice* element);
-
   void initialize(SgProject* root);
 
  protected:
-  virtual DFAstAttribute* createDFAstAttribute(Lattice* elem);
 };
 
 } // end of namespace CodeThorn

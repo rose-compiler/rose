@@ -8,14 +8,12 @@
 
 namespace CodeThorn {
 
-typedef Lattice PropertyState;
-
-class PropertyStateFactory {
- public:
-  PropertyStateFactory();
-  virtual PropertyState* create()=0;
-  virtual ~PropertyStateFactory();
-};
-
+#if 1
+  typedef Lattice PropertyState;
+#else
+  class PropertyState : public Lattice {
+  };
+#endif
+  
 }
 #endif

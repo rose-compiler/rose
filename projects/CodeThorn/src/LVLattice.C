@@ -38,21 +38,21 @@ void CodeThorn::LVLattice::toStream(ostream& os, VariableIdMapping* vim) {
   * \author Markus Schordan
   * \date 2013.
  */
-CodeThorn::LVLattice::iterator CodeThorn::LVLattice::begin() {
+CodeThorn::LVLattice::iterator CodeThorn::LVLattice::begin() const {
   return lvSet.begin();
 }
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-CodeThorn::LVLattice::iterator CodeThorn::LVLattice::end() {
+CodeThorn::LVLattice::iterator CodeThorn::LVLattice::end() const {
   return lvSet.end();
 }
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-size_t CodeThorn::LVLattice::size() {
+size_t CodeThorn::LVLattice::size() const {
   return lvSet.size();
 }
 /*! 
@@ -74,7 +74,7 @@ void CodeThorn::LVLattice::removeVariableId(VariableId var) {
   * \author Markus Schordan
   * \date 2013.
  */
-bool CodeThorn::LVLattice::isBot() {
+bool CodeThorn::LVLattice::isBot() const {
   return _bot;
 } 
 /*! 
@@ -108,7 +108,7 @@ void CodeThorn::LVLattice::combine(LVLattice& b) {
   * \author Markus Schordan
   * \date 2013.
  */
-bool CodeThorn::LVLattice::approximatedBy(Lattice& b0) {
+bool CodeThorn::LVLattice::approximatedBy(Lattice& b0) const {
   LVLattice& b=dynamic_cast<LVLattice&>(b0);
   if(isBot()&&b.isBot())
     return true;
