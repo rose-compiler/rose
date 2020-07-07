@@ -414,8 +414,8 @@ void FunctionIdMapping::computeFunctionCallMapping(SgProject* project) {
               ||isSgTemplateMemberFunctionRefExp(node)) {
       cerr<<"WARNING: "<<SgNodeHelper::sourceFilenameLineColumnToString(node)<<": unsupported kind of function ref exp: "<<node->unparseToString()<<endl;
       
-      if (node->unparseToString() == "getRetractOvershootSteps")
-        throw std::logic_error("Debugging VxWorks code...");
+      //~ if (node->unparseToString() == "getRetractOvershootSteps")
+        //~ throw std::logic_error("Debugging VxWorks code...");
     }
   }
 }

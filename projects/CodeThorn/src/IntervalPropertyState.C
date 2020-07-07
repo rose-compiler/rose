@@ -51,12 +51,12 @@ bool CodeThorn::IntervalPropertyState::approximatedByAsymmetric(Lattice& other) 
 void CodeThorn::IntervalPropertyState::combineInternal(Lattice& other0, JoinMode joinMode) {
   IntervalPropertyState* other=dynamic_cast<IntervalPropertyState*> (&other0);
   ROSE_ASSERT(other!=0);
-  if(isBot()&&other->isBot())
+  if(other->isBot())
     return;
-  if(!isBot()&&other->isBot())
-    return;
-  if(isBot()&&!other->isBot())
+    
+  if(isBot())
     _bot=false;
+  
   for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
     VariableId varId=(*i).first;
     if(other->intervals.find(varId)==other->intervals.end()) {
@@ -66,6 +66,7 @@ void CodeThorn::IntervalPropertyState::combineInternal(Lattice& other0, JoinMode
       intervals[varId].join(other->intervals[varId], joinMode);
     }
   }
+  
   for(IntervalMapType::iterator i=other->intervals.begin();i!=other->intervals.end();++i) {
     VariableId varId=(*i).first;
     if(intervals.find(varId)==intervals.end()) {

@@ -82,6 +82,7 @@ CODETHORN_HEADER_FILES=\
   CppStdUtilities.h \
   CTIOLabeler.h \
   CtxCallStrings.h \
+  CtxSolver0.h \
   DataDependenceVisualizer.h \
   DataRaceDetection.h \
   defUseQuery.h \
@@ -189,6 +190,7 @@ CODETHORN_SOURCE_FILES=\
   CppStdUtilities.C \
   CTIOLabeler.C \
   CtxCallStrings.C \
+  CtxSolver0.C \
   DataDependenceVisualizer.C \
   defUseQuery.C \
   DataRaceDetection.C \
