@@ -38,6 +38,7 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
           case V_SgFunctionRefExp:      unparseFuncRef    (expr, info);          break;
           case V_SgVarRefExp:           unparseVarRef     (expr, info);          break;
           case V_SgPointerDerefExp:     unparsePtrDeref   (expr, info);          break;
+          case V_SgTypeExpression:      unparseTypeExpr   (expr, info);          break;
 
        // operators
           case V_SgUnaryOp:             unparseUnaryExpr  (expr, info);          break;
@@ -392,10 +393,47 @@ Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
            unparseVarRef(operand, info);
            break;
         default:
-           std::cout << "error: unparsePtrDeref() is unimplemented for " << operand->class_name() << std::endl;
+           std::cout << "error: unparsePtrDeref() is unimplemented for " << operand->class_name() << "\n";
            ROSE_ASSERT(false);
            break;
         }
+   }
+
+void
+Unparse_Jovial::unparseTypeExpr(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgTypeExpression* type_expr = isSgTypeExpression(expr);
+     ASSERT_not_null(type_expr);
+
+     SgType* type = type_expr->get_type();
+     ASSERT_not_null(type);
+
+     SgName name;
+
+     switch (type->variantT())
+        {
+        case V_SgJovialTableType:
+           {
+              name = isSgJovialTableType(type)->get_name();
+              break;
+           }
+        case V_SgEnumType:
+           {
+              name = isSgEnumType(type)->get_name();
+              break;
+           }
+        case V_SgTypedefType:
+           {
+              name = isSgTypedefType(type)->get_name();
+              break;
+           }
+        default:
+           std::cout << "error: unparseTypeExpr() is unimplemented for " << type->class_name() << "\n";
+           ROSE_ASSERT(false);
+           break;
+        }
+
+     curprint(name);
    }
 
 //----------------------------------------------------------------------------

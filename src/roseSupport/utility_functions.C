@@ -611,7 +611,7 @@ frontendShell (const std::vector<std::string>& argv)
               the error code.
  */
 int
-backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelagate )
+backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate )
    {
   // DQ (7/12/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Object Code Generation (backend):");
@@ -685,7 +685,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
           printf ("Calling project->unparse() \n");
 #endif
 
-          project->unparse(unparseFormatHelp,unparseDelagate);
+          project->unparse(unparseFormatHelp,unparseDelegate);
 
 #if 0
           printf ("DONE: Calling project->unparse() \n");
