@@ -6579,6 +6579,14 @@ SgFloatVal* SageBuilder::buildFloatVal(float value /*= 0.0*/)
   return result;
 }
 
+SgFloatVal* SageBuilder::buildFloatVal_nfi(float value)
+{
+  SgFloatVal* result = new SgFloatVal(value,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgFloatVal* SageBuilder::buildFloatVal_nfi(float value, const string& str)
 {
   SgFloatVal* result = new SgFloatVal(value,str);
@@ -6599,11 +6607,6 @@ SgIntVal* SageBuilder::buildIntVal(int value)
      SgIntVal* intValue= new SgIntVal(value,"");
      ROSE_ASSERT(intValue);
      setOneSourcePositionForTransformation(intValue);
-
-#if 0
-     printf ("In buildIntVal(value = %d): intValue = %p \n",value,intValue);
-#endif
-
      return intValue;
    }
 
@@ -6612,11 +6615,14 @@ SgIntVal* SageBuilder::buildIntValHex(int value)
      SgIntVal* intValue= new SgIntVal(value, (value >= 0 ? StringUtility::intToHex((unsigned int)value) : "-" + StringUtility::intToHex((unsigned int)(-value))));
      ROSE_ASSERT(intValue);
      setOneSourcePositionForTransformation(intValue);
+     return intValue;
+   }
 
-#if 0
-     printf ("In buildIntValHex(value = %d): intValue = %p \n",value,intValue);
-#endif
-
+SgIntVal* SageBuilder::buildIntVal_nfi(int value)
+   {
+     SgIntVal* intValue = new SgIntVal(value,"");
+     ROSE_ASSERT(intValue);
+     setOneSourcePositionNull(intValue);
      return intValue;
    }
 
@@ -6625,11 +6631,6 @@ SgIntVal* SageBuilder::buildIntVal_nfi(int value, const string& str)
      SgIntVal* intValue = new SgIntVal(value,str);
      ROSE_ASSERT(intValue);
      setOneSourcePositionNull(intValue);
-
-#if 0
-     printf ("In buildIntVal_nfi(value = %d,str = %s): intValue = %p \n",value,str.c_str(),intValue);
-#endif
-
      return intValue;
    }
 
