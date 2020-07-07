@@ -35,13 +35,7 @@ class RDAnalysis : public DFAnalysisBase {
   CodeThorn::LabelSet getPostRDs(Label lab, VariableId);
   virtual void initializeExtremalValue(Lattice* element);
 
-  void initialize(SgProject* root)
-  {
-    DFAnalysisBase::initialize( root,
-                                nullptr /* no existing abstraction layer */,
-                                true /* id mapping for array elements */
-                              );
-  }
+  void initialize(SgProject* root);
 
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice* elem);

@@ -26,22 +26,23 @@ void CodeThorn::IntervalPropertyState::toStream(ostream& os, VariableIdMapping* 
   }
 }
 
-bool CodeThorn::IntervalPropertyState::approximatedBy(Lattice& other0) {
+bool CodeThorn::IntervalPropertyState::approximatedBy(Lattice& other0) const {
   IntervalPropertyState* other=dynamic_cast<IntervalPropertyState*> (&other0);
   ROSE_ASSERT(other);
   if(isBot())
     return true;
   if(!isBot()&&other->isBot())
     return false;
-  for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
+  for(IntervalMapType::const_iterator i=intervals.begin();i!=intervals.end();++i) {
     VariableId varId=(*i).first;
-    if(!CodeThorn::NumberIntervalLattice::isSubIntervalOf(intervals[varId],other->intervals[varId]))
+    if(!CodeThorn::NumberIntervalLattice::isSubIntervalOf(const_cast<CodeThorn::IntervalPropertyState*>(this)->intervals[varId],
+                                                          other->intervals[varId]))
       return false;
   }
   return true;
 }
 
-bool CodeThorn::IntervalPropertyState::approximatedByAsymmetric(Lattice& other) {
+bool CodeThorn::IntervalPropertyState::approximatedByAsymmetric(Lattice& other) const {
   return approximatedBy(other);
 }
 

@@ -437,6 +437,9 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
        // (multiple function definitions for the same function due to EDG template function normalizations).
           nodelabel += string("\\n isFriend = ") + (genericDeclaration->get_declarationModifier().isFriend() ? "true " : "false ");
 
+       // DQ (4/2/2020): Need to add more detail to the graph output so that we can debug Cxx_tests/test2020_02.C.
+          nodelabel += string("\\n isExtern = ") + (genericDeclaration->get_declarationModifier().get_storageModifier().isExtern() ? "true " : "false ");
+          
           nodelabel += string("\\n") + name;
         }
 

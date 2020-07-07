@@ -58,6 +58,31 @@ void CodeThorn::ProgramLocationsReport::writeResultToStream(std::ostream& stream
     }
 }
 
+bool CodeThorn::ProgramLocationsReport::isNonRecordedLocation(Label lab) {
+  return !definitiveLocations.isElement(lab)&&!potentialLocations.isElement(lab);
+}
+
+LabelSet CodeThorn::ProgramLocationsReport::determineRecordFreeFunctions(CFAnalysis& cfAnalyzer, Flow& flow, LabelSet& ) {
+  LabelSet funEntries=cfAnalyzer.functionEntryLabels(flow);
+  LabelSet verifiedFunctions;
+  for (Label entryLab : funEntries) {
+    bool noLocationsRecorded=true;
+    LabelSet funLabelSet=cfAnalyzer.functionLabelSet(entryLab,flow);
+    // determine whether all labels are verified
+    for (Label funLab : funLabelSet) {
+      if(!isNonRecordedLocation(funLab)) {
+        noLocationsRecorded=false;
+        break;
+      }
+    }
+    if(noLocationsRecorded) {
+      // function has no violations
+      verifiedFunctions.insert(entryLab);
+    }
+  }
+  return verifiedFunctions;
+}
+
 void CodeThorn::ProgramLocationsReport::writeResultFile(string fileName, CodeThorn::Labeler* labeler) {
   std::ofstream myfile;
   myfile.open(fileName.c_str(),std::ios::out);

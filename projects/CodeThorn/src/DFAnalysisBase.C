@@ -40,6 +40,10 @@ void DFAnalysisBase::initializeSolver() {
                       *_transferFunctions);
 }
 
+Flow* DFAnalysisBase::getFlow() const {
+  return _flow;
+}
+
 Lattice* DFAnalysisBase::getPreInfo(Label lab) {
   return _analyzerDataPreInfo[lab.getId()];
 }
@@ -130,7 +134,7 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
 }
 
 void
-DFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer, bool variableIdForEachArrayElement) {
+DFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
   cout << "INIT: establishing program abstraction layer." << endl;
   if(programAbstractionLayer) {
     ROSE_ASSERT(_programAbstractionLayer==nullptr);
@@ -139,7 +143,6 @@ DFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbst
   } else {
     _programAbstractionLayer=new ProgramAbstractionLayer();
     _programAbstractionLayerOwner=true;
-    //_programAbstractionLayer->setModeArrayElementVariableId(variableIdForEachArrayElement);
     _programAbstractionLayer->initialize(root);
   }
   _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(getVariableIdMapping());
@@ -303,15 +306,7 @@ DFAnalysisBase::run() {
   solve();
 }
 
-// default identity function
-
-DFAnalysisBase::ResultAccess&
-DFAnalysisBase::getResultAccess() {
-  return _analyzerDataPreInfo;
-}
-
 #include <iostream>
-
 #include "AstAnnotator.h"
 #include <string>
 
@@ -331,7 +326,7 @@ Labeler* DFAnalysisBase::getLabeler() {
 }
 
 
-VariableIdMapping* DFAnalysisBase::getVariableIdMapping() {
+VariableIdMappingExtended* DFAnalysisBase::getVariableIdMapping() {
   return _programAbstractionLayer->getVariableIdMapping();
 }
 

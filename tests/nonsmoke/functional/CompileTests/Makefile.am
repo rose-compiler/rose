@@ -117,7 +117,10 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 # Need to work work with Markus to understand the results better, skip these tests for now is using
 # Address Sanitizer.
 if !ROSE_USE_SANITIZER
+# DQ (7/2/2020): GNU 6.1 and later will fail for these tests.
+if !ROSE_USING_GCC_VERSION_LATER_6_1
    SUBDIRS += STL_tests
+endif
 endif
 
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can

@@ -10,10 +10,10 @@ namespace CodeThorn {
 class IntervalPropertyState : public Lattice {
 public:
   IntervalPropertyState();
-  void toStream(std::ostream& os, VariableIdMapping* vim=0);
-  bool approximatedBy(Lattice& other);
-  bool approximatedByAsymmetric(Lattice& other);
-  void combine(Lattice& other);
+  void toStream(std::ostream& os, VariableIdMapping* vim=0) override;
+  bool approximatedBy(Lattice& other) const override;
+  bool approximatedByAsymmetric(Lattice& other) const override;
+  void combine(Lattice& other) override;
   void combineAsymmetric(Lattice& other);
  private:
   void combineInternal(Lattice& other, JoinMode joinMode);
@@ -36,7 +36,7 @@ public:
   void addArrayElements(VariableId,int number);
 #endif
   typedef std::map<VariableId,NumberIntervalLattice> IntervalMapType;
-  bool isBot() { return _bot; }
+  bool isBot() const override { return _bot; }
   void setBot() { _bot=true; }
   void setEmptyState();
  private:
