@@ -980,7 +980,9 @@ SgExpression* buildIntVal_nfi(int value = 0)
 
 SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope)
 {
-   return SageBuilder::buildVarRefExp_nfi(name, scope);
+   SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, scope);
+   SageInterface::setSourcePosition(var_ref);
+   return var_ref;
 }
 
 SgExpression* buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs)
