@@ -1271,7 +1271,7 @@ SageInterface::listHeaderFiles ( SgIncludeFile* includeFile )
           public:
                void visit (SgNode* node)
                   {
-                    printf ("In visit(): node = %p = %s \n",node,node->class_name().c_str());
+                    printf ("In listHeaderFiles visit(): node = %p = %s \n",node,node->class_name().c_str());
                     SgIncludeFile* includeFile = isSgIncludeFile(node);
                     if (includeFile != NULL)
                        {
@@ -20006,6 +20006,7 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
   SgInitializedName* name = NULL;
   SgExpression* nameExp = NULL;
   ROSE_ASSERT(current != NULL);
+
   if (isSgInitializedName(current))
   {
     name = isSgInitializedName(current);
@@ -21976,6 +21977,9 @@ SgFile* SageInterface::processFile(SgProject *project, string filename, bool unp
         project -> get_fileList_ptr() -> get_listOfFiles().pop_back(); // remove it from the list of files in the project
         ROSE_ASSERT(sourcefile != isSgSourceFile((*project)[filename]));
     }
+
+  // DQ (7/2/2020): Added assertion (fails for snippet tests).
+     ROSE_ASSERT(file->get_preprocessorDirectivesAndCommentsList() != NULL);
 
     return file;
 }
@@ -24291,7 +24295,7 @@ SageInterface::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node)
                void visit (SgNode* node)
                   {
 #if 0
-                    printf ("In visit(): node = %p = %s \n",node,node->class_name().c_str());
+                    printf ("In convertFunctionDefinitionsToFunctionPrototypes visit(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
                     SgSourceFile* temp_sourceFile = isSgSourceFile(node);
                     if (temp_sourceFile != NULL)
@@ -24708,7 +24712,7 @@ SageInterface::generateFunctionDefinitionsList(SgNode* node)
                void visit (SgNode* node)
                   {
 #if 0
-                    printf ("In visit(): node = %p = %s \n",node,node->class_name().c_str());
+                    printf ("In generateFunctionDefinitionsList visit(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
 #if 0
                     SgSourceFile* temp_sourceFile = isSgSourceFile(node);

@@ -1638,6 +1638,23 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
 #endif
 
 #if 0
+     printf ("Saving list of processed files to insure that files are not processed more than once! \n");
+#endif
+#if 0
+     static std::set<std::string> file_set;
+     if (file_set.find(fileName) == file_set.end())
+        {
+          file_set.insert(fileName);
+        }
+       else
+        {
+       // DQ (5/22/2020): We need to allow this in the narrow case of a source file that is being copied.
+          printf ("WARNING: fileName has been processed previously (allowed for source files being copied): %s \n",fileName.c_str());
+       // ROSE_ASSERT(false);
+        }
+#endif
+
+#if 0
   // DQ (8/18/2019): Trying to find where this is called in the processing of the header files.
      static int counter = 0;
      if (counter > 10)
@@ -1726,16 +1743,22 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
      ROSE_ASSERT(preprocessorInfoList->getFileName() != "");
 
 #if DEBUG_LEX_PASS || 0
-     printf ("In getPreprocessorDirectives(fileName = %s): preprocessorInfoList->size() = %d \n",fileName.c_str(),(int)preprocessorInfoList->size());
+     printf ("Leaving getPreprocessorDirectives(fileName = %s): preprocessorInfoList->size() = %d \n",fileName.c_str(),(int)preprocessorInfoList->size());
      printf (" --- preprocessorInfoList->getFileName() = %s \n",preprocessorInfoList->getFileName().c_str());
+     printf (" --- preprocessorInfoList->getList().size() = %zu \n",preprocessorInfoList->getList().size());
 #endif
 
   // DQ (9/29/2013): Added assertion (debugging token handling in ROSE).
      ROSE_ASSERT(preprocessorInfoList->get_rawTokenStream() != NULL);
 
 #if DEBUG_LEX_PASS || 0
-     printf ("In getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream() = %p \n",preprocessorInfoList->get_rawTokenStream());
-     printf ("In getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream()->size() = %" PRIuPTR " \n",preprocessorInfoList->get_rawTokenStream()->size());
+     printf ("Leaving getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream() = %p \n",preprocessorInfoList->get_rawTokenStream());
+     printf ("Leaving getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream()->size() = %" PRIuPTR " \n",preprocessorInfoList->get_rawTokenStream()->size());
+#endif
+
+#if 0
+     printf ("Exiting in getPreprocessorDirectives() \n");
+     ROSE_ASSERT(false);
 #endif
 
      return preprocessorInfoList;
