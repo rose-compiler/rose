@@ -18,11 +18,13 @@ class SgEnumVal;
 class SgExpression;
 class SgExprListExp;
 class SgExprStatement;
+class SgFunctionCallExp;
 class SgFunctionDeclaration;
 class SgFunctionDefinition;
 class SgFunctionParameterList;
 class SgFunctionParameterScope;
 class SgGlobal;
+class SgIfStmt;
 class SgInitializedName;
 class SgLocatedNode;
 class SgNamespaceDeclarationStatement;
@@ -194,6 +196,15 @@ public:
 namespace SageBuilderCpp17 {
 
    SgType* buildIntType();
+   SgExpression* buildIntVal_nfi(int);
+   SgExpression* buildExprListExp_nfi();
+   SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope = NULL);
+   SgExpression* buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression* buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression* buildMultiplyOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression* buildDivideOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression* buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride);
+   SgExpression* buildNullExpression_nfi();
 
 } // namespace SageBuilderCpp17
 } // namespace builder
