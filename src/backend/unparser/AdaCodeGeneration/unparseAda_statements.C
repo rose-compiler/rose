@@ -101,6 +101,7 @@ namespace
       prn(": ");
       unparseModifiers(*this, n);
       
+      ASSERT_not_null(first);
       unparser.unparseType(first->get_type(), info);
     }
     
