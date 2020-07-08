@@ -9,14 +9,14 @@ namespace Rose { namespace AST {
 
 // FIXME use std::tuple instead
 struct FunctionDeclTriplet {
-  SgDeclarationStatement * first_nondef_decl;
-  SgDeclarationStatement * defn_decl;
-  std::set<SgDeclarationStatement *> decls;
+  SgFunctionDeclaration * first_nondef_decl;
+  SgFunctionDeclaration * defn_decl;
+  std::set<SgFunctionDeclaration *> decls;
 };
 
-static SgSymbol * select_shared_function_symbol(std::string const & name, std::map< SgSymbol *, FunctionDeclTriplet > const & sym_map) {
+static SgFunctionSymbol * select_shared_function_symbol(std::string const & name, std::map< SgFunctionSymbol *, FunctionDeclTriplet > const & sym_map) {
   if (sym_map.size() == 1) { // No duplication across TU, skip it if it is a static (file scope)
-    SgDeclarationStatement * decl = sym_map.begin()->second.first_nondef_decl;
+    SgFunctionDeclaration * decl = sym_map.begin()->second.first_nondef_decl;
     ROSE_ASSERT(decl != NULL);
     SgScopeStatement * scope = decl->get_scope();
     ROSE_ASSERT(scope != NULL);
@@ -24,7 +24,7 @@ static SgSymbol * select_shared_function_symbol(std::string const & name, std::m
     bool has_file_visibility = ( isSgGlobal(scope) || isSgNamespaceDefinitionStatement(scope) ) && is_static_decl;
     return has_file_visibility ? NULL : sym_map.begin()->first;
   } else { // Duplication: select the symbol from defining TU or any
-    std::set<SgSymbol *> defn_syms;
+    std::set<SgFunctionSymbol *> defn_syms;
     std::set<SgSourceFile *> srcfiles;
     for (auto q: sym_map) {
       srcfiles.insert(SageInterface::getEnclosingSourceFile(q.first));
@@ -59,34 +59,34 @@ static SgSymbol * select_shared_function_symbol(std::string const & name, std::m
 class LinkFunctionAcrossFiles {
   private:
     struct DeclarationCollection : public ROSE_VisitTraversal {
-      std::set<SgDeclarationStatement *> decls;
+      std::set<SgFunctionDeclaration *> decls;
 
       void visit(SgNode * node) {
-        SgDeclarationStatement * decl = (SgDeclarationStatement *)node;
+        SgFunctionDeclaration * decl = (SgFunctionDeclaration *)node;
         decls.insert(decl);
       }
     } decls;
 
     struct SymbolCollection : public ROSE_VisitTraversal {
-      std::set<SgSymbol *> symbols;
+      std::set<SgFunctionSymbol *> symbols;
 
       void visit(SgNode * node) {
-        SgSymbol * sym = (SgSymbol *)node;
+        SgFunctionSymbol * sym = (SgFunctionSymbol *)node;
         symbols.insert(sym);
       }
     } symbols;
 
     void build_name_symbol_decls_map(
-      std::map< std::string, std::map< SgSymbol *, FunctionDeclTriplet > > & name_map
+      std::map< std::string, std::map< SgFunctionSymbol *, FunctionDeclTriplet > > & name_map
     ) const {
 
 //    std::cout << "#  LinkFunctionAcrossFiles::build_name_symbol_decls_map" << std::endl;
 
-      std::map<SgDeclarationStatement *, FunctionDeclTriplet> decl_triplet_map;
+      std::map<SgFunctionDeclaration *, FunctionDeclTriplet> decl_triplet_map;
       for (auto decl: decls.decls) {
 //      std::cout << "#    decl = " << std::hex << decl << " ( " << decl->class_name() << " )" << std::endl;
 
-        SgDeclarationStatement * first_nondef = decl->get_firstNondefiningDeclaration();
+        SgFunctionDeclaration * first_nondef = isSgFunctionDeclaration(decl->get_firstNondefiningDeclaration());
         ROSE_ASSERT(first_nondef != NULL);
         FunctionDeclTriplet & decl_triplet = decl_triplet_map[first_nondef];
         decl_triplet.decls.insert(decl);
@@ -100,7 +100,9 @@ class LinkFunctionAcrossFiles {
       for (auto sym: symbols.symbols) {
 //      std::cout << "#    sym = " << std::hex << sym << " ( " << sym->class_name() << " )" << std::endl;
 
-        SgDeclarationStatement * decl = isSgDeclarationStatement(sym->get_symbol_basis());
+        SgFunctionDeclaration * decl = isSgFunctionDeclaration(sym->get_declaration());
+        ROSE_ASSERT(decl != NULL);
+        decl = isSgFunctionDeclaration(decl->get_firstNondefiningDeclaration());
         ROSE_ASSERT(decl != NULL);
         if (decl_triplet_map.find(decl) == decl_triplet_map.end()) {
           std::cerr << "decl = " << std::hex << decl << " ( " << decl->class_name() << " )" << std::endl;
@@ -126,7 +128,7 @@ class LinkFunctionAcrossFiles {
       std::set<SgSymbol *> sym_del_set;
 
       // Build map of mangled-name to map of symbol (per TU) to declarations (nondef/defn/set)
-      std::map< std::string, std::map< SgSymbol *, FunctionDeclTriplet > > name_map;
+      std::map< std::string, std::map< SgFunctionSymbol *, FunctionDeclTriplet > > name_map;
       build_name_symbol_decls_map(name_map);
 
 //    std::cout << "#  LinkFunctionAcrossFiles::apply" << std::endl;
@@ -136,14 +138,14 @@ class LinkFunctionAcrossFiles {
 
 //      std::cout << "#    " << p.first << " -> " << p.second.size() << std::endl;
 
-        SgSymbol * symbol = select_shared_function_symbol(p.first, p.second);
+        SgFunctionSymbol * symbol = select_shared_function_symbol(p.first, p.second);
         if (symbol == NULL) continue; // Case of a declaration with file-scope
 
 //      std::cout << "#      symbol = " << std::hex << symbol << " ( " << symbol->class_name() << " )" << std::endl;
 
-        SgDeclarationStatement * first_nondef_decl = p.second[symbol].first_nondef_decl;
+        SgFunctionDeclaration * first_nondef_decl = p.second[symbol].first_nondef_decl;
         ROSE_ASSERT(first_nondef_decl != NULL);
-        SgDeclarationStatement * defn_decl = p.second[symbol].defn_decl;
+        SgFunctionDeclaration * defn_decl = p.second[symbol].defn_decl;
 
         SgScopeStatement * scope = first_nondef_decl->get_scope();
         ROSE_ASSERT(scope != NULL);
@@ -167,11 +169,13 @@ class LinkFunctionAcrossFiles {
           if (q.first != symbol) {
             sym_repl_map[q.first] = symbol;
             sym_del_set.insert(q.first);
+          } else {
+            symbol->set_declaration(first_nondef_decl);
           }
           for (auto r: q.second.decls) {
             r->set_firstNondefiningDeclaration(first_nondef_decl);
             // Deal with multiple definition: if not selected then it still see itself as the defining one
-            SgDeclarationStatement * self_defn_decl = r->get_definingDeclaration();
+            SgFunctionDeclaration * self_defn_decl = isSgFunctionDeclaration(r->get_definingDeclaration());
             r->set_definingDeclaration(self_defn_decl ? self_defn_decl : defn_decl);
           }
         }

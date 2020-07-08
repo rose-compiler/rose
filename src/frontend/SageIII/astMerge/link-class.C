@@ -9,14 +9,14 @@ namespace Rose { namespace AST {
 
 // FIXME use std::tuple instead
 struct ClassDeclTriplet {
-  SgDeclarationStatement * first_nondef_decl;
-  SgDeclarationStatement * defn_decl;
-  std::set<SgDeclarationStatement *> decls;
+  SgClassDeclaration * first_nondef_decl;
+  SgClassDeclaration * defn_decl;
+  std::set<SgClassDeclaration *> decls;
 };
 
-static SgSymbol * select_shared_class_symbol(std::string const & name, std::map< SgSymbol *, ClassDeclTriplet > const & sym_map) {
+static SgClassSymbol * select_shared_class_symbol(std::string const & name, std::map< SgClassSymbol *, ClassDeclTriplet > const & sym_map) {
   if (sym_map.size() == 1) { // No duplication across TU, skip it if it is a static (file scope)
-    SgDeclarationStatement * decl = sym_map.begin()->second.first_nondef_decl;
+    SgClassDeclaration * decl = sym_map.begin()->second.first_nondef_decl;
     ROSE_ASSERT(decl != NULL);
     SgScopeStatement * scope = decl->get_scope();
     ROSE_ASSERT(scope != NULL);
@@ -24,7 +24,7 @@ static SgSymbol * select_shared_class_symbol(std::string const & name, std::map<
     bool has_file_visibility = ( isSgGlobal(scope) || isSgNamespaceDefinitionStatement(scope) ) && is_static_decl;
     return has_file_visibility ? NULL : sym_map.begin()->first;
   } else { // Duplication: select the symbol from defining TU or any
-    std::set<SgSymbol *> defn_syms;
+    std::set<SgClassSymbol *> defn_syms;
     std::set<SgSourceFile *> srcfiles;
     for (auto q: sym_map) {
       srcfiles.insert(SageInterface::getEnclosingSourceFile(q.first));
@@ -59,34 +59,34 @@ static SgSymbol * select_shared_class_symbol(std::string const & name, std::map<
 class LinkClassAcrossFiles {
   private:
     struct DeclarationCollection : public ROSE_VisitTraversal {
-      std::set<SgDeclarationStatement *> decls;
+      std::set<SgClassDeclaration *> decls;
 
       void visit(SgNode * node) {
-        SgDeclarationStatement * decl = (SgDeclarationStatement *)node;
+        SgClassDeclaration * decl = (SgClassDeclaration *)node;
         decls.insert(decl);
       }
     } decls;
 
     struct SymbolCollection : public ROSE_VisitTraversal {
-      std::set<SgSymbol *> symbols;
+      std::set<SgClassSymbol *> symbols;
 
       void visit(SgNode * node) {
-        SgSymbol * sym = (SgSymbol *)node;
+        SgClassSymbol * sym = (SgClassSymbol *)node;
         symbols.insert(sym);
       }
     } symbols;
 
     void build_name_symbol_decls_map(
-      std::map< std::string, std::map< SgSymbol *, ClassDeclTriplet > > & name_map
+      std::map< std::string, std::map< SgClassSymbol *, ClassDeclTriplet > > & name_map
     ) const {
 
 //    std::cout << "#  LinkClassAcrossFiles::build_name_symbol_decls_map" << std::endl;
 
-      std::map<SgDeclarationStatement *, ClassDeclTriplet> decl_triplet_map;
+      std::map<SgClassDeclaration *, ClassDeclTriplet> decl_triplet_map;
       for (auto decl: decls.decls) {
 //      std::cout << "#    decl = " << std::hex << decl << " ( " << decl->class_name() << " )" << std::endl;
 
-        SgDeclarationStatement * first_nondef = decl->get_firstNondefiningDeclaration();
+        SgClassDeclaration * first_nondef = isSgClassDeclaration(decl->get_firstNondefiningDeclaration());
         ROSE_ASSERT(first_nondef != NULL);
         ClassDeclTriplet & decl_triplet = decl_triplet_map[first_nondef];
         decl_triplet.decls.insert(decl);
@@ -100,7 +100,9 @@ class LinkClassAcrossFiles {
       for (auto sym: symbols.symbols) {
 //      std::cout << "#    sym = " << std::hex << sym << " ( " << sym->class_name() << " )" << std::endl;
 
-        SgDeclarationStatement * decl = isSgDeclarationStatement(sym->get_symbol_basis());
+        SgClassDeclaration * decl = isSgClassDeclaration(sym->get_declaration());
+        ROSE_ASSERT(decl != NULL);
+        decl = isSgClassDeclaration(decl->get_firstNondefiningDeclaration());
         ROSE_ASSERT(decl != NULL);
         if (decl_triplet_map.find(decl) == decl_triplet_map.end()) {
           std::cerr << "decl = " << std::hex << decl << " ( " << decl->class_name() << " )" << std::endl;
@@ -122,7 +124,7 @@ class LinkClassAcrossFiles {
       std::set<SgSymbol *> sym_del_set;
 
       // Build map of mangled-name to map of symbol (per TU) to declarations (nondef/defn/set)
-      std::map< std::string, std::map< SgSymbol *, ClassDeclTriplet > > name_map;
+      std::map< std::string, std::map< SgClassSymbol *, ClassDeclTriplet > > name_map;
       build_name_symbol_decls_map(name_map);
 
 //    std::cout << "#  LinkClassAcrossFiles::apply" << std::endl;
@@ -132,14 +134,22 @@ class LinkClassAcrossFiles {
 
 //      std::cout << "#    " << p.first << " -> " << p.second.size() << std::endl;
 
-        SgSymbol * symbol = select_shared_class_symbol(p.first, p.second);
+        SgClassSymbol * symbol = select_shared_class_symbol(p.first, p.second);
         if (symbol == NULL) continue; // Case of a declaration with file-scope
 
 //      std::cout << "#      symbol = " << std::hex << symbol << " ( " << symbol->class_name() << " )" << std::endl;
 
-        SgDeclarationStatement * first_nondef_decl = p.second[symbol].first_nondef_decl;
+        SgClassDeclaration * first_nondef_decl = p.second[symbol].first_nondef_decl;
         ROSE_ASSERT(first_nondef_decl != NULL);
-        SgDeclarationStatement * defn_decl = p.second[symbol].defn_decl;
+        SgClassDeclaration * defn_decl = p.second[symbol].defn_decl;
+
+        // Class type should have been merged by sharing
+        // We only need to change the declaration once (as it might have pointed to another first-non-def)
+        SgClassDeclaration * xdecl = isSgClassDeclaration(first_nondef_decl);
+        ROSE_ASSERT(xdecl != NULL);
+        SgClassType * xtype = xdecl->get_type();
+        ROSE_ASSERT(xtype != NULL);
+        xtype->set_declaration(first_nondef_decl);
 
         SgScopeStatement * scope = first_nondef_decl->get_scope();
         ROSE_ASSERT(scope != NULL);
@@ -163,11 +173,13 @@ class LinkClassAcrossFiles {
           if (q.first != symbol) {
             sym_repl_map[q.first] = symbol;
             sym_del_set.insert(q.first);
+          } else {
+            symbol->set_declaration(first_nondef_decl);
           }
           for (auto r: q.second.decls) {
             r->set_firstNondefiningDeclaration(first_nondef_decl);
             // Deal with multiple definition: if not selected then it still see itself as the defining one
-            SgDeclarationStatement * self_defn_decl = r->get_definingDeclaration();
+            SgClassDeclaration * self_defn_decl = isSgClassDeclaration(r->get_definingDeclaration());
             r->set_definingDeclaration(self_defn_decl ? self_defn_decl : defn_decl);
           }
         }
