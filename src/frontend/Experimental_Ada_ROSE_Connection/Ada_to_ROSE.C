@@ -405,6 +405,12 @@ namespace // local declarations
     return SG_DEREF(sb::buildFunctionType(sb::buildVoidType(), &lst));
   }
   
+  SgArrayType& mkArrayType(SgType& comptype, SgExprListExp& indices)
+  {
+    return SG_DEREF(sb::buildArrayType(&comptype, &indices));
+  }
+  
+  
   //
   // Statement Makers
 
@@ -1047,6 +1053,13 @@ namespace // local declarations
 
   //
   // auxiliary classes and functions
+  
+  /// \brief tests whether the link in an Asis node is valid (set)
+  ///        or incomplete.
+  /// \note  function should become obsolete eventually. 
+  //~ inline
+  bool isInvaldId(int id) { return id == -1; }
+  
 
   /// \brief resolves all goto statements to labels
   ///        at the end of procedures or functions.
@@ -1872,6 +1885,12 @@ namespace // local declarations
   SgType&
   getDefinitionTypeID(Element_ID defid, AstContext ctx)
   {
+    if (isInvaldId(defid))
+    {
+      logWarn() << "undefined type id: " << defid << std::endl;
+      return SG_DEREF(sb::buildVoidType());
+    }
+    
     Element_Struct&     elem = retrieveAs<Element_Struct>(asisMap, defid);
     ROSE_ASSERT(elem.Element_Kind == A_Definition);
     
@@ -1910,6 +1929,7 @@ namespace // local declarations
     ROSE_ASSERT(  decl.Declaration_Kind == A_Variable_Declaration
                || decl.Declaration_Kind == A_Constant_Declaration
                || decl.Declaration_Kind == A_Component_Declaration
+               || decl.Declaration_Kind == A_Deferred_Constant_Declaration
                );
 
     return getDefinitionTypeID(decl.Object_Declaration_View, ctx);
@@ -2016,6 +2036,19 @@ namespace // local declarations
           break;
         }
         
+      case An_Unconstrained_Array_Definition:      // 3.6(2)
+        {
+          ElemIdRange                indicesAsis = idRange(typenode.Index_Subtype_Definitions);
+          std::vector<SgExpression*> indicesSeq  = traverseIDs(indicesAsis, asisMap, ExprListCreator(ctx));
+          SgExprListExp&             indicesAst  = SG_DEREF(sb::buildExprListExp(indicesSeq));
+          SgType&                    compType    = getDefinitionTypeID(typenode.Array_Component_Definition, ctx);
+          
+          res.n = &mkArrayType(compType, indicesAst);
+          /* unused fields:
+          */
+          break ;          
+        }
+        
       case A_Tagged_Record_Type_Definition:        // 3.8(2)     -> Trait_Kinds
         {
           SgClassDefinition& def = getRecordBodyID(typenode.Record_Definition, ctx);
@@ -2039,7 +2072,6 @@ namespace // local declarations
       case A_Root_Type_Definition:                 // 3.5.4(14):  3.5.6(3)
       case An_Ordinary_Fixed_Point_Definition:     // 3.5.9(3)
       case A_Decimal_Fixed_Point_Definition:       // 3.5.9(6)
-      case An_Unconstrained_Array_Definition:      // 3.6(2)
       case A_Constrained_Array_Definition:         // 3.6(2)
       case A_Record_Type_Definition:               // 3.8(2)     -> Trait_Kinds
       //  //|A2005 start
@@ -2556,7 +2588,7 @@ namespace // local declarations
   SgExpression&
   getExprID_opt(Element_ID el, AstContext ctx)
   {
-    if (el == -1) 
+    if (isInvaldId(el)) 
     {
       logWarn() << "unintialized expression id -1" << std::endl;
       return SG_DEREF( sb::buildNullExpression() );
@@ -2570,7 +2602,7 @@ namespace // local declarations
   SgAdaRangeConstraint&
   getRangeConstraint(Element_ID el, AstContext ctx)
   {
-    if (el == -1) 
+    if (isInvaldId(el)) 
     {
       logWarn() << "Uninitialized element [range constraint]" << std::endl;
       return mkAdaRangeConstraint(mkRangeExp());
@@ -2678,6 +2710,9 @@ namespace // local declarations
   SgExpression*
   getVarInit(Declaration_Struct& decl, AstContext ctx)
   {
+    if (decl.Declaration_Kind == A_Deferred_Constant_Declaration)
+      return nullptr;
+    
     ROSE_ASSERT(  decl.Declaration_Kind == A_Variable_Declaration
                || decl.Declaration_Kind == A_Constant_Declaration
                || decl.Declaration_Kind == A_Parameter_Specification
@@ -3256,6 +3291,7 @@ namespace // local declarations
           break;
         }
       
+      case A_Deferred_Constant_Declaration:          // 3.3.1(6):7.4(2) -> Trait_Kinds
       case A_Constant_Declaration:
         {
           handleVarCstDecl(decl, ctx, isPrivate, tyConstify, elem);
@@ -3426,19 +3462,52 @@ namespace // local declarations
           break;
         }
         
+/* 
+ * only for Ada 2012
+ *         
+      case An_Expression_Function_Declaration:       // 6.8
+        {
+          / * unhandled fields - 2012 feature
+          bool                           Is_Not_Null_Return;
+          Parameter_Specification_List   Parameter_Profile;
+          Element_ID                     Result_Profile;
+          Expression_ID                  Result_Expression;
+          bool                           Is_Overriding_Declaration;
+          bool                           Is_Not_Overriding_Declaration;
+          Declaration_ID                 Corresponding_Declaration;
+          Type_Definition_ID             Corresponding_Type;
+          bool                           Is_Dispatching_Operation;
+          * /
+                  
+          break ;
+        }
+*/      
+      
+      
+/*          
+      case A_Package_Renaming_Declaration:           // 8.5.3(2)
+        {
+          Declaration_ID                 Corresponding_Declaration;
+          Expression_ID                  Renamed_Entity;
+          Expression_ID                  Corresponding_Base_Entity;
+          
+          ROSE_ASSERT(false);
+          break ;         
+        }
+*/          
+        
       case A_Choice_Parameter_Specification:         // 11.2(4)
         {
           // handled in handleExceptionHandler
           ROSE_ASSERT(false);
           break;
         }
-
+        
       case Not_A_Declaration: /* break; */           // An unexpected element
       case A_Protected_Type_Declaration:             // 9.4(2)
       case An_Incomplete_Type_Declaration:           // 3.2.1(2):3.10(2)
       case A_Tagged_Incomplete_Type_Declaration:     //  3.10.1(2)
       case A_Private_Extension_Declaration:          // 3.2.1(2):7.3(3) -> Trait_Kinds
-      case A_Deferred_Constant_Declaration:          // 3.3.1(6):7.4(2) -> Trait_Kinds
       case A_Single_Task_Declaration:                // 3.3.1(2):9.1(3)
       case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
       case An_Enumeration_Literal_Specification:     // 3.5.1(3)
@@ -3448,10 +3517,8 @@ namespace // local declarations
       case A_Return_Variable_Specification:          // 6.5
       case A_Return_Constant_Specification:          // 6.5
       case A_Null_Procedure_Declaration:             // 6.7
-      case An_Expression_Function_Declaration:       // 6.8
       case An_Object_Renaming_Declaration:           // 8.5.1(2)
       case An_Exception_Renaming_Declaration:        // 8.5.2(2)
-      case A_Package_Renaming_Declaration:           // 8.5.3(2)
       case A_Procedure_Renaming_Declaration:         // 8.5.4(2)
       case A_Function_Renaming_Declaration:          // 8.5.4(2)
       case A_Generic_Package_Renaming_Declaration:   // 8.5.5(2)
