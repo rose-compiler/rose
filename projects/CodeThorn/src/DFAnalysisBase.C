@@ -9,10 +9,16 @@
 #include "AnalysisAbstractionLayer.h"
 #include "ExtractFunctionArguments.h"
 #include "FunctionNormalization.h"
-//#include "Normalization.h"
 
-using namespace CodeThorn;
+// available solvers
+#include "PASolver1.h" 
+#include "CtxSolver0.h" 
+
+
 using namespace std;
+
+namespace CodeThorn 
+{
 
 DFAnalysisBase::DFAnalysisBase()
 {
@@ -25,19 +31,35 @@ DFAnalysisBase::~DFAnalysisBase() {
   if(_programAbstractionLayer && _programAbstractionLayerOwner)
     delete _programAbstractionLayer;
 }
-void DFAnalysisBase::initializeSolver() {
+
+void DFAnalysisBase::initializeSolver(bool defaultSolver) {
   ROSE_ASSERT(&_workList);
   ROSE_ASSERT(getInitialElementFactory());
   ROSE_ASSERT(&_analyzerDataPreInfo);
   ROSE_ASSERT(&_analyzerDataPostInfo);
   ROSE_ASSERT(getFlow());
   ROSE_ASSERT(&_transferFunctions);
-  _solver=new CodeThorn::PASolver1(_workList,
-                      _analyzerDataPreInfo,
-                      _analyzerDataPostInfo,
-                      *getInitialElementFactory(),
-                      *getFlow(),
-                      *_transferFunctions);
+  
+  if (defaultSolver) {
+    _solver = new PASolver1( _workList,
+                             _analyzerDataPreInfo,
+                             _analyzerDataPostInfo,
+                             *getInitialElementFactory(),
+                             *getFlow(),
+                             *_transferFunctions
+                           );
+  } else {
+    _solver = new CtxSolver0( _workList,
+                              _analyzerDataPreInfo,
+                              _analyzerDataPostInfo,
+                              *getInitialElementFactory(),
+                              *getFlow(),
+                              *_transferFunctions,
+                              *getLabeler()
+                            );
+  }                   
+  
+  ROSE_ASSERT(_solver);
 }
 
 Flow* DFAnalysisBase::getFlow() const {
@@ -442,3 +464,4 @@ void DFAnalysisBase::setSkipUnknownFunctionCalls(bool defer) {
   }
 }
 
+}

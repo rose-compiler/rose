@@ -53,7 +53,12 @@ CodeThorn::PASolver1::computePostInfo(Label lab,Lattice& info) {
 // runs until worklist is empty
 void
 CodeThorn::PASolver1::runSolver() {
+  constexpr uint64_t REPORT_INTERVAL = (1 << 12);
+  
   TimeMeasurement solverTimer;
+  uint64_t        nodeCounter = 0;
+  double          splitTime   = 0;
+  
   cout<<"INFO: solver 1 started."<<endl;
   solverTimer.start();
   //ROSE_ASSERT(!_workList.isEmpty()); empty files (programs of zero length)
@@ -137,9 +142,24 @@ CodeThorn::PASolver1::runSolver() {
       }
     }
     delete info;
+    
+    if (((++nodeCounter) % REPORT_INTERVAL) == 0)
+    {
+      const double oldSplitTime = splitTime;
+       
+      splitTime = solverTimer.getTimeDurationAndKeepRunning().seconds();
+      
+      std::cerr << "INFO: " << static_cast<size_t>(REPORT_INTERVAL / (splitTime-oldSplitTime)) << " nodes/s - "
+                << nodeCounter << '/' << splitTime << '.' 
+		<< std::endl; 
+    }
   }
-  cout<<"INFO: solver 1 finished after " << static_cast<unsigned long>(solverTimer.getTimeDurationAndStop().milliSeconds()) << "ms."<<endl;
-  // solverTimer.stop(); (PP 02/27/20) getTimeDurationAndStop calls stop
+  
+  TimeDuration endTime = solverTimer.getTimeDurationAndStop();
+  
+  cout<<"INFO: solver 1 finished after " << static_cast<size_t>(endTime.milliSeconds()) << "ms."<<endl;
+  cout<<"INFO: " << nodeCounter << " nodes analyzed (" << static_cast<size_t>(nodeCounter / endTime.seconds())
+      <<" nodes/s)" << endl; 
 }
 
 #endif
