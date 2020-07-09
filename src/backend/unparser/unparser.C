@@ -5608,7 +5608,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
              }
             else
              {
-#if 1
+#if 0
                printf ("project->get_fileList_ptr()->get_listOfFiles()[%zu] is not a SgSourceFile \n",i);
 #endif
              }
