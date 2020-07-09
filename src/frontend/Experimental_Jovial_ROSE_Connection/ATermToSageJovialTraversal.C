@@ -5443,24 +5443,21 @@ ATbool ATermToSageJovialTraversal::traverse_ExitStatement(ATerm term)
    ATerm t_labels;
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
-   SgUntypedStatement* stmt;
+
+   SgStopOrPauseStatement* exit_stmt = nullptr;
 
    if (ATmatch(term, "ExitStatement(<term>)", &t_labels)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
-
-      SgUntypedExitStatement* exit_stmt = new SgUntypedExitStatement("");
-      setSourcePosition(exit_stmt, term);
-
-      stmt = convert_Labels(labels, locations, exit_stmt);
    }
    else return ATfalse;
 
-//TODO_STATEMENTS
-#if 0
-   stmt_list->get_stmt_list().push_back(stmt);
-#endif
+   // Begin SageTreeBuilder
+   sage_tree_builder.Enter(exit_stmt, boost::none, std::string("exit"));
+
+   // End SageTreeBuilder
+   sage_tree_builder.Leave(exit_stmt);
 
    return ATtrue;
 }
