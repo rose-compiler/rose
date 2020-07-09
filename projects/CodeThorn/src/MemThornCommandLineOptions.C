@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "CodeThornException.h"
-#include "VxThornCommandLineOptions.h"
+#include "MemThornCommandLineOptions.h"
 #include "CppStdUtilities.h"
 
 #include <string>
@@ -47,15 +47,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   po::options_description visualizationOptions("Visualization options");
   po::options_description infoOptions("Program information options");
 
-
-  hiddenOptions.add_options()
-    ("max-transitions-forced-top1",po::value< int >(&ctOpt.maxTransitionsForcedTop1)->default_value(-1),"Performs approximation after <arg> transitions (only exact for input,output).")
-    ("max-transitions-forced-top2",po::value< int >(&ctOpt.maxTransitionsForcedTop2)->default_value(-1),"Performs approximation after <arg> transitions (only exact for input,output,df).")
-    ("max-transitions-forced-top3",po::value< int >(&ctOpt.maxTransitionsForcedTop3)->default_value(-1),"Performs approximation after <arg> transitions (only exact for input,output,df,ptr-vars).")
-    ("max-transitions-forced-top4",po::value< int >(&ctOpt.maxTransitionsForcedTop4)->default_value(-1),"Performs approximation after <arg> transitions (exact for all but inc-vars).")
-    ("max-transitions-forced-top5",po::value< int >(&ctOpt.maxTransitionsForcedTop5)->default_value(-1),"Performs approximation after <arg> transitions (exact for input,output,df and vars with 0 to 2 assigned values)).")
-    ;
-
   passOnToRoseOptions.add_options()
     (",I", po::value< vector<string> >(&ctOpt.includeDirs),"Include directories.")
     (",D", po::value< vector<string> >(&ctOpt.preProcessorDefines),"Define constants for preprocessor.")
@@ -79,11 +70,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ;
 
   experimentalOptions.add_options()
-    ("solver",po::value< int >(&ctOpt.solver)->default_value(5),"Set solver <arg> to use (one of 1,2,3,...).")
     ("normalize-all", po::value< bool >(&ctOpt.normalizeAll)->default_value(true)->implicit_value(true),"Normalize all expressions before analysis.")
     ("normalize-fcalls", po::value< bool >(&ctOpt.normalizeFCalls)->default_value(false)->implicit_value(true),"Normalize only expressions with function calls.")
     ("eliminate-compound-assignments", po::value< bool >(&ctOpt.eliminateCompoundStatements)->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")
-    ("stg-trace-file", po::value< string >(&ctOpt.stgTraceFileName), "Generate STG computation trace and write to file <arg>.")
     ("arrays-not-in-state", po::value< bool >(&ctOpt.arraysNotInState)->default_value(false)->implicit_value(true),"Arrays are not represented in state. Only correct if all arrays are read-only (manual optimization - to be eliminated).")
     ("in-state-string-literals",po::value< bool >(&ctOpt.inStateStringLiterals)->default_value(true)->implicit_value(true),"create string literals in initial state.")
     ("std-functions",po::value< bool >(&ctOpt.stdFunctions)->default_value(true)->implicit_value(true),"model std function semantics (malloc, memcpy, etc). Must be turned off explicitly.")
@@ -99,15 +88,11 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("print-violations",po::value< bool >(&ctOpt.printViolations)->default_value(false)->implicit_value(true),"Print detected violations on stdout during analysis (this can slow down the analysis significantly)")
     ("options-set",po::value< int >(&ctOpt.optionsSet)->default_value(2)->implicit_value(0),"Use a predefined set of default options (2:default|1..3:abstract)|11:concrete)).")
     ("callstring-length",po::value< int >(&ctOpt.callStringLength)->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
-    ("unit-test-expr-analyzer", po::value< bool >(&ctOpt.exprEvalTest)->default_value(false)->implicit_value(true), "Run expr eval test (with input program).")
     ;
 
   visibleOptions.add_options()            
     ("config,c", po::value< string >(&ctOpt.configFileName), "Use the configuration specified in file <arg>.")
     ("colors", po::value< bool >(&ctOpt.colors)->default_value(true)->implicit_value(true),"Use colors in output.")
-    ("csv-stats",po::value< string >(&ctOpt.csvStatsFileName),"Output statistics into a CSV file <arg>.")
-    ("display-diff",po::value< int >(&ctOpt.displayDiff)->default_value(-1),"Print statistics every <arg> computed estates.")
-    ("exploration-mode",po::value< string >(&ctOpt.explorationMode), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync)")
     ("quiet", po::value< bool >(&ctOpt.quiet)->default_value(false)->implicit_value(true), "Produce no output on screen.")
     ("help,h", "Produce this help message.")
     ("help-all", "Show all help options.")
@@ -130,20 +115,11 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("internal-checks", po::value< bool >(&ctOpt.internalChecks)->default_value(false)->implicit_value(true), "Run internal consistency checks (without input program).")
     ("cl-args",po::value< string >(&ctOpt.analyzedProgramCLArgs),"Specify command line options for the analyzed program (as one quoted string).")
     ("log-level",po::value< string >(&ctOpt.logLevel)->default_value("none,>=error"),"Set the log level (\"x,>=y\" with x,y in: (none|info|warn|trace|error|fatal|debug)).")
-    ("max-transitions",po::value< int >(&ctOpt.maxTransitions)->default_value(-1),"Passes (possibly) incomplete STG to verifier after <arg> transitions have been computed.")
-    ("max-memory",po::value< long int >(&ctOpt.maxMemory)->default_value(-1),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached.")
-    ("max-time",po::value< long int >(&ctOpt.maxTime)->default_value(-1),"Stop computing the STG after an analysis time of approximately <arg> seconds has been reached.")
-    ("max-transitions-forced-top",po::value< int >(&ctOpt.maxTransitionsForcedTop)->default_value(-1),"Performs approximation after <arg> transitions.")
-    ("max-memory-forced-top",po::value< long int >(&ctOpt.maxMemoryForcedTop)->default_value(-1),"Performs approximation after <arg> bytes of physical memory have been used.")
-    ("max-time-forced-top",po::value< long int >(&ctOpt.maxTimeForcedTop)->default_value(-1),"Performs approximation after an analysis time of approximately <arg> seconds has been reached.")
-    ("resource-limit-diff",po::value< int >(&ctOpt. resourceLimitDiff)->default_value(-1),"Check if the resource limit is reached every <arg> computed estates.")
-    ("run-rose-tests",po::value< bool >(&ctOpt.runRoseAstChecks)->default_value(false)->implicit_value(true), "Run ROSE AST tests.")
     ("analyzed-functions-csv",po::value<std::string>(&ctOpt.analyzedFunctionsCSVFileName),"Write list of analyzed functions to CSV file [arg].")
     ("analyzed-files-csv",po::value<std::string>(&ctOpt.analyzedFilesCSVFileName),"Write list of analyzed files (with analyzed functions) to CSV file [arg].")
     ("external-functions-csv",po::value<std::string>(&ctOpt.externalFunctionsCSVFileName),"Write list of external functions to CSV file [arg].")
-    ("threads",po::value< int >(&ctOpt.threads)->default_value(1),"(experimental) Run analyzer in parallel using <arg> threads.")
     ("unparse",po::value< bool >(&ctOpt.unparse)->default_value(false)->implicit_value(true),"unpare code (only relevant for inlining, normalization, and lowering)")
-    ("version,v",po::value< bool >(&ctOpt.displayVersion)->default_value(false)->implicit_value(true), "Display the version of CodeThorn.")
+    ("version,v",po::value< bool >(&ctOpt.displayVersion)->default_value(false)->implicit_value(true), "Display the program version.")
     ;
 
   infoOptions.add_options()
@@ -192,8 +168,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     cout << infoOptions << "\n";
     exit(0);
   } else if(ctOpt.displayVersion) {
-    cout << "VxThorn version "<<version<<endl;
-    cout << "Written by Markus Schordan, Marc Jasper\n";
+    cout << "MemThorn version "<<version<<endl;
+    cout << "Written by Markus Schordan\n";
     exit(0);
   }
 

@@ -41,7 +41,6 @@ namespace CodeThorn {
   
 } // end of namespace CodeThorn
 
-namespace CodeThorn {
 // template implementation code
 template<typename Element>
 bool CodeThorn::WorkListSeq<Element>::isEmpty() const { 
@@ -85,8 +84,6 @@ Element CodeThorn::WorkListSeq<Element>::examine() const {
     throw CodeThorn::Exception("Error: attempted to examine next element in empty work list.");
     
   return workList.front();
-}
-
 }
 
 #endif

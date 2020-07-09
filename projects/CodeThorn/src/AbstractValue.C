@@ -15,12 +15,15 @@
 #include "Miscellaneous2.h"
 #include "CodeThornException.h"
 #include "VariableIdMapping.h"
+#include "CodeThornLib.h"
 
 using namespace std;
 using namespace CodeThorn;
+using namespace Sawyer::Message; // required for logger[WARN]
 
 VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
 bool AbstractValue::strictChecking=true;
+bool AbstractValue::byteMode=false;
 
 istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   value.fromStream(is);
@@ -34,6 +37,12 @@ AbstractValue::AbstractValue():valueType(AbstractValue::BOT),intValue(0) {}
 // type conversion
 // TODO: represent value 'undefined' here
 AbstractValue::AbstractValue(VariableId varId):valueType(AbstractValue::PTR),variableId(varId),intValue(0) {
+  if(byteMode) {
+    // also set element type size
+    ROSE_ASSERT(_variableIdMapping);
+    size_t elemSize=_variableIdMapping->getElementSize(varId);
+    setElementTypeSize(elemSize);
+  }
 }
 
 AbstractValue::AbstractValue(Label lab):valueType(AbstractValue::FUN_PTR),label(lab) {}
@@ -62,14 +71,14 @@ CodeThorn::TypeSize AbstractValue::calculateTypeSize(CodeThorn::BuiltInType btyp
   return AbstractValue::_variableIdMapping->getTypeSize(btype);
 }
 
-void AbstractValue::setValue(long long int val) {
-  ROSE_ASSERT(typeSize!=0);
+void AbstractValue::setValue(long int val) {
+  ROSE_ASSERT(getTypeSize()!=0);
   // TODO: truncate here if necessary
   intValue=val;
 }
 
 void AbstractValue::setValue(double fval) {
-  ROSE_ASSERT(typeSize!=0);
+  ROSE_ASSERT(getTypeSize()!=0);
   // TODO: adapt here if necessary
   floatValue=fval;
 }
@@ -80,7 +89,7 @@ AbstractValue AbstractValue::createIntegerValue(CodeThorn::BuiltInType btype, lo
   return aval;
 }
 
-void AbstractValue::initInteger(CodeThorn::BuiltInType btype, long long int ival) {
+void AbstractValue::initInteger(CodeThorn::BuiltInType btype, long int ival) {
   valueType=AbstractValue::INTEGER;
   setTypeSize(calculateTypeSize(btype));
   setValue(ival);
@@ -160,6 +169,13 @@ AbstractValue::createAddressOfArray(CodeThorn::VariableId arrayVarId) {
 AbstractValue 
 AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, 
                                              AbstractValue index) {
+#if 0
+  cout<<"AbstractValue::createAddressOfArrayElement:arrayVariable:"<<arrayVariableId.toString(_variableIdMapping)
+      <<" index:"<<index.toString(_variableIdMapping)
+      <<" #"<<_variableIdMapping->getNumberOfElements(arrayVariableId)
+      <<" elemsize:"<<_variableIdMapping->getElementSize(arrayVariableId)
+      <<endl;
+#endif
   AbstractValue val;
   if(index.isTop()) {
     return Top();
@@ -170,6 +186,12 @@ AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId
     val.variableId=arrayVariableId;
     ROSE_ASSERT(index.isConstInt());
     val.intValue=index.getIntValue();
+    if(AbstractValue::byteMode) {
+      // multiple with type size
+      size_t elemSize=_variableIdMapping->getElementSize(arrayVariableId);
+      val.intValue=index.getIntValue()*elemSize;
+      val.setElementTypeSize(elemSize);
+    }
     return val;
   } else {
     cerr<<"Error: createAddressOfArray: unknown index type."<<endl;
@@ -246,7 +268,7 @@ AbstractValue AbstractValue::operatorNot() {
   case AbstractValue::UNDEFINED: tmp=*this;break;
   default:
     // other cases should not appear because there must be a proper cast
-    // TODO: logger[WARN]<<"AbstractValue::operatorNot: unhandled abstract value "<<tmp.toString()<<". Assuming any value as result."<<endl;
+    SAWYER_MESG(logger[WARN])<<"AbstractValue::operatorNot: unhandled abstract value "<<tmp.toString()<<". Assuming any value as result."<<endl;
     tmp=Top();
   }
   return tmp;
@@ -322,7 +344,10 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
         if(c1.getIntValue()!=c2.getIntValue()) {
           return c1.getIntValue()<c2.getIntValue();
         } else {
-          return c1.getTypeSize()<c2.getTypeSize();
+          if(c1.getTypeSize()!=c2.getTypeSize())
+            return c1.getTypeSize()<c2.getTypeSize();
+          else
+            return c1.getElementTypeSize()<c2.getElementTypeSize();
         }
       }
     } else if (c1.isBot()==c2.isBot()) {
@@ -340,7 +365,7 @@ bool CodeThorn::strictWeakOrderingIsEqual(const AbstractValue& c1, const Abstrac
     if(c1.isConstInt() && c2.isConstInt())
       return c1.getIntValue()==c2.getIntValue() && c1.getTypeSize()==c2.getTypeSize();
     else if(c1.isPtr() && c2.isPtr()) {
-      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue() && c1.getTypeSize()==c2.getTypeSize();
+      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue() && c1.getTypeSize()==c2.getTypeSize() && c1.getElementTypeSize()==c2.getElementTypeSize();
     } else if(c1.isFunctionPtr() && c2.isFunctionPtr()) {
       return c1.getLabel()==c2.getLabel();
     } else {
@@ -388,6 +413,7 @@ AbstractValue AbstractValue::operatorEq(AbstractValue other) const {
   } else if(other.valueType==BOT) { 
     return *this;
   } else if(isPtr() && other.isPtr()) {
+    // element type size is not relevant in byteMode when comparing pointers
     return AbstractValue(variableId==other.variableId && intValue==other.intValue && getTypeSize()==other.getTypeSize());
   } else if(isConstInt() && other.isConstInt()) {
     // includes case for two null pointer values
@@ -420,7 +446,7 @@ AbstractValue AbstractValue::operatorLess(AbstractValue other) const {
     }
   }
   if(!(isConstInt()&&other.isConstInt())) {
-    cerr<<"WARNING: operatorLess: "<<toString()<<" < "<<other.toString()<<" - assuming arbitrary result."<<endl;
+    SAWYER_MESG(logger[WARN])<<"operatorLess: "<<toString()<<" < "<<other.toString()<<" - assuming arbitrary result."<<endl;
     return AbstractValue::createTop();
   }
   return getIntValue()<other.getIntValue();
@@ -614,6 +640,8 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
         <<variableId.toUniqueString(vim)
         <<","
         <<getIntValue()
+        <<","
+        <<getElementTypeSize()
         <<")";
       return ss.str();
       //    } else {
@@ -680,11 +708,22 @@ AbstractValue::ValueType AbstractValue::getValueType() const {
 }
 
 CodeThorn::TypeSize AbstractValue::getTypeSize() const {
-  return typeSize;
+  if(typeSize==0)
+    return getElementTypeSize();
+  else
+    return typeSize;
 }
 
 void AbstractValue::setTypeSize(CodeThorn::TypeSize typeSize) {
   this->typeSize=typeSize;
+}
+
+CodeThorn::TypeSize AbstractValue::getElementTypeSize() const {
+  return elementTypeSize;
+}
+
+void AbstractValue::setElementTypeSize(CodeThorn::TypeSize typeSize) {
+  this->elementTypeSize=typeSize;
 }
 
 AbstractValue AbstractValue::getIndexValue() const { 
@@ -701,7 +740,7 @@ int AbstractValue::getIndexIntValue() const {
     throw CodeThorn::Exception("Error: AbstractValue::getIndexIntValue operation failed.");
   }
   else 
-    return intValue;
+    return (int)intValue;
 }
 
 int AbstractValue::getIntValue() const { 
@@ -783,11 +822,31 @@ AbstractValue AbstractValue::operatorAdd(AbstractValue& a,AbstractValue& b) {
     return a;
   if(a.isPtr() && b.isConstInt()) {
     AbstractValue val=a;
-    val.intValue+=b.intValue;
+    if(byteMode) {
+      int pointerElementSize=0;
+      if(a.getElementTypeSize()>0) {
+        pointerElementSize=a.getElementTypeSize();
+      } else {
+        pointerElementSize=_variableIdMapping->getElementSize(a.getVariableId());
+      }
+      val.intValue+=b.intValue*pointerElementSize;
+    } else {
+      val.intValue+=b.intValue;
+    }
     return val;
   } else if(a.isConstInt() && b.isPtr()) {
     AbstractValue val=b;
-    val.intValue+=a.intValue;
+    if(byteMode) {
+      int pointerElementSize=0;
+      if(b.getElementTypeSize()>0) {
+        pointerElementSize=b.getElementTypeSize();
+      } else {
+        pointerElementSize=_variableIdMapping->getElementSize(b.getVariableId());
+      }
+      val.intValue+=a.intValue*pointerElementSize;
+    } else {
+      val.intValue+=a.intValue;
+    }
     return val;
   } else if(a.isPtr() && b.isPtr()) {
     if(strictChecking)
@@ -811,16 +870,33 @@ AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
   if(a.isPtr() && b.isPtr()) {
     if(a.getVariableId()==b.getVariableId()) {
       AbstractValue val;
-      val.intValue=a.intValue-b.intValue;
-      val.valueType=INTEGER;
-      val.variableId=a.variableId; // same as b.variableId
+      if(byteMode) {
+        int pointerElementSize=_variableIdMapping->getElementSize(a.getVariableId());
+        if((a.intValue-b.intValue)%pointerElementSize!=0) {
+          SAWYER_MESG(CodeThorn::logger[WARN])<<"Byte pointer subtraction gives value non-divisible by element size. Using top as result:"<<a.toString(_variableIdMapping)<<"-"<<b.toString(_variableIdMapping)<<endl;
+          return Top();
+        } else {
+          val.intValue=(a.intValue-b.intValue)/pointerElementSize;
+          val.valueType=INTEGER;
+          val.variableId=a.variableId; // same as b.variableId
+        }
+      } else {
+        val.intValue=a.intValue-b.intValue;
+        val.valueType=INTEGER;
+        val.variableId=a.variableId; // same as b.variableId
+      }
       return val;
     } else {
       return Top(); // subtraction of incompatible pointers gives arbitrary value
     }
   } else if(a.isPtr() && b.isConstInt()) {
     AbstractValue val=a;
-    val.intValue-=b.intValue;
+    if(byteMode) {
+      int pointerElementSize=_variableIdMapping->getElementSize(a.getVariableId());
+      val.intValue-=a.intValue*pointerElementSize;
+    } else {
+      val.intValue-=b.intValue;
+    }
     return val;
   } else if(a.isConstInt() && b.isPtr()) {
     if(strictChecking)
@@ -941,7 +1017,8 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
     }
     case PTR: 
     case REF: {
-      if(val1.getVariableId()==val2.getVariableId()) {
+      if(val1.getVariableId()==val2.getVariableId()
+         &&val1.getIntValue()==val2.getIntValue()) {
         return val1;
       } else {
         return createTop();
@@ -1003,3 +1080,28 @@ AbstractValueSet& CodeThorn::operator+=(AbstractValueSet& s1, AbstractValueSet& 
   return s1;
 }
 
+CodeThorn::AlignedMemLoc AbstractValue::alignedMemLoc() {
+  AbstractValue arbitraryMemLoc=*this;
+  VariableId varId=arbitraryMemLoc.getVariableId();
+  long int offset=arbitraryMemLoc.getIndexIntValue();
+  ROSE_ASSERT(AbstractValue::_variableIdMapping);
+  long int pointerValueElemSize=arbitraryMemLoc.getElementTypeSize();
+  long int inStateElemSize=(long int)AbstractValue::_variableIdMapping->getElementSize(varId);
+  arbitraryMemLoc.setElementTypeSize(inStateElemSize); // adapt element size when storing in state
+  if(pointerValueElemSize!=inStateElemSize) {
+    if(inStateElemSize!=0) {
+      long int withinElementOffset=offset%inStateElemSize;
+      if(withinElementOffset!=0) {
+        // TODO: access within element with mod as byte offset
+        // need to know the element size of the pointer to mask it properly
+        arbitraryMemLoc.setValue(offset-withinElementOffset); // adjustment to element-aligned offset
+      }
+    }
+  }
+  return AlignedMemLoc(arbitraryMemLoc,offset);
+}
+
+AlignedMemLoc::AlignedMemLoc(AbstractValue av,int offset) {
+  memLoc=av;
+  this->offset=offset;
+}

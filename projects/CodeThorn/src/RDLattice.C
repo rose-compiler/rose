@@ -43,21 +43,21 @@ void CodeThorn::RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
   * \author Markus Schordan
   * \date 2013.
  */
-CodeThorn::RDLattice::iterator CodeThorn::RDLattice::begin() {
+CodeThorn::RDLattice::iterator CodeThorn::RDLattice::begin() const {
   return rdSet.begin();
 }
 /*!
   * \author Markus Schordan
   * \date 2013.
  */
-CodeThorn::RDLattice::iterator CodeThorn::RDLattice::end() {
+CodeThorn::RDLattice::iterator CodeThorn::RDLattice::end() const {
   return rdSet.end();
 }
 /*!
   * \author Markus Schordan
   * \date 2013.
  */
-size_t CodeThorn::RDLattice::size() {
+size_t CodeThorn::RDLattice::size() const {
   return rdSet.size();
 }
 /*!
@@ -96,7 +96,7 @@ void CodeThorn::RDLattice::removeAllPairsWithVariableId(VariableId var) {
   * \author Markus Schordan
   * \date 2013.
  */
-bool CodeThorn::RDLattice::isBot() {
+bool CodeThorn::RDLattice::isBot() const {
   return _bot;
 }
 /*!
@@ -128,7 +128,7 @@ void CodeThorn::RDLattice::combine(Lattice& b) {
   * \author Markus Schordan
   * \date 2013.
  */
-bool CodeThorn::RDLattice::approximatedBy(Lattice& b0) {
+bool CodeThorn::RDLattice::approximatedBy(Lattice& b0) const {
   RDLattice& b=dynamic_cast<RDLattice&>(b0);
   if(isBot()&&b.isBot())
     return true;

@@ -70,7 +70,7 @@ CodeThorn::PASolver1::runSolver() {
     // schroder3 (2016-08-05): Set up the combine and approximatedBy member functions according
     //  to the edge type.
     void(Lattice::*combineMemFunc)(Lattice&);
-    bool(Lattice::*approximatedByMemFunc)(Lattice&);
+    bool(Lattice::*approximatedByMemFunc)(Lattice&) const;
     if(edge.isType(EDGE_BACKWARD)) {
       combineMemFunc = &Lattice::combineAsymmetric;
       approximatedByMemFunc = &Lattice::approximatedByAsymmetric;

@@ -37,6 +37,10 @@ CodeThorn::RDAnalysis::~RDAnalysis() {
   delete _transferFunctions->getInitialElementFactory();
 }
 
+void CodeThorn::RDAnalysis::initialize(SgProject* root) {
+  DFAnalysisBase::initialize(root, nullptr /* no existing abstraction layer */);
+}
+
 void CodeThorn::RDAnalysis::initializeExtremalValue(Lattice* element) {
   _transferFunctions->initializeExtremalValue(*element);
   cout<<"INFO: initialized extremal value."<<endl;

@@ -11,15 +11,15 @@ namespace CodeThorn {
 class Lattice {
  public:
   Lattice();
-  virtual bool isBot();
+  virtual bool isBot() const;
   virtual void toStream(std::ostream& os, CodeThorn::VariableIdMapping* vim);
   virtual std::string toString(CodeThorn::VariableIdMapping* vim=0);
-  virtual bool approximatedBy(Lattice& other)=0;
+  virtual bool approximatedBy(Lattice& other) const =0;
   // schroder3 (2016-08-05): Asymmetric variant of approximatedBy. Default implementation
   //  calls the "normal" approximatedBy. The asymmetric variant is for example used to check
   //  whether the result of a transfer function of a backward edge is approximated by the
   //  the previous state.
-  virtual bool approximatedByAsymmetric(Lattice& other);
+  virtual bool approximatedByAsymmetric(Lattice& other) const;
   virtual void combine(Lattice& other);
   // schroder3 (2016-08-05): Asymmetric variant of combine. Default implementation
   //  calls the "normal" combine. The asymmetric variant is for example used if the
