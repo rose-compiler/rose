@@ -86,6 +86,7 @@ CODETHORN_HEADER_FILES=\
   DataDependenceVisualizer.h \
   DataRaceDetection.h \
   defUseQuery.h \
+  DFAbstractSolver.h \
   DFAnalysisBase.h \
   DFTransferFunctions.h \
   DotGraphCfgFrontend.h \

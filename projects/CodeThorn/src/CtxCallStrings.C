@@ -175,7 +175,6 @@ namespace
       const bool   res = std::equal( std::next(caller.begin(), ofs), caller.end(), 
                                      callee.begin());
                                      
-      ROSE_ASSERT(res);
       return res;
     }    
     

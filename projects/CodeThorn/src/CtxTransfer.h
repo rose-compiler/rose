@@ -35,29 +35,29 @@ namespace
   /// calls transfer on the DfItem (data-flow object).
   /// \tparam DfItem either a data-flow node (source) or a data-flow edge
   template <class DfItem>
-  struct ComponentTransfer
+  struct SubTransfer
   {
-      ComponentTransfer(DFTransferFunctions& comptrans, DfItem dfitem)
-      : component(comptrans), item(dfitem)
+      SubTransfer(DFTransferFunctions& comptrans, DfItem dfitem)
+      : tffun(comptrans), item(dfitem)
       {}
 
       template <class Key>
       void operator()(std::pair<const Key, Lattice*>& p) const
       {
-        component.transfer(item, SG_DEREF(p.second));
+        tffun.transfer(item, SG_DEREF(p.second));
       }
 
     private:
-      DFTransferFunctions& component;
+      DFTransferFunctions& tffun;
       DfItem               item;
   };
 
   template <class TfObject>
   inline
-  ComponentTransfer<TfObject>
-  componentTransfer(DFTransferFunctions& comptrans, TfObject tfobj)
+  SubTransfer<TfObject>
+  subTransfer(DFTransferFunctions& comptrans, TfObject tfobj)
   {
-    return ComponentTransfer<TfObject>(comptrans, tfobj);
+    return SubTransfer<TfObject>(comptrans, tfobj);
   }
 }
 
@@ -153,7 +153,7 @@ struct CtxTransfer : DFTransferFunctions
       ctx_lattice_t& lat = dynamic_cast<ctx_lattice_t&>(element);
 
       this->transfer(lbl, lat);
-      std::for_each(lat.begin(), lat.end(), componentTransfer(component, lbl));
+      std::for_each(lat.begin(), lat.end(), subTransfer(component, lbl));
     }
 
     /// this method is invoked from the solver/worklist algorithm and
@@ -195,6 +195,8 @@ struct CtxTransfer : DFTransferFunctions
       //~ dbgPrintCtx(std::cerr, SG_DEREF(analysis.getLabeler()), elem);
       return &elem;
     }
+    
+    DFTransferFunctions& componentTransfer() { return component; }
 
   private:
     DFTransferFunctions&      component;       ///< The component transfer
@@ -241,7 +243,7 @@ void CtxTransfer<CallContext>::transfer(Edge edge, Lattice& element)
   //~ was: this->transfer(edge.source(), element);
   this->transfer(edge.source(), lat);
   
-  std::for_each(lat.begin(), lat.end(), componentTransfer(component, edge));
+  std::for_each(lat.begin(), lat.end(), subTransfer(component, edge));
 
   //~ std::cerr << "# tr'd " << getLabeler()->getNode(edge.source())->unparseToString();
   //~ lat.toStream(std::cerr, NULL);

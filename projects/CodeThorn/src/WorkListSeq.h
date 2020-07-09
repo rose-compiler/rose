@@ -12,22 +12,31 @@
 //~ #include <list>
 
 #include "WorkList.h"
+#include "CodeThornException.h"
 
 namespace CodeThorn {
 
   template <typename Element>
-    class WorkListSeq  {
+  class WorkListSeq  {
+      //~ std::list<Element> workList;
+      std::deque<Element> workList;
+  
   public:    
-    bool isEmpty();
-    bool exists(Element elem);
+    typedef Element value_type;
+  
+    bool isEmpty() const;
+    bool exists(Element elem) const;
     void add(Element elem);
     void add(std::set<Element>& elemSet);
     Element take();
-    Element examine();
-    size_t size() { return workList.size(); }
-  private:
-    //~ std::list<Element> workList;
-    std::deque<Element> workList;
+    Element examine() const;
+    size_t size() const { return workList.size(); }
+    
+    auto begin() const -> decltype( workList.begin() ) 
+    { return workList.begin(); }
+    
+    auto end() const -> decltype( workList.end() ) 
+    { return workList.end(); }
   };
   
 } // end of namespace CodeThorn
@@ -35,14 +44,14 @@ namespace CodeThorn {
 namespace CodeThorn {
 // template implementation code
 template<typename Element>
-bool CodeThorn::WorkListSeq<Element>::isEmpty() { 
+bool CodeThorn::WorkListSeq<Element>::isEmpty() const { 
   bool res;
   res=(workList.size()==0);
   return res;
 }
 
 template<typename Element>
-bool CodeThorn::WorkListSeq<Element>::exists(Element elem) {
+bool CodeThorn::WorkListSeq<Element>::exists(Element elem) const {
   typename std::list<Element>::iterator findIter;
   findIter=std::find(workList.begin(), workList.end(), elem);
   return findIter==workList.end();
@@ -71,7 +80,7 @@ Element CodeThorn::WorkListSeq<Element>::take() {
 }
 
 template<typename Element>
-Element CodeThorn::WorkListSeq<Element>::examine() {
+Element CodeThorn::WorkListSeq<Element>::examine() const {
   if(workList.size()==0)
     throw CodeThorn::Exception("Error: attempted to examine next element in empty work list.");
     

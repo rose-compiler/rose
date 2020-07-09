@@ -112,6 +112,11 @@ struct CtxAnalysis : DFAnalysisBase
 
     CtxPropertyStateFactory<context_t>& factory()  { return ctxFactory;  }
     CtxTransfer<context_t>&             transfer() { return ctxTransfer; }
+    
+    void initializeSolver(bool defaultSolver) ROSE_OVERRIDE
+    {
+      base::initializeSolver(false /* use ctx solver instead */);
+    }
 
     // debugging support
     
