@@ -11,7 +11,7 @@
 #include <deque>
 //~ #include <list>
 
-#include "WorkList.h"
+//~ #include "WorkList.h"
 #include "CodeThornException.h"
 
 namespace CodeThorn {
