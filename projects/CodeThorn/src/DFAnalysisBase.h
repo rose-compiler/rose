@@ -9,12 +9,13 @@
 
 #include <set>
 #include <string>
+
 #include "Labeler.h"
 #include "CFAnalysis.h"
 #include "WorkListSeq.h"
 #include "CollectionOperators.h"
 #include "DFTransferFunctions.h"
-#include "PASolver1.h"
+#include "DFAbstractSolver.h"
 #include "DFAstAttribute.h"
 #include "PointerAnalysisInterface.h"
 #include "ProgramAbstractionLayer.h"
@@ -45,7 +46,7 @@ class DFAnalysisBase {
   virtual Lattice* initializeGlobalVariables(SgProject* root);
   // initializes an element with the combined global initialization state and the extremal value
   virtual void initializeTransferFunctions();
-  virtual void initializeSolver();
+  virtual void initializeSolver(bool defaultSolver = true);
   void determineExtremalLabels(SgNode* startFunRoot=0,bool onlySingleStartLabel=true);
   void run();
 
@@ -101,12 +102,12 @@ class DFAnalysisBase {
  public:
   DFTransferFunctions* _transferFunctions=nullptr;
  protected:
-  CodeThorn::PASolver1* _solver=nullptr;
+  DFAbstractSolver* _solver=nullptr;
   AnalysisType _analysisType=DFAnalysisBase::FORWARD_ANALYSIS;
   bool _no_topological_sort=false;
  private:
-  CodeThorn::PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
-  CodeThorn::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;
+  PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
+  PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;
   Lattice* _globalVariablesState=nullptr;
   bool _skipSelectedFunctionCalls=false;
   bool _programAbstractionLayerOwner=true;

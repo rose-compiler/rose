@@ -10,6 +10,19 @@
 namespace CodeThorn
 {
 
+struct CtxStats
+{
+  size_t min        = size_t(-1);
+  size_t max        = 0;
+  size_t numNonbot  = 0;
+  size_t numBot     = 0;
+
+  Label    maxLbl   = Label();
+  Lattice* maxLat   = nullptr; 
+  
+  double avg        = 0;
+};
+
 /// implements the Decorator pattern to enhance the
 ///   PropertyStateFactory with context specific functionality
 template <class CallContext>
@@ -64,7 +77,7 @@ struct CtxAnalysis : DFAnalysisBase
     const CtxLattice<CallContext>&
     getCtxLattice(Label lbl)
     {
-      return dynamic_cast<CtxLattice<CallContext>&>(SG_DEREF(getPreInfo(lbl)));
+      return dynamic_cast<context_lattice_t&>(SG_DEREF(getPreInfo(lbl)));
     }
 
     /// retrieves the lattice from the call site
@@ -99,7 +112,30 @@ struct CtxAnalysis : DFAnalysisBase
 
     CtxPropertyStateFactory<context_t>& factory()  { return ctxFactory;  }
     CtxTransfer<context_t>&             transfer() { return ctxTransfer; }
+    
+    void initializeSolver(bool defaultSolver) ROSE_OVERRIDE
+    {
+      base::initializeSolver(false /* use ctx solver instead */);
+    }
 
+    // debugging support
+    
+    /*
+    Labeler* getLabeler() const
+    {
+      return const_cast<CtxAnalysis<context_t>*>(this)->base::getLabeler();
+    }
+    */
+    
+    CtxStats latticeStats() ;
+    
+    
+    SgNode& getNode(Label lbl)
+    {
+      return getLabeler()->getNode(lbl);
+    }
+    
+    
   protected:
     CtxAttribute<CallContext>*
     createDFAstAttribute(Lattice* elem) ROSE_OVERRIDE
@@ -113,6 +149,44 @@ struct CtxAnalysis : DFAnalysisBase
     CtxPropertyStateFactory<context_t> ctxFactory;
     CtxTransfer<context_t>             ctxTransfer;
 };
+
+template <class CallContext>
+CtxStats
+CtxAnalysis<CallContext>::latticeStats() 
+{
+  Labeler& labeler = *getLabeler();
+  CtxStats res;
+  
+  for (Label lbl : labeler)
+  {
+    Lattice& el = SG_DEREF(getPreInfo(lbl));
+    
+    if (!el.isBot())
+    {
+      context_lattice_t& lat = dynamic_cast<context_lattice_t&>(el);
+      const size_t       sz = lat.size();
+      
+      if (sz < res.min) res.min = sz; 
+      
+      if (sz > res.max) 
+      {
+        res.max    = sz;
+        res.maxLbl = lbl;
+        res.maxLat = &el;
+      } 
+      
+      res.avg += sz;
+      ++res.numNonbot;
+    }
+    else
+    {
+      ++res.numBot;
+    }
+  }
+  
+  res.avg = res.avg / res.numNonbot;
+  return res;
+}
 
 } // namespace CodeThorn
 
