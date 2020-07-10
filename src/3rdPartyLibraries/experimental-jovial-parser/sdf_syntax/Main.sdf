@@ -1843,8 +1843,6 @@ context-free syntax
 %%TableName                   -> Table  %% AMBIGUOUS
   TableDereference            -> Table
 
-  Name                        -> TableName
-
   TableItemName
        Subscript
 %%  OptSubscript                                                      %% Optional makes AMBIGUOUS with Name
@@ -2068,7 +2066,7 @@ context-free syntax
   'NWDSEN'
     '(' NwdsenArgument ')'    -> NwdsenFunction       {cons("NwdsenFunction")}
 
-  TableName                   -> NwdsenArgument
+  TableName                   -> NwdsenArgument       {cons("Name"), prefer}
   TableTypeName               -> NwdsenArgument
 
 %% 6.3.11 STATUS INVERSE FUNCTIONS

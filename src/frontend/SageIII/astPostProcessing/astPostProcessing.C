@@ -606,6 +606,18 @@ void postProcessingSupport (SgNode* node)
        // AST Consistancy tests.
           checkPhysicalSourcePosition(node);
 
+#if 0
+       // DQ (6/19/2020): The new design does not require this in the AST currently 
+       // (and can cause the output of replicated include directives).
+       // DQ (5/7/2020): Adding support to insert include directives.
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling addIncludeDirectives() \n");
+             }
+
+          addIncludeDirectives(node);
+#endif
+
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("DONE: Postprocessing AST build using new EDG/Sage Translation Interface. \n");
 #endif

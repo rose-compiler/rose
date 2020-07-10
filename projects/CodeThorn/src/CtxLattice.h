@@ -17,6 +17,9 @@ namespace CodeThorn
 
 namespace
 {
+  //~ constexpr bool EXTENSIVE_ASSERTION_CHECKING = true;
+  constexpr bool EXTENSIVE_ASSERTION_CHECKING = false;
+  
   template <class P>
   inline
   std::string type_name(P* p)
@@ -110,8 +113,8 @@ namespace
 
     clone.combine(orig);
 
-    ROSE_ASSERT(orig.approximatedBy(clone));
-    ROSE_ASSERT(clone.approximatedBy(orig));
+    ROSE_ASSERT(!EXTENSIVE_ASSERTION_CHECKING || orig.approximatedBy(clone));
+    ROSE_ASSERT(!EXTENSIVE_ASSERTION_CHECKING || clone.approximatedBy(orig));
     return &clone;
   }
 
@@ -134,7 +137,7 @@ namespace
         lhslattice[rhs.first] = cloneLattice(factory, sublat);
       }
 
-      void operator()(entry_t& lhs, const unavailable_t&)
+      void operator()(const entry_t&, const unavailable_t&)
       {
         // nothing to do
       }
@@ -288,6 +291,8 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*, typename Ca
     void combine(Lattice& other) ROSE_OVERRIDE
     {
       const CtxLattice<context_t>& that = dynamic_cast<CtxLattice<context_t>& >(other);
+      
+      //~ const size_t presize = size();
 
       merge_keys( begin(), end(), 
                   that.begin(), that.end(), 
@@ -295,8 +300,17 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*, typename Ca
                   context_map::key_comp()
                 );
 
+      //~ const size_t postsize = size();
+      
+      //~ if (presize != 0 || postsize != presize) 
+      //~ {
+        //~ std::cerr << "pre/post = " << presize << '+' << that.size() << '=' << postsize << std::endl;
+        //~ std::cerr << "that: "; toStream(std::cerr, nullptr); 
+        //~ std::cerr << std::endl;
+      //~ }  
+        
       ROSE_ASSERT(this->size() >= that.size());
-      ROSE_ASSERT(other.approximatedBy(*this));
+      ROSE_ASSERT(!EXTENSIVE_ASSERTION_CHECKING || other.approximatedBy(*this));
     }
 
     PropertyStateFactory& componentFactory()
@@ -319,6 +333,27 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*, typename Ca
     // CtxLattice(const CtxLattice&) = delete;
     // CtxLattice(CtxLattice&&) = delete;
 };
+
+template <class OutputStream, class CallContext>
+void dbgPrintCtx(OutputStream& logger, Labeler& labeler, CtxLattice<CallContext>& lat)
+{
+  typedef CallContext call_string_t;
+  
+  for (auto el : lat)
+  {
+    call_string_t ctx = el.first;
+    
+    for (auto lbl : ctx)
+    {
+      std::string code = lbl != Label() ? SG_DEREF(labeler.getNode(lbl)).unparseToString() 
+                                        : std::string();
+      
+      logger << lbl << " : " << code << std::endl;
+    }
+    
+    logger << "***\n";
+  }
+}
 
 } // namespace CodeThorn
 
