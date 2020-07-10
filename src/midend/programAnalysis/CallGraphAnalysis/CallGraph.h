@@ -32,11 +32,37 @@ namespace CallTargetSet
 {
   typedef Rose_STL_Container<SgFunctionDeclaration *> SgFunctionDeclarationPtrList;
   typedef Rose_STL_Container<SgClassDefinition *> SgClassDefinitionPtrList;
-  // returns the list of declarations of all functions that may get called via the specified pointer
-  std::vector<SgFunctionDeclaration*> solveFunctionPointerCall ( SgPointerDerefExp *, SgProject * );
+  /**
+   * CallTargetSet::solveFunctionPointerCall
+   *
+   * \brief Finds all functions that match the function type of pointerDerefExp
+   *
+   * Resolving function pointer calls is hard, so the CallGraph generator doesn't
+   * try very hard at it.  When asked to resolve a function pointer call, it simply
+   * finds all functions that match that type in the memory pool a returns a list of them.
+   *
+   * @param[in] pointerDerefExp : A function pointer dereference.  
+   * @return: A vector of all functionDeclarations that match the type of the function dereferenced in pointerDerefExp
+   **/
+  std::vector<SgFunctionDeclaration*> solveFunctionPointerCall ( SgPointerDerefExp *);
 
   // returns the list of declarations of all functions that may get called via a member function pointer
   std::vector<SgFunctionDeclaration*> solveMemberFunctionPointerCall ( SgExpression *,ClassHierarchyWrapper * );
+
+  /**
+   * CallTargetSet::solveFunctionPointerCallsFunctional
+   *
+   * \brief Checks if the functionDeclaration (node) matches functionType
+   *
+   * This is a filter called by solveFunctionPointerCall. It checks that node is
+   * a functiondeclaration (or template instantiation) of type functionType.
+   * If it does, it is added to a functionList and returned.  So function list can
+   * have at most 1 entry.
+   * 
+   * @param[in] node : The node we are checking.  It must be an SgFunctionDeclaration
+   * @param[in] functionType : The function type being checked.  
+   * @return: If node matched functionType, it is added on functionList and returned.  Otherwise functionList is empty.
+   **/
   Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType* functionType );
 
   // returns the list of declarations of all functions that may get called via a

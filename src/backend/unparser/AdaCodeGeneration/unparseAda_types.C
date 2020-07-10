@@ -72,10 +72,34 @@ namespace
       type(n.get_base_type());
     }
     
+    void handle(SgTypeDefault& n) 
+    {
+      prn(" private");
+    }
+    
     void handle(SgNamedType& n) 
     { 
       prn(" ");
       prn(n.get_name()); 
+    }
+    
+    void handle(SgDeclType& n) 
+    { 
+      prn(" ");
+      expr(n.get_base_expression()); 
+    }
+    
+    void handle(SgTypeTuple& n) 
+    { 
+      SgTypePtrList& lst = n.get_types();
+      
+      for (size_t i = 0; i < lst.size()-1; ++i)
+      {
+        type(lst[i]);
+        prn(" |");
+      }
+      
+      type(lst.back());
     }
     
     void handle(SgAdaTaskType& n) 
