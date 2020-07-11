@@ -538,6 +538,7 @@ struct Declaration_Struct {
   //  A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
   //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
   //  A_Formal_Type_Declaration,                // 12.5(2)
+  //  An_Incomplete_Type_Declaration            // asis-declarations.ads 313
   Definition_ID                  Type_Declaration_View;
   //  A_Variable_Declaration,                   // 3.3.1(2)
   //  A_Constant_Declaration,                   // 3.3.1(4)
@@ -572,13 +573,15 @@ struct Declaration_Struct {
   //  An_Incomplete_Type_Declaration,           // 3.2.1(2),3.10(2)
   //  A_Tagged_Incomplete_Type_Declaration,     //  3.10.1(2)
   //  A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
-  //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
+  //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3
+  //  An_Incomplete_Type_Declaration            // asis-declarations.ads 689
   Declaration_ID                 Corresponding_Type_Completion;
   //  An_Ordinary_Type_Declaration,            // 3.2.1(3)
   //  A_Task_Type_Declaration,                  // 9.1(2)
   //  A_Protected_Type_Declaration,             // 9.4(2)
   //  A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
   //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
+  //  An_Incomplete_Type_Declaration            // asis-declarations.ads 748
   Declaration_ID                 Corresponding_Type_Partial_View;
   //  An_Ordinary_Type_Declaration,            // 3.2.1(3)
   //  A_Task_Type_Declaration,                  // 9.1(2)
