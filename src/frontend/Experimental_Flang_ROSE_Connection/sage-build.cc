@@ -699,11 +699,11 @@ void Build(const parser::TypeDeclarationStmt &x, T* scope)
    SgExpression* init_expr = nullptr;
 
    // need name and type
-   std::string name{"x"};
+   std::string name{};
 
    Build(std::get<0>(x.t), type);        // DeclarationTypeSpec
    Build(std::get<1>(x.t), scope);       // std::list<AttrSpec>
-   Build(std::get<2>(x.t), scope);       // std::list<EntityDecl>
+   Build(std::get<2>(x.t), name);        // std::list<EntityDecl>
 
    builder.Enter(var_decl, name, type, init_expr);
    builder.Leave(var_decl);
@@ -818,16 +818,16 @@ void Build(const parser::IntrinsicTypeSpec::DoubleComplex &x, SgType* &type)
    std::cout << "TYPE IS : DoubleComplex\n";
 }
 
-template<typename T>
-void Build(const parser::EntityDecl &x, T* scope)
+void Build(const parser::EntityDecl &x, std::string &name)
 {
    //  std::tuple<ObjectName, std::optional<ArraySpec>, std::optional<CoarraySpec>,
    //      std::optional<CharLength>, std::optional<Initialization>>
 
    std::cout << "Rose::builder::Build(EntityDecl)\n";
-   std::string name = std::get<0>(x.t).ToString();
+   name = std::get<0>(x.t).ToString();
    std::cout << "The object name is: " << name << std::endl;
 
+   SgScopeStatement *scope = nullptr;
    if (auto & opt = std::get<1>(x.t)) {    // ArraySpec
       Build(opt.value(), scope);
    }
