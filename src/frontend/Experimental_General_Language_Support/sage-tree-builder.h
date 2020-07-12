@@ -28,10 +28,10 @@ class SgIfStmt;
 class SgInitializedName;
 class SgLocatedNode;
 class SgNamespaceDeclarationStatement;
+class SgProcessControlStatement;
 class SgProgramHeaderStatement;
 class SgScopeStatement;
 class SgSourceFile;
-class SgStopOrPauseStatement;
 class SgSwitchStatement;
 class SgType;
 class SgTypedefDeclaration;
@@ -137,8 +137,10 @@ public:
    void Enter(SgIfStmt* &, SgExpression*, SgBasicBlock*, SgBasicBlock*);
    void Leave(SgIfStmt*);
 
-   void Enter(SgStopOrPauseStatement* &, const boost::optional<SgExpression*> &, const std::string &);
-   void Leave(SgStopOrPauseStatement*);
+   void Enter(SgProcessControlStatement* &, const std::string &, const boost::optional<SgExpression*> &);
+   void Enter(SgProcessControlStatement* &, const std::string &, const boost::optional<SgExpression*> &,
+                                                                 const boost::optional<SgExpression*> &);
+   void Leave(SgProcessControlStatement*);
 
    void Enter(SgSwitchStatement* &, SgExpression*, const SourcePositionPair &);
    void Leave(SgSwitchStatement*);
