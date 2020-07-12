@@ -79,9 +79,9 @@ void addIncludeDirectives( SgNode* node )
      ROSE_ASSERT(false);
 #endif
 
+#if 0
      std::list<SgIncludeFile*>::iterator j = sortedList.begin();
 
-#if 0
      printf ("Unsorted list: \n");
      while (j != sortedList.end())
         {
