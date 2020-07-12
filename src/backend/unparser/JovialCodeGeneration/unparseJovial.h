@@ -49,7 +49,7 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseTypeDefStmt            (SgStatement* stmt, SgUnparse_Info& info);
 
 
-          virtual void unparseStopOrPauseStmt        (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseProcessControlStmt     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseReturnStmt             (SgStatement* stmt, SgUnparse_Info& info);
 
           virtual void unparseEnumDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
