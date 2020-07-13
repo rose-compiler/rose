@@ -193,7 +193,7 @@ template<typename T> void Build(const Fortran::parser::        ParameterStmt &x,
 template<typename T> void Build(const Fortran::parser::     OldParameterStmt &x, T* scope);
 
 // Expr
-template<typename T, typename ET> void traverseBinaryExprs(const T &x, ET* &expr);
+template<typename T> void traverseBinaryExprs(const T &x, SgExpression* &lhs, SgExpression* &rhs);
 
 template<typename T> void Build(const Fortran::parser::CharLiteralConstantSubstring &x, T* &expr);
 template<typename T> void Build(const Fortran::parser::            ArrayConstructor &x, T* &expr);
@@ -207,11 +207,11 @@ template<typename T> void Build(const Fortran::parser::                   Expr::
 template<typename T> void Build(const Fortran::parser::            Expr::PercentLoc &x, T* &expr);
 template<typename T> void Build(const Fortran::parser::          Expr::DefinedUnary &x, T* &expr);
 
-template<typename T> void Build(const Fortran::parser::   Expr::Power &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::Expr::Multiply &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::  Expr::Divide &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::     Expr::Add &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::Expr::Subtract &x, T* &expr);
+void Build(const Fortran::parser::   Expr::Power &x, SgExpression* &expr);
+void Build(const Fortran::parser::Expr::Multiply &x, SgExpression* &expr);
+void Build(const Fortran::parser::  Expr::Divide &x, SgExpression* &expr);
+void Build(const Fortran::parser::     Expr::Add &x, SgExpression* &expr);
+void Build(const Fortran::parser::Expr::Subtract &x, SgExpression* &expr);
 template<typename T> void Build(const Fortran::parser::  Expr::Concat &x, T* &expr);
 template<typename T> void Build(const Fortran::parser::      Expr::LT &x, T* &expr);
 template<typename T> void Build(const Fortran::parser::      Expr::LE &x, T* &expr);

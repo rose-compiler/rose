@@ -1363,46 +1363,58 @@ void Build(const parser::Expr::DefinedUnary&x, T* &expr)
    std::cout << "Rose::builder::Build(DefinedUnary)\n";
 }
 
-template<typename T>
-void Build(const parser::Expr::Power&x, T* &expr)
+void Build(const parser::Expr::Power&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(Power)\n";
 }
 
-template<typename T>
-void Build(const parser::Expr::Multiply&x, T* &expr)
+void Build(const parser::Expr::Multiply&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(Multiply)\n";
-   traverseBinaryExprs(x, expr);
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildMultiplyOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::Divide&x, T* &expr)
+void Build(const parser::Expr::Divide&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(Divide)\n";
-   traverseBinaryExprs(x, expr);
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildDivideOp_nfi(lhs, rhs);
 }
 
-template<typename T, typename ET>
-void traverseBinaryExprs(const T &x, ET* &expr)
+template<typename T>
+void traverseBinaryExprs(const T &x, SgExpression* &lhs, SgExpression* &rhs)
 {
    std::cout << "Rose::builder::traverseBinaryExprs\n";
-   Build(std::get<0>(x.t).value(), expr); // lhs Expr
-   Build(std::get<1>(x.t).value(), expr); // rhs Expr
+
+   Build(std::get<0>(x.t).value(), lhs); // lhs Expr
+   Build(std::get<1>(x.t).value(), rhs); // rhs Expr
 }
 
-template<typename T>
-void Build(const parser::Expr::Add&x, T* &expr)
+void Build(const parser::Expr::Add&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(Add)\n";
-   traverseBinaryExprs(x, expr);
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildAddOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::Subtract&x, T* &expr)
+void Build(const parser::Expr::Subtract&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(Subtract)\n";
-   traverseBinaryExprs(x, expr);
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildSubtractOp_nfi(lhs, rhs);
 }
 
 template<typename T>
