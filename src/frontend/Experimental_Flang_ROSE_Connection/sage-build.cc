@@ -306,6 +306,14 @@ void Build(const parser::AssignmentStmt &x, T* scope)
 
    auto & expr = std::get<1>(x.t);
    Build(expr, rhs);
+
+   SgExprStatement* assign_stmt = nullptr;
+   std::vector<SgExpression*> vars;
+   vars.push_back(lhs);
+
+   // Begin SageTreeBuilder
+   builder.Enter(assign_stmt, rhs, vars, std::string()/* no label*/);
+   builder.Leave(assign_stmt);
 }
 
 void Build(const parser::Variable &x, SgExpression* &expr)
@@ -337,6 +345,9 @@ void Build(const parser::DataRef &x, SgExpression* &expr)
             std::cout << "The name of the DataRef is " << name << std::endl;
 
             semantics::Symbol *symbol = y.symbol;
+
+            // create a varref
+            expr = SageBuilderCpp17::buildVarRefExp_nfi(name);
 
 #if 0
             if (symbol) {
@@ -570,8 +581,8 @@ template<typename T>
 void Build(const parser::IntLiteralConstant &x, T* &expr)
 {
    std::cout << "Rose::builder::Build(IntLiteralConstant)\n";
-   int literal = stoi(std::get<0>(x.t).ToString());
-   std::cout << " The INTEGER LITERAL CONSTANT is " << literal << std::endl;
+
+   expr = SageBuilderCpp17::buildIntVal_nfi(stoi(std::get<0>(x.t).ToString()));
 }
 
 template<typename T>
