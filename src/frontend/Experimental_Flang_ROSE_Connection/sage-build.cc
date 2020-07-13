@@ -1204,6 +1204,26 @@ template<typename T>
 void Build(const parser::StopStmt&x, T* scope)
 {
    std::cout << "Rose::builder::Build(StopStmt)\n";
+   //  std::tuple<Kind, std::optional<StopCode>, std::optional<ScalarLogicalExpr>> t;
+
+   SgProcessControlStatement* stop_stmt{nullptr};
+   SgExpression* stop_code{nullptr};
+   boost::optional<SgExpression*> boost_code{boost::none};
+   std::string kind = parser::StopStmt::EnumToString(std::get<0>(x.t));
+
+   // edit strings to match builder function
+   if (kind == "Stop") {
+      kind = "stop";
+   } else if (kind == "ErrorStop") {
+      kind = "error_stop";
+   }
+
+   if (auto & opt = std::get<1>(x.t)) {
+      Build(opt.value().v.thing, stop_code);
+      boost_code = stop_code;
+   }
+
+   builder.Enter(stop_stmt, kind, boost_code);
 }
 
 template<typename T>
