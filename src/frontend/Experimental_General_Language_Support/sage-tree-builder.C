@@ -656,6 +656,7 @@ Enter(SgDefaultOptionStmt* &default_option_stmt)
    SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
    default_option_stmt = SageBuilder::buildDefaultOptionStmt(body);
 
+// Shouldn't we append later?  I'll try for while statement
    SageInterface::appendStatement(default_option_stmt, SageBuilder::topScopeStack());
    SageBuilder::pushScopeStack(body);
 }
@@ -667,6 +668,30 @@ Leave(SgDefaultOptionStmt* default_option_stmt)
    ROSE_ASSERT(default_option_stmt);
 
    SageBuilder::popScopeStack();  // default_option_stmt body
+}
+
+void SageTreeBuilder::
+Enter(SgWhileStmt* &while_stmt, SgExpression* condition)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgWhileStmt* &, ...) \n";
+   ROSE_ASSERT(condition);
+
+   SgExprStatement* condition_stmt = SageBuilder::buildExprStatement_nfi(condition);
+   SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
+
+   while_stmt = SageBuilder::buildWhileStmt_nfi(condition_stmt, body, /*else_body*/nullptr);
+
+   SageBuilder::pushScopeStack(body);
+}
+
+void SageTreeBuilder::
+Leave(SgWhileStmt* while_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgWhileStmt*, ...) \n";
+   ROSE_ASSERT(while_stmt);
+
+   SageBuilder::popScopeStack();  // while statement body
+   SageInterface::appendStatement(while_stmt, SageBuilder::topScopeStack());
 }
 
 SgEnumVal* SageTreeBuilder::

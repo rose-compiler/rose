@@ -151,6 +151,9 @@ public:
    void Enter(SgDefaultOptionStmt* &);
    void Leave(SgDefaultOptionStmt*);
 
+   void Enter(SgWhileStmt* &, SgExpression*);
+   void Leave(SgWhileStmt*);
+
    SgEnumVal* ReplaceEnumVal(SgEnumType*, const std::string &);
 
 // Expressions
