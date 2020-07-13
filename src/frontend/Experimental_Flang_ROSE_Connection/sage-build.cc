@@ -818,6 +818,15 @@ void Build(const parser::IntrinsicTypeSpec::DoubleComplex &x, SgType* &type)
    std::cout << "TYPE IS : DoubleComplex\n";
 }
 
+void Build(const std::list<Fortran::parser::EntityDecl> &x, std::string &name)
+{
+   std::cout << "Rose::builder::Build(std::list) for EntityDecl\n";
+
+   for (const auto &elem : x) {
+      Build(elem, name);
+   }
+}
+
 void Build(const parser::EntityDecl &x, std::string &name)
 {
    //  std::tuple<ObjectName, std::optional<ArraySpec>, std::optional<CoarraySpec>,

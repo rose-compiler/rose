@@ -105,6 +105,7 @@ void Build(const Fortran::parser::DeclarationTypeSpec::   Record&x, SgType* &);
 
 void Build(const Fortran::parser::       DerivedTypeSpec &x,     SgType* &);
 void Build(const Fortran::parser::            EntityDecl &x, std::string &);
+void Build(const std::list<Fortran::parser:: EntityDecl> &x, std::string &);
 template<typename T> void Build(const Fortran::parser::              AttrSpec &x, T* scope);
 template<typename T> void Build(const Fortran::parser::             ArraySpec &x, T* scope);
 template<typename T> void Build(const Fortran::parser::           CoarraySpec &x, T* scope);
@@ -314,15 +315,6 @@ template<typename LT, typename T> void Build(const std::list<LT> &x, T* &node)
 
    for (const auto &elem : x) {
       Build(elem, node);
-   }
-}
-
-void Build(const std::list<Fortran::parser::EntityDecl> &x, std::string &name)
-{
-   std::cout << "Rose::builder::Build(std::list) for EntityDecl\n";
-
-   for (const auto &elem : x) {
-      Build(elem, name);
    }
 }
 
