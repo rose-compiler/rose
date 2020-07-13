@@ -4626,6 +4626,7 @@ ATbool ATermToSageJovialTraversal::traverse_WhileStatement(ATerm term)
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
+   SgWhileStmt* while_stmt = nullptr;
    SgExpression* condition = nullptr;
 
    if (ATmatch(term, "WhileStatement(<term>,<term>,<term>)", &t_labels, &t_clause, &t_stmt)) {
@@ -4640,33 +4641,18 @@ ATbool ATermToSageJovialTraversal::traverse_WhileStatement(ATerm term)
          } else return ATfalse;
       }
 
-//TODO_STATEMENTS
-#if 0
-      while_body_list = new SgUntypedStatementList();
+   // Begin SageTreeBuilder
+      sage_tree_builder.Enter(while_stmt, condition);
 
-      // Match ControlledStatement -- it is a Statement
+   // Match ControlledStatement -- this is the body
       if (traverse_Statement(t_stmt)) {
          // MATCHED Statement
       } else return ATfalse;
-
-   // List will either contain one simple statement or one block statement
-      ROSE_ASSERT(while_body_list->get_stmt_list().size() == 1);
-#endif
    }
    else return ATfalse;
 
-//TODO_STATEMENTS
-#if 0
-   SgUntypedStatement * body = while_body_list->get_stmt_list().back();
-   while_body_list->get_stmt_list().pop_back();
-   delete while_body_list;
-
-   SgUntypedWhileStatement* while_stmt = new SgUntypedWhileStatement("", condition, body);
-   ROSE_ASSERT(while_stmt);
-   setSourcePosition(while_stmt, term);
-
-   stmt_list->get_stmt_list().push_back(while_stmt);
-#endif
+// Begin SageTreeBuilder
+   sage_tree_builder.Leave(while_stmt);
 
    return ATtrue;
 }

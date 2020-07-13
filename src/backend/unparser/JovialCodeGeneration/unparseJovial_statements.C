@@ -588,7 +588,7 @@ Unparse_Jovial::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(while_stmt->get_condition());
 
   // condition
-     curprint("WHILE ");
+     curprint_indented("WHILE ", info);
      info.set_inConditional(); // prevent printing line and file info
 
      SgExprStatement* condition_stmt = isSgExprStatement(while_stmt->get_condition());
