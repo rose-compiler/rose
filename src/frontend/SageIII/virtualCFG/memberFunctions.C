@@ -75,9 +75,9 @@ void makeEdge(NodeT from, NodeT to, vector<EdgeT>& result) {
     SgReturnStmt* rs = isSgReturnStmt(fromNode);
     if (fromIndex == 1 || (fromIndex == 0 && !rs->get_expression())) return;
   }
-  if (isSgStopOrPauseStatement(fromNode) && toNode == fromNode->get_parent()) {
-    SgStopOrPauseStatement* sps = isSgStopOrPauseStatement(fromNode);
-    if (fromIndex == 0 && sps->get_stop_or_pause() == SgStopOrPauseStatement::e_stop) return;
+  if (isSgProcessControlStatement(fromNode) && toNode == fromNode->get_parent()) {
+    SgProcessControlStatement* sps = isSgProcessControlStatement(fromNode);
+    if (fromIndex == 0 && sps->get_control_kind() == SgProcessControlStatement::e_stop) return;
   }
   if (fromIndex == 1 && isSgSwitchStatement(fromNode) &&
       isSgSwitchStatement(fromNode)->get_body() == toNode) return;
@@ -2470,20 +2470,20 @@ std::vector<CFGEdge> SgUseStatement::cfgInEdges(unsigned int idx) {
 }
 
 unsigned int
-SgStopOrPauseStatement::cfgIndexForEnd() const {
+SgProcessControlStatement::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgStopOrPauseStatement::cfgOutEdges(unsigned int idx) {
+std::vector<CFGEdge> SgProcessControlStatement::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
-  if (this->get_stop_or_pause() == SgStopOrPauseStatement::e_pause) {
+  if (this->get_control_kind() == SgProcessControlStatement::e_pause) {
     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   }
   return result;
 }
 
-std::vector<CFGEdge> SgStopOrPauseStatement::cfgInEdges(unsigned int idx) {
+std::vector<CFGEdge> SgProcessControlStatement::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -2491,7 +2491,7 @@ std::vector<CFGEdge> SgStopOrPauseStatement::cfgInEdges(unsigned int idx) {
   return result;
 }
 
-// Rasmussen (9/20/2018): TODO: Are image control statements correct?
+// CR (9/20/2018): TODO: Are image control statements correct?
 // I think expressions from the sync-stat-list may need to be added.
 unsigned int
 SgSyncAllStatement::cfgIndexForEnd() const {

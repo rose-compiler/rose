@@ -637,7 +637,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
      if (astfile_out != "") {
        std::list<std::string> empty_file_list;
        project->set_astfiles_in(empty_file_list);
-       project->get_astfile_out() == "";
+       project->get_astfile_out() = "";
        AST_FILE_IO::reset();
        AST_FILE_IO::startUp(project);
        AST_FILE_IO::writeASTToFile(astfile_out);

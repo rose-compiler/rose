@@ -1097,7 +1097,6 @@ FortranCodeGeneration_locatedNode::unparseInitializerList(SgExpression* expr, Sg
 
      info.set_nested_expression();
 
-  // bool paren = false;
      bool paren = true;
      if (paren)
         {
@@ -1112,8 +1111,6 @@ FortranCodeGeneration_locatedNode::unparseInitializerList(SgExpression* expr, Sg
      SgExpressionPtrList::iterator it = expr_list->get_expressions().begin();
      while (it != expr_list->get_expressions().end())
         {
-       // printf ("In unparseInitializerList(): *it = %p = %s \n",*it,(*it)->class_name().c_str());
-
           unparseExpression(*it, info);
           it++;
           if (it != expr_list->get_expressions().end())
@@ -1272,8 +1269,6 @@ FortranCodeGeneration_locatedNode::unparseUseOnly(SgExpression* expr, SgUnparse_
 
      SgExprListExp* lst = only_expr->get_access_list();
      curprint(", ONLY: ");
-  // unparseExprList(lst, info, false /*paren*/);
-  // unparseExprList(lst, info, false /*paren*/);
      unparseExprList(lst, info);
    }
 #endif
@@ -1292,7 +1287,6 @@ FortranCodeGeneration_locatedNode::unparseIOItemExpr(SgExpression* expr, SgUnpar
   SgExpression* ioitem = ioitem_expr->get_io_item();
 
   if (isSgExprListExp(ioitem)) {
- // unparseExprList(isSgExprListExp(ioitem), info, false /*paren*/);
     unparseExprList(isSgExprListExp(ioitem), info);
   }
   else {
@@ -1379,7 +1373,6 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
      curprint("(");
      if (object_list != NULL)
         {
-       // unparseExprList(object_list, info, false /*paren*/);
           unparseExprList(object_list, info);
 
        // DQ (9/26/2010): Handle cases where the list is empty (see test2010_49.f90)
@@ -1786,8 +1779,6 @@ FortranCodeGeneration_locatedNode::unparseLongDblVal(SgExpression* expr, SgUnpar
 //  helpers
 //----------------------------------------------------------------------------
 
-// bool FortranCodeGeneration_locatedNode::unparseExprList(SgExprListExp* expr, SgUnparse_Info& info, bool paren)
-// void FortranCodeGeneration_locatedNode::unparseExprList(SgExpression* expr, SgUnparse_Info& info, bool paren)
 void
 FortranCodeGeneration_locatedNode::unparseExprList(SgExpression* expr, SgUnparse_Info& info)
 {

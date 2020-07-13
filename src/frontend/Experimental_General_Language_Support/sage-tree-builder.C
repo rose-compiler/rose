@@ -535,11 +535,20 @@ Leave(SgIfStmt* if_stmt)
 }
 
 void SageTreeBuilder::
-Enter(SgStopOrPauseStatement* &control_stmt, const boost::optional<SgExpression*> &opt_code, const std::string &stmt_kind)
+Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
+      const boost::optional<SgExpression*> &opt_code)
 {
-   mlog[TRACE] << "SageTreeBuilder::Enter(SgStopOrPauseStatement* &, ...) \n";
+   return Enter(control_stmt, stmt_kind, opt_code, boost::none);
+}
+
+void SageTreeBuilder::
+Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
+      const boost::optional<SgExpression*> &opt_code, const boost::optional<SgExpression*> &opt_quiet)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgProcessControlStatement* &, ...) \n";
 
    SgExpression* code = nullptr;
+   SgExpression* quiet = nullptr;
 
    if (opt_code) {
       code = *opt_code;
@@ -548,39 +557,48 @@ Enter(SgStopOrPauseStatement* &control_stmt, const boost::optional<SgExpression*
       code = SageBuilder::buildNullExpression_nfi();
    }
 
-   control_stmt = new SgStopOrPauseStatement(code);
+   if (opt_quiet) {
+      quiet = *opt_quiet;
+   }
+   else {
+      quiet = SageBuilder::buildNullExpression_nfi();
+   }
+
+   ROSE_ASSERT(code);
+   control_stmt = new SgProcessControlStatement(code);
    ROSE_ASSERT(control_stmt);
    SageInterface::setSourcePosition(control_stmt);
 
+   ROSE_ASSERT(quiet);
+   control_stmt->set_quiet(quiet);
+
    if (stmt_kind == "abort") {
-      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_abort);
+      control_stmt->set_control_kind(SgProcessControlStatement::e_abort);
    }
    else if (stmt_kind == "error_stop") {
-      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_error_stop);
+      control_stmt->set_control_kind(SgProcessControlStatement::e_error_stop);
    }
    else if (stmt_kind == "exit") {
-      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_exit);
+      control_stmt->set_control_kind(SgProcessControlStatement::e_exit);
    }
    else if (stmt_kind == "pause") {
-      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_pause);
+      control_stmt->set_control_kind(SgProcessControlStatement::e_pause);
    }
    else if (stmt_kind == "stop") {
-      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_stop);
+      control_stmt->set_control_kind(SgProcessControlStatement::e_stop);
    }
-   ROSE_ASSERT(control_stmt->get_stop_or_pause() != SgStopOrPauseStatement::e_unknown);
+   ROSE_ASSERT(control_stmt->get_control_kind() != SgProcessControlStatement::e_unknown);
 
    code->set_parent(control_stmt);
-
-   //TODO Lables and source position
-   //setSourcePosition(control_stmt, sources.get<0>(), sources.get<2>());
 
    SageInterface::appendStatement(control_stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
-Leave(SgStopOrPauseStatement* control_stmt)
+Leave(SgProcessControlStatement* control_stmt)
 {
-   mlog[TRACE] << "SageTreeBuilder::Leave(SgStopOrPauseStatement*, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgProcessControlStatement*, ...) \n";
+
    ROSE_ASSERT(control_stmt);
 }
 
