@@ -67,6 +67,7 @@ CodeThorn::PASolver1::runSolver() {
     Label lab0=edge.source();
     Label lab1=edge.target();
 
+#if OBSOLETE_CODE
     // schroder3 (2016-08-05): Set up the combine and approximatedBy member functions according
     //  to the edge type.
     void(Lattice::*combineMemFunc)(Lattice&);
@@ -82,6 +83,7 @@ CodeThorn::PASolver1::runSolver() {
       combineMemFunc = &Lattice::combine;
       approximatedByMemFunc = &Lattice::approximatedBy;
     }
+#endif /* OBSOLETE_CODE */
 
     if(_trace)
       cout<<"TRACE: computing edge "<<lab0<<"->"<<lab1<<endl;
@@ -102,7 +104,6 @@ CodeThorn::PASolver1::runSolver() {
         cout<<endl;
       }
       _transferFunctions.transfer(edge,*info);
-      ROSE_ASSERT(info);
       if(_trace) {
         cout<<"TRACE: transfer function result: "<<lab1<<":";
         ROSE_ASSERT(info);
@@ -111,7 +112,8 @@ CodeThorn::PASolver1::runSolver() {
       }
 
       // schroder3 (2016-08-05): Check whether the combine below will change something.
-      bool isApproximatedBy=(info->*approximatedByMemFunc)(*_analyzerDataPreInfo[lab1.getId()]);
+      //~ bool isApproximatedBy=(info->*approximatedByMemFunc)(*_analyzerDataPreInfo[lab1.getId()]);
+      bool isApproximatedBy=info->approximatedBy(*_analyzerDataPreInfo[lab1.getId()]);
       if(!isApproximatedBy) {
         if(_trace) {
           cout<<"TRACE: old df value : "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
@@ -122,7 +124,7 @@ CodeThorn::PASolver1::runSolver() {
           cout<<endl;
         }
 
-        (_analyzerDataPreInfo[lab1.getId()]->*combineMemFunc)(*info);
+        _analyzerDataPreInfo[lab1.getId()]->combine(*info);
 
         if(_trace) {
           cout<<"TRACE: new df value : "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
@@ -138,7 +140,7 @@ CodeThorn::PASolver1::runSolver() {
       } else {
         // no new information was computed. Nothing to do.
         if(_trace)
-          cout<<"TRACE: nop."<<endl;
+          cout<<"TRACE: noop."<<endl;
       }
     }
     delete info;
