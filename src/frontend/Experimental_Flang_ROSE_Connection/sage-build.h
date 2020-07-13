@@ -105,6 +105,7 @@ void Build(const Fortran::parser::DeclarationTypeSpec::   Record&x, SgType* &);
 
 void Build(const Fortran::parser::       DerivedTypeSpec &x,     SgType* &);
 void Build(const Fortran::parser::            EntityDecl &x, std::string &);
+void Build(const std::list<Fortran::parser:: EntityDecl> &x, std::string &);
 template<typename T> void Build(const Fortran::parser::              AttrSpec &x, T* scope);
 template<typename T> void Build(const Fortran::parser::             ArraySpec &x, T* scope);
 template<typename T> void Build(const Fortran::parser::           CoarraySpec &x, T* scope);
@@ -192,7 +193,7 @@ template<typename T> void Build(const Fortran::parser::        ParameterStmt &x,
 template<typename T> void Build(const Fortran::parser::     OldParameterStmt &x, T* scope);
 
 // Expr
-template<typename T, typename ET> void traverseBinaryExprs(const T &x, ET* &expr);
+template<typename T> void traverseBinaryExprs(const T &x, SgExpression* &lhs, SgExpression* &rhs);
 
 template<typename T> void Build(const Fortran::parser::CharLiteralConstantSubstring &x, T* &expr);
 template<typename T> void Build(const Fortran::parser::            ArrayConstructor &x, T* &expr);
@@ -206,11 +207,11 @@ template<typename T> void Build(const Fortran::parser::                   Expr::
 template<typename T> void Build(const Fortran::parser::            Expr::PercentLoc &x, T* &expr);
 template<typename T> void Build(const Fortran::parser::          Expr::DefinedUnary &x, T* &expr);
 
-template<typename T> void Build(const Fortran::parser::   Expr::Power &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::Expr::Multiply &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::  Expr::Divide &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::     Expr::Add &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::Expr::Subtract &x, T* &expr);
+void Build(const Fortran::parser::   Expr::Power &x, SgExpression* &expr);
+void Build(const Fortran::parser::Expr::Multiply &x, SgExpression* &expr);
+void Build(const Fortran::parser::  Expr::Divide &x, SgExpression* &expr);
+void Build(const Fortran::parser::     Expr::Add &x, SgExpression* &expr);
+void Build(const Fortran::parser::Expr::Subtract &x, SgExpression* &expr);
 template<typename T> void Build(const Fortran::parser::  Expr::Concat &x, T* &expr);
 template<typename T> void Build(const Fortran::parser::      Expr::LT &x, T* &expr);
 template<typename T> void Build(const Fortran::parser::      Expr::LE &x, T* &expr);
@@ -314,15 +315,6 @@ template<typename LT, typename T> void Build(const std::list<LT> &x, T* &node)
 
    for (const auto &elem : x) {
       Build(elem, node);
-   }
-}
-
-void Build(const std::list<Fortran::parser::EntityDecl> &x, std::string &name)
-{
-   std::cout << "Rose::builder::Build(std::list) for EntityDecl\n";
-
-   for (const auto &elem : x) {
-      Build(elem, name);
    }
 }
 

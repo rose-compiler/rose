@@ -306,6 +306,14 @@ void Build(const parser::AssignmentStmt &x, T* scope)
 
    auto & expr = std::get<1>(x.t);
    Build(expr, rhs);
+
+   SgExprStatement* assign_stmt = nullptr;
+   std::vector<SgExpression*> vars;
+   vars.push_back(lhs);
+
+   // Begin SageTreeBuilder
+   builder.Enter(assign_stmt, rhs, vars, std::string()/* no label*/);
+   builder.Leave(assign_stmt);
 }
 
 void Build(const parser::Variable &x, SgExpression* &expr)
@@ -337,6 +345,9 @@ void Build(const parser::DataRef &x, SgExpression* &expr)
             std::cout << "The name of the DataRef is " << name << std::endl;
 
             semantics::Symbol *symbol = y.symbol;
+
+            // create a varref
+            expr = SageBuilderCpp17::buildVarRefExp_nfi(name);
 
 #if 0
             if (symbol) {
@@ -570,8 +581,8 @@ template<typename T>
 void Build(const parser::IntLiteralConstant &x, T* &expr)
 {
    std::cout << "Rose::builder::Build(IntLiteralConstant)\n";
-   int literal = stoi(std::get<0>(x.t).ToString());
-   std::cout << " The INTEGER LITERAL CONSTANT is " << literal << std::endl;
+
+   expr = SageBuilderCpp17::buildIntVal_nfi(stoi(std::get<0>(x.t).ToString()));
 }
 
 template<typename T>
@@ -816,6 +827,15 @@ void Build(const parser::IntrinsicTypeSpec::DoubleComplex &x, SgType* &type)
 {
    std::cout << "Rose::builder::Build(DoubleComplex)\n";
    std::cout << "TYPE IS : DoubleComplex\n";
+}
+
+void Build(const std::list<Fortran::parser::EntityDecl> &x, std::string &name)
+{
+   std::cout << "Rose::builder::Build(std::list) for EntityDecl\n";
+
+   for (const auto &elem : x) {
+      Build(elem, name);
+   }
 }
 
 void Build(const parser::EntityDecl &x, std::string &name)
@@ -1343,46 +1363,58 @@ void Build(const parser::Expr::DefinedUnary&x, T* &expr)
    std::cout << "Rose::builder::Build(DefinedUnary)\n";
 }
 
-template<typename T>
-void Build(const parser::Expr::Power&x, T* &expr)
+void Build(const parser::Expr::Power&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(Power)\n";
 }
 
-template<typename T>
-void Build(const parser::Expr::Multiply&x, T* &expr)
+void Build(const parser::Expr::Multiply&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(Multiply)\n";
-   traverseBinaryExprs(x, expr);
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildMultiplyOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::Divide&x, T* &expr)
+void Build(const parser::Expr::Divide&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(Divide)\n";
-   traverseBinaryExprs(x, expr);
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildDivideOp_nfi(lhs, rhs);
 }
 
-template<typename T, typename ET>
-void traverseBinaryExprs(const T &x, ET* &expr)
+template<typename T>
+void traverseBinaryExprs(const T &x, SgExpression* &lhs, SgExpression* &rhs)
 {
    std::cout << "Rose::builder::traverseBinaryExprs\n";
-   Build(std::get<0>(x.t).value(), expr); // lhs Expr
-   Build(std::get<1>(x.t).value(), expr); // rhs Expr
+
+   Build(std::get<0>(x.t).value(), lhs); // lhs Expr
+   Build(std::get<1>(x.t).value(), rhs); // rhs Expr
 }
 
-template<typename T>
-void Build(const parser::Expr::Add&x, T* &expr)
+void Build(const parser::Expr::Add&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(Add)\n";
-   traverseBinaryExprs(x, expr);
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildAddOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::Subtract&x, T* &expr)
+void Build(const parser::Expr::Subtract&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(Subtract)\n";
-   traverseBinaryExprs(x, expr);
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildSubtractOp_nfi(lhs, rhs);
 }
 
 template<typename T>
