@@ -2954,8 +2954,7 @@ FortranCodeGeneration_locatedNode::unparseProcessControlStmt(SgStatement* stmt, 
           curprint("STOP ");
           unparseExpression(ctrl_stmt->get_code(), info);
           // F2018 syntax
-          ASSERT_not_null(quiet_expr);
-          if (!isSgNullExpression(quiet_expr))
+          if (quiet_expr && !isSgNullExpression(quiet_expr))
              {
                 curprint(", ");
                 unparseExpression(quiet_expr, info);
@@ -2966,8 +2965,7 @@ FortranCodeGeneration_locatedNode::unparseProcessControlStmt(SgStatement* stmt, 
           curprint("ERROR STOP ");
           unparseExpression(ctrl_stmt->get_code(), info);
           // F2018 syntax
-          ASSERT_not_null(quiet_expr);
-          if (!isSgNullExpression(quiet_expr))
+          if (quiet_expr && !isSgNullExpression(quiet_expr))
              {
                 curprint(", ");
                 unparseExpression(quiet_expr, info);
