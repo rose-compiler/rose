@@ -45,7 +45,7 @@ checkType (const SgStatement* s)
       case V_SgReadStatement:
       case V_SgReturnStmt:
       case V_SgRewindStatement:
-      case V_SgStopOrPauseStatement:
+      case V_SgProcessControlStatement:
       case V_SgSwitchStatement:
       case V_SgTemplateInstantiationDecl:
       case V_SgTryStmt:
