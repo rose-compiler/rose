@@ -247,6 +247,18 @@ public:
      *  encountered multiple times then it is decremented multiple times. */
     virtual void decrementRegisters(SgAsmExpression*);
 
+    /** Update registers for pre-add expressions.
+     *
+     *  For each SgAsmBinaryAddPreupdate, add the lhs and rhs operands and assign the sum to the lhs, which must be a register
+     *  reference expression. */
+    virtual void preUpdate(SgAsmExpression*);
+
+    /** Update registers for post-add expressions.
+     *
+     *  For each SgAsmBinaryAddPostupdate, add the lhs and rhs operands and assign the sum to the lhs, which must be a register
+     *  reference expression. */
+    virtual void postUpdate(SgAsmExpression*);
+
     /** Returns a memory address by evaluating the address expression.  The address expression can be either a constant or an
      *  expression containing operators and constants.  If @p nbits is non-zero then the result is sign extended or truncated
      *  to the specified width, otherwise the returned SValue is the natural width of the expression. */

@@ -85,12 +85,6 @@ public:
         return retval;
     }
 
-    /** Process any SgAsmAddPreUpdate nodes. */
-    void preUpdate(SgAsmExpression*);
-
-    /** Process any SgAsmAddPostUpdate nodes. */
-    void postUpdate(SgAsmExpression*);
-
 protected:
     /** Initialized cached register descriptors from the register dictionary. */
     void initializeRegisterDescriptors();
@@ -102,6 +96,13 @@ protected:
 
     /** Make sure memory is configured correctly, such as setting the byte order. */
     void initializeMemory();
+
+public:
+    BaseSemantics::SValuePtr read(SgAsmExpression*, size_t value_nbits=0, size_t addr_nbits=0) override;
+    void write(SgAsmExpression*, const BaseSemantics::SValuePtr &value, size_t addr_nbits=0) override;
+
+    // Operations more or less defined by the A64 reference manual. Replicates the specified value according to the vector type.
+    BaseSemantics::SValuePtr advSimdExpandImm(SgAsmType*, const BaseSemantics::SValuePtr&);
 
 protected:
     int iproc_key(SgAsmInstruction*) const override;

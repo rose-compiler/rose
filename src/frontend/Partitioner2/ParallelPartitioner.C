@@ -3,10 +3,14 @@
 #include <sage3basic.h>
 #include <Partitioner2/ParallelPartitioner.h>
 
+#include <BinaryDataFlow.h>
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/WorkList.h>
+#include <sstream>
+#include <stringify.h>
 #include <unordered_set>
+#include <BinaryUnparserBase.h>
 
 using namespace Sawyer::Message::Common;
 using namespace Rose::StringUtility;
@@ -37,18 +41,48 @@ void initDiagnostics() {
 // InsnInfo
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-size_t
+Sawyer::Optional<size_t>
 InsnInfo::size() const {
-    ASSERT_require(wasDecoded());
     // No lock necessary since size_ doesn't change after wasDecoded returns true.
-    return size_;
+    if (wasDecoded()) {
+        return size_;
+    } else {
+        return Sawyer::Nothing();
+    }
 }
 
-AddressInterval
+Sawyer::Optional<AddressInterval>
 InsnInfo::hull() const {
-    ASSERT_require(wasDecoded());
-    // No lock necessary since va_ and size_ don't change after wasDecoded returns true.
-    return size_ > 0 ? AddressInterval::baseSize(va_, size_) : AddressInterval();
+    if (wasDecoded()) {
+        // No lock necessary since va_ and size_ don't change after wasDecoded returns true.
+        return size_ > 0 ? AddressInterval::baseSize(va_, size_) : AddressInterval();
+    } else {
+        return Sawyer::Nothing();
+    }
+}
+
+FunctionReasons
+InsnInfo::functionReasons() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return functionReasons_;
+}
+
+void
+InsnInfo::functionReasons(FunctionReasons reasons) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    functionReasons_ = reasons;
+}
+
+void
+InsnInfo::insertFunctionReasons(FunctionReasons reasons) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    functionReasons_.set(reasons);
+}
+
+void
+InsnInfo::eraseFunctionReasons(FunctionReasons reasons) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    functionReasons_.clear(reasons);
 }
 
 bool
@@ -103,6 +137,17 @@ InsnInfo::addressOrder(const Ptr &a, const Ptr &b) {
     return a->address() < b->address();
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// CfgEdge
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::ostream&
+operator<<(std::ostream &out, const CfgEdge &edge) {
+    namespace Stringify = stringify::Rose::BinaryAnalysis::Partitioner2;
+    out <<edge.types_.toString(Stringify::EdgeType(), static_cast<const char*(*)(int64_t)>(&Stringify::EdgeType));
+    return out;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // WorkItem
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,20 +190,13 @@ DecodeInstruction::run() {
     // instructions as well.
     if (insn) {
         auto successors = partitioner().computedConcreteSuccessors(insnVa);
-        for (rose_addr_t successorVa: successors.values()) {
-            if (partitioner().createLinkedCfgVertices(insnVa, successorVa).createdTarget) {
-                SAWYER_MESG(mlog[DEBUG]) <<"edge " <<addrToString(insnVa) <<" -> " <<addrToString(successorVa)
-                                         <<": normal successor\n";
-                partitioner().scheduleDecodeInstruction(successorVa);
-            } else {
-                SAWYER_MESG(mlog[DEBUG]) <<"edge " <<addrToString(insnVa) <<" -> " <<addrToString(successorVa)
-                                         <<": normal successor exists\n";
-            }
-        }
+        bool isFunctionCall = partitioner().isFunctionCall(insnVa);
 
-        if (partitioner().isFunctionCall(insnVa)) {
+        if (isFunctionCall) {
+            // Add the edge from the call source to the return target.
+            // FIXME[Robb Matzke 2020-07-08]: may-return analysis needed.
             rose_addr_t fallThroughVa = insnVa + insn->get_size();
-            if (partitioner().createLinkedCfgVertices(insnVa, fallThroughVa).createdTarget) {
+            if (partitioner().createLinkedCfgVertices(insnVa, fallThroughVa, E_CALL_RETURN).createdTarget) {
                 SAWYER_MESG(mlog[DEBUG]) <<"edge " <<addrToString(insnVa) <<" -> " <<addrToString(fallThroughVa)
                                          <<": assumed fcall-return\n";
                 partitioner().scheduleDecodeInstruction(fallThroughVa);
@@ -167,7 +205,27 @@ DecodeInstruction::run() {
                                          <<": assumed fcall-return exists\n";
             }
         }
+
+        // Create all the CFG edges emanating from this vertex.
+        EdgeType edgeType = isFunctionCall ? E_FUNCTION_CALL : E_NORMAL;
+        for (rose_addr_t successorVa: successors.values()) {
+            if (partitioner().createLinkedCfgVertices(insnVa, successorVa, edgeType).createdTarget) {
+                SAWYER_MESG(mlog[DEBUG]) <<"edge " <<addrToString(insnVa) <<" -> " <<addrToString(successorVa)
+                                         <<": normal successor\n";
+                partitioner().scheduleDecodeInstruction(successorVa);
+            } else {
+                SAWYER_MESG(mlog[DEBUG]) <<"edge " <<addrToString(insnVa) <<" -> " <<addrToString(successorVa)
+                                         <<": normal successor exists\n";
+            }
+        }
     }
+
+#if 1 // DEBUGGING [Robb Matzke 2020-07-10]
+    if (mlog[DEBUG]) {
+        mlog[DEBUG] <<"control flow graph after inserting:\n";
+        partitioner().printInsnCfg(mlog[DEBUG]);
+    }
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////    
@@ -340,10 +398,10 @@ Partitioner::decodeInstruction(rose_addr_t insnVa) {
 InsnInfo::Ptr
 Partitioner::makeInstruction(rose_addr_t insnVa) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    auto vertex = cfg_.findVertexKey(insnVa);
-    if (vertex == cfg_.vertices().end()) {
+    auto vertex = insnCfg_.findVertexKey(insnVa);
+    if (vertex == insnCfg_.vertices().end()) {
         SAWYER_MESG(mlog[DEBUG]) <<"adding instruction " <<addrToString(insnVa) <<" to CFG\n";
-        vertex = cfg_.insertVertex(std::make_shared<InsnInfo>(insnVa));
+        vertex = insnCfg_.insertVertex(std::make_shared<InsnInfo>(insnVa));
     }
     return vertex->value();
 }
@@ -355,7 +413,7 @@ Partitioner::makeInstruction(rose_addr_t insnVa, const InstructionPtr &insn /*nu
     ASSERT_not_null(insnInfo);
     if (insnInfo->setAstMaybe(insn) == insn) {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-        aum_.insert(insnInfo->hull(), insnInfo->address());
+        aum_.insert(insnInfo->hull().get(), insnInfo->address());
         ASSERT_require(nExeVas_ > 0); // because we know the instruction we inserted is from executable memory
         progress_->update(aum_.size() / (double)nExeVas_);
     }
@@ -365,8 +423,8 @@ Partitioner::makeInstruction(rose_addr_t insnVa, const InstructionPtr &insn /*nu
 InsnInfo::Ptr
 Partitioner::existingInstruction(rose_addr_t insnVa) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    auto vertex = cfg_.findVertexKey(insnVa);
-    return vertex == cfg_.vertices().end() ? std::shared_ptr<InsnInfo>() : vertex->value();
+    auto vertex = insnCfg_.findVertexKey(insnVa);
+    return vertex == insnCfg_.vertices().end() ? std::shared_ptr<InsnInfo>() : vertex->value();
 }
 
 InstructionPtr
@@ -395,16 +453,23 @@ Partitioner::lockInCache(const InsnInfo::List &insns) {
 }
 
 InsnInfo::List
-Partitioner::basicBlockEndingAt(rose_addr_t va, size_t maxInsns) {
+Partitioner::basicBlockEndingAt(rose_addr_t va, size_t maxInsns) const {
     InsnInfo::List insns;
     {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-        auto vertex = cfg_.findVertexKey(va);
-        while (vertex != cfg_.vertices().end() && insns.size() < maxInsns) {
-            insns.push_back(vertex->value());
-            if (vertex->nInEdges() != 1)
-                break;
-            vertex = vertex->inEdges().begin()->source();
+        auto vertex = insnCfg_.findVertexKey(va);
+        if (vertex != insnCfg_.vertices().end()) {
+            std::set<rose_addr_t> seen;
+            while (insns.size() < maxInsns) {
+                if (!seen.insert(vertex->value()->address()).second)
+                    break;
+                insns.push_back(vertex->value());
+                if (vertex->nInEdges() != 1)
+                    break;
+                vertex = vertex->inEdges().begin()->source();
+                if (vertex->nOutEdges() != 1)
+                    break;
+            }
         }
     }
     std::reverse(insns.begin(), insns.end());
@@ -413,26 +478,37 @@ Partitioner::basicBlockEndingAt(rose_addr_t va, size_t maxInsns) {
 
 InsnInfo::List
 Partitioner::basicBlockContaining(rose_addr_t va) const {
-    InsnInfo::List insns;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    auto startVertex = cfg_.findVertexKey(va);
+    InsnInfo::List retval;
+    auto startVertex = insnCfg_.findVertexKey(va);
+    std::set<rose_addr_t> seen;
+    if (startVertex != insnCfg_.vertices().end()) {
+        // Starting with the specified va, scan backward as far as possible.
+        auto vertex = startVertex;
+        while (true) {
+            if (!seen.insert(vertex->value()->address()).second)
+                break;
+            retval.push_back(vertex->value());
+            if (vertex->nInEdges() != 1)
+                break;
+            vertex = vertex->inEdges().begin()->source();
+            if (vertex->nOutEdges() != 1)
+                break;
+        }
+        std::reverse(retval.begin(), retval.end());
 
-    // First scan backward, including startVertex
-    for (auto vertex = startVertex; vertex != cfg_.vertices().end(); vertex = vertex->inEdges().begin()->source()) {
-        insns.push_back(vertex->value());
-        if (vertex->nInEdges() != 1)
-            break;
+        // While possibele, scan forward from the specified va.
+        vertex = startVertex;
+        while (vertex->nOutEdges() == 1) {
+            vertex = vertex->outEdges().begin()->target();
+            if (vertex->nInEdges() != 1)
+                break;
+            if (!seen.insert(vertex->value()->address()).second)
+                break;
+            retval.push_back(vertex->value());
+        }
     }
-    std::reverse(insns.begin(), insns.end());
-
-    // Then scan forward
-    for (auto vertex = startVertex; vertex != cfg_.vertices().end(); vertex = vertex->outEdges().begin()->target()) {
-        if (vertex->nOutEdges() != 1)
-            break;
-        insns.push_back(vertex->outEdges().begin()->target()->value());
-    }
-
-    return insns;
+    return retval;
 }
 
 AddressSet
@@ -503,24 +579,24 @@ Partitioner::isFunctionCall(rose_addr_t insnVa) {
 }
 
 Partitioner::CreateLinkedCfgVertices
-Partitioner::createLinkedCfgVertices(rose_addr_t srcVa, rose_addr_t tgtVa) {
+Partitioner::createLinkedCfgVertices(rose_addr_t srcVa, rose_addr_t tgtVa, const CfgEdge &edgeInfo) {
     CreateLinkedCfgVertices retval;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    auto src = cfg_.findVertexKey(srcVa);
-    if (src == cfg_.vertices().end()) {
+    auto src = insnCfg_.findVertexKey(srcVa);
+    if (src == insnCfg_.vertices().end()) {
         retval.createdSource = true;
         retval.source = std::make_shared<InsnInfo>(srcVa);
-        src = cfg_.insertVertex(retval.source);
+        src = insnCfg_.insertVertex(retval.source);
     } else {
         retval.createdSource = false;
         retval.source = src->value();
     }
 
-    auto tgt = cfg_.findVertexKey(tgtVa);
-    if (tgt == cfg_.vertices().end()) {
+    auto tgt = insnCfg_.findVertexKey(tgtVa);
+    if (tgt == insnCfg_.vertices().end()) {
         retval.createdTarget = true;
         retval.target = std::make_shared<InsnInfo>(tgtVa);
-        tgt = cfg_.insertVertex(retval.target);
+        tgt = insnCfg_.insertVertex(retval.target);
     } else {
         retval.createdTarget = false;
         retval.target = tgt->value();
@@ -531,12 +607,13 @@ Partitioner::createLinkedCfgVertices(rose_addr_t srcVa, rose_addr_t tgtVa) {
         if (edge.target() == tgt) {
             edgeFound = true;
             retval.createdEdge = false;
+            edge.value().merge(edgeInfo);
             break;
         }
     }
     if (!edgeFound) {
         retval.createdEdge = true;
-        cfg_.insertEdge(src, tgt);
+        insnCfg_.insertEdge(src, tgt, edgeInfo);
     }
     return retval;
 }
@@ -582,33 +659,76 @@ Partitioner::isRunning(bool b) {
     isRunning_ = b;
 }
 
-const Cfg&
-Partitioner::cfg() const {
+const InsnCfg&
+Partitioner::insnCfg() const {
     // No synchronization necessary since this function is documented as not thread safe. The assert is only a half-baked check
     // prone to races.
     ASSERT_forbid(isRunning());
-    return cfg_;
+    return insnCfg_;
 }
 
-Cfg&
-Partitioner::cfg() {
+InsnCfg&
+Partitioner::insnCfg() {
     ASSERT_forbid2(isRunning(), "not thread safe");
-    return cfg_;
+    return insnCfg_;
 }
 
 void
-Partitioner::printCfg(std::ostream &out) const {
-    ASSERT_forbid2(isRunning(), "not thread safe");
-    out <<"graph {\n";
-    for (auto &vertex: cfg_.vertices()) {
-        out <<"  node " <<vertex.id() <<"\n";
+Partitioner::printInsnCfg(std::ostream &out) const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    out <<"digraph cfg {\n";
+    for (auto &vertex: insnCfg_.vertices()) {
+        out <<"I" <<StringUtility::addrToString(vertex.value()->address()).substr(2) <<";\n";
     }
-    for (auto &edge: cfg_.edges()) {
-        out <<" edge " <<edge.source()->id() <<" -> " <<edge.target()->id() <<"\n";
+    for (auto &edge: insnCfg_.edges()) {
+        out <<"I" <<StringUtility::addrToString(edge.source()->value()->address()).substr(3)
+            <<" -> I" <<StringUtility::addrToString(edge.target()->value()->address()).substr(2) <<";\n";
     }
     out <<"}\n";
 }
 
+void
+Partitioner::dumpInsnCfg(std::ostream &out, const Rose::BinaryAnalysis::Partitioner2::Partitioner &p) const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    Unparser::Base::Ptr unparser = insnCache_->decoder()->unparser();
+    Rose::BinaryAnalysis::Partitioner2::Partitioner emptyPartitioner{};
+
+    for (auto vertex: insnCfg_.vertices()) {
+        out <<"vertex #" <<vertex.id() <<" ";
+        if (vertex.value()->wasDecoded()) {
+            if (auto ast = vertex.value()->ast()) {
+                out <<p.unparse(ast.lock().get()) <<"\n";
+            } else {
+                out <<addrToString(vertex.value()->address()) <<": no instruction\n";
+            }
+        } else {
+            out <<addrToString(vertex.value()->address()) <<": not decoded yet\n";
+        }
+
+        for (auto edge: vertex.inEdges())
+            out <<"  from " <<addrToString(edge.source()->value()->address())
+                <<" via " <<edge.value() <<" #" <<edge.id() <<"\n";
+        for (auto edge: vertex.outEdges())
+            out <<"  to   " <<addrToString(edge.source()->value()->address())
+                <<" via " <<edge.value() <<" #" <<edge.id() <<"\n";
+    }
+}
+
+std::map<rose_addr_t /*insn*/, rose_addr_t /*bb*/>
+Partitioner::calculateInsnToBbMap() const {
+    ASSERT_forbid2(isRunning(), "not thread safe");
+    std::map<rose_addr_t, rose_addr_t> retval;
+    for (auto &vertex: insnCfg_.vertices()) {
+        if (retval.find(vertex.value()->address()) == retval.end()) {
+            InsnInfo::List bb = basicBlockContaining(vertex.value()->address());
+            ASSERT_forbid(bb.empty());
+            rose_addr_t bbVa = bb.front()->address();
+            for (auto &insnInfo: bb)
+                retval[insnInfo->address()] = bbVa;
+        }
+    }
+    return retval;
+}
 
 std::vector<InsnInfo::List>
 Partitioner::allBasicBlocks() const {
@@ -616,7 +736,7 @@ Partitioner::allBasicBlocks() const {
     std::vector<InsnInfo::List> retval;
 
     std::unordered_set<rose_addr_t> seen;
-    for (auto &vertex: cfg_.vertices()) {
+    for (auto &vertex: insnCfg_.vertices()) {
         if (!seen.insert(vertex.value()->address()).second)
             continue;
 
@@ -625,24 +745,6 @@ Partitioner::allBasicBlocks() const {
             seen.insert(insnInfo->address());
         retval.push_back(bb);
     }
-
-#if 1 // DEBUGGING
-    {
-        Sawyer::Container::Map<rose_addr_t/*insn*/, rose_addr_t/*bb*/> map;
-        for (const InsnInfo::List &list: retval) {
-            ASSERT_forbid(list.empty());
-            for (const InsnInfo::Ptr &insn: list) {
-                ASSERT_not_null(insn);
-                ASSERT_require(insn->wasDecoded());
-                ASSERT_forbid2(map.exists(insn->address()),
-                               "insn " + addrToString(insn->address()) + " in bb " + addrToString(list.front()->address()) +
-                               " was already seen in bb " + addrToString(map.get(insn->address())));
-                map.insert(insn->address(), list.front()->address());
-            }
-        }
-    }
-#endif
-
     return retval;
 }
 
@@ -655,19 +757,135 @@ Partitioner::addressOrder(const InsnInfo::List &a, const InsnInfo::List &b) {
 }
 
 void
-Partitioner::transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &out) const {
+Partitioner::transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &out) {
     ASSERT_forbid2(isRunning(), "not thread safe");
-    std::vector<InsnInfo::List> basicBlocks = allBasicBlocks();
 
+    // Create the basic blocks
+    std::vector<InsnInfo::List> basicBlocks = allBasicBlocks();
     for (auto &insns: basicBlocks) {
         ASSERT_forbid(insns.empty());
         mlog[DEBUG] <<"attaching basic block " <<addrToString(insns.front()->address()) <<"\n";
+
+        // A basic block could end with an instruction that doesn't exist (its address is unmapped or not executable). The
+        // serial partitioner doesn't handle this, so we simply drop those instructions.
+        while (!insns.empty() && !insns.back()->ast())
+            insns.pop_back();
+        if (insns.empty())
+            continue;
+
+        // Create the basic block for the serial partitioner.
+        // FIXME[Robb Matzke 2020-07-09]: This seems to be very slow.
         auto bblock = BasicBlock::instance(insns.front()->address(), out);
         for (auto &insnInfo: insns)
             bblock->append(out, insnInfo->ast().take());
         out.detachBasicBlock(bblock);
         out.attachBasicBlock(bblock);
     }
+
+    // Create the functions
+    std::map<rose_addr_t /*func*/, AddressSet /*insns*/> fa = assignFunctions();
+    std::map<rose_addr_t /*insn*/, rose_addr_t /*bb*/> bb = calculateInsnToBbMap();
+    for (auto node: fa) {
+        rose_addr_t funcVa = node.first;
+        const AddressSet insnVas = node.second;
+        AddressSet bbVas;
+        for (rose_addr_t insnVa: insnVas.values())
+            bbVas.insert(bb.at(insnVa));
+
+        InsnInfo::Ptr funcEntry = existingInstruction(funcVa);
+        auto function = Function::instance(funcVa, funcEntry->functionReasons().vector());
+        for (rose_addr_t bbVa: bbVas.values())
+            function->insertBasicBlock(bbVa);
+        out.attachOrMergeFunction(function);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Function assignment ("Fa") assigns each instruction to a specific function.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+using FaState = std::set<rose_addr_t>;                // set of function entry addresses
+
+struct FaTransfer {
+    FaState operator()(const InsnCfg&, size_t vertexId, const FaState &state) const {
+        return state;
+    }
+
+    std::string printState(const FaState &state) const {
+        std::ostringstream ss;
+        for (auto iter = state.begin(); iter != state.end(); ++iter)
+            ss <<(iter == state.begin() ? "" : " ") <<addrToString(*iter);
+        return ss.str();
+    }
+};
+
+struct FaMerge {
+    bool operator()(FaState &a, const FaState &b) const {
+        bool changed = false;
+        for (rose_addr_t va: b) {
+            if (a.insert(va).second)
+                changed = true;
+        }
+        return changed;
+    }
+};
+
+struct FaEdgePredicate {
+    bool operator()(const InsnCfg&, const InsnCfg::Edge &edge, const FaState&) {
+        return !edge.value().types().isAnySet(E_FUNCTION_CALL |
+                                              E_FUNCTION_RETURN |
+                                              E_FUNCTION_XFER);
+    }
+};
+
+std::map<rose_addr_t /*funcVa*/, AddressSet /*insnVas*/>
+Partitioner::assignFunctions() {
+    ASSERT_forbid2(isRunning(), "not thread safe");
+
+    // Create the dataflow engine. For each CFG vertex that has a non-empty function reason, initialize it's state in the data
+    // flow and mark it as a starting point. As a side effect, if any vertex has an incoming edge that would cause the vertex
+    // to be a function entry point, then mark it as such.
+    using DfEngine = Rose::BinaryAnalysis::DataFlow::Engine<InsnCfg, FaState, FaTransfer, FaMerge, FaEdgePredicate>;
+    FaTransfer xfer;
+    DfEngine dfEngine(insnCfg_, xfer, FaMerge(), FaEdgePredicate());
+    for (auto vertex: insnCfg_.vertices()) {
+        if (vertex.value()->functionReasons().isClear(SgAsmFunction::FUNC_CALL_TARGET)) {
+            for (auto edge: vertex.inEdges()) {
+                if (edge.value().types().isAnySet(E_FUNCTION_CALL | E_FUNCTION_XFER))
+                    vertex.value()->insertFunctionReasons(SgAsmFunction::FUNC_CALL_TARGET);
+            }
+        }
+
+        if (!vertex.value()->functionReasons().isEmpty())
+            dfEngine.insertStartingVertex(vertex.id(), FaState{vertex.value()->address()});
+    }
+
+    // Run until a fixed point is reached. We've set up the problem so that we're guaranteed to reach a fixed point. Once this
+    // completes, every vertex reachable from a function entry point will have a non-empty set of function owners, and vertices
+    // that are not reachable will have an empty set.
+    dfEngine.runToFixedPoint();
+
+    // FIXME[Robb Matzke 2020-07-08]: What to do about unowned instructions?  Maybe we don't care about them because we have
+    // more work to do? Or should we create additional functions to which they should be assigned? If so, what addresses should
+    // we use as the function entry points?
+    if (mlog[ERROR]) {
+        for (size_t i = 0; i < insnCfg_.nVertices(); ++i) {
+            if (dfEngine.getInitialState(i).empty())
+                mlog[ERROR] <<"CFG vertex " <<addrToString(insnCfg_.findVertex(i)->value()->address()) <<" is not in any function\n";
+        }
+    }
+
+    // FIXME[Robb Matzke 2020-07-08]: Should it be possible for an instruction to belong to more than one function? For now,
+    // lets assume yes.
+    std::map<rose_addr_t /*funcVa*/, AddressSet /*insnVas*/> retval;
+    for (size_t i = 0; i < insnCfg_.nVertices(); ++i) {
+        for (rose_addr_t funcVa: dfEngine.getInitialState(i)) {
+            rose_addr_t insnVa = insnCfg_.findVertex(i)->value()->address();
+            retval[funcVa].insert(insnVa);
+        }
+    }
+
+    return retval;
 }
 
 } // namespace
