@@ -1021,6 +1021,11 @@ SgExpression* buildIntVal_nfi(int value = 0)
    return SageBuilder::buildIntVal_nfi(value);
 }
 
+SgExpression* buildStringVal_nfi(std::string value)
+{
+   return SageBuilder::buildStringVal_nfi(value);
+}
+
 SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope)
 {
    SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, scope);
@@ -1056,6 +1061,16 @@ SgExpression* buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpressi
 SgExpression* buildNullExpression_nfi()
 {
    return SageBuilder::buildNullExpression_nfi();
+}
+
+SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &list)
+{
+   SgExprListExp* expr_list = SageBuilder::buildExprListExp_nfi();
+
+   BOOST_FOREACH(SgExpression* expr, list) {
+      expr_list->get_expressions().push_back(expr);
+   }
+   return expr_list;
 }
 
 } // namespace SageBuilderCpp17
