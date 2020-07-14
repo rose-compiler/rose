@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#if defined(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT) && __cplusplus >= 201103L
+
 static const char *purpose = "experimental parallel disassembly";
 static const char *description =
     "Simple tool to try some parallel disassembly ideas.";
@@ -342,3 +345,14 @@ int main(int argc, char *argv[]) {
     printInsnsFromBoth(pp, p2);
 #endif
 }
+
+#else
+
+#include <iostream>
+
+int main(int argc, char *argv[]) {
+    std::cerr <<argv[0] <<": not supported in this ROSE configuration\n";
+    return 1;
+}
+
+#endif
