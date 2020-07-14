@@ -5443,24 +5443,21 @@ ATbool ATermToSageJovialTraversal::traverse_ExitStatement(ATerm term)
    ATerm t_labels;
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
-   SgUntypedStatement* stmt;
+
+   SgProcessControlStatement* exit_stmt = nullptr;
 
    if (ATmatch(term, "ExitStatement(<term>)", &t_labels)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
-
-      SgUntypedExitStatement* exit_stmt = new SgUntypedExitStatement("");
-      setSourcePosition(exit_stmt, term);
-
-      stmt = convert_Labels(labels, locations, exit_stmt);
    }
    else return ATfalse;
 
-//TODO_STATEMENTS
-#if 0
-   stmt_list->get_stmt_list().push_back(stmt);
-#endif
+   // Begin SageTreeBuilder
+   sage_tree_builder.Enter(exit_stmt, std::string("exit"), boost::none);
+
+   // End SageTreeBuilder
+   sage_tree_builder.Leave(exit_stmt);
 
    return ATtrue;
 }
@@ -5478,7 +5475,7 @@ ATbool ATermToSageJovialTraversal::traverse_StopStatement(ATerm term)
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
-   SgStopOrPauseStatement* stop_stmt = nullptr;
+   SgProcessControlStatement* stop_stmt = nullptr;
    SgExpression* stop_code = nullptr;
    boost::optional<SgExpression*> opt_code = boost::none;
 
@@ -5498,7 +5495,7 @@ ATbool ATermToSageJovialTraversal::traverse_StopStatement(ATerm term)
    else return ATfalse;
 
    // Begin SageTreeBuilder
-   sage_tree_builder.Enter(stop_stmt, opt_code, std::string("stop"));
+   sage_tree_builder.Enter(stop_stmt, std::string("stop"), opt_code);
 
    // End SageTreeBuilder
    sage_tree_builder.Leave(stop_stmt);
@@ -5519,7 +5516,7 @@ ATbool ATermToSageJovialTraversal::traverse_AbortStatement(ATerm term)
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
-   SgStopOrPauseStatement* abort_stmt = nullptr;
+   SgProcessControlStatement* abort_stmt = nullptr;
 
    if (ATmatch(term, "AbortStatement(<term>)", &t_labels)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
@@ -5529,7 +5526,7 @@ ATbool ATermToSageJovialTraversal::traverse_AbortStatement(ATerm term)
    else return ATfalse;
 
    // Begin SageTreeBuilder
-   sage_tree_builder.Enter(abort_stmt, boost::none, std::string("abort"));
+   sage_tree_builder.Enter(abort_stmt, std::string("abort"), boost::none);
 
    // End SageTreeBuilder
    sage_tree_builder.Leave(abort_stmt);
