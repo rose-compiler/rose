@@ -354,18 +354,6 @@ CtxSolver0::runSolver()
     Label        lab0 = edge.source();
     Label        lab1 = edge.target();
 
-    // schroder3 (2016-08-05): Set up the combine and approximatedBy member functions according
-    // to the edge type.
-    void (Lattice::*combineMemFunc)(Lattice&)        = &Lattice::combine;
-    //~ bool (Lattice::*approximatedByMemFunc)(Lattice&) = &Lattice::approximatedBy;
-    
-    if (edge.isType(EDGE_BACKWARD)) 
-    {
-      combineMemFunc        = &Lattice::combineAsymmetric;
-      //~ approximatedByMemFunc = &Lattice::approximatedByAsymmetric;
-      logDbg() << "BACKWARD edge" << std::endl;
-    }
-
     logDbg() << "computing edge " << lab0 << "->" << lab1 << std::endl;
     
     Iterator                 preIt = preInfoLatticeIterator(lab0, ctx);
