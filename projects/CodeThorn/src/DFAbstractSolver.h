@@ -21,7 +21,7 @@ struct DFAbstractSolver
   //~ virtual void computePostInfo(Label lab, Lattice& inInfo) = 0;
 
   /// optional debugging/tracing support
-  virtual void setTrace(bool trace) = 0; 
+  virtual void setTrace(bool trace) {} 
 };
 
 } // namespace CodeThorn

@@ -122,6 +122,7 @@ void XOMP_init (int argc, char ** argv)
   {
     char* instr_file_name;
     instr_file_name= current_time_to_str();
+    assert(instr_file_name != NULL);
     fp = fopen(instr_file_name, "a+");
     if (fp != NULL)
     {
