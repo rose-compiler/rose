@@ -40,7 +40,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This limits the use of ROSE header files at the moment.
 //
 class SgExpression;
+class SgExprListExp;
 class SgScopeStatement;
+class SgStatement;
 class SgType;
 
 
@@ -124,6 +126,7 @@ void Build(const Fortran::parser::                     AssumedRankSpec &x, SgExp
 void Build(const Fortran::parser::                   SpecificationExpr &x, SgExpression* &expr);
 void Build(const Fortran::parser::Scalar<Fortran::parser::IntExpr>     &x, SgExpression* &expr);
 void Build(const Fortran::parser::Scalar<Fortran::parser::LogicalExpr> &x, SgExpression* &expr);
+void Build(const Fortran::parser::                        ConstantExpr &x, SgExpression* &expr);
 
 void Build(const Fortran::parser::IntrinsicTypeSpec::           Real &x, SgType* &);
 void Build(const Fortran::parser::IntrinsicTypeSpec::DoublePrecision &x, SgType* &);
@@ -236,6 +239,12 @@ void Build(const Fortran::parser::    SubscriptTriplet &x, SgExpression* &expr);
 template<typename T> void Build(const Fortran::parser::   AssociateConstruct&x, T* scope);
 template<typename T> void Build(const Fortran::parser::       BlockConstruct&x, T* scope);
 template<typename T> void Build(const Fortran::parser::        CaseConstruct&x, T* scope);
+void Build(const Fortran::parser::  CaseConstruct::Case&x, SgStatement* &stmt);
+void Build(const Fortran::parser::             CaseStmt&x, std::list<SgExpression*> &case_list);
+void Build(const Fortran::parser::         CaseSelector&x, std::list<SgExpression*> &case_list);
+void Build(const std::list<Fortran::parser::CaseValueRange> &x, std::list<SgExpression*> &case_list);
+void Build(const Fortran::parser::       CaseValueRange&x, SgExpression* &expr);
+void Build(const Fortran::parser::CaseValueRange::Range&x, SgExpression* &range);
 template<typename T> void Build(const Fortran::parser::  ChangeTeamConstruct&x, T* scope);
 template<typename T> void Build(const Fortran::parser::    CriticalConstruct&x, T* scope);
 template<typename T> void Build(const Fortran::parser::          LabelDoStmt&x, T* scope);
