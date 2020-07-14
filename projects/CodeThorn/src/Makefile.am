@@ -7,7 +7,7 @@ COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counte
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 # 
-bin_PROGRAMS = codethorn equithorn vxthorn parprothorn ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
+bin_PROGRAMS = codethorn equithorn memthorn parprothorn ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
 
 # matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis cldemo
@@ -66,6 +66,7 @@ CODETHORN_HEADER_FILES=\
   AliasAnalysis.h \
   AnalysisAbstractionLayer.h \
   AnalysisAstAnnotator.h \
+  AnalysisReporting.h \
   Analyzer.h \
   ArrayElementAccessData.h \
   AstNodeInfo.h \
@@ -82,9 +83,11 @@ CODETHORN_HEADER_FILES=\
   CppStdUtilities.h \
   CTIOLabeler.h \
   CtxCallStrings.h \
+  CtxSolver0.h \
   DataDependenceVisualizer.h \
   DataRaceDetection.h \
   defUseQuery.h \
+  DFAbstractSolver.h \
   DFAnalysisBase.h \
   DFTransferFunctions.h \
   DotGraphCfgFrontend.h \
@@ -118,6 +121,10 @@ CODETHORN_HEADER_FILES=\
   LVAstAttributeInterface.h \
   LVLattice.h \
   LVTransferFunctions.h \
+  MemAnalysis.h \
+  MemTransferFunctions.h \
+  MemPropertyState.h \
+  MemPropertyStateFactory.h \
   Miscellaneous2.h \
   Miscellaneous.h \
   Normalization.h \
@@ -136,7 +143,9 @@ CODETHORN_HEADER_FILES=\
   ProgramAbstractionLayer.h \
   ProgramInfo.h \
   ProgramLocationsReport.h \
+  ProgramLocationsAnalysis.h \
   PropertyState.h \
+  PropertyStateFactory.h \
   PropertyValueTable.h \
   PState.h \
   RDAnalysis.h \
@@ -173,6 +182,7 @@ CODETHORN_SOURCE_FILES=\
   AliasAnalysis.C \
   AnalysisAbstractionLayer.C \
   AnalysisAstAnnotator.C \
+  AnalysisReporting.C \
   Analyzer.C \
   ArrayElementAccessData.C \
   AstNodeInfo.C \
@@ -189,6 +199,7 @@ CODETHORN_SOURCE_FILES=\
   CppStdUtilities.C \
   CTIOLabeler.C \
   CtxCallStrings.C \
+  CtxSolver0.C \
   DataDependenceVisualizer.C \
   defUseQuery.C \
   DataRaceDetection.C \
@@ -228,6 +239,10 @@ CODETHORN_SOURCE_FILES=\
   LVAstAttributeInterface.C \
   LVLattice.C \
   LVTransferFunctions.C \
+  MemAnalysis.C \
+  MemTransferFunctions.C \
+  MemPropertyState.C \
+  MemPropertyStateFactory.C \
   Miscellaneous2.C \
   Miscellaneous.C \
   Normalization.C \
@@ -242,7 +257,9 @@ CODETHORN_SOURCE_FILES=\
   ProgramAbstractionLayer.C \
   ProgramInfo.C \
   ProgramLocationsReport.C \
+  ProgramLocationsAnalysis.C \
   PropertyState.C \
+  PropertyStateFactory.C \
   PropertyValueTable.C \
   PState.C \
   RDAnalysis.C \
@@ -509,40 +526,40 @@ parprothorn_SOURCES = \
   parprothorn.C
 
 ##############################################################
-# TOOL: VXTHORN
+# TOOL: MEMTHORN
 ##############################################################
 
 # yacc flags for LTL parser
-vxthorn_YFLAGS = -p ltl_ 
+memthorn_YFLAGS = -p ltl_ 
 
 # this line creates speparately named object files
-vxthorn_CXXFLAGS = -fopenmp -Wall -O3 
+memthorn_CXXFLAGS = -fopenmp -Wall -O3 
 
-# vxthorn has most of its code organized in two separate libraries
-vxthorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
+# memthorn has most of its code organized in two separate libraries
+memthorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
 
 if ROSE_WITH_SPOT
 #spot and bdd need to be linked last with gcc 5.4
-vxthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
-vxthorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+memthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
+memthorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
 else
-vxthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
+memthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
 endif
 
-vxthorndir=.
+memthorndir=.
 
 # only informative
-vxthorn_xHEADERS = \
+memthorn_xHEADERS = \
   CommandLineOptions.h \
-  VxThornCommandLineOptions.h \
+  MemThornCommandLineOptions.h \
   codethorn.h \
   LTL.h
 
 # codethorn sources in addition to libcodethorn and libltlthorn
-vxthorn_SOURCES = \
+memthorn_SOURCES = \
   LTLParser.y++ \
-  VxThornCommandLineOptions.C \
-  vxthorn.C
+  MemThornCommandLineOptions.C \
+  memthorn.C
 
 ##############################################################
 # TOOL: WOODPECKER
@@ -678,7 +695,7 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain unit-test check-normalization check-vxthorn check-equivalence check-par-cfg
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain unit-test check-normalization check-equivalence check-par-cfg
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
@@ -829,9 +846,6 @@ check-ltl-driven-reset-analyzer:
 check-svcomp-witness:
 	./codethorn $(srcdir)/tests/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c --svcomp-mode --input-values="{1,2,3,4,5,6}" --witness-file=toBeImplemented.witness --with-counterexamples
 
-check-vxthorn:
-	./vxthorn $(srcdir)/tests/DOM009_sequence_arrayinits.C
-
 check-equivalence:
 	@rm -f tmp.nsdump
 	@echo ================================================================
@@ -884,6 +898,7 @@ clean-local:
 	rm -f *.exe
 	rm -f *.imout.check
 	rm -Rf make_check_log_*
+	rm -f *-LTLParser.c++
 
 distclean-local: clean
 	rm -f *.tgz

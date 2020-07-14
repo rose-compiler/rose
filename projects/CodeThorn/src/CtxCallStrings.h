@@ -35,6 +35,9 @@ concept CallContext
 
   /// returns true if *this equals that.
   bool operator==(const CallContext& that) const;
+  
+  /// updates the call context according to the function call invocation at @ref lab
+  void callInvoke(const Labeler&, Label lab);
 
   /// defines a strict weak ordering on call contexts.
   friend

@@ -13,7 +13,7 @@ int main() {
   for(int i=0;i<m;i++) {
     for(int j=0;j<n;j++) {
       arr[i][j]=(i+1)*(j+1); // write
-      printf("%d\n",arr[i][j]); // read
+      printf("arr[%d,%d]=%d\n",i,j,arr[i][j]); // read
     }
   }
   for(int i=0;i<m;i++) {

@@ -64,7 +64,7 @@ namespace
 
         tmp.callInvoke(labeler, label);
 
-        return std::make_pair(tmp, cloneLattice(factory, sg::deref(entry.second)));
+        return std::make_pair(tmp, cloneLattice(factory, SG_DEREF(entry.second)));
       }
 
     private:
@@ -120,17 +120,6 @@ namespace
   };
 
 
-  /// extracts the call string from a lattice element and forwards it for comparison.
-  bool cmpCalleeCallerCtx(const FiniteCallString& retctx, const std::pair<const FiniteCallString, Lattice*>& callctx)
-  {
-    FiniteCallString::const_reverse_iterator callzz = callctx.first.rend();
-    
-    return std::lexicographical_compare( retctx.rbegin(), retctx.rend(), 
-                                         callctx.first.rbegin(), --callzz,
-                                         FiniteLabelComparator()
-                                       );
-  }
-
   /// clones a lattice element
   struct LatticeCloner
   {
@@ -160,6 +149,19 @@ namespace
            || ((caller <  MAXLEN) && (callee == caller+1))
            );
   }
+  
+  /// extracts the call string from a lattice element and forwards it for comparison.
+  /// returns retctx < callctx.first
+  // \todo can this code be unified with callerCalleePrefix below?
+  bool cmpCalleeCallerCtx(const FiniteCallString& retctx, const std::pair<const FiniteCallString, Lattice*>& callctx)
+  {
+    FiniteCallString::const_reverse_iterator callzz = callctx.first.rend();
+    
+    return std::lexicographical_compare( retctx.rbegin(), retctx.rend(), 
+                                         callctx.first.rbegin(), --callzz,
+                                         FiniteLabelComparator()
+                                       );
+  }
 
   /// tests if this is a prefix to target
   /// \details
@@ -169,10 +171,11 @@ namespace
   {
     if (FiniteCallString::FIXED_LEN_REP)
     {
-      const size_t ofs     = 1;
-    
-      return std::equal( std::next(caller.begin(), ofs), caller.end(), 
-                         callee.begin());
+      const size_t ofs = 1;
+      const bool   res = std::equal( std::next(caller.begin(), ofs), caller.end(), 
+                                     callee.begin());
+                                     
+      return res;
     }    
     
     constexpr size_t MAX_OVERLAP = CTX_CALL_STRING_MAX_LENGTH-1;
@@ -183,8 +186,10 @@ namespace
     const size_t ofs     = len-overlap;
     
     ROSE_ASSERT(overlap+1 == callee.size());
+    return std::equal(std::next(caller.begin(), ofs), caller.end(), callee.begin()); 
   }
 
+#if OBSOLETE_CODE
   struct IsCallerCallee
   {
     bool
@@ -197,6 +202,7 @@ namespace
 
     FiniteCallString retctx;
   };
+#endif /* OBSOLETE_CODE */
 
   /// A functor that is invoked for every lattice flowing over a return edge.
   /// - Every valid return context is mapped onto every feasible context in the caller
@@ -222,14 +228,19 @@ namespace
 
         retctx.callReturn(labeler, label);
         
-        const_iterator prelow = pre.lower_bound(retctx);
-        const_iterator prepos = std::upper_bound(prelow, pre.end(), retctx, cmpCalleeCallerCtx);
+        const_iterator   prelow = pre.lower_bound(retctx);
         
-        transform_if( prelow, prepos,
-                      std::inserter(tgt, tgt.end()),
-                      IsCallerCallee{entry.first},
-                      LatticeCloner(factory, sg::deref(entry.second))
-                    );
+        // \todo make cmpCalleeCallerCtx obsolete and use 
+        //       a derivative of callerCalleePrefix instead (like CtxSolver0).
+        const_iterator   prepos = std::upper_bound(prelow, pre.end(), retctx, cmpCalleeCallerCtx);
+        
+        // the use of IsCallerCall is obsolete (transform_if -> transform)
+        //   b/c the condition must hold for all elements in range [prelow, prepos).
+        std::transform( prelow, prepos,
+                        std::inserter(tgt, tgt.end()),
+                        //~ IsCallerCallee{entry.first},
+                        LatticeCloner(factory, sg::deref(entry.second))
+                      );
       }
 
     private:

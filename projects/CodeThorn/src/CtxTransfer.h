@@ -35,29 +35,29 @@ namespace
   /// calls transfer on the DfItem (data-flow object).
   /// \tparam DfItem either a data-flow node (source) or a data-flow edge
   template <class DfItem>
-  struct ComponentTransfer
+  struct SubTransfer
   {
-      ComponentTransfer(DFTransferFunctions& comptrans, DfItem dfitem)
-      : component(comptrans), item(dfitem)
+      SubTransfer(DFTransferFunctions& comptrans, DfItem dfitem)
+      : tffun(comptrans), item(dfitem)
       {}
 
       template <class Key>
       void operator()(std::pair<const Key, Lattice*>& p) const
       {
-        component.transfer(item, SG_DEREF(p.second));
+        tffun.transfer(item, SG_DEREF(p.second));
       }
 
     private:
-      DFTransferFunctions& component;
+      DFTransferFunctions& tffun;
       DfItem               item;
   };
 
   template <class TfObject>
   inline
-  ComponentTransfer<TfObject>
-  componentTransfer(DFTransferFunctions& comptrans, TfObject tfobj)
+  SubTransfer<TfObject>
+  subTransfer(DFTransferFunctions& comptrans, TfObject tfobj)
   {
-    return ComponentTransfer<TfObject>(comptrans, tfobj);
+    return SubTransfer<TfObject>(comptrans, tfobj);
   }
 }
 
@@ -107,7 +107,7 @@ struct CtxTransfer : DFTransferFunctions
     /// \param ctxanalysis the context sensitive analysis class.
     /// \param init        a prototype lattice to initialize extremal values
     CtxTransfer(DFTransferFunctions& comptrans, CtxAnalysis<CallContext>& ctxanalysis, const ctx_lattice_t& init)
-    : base(), component(comptrans), analysis(ctxanalysis), initialElement(mkCtxLattice(analysis, init))
+    : base(), component(comptrans), analysis(ctxanalysis), initialElement(&mkCtxLattice(analysis, init))
     {}
 
     /// Initializes a new transfer object.
@@ -115,8 +115,13 @@ struct CtxTransfer : DFTransferFunctions
     ///                    definitions).
     /// \param ctxanalysis the context sensitive analysis class.
     CtxTransfer(DFTransferFunctions& comptrans, CtxAnalysis<CallContext>& ctxanalysis)
-    : base(), component(comptrans), analysis(ctxanalysis), initialElement(mkCtxLattice(analysis, component))
+    : base(), component(comptrans), analysis(ctxanalysis), initialElement(&mkCtxLattice(analysis, component))
     {}
+    
+    ~CtxTransfer()
+    {
+      delete initialElement;
+    }
 
 
     /// sets its and its' component's abstraction layer
@@ -148,7 +153,7 @@ struct CtxTransfer : DFTransferFunctions
       ctx_lattice_t& lat = dynamic_cast<ctx_lattice_t&>(element);
 
       this->transfer(lbl, lat);
-      std::for_each(lat.begin(), lat.end(), componentTransfer(component, lbl));
+      std::for_each(lat.begin(), lat.end(), subTransfer(component, lbl));
     }
 
     /// this method is invoked from the solver/worklist algorithm and
@@ -162,7 +167,8 @@ struct CtxTransfer : DFTransferFunctions
     {
       ctx_lattice_t& lat = dynamic_cast<ctx_lattice_t&>(element);
 
-      lat.combine(const_cast<ctx_lattice_t&>(initialElement));
+      //~ lat.combine(const_cast<ctx_lattice_t&>(*initialElement));
+      lat.combine(*initialElement);
     }
 
     /// overrides behavior from base function for cases where
@@ -170,17 +176,33 @@ struct CtxTransfer : DFTransferFunctions
     ///   reinitialize global state.
     ctx_lattice_t* initializeGlobalVariables(SgProject* root) ROSE_OVERRIDE
     {
-      if (!root) return cloneLattice(analysis.factory(), initialElement);
+      if (!root) return cloneLattice(analysis.factory(), *initialElement);
 
-      Lattice* elem = base::initializeGlobalVariables(root);
+      ctx_lattice_t& elem = dynamic_cast<ctx_lattice_t&>(SG_DEREF(base::initializeGlobalVariables(root)));
+      
+      ROSE_ASSERT(elem.size() <= 1);
+      
+      // \todo remove workaround when CFG has return nodes for function calls
+      //       in global variable initialization.
+      if (elem.size())
+      {
+        // replace initial element with lattice from global variable analysis
+        delete initialElement;
+      
+        initialElement = &mkCtxLattice(analysis, elem);
+      }
 
-      return dynamic_cast<ctx_lattice_t*>(elem);
+      //~ dbgPrintCtx(std::cerr, SG_DEREF(analysis.getLabeler()), elem);
+      return &elem;
     }
+    
+    DFTransferFunctions& componentTransfer() { return component; }
 
   private:
     DFTransferFunctions&      component;       ///< The component transfer
     CtxAnalysis<CallContext>& analysis;        ///< The analysis objects
-    const ctx_lattice_t&      initialElement;  ///< prototype lattice for extremal value
+    //~ const ctx_lattice_t&      initialElement;  ///< prototype lattice for extremal value
+    ctx_lattice_t*            initialElement;  ///< prototype lattice for extremal value 
 };
 
 
@@ -221,7 +243,7 @@ void CtxTransfer<CallContext>::transfer(Edge edge, Lattice& element)
   //~ was: this->transfer(edge.source(), element);
   this->transfer(edge.source(), lat);
   
-  std::for_each(lat.begin(), lat.end(), componentTransfer(component, edge));
+  std::for_each(lat.begin(), lat.end(), subTransfer(component, edge));
 
   //~ std::cerr << "# tr'd " << getLabeler()->getNode(edge.source())->unparseToString();
   //~ lat.toStream(std::cerr, NULL);

@@ -18,18 +18,20 @@ class SgEnumVal;
 class SgExpression;
 class SgExprListExp;
 class SgExprStatement;
+class SgFunctionCallExp;
 class SgFunctionDeclaration;
 class SgFunctionDefinition;
 class SgFunctionParameterList;
 class SgFunctionParameterScope;
 class SgGlobal;
+class SgIfStmt;
 class SgInitializedName;
 class SgLocatedNode;
 class SgNamespaceDeclarationStatement;
+class SgProcessControlStatement;
 class SgProgramHeaderStatement;
 class SgScopeStatement;
 class SgSourceFile;
-class SgStopOrPauseStatement;
 class SgSwitchStatement;
 class SgType;
 class SgTypedefDeclaration;
@@ -135,8 +137,10 @@ public:
    void Enter(SgIfStmt* &, SgExpression*, SgBasicBlock*, SgBasicBlock*);
    void Leave(SgIfStmt*);
 
-   void Enter(SgStopOrPauseStatement* &, const boost::optional<SgExpression*> &, const std::string &);
-   void Leave(SgStopOrPauseStatement*);
+   void Enter(SgProcessControlStatement* &, const std::string &, const boost::optional<SgExpression*> &);
+   void Enter(SgProcessControlStatement* &, const std::string &, const boost::optional<SgExpression*> &,
+                                                                 const boost::optional<SgExpression*> &);
+   void Leave(SgProcessControlStatement*);
 
    void Enter(SgSwitchStatement* &, SgExpression*, const SourcePositionPair &);
    void Leave(SgSwitchStatement*);
@@ -194,6 +198,15 @@ public:
 namespace SageBuilderCpp17 {
 
    SgType* buildIntType();
+   SgExpression* buildIntVal_nfi(int);
+   SgExpression* buildExprListExp_nfi();
+   SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope = NULL);
+   SgExpression* buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression* buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression* buildMultiplyOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression* buildDivideOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression* buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride);
+   SgExpression* buildNullExpression_nfi();
 
 } // namespace SageBuilderCpp17
 } // namespace builder

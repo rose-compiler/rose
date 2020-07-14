@@ -239,7 +239,10 @@ void merge(SgProject * project) {
   plot_links(ofs_mid);
 #endif
 
-  link(project);
+  link_variable(project);
+  link_function(project);
+  link_class(project);
+  link_namespace(project);
 
 #if ENABLE_plot_links
   std::ofstream ofs_out("merging-after.dot");

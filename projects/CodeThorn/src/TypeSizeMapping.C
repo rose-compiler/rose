@@ -63,7 +63,12 @@ namespace CodeThorn {
     if(_typeToSizeMapping.find(sgType)!=_typeToSizeMapping.end()) {
       return _typeToSizeMapping[sgType];
     }
+    // remove typedef indirection
+    sgType=sgType->stripType(SgType::STRIP_TYPEDEF_TYPE|SgType::STRIP_MODIFIER_TYPE);
     switch (sgType->variantT()) {
+
+    case V_SgTypeVoid:
+      return 0;
 
     case V_SgPointerType:
       return getTypeSize(BITYPE_POINTER);
@@ -130,9 +135,11 @@ namespace CodeThorn {
     case V_SgFunctionType:
       return getTypeSize(BITYPE_POINTER);
       //case V_SgTypeComplex:
+    case V_SgEnumType:
+      return getTypeSize(BITYPE_INT); // enum size is of size int in C++
 
     default:
-      //SAWYER_MESG(CodeThorn::logger[ERROR])<<"Unknown type:  "<<sgType->unparseToString()<<endl;
+      SAWYER_MESG(CodeThorn::logger[WARN])<<"VID:TSM:Unknown type:  "<<sgType->unparseToString()<<":"<<AstTerm::astTermWithNullValuesToString(sgType)<<endl;
       return 0;
     }
     return 0;
@@ -268,6 +275,7 @@ namespace CodeThorn {
             vim->setIsMemberVariable(varId,true);
             if(varId.isValid()) {
               SgType* varType=vim->getType(varId);
+              varType=varType->stripType(SgType::STRIP_TYPEDEF_TYPE|SgType::STRIP_MODIFIER_TYPE);
               if(varType) {
                 // determine if size of type is already known
                 int typeSize=vim->getTypeSize(varType);

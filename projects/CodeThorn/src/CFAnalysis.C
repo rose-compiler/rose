@@ -963,8 +963,9 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
         cerr<<"Error: did not find local edge of external call. CFG construction failed at "<<SgNodeHelper::sourceLineColumnToString(getNode((*i).call))<<endl;
       }
 #else
+      std::cerr << "adding " << getLabeler()->getNode((*i).call)->unparseToString() << std::endl;
       Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);
-      // register in Labaler as external function call
+      // register in Labeler as external function call
       getLabeler()->setExternalFunctionCallLabel((*i).call);
       flow.insert(externalEdge);
 #endif
@@ -1185,11 +1186,13 @@ Flow CFAnalysis::flow(SgNode* node) {
     Label callReturnLabel=labeler->functionCallReturnLabel(node);
     edgeSet.insert(Edge(callLabel,EDGE_LOCAL,callReturnLabel));
 #else
+    std::cerr << "call " << node->unparseToString() << std::endl;
     // 'local' edge is added when intraInter flow is computed
 #endif
     // add special case edge for callReturn to returnNode SgReturnStmt(SgFunctionCallExp)
     // edge: SgFunctionCallExp.callReturn->init(SgReturnStmt)
     if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node)) {
+      std::cerr << "callret " << std::endl;
       Label callReturnLabel=labeler->functionCallReturnLabel(node);
       Label returnStmtLabel=labeler->functionCallReturnLabel(node)+1;
       edgeSet.insert(Edge(callReturnLabel,EDGE_FORWARD,returnStmtLabel));
@@ -1200,7 +1203,7 @@ Flow CFAnalysis::flow(SgNode* node) {
   if(SgNodeHelper::matchExtendedNormalizedCall(node)) {
     Label callLabel=labeler->functionCallLabel(node);
     Label callReturnLabel=labeler->functionCallReturnLabel(node);
-    edgeSet.insert(Edge(callLabel,EDGE_LOCAL,callReturnLabel));
+    edgeSet.insert(Edge(callLabel,EDGE_FORWARD,callReturnLabel));
     return edgeSet;
   }
 
@@ -1546,7 +1549,7 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgTryStmt: // PP
     {
       SgNode* childStmt=node->get_traversalSuccessorByIndex(0);
-      Edge edge1=Edge(labeler->getLabel(node),EDGE_FORWARD,initialLabel(childStmt));
+      Edge    edge1=Edge(labeler->getLabel(node),EDGE_FORWARD,initialLabel(childStmt));
       edgeSet.insert(edge1);
       Flow    childFlow=flow(childStmt);
       edgeSet+=childFlow;

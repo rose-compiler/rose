@@ -88,7 +88,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.12.9";
+const std::string versionString="1.12.10";
 
 // handler for generating backtrace
 void handler(int sig) {
@@ -557,6 +557,7 @@ int main( int argc, char * argv[] ) {
       return 0;
     }
 
+    AbstractValue::byteMode=ctOpt.byteMode;
     configureOptionSets(ctOpt);
 
     analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;
@@ -1190,7 +1191,8 @@ int main( int argc, char * argv[] ) {
         }
         if (ltlOpt.cegpra.checkAllProperties) {
           ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlInAlphabet, ltlOutAlphabet);
-        } else {  // cegpra for single LTL property
+        } else {
+          // cegpra for single LTL property
           //ROSE_ASSERT(ltlOpt.cegpra.ltlPropertyNr!=-1);
           int property = ltlOpt.cegpra.ltlPropertyNr;
           ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);
