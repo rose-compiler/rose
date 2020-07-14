@@ -54,7 +54,7 @@ generateJovialCompoolFile(SgFile *sfile)
 
           std::string compool_name = Rose::StringUtility::convertToLowerCase(compool_stmt->get_name());
           std::string output_directory = get_rcompool_dir(sfile);
-          std::string output_filename = output_directory + compool_name + MOD_FILE_SUFFIX;
+          std::string output_filename = output_directory + compool_name + CMP_FILE_SUFFIX;
 
           if (SgProject::get_verbose() > 0)
              {

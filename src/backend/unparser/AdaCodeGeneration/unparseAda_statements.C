@@ -101,6 +101,7 @@ namespace
       prn(": ");
       unparseModifiers(*this, n);
       
+      ASSERT_not_null(first);
       unparser.unparseType(first->get_type(), info);
     }
     
@@ -364,16 +365,17 @@ namespace
       for (size_t i = 0; i < params.size(); ++i)
       {
         SgInitializedName* ini = params[i];
-        ROSE_ASSERT(ini);
+        ASSERT_not_null(ini);
         
         if (first == NULL) 
           first = ini; 
         else 
           prn(COMMA_SEP);
           
+        ASSERT_not_null(ini);
         prn(ini->get_name());
       }
-      
+
       prn(": ");
       unparseModifiers(*this, n);
       

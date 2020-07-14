@@ -349,6 +349,9 @@ ATbool traverse_AbsFunction          (ATerm term, SgFunctionCallExp* &func_call)
 // 6.3.7 SIZE FUNCTION
 ATbool traverse_SizeFunction         (ATerm term, SgFunctionCallExp* &func_call);
 
+// 6.3.10 NWDSEN FUNCTION
+ATbool traverse_NwdsenFunction       (ATerm term, SgFunctionCallExp* &func_call);
+
 // 6.3.11 STATUS INVERSE FUNCTIONS
 ATbool traverse_StatusInverseFunction(ATerm term, SgFunctionCallExp* &func_call);
 

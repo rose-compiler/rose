@@ -393,7 +393,7 @@ ATbool ATermToSageJovialTraversal::traverse_SubroutineDefinitionList(ATerm term)
 //========================================================================================
 // 1.4 IMPLEMENTATION PARAMETERS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, SgExpression* &sg_expr)
+ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, SgExpression* &expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_IntegerMachineParameter: %s\n", ATwriteToString(term));
@@ -416,7 +416,7 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    else if (ATmatch(term, "BYTEPOS(<term>)", &t_formula)) {
       cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - BYTEPOS\n";
       // MATCHED BYTEPOS
-      if (traverse_NumericFormula(t_formula, sg_expr)) {
+      if (traverse_NumericFormula(t_formula, expr)) {
          // MATCHED CompileTimeNumericFormula
       } else return ATfalse;
    }
@@ -432,17 +432,17 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    else if (ATmatch(term, "IMPLFLOATPRECISION(<term>)", &t_precision)) {
       cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - IMPLFLOATPRECISION\n";
       // MATCHED IMPLFLOATPRECISION
-      if (traverse_NumericFormula(t_precision, sg_expr)) {
+      if (traverse_NumericFormula(t_precision, expr)) {
          // MATCHED Precision
       } else return ATfalse;
    }
    else if (ATmatch(term, "IMPLFIXEDPRECISION(<term>,<term>)", &t_scale_spec, &t_frac_spec)) {
       cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - IMPLFIXEDPRECISION\n";
       // MATCHED IMPLFIXEDPRECISION
-      if (traverse_NumericFormula(t_scale_spec, sg_expr)) {
+      if (traverse_NumericFormula(t_scale_spec, expr)) {
          // MATCHED ScaleSpecifier
       } else return ATfalse;
-      if (traverse_NumericFormula(t_frac_spec, sg_expr)) {
+      if (traverse_NumericFormula(t_frac_spec, expr)) {
          // MATCHED FractionSpecifier
       } else return ATfalse;
    }
@@ -1480,8 +1480,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
       if (table_type == nullptr) {
          cerr << "WARNING UNIMPLEMENTED: TableDeclaration - TableDescriptionName returns NULL type for name " << table_type_name << "\n";
          // TODO_COMPOOL
-         // ROSE_ASSERT(type);
-         return ATtrue;
+         ROSE_ASSERT(table_type);
       }
       type = SageBuilder::buildJovialTableType(table_type_name, table_type->get_base_type(), dim_info, SageBuilder::topScopeStack());
       ROSE_ASSERT(type);
@@ -5444,24 +5443,21 @@ ATbool ATermToSageJovialTraversal::traverse_ExitStatement(ATerm term)
    ATerm t_labels;
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
-   SgUntypedStatement* stmt;
+
+   SgProcessControlStatement* exit_stmt = nullptr;
 
    if (ATmatch(term, "ExitStatement(<term>)", &t_labels)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
-
-      SgUntypedExitStatement* exit_stmt = new SgUntypedExitStatement("");
-      setSourcePosition(exit_stmt, term);
-
-      stmt = convert_Labels(labels, locations, exit_stmt);
    }
    else return ATfalse;
 
-//TODO_STATEMENTS
-#if 0
-   stmt_list->get_stmt_list().push_back(stmt);
-#endif
+   // Begin SageTreeBuilder
+   sage_tree_builder.Enter(exit_stmt, std::string("exit"), boost::none);
+
+   // End SageTreeBuilder
+   sage_tree_builder.Leave(exit_stmt);
 
    return ATtrue;
 }
@@ -5479,7 +5475,7 @@ ATbool ATermToSageJovialTraversal::traverse_StopStatement(ATerm term)
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
-   SgStopOrPauseStatement* stop_stmt = nullptr;
+   SgProcessControlStatement* stop_stmt = nullptr;
    SgExpression* stop_code = nullptr;
    boost::optional<SgExpression*> opt_code = boost::none;
 
@@ -5499,7 +5495,7 @@ ATbool ATermToSageJovialTraversal::traverse_StopStatement(ATerm term)
    else return ATfalse;
 
    // Begin SageTreeBuilder
-   sage_tree_builder.Enter(stop_stmt, opt_code, std::string("stop"));
+   sage_tree_builder.Enter(stop_stmt, std::string("stop"), opt_code);
 
    // End SageTreeBuilder
    sage_tree_builder.Leave(stop_stmt);
@@ -5520,7 +5516,7 @@ ATbool ATermToSageJovialTraversal::traverse_AbortStatement(ATerm term)
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
-   SgStopOrPauseStatement* abort_stmt = nullptr;
+   SgProcessControlStatement* abort_stmt = nullptr;
 
    if (ATmatch(term, "AbortStatement(<term>)", &t_labels)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
@@ -5530,7 +5526,7 @@ ATbool ATermToSageJovialTraversal::traverse_AbortStatement(ATerm term)
    else return ATfalse;
 
    // Begin SageTreeBuilder
-   sage_tree_builder.Enter(abort_stmt, boost::none, std::string("abort"));
+   sage_tree_builder.Enter(abort_stmt, std::string("abort"), boost::none);
 
    // End SageTreeBuilder
    sage_tree_builder.Leave(abort_stmt);
@@ -5592,24 +5588,22 @@ ATbool ATermToSageJovialTraversal::traverse_NumericFormula(ATerm term, SgExpress
    // NumericFormula PlusOrMinus NumericTerm -> NumericFormula
    //
    else if (ATmatch(term, "NumericFormula(<term>,<term>,<term>)", &t_lhs,&t_op,&t_rhs)) {
-      SgExpression * sg_lhs = nullptr, * sg_rhs = nullptr;
+      SgExpression * lhs = nullptr, * rhs = nullptr;
 
-      if (traverse_NumericFormula(t_lhs, sg_lhs)) {
+      if (traverse_NumericFormula(t_lhs, lhs)) {
          // MATCHED NumericFormula
       } else return ATfalse;
 
-      if (traverse_NumericTerm(t_rhs, sg_rhs)) {
+      if (traverse_NumericTerm(t_rhs, rhs)) {
          // MATCHED NumericTerm
       } else return ATfalse;
 
       if (ATmatch(t_op, "AddOp()")) {
-         expr = new SgAddOp(sg_lhs, sg_rhs, NULL);
-         ROSE_ASSERT(expr != nullptr);
+         expr = SageBuilder::buildAddOp_nfi(lhs, rhs);
          setSourcePosition(expr, term);
       }
       else if (ATmatch(t_op, "SubtractOp()")) {
-         expr = new SgSubtractOp(sg_lhs, sg_rhs, NULL);
-         ROSE_ASSERT(expr != nullptr);
+         expr = SageBuilder::buildSubtractOp_nfi(lhs, rhs);
          setSourcePosition(expr, term);
       } else return ATfalse;
    }
@@ -5627,7 +5621,7 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
    ATerm t_num_var, t_formula, t_factor, t_num_term, t_conversion;
    char *literal=nullptr, *var_name=nullptr;
 
-   SgExpression *sg_num_term = nullptr, *sg_factor = nullptr, *cast_formula = nullptr;
+   SgExpression *num_term = nullptr, *factor = nullptr, *cast_formula = nullptr;
    SgType* conv_type = nullptr;
 
    expr = nullptr;
@@ -5698,9 +5692,9 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
 
       if (traverse_FixedConversion(t_conversion, conv_type)) {
       } else return ATfalse;
-      if (traverse_NumericTerm(t_num_term, sg_num_term)) {
+      if (traverse_NumericTerm(t_num_term, num_term)) {
       } else return ATfalse;
-      if (traverse_NumericFactor(t_factor, sg_factor)) {
+      if (traverse_NumericFactor(t_factor, factor)) {
       } else return ATfalse;
 
    }
@@ -5777,13 +5771,13 @@ ATbool ATermToSageJovialTraversal::traverse_NumericTerm(ATerm term, SgExpression
       ROSE_ASSERT(lhs && rhs);
 
       if (ATmatch(t_op, "MultiplyOp()")) {
-         expr = new SgMultiplyOp(lhs, rhs, NULL);
+         expr = SageBuilder::buildMultiplyOp_nfi(lhs, rhs);
       }
       else if (ATmatch(t_op, "DivideOp()")) {
-         expr = new SgDivideOp(lhs, rhs, NULL);
+         expr = SageBuilder::buildDivideOp_nfi(lhs, rhs);
       }
       else if (ATmatch(t_op, "ModOp()")) {
-         expr = new SgModOp(lhs, rhs, NULL);
+         expr = SageBuilder::buildModOp_nfi(lhs, rhs);
       }
       else return ATfalse;
 
@@ -6732,7 +6726,11 @@ ATbool ATermToSageJovialTraversal::traverse_IntrinsicFunctionCall(ATerm term, Sg
    }
 
    //   BoundsFunction              -> IntrinsicFunctionCall
-   //   NwdsenFunction              -> IntrinsicFunctionCall
+
+   else if (traverse_NwdsenFunction(term, func_call)) {
+      // MATCHED NwdsenFunction
+   }
+
    //   NentFunction                -> IntrinsicFunctionCall
 
    else return ATfalse;
@@ -6847,21 +6845,21 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionC
 #endif
 
    ATerm t_formula, t_fbyte, t_nbyte;
-   SgExpression * sg_formula, * sg_fbyte, * sg_nbyte;
+   SgExpression * formula, * fbyte, * nbyte;
 
    func_call = nullptr;
 
    if (ATmatch(term, "ByteFunction(<term>, <term>,<term>)", &t_formula, &t_fbyte, &t_nbyte)) {
       cerr << "WARNING UNIMPLEMENTED: ByteFunction\n";
-      if (traverse_CharacterFormula(t_formula, sg_formula)) {
+      if (traverse_CharacterFormula(t_formula, formula)) {
          // MATCHED CharacterFormula
       } else return ATfalse;
 
-      if (traverse_NumericFormula(t_fbyte, sg_fbyte)) {
+      if (traverse_NumericFormula(t_fbyte, fbyte)) {
          // MATCHED NumericFormula
       } else return ATfalse;
 
-      if (traverse_NumericFormula(t_nbyte, sg_nbyte)) {
+      if (traverse_NumericFormula(t_nbyte, nbyte)) {
          // MATCHED NumericFormula
       } else return ATfalse;
    } else return ATfalse;
@@ -6967,29 +6965,87 @@ ATbool ATermToSageJovialTraversal::traverse_SizeFunction(ATerm term, SgFunctionC
 #endif
 
    ATerm t_formula;
-   SgExpression* sg_formula;
+   SgExpression* formula;
 
    func_call = nullptr;
 
    if (ATmatch(term, "SizeFunction(BITSIZE(),<term>)", &t_formula)) {
       cerr << "WARNING UNIMPLEMENTED: SizeFunction - BITSIZE \n";
-      if (traverse_Formula(t_formula, sg_formula)) {
+      if (traverse_Formula(t_formula, formula)) {
          // MATCHED Formula
       } else return ATfalse;
    }
    else if (ATmatch(term, "SizeFunction(BYTESIZE(),<term>)", &t_formula)) {
       cerr << "WARNING UNIMPLEMENTED: SizeFunction - BYTESIZE \n";
-      if (traverse_Formula(t_formula, sg_formula)) {
+      if (traverse_Formula(t_formula, formula)) {
          // MATCHED Formula
       } else return ATfalse;
    }
    else if (ATmatch(term, "SizeFunction(WORDSIZE(),<term>)", &t_formula)) {
       cerr << "WARNING UNIMPLEMENTED: SizeFunction - WORDSIZE \n";
-      if (traverse_Formula(t_formula, sg_formula)) {
+      if (traverse_Formula(t_formula, formula)) {
          // MATCHED Formula
       } else return ATfalse;
    }
    else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 6.3.10 NWDSEN FUNCTIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToSageJovialTraversal::traverse_NwdsenFunction(ATerm term, SgFunctionCallExp* &func_call)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_NwdsenFunction: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_argument;
+   std::string name;
+   SgExpression* table_arg = nullptr;
+
+   func_call = nullptr;
+
+   if (ATmatch(term, "NwdsenFunction(<term>)", &t_argument)) {
+      if (traverse_Name(t_argument, name)) {
+         // MATCHED TableName or TableTypeName
+      } else return ATfalse;
+   } else return ATfalse;
+
+   // Find symbol and jovial table type
+   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   ROSE_ASSERT(symbol);
+   SgJovialTableType* type = isSgJovialTableType(symbol->get_type());
+   ROSE_ASSERT(type);
+
+   switch (symbol->variantT())
+      {
+      case V_SgClassSymbol:
+         {
+            table_arg = SageBuilder::buildTypeExpression(type);
+            break;
+         }
+      case V_SgVariableSymbol:
+         {
+            table_arg = SageBuilder::buildVarRefExp_nfi(isSgVariableSymbol(symbol));
+            break;
+         }
+      default: ROSE_ASSERT(false); break;
+      }
+
+   ROSE_ASSERT(table_arg);
+   setSourcePosition(table_arg, t_argument);
+
+   // build the parameter list
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   params->append_expression(table_arg);
+
+   SgType* return_type = SageBuilder::buildSignedIntType();
+
+   func_call = SageBuilder::buildFunctionCallExp("NWDSEN", return_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
+   setSourcePosition(func_call, term);
 
    return ATtrue;
 }
@@ -7261,7 +7317,7 @@ ATbool ATermToSageJovialTraversal::traverse_PointerConversion(ATerm term, SgType
 // 8.3.1 NUMERIC LITERAL
 //----------------------------------------------------------------------------------------
 
-ATbool ATermToSageJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term, SgExpression* &sg_expr)
+ATbool ATermToSageJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term, SgExpression* &expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_FixedOrFloatingLiteral: %s\n", ATwriteToString(term));
@@ -7271,7 +7327,7 @@ ATbool ATermToSageJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term, S
    std::string literal, opt_exp;
    char* number;
 
-   sg_expr = nullptr;
+   expr = nullptr;
 
 // FractionalForm OptExponent -> RealLiteral
    if (ATmatch(term, "RealLiteralFF(<term>,<term>)", &t_frac_form, &t_opt_exp)) {
@@ -7328,8 +7384,8 @@ ATbool ATermToSageJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term, S
       return ATfalse;
    }
 
-   sg_expr = SageBuilder::buildFloatVal_nfi(literal);
-   setSourcePosition(sg_expr, term);
+   expr = SageBuilder::buildFloatVal_nfi(literal);
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }

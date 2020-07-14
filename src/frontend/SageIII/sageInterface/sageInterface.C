@@ -19839,14 +19839,12 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                            // moved. This is fixed below. SgJovialTableType derives from SgClassType, it may be that
                            // class types are not moved correctly either.
 
-                           SgType* var_type = init_name->get_type();
                            SgJovialTableType* table_type = isSgJovialTableType(init_name->get_type());
                            if (table_type)
                               {
                                  SgDeclarationStatement* decl = table_type->get_declaration();
                                  SgDeclarationStatement* def_decl = decl->get_definingDeclaration();
                                  SgDeclarationStatement* nondef_decl = decl->get_firstNondefiningDeclaration();
-                                 SgNode* decl_parent = decl->get_parent();
 
                                  nondef_decl->set_parent(targetBlock);
                                  nondef_decl->set_scope(targetBlock);
