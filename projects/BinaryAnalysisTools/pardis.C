@@ -33,6 +33,14 @@ initializeParallelPartitioner(PP::Partitioner &pp, P2::Partitioner &p) {
     initializeParallelPartitioner(pp);
 
     info <<"inserting starting points from old partitioner";
+#if 1
+    for (auto function: p.functions()) {
+        debug <<"inserting starting point " <<StringUtility::addrToString(function->address()) <<" as function\n";
+        PP::InsnInfo::Ptr insnInfo = pp.makeInstruction(function->address());
+        insnInfo->functionReasons(function->reasons());
+        pp.scheduleDecodeInstruction(function->address());
+    }
+#else
     for (auto cfgVertex: p.cfg().vertices()) {
         if (auto addr = cfgVertex.value().optionalAddress()) {
             debug <<"insert starting point " <<StringUtility::addrToString(*addr) <<" from CFG\n";
@@ -40,6 +48,7 @@ initializeParallelPartitioner(PP::Partitioner &pp, P2::Partitioner &p) {
             pp.scheduleDecodeInstruction(*addr);
         }
     }
+#endif
     info <<"; done\n";
 
     info <<"inserting function prologue patterns";
@@ -72,20 +81,20 @@ runPartitioner(PP::Partitioner &pp) {
     size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     if (0 == nThreads)
         nThreads = boost::thread::hardware_concurrency();
-    info <<"starting disassembly at " <<StringUtility::plural(pp.cfg().nVertices(), "addresses") <<"\n";
+    info <<"starting disassembly at " <<StringUtility::plural(pp.insnCfg().nVertices(), "addresses") <<"\n";
 
     info <<"disassembling with " <<StringUtility::plural(nThreads, "threads");
     Sawyer::Stopwatch timer;
     pp.run(nThreads);
     info <<"; took " <<timer <<" seconds\n";
-    info <<"CFG now has " <<StringUtility::plural(pp.cfg().nVertices(), "instructions") <<"\n";
+    info <<"CFG now has " <<StringUtility::plural(pp.insnCfg().nVertices(), "instructions") <<"\n";
 }
 
 std::vector<PP::InsnInfo::Ptr>
 insnsByAddr(PP::Partitioner &pp) {
     std::vector<PP::InsnInfo::Ptr> insns;
-    insns.reserve(pp.cfg().nVertices());
-    for (auto cfgVertex: pp.cfg().vertices())
+    insns.reserve(pp.insnCfg().nVertices());
+    for (auto cfgVertex: pp.insnCfg().vertices())
         insns.push_back(cfgVertex.value());
     std::sort(insns.begin(), insns.end(), PP::InsnInfo::addressOrder);
     return insns;
@@ -96,9 +105,10 @@ insnsByAddr(P2::Partitioner &p) {
     std::vector<SgAsmInstruction*> insns;
     for (auto &vertex: p.cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
-            P2::BasicBlock::Ptr bb = vertex.value().bblock();
-            for (auto insn: bb->instructions())
-                insns.push_back(insn);
+            if (P2::BasicBlock::Ptr bb = vertex.value().bblock()) {
+                for (auto insn: bb->instructions())
+                    insns.push_back(insn);
+            }
         }
     }
     std::sort(insns.begin(), insns.end(), [](SgAsmInstruction *a, SgAsmInstruction *b) {
@@ -149,7 +159,7 @@ printAllInstructions(PP::Partitioner &pp, P2::Partitioner &p) {
                 maxPrintedVa = cfgInsns.back()->address();
             } else if (auto insn = cfgInsns.back()->ast()) {
                 std::cout <<green <<p.unparse(insn.lock().get()) <<endColor <<"\n";
-                maxPrintedVa = cfgInsns.back()->hull().greatest();
+                maxPrintedVa = cfgInsns.back()->hull().get().greatest();
             } else {
                 std::cout <<green <<addrToString(cfgVa) <<": invalid address" <<endColor <<"\n";
                 maxPrintedVa = cfgInsns.back()->address();
@@ -189,43 +199,54 @@ printAllInstructions(PP::Partitioner &pp, P2::Partitioner &p) {
 void
 printInsnsFromBoth(PP::Partitioner &pp, P2::Partitioner &p) {
     using namespace Rose::StringUtility;
-    std::string green = "\033[38;2;" + Rose::Color::HSV(0.3, 1.0, 0.4).toAnsi();
-    std::string red = "\033[38;2;" + Rose::Color::HSV(0.0, 1.0, 0.4).toAnsi();
-    std::string endColor = "\033[0m";
+    const std::string green = "\033[38;2;" + Rose::Color::HSV(0.3, 1.0, 0.4).toAnsi();
+    const std::string red = "\033[38;2;" + Rose::Color::HSV(0.0, 1.0, 0.4).toAnsi();
+    const std::string endColor = "\033[0m";
 
-    auto insns1 = insnsByAddr(pp);
+    std::vector<PP::InsnInfo::Ptr> insns1 = insnsByAddr(pp);
     std::reverse(insns1.begin(), insns1.end()); // so we can pop_back instead of erase
-    auto insns2 = insnsByAddr(p);
+    std::vector<SgAsmInstruction*> insns2 = insnsByAddr(p);
     std::reverse(insns2.begin(), insns2.end());
 
     while (!insns1.empty() || !insns2.empty()) {
-        Sawyer::Optional<rose_addr_t> maxPrintedVa;
-        if (!insns1.empty() && (insns2.empty() || insns1.back()->address() <= insns2.back()->get_address())) {
-            auto insn1 = insns1.back();
-            if (!insn1->wasDecoded()) {
-                std::cout <<green <<addrToString(insn1->address()) <<": not decoded" <<endColor <<"\n";
-                maxPrintedVa = insn1->address();
-            } else if (auto insn = insn1->ast()) {
-                std::cout <<green <<p.unparse(insn.lock().get()) <<endColor <<"\n";
-                maxPrintedVa = insn1->hull().greatest();
-            } else {
-                std::cout <<green <<addrToString(insn1->address()) <<": invalid address" <<endColor <<"\n";
-                maxPrintedVa = insn1->address();
-            }
+        std::string color;
+        SgAsmInstruction *insn = nullptr;
+        rose_addr_t va = 0;
+        LockedInstruction insnLock;
+
+        if (insns1.empty()) {
+            color = "S " + red;                         // serial partitioner only
+            insn = insns2.back();
+            va = insn->get_address();
+            insns2.pop_back();
+        } else if (insns2.empty()) {
+            color = "P " + green;                       // parallel partitioner only
+            insnLock = insns1.back()->ast().lock();
+            insn = insnLock.get();
+            va = insns1.back()->address();
             insns1.pop_back();
-        }
-
-        if (maxPrintedVa) {
-            while (!insns2.empty() && insns2.back()->get_address() <= *maxPrintedVa)
-                insns2.pop_back();
-        }
-
-        if (!insns2.empty() && (insns1.empty() || insns2.back()->get_address() < insns1.back()->address())) {
-            auto insn2 = insns2.back();
-            ASSERT_not_null(insn2);
-            std::cout <<red <<p.unparse(insn2) <<endColor <<"\n";
+        } else if (insns2.back()->get_address() < insns1.back()->address()) {
+            color = "S " + red;                         // serial partitioner only
+            insn = insns2.back();
+            va = insn->get_address();
+            insns2.pop_back();
+        } else if (insns1.back()->address() < insns2.back()->get_address()) {
+            color = "P " + green;                       // parallel partitioner only
+            insnLock = insns1.back()->ast().lock();
+            insn = insnLock.get();
+            va = insns1.back()->address();
+            insns1.pop_back();
+        } else {
+            ASSERT_require(insns1.back()->address() == insns2.back()->get_address());
+            color = "B ";                               // both partitioners
+            insnLock = insns1.back()->ast().lock();
+            insn = insnLock.get();
+            va = insns1.back()->address();
+            insns1.pop_back();
             insns2.pop_back();
         }
+
+        std::cout <<color <<(insn ? p.unparse(insn) : addrToString(va)+": invalid memory") <<endColor <<"\n";
     }
 }
     
@@ -244,6 +265,7 @@ int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     Diagnostics::initAndRegister(&mlog, "tool");
     mlog.comment("parallel disassembly");
+    Sawyer::Stopwatch timer;
 
     // Get, parse, and load the specimen.
     mlog[INFO] <<"parsing container\n";
@@ -272,27 +294,51 @@ int main(int argc, char *argv[]) {
 
 #if 0
     // Write starting points to stdout
-    for (auto vertex: pp.cfg().vertices())
+    for (auto vertex: pp.insnCfg().vertices())
         std::cout <<StringUtility::addrToString(vertex.value()->address()) <<"\n";
 #endif
 
-    mlog[INFO] <<"starting parallel phase\n";
+    mlog[INFO] <<"starting parallel phase";
     Sawyer::ProgressBar<double> bar(100.0, mlog[MARCH], "disassembly");
     bar.suffix(" percent");
     boost::thread(asyncProgressReporting, pp.progress(), &bar).detach();
+    timer.restart();
     runPartitioner(pp);
+    mlog[INFO] <<"; took " <<timer <<" seconds\n";
 
-    mlog[INFO] <<"generating output\n";
+    std::map<rose_addr_t, AddressSet> functions = pp.assignFunctions();
+    for (auto node: functions) {
+        std::cout <<"Function " <<StringUtility::addrToString(node.first) <<"\n";
+        for (rose_addr_t va: node.second.values()) {
+            std::cout <<"  " <<StringUtility::addrToString(va) <<"\n";
+        }
+    }
+
+    pp.dumpInsnCfg(std::cout, p);
+
 #if 0
+    mlog[INFO] <<"generating output\n";
     printCfgInstructions(pp, p);
-#elif 1
+#elif 0
+    mlog[INFO] <<"generating output\n";
     pp.printCfg(std::cout);
 #elif 1
+    mlog[INFO] <<"transfering results to serial partitioner";
+    timer.restart();
     pp.transferResults(p);
-    printAllInstructions(pp, p);
+    mlog[INFO] <<"; took " <<timer <<" seconds\n";
+    mlog[INFO] <<"generating output\n";
+    printInsnsFromBoth(pp, p);
+    engine.savePartitioner(p, "x.rba");
+
 #else
+    mlog[INFO] <<"running serial partitioner";
+    timer.restart();
     engine.doingPostAnalysis(false);
     P2::Partitioner p2 = engine.partition(specimenName);
+    mlog[INFO] <<"; took " <<timer <<" seconds\n";
+
+    mlog[INFO] <<"generating output\n";
     printInsnsFromBoth(pp, p2);
 #endif
 }

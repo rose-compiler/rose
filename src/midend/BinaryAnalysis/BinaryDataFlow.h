@@ -327,7 +327,9 @@ public:
          *  copied. */
         Engine(const CFG &cfg, TransferFunction &xfer, MergeFunction merge = MergeFunction(),
                PathFeasibility isFeasible = PathFeasibility())
-            : cfg_(cfg), xfer_(xfer), merge_(merge), maxIterations_(-1), nIterations_(0), isFeasible_(isFeasible) {}
+            : cfg_(cfg), xfer_(xfer), merge_(merge), maxIterations_(-1), nIterations_(0), isFeasible_(isFeasible) {
+            reset();
+        }
 
         /** Data-flow control flow graph.
          *

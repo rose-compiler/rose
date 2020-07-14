@@ -151,6 +151,9 @@ public:
    void Enter(SgDefaultOptionStmt* &);
    void Leave(SgDefaultOptionStmt*);
 
+   void Enter(SgWhileStmt* &, SgExpression*);
+   void Leave(SgWhileStmt*);
+
    SgEnumVal* ReplaceEnumVal(SgEnumType*, const std::string &);
 
 // Expressions
@@ -198,15 +201,17 @@ public:
 namespace SageBuilderCpp17 {
 
    SgType* buildIntType();
-   SgExpression* buildIntVal_nfi(int);
-   SgExpression* buildExprListExp_nfi();
-   SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope = NULL);
-   SgExpression* buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs);
-   SgExpression* buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs);
-   SgExpression* buildMultiplyOp_nfi(SgExpression* lhs, SgExpression* rhs);
-   SgExpression* buildDivideOp_nfi(SgExpression* lhs, SgExpression* rhs);
-   SgExpression* buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride);
-   SgExpression* buildNullExpression_nfi();
+   SgExpression*  buildIntVal_nfi(int);
+   SgExpression*  buildStringVal_nfi(std::string);
+   SgExpression*  buildExprListExp_nfi();
+   SgExpression*  buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope = NULL);
+   SgExpression*  buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildMultiplyOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildDivideOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride);
+   SgExpression*  buildNullExpression_nfi();
+   SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &);
 
 } // namespace SageBuilderCpp17
 } // namespace builder
