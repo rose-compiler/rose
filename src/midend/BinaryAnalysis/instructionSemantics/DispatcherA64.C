@@ -37,7 +37,11 @@ public:
         ASSERT_require(insn == operators->currentInstruction());
         dispatcher->advanceInstructionPointer(insn);    // branch instructions will reassign
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+        for (size_t i = 0; i < operands.size(); ++i)
+            dispatcher->preUpdate(operands[i]);
         p(dispatcher.get(), operators.get(), insn, operands);
+        for (size_t i = 0; i < operands.size(); ++i)
+            dispatcher->postUpdate(operands[i]);
     }
 
     void assert_args(I insn, A args, size_t nargs) {
@@ -48,14 +52,111 @@ public:
     }
 };
 
-struct IP_ldr: P {
+struct IP_add: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValuePtr a = d->read(args[1]);
+        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->get_width());
+        SValuePtr result;
+
+        if (auto vectorType = isSgAsmVectorType(args[0]->get_type())) {
+            size_t elmtSize = vectorType->get_elmtType()->get_nBits();
+            for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
+                SValuePtr elmtA = ops->extract(a, i*elmtSize, (i+1)*elmtSize);
+                SValuePtr elmtB = ops->extract(b, i*elmtSize, (i+1)*elmtSize);
+                SValuePtr sum = ops->add(elmtA, elmtB);
+                result = result ? ops->concat(result, sum) : sum;
+            }
+        } else {
+            result = ops->add(a, b);
+        }
+        d->write(args[0], result);
+    }
+};
+
+struct IP_dup: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->preUpdate(args[1]);
+        SValuePtr src = d->read(args[1]);
+        ASSERT_require(args[0]->get_nBits() >= src->get_width());
+        size_t nElmts = args[0]->get_nBits() / src->get_width();
+        ASSERT_require(nElmts * src->get_width() == args[0]->get_nBits());
+        SValuePtr toWrite;
+        for (size_t i = 0; i < nElmts; ++i)
+            toWrite = toWrite ? ops->concat(toWrite, src) : src;
+        d->write(args[0], toWrite);
+    }
+};
+
+struct IP_ins: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
         SValuePtr result = d->read(args[1]);
         SValuePtr extended = ops->signExtend(result, args[0]->get_nBits());
         d->write(args[0], extended);
-        d->postUpdate(args[1]);
+    }
+};
+
+struct IP_ldr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr result = d->read(args[1]);
+        SValuePtr extended = ops->signExtend(result, args[0]->get_nBits());
+        d->write(args[0], extended);
+    }
+};
+
+struct IP_mov: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr result = d->read(args[1]);
+        SValuePtr extended = ops->signExtend(result, args[0]->get_nBits());
+        d->write(args[0], extended);
+    }
+};
+
+struct IP_movn: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr result = d->read(args[1]);
+        SValuePtr extended = ops->signExtend(result, args[0]->get_nBits());
+        SValuePtr inverted = ops->invert(extended);
+        d->write(args[0], inverted);
+    }
+};
+
+struct IP_movz: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr result = d->read(args[1]);
+        SValuePtr extended = ops->unsignedExtend(result, args[0]->get_nBits());
+        d->write(args[0], extended);
+    }
+};
+
+struct IP_orr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        if (args.size() == 2) {
+            SValuePtr a1 = d->read(args[0]);
+            SValuePtr a2 = d->advSimdExpandImm(args[0]->get_type(), d->read(args[1]));
+            SValuePtr result = ops->or_(a1, a2);
+            d->write(args[0], result);
+        } else {
+            assert_args(insn, args, 3);
+            SValuePtr a1 = d->read(args[1], args[0]->get_nBits());
+            SValuePtr a2 = d->read(args[2], args[0]->get_nBits());
+            SValuePtr result = ops->or_(a1, a2);
+            d->write(args[0], result);
+        }
+    }
+};
+
+struct IP_umov: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr result = d->read(args[1]);
+        SValuePtr extended = ops->unsignedExtend(result, args[0]->get_nBits());
+        d->write(args[0], extended);
     }
 };
 
@@ -65,7 +166,15 @@ struct IP_ldr: P {
 
 void
 DispatcherA64::initializeInsnDispatchTable() {
-    iproc_set(ARM64_INS_LDR, new A64::IP_ldr);
+    iproc_set(ARM64_INS_ADD,    new A64::IP_add);
+    iproc_set(ARM64_INS_DUP,    new A64::IP_dup);
+    iproc_set(ARM64_INS_INS,    new A64::IP_ins);
+    iproc_set(ARM64_INS_LDR,    new A64::IP_ldr);
+    iproc_set(ARM64_INS_MOV,    new A64::IP_mov);
+    iproc_set(ARM64_INS_MOVN,   new A64::IP_movn);
+    iproc_set(ARM64_INS_MOVZ,   new A64::IP_movz);
+    iproc_set(ARM64_INS_ORR,    new A64::IP_orr);
+    iproc_set(ARM64_INS_UMOV,   new A64::IP_umov);
 }
 
 void
@@ -123,50 +232,45 @@ DispatcherA64::iproc_key(SgAsmInstruction *insn_) const {
     return insn->get_kind();
 }
 
-void
-DispatcherA64::preUpdate(SgAsmExpression *expr) {
-    ASSERT_not_null(expr);
-
-    struct T: AstSimpleProcessing {
-        DispatcherA64 *d;
-
-        T(DispatcherA64 *d)
-            : d(d) {}
-
-        void visit(SgNode *node_) override {
-            if (auto node = isSgAsmBinaryAddPreupdate(node_)) {
-                SValuePtr addend1 = d->read(node->get_lhs());
-                SValuePtr addend2 = d->read(node->get_rhs());
-                ASSERT_require(addend1->get_width() == addend2->get_width()); // this, or sign extend one of them
-                SValuePtr rvalue = d->get_operators()->add(addend1, addend2);
-                d->write(node->get_lhs(), rvalue);
-            }
+SValuePtr
+DispatcherA64::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits/*=0*/) {
+    // Reading from general purpose register 31 always returns zero
+    if (auto rre = isSgAsmRegisterReferenceExpression(e)) {
+        RegisterDescriptor reg = rre->get_descriptor();
+        if (reg.majorNumber() == arm_regclass_gpr && reg.minorNumber() == 31) {
+            if (0 == value_nbits)
+                value_nbits = reg.nBits();
+            return operators->number_(value_nbits, 0);
         }
-    } t(this);
-    t.traverse(expr, postorder);
+    }
+    return BaseSemantics::Dispatcher::read(e, value_nbits, addr_nbits);
 }
 
 void
-DispatcherA64::postUpdate(SgAsmExpression *expr) {
-    ASSERT_not_null(expr);
+DispatcherA64::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/*=0*/) {
+    // Writes to general purpose register 31 are always discarded
+    if (auto rre = isSgAsmRegisterReferenceExpression(e)) {
+        RegisterDescriptor reg = rre->get_descriptor();
+        if (reg.majorNumber() == arm_regclass_gpr && reg.minorNumber() == 31)
+            return;
+    }
+    BaseSemantics::Dispatcher::write(e, value, addr_nbits);
+}
 
-    struct T: AstSimpleProcessing {
-        DispatcherA64 *d;
-
-        T(DispatcherA64 *d)
-            : d(d) {}
-
-        void visit(SgNode *node_) override {
-            if (auto node = isSgAsmBinaryAddPostupdate(node_)) {
-                SValuePtr addend1 = d->read(node->get_lhs());
-                SValuePtr addend2 = d->read(node->get_rhs());
-                ASSERT_require(addend1->get_width() == addend2->get_width()); // this, or sign extend one of them
-                SValuePtr rvalue = d->get_operators()->add(addend1, addend2);
-                d->write(node->get_lhs(), rvalue);
-            }
-        }
-    } t(this);
-    t.traverse(expr, postorder);
+SValuePtr
+DispatcherA64::advSimdExpandImm(SgAsmType *type, const SValuePtr &imm) {
+    ASSERT_not_null(type);
+    ASSERT_not_null(imm);
+    auto vectorType = isSgAsmVectorType(type);
+    ASSERT_not_null(vectorType);
+    auto elmtType = vectorType->get_elmtType();
+    ASSERT_not_null(elmtType);
+    ASSERT_require(isSgAsmScalarType(elmtType));
+    SValuePtr elmt = operators->unsignedExtend(imm, elmtType->get_nBits());
+    SValuePtr result;
+    for (size_t i = 0; i < vectorType->get_nElmts(); ++i)
+        result = result ? operators->concat(result, elmt) : elmt;
+    return result;
 }
 
 } // namespace

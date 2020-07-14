@@ -36,6 +36,8 @@ struct CtxLatticeRange
 };
 
 
+/// A context-aware solver  
+// \note derived from PASolver1
 struct CtxSolver0 : DFAbstractSolver
 {
     // define your call context
@@ -43,18 +45,18 @@ struct CtxSolver0 : DFAbstractSolver
     typedef FiniteCallString context_t;
   
     CtxSolver0( WorkListSeq<Edge>& initWorklist,
-	        std::vector<Lattice*>& analyzerDataPreInfo,
-	        std::vector<Lattice*>& analyzerDataPostInfo,
-	        PropertyStateFactory& initialElementFactory,
-	        Flow& flow,
-	        DFTransferFunctions& transferFunctions,
-		Labeler& thelabeler
-	      );
+	              std::vector<Lattice*>& analyzerDataPreInfo,
+	              std::vector<Lattice*>& analyzerDataPostInfo,
+	              PropertyStateFactory& initialElementFactory,
+	              Flow& flow,
+	              DFTransferFunctions& transferFunctions,
+		            Labeler& thelabeler
+	            );
 	     
     void runSolver() ROSE_OVERRIDE;
     void computeCombinedPreInfo(Label lab, Lattice& inInfo) ROSE_OVERRIDE;
     
-    void setTrace(bool) { /* supported in name only */ }
+    void setTrace(bool) ROSE_OVERRIDE { /* supported in name only */ }
 
   private:
     //
