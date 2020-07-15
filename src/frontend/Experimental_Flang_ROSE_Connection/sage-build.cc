@@ -1577,6 +1577,7 @@ void Build(const parser::BlockConstruct&x, T* scope)
 
    semantics::Symbol *symbol = block_name.symbol;
 
+#if 0
    if (symbol) {
       const parser::CharBlock &srcName = symbol->name();
       std::cout << "The symbol name is " << srcName.ToString() << "\n";
@@ -1609,6 +1610,7 @@ void Build(const parser::BlockConstruct&x, T* scope)
          std::cout << "No scope was introduced by " << block_name.ToString() << "()\n";
       }
    }
+#endif
 
    const auto &block = std::get<2>(x.t);
    std::cout << "The block is of type: " << typeid(block).name() << "\n";
