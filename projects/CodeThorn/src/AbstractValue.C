@@ -22,7 +22,7 @@ using namespace CodeThorn;
 using namespace Sawyer::Message; // required for logger[WARN]
 
 VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
-bool AbstractValue::strictChecking=true;
+bool AbstractValue::strictChecking=false;
 bool AbstractValue::byteMode=false;
 
 istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {

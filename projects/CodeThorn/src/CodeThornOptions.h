@@ -52,6 +52,8 @@ struct CodeThornOptions : public Options {
   bool ompAst=false;
   bool normalizeAll=false;
   bool normalizeFCalls=false;
+  bool extendedNormalizedCppFunctionCalls=false; // support for CPP method calls (virtual etc.)
+  bool strictChecking=false; // only used for testing when a certain level of precision is enforced, does not impact correctness
   bool inlineFunctions=false;
   int inlineFunctionsDepth=10;
   bool eliminateCompoundStatements=false;
@@ -88,6 +90,7 @@ struct CodeThornOptions : public Options {
   int optionsSet=0;
   int callStringLength=-1; // not used yet
   bool byteMode=false; // switches between byte-addresses and index-based addresses in PState
+      
   
   // RERS C-subset program options
   struct Rers {
