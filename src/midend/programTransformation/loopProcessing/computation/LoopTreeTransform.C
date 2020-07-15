@@ -1167,14 +1167,15 @@ operator()( LoopTreeNode* repl, LoopTreeNode* init,
 {
   CopyArrayOpt opt = c.get_opt();
   if (DebugCopyConfig()) {
-      if (init != 0) 
+      if (init != NULL) 
         std::cerr << "init cutting node: " << init->toString() << std::endl;
-      if (save != 0) 
+      if (save != NULL) 
         std::cerr << "save cutting node: " << save->toString() << std::endl;
       std::cerr << "copy config " << c.toString() << " : " << std::endl;
   }
   if (init == save) {
      LoopTreeNode *r = new LoopTreeCopyArray(c);
+     assert(init != NULL);
      InsertNode(r,init,-1); 
      return;
   }
@@ -1184,6 +1185,7 @@ operator()( LoopTreeNode* repl, LoopTreeNode* init,
   if (opt1 != 0) {
      c.set_opt(opt1);
      LoopTreeNode *r = new LoopTreeCopyArray(c);
+     assert(init != NULL);
      InsertNode(r,init,-1); 
   }
 
