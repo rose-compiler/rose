@@ -228,7 +228,7 @@ struct stream_element
 
 using namespace std;
 
-#define DEBUG_LEX_PASS 1
+#define DEBUG_LEX_PASS 0
 
 // list <stream_element*> ROSE_token_stream;
 // typedef list <stream_element*>:: iterator SE_ITR;
@@ -1075,9 +1075,8 @@ BEGIN NORMAL;
   // preproc_column_num++; 
    }
 
-<NORMAL>(0x|0b)?(([0-9]([0-9'])+[0-9])|[0-9]+) {
+<NORMAL>(0x|0b)?((([0-9]+['])+[0-9]+)|[0-9]+) {
   // MS (7/14/2020): C++14 support for "'" in numbers, also added binary/hex prefix (octal is implicit)
-  //                 Note: regex allows 00''22, floats are still parsed as multiple tokens
   // DQ (9/29/2013): This does not accound for 0L to be a single literal
 #if DEBUG_LEX_PASS
      printf("%s is a numeric literal token \n", yytext);
