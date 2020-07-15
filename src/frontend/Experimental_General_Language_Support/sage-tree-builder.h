@@ -36,6 +36,7 @@ class SgSwitchStatement;
 class SgType;
 class SgTypedefDeclaration;
 class SgVariableDeclaration;
+class SgWhileStmt;
 
 // Jovial specific classes
 class SgJovialCompoolStatement;
@@ -168,6 +169,9 @@ public:
    void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, bool is_compool=false);
    void Leave(SgJovialDirectiveStatement*);
 
+   void Enter(SgJovialForThenStatement* &);
+   void Leave(SgJovialForThenStatement*);
+
    void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);
    void Leave(SgJovialCompoolStatement*);
 
@@ -200,7 +204,9 @@ public:
 //
 namespace SageBuilderCpp17 {
 
+   SgType* buildBoolType();
    SgType* buildIntType();
+   SgExpression*  buildBoolValExp_nfi(bool value);
    SgExpression*  buildIntVal_nfi(int);
    SgExpression*  buildStringVal_nfi(std::string);
    SgExpression*  buildExprListExp_nfi();
