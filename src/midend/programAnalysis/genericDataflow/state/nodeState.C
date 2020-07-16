@@ -131,7 +131,10 @@ void NodeState::setLatticeAbove(const Analysis* analysis, vector<Lattice*>& latt
                 // Empty out the current mapping of analysis in dfInfoAbove
                 for(vector<Lattice*>::iterator it = w->second.begin(); 
                     it != w->second.end(); it++)
-                { delete *it; }
+                {
+                  ROSE_ASSERT((*it) != NULL);
+                  delete *it;
+                }
                 w->second.clear();
                 
                 // Create the new mapping
