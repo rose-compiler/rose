@@ -153,7 +153,7 @@ public:
    void Leave(SgDefaultOptionStmt*);
 
    void Enter(SgWhileStmt* &, SgExpression*);
-   void Leave(SgWhileStmt*);
+   void Leave(SgWhileStmt*, bool has_end_do_stmt=false);
 
    SgEnumVal* ReplaceEnumVal(SgEnumType*, const std::string &);
 
@@ -169,7 +169,7 @@ public:
    void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, bool is_compool=false);
    void Leave(SgJovialDirectiveStatement*);
 
-   void Enter(SgJovialForThenStatement* &);
+   void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*);
    void Leave(SgJovialForThenStatement*);
 
    void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);
@@ -204,17 +204,31 @@ public:
 //
 namespace SageBuilderCpp17 {
 
+// Types
    SgType* buildBoolType();
    SgType* buildIntType();
+
+// Operators
+   SgExpression*  buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildAndOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildConcatenationOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildDivideOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildEqualityOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildLessThanOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildLessOrEqualOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildGreaterThanOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildGreaterOrEqualOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildMultiplyOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildNotEqualOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildOrOp_nfi(SgExpression* lhs, SgExpression* rhs);
+
+// Expressions
    SgExpression*  buildBoolValExp_nfi(bool value);
    SgExpression*  buildIntVal_nfi(int);
    SgExpression*  buildStringVal_nfi(std::string);
    SgExpression*  buildExprListExp_nfi();
    SgExpression*  buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope = NULL);
-   SgExpression*  buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs);
    SgExpression*  buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs);
-   SgExpression*  buildMultiplyOp_nfi(SgExpression* lhs, SgExpression* rhs);
-   SgExpression*  buildDivideOp_nfi(SgExpression* lhs, SgExpression* rhs);
    SgExpression*  buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride);
    SgExpression*  buildNullExpression_nfi();
    SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &);
