@@ -1691,6 +1691,7 @@ Outliner::insert (SgFunctionDeclaration* func,
         // ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() != NULL);
            if (SageInterface::is_Fortran_language() == false)
             {
+              ROSE_ASSERT(sourceFileFunctionPrototype != NULL);
               sourceFileFunctionPrototype->set_definingDeclaration(func);
               ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() != NULL);
             }
