@@ -514,13 +514,16 @@ namespace
       prn("with ");
       
       SgExpressionPtrList& lst = n.get_import_list();
-      ROSE_ASSERT(lst.size() != 0);
+      //~ ROSE_ASSERT(lst.size() != 0);
+      ROSE_ASSERT(lst.size() == 1);
       
+      /*
       for (size_t i = 0; i < lst.size()-1; ++i)
       {
         expr(lst[i]);
         prn(".");
       }
+      */
       
       expr(lst.back());
       prn(EOS_NL);
@@ -825,9 +828,18 @@ namespace
     list(lst.begin(), lst.end());
   }
   
+  struct RequiresNew : sg::DispatchHandler<bool>
+  {
+    void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
+    
+    void handle(SgType&)        { res = true;  }
+    void handle(SgTypeDefault&) { res = false; }
+    void handle(SgArrayType&)   { res = false; }
+  };
+  
   bool AdaStatementUnparser::requiresNew(SgType* n)
   {
-    return isSgTypeDefault(n) == NULL;
+    return sg::dispatch(RequiresNew(), n);
   }
   
   bool isPrivate(SgDeclarationStatement& dcl)
