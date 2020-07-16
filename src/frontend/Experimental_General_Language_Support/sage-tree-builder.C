@@ -685,10 +685,16 @@ Enter(SgWhileStmt* &while_stmt, SgExpression* condition)
 }
 
 void SageTreeBuilder::
-Leave(SgWhileStmt* while_stmt)
+Leave(SgWhileStmt* while_stmt, bool has_end_do_stmt)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgWhileStmt*, ...) \n";
    ROSE_ASSERT(while_stmt);
+
+   // The default value of has_end_do_stmt is false so if true,
+   // then the language supports it and it needs to be set.
+   if (has_end_do_stmt) {
+      while_stmt->set_has_end_statement(true);
+   }
 
    SageBuilder::popScopeStack();  // while statement body
    SageInterface::appendStatement(while_stmt, SageBuilder::topScopeStack());
@@ -789,6 +795,38 @@ Leave(SgJovialDirectiveStatement* directive)
 
    SageInterface::appendStatement(directive, SageBuilder::topScopeStack());
    ROSE_ASSERT(directive->get_parent() == SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgJovialForThenStatement* &for_stmt, SgExpression* init_expr, SgExpression* incr_expr,
+         SgExpression* test_expr)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialForThenStatement* &, ...) \n";
+
+   ROSE_ASSERT(init_expr);
+   ROSE_ASSERT(incr_expr);
+   ROSE_ASSERT(test_expr);
+
+   SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
+
+   for_stmt = new SgJovialForThenStatement(init_expr, incr_expr, test_expr, body);
+   ROSE_ASSERT(for_stmt);
+   SageInterface::setSourcePosition(for_stmt);
+
+   if (SageInterface::is_language_case_insensitive()) {
+      for_stmt->setCaseInsensitive(true);
+   }
+
+   SageBuilder::pushScopeStack(body);
+}
+
+void SageTreeBuilder::
+Leave(SgJovialForThenStatement* for_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialForThenStatement*, ...) \n";
+
+   SageBuilder::popScopeStack();  // for body
+   SageInterface::appendStatement(for_stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
@@ -1006,14 +1044,93 @@ importModule(const std::string &module_name)
 //
 namespace SageBuilderCpp17 {
 
+SgType* buildBoolType()
+{
+   return SageBuilder::buildBoolType();
+}
+
 SgType* buildIntType()
 {
    return SageBuilder::buildIntType();
 }
 
+// Operators
+//
+SgExpression* buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildAddOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildAndOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildAndOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildDivideOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildDivideOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildEqualityOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildEqualityOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildGreaterThanOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildGreaterThanOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildGreaterOrEqualOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildGreaterOrEqualOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildMultiplyOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildMultiplyOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildLessThanOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildLessThanOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildLessOrEqualOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildLessOrEqualOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildNotEqualOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildNotEqualOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildOrOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildOrOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildSubtractOp_nfi(lhs, rhs);
+}
+
+// Expressions
+//
+SgExpression* buildConcatenationOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildConcatenationOp_nfi(lhs, rhs);
+}
+
 SgExpression* buildExprListExp_nfi()
 {
    return SageBuilder::buildExprListExp_nfi();
+}
+
+SgExpression* buildBoolValExp_nfi(bool value)
+{
+   return SageBuilder::buildBoolValExp_nfi(value);
 }
 
 SgExpression* buildIntVal_nfi(int value = 0)
@@ -1031,26 +1148,6 @@ SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope)
    SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, scope);
    SageInterface::setSourcePosition(var_ref);
    return var_ref;
-}
-
-SgExpression* buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs)
-{
-   return SageBuilder::buildAddOp_nfi(lhs, rhs);
-}
-
-SgExpression* buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs)
-{
-   return SageBuilder::buildSubtractOp_nfi(lhs, rhs);
-}
-
-SgExpression* buildMultiplyOp_nfi(SgExpression* lhs, SgExpression* rhs)
-{
-   return SageBuilder::buildMultiplyOp_nfi(lhs, rhs);
-}
-
-SgExpression* buildDivideOp_nfi(SgExpression* lhs, SgExpression* rhs)
-{
-   return SageBuilder::buildDivideOp_nfi(lhs, rhs);
 }
 
 SgExpression* buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride)

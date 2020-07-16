@@ -4667,19 +4667,15 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
-   SgUntypedExpression* var_ref = NULL;
-   SgUntypedExpression* init    = NULL;
-   SgUntypedExpression* phrase1 = NULL;
-   SgUntypedExpression* phrase2 = NULL;
+   SgExpression* var_ref = NULL;
+   SgExpression* init    = NULL;
+   SgExpression* phrase1 = NULL;
+   SgExpression* phrase2 = NULL;
 
    int phrase1_enum = Jovial_ROSE_Translation::e_unknown;
    int phrase2_enum = Jovial_ROSE_Translation::e_unknown;
 
-//TODO_STATEMENTS
-#if 0
-   SgUntypedForStatement* for_stmt = NULL;
-   SgUntypedStatement* body = NULL;
-#endif
+   SgJovialForThenStatement* for_stmt = nullptr;
 
    if (ATmatch(term, "ForStatement(<term>,<term>,<term>)", &t_labels, &t_clause, &t_stmt)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
@@ -4690,28 +4686,20 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
          // MATCHED ForClause
       } else return ATfalse;
 
-      // Match ControlledStatement which is a Statement
+      SgAssignOp* initialization = SageBuilder::buildAssignOp_nfi(var_ref, init);
+      setSourcePosition(initialization, t_clause);
+
+      // Begin SageTreeBuilder
+      sage_tree_builder.Enter(for_stmt, initialization, phrase1, phrase2);
+
+      // Match ControlledStatement (body of loop)
       if (traverse_Statement(t_stmt)) {
          // MATCHED Statement
       } else return ATfalse;
    }
    else return ATfalse;
 
-   //cout << ".x. loop body size is " << for_body_list->get_stmt_list().size() << endl;
-   //WHY????   ROSE_ASSERT(for_body_list->get_stmt_list().size() > 0);
-
-//TODO_STATEMENTS
 #if 0
-   if (for_body_list->get_stmt_list().size() > 0) {
-      body = for_body_list->get_stmt_list().back();
-      for_body_list->get_stmt_list().pop_back();
-   }
-
-   int op_enum = LanguageTranslation::e_operator_assign;
-   SgUntypedBinaryOperator* initialization = new SgUntypedBinaryOperator(op_enum,"assign",var_ref,init);
-   ROSE_ASSERT(initialization);
-   setSourcePosition(initialization, t_clause);
-
 // WHILE then optional BY or THEN (increment expression)
    if (phrase1_enum == e_while_phrase_expr) {
       if (phrase2_enum == e_by_phrase_expr) {
@@ -4743,44 +4731,49 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
       }
       for_stmt = new SgUntypedForStatement("", stmt_enum, initialization, phrase2, phrase1, body, "");
    }
+#endif
 
    ROSE_ASSERT(for_stmt);
    setSourcePosition(for_stmt, term);
 
-   stmt_list->get_stmt_list().push_back(for_stmt);
-#endif
+// End SageTreeBuilder
+   sage_tree_builder.Leave(for_stmt);
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_ForClause(ATerm term, SgUntypedExpression* & var_ref, SgUntypedExpression* & init,
-                                                                     SgUntypedExpression* & phrase1, SgUntypedExpression* & phrase2,
-                                                                     int & phrase1_enum, int & phrase2_enum)
+ATbool ATermToSageJovialTraversal::traverse_ForClause(ATerm term, SgExpression* &var_ref, SgExpression* &init,
+                                                                  SgExpression* &phrase1, SgExpression* &phrase2,
+                                                                  int &phrase1_enum, int &phrase2_enum)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ForClause: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_item, t_clause;
-   char* name;
+   char* var_name;
 
-   init = NULL;
-   var_ref = NULL;
-   phrase1 = NULL;
-   phrase2 = NULL;
+   init = nullptr;
+   var_ref = nullptr;
+   phrase1 = nullptr;
+   phrase2 = nullptr;
    phrase1_enum = Jovial_ROSE_Translation::e_unknown;
    phrase2_enum = Jovial_ROSE_Translation::e_unknown;
 
    if (ATmatch(term, "ForClause(<term>,<term>)", &t_item, &t_clause)) {
       // MATCHED ForClause
 
-      if (ATmatch(t_item, "<str>" , &name)) {
+      if (ATmatch(t_item, "<str>" , &var_name)) {
          // MATCHED ControlItem
-         int expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
-         var_ref = new SgUntypedReferenceExpression(expr_enum, name);
-         ROSE_ASSERT(var_ref);
+         SgVariableSymbol* var_sym;
+
+         // if this is 
+         var_sym = SageInterface::lookupVariableSymbolInParentScopes(var_name, SageBuilder::topScopeStack());
+         ROSE_ASSERT(var_sym);
+         var_ref = SageBuilder::buildVarRefExp_nfi(var_sym);
          setSourcePosition(var_ref, t_item);
-      } else return ATfalse;
+      }
+      else return ATfalse;
 
       if (traverse_ControlClause(t_clause, init, phrase1, phrase2, phrase1_enum, phrase2_enum)) {
          // MATCHED ControlClause
@@ -4791,9 +4784,9 @@ ATbool ATermToSageJovialTraversal::traverse_ForClause(ATerm term, SgUntypedExpre
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_ControlClause(ATerm term, SgUntypedExpression* & initial_value,
-                                                             SgUntypedExpression* & phrase1, SgUntypedExpression* & phrase2,
-                                                             int & phrase1_enum, int & phrase2_enum)
+ATbool ATermToSageJovialTraversal::traverse_ControlClause(ATerm term, SgExpression* &initial_value,
+                                                             SgExpression* &phrase1, SgExpression* &phrase2,
+                                                             int &phrase1_enum, int &phrase2_enum)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ControlClause: %s\n", ATwriteToString(term));
@@ -4801,17 +4794,15 @@ ATbool ATermToSageJovialTraversal::traverse_ControlClause(ATerm term, SgUntypedE
 
    ATerm t_value, t_continuation;
 
-   initial_value = NULL;
-   phrase1 = NULL;
-   phrase2 = NULL;
+   initial_value = nullptr;
+   phrase1 = nullptr;
+   phrase2 = nullptr;
    phrase1_enum = Jovial_ROSE_Translation::e_unknown;
    phrase2_enum = Jovial_ROSE_Translation::e_unknown;
 
-   SgExpression* expr = nullptr;
-
    if (ATmatch(term, "ControlClause(<term>,<term>)", &t_value, &t_continuation)) {
       // MATCHED ControlClause
-      if (traverse_Formula(t_value, expr)) {
+      if (traverse_Formula(t_value, initial_value)) {
          // MATCHED InitialValue
       } else return ATfalse;
       if (traverse_OptContinuation(t_continuation, phrase1, phrase2, phrase1_enum, phrase2_enum)) {
@@ -4826,15 +4817,15 @@ ATbool ATermToSageJovialTraversal::traverse_ControlClause(ATerm term, SgUntypedE
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_OptContinuation(ATerm term, SgUntypedExpression* & phrase1, SgUntypedExpression* & phrase2,
-                                                               int & phrase_enum1, int & phrase_enum2)
+ATbool ATermToSageJovialTraversal::traverse_OptContinuation(ATerm term, SgExpression* &phrase1, SgExpression* &phrase2,
+                                                                        int &phrase_enum1, int &phrase_enum2)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptContinuation: %s\n", ATwriteToString(term));
 #endif
 
-   phrase1 = NULL;
-   phrase2 = NULL;
+   phrase1 = nullptr;
+   phrase2 = nullptr;
    phrase_enum1 = Jovial_ROSE_Translation::e_unknown;
    phrase_enum2 = Jovial_ROSE_Translation::e_unknown;
 
@@ -4846,8 +4837,8 @@ ATbool ATermToSageJovialTraversal::traverse_OptContinuation(ATerm term, SgUntype
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_Continuation(ATerm term, SgUntypedExpression* & phrase1, SgUntypedExpression* & phrase2,
-                                                            int & phrase_enum_1, int & phrase_enum_2)
+ATbool ATermToSageJovialTraversal::traverse_Continuation(ATerm term, SgExpression* &phrase1, SgExpression* &phrase2,
+                                                                     int &phrase_enum_1, int &phrase_enum_2)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Continuation: %s\n", ATwriteToString(term));
@@ -4875,7 +4866,7 @@ ATbool ATermToSageJovialTraversal::traverse_Continuation(ATerm term, SgUntypedEx
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_Phrase(ATerm term, SgUntypedExpression* & expr, int & phrase_enum)
+ATbool ATermToSageJovialTraversal::traverse_Phrase(ATerm term, SgExpression* &expr, int &phrase_enum)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Phrase: %s\n", ATwriteToString(term));
@@ -4883,27 +4874,24 @@ ATbool ATermToSageJovialTraversal::traverse_Phrase(ATerm term, SgUntypedExpressi
 
    ATerm t_formula;
 
-   expr = NULL;
+   expr = nullptr;
    phrase_enum = Jovial_ROSE_Translation::e_unknown;
-
-// Begin SageTreeBuilder
-   SgExpression* sg_expr = nullptr;
 
    if (ATmatch(term, "ByPhrase(<term>)", &t_formula)) {
       // MATCHED ByPhrase
-      if (traverse_NumericFormula(t_formula, sg_expr)){
+      if (traverse_NumericFormula(t_formula, expr)){
          // MATCHED NumericFormula
          phrase_enum = Jovial_ROSE_Translation::e_by_phrase_expr;
       } else return ATfalse;
    } else if (ATmatch(term, "ThenPhrase(<term>)", &t_formula)) {
       // MATCHED ThenPhrase
-      if (traverse_Formula(t_formula, sg_expr)){
+      if (traverse_Formula(t_formula, expr)){
          // MATCHED Formula
          phrase_enum = Jovial_ROSE_Translation::e_then_phrase_expr;
       } else return ATfalse;
    } else if (ATmatch(term, "WhilePhrase(<term>)", &t_formula)) {
       // MATCHED WhilePhrase
-      if (traverse_BitFormula(t_formula, sg_expr)){
+      if (traverse_BitFormula(t_formula, expr)){
          // BooleanFormula defaults to BitFormula
          // MATCHED BitFormula
          phrase_enum = Jovial_ROSE_Translation::e_while_phrase_expr;
@@ -5816,21 +5804,10 @@ ATbool ATermToSageJovialTraversal::traverse_ExponentiationOp(ATerm term, SgExpre
       if (traverse_NumericPrimary(t_rhs, rhs)) {
          // MATCHED NumericPrimary
       } else return ATfalse;
-
-      // DELETE ME
-      //      op_enum = LanguageTranslation::e_operator_exponentiate;
-      //      op_name = "**";
-      //      expr = new SgUntypedBinaryOperator(op_enum,op_name,lhs,rhs);
-      //      setSourcePosition(expr, term);
    }
-
-   //   else if (traverse_NumericPrimary(term, expr)) {
-      // MATCHED NumericPrimary
-   //   }
-
    else return ATfalse;
 
-   ROSE_ASSERT(expr != nullptr);
+   ROSE_ASSERT(expr);
 
    return ATtrue;
 }
@@ -5995,7 +5972,7 @@ ATbool ATermToSageJovialTraversal::traverse_LogicalOperand(ATerm term, SgExpress
       // MATCHED RelationalExpression
    } else return ATfalse;
 
-   ROSE_ASSERT(expr != NULL);
+   ROSE_ASSERT(expr != nullptr);
 
    return ATtrue;
 }
@@ -6052,7 +6029,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
    // NamedBitConstant       -> BitPrimary {cons("NamedBitConstant")} (rejected in grammar)
    // BitFunctionCall        -> BitPrimary (no cons)
 
-   ROSE_ASSERT(expr != NULL);
+   ROSE_ASSERT(expr != nullptr);
 
    return ATtrue;
 }
@@ -6081,22 +6058,22 @@ ATbool ATermToSageJovialTraversal::traverse_RelationalExpression(ATerm term, SgE
       ROSE_ASSERT(lhs && rhs);
 
       if (ATmatch(t_operator, "LessThanOp()")) {
-         expr = new SgLessThanOp(lhs, rhs, NULL);
+         expr = new SgLessThanOp(lhs, rhs, nullptr);
       }
       else if (ATmatch(t_operator, "GreaterThanOp()")) {
-         expr = new SgGreaterThanOp(lhs, rhs, NULL);
+         expr = new SgGreaterThanOp(lhs, rhs, nullptr);
       }
       else if (ATmatch(t_operator, "LessOrEqualOp()")) {
-         expr = new SgLessOrEqualOp(lhs, rhs, NULL);
+         expr = new SgLessOrEqualOp(lhs, rhs, nullptr);
       }
       else if (ATmatch(t_operator, "GreaterOrEqualOp()")) {
-         expr = new SgGreaterOrEqualOp(lhs, rhs, NULL);
+         expr = new SgGreaterOrEqualOp(lhs, rhs, nullptr);
       }
       else if (ATmatch(t_operator, "EqualityOp()")) {
-         expr = new SgEqualityOp(lhs, rhs, NULL);
+         expr = new SgEqualityOp(lhs, rhs, nullptr);
       }
       else if (ATmatch(t_operator, "NotEqualOp()")) {
-         expr = new SgNotEqualOp(lhs, rhs, NULL);
+         expr = new SgNotEqualOp(lhs, rhs, nullptr);
       } else return ATfalse;
 
    } else return ATfalse;
