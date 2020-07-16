@@ -36,6 +36,7 @@ InterProceduralAnalysis::~InterProceduralAnalysis() {}
 // state - the function's NodeState
 bool UnstructuredPassIntraAnalysis::runAnalysis(const Function& func, NodeState* state)
 {
+        ROSE_ASSERT(func.get_definition()!=NULL);
         DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
 
      // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
