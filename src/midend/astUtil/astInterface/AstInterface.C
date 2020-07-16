@@ -1012,8 +1012,10 @@ void NotifyTreeCopy ( AstInterfaceImpl& fa, const AstNodePtr& _orig, const AstNo
 bool AstInterface :: get_fileInfo(const AstNodePtr& _n, std:: string* fname, int* lineno )
 {
   SgNode* n = AstNodePtrImpl(_n).get_ptr();
-  Sg_File_Info *f =n->get_file_info(); 
-  if (fname == 0) {
+  assert(n != NULL);
+  Sg_File_Info* f = n->get_file_info(); 
+  assert(f != NULL);
+  if (fname != 0) {
      *fname = f->get_filename();
   }
   if (lineno != 0) 
