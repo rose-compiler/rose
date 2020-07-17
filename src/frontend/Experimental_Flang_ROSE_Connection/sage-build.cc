@@ -1395,70 +1395,115 @@ void Build(const parser::Expr::Subtract&x, SgExpression* &expr)
    expr = SageBuilderCpp17::buildSubtractOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::Concat&x, T* &expr)
+void Build(const parser::Expr::Concat&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(Concat)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildConcatenationOp_nfi(lhs, rhs);
+
 }
 
-template<typename T>
-void Build(const parser::Expr::LT&x, T* &expr)
+void Build(const parser::Expr::LT&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(LT)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildLessThanOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::LE&x, T* &expr)
+void Build(const parser::Expr::LE&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(LE)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildLessOrEqualOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::EQ&x, T* &expr)
+void Build(const parser::Expr::EQ&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(EQ)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildEqualityOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::NE&x, T* &expr)
+void Build(const parser::Expr::NE&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(NE)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildNotEqualOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::GE&x, T* &expr)
+void Build(const parser::Expr::GE&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(GE)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildGreaterOrEqualOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::GT&x, T* &expr)
+void Build(const parser::Expr::GT&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(GT)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildGreaterThanOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::AND&x, T* &expr)
+void Build(const parser::Expr::AND&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(AND)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildAndOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::OR&x, T* &expr)
+void Build(const parser::Expr::OR&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(OR)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildOrOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::EQV&x, T* &expr)
+void Build(const parser::Expr::EQV&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(EQV)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildEqualityOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::NEQV&x, T* &expr)
+void Build(const parser::Expr::NEQV&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(NEQV)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildNotEqualOp_nfi(lhs, rhs);
 }
 
 template<typename T>
