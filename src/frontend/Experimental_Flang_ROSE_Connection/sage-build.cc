@@ -1069,6 +1069,12 @@ template<typename T>
 void Build(const parser::ExitStmt&x, T* scope)
 {
    std::cout << "Rose::builder::Build(ExitStmt)\n";
+   // std::optional<Name> v;
+
+   // TODO: exit with a name
+   SgProcessControlStatement* exit_stmt{nullptr};
+   builder.Enter(exit_stmt, "exit", boost::none, boost::none);
+   builder.Leave(exit_stmt);
 }
 
 template<typename T>
