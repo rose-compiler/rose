@@ -215,7 +215,7 @@ SgExprStatement *splitVarDecl(SgVariableDeclaration *varDecl)
 
      SgInitializer *init = in->get_initializer();
 
-     SgExpression *operand;
+     SgExpression *operand = NULL;
      switch (init->variantT())
         {
           case V_SgAssignInitializer:
@@ -384,7 +384,7 @@ void initialTransformation(SgNode *n)
           if (hasSC(cond))
              {
                cout << "hasSC(cond)" << endl;
-               SgExprStatement *condExprStmt;
+               SgExprStatement *condExprStmt = NULL;
                switch (cond->variantT())
                   {
                     case V_SgExprStatement:

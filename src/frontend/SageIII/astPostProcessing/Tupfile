@@ -20,15 +20,16 @@ endif
 
 run $(librose_compile) $(SOURCES)
 
-run $(public_header) addPrototypesForTemplateInstantiations.h astPostProcessing.h checkIsCompilerGeneratedFlag.h \
-    checkIsFrontendSpecificFlag.h checkIsModifiedFlag.h checkPhysicalSourcePosition.h detectTransformations.h \
-    fixupConstantFoldedValues.h fixupConstructorPreinitializationLists.h fixupCxxSymbolTablesToSupportAliasingSymbols.h \
-    fixupDeclarationScope.h fixupDeclarations.h fixupDefiningAndNondefiningDeclarations.h fixupFileInfoFlags.h \
-    fixupFunctionDefaultArguments.h fixupNames.h fixupNullPointers.h fixupSelfReferentialMacros.h fixupSymbolTables.h \
-    fixupTemplateArguments.h fixupTemplateInstantiations.h fixupTypeReferences.h fixupTypes.h fixupUseAndUsingDeclarations.h \
+run $(public_header) addIncludeDirectives.h addPrototypesForTemplateInstantiations.h astPostProcessing.h \
+    checkIsCompilerGeneratedFlag.h checkIsFrontendSpecificFlag.h checkIsModifiedFlag.h checkPhysicalSourcePosition.h \
+    detectTransformations.h fixupConstantFoldedValues.h fixupConstructorPreinitializationLists.h \
+    fixupCxxSymbolTablesToSupportAliasingSymbols.h fixupDeclarationScope.h fixupDeclarations.h \
+    fixupDefiningAndNondefiningDeclarations.h fixupFileInfoFlags.h fixupFunctionDefaultArguments.h fixupNames.h \
+    fixupNullPointers.h fixupSelfReferentialMacros.h fixupSymbolTables.h fixupTemplateArguments.h \
+    fixupTemplateInstantiations.h fixupTypeReferences.h fixupTypes.h fixupUseAndUsingDeclarations.h \
     initializeExplicitScopeData.h insertFortranContainsStatement.h markBackendCompilerSpecificFunctions.h \
     markCompilerGenerated.h markForOutputInCodeGeneration.h markLhsValues.h markOverloadedTemplateInstantiations.h \
     markSharedDeclarationsForOutputInCodeGeneration.h markTemplateInstantiationsForOutput.h \
-    markTemplateSpecializationsForOutput.h markTransformationsForOutput.h \
-    normalizeTypedefSequenceLists.h processTemplateHandlingOptions.h propagateHiddenListData.h resetParentPointers.h \
-    resetTemplateNames.h resolveFortranReferences.h \
+    markTemplateSpecializationsForOutput.h markTransformationsForOutput.h normalizeTypedefSequenceLists.h \
+    processTemplateHandlingOptions.h propagateHiddenListData.h resetParentPointers.h resetTemplateNames.h \
+    resolveFortranReferences.h

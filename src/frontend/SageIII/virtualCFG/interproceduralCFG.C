@@ -24,9 +24,9 @@ void addEdge(CFGNode from, CFGNode to, std::vector<CFGEdge>& result) {
     SgReturnStmt* rs = isSgReturnStmt(fromNode);
     if (fromIndex == 1 || (fromIndex == 0 && !rs->get_expression())) return;
   }
-  if (isSgStopOrPauseStatement(fromNode) && toNode == fromNode->get_parent()) {
-    SgStopOrPauseStatement* sps = isSgStopOrPauseStatement(fromNode);
-    if (fromIndex == 0 && sps->get_stop_or_pause() == SgStopOrPauseStatement::e_stop) return;
+  if (isSgProcessControlStatement(fromNode) && toNode == fromNode->get_parent()) {
+    SgProcessControlStatement* sps = isSgProcessControlStatement(fromNode);
+    if (fromIndex == 0 && sps->get_control_kind() == SgProcessControlStatement::e_stop) return;
   }
   if (fromIndex == 1 && isSgSwitchStatement(fromNode) &&
       isSgSwitchStatement(fromNode)->get_body() == toNode) return;
