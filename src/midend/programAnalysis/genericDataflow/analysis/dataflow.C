@@ -16,6 +16,7 @@ NodeState* IntraBWDataflow::initializeFunctionNodeState(const Function &func, No
 // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
 // DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
 
+  ROSE_ASSERT(func.get_definition() != NULL);
   DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition(),filter);
   
   //Dbg::dbg << "funcCFGStart="<<funcCFGStart.getNode()<<" = ["<<Dbg::escape(funcCFGStart.getNode()->unparseToString())<<" | "<<funcCFGStart.getNode()->class_name()<<" | "<<funcCFGStart.getIndex()<<"]"<<endl;
@@ -376,7 +377,7 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
                                 // The CFG node corresponding to the current descendant of n
                                 DataflowNode nextNode = *di;
                                 SgNode *nextSgNode = nextNode.getNode();
-                                ROSE_ASSERT  (nextSgNode != NULL);
+                                ROSE_ASSERT(nextSgNode != NULL);
                                 if(analysisDebugLevel>=1)
                                         Dbg::dbg << "    Descendant: "<<nextSgNode<<"["<<nextSgNode->class_name()<<" | "<<Dbg::escape(nextSgNode->unparseToString())<<"]"<<endl;
                         

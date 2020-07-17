@@ -662,34 +662,38 @@ class SplitFraction : public SymbolicVisitor
           SymbolicExpr* frv = (frp == 0)? 0 : v.DistributeExpr(SYMOP_NIL, SymbolicVal());
           SymbolicExpr::OpdIterator opd1 = v.GetOpdIterator();
           for ( ; opd1 != opds ; ++opd1) {
-              if (inv != 0)
+              if (inv != NULL)
                   inv->AddOpd(*opd1);
               if (frv != 0)
                   frv->AddOpd(*opd1);
             }
-           if (inv != 0)
+           if (inv != NULL)
                inv->ApplyOpd(*inp);
-           if (frv != 0)
+           if (frv != NULL)
                frv->ApplyOpd(*frp);
            for (++opd1; !opd1.ReachEnd(); ++opd1) {
               SymbolicVal cur = v.Term2Val(*opd1);
               if (operator()(cur, inp, frp)) {
-                 if (inv != 0)
+                 if (inv != NULL)
                      inv->ApplyOpd(*inp);
-                 if (frv != 0)
+                 if (frv != NULL)
                      frv->ApplyOpd(*frp);
               }
               else {
-                 if (inv != 0)
+                 if (inv != NULL)
                      inv->AddOpd(*opd1);
-                 if (frv != 0)
+                 if (frv != NULL)
                      frv->AddOpd(*opd1);
               }
            }
-           if (inp != 0)
+           if (inp != NULL) {
+                assert(inv != NULL);
                 *inp = GetExprVal(inv);
-           if (frp != 0)
+           }
+           if (frp != NULL) {
+                assert(frv != NULL);
                 *frp = GetExprVal(frv);
+           }
      }
      hasfrac = _hasfrac;
    }

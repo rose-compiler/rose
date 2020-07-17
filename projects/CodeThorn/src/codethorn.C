@@ -558,6 +558,8 @@ int main( int argc, char * argv[] ) {
     }
 
     AbstractValue::byteMode=ctOpt.byteMode;
+    AbstractValue::strictChecking=ctOpt.strictChecking;
+    SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls;
     configureOptionSets(ctOpt);
 
     analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;

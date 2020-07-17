@@ -796,6 +796,7 @@ bool ContextInsensitiveInterProceduralDataflow::transfer(
                                 Dbg::dbg << "ContextInsensitiveInterProceduralDataflow::transfer Incoming Dataflow info modified\n";
                         // Record that the callee function needs to be re-analyzed because of new information from the caller
                         TraverseCallGraphDataflow::addToRemaining(getFunc(callee));
+                        ROSE_ASSERT(getFunc(callee) != NULL);
                         remainingDueToCallers.insert(getFunc(callee));
                 }
                 
