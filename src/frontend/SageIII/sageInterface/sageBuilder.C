@@ -6579,6 +6579,14 @@ SgFloatVal* SageBuilder::buildFloatVal(float value /*= 0.0*/)
   return result;
 }
 
+SgFloatVal* SageBuilder::buildFloatVal_nfi(float value)
+{
+  SgFloatVal* result = new SgFloatVal(value,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgFloatVal* SageBuilder::buildFloatVal_nfi(float value, const string& str)
 {
   SgFloatVal* result = new SgFloatVal(value,str);
@@ -6599,11 +6607,6 @@ SgIntVal* SageBuilder::buildIntVal(int value)
      SgIntVal* intValue= new SgIntVal(value,"");
      ROSE_ASSERT(intValue);
      setOneSourcePositionForTransformation(intValue);
-
-#if 0
-     printf ("In buildIntVal(value = %d): intValue = %p \n",value,intValue);
-#endif
-
      return intValue;
    }
 
@@ -6612,11 +6615,14 @@ SgIntVal* SageBuilder::buildIntValHex(int value)
      SgIntVal* intValue= new SgIntVal(value, (value >= 0 ? StringUtility::intToHex((unsigned int)value) : "-" + StringUtility::intToHex((unsigned int)(-value))));
      ROSE_ASSERT(intValue);
      setOneSourcePositionForTransformation(intValue);
+     return intValue;
+   }
 
-#if 0
-     printf ("In buildIntValHex(value = %d): intValue = %p \n",value,intValue);
-#endif
-
+SgIntVal* SageBuilder::buildIntVal_nfi(int value)
+   {
+     SgIntVal* intValue = new SgIntVal(value,"");
+     ROSE_ASSERT(intValue);
+     setOneSourcePositionNull(intValue);
      return intValue;
    }
 
@@ -6625,11 +6631,6 @@ SgIntVal* SageBuilder::buildIntVal_nfi(int value, const string& str)
      SgIntVal* intValue = new SgIntVal(value,str);
      ROSE_ASSERT(intValue);
      setOneSourcePositionNull(intValue);
-
-#if 0
-     printf ("In buildIntVal_nfi(value = %d,str = %s): intValue = %p \n",value,str.c_str(),intValue);
-#endif
-
      return intValue;
    }
 
@@ -15856,7 +15857,9 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
      ROSE_ASSERT(subtreeRoot != NULL);
      ROSE_ASSERT(newFileName != "");
 
-#if 0
+#define DEBUG_FIXUP 0
+
+#if DEBUG_FIXUP
      printf ("In SageBuilder::fixupSourcePositionFileSpecification(): newFileName = %s \n",newFileName.c_str());
      printf ("In SageBuilder::fixupSourcePositionFileSpecification(): subtreeRoot = %p = %s \n",subtreeRoot,subtreeRoot->class_name().c_str());
 #endif
@@ -15870,15 +15873,15 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
                     newFileName    = tmp_newFileName;
                     new_file_id    = tmp_new_file_id;
                     originalFileId = tmp_originalFileId;
-#if 0
+#if DEBUG_FIXUP
                     printf ("In SageBuilder::fixupSourcePositionFileSpecification(): newFileName = %s new_file_id = %d originalFileId = %d \n",newFileName.c_str(),new_file_id,originalFileId);
 #endif
                   }
 
                void visit (SgNode* node)
                   {
-#if 0
-                    printf ("In visit(): node = %p = %s \n",node,node->class_name().c_str());
+#if DEBUG_FIXUP
+                    printf ("In fixupSourcePositionFileSpecification visit(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
 
                     SgLocatedNode* locatedNode = isSgLocatedNode(node);
@@ -15892,7 +15895,7 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
 
                               if (locatedNode->get_startOfConstruct()->isShared() == true)
                                  {
-#if 0
+#if DEBUG_FIXUP
                                    printf ("Found SgLocatedNode marked as isShared() == true: locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
 #endif
 #if 0
@@ -15906,7 +15909,7 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
                               locatedNode->get_startOfConstruct()->set_physical_file_id(new_file_id);
                               locatedNode->get_endOfConstruct  ()->set_physical_file_id(new_file_id);
 
-#if 0
+#if DEBUG_FIXUP
                               printf ("locatedNode->get_startOfConstruct()->get_filename() = %s locatedNode->get_startOfConstruct()->get_physical_filename() = %s \n",
                                    locatedNode->get_startOfConstruct()->get_filenameString().c_str(),locatedNode->get_startOfConstruct()->get_physical_filename().c_str());
                               printf ("locatedNode->get_startOfConstruct()->get_file_id() = %d locatedNode->get_startOfConstruct()->get_physical_file_id() = %d \n",
@@ -15916,7 +15919,7 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
                             }
                            else
                             {
-#if 0
+#if DEBUG_FIXUP
                               printf ("NOT MATCHING: originalFileId = %d locatedNode->get_startOfConstruct()->get_file_id() = %d locatedNode->get_startOfConstruct()->get_physical_file_id() = %d \n",
                                       originalFileId,locatedNode->get_startOfConstruct()->get_file_id(),locatedNode->get_startOfConstruct()->get_physical_file_id());
                               printf (" ------------ originalFileId = %d locatedNode->get_endOfConstruct()->get_file_id() = %d locatedNode->get_endOfConstruct()->get_physical_file_id() = %d \n",
@@ -15966,7 +15969,7 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
                                       {
                                         sourceFile->get_startOfConstruct()->set_file_id(new_file_id);
                                         sourceFile->get_startOfConstruct()->set_physical_file_id(new_file_id);
-#if 0
+#if DEBUG_FIXUP
                                         printf ("sourceFile->get_startOfConstruct()->get_file_id()          = %d \n",sourceFile->get_startOfConstruct()->get_file_id());
                                         printf ("sourceFile->get_startOfConstruct()->get_physical_file_id() = %d \n",sourceFile->get_startOfConstruct()->get_physical_file_id());
 #endif
@@ -15976,7 +15979,7 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
                                  }
                                 else
                                  {
-#if 0
+#if DEBUG_FIXUP
                                    printf ("Unhandled: node = %p = %s \n",node,node->class_name().c_str());
 #endif
                                  }
@@ -16011,7 +16014,7 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
        // the file_id be computed ans saved into the file_id to filename maps.
 
           originalFileId = file->get_startOfConstruct()->get_file_id();
-#if 0
+#if DEBUG_FIXUP
           printf ("originalFileId = %d \n",originalFileId);
 #endif
           file->get_startOfConstruct()->set_filenameString(newFileName);
@@ -16038,7 +16041,7 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
           ROSE_ASSERT(newFileName == new_filename_2);
 #endif
 
-#if 0
+#if DEBUG_FIXUP
           printf ("In SageBuilder::fixupSourcePositionFileSpecification(): file != NULL: newFileName = %s new_file_id = %d \n",newFileName.c_str(),new_file_id);
 #endif
         }
@@ -16047,17 +16050,17 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
           SgLocatedNode* subtreeLocatedNode = isSgLocatedNode(subtreeRoot);
           if (subtreeLocatedNode != NULL)
              {
-#if 0
+#if DEBUG_FIXUP
                printf ("subtreeLocatedNode->get_startOfConstruct()->get_file_id()          = %d \n",subtreeLocatedNode->get_startOfConstruct()->get_file_id());
                printf ("subtreeLocatedNode->get_startOfConstruct()->get_physical_file_id() = %d \n",subtreeLocatedNode->get_startOfConstruct()->get_physical_file_id());
 #endif
                originalFileId = subtreeLocatedNode->get_startOfConstruct()->get_file_id();
                new_file_id = Sg_File_Info::getIDFromFilename(newFileName);
-#if 0
+#if DEBUG_FIXUP
                printf ("originalFileId = %d \n",originalFileId);
                printf ("new_file_id    = %d \n",new_file_id);
 #endif
-#if 0
+#if DEBUG_FIXUP
                printf ("In SageBuilder::fixupSourcePositionFileSpecification(): subtreeLocatedNode = %s : originalFileId = %d newFileName = %s new_file_id = %d \n",
                     subtreeLocatedNode->class_name().c_str(),originalFileId,newFileName.c_str(),new_file_id);
 #endif
@@ -16126,7 +16129,7 @@ SageBuilder::fixupSharingSourcePosition(SgNode* subtreeRoot, int new_file_id)
                void visit (SgNode* node)
                   {
 #if 0
-                    printf ("In visit(): node = %p = %s new_file_id = %d \n",node,node->class_name().c_str(),new_file_id);
+                    printf ("In fixupSharingSourcePosition visit(): node = %p = %s new_file_id = %d \n",node,node->class_name().c_str(),new_file_id);
 #endif
 
                     SgStatement* statement = isSgStatement(node);
@@ -16759,6 +16762,9 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      fixupSourcePositionFileSpecification(result,outputFileName);
 #endif
 
+  // DQ (7/2/2020): Added assertion (fails for snippet tests).
+     ROSE_ASSERT(result->get_preprocessorDirectivesAndCommentsList() != NULL);
+
      return result;
 #else
 
@@ -16946,12 +16952,20 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
         }
      ROSE_ASSERT (sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
 
+#if 1
+  // DQ (5/22/2020): If this is processing a previously processed file, then this 
+  // will cause comments and CPP directives to be collected twice. This happens
+  // in the case where we build a copy of the source file to support construction 
+  // of a dynamic library.
+     printf ("NOTE: SageBuilder::buildSourceFile(): If this is processing a previously processed source file then this will cause the source file comments and CPP directives to be collected redundently \n");
+#endif
+
   // DQ (11/4/2019): This is a test that is use in attaching CPP directives and comments to the AST.
      ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
      ROSE_ASSERT(filePreprocInfo != NULL);
 #endif
 
-#if 0
+#if 1
      printf ("In SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project): calling attachPreprocessingInfo() \n");
 #endif
 

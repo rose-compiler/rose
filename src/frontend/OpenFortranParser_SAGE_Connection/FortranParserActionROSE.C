@@ -12816,10 +12816,10 @@ void c_action_case_value()
             setSourcePosition(pauseExpression);
         }
 
-        SgStopOrPauseStatement* pauseStatement = new SgStopOrPauseStatement(
+        SgProcessControlStatement* pauseStatement = new SgProcessControlStatement(
                 pauseExpression);
 
-        pauseStatement->set_stop_or_pause(SgStopOrPauseStatement::e_pause);
+        pauseStatement->set_control_kind(SgProcessControlStatement::e_pause);
 
         if (constant != NULL)
         {
@@ -13080,10 +13080,10 @@ void c_action_case_value()
             setSourcePosition(stopExpression);
         }
 
-        SgStopOrPauseStatement* stopStatement = new SgStopOrPauseStatement(
+        SgProcessControlStatement* stopStatement = new SgProcessControlStatement(
                 stopExpression);
 
-        stopStatement->set_stop_or_pause(SgStopOrPauseStatement::e_stop);
+        stopStatement->set_control_kind(SgProcessControlStatement::e_stop);
 
         setSourcePosition(stopStatement, stopKeyword);
 

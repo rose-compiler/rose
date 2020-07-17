@@ -1,8 +1,3 @@
 #include "PropertyState.h"
 
-CodeThorn::PropertyStateFactory::PropertyStateFactory() {
-}
-
-CodeThorn::PropertyStateFactory::~PropertyStateFactory() {
-}
-
+// nothing to do here

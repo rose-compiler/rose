@@ -3,7 +3,7 @@
 extern void
 generateJovialCompoolFile(SgFile *sfile);
 
-#define MOD_FILE_SUFFIX  ".rcmp"
+#define CMP_FILE_SUFFIX  ".rcmp"
 
 #endif
 

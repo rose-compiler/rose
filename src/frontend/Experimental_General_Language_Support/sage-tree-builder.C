@@ -535,11 +535,20 @@ Leave(SgIfStmt* if_stmt)
 }
 
 void SageTreeBuilder::
-Enter(SgStopOrPauseStatement* &control_stmt, const boost::optional<SgExpression*> &opt_code, const std::string &stmt_kind)
+Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
+      const boost::optional<SgExpression*> &opt_code)
 {
-   mlog[TRACE] << "SageTreeBuilder::Enter(SgStopOrPauseStatement* &, ...) \n";
+   return Enter(control_stmt, stmt_kind, opt_code, boost::none);
+}
+
+void SageTreeBuilder::
+Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
+      const boost::optional<SgExpression*> &opt_code, const boost::optional<SgExpression*> &opt_quiet)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgProcessControlStatement* &, ...) \n";
 
    SgExpression* code = nullptr;
+   SgExpression* quiet = nullptr;
 
    if (opt_code) {
       code = *opt_code;
@@ -548,39 +557,48 @@ Enter(SgStopOrPauseStatement* &control_stmt, const boost::optional<SgExpression*
       code = SageBuilder::buildNullExpression_nfi();
    }
 
-   control_stmt = new SgStopOrPauseStatement(code);
+   if (opt_quiet) {
+      quiet = *opt_quiet;
+   }
+   else {
+      quiet = SageBuilder::buildNullExpression_nfi();
+   }
+
+   ROSE_ASSERT(code);
+   control_stmt = new SgProcessControlStatement(code);
    ROSE_ASSERT(control_stmt);
    SageInterface::setSourcePosition(control_stmt);
 
+   ROSE_ASSERT(quiet);
+   control_stmt->set_quiet(quiet);
+
    if (stmt_kind == "abort") {
-      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_abort);
+      control_stmt->set_control_kind(SgProcessControlStatement::e_abort);
    }
    else if (stmt_kind == "error_stop") {
-      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_error_stop);
+      control_stmt->set_control_kind(SgProcessControlStatement::e_error_stop);
    }
    else if (stmt_kind == "exit") {
-      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_exit);
+      control_stmt->set_control_kind(SgProcessControlStatement::e_exit);
    }
    else if (stmt_kind == "pause") {
-      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_pause);
+      control_stmt->set_control_kind(SgProcessControlStatement::e_pause);
    }
    else if (stmt_kind == "stop") {
-      control_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_stop);
+      control_stmt->set_control_kind(SgProcessControlStatement::e_stop);
    }
-   ROSE_ASSERT(control_stmt->get_stop_or_pause() != SgStopOrPauseStatement::e_unknown);
+   ROSE_ASSERT(control_stmt->get_control_kind() != SgProcessControlStatement::e_unknown);
 
    code->set_parent(control_stmt);
-
-   //TODO Lables and source position
-   //setSourcePosition(control_stmt, sources.get<0>(), sources.get<2>());
 
    SageInterface::appendStatement(control_stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
-Leave(SgStopOrPauseStatement* control_stmt)
+Leave(SgProcessControlStatement* control_stmt)
 {
-   mlog[TRACE] << "SageTreeBuilder::Leave(SgStopOrPauseStatement*, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgProcessControlStatement*, ...) \n";
+
    ROSE_ASSERT(control_stmt);
 }
 
@@ -638,6 +656,7 @@ Enter(SgDefaultOptionStmt* &default_option_stmt)
    SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
    default_option_stmt = SageBuilder::buildDefaultOptionStmt(body);
 
+// Shouldn't we append later?  I'll try for while statement
    SageInterface::appendStatement(default_option_stmt, SageBuilder::topScopeStack());
    SageBuilder::pushScopeStack(body);
 }
@@ -649,6 +668,36 @@ Leave(SgDefaultOptionStmt* default_option_stmt)
    ROSE_ASSERT(default_option_stmt);
 
    SageBuilder::popScopeStack();  // default_option_stmt body
+}
+
+void SageTreeBuilder::
+Enter(SgWhileStmt* &while_stmt, SgExpression* condition)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgWhileStmt* &, ...) \n";
+   ROSE_ASSERT(condition);
+
+   SgExprStatement* condition_stmt = SageBuilder::buildExprStatement_nfi(condition);
+   SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
+
+   while_stmt = SageBuilder::buildWhileStmt_nfi(condition_stmt, body, /*else_body*/nullptr);
+
+   SageBuilder::pushScopeStack(body);
+}
+
+void SageTreeBuilder::
+Leave(SgWhileStmt* while_stmt, bool has_end_do_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgWhileStmt*, ...) \n";
+   ROSE_ASSERT(while_stmt);
+
+   // The default value of has_end_do_stmt is false so if true,
+   // then the language supports it and it needs to be set.
+   if (has_end_do_stmt) {
+      while_stmt->set_has_end_statement(true);
+   }
+
+   SageBuilder::popScopeStack();  // while statement body
+   SageInterface::appendStatement(while_stmt, SageBuilder::topScopeStack());
 }
 
 SgEnumVal* SageTreeBuilder::
@@ -746,6 +795,38 @@ Leave(SgJovialDirectiveStatement* directive)
 
    SageInterface::appendStatement(directive, SageBuilder::topScopeStack());
    ROSE_ASSERT(directive->get_parent() == SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgJovialForThenStatement* &for_stmt, SgExpression* init_expr, SgExpression* incr_expr,
+         SgExpression* test_expr)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialForThenStatement* &, ...) \n";
+
+   ROSE_ASSERT(init_expr);
+   ROSE_ASSERT(incr_expr);
+   ROSE_ASSERT(test_expr);
+
+   SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
+
+   for_stmt = new SgJovialForThenStatement(init_expr, incr_expr, test_expr, body);
+   ROSE_ASSERT(for_stmt);
+   SageInterface::setSourcePosition(for_stmt);
+
+   if (SageInterface::is_language_case_insensitive()) {
+      for_stmt->setCaseInsensitive(true);
+   }
+
+   SageBuilder::pushScopeStack(body);
+}
+
+void SageTreeBuilder::
+Leave(SgJovialForThenStatement* for_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialForThenStatement*, ...) \n";
+
+   SageBuilder::popScopeStack();  // for body
+   SageInterface::appendStatement(for_stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
@@ -963,7 +1044,131 @@ importModule(const std::string &module_name)
 //
 namespace SageBuilderCpp17 {
 
-   SgType* buildIntType() { return SageBuilder::buildIntType(); }
+SgType* buildBoolType()
+{
+   return SageBuilder::buildBoolType();
+}
+
+SgType* buildIntType()
+{
+   return SageBuilder::buildIntType();
+}
+
+// Operators
+//
+SgExpression* buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildAddOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildAndOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildAndOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildDivideOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildDivideOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildEqualityOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildEqualityOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildGreaterThanOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildGreaterThanOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildGreaterOrEqualOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildGreaterOrEqualOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildMultiplyOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildMultiplyOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildLessThanOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildLessThanOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildLessOrEqualOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildLessOrEqualOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildNotEqualOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildNotEqualOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildOrOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildOrOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildSubtractOp_nfi(lhs, rhs);
+}
+
+// Expressions
+//
+SgExpression* buildConcatenationOp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildConcatenationOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildExprListExp_nfi()
+{
+   return SageBuilder::buildExprListExp_nfi();
+}
+
+SgExpression* buildBoolValExp_nfi(bool value)
+{
+   return SageBuilder::buildBoolValExp_nfi(value);
+}
+
+SgExpression* buildIntVal_nfi(int value = 0)
+{
+   return SageBuilder::buildIntVal_nfi(value);
+}
+
+SgExpression* buildStringVal_nfi(std::string value)
+{
+   return SageBuilder::buildStringVal_nfi(value);
+}
+
+SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope)
+{
+   SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, scope);
+   SageInterface::setSourcePosition(var_ref);
+   return var_ref;
+}
+
+SgExpression* buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride)
+{
+   return SageBuilder::buildSubscriptExpression_nfi(lower_bound, upper_bound, stride);
+}
+
+SgExpression* buildNullExpression_nfi()
+{
+   return SageBuilder::buildNullExpression_nfi();
+}
+
+SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &list)
+{
+   SgExprListExp* expr_list = SageBuilder::buildExprListExp_nfi();
+
+   BOOST_FOREACH(SgExpression* expr, list) {
+      expr_list->get_expressions().push_back(expr);
+   }
+   return expr_list;
+}
 
 } // namespace SageBuilderCpp17
 

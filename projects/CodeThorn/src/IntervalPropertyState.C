@@ -5,6 +5,7 @@ using namespace CodeThorn;
 
 CodeThorn::IntervalPropertyState::IntervalPropertyState() {
   setBot();
+  setBackEdge();
 }
 
 void CodeThorn::IntervalPropertyState::toStream(ostream& os, VariableIdMapping* vim) {
@@ -26,37 +27,40 @@ void CodeThorn::IntervalPropertyState::toStream(ostream& os, VariableIdMapping* 
   }
 }
 
-bool CodeThorn::IntervalPropertyState::approximatedBy(Lattice& other0) {
+bool CodeThorn::IntervalPropertyState::approximatedBy(Lattice& other0) const {
   IntervalPropertyState* other=dynamic_cast<IntervalPropertyState*> (&other0);
   ROSE_ASSERT(other);
   if(isBot())
     return true;
-  if(!isBot()&&other->isBot())
+  if(other->isBot())
     return false;
-  for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
+    
+  for(IntervalMapType::const_iterator i=intervals.begin();i!=intervals.end();++i) {
     VariableId varId=(*i).first;
-    if(!CodeThorn::NumberIntervalLattice::isSubIntervalOf(intervals[varId],other->intervals[varId]))
+    if(!CodeThorn::NumberIntervalLattice::isSubIntervalOf(const_cast<CodeThorn::IntervalPropertyState*>(this)->intervals[varId],
+                                                          other->intervals[varId]))
       return false;
   }
   return true;
 }
 
-bool CodeThorn::IntervalPropertyState::approximatedByAsymmetric(Lattice& other) {
+bool CodeThorn::IntervalPropertyState::approximatedByAsymmetric(Lattice& other) const {
+  // PP currrently not used
   return approximatedBy(other);
 }
 
 // schroder3 (2016-08-05): Merges the "other0" IntervalPropertyState into this IntervalPropertyState.
 //  The interval of each variable in this state is joined with the interval of the corresponding
 //  variable in the "other0" state.
-void CodeThorn::IntervalPropertyState::combineInternal(Lattice& other0, JoinMode joinMode) {
-  IntervalPropertyState* other=dynamic_cast<IntervalPropertyState*> (&other0);
+void CodeThorn::IntervalPropertyState::combineInternal(IntervalPropertyState& other0, JoinMode joinMode) {
+  IntervalPropertyState* other=&other0;
   ROSE_ASSERT(other!=0);
-  if(isBot()&&other->isBot())
+  if(other->isBot())
     return;
-  if(!isBot()&&other->isBot())
-    return;
-  if(isBot()&&!other->isBot())
+    
+  if(isBot())
     _bot=false;
+  
   for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
     VariableId varId=(*i).first;
     if(other->intervals.find(varId)==other->intervals.end()) {
@@ -66,6 +70,7 @@ void CodeThorn::IntervalPropertyState::combineInternal(Lattice& other0, JoinMode
       intervals[varId].join(other->intervals[varId], joinMode);
     }
   }
+  
   for(IntervalMapType::iterator i=other->intervals.begin();i!=other->intervals.end();++i) {
     VariableId varId=(*i).first;
     if(intervals.find(varId)==intervals.end()) {
@@ -82,13 +87,20 @@ void CodeThorn::IntervalPropertyState::combineInternal(Lattice& other0, JoinMode
 }
 
 void CodeThorn::IntervalPropertyState::combine(Lattice& other0){
-  // schroder3 (2016-08-05): Use the exact join:
-  combineInternal(other0, JM_Exact);
+  // backedge is a property of an edge state, but not at a label state
+  ROSE_ASSERT(isBackEdge() == false);
+  ROSE_ASSERT(typeid(IntervalPropertyState) == typeid(other0));
+  
+  IntervalPropertyState& that0 = static_cast<IntervalPropertyState&>(other0);
+  
+  // PP: use join appropriate for edge direction
+  combineInternal(that0, that0.isBackEdge() ? JM_InfinityAsymmetric : JM_Exact);
 }
 
 void CodeThorn::IntervalPropertyState::combineAsymmetric(Lattice& other0){
+  // PP: currently not used; functionality integrated with combine 
   // schroder3 (2016-08-05): Use the asymmetric join:
-  combineInternal(other0, JM_InfinityAsymmetric);
+  combineInternal(static_cast<IntervalPropertyState&>(other0), JM_InfinityAsymmetric);
 }
 
 // adds integer variable

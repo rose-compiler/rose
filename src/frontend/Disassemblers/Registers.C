@@ -814,6 +814,24 @@ RegisterDictionary::dictionary_a64() {
         // "Advanced SIMD" registers, which are also the floating-point registers. [1. p. A3-77]
         // also known as "NEON and floating-point registers" [2, p. 4-16]
         for (unsigned i = 0; i < 32; ++i) {
+            // Parts of vector registers
+            for (size_t j = 0; j < 16; ++j) {
+                regs->insert("v" + boost::lexical_cast<std::string>(i) + ".b[" + boost::lexical_cast<std::string>(j) + "]",
+                             arm_regclass_ext, i, 8 * j, 8);
+            }
+            for (size_t j = 0; j < 8; ++j) {
+                regs->insert("v" + boost::lexical_cast<std::string>(i) + ".h[" + boost::lexical_cast<std::string>(j) + "]",
+                             arm_regclass_ext, i, 16 * j, 16);
+            }
+            for (size_t j = 0; j < 4; ++j) {
+                regs->insert("v" + boost::lexical_cast<std::string>(i) + ".s[" + boost::lexical_cast<std::string>(j) + "]",
+                             arm_regclass_ext, i, 32 * j, 32);
+            }
+            for (size_t j = 0; j < 2; ++j) {
+                regs->insert("v" + boost::lexical_cast<std::string>(i) + ".d[" + boost::lexical_cast<std::string>(j) + "]",
+                             arm_regclass_ext, i, 64 * j, 64);
+            }
+
             // Floating-point registers. 32 registers having names that access various parts of each register.
             regs->insert("v" + boost::lexical_cast<std::string>(i), arm_regclass_ext, i, 0, 128); // "quadword"
             regs->insert("d" + boost::lexical_cast<std::string>(i), arm_regclass_ext, i, 0, 64); // "doubleword"

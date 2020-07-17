@@ -56,6 +56,18 @@ State::State(const P2::Partitioner &p, const Settings &settings, const Base &fro
     cfgArrowsPointToInsns_ = !settings.bblock.cfg.showingPredecessors || !settings.bblock.cfg.showingSuccessors;
 }
 
+State::State(const P2::Partitioner &p, const RegisterDictionary *regdict, const Settings &settings, const Base &frontUnparser)
+    : partitioner_(p), registerNames_(regdict), frontUnparser_(frontUnparser) {
+    if (settings.function.cg.showing)
+        cg_ = p.functionCallGraph(P2::AllowParallelEdges::NO);
+    intraFunctionCfgArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
+    intraFunctionBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
+    globalBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
+    globalBlockArrows_.flags.set(ArrowMargin::ALWAYS_RENDER);
+    cfgArrowsPointToInsns_ = !settings.bblock.cfg.showingPredecessors || !settings.bblock.cfg.showingSuccessors;
+}
+
+
 State::~State() {}
 
 const P2::Partitioner&
@@ -1853,7 +1865,8 @@ Base::emitInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, Sta
         std::vector<std::string> comments;
         std::string label;
 
-        if (bv.size() == state.partitioner().instructionProvider().instructionPointerRegister().nBits() &&
+        if (!state.partitioner().isDefaultConstructed() &&
+            bv.size() == state.partitioner().instructionProvider().instructionPointerRegister().nBits() &&
             state.frontUnparser().emitAddress(out, bv, state, false)) {
             // address with a label, existing basic block, or existing function.
         } else if (bv.isEqualToZero()) {

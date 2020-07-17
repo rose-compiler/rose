@@ -18,22 +18,25 @@ class SgEnumVal;
 class SgExpression;
 class SgExprListExp;
 class SgExprStatement;
+class SgFunctionCallExp;
 class SgFunctionDeclaration;
 class SgFunctionDefinition;
 class SgFunctionParameterList;
 class SgFunctionParameterScope;
 class SgGlobal;
+class SgIfStmt;
 class SgInitializedName;
 class SgLocatedNode;
 class SgNamespaceDeclarationStatement;
+class SgProcessControlStatement;
 class SgProgramHeaderStatement;
 class SgScopeStatement;
 class SgSourceFile;
-class SgStopOrPauseStatement;
 class SgSwitchStatement;
 class SgType;
 class SgTypedefDeclaration;
 class SgVariableDeclaration;
+class SgWhileStmt;
 
 // Jovial specific classes
 class SgJovialCompoolStatement;
@@ -135,8 +138,10 @@ public:
    void Enter(SgIfStmt* &, SgExpression*, SgBasicBlock*, SgBasicBlock*);
    void Leave(SgIfStmt*);
 
-   void Enter(SgStopOrPauseStatement* &, const boost::optional<SgExpression*> &, const std::string &);
-   void Leave(SgStopOrPauseStatement*);
+   void Enter(SgProcessControlStatement* &, const std::string &, const boost::optional<SgExpression*> &);
+   void Enter(SgProcessControlStatement* &, const std::string &, const boost::optional<SgExpression*> &,
+                                                                 const boost::optional<SgExpression*> &);
+   void Leave(SgProcessControlStatement*);
 
    void Enter(SgSwitchStatement* &, SgExpression*, const SourcePositionPair &);
    void Leave(SgSwitchStatement*);
@@ -146,6 +151,9 @@ public:
 
    void Enter(SgDefaultOptionStmt* &);
    void Leave(SgDefaultOptionStmt*);
+
+   void Enter(SgWhileStmt* &, SgExpression*);
+   void Leave(SgWhileStmt*, bool has_end_do_stmt=false);
 
    SgEnumVal* ReplaceEnumVal(SgEnumType*, const std::string &);
 
@@ -160,6 +168,9 @@ public:
 
    void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, bool is_compool=false);
    void Leave(SgJovialDirectiveStatement*);
+
+   void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*);
+   void Leave(SgJovialForThenStatement*);
 
    void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);
    void Leave(SgJovialCompoolStatement*);
@@ -193,7 +204,34 @@ public:
 //
 namespace SageBuilderCpp17 {
 
+// Types
+   SgType* buildBoolType();
    SgType* buildIntType();
+
+// Operators
+   SgExpression*  buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildAndOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildConcatenationOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildDivideOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildEqualityOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildLessThanOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildLessOrEqualOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildGreaterThanOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildGreaterOrEqualOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildMultiplyOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildNotEqualOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildOrOp_nfi(SgExpression* lhs, SgExpression* rhs);
+
+// Expressions
+   SgExpression*  buildBoolValExp_nfi(bool value);
+   SgExpression*  buildIntVal_nfi(int);
+   SgExpression*  buildStringVal_nfi(std::string);
+   SgExpression*  buildExprListExp_nfi();
+   SgExpression*  buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope = NULL);
+   SgExpression*  buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride);
+   SgExpression*  buildNullExpression_nfi();
+   SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &);
 
 } // namespace SageBuilderCpp17
 } // namespace builder

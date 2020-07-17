@@ -234,17 +234,17 @@ ATbool traverse_AssignmentStatement(ATerm term);
 // 4.2 LOOP STATEMENTS
 ATbool traverse_WhileStatement  (ATerm term);
 ATbool traverse_ForStatement    (ATerm term);
-ATbool traverse_ForClause       (ATerm term, SgUntypedExpression* & var_ref, SgUntypedExpression* & init,
-                                             SgUntypedExpression* & phrase1, SgUntypedExpression* & phrase2,
-                                             int & phrase1_enum, int & phrase2_enum);
-ATbool traverse_ControlClause   (ATerm term, SgUntypedExpression* & initial_value,
-                                             SgUntypedExpression* & phrase1, SgUntypedExpression* & phrase2,
-                                             int & phrase1_enum, int & phrase2_enum);
-ATbool traverse_OptContinuation (ATerm term, SgUntypedExpression* & phrase1, SgUntypedExpression* & phrase2,
-                                             int & phrase1_enum, int & phrase2_enum);
-ATbool traverse_Continuation    (ATerm term, SgUntypedExpression* & phrase1, SgUntypedExpression* & phrase2,
-                                             int & phrase1_enum, int & phrase2_enum);
-ATbool traverse_Phrase          (ATerm term, SgUntypedExpression* & expr, int & phrase_enum);
+ATbool traverse_ForClause       (ATerm term, SgExpression* &var_ref, SgExpression* &init,
+                                             SgExpression* &phrase1, SgExpression* &phrase2,
+                                             int &phrase1_enum, int &phrase2_enum);
+ATbool traverse_ControlClause   (ATerm term, SgExpression* &initial_value,
+                                             SgExpression* &phrase1, SgExpression* &phrase2,
+                                             int &phrase1_enum, int &phrase2_enum);
+ATbool traverse_OptContinuation (ATerm term, SgExpression* &phrase1, SgExpression* &phrase2,
+                                             int &phrase1_enum, int &phrase2_enum);
+ATbool traverse_Continuation    (ATerm term, SgExpression* &phrase1, SgExpression* &phrase2,
+                                             int &phrase1_enum, int &phrase2_enum);
+ATbool traverse_Phrase          (ATerm term, SgExpression* &expr, int &phrase_enum);
 
 // 4.3 IF STATEMENTS
 ATbool traverse_IfStatement   (ATerm term);
@@ -348,6 +348,9 @@ ATbool traverse_AbsFunction          (ATerm term, SgFunctionCallExp* &func_call)
 
 // 6.3.7 SIZE FUNCTION
 ATbool traverse_SizeFunction         (ATerm term, SgFunctionCallExp* &func_call);
+
+// 6.3.10 NWDSEN FUNCTION
+ATbool traverse_NwdsenFunction       (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.11 STATUS INVERSE FUNCTIONS
 ATbool traverse_StatusInverseFunction(ATerm term, SgFunctionCallExp* &func_call);

@@ -91,7 +91,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
           case V_SgBreakStmt:                  unparseBreakStmt      (stmt, info);  break;
           case V_SgTypedefDeclaration:         unparseTypeDefStmt    (stmt, info);  break;
 
-          case V_SgStopOrPauseStatement:       unparseStopOrPauseStmt(stmt, info);  break;
+          case V_SgProcessControlStatement:    unparseProcessControlStmt(stmt, info);  break;
           case V_SgReturnStmt:                 unparseReturnStmt     (stmt, info);  break;
 
           case V_SgExprStatement:              unparseExprStmt       (stmt, info);  break;
@@ -588,7 +588,7 @@ Unparse_Jovial::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(while_stmt->get_condition());
 
   // condition
-     curprint("WHILE ");
+     curprint_indented("WHILE ", info);
      info.set_inConditional(); // prevent printing line and file info
 
      SgExprStatement* condition_stmt = isSgExprStatement(while_stmt->get_condition());
@@ -731,30 +731,30 @@ void Unparse_Jovial::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Jovial::unparseProcessControlStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-     SgStopOrPauseStatement* sp_stmt = isSgStopOrPauseStatement(stmt);
-     ASSERT_not_null(sp_stmt);
+     SgProcessControlStatement* pc_stmt = isSgProcessControlStatement(stmt);
+     ASSERT_not_null(pc_stmt);
 
-     SgStopOrPauseStatement::stop_or_pause_enum kind = sp_stmt->get_stop_or_pause();
+     SgProcessControlStatement::control_enum kind = pc_stmt->get_control_kind();
 
-     if (kind == SgStopOrPauseStatement::e_stop)
+     if (kind == SgProcessControlStatement::e_stop)
         {
           curprint_indented("STOP ", info);
-          unparseExpression(sp_stmt->get_code(), info);
+          unparseExpression(pc_stmt->get_code(), info);
           curprint(";\n");
         }
-     else if (kind == SgStopOrPauseStatement::e_exit)
+     else if (kind == SgProcessControlStatement::e_exit)
         {
           curprint_indented("EXIT;\n", info);
         }
-     else if (kind == SgStopOrPauseStatement::e_abort)
+     else if (kind == SgProcessControlStatement::e_abort)
         {
           curprint_indented("ABORT;\n", info);
         }
      else
         {
-          cerr << "Unparse_Jovial::unparseStopOrPauseStmt: unknown statement enum "
+          cerr << "Unparse_Jovial::unparseProcessControlStmt: unknown statement enum "
                <<  kind << endl;
           ROSE_ASSERT(false);
         }

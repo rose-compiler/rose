@@ -85,7 +85,7 @@ namespace CodeThorn {
     friend class Solver12;
     friend class Visualizer;
     friend class VariableValueMonitor;
-
+    friend class ExprAnalyzer;
   public:
     static void initDiagnostics();
     Analyzer();

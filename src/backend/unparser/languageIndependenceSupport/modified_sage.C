@@ -1505,6 +1505,10 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
   // if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage())
      if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage().empty() == false)
         {
+#if 1
+           printf ("/* output extern keyword */ \n");
+           
+#endif
           curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
           if (decl_stmt->isExternBrace())
              {
@@ -2024,6 +2028,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
      if (decl_stmt->get_declarationModifier().get_storageModifier().isStatic())
         {
+#if 0
+          printf ("In Unparse_MOD_SAGE::printSpecifier2(): Output the static keyword \n");
+#endif
           curprint("static ");
         }
 

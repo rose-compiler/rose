@@ -22,7 +22,7 @@ namespace ParallelPartitioner {
 class Partitioner;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Settings and configuration
+// Settings and configuration, including miscellaneous basic types.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Accuracy flag. */
@@ -30,6 +30,9 @@ enum class Accuracy {
     LOW,                                        /**< Fast but less accurate, generally looking at patterns. */
     HIGH,                                       /**< Accurate but slow, generally looking at semantics. */
 };
+
+/** Reasons for being a function. */
+using FunctionReasons = BitFlags<SgAsmFunction::FunctionReason>;
 
 /** Settings. */
 struct Settings {
@@ -142,6 +145,7 @@ private:
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_; // protects all following data members
     size_t size_;                               // instruction size in bytes even for evicted instruction
     bool wasDecoded_;                           // has any DecodeInstruction work completed?
+    FunctionReasons functionReasons_;          // is this insn the entry point of a function?
 
     // Cached items associated with basic blocks. The key is the hash of the basic block instruction addresses.
 
@@ -162,30 +166,45 @@ public:
     /** Address of instruction.
      *
      *  The starting address of the instruction. This information is available for every object, even if we've never attempted
-     *  to decode an instruction at that address and @ref wasDecoded is returning false.
+     *  to decode an instruction at that address and @ref wasDecoded is returning false. The address is provided by the
+     *  constructor and is read only.
      *
      *  Thread safety: This function is thread safe. */
     rose_addr_t address() const {
         return va_;
     }
 
-    /** Size of instruction in bytes.
+    /** Size of instruciton in bytes if known.
      *
-     *  This information is available only after @ref wasDecoded is returning true. The size is available whether or not the
-     *  instruction AST has been evicted from the cache. The size will be zero only if the memory address is invalid (not
-     *  mapped or not executable).
+     *  The size of an instruction is known only after @ref wasDecoded is returning true; before that, this function returns
+     *  nothing.  After an instruction is decoded, its size is available regardless of whether the instruction AST is in memory
+     *  or has been evicted.
      *
-     *  Thread safety:  This function is thread safe. */
-    size_t size() const;
+     *  Thread safety: This function is thread safe. */
+    Sawyer::Optional<size_t> size() const;
 
-    /** Location of instruction.
+    /** Location of instruction if known.
      *
      *  The addresses occupied by this instruction. This is a combination of the starting address and instruction size and
      *  therefore is available only after @ref wasDecoded is returning true. This information is available even when the
      *  instruction AST is evicted from the cache.
      *
      *  Thread safety: This function is thread safe. */
-    AddressInterval hull() const;
+    Sawyer::Optional<AddressInterval> hull() const;
+
+    /** Property: Function reasons.
+     *
+     *  This is a set of reason bits that describe why this instruction is the entry point of a function.  If the set is empty then
+     *  this instruction is not a function entry point.
+     *
+     *  Thread safety: This function is thread safe.
+     *
+     *  @{ */
+    FunctionReasons functionReasons() const;
+    void functionReasons(FunctionReasons);
+    void insertFunctionReasons(FunctionReasons);
+    void eraseFunctionReasons(FunctionReasons);
+    /** @} */
 
     /** Cached information.
      *
@@ -250,6 +269,37 @@ private:
 
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// CFG edge information
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class CfgEdge {
+public:
+    using EdgeTypes = BitFlags<EdgeType>;
+    EdgeTypes types_;
+
+public:
+    CfgEdge()
+        : types_(E_NORMAL) {}
+
+    /*implicit*/ CfgEdge(EdgeType type)
+        : types_(type) {}
+
+    void merge(const CfgEdge &other) {
+        types_.set(other.types_);
+    }
+
+    EdgeTypes types() const {
+        return types_;
+    }
+
+    void types(EdgeTypes x) {
+        types_.set(x);
+    }
+
+    friend std::ostream& operator<<(std::ostream&, const CfgEdge&);
+};
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Control flow graph
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -274,7 +324,7 @@ public:
  *  Unlike most other parts of ROSE, this CFG's vertices are individual instructions rather than whole basic blocks. The
  *  partitioner's first order of business is to create a global control flow graph which it then organizes into basic blocks
  *  and instructions. */
-using Cfg = Sawyer::Container::Graph<std::shared_ptr<InsnInfo>, Sawyer::Nothing, InsnInfoKey>;
+using InsnCfg = Sawyer::Container::Graph<std::shared_ptr<InsnInfo>, CfgEdge, InsnInfoKey>;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // WorkItem -- base class for individual parallel units of work
@@ -468,7 +518,7 @@ class Partitioner: public Sawyer::Attribute::Storage<>, public Sawyer::SharedObj
 
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects all following data members
     bool isRunning_;                                    // true while "run" is called
-    Cfg cfg_;                                           // the global control flow graph
+    InsnCfg insnCfg_;                                   // the global control flow graph
     Aum aum_;                                           // address usage map
 
 public:
@@ -638,11 +688,12 @@ public:
 
     /** Add an edge and maybe vertices to the global CFG.
      *
-     *  Ensures that the two instruction addresses exist in the global CFG and creates an edge between them if there is
-     *  no such edge yet. Returns information about whether the vertices and edges where created.
+     *  Ensures that the two instruction addresses exist in the global CFG and creates an edge between them if there is no such
+     *  edge yet. Returns information about whether the vertices and edges where created. If an edge is created then it is set
+     *  to the specified value, otherwise the specified value is merged into the existing edge.
      *
      *  Thread safety: This function is thread safe. */
-    CreateLinkedCfgVertices createLinkedCfgVertices(rose_addr_t sourceVa, rose_addr_t targetVa);
+    CreateLinkedCfgVertices createLinkedCfgVertices(rose_addr_t sourceVa, rose_addr_t targetVa, const CfgEdge&);
 
     /** Add a work item to decode an instruction.
      *
@@ -670,7 +721,7 @@ public:
      *  part of the same basic block.  At most @p maxInsns instructions are returned.
      *
      *  Thread safety: This function is thread safe. */
-    InsnInfo::List basicBlockEndingAt(rose_addr_t, size_t maxInsns = UNLIMITED);
+    InsnInfo::List basicBlockEndingAt(rose_addr_t, size_t maxInsns = UNLIMITED) const;
 
     /** Find basic block containing specified instruction.
      *
@@ -740,14 +791,21 @@ public:
      *  Thread safety: This function is not thread safe.
      *
      * @{ */
-    const Cfg& cfg() const;
-    Cfg& cfg();
+    const InsnCfg& insnCfg() const;
+    InsnCfg& insnCfg();
     /** @} */
 
     /** Output the CFG as a DOT graph.
      *
-     *  Thread safety: This function is not thread safe. */
-    void printCfg(std::ostream&) const;
+     *  Thread safety: This function is thread safe. */
+    void printInsnCfg(std::ostream&) const;
+
+    /** Output the CFG as text for debugging.
+     *
+     *  The serial partitioner is used only for unparsing the instructions.
+     *
+     *  Thread safety: This function is thread safe. */
+    void dumpInsnCfg(std::ostream&, const Rose::BinaryAnalysis::Partitioner2::Partitioner&) const;
 
     /** List of all basic blocks.
      *
@@ -758,17 +816,33 @@ public:
      *  Thread safety: This function is not thread safe. */
     std::vector<InsnInfo::List> allBasicBlocks() const;
 
+    /** Create a map from instructions to basic blocks.
+     *
+     *  Traverses the entire CFG and creates a mapping from each instruction address to that instruction's basic block address.
+     *
+     *  Thread safety: This function is not thread safe. */
+    std::map<rose_addr_t /*insn*/, rose_addr_t /*bb*/> calculateInsnToBbMap() const;
+
     /** Predicate to order blocks by starting address.
      *
      *  Compares two instruction lists and returns true if the first list starts at an earlier address than the second list. An
      *  empty list compares less than all non-empty lists. */
     static bool addressOrder(const InsnInfo::List &a, const InsnInfo::List &b);
 
+    /** Assign instructions to functions.
+     *
+     *  This starts with instructions that are marked as function entry points and traverses certain edges of the control flow
+     *  graph to assign reachable instructions to the same function. It's possible for an instruction to be owned by any number
+     *  of functions -- including none at all -- although most instructions will normally be owned by one function.
+     *
+     *  Thread safety: This function is not thread safe. */
+    std::map<rose_addr_t /*funcVa*/, AddressSet /*insnVas*/> assignFunctions();
+
     /** Build results from CFG.
      *
      *  Clears and repopulates the specified partitioner object with information from this partitioner's global control flow
      *  graph. */
-    void transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &out) const;
+    void transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &out);
 };
 
 

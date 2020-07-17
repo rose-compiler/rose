@@ -909,7 +909,8 @@ add
     } else if(isSgAssignOp(expr)||isSgCompoundAssignOp(expr)) {
       // special case: normalize assignment with lhs/rhs-semantics
 
-      if(isSgExprStatement(expr->get_parent())) {
+      // 'true' keeps a=b=c;
+      if(true||isSgExprStatement(expr->get_parent())) {
         // special handling of assignment that is not inside an
         // expression normalize rhs of assignment
         mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
@@ -1449,6 +1450,19 @@ add
       if(SgArrayType* strippedArrayType = isSgArrayType(arrayType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
         SgType* strippedArrayBaseType = strippedArrayType->get_base_type();
         variableType = SageBuilder::buildPointerType(strippedArrayBaseType);
+      }
+    }
+
+    //MS 06/24/2020: If the expression is an assignment then ensure
+    //that tmp var is of reference type. In case of array use base
+    //type.
+    if (isSgAssignOp(expression))
+    {
+      if(SgType* strippedType = isSgType(expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
+        if(SgArrayType* arrayType = isSgArrayType(strippedType)) {
+          SgType* strippedType = arrayType->get_base_type();
+        }
+        variableType = SageBuilder::buildReferenceType(strippedType);
       }
     }
 

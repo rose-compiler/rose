@@ -9,10 +9,16 @@
 #include "AnalysisAbstractionLayer.h"
 #include "ExtractFunctionArguments.h"
 #include "FunctionNormalization.h"
-//#include "Normalization.h"
 
-using namespace CodeThorn;
+// available solvers
+#include "PASolver1.h" 
+#include "CtxSolver0.h" 
+
+
 using namespace std;
+
+namespace CodeThorn 
+{
 
 DFAnalysisBase::DFAnalysisBase()
 {
@@ -25,19 +31,39 @@ DFAnalysisBase::~DFAnalysisBase() {
   if(_programAbstractionLayer && _programAbstractionLayerOwner)
     delete _programAbstractionLayer;
 }
-void DFAnalysisBase::initializeSolver() {
+
+void DFAnalysisBase::initializeSolver(bool defaultSolver) {
   ROSE_ASSERT(&_workList);
   ROSE_ASSERT(getInitialElementFactory());
   ROSE_ASSERT(&_analyzerDataPreInfo);
   ROSE_ASSERT(&_analyzerDataPostInfo);
   ROSE_ASSERT(getFlow());
   ROSE_ASSERT(&_transferFunctions);
-  _solver=new CodeThorn::PASolver1(_workList,
-                      _analyzerDataPreInfo,
-                      _analyzerDataPostInfo,
-                      *getInitialElementFactory(),
-                      *getFlow(),
-                      *_transferFunctions);
+  
+  if (defaultSolver) {
+    _solver = new PASolver1( _workList,
+                             _analyzerDataPreInfo,
+                             _analyzerDataPostInfo,
+                             *getInitialElementFactory(),
+                             *getFlow(),
+                             *_transferFunctions
+                           );
+  } else {
+    _solver = new CtxSolver0( _workList,
+                              _analyzerDataPreInfo,
+                              _analyzerDataPostInfo,
+                              *getInitialElementFactory(),
+                              *getFlow(),
+                              *_transferFunctions,
+                              *getLabeler()
+                            );
+  }                   
+  
+  ROSE_ASSERT(_solver);
+}
+
+Flow* DFAnalysisBase::getFlow() const {
+  return _flow;
 }
 
 Lattice* DFAnalysisBase::getPreInfo(Label lab) {
@@ -130,7 +156,7 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
 }
 
 void
-DFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer, bool variableIdForEachArrayElement) {
+DFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
   cout << "INIT: establishing program abstraction layer." << endl;
   if(programAbstractionLayer) {
     ROSE_ASSERT(_programAbstractionLayer==nullptr);
@@ -139,7 +165,6 @@ DFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbst
   } else {
     _programAbstractionLayer=new ProgramAbstractionLayer();
     _programAbstractionLayerOwner=true;
-    //_programAbstractionLayer->setModeArrayElementVariableId(variableIdForEachArrayElement);
     _programAbstractionLayer->initialize(root);
   }
   _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(getVariableIdMapping());
@@ -303,15 +328,7 @@ DFAnalysisBase::run() {
   solve();
 }
 
-// default identity function
-
-DFAnalysisBase::ResultAccess&
-DFAnalysisBase::getResultAccess() {
-  return _analyzerDataPreInfo;
-}
-
 #include <iostream>
-
 #include "AstAnnotator.h"
 #include <string>
 
@@ -331,7 +348,7 @@ Labeler* DFAnalysisBase::getLabeler() {
 }
 
 
-VariableIdMapping* DFAnalysisBase::getVariableIdMapping() {
+VariableIdMappingExtended* DFAnalysisBase::getVariableIdMapping() {
   return _programAbstractionLayer->getVariableIdMapping();
 }
 
@@ -447,3 +464,4 @@ void DFAnalysisBase::setSkipUnknownFunctionCalls(bool defer) {
   }
 }
 
+}
