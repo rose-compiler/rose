@@ -315,7 +315,7 @@ namespace CodeThorn {
   private:
     
     SgVariableDeclaration* buildVariableDeclarationForExpression(SgExpression* expression, SgScopeStatement* scope, bool initWithExpression, bool shareExpression);
-    // private member variables
+    void printNormalizationPhase();
     
     // counter for generating new variable names
     Normalization::TmpVarNrType getTmpVarNr();
@@ -349,6 +349,8 @@ namespace CodeThorn {
     string _uniqueVarPrefix="__";
     string _uniqueVarPostfix="__";
     static int32_t uniqueVarCounter;
+    int normPhaseNr=1;
+    int normPhaseNrLast=1; // set in normalizeAstPhaseByPhase
   };
   
 } // end of namespace CodeThorn

@@ -46,6 +46,7 @@ struct CodeThornOptions : public Options {
     bool viz=false;
     bool vizTg2=false;
     std::string icfgFileName;
+    std::string callGraphFileName;
   } visualization;
   
   // experimental options
