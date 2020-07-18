@@ -1009,18 +1009,28 @@ void NotifyTreeCopy ( AstInterfaceImpl& fa, const AstNodePtr& _orig, const AstNo
   fa.Notify(info);
 };
 
-bool AstInterface :: get_fileInfo(const AstNodePtr& _n, std:: string* fname, int* lineno )
+bool AstInterface :: get_fileInfo ( const AstNodePtr& _n, std:: string* fname, int* lineno )
 {
-  SgNode* n = AstNodePtrImpl(_n).get_ptr();
-  assert(n != NULL);
-  Sg_File_Info* f = n->get_file_info(); 
-  assert(f != NULL);
-  if (fname != 0) {
-     *fname = f->get_filename();
-  }
-  if (lineno != 0) 
-     *lineno = f->get_line();
-  return true;
+   SgNode*       n = AstNodePtrImpl(_n).get_ptr();
+   assert(n != NULL);
+   Sg_File_Info* f = n->get_file_info();
+   if (f != NULL) {
+      if (fname != NULL) {
+         *fname = f->get_filename();
+      }
+       if (lineno != NULL) {
+         *lineno = f->get_line();
+      }
+   }
+   else {
+      if (fname != NULL) {
+         *fname = NULL;
+      }
+      if (lineno != NULL) {
+         *lineno = NULL;
+      }
+   }
+   return true;
 }
 
 AstNodePtr AstInterface :: CopyAstTree( const AstNodePtr &_orig) 
