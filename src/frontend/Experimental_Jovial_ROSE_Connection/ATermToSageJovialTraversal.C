@@ -1067,6 +1067,14 @@ ATbool ATermToSageJovialTraversal::traverse_CharacterLiteral(ATerm term, std::st
       str_literal = char_literal;
    } else return ATfalse;
 
+   // The string is enclosed in single quotes, they need to be removed and added back
+   // during unparsing.
+   ROSE_ASSERT(str_literal.size() >= 2);
+   ROSE_ASSERT(str_literal.at(0) == '\'');
+   ROSE_ASSERT(str_literal.at(str_literal.size()-1) == '\'');
+
+   str_literal = str_literal.substr(1, str_literal.size()-2);
+
    return ATtrue;
 }
 
