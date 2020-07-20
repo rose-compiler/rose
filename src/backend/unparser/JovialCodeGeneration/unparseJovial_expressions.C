@@ -98,7 +98,10 @@ Unparse_Jovial::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
   {
      SgStringVal* string_val = isSgStringVal(expr);
      ASSERT_not_null(string_val);
-     curprint(string_val->get_value());
+
+  // Add quotes back to the string (removed from string coming from parser)
+     std::string quoted_string = "'" + string_val->get_value() + "'";
+     curprint(quoted_string);
   }
 
 void
