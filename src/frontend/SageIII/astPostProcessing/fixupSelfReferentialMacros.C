@@ -81,7 +81,21 @@ FixupSelfReferentialMacrosInAST::visit ( SgNode* node )
                SgClassType* classType = isSgClassType(type);
                if (classType != NULL)
                   {
+                 // DQ (7/18/2020): Added assertion.
+                    ROSE_ASSERT(classType->get_declaration() != NULL);
+
                     SgClassDeclaration* targetClassDeclaration = isSgClassDeclaration(classType->get_declaration());
+
+                 // DQ (7/18/2020): Added assertion.
+                    if (targetClassDeclaration == NULL)
+                      {
+                        printf ("classType->get_declaration() = %p = %s \n",classType->get_declaration(),classType->get_declaration()->class_name().c_str());
+                      }
+
+                 // ROSE_ASSERT(targetClassDeclaration != NULL);
+                    if (targetClassDeclaration != NULL)
+                       {
+
                     SgName className = targetClassDeclaration->get_name();
 
                  // printf ("In FixupSelfReferentialMacrosInAST::visit(): Found a class declaration name = %s \n",className.str());
@@ -123,6 +137,12 @@ FixupSelfReferentialMacrosInAST::visit ( SgNode* node )
                               addMacro(associatedStatement,"#undef si_band\n",   directiveType);
                               addMacro(associatedStatement,"#undef si_fd\n",     directiveType);
                             }
+                       }
+                       }
+                      else
+                       {
+                      // DQ (7/18/2020): Output a warning message here (Cxx11_tests/test2020_69.C).
+                         printf ("Warning: In FixupSelfReferentialMacrosInAST::visit(): targetClassDeclaration == NULL \n");
                        }
                   }
              }
