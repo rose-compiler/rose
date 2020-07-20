@@ -297,6 +297,10 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      SgLambdaExp* lambdaExp = isSgLambdaExp(expr);
      ASSERT_not_null(lambdaExp);
 
+#if 0
+     printf ("In unparseLambdaExpression(expr = %p = %s) \n",expr,expr->class_name().c_str());
+#endif
+
      // Liao, 7/1/2016
      // To workaround some wrong AST generated from RAJA LULESH code
      // we clear skip base type flag of unparse_info
@@ -490,6 +494,10 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
 #if 0
      printf ("In unparseLambdaExpression(): DONE: calling unparseStatement(lambdaFunction->get_definition()->get_body(), ninfo); \n");
      curprint (" /* In unparseLambdaExpression(): DONE: calling unparseStatement(lambdaFunction->get_definition()->get_body(), ninfo); */ ");
+#endif
+
+#if 0
+     printf ("Leaving unparseLambdaExpression(expr = %p = %s) \n",expr,expr->class_name().c_str());
 #endif
 
 #if 0
