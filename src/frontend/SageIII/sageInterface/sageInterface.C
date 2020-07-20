@@ -24828,3 +24828,43 @@ SageInterface::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node)
 #endif
    }
 
+
+
+// DQ (7/14/2020): Added test for initializers to support debugging of Cxx11_tests/test2020_69.C.
+void
+SageInterface::checkForInitializers( SgNode* node )
+   {
+  // This function checks variable declarations for initializers.  An issue (bug) in EDG 6.0 
+  // support for variable declarations initialized using lambda functions is that the initalizer
+  // is discarded at some point in the processing of the AST.  This function reports on all 
+  // variable declarations and if they contain initializers and if so what kind of initializer.
+
+     ROSE_ASSERT(node != NULL);
+
+  // Preorder traversal to uniquely label the scopes (SgScopeStatements)
+     class CheckInitializerTraversal : public AstSimpleProcessing
+        {
+          public:
+               void visit (SgNode* node)
+                  {
+                    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(node);
+                    if (variableDeclaration != NULL)
+                       {
+                         SgInitializedName* initializedName = getFirstInitializedName(variableDeclaration);
+                         SgExpression* initializer = initializedName->get_initializer();
+
+                         printf ("variableDeclaration = %p initializedName = %p = %s initializer = %p \n",
+                              variableDeclaration,initializedName,initializedName->get_name().str(),initializer);
+
+                         if (initializer != NULL)
+                            {
+                              printf (" --- initializer = %s \n",initializer->class_name().c_str());
+                            }
+                       }
+                  }
+        };
+
+    // Now buid the traveral object and call the traversal (preorder) on the project.
+       CheckInitializerTraversal traversal;
+       traversal.traverse(node, preorder);
+   }
