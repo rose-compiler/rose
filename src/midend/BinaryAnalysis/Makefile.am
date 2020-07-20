@@ -42,11 +42,13 @@ libbinaryMidend_la_SOURCES =					\
     BinaryYicesSolver.C						\
     BinaryZ3Solver.C						\
     Concolic/ConcolicExecutor.C					\
+    Concolic/ConcreteExecutor.C					\
     Concolic/Database.C						\
     Concolic/Database2.C					\
     Concolic/ExecutionManager.C					\
     Concolic/LinuxExecutor.C					\
     Concolic/LinuxExitStatus.C					\
+    Concolic/LinuxTraceExecutor.C				\
     Concolic/Specimen.C						\
     Concolic/TestCase.C						\
     Concolic/TestSuite.C					\

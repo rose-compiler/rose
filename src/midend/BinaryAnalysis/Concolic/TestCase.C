@@ -42,6 +42,18 @@ TestCase::printableName(const Database::Ptr &db) {
     return retval;
 }
 
+std::string
+TestCase::timestamp() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return timestamp_;
+}
+
+void
+TestCase::timestamp(const std::string &s) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    timestamp_ = s;
+}
+
 Specimen::Ptr
 TestCase::specimen() const {
   //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
@@ -107,6 +119,16 @@ void
 TestCase::concreteRank(Sawyer::Optional<double> val) {
     //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     concreteRank_ = val;
+}
+
+bool
+TestCase::concreteIsInteresting() const {
+    return concreteIsInteresting_;
+}
+
+void
+TestCase::concreteIsInteresting(bool b) {
+    concreteIsInteresting_ = b;
 }
 
 } // namespace

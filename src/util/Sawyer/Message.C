@@ -142,6 +142,17 @@ now() {
 #endif
 }
 
+// thread safe
+SAWYER_EXPORT bool
+isTerminal(int fd) {
+#if defined(BOOST_WINDOWS)
+    return false;
+#else // POSIX
+    char *s = getenv("SAWYER_TTY");
+    return isatty(fd) || (s && *s);
+#endif
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // no global state
@@ -924,7 +935,7 @@ FdSink::init() {
     gangInternal(Gang::instanceForId(fd_));
     overridePropertiesNS().useColor = true;
 #else
-    if (isatty(fd_)) {
+    if (isTerminal(fd_)) {
         gangInternal(Gang::instanceForTty());
         defaultPropertiesNS().useColor = true;          // use color if the user doesn't care
     } else {
@@ -972,7 +983,7 @@ FileSink::init() {
     overridePropertiesNS().useColor = true;
     defaultPropertiesNS().isBuffered = false;
 #else
-    if (isatty(fileno(file_))) {
+    if (isTerminal(fileno(file_))) {
         gangInternal(Gang::instanceForTty());
         overridePropertiesNS().useColor = true;         // use color if the user doesn't care
     } else {
