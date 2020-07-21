@@ -1,3 +1,5 @@
+// DQ (7/21/2020): This appears to fail in EDG 6.0.
+
 void f1(auto); // same as template<class T> void f(T)
 void f2(C1 auto); // same as template<C1 T> void f2(T), if C1 is a concept
 void f3(C2 auto...); // same as template<C2... Ts> void f3(Ts...), if C2 is a concept

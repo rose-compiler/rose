@@ -1,3 +1,4 @@
+#include<typeinfo>
 
 void f(int, const int (&)[2] = {}) {} // #1
 void f(const int&, const int (&)[1]) {} // #2

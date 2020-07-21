@@ -1,6 +1,9 @@
+#include <map>
+using namespace std;
 
-foo1()
+void foo1()
    {
+     map<int,int> mymap;
      for (auto&& [first,second] : mymap) 
           { // use first and second
           }
@@ -11,8 +14,10 @@ foo1()
 // The above syntax produces code equivalent to the following (__range, __begin and __end are for exposition only):
 
 
-// This code examples must be put into functions to make sense.
+#if 0
+// This code examples must be put into functions to make sense, plus they have undefined identifiers.
 
+void foo2()
 {
     auto && __range = range_expression ;
     for (auto __begin = begin_expr, __end = end_expr; __begin != __end; ++__begin) {
@@ -23,8 +28,10 @@ foo1()
     }
 
 }
-	(until C++17)
 
+// (until C++17)
+
+void foo3()
 {
 
     auto && __range = range_expression ;
@@ -38,9 +45,11 @@ foo1()
     }
 
 }
-	(since C++17)
-(until C++20)
 
+// (since C++17)
+// (until C++20)
+
+void foo4()
 {
 
     init-statement
@@ -55,3 +64,4 @@ foo1()
     }
 
 } 
+#endif
