@@ -493,7 +493,7 @@ Unparse_Jovial::unparseForStatement(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(for_stmt->get_increment());
      ROSE_ASSERT(for_stmt->get_loop_body());
 
-     curprint("FOR ");
+     curprint_indented("FOR ", info);
 
      SgForInitStatement* for_init_stmt = isSgForInitStatement(for_stmt->get_for_init_stmt());
      ROSE_ASSERT(for_init_stmt);
