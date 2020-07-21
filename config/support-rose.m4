@@ -2320,6 +2320,7 @@ tests/nonsmoke/functional/CompileTests/Cxx_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx11_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx14_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx17_tests/Makefile
+tests/nonsmoke/functional/CompileTests/Cxx20_tests/Makefile
 tests/nonsmoke/functional/CompileTests/ElsaTestCases/Makefile
 tests/nonsmoke/functional/CompileTests/ElsaTestCases/ctests/Makefile
 tests/nonsmoke/functional/CompileTests/ElsaTestCases/gnu/Makefile
