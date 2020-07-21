@@ -194,7 +194,9 @@ TEST_TRANSLATOR=../../testTranslator
 # ROSE_FLAGS
 
 # DQ (7/202/2020): The -std=c++20 option is not supported on the only backend compilers I have for testing this at the moment.
+# But it is supported properly in ROSE, so we just need to use the correct version of the backend compiler.
 LANG_FLAGS = -std=c++17
+# LANG_FLAGS = -std=c++20
 
 ROSE_FLAGS =
 if !ROSE_USE_CLANG_FRONTEND
