@@ -18,6 +18,7 @@ void f1(int i)
         {
             int m = n * n;
             int j = 40;
+#if 0
             auto m3 = [this, m] {
                 auto m4 = [&, j] { // error: j is not captured by m3
                         int x = n; // error: n is implicitly captured by m4
@@ -30,6 +31,21 @@ void f1(int i)
                                    // and explicitly captured by m3
                 };
             };
+#else
+         // DQ (7/21/2020): Fixed this code to avoid explicit errors in code above.
+            auto m3 = [this, m, j] {
+                auto m4 = [&, j] { // error: j is not captured by m3
+                        int x = j; // error: n is implicitly captured by m4
+                                   // but not captured by m3
+                        x += m;    // ok: m is implicitly captured by m4
+                                   // and explicitly captured by m3
+                     // x += i;    // error: i is outside of the reaching scope
+                                   // (which ends at work())
+                        x += f;    // ok: this is captured implicitly by m4
+                                   // and explicitly captured by m3
+                };
+            };
+#endif
         }
     };
 }
