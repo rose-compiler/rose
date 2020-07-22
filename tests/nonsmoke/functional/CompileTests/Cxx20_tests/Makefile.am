@@ -5,36 +5,41 @@ AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD    = $(ROSE_LIBS)
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-   trivial.C
+   trivial.C \
+   test2020_01.C \
+   test2020_04.C \
+   test2020_08.C \
+   test2020_09.C \
+   test2020_15.C \
+   test2020_17.C \
+   test2020_18.C \
+   test2020_19.C \
+   test2020_20.C \
+   test2020_23.C \
+   test2020_27.C \
+   test2020_39.C \
+   test2020_40.C \
+   test2020_70.C \
+   test2020_72.C \
+   test2020_74.C 
 
 TESTCODE_CURRENTLY_FAILING = \
-   test2020_01.C \
    test2020_02.C \
    test2020_03.C \
-   test2020_04.C \
    test2020_05.C \
    test2020_06.C \
    test2020_07.C \
-   test2020_08.C \
-   test2020_09.C \
    test2020_10.C \
    test2020_11.C \
    test2020_12.C \
    test2020_13.C \
    test2020_14.C \
-   test2020_15.C \
    test2020_16.C \
-   test2020_17.C \
-   test2020_18.C \
-   test2020_19.C \
-   test2020_20.C \
    test2020_21.C \
    test2020_22.C \
-   test2020_23.C \
    test2020_24.C \
    test2020_25.C \
    test2020_26.C \
-   test2020_27.C \
    test2020_28.C \
    test2020_29.C \
    test2020_30.C \
@@ -46,8 +51,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_36.C \
    test2020_37.C \
    test2020_38.C \
-   test2020_39.C \
-   test2020_40.C \
    test2020_41.C \
    test2020_42.C \
    test2020_43.C \
@@ -77,17 +80,14 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_67.C \
    test2020_68.C \
    test2020_69.C \
-   test2020_70.C \
    test2020_71.C \
-   test2020_72.C \
    test2020_73.C \
-   test2020_74.C \
-   test2020_75.C
+   test2020_75.C \
+   test2020_76.C 
 
 # DQ (7/21/2020): These test codes have not yet been fixed up to be valid test codes for C++20 support in ROSE.
 # They may fail for issues unrelated to C++20 support in EDG 6.0.
 UNEVALUATED_TEST_CODES = \
-   test2020_76.C \
    test2020_77.C \
    test2020_78.C \
    test2020_79.C \
@@ -200,8 +200,12 @@ TEST_TRANSLATOR=../../testTranslator
 
 # DQ (7/202/2020): The -std=c++20 option is not supported on the only backend compilers I have for testing this at the moment.
 # But it is supported properly in ROSE, so we just need to use the correct version of the backend compiler.
+# LANG_FLAGS = -std=c++17
+if ROSE_USING_GCC_VERSION_LATER_10_1
+LANG_FLAGS = -std=c++20
+else
 LANG_FLAGS = -std=c++17
-# LANG_FLAGS = -std=c++20
+endif
 
 ROSE_FLAGS =
 if !ROSE_USE_CLANG_FRONTEND
@@ -237,11 +241,11 @@ if USING_GNU_COMPILER
 if ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
 # Exclude these tests on GNU 4.9 and later compilers).
-if ROSE_USING_GCC_VERSION_LATER_5_1
+if ROSE_USING_GCC_VERSION_LATER_10_1
 	@echo "ROSE_USING_GCC_VERSION_LATER_5_1 == true"
 	@$(MAKE) $(PASSING_TEST_Source_passed)
 else # NOT ROSE_USING_GCC_VERSION_LATER_5_1
-	@echo "ROSE_USING_GCC_VERSION_LATER_5_1 == true (requires GNU 5.1 or later version of GNU compiler)"
+	@echo "ROSE_USING_GCC_VERSION_LATER_10_1 == true (requires GNU 10.1 or later version of GNU compiler)"
 endif # ROSE_USING_GCC_VERSION_LATER_5_1
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
 # If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
@@ -259,7 +263,7 @@ else # NOT USING_CLANG_COMPILER
 if USING_INTEL_COMPILER
 # Exclude this list of files in the case of Intel compiler.
 	@echo "USING_INTEL_COMPILER == true"
-	@$(MAKE) $(PASSING_TEST_Source_passed)
+#	@$(MAKE) $(PASSING_TEST_Source_passed)
 else # NOT USING_INTEL_COMPILER
 # This is an unknown compiler.
 	@echo "USING_INTEL_COMPILER == false"
