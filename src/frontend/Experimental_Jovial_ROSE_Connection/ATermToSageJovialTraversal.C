@@ -5228,13 +5228,10 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureCallStatement(ATerm term)
    std::string proc_name;
    std::string abort_stmt_name;
    SgExprListExp* param_list;
-
-#if 0
-// TODO - create SageTreeBuilder functions
    SgExprStatement* call_stmt = nullptr;
-#endif
 
    if (ATmatch(term, "ProcedureCallStatement(<term>,<term>,<term>,<term>)", &t_labels, &t_proc_name, &t_param_list, &t_abort_phrase)) {
+      // MATCHED UsedDefinedProcedureCall -> ProcedureCallStatement
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
@@ -5254,18 +5251,18 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureCallStatement(ATerm term)
       } else if (ATmatch(t_abort_phrase, "AbortPhrase(<term>)", &t_abort_name)) {
          if (traverse_Name(t_abort_name, abort_stmt_name)) {
             // MATCHED AbortStatementName
+            cerr << "WARNING UNIMPLEMENTED: ProcedureCallStatement AbortPhrase not handled \n";
+            ROSE_ASSERT(false);
          } else return ATfalse;
       } else return ATfalse;
    }
    else return ATfalse;
 
-#if 0
    // Begin SageTreeBuilder
    sage_tree_builder.Enter(call_stmt, proc_name, param_list, abort_stmt_name);
 
    // End SageTreeBuilder
    sage_tree_builder.Leave(call_stmt);
-#endif
 
    return ATtrue;
 }
@@ -6736,7 +6733,7 @@ ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCa
 
    // BlockReference              -> LocArgument
    // TODO
-   // cerr << "WARNING UNIMPLEMENTED: LocFunction - BlockReference argument needs reproducer \n";
+   cerr << "WARNING UNIMPLEMENTED: LocFunction - BlockReference argument needs reproducer \n";
 
    ROSE_ASSERT(loc_arg_expr);
 
@@ -6749,7 +6746,7 @@ ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCa
        // if not found: put fake init name and symbol here and
        // waiting for a postProcessing phase to clean it up
        // two features: no scope and unknown type for initializedName
-   // cerr << "WARNING UNIMPLEMENTED: LocFunction - return type is pointer to SgTypeUnknown \n";
+   cerr << "WARNING UNIMPLEMENTED: LocFunction - return type is pointer to SgTypeUnknown \n";
 
    func_call = SageBuilder::buildFunctionCallExp("LOC", return_type, params, SageBuilder::topScopeStack());
    ROSE_ASSERT(func_call);
@@ -7038,7 +7035,6 @@ ATbool ATermToSageJovialTraversal::traverse_StatusInverseFunction(ATerm term, Sg
    func_call = nullptr;
 
    if (ATmatch(term, "StatusInverseFunctionFIRST(<term>)", &t_argument)) {
-      //DONE: cerr << "WARNING UNIMPLEMENTED: StatusInverseFunctionFIRST\n";
       if (traverse_StatusFormula(t_argument, argument)) {
          // MATCHED StatusFormula
       }
@@ -7049,7 +7045,6 @@ ATbool ATermToSageJovialTraversal::traverse_StatusInverseFunction(ATerm term, Sg
       function_name = "FIRST";
    }
    else if (ATmatch(term, "StatusInverseFunctionLAST(<term>)", &t_argument)) {
-      //DONE: cerr << "WARNING UNIMPLEMENTED: StatusInverseFunctionLAST\n";
       if (traverse_StatusFormula(t_argument, argument)) {
          // MATCHED StatusFormula
       }

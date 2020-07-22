@@ -277,33 +277,8 @@ Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
       unparseExpression(func_call->get_function(), info);
 
    // argument list
-      SgUnparse_Info ninfo(info);
       curprint("(");
-      if (func_call->get_args()) {
-         SgInitializedNamePtrList::iterator formal = formal_params.begin();
-         SgExpressionPtrList::iterator actual = actual_params.begin();
-
-         bool firstOutParam = false;
-         bool foundOutParam = false;
-
-         while (actual != actual_params.end()) {
-
-         // TODO - Change temporary hack of using storage modifier isMutable to represent an out parameter
-            if ((*formal)->get_storageModifier().isMutable() && foundOutParam == false)
-               {
-                  firstOutParam = true;
-                  foundOutParam = true;
-                  curprint(":");
-               }
-            formal++;
-
-            unparseExpression((*actual), ninfo);
-            actual++;
-            if (actual != actual_params.end() && firstOutParam == false) {
-               curprint(",");
-            }
-         }
-      }
+      unparseExpression(func_call->get_args(), info);
       curprint(")");
    }
 

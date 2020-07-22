@@ -38,6 +38,7 @@ JOVIAL_TESTCODES = \
  4_3_if_stmt_d.jov                      \
  4_3_if_stmt_e.jov                      \
  4_4_case_stmt_a.jov                    \
+ 4_5_proc_call_stmt.jov                 \
  4_8_exit_stmt_a.jov                    \
  4_9_stop_stmt_a.jov                    \
  4_9_stop_stmt_b.jov                    \

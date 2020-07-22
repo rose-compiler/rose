@@ -493,7 +493,7 @@ Unparse_Jovial::unparseForStatement(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(for_stmt->get_increment());
      ROSE_ASSERT(for_stmt->get_loop_body());
 
-     curprint_indented("FOR ", info);
+     curprint("FOR ");
 
      SgForInitStatement* for_init_stmt = isSgForInitStatement(for_stmt->get_for_init_stmt());
      ROSE_ASSERT(for_init_stmt);
@@ -548,7 +548,7 @@ Unparse_Jovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info
      ROSE_ASSERT(for_stmt->get_while_expression());
      ROSE_ASSERT(for_stmt->get_loop_body());
 
-     curprint("FOR ");
+     curprint_indented("FOR ", info);
 
      SgAssignOp* init_expr = isSgAssignOp(for_stmt->get_initialization());
      ROSE_ASSERT(init_expr);
@@ -736,7 +736,7 @@ Unparse_Jovial::unparseProcessControlStmt(SgStatement* stmt, SgUnparse_Info& inf
      SgProcessControlStatement* pc_stmt = isSgProcessControlStatement(stmt);
      ASSERT_not_null(pc_stmt);
 
-     SgProcessControlStatement::control_enum kind = pc_stmt->get_control_kind();
+     SgProcessControlStatement::control_kind kind = pc_stmt->get_control_kind();
 
      if (kind == SgProcessControlStatement::e_stop)
         {
@@ -1154,12 +1154,20 @@ Unparse_Jovial::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgExprStatement* expr_stmt = isSgExprStatement(stmt);
      ASSERT_not_null(expr_stmt);
-     ASSERT_not_null(expr_stmt->get_expression());
+
+     SgExpression* expr = expr_stmt->get_expression();
+     ASSERT_not_null(expr);
 
   // pretty printing
      curprint( ws_prefix(info.get_nestingLevel()) );
 
-     unparseExpression(expr_stmt->get_expression(), info);
+     unparseExpression(expr, info);
+
+  // This is needed because SgAssignOp prints the ";" on its own
+  // and function call is an expression so it can't add the ";" itself.
+     if (isSgFunctionCallExp(expr)) {
+        curprint(";");
+     }
 
      unp->u_sage->curprint_newline();
    }
