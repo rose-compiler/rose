@@ -82,7 +82,11 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_72.C \
    test2020_73.C \
    test2020_74.C \
-   test2020_75.C \
+   test2020_75.C
+
+# DQ (7/21/2020): These test codes have not yet been fixed up to be valid test codes for C++20 support in ROSE.
+# They may fail for issues unrelated to C++20 support in EDG 6.0.
+UNEVALUATED_TEST_CODES = \
    test2020_76.C \
    test2020_77.C \
    test2020_78.C \
@@ -120,7 +124,8 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_109.C \
    test2020_110.C \
    test2020_111.C \
-   test2020_112.C 
+   test2020_112.C \
+   test2020_113.C
 
 if USING_GNU_COMPILER
 #  EXAMPLE_TESTCODES_REQUIRED_TO_PASS +=
@@ -194,7 +199,9 @@ TEST_TRANSLATOR=../../testTranslator
 # ROSE_FLAGS
 
 # DQ (7/202/2020): The -std=c++20 option is not supported on the only backend compilers I have for testing this at the moment.
+# But it is supported properly in ROSE, so we just need to use the correct version of the backend compiler.
 LANG_FLAGS = -std=c++17
+# LANG_FLAGS = -std=c++20
 
 ROSE_FLAGS =
 if !ROSE_USE_CLANG_FRONTEND

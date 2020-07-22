@@ -1,4 +1,5 @@
 struct S2 { void f(int i); };
+
 void S2::f(int i)
 {
     [=]{};          // OK: by-copy capture default

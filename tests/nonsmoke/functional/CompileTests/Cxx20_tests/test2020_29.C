@@ -1,3 +1,5 @@
+void use (int, int);
+
 class S {
   int x = 0;
   void f() {

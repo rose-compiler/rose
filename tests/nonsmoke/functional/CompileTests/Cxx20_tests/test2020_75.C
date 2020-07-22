@@ -1,7 +1,7 @@
 template <class T> void f(T t);
 template <class X> void g(const X x);
 template <class Z> void h(Z z, Z* zp);
- 
+
 // two different functions with the same type, but 
 // within the function, t has different cv qualifications
 f<int>(1);       // function type is void(int), t is int

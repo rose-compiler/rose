@@ -1,3 +1,5 @@
+// DQ (7/21/2020): Concept support is not available in EDG 6.0.
+
 template<typename T> concept C2 =
 requires(T x) {
     {*x} -> std::convertible_to<typename T::inner>; // the expression *x must be valid

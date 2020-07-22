@@ -1,3 +1,5 @@
+// DQ (7/21/2020): Concept support is not available in EDG 6.0.
+
 template<typename T>
 struct S {
     constexpr operator bool() const { return true; }

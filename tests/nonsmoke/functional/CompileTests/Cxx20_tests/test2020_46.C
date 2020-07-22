@@ -1,6 +1,9 @@
 #include <string>
 #include <cstddef>
+
+// DQ (7/21/2020): concepts header file is not availalbe in GNU 6.1.
 #include <concepts>
+
 using namespace std::literals;
  
 // Declaration of the concept "Hashable", which is satisfied by
