@@ -627,7 +627,10 @@ void NodeState::setFacts(const Analysis* analysis, const vector<NodeFact*>& newF
                 for(vector<NodeFact*>::iterator it = factsIt->second.begin();
                     it != factsIt->second.end(); it++)
                 //{ delete it->second; }
-                { delete *it; }
+                {
+                   assert((*it) != NULL);
+                   delete *it;
+                }
                 factsIt->second.clear();
                 factsIt->second = newFacts;
         }
