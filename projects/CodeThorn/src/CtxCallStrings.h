@@ -430,7 +430,7 @@ struct ContextSequenceCOW
       
       --data->cnt;
       
-      data = orig->data;
+      data = orig.data;
       ++data->cnt;
       
       return *this;

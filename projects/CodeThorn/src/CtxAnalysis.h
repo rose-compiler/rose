@@ -6,6 +6,8 @@
 #include "CtxLattice.h"
 #include "CtxTransfer.h"
 #include "CtxAttribute.h"
+#include "CtxPropertyStateFactory.h"
+#include "CtxSolver0.h"
 
 namespace CodeThorn
 {
@@ -23,33 +25,6 @@ struct CtxStats
   double avg        = 0;
 };
 
-/// implements the Decorator pattern to enhance the
-///   PropertyStateFactory with context specific functionality
-template <class CallContext>
-struct CtxPropertyStateFactory : PropertyStateFactory
-{
-    typedef CallContext           context_t;
-    typedef CtxLattice<context_t> context_lattice_t;
-
-    explicit
-    CtxPropertyStateFactory(PropertyStateFactory& compFac)
-    : compFactory(compFac)
-    {}
-
-    context_lattice_t* create() ROSE_OVERRIDE
-    {
-      return new context_lattice_t(compFactory);
-    }
-
-    PropertyStateFactory& componentFactory()
-    {
-      return compFactory;
-    }
-
-  private:
-    PropertyStateFactory& compFactory;
-};
-
 
 /// analysis class that wraps a context-sensitive analysis around
 ///   a non-context-sensitive forward analysis.
@@ -59,7 +34,7 @@ struct CtxAnalysis : DFAnalysisBase
     typedef DFAnalysisBase        base;
     typedef CallContext           context_t;
     typedef CtxLattice<context_t> context_lattice_t;
-
+    
     CtxAnalysis(PropertyStateFactory& compFactory, DFTransferFunctions& compTransfer)
     : base(), ctxFactory(compFactory), ctxTransfer(compTransfer, *this)
     {
@@ -113,9 +88,16 @@ struct CtxAnalysis : DFAnalysisBase
     CtxPropertyStateFactory<context_t>& factory()  { return ctxFactory;  }
     CtxTransfer<context_t>&             transfer() { return ctxTransfer; }
     
-    void initializeSolver(bool defaultSolver) ROSE_OVERRIDE
+    void initializeSolver() ROSE_OVERRIDE
     {
-      base::initializeSolver(false /* use ctx solver instead */);
+      _solver = new CtxSolver0( _workList,
+                                _analyzerDataPreInfo,
+                                _analyzerDataPostInfo,
+                                SG_DEREF(getInitialElementFactory()),
+                                SG_DEREF(getFlow()),
+                                SG_DEREF(_transferFunctions),
+                                SG_DEREF(getLabeler())
+                              );
     }
 
     // debugging support
