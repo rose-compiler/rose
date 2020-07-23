@@ -736,7 +736,7 @@ Unparse_Jovial::unparseProcessControlStmt(SgStatement* stmt, SgUnparse_Info& inf
      SgProcessControlStatement* pc_stmt = isSgProcessControlStatement(stmt);
      ASSERT_not_null(pc_stmt);
 
-     SgProcessControlStatement::control_kind kind = pc_stmt->get_control_kind();
+     SgProcessControlStatement::control_enum kind = pc_stmt->get_control_kind();
 
      if (kind == SgProcessControlStatement::e_stop)
         {

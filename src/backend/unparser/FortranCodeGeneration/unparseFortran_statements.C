@@ -2947,11 +2947,11 @@ FortranCodeGeneration_locatedNode::unparseProcessControlStmt(SgStatement* stmt, 
      ASSERT_not_null(ctrl_stmt);
 
      SgExpression* quiet_expr = ctrl_stmt->get_quiet();
-     SgProcessControlStatement::control_kind kind = ctrl_stmt->get_control_kind();
+     SgProcessControlStatement::control_enum kind = ctrl_stmt->get_control_kind();
 
      switch (kind)
         {
-          case SgProcessControlStatement::control_kind::e_stop:
+          case SgProcessControlStatement::e_stop:
              {
                 curprint("STOP ");
                 unparseExpression(ctrl_stmt->get_code(), info);
@@ -2963,7 +2963,7 @@ FortranCodeGeneration_locatedNode::unparseProcessControlStmt(SgStatement* stmt, 
                    }
                 break;
              }
-          case SgProcessControlStatement::control_kind::e_error_stop:
+          case SgProcessControlStatement::e_error_stop:
              {
                 curprint("ERROR STOP ");
                 unparseExpression(ctrl_stmt->get_code(), info);
@@ -2975,7 +2975,7 @@ FortranCodeGeneration_locatedNode::unparseProcessControlStmt(SgStatement* stmt, 
                    }
                 break;
              }
-          case SgProcessControlStatement::control_kind::e_pause:
+          case SgProcessControlStatement::e_pause:
              {
                 curprint("PAUSE ");
                 unparseExpression(ctrl_stmt->get_code(), info);
