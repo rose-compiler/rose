@@ -29,7 +29,7 @@ namespace CodeThorn {
 #include "PropertyState.h"
 
 class DFAnalysisBase {
- public:
+ public:  
   DFAnalysisBase();
   virtual ~DFAnalysisBase();
   void setExtremalLabels(LabelSet extremalLabels);
@@ -46,7 +46,7 @@ class DFAnalysisBase {
   virtual Lattice* initializeGlobalVariables(SgProject* root);
   // initializes an element with the combined global initialization state and the extremal value
   virtual void initializeTransferFunctions();
-  virtual void initializeSolver(bool defaultSolver = true);
+  virtual void initializeSolver();
   void determineExtremalLabels(SgNode* startFunRoot=0,bool onlySingleStartLabel=true);
   void run();
 

@@ -53,6 +53,7 @@
 #include "Normalization.h"
 #include "DataDependenceVisualizer.h" // also used for clustered ICFG
 #include "Evaluator.h" // CppConstExprEvaluator
+#include "CtxCallStrings.h" // for setting call string options
 
 // Z3-based analyser / SSA 
 #include "z3-prover-connection/SSAGenerator.h"
@@ -560,6 +561,8 @@ int main( int argc, char * argv[] ) {
     AbstractValue::byteMode=ctOpt.byteMode;
     AbstractValue::strictChecking=ctOpt.strictChecking;
     SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls;
+    if (ctOpt.callStringLength >= 2) 
+      setFiniteCallStringMaxLength(ctOpt.callStringLength);
     configureOptionSets(ctOpt);
 
     analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;
