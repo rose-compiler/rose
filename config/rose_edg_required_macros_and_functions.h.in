@@ -52,7 +52,9 @@
    Note that undefining the macro does not work well, and results in references to undefined functions.  
    This appears to be a clang specific macro function (compiler extension) that is supported in Intel V16 C++ cpmpiler.
  */
+/* DQ (7/23/2020): Later versions of EDG support this properly (EDG 6.0 and maybe EDG 5.0).
   #define __has_include_next(file) 1
+*/
 
 /* DQ (5/10/2016): Ignoring the SSE support (turn it off). */
   #define _PMMINTRIN_H_INCLUDED
@@ -341,9 +343,11 @@ typedef long double __float128;
 #endif
 
 /* DQ (5/10/2016): Added support for GNU 5.x compilers (at least 5.1) */
+/* DQ (7/23/2020): Later versions of EDG support this properly (EDG 6.0 and maybe EDG 5.0).
 #if ((__GNUC__ > 4) && (__GNUC_MINOR__ >= 1) && (__GNUC_PATCHLEVEL__ >= 0))
    #undef __has_include(STR)
 #endif
+*/
 
 /* DQ (10/22/2010): Isolate some of the OSX specific details. */
 #ifdef __APPLE__

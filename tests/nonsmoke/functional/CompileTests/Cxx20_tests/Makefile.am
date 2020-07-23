@@ -6,7 +6,6 @@ LDADD    = $(ROSE_LIBS)
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    trivial.C \
-   test2020_01.C \
    test2020_04.C \
    test2020_08.C \
    test2020_09.C \
@@ -50,9 +49,12 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_103.C \
    test2020_104.C \
    test2020_110.C \
-   test2020_111.C 
+   test2020_111.C \
+   test2020_116.C \
+   test2020_118.C
 
 TESTCODE_CURRENTLY_FAILING = \
+   test2020_01.C \
    test2020_02.C \
    test2020_03.C \
    test2020_05.C \
@@ -124,9 +126,7 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_113.C \
    test2020_114.C \
    test2020_115.C \
-   test2020_116.C \
-   test2020_117.C \
-   test2020_118.C
+   test2020_117.C 
 
 # DQ (7/21/2020): These test codes have not yet been fixed up to be valid test codes for C++20 support in ROSE.
 # They may fail for issues unrelated to C++20 support in EDG 6.0.
