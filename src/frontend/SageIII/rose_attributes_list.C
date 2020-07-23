@@ -2801,6 +2801,9 @@ ROSEAttributesListContainer::~ROSEAttributesListContainer()
 void
 ROSEAttributesListContainer::addList ( std::string fileName, ROSEAttributesList* listPointer )
    {
+  // DQ (7/2/2020): Added assertion to catch when this function is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
   // attributeListList.push_back ( listPointer );
      attributeListMap[fileName] = listPointer;
    }

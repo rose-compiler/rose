@@ -438,6 +438,7 @@ ROSE_DLL_API SgDoubleVal* buildDoubleVal(double value = 0.0);
 ROSE_DLL_API SgDoubleVal* buildDoubleVal_nfi(double value, const std::string& str);
 
 ROSE_DLL_API SgFloatVal* buildFloatVal(float value = 0.0);
+ROSE_DLL_API SgFloatVal* buildFloatVal_nfi(float value = 0.0);
 ROSE_DLL_API SgFloatVal* buildFloatVal_nfi(float value, const std::string& str);
 //! Build a float value expression by converting the string
 ROSE_DLL_API SgFloatVal* buildFloatVal_nfi(const std::string& str);
@@ -445,6 +446,7 @@ ROSE_DLL_API SgFloatVal* buildFloatVal_nfi(const std::string& str);
 //! Build an integer value expression
 ROSE_DLL_API SgIntVal* buildIntVal(int value = 0);
 ROSE_DLL_API SgIntVal* buildIntValHex(int value = 0);
+ROSE_DLL_API SgIntVal* buildIntVal_nfi(int value = 0);
 ROSE_DLL_API SgIntVal* buildIntVal_nfi(int value, const std::string& str);
 //! Build an integer value expression by converting the string
 ROSE_DLL_API SgIntVal* buildIntVal_nfi(const std::string& str);
@@ -721,10 +723,10 @@ SgSetComprehension * buildSetComprehension_nfi(SgExpression *elt, SgExprListExp 
 ROSE_DLL_API SgDictionaryComprehension * buildDictionaryComprehension(SgKeyDatumPair *kd_pair, SgExprListExp *generators);
 SgDictionaryComprehension * buildDictionaryComprehension_nfi(SgKeyDatumPair *kd_pair, SgExprListExp *generators);
 
-//! Build SgVarRefExp based on a variable's Sage name. It will lookup symbol table internally starting from scope. A variable name is unique so type can be inferred (double check this).
+//! Build SgVarRefExp based on a variable's Sage name. It will lookup the name in the symbol table internally starting from scope. A variable name is unique so type can be inferred (double check this).
 
 /*!
-It is possible to build a reference to a variable with known name before the variable is declaration, especially during bottomup construction of AST. In this case, SgTypeUnknown is used to indicate the variable reference needing postprocessing fix using fixVariableReferences() once the AST is complete and all variable declarations exist. But the side effect is some get_type() operation may not recognize the unknown type before the fix. So far, I extended SgPointerDerefExp::get_type() and SgPntrArrRefExp::get_type() for SgTypeUnknown. There may be others needing the same extension.
+It is possible to build a reference to a variable with known name before the variable is declared, especially during bottomup construction of AST. In this case, SgTypeUnknown is used to indicate the variable reference needing postprocessing fix using fixVariableReferences() once the AST is complete and all variable declarations exist. But the side effect is that some get_type() operations may not recognize the unknown type before the fix. So far, I extended SgPointerDerefExp::get_type() and SgPntrArrRefExp::get_type() for SgTypeUnknown. There may be others needing the same extension.
 */
 ROSE_DLL_API SgVarRefExp * buildVarRefExp(const SgName& name, SgScopeStatement* scope=NULL);
 

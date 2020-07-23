@@ -186,7 +186,7 @@ Analysis::emitGraphViz(std::ostream &out) const {
     // Edges representing possible edit actions
     {
         boost::graph_traits<Graph>::edge_iterator ei, ei_end;
-        for (boost::tie(ei, ei_end)=boost::edges(graph_); ei!=ei_end; ++ei) {
+        for (boost::tie(ei, ei_end)=boost::edges(graph_); ei!=ei_end; ++ei) { // copied from projects // blame quinlan
             Vertex vs = boost::source(*ei, graph_);
             Vertex vt = boost::target(*ei, graph_);
             size_t si, sj, ti, tj;                      // source and target row and column numbers

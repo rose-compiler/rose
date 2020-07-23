@@ -150,11 +150,11 @@ ATbool traverse_ItemPreset            (ATerm term, SgExpression* &preset);
 ATbool traverse_ItemPresetValue       (ATerm term, SgExpression* &preset);
 ATbool traverse_OptItemPresetValue    (ATerm term, SgExpression* &preset);
 ATbool traverse_TablePreset           (ATerm term, SgExpression* &preset);
-ATbool traverse_TablePresetList       (ATerm term, SgExprListExp* preset_list);
-ATbool traverse_DefaultPresetSublist  (ATerm term, SgExprListExp* preset_list);
-ATbool traverse_SpecifiedPresetSublist(ATerm term, SgExprListExp* preset_list);
-ATbool traverse_PresetIndexSpecifier  (ATerm term, SgInitializer* preset_list);
-ATbool traverse_PresetValuesOption    (ATerm term, SgExpression* &preset);
+ATbool traverse_TablePresetList       (ATerm term, SgJovialTablePresetExp* table_preset);
+ATbool traverse_DefaultPresetSublist  (ATerm term, SgExprListExp* default_sublist);
+ATbool traverse_SpecifiedPresetSublist(ATerm term, SgExprListExp* specified_sublist);
+ATbool traverse_PresetIndexSpecifier  (ATerm term, SgExprListExp* index_specifier_list);
+ATbool traverse_PresetValuesOption    (ATerm term, SgExpression*  &preset);
 
 // 2.2 TYPE DECLARATIONS
 ATbool traverse_TypeDeclaration       (ATerm term);
@@ -234,17 +234,17 @@ ATbool traverse_AssignmentStatement(ATerm term);
 // 4.2 LOOP STATEMENTS
 ATbool traverse_WhileStatement  (ATerm term);
 ATbool traverse_ForStatement    (ATerm term);
-ATbool traverse_ForClause       (ATerm term, SgUntypedExpression* & var_ref, SgUntypedExpression* & init,
-                                             SgUntypedExpression* & phrase1, SgUntypedExpression* & phrase2,
-                                             int & phrase1_enum, int & phrase2_enum);
-ATbool traverse_ControlClause   (ATerm term, SgUntypedExpression* & initial_value,
-                                             SgUntypedExpression* & phrase1, SgUntypedExpression* & phrase2,
-                                             int & phrase1_enum, int & phrase2_enum);
-ATbool traverse_OptContinuation (ATerm term, SgUntypedExpression* & phrase1, SgUntypedExpression* & phrase2,
-                                             int & phrase1_enum, int & phrase2_enum);
-ATbool traverse_Continuation    (ATerm term, SgUntypedExpression* & phrase1, SgUntypedExpression* & phrase2,
-                                             int & phrase1_enum, int & phrase2_enum);
-ATbool traverse_Phrase          (ATerm term, SgUntypedExpression* & expr, int & phrase_enum);
+ATbool traverse_ForClause       (ATerm term, SgExpression* &var_ref, SgExpression* &init,
+                                             SgExpression* &phrase1, SgExpression* &phrase2,
+                                             int &phrase1_enum, int &phrase2_enum);
+ATbool traverse_ControlClause   (ATerm term, SgExpression* &initial_value,
+                                             SgExpression* &phrase1, SgExpression* &phrase2,
+                                             int &phrase1_enum, int &phrase2_enum);
+ATbool traverse_OptContinuation (ATerm term, SgExpression* &phrase1, SgExpression* &phrase2,
+                                             int &phrase1_enum, int &phrase2_enum);
+ATbool traverse_Continuation    (ATerm term, SgExpression* &phrase1, SgExpression* &phrase2,
+                                             int &phrase1_enum, int &phrase2_enum);
+ATbool traverse_Phrase          (ATerm term, SgExpression* &expr, int &phrase_enum);
 
 // 4.3 IF STATEMENTS
 ATbool traverse_IfStatement   (ATerm term);
@@ -259,8 +259,8 @@ ATbool traverse_CaseIndex       (ATerm term, SgExpression*  &index);
 
 // 4.5 PROCEDURE CALL STATEMENTS
 ATbool traverse_ProcedureCallStatement (ATerm term);
-ATbool traverse_ActualParameterList    (ATerm term, SgUntypedExprListExpression* arg_list);
-ATbool traverse_ActualOutputParameters (ATerm term, SgUntypedExprListExpression* param_list);
+ATbool traverse_ActualParameterList    (ATerm term, SgExprListExp* param_list);
+ATbool traverse_ActualOutputParameters (ATerm term, SgExprListExp* param_list);
 
 // 4.6 RETURN STATEMENTS
 ATbool traverse_ReturnStatement (ATerm term);
@@ -327,8 +327,8 @@ ATbool traverse_ByteFunctionVariable (ATerm term, SgExpression* &var);
 ATbool traverse_NamedConstant        (ATerm term, SgExpression* &var);
 
 // 6.3 FUNCTION CALLS
-ATbool traverse_FunctionCall           (ATerm term, SgFunctionCallExp* &func_call);
-ATbool traverse_UserDefinedFunctionCall(ATerm term, SgFunctionCallExp* &func_call);
+ATbool traverse_FunctionCall           (ATerm term, SgExpression* &expr);
+ATbool traverse_UserDefinedFunctionCall(ATerm term, SgExpression* &expr);
 ATbool traverse_IntrinsicFunctionCall  (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.1 LOC FUNCTION
@@ -348,6 +348,9 @@ ATbool traverse_AbsFunction          (ATerm term, SgFunctionCallExp* &func_call)
 
 // 6.3.7 SIZE FUNCTION
 ATbool traverse_SizeFunction         (ATerm term, SgFunctionCallExp* &func_call);
+
+// 6.3.10 NWDSEN FUNCTION
+ATbool traverse_NwdsenFunction       (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.11 STATUS INVERSE FUNCTIONS
 ATbool traverse_StatusInverseFunction(ATerm term, SgFunctionCallExp* &func_call);

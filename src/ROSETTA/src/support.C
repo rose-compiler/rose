@@ -870,7 +870,7 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 #endif
   // DQ (11/8/2018): These are added include directories that will be used in the generation of the backend compiler 
-  // command line (after all other include directives have been output). This option supports the unparsing of header 
+  // command line (before all other include directives have been output). This option supports the unparsing of header 
   // files which requires source files to be positioned a locations relative to an application root file position, 
   // and header fils to be included using additional include paths. This is required to handled header files using 
   // "../" prefixes, and different include paths are required depending upon if they are transformed.
@@ -908,7 +908,7 @@ Grammar::setUpSupport ()
      IncludeFile.setDataPrototype ( "SgName", "filename", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (9/18/2018): Added source file which is initialized when unparsing headers.
+  // DQ (9/18/2018): Added source file which is initialized when unparsing headers (provides simple interface for unparer which take a SgSourceFile).
      IncludeFile.setDataPrototype ( "SgSourceFile*", "source_file", " = NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
@@ -997,6 +997,10 @@ Grammar::setUpSupport ()
 
   // DQ (11/21/2018): Allow us to mark the ROSE generated include files from system directories.
      IncludeFile.setDataPrototype   ( "bool", "isApplicationFile", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/26/2020): Allow us to mark the SgIncludeFile as being the root (associated with the input sourde file).
+     IncludeFile.setDataPrototype   ( "bool", "isRootSourceFile", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (9/18/2018): We can likely eliminate this IR node now that we store the include file tree directly
@@ -2302,6 +2306,24 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("std::list<std::string>", "astfiles_in", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (3/12/2020): Added additional list to support extra paths to support directories where modified header files
+  // are unparsed. This list is added to support extra directories added to support transformed header files.
+  // And additional extraIncludeDirectorySpecifierList is available on the SgSourceFile IR node to support 
+  // header file directories that are source file specific.
+     Project.setDataPrototype("SgStringList","extraIncludeDirectorySpecifierList", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/6/2020): Now that we can support only unparsing modified header files the tests of header file 
+  // unparsing (which don't modifie any headers) are not as useful as before.  So we need a flag to force
+  // setting all header files to be unparsed so that the testing will be more meaningful (and similar to
+  // before the support to only unparse the modified header files).
+  // Project.setDataPrototype("bool","unparseAllHeaderFiles", "= false",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/4/2020): Adding support for unparse headers feature specific diagnostics.
+  // This has been changed to b a static function.
+  // Project.setDataPrototype("int","unparseHeaderFilesDebug", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

@@ -218,6 +218,12 @@ void postProcessingSupport (SgNode* node)
           printf ("Postprocessing AST build using new EDG/Sage Translation Interface. \n");
 #endif
 
+#if 0
+       // DQ (7/14/2020): DEBUGGING: Check initializers.
+          printf ("Test 1 in postProcessingSupport() \n");
+          SageInterface::checkForInitializers(node);
+#endif
+
 // DQ (10/27/2015): Added test to detect cycles in typedef types.
 #define DEBUG_TYPEDEF_CYCLES 0
 
@@ -271,6 +277,11 @@ void postProcessingSupport (SgNode* node)
                printf ("Calling topLevelResetParentPointer() \n");
              }
 
+#if 0
+       // DQ (7/14/2020): DEBUGGING: Check initializers.
+          printf ("Test 2 in postProcessingSupport() \n");
+          SageInterface::checkForInitializers(node);
+#endif
 
 #if 0
        // DQ (8/2/2019): Adding output graph before resetParent traversal (because the AST in each appears to be different, debugging this).
@@ -350,6 +361,12 @@ void postProcessingSupport (SgNode* node)
        // of a non-defining declaration appearing before a defining declaration and requiring a fixup of the
        // non-defining declaration reference to the defining declaration.
           fixupAstDefiningAndNondefiningDeclarations(node);
+
+#if 0
+       // DQ (7/14/2020): DEBUGGING: Check initializers.
+          printf ("Test 3 in postProcessingSupport() \n");
+          SageInterface::checkForInitializers(node);
+#endif
 
 #if DEBUG_TYPEDEF_CYCLES
           printf ("Calling TestAstForCyclesInTypedefs() \n");
@@ -476,10 +493,22 @@ void postProcessingSupport (SgNode* node)
                printf ("Calling fixupTemplateArguments() \n");
              }
 
+#if 0
+       // DQ (7/14/2020): DEBUGGING: Check initializers.
+          printf ("Test 4 in postProcessingSupport() \n");
+          SageInterface::checkForInitializers(node);
+#endif
+
        // DQ (2/11/2017): Changed API to use SgSimpleProcessing based traversal.
        // DQ (11/27/2016): Fixup template arguments to additionally reference a type that can be unparsed.
        // fixupTemplateArguments();
           fixupTemplateArguments(node);
+
+#if 0
+       // DQ (7/14/2020): DEBUGGING: Check initializers.
+          printf ("Test 4.1 in postProcessingSupport() \n");
+          SageInterface::checkForInitializers(node);
+#endif
 
        // DQ (2/12/2012): This is a problem for test2004_35.C (debugging this issue).
        // printf ("Exiting after calling resetTemplateNames() \n");
@@ -500,14 +529,22 @@ void postProcessingSupport (SgNode* node)
           SgProject* project = isSgProject(node);
 #if 0
           printf ("In postProcessingSupport: project = %p \n",project);
+          printf (" --- project->get_suppressConstantFoldingPostProcessing() = %s \n",project->get_suppressConstantFoldingPostProcessing() ? "true" : "false");
 #endif
-          if (project != NULL && project->get_suppressConstantFoldingPostProcessing() == false) {
-            resetConstantFoldedValues(node);
-          } else if (project != NULL && SgProject::get_verbose() >= 1) {
+          if (project != NULL && project->get_suppressConstantFoldingPostProcessing() == false) 
+             {
+               resetConstantFoldedValues(node);
+             } else if (project != NULL && SgProject::get_verbose() >= 1) {
             mprintf ("In postProcessingSupport: skipping call to resetConstantFoldedValues(): project->get_suppressConstantFoldingPostProcessing() = %s \n",project->get_suppressConstantFoldingPostProcessing() ? "true" : "false");
           } else if (project == NULL) {
             mprintf ("postProcessingSupport should not be called for non SgProject IR nodes \n");
           }
+
+#if 0
+       // DQ (7/14/2020): DEBUGGING: Check initializers.
+          printf ("Test 4.2 in postProcessingSupport() \n");
+          SageInterface::checkForInitializers(node);
+#endif
 
           if (SgProject::get_verbose() > 1)
              {
@@ -517,10 +554,22 @@ void postProcessingSupport (SgNode* node)
        // DQ (10/5/2012): Fixup known macros that might expand into a recursive mess in the unparsed code.
           fixupSelfReferentialMacrosInAST(node);
 
+#if 0
+       // DQ (7/14/2020): DEBUGGING: Check initializers.
+          printf ("Test 4.3 in postProcessingSupport() \n");
+          SageInterface::checkForInitializers(node);
+#endif
+
        // Make sure that frontend-specific and compiler-generated AST nodes are marked as such. These two must run in this
        // order since checkIsCompilerGenerated depends on correct values of compiler-generated flags.
           checkIsFrontendSpecificFlag(node);
           checkIsCompilerGeneratedFlag(node);
+
+#if 0
+       // DQ (7/14/2020): DEBUGGING: Check initializers.
+          printf ("Test 4.4 in postProcessingSupport() \n");
+          SageInterface::checkForInitializers(node);
+#endif
 
           if (SgProject::get_verbose() > 1)
              {
@@ -529,6 +578,12 @@ void postProcessingSupport (SgNode* node)
 
        // DQ (11/14/2015): Fixup inconsistancies across the multiple Sg_File_Info obejcts in SgLocatedNode and SgExpression IR nodes.
           fixupFileInfoInconsistanties(node);
+
+#if 0
+       // DQ (7/14/2020): DEBUGGING: Check initializers.
+          printf ("Test 5 in postProcessingSupport() \n");
+          SageInterface::checkForInitializers(node);
+#endif
 
 #if 1
           if (SgProject::get_verbose() > 1)
@@ -605,6 +660,24 @@ void postProcessingSupport (SgNode* node)
        // if done befor it is used (here), instead of after the comment and CPP directive insertion in the
        // AST Consistancy tests.
           checkPhysicalSourcePosition(node);
+
+#if 0
+       // DQ (6/19/2020): The new design does not require this in the AST currently 
+       // (and can cause the output of replicated include directives).
+       // DQ (5/7/2020): Adding support to insert include directives.
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling addIncludeDirectives() \n");
+             }
+
+          addIncludeDirectives(node);
+#endif
+
+#if 0
+       // DQ (7/14/2020): DEBUGGING: Check initializers.
+          printf ("Test 6 in postProcessingSupport() \n");
+          SageInterface::checkForInitializers(node);
+#endif
 
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("DONE: Postprocessing AST build using new EDG/Sage Translation Interface. \n");
@@ -931,6 +1004,5 @@ void postProcessingSupport (SgNode* node)
              }
 
         }
-
    }
 

@@ -214,16 +214,38 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
      bool statementInFile = false;
 
-#if 0
-     printf ("\nIn statementFromFile(): sourceFilename = %s stmt = %p = %s \n",sourceFilename.c_str(),stmt,stmt->class_name().c_str());
+  // DQ (5/19/2020): Debugging new support for include directives.
+     SgIncludeDirectiveStatement* includeDirectiveStatement = isSgIncludeDirectiveStatement(stmt);
+     if (includeDirectiveStatement != NULL)
+        {
+          printf ("**************** Found a SgIncludeDirectiveStatement IR node: directive = %s \n",includeDirectiveStatement->get_directiveString().c_str());
+          ROSE_ASSERT(includeDirectiveStatement->get_startOfConstruct() != NULL);
+
+#if 1
+       // DQ (6/23/2020): These are no longer introduced, so they should be an error.
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
 #endif
+        }
 
 #if 0
-     printf ("\n");
-     printf ("In statementFromFile(): sourceFilename = %s stmt = %p = %s \n",sourceFilename.c_str(),stmt,stmt->class_name().c_str());
-     printf ("   --- stmt = %s \n",SageInterface::get_name(stmt).c_str());
-     printf ("   --- stmt->get_file_info()->get_fileIDsToUnparse().size() = %zu \n",stmt->get_file_info()->get_fileIDsToUnparse().size());
+  // DQ (4/9/2020): Added header file unparsing feature specific debug level.
+     if (SgProject::get_unparseHeaderFilesDebug() > 0)
+        {
+          printf ("\nIn statementFromFile(): sourceFilename = %s stmt = %p = %s \n",sourceFilename.c_str(),stmt,stmt->class_name().c_str());
+        }
 #endif
+
+  // #if 0
+  // DQ (4/9/2020): Added header file unparsing feature specific debug level.
+     if (SgProject::get_unparseHeaderFilesDebug() >= 10)
+        {
+          printf ("\n");
+          printf ("In statementFromFile(): sourceFilename = %s stmt = %p = %s \n",sourceFilename.c_str(),stmt,stmt->class_name().c_str());
+          printf ("   --- stmt = %s \n",SageInterface::get_name(stmt).c_str());
+          printf ("   --- stmt->get_file_info()->get_fileIDsToUnparse().size() = %zu \n",stmt->get_file_info()->get_fileIDsToUnparse().size());
+        }
+  // #endif
 
 #if 0
   // DQ (11/10/2019): This is too simple of a tests, and while it frequently will work we need to see if the 
@@ -562,8 +584,16 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                   {
                  // DQ (3/24/2019): The newest use of this IR nodes does not accomidate the headerFileBody.
                  // if (includeDirectiveStatement->get_headerFileBody()->get_file_info()->get_filenameString() == sourceFilename)
+                 // if (includeDirectiveStatement->get_headerFileBody() != NULL && includeDirectiveStatement->get_headerFileBody()->get_file_info()->get_filenameString() == sourceFilename)
                     if (includeDirectiveStatement->get_headerFileBody() != NULL && includeDirectiveStatement->get_headerFileBody()->get_file_info()->get_filenameString() == sourceFilename)
                        {
+                         statementInFile = true;
+                       }
+
+                 // DQ (5/19/2020): Generalized to allow when headerFileBody == NULL.
+                    if (includeDirectiveStatement->get_headerFileBody() == NULL)
+                       {
+                         printf ("Allow to be unparsed when headerFileBody == NULL \n");
                          statementInFile = true;
                        }
                   }
@@ -618,10 +648,15 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 #endif
         }
 
-#if 0
-     printf ("Leaving statementFromFile(): stmt = %p = %s = %s statementInFile = %s sourceFilename = %s \n",
-          stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false",sourceFilename.c_str());
-#endif
+  // #if 0
+  // DQ (4/9/2020): Added header file unparsing feature specific debug level.
+     if (SgProject::get_unparseHeaderFilesDebug() >= 9)
+        {
+          printf ("Leaving statementFromFile(): stmt = %p = %s = %s statementInFile = %s sourceFilename = %s \n",
+               stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false",sourceFilename.c_str());
+        }
+  // #endif
+
 #if 0
      if (isSgFunctionDeclaration(stmt) != NULL)
         {
@@ -658,6 +693,21 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
           curprint ( string("\n/* Inside of UnparseLanguageIndependentConstructs::statementFromFile (" ) + StringUtility::numberToString(stmt) + "): class_name() = " + stmt->class_name() + " (skipped) */ \n");
         }
 #endif
+
+  // DQ (5/19/2020): Debugging new support for include directives.
+  // SgIncludeDirectiveStatement* includeDirectiveStatement = isSgIncludeDirectiveStatement(stmt);
+     if (includeDirectiveStatement != NULL)
+        {
+          printf ("BOTTOM: Found a SgIncludeDirectiveStatement IR node: directive = %s \n",includeDirectiveStatement->get_directiveString().c_str());
+          ROSE_ASSERT(includeDirectiveStatement->get_startOfConstruct() != NULL);
+
+          printf ("statementInFile = %s \n",statementInFile ? "true" : "false");
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 
      return statementInFile;
    }
@@ -6853,8 +6903,13 @@ UnparseLanguageIndependentConstructs::unparseIncludeDirectiveStatement (SgStatem
      ASSERT_not_null(info.get_current_source_file());
      bool usingTokenUnparsing = info.get_current_source_file()->get_unparse_tokens();
 
-#if 0
+#if 1
      printf ("In unparseIncludeDirectiveStatement: usingTokenUnparsing = %s \n",usingTokenUnparsing ? "true" : "false");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
 
 #if 1
@@ -6868,7 +6923,9 @@ UnparseLanguageIndependentConstructs::unparseIncludeDirectiveStatement (SgStatem
        // This is the better choice because then the other comments and any other CPP directives will be unparsed as in the original code.
        // NOTE: If we don't suppores this here, then there will be two include directives unparsed.
           SgHeaderFileBody* headerFileBody = directive -> get_headerFileBody();
-
+#if 1
+          printf ("In unparseIncludeDirectiveStatement(): headerFileBody = %p \n",headerFileBody);
+#endif
        // DQ (3/24/2019): The newest use of this IR nodes does not accomidate the headerFileBody.
        // ASSERT_not_null(headerFileBody);
           if (headerFileBody != NULL)
@@ -6888,8 +6945,8 @@ UnparseLanguageIndependentConstructs::unparseIncludeDirectiveStatement (SgStatem
                ASSERT_not_null(directive);
                curprint("\n ");
 
-  // DQ (3/24/2019): Adding extra CR.
-     unp->cur.insert_newline(1);
+            // DQ (3/24/2019): Adding extra CR.
+               unp->cur.insert_newline(1);
 
                curprint(directive->get_directiveString());
             // unp->u_sage->curprint_newline();

@@ -122,6 +122,38 @@ class ChangeReturnsToGotosPrevisitor: public SageInterface::StatementGenerator {
   }
 };
 
+// Pei-Hung (06/12/20) This will replace the closure symbols to the capture symbols
+class ReplaceCaptureVariableVisitor: public AstSimpleProcessing {
+  public:
+  // map < closureSymbol, captureSymbol>
+  typedef std::map<SgVariableSymbol*, SgVariableSymbol*> captureVarMap;
+
+ 
+  private:
+  const captureVarMap& varMap;
+
+  public:
+  ReplaceCaptureVariableVisitor(const captureVarMap& varMap):
+  varMap(varMap) {}
+    
+  virtual void visit(SgNode* n) {
+    if (isSgDotExp(n) || isSgArrowExp(n)) {
+      SgBinaryOp* binaryOp = isSgBinaryOp(n);
+      isSgExpression(n->get_parent())->
+        replace_expression(isSgExpression(n), binaryOp->get_rhs_operand());
+    }
+   if (isSgVarRefExp(n))
+   {
+     SgVarRefExp* vr = isSgVarRefExp(n);
+     SgVariableSymbol* sym = vr->get_symbol();
+     captureVarMap::const_iterator iter = varMap.find(sym);
+     if (iter == varMap.end()) return; // This is not a parameter use
+     //cout <<" replace closure symbol" << endl;
+     vr->set_symbol(iter->second);
+   }
+  }
+};
+
 // This class replaces all uses of this to references to a specified
 // variable.  Used as part of inlining non-static member functions.
 class ReplaceThisWithRefVisitor: public AstSimpleProcessing {
@@ -324,6 +356,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
               printf ("ai = %p ai->isTransformation() = %s \n",ai,ai->isTransformation() ? "true" : "false");
 #endif
               SgInitializedName* in = isSgInitializedName(ai->get_parent());
+              in->set_auto_decltype(SageBuilder::buildAutoType());
               ROSE_ASSERT (in);
               if (isSgInitializer(ai->get_operand()))
                 removeRedundantCopyInConstruction(in);
@@ -428,7 +461,9 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      SgName thisname("this__");
      thisname << ++gensym_counter;
      SgInitializedName* thisinitname = 0;
-
+     // Pei-Hung (06/12/20) Need to check if this is a lambda function call
+     bool isLambdaMemberFuncCall = false;
+     ReplaceCaptureVariableVisitor::captureVarMap varMap;
      // create a new variable declaration for member function call : 
      //   TYPE*  this__ =  thisPtr; ??
      // static member functions cannot access this->data (non-static data). That is why we check non-static for thisptr case. 
@@ -437,44 +472,74 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
        assert (thisptr != NULL);
        SgType* thisptrtype = thisptr->get_type();
        const SgSpecialFunctionModifier& specialMod = 
-         funsym->get_declaration()->get_specialFunctionModifier();
+       funsym->get_declaration()->get_specialFunctionModifier();
+       SgFunctionType* ft = funsym->get_declaration()->get_type();
+       ROSE_ASSERT (ft);
+       SgMemberFunctionType* mft = isSgMemberFunctionType(ft);
+       ROSE_ASSERT (mft);
+       SgType* ct = mft->get_class_type();
        if (specialMod.isConstructor()) {
-         SgFunctionType* ft = funsym->get_declaration()->get_type();
-         ROSE_ASSERT (ft);
-         SgMemberFunctionType* mft = isSgMemberFunctionType(ft);
-         ROSE_ASSERT (mft);
-         SgType* ct = mft->get_class_type();
          thisptrtype = new SgPointerType(ct);
        }
-       SgConstVolatileModifier& thiscv = fundecl->get_declarationModifier().get_typeModifier().get_constVolatileModifier();
-       // if (thiscv.isConst() || thiscv.isVolatile()) { FIXME
-       thisptrtype = new SgModifierType(thisptrtype);
-       isSgModifierType(thisptrtype)->get_typeModifier().get_constVolatileModifier() = thiscv;
-       // }
-       // cout << thisptrtype->unparseToString() << " --- " << thiscv.isConst() << " " << thiscv.isVolatile() << endl;
-       SgAssignInitializer* assignInitializer = new SgAssignInitializer(SgNULL_FILE, thisptr);
-       assignInitializer->set_endOfConstruct(SgNULL_FILE);
+       // Pei-Hung (06/12/20) check if the parent of SgClassDeclaration is a SgLambdaExp
+       SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(ct)->get_declaration());
+       ROSE_ASSERT(classDecl);
+       if(isSgLambdaExp(classDecl->get_parent()))
+       {
+         // Pei-Hung (06/12/20) If this is a lambda function call, we try to skip the class
+         // declaration.
+         SgLambdaExp* lambdaExp = isSgLambdaExp(classDecl->get_parent());
+         ROSE_ASSERT(lambdaExp);
+         isLambdaMemberFuncCall = true;
+         //cout << "There is a lambda class" << endl;
+         SgLambdaCaptureList* lambdaCaptureList = lambdaExp->get_lambda_capture_list();
+         SgLambdaCapturePtrList captureList = lambdaCaptureList->get_capture_list();
+         BOOST_FOREACH (SgLambdaCapture* capture, captureList)
+         {
+           // get the capture variable
+           SgVarRefExp* captureVarRef = isSgVarRefExp(capture->get_capture_variable());
+           ROSE_ASSERT(captureVarRef);
+           SgVariableSymbol* captureVarSym = captureVarRef->get_symbol();
+           // get the closure variable
+           SgVarRefExp* closureVarRef = isSgVarRefExp(capture->get_closure_variable());
+           ROSE_ASSERT(closureVarRef);
+           SgVariableSymbol* closureVarSym = closureVarRef->get_symbol();
+           // Mapping closure and capture. 
+           varMap[closureVarSym] = captureVarSym;
+         }
+       }
+       else
+       { 
+         SgConstVolatileModifier& thiscv = fundecl->get_declarationModifier().get_typeModifier().get_constVolatileModifier();
+         // if (thiscv.isConst() || thiscv.isVolatile()) { FIXME
+         thisptrtype = new SgModifierType(thisptrtype);
+         isSgModifierType(thisptrtype)->get_typeModifier().get_constVolatileModifier() = thiscv;
+         // }
+         // cout << thisptrtype->unparseToString() << " --- " << thiscv.isConst() << " " << thiscv.isVolatile() << endl;
+         SgAssignInitializer* assignInitializer = new SgAssignInitializer(SgNULL_FILE, thisptr);
+         assignInitializer->set_endOfConstruct(SgNULL_FILE);
 #if 0
-       printf ("before new SgVariableDeclaration(): assignInitializer = %p assignInitializer->isTransformation() = %s \n",assignInitializer,assignInitializer->isTransformation() ? "true" : "false");
-#endif
-       thisdecl = new SgVariableDeclaration(SgNULL_FILE, thisname, thisptrtype, assignInitializer);
+         printf ("before new SgVariableDeclaration(): assignInitializer = %p assignInitializer->isTransformation() = %s \n",assignInitializer,assignInitializer->isTransformation() ? "true" : "false");
+#endif   
+         thisdecl = new SgVariableDeclaration(SgNULL_FILE, thisname, thisptrtype, assignInitializer);
 #if 0
-       printf ("(after new SgVariableDeclaration(): assignInitializer = %p assignInitializer->isTransformation() = %s \n",assignInitializer,assignInitializer->isTransformation() ? "true" : "false");
-#endif
-       thisdecl->set_endOfConstruct(SgNULL_FILE);
-       thisdecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
-       thisdecl->set_definingDeclaration(thisdecl);
+         printf ("(after new SgVariableDeclaration(): assignInitializer = %p assignInitializer->isTransformation() = %s \n",assignInitializer,assignInitializer->isTransformation() ? "true" : "false");
+#endif   
+         thisdecl->set_endOfConstruct(SgNULL_FILE);
+         thisdecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
+         thisdecl->set_definingDeclaration(thisdecl);
 
-       thisinitname = (thisdecl->get_variables()).back();
-       //thisinitname = lastElementOfContainer(thisdecl->get_variables());
-       // thisinitname->set_endOfConstruct(SgNULL_FILE);
-       assignInitializer->set_parent(thisinitname);
-       markAsTransformation(assignInitializer);
+         thisinitname = (thisdecl->get_variables()).back();
+         //thisinitname = lastElementOfContainer(thisdecl->get_variables());
+         // thisinitname->set_endOfConstruct(SgNULL_FILE);
+         assignInitializer->set_parent(thisinitname);
+         markAsTransformation(assignInitializer);
 
-       // printf ("Built new SgVariableDeclaration #1 = %p \n",thisdecl);
+         // printf ("Built new SgVariableDeclaration #1 = %p \n",thisdecl);
 
-       // DQ (6/23/2006): New test
-       ROSE_ASSERT(assignInitializer->get_parent() != NULL);
+         // DQ (6/23/2006): New test
+         ROSE_ASSERT(assignInitializer->get_parent() != NULL);
+       }
      }
 
      // Get the list of actual argument expressions from the function call, which we'll later use to initialize new local
@@ -492,6 +557,37 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      std::vector<SgInitializedName*> inits;
      SgTreeCopy tc;
      SgFunctionDefinition* function_copy = isSgFunctionDefinition(fundef->copy(tc));
+
+     // Pei-Hung (07/15/2020) the SgClassSymbol for the copied SgthisExp is associated with original 
+     // symbol table.  This should better be fixed in the deep copy function.  This should serve as 
+     // a tentative fix only.
+     for(SgCopyHelp::copiedNodeMapTypeIterator iter = tc.get_copiedNodeMap().begin(); iter !=tc.get_copiedNodeMap().end(); iter++)
+     {
+        SgThisExp* thisexp_raw = isSgThisExp(const_cast<SgNode*>(iter->first));
+        if(thisexp_raw != NULL)
+        {
+          SgThisExp* thisexp_copy = isSgThisExp(iter->second);
+          SgClassSymbol* classsym_raw = thisexp_raw->get_class_symbol();
+          SgClassSymbol* classsym_copy = thisexp_copy->get_class_symbol();
+          // both SgClassSymbols point to the same symbol table
+          if(classsym_raw->get_parent() == classsym_copy->get_parent())
+          {
+            SgSymbolTable* symtable_raw = isSgSymbolTable(classsym_raw->get_parent());
+            ROSE_ASSERT(symtable_raw);
+            SgScopeStatement* parentscope = isSgScopeStatement(symtable_raw->get_parent());
+            // Use the copy stack to look for the scope this symbol should stay
+            if(tc.get_copiedNodeMap().find(parentscope) != tc.get_copiedNodeMap().end())
+            {
+              SgSymbolTable* newsymtable = isSgScopeStatement(tc.get_copiedNodeMap().find(parentscope)->second)->get_symbol_table();
+              classsym_copy->set_parent(newsymtable);
+              newsymtable->insert(classsym_copy->get_name(),classsym_copy);
+              //std::cout << symtable_raw << " scope :" << tc.get_copiedNodeMap().find(parentscope)->first << ":" << tc.get_copiedNodeMap().find(parentscope)->second << std::endl;
+              //std::cout << "copy stack :" << iter->first<< ":" << iter->second << std::endl;
+            }
+          }
+        } 
+     }
+
      ROSE_ASSERT (function_copy);
      SgBasicBlock* funbody_copy = function_copy->get_body();
 #if 0
@@ -514,6 +610,21 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      if(funbody_raw->get_symbol_table()->size() != funbody_copy->get_symbol_table()->size()) {
         cerr<<"funbody_raw symbol table size: "<<funbody_raw->get_symbol_table()->size()<<endl;
         cerr<<"funbody_copy symbol table size: "<<funbody_copy->get_symbol_table()->size()<<endl;
+        SgSymbolTable* rawSymTable = funbody_raw->get_symbol_table();
+        std::set<SgNode *> rawSymbolList  = rawSymTable->get_symbols();
+        for(std::set<SgNode *>::iterator i = rawSymbolList.begin(); i != rawSymbolList.end(); ++i)
+        {
+          SgSymbol* sym = isSgSymbol(*i);
+          cout << " raw symbol name = " << sym->get_name() << endl;
+        }
+        SgSymbolTable* copySymTable = funbody_copy->get_symbol_table();
+        std::set<SgNode *> copySymbolList  = copySymTable->get_symbols();
+        for(std::set<SgNode *>::iterator i = copySymbolList.begin(); i != copySymbolList.end(); ++i)
+        {
+          SgSymbol* sym = isSgSymbol(*i);
+          cout << " copy symbol name = " << sym->get_name() << endl;
+        }
+        
      }
      ASSERT_require(funbody_raw->get_symbol_table()->size() == funbody_copy->get_symbol_table()->size());
    
@@ -532,6 +643,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      }
      delete function_copy;
      function_copy = NULL;
+     funbody_copy->set_parent(SageInterface::getScope(funcall));
 #if 0
      SgPragma* pragmaBegin = new SgPragma("start_of_inline_function", SgNULL_FILE);
      SgPragmaDeclaration* pragmaBeginDecl = new SgPragmaDeclaration(SgNULL_FILE, pragmaBegin);
@@ -557,15 +669,166 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 
          // Build the new local variable.
          // FIXME[Robb P. Matzke 2014-12-12]: we need a better way to generate a non-conflicting local variable name
-         SgAssignInitializer* initializer = new SgAssignInitializer(SgNULL_FILE, actualArg, formalArg->get_type());
-         ASSERT_not_null(initializer);
+         //SgAssignInitializer* initializer = NULL;
+         SgInitializer* initializer = NULL;
+         // Pei-Hung (06/12/20): need to check if the argument is a class defined for lambda
+         SgClassDeclaration* classdecl = NULL;
+         bool hasLambdaFuncArg = false;
+         if(isSgClassType(formalArg->get_typeptr()))
+         {
+           SgClassType* classtype = isSgClassType(formalArg->get_typeptr());
+           classdecl = isSgClassDeclaration(classtype->get_declaration()); 
+           ROSE_ASSERT(classdecl);
+           // check if the parent of SgClassDeclaration is SgLambdaExp
+           if(isSgLambdaExp(classdecl->get_parent()))
+           {
+             //cout << formalArg->get_name()<< endl;
+             //cout << classdecl->get_name() << endl;
+             hasLambdaFuncArg = true;
+           }
+         }
+         SgVariableDeclaration* vardecl = NULL;
+         SgName shadow_name(formalArg->get_name());
+         shadow_name << "__" << ++gensym_counter;
+         int newStmtCount = 0;
+         // Pei-Hung (06/12/20) this will create functor for the inlined code.
+         // turn off this by default; turn it on for experimental usage
+         bool retrieveFunctor = true;
+         if(retrieveFunctor && hasLambdaFuncArg)
+         {
+           // cout << "new class name = " << shadow_name << endl;
+           // Get lambda function, class declaration, and others
+           SgLambdaExp* lambdaExp = isSgLambdaExp(classdecl->get_parent());
+           SgClassDeclaration* defingingclassdecl  = isSgClassDeclaration(classdecl->get_definingDeclaration());
+           SgMemberFunctionDeclaration* lambdaFunc = isSgMemberFunctionDeclaration(lambdaExp->get_lambda_function());
+           SgLambdaCaptureList* lambdaCaptureList = lambdaExp->get_lambda_capture_list();
+           SgLambdaCapturePtrList captureList = lambdaCaptureList->get_capture_list();
+
+           // Create new copy of class
+           SgMemberFunctionDeclaration* lambdaFuncDefCopy = isSgMemberFunctionDeclaration(SageInterface::deepCopy(lambdaFunc));
+          // These should be replaced by buildClassDeclarationStatement_nfi if it can be compiled properly.
+           SgClassDeclaration* lambdaFuncClassCopy = new SgClassDeclaration(shadow_name, SgClassDeclaration::e_class, NULL,NULL);
+           lambdaFuncClassCopy->set_firstNondefiningDeclaration(lambdaFuncClassCopy);
+           lambdaFuncClassCopy->set_parent(funbody_copy);
+           lambdaFuncClassCopy->set_scope(funbody_copy);
+           SgClassType* class_type = NULL;
+           class_type = SgClassType::createType(lambdaFuncClassCopy);
+           setOneSourcePositionForTransformation(lambdaFuncClassCopy);
+           SgClassDefinition* lambdaClassDef = SageBuilder::buildClassDefinition();
+
+           SgClassDeclaration* definingLambdaClassDecl = new SgClassDeclaration(shadow_name,SgClassDeclaration::e_class,NULL,lambdaClassDef);
+           lambdaClassDef->set_declaration(definingLambdaClassDecl);
+           definingLambdaClassDecl->set_parent(funbody_copy);
+           definingLambdaClassDecl->set_scope(funbody_copy);
+           lambdaFuncClassCopy->set_definingDeclaration(definingLambdaClassDecl);
+           setOneSourcePositionForTransformation(definingLambdaClassDecl);
+           definingLambdaClassDecl->set_definingDeclaration(definingLambdaClassDecl);
+           definingLambdaClassDecl->set_firstNondefiningDeclaration(lambdaFuncClassCopy);
+           definingLambdaClassDecl->set_type(lambdaFuncClassCopy->get_type());
+           lambdaFuncClassCopy->setForward();
+           //fixStructDeclaration(definingLambdaClassDecl,funbody_copy);
+
+           // namae the class to be the variable name used for template function argument
+           lambdaFuncClassCopy->set_name(shadow_name);
+           definingLambdaClassDecl->set_name(shadow_name);
+
+           lambdaFuncClassCopy->set_explicit_anonymous(false);
+           definingLambdaClassDecl->set_explicit_anonymous(false);
+
+           lambdaFuncClassCopy->set_isAutonomousDeclaration(false);
+           definingLambdaClassDecl->set_isAutonomousDeclaration(false);
+
+           //cout << lambdaFuncClassCopy->get_name() << ":" << lambdaFuncClassCopy << ":" << lambdaFuncClassCopy->get_explicit_anonymous() << ":" << lambdaFuncClassCopy->get_isAutonomousDeclaration() << endl;
+           //cout << lambdaFuncClassCopy->get_parent() << ":" << classdecl->get_parent()<< endl;
+           //cout << lambdaFuncClassCopy->get_type() << ":" << classdecl->get_type()<< endl;
+       
+           // Insert the class definition to expose the class details. 
+           lambdaClassDef->append_member(lambdaFuncDefCopy);
+
+           // adding capture list
+           SgFunctionParameterList* captureParamList = SageBuilder::buildFunctionParameterList();
+           SgCtorInitializerList* closureList = SageBuilder::buildCtorInitializerList_nfi();
+           closureList->set_definingDeclaration(closureList);
+           // prepare member functon parameter list for constructor initializer
+           SgExprListExp* memberFuncArgList = SageBuilder::buildExprListExp_nfi();
+           BOOST_FOREACH (SgLambdaCapture* capture, captureList)
+           {
+             // capture list
+             SgVarRefExp* captureVarRef = isSgVarRefExp(capture->get_capture_variable());
+             ROSE_ASSERT(captureVarRef);
+             SgVariableSymbol* captureVarSym = captureVarRef->get_symbol();
+             SgName localVarName(captureVarSym->get_name());
+             localVarName << "__" << ++gensym_counter;
+             //cout << "capture list:"<< localVarName << endl;
+             SgInitializedName* captureInitializedName = SageBuilder::buildInitializedName(localVarName, captureVarSym->get_type());
+             captureParamList->append_arg(captureInitializedName);
+             captureInitializedName->set_parent(captureParamList);
+             captureInitializedName->set_scope(lambdaClassDef);
+ 
+             // closure list
+             SgVarRefExp* closureVarRef = isSgVarRefExp(capture->get_closure_variable());
+             ROSE_ASSERT(closureVarRef);
+             SgVariableSymbol* closureVarSym = closureVarRef->get_symbol();
+             SgName closureNmae = closureVarSym->get_name();
+             //cout << "closure list:"<< closureNmae << endl;
+             // build local private variable declaration for the closure variable
+             SgVariableDeclaration* closureVarDel = SageBuilder::buildVariableDeclaration(closureNmae, closureVarSym->get_type(), NULL, lambdaClassDef);
+             closureVarDel->get_declarationModifier().get_accessModifier().setPrivate() ;
+
+             SgVarRefExp* closureAssignVarExp = SageBuilder::buildVarRefExp(captureInitializedName, funbody_copy);
+             SgAssignInitializer* assignInitilizer = SageBuilder::buildAssignInitializer(closureAssignVarExp, closureVarSym->get_type());
+             SgInitializedName* closuredName = SageBuilder::buildInitializedName(closureNmae, closureVarSym->get_type(), assignInitilizer);
+             closureList->append_ctor_initializer(closuredName);
+             closuredName->set_parent(closureList);
+             closuredName->set_scope(lambdaClassDef);
+             lambdaClassDef->append_member(closureVarDel);
+
+             // Add parameter for onstructor initializer
+             SgVarRefExp* constructInitializerParam = SageBuilder::buildVarRefExp(closureVarSym);
+             memberFuncArgList->append_expression(constructInitializerParam);
+           }
+           // Build constructor with member intialization
+           SgMemberFunctionDeclaration* selfDefiningFunctionDecl = SageBuilder::buildDefiningMemberFunctionDeclaration (shadow_name, SageBuilder::buildVoidType(),captureParamList, lambdaClassDef );
+           selfDefiningFunctionDecl->set_CtorInitializerList(closureList);
+           selfDefiningFunctionDecl->set_associatedClassDeclaration(definingLambdaClassDecl);
+           // set constructor type to avoid return type being unparsed
+           selfDefiningFunctionDecl->get_specialFunctionModifier().setConstructor();
+           closureList->set_parent(selfDefiningFunctionDecl);
+           lambdaClassDef->append_member(selfDefiningFunctionDecl);
+           funbody_copy->get_statements().insert(funbody_copy->get_statements().begin() + argNumber, definingLambdaClassDecl);
+           newStmtCount++;
+
+           // Build variable declaration for the new class/
+           SgConstructorInitializer* constructorInitializer = SageBuilder::buildConstructorInitializer(selfDefiningFunctionDecl, memberFuncArgList, SageBuilder::buildVoidType(),false, false, false, false);
+           ASSERT_not_null(constructorInitializer);
+           initializer = isSgInitializer(constructorInitializer);
+           SgName init_construct_name(formalArg->get_name());
+           init_construct_name << "__" << ++gensym_counter;
+           vardecl = SageBuilder::buildVariableDeclaration(init_construct_name, definingLambdaClassDecl->get_type(), initializer, funbody_copy);
+         }
+         else if(hasLambdaFuncArg)
+         {
+           SgLambdaExp* lambdaExp = isSgLambdaExp(classdecl->get_parent());
+           SgClassDeclaration* defingingclassdecl  = isSgClassDeclaration(classdecl->get_definingDeclaration());
+           SgMemberFunctionDeclaration* lambdaFunc = isSgMemberFunctionDeclaration(lambdaExp->get_lambda_function());
+           SgAssignInitializer* assignInitializer = new SgAssignInitializer(SgNULL_FILE, actualArg, formalArg->get_type());
+           ASSERT_not_null(assignInitializer);
+           initializer = isSgInitializer(assignInitializer);
+           vardecl = new SgVariableDeclaration(SgNULL_FILE, shadow_name, formalArg->get_type(), initializer);
+           SgInitializedName* vardeclInitializedName = vardecl->get_decl_item(shadow_name);
+           vardeclInitializedName->set_auto_decltype(SageBuilder::buildAutoType());
+         }
+         else
+         { 
+           SgAssignInitializer* assignInitializer = new SgAssignInitializer(SgNULL_FILE, actualArg, formalArg->get_type());
+           ASSERT_not_null(assignInitializer);
+           initializer = isSgInitializer(assignInitializer);
+           vardecl = new SgVariableDeclaration(SgNULL_FILE, shadow_name, formalArg->get_type(), initializer);
+         }
          initializer->set_endOfConstruct(SgNULL_FILE);
 #if 0
          printf ("initializer = %p initializer->isTransformation() = %s \n",initializer,initializer->isTransformation() ? "true" : "false");
 #endif
-         SgName shadow_name(formalArg->get_name());
-         shadow_name << "__" << ++gensym_counter;
-         SgVariableDeclaration* vardecl = new SgVariableDeclaration(SgNULL_FILE, shadow_name, formalArg->get_type(), initializer);
          vardecl->set_definingDeclaration(vardecl);
          vardecl->set_endOfConstruct(SgNULL_FILE);
          vardecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
@@ -578,7 +841,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
          inits.push_back(init);
          initializer->set_parent(init);
          init->set_scope(funbody_copy);
-         funbody_copy->get_statements().insert(funbody_copy->get_statements().begin() + argNumber, vardecl);
+         funbody_copy->get_statements().insert(funbody_copy->get_statements().begin() + argNumber + newStmtCount, vardecl);
          SgVariableSymbol* sym = new SgVariableSymbol(init);
          paramMap[formalArg] = sym;
          funbody_copy->insert_symbol(shadow_name, sym);
@@ -587,7 +850,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 
      // Similarly for "this". We create a local variable in the to-be-inserted function body that will be initialized with the
      // caller's "this".
-     if (thisdecl) {
+     if (!isLambdaMemberFuncCall && thisdecl) {
          thisdecl->set_parent(funbody_copy);
          thisinitname->set_scope(funbody_copy);
          funbody_copy->get_statements().insert(funbody_copy->get_statements().begin(), thisdecl);
@@ -595,6 +858,11 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
          funbody_copy->insert_symbol(thisname, thisSym);
          thisSym->set_parent(funbody_copy->get_symbol_table());
          ReplaceThisWithRefVisitor(thisSym).traverse(funbody_copy, postorder);
+     }
+     if(isLambdaMemberFuncCall)
+     {
+       ReplaceCaptureVariableVisitor(varMap).traverse(funbody_copy, postorder);
+        
      }
      ReplaceParameterUseVisitor(paramMap).traverse(funbody_copy, postorder);
 

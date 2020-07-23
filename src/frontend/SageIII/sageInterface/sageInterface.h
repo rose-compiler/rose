@@ -2739,6 +2739,11 @@ bool isTemplateInstantiationFromTemplateDeclarationSatisfyingFilter (SgFunctionD
 
 void detectCycleInType(SgType * type, const std::string & from);
 
+// DQ (7/14/2020): Debugging support.
+void checkForInitializers( SgNode* node );
+
 }// end of namespace
+
+
 
 #endif

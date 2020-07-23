@@ -9455,9 +9455,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
                  else
                   {
+#if 0
                  // DQ (3/5/2017): Converted to use message logging.
                  // DQ (9/17/2011): Added this case, print a warning and fix thiat after debugging the constant folding value elimination..
                     mfprintf(mlog [ WARN ] ) ("WARNING: SgFunctionRefExp name qualification not handled for the case of currentStatement == NULL \n");
+#endif
                   }
              }
             else

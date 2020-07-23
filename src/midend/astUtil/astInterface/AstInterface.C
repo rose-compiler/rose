@@ -1013,10 +1013,10 @@ bool AstInterface :: get_fileInfo(const AstNodePtr& _n, std:: string* fname, int
 {
   SgNode* n = AstNodePtrImpl(_n).get_ptr();
   Sg_File_Info *f =n->get_file_info(); 
-  if (fname == 0) {
+  if (fname != NULL) {
      *fname = f->get_filename();
   }
-  if (lineno != 0) 
+  if (lineno != NULL) 
      *lineno = f->get_line();
   return true;
 }
