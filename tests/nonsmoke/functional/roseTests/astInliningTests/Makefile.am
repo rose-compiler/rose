@@ -110,7 +110,7 @@ endif
 endif
 
 $(inlineEverything_test_cpp11_targets): $(@:rose_cpp11_v1_%=%) inlineEverything
-	$(builddir)/inlineEverything -std=c++11 -c $(srcdir)/$(@:rose_cpp11_v1_%=%) -rose:output $@
+	$(builddir)/inlineEverything -main-only -std=c++11 -c $(srcdir)/$(@:rose_cpp11_v1_%=%) -rose:output $@
 
 EXTRA_DIST += test1.conf test1A.C test1B.C
 test1.passed: test1A.C test1B.C

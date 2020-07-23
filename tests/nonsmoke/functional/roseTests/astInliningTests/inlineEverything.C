@@ -30,6 +30,45 @@ isAstContaining(SgNode *haystack, SgNode *needle) {
 // only call doInlinine(), without postprocessing or consistency checking. Useful to debugging things. 
 static bool e_inline_only= false; 
 static int e_inline_limit= 99999999; 
+// a new driver: start from the main function, inlining only functions which are reachable from main().
+static bool e_inline_main= false; 
+
+// Given a function with a body, inlining recursively all functions called inside of the body.
+// Return the number of call sites considered for inlining
+//   and the call sites which are actuallyed inlined.
+void inlineFromRoot (SgFunctionDeclaration* func_decl, int& callSitesConsidered,  std::vector <SgFunctionCallExp*>& inlined_calls)
+{
+  // sanity check
+  ROSE_ASSERT (func_decl != NULL);
+  func_decl =  isSgFunctionDeclaration(func_decl->get_definingDeclaration());
+  ROSE_ASSERT (func_decl != NULL);
+
+  bool changed; //if the AST of the function body has been changed due to inlining
+  do {
+    changed = false; 
+
+    BOOST_FOREACH (SgFunctionCallExp *call, SageInterface::querySubTree<SgFunctionCallExp>(func_decl)) 
+    {
+      callSitesConsidered ++;
+      if (callSitesConsidered >  e_inline_limit )
+      { 
+        if (Inliner::verbose)
+          std::cout << "Reached the limit of number of functions:" << callSitesConsidered<< std::endl;
+        break;
+      }
+
+      if (Inliner::verbose)
+        std::cout << "Trying to inline the function id (starting from 1):" << callSitesConsidered << std::endl;
+
+      if (doInline(call)) {
+        ASSERT_always_forbid2(isAstContaining(func_decl, call),
+            "Inliner says it inlined, but the call expression is still present in the AST.");
+        inlined_calls.push_back(call);
+        changed = true;
+      }
+    } //end boost_foreach() 
+  } while (changed);
+}
 
 int
 main (int argc, char* argv[]) {
@@ -49,7 +88,8 @@ main (int argc, char* argv[]) {
     cout<<" -skip-postprocessing: Skip postprocessing which cleanups code"<<endl;
     cout<<" -process-headers:     Process calls within header files"<<endl;
     cout<<" -verbose:            Printout debugging information"<<endl;
-    cout<<" -limit N:            Outline up to N functions, then stop"<<endl;
+    cout<<" -limit N:            Inline up to N functions, then stop"<<endl;
+    cout<<" -main-only:          Inline only functions reachable from main()"<<endl;
     cout<<"----------------------Generic Help for ROSE tools--------------------------"<<endl;
   }
 
@@ -62,9 +102,18 @@ main (int argc, char* argv[]) {
   else 
     e_inline_only = false;
 
+  if (CommandlineProcessing::isOption (argvList,"-main-only","", true))
+  {
+    cout<<"Inlining only functions reachable from main()...."<<endl;
+    e_inline_main = true ;
+  }
+  else 
+    e_inline_main = false;
+
+
   if (CommandlineProcessing::isOptionWithParameter (argvList,"", "-limit", e_inline_limit, true))
   {
-    cout<<"Limiting the number of functions to be outlined to be:" << e_inline_limit <<endl;
+    cout<<"Limiting the number of functions to be inlined to be:" << e_inline_limit <<endl;
   }
 
   // skip calls within headers or not
@@ -93,34 +142,42 @@ main (int argc, char* argv[]) {
 // this is essentially recursion by default.
   int call_count =0; 
   size_t nInlined = 0;
-  for (int count=0; count<10; ++count) 
+
+  if (e_inline_main)
   {
-    bool changed = false;
-//    BOOST_FOREACH (SgFunctionCallExp *call, SageInterface::querySubTree<SgFunctionCallExp>(sageProject)) 
-// interesting user loops are often located in the end of the source file    
-    BOOST_REVERSE_FOREACH (SgFunctionCallExp *call, SageInterface::querySubTree<SgFunctionCallExp>(sageProject)) 
-    {
-      call_count++; 
-      if (call_count>  e_inline_limit )
-      {
-        if (Inliner::verbose)        
-             std::cout << "Reached the limit of number of functions:" << call_count << std::endl;
-          break; 
-      }
-     if (Inliner::verbose)        
-         std::cout << "Trying to inline the function id (starting from 1):" << call_count << std::endl;
-      if (doInline(call)) {
-        ASSERT_always_forbid2(isAstContaining(sageProject, call),
-            "Inliner says it inlined, but the call expression is still present in the AST.");
-        ++nInlined;
-        inlined_calls.push_back(call);
-        changed = true;
-        break;
-      }
-    }
-    if (!changed)
-      break;
+      SgFunctionDeclaration * fdecl = SageInterface::findMain(sageProject);
+      inlineFromRoot(fdecl, call_count, inlined_calls);
   }
+  else // the original driver to inline everything, which is too aggressive.
+    for (int count=0; count<10; ++count) 
+    {
+      bool changed = false;
+      //    BOOST_FOREACH (SgFunctionCallExp *call, SageInterface::querySubTree<SgFunctionCallExp>(sageProject)) 
+      // interesting user loops are often located in the end of the source file    
+      BOOST_REVERSE_FOREACH (SgFunctionCallExp *call, SageInterface::querySubTree<SgFunctionCallExp>(sageProject)) 
+      {
+        call_count++; 
+        if (call_count>  e_inline_limit )
+        {
+          if (Inliner::verbose)        
+            std::cout << "Reached the limit of number of functions:" << call_count << std::endl;
+          break; 
+        }
+        if (Inliner::verbose)        
+          std::cout << "Trying to inline the function id (starting from 1):" << call_count << std::endl;
+        if (doInline(call)) {
+          ASSERT_always_forbid2(isAstContaining(sageProject, call),
+              "Inliner says it inlined, but the call expression is still present in the AST.");
+          ++nInlined;
+          inlined_calls.push_back(call);
+          changed = true;
+          break; //TODO why is there a break???
+        }
+      }
+      if (!changed)
+        break;
+    }
+
   std::cout <<"Test inlined " <<StringUtility::plural(nInlined, "function calls") << " out of "<< call_count<< " calls." <<"\n";
   for (size_t i=0; i< inlined_calls.size(); i++)
   {
