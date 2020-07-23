@@ -1,7 +1,10 @@
 template<class T> void f(T, T*);    // #1
 template<class T> void f(T, int*);  // #2
+
 void m(int* p) {
-    f(0, p); // deduction for #1: void f(T, T*) [T = int]
+
+ // DQ (7/21/2020): Failing case (ambiguous case) should not be tested
+ // f(0, p); // deduction for #1: void f(T, T*) [T = int]
              // deduction for #2: void f(T, int*) [T = int]
  // partial ordering:
  // #1 from #2: void(T,T*) from void(U1,int*): P1=T, A1=U1: T=U1

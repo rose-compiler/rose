@@ -1,3 +1,8 @@
+// DQ (7/22/2020): EDG 6.0 can't handl the STL string header file.
+#include <string>
+
+class Base {};
+
 class TotallyOrdered : Base {
   std::string tax_id;
   std::string first_name;
@@ -15,10 +20,16 @@ public:
  }
  // ... non-comparison functions ...
 };
-// compiler generates all four relational operators
-TotallyOrdered to1, to2;
-std::set<TotallyOrdered> s; // ok
-s.insert(to1); // ok
-if (to1 <= to2) { /*...*/ } // ok, single call to <=>
 
+// DQ (7/21/2020): Moved function calls into a function.
+void foobar1()
+   {
+  // compiler generates all four relational operators
+     TotallyOrdered to1, to2;
+
+  // std::set<TotallyOrdered> s; // ok
+  // s.insert(to1); // ok
+
+     if (to1 <= to2) { /*...*/ } // ok, single call to <=>
+   }
 

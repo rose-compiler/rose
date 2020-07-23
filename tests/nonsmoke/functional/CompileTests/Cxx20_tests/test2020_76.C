@@ -1,3 +1,10 @@
+// DQ (7/22/2020): Needed to add declaration of template A.
+template <int T> 
+struct A
+   {
+     int x;
+   };
+
 template<int I, int J> A<I+J> f(A<I>, A<J>); // overload #1
 template<int K, int L> A<K+L> f(A<K>, A<L>); // same as #1
 template<int I, int J> A<I-J> f(A<I>, A<J>); // overload #2
