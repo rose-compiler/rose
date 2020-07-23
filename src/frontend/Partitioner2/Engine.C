@@ -2167,7 +2167,12 @@ Engine::makeCalledFunctions(Partitioner &partitioner) {
 
 std::vector<Function::Ptr>
 Engine::makeNextPrologueFunction(Partitioner &partitioner, rose_addr_t startVa) {
-    std::vector<Function::Ptr> functions = partitioner.nextFunctionPrologue(startVa);
+    return makeNextPrologueFunction(partitioner, startVa, startVa);
+}
+
+std::vector<Function::Ptr>
+Engine::makeNextPrologueFunction(Partitioner &partitioner, rose_addr_t startVa, rose_addr_t &lastSearchedVa) {
+    std::vector<Function::Ptr> functions = partitioner.nextFunctionPrologue(startVa, lastSearchedVa /*out*/);
     BOOST_FOREACH (const Function::Ptr &function, functions)
         partitioner.attachOrMergeFunction(function);
     return functions;
@@ -2345,11 +2350,9 @@ Engine::discoverFunctions(Partitioner &partitioner) {
 
         // No pending basic blocks, so look for a function prologue. This creates a pending basic block for the function's
         // entry block, so go back and look for more basic blocks again.
-        std::vector<Function::Ptr> newFunctions = makeNextPrologueFunction(partitioner, nextPrologueVa);
-        if (!newFunctions.empty()) {
-            nextPrologueVa = newFunctions[0]->address();   // avoid "+1" because it may overflow
+        std::vector<Function::Ptr> newFunctions = makeNextPrologueFunction(partitioner, nextPrologueVa, nextPrologueVa /*out*/);
+        if (!newFunctions.empty())
             continue;
-        }
 
         // Scan inter-function code areas to find basic blocks that look reasonable and process them with instruction semantics
         // to find calls to functions that we don't know about yet.

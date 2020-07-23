@@ -6,7 +6,10 @@ class SgProject;
 namespace Rose {
 namespace AST {
 
-void link(SgProject *);
+void link_variable(SgProject *);
+void link_function(SgProject *);
+void link_class(SgProject *);
+void link_namespace(SgProject *);
 
 }
 }

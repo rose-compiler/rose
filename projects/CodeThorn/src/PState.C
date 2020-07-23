@@ -136,8 +136,11 @@ bool PState::varExists(AbstractValue varId) const {
   * \date 2012.
  */
 bool PState::memLocExists(AbstractValue memLoc) const {
-  PState::const_iterator i=find(memLoc);
-  return !(i==end());
+  if(AbstractValue::byteMode) {
+    AlignedMemLoc aMemLoc=memLoc.alignedMemLoc();
+    return find(aMemLoc.memLoc)!=end();
+  }
+  return find(memLoc)!=end();
 }
 
 /*! 
@@ -170,19 +173,10 @@ bool PState::varIsTop(AbstractValue varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
-string PState::varValueToString(AbstractValue varId) const {
+string PState::varValueToString(AbstractValue av) const {
   stringstream ss;
-  AbstractValue val=varValue(varId);
+  AbstractValue val=varValue(av);
   return val.toString();
-}
-
-/*! 
-  * \author Markus Schordan
-  * \date 2014.
- */
-AbstractValue PState::varValue(AbstractValue varId) const {
-  AbstractValue val=((*(const_cast<PState*>(this)))[varId]);
-  return val;
 }
 
 /*! 
@@ -201,7 +195,9 @@ void PState::writeTopToAllMemoryLocations() {
 void PState::combineValueAtAllMemoryLocations(AbstractValue val) {
   for(PState::iterator i=begin();i!=end();++i) {
     AbstractValue memLoc=(*i).first;
-    combineAtMemoryLocation(memLoc,val);
+    if(!memLoc.isRef()) {
+      combineAtMemoryLocation(memLoc,val);
+    }
   }
 }
 
@@ -211,18 +207,18 @@ void PState::combineValueAtAllMemoryLocations(AbstractValue val) {
  */
 void PState::writeValueToAllMemoryLocations(CodeThorn::AbstractValue val) {
   for(PState::iterator i=begin();i!=end();++i) {
-    AbstractValue varId=(*i).first;
-    writeToMemoryLocation(varId,val);
+    AbstractValue av=(*i).first;
+    writeToMemoryLocation(av,val);
   }
 }
 
-void PState::reserveMemoryLocation(AbstractValue varId) {
-  writeUndefToMemoryLocation(varId);
+void PState::reserveMemoryLocation(AbstractValue av) {
+  writeUndefToMemoryLocation(av);
 }
 
-void PState::writeUndefToMemoryLocation(AbstractValue varId) {
+void PState::writeUndefToMemoryLocation(AbstractValue av) {
   AbstractValue undefValue=AbstractValue::createUndefined();
-  writeToMemoryLocation(varId, undefValue);
+  writeToMemoryLocation(av, undefValue);
 }
 
 void PState::writeTopToMemoryLocation(AbstractValue varId) {
@@ -336,6 +332,15 @@ bool CodeThorn::operator!=(const PState& c1, const PState& c2) {
   return !(c1==c2);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2014.
+ */
+AbstractValue PState::varValue(AbstractValue av) const {
+  AbstractValue val=((*(const_cast<PState*>(this)))[av]);
+  return val;
+}
+
 AbstractValue PState::readFromMemoryLocation(AbstractValue abstractMemLoc) const {
   if(abstractMemLoc.isTop()) {
     // result can be any value
@@ -351,17 +356,57 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
     abstractValue=AbstractValue(CodeThorn::Top());
   }
   if(abstractMemLoc.isTop()) {
-    //combineValueAtAllMemoryLocations(abstractValue); // BUG: leads to infinite loop in DOM029
+    combineValueAtAllMemoryLocations(abstractValue); // BUG: leads to infinite loop in DOM029
+    return;
   } else {
-    operator[](abstractMemLoc)=abstractValue;
+    if(AbstractValue::byteMode) {
+      VariableId varId=abstractMemLoc.getVariableId();
+      long int offset=abstractMemLoc.getIndexIntValue();
+      ROSE_ASSERT(AbstractValue::_variableIdMapping);
+      long int pointerValueElemSize=abstractMemLoc.getElementTypeSize();
+      long int inStateElemSize=(long int)AbstractValue::_variableIdMapping->getElementSize(varId);
+      abstractMemLoc.setElementTypeSize(inStateElemSize); // adapt element size when storing in state
+      if(pointerValueElemSize!=inStateElemSize) {
+        //cout<<"DEBUG: memloc:"<<abstractMemLoc.toString(AbstractValue::_variableIdMapping)<<endl;
+        //cout<<"DEBUG: elemSize: "<<elemSize<<endl;
+        if(inStateElemSize!=0) {
+          //cout<<"DEBUG: offset     : "<<offset<<endl;
+          long int withinElementOffset=offset%inStateElemSize;
+          //cout<<"DEBUG: withinElementOffset: "<<withinElementOffset<<endl;
+          if(withinElementOffset!=0) {
+            // TODO: access within element with mod as byte offset
+            offset-=withinElementOffset;
+            abstractMemLoc.setValue(offset); // adjustment of address to element-aligned offset
+          }
+          // conservative destruction of values if unaligned write
+          operator[](abstractMemLoc)=AbstractValue::createTop(); // loosing value, loosing precision
+          if(withinElementOffset+pointerValueElemSize>inStateElemSize) {
+            int long numModifiedElements=(pointerValueElemSize/inStateElemSize); // one is already modifed above
+            for(int i=0;i<numModifiedElements;i++) {
+              AbstractValue change=AbstractValue(inStateElemSize);
+              abstractMemLoc=AbstractValue::operatorAdd(abstractMemLoc,change); // advance pointer
+              // TODO: check for memory bound
+              operator[](abstractMemLoc)=AbstractValue::createTop();
+            }
+          }
+        } else {
+          operator[](abstractMemLoc)=abstractValue; // should not happen (elemsize=0)
+        }
+      } else {
+        operator[](abstractMemLoc)=abstractValue; // elem size is the same, keeping precision
+      }
+    } else {
+      operator[](abstractMemLoc)=abstractValue; // not in bytemode (cannot handle unaligend access)
+    }
   }
 }
 
 void PState::combineAtMemoryLocation(AbstractValue abstractMemLoc,
                                      AbstractValue abstractValue) {
-  AbstractValue currentValue=operator[](abstractMemLoc);
+  AbstractValue currentValue=readFromMemoryLocation(abstractMemLoc);
   AbstractValue newValue=AbstractValue::combine(currentValue,abstractValue);
-  operator[](abstractMemLoc)=newValue;
+  if(!abstractMemLoc.isTop()&&!abstractMemLoc.isBot()) 
+    writeToMemoryLocation(abstractMemLoc,newValue);
 }
 
 size_t PState::stateSize() const {
@@ -424,6 +469,7 @@ CodeThorn::PState PState::combine(CodeThorn::PState& p1, CodeThorn::PState& p2) 
   // case if the number of matched elements above is different to p2.size()
   if(numMatched!=p2.size()) {
     for(auto elem2:p2) {
+      // only add elements of p2 that are not in p1
       if(p1.find(elem2.first)==p1.end()) {
         res.writeToMemoryLocation(elem2.first,elem2.second);
       }

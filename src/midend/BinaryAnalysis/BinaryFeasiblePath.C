@@ -908,7 +908,7 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
     }
 
     // Direction flag (DF) is always set
-    if (const RegisterDescriptor REG_DF = cpu->get_register_dictionary()->findOrThrow("df"))
+    if (const RegisterDescriptor REG_DF = cpu->get_register_dictionary()->find("df"))
         ops->writeRegister(REG_DF, ops->boolean_(true));
 
     initialState_ = ops->currentState()->clone();

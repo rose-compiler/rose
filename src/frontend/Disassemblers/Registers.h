@@ -112,7 +112,7 @@ public:
      *  instruction set.
      *
      *  They are documented in "Arm Instruction Set Version 1.0 Reference Guide" copyright 2018 Arm Limited. */
-    static const RegisterDictionary* dictionary_aarch64();
+    static const RegisterDictionary* dictionary_a64();
 #endif
 
     /** PowerPC-32 registers. */

@@ -2181,8 +2181,15 @@ public:
      *
      *  If no match is found then an empty vector is returned.
      *
-     *  Thread safety: Not thread safe. */
+     *  If The @p lastSearchedVa argument is provided, then it is set to the highest address at which a function prologue was
+     *  searched.
+     *
+     *  Thread safety: Not thread safe.
+     *
+     *  @{ */
     std::vector<Function::Ptr> nextFunctionPrologue(rose_addr_t startVa) /*final*/;
+    std::vector<Function::Ptr> nextFunctionPrologue(rose_addr_t startVa, rose_addr_t &lastSearchedVa /*out*/) /*final*/;
+    /** @} */
 
 public:
     /** Ordered list of function padding matchers.

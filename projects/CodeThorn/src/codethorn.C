@@ -53,6 +53,7 @@
 #include "Normalization.h"
 #include "DataDependenceVisualizer.h" // also used for clustered ICFG
 #include "Evaluator.h" // CppConstExprEvaluator
+#include "CtxCallStrings.h" // for setting call string options
 
 // Z3-based analyser / SSA 
 #include "z3-prover-connection/SSAGenerator.h"
@@ -88,7 +89,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.12.9";
+const std::string versionString="1.12.10";
 
 // handler for generating backtrace
 void handler(int sig) {
@@ -557,6 +558,11 @@ int main( int argc, char * argv[] ) {
       return 0;
     }
 
+    AbstractValue::byteMode=ctOpt.byteMode;
+    AbstractValue::strictChecking=ctOpt.strictChecking;
+    SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls;
+    if (ctOpt.callStringLength >= 2) 
+      setFiniteCallStringMaxLength(ctOpt.callStringLength);
     configureOptionSets(ctOpt);
 
     analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;
@@ -1190,7 +1196,8 @@ int main( int argc, char * argv[] ) {
         }
         if (ltlOpt.cegpra.checkAllProperties) {
           ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlInAlphabet, ltlOutAlphabet);
-        } else {  // cegpra for single LTL property
+        } else {
+          // cegpra for single LTL property
           //ROSE_ASSERT(ltlOpt.cegpra.ltlPropertyNr!=-1);
           int property = ltlOpt.cegpra.ltlPropertyNr;
           ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);

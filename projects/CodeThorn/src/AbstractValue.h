@@ -24,7 +24,8 @@ using std::ostream;
 namespace CodeThorn {
   
   class AbstractValue;
-
+  class AlignedMemLoc;
+  
   bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
   bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
 
@@ -63,7 +64,7 @@ class AbstractValue {
   // -Wno-psabi allows to turn this off
   //AbstractValue(long double x);
   AbstractValue(CodeThorn::VariableId varId); // allows implicit type conversion
-  void initInteger(CodeThorn::BuiltInType btype, long long int ival);
+  void initInteger(CodeThorn::BuiltInType btype, long int ival);
   void initFloat(CodeThorn::BuiltInType btype, double fval);
   static AbstractValue createIntegerValue(CodeThorn::BuiltInType btype, long long int ival);
   CodeThorn::TypeSize calculateTypeSize(CodeThorn::BuiltInType btype);
@@ -151,7 +152,7 @@ class AbstractValue {
   AbstractValue getIndexValue() const;
   CodeThorn::VariableId getVariableId() const;
   // sets value according to type size (truncates if necessary)
-  void setValue(long long int ival);
+  void setValue(long int ival);
   void setValue(double fval);
   Label getLabel() const;
   long hash() const;
@@ -159,22 +160,30 @@ class AbstractValue {
 
   CodeThorn::TypeSize getTypeSize() const;
   void setTypeSize(CodeThorn::TypeSize valueSize);
+  CodeThorn::TypeSize getElementTypeSize() const;
+  void setElementTypeSize(CodeThorn::TypeSize valueSize);
   static void setVariableIdMapping(CodeThorn::VariableIdMappingExtended* varIdMapping);
   static CodeThorn::VariableIdMappingExtended* getVariableIdMapping();
   static bool approximatedBy(AbstractValue val1, AbstractValue val2);
   static AbstractValue combine(AbstractValue val1, AbstractValue val2);
   static bool strictChecking; // if turned off, some error conditions are not active, but the result remains sound.
+  // returns a memLoc aligned to the declared element size of the memory region it's referring to
+  // with the offset into the element. If the offset is 0, then it's exactly aligned.
+  AlignedMemLoc alignedMemLoc();
  private:
   AbstractValue topOrError(std::string) const;
   ValueType valueType;
   CodeThorn::VariableId variableId;
-  union {
-    long long int intValue=0;
-    double floatValue;
-  };
+  //union {
+  long int intValue=0;
+  double floatValue;
+  //};
   Label label;
   CodeThorn::TypeSize typeSize=0;
+  CodeThorn::TypeSize elementTypeSize=0; // shapr: set, use in +,- operations
+ public:
   static CodeThorn::VariableIdMappingExtended* _variableIdMapping;
+  static bool byteMode; // computes byte offset for array and struct elements
 };
 
 // arithmetic operators
@@ -197,6 +206,13 @@ class AbstractValue {
 
   typedef std::set<AbstractValue> AbstractValueSet;
   AbstractValueSet& operator+=(AbstractValueSet& s1, AbstractValueSet& s2);
+
+  struct AlignedMemLoc {
+    AlignedMemLoc(AbstractValue,int);
+    AbstractValue memLoc;
+    int offset=0;
+  };
+
 }
 
 #endif

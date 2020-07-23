@@ -42,8 +42,8 @@ std::string unparseMnemonic(SgAsmInstruction *insn) {
         case V_SgAsmX86Instruction:
             return unparseX86Mnemonic(isSgAsmX86Instruction(insn));
 #ifdef ROSE_ENABLE_ASM_A64
-        case V_SgAsmArm64Instruction:
-            ASSERT_not_implemented("compatibility mode no longer supported for ARM");
+        case V_SgAsmA64Instruction:
+            return unparseA64Mnemonic(isSgAsmA64Instruction(insn));
 #endif
         case V_SgAsmPowerpcInstruction:
             return unparsePowerpcMnemonic(isSgAsmPowerpcInstruction(insn));
@@ -79,8 +79,8 @@ std::string unparseExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap
         case V_SgAsmX86Instruction:
             return unparseX86Expression(expr, labels, registers);
 #ifdef ROSE_ENABLE_ASM_A64
-        case V_SgAsmArm64Instruction:
-            ASSERT_not_implemented("compatibility mode not supported for ARM");
+        case V_SgAsmA64Instruction:
+            return unparseA64Expression(expr, labels, registers);
 #endif
         case V_SgAsmPowerpcInstruction:
             return unparsePowerpcExpression(expr, labels, registers);
@@ -105,7 +105,7 @@ unparseAsmStatement(SgAsmStatement* stmt)
     switch (stmt->variantT()) {
         case V_SgAsmX86Instruction:
 #ifdef ROSE_ENABLE_ASM_A64
-        case V_SgAsmArm64Instruction:
+        case V_SgAsmA64Instruction:
 #endif
         case V_SgAsmPowerpcInstruction:
         case V_SgAsmMipsInstruction:

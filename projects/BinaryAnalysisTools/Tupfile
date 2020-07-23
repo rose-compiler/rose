@@ -32,7 +32,14 @@ ifneq (@(WITH_DLIB),no)
     run $(tool_compile_linkexe) --install -o rose-find-similar-functions findSimilarFunctions.C
 endif
 
+# Experimental
+run $(tool_compile_linkexe) --install -o rose-pardis pardis.C
 
+########################################################################################################################
+# Debugging
+########################################################################################################################
+
+run $(tool_compile_linkexe) debug-arm-semantics.C
 
 ########################################################################################################################
 # Tests

@@ -292,6 +292,7 @@ class BuildLoopDepGraphCreate : public BuildLoopDepGraphEdges
     for ( ; (cur != NULL && !cur->IncreaseLoopLevel() && cur->GetOrigStmt()==0); iter.Advance(), cur = iter.Current());
     if (DebugDep())  {
       std::cerr << "Trying to create : " << AstInterface::AstToString(start) << "\n";
+      assert(cur!=NULL);
       std::cerr << "current loop tree node:" << cur->toString() << "\n";
      }
     LoopTreeDepGraphNode *d = graph.CreateNode(cur, c);

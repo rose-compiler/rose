@@ -7,6 +7,7 @@
 #include "FunctionCallMapping.h"
 #include "CFAnalysis.h"
 #include "Flow.h"
+#include "VariableIdMappingExtended.h"
 
 class SgProject;
 class ClassHierarchyWrapper;
@@ -20,7 +21,7 @@ namespace CodeThorn {
     virtual void initialize(SgProject* root);
     SgProject* getRoot();
     Labeler* getLabeler();
-    VariableIdMapping* getVariableIdMapping();
+    VariableIdMappingExtended* getVariableIdMapping();
     FunctionIdMapping* getFunctionIdMapping();
     FunctionCallMapping* getFunctionCallMapping();
     FunctionCallMapping2* getFunctionCallMapping2();
@@ -36,7 +37,7 @@ namespace CodeThorn {
   private:
     bool _modeArrayElementVariableId=false;
     Labeler* _labeler=nullptr;
-    VariableIdMapping* _variableIdMapping=nullptr;
+    VariableIdMappingExtended* _variableIdMapping=nullptr;
     FunctionIdMapping* _functionIdMapping=nullptr;
     FunctionCallMapping* _functionCallMapping=nullptr;
     FunctionCallMapping2* _functionCallMapping2=nullptr;

@@ -17,6 +17,7 @@ endif
 ##################################################################################
 
 TESTCODES_REQUIRED_TO_PASS = \
+     test2020_03.c \
      test_CplusplusMacro_C.c \
      gconv_info.c \
      testCvsCpp.c \
@@ -577,7 +578,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2019_12.c \
      test2019_13.c \
      test2019_14.c \
-     test2019_15.c 
+     test2019_15.c
 
 
 TESTCODE_CURRENTLY_FAILING = \
@@ -948,9 +949,12 @@ TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 
 # any programs needed by your tests that does not need to be built by make all.
+
+# DQ (6/23/2020): I need to avoid having these run first.
 check_PROGRAMS = $(PASSING_TEST_Executables)
+
 # a list of programs or scripts to run in order to do the testing 
-TESTS= $(check_PROGRAMS) caller.out 
+TESTS= $(check_PROGRAMS) caller.out
 
 # DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
 # this, this implementation needs review).  It might be better to prepend the information to the 
@@ -1079,7 +1083,9 @@ test_link_using_asm_symbol_injection: $(TEST_TRANSLATOR)
 caller.o: $(srcdir)/callee.c $(srcdir)/caller.c
 	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $^
 # default case: generate executable a.out from any number of input files	
+
 caller.out: $(srcdir)/callee.c $(srcdir)/caller.c
+#	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $^ -o caller.out
 	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $^ -o caller.out
 # DQ (4/18/2015): Add the execution of the generated executable.
 	./caller.out
@@ -1188,7 +1194,8 @@ EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
         test2015_154.h \
         test2015_156.h \
         test2015_157.h \
-        test2015_159.h
+        test2015_159.h \
+        test2020_03.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests

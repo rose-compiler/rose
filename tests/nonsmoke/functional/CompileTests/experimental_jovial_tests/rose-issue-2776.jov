@@ -1,0 +1,10 @@
+START
+PROGRAM typename'conv ;
+BEGIN
+  TYPE float'type F 64;
+  ITEM float'var float'type;
+  ITEM ii U = 999;
+
+  float'var = float'type(ii);
+END
+TERM

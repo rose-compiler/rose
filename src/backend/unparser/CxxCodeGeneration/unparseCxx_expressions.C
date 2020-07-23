@@ -297,6 +297,10 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      SgLambdaExp* lambdaExp = isSgLambdaExp(expr);
      ASSERT_not_null(lambdaExp);
 
+#if 0
+     printf ("In unparseLambdaExpression(expr = %p = %s) \n",expr,expr->class_name().c_str());
+#endif
+
      // Liao, 7/1/2016
      // To workaround some wrong AST generated from RAJA LULESH code
      // we clear skip base type flag of unparse_info
@@ -490,6 +494,10 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
 #if 0
      printf ("In unparseLambdaExpression(): DONE: calling unparseStatement(lambdaFunction->get_definition()->get_body(), ninfo); \n");
      curprint (" /* In unparseLambdaExpression(): DONE: calling unparseStatement(lambdaFunction->get_definition()->get_body(), ninfo); */ ");
+#endif
+
+#if 0
+     printf ("Leaving unparseLambdaExpression(expr = %p = %s) \n",expr,expr->class_name().c_str());
 #endif
 
 #if 0
@@ -7652,7 +7660,9 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
         {
        // Now check the version of the identified GNU g++ compiler.
           if ((usingGxx && ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 5) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4)))
-             || (usingClang && (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 7)))
+          // DQ (3/31/2020): bug fix for use of ROSE on older clang version 6 (on my Mac)
+          // || (usingClang && (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 7)))
+             || (usingClang && (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 6)))
              {
             // If this is the GNU g++ 4.5 version compiler (or greater) then we have to use "X::A()"
             // as a constructor name instead of "X::A::A()" which was previously accepted by GNU g++.

@@ -835,8 +835,13 @@ public:
      *  predefined and user-defined callbacks to search for the next pattern.
      *
      *  Returns a vector of non-null function pointers pointer for the newly inserted functions, otherwise returns an empty
-     *  vector. */
+     *  vector. If the @p lastSearchedVa is provided, it will be set to the highest address at which a function prologue was
+     *  searched.
+     *
+     * @{ */
     virtual std::vector<Function::Ptr> makeNextPrologueFunction(Partitioner&, rose_addr_t startVa);
+    virtual std::vector<Function::Ptr> makeNextPrologueFunction(Partitioner&, rose_addr_t startVa, rose_addr_t &lastSearchedVa);
+    /** @} */
 
     /** Make functions from inter-function calls.
      *

@@ -9,12 +9,13 @@
 
 #include <set>
 #include <string>
+
 #include "Labeler.h"
 #include "CFAnalysis.h"
 #include "WorkListSeq.h"
 #include "CollectionOperators.h"
 #include "DFTransferFunctions.h"
-#include "PASolver1.h"
+#include "DFAbstractSolver.h"
 #include "DFAstAttribute.h"
 #include "PointerAnalysisInterface.h"
 #include "ProgramAbstractionLayer.h"
@@ -28,15 +29,12 @@ namespace CodeThorn {
 #include "PropertyState.h"
 
 class DFAnalysisBase {
- public:
+ public:  
   DFAnalysisBase();
   virtual ~DFAnalysisBase();
   void setExtremalLabels(LabelSet extremalLabels);
   virtual void initializeExtremalValue(Lattice* element);
-
-  // \todo maybe split into initialize(root,variableIdForEachArrayElement)
-  //       and initialize(ProgramAbstractionLayer*).
-  virtual void initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer=nullptr, bool variableIdForEachArrayElement = false);
+  virtual void initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer=nullptr);
 
   void setForwardAnalysis();
   void setBackwardAnalysis();
@@ -51,29 +49,25 @@ class DFAnalysisBase {
   virtual void initializeSolver();
   void determineExtremalLabels(SgNode* startFunRoot=0,bool onlySingleStartLabel=true);
   void run();
-  //virtual PropertyState* createPropertyState();
 
-  // results are accessible through begin/end and iterator.
-  typedef vector<Lattice*> AnalyzerData;
-  typedef vector<Lattice*> ResultAccess;
-  ResultAccess& getResultAccess();
+  vector<Lattice*>& getResultAccess();
 #if 0
   void attachResultsToAst(string);
 #endif
   Labeler* getLabeler();
   CFAnalysis* getCFAnalyzer();
-  VariableIdMapping* getVariableIdMapping();
+  VariableIdMappingExtended* getVariableIdMapping();
   FunctionIdMapping* getFunctionIdMapping();
-  Flow* getFlow() const { return _flow; }
-  Lattice* getPreInfo(Label lab);
-  Lattice* getPostInfo(Label lab);
+  Flow* getFlow() const;
+  virtual Lattice* getPreInfo(Label lab);
+  virtual Lattice* getPostInfo(Label lab);
   void attachInInfoToAst(string attributeName);
   void attachOutInfoToAst(string attributeName);
 
   void attachInfoToAst(string attributeName,bool inInfo);
   void setSolverTrace(bool trace) { _solver->setTrace(trace); }
 
-  // optional: allows to set a pointer analysis (if not set the default behavior is used (everything is modified through any pointer)).
+  // optional: allows to set a pointer analysis (if not set, then the default behavior is used (everything is modified through any pointer)).
   void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pa);
   CodeThorn::PointerAnalysisInterface* getPointerAnalysis();
   void setSkipUnknownFunctionCalls(bool defer);
@@ -84,8 +78,8 @@ class DFAnalysisBase {
   virtual void solve();
   ProgramAbstractionLayer* _programAbstractionLayer=nullptr;
   LabelSet _extremalLabels;
-  Flow* _flow;
   // following members are initialized by function initialize()
+  Flow* _flow=nullptr;
   long _numberOfLabels=0;
   vector<Lattice*> _analyzerDataPreInfo;
   vector<Lattice*> _analyzerDataPostInfo;
@@ -93,9 +87,8 @@ class DFAnalysisBase {
   void setInitialElementFactory(PropertyStateFactory*);
   PropertyStateFactory* getInitialElementFactory();
 
-  //typedef AnalyzerData::iterator iterator;
-  typedef AnalyzerData::iterator iterator;
 #if 0
+  typedef vector<Lattice*>::iterator iterator;
   iterator begin();
   iterator end();
   size_t size();
@@ -109,12 +102,12 @@ class DFAnalysisBase {
  public:
   DFTransferFunctions* _transferFunctions=nullptr;
  protected:
-  CodeThorn::PASolver1* _solver=nullptr;
+  DFAbstractSolver* _solver=nullptr;
   AnalysisType _analysisType=DFAnalysisBase::FORWARD_ANALYSIS;
   bool _no_topological_sort=false;
  private:
-  CodeThorn::PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
-  CodeThorn::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;
+  PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
+  PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;
   Lattice* _globalVariablesState=nullptr;
   bool _skipSelectedFunctionCalls=false;
   bool _programAbstractionLayerOwner=true;
