@@ -2199,11 +2199,11 @@ ROSE_DLL_API int splitVariableDeclaration (SgScopeStatement* scope, bool topLeve
 
 //! Replace an expression with a temporary variable and an assignment statement
 /*!
- Add a new temporary variable to contain the value of 'from'
- Change reference to 'from' to use this new variable
- Assumptions: 'from' is not within the test of a loop or 'if'
-              not currently traversing 'from' or the statement it is in
-
+ Add a new temporary variable to contain the value of 'from'.
+ Change reference to 'from' to use this new variable.
+ Assumptions: (1)'from' is not within the test of a loop or 'if';
+              (2)not currently traversing 'from' or the statement it is in.
+ Return value: the new temp variable declaration's assign initializer containing the from expression.              
  */
  ROSE_DLL_API SgAssignInitializer* splitExpression(SgExpression* from, std::string newName = "");
 
