@@ -43,6 +43,7 @@ void SystemDependenceGraph::createConnectionsForLibaryFunction(SgFunctionDeclara
 // DependenceNode * formalIn,*formalOut,*entry,*formalReturn;
    DependenceNode * formalIn,*entry,*formalReturn;
 
+  ROSE_ASSERT(ii != NULL);
   entry=getNode(DependenceNode::ENTRY,ii->getFunctionEntry());
   formalReturn=getNode(DependenceNode::FORMALRETURN,ii->getFormalReturn());
   if (fName.getString()==string("printf___Fb_i_Gb_RST__Pb__Cc__Pe____sep__e_Fe_")
