@@ -314,6 +314,7 @@ bool nodeConstAnalysis::transfer(const Function& func, const DataflowNode& n, No
                                 for(varIDSet::iterator it=rhsReads.begin(); it!=rhsReads.end(); it++)
                                 {
                                         nodeConstLattice* rhsVarLat = dynamic_cast<nodeConstLattice*>(prodLat->getVarLattice(func, *it));
+                                        ROSE_ASSERT(rhsVarLat != NULL);
                                         printf("    RHS variable %s lattice: %s\n", (*it).str().c_str(), rhsVarLat->str().c_str());
                                         maxLat.maxUpdate(*rhsVarLat);
                                 }
