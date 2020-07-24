@@ -7,6 +7,7 @@
 #include <list>
 using namespace std;
 
+#include <assert.h>
 
 bool SystemDependenceGraph::isKnownLibraryFunction(SgFunctionDeclaration *fDec)
 {
@@ -636,6 +637,7 @@ void SystemDependenceGraph::doInterproceduralConnections(InterproceduralInfo * i
 void SystemDependenceGraph::addFunction(FunctionDependenceGraph * pdg)
 {
 
+  ROSE_ASSERT(pdg->getInterprocedural() != NULL);
   SgFunctionDeclaration *func = pdg->getInterprocedural()->getFunctionDeclaration();
 
   ROSE_ASSERT(func != NULL);
