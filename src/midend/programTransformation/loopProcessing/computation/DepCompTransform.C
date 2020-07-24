@@ -131,6 +131,7 @@ tc.DumpDep();
     for (GroupGraphNode::const_iterator iter=scc->begin(); !iter.ReachEnd(); iter++) {
        LoopTreeDepGraphNode *n =
           static_cast<LoopTreeDepGraphNode*>(iter.Current());
+       assert(tc.GetTreeNode(n) != NULL);
        treeSet.insert( tc.GetTreeNode(n) );
     }
     if (treeSet.NumberOfEntries()) {
