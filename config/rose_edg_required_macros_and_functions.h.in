@@ -53,8 +53,9 @@
    This appears to be a clang specific macro function (compiler extension) that is supported in Intel V16 C++ cpmpiler.
  */
 /* DQ (7/23/2020): Later versions of EDG support this properly (EDG 6.0 and maybe EDG 5.0).
-  #define __has_include_next(file) 1
+   However this is confirmed to still be required for the Intel compiler.
 */
+  #define __has_include_next(file) 1
 
 /* DQ (5/10/2016): Ignoring the SSE support (turn it off). */
   #define _PMMINTRIN_H_INCLUDED
@@ -828,7 +829,9 @@ ROSE_CONSTEXPR bool            __builtin_is_constant_evaluated  ()              
 
 #endif
 
-#if __GNUC__ >= 10 && __cplusplus 
+/* DQ (7/23/2020): This fixes a bug demonstrated with GNU 10 using make check-core and/or make check-smoke. */
+/* #if __GNUC__ >= 10 && __cplusplus */
+#if __GNUC__ >= 42 && __cplusplus 
 template <typename T, typename U>
 struct __rose_is_same_as {
   static constexpr bool value = false;
