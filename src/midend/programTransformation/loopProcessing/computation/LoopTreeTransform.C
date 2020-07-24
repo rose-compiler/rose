@@ -1193,6 +1193,7 @@ operator()( LoopTreeNode* repl, LoopTreeNode* init,
   if (opt2 != 0) {
      c.set_opt(opt2);
      LoopTreeNode *r = new LoopTreeCopyArray(c);
+     assert(save != NULL);
      InsertNode(r,save,-1); 
   }
 }
