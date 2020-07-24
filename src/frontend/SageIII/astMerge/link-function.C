@@ -33,6 +33,7 @@ static SgFunctionSymbol * select_shared_function_symbol(std::string const & name
       }
     }
 
+#if DEBUG_LinkFunctionAcrossFiles
     if (srcfiles.size() < sym_map.size()) {
       std::cerr << "Found disconnected symbols that are not from distinct files..." << std::endl;
       std::cerr << " - name : " << name << std::endl;
@@ -51,6 +52,7 @@ static SgFunctionSymbol * select_shared_function_symbol(std::string const & name
         std::cerr << " > srcfile : " << srcfile->get_sourceFileNameWithPath() << " (" << std::hex << srcfile << ")" << std::endl;
       }
     }
+#endif
 
     return (defn_syms.size() > 0) ? *(defn_syms.begin()) : sym_map.begin()->first;
   }

@@ -2,6 +2,7 @@
 #include <CompSliceImpl.h>
 #include <LoopTreeTransform.h>
 #include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <assert.h>
 #include <stdio.h>
 
 class CondSliceStmt : public CompSliceStmt
@@ -68,6 +69,7 @@ DynamicCompSlice :: ~DynamicCompSlice()
 unsigned DynamicCompSlice:: QuerySliceStmtGroupIndex( const LoopTreeNode *n) const
 {
   CondSliceStmt* sliceStmt = static_cast<CondSliceStmt*>( GetImpl()->QuerySliceStmt(n));
+  assert(sliceStmt != NULL);
   return sliceStmt->GetSliceGroupIndex();
 }
 

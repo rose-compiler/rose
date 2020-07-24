@@ -2599,17 +2599,25 @@ endif
 TEST_Objects_FoldedConstants = ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS:.C=.foldedConstants-o}
 TEST_Objects_UnfoldedConstants = ${ALL_TESTCODES:.C=.unfoldedConstants-o}
 
+if ROSE_USE_EDG_VERSION_5_0
+# EDG versions 6.0 and later do not require the -rose:unparse_edg_normalized_method_ROSE_1392 
+# option (it appears that template declarations mihgt no longer be normalized).
 method-defn-in-tpldecl-0.C.passed: $(srcdir)/method-defn-in-tpldecl-0.C $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 	@$(RTH_RUN) \
 	    CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) $(srcdir)/$(@:.C.passed=.C) -o method-defn-in-tpldecl-0 -rose:unparse_edg_normalized_method_ROSE_1392; test -e method-defn-in-tpldecl-0" \
 	    TITLE="testTranslator $(notdir $<) [$@]" \
 	    $(top_srcdir)/scripts/test_exit_status $@
+endif
 
+if ROSE_USE_EDG_VERSION_5_0
+# EDG versions 6.0 and later do not require the -rose:unparse_edg_normalized_method_ROSE_1392 
+# option (it appears that template declarations mihgt no longer be normalized).
 method-defn-in-tpldecl-1.C.passed: $(srcdir)/method-defn-in-tpldecl-1.C $(srcdir)/method-defn-in-tpldecl-1.h $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 	@$(RTH_RUN) \
 	    CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) $(srcdir)/$(@:.C.passed=.C) -o method-defn-in-tpldecl-1 -rose:unparse_edg_normalized_method_ROSE_1392; test -e method-defn-in-tpldecl-1" \
 	    TITLE="testTranslator $(notdir $<) [$@]" \
 	    $(top_srcdir)/scripts/test_exit_status $@
+endif
 
 # DQ (9/18/2011): This is testing the option to process the AST to use the constant folded values (contained in the AST).
 $(TEST_Objects_FoldedConstants): ../../testTranslatorFoldedConstants

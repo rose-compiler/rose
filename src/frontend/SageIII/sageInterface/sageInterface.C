@@ -12452,12 +12452,14 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
   ROSE_ASSERT(from != NULL);
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+#if 0  // This is not accurate for template class specializations. We disable this assertion for now. The worst case is compilation error later.
   if (!SageInterface::isCopyConstructible(from->get_type())) {
     std::cerr << "Type " << from->get_type()->unparseToString() << " of expression " << from->unparseToString() << " is not copy constructible" << std::endl;
     ROSE_ASSERT (false);
   }
 
   assert (SageInterface::isCopyConstructible(from->get_type())); // How do we report errors?
+#endif
   SgStatement* stmt = getStatementOfExpression(from);
   assert (stmt);
   if (!isSgForInitStatement(stmt->get_parent())) {
@@ -23269,6 +23271,23 @@ SageInterface::translateToUseCppDeclarations( SgNode* n )
      printf ("Leaving translateToUseCppDeclarations(): DONE: Calling traversal.traverse() \n");
    }
 
+void SageInterface::recursivePrintCurrentAndParent (SgNode* n)
+{
+  // print current level's info
+  if (!n) return; 
+  cout<<"--------------"<<endl;
+  cout<<n<<":"<<n->class_name()<<  endl;
+  if (SgLocatedNode * lnode = isSgLocatedNode(n))
+  { 
+    cout<<"file info:\t ";
+    lnode->get_file_info()->display();
+    cout<<"\n unparseToString:\t ";
+    lnode->unparseToString();
+  }  
+
+  // track back to its parent
+  recursivePrintCurrentAndParent (n->get_parent());
+} 
 
 void SageInterface:: saveToPDF(SgNode* node)
 {
@@ -24826,3 +24845,43 @@ SageInterface::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node)
 #endif
    }
 
+
+
+// DQ (7/14/2020): Added test for initializers to support debugging of Cxx11_tests/test2020_69.C.
+void
+SageInterface::checkForInitializers( SgNode* node )
+   {
+  // This function checks variable declarations for initializers.  An issue (bug) in EDG 6.0 
+  // support for variable declarations initialized using lambda functions is that the initalizer
+  // is discarded at some point in the processing of the AST.  This function reports on all 
+  // variable declarations and if they contain initializers and if so what kind of initializer.
+
+     ROSE_ASSERT(node != NULL);
+
+  // Preorder traversal to uniquely label the scopes (SgScopeStatements)
+     class CheckInitializerTraversal : public AstSimpleProcessing
+        {
+          public:
+               void visit (SgNode* node)
+                  {
+                    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(node);
+                    if (variableDeclaration != NULL)
+                       {
+                         SgInitializedName* initializedName = getFirstInitializedName(variableDeclaration);
+                         SgExpression* initializer = initializedName->get_initializer();
+
+                         printf ("variableDeclaration = %p initializedName = %p = %s initializer = %p \n",
+                              variableDeclaration,initializedName,initializedName->get_name().str(),initializer);
+
+                         if (initializer != NULL)
+                            {
+                              printf (" --- initializer = %s \n",initializer->class_name().c_str());
+                            }
+                       }
+                  }
+        };
+
+    // Now buid the traveral object and call the traversal (preorder) on the project.
+       CheckInitializerTraversal traversal;
+       traversal.traverse(node, preorder);
+   }

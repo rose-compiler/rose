@@ -5,6 +5,8 @@
 namespace Rose {
 namespace AST {
 
+#define DEBUG_NameBasedSharing 0
+
 static std::string declaration_position(SgLocatedNode * const lnode) {
   Sg_File_Info* fileInfo = lnode->get_file_info();
   ROSE_ASSERT(fileInfo != NULL);
@@ -116,14 +118,18 @@ struct NameBasedSharing : public ROSE_VisitTraversal {
   void apply() {
     traverseMemoryPool();
 
-//    std::cout << "#  NameBasedSharing::apply" << std::endl;
+#if DEBUG_NameBasedSharing
+    std::cout << "#  NameBasedSharing::apply" << std::endl;
+#endif
 
     std::map<SgNode*, SgNode*> replacements;
     for (std::map<std::string, std::vector<SgNode *> >::const_iterator it_map = name_to_nodes.begin(); it_map != name_to_nodes.end(); ++it_map) {
       std::vector<SgNode *> const & nodes = it_map->second;
       ROSE_ASSERT(nodes.size() > 0);
 
-//      std::cout << "#    " << it_map->first << " -> " << nodes.size() << std::endl;
+#if DEBUG_NameBasedSharing
+      std::cout << "#    " << it_map->first << " -> " << nodes.size() << std::endl;
+#endif
 
       std::vector<SgNode *>::const_iterator it_node = nodes.begin();
       SgNode * reference_node = *(it_node++);
@@ -138,7 +144,9 @@ struct NameBasedSharing : public ROSE_VisitTraversal {
         }
       }
 
-//      std::cout << "#      reference_node = " << std::hex << reference_node << " ( " << reference_node->class_name() << " )" << std::endl;
+#if DEBUG_NameBasedSharing
+      std::cout << "#      reference_node = " << std::hex << reference_node << " ( " << reference_node->class_name() << " )" << std::endl;
+#endif
 
       // Set reference_node as shared
       if (nodes.size() > 1) {

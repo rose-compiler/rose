@@ -1,5 +1,6 @@
 #include "analysis.h"
 #include "dataflow.h"
+#include <assert.h>
 
 #include <memory>
 using std::auto_ptr;
@@ -32,6 +33,7 @@ NodeState* IntraBWDataflow::initializeFunctionNodeState(const Function &func, No
 
 NodeState* IntraFWDataflow::initializeFunctionNodeState(const Function &func, NodeState *fState)
 {
+  ROSE_ASSERT(func.get_definition() != NULL);
   DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(), filter);
 
 // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
@@ -63,6 +65,7 @@ NodeState* IntraFWDataflow::initializeFunctionNodeState(const Function &func, No
 VirtualCFG::dataflow*
 IntraFWDataflow::getInitialWorklist(const Function &func, bool firstVisit, bool analyzeDueToCallers, const set<Function> &calleesUpdated, NodeState *fState)
 {
+  assert(func.get_definition() != NULL);
   DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
   DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition(),filter);
 
@@ -71,8 +74,9 @@ IntraFWDataflow::getInitialWorklist(const Function &func, bool firstVisit, bool 
 
   // If we're analyzing this function for the first time or because the dataflow information coming in from its
   // callers has changed, add the function's entry point
-  if(firstVisit || analyzeDueToCallers)
+  if(firstVisit || analyzeDueToCallers) {
     it->add(funcCFGStart);
+  }
 
   // If we're analyzing this function because of a change in the exit dataflow states of some of the 
   // functions called by this function (these functions are recorded in calleesUpdated), add the calls
@@ -164,9 +168,9 @@ vector<DataflowNode> IntraBWDataflow::getDescendants(const DataflowNode &n)
 { return gatherDescendants(n.inEdges(),  &DataflowEdge::source); }
 
 DataflowNode IntraFWDataflow::getUltimate(const Function &func)
-{ return cfgUtils::getFuncEndCFG(func.get_definition(), filter); }
+{ assert(func.get_definition() != NULL); return cfgUtils::getFuncEndCFG(func.get_definition(), filter); }
 DataflowNode IntraBWDataflow::getUltimate(const Function &func)
-{ return cfgUtils::getFuncStartCFG(func.get_definition(), filter); }
+{ assert(func.get_definition() != NULL); return cfgUtils::getFuncStartCFG(func.get_definition(), filter); }
 
 // Runs the intra-procedural analysis on the given function. Returns true if 
 // the function's NodeState gets modified as a result and false otherwise.
