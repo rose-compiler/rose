@@ -574,6 +574,7 @@ bool IntraPartitionFWDataflow::runAnalysisResume(const Function& func, NodeState
                 //upia_ids.runAnalysis();
         }
         
+        ROSE_ASSERT(func.get_definition() != NULL);
         DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
         DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition(),filter);
         
