@@ -72,6 +72,7 @@ void SystemDependenceGraph::createSafeConfiguration(SgFunctionDeclaration *fDec)
 {
   InterproceduralInfo * ii=getInterproceduralInformation(fDec);
   DependenceNode * formalIn,*formalOut,*entry,*formalReturn;
+  assert(ii != NULL);
   entry=getNode(DependenceNode::ENTRY,ii->getFunctionEntry());
   formalReturn=getNode(DependenceNode::FORMALRETURN,ii->getFormalReturn());
   for (int i=0;i<ii->getFormalCount();i++)
