@@ -155,6 +155,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("normalize-all", po::value< bool >(&ctOpt.normalizeAll)->default_value(false)->implicit_value(true),"Normalize all expressions before analysis.")
     ("normalize-fcalls", po::value< bool >(&ctOpt.normalizeFCalls)->default_value(false)->implicit_value(true),"Normalize only expressions with function calls.")
     ("normalize-extended", po::value<bool >(&ctOpt.extendedNormalizedCppFunctionCalls)->default_value(false)->implicit_value(true),"Normalize CPP function calls.")
+    ("normalize-phase-info", po::value<bool > (&ctOpt.normalizePhaseInfo)->default_value(false)->implicit_value(true),"Print phase progression info on stdout during normalization.")
     ("strict-checking", po::value<bool >(&ctOpt.strictChecking)->default_value(false)->implicit_value(true),"Perform strict checking in semantics (mostly useful for testing), otherwise compute conservative value.")
     ("inline", po::value< bool >(&ctOpt.inlineFunctions)->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("inlinedepth",po::value< int >(&ctOpt.inlineFunctionsDepth)->default_value(10),"Default value is 10. A higher value inlines more levels of function calls.")

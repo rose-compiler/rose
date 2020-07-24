@@ -39,6 +39,9 @@ namespace CodeThorn {
       // only normalize expressions with function calls
       bool restrictToFunCallExpressions=true;
 
+      // print normalization progression info on stdout
+      bool printPhaseInfo=false;
+      
       // transforms single statements in if/while/do-while into blocks with one statement
       // transformation: if(Cond) S; => if(Cond) { S }
       bool normalizeSingleStatements=true;

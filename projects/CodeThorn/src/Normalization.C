@@ -129,12 +129,14 @@ namespace CodeThorn {
 #endif
   }
   void Normalization::printNormalizationPhase() {
-    cout<<"Normalization phase "<<normPhaseNr<<"/"<<normPhaseNrLast<<"["<<(normPhaseNr*100/normPhaseNrLast)<<"%]"<<" ... "<<endl;
+    if(this->options.printPhaseInfo) {
+      cout<<"Normalization phase "<<normPhaseNr<<"/"<<normPhaseNrLast<<"["<<(normPhaseNr*100/normPhaseNrLast)<<"%]"<<" ... "<<endl;
+    }
     normPhaseNr++;
   }
   void Normalization::normalizeAstPhaseByPhase(SgNode* root) {
     normPhaseNr=1;
-    normPhaseNrLast=13;
+    normPhaseNrLast=12;
     printNormalizationPhase();
     if (options.normalizeCplusplus) {
       normalizeCxx(*this, root);
@@ -189,7 +191,9 @@ namespace CodeThorn {
       ROSE_ASSERT(inliner);
       inliner->inlineFunctions(root);
     }
-    cout<<"Normalization done."<<endl;
+    if(this->options.printPhaseInfo) {
+      cout<<"Normalization done."<<endl;
+    }
   }
 
   Normalization::RegisteredSubExprTransformation::RegisteredSubExprTransformation(SubExprTransformationEnum t,SgStatement* s, SgExpression* e)

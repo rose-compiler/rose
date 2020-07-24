@@ -53,6 +53,7 @@ struct CodeThornOptions : public Options {
   bool ompAst=false;
   bool normalizeAll=false;
   bool normalizeFCalls=false;
+  bool normalizePhaseInfo=false;
   bool extendedNormalizedCppFunctionCalls=false; // support for CPP method calls (virtual etc.)
   bool strictChecking=false; // only used for testing when a certain level of precision is enforced, does not impact correctness
   bool inlineFunctions=false;

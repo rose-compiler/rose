@@ -89,7 +89,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.12.10";
+const std::string versionString="1.12.11";
 
 // handler for generating backtrace
 void handler(int sig) {
@@ -660,10 +660,10 @@ int main( int argc, char * argv[] ) {
       cout << "STATUS: Parsing and creating AST finished."<<endl;
     }
 
-    /* perform inlining before variable ids are computed, because
-       variables are duplicated by inlining. */
+    /* perform normalization before variable ids are computed */
     timer.start();
     Normalization lowering;
+    lowering.options.printPhaseInfo=ctOpt.normalizePhaseInfo;
     if(ctOpt.normalizeFCalls) {
       lowering.normalizeAst(sageProject,1);
       SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
