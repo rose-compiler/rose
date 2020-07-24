@@ -112,9 +112,10 @@ struct CtxAnalysis : DFAnalysisBase
     CtxStats latticeStats() ;
     
     
-    SgNode& getNode(Label lbl)
+    SgNode& getNode(Label lbl) const
     {
-      return getLabeler()->getNode(lbl);
+      // MS 7/24/20: added required dereference op
+      return *getLabeler()->getNode(lbl);
     }
     
     

@@ -7,7 +7,7 @@ CodeThorn::Lattice::~Lattice() {
 }
 
 void CodeThorn::Lattice::toStream(std::ostream& os, VariableIdMapping* vim) {
-  os<< isBot() ? "bot" : "<lattice-element>";
+  os<< (isBot() ? "bot" : "<lattice-element>");
 }
 
 std::string CodeThorn::Lattice::toString(VariableIdMapping* vim) {
