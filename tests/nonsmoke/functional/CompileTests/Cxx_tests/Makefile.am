@@ -1931,6 +1931,18 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2019_22.C \
    test2019_23.C \
    test2019_24.C \
+   test2020_01.C \
+   test2020_02.C \
+   test2020_03.C \
+   test2020_04.C \
+   test2020_05.C \
+   test2020_06.C \
+   test2020_07.C \
+   test2020_08.C \
+   test2020_09.C \
+   test2020_10.C \
+   test2020_11.C \
+   test2020_12.C \
    test_CplusplusMacro_Cpp.C \
    test_int_lexemes.C \
    test_int_lexemes_donot_pass.C \
