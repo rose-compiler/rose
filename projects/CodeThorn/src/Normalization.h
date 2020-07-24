@@ -39,6 +39,9 @@ namespace CodeThorn {
       // only normalize expressions with function calls
       bool restrictToFunCallExpressions=true;
 
+      // print normalization progression info on stdout
+      bool printPhaseInfo=false;
+      
       // transforms single statements in if/while/do-while into blocks with one statement
       // transformation: if(Cond) S; => if(Cond) { S }
       bool normalizeSingleStatements=true;
@@ -315,7 +318,7 @@ namespace CodeThorn {
   private:
     
     SgVariableDeclaration* buildVariableDeclarationForExpression(SgExpression* expression, SgScopeStatement* scope, bool initWithExpression, bool shareExpression);
-    // private member variables
+    void printNormalizationPhase();
     
     // counter for generating new variable names
     Normalization::TmpVarNrType getTmpVarNr();
@@ -349,6 +352,8 @@ namespace CodeThorn {
     string _uniqueVarPrefix="__";
     string _uniqueVarPostfix="__";
     static int32_t uniqueVarCounter;
+    int normPhaseNr=1;
+    int normPhaseNrLast=1; // set in normalizeAstPhaseByPhase
   };
   
 } // end of namespace CodeThorn

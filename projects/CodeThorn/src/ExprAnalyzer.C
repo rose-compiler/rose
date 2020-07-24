@@ -1987,11 +1987,16 @@ enum MemoryAccessBounds ExprAnalyzer::checkMemoryAccessBounds(AbstractValue addr
   }
 }    
 
-ProgramLocationsReport ExprAnalyzer::getViolatingLocations(enum AnalysisSelector analysisSelector) {
+ProgramLocationsReport ExprAnalyzer::getProgramLocationsReport(enum AnalysisSelector analysisSelector) {
   ProgramLocationsReport report;
 #pragma omp critical(VIOLATIONRECORDING)
   report=_violatingLocations.at(analysisSelector);
   return report;
+}
+
+// deprecated
+ProgramLocationsReport ExprAnalyzer::getViolatingLocations(enum AnalysisSelector analysisSelector) {
+  return getProgramLocationsReport(analysisSelector);
 }
 
 void ExprAnalyzer::initViolatingLocations() {
