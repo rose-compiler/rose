@@ -245,7 +245,26 @@ markAsTransformation(SgNode *ast) {
     };
     FixFileInfo().traverse(ast, preorder);
 }
+#if 0
+// a helper function for debugging purpose, used inside gdb.
+static void recursivePrintCurrentAndParent (SgNode* n)
+{
+  // print current level's info
+  if (!n) return; 
+  cout<<"--------------"<<endl;
+  cout<<n<<":"<<n->class_name()<<  endl;
+  if (SgLocatedNode * lnode = isSgLocatedNode(n))
+  { 
+    cout<<"file info:\t ";
+    lnode->get_file_info()->display();
+    cout<<"\n unparseToString:\t ";
+    lnode->unparseToString();
+  }  
 
+  // track back to its parent
+  recursivePrintCurrentAndParent (n->get_parent());
+} 
+#endif
 // Main inliner code.  Accepts a function call as a parameter, and inlines
 // only that single function call.  Returns true if it succeeded, and false
 // otherwise.  The function call must be to a named function, static member
@@ -268,6 +287,13 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      checkTransformedFlagsVisitor(globalScope);
 #endif
 
+   if (Inliner::verbose)        
+   {
+     Sg_File_Info* info_start = funcall->get_startOfConstruct ();
+     size_t a_start = (size_t)info_start->get_line ();
+     cout<<"Inside doInling() for a function call @ "<< a_start<<endl;
+     //funcall->get_file_info()->display();
+   }
     if (Inliner::skipHeaders)
     {
       // Liao 1/23/2018. we ignore function calls within header files, which are not unparsed by ROSE. 
@@ -298,6 +324,27 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
           if (dotexp) {
             SgExpression* lhs = dotexp->get_lhs_operand();
 
+           // Skip operator overloading functions for now.
+            SgExpression* rhs = dotexp->get_rhs_operand();
+           // TODO: refactored into SageInterface: isOperatorOverloading() 
+            SgMemberFunctionRefExp* m_ref_exp = isSgMemberFunctionRefExp(rhs);
+            if (m_ref_exp)
+            {
+              SgMemberFunctionDeclaration* m_func_decl =  m_ref_exp->get_symbol()->get_declaration();
+              if (m_func_decl)
+              {
+                string q_name = m_func_decl->get_qualified_name().getString();
+                string::size_type pos = q_name.find ("::operator",0);
+                string::size_type a_pos = q_name.find("::__anonymous_",0); // lambda expression is call through an anonymous operator
+                if (pos !=string::npos && a_pos !=0)  // a non-anonymous operator
+                {
+//                  if (Inliner::verbose)        
+                    std::cout << "Inline returns false: skip non-anonymous operator function named:" << q_name << std::endl;
+                  return false;
+                }
+              }
+            }
+
             // FIXME -- patch this into p_lvalue
             bool is_lvalue = lhs->get_lvalue();
             if (isSgInitializer(lhs)) is_lvalue = false;
@@ -315,7 +362,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
                 removeRedundantCopyInConstruction(in);
               lhs = dotexp->get_lhs_operand(); // Should be a var ref now
             }
-            thisptr = new SgAddressOfOp(SgNULL_FILE, lhs);
+            thisptr = new SgAddressOfOp(SgNULL_FILE, deepCopy(lhs));
           } else if (arrowexp) {
             thisptr = arrowexp->get_lhs_operand();
           } else {
@@ -328,7 +375,6 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
            if (Inliner::verbose)        
            {
               std::cout << "Inline returns false: not a call to a named function for SgFunctionCallExp*"<< funcall << std::endl;
-              funcall->get_file_info()->display();
            }
           return false; // Probably a call through a fun ptr
         }
@@ -357,6 +403,27 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 
      SgFunctionDeclaration* fundecl = funsym->get_declaration();
      fundecl = fundecl ? isSgFunctionDeclaration(fundecl->get_definingDeclaration()) : NULL;
+#if 0
+    if (!isSgTemplateInstantiationFunctionDecl (fundecl))
+    {
+      if (Inliner::verbose)        
+        std::cout << "Inline returns false: skipping function calls to non-template instantiations:" << fundecl->class_name() << " at line: "
+            << func_ref_exp->get_file_info()->get_line() << std::endl;
+      return false;
+    }
+#endif
+     // check the qualified name of the function to be inlined: skip std::xx functions
+     if (fundecl)
+     {
+       string q_name = fundecl->get_qualified_name().getString();
+       string::size_type pos = q_name.find ("::std::",0);
+       if (pos ==0)
+       {
+         if (Inliner::verbose)        
+           std::cout << "Inline returns false: skip std function named:" << q_name << std::endl;
+         return false;
+       }
+     }
 
      SgFunctionDefinition* fundef = fundecl ? fundecl->get_definition() : NULL;
      if (!fundef)

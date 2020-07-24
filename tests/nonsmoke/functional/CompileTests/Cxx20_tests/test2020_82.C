@@ -14,4 +14,5 @@ int main() {
 //     int operator*(   T&, R&)  T=B<A>, R=A
 // and int operator*(B<A>&, R&)  R=A 
 // selects int operator*(B<A>&, A&) as more specialized
+}
 

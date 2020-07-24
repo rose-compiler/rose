@@ -431,6 +431,8 @@ bool isPointerToNonConstType(SgType* type)
         SgClassDeclaration* decl =
           isSgClassDeclaration(isSgClassType(type)->get_declaration());
         assert (decl);
+        decl= isSgClassDeclaration(decl->get_definingDeclaration ());
+        assert (decl);
         SgClassDefinition* defn = decl->get_definition();
         assert (defn);
         bool hasDefaultConstructor = false, hasAnyConstructor = false;

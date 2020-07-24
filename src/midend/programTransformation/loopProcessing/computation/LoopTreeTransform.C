@@ -138,6 +138,7 @@ Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, int pos, ObserveTransform &
     n1 = n->Clone();
     for ( LoopTreeNode *cur1 = n->FirstChild(); cur1 != tmp1; ) {
       LoopTreeNode* t = cur1;
+      assert(cur1 != NULL);
       cur1 = cur1->NextSibling();
       UnlinkNode(t);
       t->Link( n1, LoopTreeNode::AsLastChild);

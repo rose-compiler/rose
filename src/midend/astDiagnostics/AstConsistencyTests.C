@@ -2874,6 +2874,7 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // non-defining declarations in generated internally).
                if (firstNondefiningDeclaration == NULL)
                   {
+                    ROSE_ASSERT(declaration->variantT() != NULL);
                     switch (declaration->variantT())
                        {
                       // These nodes should have a non-defining declaration even if only a defining 

@@ -33,6 +33,7 @@ static SgClassSymbol * select_shared_class_symbol(std::string const & name, std:
       }
     }
 
+#if DEBUG_LinkClassAcrossFiles
     if (srcfiles.size() < sym_map.size()) {
       std::cerr << "Found disconnected symbols that are not from distinct files..." << std::endl;
       std::cerr << " - name : " << name << std::endl;
@@ -51,6 +52,7 @@ static SgClassSymbol * select_shared_class_symbol(std::string const & name, std:
         std::cerr << " > srcfile : " << srcfile->get_sourceFileNameWithPath() << " (" << std::hex << srcfile << ")" << std::endl;
       }
     }
+#endif
 
     return (defn_syms.size() > 0) ? *(defn_syms.begin()) : sym_map.begin()->first;
   }
@@ -75,6 +77,15 @@ class LinkClassAcrossFiles {
         symbols.insert(sym);
       }
     } symbols;
+
+    struct TypeCollection : public ROSE_VisitTraversal {
+      std::set<SgClassType *> types;
+
+      void visit(SgNode * node) {
+        SgClassType * type = (SgClassType *)node;
+        types.insert(type);
+      }
+    } types;
 
     void build_name_symbol_decls_map(
       std::map< std::string, std::map< SgClassSymbol *, ClassDeclTriplet > > & name_map
@@ -119,9 +130,11 @@ class LinkClassAcrossFiles {
       SgClassDeclaration::traverseMemoryPoolNodes(decls);
       SgTemplateInstantiationDecl::traverseMemoryPoolNodes(decls);
       SgClassSymbol::traverseMemoryPoolNodes(symbols);
+      SgClassType::traverseMemoryPoolNodes(types);
 
-      std::map<SgNode *, SgNode *> sym_repl_map;
+      std::map<SgNode *, SgNode *> node_repl_map;
       std::set<SgSymbol *> sym_del_set;
+      std::set<SgType *> type_del_set;
 
       // Build map of mangled-name to map of symbol (per TU) to declarations (nondef/defn/set)
       std::map< std::string, std::map< SgClassSymbol *, ClassDeclTriplet > > name_map;
@@ -143,14 +156,6 @@ class LinkClassAcrossFiles {
         ROSE_ASSERT(first_nondef_decl != NULL);
         SgClassDeclaration * defn_decl = p.second[symbol].defn_decl;
 
-        // Class type should have been merged by sharing
-        // We only need to change the declaration once (as it might have pointed to another first-non-def)
-        SgClassDeclaration * xdecl = isSgClassDeclaration(first_nondef_decl);
-        ROSE_ASSERT(xdecl != NULL);
-        SgClassType * xtype = xdecl->get_type();
-        ROSE_ASSERT(xtype != NULL);
-        xtype->set_declaration(first_nondef_decl);
-
         SgScopeStatement * scope = first_nondef_decl->get_scope();
         ROSE_ASSERT(scope != NULL);
 
@@ -171,7 +176,7 @@ class LinkClassAcrossFiles {
         // Register symbols for deletion and substitution. Patches nondef/defn declarations.
         for (auto q: p.second) {
           if (q.first != symbol) {
-            sym_repl_map[q.first] = symbol;
+            node_repl_map[q.first] = symbol;
             sym_del_set.insert(q.first);
           } else {
             symbol->set_declaration(first_nondef_decl);
@@ -185,13 +190,48 @@ class LinkClassAcrossFiles {
         }
       }
 
+      // Build map from first decl to map of type to assoc. decl
+      std::map<SgClassDeclaration *, std::map<SgClassType *, SgClassDeclaration *> > xtype_map;
+      for (auto t: types.types) {
+        SgClassDeclaration * xdecl = isSgClassDeclaration(t->get_declaration());
+        ROSE_ASSERT(xdecl != NULL);
+        SgClassDeclaration * first_xdecl = isSgClassDeclaration(xdecl->get_firstNondefiningDeclaration());
+        ROSE_ASSERT(first_xdecl != NULL);
+        xtype_map[first_xdecl][t] = xdecl;
+      }
+
+      // Find all class-types pointing to wrong declaration (must be first non-defining)
+      for (auto p: xtype_map) {
+        SgClassType * xtype = NULL;
+        std::vector<SgClassType *> xtypes;
+        for (auto q: p.second) {
+          if (q.second == p.first) {
+            xtype = q.first; // valid type if assoc. decl. is the first non-defining declaration
+          } else {
+            xtypes.push_back(q.first);
+          }
+        }
+        ROSE_ASSERT(xtype != NULL); // Should have found at least one valid type
+        for (auto xtype_: xtypes) {
+          type_del_set.insert(xtype_);
+          node_repl_map[xtype_] = xtype;
+        }
+      }
+
+      // Delete superfluous class-symbols
       for (auto s: sym_del_set) {
         SgSymbolTable * table = isSgSymbolTable(s->get_parent());
         ROSE_ASSERT(table != NULL);
         table->remove(s);
         delete s;
       }
-      fixupTraversal(sym_repl_map);
+
+      // Delete superfluous class-types
+      for (auto t: type_del_set) {
+        delete t;
+      }
+
+      fixupTraversal(node_repl_map);
     }
 };
 #endif

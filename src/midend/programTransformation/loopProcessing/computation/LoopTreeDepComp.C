@@ -295,6 +295,7 @@ class BuildLoopDepGraphCreate : public BuildLoopDepGraphEdges
       assert(cur!=NULL);
       std::cerr << "current loop tree node:" << cur->toString() << "\n";
      }
+    assert(cur!=NULL);
     LoopTreeDepGraphNode *d = graph.CreateNode(cur, c);
     iter.Advance();
     return d;

@@ -1,3 +1,6 @@
+#include<string>
+#include<set>
+
 class CaseInsensitiveString {
   std::string s;
 public:
@@ -10,13 +13,18 @@ public:
   // ... non-comparison functions ...
 };
  
-// Compiler generates all four relational operators
-CaseInsensitiveString cis1, cis2;
-std::set<CaseInsensitiveString> s; // ok
-s.insert(/*...*/); // ok
-if (cis1 <= cis2) { /*...*/ } // ok, performs one comparison operation
+// DQ (7/21/2020): Moved function calls into a function.
+void foobar1()
+   {
+  // Compiler generates all four relational operators
+     CaseInsensitiveString cis1, cis2;
+     std::set<CaseInsensitiveString> s; // ok
+     s.insert(/*...*/); // ok
+     if (cis1 <= cis2) { /*...*/ } // ok, performs one comparison operation
  
-// Compiler also generates all eight heterogeneous relational operators
-if (cis1 <= "xyzzy") { /*...*/ } // ok, performs one comparison operation
-if ("xyzzy" >= cis1) { /*...*/ } // ok, identical semantics
+  // Compiler also generates all eight heterogeneous relational operators
+     if (cis1 <= "xyzzy") { /*...*/ } // ok, performs one comparison operation
+     if ("xyzzy" >= cis1) { /*...*/ } // ok, identical semantics
+
+   }
 

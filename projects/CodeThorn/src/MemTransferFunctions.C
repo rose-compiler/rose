@@ -37,7 +37,7 @@ void MemTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* ca
   // uses and defs in argument-expressions
   int paramNr=0;
   for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
-    VariableId paramId=getParameterVariableId(paramNr);
+    //VariableId paramId=getParameterVariableId(paramNr);
     transferExpression(lab,*i,element);
     paramNr++;
   }
@@ -68,7 +68,7 @@ void MemTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition
     // generate formal parameter
     SgInitializedName* formalParameterName=*i;
     assert(formalParameterName);
-    VariableId formalParameterVarId=getVariableIdMapping()->variableId(formalParameterName);
+    //VariableId formalParameterVarId=getVariableIdMapping()->variableId(formalParameterName);
     paramNr++;
   }
 }
@@ -82,14 +82,14 @@ void MemTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition*
 
   // remove all declared variable at function exit (including function parameter variables)
   for(VariableIdSet::iterator i=localVariablesInFunction.begin();i!=localVariablesInFunction.end();++i) {
-    VariableId varId=*i;
+    //VariableId varId=*i;
   }
 }
 
 void MemTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* node, Lattice& element0) {
   MemPropertyState& element=dynamic_cast<MemPropertyState&>(element0);
   transferExpression(lab,node,element);
-  VariableId resVarId=getResultVariableId();
+  //VariableId resVarId=getResultVariableId();
 }
 
 void MemTransferFunctions::initializeExtremalValue(Lattice& element) {

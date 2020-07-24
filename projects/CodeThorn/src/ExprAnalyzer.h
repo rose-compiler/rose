@@ -108,7 +108,12 @@ namespace CodeThorn {
     AbstractValue computeAbstractAddress(SgVarRefExp* varRefExp);
 
     // record detected errors in programs
+    ProgramLocationsReport getProgramLocationsReport(enum AnalysisSelector analysisSelector);
+
+    // deprecated (use getProgramLocationsReport instead)
     ProgramLocationsReport getViolatingLocations(enum AnalysisSelector analysisSelector);
+
+    // record detected errors in programs
     void recordDefinitiveViolatingLocation(enum AnalysisSelector analysisSelector, Label lab);
     void recordPotentialViolatingLocation(enum AnalysisSelector analysisSelector, Label lab);
     std::string analysisSelectorToString(AnalysisSelector sel);
