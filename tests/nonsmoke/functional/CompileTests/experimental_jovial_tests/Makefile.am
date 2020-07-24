@@ -49,6 +49,7 @@ JOVIAL_TESTCODES = \
  5_2_logical_continuation_a.jov         \
  5_2_logical_continuation_b.jov         \
  6_1_ptr_dereference.jov                \
+ 6_3_user_def_function_call.jov         \
  6_3_5_shift_function.jov               \
  6_3_6_abs_function.jov                 \
  6_3_10_nwdsen_function.jov             \
