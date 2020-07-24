@@ -147,6 +147,7 @@ main (int argc, char* argv[]) {
   {
       SgFunctionDeclaration * fdecl = SageInterface::findMain(sageProject);
       inlineFromRoot(fdecl, call_count, inlined_calls);
+      nInlined = inlined_calls.size();
   }
   else // the original driver to inline everything, which is too aggressive.
     for (int count=0; count<10; ++count) 
