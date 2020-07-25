@@ -829,9 +829,10 @@ ROSE_CONSTEXPR bool            __builtin_is_constant_evaluated  ()              
 
 #endif
 
+/* DQ (7/24/2020): This code is no longer required now that the EDG/ROSE connection is fixed for at least EDG 6.0 (maybe EDG 5.0). */
 /* DQ (7/23/2020): This fixes a bug demonstrated with GNU 10 using make check-core and/or make check-smoke. */
 /* #if __GNUC__ >= 10 && __cplusplus */
-#if __GNUC__ >= 42 && __cplusplus 
+#if 0
 template <typename T, typename U>
 struct __rose_is_same_as {
   static constexpr bool value = false;
