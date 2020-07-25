@@ -86,6 +86,7 @@ SetSliceLoop( LoopTreeNode *s, LoopTreeNode *l,
 void CompSlice::SetSliceAlign( LoopTreeNode *s, int align)
 {
   CompSliceStmt *stmt = impl->QuerySliceStmt(s);
+  assert(stmt != NULL);
   stmt->SetSliceAlign(align);
 }
 
