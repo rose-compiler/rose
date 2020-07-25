@@ -92,7 +92,8 @@ void SageTreeBuilder::Enter(SgBasicBlock* &block)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgBasicBlock* &) \n";
 
-   block = SageBuilder::buildBasicBlock_nfi();
+   // Set the parent (at least temporarily) so that symbols can be traced.
+   block = SageBuilder::buildBasicBlock_nfi(SageBuilder::topScopeStack());
 
    SageBuilder::pushScopeStack(block);
 }
@@ -1161,6 +1162,7 @@ SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope)
 {
    SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, scope);
    SageInterface::setSourcePosition(var_ref);
+
    return var_ref;
 }
 

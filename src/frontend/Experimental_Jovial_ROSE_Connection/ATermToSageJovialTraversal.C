@@ -4935,8 +4935,9 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
          // MATCHED BitFormula
       } else return ATfalse;
 
-   // Create a basic block and push it on the scope stack so that there is a place for statements
-      true_body = SageBuilder::buildBasicBlock_nfi();
+   // Create a basic block and push it on the scope stack so there is
+   // a place for statements. Temporarily set its parent so symbols can be found.
+      true_body = SageBuilder::buildBasicBlock_nfi(SageBuilder::topScopeStack());
       SageBuilder::pushScopeStack(true_body);
 
       if (traverse_Statement(t_true)) {
@@ -4951,7 +4952,7 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
       }
       else if (ATmatch(t_else, "ElseClause(<term>)", &t_false)) {
       // There is a false body
-         false_body = SageBuilder::buildBasicBlock_nfi();
+         false_body = SageBuilder::buildBasicBlock_nfi(SageBuilder::topScopeStack());
          SageBuilder::pushScopeStack(false_body);
 
          if (traverse_Statement(t_false)) {
@@ -6286,9 +6287,10 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
 
    if (ATmatch(term, "<str>" , &name)) {
       // MATCHED NamedVariable
-      // SageTreeBuilder
+
       var = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
       setSourcePosition(var, term);
+
    } else if (traverse_Dereference(term, var)) {
       // MATCHED ItemDereference/TableDereference -> Item/Table -> NamedVariable
    } else if (traverse_TableItem(term, var)) {

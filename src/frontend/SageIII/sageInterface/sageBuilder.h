@@ -1263,6 +1263,10 @@ ROSE_DLL_API SgBasicBlock * buildBasicBlock(SgStatement * stmt1 = NULL, SgStatem
 ROSE_DLL_API SgBasicBlock * buildBasicBlock_nfi();
 SgBasicBlock * buildBasicBlock_nfi(const std::vector<SgStatement*>&);
 
+// CR (7/24/2020): Added additional functionality
+//! Build a SgBasicBlock and set its parent. This function does NOT link the parent scope to the block.
+SgBasicBlock * buildBasicBlock_nfi(SgScopeStatement* parent);
+
 //! Build an assignment statement from lefthand operand and right hand operand
 ROSE_DLL_API SgExprStatement*
 buildAssignStatement(SgExpression* lhs,SgExpression* rhs);
