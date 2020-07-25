@@ -10011,6 +10011,18 @@ SgBasicBlock* SageBuilder::buildBasicBlock_nfi(const vector<SgStatement*>& stmts
      return result;
    }
 
+// CR (7/24/2020): Added additional functionality.
+// Build a SgBasicBlock and set its parent. This function does NOT link the parent scope to the block.
+SgBasicBlock*
+SageBuilder::buildBasicBlock_nfi(SgScopeStatement* parent)
+{
+   SgBasicBlock* block = buildBasicBlock_nfi();
+   block->set_parent(parent);
+
+   return block;
+}
+
+
 SgGotoStatement *
 SageBuilder::buildGotoStatement(SgLabelStatement *  label)
 {
