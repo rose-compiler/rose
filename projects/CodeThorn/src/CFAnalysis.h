@@ -66,6 +66,7 @@ class CFAnalysis {
   LabelSetSet functionLabelSetSets(Flow& flow);
   LabelSet functionLabelSet(Label entryLabel, Flow& flow);
   LabelSet setOfInitialLabelsOfStmtsInBlock(SgNode* node);
+  LabelSet setOfLabelsOfInterest();
   /**
    * \brief Computes the control flow for an AST subtree rooted at node.
    */
@@ -100,6 +101,10 @@ class CFAnalysis {
   int reduceBlockEndNodes(Flow& flow);
   // eliminates block begin and block end nodes.
   int reduceBlockBeginEndNodes(Flow& flow);
+
+  // reduce to call graph, where each function is represented by its function entry label
+  // external functions are not represented (if they are only represented by external edges in the ICFG)
+  int reduceToFunctionEntryNodes(Flow& flow);
   /*
     eliminates empty codition nodes. This requires that only one successor is left in the icfg.
     this function can be applied after optimizations (e.g. empty blocks have been removed from the icfg).

@@ -47,7 +47,7 @@
  //----------------------------------end of min raja.h
  // Input RAJA code
  // --------------------------------
- void foo_input()
+ int main()
  {
    const int n = 15;
    double *a = new double [15];
@@ -65,14 +65,6 @@
         a[i]=0.5;
     }
  // not calling this to avoid including a header:   free(a);
- }
-
-//simplify the code further
-#if 0
- int main()
- {
-   foo_input();
-   return 0;
- }
-#endif
+ return 0;
+}
 
