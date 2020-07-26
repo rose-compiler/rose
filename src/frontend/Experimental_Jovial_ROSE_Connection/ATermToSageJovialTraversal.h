@@ -138,9 +138,10 @@ ATbool traverse_ConstantDeclaration(ATerm term, int def_or_ref = 0);
 // 2.1.4 BLOCK DECLARATION
 ATbool traverse_BlockDeclaration   (ATerm term, int def_or_ref = 0);
 ATbool traverse_BlockBodyPart      (ATerm term, SgJovialTableStatement* block_decl);
-ATbool traverse_BlockPreset        (ATerm term, SgExprListExp* preset_list);
+ATbool traverse_BlockPreset        (ATerm term, SgExprListExp* &preset_list);
 ATbool traverse_BlockPresetList    (ATerm term, SgExprListExp* preset_list);
-ATbool traverse_OptBlockPresetList (ATerm term, SgExprListExp* preset_list);
+ATbool traverse_OptBlockPresetList (ATerm term, SgExprListExp* &preset_list);
+ATbool traverse_OptTablePresetList (ATerm term, SgExpression*  &preset_list);
 
 // 2.1.5 ALLOCATION OF DATA OBJECTS
 ATbool traverse_OptAllocationSpecifier(ATerm term, Sawyer::Optional<LanguageTranslation::ExpressionKind> &modifier_enum);
