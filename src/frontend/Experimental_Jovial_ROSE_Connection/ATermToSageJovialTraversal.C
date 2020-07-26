@@ -2570,7 +2570,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockBodyPart(ATerm term, SgJovialTa
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_BlockPreset(ATerm term, SgExprListExp* preset_list)
+ATbool ATermToSageJovialTraversal::traverse_BlockPreset(ATerm term, SgExprListExp* &preset_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BlockPreset: %s\n", ATwriteToString(term));
@@ -2582,6 +2582,9 @@ ATbool ATermToSageJovialTraversal::traverse_BlockPreset(ATerm term, SgExprListEx
       // MATCHED no-block-preset
    }
    else if (ATmatch(term, "BlockPreset(<term>)", &t_block_preset)) {
+
+      preset_list = SageBuilder::buildExprListExp_nfi();
+
       if (traverse_BlockPresetList(t_block_preset, preset_list)) {
          // MATCHED BlockPresetList
       } else return ATfalse;
@@ -2597,36 +2600,40 @@ ATbool ATermToSageJovialTraversal::traverse_BlockPresetList(ATerm term, SgExprLi
    printf("... traverse_BlockPresetList: %s\n", ATwriteToString(term));
 #endif
 
-#if 0
-   SgExpression* preset = nullptr;
-#endif
+   SgExpression*  preset = nullptr;
+   SgExpression*  opt_table_list = nullptr;
+   SgExprListExp* opt_block_list = nullptr;
 
    ATermList tail = (ATermList) ATmake("<term>", term);
    while (! ATisEmpty(tail)) {
-      cerr << "WARNING UNIMPLEMENTED: BlockPresetList\n";
-      ROSE_ASSERT(false);
 
-#if 0
       ATerm head = ATgetFirst(tail);
       tail = ATgetNext(tail);
 
       if (traverse_PresetValuesOption(head, preset)) {
          // MATCHED PresetValuesOption
+         preset_list->get_expressions().push_back(preset);
+         preset->set_parent(preset_list);
       }
-      else if (traverse_TablePresetList(head, preset_list)) {
-         // MATCHED TablePresetList
+      else if (traverse_OptTablePresetList(head, opt_table_list)) {
+         // MATCHED OptTablePresetList
+         opt_table_list->set_need_paren(true);
+         preset_list->get_expressions().push_back(opt_table_list);
+         opt_table_list->set_parent(preset_list);
       }
-      else if (traverse_OptBlockPresetList(head, preset_list)) {
+      else if (traverse_OptBlockPresetList(head, opt_block_list)) {
          // MATCHED OptBlockPresetList
+         opt_block_list->set_need_paren(true);
+         preset_list->get_expressions().push_back(opt_block_list);
+         opt_block_list->set_parent(preset_list);
       }
       else return ATfalse;
-#endif
    }
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_OptBlockPresetList(ATerm term, SgExprListExp* preset_list)
+ATbool ATermToSageJovialTraversal::traverse_OptBlockPresetList(ATerm term, SgExprListExp* &preset_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptBlockPresetList: %s\n", ATwriteToString(term));
@@ -2638,8 +2645,40 @@ ATbool ATermToSageJovialTraversal::traverse_OptBlockPresetList(ATerm term, SgExp
       // MATCHED no-block-preset-list
    }
    else if (ATmatch(term, "OptBlockPresetlist(<term>)", &t_list)) {
+
+      preset_list = SageBuilder::buildExprListExp_nfi();
       if (traverse_BlockPresetList(t_list, preset_list)) {
          //Grammar:   '(' BlockPresetList ')' -> OptBlockPresetList  {cons("OptBlockPresetlist")}
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToSageJovialTraversal::traverse_OptTablePresetList(ATerm term, SgExpression* &preset_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_OptTablePresetList: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_list;
+
+   if (ATmatch(term, "no-table-preset-list")) {
+      // MATCHED no-table-preset-list
+   }
+   else if (ATmatch(term, "OptTablePresetlist(<term>)", &t_list)) {
+      SgExprListExp* default_sublist = SageBuilder::buildExprListExp_nfi();
+      SgExprListExp* specified_sublist = SageBuilder::buildExprListExp_nfi();
+
+      SgJovialTablePresetExp* table_preset = new SgJovialTablePresetExp(default_sublist, specified_sublist);
+      ROSE_ASSERT(table_preset);
+      setSourcePosition(table_preset, term);
+
+      preset_list = table_preset;
+
+      if (traverse_TablePresetList(t_list, table_preset)) {
+         //Grammar:   '(' TablePresetList ')' -> OptTablePresetList  {cons("OptTablePresetlist")}
       } else return ATfalse;
    }
    else return ATfalse;
