@@ -175,7 +175,6 @@ JOVIAL_TESTCODES_WORKING_ON = \
  1_2_2_procedure_module_c.jov           \
  1_2_2_procedure_module_d.jov           \
  1_2_2_procedure_module_g.jov           \
- 1_2_3_main-program-module_c.jov        \
  1_2_3_program-body_d.jov               \
  1_2_3_program-body_e.jov               \
  1_2_3_program-body_f.jov               \
@@ -192,6 +191,7 @@ JOVIAL_TESTCODES_WORKING_ON = \
  5_1_1_integer-formula.jov
 
 ## TODO: Don't seem to be able to run just parser tests
+#  - but don't really need to anymore as we've moved beyond just parsing
 #
 TEST_JOVIAL_PARSER_Objects  = ${JOVIAL_PARSER_TESTCODES:.jov=.aterm}
 TEST_JOVIAL_PARSER_Sources  = ${JOVIAL_PARSER_TESTCODES:.jov=.jov.passed}
@@ -229,6 +229,9 @@ $(TEST_JOVIAL_Objects): ../../testTranslator
 	../../testTranslator -rose:jovial $(srcdir)/$(@:.aterm=.jov)
 
 $(TEST_COMPOOL_Objects): ../../testTranslator
+	../../testTranslator -rose:jovial $(srcdir)/$(@:.aterm=.cpl)
+
+$(TEST_DIRECTIVE_Objects): ../../testTranslator
 	../../testTranslator -rose:jovial $(srcdir)/$(@:.aterm=.cpl)
 
 check-compool:
