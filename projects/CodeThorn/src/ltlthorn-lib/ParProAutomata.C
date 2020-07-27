@@ -17,40 +17,40 @@ using namespace CodeThorn;
 using namespace std;
 
 namespace CodeThorn {
-  bool ParProAutomata::handleCommandLineArguments(CommandLineOptions& args,Sawyer::Message::Facility& logger) {
+  bool ParProAutomata::handleCommandLineArguments(ParProOptions& parProOpt, CodeThornOptions& ctOpt, LTLOptions& ltlOpt, Sawyer::Message::Facility& logger) {
     // ParPro command line options
-    if (args.isDefined("generate-automata")) {
-      CodeThorn::ParProAutomata::generateAutomata();
+    if(parProOpt.generateAutomata.size()>0) {
+      CodeThorn::ParProAutomata::generateAutomata(parProOpt);
       return true;
     }
-    if (args.isDefined("automata-dot-input")) {
-      CodeThorn::ParProAutomata::automataDotInput(logger);
+    if(parProOpt.automataDotInput.size()>0) {
+      CodeThorn::ParProAutomata::automataDotInput(parProOpt, ctOpt, ltlOpt, logger);
       return true;
     }
     return false;
   }
 
-  void ParProAutomata::automataDotInput(Sawyer::Message::Facility logger) {
-    if (args.isDefined("seed")) {
-      srand(args.getInt("seed"));
+  void ParProAutomata::automataDotInput(ParProOptions& parProOpt, CodeThornOptions& ctOpt, LTLOptions& ltlOpt, Sawyer::Message::Facility logger) {
+    if (parProOpt.seed!=-1) {
+      srand(parProOpt.seed);
     } else {
       srand(time(NULL));
     }
     DotGraphCfgFrontend dotGraphCfgFrontend;
-    string filename = args.getString("automata-dot-input");
+    string filename = parProOpt.automataDotInput;
     CfgsAndAnnotationMap cfgsAndMap = dotGraphCfgFrontend.parseDotCfgs(filename);
     list<Flow> cfgs = cfgsAndMap.first;
     EdgeAnnotationMap edgeAnnotationMap = cfgsAndMap.second;
 
     string promelaCode;
-    if (args.isDefined("promela-output")) {
+    if (parProOpt.promelaOutput.size()>0) {
       cout << "STATUS: generating PROMELA code (parallel processes based on CFG automata)..." << endl;
       PromelaCodeGenerator codeGenerator;
       promelaCode = codeGenerator.generateCode(cfgsAndMap);
       cout << "STATUS: done (LTLs not added yet)." << endl;
     }
 
-    if (args.getBool("viz")) {
+    if (ctOpt.visualization.viz) {
       int counter = 0;
       for(list<Flow>::iterator i=cfgs.begin(); i!=cfgs.end(); i++) {
         Flow cfg = *i;
@@ -72,28 +72,28 @@ namespace CodeThorn {
     }
 
     ParProExplorer explorer(cfgsAsVector, edgeAnnotationMap);
-    if (args.isDefined("verification-engine")) {
-      string verificationEngine = args.getString("verification-engine");
+    if (parProOpt.verificationEngine.size()>0) {
+      string verificationEngine = parProOpt.verificationEngine;
       if (verificationEngine == "ltsmin") {
         explorer.setUseLtsMin(true);
       }
     } 
-    if (args.getBool("keep-systems")) {
+    if (parProOpt.keepSystems) {
       explorer.setStoreComputedSystems(true);
     } else {
       explorer.setStoreComputedSystems(false);
     }
-    if (args.getBool("parallel-composition-only")) {
+    if (parProOpt.parallelCompositionOnly) {
       explorer.setParallelCompositionOnly(true);
     } else {
       explorer.setStoreComputedSystems(false);
     }
-    if (args.isDefined("use-components")) {
-      string componentSelection = args.getString("use-components");
+    if (parProOpt.useComponents.size()>0) {
+      string componentSelection = parProOpt. useComponents;
       if (componentSelection == "all") {
         explorer.setComponentSelection(PAR_PRO_COMPONENTS_ALL);
-        if (args.isDefined("ltl-mode")) {
-          string ltlMode= args.getString("ltl-mode");
+        if (parProOpt.ltlMode.size()>0) {
+          string ltlMode=parProOpt.ltlMode;
           if (ltlMode == "mine") {
             explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_INFINITE);
           }
@@ -101,8 +101,8 @@ namespace CodeThorn {
       } else if (componentSelection == "subsets-fixed") {
         explorer.setComponentSelection(PAR_PRO_COMPONENTS_SUBSET_FIXED);
         explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_FINITE);
-        if (args.isDefined("fixed-subsets")) {
-          string setsstring=args.getString("fixed-subsets");
+        if (parProOpt.fixedSubsets.size()>0) {
+          string setsstring=parProOpt.fixedSubsets;
           list<set<int> > intSets=Parse::integerSetList(setsstring);
           explorer.setFixedComponentSubsets(intSets);
         } else {
@@ -111,59 +111,59 @@ namespace CodeThorn {
         }
       } else if (componentSelection == "subsets-random") {
         explorer.setComponentSelection(PAR_PRO_COMPONENTS_SUBSET_RANDOM);
-        if (args.isDefined("num-random-components")) {
-          explorer.setNumberRandomComponents(args.getInt("num-random-components"));
+        if (parProOpt.numRandomComponents!=-1) {
+          explorer.setNumberRandomComponents(parProOpt.numRandomComponents);
         } else {
           explorer.setNumberRandomComponents(std::min(3, (int) cfgsAsVector.size()));
         }
-        if (args.isDefined("different-component-subsets")) {
+        if (parProOpt.differentComponentSubsets!=-1) {
           explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_FINITE);
-          explorer.setNumberDifferentComponentSubsets(args.getInt("different-component-subsets"));
+          explorer.setNumberDifferentComponentSubsets(parProOpt.differentComponentSubsets);
         } else {
           explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_INFINITE);
         }
       }
     } else {
       explorer.setComponentSelection(PAR_PRO_COMPONENTS_ALL);
-      if (args.isDefined("ltl-mode")) {
-        string ltlMode= args.getString("ltl-mode");
+      if (parProOpt.ltlMode.size()>0) {
+        string ltlMode= parProOpt.ltlMode;
         if (ltlMode == "mine") {
           explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_INFINITE);
         }
       }
     }
 
-    if ( args.isDefined("check-ltl") ) {
+    if ( ltlOpt.ltlFormulaeFile.size()>0 ) {
       explorer.setLtlMode(PAR_PRO_LTL_MODE_CHECK);
-      explorer.setLtlInputFilename(args.getString("check-ltl"));
+      explorer.setLtlInputFilename(ltlOpt.ltlFormulaeFile);
     } else {
-      if ( args.isDefined("ltl-mode") ) {
-        string ltlMode= args.getString("ltl-mode");
+      if (parProOpt.ltlMode.size()>0) {
+        string ltlMode= parProOpt.ltlMode;
         if (ltlMode == "check") {
           logger[ERROR] << "ltl mode \"check\" selected but option \"--check-ltl=<filename>\" not used. Please provide LTL property file." << endl;
           ROSE_ASSERT(0);
         } else if (ltlMode == "mine") {
           explorer.setLtlMode(PAR_PRO_LTL_MODE_MINE);
-          if (args.isDefined("num-components-ltl")) {
-            explorer.setNumberOfComponentsForLtlAnnotations(args.getInt("num-components-ltl"));
+          if (parProOpt.numComponentsLtl!=-1) {
+            explorer.setNumberOfComponentsForLtlAnnotations(parProOpt.numComponentsLtl);
           } else {
             explorer.setNumberOfComponentsForLtlAnnotations(std::min(3, (int) cfgsAsVector.size()));
           }
-          if (args.isDefined("minimum-components")) {
-            explorer.setMinNumComponents(args.getInt("minimum-components"));
+          if (parProOpt.minimumComponents!=-1) {
+            explorer.setMinNumComponents(parProOpt.minimumComponents);
           }
-          if (args.isDefined("mine-num-verifiable")) {
-            explorer.setNumRequiredVerifiable(args.getInt("mine-num-verifiable"));
+          if (parProOpt.mineNumVerifiable!=-1) {
+            explorer.setNumRequiredVerifiable(parProOpt.mineNumVerifiable);
           } else {
             explorer.setNumRequiredVerifiable(10);
           }
-          if (args.isDefined("mine-num-falsifiable")) {
-            explorer.setNumRequiredFalsifiable(args.getInt("mine-num-falsifiable"));
+          if (parProOpt.mineNumFalsifiable!=-1) {
+            explorer.setNumRequiredFalsifiable(parProOpt.mineNumFalsifiable);
           } else {
             explorer.setNumRequiredFalsifiable(10);
           }
-          if (args.isDefined("minings-per-subsets")) {
-            explorer.setNumMiningsPerSubset(args.getInt("minings-per-subsets"));
+          if (parProOpt.miningsPerSubset!=-1) {
+            explorer.setNumMiningsPerSubset(parProOpt.miningsPerSubset);
           } else {
             explorer.setNumMiningsPerSubset(50);
           }
@@ -175,18 +175,18 @@ namespace CodeThorn {
       }
     }
 
-    if (args.getBool("viz")) {
+    if (ctOpt.visualization.viz) {
       explorer.setVisualize(true);
     }
 
-    if (!args.getBool("promela-output-only")) {
+    if (!parProOpt.promelaOutputOnly) {
       explorer.explore();
     }
   
-    if (args.isDefined("check-ltl")) {
+    if (ltlOpt.ltlFormulaeFile.size()>0) {
       PropertyValueTable* ltlResults=nullptr;
-      if (args.getBool("promela-output-only")) { // just read the properties into a PropertyValueTable
-        SpotConnection spotConnection(args.getString("check-ltl"));
+      if (parProOpt.promelaOutputOnly) { // just read the properties into a PropertyValueTable
+        SpotConnection spotConnection(ltlOpt.ltlFormulaeFile);
         ltlResults = spotConnection.getLtlResults();
       } else {
         ltlResults = explorer.propertyValueTable();
@@ -198,13 +198,13 @@ namespace CodeThorn {
       cout << "=============================================================="<<endl;
     }
 
-    bool withResults = args.getBool("output-with-results");
-    bool withAnnotations = args.getBool("output-with-annotations");
+    bool withResults = parProOpt.outputWithResults;
+    bool withAnnotations = parProOpt.outputWithAnnotations;
 #ifdef HAVE_SPOT
-    if (args.isDefined("promela-output")) {
+    if (parProOpt.promelaOutput.size()>0) {
       PropertyValueTable* ltlResults;
-      if (args.getBool("promela-output-only")) { // just read the properties into a PropertyValueTable
-        SpotConnection spotConnection(args.getString("check-ltl"));
+      if (parProOpt.promelaOutputOnly) { // just read the properties into a PropertyValueTable; MS 2020: this may need to be flipped?
+        SpotConnection spotConnection(ltlOpt.ltlFormulaeFile);
         ltlResults = spotConnection.getLtlResults();
       } else {
         ltlResults = explorer.propertyValueTable();
@@ -212,47 +212,47 @@ namespace CodeThorn {
       // uses SpotMiscellaneous::spinSyntax as callback to avoid static dependency of ltlResults on SpotMisc.
       string promelaLtlFormulae = ltlResults->getLtlsAsPromelaCode(withResults, withAnnotations,&SpotMiscellaneous::spinSyntax);
       promelaCode += "\n" + promelaLtlFormulae;
-      string filename = args.getString("promela-output");
+      string filename = parProOpt.promelaOutput;
       write_file(filename, promelaCode);
       cout << "generated " << filename  <<"."<<endl;
     }
 #endif
-    if (args.isDefined("ltl-properties-output")) {
+    if (parProOpt.ltlPropertiesOutput.size()>0) {
       string ltlFormulae = explorer.propertyValueTable()->getLtlsRersFormat(withResults, withAnnotations);
-      string filename = args.getString("ltl-properties-output");
+      string filename = parProOpt.ltlPropertiesOutput;
       write_file(filename, ltlFormulae);
       cout << "generated " << filename  <<"."<<endl;
     }
-    if(!args.isDefined("quiet"))
+    if(!ctOpt.quiet)
       cout << "STATUS: done." << endl;
   }
 
-  void ParProAutomata::generateAutomata() {
-    if (args.isDefined("seed")) {
-      srand(args.getInt("seed"));
+  void ParProAutomata::generateAutomata(ParProOptions& parProOpt) {
+    if (parProOpt.seed!=-1) {
+      srand(parProOpt.seed);
     } else {
       srand(time(NULL));
     }
     ParProAutomataGenerator automataGenerator;
     int numberOfAutomata = 10;
-    if (args.isDefined("num-automata")) {
-      numberOfAutomata = args.getInt("num-automata");
+    if (parProOpt.numAutomata!=-1) {
+      numberOfAutomata = parProOpt.numAutomata;
     }
     pair<int, int> numberOfSyncsRange = pair<int, int>(9, 18);
-    if (args.isDefined("num-syncs-range")) {
-      numberOfSyncsRange = parseCsvIntPair(args.getString("num-syncs-range"));
+    if (parProOpt.numSyncsRange.size()>0) {
+      numberOfSyncsRange = parseCsvIntPair(parProOpt.numSyncsRange);
     }
     pair<int, int> numberOfCirclesPerAutomatonRange = pair<int, int>(2, 4);
-    if (args.isDefined("num-circles-range")) {
-      numberOfCirclesPerAutomatonRange = parseCsvIntPair(args.getString("num-circles-range"));
+    if (parProOpt.numCirclesRange.size()>0) {
+      numberOfCirclesPerAutomatonRange = parseCsvIntPair(parProOpt.numCirclesRange);
     }
     pair<int, int> circleLengthRange = pair<int, int>(5, 8);
-    if (args.isDefined("circle-length-range")) {
-      circleLengthRange = parseCsvIntPair(args.getString("circle-length-range"));
+    if (parProOpt.circlesLengthRange.size()>0) {
+      circleLengthRange = parseCsvIntPair(parProOpt.circlesLengthRange);
     }
     pair<int, int> numIntersectionsOtherCirclesRange = pair<int, int>(1, 2);
-    if (args.isDefined("num-intersections-range")) {
-      numIntersectionsOtherCirclesRange = parseCsvIntPair(args.getString("num-intersections-range"));
+    if (parProOpt.numIntersectionsRange.size()>0) {
+      numIntersectionsOtherCirclesRange = parseCsvIntPair(parProOpt.numIntersectionsRange);
     }
     vector<Flow*> automata = automataGenerator.randomlySyncedCircleAutomata(
                                                                             numberOfAutomata,
@@ -262,7 +262,7 @@ namespace CodeThorn {
                                                                             numIntersectionsOtherCirclesRange);
     Visualizer visualizer;
     string dotCfas = visualizer.cfasToDotSubgraphs(automata);
-    string outputFilename = args.getString("generate-automata");
+    string outputFilename = parProOpt.generateAutomata;
     write_file(outputFilename, dotCfas);
     cout << "generated " << outputFilename <<"."<<endl;
   }

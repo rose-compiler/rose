@@ -596,8 +596,8 @@ run-test() {
 
     # Create the directory that will hold this test. Each test has its own directory that's initialized with all
     # the configuration info needed by the test and will eventually contain the test results.
-    local container_name="$(generate-container-name "$os")"
-    local rundir="${VARDIR}/running/${container_name}"
+    local container_basename="$(generate-container-name "$os")"
+    local rundir="${VARDIR}/running/${container_basename}"
     mkdir -p "$rundir/artifacts"
 
     # Create configuration files
@@ -615,7 +615,7 @@ run-test() {
     (
 	echo "Time that test started: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 	echo "Host machine: $(whoami)@$(hostname -f) $(uname -srv)"
-	echo "Target machine: Docker container $container_name using image $image_name"
+	echo "Target machine: Docker container ${container_basename}-* using image $image_name"
 	echo "Number of hardware threads: $(grep -cP '^processor\t:' /proc/cpuinfo)"
 	[ -n "$KEEP_CONTAINERS" ] && echo "Restart command (if saved): ${rundir}/debug-container"
 	echo
@@ -627,10 +627,12 @@ run-test() {
     # Run the test
     echo
     echo "Test is starting; run directory is ${rundir}"
+    local container_name=
     for phasedir in "${LIBDIR}/container-scripts/phases"/*; do
 	[ -d "$phasedir" ] || continue
 	local phase_basename="${phasedir##*/}"
 	local phase_name="$(echo "$phase_basename" |sed 's/^[0-9]\+-//')"
+	container_name="${container_basename}-${phase_basename}"
 	[ "$phase_basename" = "$phase_name" ] && continue # didn't start with a number
 	echo "$phase_basename" > "${rundir}/phase"
 	delete-result "$rundir" status
@@ -652,7 +654,7 @@ run-test() {
 		$mount_spock_switches \
 		$mount_project_switches \
 		--mount type=bind,src="${rundir}",dst="/home/user/run" \
-		--name "$container_name" "$image_name"); then
+		--name "${container_name}" "$image_name"); then
 	    # Test finishted, so report results
 	    echo "docker container $container_name completed: $(get-result "$rundir" status)"
 	    remove-or-keep-container "$rundir" "$image_name" "$container_name"
@@ -664,7 +666,7 @@ run-test() {
 	fi
     done
     report-results "$rundir"
-    upload-artifacts "$rundir" "$container_name"
+    upload-artifacts "$rundir" "$container_name" # from the last container
     remove-or-keep-rundir "$rundir"
 }
 

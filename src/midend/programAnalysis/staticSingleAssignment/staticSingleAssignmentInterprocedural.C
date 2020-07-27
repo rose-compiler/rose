@@ -75,7 +75,7 @@ vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralPr
     SgIncidenceDirectedGraph* callGraph = cgBuilder.getGraph();
 
     //Build a map from SgGraphNode* to the corresponding function definitions
-    unordered_map<SgFunctionDefinition*, SgGraphNode*> graphNodeToFunction;
+    boost::unordered::unordered_map<SgFunctionDefinition*, SgGraphNode*> graphNodeToFunction;
     set<SgGraphNode*> allNodes = callGraph->computeNodeSet();
 
     foreach(SgGraphNode* graphNode, allNodes)
@@ -113,7 +113,7 @@ void StaticSingleAssignment::processCalleesThenFunction(SgFunctionDefinition* ta
     else
         visited.insert(targetFunction);
 
-    unordered_map<SgFunctionDefinition*, SgGraphNode*>::const_iterator functionIter = graphNodeToFunction.find(targetFunction);
+    boost::unordered::unordered_map<SgFunctionDefinition*, SgGraphNode*>::const_iterator functionIter = graphNodeToFunction.find(targetFunction);
     if (functionIter == graphNodeToFunction.end())
     {
         printf("The function %s has no vertex in the call graph!\n", targetFunction->get_declaration()->get_name().str());

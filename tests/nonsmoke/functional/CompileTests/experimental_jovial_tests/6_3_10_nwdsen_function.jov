@@ -1,0 +1,20 @@
+START
+PROGRAM nwdsenFunction;
+BEGIN
+
+TABLE table'1 (1:10, 2:20, 3:30);
+   ITEM table'item'1 F;
+
+TYPE table'type TABLE;
+  BEGIN
+    ITEM bit'part B 16;
+    ITEM num'part U 16;
+  END
+
+ITEM word'num S;
+
+word'num = nwdsen(table'type);
+word'num = nwdsen(table'1);
+
+END
+TERM

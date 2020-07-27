@@ -54,7 +54,7 @@ ROSE_DLL_API SgProject* frontendShell ( const std::vector<std::string>& argv);
 //
 // WARNING: If a non-null unparseFormatHelp is specified then backend will unconditionally delete it.  Therefore, the caller
 // must have allocated it on the heap or else strange errors will result.
-ROSE_DLL_API int backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelagate = NULL );
+ROSE_DLL_API int backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelegate = NULL );
 
 // DQ (8/24/2009): This backend calls the backend compiler using the original input source file list.
 // This is useful as a test code for testing ROSE for use on projects that target Compass or any

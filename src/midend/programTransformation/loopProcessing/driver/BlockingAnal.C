@@ -1,9 +1,10 @@
 #include <BlockingAnal.h>
 #include <LoopTreeTransform.h>
 #include <AutoTuningInterface.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 static int SliceNestReuseLevel(CompSliceLocalityRegistry *anal, const CompSliceNest& n)
-     { 
+     {
        unsigned num = n.NumberOfEntries();
        size_t reuseLevel = 0;
        for (; reuseLevel < num; ++reuseLevel) {
@@ -13,7 +14,7 @@ static int SliceNestReuseLevel(CompSliceLocalityRegistry *anal, const CompSliceN
        return reuseLevel;
     }
 
-static SymbolicVal GetDefaultBlockSize(const CompSlice* slice) 
+static SymbolicVal GetDefaultBlockSize(const CompSlice* slice)
     {
        AstInterface& fa = LoopTransformInterface::getAstInterface();
        LoopTransformOptions* opt = LoopTransformOptions::GetInstance();
@@ -29,36 +30,36 @@ static SymbolicVal GetDefaultBlockSize(const CompSlice* slice)
            LoopTreeNode *loop = iter.Current();
            SymbolicBound b = loop->GetLoopInfo()->GetBound();
            SymbolicVal size = b.ub - b.lb + 1;
- 
+
            l.push_back(fa.CreateConstInt(1).get_ptr());
            l.push_back(size.CodeGen(fa).get_ptr());
            std::string funname = "getTuningValue";
            AstNodePtr init = fa.CreateFunctionCall(funname, l.begin(), l.end());
-           return SymbolicVar(fa.NewVar(fa.GetType("int"), "",true,true,AST_NULL, init),AST_NULL); 
+           return SymbolicVar(fa.NewVar(fa.GetType("int"), "",true,true,AST_NULL, init),AST_NULL);
        }
     }
 
 const CompSlice* LoopNoBlocking::
-SetBlocking(CompSliceLocalityRegistry *anal, 
+SetBlocking(CompSliceLocalityRegistry *anal,
                            const CompSliceDepGraphNode::FullNestInfo& nestInfo)
    {
       const CompSliceNest* n = nestInfo.GetNest();
       int loopnum = n->NumberOfEntries();
       if (loopnum == 0) return 0;
        blocksize.clear();
-       for (int i = 0; i < loopnum; ++i) 
+       for (int i = 0; i < loopnum; ++i)
           blocksize.push_back(1);
        return n->Entry(loopnum-1);
    }
 
 const CompSlice* OuterLoopReuseBlocking ::
-SetBlocking( CompSliceLocalityRegistry *anal, 
+SetBlocking( CompSliceLocalityRegistry *anal,
                            const CompSliceDepGraphNode::FullNestInfo& nestInfo)
    {
       const CompSliceNest& n = *nestInfo.GetNest();
       blocksize.clear();
       size_t num = n.NumberOfEntries();
-      int reuseLevel = SliceNestReuseLevel(anal, n); 
+      int reuseLevel = SliceNestReuseLevel(anal, n);
       for (int i = 0; i < reuseLevel; ++i)
             blocksize.push_back(1);
       size_t index;
@@ -71,21 +72,21 @@ SetBlocking( CompSliceLocalityRegistry *anal,
    }
 
 const CompSlice* InnerLoopReuseBlocking ::
-SetBlocking( CompSliceLocalityRegistry *anal, 
+SetBlocking( CompSliceLocalityRegistry *anal,
                            const CompSliceDepGraphNode::FullNestInfo& nestInfo)
    {
       const CompSliceNest& n = *nestInfo.GetNest();
       blocksize.clear();
       unsigned num = n.NumberOfEntries();
-      int reuseLevel = SliceNestReuseLevel(anal, n); 
+      int reuseLevel = SliceNestReuseLevel(anal, n);
       blocksize.resize(reuseLevel + 1, 1);
-      for ( size_t index = reuseLevel+1; index < num; ++index) 
+      for ( size_t index = reuseLevel+1; index < num; ++index)
          blocksize.push_back(GetDefaultBlockSize(n[index]));
       return n[num-1];
 }
 
 const CompSlice* AllLoopReuseBlocking ::
-SetBlocking( CompSliceLocalityRegistry *anal, 
+SetBlocking( CompSliceLocalityRegistry *anal,
                            const CompSliceDepGraphNode::FullNestInfo& nestInfo)
    {
       const CompSliceNest& n = *nestInfo.GetNest();
@@ -95,10 +96,10 @@ SetBlocking( CompSliceLocalityRegistry *anal,
           blocksize.push_back(1);
           return n[0];
       }
-      int reuseLevel = SliceNestReuseLevel(anal, n); 
+      int reuseLevel = SliceNestReuseLevel(anal, n);
       for (int i = 0; i < reuseLevel; ++i)
             blocksize.push_back(1);
-      for ( size_t index = reuseLevel; index < num; ++index) 
+      for ( size_t index = reuseLevel; index < num; ++index)
            blocksize.push_back(GetDefaultBlockSize(n[index]));
       return n[num-1];
    }
@@ -127,11 +128,11 @@ int LoopBlocking:: SetIndex( int num)
 
 extern bool DebugLoop();
 LoopTreeNode* LoopBlocking::
-apply( const CompSliceDepGraphNode::FullNestInfo& nestInfo, 
+apply( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
        LoopTreeDepComp& comp, DependenceHoisting &op, LoopTreeNode *top)
 {
-  
-  if (nestInfo.GetNest()->NumberOfEntries() <= 0) 
+
+  if (nestInfo.GetNest()->NumberOfEntries() <= 0)
           return top;
 
   bool debugloop = DebugLoop();
@@ -149,11 +150,11 @@ apply( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
          head->DumpTree();
   }
   return top;
-}  
+}
 
 
 LoopTreeNode* LoopBlocking::
-ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo, 
+ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
               LoopTreeDepComp& comp, DependenceHoisting &op, LoopTreeNode *&top)
 {
   const CompSliceNest& slices = *nestInfo.GetNest();
@@ -172,7 +173,7 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
         comp.DumpDep();
         std::cerr << "\n blocking size for this loop is " << b.toString() << "\n";
      }
-      
+
      if (!(b == 1)) {
          LoopTreeNode *n = LoopTreeBlockLoop()( top, SymbolicVar(fa.NewVar(fa.GetType("int")), AST_NULL), b);
          if (DebugLoop()) {
@@ -204,12 +205,12 @@ DoNonPerfectBlocking(const CompSliceDepGraphNode::FullNestInfo& nestInfo)
         if (innerNest == 0) innerNest = p;
         else { innerNest = 0; break; /*QY: only allow one nest */ }
      }
-  } 
+  }
   return innerNest;
 }
 
 const CompSlice* ParameterizeBlocking::
-SetBlocking(CompSliceLocalityRegistry *anal, 
+SetBlocking(CompSliceLocalityRegistry *anal,
                            const CompSliceDepGraphNode::FullNestInfo& nestInfo)
 {
   const CompSlice* res = AllLoopReuseBlocking::SetBlocking(anal,nestInfo);
@@ -218,7 +219,7 @@ SetBlocking(CompSliceLocalityRegistry *anal,
   if (size <= 1 || !curNest->Entry(size-1)->SliceCommonLoop(curNest->Entry(0)))
   { /*QY: current loop nest is perfectly nested*/
      const CompSliceDepGraphNode::NestInfo* nonperfect = DoNonPerfectBlocking(nestInfo);
-     if (nonperfect) 
+     if (nonperfect)
      { /*QY: extra loops inside; (not considered for blocking normally). */
         const CompSliceNest* innerNest = nonperfect->GetNest();
         assert(innerNest!=0); /*QY: this is why nonperfect is returned */
@@ -233,8 +234,8 @@ SetBlocking(CompSliceLocalityRegistry *anal,
 }
 
 LoopTreeNode* ParameterizeBlocking::
-ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo, 
-              LoopTreeDepComp& comp, DependenceHoisting &op, 
+ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
+              LoopTreeDepComp& comp, DependenceHoisting &op,
                                       LoopTreeNode *&top)
 {
   const CompSliceNest* pslices = nestInfo.GetNest();
@@ -255,7 +256,7 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
   if (inner == 0 && size == 1) { /*QY: all loops are perfectly nested*/ return top;}
 
   const CompSlice* slice_innermost = slices[size-1], *slice_top=slices[0];
-  CompSlice::ConstLoopIterator p_inner 
+  CompSlice::ConstLoopIterator p_inner
                      = slice_innermost->GetConstLoopIterator();
   LoopTreeNode* loop_innermost=*p_inner;
   if (size > 1)
@@ -269,7 +270,7 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
        const CompSlice* slice_inner=slices[i];
        const CompSlice* slice_pivot = slices[i-1];
        CompSlice::ConstLoopIterator p_pivot=slice_pivot->GetConstLoopIterator();
-       if  (slice_inner->SliceCommonLoop(slice_pivot)) { 
+       if  (slice_inner->SliceCommonLoop(slice_pivot)) {
          /*QY: outer loops are not perfectly nested*/
          FuseLoopInfo loops_cur(p_pivot.Current());
          for (LoopTreeTraverseSelectLoop p_inner(top);
@@ -278,7 +279,7 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
              LoopTreeNode* cur = p_inner.Current();
              if (!slice_inner->QuerySliceLoop(cur) || slice_pivot->QuerySliceLoop(cur)) continue;
              CompSlice::SliceLoopInfo curinfo = slice_inner->QuerySliceLoopInfo(cur);
-             loops_cur.loops.push_back(FuseLoopInfo::Entry(cur,curinfo.minalign-p_pivot.CurrentInfo().minalign)); 
+             loops_cur.loops.push_back(FuseLoopInfo::Entry(cur,curinfo.minalign-p_pivot.CurrentInfo().minalign));
          }
          assert(loops_cur.loops.size() > 0);
          non_perfects.push_back(loops_cur);
@@ -291,14 +292,14 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
 
 
   if (inner == 0) { /*QY: no inner loops that can be blocked together*/
-     if (non_perfects.size() > 0) 
+     if (non_perfects.size() > 0)
          tuning->BlockLoops(top, loop_innermost, this, &non_perfects);
      else tuning->BlockLoops(top, loop_innermost, this);
   }
   else {
       LoopTreeNode* innerTop = LoopTreeTransform().InsertHandle(loop_innermost,1);
-      /*QY: need to call GenXformRoot for each innerNest before inner*/ 
-      for (const CompSliceDepGraphNode::NestInfo* p = nestInfo.InnerNest(); 
+      /*QY: need to call GenXformRoot for each innerNest before inner*/
+      for (const CompSliceDepGraphNode::NestInfo* p = nestInfo.InnerNest();
            p != 0 ;  p = p->InnerNest()) {
          LoopTreeNode* curTop = p->GenXformRoot(innerTop);
          assert(curTop != 0);
@@ -306,7 +307,7 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
       }
       const CompSliceNest* innerNest=inner->GetNest();
       assert(innerNest!=0);
-      for (int j = innerNest->NumberOfEntries()-1; j >= 0; --j) 
+      for (int j = innerNest->NumberOfEntries()-1; j >= 0; --j)
       {
          innerTop = op.Transform( comp, innerNest->Entry(j),innerTop);
       }
@@ -316,11 +317,11 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
          CompSlice::ConstLoopIterator p_inner2 = innerNest->Entry(i)->GetConstLoopIterator();
          inner2 = p_inner2.Current();
          FuseLoopInfo cur;
-         for ( ; !p_inner2.ReachEnd(); ++p_inner2) 
-          { 
+         for ( ; !p_inner2.ReachEnd(); ++p_inner2)
+          {
              cur.loops.push_back(FuseLoopInfo::Entry(p_inner2.Current(),p_inner2.CurrentInfo().minalign));
           }
-          non_perfects.push_back(cur); 
+          non_perfects.push_back(cur);
       }
       tuning->BlockLoops(top, inner2, this, &non_perfects);
   }

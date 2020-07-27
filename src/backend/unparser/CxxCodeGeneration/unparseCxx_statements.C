@@ -7306,7 +7306,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // SgInitializedName *prev_decl_item = NULL;
 
   // DQ (11/28/2004): Is this even used in enum declarations! (I don't think so!)
-     ROSE_ASSERT(ninfo.inEnumDecl() == false);
+  // ROSE_ASSERT(ninfo.inEnumDecl() == false);
 
   // DQ (11/28/2004): Within an enum declaration there should not be a type associated with the variables???
      if (ninfo.inEnumDecl())
@@ -7636,7 +7636,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                        }
                   }
 
-#if DEBUG_VARIABLE_DECLARATION
+#if DEBUG_VARIABLE_DECLARATION || 0
                printf ("Calling unp->u_sage->printSpecifier2 \n");
                curprint ("\n/* Calling unp->u_sage->printSpecifier2() */ \n");
             // printDebugInfo("entering unp->u_sage->printSpecifier2", true);
@@ -7811,7 +7811,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // DQ (12/26/2019): Adding support for unparsing of defining declarations in types used across multiple translation units (multiple files).
             // See Cxx11_tests/test2019_518a.C and test2019_518b.C.
                SgDeclarationStatement* tmp_associatedDefiningDeclaration = vardecl_stmt->get_baseTypeDefiningDeclaration();
-               if (tmp_associatedDefiningDeclaration != NULL)
+            // TV (06/11/2020): Only set these fields for class declarations as it is the only handled case
+               if (isSgClassDeclaration(tmp_associatedDefiningDeclaration) != NULL)
                   {
                     ninfo_for_type.set_useAlternativeDefiningDeclaration();
 
@@ -8585,7 +8586,13 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint ( string(","));
              }
 
-          unparseAttachedPreprocessingInfo(decl_item, ninfo, PreprocessingInfo::after);    
+#if 0
+          curprint ("\n/* BEFORE: Calling unparseAttachedPreprocessingInfo (after) */ \n");
+#endif
+          unparseAttachedPreprocessingInfo(decl_item, ninfo, PreprocessingInfo::after);
+#if 0
+          curprint ("\n/* AFTER: Calling unparseAttachedPreprocessingInfo (after) */ \n");
+#endif
         }
 
 #if 0
@@ -8618,9 +8625,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // This breaks other test codes, but the grainularity of the specification of output of ";" and where the 
   // set_SkipSemiColon() function is called is now more precise.  So the other codes now pass.
   // DQ (7/12/2006): Bug fix reported by Peter Collingbourne
-  // if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.SkipSemiColon())
-  // if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.inConditional() && !ninfo.SkipSemiColon())
-     if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.SkipSemiColon())
+//   if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.SkipSemiColon())
+     if (!ninfo.SkipSemiColon())
         {
        // DQ (2/27/2013): Added support for missing attributes.
           unp->u_sage->printAttributes(vardecl_stmt,info);

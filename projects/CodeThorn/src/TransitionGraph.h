@@ -15,7 +15,7 @@ namespace CodeThorn {
     const EState* source; // source node
     Edge edge;
     const EState* target; // target node
-    string toString() const;
+    string toString(CodeThorn::VariableIdMapping* variableIdMapping=0) const;
     size_t memorySize() const;
   private:
   };
@@ -60,7 +60,7 @@ namespace CodeThorn {
     EStatePtrSet estateSet();
     long numberOfObservableStates(bool includeIn=true, bool includeOut=true, bool includeErr=true);
     void add(Transition trans);
-    string toString() const;
+    string toString(VariableIdMapping* variableIdMapping=0) const;
     LabelSet labelSetOfIoOperations(InputOutput::OpType op);
     Label getStartLabel() { assert(_startLabel!=Label()); return _startLabel; }
     void setStartLabel(Label lab) { _startLabel=lab; }
@@ -75,8 +75,6 @@ namespace CodeThorn {
     //! deprecated
     void reduceEStates(std::set<const EState*> toReduce);
     void reduceEState(const EState* estate);
-    //! reduces estates. Adds edge-annotation PATH. Structure preserving by remapping existing edges.
-    void reduceEStates2(std::set<const EState*> toReduce);
     void reduceEState2(const EState* estate); // used for semantic folding
     void reduceEStates3(std::function<bool(const EState*)> predicate); // used for semantic folding
     TransitionPtrSet inEdges(const EState* estate);

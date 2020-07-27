@@ -300,6 +300,14 @@ SnippetFile::parse(const std::string &fileName)
     }
     SgSourceFile *snippetAst = isSgSourceFile(file);
     assert(snippetAst!=NULL);
+
+  // DQ (7/2/2020): Added assertion (fails for snippet tests).
+     if (snippetAst->get_preprocessorDirectivesAndCommentsList() == NULL)
+       {
+         snippetAst->set_preprocessorDirectivesAndCommentsList(new ROSEAttributesListContainer());
+       }
+     ROSE_ASSERT(snippetAst->get_preprocessorDirectivesAndCommentsList() != NULL);
+
     attachPreprocessingInfo(snippetAst);
     resetConstantFoldedValues(file);
     snippetAst->set_skip_unparse(true);
@@ -318,6 +326,7 @@ SnippetFile::findSnippetFunctions()
                     SgFunctionDeclaration *fdecl = fdef->get_declaration();
                     SgFunctionType *ftype = fdecl ? fdecl->get_type() : NULL;
                     SgType *rettype = ftype ? ftype->get_return_type() : NULL;
+                    ROSE_ASSERT(fdecl != NULL);
                     if (rettype==SageBuilder::buildVoidType() && // snippets must return void
                         !boost::contains(fdecl->get_qualified_name().getString(), "<")) // and not have funky names
                         functions[fdef->get_declaration()->get_qualified_name()].push_back(fdef);

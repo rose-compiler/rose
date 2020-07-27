@@ -10,12 +10,13 @@
 #include <union_find.h>
 #include <GraphScope.h>
 #include <GraphIO.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 bool DebugRefFuse()
 {
   static int r = 0;
   if (r == 0) {
-     r = CmdOptions::GetInstance()->HasOption("-debugreffuse")? 1 : -1; 
+     r = CmdOptions::GetInstance()->HasOption("-debugreffuse")? 1 : -1;
   }
   return r == 1;
 }
@@ -23,7 +24,7 @@ bool DebugCopyConfig()
 {
   static int r = 0;
   if (r == 0) {
-     r = CmdOptions::GetInstance()->HasOption("-debugcopyconfig")? 1 : -1; 
+     r = CmdOptions::GetInstance()->HasOption("-debugcopyconfig")? 1 : -1;
   }
   return r == 1;
 }
@@ -31,7 +32,7 @@ bool DebugCopySplit()
 {
   static int r = 0;
   if (r == 0) {
-     r = CmdOptions::GetInstance()->HasOption("-debugcopysplit")? 1 : -1; 
+     r = CmdOptions::GetInstance()->HasOption("-debugcopysplit")? 1 : -1;
   }
   return r == 1;
 }
@@ -39,7 +40,7 @@ bool DebugLoopDist()
 {
   static int r = 0;
   if (r == 0) {
-     r = CmdOptions::GetInstance()->HasOption("-debugloopdist")? 1 : -1; 
+     r = CmdOptions::GetInstance()->HasOption("-debugloopdist")? 1 : -1;
   }
   return r == 1;
 }
@@ -47,9 +48,9 @@ class CollectTreeNodes {
    LoopTreeDepComp& comp;
    PtrSetWrap<LoopTreeNode>& result;
  public:
-   CollectTreeNodes(LoopTreeDepComp& c, PtrSetWrap<LoopTreeNode>& r) 
+   CollectTreeNodes(LoopTreeDepComp& c, PtrSetWrap<LoopTreeNode>& r)
        : comp(c),result(r) {}
-   bool operator()(const LoopTreeDepGraphNode* n) 
+   bool operator()(const LoopTreeDepGraphNode* n)
     {
       LoopTreeNode* s = comp.GetTreeNode(n);
       if (result.IsMember(s))
@@ -58,7 +59,7 @@ class CollectTreeNodes {
       return true;
     }
 };
-void DepLinkedNodes(LoopTreeDepComp& comp, LoopTreeNodeIterator stmts, 
+void DepLinkedNodes(LoopTreeDepComp& comp, LoopTreeNodeIterator stmts,
                     GraphAccess::EdgeDirection dir, PtrSetWrap<LoopTreeNode>& result)
 {
   CollectTreeNodes collect(comp, result);
@@ -125,19 +126,20 @@ tc.DumpDep();
 
   for ( GroupGraphCreate::NodeIterator sccIter = sccGraph.GetNodeIterator();
        !sccIter.ReachEnd(); sccIter++) {
-    GroupGraphNode *scc = sccIter.Current(); 
+    GroupGraphNode *scc = sccIter.Current();
     LoopTreeNodeSet treeSet;
     for (GroupGraphNode::const_iterator iter=scc->begin(); !iter.ReachEnd(); iter++) {
-       LoopTreeDepGraphNode *n = 
-          static_cast<LoopTreeDepGraphNode*>(iter.Current()); 
+       LoopTreeDepGraphNode *n =
+          static_cast<LoopTreeDepGraphNode*>(iter.Current());
+       assert(tc.GetTreeNode(n) != NULL);
        treeSet.insert( tc.GetTreeNode(n) );
     }
     if (treeSet.NumberOfEntries()) {
       SelectPtrSet<LoopTreeNode> sel(treeSet);
-      LoopTreeNode* tmp = LoopTreeDistributeNode()( l,sel); 
+      LoopTreeNode* tmp = LoopTreeDistributeNode()( l,sel);
       if (result.node == 0) {
          result.node = tmp; result.sel = treeSet;
-      } 
+      }
     }
   }
 if (DebugLoopDist()) {
@@ -149,10 +151,10 @@ std::cerr << "***************end sub tree *******\n";
   return result;
 }
 
-class DepCompAstRefDAG : public DepCompAstRefGraphCreate 
+class DepCompAstRefDAG : public DepCompAstRefGraphCreate
 {
 public:
-  DepCompAstRefDAG(const DepCompAstRefAnal& stmtorder, const DepCompAstRefGraphCreate* g) 
+  DepCompAstRefDAG(const DepCompAstRefAnal& stmtorder, const DepCompAstRefGraphCreate* g)
    {
       DoublyLinkedListWrap <DepCompAstRefGraphNode*> nodelist;
       DepCompAstRefGraphCreate::NodeIterator nodes = g->GetNodeIterator();
@@ -179,7 +181,7 @@ public:
                   AddEdge(n1,n,e);
              }
          }
-      }   
+      }
       if (DebugRefFuse()) {
          std::cerr << GraphToString(*this) << std::endl;
       }
@@ -198,15 +200,15 @@ class AstRefTypedFusionOperator : public TypedFusionOperator
     int size;
     DepCompCopyArrayCollect& collect;
 
-    void AddNodeType( const DepCompAstRefGraphCreate *g, DepCompAstRefGraphNode* n) 
+    void AddNodeType( const DepCompAstRefGraphCreate *g, DepCompAstRefGraphNode* n)
      {
        for (GraphAccess::EdgeDirection d = GraphAccess::EdgeOut; d != GraphAccess::BiEdge;
             d = (d == GraphAccess::EdgeOut)? GraphAccess::EdgeIn : GraphAccess::BiEdge) {
          DepCompAstRefGraphCreate::EdgeIterator edges = g->GetNodeEdgeIterator(n, d);
          for ( ; !edges.ReachEnd(); ++edges) {
             DepInfoEdge* e = (*edges);
-            DepCompAstRefGraphNode* n1 = g->GetEdgeEndPoint(e, GraphAccess::Reverse(d)); 
-            if  (nodeMap.find(n1) != nodeMap.end()) 
+            DepCompAstRefGraphNode* n1 = g->GetEdgeEndPoint(e, GraphAccess::Reverse(d));
+            if  (nodeMap.find(n1) != nodeMap.end())
                   continue;
             if (DebugRefFuse())
               std::cerr << "mapping node " << n1->toString() << " to " << size << std::endl;
@@ -217,7 +219,7 @@ class AstRefTypedFusionOperator : public TypedFusionOperator
      }
   public:
     AstRefTypedFusionOperator(DepCompCopyArrayCollect& c,
-                              const DepCompAstRefGraphCreate* g) 
+                              const DepCompAstRefGraphCreate* g)
          : collect(c)
       {
         size = 0;
@@ -225,7 +227,7 @@ class AstRefTypedFusionOperator : public TypedFusionOperator
         for (DepCompAstRefGraphCreate::NodeIterator nodes = g->GetNodeIterator();
             !nodes.ReachEnd(); nodes.Advance()) {
            DepCompAstRefGraphNode* n = nodes.Current();
-           if (nodeMap.find(n) != nodeMap.end()) 
+           if (nodeMap.find(n) != nodeMap.end())
               continue;
            AstNodePtr r = n->GetInfo().orig;
            AstNodePtr arr;
@@ -242,7 +244,7 @@ class AstRefTypedFusionOperator : public TypedFusionOperator
       {
         GraphAccessWrapTemplate<void,void,DepCompAstRefDAG> access(dag);
         for (int i = 0; i < size; ++i) {
-           if (DebugRefFuse()) 
+           if (DebugRefFuse())
               std::cerr << "fusing node type " << i << std::endl;
            TypedFusion()(&access, *this, i);
         }
@@ -256,18 +258,18 @@ class AstRefTypedFusionOperator : public TypedFusionOperator
            }
         }
       }
-    virtual int GetNodeType( GraphAccessInterface::Node *n) 
+    virtual int GetNodeType( GraphAccessInterface::Node *n)
       {
          DepCompAstRefGraphNode* n1 = static_cast<DepCompAstRefGraphNode*>(n);
          if (nodeMap.find(n1) == nodeMap.end()) {
-            return nodeMap.size(); 
+            return nodeMap.size();
          }
          else {
             return nodeMap[n1].nodetype;
          }
       }
-    virtual void MarkFuseNodes(GraphAccessInterface::Node *gn1, 
-                               GraphAccessInterface::Node *gn2) 
+    virtual void MarkFuseNodes(GraphAccessInterface::Node *gn1,
+                               GraphAccessInterface::Node *gn2)
      {
          DepCompAstRefGraphNode* n1 = static_cast<DepCompAstRefGraphNode*>(gn1);
          DepCompAstRefGraphNode* n2 = static_cast<DepCompAstRefGraphNode*>(gn2);
@@ -282,9 +284,9 @@ class AstRefTypedFusionOperator : public TypedFusionOperator
          info1.collect->refs.insert(n2);
          info2.collect = info1.collect;
      }
-    virtual bool PreventFusion( GraphAccessInterface::Node *src, 
+    virtual bool PreventFusion( GraphAccessInterface::Node *src,
                                    GraphAccessInterface::Node *snk,
-                                   GraphAccessInterface::Edge *ge) 
+                                   GraphAccessInterface::Edge *ge)
      {
          DepCompAstRefGraphNode* n1 = static_cast<DepCompAstRefGraphNode*>(src);
          DepCompAstRefGraphNode* n2 = static_cast<DepCompAstRefGraphNode*>(snk);
@@ -303,7 +305,7 @@ class AstRefTypedFusionOperator : public TypedFusionOperator
      }
 };
 
-LoopTreeNode* DepCompCopyArrayCollect:: 
+LoopTreeNode* DepCompCopyArrayCollect::
 OutmostCopyRoot( CopyArrayUnit& unit, DepCompAstRefGraphCreate& refDep, LoopTreeNode* treeroot)
 {
  LoopTreeNode* origroot = unit.root;
@@ -311,10 +313,10 @@ OutmostCopyRoot( CopyArrayUnit& unit, DepCompAstRefGraphCreate& refDep, LoopTree
     DepCompCopyArrayCollect::CopyArrayUnit::CrossGraph crossgraph(&refDep, unit);
       GraphEdgeIterator<DepCompCopyArrayCollect::CopyArrayUnit::CrossGraph>
           edges(&crossgraph);
-    if (!edges.ReachEnd()) 
-       break; 
+    if (!edges.ReachEnd())
+       break;
      DepCompCopyArrayCollect::CopyArrayUnit::InsideGraph insidegraph(&refDep, unit);
-     GraphEdgeIterator<DepCompCopyArrayCollect::CopyArrayUnit::InsideGraph> 
+     GraphEdgeIterator<DepCompCopyArrayCollect::CopyArrayUnit::InsideGraph>
           ep(&insidegraph);
      for (  ;  !ep.ReachEnd(); ++ep) {
         if (!(*ep)->GetInfo().is_precise()) {
@@ -328,15 +330,15 @@ OutmostCopyRoot( CopyArrayUnit& unit, DepCompAstRefGraphCreate& refDep, LoopTree
   }
   LoopTreeNode* res = unit.root;
   if (res == 0)
-     res = treeroot; 
+     res = treeroot;
   else if (res->LoopLevel() +1 == origroot->LoopLevel() && origroot->Parent()->ChildCount() == 1) {
-     res = origroot->Parent();   
+     res = origroot->Parent();
   }
   unit.root = origroot;
   return res;
 }
 
-                                                                                              
+
 LoopTreeNode*  DepCompCopyArrayCollect:: ComputeCommonRoot(CopyArrayUnit::NodeSet& refs)
 {
     LoopTreeInterface interface;
@@ -350,18 +352,18 @@ LoopTreeNode*  DepCompCopyArrayCollect:: ComputeCommonRoot(CopyArrayUnit::NodeSe
          curroot = get_stmtref_info().get_tree_root();
          break;
       }
-      curroot = nroot; 
+      curroot = nroot;
     }
     return curroot;
 }
 
 template<class NodeIter>
-bool EnforceCopyRootRemove(NodeIter nodes, const DepCompAstRefGraphNode* outnode, 
+bool EnforceCopyRootRemove(NodeIter nodes, const DepCompAstRefGraphNode* outnode,
                            int copylevel,
                      DepCompCopyArrayCollect::CopyArrayUnit::NodeSet& cuts)
 {
    LoopTreeInterface interface;
-   bool removeall = true; 
+   bool removeall = true;
    LoopTreeNode* outstmt = outnode->GetInfo().stmt;
    for ( ; !nodes.ReachEnd(); ++nodes) {
       const DepCompAstRefGraphNode* cur = *nodes;
@@ -370,7 +372,7 @@ bool EnforceCopyRootRemove(NodeIter nodes, const DepCompAstRefGraphNode* outnode
       LoopTreeNode* stmt = cur->GetInfo().stmt;
       LoopTreeNode* tmp = 0;
       if (stmt == outstmt ||
-          ((tmp = GetCommonLoop(interface,stmt, outstmt)) != 0 && 
+          ((tmp = GetCommonLoop(interface,stmt, outstmt)) != 0 &&
              GetLoopLevel(tmp, interface) >= copylevel))  {
           cuts.insert(cur);
       }
@@ -381,14 +383,14 @@ bool EnforceCopyRootRemove(NodeIter nodes, const DepCompAstRefGraphNode* outnode
 }
 
 void DepCompCopyArrayToBuffer::
-EnforceCopyRoot( DepCompCopyArrayCollect::CopyArrayUnit& curunit, 
+EnforceCopyRoot( DepCompCopyArrayCollect::CopyArrayUnit& curunit,
                  const DepCompAstRefGraphCreate& refDep,
                  const DepCompAstRefGraphNode* outnode,
                  DepCompCopyArrayCollect::CopyArrayUnit::NodeSet& cuts)
 {
     int copylevel = curunit.copylevel();
 
-    DepCompCopyArrayCollect::CopyArrayUnit::CrossGraphOut 
+    DepCompCopyArrayCollect::CopyArrayUnit::CrossGraphOut
            crossout(&refDep, curunit);
     GraphNodePredecessorIterator<DepCompCopyArrayCollect::CopyArrayUnit::CrossGraphOut>
           preds(&crossout, outnode);
@@ -402,13 +404,13 @@ EnforceCopyRoot( DepCompCopyArrayCollect::CopyArrayUnit& curunit,
     if (!EnforceCopyRootRemove( succ, outnode, copylevel, cuts))
          complete = false;
     if (complete)
-         return; 
+         return;
      tmp.refs -= cuts;
      EnforceCopyRootRemove(tmp.refs.begin(), outnode, copylevel, cuts);
 }
 
 void DepCompCopyArrayToBuffer::
-EnforceCopyRoot( DepCompCopyArrayCollect::CopyArrayUnit& curunit, 
+EnforceCopyRoot( DepCompCopyArrayCollect::CopyArrayUnit& curunit,
                 const DepCompAstRefGraphCreate& refDep,
                  DepCompCopyArrayCollect::CopyArrayUnit::NodeSet& cuts)
 {
@@ -418,8 +420,8 @@ EnforceCopyRoot( DepCompCopyArrayCollect::CopyArrayUnit& curunit,
     if (DebugCopySplit())  {
       std::cerr << IteratorToString2( curunit.refs.begin()) << " ; \n with root = " << curunit.root->TreeToString() << std::endl;
     }
-    
-    DepCompCopyArrayCollect::CopyArrayUnit::NodeSet outnodes; 
+
+    DepCompCopyArrayCollect::CopyArrayUnit::NodeSet outnodes;
     DepCompCopyArrayCollect::CopyArrayUnit::CrossGraphOut crossout(&refDep, curunit);
     for (
        GraphEdgeIterator<DepCompCopyArrayCollect::CopyArrayUnit::CrossGraphOut>
@@ -434,7 +436,7 @@ EnforceCopyRoot( DepCompCopyArrayCollect::CopyArrayUnit& curunit,
         DepCompAstRefGraphNode* cur = refDep.GetEdgeEndPoint(*inedges, GraphAccess::EdgeOut);
         outnodes.insert(cur);
     }
-    
+
     for (DepCompCopyArrayCollect::CopyArrayUnit::NodeSet::const_iterator p1 = outnodes.begin();
           !p1.ReachEnd(); ++p1)  {
         EnforceCopyRoot(curunit, refDep, *p1, cuts);
@@ -454,7 +456,7 @@ CollectCopyArray( DepCompCopyArrayCollect& collect,
   // AstInterface& ai = la;
   for (DepCompCopyArrayCollect::iterator arrays = collect.begin();
        arrays != collect.end(); ++arrays) {
-    DepCompCopyArrayCollect::CopyArrayUnit& curunit = *arrays; 
+    DepCompCopyArrayCollect::CopyArrayUnit& curunit = *arrays;
     DepCompCopyArrayCollect::CopyArrayUnit::NodeSet& refs = curunit.refs;
     assert (refs.size() > 0);
 
@@ -467,9 +469,9 @@ CollectCopyArray( DepCompCopyArrayCollect& collect,
        collect.AddCopyArray().refs = cuts;
     }
   }
-} 
+}
 
-CopyArrayConfig 
+CopyArrayConfig
 ComputeCopyConfig( const DepCompAstRefAnal& stmtorder,
                    const DepCompCopyArrayCollect::CopyArrayUnit& unit,
                    const DepCompAstRefGraphNode* initcut)
@@ -481,7 +483,7 @@ ComputeCopyConfig( const DepCompAstRefAnal& stmtorder,
 
     AstNodePtr lhs;
     bool readlhs = false;
-    bool is_init = ai.IsAssignment(initInfo.stmt->GetOrigStmt(), &lhs,0,&readlhs) 
+    bool is_init = ai.IsAssignment(initInfo.stmt->GetOrigStmt(), &lhs,0,&readlhs)
                    && !readlhs && (lhs == initcut->GetInfo().orig);
     AstNodeType inittype;
     if (ai.IsExpression(initInfo.orig, &inittype)==AST_NULL)
@@ -509,19 +511,19 @@ ComputeCopyConfig( const DepCompAstRefAnal& stmtorder,
         AstInterface::AstNodeList curIndex;
         if (!LoopTransformInterface::IsArrayAccess(curinfo.orig, 0, &curIndex))
            assert(false);
-        if (cursel.select(curinfo.stmt, unit.root, curIndex)) 
+        if (cursel.select(curinfo.stmt, unit.root, curIndex))
           is_init = false;
    }
    cursel.set_bufsize(ai);
    LoopTreeNode* shift = 0;
    if (unit.carrybyroot)
-       shift = unit.root; 
+       shift = unit.root;
    int copyopt = 0;
-   if (!is_init) 
+   if (!is_init)
       copyopt |= INIT_COPY;
    if  (has_write)
       copyopt |= SAVE_COPY;
-      
+
    CopyArrayOpt opt = (CopyArrayOpt)copyopt;
    CopyArrayConfig curconfig(ai, cursel, opt, shift);
    return curconfig;
@@ -529,8 +531,8 @@ ComputeCopyConfig( const DepCompAstRefAnal& stmtorder,
 
 void ComputeCutBoundary( const DepCompAstRefGraphCreate& refDep,
                          const DepCompAstRefAnal& stmtorder,
-                         DepCompCopyArrayCollect::CopyArrayUnit& unit, 
-                         const DepCompAstRefGraphNode*& cut1, 
+                         DepCompCopyArrayCollect::CopyArrayUnit& unit,
+                         const DepCompAstRefGraphNode*& cut1,
                          const DepCompAstRefGraphNode*& cut2)
 {
    cut1 = cut2 = 0;
@@ -539,13 +541,13 @@ void ComputeCutBoundary( const DepCompAstRefGraphCreate& refDep,
           !p.ReachEnd(); ++p)  {
       const DepCompAstRefGraphNode* curref = *p;
       if (cut1 == 0 || stmtorder.CompareAstRef(cut1->GetInfo(), curref->GetInfo()) > 0)
-           cut1 = curref; 
+           cut1 = curref;
       if (cut2 == 0 || stmtorder.CompareAstRef(cut2->GetInfo(), curref->GetInfo()) < 0)
-           cut2 = curref; 
+           cut2 = curref;
    }
    assert(cut1 != 0 && cut2 != 0);
 }
- 
+
 
 
 void DepCompCopyArrayToBuffer::
@@ -561,7 +563,7 @@ ApplyCopyArray( DepCompCopyArrayCollect& collect,
 
       const DepCompAstRefGraphNode* initcut = 0, *savecut = 0;
       ComputeCutBoundary(refDep, stmtorder, curarray, initcut, savecut);
-      CopyArrayConfig curconfig = 
+      CopyArrayConfig curconfig =
                  ComputeCopyConfig(stmtorder, curarray, initcut);
 
       LoopTreeNode* repl = curarray.root;
@@ -575,10 +577,10 @@ assert(repl != 0);
          else for ( ; init->Parent() != curarray.root;
                     init=init->Parent());
       }
-      if ( (opt & SHIFT_COPY) && (init != 0 || save != 0)) 
+      if ( (opt & SHIFT_COPY) && (init != 0 || save != 0))
             save = curarray.root->LastChild();
-      else if (save != 0)  
-            for (; save->Parent()!=curarray.root;                    
+      else if (save != 0)
+            for (; save->Parent()!=curarray.root;
               save=save->Parent());
       ApplyXform(curarray, curconfig, repl, init,save);
   }
@@ -593,15 +595,15 @@ void DepCompCopyArrayToBuffer::ApplyXform(
       curconfig.get_arr().set_bufname(fa);
       LoopTreeCopyArrayToBuffer()( replRoot,initstmt, savestmt, curconfig);
 
-      for ( DepCompCopyArrayCollect::CopyArrayUnit::NodeSet::const_iterator p 
+      for ( DepCompCopyArrayCollect::CopyArrayUnit::NodeSet::const_iterator p
               = curarray.refs.begin();
             !p.ReachEnd(); ++p)  {
           const DepCompAstRef& curinfo = (*p)->GetInfo();
           AstNodePtr curref = curinfo.orig;
           AstInterface::AstNodeList index;
-          if (!LoopTransformInterface::IsArrayAccess(curref, 0,&index)) 
+          if (!LoopTransformInterface::IsArrayAccess(curref, 0,&index))
               assert(false);
           AstNodePtr currepl = curconfig.get_arr().buf_codegen(fa, index);
-          LoopTreeReplaceAst()(curinfo.stmt, curref, currepl); 
-      } 
+          LoopTreeReplaceAst()(curinfo.stmt, curref, currepl);
+      }
 }

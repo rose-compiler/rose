@@ -41,6 +41,7 @@ inlineEverything_specimens =			\
 	specimen20_1.C				\
 	specimen21_1.C				\
 	specimen22_1.C                          \
+        operatorPlusOverloading.C \
 	specimen25_1.C
 # current failing 	
 #	specimen26_1.C , with system header, failing postprocessing 
@@ -49,7 +50,9 @@ inlineEverything_specimens =			\
 
 #Liao, new set of tests with C++11 lambda expressions, not yet supported
 inlineEverything_cpp11_specimens =			\
-        simplest_raja.C
+        simplest_raja.C \
+	simplest_raja_v2.C \
+	lambda_001.C
 
 EXTRA_DIST += $(inlineEverything_specimens) inlineEverything.conf
 
@@ -98,11 +101,16 @@ $(inlineEverything_test_tokenStreamUnparsing_targets): $(@:rose_v3_%=%) inlineEv
 #-----------------------------------------------------------
 inlineEverything_test_cpp11_targets = $(addprefix rose_cpp11_v1_, $(inlineEverything_cpp11_specimens))
 check-cpp11-v1:$(inlineEverything_test_cpp11_targets)
-# TODO: uncommened the followin line when ready 
 # TODO: only turn on this when C++11 is turned on
+if USING_GNU_COMPILER
+if ROSE_USING_GCC_VERSION_LATER_4_8
+# unparser does not yet work
 # TEST_TARGETS += $(inlineEverything_test_cpp11_targets)
+endif
+endif
+
 $(inlineEverything_test_cpp11_targets): $(@:rose_cpp11_v1_%=%) inlineEverything
-	$(builddir)/inlineEverything -std=c++11 -c $(srcdir)/$(@:rose_cpp11_v1_%=%) -rose:output $@
+	$(builddir)/inlineEverything -main-only -std=c++11 -c $(srcdir)/$(@:rose_cpp11_v1_%=%) -rose:output $@
 
 EXTRA_DIST += test1.conf test1A.C test1B.C
 test1.passed: test1A.C test1B.C

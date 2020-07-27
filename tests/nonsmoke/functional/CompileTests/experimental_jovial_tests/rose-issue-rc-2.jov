@@ -1,0 +1,7 @@
+START
+PROGRAM main;
+BEGIN
+    ITEM string C;
+    string='Test';
+END
+TERM

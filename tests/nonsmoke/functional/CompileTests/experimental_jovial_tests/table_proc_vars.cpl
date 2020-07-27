@@ -1,0 +1,18 @@
+START
+
+COMPOOL table'proc'vars;
+
+DEF TABLE a'table (10);
+  BEGIN
+    ITEM bolts  U 4;
+  END
+
+REF PROC a'proc (in'param);
+  BEGIN
+    TABLE in'param (1:10);
+      BEGIN
+        ITEM screws U 4;
+      END
+  END
+
+TERM

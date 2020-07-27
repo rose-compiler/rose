@@ -1,3 +1,7 @@
+
+// DQ (7/23/2020): GNU 10 STL requires that we include the STL string header file explicitly.
+#include <string>
+
 #include <vector>
 #include <map>
 

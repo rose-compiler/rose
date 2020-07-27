@@ -42,20 +42,6 @@ std::string unparseX86Register(SgAsmInstruction*, Rose::BinaryAnalysis::Register
                                const Rose::BinaryAnalysis::RegisterDictionary*);
 
 /*-------------------------------------------------------------------------------------------------------------------------------
- * ARM
- *-------------------------------------------------------------------------------------------------------------------------------*/
-enum ArmSignForExpressionUnparsing 
-{
-  arm_sign_none,
-  arm_sign_plus,
-  arm_sign_minus
-} ;
-
-std::string unparseArmMnemonic(SgAsmArmInstruction*);
-std::string unparseArmExpression(SgAsmExpression*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*,
-                                 const Rose::BinaryAnalysis::RegisterDictionary*);
-
-/*-------------------------------------------------------------------------------------------------------------------------------
  * PowerPC
  *-------------------------------------------------------------------------------------------------------------------------------*/
 
@@ -78,6 +64,15 @@ std::string unparseMipsExpression(SgAsmExpression*, const Rose::BinaryAnalysis::
 std::string unparseM68kMnemonic(SgAsmM68kInstruction*);
 std::string unparseM68kExpression(SgAsmExpression*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*,
                                   const Rose::BinaryAnalysis::RegisterDictionary*);
+
+/*-------------------------------------------------------------------------------------------------------------------------------
+ * A64
+ *-------------------------------------------------------------------------------------------------------------------------------*/
+#ifdef ROSE_ENABLE_ASM_A64
+std::string unparseA64Mnemonic(SgAsmA64Instruction*);
+std::string unparseA64Expression(SgAsmExpression*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*,
+                                 const Rose::BinaryAnalysis::RegisterDictionary*);
+#endif
 
 #endif
 #endif

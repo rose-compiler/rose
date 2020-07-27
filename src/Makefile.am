@@ -261,6 +261,7 @@ EXTRA_DIST = CMakeLists.txt extra.docs
 
 # Header files that need to be included in the distribution
 pkginclude_HEADERS = \
+     featureTests.h \
      rose.h \
      roseInternal.h \
      rose_msvc.h \
@@ -416,6 +417,7 @@ rose_config_installed_cppflags =		\
 	$(ROSE_ATERM_INCLUDE)			\
 	$(ROSE_DLIB_INCLUDES)			\
 	$(ROSE_GCRYPT_INCLUDES)			\
+	$(ROSE_CAPSTONE_INCLUDES)		\
 	$(BOOST_CPPFLAGS)
 
 rose_config_installed_ldflags =			\
@@ -450,6 +452,7 @@ rose_config_installed_ldflags =			\
 	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\
 	$(ROSE_DLIB_LIBS_WITH_PATH)		\
 	$(ROSE_GCRYPT_LIBS_WITH_PATH)		\
+	$(ROSE_CAPSTONE_LIBS_WITH_PATH)		\
 	-lm
 if ROSE_USE_EDG_QUAD_FLOAT
   rose_config_installed_ldflags += -lquadmath
@@ -560,8 +563,9 @@ check-hello-c: $(eval SHELL:=/bin/bash)
 	${AM_V_at}echo "   printf(\"Hello World from C\\n\");" >> hello-world.c
 	${AM_V_at}echo "   return 0;"                           >> hello-world.c
 	${AM_V_at}echo "}"                                      >> hello-world.c
-	${AM_V_at}./rose-cc hello-world.c -o hello-world-c
+	${AM_V_at}./rose-cc -rose:ast:write hello-world-c.ast hello-world.c -o hello-world-c
 	${AM_V_at}./hello-world-c
+	${AM_V_at}./rose-compiler -rose:ast:read hello-world-c.ast
 else
 check-hello-c:
 	@echo "  TEST     ROSE C compiler [rose-cc]"
@@ -570,8 +574,9 @@ check-hello-c:
 	${AM_V_at}echo "   printf(\"Hello World from C\\n\");" >> hello-world.c
 	${AM_V_at}echo "   return 0;"                           >> hello-world.c
 	${AM_V_at}echo "}"                                      >> hello-world.c
-	${AM_V_at}./rose-cc hello-world.c -o hello-world-c
+	${AM_V_at}./rose-cc -rose:ast:write hello-world-c.ast hello-world.c -o hello-world-c
 	${AM_V_at}./hello-world-c
+	${AM_V_at}./rose-compiler -rose:ast:read hello-world-c.ast
 endif
 endif
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
@@ -582,8 +587,9 @@ check-hello-cxx:
 	${AM_V_at}echo "    std::cout << \"Hello World from C++!\" << std::endl;" >> hello-world.cpp
 	${AM_V_at}echo "    return 0;"                                            >> hello-world.cpp
 	${AM_V_at}echo "}"                                                        >> hello-world.cpp
-	${AM_V_at}./rose-c++ hello-world.cpp -o hello-world-cpp
+	${AM_V_at}./rose-c++ -rose:ast:write hello-world-cxx.ast hello-world.cpp -o hello-world-cpp
 	${AM_V_at}./hello-world-cpp
+	${AM_V_at}./rose-compiler -rose:ast:read hello-world-cxx.ast
 endif
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 check-hello-fortran:
@@ -591,8 +597,9 @@ check-hello-fortran:
 	${AM_V_at}echo "program hello"                            >  hello-world.f90
 	${AM_V_at}echo "  print *, \"Hello World from Fortran!\"" >> hello-world.f90
 	${AM_V_at}echo "end program hello"                        >> hello-world.f90
-	${AM_V_at}./rose-fortran hello-world.f90 -o hello-world-f90
+	${AM_V_at}./rose-fortran -rose:ast:write hello-world-f90.ast hello-world.f90 -o hello-world-f90
 	${AM_V_at}./hello-world-f90
+#	${AM_V_at}./rose-compiler -rose:ast:read hello-world-f90.ast
 endif
 
 check-local: $(bin_PROGRAMS)

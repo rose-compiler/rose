@@ -7,6 +7,7 @@
 #include "PointerAnalysisInterface.h"
 #include "ProgramAbstractionLayer.h"
 #include "PropertyState.h"
+#include "PropertyStateFactory.h"
 
 namespace CodeThorn {
 
@@ -31,9 +32,11 @@ public:
   virtual void transferSwitchCase(CodeThorn::Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate);
   virtual void transferSwitchDefault(CodeThorn::Label lab,SgStatement* condStmt, SgDefaultOptionStmt* defaultStmt,Lattice& pstate);
   virtual void transferFunctionCall(CodeThorn::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
+  virtual void transferConstructorCall(CodeThorn::Label lab, SgConstructorInitializer* callCtor, SgExpressionPtrList& arguments, Lattice& element);
   virtual void transferExternalFunctionCall(CodeThorn::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
-  virtual void transferFunctionCallReturn(CodeThorn::Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element);
+  //~ virtual void transferFunctionCallReturn(CodeThorn::Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element);
   virtual void transferFunctionCallReturn(CodeThorn::Label lab, CodeThorn::VariableId varId, SgFunctionCallExp* callExp, Lattice& element);
+  virtual void transferConstructorCallReturn(CodeThorn::Label lab, CodeThorn::VariableId varId, SgConstructorInitializer* callCtor, Lattice& element);
   virtual void transferFunctionEntry(CodeThorn::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element);
   virtual void transferFunctionExit(CodeThorn::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
   virtual ~DFTransferFunctions() {}

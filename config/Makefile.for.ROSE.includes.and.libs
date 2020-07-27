@@ -137,6 +137,13 @@ if ROSE_HAVE_LIBPQXX
   ROSE_LIBPQXX_LIBS_WITH_PATH = -L@ROSE_LIBPQXX_PREFIX@/lib -lpqxx -lpq
 endif
 
+# Capstone disassembler
+if ROSE_HAVE_CAPSTONE
+  ROSE_CAPSTONE_INCLUDES = -I@ROSE_CAPSTONE_PREFIX@/include
+  ROSE_CAPSTONE_LIBS = -lcapstone
+  ROSE_CAPSTONE_LIBS_WITH_PATH = -L@ROSE_CAPSTONE_PREFIX@/lib -lcapstone
+endif
+
 # Math algorithms from http://dlib.net. This is a headers-only library neede by some binary analyses.
 if ROSE_HAVE_DLIB
   ROSE_DLIB_INCLUDES = -I@DLIB_PREFIX@
@@ -251,8 +258,8 @@ endif
 
 # Added support for Fortran front-end development using the flang (F18) compiler [Rasmussen 8/12/2019]
 if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
-  ROSE_FLANG_INCLUDES = -I$(FLANG_SOURCE_PATH)/lib/parser
-  ROSE_FLANG_LIBS     = -L$(FLANG_INSTALL_PATH)/lib -lFortranParser -lFortranSemantics -lFortranEvaluate -lFortranCommon -lFortranDecimal
+  ROSE_FLANG_INCLUDES = -I$(FLANG_INSTALL_PATH)/include
+  ROSE_FLANG_LIBS     = -L$(FLANG_INSTALL_PATH)/lib -lLLVMDemangle -lLLVMSupport -lLLVMFrontendOpenMP -lFortranParser -lFortranSemantics -lFortranEvaluate -lFortranCommon -lFortranDecimal -lFortranLower -lncurses
 endif
 
 # DQ (5/9/2017): Adding Ada library support.
@@ -471,6 +478,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      $(ROSE_Z3_INCLUDES) \
      $(ROSE_YAML_INCLUDES) \
      $(ROSE_LIBPQXX_INCLUDES) \
+     $(ROSE_CAPSTONE_INCLUDES) \
      $(ROSE_READLINE_INCLUDES) \
      $(ROSE_LIBMAGIC_INCLUDES) \
      $(ROSE_DLIB_INCLUDES) \
@@ -554,7 +562,7 @@ ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm $(JAVA_JVM_LINK) \
   $(ROSE_YAML_LIBS_WITH_PATH) $(ROSE_LIBMAGIC_LIBS_WITH_PATH) $(ROSE_READLINE_LIBS_WITH_PATH) \
   $(ROSE_DLIB_LIBS_WITH_PATH) $(ROSE_GCRYPT_LIBS_WITH_PATH) $(ROSE_LIBPQXX_LIBS_WITH_PATH) \
   $(ROSE_ADA_LIBS_WITH_PATH) $(ROSE_COBOL_PT_LIBS_WITH_PATH) $(ROSE_PYTHON_LIBS_WITH_PATH) \
-  $(ROSE_QUAD_FLOAT_MATH) 
+  $(ROSE_QUAD_FLOAT_MATH) $(ROSE_CAPSTONE_LIBS_WITH_PATH)
 
 if ROSE_USE_CLANG_FRONTEND
 ROSE_LIBS += $(CLANG_LDFLAGS) -ltinfo

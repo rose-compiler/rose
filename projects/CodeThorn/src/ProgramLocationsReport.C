@@ -1,13 +1,52 @@
 #include "sage3basic.h"
 #include "ProgramLocationsReport.h"
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include "CodeThornException.h"
 #include "SgNodeHelper.h"
 
 using namespace std;
 using namespace CodeThorn;
-using namespace CodeThorn;
+
+void CodeThorn::ProgramLocationsReport::setAllLocationsOfInterest(LabelSet loc) {
+  allLocations=loc;
+}
+
+LabelSet CodeThorn::ProgramLocationsReport::verifiedLocations(){
+  LabelSet u=unverifiedLocations();
+  return allLocations-u;
+}
+
+LabelSet CodeThorn::ProgramLocationsReport::falsifiedLocations() {
+  return definitiveLocations;
+}
+
+LabelSet CodeThorn::ProgramLocationsReport::unverifiedLocations() {
+  return potentialLocations-definitiveLocations;
+}
+
+LabelSet CodeThorn::ProgramLocationsReport::verifiedFunctions(Labeler* labeler) {
+  return filterFunctionEntryLabels(labeler,verifiedLocations());
+}
+
+LabelSet CodeThorn::ProgramLocationsReport::falsifiedFunctions(Labeler* labeler) {
+  return filterFunctionEntryLabels(labeler,falsifiedLocations());
+}
+
+LabelSet CodeThorn::ProgramLocationsReport::unverifiedFunctions(Labeler* labeler) {
+  return filterFunctionEntryLabels(labeler,unverifiedLocations());
+}
+
+LabelSet CodeThorn::ProgramLocationsReport::filterFunctionEntryLabels(Labeler* labeler, LabelSet labSet) {
+  LabelSet functionEntryLabels;
+  for(auto lab : labSet) {
+    if(labeler->isFunctionEntryLabel(lab)) {
+      functionEntryLabels.insert(lab);
+    }
+  }
+  return functionEntryLabels;
+}
 
 bool CodeThorn::ProgramLocationsReport::hasSourceLocation(SgStatement* stmt) {
   ROSE_ASSERT(stmt);
@@ -45,17 +84,52 @@ string CodeThorn::ProgramLocationsReport::sourceCodeAtProgramLocation(Labeler* l
   return SgNodeHelper::doubleQuotedEscapedString(node->unparseToString());
 }
 
-void CodeThorn::ProgramLocationsReport::writeResultToStream(std::ostream& stream, CodeThorn::Labeler* labeler) {
-    for(auto lab : definitiveLocations) {
-      stream<<"definitive: "<<programLocation(labeler,lab);
-      stream<<": "<<sourceCodeAtProgramLocation(labeler,lab);
-      stream<<endl;
+bool CodeThorn::ProgramLocationsReport::isNonRecordedLocation(Label lab) {
+  return !definitiveLocations.isElement(lab)&&!potentialLocations.isElement(lab);
+}
+
+LabelSet CodeThorn::ProgramLocationsReport::determineRecordFreeFunctions(CFAnalysis& cfAnalyzer, Flow& flow) {
+  LabelSet funEntries=cfAnalyzer.functionEntryLabels(flow);
+  LabelSet verifiedFunctions;
+  for (Label entryLab : funEntries) {
+    bool noLocationsRecorded=true;
+    LabelSet funLabelSet=cfAnalyzer.functionLabelSet(entryLab,flow);
+    // determine whether all labels are verified
+    for (Label funLab : funLabelSet) {
+      if(!isNonRecordedLocation(funLab)) {
+        noLocationsRecorded=false;
+        break;
+      }
     }
-    for(auto lab : potentialLocations) {
-      stream<<"potential: "<<programLocation(labeler,lab);
-      stream<<": "<<sourceCodeAtProgramLocation(labeler,lab);
-      stream<<endl;
+    if(noLocationsRecorded) {
+      // entire function has no violations
+      verifiedFunctions.insert(entryLab);
     }
+  }
+  return verifiedFunctions;
+}
+
+void ProgramLocationsReport::recordDefinitiveLocation(CodeThorn::Label lab) {
+#pragma omp critical(definitiveproglocrecording)
+  {
+    definitiveLocations.insert(lab);
+  }
+}
+void ProgramLocationsReport::recordPotentialLocation(CodeThorn::Label lab) {
+#pragma omp critical(potentialproglocrecording)
+  {
+    potentialLocations.insert(lab);
+  }
+}
+ 
+size_t ProgramLocationsReport::numDefinitiveLocations() {
+  return definitiveLocations.size();
+}
+ size_t ProgramLocationsReport::numPotentialLocations() {
+  return potentialLocations.size();
+}
+size_t ProgramLocationsReport::numTotalLocations() {
+  return definitiveLocations.size()+potentialLocations.size();
 }
 
 void CodeThorn::ProgramLocationsReport::writeResultFile(string fileName, CodeThorn::Labeler* labeler) {
@@ -78,25 +152,42 @@ void CodeThorn::ProgramLocationsReport::writeResultFile(string fileName, CodeTho
   }
 }
 
-void ProgramLocationsReport::recordDefinitiveLocation(CodeThorn::Label lab) {
-#pragma omp critical(definitiveproglocrecording)
-  {
-  definitiveLocations.insert(lab);
-  }
+void CodeThorn::ProgramLocationsReport::writeResultToStream(std::ostream& stream, CodeThorn::Labeler* labeler) {
+    for(auto lab : definitiveLocations) {
+      stream<<"definitive: "<<programLocation(labeler,lab);
+      stream<<": "<<sourceCodeAtProgramLocation(labeler,lab);
+      stream<<endl;
+    }
+    for(auto lab : potentialLocations) {
+      stream<<"potential: "<<programLocation(labeler,lab);
+      stream<<": "<<sourceCodeAtProgramLocation(labeler,lab);
+      stream<<endl;
+    }
 }
-void ProgramLocationsReport::recordPotentialLocation(CodeThorn::Label lab) {
-#pragma omp critical(potentialproglocrecording)
-  {
-  potentialLocations.insert(lab);
+
+void ProgramLocationsReport::writeLocationsVerificationReport(std::ostream& os, Labeler* labeler) {
+  int n=allLocations.size();
+  LabelSet verified=verifiedLocations();
+  int v=verified.size();
+  LabelSet falsified=falsifiedLocations();
+  int f=falsified.size();
+  LabelSet unverified=unverifiedLocations();
+  int u=unverified.size();
+  os<<std::fixed<<std::setprecision(2);
+  os<<"Falsified Locations  : "<<f<<"["<<f/n*100<<"]"<<endl;
+  os<<"Verified Locations   : "<<v<<"["<<v/n*100<<"]"<<endl;
+  os<<"Unverified Locations : "<<u<<"["<<u/n*100<<"]"<<endl;
+  os<<"Detected Errors:"<<endl;
+  if(f==0) {
+    cout<<"None."<<endl;
+  } else {
+    for(auto lab:definitiveLocations) {
+      os<<sourceCodeAtProgramLocation(labeler,lab);
+    }
   }
 }
 
-size_t ProgramLocationsReport::numDefinitiveLocations() {
-  return definitiveLocations.size();
-}
-size_t ProgramLocationsReport::numPotentialLocations() {
-  return potentialLocations.size();
-}
-size_t ProgramLocationsReport::numTotalLocations() {
-  return definitiveLocations.size()+potentialLocations.size();
+void ProgramLocationsReport::writeFunctionsVerificationReport(std::ostream& os, Labeler* labeler) {
+  cerr<<"Error: writeFunctionsVerificationReport not implemented yet."<<endl;
+  exit(1);
 }

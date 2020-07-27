@@ -1,10 +1,12 @@
 #include <rosePublicConfig.h>
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
+#include <RegisterStateGeneric.h>
 
+#include <boost/algorithm/string/erase.hpp>
+#include <boost/format.hpp>
 #include <Diagnostics.h>
 #include <FormatRestorer.h>
-#include <RegisterStateGeneric.h>
 #include <boost/format.hpp>
 
 // Define this if you want extra consistency checking before and after each mutator.  This slows things down considerably but
@@ -196,6 +198,8 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
             return dflt;
         SValuePtr newval = dflt->copy();
         std::string regname = regdict->lookup(reg);
+        boost::erase_all(regname, "[");
+        boost::erase_all(regname, "]");
         if (!regname.empty() && newval->get_comment().empty())
             newval->set_comment(regname + "_0");
         registers_.insertMaybeDefault(reg).push_back(RegPair(reg, newval));

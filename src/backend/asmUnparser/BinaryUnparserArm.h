@@ -1,8 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_UnparserArm_H
 #define ROSE_BinaryAnalysis_UnparserArm_H
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_ASM_A64
 
 #include <BinaryUnparserBase.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -10,6 +11,9 @@ namespace Unparser {
 
 struct ArmSettings: public Settings {};
 
+/** ARM AArch64 A64 disassembler.
+ *
+ *  This class is able to decode a single ARM AArch64 A64 instruction at a time. */
 class Arm: public Base {
     ArmSettings settings_;
 
@@ -36,8 +40,9 @@ protected:
     void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const ROSE_OVERRIDE;
 
 protected:
-    static std::string unparseArmCondition(ArmInstructionCondition);
-    void outputExpr(std::ostream&, SgAsmExpression*, State&, std::string sign, std::string *suffix = NULL) const;
+    static std::string unparseArmCondition(A64InstructionCondition);
+    void outputExpr(std::ostream&, SgAsmExpression*, State&) const;
+    void outputRegister(std::ostream&, SgAsmRegisterReferenceExpression*, State&) const;
 };
 
 } // namespace

@@ -253,7 +253,7 @@ namespace
 int Labeler::numberOfAssociatedLabels(SgNode* node) {
   if(node==0)
     return 0;
-
+    
   /* special case: the incExpr in a SgForStatement is a raw SgExpression
    * hence, the root can be any unary or binary node. We therefore perform
    * a lookup in the AST to check whether we are inside a SgForStatement
@@ -268,7 +268,7 @@ int Labeler::numberOfAssociatedLabels(SgNode* node) {
   }
 
   //special case of FunctionCall is matched as : f(), x=f(); T x=f();
-  if(SgNodeHelper::Pattern::matchFunctionCall(node)) {
+  if(SgNodeHelper::matchExtendedNormalizedCall(node) || SgNodeHelper::Pattern::matchFunctionCall(node)) {
     //cout << "DEBUG: Labeler: assigning 2 labels for SgFunctionCallExp"<<endl;
     return 2;
   }
@@ -276,17 +276,12 @@ int Labeler::numberOfAssociatedLabels(SgNode* node) {
   switch(node->variantT()) {
     //  case V_SgFunctionCallExp:
   case V_SgBasicBlock:
+  case V_SgTryStmt:
     return 1;
   case V_SgFunctionDefinition:
     return 2;
   case V_SgExprStatement:
-    //special case of FunctionCall inside expression
-    if(SgNodeHelper::matchExtendedNormalizedCall(node) || SgNodeHelper::Pattern::matchFunctionCall(node)) {
-      //cout << "DEBUG: Labeler: assigning 2 labels for SgFunctionCallExp"<<endl;
-      return 2;
-    }
-    else
-      return 1;
+    return 1;
   case V_SgIfStmt:
   case V_SgWhileStmt:
   case V_SgDoWhileStmt:
@@ -305,10 +300,6 @@ int Labeler::numberOfAssociatedLabels(SgNode* node) {
 
     // declarations
   case V_SgVariableDeclaration:
-    if (SgNodeHelper::matchExtendedNormalizedCall(node))
-      return 2;
-    /* fallthrough */
-    // C++17 [[fallthrough]];
   case V_SgClassDeclaration:
   case V_SgEnumDeclaration:
   case V_SgTypedefDeclaration:
@@ -676,14 +667,26 @@ LabelSet Labeler::getLabelSet(set<SgNode*>& nodeSet) {
 LabelSet LabelSet::operator+(LabelSet& s2) {
   LabelSet result;
   result=*this;
-  for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
-    result.insert(*i2);
+  result+=s2;
   return result;
 }
 
 LabelSet& LabelSet::operator+=(LabelSet& s2) {
   for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
     insert(*i2);
+  return *this;
+}
+
+LabelSet LabelSet::operator-(LabelSet& s2) {
+  LabelSet result;
+  result=*this;
+  result-=s2;
+  return result;
+}
+
+LabelSet& LabelSet::operator-=(LabelSet& s2) {
+  for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
+    erase(*i2);
   return *this;
 }
 

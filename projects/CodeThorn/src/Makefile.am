@@ -6,7 +6,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix addressTakenAnalysis cldemo
+# 
+bin_PROGRAMS = codethorn equithorn memthorn parprothorn ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
 
 # matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis cldemo
@@ -47,6 +48,7 @@ CODETHORN_SOLO_HEADER_FILES=\
   CtxAnalysis.h \
   CtxAttribute.h \
   CtxLattice.h \
+  CtxPropertyStateFactory.h \
   CtxTransfer.h \
   EqualityMaintainer.h \
   Evaluator.h \
@@ -65,6 +67,7 @@ CODETHORN_HEADER_FILES=\
   AliasAnalysis.h \
   AnalysisAbstractionLayer.h \
   AnalysisAstAnnotator.h \
+  AnalysisReporting.h \
   Analyzer.h \
   ArrayElementAccessData.h \
   AstNodeInfo.h \
@@ -81,9 +84,12 @@ CODETHORN_HEADER_FILES=\
   CppStdUtilities.h \
   CTIOLabeler.h \
   CtxCallStrings.h \
+  CtxSolver0.h \
+  CtxPrioritySolver.h \
   DataDependenceVisualizer.h \
   DataRaceDetection.h \
   defUseQuery.h \
+  DFAbstractSolver.h \
   DFAnalysisBase.h \
   DFTransferFunctions.h \
   DotGraphCfgFrontend.h \
@@ -117,6 +123,10 @@ CODETHORN_HEADER_FILES=\
   LVAstAttributeInterface.h \
   LVLattice.h \
   LVTransferFunctions.h \
+  MemAnalysis.h \
+  MemTransferFunctions.h \
+  MemPropertyState.h \
+  MemPropertyStateFactory.h \
   Miscellaneous2.h \
   Miscellaneous.h \
   Normalization.h \
@@ -124,13 +134,20 @@ CODETHORN_HEADER_FILES=\
   NormalizationInliner.h \
   NormalizationOp.h \
   NumberIntervalLattice.h \
+  Options.h \
+  CodeThornOptions.h \
+  LTLOptions.h \
+  ltlthorn-lib/ParProOptions.h \
   PASolver1.h \
   PointerAnalysisInterface.h \
   PragmaHandler.h \
+  PredefinedSemanticFunctions.h \
   ProgramAbstractionLayer.h \
   ProgramInfo.h \
   ProgramLocationsReport.h \
+  ProgramLocationsAnalysis.h \
   PropertyState.h \
+  PropertyStateFactory.h \
   PropertyValueTable.h \
   PState.h \
   RDAnalysis.h \
@@ -145,12 +162,10 @@ CODETHORN_HEADER_FILES=\
   RewriteStatistics.h \
   RewriteSystem.h \
   RWState.h \
-  SgTypeSizeMapping.h \
   Solver5.h \
   Solver8.h \
   Solver.h \
   Specialization.h \
-  StructureAccessLookup.h \
   SvcompWitness.h \
   TimeMeasurement.h \
   TransitionGraph.h \
@@ -169,6 +184,7 @@ CODETHORN_SOURCE_FILES=\
   AliasAnalysis.C \
   AnalysisAbstractionLayer.C \
   AnalysisAstAnnotator.C \
+  AnalysisReporting.C \
   Analyzer.C \
   ArrayElementAccessData.C \
   AstNodeInfo.C \
@@ -185,6 +201,8 @@ CODETHORN_SOURCE_FILES=\
   CppStdUtilities.C \
   CTIOLabeler.C \
   CtxCallStrings.C \
+  CtxSolver0.C \
+  CtxPrioritySolver.C \
   DataDependenceVisualizer.C \
   defUseQuery.C \
   DataRaceDetection.C \
@@ -216,11 +234,18 @@ CODETHORN_SOURCE_FILES=\
   LanguageRestrictor.C \
   Lattice.C \
   LoopInfo.C \
+  CodeThornOptions.C \
+  LTLOptions.C \
+  ltlthorn-lib/ParProOptions.C \
   LVAnalysis.C \
   LVAstAttribute.C \
   LVAstAttributeInterface.C \
   LVLattice.C \
   LVTransferFunctions.C \
+  MemAnalysis.C \
+  MemTransferFunctions.C \
+  MemPropertyState.C \
+  MemPropertyStateFactory.C \
   Miscellaneous2.C \
   Miscellaneous.C \
   Normalization.C \
@@ -231,10 +256,13 @@ CODETHORN_SOURCE_FILES=\
   PASolver1.C \
   PointerAnalysisInterface.C \
   PragmaHandler.C \
+  PredefinedSemanticFunctions.C \
   ProgramAbstractionLayer.C \
   ProgramInfo.C \
   ProgramLocationsReport.C \
+  ProgramLocationsAnalysis.C \
   PropertyState.C \
+  PropertyStateFactory.C \
   PropertyValueTable.C \
   PState.C \
   RDAnalysis.C \
@@ -249,12 +277,10 @@ CODETHORN_SOURCE_FILES=\
   RewriteStatistics.C \
   RewriteSystem.C \
   RWState.C \
-  SgTypeSizeMapping.C \
   Solver5.C \
   Solver8.C \
   Solver.C \
   Specialization.C \
-  StructureAccessLookup.C \
   SvcompWitness.C \
   TimeMeasurement.C \
   TransitionGraph.C \
@@ -398,8 +424,145 @@ codethorn_SOURCES = \
 # TOOL: LTLTHORN
 ##############################################################
 
-# TODO
+# yacc flags for LTL parser
+ltlthorn_YFLAGS = -p ltl_ 
 
+# this line creates speparately named object files
+ltlthorn_CXXFLAGS = -fopenmp -Wall -O3 
+
+# ltlthorn has most of its code organized in two separate libraries
+ltlthorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
+
+if ROSE_WITH_SPOT
+#spot and bdd need to be linked last with gcc 5.4
+ltlthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
+ltlthorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+else
+ltlthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
+endif
+
+ltlthorndir=.
+
+# only informative
+ltlthorn_xHEADERS = \
+  CommandLineOptions.h \
+  LTLThornCommandLineOptions.h \
+  codethorn.h \
+  LTL.h
+
+# codethorn sources in addition to libcodethorn and libltlthorn
+ltlthorn_SOURCES = \
+  LTLParser.y++ \
+  LTLThornCommandLineOptions.C \
+  ltlthorn.C
+
+##############################################################
+# TOOL: EQUITHORN
+##############################################################
+
+# yacc flags for LTL parser
+equithorn_YFLAGS = -p ltl_ 
+
+# this line creates speparately named object files
+equithorn_CXXFLAGS = -fopenmp -Wall -O3 
+
+# equithorn has most of its code organized in two separate libraries
+equithorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
+
+if ROSE_WITH_SPOT
+#spot and bdd need to be linked last with gcc 5.4
+equithorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
+equithorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+else
+equithorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
+endif
+
+equithorndir=.
+
+# only informative
+equithorn_xHEADERS = \
+  CommandLineOptions.h \
+  EquiThornCommandLineOptions.h \
+  codethorn.h \
+  LTL.h
+
+# codethorn sources in addition to libcodethorn and libltlthorn
+equithorn_SOURCES = \
+  LTLParser.y++ \
+  EquiThornCommandLineOptions.C \
+  equithorn.C
+
+##############################################################
+# TOOL: PARPROTHORN
+##############################################################
+
+# yacc flags for LTL parser
+parprothorn_YFLAGS = -p ltl_ 
+
+# this line creates speparately named object files
+parprothorn_CXXFLAGS = -fopenmp -Wall -O3 
+
+# parprothorn has most of its code organized in two separate libraries
+parprothorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
+
+if ROSE_WITH_SPOT
+#spot and bdd need to be linked last with gcc 5.4
+parprothorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
+parprothorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+else
+parprothorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
+endif
+
+parprothorndir=.
+
+# only informative
+parprothorn_xHEADERS = \
+  CommandLineOptions.h \
+  ParProThornCommandLineOptions.h \
+  codethorn.h \
+  LTL.h
+
+# codethorn sources in addition to libcodethorn and libltlthorn
+parprothorn_SOURCES = \
+  LTLParser.y++ \
+  ParProThornCommandLineOptions.C \
+  parprothorn.C
+
+##############################################################
+# TOOL: MEMTHORN
+##############################################################
+
+# yacc flags for LTL parser
+memthorn_YFLAGS = -p ltl_ 
+
+# this line creates speparately named object files
+memthorn_CXXFLAGS = -fopenmp -Wall -O3 
+
+# memthorn has most of its code organized in two separate libraries
+memthorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
+
+if ROSE_WITH_SPOT
+#spot and bdd need to be linked last with gcc 5.4
+memthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
+memthorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+else
+memthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
+endif
+
+memthorndir=.
+
+# only informative
+memthorn_xHEADERS = \
+  CommandLineOptions.h \
+  MemThornCommandLineOptions.h \
+  codethorn.h \
+  LTL.h
+
+# codethorn sources in addition to libcodethorn and libltlthorn
+memthorn_SOURCES = \
+  LTLParser.y++ \
+  MemThornCommandLineOptions.C \
+  memthorn.C
 
 ##############################################################
 # TOOL: WOODPECKER
@@ -467,7 +630,7 @@ if ROSE_WITH_SPOT
 addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lboost_program_options
 addressTakenAnalysis_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
-addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
+addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lboost_program_options
 endif
 addressTakenAnalysis_CXXFLAGS = -fopenmp -Wall -O3
 addressTakenAnalysis_DEPENDENCIES=libcodethorn.la
@@ -535,12 +698,12 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-equivalence check-svcomp-witness check-par-cfg
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain unit-test check-normalization check-equivalence check-par-cfg
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
 #CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven
-CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer
+CHECK_WITH_SPOT_ONLY_PASSING=check-svcomp-witness check-ltl check-ltl-driven-reset-analyzer
 
 CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_ONLY_PASSING)
 
@@ -572,6 +735,9 @@ check-codethorn-internal:
 
 check-domain:
 	$(srcdir)/scripts/runDomainTests $(srcdir)/tests
+
+unit-test:
+	$(srcdir)/scripts/runUnitTests $(srcdir)/tests
 
 check-domain-old:
 	@echo ================================================================
@@ -606,7 +772,7 @@ check-const-analysis:
 	@echo ================================================================
 	@echo RUNNING CONST ANALYSIS CHECK
 	@echo ================================================================
-	@./woodpecker --edg:no_warnings --csv-const-result=tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.c
+	@./woodpecker --csv-const-result=tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.c
 	@diff tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.const.csv
 	@rm tmp.const.csv
 
@@ -688,7 +854,7 @@ check-equivalence:
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
-	@./codethorn --edg:no_warnings --normalize-all=off $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump --rule-commutative-sort=no --abstraction-mode=0
+	@./equithorn --edg:no_warnings --normalize-all=off $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump --rule-commutative-sort=no --abstraction-mode=0
 #	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
 	@cat tmp.nsdump
 	@rm -f tmp.nsdump
@@ -697,7 +863,7 @@ check-commandline-options: ./codethorn
 	@echo ================================================================
 	@echo RUNNING COMMAND LINE OPTION TESTS
 	@echo ================================================================
-	@./codethorn --edg:no_warnings --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --viz
+	@./codethorn --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --viz
 	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-deadcode:
@@ -735,6 +901,7 @@ clean-local:
 	rm -f *.exe
 	rm -f *.imout.check
 	rm -Rf make_check_log_*
+	rm -f *-LTLParser.c++
 
 distclean-local: clean
 	rm -f *.tgz

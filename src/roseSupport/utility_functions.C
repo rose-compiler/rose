@@ -45,6 +45,7 @@
 
 #include "AST_FILE_IO.h"
 #include "merge.h"
+#include "load.h"
 // Note that this is required to define the Sg_File_Info_XXX symbols (need for file I/O)
 #include "Cxx_GrammarMemoryPoolSupport.h"
 
@@ -610,7 +611,7 @@ frontendShell (const std::vector<std::string>& argv)
               the error code.
  */
 int
-backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelagate )
+backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate )
    {
   // DQ (7/12/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Object Code Generation (backend):");
@@ -636,7 +637,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
      if (astfile_out != "") {
        std::list<std::string> empty_file_list;
        project->set_astfiles_in(empty_file_list);
-       project->get_astfile_out() == "";
+       project->get_astfile_out() = "";
        AST_FILE_IO::reset();
        AST_FILE_IO::startUp(project);
        AST_FILE_IO::writeASTToFile(astfile_out);
@@ -684,7 +685,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
           printf ("Calling project->unparse() \n");
 #endif
 
-          project->unparse(unparseFormatHelp,unparseDelagate);
+          project->unparse(unparseFormatHelp,unparseDelegate);
 
 #if 0
           printf ("DONE: Calling project->unparse() \n");

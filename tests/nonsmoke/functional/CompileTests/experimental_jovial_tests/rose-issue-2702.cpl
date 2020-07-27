@@ -1,0 +1,18 @@
+START
+COMPOOL COMPOOL'1;
+TYPE TABLE'TYPE'1 TABLE;
+  BEGIN
+    !ORDER;
+    ITEM ITEM'1 U;
+  END
+
+TYPE table'x TABLE PARALLEL ;
+   ITEM xpos U ;
+
+TYPE table'y TABLE T ;
+   ITEM ypos U ;
+
+TYPE table'z TABLE T 9;
+   ITEM zpos U ;
+
+TERM

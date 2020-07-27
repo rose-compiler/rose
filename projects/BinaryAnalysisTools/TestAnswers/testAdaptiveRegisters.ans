@@ -44,7 +44,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x004000e5: mov rax, 0x0706050403020100<506097522914230528>
+0x004000e5: mov rax, 0x0706050403020100
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rax [writer=0x004000e5] write-only = 0x0706050403020100<506097522914230528>[u64]
@@ -62,7 +62,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x004000ef: mov qword ds:[0x0000000000000000], rax
+0x004000ef: mov qword ds:[0], rax
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rax [writer=0x004000e5] = 0x0706050403020100<506097522914230528>[u64]
@@ -88,7 +88,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x004000f7: mov dword ds:[0x0000000000000008], eax
+0x004000f7: mov dword ds:[8], eax
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  eax [writer=0x004000e5] = 0x03020100<50462976>[u32]
@@ -119,7 +119,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x004000fe: mov word ds:[0x000000000000000c], ax
+0x004000fe: mov word ds:[12], ax
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  ax [writer=0x004000e5] = 0x0100<256>[u16]
@@ -153,7 +153,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x00400106: mov byte ds:[0x000000000000000e], al
+0x00400106: mov byte ds:[14], al
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  al [writer=0x004000e5] = 0x00[u8]
@@ -189,7 +189,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x0040010d: mov word ds:[0x000000000000000f], ax
+0x0040010d: mov word ds:[15], ax
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  ax [writer=0x004000e5] = 0x0100<256>[u16]
@@ -226,7 +226,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x00400115: mov dword ds:[0x0000000000000011], eax
+0x00400115: mov dword ds:[0x0000000000000011<17>], eax
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  eax [writer=0x004000e5] = 0x03020100<50462976>[u32]
@@ -266,7 +266,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x0040011c: mov qword ds:[0x0000000000000015], rax
+0x0040011c: mov qword ds:[0x0000000000000015<21>], rax
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rax [writer=0x004000e5] = 0x0706050403020100<506097522914230528>[u64]
@@ -313,7 +313,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x004000e1 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x00400124: mov byte ds:[0x000000000000001d], ah
+0x00400124: mov byte ds:[0x000000000000001d<29>], ah
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  al [writer=0x004000e5] = 0x00[u8]
@@ -506,7 +506,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x0040012d write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x0040012d write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x00400131: mov rax, 0x0706050403020100<506097522914230528>
+0x00400131: mov rax, 0x0706050403020100
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rax [writer=0x00400131] write-only = 0x0706050403020100<506097522914230528>[u64]
@@ -524,7 +524,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x0040012d write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x0040012d write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x0040013b: mov rsp, 0x00000000137017c2
+0x0040013b: mov rsp, 0x137017c2
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rax [writer=0x00400131] write-only = 0x0706050403020100<506097522914230528>[u64]
@@ -542,7 +542,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x0040012d write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x0040012d write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x00400145: mov qword ds:[0x0000000000000000], rax
+0x00400145: mov qword ds:[0], rax
 RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations=yes
 registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
@@ -568,7 +568,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x0040012d write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x0040012d write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x0040014d: mov dword ds:[0x0000000000000008], eax
+0x0040014d: mov dword ds:[8], eax
 RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations=yes
 registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
@@ -598,7 +598,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x0040012d write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x0040012d write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x00400154: mov word ds:[0x000000000000000c], ax
+0x00400154: mov word ds:[12], ax
 RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations=yes
 registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
@@ -630,7 +630,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x0040012d write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x0040012d write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x0040015c: mov byte ds:[0x000000000000000e], al
+0x0040015c: mov byte ds:[14], al
 RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations=yes
 registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
@@ -772,7 +772,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x00400165 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x00400165 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x00400169: mov rax, 0x0706050403020100<506097522914230528>
+0x00400169: mov rax, 0x0706050403020100
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rax [writer=0x00400169] write-only = 0x0706050403020100<506097522914230528>[u64]
@@ -809,7 +809,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x00400165 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x00400165 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x00400178: mov ax, 0xe1e0<-7712>
+0x00400178: mov ax, 0xe1e0<57824,-7712>
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  ax [writer=0x00400178] write-only = 0xe1e0<57824,-7712>[u16]
@@ -829,7 +829,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x00400165 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x00400165 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x0040017c: mov al, 0xd0<-48>
+0x0040017c: mov al, 0xd0<208,-48>
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  al [writer=0x0040017c] write-only = 0xd0<-48>[u8]
@@ -850,7 +850,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x00400165 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x00400165 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x0040017e: mov ax, 0xc1c0<-15936>
+0x0040017e: mov ax, 0xc1c0<49600,-15936>
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  ax [writer=0x0040017e] write-only = 0xc1c0<49600,-15936>[u16]
@@ -889,7 +889,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x00400165 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x00400165 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x00400187: mov rax, 0xa7a6a5a4a3a2a1a0<-6366218896703053408>
+0x00400187: mov rax, 0xa7a6a5a4a3a2a1a0
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rax [writer=0x00400187] write-only = 0xa7a6a5a4a3a2a1a0<12080525177006498208>[u64]
@@ -907,7 +907,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x00400165 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x00400165 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x00400191: mov ah, 0xff<-1>
+0x00400191: mov ah, 0xff<255,-1>
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  al [writer=0x00400187] write-only = 0xa0<-96>[u8]
@@ -1008,7 +1008,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x00400195 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x00400195 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x00400199: mov rsp, 0x00000000137017c2
+0x00400199: mov rsp, 0x137017c2
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
@@ -1025,7 +1025,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x00400195 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x00400195 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x004001a3: mov rax, 0x0706050403020100<506097522914230528>
+0x004001a3: mov rax, 0x0706050403020100
 RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations=yes
 registers:
  rax [writer=0x004001a3] write-only = 0x0706050403020100<506097522914230528>[u64]
@@ -1061,7 +1061,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x00400195 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x00400195 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x004001b2: mov ax, 0xe1e0<-7712>
+0x004001b2: mov ax, 0xe1e0<57824,-7712>
 RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations=yes
 registers:
  rax [writers={0x004001ad, 0x004001b2}] write-only = 0x00000000f3f2e1e0<4092781024>[u64]
@@ -1079,7 +1079,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x00400195 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x00400195 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x004001b6: mov al, 0xd0<-48>
+0x004001b6: mov al, 0xd0<208,-48>
 RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations=yes
 registers:
  rax [writers={0x004001ad, 0x004001b2, 0x004001b6}] write-only = 0x00000000f3f2e1d0<4092781008>[u64]
@@ -1097,7 +1097,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x00400195 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x00400195 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x004001b8: mov ax, 0xc1c0<-15936>
+0x004001b8: mov ax, 0xc1c0<49600,-15936>
 RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations=yes
 registers:
  rax [writers={0x004001ad, 0x004001b8}] write-only = 0x00000000f3f2c1c0<4092772800>[u64]
@@ -1133,7 +1133,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x00400195 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x00400195 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x004001c1: mov rax, 0xa7a6a5a4a3a2a1a0<-6366218896703053408>
+0x004001c1: mov rax, 0xa7a6a5a4a3a2a1a0
 RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations=yes
 registers:
  rax [writer=0x004001c1] write-only = 0xa7a6a5a4a3a2a1a0<12080525177006498208>[u64]
@@ -1151,7 +1151,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x00400195 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x00400195 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x004001cb: mov ah, 0xff<-1>
+0x004001cb: mov ah, 0xff<255,-1>
 RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations=yes
 registers:
  rax [writers={0x004001c1, 0x004001cb}] write-only = 0xa7a6a5a4a3a2ffa0<12080525177006522272>[u64]
@@ -1246,7 +1246,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x004001cf write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x004001cf write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x004001d3: mov rax, 0x0706050403020100<506097522914230528>
+0x004001d3: mov rax, 0x0706050403020100
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rax [writer=0x004001d3] write-only = 0x0706050403020100<506097522914230528>[u64]
@@ -1264,7 +1264,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x004001cf write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x004001cf write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x004001dd: mov rsp, 0x00000000137017c1
+0x004001dd: mov rsp, 0x137017c1
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rax [writer=0x004001d3] write-only = 0x0706050403020100<506097522914230528>[u64]
@@ -1282,7 +1282,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x004001cf write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x004001cf write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x004001e7: mov dword ds:[0x0000000000000000], eax
+0x004001e7: mov dword ds:[0], eax
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=no
 registers:
  eax [writer=0x004001d3] = 0x03020100<50462976>[u32]
@@ -1305,7 +1305,7 @@ memory:
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff9<18446744073709551609,-7>[u64]) writer=0x004001cf write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] rbp_0[u64])
  addr=(add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64]) writer=0x004001cf write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] rbp_0[u64])
 
-0x004001ee: mov qword ds:[0x0000000000000004], rax
+0x004001ee: mov qword ds:[4], rax
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=no
 registers:
  rax [writer=0x004001d3] = 0x0706050403020100<506097522914230528>[u64]

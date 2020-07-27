@@ -13,6 +13,7 @@ public:
   ~IntervalTransferFunctions();
   //  IntervalTransferFunctions(NumberIntervalLattice* domain, PropertyState* p, CodeThorn::Labeler* l, VariableIdMapping* vid);
   NumberIntervalLattice evalExpression(CodeThorn::Label label, SgExpression* expr, Lattice& element);
+  
   void transferCondition(CodeThorn::Edge edge, Lattice& element);
   void transferExpression(CodeThorn::Label label, SgExpression* expr, Lattice& element);
   void transferDeclaration(CodeThorn::Label label, SgVariableDeclaration* decl, Lattice& element);
@@ -28,6 +29,9 @@ public:
   void setCppExprEvaluator(CodeThorn::CppExprEvaluator* expEval);
   void setSkipUnknownFunctionCalls(bool);
   void initializeExtremalValue(Lattice& element);
+  
+  // PP: added to capture transfer on a back-edge 
+  void transfer(Edge edge, Lattice& element) override;
 
 private:
   CodeThorn::CppExprEvaluator* _cppExprEvaluator;

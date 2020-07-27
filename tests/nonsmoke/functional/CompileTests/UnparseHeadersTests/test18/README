@@ -1,0 +1,10 @@
+This test checks that ROSE can correctly detect and unparse
+preprocessor directives (or comments) that appear in a header file,
+which is included in more than one place. The bug that this test
+exposes consists in ROSE attaching preprocessor directives or comments
+only to a single occurrence of the content of the header file included
+in multiple places. In this test, the bug would cause ROSE to attach
+the #include preprocessor directive to the last occurrence, but the
+first occurrence, which does not get the required preprocessor
+directive, is unparsed, thus causing this test to fail, unless ROSE
+attaches preprocessor directives to all occurrences.

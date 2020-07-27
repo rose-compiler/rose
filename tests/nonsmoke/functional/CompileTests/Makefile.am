@@ -48,6 +48,16 @@ endif
 endif
 endif
 
+# DQ (7/20/2020): Only EDG 6.0 is has sufficent support for C++20 (I think).
+if ROSE_USE_EDG_VERSION_6_0
+SUBDIRS += Cxx20_tests
+if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
+if ROSE_USING_GCC_VERSION_LATER_6_1
+SUBDIRS += unparse_template_from_ast
+endif
+endif
+endif
+
 endif
 endif
 
@@ -117,7 +127,10 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 # Need to work work with Markus to understand the results better, skip these tests for now is using
 # Address Sanitizer.
 if !ROSE_USE_SANITIZER
+# DQ (7/2/2020): GNU 6.1 and later will fail for these tests.
+if !ROSE_USING_GCC_VERSION_LATER_6_1
    SUBDIRS += STL_tests
+endif
 endif
 
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can

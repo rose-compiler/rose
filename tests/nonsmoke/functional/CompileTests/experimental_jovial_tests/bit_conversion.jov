@@ -1,12 +1,18 @@
 START
-PROGRAM bit'item ;
+PROGRAM bit'conversion;
 BEGIN
 
-ITEM bit'var B 16 ;
+TYPE bit'type B 32;
+ITEM bit'var B 16;
 
 bit'var = 1B'0' ;
-bit'var = (*B 16*) ((2*(16 - 1)) - 1) ;
+bit'var = (* B 16*) (1+2);
+bit'var = B(TRUE);
+bit'var = bit'type(3.14159);
+
+% NumericVariable needs to be implemented for the following %
+% bit'var = REP (bit'var); %
+% REP (bit'var) = 2B'01'; %
 
 END
 TERM
-

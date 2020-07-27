@@ -36,21 +36,16 @@ static SgGlobal* initialize_global_scope(SgSourceFile* file)
     ROSE_ASSERT(globalScope != NULL);
     ROSE_ASSERT(globalScope->get_parent() != NULL);
 
- // Fortran is case insensitive
+ // Jovial is case insensitive
     globalScope->setCaseInsensitive(true);
 
- // DQ (8/21/2008): endOfConstruct is not set to be consistent with startOfConstruct.
     ROSE_ASSERT(globalScope->get_endOfConstruct()   != NULL);
     ROSE_ASSERT(globalScope->get_startOfConstruct() != NULL);
 
- // DQ (10/10/2010): Set the start position of global scope to "1".
+ // Not sure why this isn't set at construction
     globalScope->get_startOfConstruct()->set_line(1);
-
- // DQ (10/10/2010): Set this position to the same value so that if we increment
- // by "1" the start and end will not be the same value.
     globalScope->get_endOfConstruct()->set_line(1);
 
-    ROSE_ASSERT(SageBuilder::emptyScopeStack() == true);
     SageBuilder::pushScopeStack(globalScope);
 
     return globalScope;
