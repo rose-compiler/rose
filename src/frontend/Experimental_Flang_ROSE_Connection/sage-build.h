@@ -232,6 +232,10 @@ template<typename T> void Build(const Fortran::parser::    CompilerDirective&x, 
 template<typename T> void Build(const Fortran::parser::      OpenMPConstruct&x, T* scope);
 template<typename T> void Build(const Fortran::parser::  OmpEndLoopDirective&x, T* scope);
 
+// DoConstruct
+void Build(const Fortran::parser::NonLabelDoStmt&x, SgExpression* &expr);
+void Build(const Fortran::parser::   LoopControl&x, SgExpression* &expr);
+
 // SpecificationConstruct
 template<typename T> void Build(const Fortran::parser::            DerivedTypeDef&x, T* scope);
 template<typename T> void Build(const Fortran::parser::                   EnumDef&x, T* scope);
