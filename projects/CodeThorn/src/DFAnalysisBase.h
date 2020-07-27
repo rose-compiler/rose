@@ -54,7 +54,7 @@ class DFAnalysisBase {
 #if 0
   void attachResultsToAst(string);
 #endif
-  Labeler* getLabeler();
+  Labeler* getLabeler() const;
   CFAnalysis* getCFAnalyzer();
   VariableIdMappingExtended* getVariableIdMapping();
   FunctionIdMapping* getFunctionIdMapping();

@@ -42,6 +42,7 @@ class SgWhileStmt;
 class SgJovialCompoolStatement;
 class SgJovialDefineDeclaration;
 class SgJovialDirectiveStatement;
+class SgJovialForThenStatement;
 class SgJovialOverlayDeclaration;
 class SgJovialTableStatement;
 
@@ -132,6 +133,7 @@ public:
    void Enter(SgNamespaceDeclarationStatement* &, const std::string &, const SourcePositionPair &);
    void Leave(SgNamespaceDeclarationStatement*);
 
+   void Enter(SgExprStatement* &, const std::string &, SgExprListExp*, const std::string &);
    void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &, const std::string &);
    void Leave(SgExprStatement*);
 
@@ -159,7 +161,7 @@ public:
 
 // Expressions
 //
-   void Enter(SgFunctionCallExp* &, std::string &name, SgExprListExp* params);
+   void Enter(SgFunctionCallExp* &, const std::string &name, SgExprListExp* params);
 
 // Jovial specific nodes
 //

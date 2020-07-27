@@ -165,6 +165,9 @@ Grammar::setUpExpressions ()
   // DQ (12/13/2007): Added support for Fortran string concatenation operator
      NEW_TERMINAL_MACRO (ConcatenationOp,        "ConcatenationOp",        "CONCATENATION_OP" );
   
+  // CR (07/26/2020): Jovial replication operator for initialization expressions, also seen in Fortran
+     NEW_TERMINAL_MACRO (ReplicationOp,          "ReplicationOp",          "REPLICATION_OP" );
+
   // PP (06/08/2020): Added support for Ada remainder (different from mod) and abs operators 
      NEW_TERMINAL_MACRO (RemOp,                  "RemOp",                  "REM_OP" );
      NEW_TERMINAL_MACRO (AbsOp,                  "AbsOp",                  "ABS_OP" );
@@ -384,26 +387,22 @@ Grammar::setUpExpressions ()
                             MatrixTransposeOp | AbsOp,
                             "UnaryOp","UNARY_EXPRESSION", false);
 
-
      NEW_NONTERMINAL_MACRO (CompoundAssignOp,
                             PlusAssignOp   | MinusAssignOp    | AndAssignOp  | IorAssignOp    | MultAssignOp     |
                             DivAssignOp    | ModAssignOp      | XorAssignOp  | LshiftAssignOp | RshiftAssignOp   |
                             JavaUnsignedRshiftAssignOp        | IntegerDivideAssignOp | ExponentiationAssignOp,
                             "CompoundAssignOp", "COMPOUND_ASSIGN_OP", false);
 
-  // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice) (adding ExponentiationOp binary operator)
      NEW_NONTERMINAL_MACRO (BinaryOp,
           ArrowExp       | DotExp           | DotStarOp           | ArrowStarOp      | EqualityOp           | LessThanOp     | 
           GreaterThanOp  | NotEqualOp       | LessOrEqualOp       | GreaterOrEqualOp | AddOp                | SubtractOp     | 
           MultiplyOp     | DivideOp         | IntegerDivideOp     | ModOp            | AndOp                | OrOp           |
           BitXorOp       | BitAndOp         | BitOrOp             | BitEqvOp         | CommaOpExp           | LshiftOp       |
           RshiftOp       | PntrArrRefExp    | ScopeOp             | AssignOp         | ExponentiationOp     | JavaUnsignedRshiftOp |
-          ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         |
-
-          NonMembershipOp | IsOp            | IsNotOp             | DotDotExp        | ElementwiseOp        | PowerOp        |
-          LeftDivideOp    | RemOp,
+          ConcatenationOp| PointerAssignOp  | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         |
+          NonMembershipOp| IsOp             | IsNotOp             | DotDotExp        | ElementwiseOp        | PowerOp        |
+          LeftDivideOp   | RemOp            | ReplicationOp,
           "BinaryOp","BINARY_EXPRESSION", false);
-
 
      NEW_NONTERMINAL_MACRO (NaryOp,
           NaryBooleanOp  | NaryComparisonOp,
@@ -774,6 +773,9 @@ Grammar::setUpExpressions ()
      ConcatenationOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
 
+     ReplicationOp.setFunctionSource   ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
+                                  "../Grammar/Expression.code" );
+
      RemOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
      AbsOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
@@ -1049,6 +1051,7 @@ Grammar::setUpExpressions ()
      NaryBooleanOp.editSubstitute    ( "PRECEDENCE_VALUE", "13" );
 
      ConcatenationOp.editSubstitute ( "PRECEDENCE_VALUE", " 3" );
+     ReplicationOp.editSubstitute   ( "PRECEDENCE_VALUE", "13" );
      RemOp.editSubstitute           ( "PRECEDENCE_VALUE", "13" );
      AbsOp.editSubstitute           ( "PRECEDENCE_VALUE", "15" );
 
@@ -2350,7 +2353,8 @@ Grammar::setUpExpressions ()
                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ConcatenationOp.setFunctionPrototype ( "HEADER_CONCATENATION_OPERATOR", "../Grammar/Expression.code" );
-     
+     ReplicationOp.setFunctionPrototype   ( "HEADER_REPLICATION_OPERATOR",   "../Grammar/Expression.code" );
+
      RemOp.setFunctionPrototype ( "HEADER_REM_OPERATOR", "../Grammar/Expression.code" );
      AbsOp.setFunctionPrototype ( "HEADER_ABS_OPERATOR", "../Grammar/Expression.code" );
 
@@ -3096,7 +3100,8 @@ Grammar::setUpExpressions ()
      BracedInitializer.setFunctionSource ( "SOURCE_BRACED_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
 
      ConcatenationOp.setFunctionSource  ( "SOURCE_CONCATENATION_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     
+     ReplicationOp.setFunctionSource    ( "SOURCE_REPLICATION_OPERATOR_EXPRESSION",  "../Grammar/Expression.code" );
+
      RemOp.setFunctionSource            ( "SOURCE_REM_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      AbsOp.setFunctionSource            ( "SOURCE_ABS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      

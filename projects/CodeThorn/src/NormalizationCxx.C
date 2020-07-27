@@ -362,7 +362,7 @@ namespace
     
     void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
     
-    //~ void handle(SgDeclarationStatement&) {}
+    void handle(SgDeclarationStatement&) { }
     void handle(SgTypedefDeclaration&)   { }
     void handle(SgEnumDeclaration&)      { }
     

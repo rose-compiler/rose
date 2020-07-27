@@ -280,7 +280,8 @@ void removeConstantFoldedValue(SgProject * project) {
 #if 0
         printf ("child = %p = %s \n",child,child->class_name().c_str());
 #endif
-#if 0
+#if 1
+     // DQ (7/23/2020): Only required now for C++11 code using EDG 6.0 and GNU 10.1 (see Cxx11_tests/test2015_02.C).
      // DQ (7/18/2020): Added support to permit Cxx11_tests/test2020_69.C to pass.
         SgLambdaExp* lambdaExp = isSgLambdaExp(child);
         if (lambdaExp == NULL)

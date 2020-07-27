@@ -372,9 +372,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     return labeler->getLabel(node);
 
   if(!labeler->numberOfAssociatedLabels(node)) {
-    cerr << "Error: icfg construction: not label relevant node "<<node->sage_class_name()<<endl;
     throw std::logic_error("Error: icfg construction: not label relevant node ");
-    exit(1);
   }
   ROSE_ASSERT(labeler->numberOfAssociatedLabels(node));
   switch (node->variantT()) {
@@ -936,6 +934,18 @@ int CFAnalysis::reduceBlockEndNodes(Flow& flow) {
   return cnt;
 }
 
+int CFAnalysis::reduceToFunctionEntryNodes(Flow& flow) {
+  LabelSet labs=flow.nodeLabels();
+  int cnt=0;
+  for(auto lab:labs) {
+    if(!labeler->isFunctionEntryLabel(lab)) {
+      cnt+=reduceNode(flow,lab);
+    }
+  }
+  return cnt;
+}
+
+
 void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
   for(InterFlow::iterator i=interFlow.begin();i!=interFlow.end();++i) {
     if((*i).entry==Labeler::NO_LABEL && (*i).exit==Labeler::NO_LABEL) {
@@ -963,7 +973,6 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
         cerr<<"Error: did not find local edge of external call. CFG construction failed at "<<SgNodeHelper::sourceLineColumnToString(getNode((*i).call))<<endl;
       }
 #else
-      std::cerr << "adding " << getLabeler()->getNode((*i).call)->unparseToString() << std::endl;
       Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);
       // register in Labeler as external function call
       getLabeler()->setExternalFunctionCallLabel((*i).call);
@@ -1009,12 +1018,23 @@ SgNode* CFAnalysis::correspondingLoopConstruct(SgNode* node) {
   return node;
 }
 
+LabelSet CFAnalysis::setOfLabelsOfInterest() {
+  LabelSet ls;
+  Labeler& labeler=*getLabeler();
+  for(auto l : labeler) {
+    if(!(labeler.isBlockBeginLabel(l)||labeler.isBlockEndLabel(l))) {
+      ls.insert(l);
+    }
+  }
+  return ls;
+}
+
 LabelSet CFAnalysis::setOfInitialLabelsOfStmtsInBlock(SgNode* node) {
   LabelSet ls;
   if(node==0)
     return ls;
   if(!isSgStatement(node)) {
-    cerr<<"ERROR: "<<node->class_name()<<endl;
+    //cerr<<"ERROR: "<<node->class_name()<<endl;
   }
   size_t len=node->get_numberOfTraversalSuccessors();
   for(size_t i=0;i<len;++i) {
@@ -1030,13 +1050,13 @@ Flow CFAnalysis::controlDependenceGraph(Flow& controlFlow) {
   Flow controlDependenceEdges;
   for(LabelSet::iterator i=condLabels.begin();i!=condLabels.end();++i) {
     SgNode* condition=getLabeler()->getNode(*i);
-    cerr<<"DEBUG: cond:"<<condition->class_name()<<endl;
+    //cerr<<"DEBUG: cond:"<<condition->class_name()<<endl;
     SgNode* stmt=SgNodeHelper::getParent(condition);
-    cerr<<"DEBUG: stmt:"<<stmt->class_name()<<endl;
+    //cerr<<"DEBUG: stmt:"<<stmt->class_name()<<endl;
     // while/dowhile/for
     if(SgNodeHelper::isLoopCond(condition)) {
       SgNode* loopBody=SgNodeHelper::getLoopBody(stmt);
-      cerr<<"DEBUG: loopBody:"<<loopBody->class_name()<<endl;
+      //cerr<<"DEBUG: loopBody:"<<loopBody->class_name()<<endl;
       LabelSet loopBodyInitLabels=setOfInitialLabelsOfStmtsInBlock(loopBody);
       targetLabels=loopBodyInitLabels;
     }
@@ -1186,13 +1206,11 @@ Flow CFAnalysis::flow(SgNode* node) {
     Label callReturnLabel=labeler->functionCallReturnLabel(node);
     edgeSet.insert(Edge(callLabel,EDGE_LOCAL,callReturnLabel));
 #else
-    std::cerr << "call " << node->unparseToString() << std::endl;
     // 'local' edge is added when intraInter flow is computed
 #endif
     // add special case edge for callReturn to returnNode SgReturnStmt(SgFunctionCallExp)
     // edge: SgFunctionCallExp.callReturn->init(SgReturnStmt)
     if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node)) {
-      std::cerr << "callret " << std::endl;
       Label callReturnLabel=labeler->functionCallReturnLabel(node);
       Label returnStmtLabel=labeler->functionCallReturnLabel(node)+1;
       edgeSet.insert(Edge(callReturnLabel,EDGE_FORWARD,returnStmtLabel));

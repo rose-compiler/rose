@@ -1505,9 +1505,8 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
   // if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage())
      if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage().empty() == false)
         {
-#if 1
+#if 0
            printf ("/* output extern keyword */ \n");
-           
 #endif
           curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
           if (decl_stmt->isExternBrace())

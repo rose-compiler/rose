@@ -329,7 +329,7 @@ CFAnalysis* DFAnalysisBase::getCFAnalyzer() {
 }
 
 
-Labeler* DFAnalysisBase::getLabeler() {
+Labeler* DFAnalysisBase::getLabeler() const {
   return _programAbstractionLayer->getLabeler();
 }
 
