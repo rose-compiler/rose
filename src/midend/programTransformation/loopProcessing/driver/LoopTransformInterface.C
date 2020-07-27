@@ -348,17 +348,21 @@ LoopTransformInterface::
 IsLoop(const AstNodePtr& s, SymbolicVal* init , SymbolicVal* cond,
         SymbolicVal* incr, AstNodePtr* body)
 {
-  assert(fa != 0);
-std::cerr << "### "  <<"--"<<init->toString()<<std::endl;
+  assert(init != NULL);
+  std::cerr << "### "  <<"--"<<init->toString()<<std::endl;
   AstNodePtr initast, condast, incrast;
+  assert(fa != NULL);
   if (!fa->IsLoop(s, &initast, &condast, &incrast, body))
       return false;
-  if (init != 0 && initast != AST_NULL)
+  if (init != NULL && initast != AST_NULL) {
      *init = SymbolicValGenerator::GetSymbolicVal(*fa,initast);
-  if (cond != 0 && condast != AST_NULL)
+  }
+  if (cond != 0 && condast != AST_NULL) {
      *cond = SymbolicValGenerator::GetSymbolicVal(*fa,condast);
-  if (incr != 0 && incrast != AST_NULL)
-       *incr = SymbolicValGenerator::GetSymbolicVal(*fa,incrast);
+  }
+  if (incr != 0 && incrast != AST_NULL) {
+     *incr = SymbolicValGenerator::GetSymbolicVal(*fa,incrast);
+  }
   return true;
 }
 
