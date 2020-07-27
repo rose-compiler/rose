@@ -297,6 +297,10 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      SgLambdaExp* lambdaExp = isSgLambdaExp(expr);
      ASSERT_not_null(lambdaExp);
 
+#if 0
+     printf ("In unparseLambdaExpression(expr = %p = %s) \n",expr,expr->class_name().c_str());
+#endif
+
      // Liao, 7/1/2016
      // To workaround some wrong AST generated from RAJA LULESH code
      // we clear skip base type flag of unparse_info
@@ -490,6 +494,10 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
 #if 0
      printf ("In unparseLambdaExpression(): DONE: calling unparseStatement(lambdaFunction->get_definition()->get_body(), ninfo); \n");
      curprint (" /* In unparseLambdaExpression(): DONE: calling unparseStatement(lambdaFunction->get_definition()->get_body(), ninfo); */ ");
+#endif
+
+#if 0
+     printf ("Leaving unparseLambdaExpression(expr = %p = %s) \n",expr,expr->class_name().c_str());
 #endif
 
 #if 0
@@ -5540,7 +5548,7 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
              {
             // DQ (10/11/2006): As part of new implementation of qualified names we now default to the generation of all qualified names unless they are skipped.
             // newinfo.set_SkipQualifiedNames();
-#if 0
+#if 1
             // DQ (3/15/2015): test2015_11.c demonstrates a case where I think this should be not be set (un-named struct type).
             // DQ (10/17/2012): Added new code not present where this is handled for SgVariableDeclaration IR nodes.
                newinfo.unset_SkipDefinition();
@@ -5565,7 +5573,7 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
 #endif
        // DQ (10/18/2012): Added to unset ";" usage in defining declaration.
           newinfo.unset_SkipSemiColon();
-#if 1
+
        // DQ (10/17/2012): We have to separate these out if we want to output the defining declarations.
           newinfo.set_isTypeFirstPart();
 
@@ -5585,15 +5593,6 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
           curprint ("/* In unparseSizeOfOp(): isTypeSecondPart \n */ ");
 #endif
           unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
-#else
-
-#error "DEAD CODE!"
-
-       // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
-       // unp->u_type->unparseType(cast_op->get_expression_type(), newinfo);
-       // unp->u_type->unparseType(cast_op->get_type(), newinfo);
-          unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
-#endif
         }
 
      curprint(")");
@@ -7661,7 +7660,9 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
         {
        // Now check the version of the identified GNU g++ compiler.
           if ((usingGxx && ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 5) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4)))
-             || (usingClang && (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 7)))
+          // DQ (3/31/2020): bug fix for use of ROSE on older clang version 6 (on my Mac)
+          // || (usingClang && (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 7)))
+             || (usingClang && (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 6)))
              {
             // If this is the GNU g++ 4.5 version compiler (or greater) then we have to use "X::A()"
             // as a constructor name instead of "X::A::A()" which was previously accepted by GNU g++.

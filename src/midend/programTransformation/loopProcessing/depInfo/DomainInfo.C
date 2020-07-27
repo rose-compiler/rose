@@ -1,6 +1,8 @@
 #include <iostream>
 #include <sstream>
 
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+
 #include <DomainInfo.h>
 
 extern bool DebugDep();
@@ -16,7 +18,7 @@ DomainCondConstIterator DomainInfo::GetConstIterator() const
 DomainCondUpdateIterator DomainInfo:: GetUpdateIterator()
  { return new IteratorImplTemplate<DomainCond&, DomainInfoIterator>(DomainInfoIterator(UpdateRef())); }
 
-DomainInfo::DomainInfo() 
+DomainInfo::DomainInfo()
    : CountRefHandle <DomainInfoImpl>( new DomainInfoImpl() )
        {}
 
@@ -35,22 +37,22 @@ bool DomainInfo::operator |= (const DomainInfo &that)
 void DomainInfo:: UpdateDomainCond( bool (*Update)(DomainCond &info) )
       { UpdateRef().UpdateElem(Update); }
 
-std::string DomainInfo::toString() const 
-{ 
+std::string DomainInfo::toString() const
+{
   std::string res;
   const LatticeElemList<DomainCond>& list = ConstRef();
-  for ( LatticeElemList<DomainCond>::iterator iter(list); 
+  for ( LatticeElemList<DomainCond>::iterator iter(list);
         !iter.ReachEnd(); iter++) {
-       res = res + iter.Current().toString() + "\n";   
+       res = res + iter.Current().toString() + "\n";
   }
   return res;
 }
 
-DomainCond::DomainCond( int dim ) 
+DomainCond::DomainCond( int dim )
   : DepInfo(DepInfoGenerator::GetBottomDepInfo(dim,dim, dim))
-{  
+{
    for (int i = 0; i < dim; i++) {
-      Entry(i,i) = DepRel(DEPDIR_EQ, 0); 
+      Entry(i,i) = DepRel(DEPDIR_EQ, 0);
     }
 }
 
@@ -65,24 +67,24 @@ void DomainCond :: Initialize( const DepRel &r)
 }
 
 void DomainCond :: SetLoopRel(int index1, int index2, const DepRel &r)
-{ 
+{
    assert( index1 != index2);
    Entry(index1, index2) = r;
    Entry(index2, index1) = Reverse(r);
    ClosureCond();
-} 
+}
 
-std::string DomainCond :: toString() const 
-{  
+std::string DomainCond :: toString() const
+{
    std::stringstream res;
 
    int num = NumOfLoops();
    res << "# of loops = " << num << ": ";
-   for (int i = 0; i < num; i++) { 
-      for (int j = i+1; j < num; j++) { 
+   for (int i = 0; i < num; i++) {
+      for (int j = i+1; j < num; j++) {
         DepRel r = Entry(i,j);
         if (!r.IsBottom()) {
-           res << i << "," << j << ":" << r.toString() << ";"; 
+           res << i << "," << j << ":" << r.toString() << ";";
         }
      }
    }
@@ -123,7 +125,7 @@ bool DomainCond :: ClosureCond()
   }
    DomainCond d1 = (*this);
 bool mod = false;
-   while ( (*this) *= d1) 
+   while ( (*this) *= d1)
      mod = true;
    return mod;
 }
@@ -172,7 +174,7 @@ void DomainCond::AlignLoop( int index, int align)
 DomainCond operator |  ( const DomainCond &info1, DomainCond &info2)
 {
   DomainCond result(info1);
-  result |= info2; 
+  result |= info2;
   return result;
 }
 
@@ -291,7 +293,7 @@ DepRel DomainInfo :: GetLoopRel( int loop1, int loop2) const
 
 int DomainInfo :: NumOfLoops() const
 {
-  return DomainInfoIterator(ConstRef()).Current().NumOfLoops(); 
+  return DomainInfoIterator(ConstRef()).Current().NumOfLoops();
 }
 
 void RestrictDepDomain (DepInfo &dep, const DomainInfo &domain,

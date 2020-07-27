@@ -19092,19 +19092,19 @@ namespace Rose {
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1374
 namespace stringify {
-    /** Convert E_SgAsmArmInstruction enum constant to a string. */
-    const char* E_SgAsmArmInstruction(int64_t);
+    /** Convert E_SgAsmA64Instruction enum constant to a string. */
+    const char* E_SgAsmA64Instruction(int64_t);
 
-    /** Convert E_SgAsmArmInstruction enum constant to a string. */
-    std::string E_SgAsmArmInstruction(int64_t, const std::string &strip);
+    /** Convert E_SgAsmA64Instruction enum constant to a string. */
+    std::string E_SgAsmA64Instruction(int64_t, const std::string &strip);
 
-    /** Return all E_SgAsmArmInstruction member values as a vector. */
-    const std::vector<int64_t>& E_SgAsmArmInstruction();
+    /** Return all E_SgAsmA64Instruction member values as a vector. */
+    const std::vector<int64_t>& E_SgAsmA64Instruction();
 }
 
 namespace Rose {
-    std::string stringifyE_SgAsmArmInstruction(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyE_SgAsmArmInstruction();
+    std::string stringifyE_SgAsmA64Instruction(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyE_SgAsmA64Instruction();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at

@@ -5,6 +5,7 @@
 #include <TypedFusion.h>
 #include <GraphScope.h>
 #include <FusionAnal.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 //#define DEBUG 1
 
@@ -30,7 +31,7 @@ class SliceGraphTypedFusionImpl : public TypedFusionOperator
 #ifdef DEBUG
 std::cerr << "SliceGraphTypedFusionImpl:MarkFuseNodes\n";
 #endif
-    CompSliceDepGraphNode *n1 = static_cast<CompSliceDepGraphNode*>(gn1), 
+    CompSliceDepGraphNode *n1 = static_cast<CompSliceDepGraphNode*>(gn1),
                           *n2 = static_cast<CompSliceDepGraphNode*>(gn2);
     FuseVecType1 *fuseInfo = fuseMap.Map(n1);
     if (fuseInfo == 0) {
@@ -45,7 +46,7 @@ std::cerr << "n1 = " << n1->toString() << "\n";
 std::cerr << "n2 = " << n2->toString() << "\n";
 std::cerr << "end SliceGraphTypedFusionImpl:MarkFuseNodes\n";
 #endif
-  }    
+  }
 
   bool PreventFusion( GraphAccessInterface::Node *gn1, GraphAccessInterface::Node *gn2, GraphAccessInterface::Edge *e)
   {
@@ -58,8 +59,8 @@ std::cerr << "end SliceGraphTypedFusionImpl:MarkFuseNodes\n";
     return !fuse.Fusible( reg, *nest1, *nest2, edge->GetInfo());
   }
  public:
-  SliceGraphTypedFusionImpl( CompSliceLocalityRegistry *r, CompSliceDepGraphCreate &c, 
-                            const LoopNestFusion &f) 
+  SliceGraphTypedFusionImpl( CompSliceLocalityRegistry *r, CompSliceDepGraphCreate &c,
+                            const LoopNestFusion &f)
      : fuse(f), reg(r), ct(c) {}
   virtual ~SliceGraphTypedFusionImpl() {}
   void FuseNodes()
@@ -71,7 +72,7 @@ std::cerr << "SliceGraphTypedFusionImpl:FuseNodes\n";
       FuseVecType1 *fuseInfo = p2.Current();
       for (FuseVecType1::Iterator pp(*fuseInfo); !pp.ReachEnd(); ++pp) {
          if ( (*pp) == 0)
-             continue; 
+             continue;
          CompSliceDepGraphNode *n1 = pp.Current(), **n1p = 0;
          CompSliceNest* g1 = n1->GetInfo().GetNest();
          if (g1 == 0) continue;
@@ -87,7 +88,7 @@ std::cerr << "SliceGraphTypedFusionImpl:FuseNodes\n";
             DepInfo info = DepInfoGenerator::GetTopDepInfo();
             if (!crossIter.ReachEnd()) {
                 edge = crossIter.Current();
-                info =  edge->GetInfo(); 
+                info =  edge->GetInfo();
             }
             if (fuse.Fusible( reg, *g1, *g2, info)) {
                 fuse.Fuse( reg, *g1, *g2, info);
@@ -108,8 +109,8 @@ std::cerr << "SliceGraphTypedFusionImpl:FuseNodes\n";
   }
 };
 
-void SliceNestTypedFusion( CompSliceLocalityRegistry *reg, 
-                           CompSliceDepGraphCreate &t, 
+void SliceNestTypedFusion( CompSliceLocalityRegistry *reg,
+                           CompSliceDepGraphCreate &t,
                            const LoopNestFusion& fuse )
 {
 #ifdef DEBUG
@@ -119,7 +120,7 @@ std::cerr << "SliceNestTypedFusion\n";
   GraphAccessWrapTemplate<GraphAccessInterface::Node,
                           GraphAccessInterface::Edge,
                           CompSliceDepGraphCreate> access(&t);
-                          
+
   TypedFusion()(&access, impl, (int)true);
   impl.FuseNodes();
 }
@@ -134,19 +135,19 @@ std::cerr << "SliceGraphReverseTypedFusionImpl:FuseNodes\n";
 #endif
     for ( FuseVecType2::Iterator p2(fuseVec); !p2.ReachEnd(); p2.Advance()) {
       FuseVecType1 *fuseInfo = p2.Current();
-      fuseInfo->Reverse(); 
+      fuseInfo->Reverse();
     }
     fuseVec.Reverse();
     SliceGraphTypedFusionImpl :: FuseNodes();
-  } 
+  }
 
-  SliceGraphReverseTypedFusionImpl( CompSliceLocalityRegistry *r,CompSliceDepGraphCreate &_ct, 
-                                   const LoopNestFusion& f) 
+  SliceGraphReverseTypedFusionImpl( CompSliceLocalityRegistry *r,CompSliceDepGraphCreate &_ct,
+                                   const LoopNestFusion& f)
    : SliceGraphTypedFusionImpl(r, _ct,f) {}
 
 };
 
-void SliceNestReverseTypedFusion( CompSliceLocalityRegistry *reg, CompSliceDepGraphCreate &t, 
+void SliceNestReverseTypedFusion( CompSliceLocalityRegistry *reg, CompSliceDepGraphCreate &t,
                                   const LoopNestFusion& fuse)
 {
 #ifdef DEBUG
@@ -154,8 +155,8 @@ std::cerr << "SliceNestReverseTypedFusion\n";
 #endif
   SliceGraphReverseTypedFusionImpl impl(reg, t, fuse);
   GraphReverseEdge<CompSliceDepGraphCreate> graph(&t);
-  GraphAccessWrapTemplate<GraphAccessInterface::Node, 
-                          GraphAccessInterface::Edge, 
+  GraphAccessWrapTemplate<GraphAccessInterface::Node,
+                          GraphAccessInterface::Edge,
                         GraphReverseEdge<CompSliceDepGraphCreate> > acc(&graph);
   TypedFusion()(&acc, impl, (int)true);
   impl.FuseNodes();

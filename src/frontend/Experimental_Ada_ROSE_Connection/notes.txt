@@ -1,0 +1,14 @@
+0) download asislib that MATCHES compiler version
+1) configure ADA + compilers with gprconfig (incl. C and C++ compilers)
+2) update the top-level Makefile in asislib
+[cd gnat; $(GPRBUILD) -p  -XBLD=$(BLD) $(GPRBUILD_FLAGS) snames.gpr
+gnat xsnamest$(exe_ext)]
+=> [cd gnat; $(GPRBUILD) -p  -XBLD=$(BLD) $(GPRBUILD_FLAGS) snames.gpr ; xsnamest$(exe_ext)]
+
+** Troubleshooting **
+
+----
+error message: ld: ROSE_SOURCE_TREE/src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/dot_asis_library/obj/asis_tool_2-tool.o: relocation R_X86_64_32 against `.rodata' can not be used when making a shared object; recompile with -fPIC
+
+solution: the dot_asis library (or parts of it) were built statically. Under dot_asis_library, remove all obj files and set the build type to dynamic (from static). -> then rebuild from the beginning.
+---- 

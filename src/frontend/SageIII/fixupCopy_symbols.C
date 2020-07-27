@@ -675,6 +675,17 @@ SgAdaLoopStmt::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
      SgStatement::fixupCopy_symbols(copy,help);
    }
 
+void
+SgAdaAcceptStmt::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgAdaLoopStmt::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+  // Also call the base class version of the fixupCopycopy() member function
+     SgStatement::fixupCopy_symbols(copy,help);
+   }
+
 
 void
 SgTypedefDeclaration::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const

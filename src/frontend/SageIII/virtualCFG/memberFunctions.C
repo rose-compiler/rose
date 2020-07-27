@@ -75,9 +75,9 @@ void makeEdge(NodeT from, NodeT to, vector<EdgeT>& result) {
     SgReturnStmt* rs = isSgReturnStmt(fromNode);
     if (fromIndex == 1 || (fromIndex == 0 && !rs->get_expression())) return;
   }
-  if (isSgStopOrPauseStatement(fromNode) && toNode == fromNode->get_parent()) {
-    SgStopOrPauseStatement* sps = isSgStopOrPauseStatement(fromNode);
-    if (fromIndex == 0 && sps->get_stop_or_pause() == SgStopOrPauseStatement::e_stop) return;
+  if (isSgProcessControlStatement(fromNode) && toNode == fromNode->get_parent()) {
+    SgProcessControlStatement* sps = isSgProcessControlStatement(fromNode);
+    if (fromIndex == 0 && sps->get_control_kind() == SgProcessControlStatement::e_stop) return;
   }
   if (fromIndex == 1 && isSgSwitchStatement(fromNode) &&
       isSgSwitchStatement(fromNode)->get_body() == toNode) return;
@@ -2121,9 +2121,20 @@ SgAdaLoopStmt::cfgIsIndexInteresting(unsigned int) const
   return false;
 }
 
+bool
+SgAdaAcceptStmt::cfgIsIndexInteresting(unsigned int idx) const
+{
+  return (idx == 0);
+}
+
 unsigned int
 SgAdaLoopStmt::cfgIndexForEnd() const {
   return 2; 
+}
+
+unsigned int
+SgAdaAcceptStmt::cfgIndexForEnd() const {
+  return 1; 
 }
 
 std::vector<CFGEdge> 
@@ -2139,6 +2150,18 @@ SgAdaLoopStmt::cfgOutEdges(unsigned int idx) {
 }
 
 std::vector<CFGEdge> 
+SgAdaAcceptStmt::cfgOutEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  
+  switch (idx) {
+    case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
+    case 1: makeEdge(CFGNode(this, idx), getNodeJustBeforeInContainer(this),  result); break;
+    default: ROSE_ASSERT (!"Bad index for SgAdaAcceptStmt");
+  }
+  return result;
+}
+
+std::vector<CFGEdge> 
 SgAdaLoopStmt::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   
@@ -2146,6 +2169,18 @@ SgAdaLoopStmt::cfgInEdges(unsigned int idx) {
     case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
     case 1: makeEdge(this->get_body()->cfgForEnd(),      CFGNode(this, idx), result); break; 
     default: ROSE_ASSERT (!"Bad index for SgAdaLoopStmt");
+  }
+  return result;
+}
+
+std::vector<CFGEdge> 
+SgAdaAcceptStmt::cfgInEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  
+  switch (idx) {
+    case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+    case 1: makeEdge(this->get_body()->cfgForEnd(),      CFGNode(this, idx), result); break; 
+    default: ROSE_ASSERT (!"Bad index for SgAdaAcceptStmt");
   }
   return result;
 }
@@ -2435,20 +2470,20 @@ std::vector<CFGEdge> SgUseStatement::cfgInEdges(unsigned int idx) {
 }
 
 unsigned int
-SgStopOrPauseStatement::cfgIndexForEnd() const {
+SgProcessControlStatement::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgStopOrPauseStatement::cfgOutEdges(unsigned int idx) {
+std::vector<CFGEdge> SgProcessControlStatement::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
-  if (this->get_stop_or_pause() == SgStopOrPauseStatement::e_pause) {
+  if (this->get_control_kind() == SgProcessControlStatement::e_pause) {
     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   }
   return result;
 }
 
-std::vector<CFGEdge> SgStopOrPauseStatement::cfgInEdges(unsigned int idx) {
+std::vector<CFGEdge> SgProcessControlStatement::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
@@ -2456,7 +2491,7 @@ std::vector<CFGEdge> SgStopOrPauseStatement::cfgInEdges(unsigned int idx) {
   return result;
 }
 
-// Rasmussen (9/20/2018): TODO: Are image control statements correct?
+// CR (9/20/2018): TODO: Are image control statements correct?
 // I think expressions from the sync-stat-list may need to be added.
 unsigned int
 SgSyncAllStatement::cfgIndexForEnd() const {

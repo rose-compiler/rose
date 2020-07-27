@@ -5,6 +5,10 @@
 
 #include "Diagnostics.h"
 
+// In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
+// need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 using namespace Rose::Diagnostics;
 
 void
@@ -61,51 +65,52 @@ SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *file)
     return true;
 }
 
+// class method
 SgAsmExecutableFileFormat::InsSetArchitecture
-SgAsmElfFileHeader::machine_to_isa(unsigned machine) const
-{
-    switch (p_e_machine) {                                /* These come from the Portable Formats Specification v1.1 */
-      case 0:        return ISA_UNSPECIFIED;
-      case 1:        return ISA_ATT_WE_32100;
-      case 2:        return ISA_SPARC_Family;
-      case 3:        return ISA_IA32_386;
-      case 4:        return ISA_M68K_Family;
-      case 5:        return ISA_M88K_Family;
-      case 7:        return ISA_I860_Family;
-      case 8:        return ISA_MIPS_Family;
-      case 20:       return ISA_PowerPC;
-      case 21:       return ISA_PowerPC_64bit;
-      case 40:       return ISA_ARM_Family;
-      case 62:       return ISA_X8664_Family;
+SgAsmElfFileHeader::machine_to_isa(unsigned machine) {
+    switch (machine) {                                /* These come from the Portable Formats Specification v1.1 */
+        case 0:        return ISA_UNSPECIFIED;
+        case 1:        return ISA_ATT_WE_32100;
+        case 2:        return ISA_SPARC_Family;
+        case 3:        return ISA_IA32_386;
+        case 4:        return ISA_M68K_Family;
+        case 5:        return ISA_M88K_Family;
+        case 7:        return ISA_I860_Family;
+        case 8:        return ISA_MIPS_Family;
+        case 0x14:     return ISA_PowerPC;
+        case 0x15:     return ISA_PowerPC_64bit;
+        case 0x28:     return ISA_ARM_Family;
+        case 0x3e:     return ISA_X8664_Family;
+        case 0xb7:     return ISA_ARM_A64;
       default:
         /*FIXME: There's a whole lot more. See Dan's Elf reader. */
         // DQ (10/12/2008): Need more information to address PowerPC support.
-        mlog[WARN] <<"SgAsmElfFileHeader::parse::p_e_machine = " <<p_e_machine <<"\n";
+        mlog[WARN] <<"SgAsmElfFileHeader::parse::p_e_machine = " <<machine <<"\n";
         return ISA_OTHER;
     }
 }
 
 unsigned
-SgAsmElfFileHeader::isa_to_machine(SgAsmExecutableFileFormat::InsSetArchitecture isa) const
-{
+SgAsmElfFileHeader::isa_to_machine(SgAsmExecutableFileFormat::InsSetArchitecture isa) const {
     switch (isa) {
-      case ISA_UNSPECIFIED:
-      case ISA_OTHER:        return p_e_machine;
-      case ISA_ATT_WE_32100: return 1;
-      case ISA_IA32_386:     return 3;
-      case ISA_PowerPC:      return 20;  /*see note in machine_to_isa()*/
-      default:
-        switch (isa & ISA_FAMILY_MASK) {
-          case ISA_SPARC_Family: return 2;
-          case ISA_M68K_Family:  return 4;
-          case ISA_M88K_Family:  return 5;
-          case ISA_I860_Family:  return 7;
-          case ISA_MIPS_Family:  return 8;
-          case ISA_ARM_Family:   return 40;
-          case ISA_X8664_Family: return 62;
-          default:
-            return p_e_machine;
-        }
+        case ISA_UNSPECIFIED:
+        case ISA_OTHER:        return p_e_machine;
+        case ISA_ATT_WE_32100: return 1;
+        case ISA_IA32_386:     return 3;
+        case ISA_PowerPC:      return 0x14;  /*see note in machine_to_isa()*/
+        case ISA_ARM_A64:      return 0xb7;
+        default:
+            switch (isa & ISA_FAMILY_MASK) {
+                case ISA_SPARC_Family: return 2;
+                case ISA_M68K_Family:  return 4;
+                case ISA_M88K_Family:  return 5;
+                case ISA_I860_Family:  return 7;
+                case ISA_MIPS_Family:  return 8;
+                case ISA_ARM_Family:   return 40;
+                case ISA_X8664_Family: return 62;
+                default:
+                    return p_e_machine;
+            }
     }
 }
 

@@ -797,7 +797,8 @@ AstNodeClass::evaluateType(std::string& varTypeString)
               varTypeString == "SgStorageModifier" || 
               varTypeString == "SgElaboratedTypeModifier" ||
               varTypeString == "SgUPC_AccessModifier" ||
-              varTypeString == "SgConstVolatileModifier")
+              varTypeString == "SgConstVolatileModifier" ||
+              varTypeString == "SgStructureModifier")
              {
                returnType = MODIFIERCLASS_WITHOUTEASYSTORAGE;
              }
@@ -829,6 +830,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgStorageModifier::storage_modifier_enum" ) ||
                  ( varTypeString == "SgAccessModifier::access_modifier_enum" ) ||
                  ( varTypeString == "SgUPC_AccessModifier::upc_access_modifier_enum" ) ||
+                 ( varTypeString == "SgStructureModifier::jovial_structure_modifier_enum" ) ||
                  ( varTypeString == "SgElaboratedTypeModifier::elaborated_type_modifier_enum" ) ||
                  ( varTypeString == "SgDeclarationStatement::template_specialization_enum" ) ||
                  ( varTypeString == "SgDeclarationModifier::gnu_declaration_visability_enum" ) ||
@@ -840,11 +842,11 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgInitializedName::asm_register_name_enum" ) ||
                  ( varTypeString == "SgInitializedName::excess_specifier_enum" ) ||
                  ( varTypeString == "SgJovialDirectiveStatement::directive_types" ) ||
+                 ( varTypeString == "SgProcessControlStatement::control_enum" ) ||
                  ( varTypeString == "SgTypeComplex::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgTypeImaginary::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgClassDeclaration::class_types" ) ||
                  ( varTypeString == "SgTemplateClassDeclaration::class_types" ) ||
-                 ( varTypeString == "SgStopOrPauseStatement::stop_or_pause_enum" ) ||
                  ( varTypeString == "SgIOStatement::io_statement_enum" ) ||
                  ( varTypeString == "SgForAllStatement::forall_statement_kind_enum" ) ||
                  ( varTypeString == "SgImageControlStatement::image_control_statement_enum" ) ||
@@ -878,8 +880,8 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "X86RepeatPrefix" ) || "Rose::BinaryAnalysis::X86RepeatPrefix" == varTypeString ||
                  ( varTypeString == "X86PositionInRegister" ) || "Rose::BinaryAnalysis::X86PositionInRegister" == varTypeString ||
                  ( varTypeString == "X86InstructionSize" ) || "Rose::BinaryAnalysis::X86InstructionSize" == varTypeString ||
-                 ( varTypeString == "ArmInstructionKind" ) || "Rose::BinaryAnalysis::ArmInstructionKind" == varTypeString ||
-                 ( varTypeString == "ArmInstructionCondition" ) || "Rose::BinaryAnalysis::ArmInstructionCondition" == varTypeString ||
+                 ( varTypeString == "A64InstructionKind" ) || "Rose::BinaryAnalysis::A64InstructionKind" == varTypeString ||
+                 ( varTypeString == "A64InstructionCondition" ) || "Rose::BinaryAnalysis::A64InstructionCondition" == varTypeString ||
                  ( varTypeString == "PowerpcInstructionKind" ) || "Rose::BinaryAnalysis::PowerpcInstructionKind" == varTypeString ||
                  ( varTypeString == "PowerpcRegisterClass" ) || "Rose::BinaryAnalysis::PowerpcRegisterClass" == varTypeString ||
                  ( varTypeString == "PowerpcConditionRegisterAccessGranularity" ) || "Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity" == varTypeString ||

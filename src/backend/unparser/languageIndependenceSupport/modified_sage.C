@@ -36,7 +36,7 @@ Unparse_MOD_SAGE::Unparse_MOD_SAGE(Unparser* unp):unp(unp) {
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isOperator(SgExpression* expr)
    {
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      if (isBinaryOperator(expr) || isUnaryOperator(expr))
           return true;
@@ -239,7 +239,7 @@ bool Unparse_MOD_SAGE::isBinaryBracketOperator(SgExpression* expr)
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryOperator(SgExpression* expr)
    {
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      bool isBinaryOperatorResult = false;
 
@@ -252,13 +252,13 @@ bool Unparse_MOD_SAGE::isBinaryOperator(SgExpression* expr)
      string func_name;
      if (func_ref != NULL)
         {
-          ROSE_ASSERT(func_ref->get_symbol() != NULL);
+          ASSERT_not_null(func_ref->get_symbol());
           func_name = func_ref->get_symbol()->get_name().str();
         }
        else
         {
-          ROSE_ASSERT(mfunc_ref != NULL);
-          ROSE_ASSERT(mfunc_ref->get_symbol() != NULL);
+          ASSERT_not_null(mfunc_ref);
+          ASSERT_not_null(mfunc_ref->get_symbol());
           func_name = mfunc_ref->get_symbol()->get_name().str();
         }
 
@@ -321,7 +321,7 @@ Unparse_MOD_SAGE::isUnaryIncrementOperator(SgExpression* expr)
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
   // If it is a non-member function this it will have a single argument
   // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -381,7 +381,7 @@ Unparse_MOD_SAGE::isUnaryDecrementOperator(SgExpression* expr)
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
   // If it is a non-member function this it will have a single argument
   // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -434,7 +434,7 @@ Unparse_MOD_SAGE::isUnaryDecrementOperator(SgExpression* expr)
 bool
 Unparse_MOD_SAGE::isUnaryLiteralOperator(SgExpression* expr)
    {
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -609,7 +609,7 @@ bool Unparse_MOD_SAGE::isUnaryPostfixOperator(SgExpression* expr)
    {
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
   // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -772,7 +772,7 @@ GetOperatorVariant(SgExpression* expr)
                SgExpression *mfunc = isSgBinaryOp(func)->get_rhs_operand();
 
             // DQ (9/28/2012): Added assertion.
-               ROSE_ASSERT(mfunc != NULL);
+               ASSERT_not_null(mfunc);
 
                if (mfunc->variantT() == V_SgPseudoDestructorRefExp)
                     return V_SgFunctionCallExp;
@@ -790,7 +790,7 @@ GetOperatorVariant(SgExpression* expr)
                     printf ("ERROR: mfunc = %p = %s mfunc->get_startOfConstruct() = %p mfunc->get_operatorPosition() = %p \n",mfunc,mfunc->class_name().c_str(),mfunc->get_startOfConstruct(),mfunc->get_operatorPosition());
                     mfunc->get_startOfConstruct()->display("Error in GetOperatorVariant() in modified_sage.C (unparser): debug");
                   }
-               ROSE_ASSERT(mfunc_ref != NULL);
+               ASSERT_not_null(mfunc_ref);
                name = mfunc_ref->get_symbol()->get_name();
 #else
             // DQ (11/27/2012): Added more general support for templates to include new IR nodes.
@@ -945,7 +945,7 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
 //  are removed (return true). Otherwise, return false.
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::RemovePareninExprList(SgExprListExp* expr_list) {
-  ROSE_ASSERT(expr_list != NULL);
+  ASSERT_not_null(expr_list);
   SgExpressionPtrList::iterator i = expr_list->get_expressions().begin();
 
   if (i != expr_list->get_expressions().end()) {
@@ -977,7 +977,7 @@ bool Unparse_MOD_SAGE::RemovePareninExprList(SgExprListExp* expr_list) {
 bool
 Unparse_MOD_SAGE::isOneElementList(SgConstructorInitializer* con_init)
    {
-     ROSE_ASSERT(con_init != NULL);
+     ASSERT_not_null(con_init);
      if (con_init->get_args())
         {
           SgExprListExp* expr_list = isSgExprListExp(con_init->get_args());
@@ -1382,7 +1382,7 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
         {
        // DQ (6/15/2019): This is horrible API for this function.
           SgInitializedName & initalizedName = SageInterface::getFirstVariable(*variableDeclaration);
-       // ROSE_ASSERT(initalizedName != NULL);
+       // ASSERT_not_null(initalizedName);
           printf (" --- initalizedName name = %s \n",initalizedName.get_name().str());
         }
 
@@ -1398,7 +1398,7 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
 
      if (info.CheckAccess())
         {
-          ROSE_ASSERT (decl_stmt != NULL);
+          ASSERT_not_null(decl_stmt);
           bool flag = false;
 
           if (info.isPrivateAccess())
@@ -1491,7 +1491,7 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
 void
 Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_stmt )
    {
-     ROSE_ASSERT(decl_stmt != NULL);
+     ASSERT_not_null(decl_stmt);
 
 #if 0
      printf ("Inside of outputExternLinkageSpecifier() decl_stmt = %p = %s decl_stmt->isExternBrace() = %s \n",decl_stmt,decl_stmt->class_name().c_str(),decl_stmt->isExternBrace() ? "true" : "false");
@@ -1505,6 +1505,9 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
   // if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage())
      if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage().empty() == false)
         {
+#if 0
+           printf ("/* output extern keyword */ \n");
+#endif
           curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
           if (decl_stmt->isExternBrace())
              {
@@ -1607,7 +1610,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                            // then we don't want the "template<>" syntax on the member function instantiation, else if it was not output (e.g. when 
                            // testTranslator is run on test2015_35.C) then we require the "template<>" syntax.
                               SgTemplateInstantiationMemberFunctionDecl* nondefiningTemplateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(decl_stmt->get_firstNondefiningDeclaration());
-                              ROSE_ASSERT(nondefiningTemplateInstantiationMemberFunctionDecl != NULL);
+                              ASSERT_not_null(nondefiningTemplateInstantiationMemberFunctionDecl);
 #if DEBUG_TEMPLATE_SPECIALIZATION
                               printf("  nondefiningTemplateInstantiationMemberFunctionDecl->get_parent() = %p (%s)\n", nondefiningTemplateInstantiationMemberFunctionDecl->get_parent(), nondefiningTemplateInstantiationMemberFunctionDecl->get_parent() ? nondefiningTemplateInstantiationMemberFunctionDecl->get_parent()->class_name().c_str() : "");
 #endif
@@ -1616,7 +1619,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                               SgTemplateInstantiationDefn* nondefiningTemplateClassInstatiationDefn = isSgTemplateInstantiationDefn(nondefiningTemplateInstantiationMemberFunctionDecl->get_parent());
                               if (nondefiningTemplateClassInstatiationDefn != NULL) {
                                 SgTemplateInstantiationDecl* templateClassInstantiation = isSgTemplateInstantiationDecl(nondefiningTemplateClassInstatiationDefn->get_parent());
-                                ROSE_ASSERT(templateClassInstantiation != NULL);
+                                ASSERT_not_null(templateClassInstantiation);
 #if DEBUG_TEMPLATE_SPECIALIZATION
                                 printf ("templateClassInstantiation->get_file_info()->isCompilerGenerated()      = %s \n",templateClassInstantiation->get_file_info()->isCompilerGenerated() ? "true" : "false");
                                 printf ("templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() = %s \n",templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() ? "true" : "false");
@@ -1772,16 +1775,16 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
         {
 #if 1
        // This assertion fails in test2004_116.C
-       // ROSE_ASSERT(functionDeclaration != NULL);
+       // ASSERT_not_null(functionDeclaration);
           if (functionDeclaration == NULL)
              {
                curprint( "friend ");
              }
 #else
        // DQ (3/8/2012): We now handle a new design of templates as class derived from SgFunctionDeclaration, so this is a better implementation now.
-          ROSE_ASSERT(functionDeclaration != NULL);
-          ROSE_ASSERT(functionDeclaration->get_parent() != NULL);
-          ROSE_ASSERT(functionDeclaration->get_scope() != NULL);
+          ASSERT_not_null(functionDeclaration);
+          ASSERT_not_null(functionDeclaration->get_parent());
+          ASSERT_not_null(functionDeclaration->get_scope());
           if (functionDeclaration->get_parent() == functionDeclaration->get_scope())
              {
                curprint("friend ");
@@ -1821,7 +1824,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // printf ("isDeclarationOfTemplateSpecialization = %s \n",isDeclarationOfTemplateSpecialization == true ? "true" : "false");
           if ( (decl_stmt->get_declarationModifier().isFriend() == true) && (isDeclarationOfTemplateSpecialization == false) )
              {
-               ROSE_ASSERT(decl_stmt->get_parent() != NULL);
+               ASSERT_not_null(decl_stmt->get_parent());
 #if 0
                printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): decl_stmt->get_parent() = %p = %s \n",decl_stmt->get_parent(),decl_stmt->get_parent()->class_name().c_str());
 #endif
@@ -1876,7 +1879,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
             // DQ (9/25/2013): Check if this is a C file using -std=c89, and if so then unparse "__inline__" instead of "inline".
             // curprint( "inline ");
                SgFile* file = TransformationSupport::getFile(functionDeclaration);
-               ROSE_ASSERT(file != NULL);
+               ASSERT_not_null(file);
                if (file->get_C89_only() == true && file->get_C89_gnu_only() == false)
                   {
                  // DQ (9/25/2013): This is what is required when using -std=c89 (the default for GNU gcc is -std=gnu89).
@@ -2024,6 +2027,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
      if (decl_stmt->get_declarationModifier().get_storageModifier().isStatic())
         {
+#if 0
+          printf ("In Unparse_MOD_SAGE::printSpecifier2(): Output the static keyword \n");
+#endif
           curprint("static ");
         }
 
@@ -2373,7 +2379,7 @@ Unparse_MOD_SAGE::printAttributesForType(SgDeclarationStatement* decl_stmt, SgUn
    {
   // DQ (12/31/2013): Added support for missing attributes on types within declarations (in unparsed code).
 
-     ROSE_ASSERT(decl_stmt != NULL);
+     ASSERT_not_null(decl_stmt);
 
 #if 0
      printf ("In printAttributesForType(SgDeclarationStatement*): Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
@@ -2431,7 +2437,7 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
   // DQ (2/26/2013): Added support for missing attributes in unparsed code.
   // These are output after the function declaration (and before the body of the function or the closing ";").
 
-     ROSE_ASSERT(decl_stmt != NULL);
+     ASSERT_not_null(decl_stmt);
 
 #if 0
      printf ("In printAttributes(SgDeclarationStatement*): Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
@@ -2489,7 +2495,7 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // DQ (12/31/2013): Note that we need to look at the SgInitializedName in the variable declaration, since
        // we use the type modifier on the declaration to set the attributes for the type (not the variable).
           SgInitializedName* initializedName = SageInterface::getFirstInitializedName(variableDeclaration);
-          ROSE_ASSERT(initializedName != NULL);
+          ASSERT_not_null(initializedName);
           initializedName->isGnuAttributePacked();
           if (initializedName->isGnuAttributePacked() == true)
              {
@@ -2731,7 +2737,7 @@ Unparse_MOD_SAGE::printFunctionFormalArgumentSpecifier ( SgType* type, SgUnparse
 
   // DQ (2/4/2006): Removed (not used)
   // SgModifierNodes* modifiers = type->get_modifiers();
-  // ROSE_ASSERT (modifiers != NULL);
+  // ASSERT_not_null(modifiers);
    }
 #endif
 

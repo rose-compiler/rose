@@ -1386,11 +1386,14 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          SgInitializedNamePtrList::const_iterator result = std::find(initNameList.begin(), initNameList.end(), initializedName);
                          ROSE_ASSERT(result != initNameList.end());
                        }
-                      else
+                      else if (isSgTemplateDeclaration(parentParameterList->get_parent()))
                        {
                       // DQ (12/6/2011): Now that we have the template declarations in the AST, this could be a SgTemplateDeclaration.
-                         ROSE_ASSERT(isSgTemplateDeclaration(parentParameterList->get_parent()) != NULL);
                          printf ("WARNING: There are tests missing for the case of a parentParameterList->get_parent() that is a SgTemplateDeclaration \n");
+                       }
+                       else
+                       {
+                         ROSE_ASSERT(isSgAdaAcceptStmt(parentParameterList->get_parent()));
                        }
                   }
                  else
@@ -2871,6 +2874,7 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // non-defining declarations in generated internally).
                if (firstNondefiningDeclaration == NULL)
                   {
+                    ROSE_ASSERT(declaration->variantT() != NULL);
                     switch (declaration->variantT())
                        {
                       // These nodes should have a non-defining declaration even if only a defining 
@@ -3424,6 +3428,27 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(aliasSymbol->get_alias() != NULL);
                          break;
                        }
+                       
+                    case V_SgAdaPackageSymbol:
+                       {
+                      // This is an alias for a symbol injected from another scope as part of a Fortran "use" statement
+                      // (or perhaps eventually a C++ using declaration or using directive).
+                         SgAdaPackageSymbol* sy = isSgAdaPackageSymbol(symbol);
+                         ROSE_ASSERT(sy != NULL);
+                         ROSE_ASSERT(sy->get_declaration() != NULL);
+                         break;
+                       }
+                       
+                    case V_SgAdaTaskSymbol:
+                       {
+                      // This is an alias for a symbol injected from another scope as part of a Fortran "use" statement
+                      // (or perhaps eventually a C++ using declaration or using directive).
+                         SgAdaTaskSymbol* sy = isSgAdaTaskSymbol(symbol);
+                         ROSE_ASSERT(sy != NULL);
+                         ROSE_ASSERT(sy->get_declaration() != NULL);
+                         break;
+                       }   
+
 
                     case V_SgNonrealSymbol:
                        {
@@ -4363,6 +4388,7 @@ TestLValues::visit ( SgNode* node )
                         case V_SgBoolValExp:     
                         case V_SgExponentiationOp: 
                         case V_SgConcatenationOp: 
+                        case V_SgReplicationOp:
                         case V_SgLshiftOp:      
                         case V_SgRshiftOp:       
                         case V_SgEqualityOp:    

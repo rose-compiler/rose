@@ -1,5 +1,6 @@
 #include "SymbolicVal.h"
 #include "SymbolicExpr.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 class ValFindBase : public SymbolicVisitor
 {
@@ -9,8 +10,8 @@ class ValFindBase : public SymbolicVisitor
   virtual void Default() { result = (target == cur); }
 
 
-  void VisitFunction( const SymbolicFunction &v) 
-       { 
+  void VisitFunction( const SymbolicFunction &v)
+       {
           if (target.GetValType() == VAL_FUNCTION && cur == target)
               result = true;
           else {
@@ -19,13 +20,13 @@ class ValFindBase : public SymbolicVisitor
               SymbolicVal tmp = *p;
               cur = tmp;
               cur.Visit(this);
-              if ( result) 
+              if ( result)
                  break;
             }
           }
        }
-  void VisitExpr( const SymbolicExpr &v) 
-       { 
+  void VisitExpr( const SymbolicExpr &v)
+       {
          if (target.GetValType() == VAL_EXPR && cur == target)
               result = true;
          else {
@@ -37,23 +38,23 @@ class ValFindBase : public SymbolicVisitor
               if (result)
                  break;
            }
-         } 
+         }
        }
  public:
   ValFindBase() : result(false) {}
-    
+
   bool operator ()( const SymbolicVal &v, const SymbolicVal& _target)
-    { 
+    {
       target = _target;
       cur = v;
-      result = false; 
-      v.Visit(this); 
-      return result; 
+      result = false;
+      v.Visit(this);
+      return result;
     }
 };
 
 bool FindVal( const SymbolicVal &v, const SymbolicVal &var)
-{ 
+{
    ValFindBase op;
    return op(v, var);
 }
