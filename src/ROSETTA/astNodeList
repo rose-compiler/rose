@@ -653,6 +653,7 @@ SgReferenceType
 SgRemOp
 SgRenamePair
 SgRenameSymbol
+SgReplicationOp
 SgReturnStmt
 SgRewindStatement
 SgRshiftAssignOp
@@ -682,13 +683,13 @@ SgJavaForEachStatement
 SgJavaSynchronizedStatement
 SgJavaParameterizedType
 SgJavaWildcardType
+SgProcessControlStatement
 SgSpecialFunctionModifier
 SgStatement
 SgStaticAssertionDeclaration
 SgStmtDeclarationStatement
 SgStatementExpression
 SgStatementFunctionStatement
-SgStopOrPauseStatement
 SgStorageModifier
 SgStringConversion
 SgStringKeyedBidirectionalGraph
