@@ -7463,6 +7463,9 @@ BUILD_BINARY_DEF(ElementwiseLeftDivideOp);
 BUILD_BINARY_DEF(ElementwiseAddOp);
 BUILD_BINARY_DEF(ElementwiseSubtractOp);
 
+// DQ (7/25/2020): Adding C++20 support
+BUILD_BINARY_DEF(SpaceshipOp)
+
 #undef BUILD_BINARY_DEF
 
 
@@ -11892,6 +11895,68 @@ SageBuilder::buildLambdaCaptureList_nfi()
 
      setOneSourcePositionNull(lambdaCaptureList);
      return lambdaCaptureList;
+   }
+
+// DQ (7/25/2020): Adding C++17 support
+SgFoldExpression* 
+SageBuilder::buildFoldExpression(SgExpression* operands, string operator_token_string, bool is_left_associative)
+   {
+     SgFoldExpression* result = new SgFoldExpression(NULL,operands,operator_token_string,is_left_associative);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+
+SgFoldExpression*
+SageBuilder::buildFoldExpression_nfi(SgExpression* operands, string operator_token_string, bool is_left_associative)
+   {
+     SgFoldExpression* result = new SgFoldExpression(NULL,operands,operator_token_string,is_left_associative);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionNull(result);
+     return result;
+   }
+
+// DQ (7/25/2020): Adding C++20 support
+SgAwaitExpression*
+SageBuilder::buildAwaitExpression()
+   {
+     SgAwaitExpression* result = new SgAwaitExpression(NULL,NULL);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+SgAwaitExpression*
+SageBuilder::buildAwaitExpression_nfi()
+   {
+     SgAwaitExpression* result = new SgAwaitExpression(NULL,NULL);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionNull(result);
+     return result;
+   }
+
+// DQ (7/25/2020): Adding C++20 support
+SgChooseExpression*
+SageBuilder::buildChooseExpression()
+   {
+     SgChooseExpression* result = new SgChooseExpression(NULL,NULL);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+
+SgChooseExpression*
+SageBuilder::buildChooseExpression_nfi()
+   {
+     SgChooseExpression* result = new SgChooseExpression(NULL,NULL);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionNull(result);
+     return result;
    }
 
 

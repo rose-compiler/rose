@@ -52,16 +52,22 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_111.C \
    test2020_116.C \
    test2020_118.C \
+   test2020_119.C \
    test2020_120.C \
    test2020_121.C \
-   test2020_122.C
+   test2020_122.C \
+   test2020_124.C \
+   test2020_125.C \
+   test2020_06.C \
+   test2020_37.C \
+   test2020_76.C \
+   test2020_126.C
 
 TESTCODE_CURRENTLY_FAILING = \
    test2020_01.C \
    test2020_02.C \
    test2020_03.C \
    test2020_05.C \
-   test2020_06.C \
    test2020_07.C \
    test2020_10.C \
    test2020_11.C \
@@ -83,7 +89,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_34.C \
    test2020_35.C \
    test2020_36.C \
-   test2020_37.C \
    test2020_38.C \
    test2020_41.C \
    test2020_42.C \
@@ -117,7 +122,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_71.C \
    test2020_73.C \
    test2020_75.C \
-   test2020_76.C \
    test2020_82.C \
    test2020_99.C \
    test2020_105.C \
@@ -129,7 +133,8 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_113.C \
    test2020_114.C \
    test2020_115.C \
-   test2020_117.C 
+   test2020_117.C \
+   test2020_123.C 
 
 # DQ (7/21/2020): These test codes have not yet been fixed up to be valid test codes for C++20 support in ROSE.
 # They may fail for issues unrelated to C++20 support in EDG 6.0.
