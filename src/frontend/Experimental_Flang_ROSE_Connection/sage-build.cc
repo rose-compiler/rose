@@ -1825,6 +1825,28 @@ template<typename T>
 void Build(const parser::DoConstruct&x, T* scope)
 {
    std::cout << "Rose::builder::Build(DoConstruct)\n";
+   //  std::tuple<Statement<NonLabelDoStmt>, Block, Statement<EndDoStmt>> t;
+   //  bool IsDoNormal() const;  bool IsDoWhile() const; bool IsDoConcurrent() const;
+
+   SgStatement* block_stmt{nullptr};
+   SgWhileStmt* while_stmt{nullptr};
+   SgExpression* condition{nullptr};
+
+   // Traverse NonLabelDoStmt to get the loop condition
+   Build(std::get<0>(x.t).statement, condition);
+
+   // Enter SageTreeBuilder if is DoWhile
+   if (x.IsDoWhile()) {
+      builder.Enter(while_stmt, condition);
+   }
+
+   // Traverse the body
+   Build(std::get<1>(x.t), block_stmt);
+
+   // Leave SageTreeBuilder
+   if (x.IsDoWhile()) {
+      builder.Leave(while_stmt, true /* has_end_do_stmt */);
+   }
 }
 
 template<typename T>
@@ -1873,6 +1895,45 @@ template<typename T>
 void Build(const parser::OmpEndLoopDirective&x, T* scope)
 {
    std::cout << "Rose::builder::Build(OmpEndLoopDirective)\n";
+}
+
+// DoConstruct
+void Build(const parser::NonLabelDoStmt&x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(NonLabelDoStmt)\n";
+   //   std::tuple<std::optional<Name>, std::optional<LoopControl>> t;
+
+   if (auto & opt = std::get<1>(x.t)) {    // std::optional<LoopControl>
+      Build(opt.value(), expr);
+   }
+}
+
+void Build(const parser::LoopControl&x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(LoopControl)\n";
+   //  std::variant<Bounds, ScalarLogicalExpr, Concurrent> u;
+   //  using Bounds = LoopBounds<ScalarName, ScalarExpr>;
+   // struct LoopBounds { VAR name;  BOUND lower, upper;  std::optional<BOUND> step; }
+
+   std::string name;
+   SgExpression * lower_bound = nullptr, * upper_bound = nullptr;
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::LoopControl::Bounds &y)
+            {
+#if 0
+               name = y.name.thing.ToString();
+               std::cout << "the name in the loop control is " << name << "\n";
+
+               Build(y.lower.thing.value(), lower_bound);
+               Build(y.upper.thing.value(), upper_bound);
+#endif
+            },
+         [&] (const parser::LoopControl::Concurrent &y) { ; },
+         [&] (const auto &y) { Build(y, expr); }, // ScalarLogicalExpr
+      },
+      x.u);
 }
 
    // SpecificationConstruct
