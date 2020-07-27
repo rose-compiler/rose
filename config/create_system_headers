@@ -76,9 +76,47 @@ process_headers()
   # find "$src_dir/." -type f -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|ln -s '&' '$target_dir/\\1'|p" | sh -s &
     [ -n "$VERBOSE" ] && echo "Done copying"
     # Find the special-case files to process
+
+  # find "$src_dir/." -name compare -a -type f -a -print 2>/dev/null | \
+    find "$src_dir" -name compare -a -type f -a -print 2>/dev/null | \
+    while read srcName; do
+     # echo "processing files in directory $srcDirName to put into $targetDirName"
+     # echo "compare: processing files in directory $src_dir to put into $target_dir (srcName = $srcName)"
+     # this is not the most efficient thing to do ...
+       targetName="`echo "$srcName" | sed "s|$src_dir|$target_dir|g"`"
+     # echo "removing targetName = $targetName"
+     # rm "$targetName" # In case targetName is a link to something in the base include directory
+     # echo ""
+    done
+
+  # find "$src_dir/." -name coroutine -a -type f -a -print 2>/dev/null | \
+    find "$src_dir" -name coroutine -a -type f -a -print 2>/dev/null | \
+    while read srcName; do
+     # echo "processing files in directory $srcDirName to put into $targetDirName"
+     # echo "coroutine: processing files in directory $src_dir to put into $target_dir (srcName = $srcName)"
+     # this is not the most efficient thing to do ...
+       targetName="`echo "$srcName" | sed "s|$src_dir|$target_dir|g"`"
+     # echo "removing targetName = $targetName"
+     # rm "$targetName" # In case targetName is a link to something in the base include directory
+     # echo ""
+    done
+
+  # find "$src_dir/." -name tuple -a -type f -a -print 2>/dev/null | \
+    find "$src_dir" -name tuple -a -type f -a -print 2>/dev/null | \
+    while read srcName; do
+     # echo "processing files in directory $srcDirName to put into $targetDirName"
+     # echo "tuple: processing files in directory $src_dir to put into $target_dir (srcName = $srcName)"
+     # this is not the most efficient thing to do ...
+       targetName="`echo "$srcName" | sed "s|$src_dir|$target_dir|g"`"
+     # echo "removing targetName = $targetName"
+     # rm "$targetName" # In case targetName is a link to something in the base include directory
+     # echo ""
+    done
+
     find "$src_dir/." -name c++config.h -a -type f -a -print 2>/dev/null | \
     while read srcName; do
      # echo "processing files in directory $srcDirName to put into $targetDirName"
+     # echo "processing files in directory $src_dir to put into $target_dir (srcName = $srcName)"
      # this is not the most efficient thing to do ...
        targetName="`echo "$srcName" | sed "s|$src_dir|$target_dir|g"`"
        rm "$targetName" # In case targetName is a link to something in the base include directory
@@ -430,11 +468,34 @@ if [[ "$OSTYPE" = solaris2* ]]; then
 fi
 ###### End of fixup for missing err.h on Solaris
 
+# echo "Processing header files to language = $language"
+
 # if [ is_C_compiler = "yes" ]
 if [ "x$language" = "xc" ]
 then
     [ -n "$VERBOSE" ] && echo "We are handling C compiler specific details, so copy the ROSE specific fix for complex.h to $system_headers_directory" >&2
     cp "$roseHome/config/rose_specific_complex.h" "$system_headers_directory/complex.h"
+fi
+
+# DQ (7/26/2020): This might have to be specific to GNU, or GNU 10.x
+if [ "x$language" = "xc++" ]
+then
+  # echo "compilerVendorName = $compilerVendorName"
+    if [ "x$compilerVendorName" = "xgnu" ]; then
+      # DQ (7/26/2020): Need to make this dependent on GNU 10.x (specifically it is a problem for GNU 6.1, and likely other versions of GNU)
+        echo "Processing C++ specific header files (compare, coroutine, and tuple) for GNU 10.x and C++20 support)."
+        echo "system_headers_directory = $system_headers_directory"
+      # ls $system_headers_directory/../hdrs5
+      # [ -n "$VERBOSE" ] && echo "We are handling C++ compiler specific details, so copy the ROSE specific fix for compare to $system_headers_directory" >&2
+      # cp "$roseHome/config/rose_specific_compare" "$system_headers_directory/../hdrs5/compare"
+      # [ -n "$VERBOSE" ] && echo "We are handling C++ compiler specific details, so copy the ROSE specific fix for coroutine to $system_headers_directory" >&2
+      # cp "$roseHome/config/rose_specific_coroutine" "$system_headers_directory/../hdrs5/coroutine"
+      # [ -n "$VERBOSE" ] && echo "We are handling C++ compiler specific details, so copy the ROSE specific fix for tuple to $system_headers_directory" >&2
+      # cp "$roseHome/config/rose_specific_tuple" "$system_headers_directory/../hdrs5/tuple"
+
+      # echo "After copying rose_specific header files:"
+      # ls $system_headers_directory/../hdrs5
+    fi
 fi
 
 error_code=$?
