@@ -846,6 +846,21 @@ struct __rose_is_same_as<T,T> {
 #define __is_same_as(T,U) __rose_is_same_as<T,U>::value
 #endif
 
+
+/* DQ (7/26/2020): Adding GNU 10 C++20 specific builtin functions (part of what 
+is needed to compile C++20 specific headers, the rest are some modified headers). */
+#if __GNUC__ >= 10 && __cplusplus
+bool __builtin_coro_done(void* _M_fr_ptr);
+void __builtin_coro_resume(void* _M_fr_ptr);
+void __builtin_coro_destroy(void* _M_fr_ptr);
+// std::compare_three_way()(__a.address(), __b.address());
+void* __builtin_coro_promise(void* _M_fr_ptr, unsigned long, bool);
+constexpr bool __atomic_always_lock_free(unsigned long, unsigned long);
+// extern unsigned long ATOMIC_CHAR8_T_LOCK_FREE;
+const unsigned long __GCC_ATOMIC_CHAR8_T_LOCK_FREE = 2;
+#endif
+
+
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #if 0
 
