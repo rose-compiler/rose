@@ -216,7 +216,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
           case V_SgSwitchStatement:            unparseSwitchStmt(stmt, info);            break;
           case V_SgCaseOptionStmt:             unparseCaseStmt(stmt, info);              break;
           case V_SgDefaultOptionStmt:          unparseDefaultStmt(stmt, info);           break;
-          case V_SgStopOrPauseStatement:       unparseStopOrPauseStmt(stmt, info);       break;
+          case V_SgProcessControlStatement:    unparseProcessControlStmt(stmt, info);    break;
 
        // executable statements, IO
        // case V_SgIOStatement:                unparseIOStmt(stmt, info);                break;
@@ -2941,29 +2941,53 @@ FortranCodeGeneration_locatedNode::unparseGotoStmt(SgStatement* stmt, SgUnparse_
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
+FortranCodeGeneration_locatedNode::unparseProcessControlStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-     SgStopOrPauseStatement* sp_stmt = isSgStopOrPauseStatement(stmt);
-     ASSERT_not_null(sp_stmt);
+     SgProcessControlStatement* ctrl_stmt = isSgProcessControlStatement(stmt);
+     ASSERT_not_null(ctrl_stmt);
 
-  // SgStopOrPauseStatement::stop_or_pause knd = (SgStopOrPauseStatement::stop_or_pause) sp_stmt->get_stmt_kind();
-     SgStopOrPauseStatement::stop_or_pause_enum kind = sp_stmt->get_stop_or_pause();
+     SgExpression* quiet_expr = ctrl_stmt->get_quiet();
+     SgProcessControlStatement::control_enum kind = ctrl_stmt->get_control_kind();
 
-     if (kind == SgStopOrPauseStatement::e_stop)
+     switch (kind)
         {
-          curprint("STOP ");
-          unparseExpression(sp_stmt->get_code(), info);
-        }
-     else if (kind == SgStopOrPauseStatement::e_error_stop)
-        {
-          curprint("ERROR STOP ");
-          unparseExpression(sp_stmt->get_code(), info);
-        }
-     else
-        {
-          ROSE_ASSERT(kind == SgStopOrPauseStatement::e_pause);
-          curprint("PAUSE ");
-          unparseExpression(sp_stmt->get_code(), info);
+          case SgProcessControlStatement::e_stop:
+             {
+                curprint("STOP ");
+                unparseExpression(ctrl_stmt->get_code(), info);
+                // F2018 syntax
+                if (quiet_expr && !isSgNullExpression(quiet_expr))
+                   {
+                      curprint(", ");
+                      unparseExpression(quiet_expr, info);
+                   }
+                break;
+             }
+          case SgProcessControlStatement::e_error_stop:
+             {
+                curprint("ERROR STOP ");
+                unparseExpression(ctrl_stmt->get_code(), info);
+                // F2018 syntax
+                if (quiet_expr && !isSgNullExpression(quiet_expr))
+                   {
+                      curprint(", ");
+                      unparseExpression(quiet_expr, info);
+                   }
+                break;
+             }
+          case SgProcessControlStatement::e_pause:
+             {
+                curprint("PAUSE ");
+                unparseExpression(ctrl_stmt->get_code(), info);
+                break;
+             }
+          default:
+             {
+               cerr << "error: unparseProcessControlStatement() is unimplemented for enum value "
+                    << kind << "\n";
+               ROSE_ASSERT(false);
+               break;
+             }
         }
 
      unp->cur.insert_newline(1); 

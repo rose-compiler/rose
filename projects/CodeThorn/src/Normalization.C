@@ -128,49 +128,71 @@ namespace CodeThorn {
     }
 #endif
   }
-
+  void Normalization::printNormalizationPhase() {
+    if(this->options.printPhaseInfo) {
+      cout<<"Normalization phase "<<normPhaseNr<<"/"<<normPhaseNrLast<<"["<<(normPhaseNr*100/normPhaseNrLast)<<"%]"<<" ... "<<endl;
+    }
+    normPhaseNr++;
+  }
   void Normalization::normalizeAstPhaseByPhase(SgNode* root) {
+    normPhaseNr=1;
+    normPhaseNrLast=12;
+    printNormalizationPhase();
     if (options.normalizeCplusplus) {
       normalizeCxx(*this, root);
     }
+    printNormalizationPhase();
     if(options.normalizeSingleStatements) {
       normalizeSingleStatementsToBlocks(root);
     }
+    printNormalizationPhase();
     if(options.normalizeLabels) {
       normalizeLabelStmts(root);
     }
+    printNormalizationPhase();
     if(options.eliminateForStatements) {
       convertAllForStmtsToWhileStmts(root);
     }
 
     // uses options to select which breaks are transformed (can be none)
+    printNormalizationPhase();
     normalizeBreakAndContinueStmts(root);
 
+    printNormalizationPhase();
     if(options.eliminateWhileStatements) {
       // transforms while and do-while loops
       createLoweringSequence(root);
       applyLoweringSequence();
     }
+    printNormalizationPhase();
     if(options.hoistBranchInitStatements) {
       hoistBranchInitStatementsInAst(root);
     }
+    printNormalizationPhase();
     if(options.hoistConditionExpressions) {
       hoistConditionsInAst(root,options.restrictToFunCallExpressions);
     }
+    printNormalizationPhase();
     if(options.normalizeExpressions) {
       normalizeExpressionsInAst(root,options.restrictToFunCallExpressions);
     }
+    printNormalizationPhase();
     if(options.normalizeVariableDeclarations) {
       normalizeAllVariableDeclarations(root,false);
     }
+    printNormalizationPhase();
     if(options.normalizeVariableDeclarationsWithFunctionCalls) {
       bool normalizeOnlyVariablesWithFunctionCallsFlag=true;
       normalizeAllVariableDeclarations(root,normalizeOnlyVariablesWithFunctionCallsFlag);
     }
+    printNormalizationPhase();
     if(options.inlining) {
       InlinerBase* inliner=getInliner();
       ROSE_ASSERT(inliner);
       inliner->inlineFunctions(root);
+    }
+    if(this->options.printPhaseInfo) {
+      cout<<"Normalization done."<<endl;
     }
   }
 
@@ -909,7 +931,8 @@ add
     } else if(isSgAssignOp(expr)||isSgCompoundAssignOp(expr)) {
       // special case: normalize assignment with lhs/rhs-semantics
 
-      if(isSgExprStatement(expr->get_parent())) {
+      // 'true' keeps a=b=c;
+      if(true||isSgExprStatement(expr->get_parent())) {
         // special handling of assignment that is not inside an
         // expression normalize rhs of assignment
         mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
@@ -1449,6 +1472,19 @@ add
       if(SgArrayType* strippedArrayType = isSgArrayType(arrayType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
         SgType* strippedArrayBaseType = strippedArrayType->get_base_type();
         variableType = SageBuilder::buildPointerType(strippedArrayBaseType);
+      }
+    }
+
+    //MS 06/24/2020: If the expression is an assignment then ensure
+    //that tmp var is of reference type. In case of array use base
+    //type.
+    if (isSgAssignOp(expression))
+    {
+      if(SgType* strippedType = isSgType(expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
+        if(SgArrayType* arrayType = isSgArrayType(strippedType)) {
+          SgType* strippedType = arrayType->get_base_type();
+        }
+        variableType = SageBuilder::buildReferenceType(strippedType);
       }
     }
 

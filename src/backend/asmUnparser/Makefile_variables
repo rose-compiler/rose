@@ -12,6 +12,7 @@ asmUnparser_la_sources=					\
 	$(asmUnparserPath)/AsmUnparser.C		\
 	$(asmUnparserPath)/AsmUnparser_compat.C		\
 	$(asmUnparserPath)/AsmFunctionIndex.C		\
+	$(asmUnparserPath)/unparseA64Asm.C		\
 	$(asmUnparserPath)/unparseX86Asm.C		\
 	$(asmUnparserPath)/unparsePowerpcAsm.C		\
 	$(asmUnparserPath)/unparseM68kAsm.C		\

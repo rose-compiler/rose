@@ -6,35 +6,23 @@
 #include "CtxLattice.h"
 #include "CtxTransfer.h"
 #include "CtxAttribute.h"
+#include "CtxPropertyStateFactory.h"
+#include "CtxSolver0.h"
 
 namespace CodeThorn
 {
 
-/// implements the Decorator pattern to enhance the
-///   PropertyStateFactory with context specific functionality
-template <class CallContext>
-struct CtxPropertyStateFactory : PropertyStateFactory
+struct CtxStats
 {
-    typedef CallContext           context_t;
-    typedef CtxLattice<context_t> context_lattice_t;
+  size_t min        = size_t(-1);
+  size_t max        = 0;
+  size_t numNonbot  = 0;
+  size_t numBot     = 0;
 
-    explicit
-    CtxPropertyStateFactory(PropertyStateFactory& compFac)
-    : compFactory(compFac)
-    {}
-
-    context_lattice_t* create() ROSE_OVERRIDE
-    {
-      return new context_lattice_t(compFactory);
-    }
-
-    PropertyStateFactory& componentFactory()
-    {
-      return compFactory;
-    }
-
-  private:
-    PropertyStateFactory& compFactory;
+  Label    maxLbl   = Label();
+  Lattice* maxLat   = nullptr; 
+  
+  double avg        = 0;
 };
 
 
@@ -46,7 +34,7 @@ struct CtxAnalysis : DFAnalysisBase
     typedef DFAnalysisBase        base;
     typedef CallContext           context_t;
     typedef CtxLattice<context_t> context_lattice_t;
-
+    
     CtxAnalysis(PropertyStateFactory& compFactory, DFTransferFunctions& compTransfer)
     : base(), ctxFactory(compFactory), ctxTransfer(compTransfer, *this)
     {
@@ -64,7 +52,7 @@ struct CtxAnalysis : DFAnalysisBase
     const CtxLattice<CallContext>&
     getCtxLattice(Label lbl)
     {
-      return dynamic_cast<CtxLattice<CallContext>&>(SG_DEREF(getPreInfo(lbl)));
+      return dynamic_cast<context_lattice_t&>(SG_DEREF(getPreInfo(lbl)));
     }
 
     /// retrieves the lattice from the call site
@@ -99,7 +87,38 @@ struct CtxAnalysis : DFAnalysisBase
 
     CtxPropertyStateFactory<context_t>& factory()  { return ctxFactory;  }
     CtxTransfer<context_t>&             transfer() { return ctxTransfer; }
+    
+    void initializeSolver() ROSE_OVERRIDE
+    {
+      _solver = new CtxSolver0( _workList,
+                                _analyzerDataPreInfo,
+                                _analyzerDataPostInfo,
+                                SG_DEREF(getInitialElementFactory()),
+                                SG_DEREF(getFlow()),
+                                SG_DEREF(_transferFunctions),
+                                SG_DEREF(getLabeler())
+                              );
+    }
 
+    // debugging support
+    
+    /*
+    Labeler* getLabeler() const
+    {
+      return const_cast<CtxAnalysis<context_t>*>(this)->base::getLabeler();
+    }
+    */
+    
+    CtxStats latticeStats() ;
+    
+    
+    SgNode& getNode(Label lbl) const
+    {
+      // MS 7/24/20: added required dereference op
+      return *getLabeler()->getNode(lbl);
+    }
+    
+    
   protected:
     CtxAttribute<CallContext>*
     createDFAstAttribute(Lattice* elem) ROSE_OVERRIDE
@@ -113,6 +132,44 @@ struct CtxAnalysis : DFAnalysisBase
     CtxPropertyStateFactory<context_t> ctxFactory;
     CtxTransfer<context_t>             ctxTransfer;
 };
+
+template <class CallContext>
+CtxStats
+CtxAnalysis<CallContext>::latticeStats() 
+{
+  Labeler& labeler = *getLabeler();
+  CtxStats res;
+  
+  for (Label lbl : labeler)
+  {
+    Lattice& el = SG_DEREF(getPreInfo(lbl));
+    
+    if (!el.isBot())
+    {
+      context_lattice_t& lat = dynamic_cast<context_lattice_t&>(el);
+      const size_t       sz = lat.size();
+      
+      if (sz < res.min) res.min = sz; 
+      
+      if (sz > res.max) 
+      {
+        res.max    = sz;
+        res.maxLbl = lbl;
+        res.maxLat = &el;
+      } 
+      
+      res.avg += sz;
+      ++res.numNonbot;
+    }
+    else
+    {
+      ++res.numBot;
+    }
+  }
+  
+  res.avg = res.avg / res.numNonbot;
+  return res;
+}
 
 } // namespace CodeThorn
 

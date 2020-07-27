@@ -1,0 +1,9 @@
+START
+PROGRAM main;
+BEGIN
+  ITEM TEMP U;
+  TEMP = 1;
+  TEMP = 2;
+  IF TRUE; TEMP = 3;
+END
+TERM

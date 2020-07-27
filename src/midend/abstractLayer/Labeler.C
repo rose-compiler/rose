@@ -667,14 +667,26 @@ LabelSet Labeler::getLabelSet(set<SgNode*>& nodeSet) {
 LabelSet LabelSet::operator+(LabelSet& s2) {
   LabelSet result;
   result=*this;
-  for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
-    result.insert(*i2);
+  result+=s2;
   return result;
 }
 
 LabelSet& LabelSet::operator+=(LabelSet& s2) {
   for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
     insert(*i2);
+  return *this;
+}
+
+LabelSet LabelSet::operator-(LabelSet& s2) {
+  LabelSet result;
+  result=*this;
+  result-=s2;
+  return result;
+}
+
+LabelSet& LabelSet::operator-=(LabelSet& s2) {
+  for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
+    erase(*i2);
   return *this;
 }
 

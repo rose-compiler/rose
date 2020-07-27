@@ -12452,12 +12452,14 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
   ROSE_ASSERT(from != NULL);
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+#if 0  // This is not accurate for template class specializations. We disable this assertion for now. The worst case is compilation error later.
   if (!SageInterface::isCopyConstructible(from->get_type())) {
     std::cerr << "Type " << from->get_type()->unparseToString() << " of expression " << from->unparseToString() << " is not copy constructible" << std::endl;
     ROSE_ASSERT (false);
   }
 
   assert (SageInterface::isCopyConstructible(from->get_type())); // How do we report errors?
+#endif
   SgStatement* stmt = getStatementOfExpression(from);
   assert (stmt);
   if (!isSgForInitStatement(stmt->get_parent())) {
@@ -19839,14 +19841,12 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                            // moved. This is fixed below. SgJovialTableType derives from SgClassType, it may be that
                            // class types are not moved correctly either.
 
-                           SgType* var_type = init_name->get_type();
                            SgJovialTableType* table_type = isSgJovialTableType(init_name->get_type());
                            if (table_type)
                               {
                                  SgDeclarationStatement* decl = table_type->get_declaration();
                                  SgDeclarationStatement* def_decl = decl->get_definingDeclaration();
                                  SgDeclarationStatement* nondef_decl = decl->get_firstNondefiningDeclaration();
-                                 SgNode* decl_parent = decl->get_parent();
 
                                  nondef_decl->set_parent(targetBlock);
                                  nondef_decl->set_scope(targetBlock);
@@ -19875,12 +19875,12 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                        {
                          SgFunctionDeclaration * funcDecl = isSgFunctionDeclaration(declaration);
                          ROSE_ASSERT (funcDecl);
-                         //cout<<"found a function declaration to be moved ..."<<endl;
                        }
                      break;
                      case V_SgAttributeSpecificationStatement:
                      case V_SgEmptyDeclaration:
                      case V_SgFortranIncludeLine:
+                     case V_SgJovialDirectiveStatement:
                      case V_SgPragmaDeclaration:
                        break;
                     default:
@@ -23271,6 +23271,23 @@ SageInterface::translateToUseCppDeclarations( SgNode* n )
      printf ("Leaving translateToUseCppDeclarations(): DONE: Calling traversal.traverse() \n");
    }
 
+void SageInterface::recursivePrintCurrentAndParent (SgNode* n)
+{
+  // print current level's info
+  if (!n) return; 
+  cout<<"--------------"<<endl;
+  cout<<n<<":"<<n->class_name()<<  endl;
+  if (SgLocatedNode * lnode = isSgLocatedNode(n))
+  { 
+    cout<<"file info:\t ";
+    lnode->get_file_info()->display();
+    cout<<"\n unparseToString:\t ";
+    lnode->unparseToString();
+  }  
+
+  // track back to its parent
+  recursivePrintCurrentAndParent (n->get_parent());
+} 
 
 void SageInterface:: saveToPDF(SgNode* node)
 {

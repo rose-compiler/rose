@@ -810,6 +810,7 @@ insertFriendDecl (const SgFunctionDeclaration* func,
 //  cout<<friend_proto->unparseToString()<<endl; 
 
   if (enable_debug)
+    ROSE_ASSERT(friend_proto != NULL);
     printf ("Exiting insertFriendDecl(): func = %p friend_proto = %p friend_proto->isFriend = %s \n",func,friend_proto,friend_proto->get_declarationModifier().isFriend() ? "true" : "false");
 
 
@@ -1691,6 +1692,7 @@ Outliner::insert (SgFunctionDeclaration* func,
         // ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() != NULL);
            if (SageInterface::is_Fortran_language() == false)
             {
+              ROSE_ASSERT(sourceFileFunctionPrototype != NULL);
               sourceFileFunctionPrototype->set_definingDeclaration(func);
               ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() != NULL);
             }

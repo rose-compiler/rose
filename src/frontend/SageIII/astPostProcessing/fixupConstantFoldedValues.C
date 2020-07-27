@@ -316,14 +316,14 @@ struct RemoveOriginalExpressionTrees : public ROSE_VisitTraversal {
     ROSE_ASSERT(node != NULL);
 
     SgExpression * exp = isSgExpression(node);
-#if 1
+#if 0
     printf ("In RemoveOriginalExpressionTrees::visit(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
 
     if (exp != NULL) {
       SgExpression * oet = exp->get_originalExpressionTree();
       if (oet != NULL) {
-#if 1
+#if 0
         printf ("In RemoveOriginalExpressionTrees::visit(): calling deleteExpressionAndOriginalExpressionTree()oet = %p = %s \n",oet,oet->class_name().c_str());
 #endif
         exp->set_originalExpressionTree(NULL);

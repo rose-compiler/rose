@@ -3655,12 +3655,12 @@ HEADER_USE_STATEMENT_START
           virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 HEADER_USE_STATEMENT_END
 
-HEADER_STOP_OR_PAUSE_STATEMENT_START
+HEADER_PROCESS_CONTROL_STATEMENT_START
      public:
        // CR (4/26/2018): Added e_exit for Jovial (exit similar to Fortran stop)
-       // CR (5/21/2018): Added e_abort for Jovial, perhaps should rethink naming
-       //                        of SgStopOrPauseStatement (or create new node?)
-          enum stop_or_pause_enum
+       // CR (5/21/2018): Added e_abort for Jovial
+       // CR (7/11/2020): Renamed SgStopOrPauseStatement to SgProcessControlStatement
+          enum control_enum
              {
                e_unknown,
                e_abort,
@@ -3676,7 +3676,7 @@ HEADER_STOP_OR_PAUSE_STATEMENT_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
-HEADER_STOP_OR_PAUSE_STATEMENT_END
+HEADER_PROCESS_CONTROL_STATEMENT_END
 
 // CR (9/20/2018): Added image control statements
 //
@@ -18969,10 +18969,10 @@ SgUseStatement::get_mangled_name() const
 
 SOURCE_USE_STATEMENT_END
 
-SOURCE_STOP_OR_PAUSE_STATEMENT_START
+SOURCE_PROCESS_CONTROL_STATEMENT_START
 
 void
-SgStopOrPauseStatement::post_construction_initialization()
+SgProcessControlStatement::post_construction_initialization()
    {
   // Set the parent of any input expression.
      if (p_code != NULL)
@@ -18981,7 +18981,7 @@ SgStopOrPauseStatement::post_construction_initialization()
         }
    }
 
-SOURCE_STOP_OR_PAUSE_STATEMENT_END
+SOURCE_PROCESS_CONTROL_STATEMENT_END
 
 SOURCE_IMAGE_CONTROL_STATEMENT_START
 

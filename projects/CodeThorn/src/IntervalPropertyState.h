@@ -10,20 +10,20 @@ namespace CodeThorn {
 class IntervalPropertyState : public Lattice {
 public:
   IntervalPropertyState();
-  void toStream(std::ostream& os, VariableIdMapping* vim=0);
-  bool approximatedBy(Lattice& other);
-  bool approximatedByAsymmetric(Lattice& other);
-  void combine(Lattice& other);
+  void toStream(std::ostream& os, VariableIdMapping* vim=0) override;
+  bool approximatedBy(Lattice& other) const override;
+  bool approximatedByAsymmetric(Lattice& other) const;
+  void combine(Lattice& other) override;
   void combineAsymmetric(Lattice& other);
  private:
-  void combineInternal(Lattice& other, JoinMode joinMode);
+  void combineInternal(IntervalPropertyState& other, JoinMode joinMode);
  public:
   void overwrite(Lattice& other0);
   // adds integer variable
   void addVariable(VariableId varId);
   void setVariable(VariableId varId,NumberIntervalLattice num);
-  NumberIntervalLattice getVariable(CodeThorn::VariableId varId);
-  CodeThorn::VariableIdSet allVariableIds();
+  NumberIntervalLattice getVariable(VariableId varId);
+  VariableIdSet allVariableIds();
   // removes variable from state. Returns true if variable existed in state, otherwise false.
   bool variableExists(VariableId varId);
   bool removeVariable(VariableId varId);
@@ -36,12 +36,15 @@ public:
   void addArrayElements(VariableId,int number);
 #endif
   typedef std::map<VariableId,NumberIntervalLattice> IntervalMapType;
-  bool isBot() { return _bot; }
+  bool isBot() const override { return _bot; }
   void setBot() { _bot=true; }
+  void setBackEdge(bool backedge = false) { _backedge=backedge; }
+  bool isBackEdge() const { return _backedge; }
   void setEmptyState();
  private:
   IntervalMapType intervals;
   bool _bot;
+  bool _backedge;
 };
 
 } // end of namespace CodeThorn

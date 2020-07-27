@@ -205,7 +205,7 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (CommonBlock,               "CommonBlock",               "COMMON_BLOCK" );
      NEW_TERMINAL_MACRO (ModuleStatement,           "ModuleStatement",           "MODULE_STATEMENT" );
      NEW_TERMINAL_MACRO (UseStatement,              "UseStatement",              "USE_STATEMENT" );
-     NEW_TERMINAL_MACRO (StopOrPauseStatement,      "StopOrPauseStatement",      "STOP_OR_PAUSE_STATEMENT" );
+     NEW_TERMINAL_MACRO (ProcessControlStatement,   "ProcessControlStatement",   "PROCESS_CONTROL_STATEMENT" );
 
   // DQ (11/25/2007): Make this the base class of all the IR nodes for Fortran I/O
   // NEW_TERMINAL_MACRO (IOStatement,               "IOStatement",               "IO_STATEMENT" );
@@ -562,12 +562,13 @@ Grammar::setUpStatements ()
 
 
   // CR (9/20/2018): Added ImageControlStatement
+  // CR (7/11/2020): Changed StopOrPauseStatement to ProcessControlStatement to allow more variants
      NEW_NONTERMINAL_MACRO (Statement,
              ScopeStatement            | FunctionTypeTable      | DeclarationStatement            | ExprStatement         |
              LabelStatement            | CaseOptionStmt         | TryStmt                         | DefaultOptionStmt     |
              BreakStmt                 | ContinueStmt           | ReturnStmt                      | GotoStatement         |
              SpawnStmt                 | NullStatement          | VariantStatement                | ForInitStatement      | 
-             CatchStatementSeq         | StopOrPauseStatement   | IOStatement                     | 
+             CatchStatementSeq         | ProcessControlStatement| IOStatement                     |
              WhereStatement            | ElseWhereStatement     | NullifyStatement                | ArithmeticIfStatement |
              AssignStatement           | ComputedGotoStatement  | AssignedGotoStatement           |
           /* FortranDo                 | */ AllocateStatement   | DeallocateStatement             | UpcNotifyStatement    | 
@@ -661,6 +662,7 @@ Grammar::setUpStatements ()
   // DQ (5/8/2007): Added hidden declaration list. If a symbol is in this list then it requires name qualification ("typically "::" keyword).
      ScopeStatement.setDataPrototype    ( "std::set<SgSymbol*>","hidden_declaration_list","",
                                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
 
      FunctionTypeTable.setFunctionPrototype( "HEADER_FUNCTION_TYPE_TABLE", "../Grammar/Statement.code" );
      FunctionTypeTable.setDataPrototype    ( "SgSymbolTable*","function_type_table","= NULL",
@@ -3337,13 +3339,15 @@ Grammar::setUpStatements ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/14/2007): Added new data members to Fortran IR nodes.
-     StopOrPauseStatement.setFunctionPrototype ( "HEADER_STOP_OR_PAUSE_STATEMENT", "../Grammar/Statement.code" );
-     StopOrPauseStatement.setDataPrototype    ( "SgStopOrPauseStatement::stop_or_pause_enum", "stop_or_pause", "= SgStopOrPauseStatement::e_unknown",
+  // CR (7/11/2020): Added F2018 addition, quiet
+     ProcessControlStatement.setFunctionPrototype ( "HEADER_PROCESS_CONTROL_STATEMENT", "../Grammar/Statement.code" );
+     ProcessControlStatement.setDataPrototype     ( "SgProcessControlStatement::control_enum",
+                                                    "control_kind", "= SgProcessControlStatement::e_unknown",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // StopOrPauseStatement.setDataPrototype    ( "SgName", "code", "= \"\"",
-  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     StopOrPauseStatement.setDataPrototype    ( "SgExpression*", "code", "= NULL",
+     ProcessControlStatement.setDataPrototype     ( "SgExpression*", "code", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     ProcessControlStatement.setDataPrototype     ( "SgExpression*", "quiet", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/14/2007): Added new data members to Fortran IR nodes.
      IOStatement.setFunctionPrototype ( "HEADER_IO_STATEMENT", "../Grammar/Statement.code" );
@@ -3351,20 +3355,6 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      IOStatement.setDataPrototype    ( "SgExprListExp*", "io_stmt_list", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#if 0
-  // IOStatement.setDataPrototype    ( "SgIOControlStatement*", "io_control", "= NULL",
-  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (8/15/2007): Added new data members to Fortran IR nodes (all the I/O IR nodes share these fields)
-     IOControlStatement.setFunctionPrototype ( "HEADER_IO_CONTROL_STATEMENT", "../Grammar/Statement.code" );
-     IOControlStatement.setDataPrototype ( "SgExpression*", "unit", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     IOControlStatement.setDataPrototype ( "SgExpression*", "iostat", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     IOControlStatement.setDataPrototype ( "SgExpression*", "err_label", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#else
-  // DQ (11/25/2007): Make these a part of the IOStatement and eliminate the IOControlStatement IR node
      IOStatement.setDataPrototype ( "SgExpression*", "unit", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      IOStatement.setDataPrototype ( "SgExpression*", "iostat", "= NULL",
@@ -3373,7 +3363,6 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      IOStatement.setDataPrototype ( "SgExpression*", "iomsg", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
 
   // CR (9/20/2018): Added F2018 image control statements
      ImageControlStatement.setFunctionPrototype ( "HEADER_IMAGE_CONTROL_STATEMENT", "../Grammar/Statement.code" );
@@ -4273,7 +4262,7 @@ Grammar::setUpStatements ()
      CommonBlock.setFunctionSource              ("SOURCE_COMMON_BLOCK_STATEMENT", "../Grammar/Statement.code" );
      ModuleStatement.setFunctionSource          ("SOURCE_MODULE_STATEMENT", "../Grammar/Statement.code" );
      UseStatement.setFunctionSource             ("SOURCE_USE_STATEMENT", "../Grammar/Statement.code" );
-     StopOrPauseStatement.setFunctionSource     ("SOURCE_STOP_OR_PAUSE_STATEMENT", "../Grammar/Statement.code" );
+     ProcessControlStatement.setFunctionSource  ("SOURCE_PROCESS_CONTROL_STATEMENT", "../Grammar/Statement.code" );
 
      IOStatement.setFunctionSource              ("SOURCE_IO_STATEMENT", "../Grammar/Statement.code" );
 

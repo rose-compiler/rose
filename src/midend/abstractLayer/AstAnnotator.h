@@ -17,8 +17,8 @@ namespace CodeThorn {
  */
 class AstAnnotator {
  public:
-  AstAnnotator(CodeThorn::Labeler* labeler);
-  AstAnnotator(CodeThorn::Labeler* labeler, VariableIdMapping* variableIdMapping);
+  AstAnnotator(Labeler* labeler);
+  AstAnnotator(Labeler* labeler, VariableIdMapping* variableIdMapping);
   // annotates attributes of Type DFAstAttribute of name 'attributeName' as comment for all nodes in the AST subtree of  node 'node'.
   void annotateAstAttributesAsCommentsBeforeStatements(SgNode* node, std::string attributeName);
   void annotateAstAttributesAsCommentsAfterStatements(SgNode* node, std::string attributeName);
@@ -26,7 +26,7 @@ class AstAnnotator {
  protected:
   void annotateAstAttributesAsComments(SgNode* node, std::string attributeName, PreprocessingInfo::RelativePositionType posSpecifier,std::string analysisInfoTypeDescription);
   void insertComment(std::string comment, PreprocessingInfo::RelativePositionType posSpecifier, SgStatement* node);
-  CodeThorn::Labeler* _labeler;
+  Labeler* _labeler;
   VariableIdMapping* _variableIdMapping;
 };
 

@@ -38,6 +38,7 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
           case V_SgFunctionRefExp:      unparseFuncRef    (expr, info);          break;
           case V_SgVarRefExp:           unparseVarRef     (expr, info);          break;
           case V_SgPointerDerefExp:     unparsePtrDeref   (expr, info);          break;
+          case V_SgTypeExpression:      unparseTypeExpr   (expr, info);          break;
 
        // operators
           case V_SgUnaryOp:             unparseUnaryExpr  (expr, info);          break;
@@ -97,7 +98,10 @@ Unparse_Jovial::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
   {
      SgStringVal* string_val = isSgStringVal(expr);
      ASSERT_not_null(string_val);
-     curprint(string_val->get_value());
+
+  // Add quotes back to the string (removed from string coming from parser)
+     std::string quoted_string = "'" + string_val->get_value() + "'";
+     curprint(quoted_string);
   }
 
 void
@@ -273,33 +277,8 @@ Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
       unparseExpression(func_call->get_function(), info);
 
    // argument list
-      SgUnparse_Info ninfo(info);
       curprint("(");
-      if (func_call->get_args()) {
-         SgInitializedNamePtrList::iterator formal = formal_params.begin();
-         SgExpressionPtrList::iterator actual = actual_params.begin();
-
-         bool firstOutParam = false;
-         bool foundOutParam = false;
-
-         while (actual != actual_params.end()) {
-
-         // TODO - Change temporary hack of using storage modifier isMutable to represent an out parameter
-            if ((*formal)->get_storageModifier().isMutable() && foundOutParam == false)
-               {
-                  firstOutParam = true;
-                  foundOutParam = true;
-                  curprint(":");
-               }
-            formal++;
-
-            unparseExpression((*actual), ninfo);
-            actual++;
-            if (actual != actual_params.end() && firstOutParam == false) {
-               curprint(",");
-            }
-         }
-      }
+      unparseExpression(func_call->get_args(), info);
       curprint(")");
    }
 
@@ -392,10 +371,47 @@ Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
            unparseVarRef(operand, info);
            break;
         default:
-           std::cout << "error: unparsePtrDeref() is unimplemented for " << operand->class_name() << std::endl;
+           std::cout << "error: unparsePtrDeref() is unimplemented for " << operand->class_name() << "\n";
            ROSE_ASSERT(false);
            break;
         }
+   }
+
+void
+Unparse_Jovial::unparseTypeExpr(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgTypeExpression* type_expr = isSgTypeExpression(expr);
+     ASSERT_not_null(type_expr);
+
+     SgType* type = type_expr->get_type();
+     ASSERT_not_null(type);
+
+     SgName name;
+
+     switch (type->variantT())
+        {
+        case V_SgJovialTableType:
+           {
+              name = isSgJovialTableType(type)->get_name();
+              break;
+           }
+        case V_SgEnumType:
+           {
+              name = isSgEnumType(type)->get_name();
+              break;
+           }
+        case V_SgTypedefType:
+           {
+              name = isSgTypedefType(type)->get_name();
+              break;
+           }
+        default:
+           std::cout << "error: unparseTypeExpr() is unimplemented for " << type->class_name() << "\n";
+           ROSE_ASSERT(false);
+           break;
+        }
+
+     curprint(name);
    }
 
 //----------------------------------------------------------------------------

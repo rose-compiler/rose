@@ -12,6 +12,7 @@
 #include "keep_going.h"
 #include "FileUtility.h"
 #include "Diagnostics.h"                                // Rose::Diagnostics
+#include "Outliner.hh"                                
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -4722,8 +4723,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          //But it is enough to reach EDG only.
          //We can later on back end option to turn on their OpenMP handling flags,
          //like -fopenmp for GCC, depending on the version of gcc
-         //which will define this macro for GCC
-          argv.push_back(ompmacro);
+         //which will defirose-cc ne this macro for GCC
+         if (!Outliner::select_omp_loop) // the Outliner has a special mode to find omp loops for testing, not really turning on OpenMP
+            argv.push_back(ompmacro);
         }
 
      // Process sub-options for OpenMP handling, Liao 5/31/2009
@@ -4741,7 +4743,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        if (!get_openmp())
        {
          set_openmp(true);
-         argv.push_back(ompmacro);
+         if (!Outliner::select_omp_loop)
+           argv.push_back(ompmacro);
        }
      }
 
@@ -4760,7 +4763,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        if (!get_openmp())
        {
          set_openmp(true);
-         argv.push_back(ompmacro);
+         if (!Outliner::select_omp_loop)
+           argv.push_back(ompmacro);
        }
      }
 
@@ -4780,7 +4784,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        if (!get_openmp())
        {
          set_openmp(true);
-         argv.push_back(ompmacro);
+         if (!Outliner::select_omp_loop)
+           argv.push_back(ompmacro);
        }
      }
 
@@ -8000,7 +8005,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
        // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP=OMPVERSION should be added
        // since we don't remove condition compilation preprocessing info. during OpenMP lowering
-          if (get_openmp_lowering()||get_openmp())  
+          if (get_openmp_lowering()|| ( get_openmp() && !Outliner::select_omp_loop ))  
           {
             string ompmacro="-D_OPENMP="+ StringUtility::numberToString(OMPVERSION);
             compilerNameString.push_back(ompmacro);
