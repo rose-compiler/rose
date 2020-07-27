@@ -9,7 +9,7 @@
 namespace CodeThorn
 {
 
-/// implements the Decorator pattern to enhance the
+/// \brief implements the Decorator pattern to enhance the
 ///   PropertyStateFactory with context specific functionality
 template <class CallContext>
 struct CtxPropertyStateFactory : PropertyStateFactory
