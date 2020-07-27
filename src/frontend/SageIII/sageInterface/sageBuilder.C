@@ -7454,6 +7454,9 @@ BUILD_BINARY_DEF(XorAssignOp)
 BUILD_BINARY_DEF(VarArgCopyOp)
 BUILD_BINARY_DEF(VarArgStartOp)
 
+// CR(07/26/2018): Jovial operators
+BUILD_BINARY_DEF(ReplicationOp);
+
 //SK(08/20/2015): Matlab operators
 BUILD_BINARY_DEF(PowerOp);
 BUILD_BINARY_DEF(ElementwisePowerOp);
@@ -7468,8 +7471,8 @@ BUILD_BINARY_DEF(ElementwiseSubtractOp);
 
 
 
-// Rasmussen ( 1/25/2018):
-//           (10/30/2018): Fixed case when this function is called with NULL dim_info object.
+// CR ( 1/25/2018):
+//    (10/30/2018): Fixed case when this function is called with NULL dim_info object.
 SgArrayType* SageBuilder::buildArrayType(SgType* base_type, SgExprListExp* dim_info)
    {
      ROSE_ASSERT(base_type != NULL);
