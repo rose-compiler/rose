@@ -764,6 +764,10 @@ fi
 # echo "Exiting after test for GNU compiler and setting the version info for EDG (GCC_VERSION and GCC_MINOR_VERSION)."
 # exit 1
 
+# DQ (7/27/2020): debugging info
+# echo "After computing GNU version: GCC_VERSION       = $GCC_VERSION"
+# echo "After computing GNU version: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
+
 # *****************************************************************
 
 # DQ (2/7/2017): These macros test for C++11 and C++14 features and
@@ -814,7 +818,6 @@ ROSE_SUPPORT_FATAL_WARNINGS
 )
 
 
-
 AC_DEFUN([ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES],
 [
 # Begin macro ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES.
@@ -828,16 +831,22 @@ AC_MSG_NOTICE([in ROSE SUPPORT ROSE BUILD INCLUDE FILES: Using back-end C++ comp
 # echo "Changes spelling of include-stagin to force the directory of header files to be rebuilt."
 rm -rf ./include-stagin
 
+# DQ (7/27/2020): debugging info
+# echo "Before processing include files: GCC_VERSION       = $GCC_VERSION"
+# echo "Before processing include files: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
+
 if test x$enable_clang_frontend = xyes; then
   INSTALL_CLANG_SPECIFIC_HEADERS
 else
 
 # DQ (7/26/2020): Process this macro only to better support testing.
+# GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+
   # DQ (11/1/2011): I think that we need these for more complex header file
   # requirements than we have seen in testing C code to date.  Previously
   # in testing C codes with the EDG 4.x we didn't need as many header files.
-  GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
-  GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+    GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
+    GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
 fi
 
 # End macro ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES.
