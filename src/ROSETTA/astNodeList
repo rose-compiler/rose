@@ -650,6 +650,7 @@ SgReferenceType
 SgRemOp
 SgRenamePair
 SgRenameSymbol
+SgReplicationOp
 SgReturnStmt
 SgRewindStatement
 SgRshiftAssignOp

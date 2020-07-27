@@ -19875,12 +19875,12 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                        {
                          SgFunctionDeclaration * funcDecl = isSgFunctionDeclaration(declaration);
                          ROSE_ASSERT (funcDecl);
-                         //cout<<"found a function declaration to be moved ..."<<endl;
                        }
                      break;
                      case V_SgAttributeSpecificationStatement:
                      case V_SgEmptyDeclaration:
                      case V_SgFortranIncludeLine:
+                     case V_SgJovialDirectiveStatement:
                      case V_SgPragmaDeclaration:
                        break;
                     default:

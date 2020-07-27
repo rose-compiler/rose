@@ -1943,6 +1943,9 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_10.C \
    test2020_11.C \
    test2020_12.C \
+   test2020_13.C \
+   test2020_14.C \
+   test2020_15.C \
    test_CplusplusMacro_Cpp.C \
    test_int_lexemes.C \
    test_int_lexemes_donot_pass.C \

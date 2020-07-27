@@ -51,7 +51,10 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_110.C \
    test2020_111.C \
    test2020_116.C \
-   test2020_118.C
+   test2020_118.C \
+   test2020_120.C \
+   test2020_121.C \
+   test2020_122.C
 
 TESTCODE_CURRENTLY_FAILING = \
    test2020_01.C \
