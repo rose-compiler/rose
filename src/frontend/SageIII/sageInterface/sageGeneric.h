@@ -600,6 +600,7 @@ namespace sg
     GEN_VISIT(SgRemOp)
     GEN_VISIT(SgRenamePair)
     GEN_VISIT(SgRenameSymbol)
+    GEN_VISIT(SgReplicationOp)
     GEN_VISIT(SgReturnStmt)
     GEN_VISIT(SgRewindStatement)
     GEN_VISIT(SgRshiftAssignOp)
