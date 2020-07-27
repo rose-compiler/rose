@@ -211,15 +211,27 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
                break;
              }
 
-          case LAMBDA_EXP:              { unparseLambdaExpression(expr, info); break; }
+          case LAMBDA_EXP:  { unparseLambdaExpression(expr, info); break; }
 
        // DQ (11/21/2017): Adding support for GNU C/C++ extension for computed goto 
        // (and using what was previously only a Fortran IR node to support this).
-          case LABEL_REF:              { unparseLabelRefExpression(expr, info); break; }
-          case NONREAL_REF:            { unparseNonrealRefExpression(expr, info); break; }
+          case LABEL_REF:   { unparseLabelRefExpression(expr, info); break; }
+          case NONREAL_REF: { unparseNonrealRefExpression(expr, info); break; }
 
        // DQ (2/14/2019): Adding support for C++14 void values.
-          case VOID_VAL:               { unparseVoidValue(expr,info); break; }
+          case VOID_VAL:    { unparseVoidValue(expr,info); break; }
+
+       // DQ (7/26/2020): Adding support for C++20 spaceship operator.
+          case SPACESHIP_OP: { unparseSpaceshipOp(expr,info); break; }
+
+       // DQ (7/26/2020): Adding support for C++17 fold operator.
+          case FOLD_EXPR:    { unparseFoldExpression(expr,info); break; }
+
+       // DQ (7/26/2020): Adding support for C++20 fold operator.
+          case AWAIT_EXPR:   { unparseAwaitExpression(expr,info); break; }
+
+       // DQ (7/26/2020): Adding support for C++20 fold operator.
+          case CHOOSE_EXPR:  { unparseChooseExpression(expr,info); break; }
 
           default:
              {
@@ -5459,6 +5471,46 @@ void Unparse_ExprStmt::unparseLShiftOp(SgExpression* expr, SgUnparse_Info& info)
 void Unparse_ExprStmt::unparseRShiftOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ">>", info); }
 void Unparse_ExprStmt::unparseUnaryMinusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "-", info); }
 void Unparse_ExprStmt::unparseUnaryAddOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "+", info); }
+
+// DQ (7/26/2020): Adding support for C++20 spaceship operator.
+void Unparse_ExprStmt::unparseSpaceshipOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "<=>", info); }
+
+
+// DQ (7/26/2020): Adding support for C++20 await expression.
+void 
+Unparse_ExprStmt::unparseAwaitExpression(SgExpression* expr, SgUnparse_Info& info)
+   {
+     printf ("C++20 await expression unparse support not implemented \n");
+     ROSE_ASSERT(false);
+   }
+
+
+// DQ (7/26/2020): Adding support for C++20 choose expression.
+void
+Unparse_ExprStmt::unparseChooseExpression(SgExpression* expr, SgUnparse_Info& info)
+   {
+     printf ("C++20 choose expression unparse support not implemented \n");
+     ROSE_ASSERT(false);
+   }
+
+
+// DQ (7/26/2020): Adding support for C++20 expression folding expression.
+void
+Unparse_ExprStmt::unparseFoldExpression(SgExpression* expr, SgUnparse_Info& info)
+   {
+  // printf ("C++20 fold expression unparse support not implemented (selected an alternative operator +) \n");
+
+     SgFoldExpression* foldExpression = isSgFoldExpression(expr);
+     SgExpression* operands = foldExpression->get_operands();
+     unparseExpression(operands,info);
+     string operator_token = foldExpression->get_operator_token();
+
+     curprint(operator_token.c_str());
+     curprint(" ... ");
+
+  // ROSE_ASSERT(false);
+  // unparseAddOp(expr,info);
+   }
 
 
 void
