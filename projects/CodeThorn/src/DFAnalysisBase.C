@@ -9,10 +9,7 @@
 #include "AnalysisAbstractionLayer.h"
 #include "ExtractFunctionArguments.h"
 #include "FunctionNormalization.h"
-
-// available solvers
 #include "PASolver1.h" 
-#include "CtxSolver0.h" 
 
 
 using namespace std;
@@ -32,32 +29,21 @@ DFAnalysisBase::~DFAnalysisBase() {
     delete _programAbstractionLayer;
 }
 
-void DFAnalysisBase::initializeSolver(bool defaultSolver) {
+void DFAnalysisBase::initializeSolver() {
   ROSE_ASSERT(&_workList);
   ROSE_ASSERT(getInitialElementFactory());
   ROSE_ASSERT(&_analyzerDataPreInfo);
   ROSE_ASSERT(&_analyzerDataPostInfo);
   ROSE_ASSERT(getFlow());
   ROSE_ASSERT(&_transferFunctions);
-  
-  if (defaultSolver) {
-    _solver = new PASolver1( _workList,
-                             _analyzerDataPreInfo,
-                             _analyzerDataPostInfo,
-                             *getInitialElementFactory(),
-                             *getFlow(),
-                             *_transferFunctions
-                           );
-  } else {
-    _solver = new CtxSolver0( _workList,
-                              _analyzerDataPreInfo,
-                              _analyzerDataPostInfo,
-                              *getInitialElementFactory(),
-                              *getFlow(),
-                              *_transferFunctions,
-                              *getLabeler()
-                            );
-  }                   
+     
+  _solver = new PASolver1( _workList,
+                           _analyzerDataPreInfo,
+                           _analyzerDataPostInfo,
+                           *getInitialElementFactory(),
+                           *getFlow(),
+                           *_transferFunctions
+                         );
   
   ROSE_ASSERT(_solver);
 }
@@ -343,7 +329,7 @@ CFAnalysis* DFAnalysisBase::getCFAnalyzer() {
 }
 
 
-Labeler* DFAnalysisBase::getLabeler() {
+Labeler* DFAnalysisBase::getLabeler() const {
   return _programAbstractionLayer->getLabeler();
 }
 

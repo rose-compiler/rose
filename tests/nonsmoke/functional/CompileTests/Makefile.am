@@ -48,6 +48,16 @@ endif
 endif
 endif
 
+# DQ (7/20/2020): Only EDG 6.0 is has sufficent support for C++20 (I think).
+if ROSE_USE_EDG_VERSION_6_0
+SUBDIRS += Cxx20_tests
+if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
+if ROSE_USING_GCC_VERSION_LATER_6_1
+SUBDIRS += unparse_template_from_ast
+endif
+endif
+endif
+
 endif
 endif
 

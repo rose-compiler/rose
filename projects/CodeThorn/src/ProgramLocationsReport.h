@@ -9,26 +9,44 @@
 namespace CodeThorn {
   class ProgramLocationsReport {
   public:
-    void writeResultFile(std::string fileName, CodeThorn::Labeler* labeler);
-    void writeResultToStream(std::ostream& os,CodeThorn::Labeler* labeler);
-    CodeThorn::LabelSet definitiveLocations;
-    CodeThorn::LabelSet potentialLocations;
     void recordDefinitiveLocation(CodeThorn::Label lab);
     void recordPotentialLocation(CodeThorn::Label lab);
     bool isNonRecordedLocation(Label lab);
     size_t numDefinitiveLocations();
     size_t numPotentialLocations();
     size_t numTotalLocations();
-    // returns entry labels of functions for which no location is recorded in locationsOfInterest
-    // locationsOfInterest are supposed to be computed previously for the respective analysis
-    // e.g. for a null pointer analysis the locationsOfInterest are pointer dereference locations.
-    // RFF=LoI-Definitive-Potential
-    // verified=RFF=LoI-Definitive-Potential, falsified=Definitive, unknown=Potential
-    LabelSet determineRecordFreeFunctions(CFAnalysis& cfAnalyzer, Flow& flow, LabelSet& locationsOfInterest);
-    private:
+
+    // provide set of all locations
+    void setAllLocationsOfInterest(LabelSet loc);
+    LabelSet verifiedLocations();
+    LabelSet falsifiedLocations();
+    LabelSet unverifiedLocations();
+
+    // computes function locations from existing recorded/set locations (as subsets)
+    // the labeler is used to determine the function entry labels
+    LabelSet verifiedFunctions(Labeler* labeler);
+    LabelSet falsifiedFunctions(Labeler* labeler);
+    LabelSet unverifiedFunctions(Labeler* labeler);
+
+    bool hasSourceLocation(SgStatement* stmt);
+    LabelSet filterFunctionEntryLabels(Labeler* labeler, LabelSet labSet);
+
+    void writeResultFile(std::string fileName, CodeThorn::Labeler* labeler);
+    void writeResultToStream(std::ostream& os,CodeThorn::Labeler* labeler);
+    void writeLocationsVerificationReport(std::ostream& os, CodeThorn::Labeler* labeler);
+    void writeFunctionsVerificationReport(std::ostream& os, CodeThorn::Labeler* labeler);
+  private:
     std::string programLocation(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
     std::string sourceCodeAtProgramLocation(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
-    bool hasSourceLocation(SgStatement* stmt);
+    // provide set of all locations
+    LabelSet determineRecordFreeFunctions(CFAnalysis& cfAnalyzer, Flow& flow);
+
+    CodeThorn::LabelSet definitiveLocations;
+    CodeThorn::LabelSet potentialLocations;
+    CodeThorn::LabelSet allLocations;
+    CodeThorn::LabelSet definitiveFunctionEntryLocations;
+    CodeThorn::LabelSet potentialFunctionEntryLocations;
+    CodeThorn::LabelSet allFunctionEntryLocations;
   };
 }
 #endif

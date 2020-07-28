@@ -37,6 +37,8 @@ namespace CodeThorn {
     
     auto end() const -> decltype( workList.end() ) 
     { return workList.end(); }
+    
+    void clear() { workList.clear(); }
   };
   
 } // end of namespace CodeThorn

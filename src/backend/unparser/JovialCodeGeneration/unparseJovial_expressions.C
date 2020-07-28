@@ -98,7 +98,10 @@ Unparse_Jovial::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
   {
      SgStringVal* string_val = isSgStringVal(expr);
      ASSERT_not_null(string_val);
-     curprint(string_val->get_value());
+
+  // Add quotes back to the string (removed from string coming from parser)
+     std::string quoted_string = "'" + string_val->get_value() + "'";
+     curprint(quoted_string);
   }
 
 void
@@ -274,33 +277,8 @@ Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
       unparseExpression(func_call->get_function(), info);
 
    // argument list
-      SgUnparse_Info ninfo(info);
       curprint("(");
-      if (func_call->get_args()) {
-         SgInitializedNamePtrList::iterator formal = formal_params.begin();
-         SgExpressionPtrList::iterator actual = actual_params.begin();
-
-         bool firstOutParam = false;
-         bool foundOutParam = false;
-
-         while (actual != actual_params.end()) {
-
-         // TODO - Change temporary hack of using storage modifier isMutable to represent an out parameter
-            if ((*formal)->get_storageModifier().isMutable() && foundOutParam == false)
-               {
-                  firstOutParam = true;
-                  foundOutParam = true;
-                  curprint(":");
-               }
-            formal++;
-
-            unparseExpression((*actual), ninfo);
-            actual++;
-            if (actual != actual_params.end() && firstOutParam == false) {
-               curprint(",");
-            }
-         }
-      }
+      unparseExpression(func_call->get_args(), info);
       curprint(")");
    }
 

@@ -249,6 +249,18 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseUnaryAddOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseSizeOfOp                (SgExpression* expr, SgUnparse_Info& info);  
 
+       // DQ (7/26/2020): Adding support for C++20 spaceship operator.
+          virtual void unparseSpaceshipOp             (SgExpression* expr, SgUnparse_Info& info);
+
+       // DQ (7/26/2020): Adding support for C++20 await expression.
+          virtual void unparseAwaitExpression         (SgExpression* expr, SgUnparse_Info& info);
+
+       // DQ (7/26/2020): Adding support for C++20 choose expression.
+          virtual void unparseChooseExpression        (SgExpression* expr, SgUnparse_Info& info);
+
+       // DQ (7/26/2020): Adding support for C++20 expression folding expression.
+          virtual void unparseFoldExpression          (SgExpression* expr, SgUnparse_Info& info);
+
        // DQ (6/20/2013): Added support for C/C++ alignment extension __alignof__ operator.
           virtual void unparseAlignOfOp               (SgExpression* expr, SgUnparse_Info& info);  
 

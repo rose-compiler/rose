@@ -935,7 +935,7 @@ package body Asis_Tool_2.Element is
               Get_Element_ID (Asis.Declarations.Renamed_Entity (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Renamed_Entity", ID);
-            Result.Result_Profile := ID;
+            Result.Renamed_Entity := ID;
          end;
 
          procedure Add_Result_Profile is
@@ -1290,6 +1290,7 @@ package body Asis_Tool_2.Element is
                Add_Corresponding_Base_Entity;
                Add_Corresponding_Body;
                Add_Corresponding_Declaration;
+               Add_Renamed_Entity;
 
             when A_Generic_Procedure_Renaming_Declaration =>
                Add_Corresponding_Base_Entity;

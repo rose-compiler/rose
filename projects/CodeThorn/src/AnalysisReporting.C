@@ -11,6 +11,20 @@ using namespace std;
 using namespace CodeThorn;
 
 namespace CodeThorn {
+
+  void AnalysisReporting::generateVerificationReports(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer) {
+    for(auto analysisInfo : ctOpt.analysisList()) {
+      AnalysisSelector analysisSel=analysisInfo.first;
+      string analysisName=analysisInfo.second;
+      if(ctOpt.getAnalysisSelectionFlag(analysisSel)) {
+        ProgramLocationsReport report=analyzer->getExprAnalyzer()->getProgramLocationsReport(analysisSel);
+        report.setAllLocationsOfInterest(analyzer->getCFAnalyzer()->setOfLabelsOfInterest());
+        report.writeLocationsVerificationReport(cout,analyzer->getLabeler());
+        //report->writeFunctionsVerificationReport(cout,analyzer->getLabeler());
+      }
+    }
+  }
+  
   void AnalysisReporting::generateAnalysisStatsRawData(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer) {
     for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
@@ -42,27 +56,27 @@ namespace CodeThorn {
     
   }
   void AnalysisReporting::generateAstNodeStats(CodeThornOptions& ctOpt, SgProject* sageProject) {
-  if(ctOpt.info.printAstNodeStats||ctOpt.info.astNodeStatsCSVFileName.size()>0) {
-    // from: src/midend/astDiagnostics/AstStatistics.C
-    if(ctOpt.info.printAstNodeStats) {
-      ROSE_Statistics::AstNodeTraversalStatistics astStats;
-      string s=astStats.toString(sageProject);
-      cout<<s; // output includes newline at the end
-    }
-    if(ctOpt.info.astNodeStatsCSVFileName.size()>0) {
-      ROSE_Statistics::AstNodeTraversalCSVStatistics astCSVStats;
-      string fileName=ctOpt.info.astNodeStatsCSVFileName;
-      astCSVStats.setMinCountToShow(1); // default value is 1
-      if(!CppStdUtilities::writeFile(fileName, astCSVStats.toString(sageProject))) {
-        cerr<<"Error: cannot write AST node statistics to CSV file "<<fileName<<endl;
-        exit(1);
+    if(ctOpt.info.printAstNodeStats||ctOpt.info.astNodeStatsCSVFileName.size()>0) {
+      // from: src/midend/astDiagnostics/AstStatistics.C
+      if(ctOpt.info.printAstNodeStats) {
+        ROSE_Statistics::AstNodeTraversalStatistics astStats;
+        string s=astStats.toString(sageProject);
+        cout<<s; // output includes newline at the end
+      }
+      if(ctOpt.info.astNodeStatsCSVFileName.size()>0) {
+        ROSE_Statistics::AstNodeTraversalCSVStatistics astCSVStats;
+        string fileName=ctOpt.info.astNodeStatsCSVFileName;
+        astCSVStats.setMinCountToShow(1); // default value is 1
+        if(!CppStdUtilities::writeFile(fileName, astCSVStats.toString(sageProject))) {
+          cerr<<"Error: cannot write AST node statistics to CSV file "<<fileName<<endl;
+          exit(1);
+        }
       }
     }
   }
-}
 
-void AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer) {
-  if(ctOpt.analyzedFunctionsCSVFileName.size()>0) {
+  void AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer) {
+    if(ctOpt.analyzedFunctionsCSVFileName.size()>0) {
       string fileName=ctOpt.analyzedFunctionsCSVFileName;
       if(!ctOpt.quiet)
         cout<<"Writing list of analyzed functions to file "<<fileName<<endl;
@@ -73,26 +87,26 @@ void AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(CodeThornOption
       }
     }
 
-  if(ctOpt.analyzedFilesCSVFileName.size()>0) {
-    string fileName=ctOpt.analyzedFilesCSVFileName;
-    if(!ctOpt.quiet)
-      cout<<"Writing list of analyzed files to file "<<fileName<<endl;
-    string s=analyzer->analyzedFilesToString();
-    if(!CppStdUtilities::writeFile(fileName, s)) {
-      cerr<<"Cannot create file "<<fileName<<endl;
-      exit(1);
+    if(ctOpt.analyzedFilesCSVFileName.size()>0) {
+      string fileName=ctOpt.analyzedFilesCSVFileName;
+      if(!ctOpt.quiet)
+        cout<<"Writing list of analyzed files to file "<<fileName<<endl;
+      string s=analyzer->analyzedFilesToString();
+      if(!CppStdUtilities::writeFile(fileName, s)) {
+        cerr<<"Cannot create file "<<fileName<<endl;
+        exit(1);
+      }
     }
-  }
 
-  if(ctOpt.externalFunctionsCSVFileName.size()>0) {
-    string fileName=ctOpt.externalFunctionsCSVFileName;
-    if(!ctOpt.quiet)
-      cout<<"Writing list of external functions to file "<<fileName<<endl;
-    string s=analyzer->externalFunctionsToString();
-    if(!CppStdUtilities::writeFile(fileName, s)) {
-      cerr<<"Cannot create file "<<fileName<<endl;
-      exit(1);
+    if(ctOpt.externalFunctionsCSVFileName.size()>0) {
+      string fileName=ctOpt.externalFunctionsCSVFileName;
+      if(!ctOpt.quiet)
+        cout<<"Writing list of external functions to file "<<fileName<<endl;
+      string s=analyzer->externalFunctionsToString();
+      if(!CppStdUtilities::writeFile(fileName, s)) {
+        cerr<<"Cannot create file "<<fileName<<endl;
+        exit(1);
+      }
     }
   }
-}
 } // end of namespace CodeThorn

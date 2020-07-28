@@ -9,7 +9,7 @@ namespace RAJA
   typedef int Index_type;
 }
 
-void foo_input()
+int main()
 {
   double *a = new double [15];
   auto loop_body__4 =  [=] (int i)
@@ -29,5 +29,6 @@ void foo_input()
     a[i] = 0.5;
   }
   // not calling this to avoid including a header:   free(a);
+  return 0;
 }
 

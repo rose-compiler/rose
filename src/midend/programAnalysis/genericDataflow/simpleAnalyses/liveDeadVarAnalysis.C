@@ -881,6 +881,7 @@ void VarsExprsProductLattice::remapVars(const map<varID, varID>& varNameMap, con
         map<varID, int> newVarLatticeIndex;
         
         // Fill newLattices with lattices associated with variables in the new function 
+        ROSE_ASSERT(newFunc.get_definition() != NULL);    
         DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(newFunc.get_definition(),filter); //TODO This function is never being used somehow
 
         //Akshatha(08/12): To handle cases which do not require LiveDeadVars Analysis        

@@ -3132,10 +3132,11 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
       } else {
         SAWYER_MESG(logger[ERROR])<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(nextNodeToAnalyze2)<<endl;
         SAWYER_MESG(logger[ERROR])<<"Unsupported type on LHS side of assignment: "
-            <<"type: '"<<variableIdMapping->getType(lhsVar)->unparseToString()<<"'"
-            <<", "
-            <<"AST type node: "<<variableIdMapping->getType(lhsVar)->class_name()
-            <<endl;
+                                  <<"type lhs: '"<<variableIdMapping->getType(lhsVar)->unparseToString()<<"'"
+                                  <<", "
+                                  <<"AST type node: "<<variableIdMapping->getType(lhsVar)->class_name()
+                                  <<", Expr:"<<nextNodeToAnalyze2->unparseToString()
+                                  <<endl;
         exit(1);
       }
     } else if(isSgDotExp(lhs)) {

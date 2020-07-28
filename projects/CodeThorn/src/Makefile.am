@@ -48,6 +48,7 @@ CODETHORN_SOLO_HEADER_FILES=\
   CtxAnalysis.h \
   CtxAttribute.h \
   CtxLattice.h \
+  CtxPropertyStateFactory.h \
   CtxTransfer.h \
   EqualityMaintainer.h \
   Evaluator.h \
@@ -84,6 +85,7 @@ CODETHORN_HEADER_FILES=\
   CTIOLabeler.h \
   CtxCallStrings.h \
   CtxSolver0.h \
+  CtxPrioritySolver.h \
   DataDependenceVisualizer.h \
   DataRaceDetection.h \
   defUseQuery.h \
@@ -200,6 +202,7 @@ CODETHORN_SOURCE_FILES=\
   CTIOLabeler.C \
   CtxCallStrings.C \
   CtxSolver0.C \
+  CtxPrioritySolver.C \
   DataDependenceVisualizer.C \
   defUseQuery.C \
   DataRaceDetection.C \

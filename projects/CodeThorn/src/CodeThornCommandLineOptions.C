@@ -116,7 +116,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("visualize-read-write-sets", po::value< bool >(&ctOpt.visualization.visualizeRWSets)->default_value(false)->implicit_value(true), "Generate a read/write-set graph that illustrates the read and write accesses of the involved threads.")
     ("viz", po::value< bool >(&ctOpt.visualization.viz)->default_value(false)->implicit_value(true),"Generate visualizations of AST, CFG, and transition system as dot files (ast.dot, cfg.dot, transitiongraph1/2.dot.")
     ("viz-tg2", po::value< bool >(&ctOpt.visualization.vizTg2)->default_value(false)->implicit_value(true),"Generate transition graph 2 (.dot).")
-    ("cfg", po::value< string >(&ctOpt.visualization.icfgFileName), "Generate inter-procedural cfg as dot file. Each function is visualized as one dot cluster.")
+    ("cfg", po::value< string >(&ctOpt.visualization.icfgFileName), "same as --icfg.")
+    ("icfg", po::value< string >(&ctOpt.visualization.icfgFileName), "Generate inter-procedural cfg as dot file. Each function is visualized as one dot cluster.")
+    ("call-graph", po::value< string >(&ctOpt.visualization.callGraphFileName), "Generate call graph as dot file. Each function is one node.")
     ;
 
   parallelProgramOptions.add_options()
@@ -152,6 +154,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("omp-ast", po::value< bool >(&ctOpt.ompAst)->default_value(false)->implicit_value(true),"Flag for using the OpenMP AST - useful when visualizing the ICFG.")
     ("normalize-all", po::value< bool >(&ctOpt.normalizeAll)->default_value(false)->implicit_value(true),"Normalize all expressions before analysis.")
     ("normalize-fcalls", po::value< bool >(&ctOpt.normalizeFCalls)->default_value(false)->implicit_value(true),"Normalize only expressions with function calls.")
+    ("normalize-extended", po::value<bool >(&ctOpt.extendedNormalizedCppFunctionCalls)->default_value(false)->implicit_value(true),"Normalize CPP function calls.")
+    ("normalize-phase-info", po::value<bool > (&ctOpt.normalizePhaseInfo)->default_value(false)->implicit_value(true),"Print phase progression info on stdout during normalization.")
+    ("strict-checking", po::value<bool >(&ctOpt.strictChecking)->default_value(false)->implicit_value(true),"Perform strict checking in semantics (mostly useful for testing), otherwise compute conservative value.")
     ("inline", po::value< bool >(&ctOpt.inlineFunctions)->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("inlinedepth",po::value< int >(&ctOpt.inlineFunctionsDepth)->default_value(10),"Default value is 10. A higher value inlines more levels of function calls.")
     ("eliminate-compound-assignments", po::value< bool >(&ctOpt.eliminateCompoundStatements)->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")

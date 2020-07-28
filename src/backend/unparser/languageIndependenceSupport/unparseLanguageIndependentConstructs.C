@@ -8689,6 +8689,13 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgRangeExp:
                                      precedence_value = 0; break;
 
+       // DQ (7/26/2020): Adding C++17 and C++20 support.
+       // DQ (7/26/2020): Not clear if this is the correct precedence for these C++17 and C++20 expressions.
+          case V_SgSpaceshipOp:      precedence_value = 12; break;
+          case V_SgFoldExpression:   precedence_value = 0; break;
+          case V_SgAwaitExpression:  precedence_value = 0; break;
+          case V_SgChooseExpression: precedence_value = 0; break;
+
           default:
              {
             // We want this to be a printed warning (so we can catch these missing cases), but it is not worthy of calling an error since the default works fine.

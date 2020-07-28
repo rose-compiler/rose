@@ -108,7 +108,12 @@ namespace CodeThorn {
     AbstractValue computeAbstractAddress(SgVarRefExp* varRefExp);
 
     // record detected errors in programs
+    ProgramLocationsReport getProgramLocationsReport(enum AnalysisSelector analysisSelector);
+
+    // deprecated (use getProgramLocationsReport instead)
     ProgramLocationsReport getViolatingLocations(enum AnalysisSelector analysisSelector);
+
+    // record detected errors in programs
     void recordDefinitiveViolatingLocation(enum AnalysisSelector analysisSelector, Label lab);
     void recordPotentialViolatingLocation(enum AnalysisSelector analysisSelector, Label lab);
     std::string analysisSelectorToString(AnalysisSelector sel);
@@ -263,6 +268,11 @@ namespace CodeThorn {
                                                         SingleEvalResultConstInt lhsResult, 
                                                         SingleEvalResultConstInt rhsResult,
                                                         EState estate, EvalMode mode=MODE_VALUE);
+    list<SingleEvalResultConstInt> evalCommaOp(SgCommaOpExp* node, 
+                                                        SingleEvalResultConstInt lhsResult, 
+                                                        SingleEvalResultConstInt rhsResult,
+                                                        EState estate, EvalMode mode=MODE_VALUE);
+
     list<SingleEvalResultConstInt> evalNotOp(SgNotOp* node, 
                                              SingleEvalResultConstInt operandResult, 
                                              EState estate, EvalMode mode=MODE_VALUE);
@@ -302,6 +312,7 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalPostDecrementOp(SgMinusMinusOp* node, 
 						       SingleEvalResultConstInt operandResult, 
 						       EState estate, EvalMode mode=MODE_VALUE);
+
     // dispatch function
     list<SingleEvalResultConstInt> evalMinusMinusOp(SgMinusMinusOp* node, 
                                                     SingleEvalResultConstInt operandResult, 
@@ -320,6 +331,7 @@ namespace CodeThorn {
 
     list<SingleEvalResultConstInt> evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalLValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
+    list<SingleEvalResultConstInt> evalLValuePointerDerefExp(SgPointerDerefExp* node, EState estate);
     // handles DotExp and ArrowExp
     list<SingleEvalResultConstInt> evalLValueExp(SgNode* node, EState estate, EvalMode mode=MODE_VALUE);
 
