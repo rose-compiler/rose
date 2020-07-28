@@ -173,7 +173,9 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
       FunctionCallTargetSet funCallTargetSet=determineFunctionDefinition5(*i, callInfo.representativeNode());
       Label callLabel,entryLabel,exitLabel,callReturnLabel;
       if(funCallTargetSet.size()==0) {
-        logger[INFO] << "undefined call target: " << callNode->unparseToString() << std::endl;
+        logger[WARN] << "undefined call target: " << callNode->unparseToString() 
+                     << " <" << typeid(*callNode).name() << ">"
+                     << std::endl;
         callLabel=*i;
         entryLabel=Labeler::NO_LABEL;
         exitLabel=Labeler::NO_LABEL;
@@ -181,8 +183,8 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
         interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
       } else {
         logger[TRACE] << "defined call target: " << callNode->unparseToString() 
-                     << " <" << typeid(*callNode).name() << ">"
-                     << std::endl;
+                      << " <" << typeid(*callNode).name() << ">"
+                      << std::endl;
         for(auto fct : funCallTargetSet) {
           callLabel=*i;
           SgFunctionDefinition* funDef=fct.getDefinition();
@@ -195,6 +197,10 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
           }
           callReturnLabel=labeler->functionCallReturnLabel(callNode);
           interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
+          
+          //~ logger[TRACE] << "iflow2b " 
+                        //~ << callLabel << ", " << entryLabel << ", " << exitLabel << ", " << callReturnLabel
+                        //~ << std::endl;
         }
       }
       break;
