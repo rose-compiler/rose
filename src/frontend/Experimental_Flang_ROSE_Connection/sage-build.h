@@ -105,16 +105,16 @@ void Build(const Fortran::parser::DeclarationTypeSpec::    Class&x, SgType* &);
 void Build(const Fortran::parser::DeclarationTypeSpec::ClassStar&x, SgType* &);
 void Build(const Fortran::parser::DeclarationTypeSpec::   Record&x, SgType* &);
 
-void Build(const Fortran::parser::       DerivedTypeSpec &x,     SgType* &);
-void Build(const Fortran::parser::            EntityDecl &x, std::string &);
-void Build(const std::list<Fortran::parser:: EntityDecl> &x, std::string &);
+void Build(const Fortran::parser::       DerivedTypeSpec &x,                      SgType* &);
+void Build(const Fortran::parser::            EntityDecl &x, std::string &, SgExpression* &);
+void Build(const std::list<Fortran::parser:: EntityDecl> &x, std::string &, SgExpression* &);
 template<typename T> void Build(const Fortran::parser::              AttrSpec &x, T* scope);
 template<typename T> void Build(const Fortran::parser::             ArraySpec &x, T* scope);
 template<typename T> void Build(const Fortran::parser::           CoarraySpec &x, T* scope);
 template<typename T> void Build(const Fortran::parser::            CharLength &x, T* scope);
-template<typename T> void Build(const Fortran::parser::        Initialization &x, T* scope);
-void Build(const Fortran::parser::     IntrinsicTypeSpec &x, SgType* &);
-void Build(const Fortran::parser::       IntegerTypeSpec &x, SgType* &);
+void Build(const Fortran::parser::        Initialization &x, SgExpression* &);
+void Build(const Fortran::parser::     IntrinsicTypeSpec &x,       SgType* &);
+void Build(const Fortran::parser::       IntegerTypeSpec &x,       SgType* &);
 
 // ArraySpec
 void Build(const Fortran::parser::                   ExplicitShapeSpec &x, SgExpression* &expr);
