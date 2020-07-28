@@ -53,6 +53,8 @@
 #include "Normalization.h"
 #include "DataDependenceVisualizer.h" // also used for clustered ICFG
 #include "Evaluator.h" // CppConstExprEvaluator
+#include "CtxCallStrings.h" // for setting call string options
+#include "AnalysisReporting.h"
 
 // Z3-based analyser / SSA 
 #include "z3-prover-connection/SSAGenerator.h"
@@ -88,7 +90,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.12.10";
+const std::string versionString="1.12.11";
 
 // handler for generating backtrace
 void handler(int sig) {
@@ -558,6 +560,10 @@ int main( int argc, char * argv[] ) {
     }
 
     AbstractValue::byteMode=ctOpt.byteMode;
+    AbstractValue::strictChecking=ctOpt.strictChecking;
+    SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls;
+    if (ctOpt.callStringLength >= 2) 
+      setFiniteCallStringMaxLength(ctOpt.callStringLength);
     configureOptionSets(ctOpt);
 
     analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;
@@ -657,10 +663,10 @@ int main( int argc, char * argv[] ) {
       cout << "STATUS: Parsing and creating AST finished."<<endl;
     }
 
-    /* perform inlining before variable ids are computed, because
-       variables are duplicated by inlining. */
+    /* perform normalization before variable ids are computed */
     timer.start();
     Normalization lowering;
+    lowering.options.printPhaseInfo=ctOpt.normalizePhaseInfo;
     if(ctOpt.normalizeFCalls) {
       lowering.normalizeAst(sageProject,1);
       SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
@@ -971,56 +977,10 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    for(auto analysisInfo : ctOpt.analysisList()) {
-      AnalysisSelector analysisSel=analysisInfo.first;
-      string analysisName=analysisInfo.second;
-      if(ctOpt.getAnalysisSelectionFlag(analysisSel)||ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
-        ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getViolatingLocations(analysisSel);
-        if(ctOpt.getAnalysisSelectionFlag(analysisSel)) {
-          cout<<"\nResults for "<<analysisName<<" analysis:"<<endl;
-          if(locations.numTotalLocations()>0) {
-            locations.writeResultToStream(cout,analyzer->getLabeler());
-          } else {
-            cout<<"No violations detected."<<endl;
-          }
-        }
-        if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
-          string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
-          if(!ctOpt.quiet)
-            cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
-          locations.writeResultFile(fileName,analyzer->getLabeler());
-        }
-      }
-    }
-
-    if(ctOpt.analyzedFunctionsCSVFileName.size()>0) {
-      string fileName=ctOpt.analyzedFunctionsCSVFileName;
-      if(!ctOpt.quiet)
-        cout<<"Writing list of analyzed functions to file "<<fileName<<endl;
-      string s=analyzer->analyzedFunctionsToString();
-      if(!CppStdUtilities::writeFile(fileName, s)) {
-        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
-      }
-    }
-
-    if(ctOpt.analyzedFilesCSVFileName.size()>0) {
-      string fileName=ctOpt.analyzedFilesCSVFileName;
-      if(!ctOpt.quiet)
-        cout<<"Writing list of analyzed files to file "<<fileName<<endl;
-      string s=analyzer->analyzedFilesToString();
-      if(!CppStdUtilities::writeFile(fileName, s)) {
-        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
-      }
-    }
-
-    if(ctOpt.externalFunctionsCSVFileName.size()>0) {
-      string fileName=ctOpt.externalFunctionsCSVFileName;
-      if(!ctOpt.quiet)
-        cout<<"Writing list of external functions to file "<<fileName<<endl;
-      string s=analyzer->externalFunctionsToString();
-      if(!CppStdUtilities::writeFile(fileName, s)) {
-        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
-      }
+    if(ctOpt.analysisList().size()>0) {
+      AnalysisReporting::generateAnalysisStatsRawData(ctOpt,analyzer);
+      AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
+      AnalysisReporting::generateVerificationReports(ctOpt,analyzer);
     }
 
     long pstateSetSize=analyzer->getPStateSet()->size();

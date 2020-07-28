@@ -144,15 +144,15 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
       transferFunctionCallReturn(lab, lhsVarId, funCall, element);
     } else if(isSgReturnStmt(node)) {
       // special case of return f(...);
-      node=SgNodeHelper::getFirstChild(node);
-      if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
+      SgNode* childnode=SgNodeHelper::getFirstChild(node);
+      if(SgFunctionCallExp* funCall=isSgFunctionCallExp(childnode)) {
         transferFunctionCallReturn(lab, withoutVariable(), funCall, element);
-        return;
       } else {
         SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(node);
         ROSE_ASSERT(callinfo && callinfo.ctorInitializer());
         transferConstructorCallReturn(lab, withoutVariable(), callinfo.ctorInitializer(), element);
       }
+      return;
     } else if(SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(node)) {
       SgVariableDeclaration* varDecl=isSgVariableDeclaration(node);
       ROSE_ASSERT(varDecl);

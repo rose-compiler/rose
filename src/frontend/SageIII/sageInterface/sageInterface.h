@@ -395,6 +395,9 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
    \brief Not sure the classifications right now
  */
 
+  //! Recursively print current and parent nodes. used within gdb to probe the context of a node.
+  void recursivePrintCurrentAndParent (SgNode* n) ;
+
    //! Save AST into a pdf file. Start from a node to find its enclosing file node. The entire file's AST will be saved into a pdf.
    void saveToPDF(SgNode* node, std::string filename);
    void saveToPDF(SgNode* node); // enable calling from gdb
@@ -2196,11 +2199,11 @@ ROSE_DLL_API int splitVariableDeclaration (SgScopeStatement* scope, bool topLeve
 
 //! Replace an expression with a temporary variable and an assignment statement
 /*!
- Add a new temporary variable to contain the value of 'from'
- Change reference to 'from' to use this new variable
- Assumptions: 'from' is not within the test of a loop or 'if'
-              not currently traversing 'from' or the statement it is in
-
+ Add a new temporary variable to contain the value of 'from'.
+ Change reference to 'from' to use this new variable.
+ Assumptions: (1)'from' is not within the test of a loop or 'if';
+              (2)not currently traversing 'from' or the statement it is in.
+ Return value: the new temp variable declaration's assign initializer containing the from expression.              
  */
  ROSE_DLL_API SgAssignInitializer* splitExpression(SgExpression* from, std::string newName = "");
 
@@ -2736,6 +2739,11 @@ bool isTemplateInstantiationFromTemplateDeclarationSatisfyingFilter (SgFunctionD
 
 void detectCycleInType(SgType * type, const std::string & from);
 
+// DQ (7/14/2020): Debugging support.
+void checkForInitializers( SgNode* node );
+
 }// end of namespace
+
+
 
 #endif

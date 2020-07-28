@@ -241,6 +241,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateLExpression(SgNode* node,ES
     return evalLValueExp(dotExp,estate);
   } else if(SgArrowExp* arrowExp=isSgArrowExp(node)) {
     return evalLValueExp(arrowExp,estate);
+  } else if(SgPointerDerefExp* ptrDerefExp=isSgPointerDerefExp(node)) {
+    return evalLValuePointerDerefExp(ptrDerefExp,estate);
   } else {
     cerr<<"Error: unsupported lvalue expression: "<<node->unparseToString()<<endl;
     cerr<<"     : "<<SgNodeHelper::sourceLineColumnToString(node)<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
@@ -406,6 +408,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
           CASE_EXPR_ANALYZER_EVAL(SgPntrArrRefExp,evalArrayReferenceOp);
           CASE_EXPR_ANALYZER_EVAL(SgLshiftOp,evalBitwiseShiftLeftOp);
           CASE_EXPR_ANALYZER_EVAL(SgRshiftOp,evalBitwiseShiftRightOp);
+          CASE_EXPR_ANALYZER_EVAL(SgCommaOpExp,evalCommaOp);
         case V_SgAssignOp: {
           list<SingleEvalResultConstInt> l=evaluateLExpression(lhs,estate);
           ROSE_ASSERT(l.size()==1);
@@ -584,6 +587,20 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConditionalExpr(SgConditionalEx
     cerr<<"Error: evaluating conditional operator inside expressions - unknown behavior (condition may have evaluated to bot)."<<endl;
     exit(1);
   }
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalCommaOp(SgCommaOpExp* node,
+                                                      SingleEvalResultConstInt lhsResult,
+                                                      SingleEvalResultConstInt rhsResult,
+                                                      EState estate, EvalMode mode) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  // lhsResult is ignored in comma op
+  // result of the expression is the rhs's value
+  res.result=rhsResult.result;
+  resultList.push_back(res);
+  return resultList;
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalEqualOp(SgEqualityOp* node,
@@ -1249,7 +1266,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::semanticEvalDereferenceOp(SingleEva
   // null pointer check
   bool continueExec=checkAndRecordNullPointer(derefOperandValue, estate.label());
   if(continueExec) {
-    res.result=readFromMemoryLocation(estate.label(),estate.pstate(),derefOperandValue);
+    switch(mode) {
+    case ExprAnalyzer::MODE_VALUE :res.result=readFromMemoryLocation(estate.label(),estate.pstate(),derefOperandValue);break;
+    case ExprAnalyzer::MODE_ADDRESS:res.result=derefOperandValue;;break;
+    default:
+      cerr<<"Error: ExprAnalyzer::semanticEvalDereferenceOp: unknown evaluation mode: "<<mode<<endl;
+      exit(1);
+    }
     return listify(res);
   } else {
     // Alternative to above null pointer dereference recording: build
@@ -1265,7 +1288,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::semanticEvalDereferenceOp(SingleEva
 list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp* node,
                                                               SingleEvalResultConstInt operandResult,
                                                               EState estate, EvalMode mode) {
-  return semanticEvalDereferenceOp(operandResult,estate);
+  return semanticEvalDereferenceOp(operandResult,estate,mode);
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPreComputationOp(EState estate, AbstractValue address, AbstractValue change) {
@@ -1479,6 +1502,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
   }
   // unreachable
 }
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePointerDerefExp(SgPointerDerefExp* node, EState estate) {
+  SAWYER_MESG(logger[TRACE])<<"DEBUG: evalLValuePtrDerefExp: "<<node->unparseToString()<<" label:"<<estate.label().toString()<<endl;
+  // abstract_value(*p) = abstract_eval(p) : the value of 'p' is an abstract address stored in p, which is the lvalue of *p
+  SgExpression* operand=node->get_operand_i();
+  list<SingleEvalResultConstInt> operandResultList=evaluateExpression(operand,estate,ExprAnalyzer::MODE_VALUE);
+  return operandResultList;
+}
+
 
 std::list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionRefExp(SgFunctionRefExp* node, EState estate, EvalMode mode) {
   //cout<<"DEBUG: evalFunctionRefExp:"<<node->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
@@ -1955,11 +1987,16 @@ enum MemoryAccessBounds ExprAnalyzer::checkMemoryAccessBounds(AbstractValue addr
   }
 }    
 
-ProgramLocationsReport ExprAnalyzer::getViolatingLocations(enum AnalysisSelector analysisSelector) {
+ProgramLocationsReport ExprAnalyzer::getProgramLocationsReport(enum AnalysisSelector analysisSelector) {
   ProgramLocationsReport report;
 #pragma omp critical(VIOLATIONRECORDING)
   report=_violatingLocations.at(analysisSelector);
   return report;
+}
+
+// deprecated
+ProgramLocationsReport ExprAnalyzer::getViolatingLocations(enum AnalysisSelector analysisSelector) {
+  return getProgramLocationsReport(analysisSelector);
 }
 
 void ExprAnalyzer::initViolatingLocations() {

@@ -1949,10 +1949,11 @@ namespace AbstractMemoryObject {
 
       // create the element access then, using symbol, parent, and index
       IndexVector * iv = generateIndexVector  (*subscripts);
-      assert (iv != 0);
+      assert(iv != 0);
       mem_obj = named_objset_map[whole_array_obj][s][iv];
       if (mem_obj == NULL)
       {
+        assert(s != NULL);
         mem_obj = createNamedObjSet (s, r->get_type(), whole_array_obj, iv);
         named_objset_map[whole_array_obj][s][iv] = mem_obj;
       }

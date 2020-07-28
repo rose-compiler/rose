@@ -208,6 +208,7 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
             if (baseClassDefinition == varClassScope)
             {
                 //Check that the variable is public or protected
+                ROSE_ASSERT(varDeclaration != NULL);
                 const SgAccessModifier& access = varDeclaration->get_declarationModifier().get_accessModifier();
                 return (access.isPublic() || access.isProtected());
             }

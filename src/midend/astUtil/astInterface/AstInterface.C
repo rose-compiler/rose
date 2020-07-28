@@ -1013,10 +1013,10 @@ bool AstInterface :: get_fileInfo(const AstNodePtr& _n, std:: string* fname, int
 {
   SgNode* n = AstNodePtrImpl(_n).get_ptr();
   Sg_File_Info *f =n->get_file_info(); 
-  if (fname == 0) {
+  if (fname != NULL) {
      *fname = f->get_filename();
   }
-  if (lineno != 0) 
+  if (lineno != NULL) 
      *lineno = f->get_line();
   return true;
 }
@@ -2380,6 +2380,7 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
         assert(false);
      }
      SgType* t = AstNodeTypeImpl(_ftype).get_ptr();
+     ROSE_ASSERT(t != NULL);
      if (t->variantT() == V_SgPointerType)
         t = static_cast<SgPointerType*>(t)->get_base_type();
      SgFunctionType* ftype = isSgFunctionType(t);

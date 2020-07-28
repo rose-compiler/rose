@@ -3059,7 +3059,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                      // DQ (2/4/2020): Check if there is an existing class in the current_classDefinition 
                                      // (which is not an alias), and if so then we don't need to worry about any ambiguity.
                                      // See Cxx11_test/test2020_11.C for an example.
-                                        SgClassSymbol* lookupClassSymbol = current_classDefinition->lookup_class_symbol(name);
+                                     // SgClassSymbol* lookupClassSymbol = current_classDefinition->lookup_class_symbol(name);
                                         size_t symbolCount               = current_classDefinition->count_symbol(name);
                                         size_t numberOfAliasSymbols      = current_classDefinition->count_alias_symbol(name);
                                         ROSE_ASSERT(symbolCount >= numberOfAliasSymbols);
@@ -10431,502 +10431,566 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Case of SgVarRefExp: nameQualificationInducedFromPointerMemberType = %s \n",nameQualificationInducedFromPointerMemberType ? "true" : "false");
           mfprintf(mlog [ WARN ] ) (" --- isDataMemberReference = %s isAddressTaken = %s \n",isDataMemberReference ? "true" : "false",isAddressTaken ? "true" : "false");
+          mfprintf(mlog [ WARN ] ) (" --- currentStatement = %p \n",currentStatement);
 #endif
 
           if (isDataMemberReference == false || isAddressTaken == true)
              {
+            // DQ (7/24/2020): Is this declared above this point?
+            // variableDeclaration = NULL;
 
-       // DQ (6/23/2011): This test fails for the new name qualification after a transformation in tests/nonsmoke/functional/roseTests/programTransformationTests/test1.C
-       // ASSERT_not_null(currentStatement);
-          if (currentStatement != NULL)
-             {
-            // DQ (5/30/2011): Handle the case of test2011_58.C (index declaration in for loop construct).
-            // SgScopeStatement* currentScope = currentStatement->get_scope();
-               SgScopeStatement* currentScope = isSgScopeStatement(currentStatement);
-               if (currentScope == NULL)
+            // DQ (6/23/2011): This test fails for the new name qualification after a transformation in tests/nonsmoke/functional/roseTests/programTransformationTests/test1.C
+            // ASSERT_not_null(currentStatement);
+               if (currentStatement != NULL)
                   {
-                    currentScope = currentStatement->get_scope();
-                  }
-               ASSERT_not_null(currentScope);
-
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               mfprintf(mlog [ WARN ] ) ("Case SgVarRefExp: (could this be in an array type?) currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
-#endif
-               SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
-               ASSERT_not_null(variableSymbol);
-               SgInitializedName* initializedName = variableSymbol->get_declaration();
-               ASSERT_not_null(initializedName);
-
-            // DQ (7/18/2012): Added test as part of debugging test2011_75.C.
-               ASSERT_not_null(initializedName->get_parent());
-
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               mfprintf(mlog [ WARN ] ) ("Case of SgVarRefExp: varRefExp = %p : initializedName name = %s parent = %p = %s \n",
-                    varRefExp,initializedName->get_name().str(),initializedName->get_parent(),initializedName->get_parent()->class_name().c_str());
-#endif
-               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
-            // ASSERT_not_null(variableDeclaration);
-               if (variableDeclaration == NULL)
-                  {
-                 // This is the special case for the compiler generated variable "__PRETTY_FUNCTION__".
-                    if (initializedName->get_name() == "__PRETTY_FUNCTION__" ||  initializedName->get_name() == "__func__")
+                 // DQ (5/30/2011): Handle the case of test2011_58.C (index declaration in for loop construct).
+                 // SgScopeStatement* currentScope = currentStatement->get_scope();
+                    SgScopeStatement* currentScope = isSgScopeStatement(currentStatement);
+                    if (currentScope == NULL)
                        {
-                      // Skip these cases ... no name qualification is required.
+                         currentScope = currentStatement->get_scope();
                        }
-                      else
-                       {
-                      // If this is a SgInitializedName from a function parameter list then it does not need qualification.
-                         SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(initializedName->get_parent());
-                         if (functionParameterList != NULL)
-                            {
+                    ASSERT_not_null(currentScope);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              mfprintf(mlog [ WARN ] ) ("Names from function parameter list can not be name qualified (because they are the initial declarations): name = %s \n",initializedName->get_name().str());
+                    mfprintf(mlog [ WARN ] ) ("Case SgVarRefExp: (could this be in an array type?) currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 #endif
+                    SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+                    ASSERT_not_null(variableSymbol);
+                    SgInitializedName* initializedName = variableSymbol->get_declaration();
+                    ASSERT_not_null(initializedName);
+
+                 // DQ (7/18/2012): Added test as part of debugging test2011_75.C.
+                    ASSERT_not_null(initializedName->get_parent());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    mfprintf(mlog [ WARN ] ) ("Case of SgVarRefExp: varRefExp = %p : initializedName name = %s parent = %p = %s \n",
+                         varRefExp,initializedName->get_name().str(),initializedName->get_parent(),initializedName->get_parent()->class_name().c_str());
+#endif
+                 // DQ (7/24/3030): This variable declaration hides an outer declaration using the same variable name.
+                    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
+                 // ASSERT_not_null(variableDeclaration);
+
+                 // DQ (7/24/2020): Debugging Cxx20_tests/test2020_122.C and Cxx_tests/test2020_14.C.
+                 // bool inDesignatedInitializer = false;
+                    if ((variableDeclaration != NULL) && (variableDeclaration != variableDeclaration->get_definingDeclaration()) )
+                       {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("SgVarRefExp is not in a defining SgVariableDeclaration: might be in a SgDesignatedInitializer \n");
+#endif
+                         SgExprListExp* exprListExp = isSgExprListExp(varRefExp->get_parent());
+                         if (exprListExp != NULL)
+                            {
+                              SgDesignatedInitializer* designatedInitializer = isSgDesignatedInitializer(exprListExp->get_parent());
+                              if (designatedInitializer != NULL)
+                                 {
+                                // inDesignatedInitializer = true;
+#if 0
+                                   printf ("Found case of SgVarRefExp in SgDesignatedInitializer (no name qualification is required (allowed)) \n");
+                                   ROSE_ASSERT(false);
+#endif
+                                // This is not a SgInitializedName being declared by a variable declaration. Setting 
+                                // this to NULL will force the TRUE case below to be taken, which after the check
+                                // for some builtin predefined names, will cause not name qualification to be added.
+                                   variableDeclaration = NULL;
+                                 }
+                            }
+                       }
+#if 0
+                    mfprintf(mlog [ WARN ] ) ("Test 1: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
+                    ROSE_ASSERT(false);
+#endif
+                    if (variableDeclaration == NULL)
+                       {
+                      // This is the special case for the compiler generated variable "__PRETTY_FUNCTION__".
+                         if (initializedName->get_name() == "__PRETTY_FUNCTION__" ||  initializedName->get_name() == "__func__")
+                            {
+                           // Skip these cases ... no name qualification is required.
                             }
                            else
                             {
+                           // If this is a SgInitializedName from a function parameter list then it does not need qualification.
+                              SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(initializedName->get_parent());
+                              if (functionParameterList != NULL)
+                                 {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              mfprintf(mlog [ WARN ] ) ("varRefExp's initialized name = %s is not associated with a SgVariableDeclaration \n",initializedName->get_name().str());
-                              initializedName->get_file_info()->display("This SgInitializedName is not associated with a SgVariableDeclaration");
-
-                              SgStatement* currentStatement = TransformationSupport::getStatement(initializedName->get_parent());
-                              ASSERT_not_null(currentStatement);
-
-                              SgScopeStatement* targetScope = initializedName->get_scope();
-                              mfprintf(mlog [ WARN ] ) ("targetScope = %p = %s \n",targetScope,targetScope->class_name().c_str());
-
-                              mfprintf(mlog [ WARN ] ) ("SgVarRefExp case (no associated variableDeclaration): currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
-
-                              mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
+                                   mfprintf(mlog [ WARN ] ) ("Names from function parameter list can not be name qualified (because they are the initial declarations): name = %s \n",initializedName->get_name().str());
 #endif
-                           // DQ (7/18/2012): Uncommented to debug test2011_75.C, not fixed, but test2005_103.C fails and so this shuld be commented again (I think).
-                           // ROSE_ASSERT(false);
+                                 }
+                                else
+                                 {
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                   mfprintf(mlog [ WARN ] ) ("varRefExp's initialized name = %s is not associated with a SgVariableDeclaration \n",initializedName->get_name().str());
+                                   initializedName->get_file_info()->display("This SgInitializedName is not associated with a SgVariableDeclaration");
+
+                                   SgStatement* currentStatement = TransformationSupport::getStatement(initializedName->get_parent());
+                                   ASSERT_not_null(currentStatement);
+
+                                   SgScopeStatement* targetScope = initializedName->get_scope();
+                                   mfprintf(mlog [ WARN ] ) ("targetScope = %p = %s \n",targetScope,targetScope->class_name().c_str());
+
+                                   mfprintf(mlog [ WARN ] ) ("SgVarRefExp case (no associated variableDeclaration): currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+
+                                   mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
+#endif
+                                // DQ (7/18/2012): Uncommented to debug test2011_75.C, not fixed, but test2005_103.C fails and so this should be commented again (I think).
+                                // ROSE_ASSERT(false);
+                                 }
                             }
                        }
-                  }
-                 else
-                  {
+                      else
+                       {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    mfprintf(mlog [ WARN ] ) ("In case SgVarRefExp: (variableDeclaration != NULL) Calling nameQualificationDepth() \n");
+                         mfprintf(mlog [ WARN ] ) ("In case SgVarRefExp: (variableDeclaration != NULL) Calling nameQualificationDepth() \n");
 #endif
-                 // DQ (12/21/2015): When this is a data member of a class/struct then we are consistatnly overqualifying the SgVarRefExp
-                 // because we are not considering the case of a variable of type class that is being used with the SgArrowExp or SgDotExp
-                 // which would not require the name qualification.  The only case where we would still need the name qualification is the
-                 // relatively rare case of multiple inheritance (which must be detected seperately).
+                      // DQ (12/21/2015): When this is a data member of a class/struct then we are consistatnly overqualifying the SgVarRefExp
+                      // because we are not considering the case of a variable of type class that is being used with the SgArrowExp or SgDotExp
+                      // which would not require the name qualification.  The only case where we would still need the name qualification is the
+                      // relatively rare case of multiple inheritance (which must be detected seperately).
 #if 0
 
 #error "DEAD CODE!"
 
 #define DEBUG_MEMBER_DATA_QUALIFICATION 1
 
-                    SgScopeStatement* variableDeclarationScope = variableDeclaration->get_scope();
-                    ASSERT_not_null(variableDeclarationScope);
+                         SgScopeStatement* variableDeclarationScope = variableDeclaration->get_scope();
+                         ASSERT_not_null(variableDeclarationScope);
 
-                 // If this is the same scoep then it is not interesting to debug this case.
-                    if (variableDeclarationScope != currentScope)
-                       {
-                         SgExpression* parentExpression = isSgExpression(varRefExp->get_parent());
-
-                         SgBinaryOp* binaryOperator = isSgBinaryOp(parentExpression);
-                         if (binaryOperator != NULL)
+                      // If this is the same scoep then it is not interesting to debug this case.
+                         if (variableDeclarationScope != currentScope)
                             {
-                              ASSERT_not_null(parentExpression);
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                              mfprintf(mlog [ WARN ] ) ("   --- parentExpression of varRefExp = %p varRefExp = %p = %s \n",varRefExp,parentExpression,parentExpression->class_name().c_str());
-#endif
-                              SgArrowExp* arrowExp = isSgArrowExp(binaryOperator);
-                              SgDotExp* dotExp     = isSgDotExp(binaryOperator);
+                              SgExpression* parentExpression = isSgExpression(varRefExp->get_parent());
 
-                              SgExpression* lhs  = binaryOperator->get_lhs_operand();
-                              ASSERT_not_null(lhs);
-                              SgCastExp* castExp = isSgCastExp(lhs);
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                              mfprintf(mlog [ WARN ] ) ("   --- lhs = %p = %s \n",lhs,lhs->class_name().c_str());
-#endif
-                           // DQ (12/22/2015): Iterate though any possible chain of SgCastExp IR nodes (see test2005_89.C).
-                           // if (castExp != NULL && castExp->get_file_info()->isCompilerGenerated() == true)
-                              while (castExp != NULL && castExp->get_file_info()->isCompilerGenerated() == true)
+                              SgBinaryOp* binaryOperator = isSgBinaryOp(parentExpression);
+                              if (binaryOperator != NULL)
                                  {
+                                   ASSERT_not_null(parentExpression);
 #if DEBUG_MEMBER_DATA_QUALIFICATION
-                                   mfprintf(mlog [ WARN ] ) ("   --- detected implicit (compiler generated) cast: castExp = %p \n",castExp);
+                                   mfprintf(mlog [ WARN ] ) ("   --- parentExpression of varRefExp = %p varRefExp = %p = %s \n",varRefExp,parentExpression,parentExpression->class_name().c_str());
 #endif
-                                   lhs = isSgExpression(castExp->get_operand());
+                                   SgArrowExp* arrowExp = isSgArrowExp(binaryOperator);
+                                   SgDotExp* dotExp     = isSgDotExp(binaryOperator);
+
+                                   SgExpression* lhs  = binaryOperator->get_lhs_operand();
                                    ASSERT_not_null(lhs);
+                                   SgCastExp* castExp = isSgCastExp(lhs);
+#if DEBUG_MEMBER_DATA_QUALIFICATION
+                                   mfprintf(mlog [ WARN ] ) ("   --- lhs = %p = %s \n",lhs,lhs->class_name().c_str());
+#endif
+                                // DQ (12/22/2015): Iterate though any possible chain of SgCastExp IR nodes (see test2005_89.C).
+                                // if (castExp != NULL && castExp->get_file_info()->isCompilerGenerated() == true)
+                                   while (castExp != NULL && castExp->get_file_info()->isCompilerGenerated() == true)
+                                      {
+#if DEBUG_MEMBER_DATA_QUALIFICATION
+                                        mfprintf(mlog [ WARN ] ) ("   --- detected implicit (compiler generated) cast: castExp = %p \n",castExp);
+#endif
+                                        lhs = isSgExpression(castExp->get_operand());
+                                        ASSERT_not_null(lhs);
 
 #error "DEAD CODE!"
 
-                                // We have to handle chains of implicit casts.
-                                // ROSE_ASSERT(isSgCastExp(lhs) == NULL);
+                                     // We have to handle chains of implicit casts.
+                                     // ROSE_ASSERT(isSgCastExp(lhs) == NULL);
 
-                                   castExp = isSgCastExp(lhs);
+                                        castExp = isSgCastExp(lhs);
 #if 0
-                                   if (isSgCastExp(lhs) != NULL)
-                                      {
-                                        mfprintf(mlog [ WARN ] ) ("lhs = %p = %s \n",lhs,lhs->class_name().c_str());
-                                        lhs->get_file_info()->display("implicit cast");
-                                        varRefExp->get_file_info()->display("varRefExp associated with implicit cast");
+                                        if (isSgCastExp(lhs) != NULL)
+                                           {
+                                             mfprintf(mlog [ WARN ] ) ("lhs = %p = %s \n",lhs,lhs->class_name().c_str());
+                                             lhs->get_file_info()->display("implicit cast");
+                                             varRefExp->get_file_info()->display("varRefExp associated with implicit cast");
+                                           }
+#endif
                                       }
-#endif
-                                 }
 
 #if DEBUG_MEMBER_DATA_QUALIFICATION
-                              mfprintf(mlog [ WARN ] ) ("   --- (after filtering implicit casts) lhs = %p = %s \n",lhs,lhs->class_name().c_str());
+                                   mfprintf(mlog [ WARN ] ) ("   --- (after filtering implicit casts) lhs = %p = %s \n",lhs,lhs->class_name().c_str());
 #endif
-                              SgClassType* classType = NULL;
+                                   SgClassType* classType = NULL;
 
-                           // DQ (12/22/2015): If the varRefExp is the lhs then we don't want to change the name qualification. 
-                           // See test2015_138.C for example for the case of SgDotExp.
-                           // if (arrowExp != NULL)
-                              if (arrowExp != NULL && lhs != varRefExp)
-                                 {
+                                // DQ (12/22/2015): If the varRefExp is the lhs then we don't want to change the name qualification. 
+                                // See test2015_138.C for example for the case of SgDotExp.
+                                // if (arrowExp != NULL)
+                                   if (arrowExp != NULL && lhs != varRefExp)
+                                      {
 #if DEBUG_MEMBER_DATA_QUALIFICATION
-                                   mfprintf(mlog [ WARN ] ) ("   --- Found SgArrowExp: lhs = %p = %s \n",lhs,lhs->class_name().c_str());
+                                        mfprintf(mlog [ WARN ] ) ("   --- Found SgArrowExp: lhs = %p = %s \n",lhs,lhs->class_name().c_str());
 #endif
-                                   SgType* lhs_type = lhs->get_type();
-                                   ASSERT_not_null(lhs_type);
+                                        SgType* lhs_type = lhs->get_type();
+                                        ASSERT_not_null(lhs_type);
 #if DEBUG_MEMBER_DATA_QUALIFICATION
-                                   mfprintf(mlog [ WARN ] ) ("   --- lhs_type = %p = %s \n",lhs_type,lhs_type->class_name().c_str());
+                                        mfprintf(mlog [ WARN ] ) ("   --- lhs_type = %p = %s \n",lhs_type,lhs_type->class_name().c_str());
 #endif
-                                // Handle the case of reference to pointer type.
-                                   lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+                                     // Handle the case of reference to pointer type.
+                                        lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
 
 #error "DEAD CODE!"
 
-                                   SgPointerType* pointerType = isSgPointerType(lhs_type);
-                                // ASSERT_not_null(pointerType);
-                                   if (pointerType != NULL)
-                                      {
-                                        SgType* baseType = pointerType->get_base_type();
-                                        ASSERT_not_null(baseType);
+                                        SgPointerType* pointerType = isSgPointerType(lhs_type);
+                                     // ASSERT_not_null(pointerType);
+                                        if (pointerType != NULL)
+                                           {
+                                             SgType* baseType = pointerType->get_base_type();
+                                             ASSERT_not_null(baseType);
 
-                                     // Handle the case of pointer to reference type.
+                                          // Handle the case of pointer to reference type.
+                                          // Not clear if we have to handle array types
+                                             baseType = baseType->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+                                             ASSERT_not_null(baseType);
+#if DEBUG_MEMBER_DATA_QUALIFICATION
+                                             mfprintf(mlog [ WARN ] ) ("   --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+#endif
+                                          // It might be better to resolve this to a SgNamedType instead of SgClassType.
+                                             classType = isSgClassType(baseType);
+                                             if (classType == NULL)
+                                                {
+                                               // DQ (12/18/2016): In the case of Cxx11_tests/test2016_97.C the baseType is a SgTemplateType (though the variable is declared with "auto").
+                                                  mfprintf(mlog [ WARN ] ) ("Note: Name qualification: case of SgVarRefExp: type is not a SgClassType --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+#if 0
+                                                  lhs->get_file_info()->display("classType == NULL: debug");
+#endif
+                                                }
+                                          // ASSERT_not_null(classType);
+                                           }
+                                          else
+                                           {
+#if 0
+                                          // Debug this case!
+                                          // I think this is happening for template classes (might be interesting to look into further).
+                                             mfprintf(mlog [ WARN ] ) ("   --- SgArrowExp without associated SgPointer \n");
+                                             varRefExp->get_file_info()->display("SgArrowExp without associated SgPointer: debug");
+#endif
+                                           }
+                                      }
+
+#error "DEAD CODE!"
+
+                                // DQ (12/22/2015): If the varRefExp is the lhs then we don't want to change the name qualification. See test2015_138.C for example.
+                                // if (dotExp != NULL)
+                                   if (dotExp != NULL && lhs != varRefExp)
+                                      {
+#if DEBUG_MEMBER_DATA_QUALIFICATION
+                                        mfprintf(mlog [ WARN ] ) ("   --- Found SgDotExp: lhs = %p = %s \n",lhs,lhs->class_name().c_str());
+#endif
+                                        SgType* lhs_type = lhs->get_type();
+                                        ASSERT_not_null(lhs_type);
+#if DEBUG_MEMBER_DATA_QUALIFICATION
+                                        mfprintf(mlog [ WARN ] ) ("   --- lhs_type = %p = %s = %s \n",lhs_type,lhs_type->class_name().c_str(),lhs_type->unparseToString().c_str());
+#endif
                                      // Not clear if we have to handle array types
-                                        baseType = baseType->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+                                        SgType* baseType = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
                                         ASSERT_not_null(baseType);
 #if DEBUG_MEMBER_DATA_QUALIFICATION
                                         mfprintf(mlog [ WARN ] ) ("   --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
 #endif
-                                     // It might be better to resolve this to a SgNamedType instead of SgClassType.
                                         classType = isSgClassType(baseType);
-                                        if (classType == NULL)
-                                           {
-                                          // DQ (12/18/2016): In the case of Cxx11_tests/test2016_97.C the baseType is a SgTemplateType (though the variable is declared with "auto").
-                                             mfprintf(mlog [ WARN ] ) ("Note: Name qualification: case of SgVarRefExp: type is not a SgClassType --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-#if 0
-                                             lhs->get_file_info()->display("classType == NULL: debug");
-#endif
-                                           }
                                      // ASSERT_not_null(classType);
                                       }
-                                     else
+
+                                   if (classType != NULL)
                                       {
-#if 0
-                                     // Debug this case!
-                                     // I think this is happening for template classes (might be interesting to look into further).
-                                        mfprintf(mlog [ WARN ] ) ("   --- SgArrowExp without associated SgPointer \n");
-                                        varRefExp->get_file_info()->display("SgArrowExp without associated SgPointer: debug");
+                                        SgDeclarationStatement* declarationStatement = classType->get_declaration();
+                                        ASSERT_not_null(declarationStatement);
+#if DEBUG_MEMBER_DATA_QUALIFICATION
+                                        mfprintf(mlog [ WARN ] ) ("   --- declarationStatement = %p = %s = %s \n",declarationStatement,declarationStatement->class_name().c_str(),SageInterface::get_name(declarationStatement).c_str());
 #endif
+                                        SgDeclarationStatement* definingDeclarationStatement = declarationStatement->get_definingDeclaration();
+                                     // ASSERT_not_null(definingDeclarationStatement);
+                                        if (definingDeclarationStatement != NULL)
+                                           {
+#error "DEAD CODE!"
+
+                                             SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(definingDeclarationStatement);
+                                             ASSERT_not_null(definingClassDeclaration);
+                                             SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
+                                             ASSERT_not_null(classDefinition);
+
+                                             currentScope = classDefinition;
+#if DEBUG_MEMBER_DATA_QUALIFICATION
+                                             mfprintf(mlog [ WARN ] ) ("   --- Case of SgVarRefExp: recomputed currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+                                           }
+                                          else
+                                           {
+#if 0
+                                          // Debug this case!
+                                          // I think this happends in template member functions.
+                                          // I think this is happening for template classes (might be interesting to look into further).
+                                             mfprintf(mlog [ WARN ] ) ("   --- SgClassType without associated defining declaration \n");
+                                             varRefExp->get_file_info()->display("SgClassType without associated defining declaration: debug");
+#endif
+                                           }
                                       }
+#if 0
+                                   mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
+                                   ROSE_ASSERT(false);
+#endif
                                  }
+                            }
 
 #error "DEAD CODE!"
 
-                           // DQ (12/22/2015): If the varRefExp is the lhs then we don't want to change the name qualification. See test2015_138.C for example.
-                           // if (dotExp != NULL)
-                              if (dotExp != NULL && lhs != varRefExp)
-                                 {
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                   mfprintf(mlog [ WARN ] ) ("   --- Found SgDotExp: lhs = %p = %s \n",lhs,lhs->class_name().c_str());
 #endif
-                                   SgType* lhs_type = lhs->get_type();
-                                   ASSERT_not_null(lhs_type);
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                   mfprintf(mlog [ WARN ] ) ("   --- lhs_type = %p = %s = %s \n",lhs_type,lhs_type->class_name().c_str(),lhs_type->unparseToString().c_str());
-#endif
-                                // Not clear if we have to handle array types
-                                   SgType* baseType = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
-                                   ASSERT_not_null(baseType);
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                   mfprintf(mlog [ WARN ] ) ("   --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-#endif
-                                   classType = isSgClassType(baseType);
-                                // ASSERT_not_null(classType);
-                                 }
 
-                              if (classType != NULL)
-                                 {
-                                   SgDeclarationStatement* declarationStatement = classType->get_declaration();
-                                   ASSERT_not_null(declarationStatement);
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                   mfprintf(mlog [ WARN ] ) ("   --- declarationStatement = %p = %s = %s \n",declarationStatement,declarationStatement->class_name().c_str(),SageInterface::get_name(declarationStatement).c_str());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         mfprintf(mlog [ WARN ] ) ("variableDeclaration = %p \n",variableDeclaration);
+                         mfprintf(mlog [ WARN ] ) ("currentScope        = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                         mfprintf(mlog [ WARN ] ) ("currentStatement    = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
 #endif
-                                   SgDeclarationStatement* definingDeclarationStatement = declarationStatement->get_definingDeclaration();
-                                // ASSERT_not_null(definingDeclarationStatement);
-                                   if (definingDeclarationStatement != NULL)
-                                      {
+                         int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,currentScope,currentStatement);
+
+#if 0
+                      // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
+
 #error "DEAD CODE!"
 
-                                        SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(definingDeclarationStatement);
-                                        ASSERT_not_null(definingClassDeclaration);
-                                        SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                                        ASSERT_not_null(classDefinition);
+                      // DQ (2/7/2019): Adding support for SgPointerMemberType lvalue types that force rvalue name qualification (see Cxx11_tests/test2019_80.C).
+                         SgPointerMemberType* pointerMemberType = inheritedAttribute.get_usingPointerToMemberType();
+                         if (pointerMemberType != NULL)
+                            {
+#error "DEAD CODE!"
 
-                                        currentScope = classDefinition;
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                        mfprintf(mlog [ WARN ] ) ("   --- Case of SgVarRefExp: recomputed currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
-#endif
-                                      }
-                                     else
-                                      {
 #if 0
-                                     // Debug this case!
-                                     // I think this happends in template member functions.
-                                     // I think this is happening for template classes (might be interesting to look into further).
-                                        mfprintf(mlog [ WARN ] ) ("   --- SgClassType without associated defining declaration \n");
-                                        varRefExp->get_file_info()->display("SgClassType without associated defining declaration: debug");
+                              mfprintf(mlog [ WARN ] ) ("Found case of name qualification required because the lhs type is SgPointerMemberType: pointerMemberType = %p \n",pointerMemberType);
 #endif
-                                      }
-                                 }
+                              amountOfNameQualificationRequired++;
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
                               ROSE_ASSERT(false);
 #endif
                             }
-                       }
-
+                           else
+                            {
 #error "DEAD CODE!"
 
-#endif
-
-
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    mfprintf(mlog [ WARN ] ) ("variableDeclaration = %p \n",variableDeclaration);
-                    mfprintf(mlog [ WARN ] ) ("currentScope        = %p = %s \n",currentScope,currentScope->class_name().c_str());
-                    mfprintf(mlog [ WARN ] ) ("currentStatement    = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
-#endif
-                    int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,currentScope,currentStatement);
-
+                           // DQ (2/7/2019): Add an extra level of name qualification if this is pointer-to-member type induced.
+                              if (nameQualificationInducedFromPointerMemberType == true)
+                                 {
 #if 0
-                 // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
-
-#error "DEAD CODE!"
-
-                 // DQ (2/7/2019): Adding support for SgPointerMemberType lvalue types that force rvalue name qualification (see Cxx11_tests/test2019_80.C).
-                    SgPointerMemberType* pointerMemberType = inheritedAttribute.get_usingPointerToMemberType();
-                    if (pointerMemberType != NULL)
-                       {
-#error "DEAD CODE!"
-
-#if 0
-                         mfprintf(mlog [ WARN ] ) ("Found case of name qualification required because the lhs type is SgPointerMemberType: pointerMemberType = %p \n",pointerMemberType);
+                                   mfprintf(mlog [ WARN ] ) ("Found case of name qualification required because the function parameter type is SgPointerMemberType \n");
 #endif
-                         amountOfNameQualificationRequired++;
-#if 0
-                         mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
-#endif
-                       }
-                      else
-                       {
+                                   amountOfNameQualificationRequired++;
+                                 }
 #error "DEAD CODE!"
 
+                           }
+#else
                       // DQ (2/7/2019): Add an extra level of name qualification if this is pointer-to-member type induced.
                          if (nameQualificationInducedFromPointerMemberType == true)
                             {
-#if 0
-                              mfprintf(mlog [ WARN ] ) ("Found case of name qualification required because the function parameter type is SgPointerMemberType \n");
+                           // DQ (2/8/2019): Only add name qualification if not present (else we can get over qualification 
+                           // that can show up as pointer names in the name qualification, see Cxx11_tests/test2019_86.C).
+                              if (amountOfNameQualificationRequired == 0)
+                                 {
+                                // DQ (3/30/2019): Experiment with commenting this out!
+                                   amountOfNameQualificationRequired++;
+                                 }
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              mfprintf(mlog [ WARN ] ) ("Found case of name qualification required because the variable is associated with SgPointerMemberType: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
-                              amountOfNameQualificationRequired++;
                             }
-#error "DEAD CODE!"
-
-                      }
-#else
-                 // DQ (2/7/2019): Add an extra level of name qualification if this is pointer-to-member type induced.
-                    if (nameQualificationInducedFromPointerMemberType == true)
-                       {
-                      // DQ (2/8/2019): Only add name qualification if not present (else we can get over qualification 
-                      // that can show up as pointer names in the name qualification, see Cxx11_tests/test2019_86.C).
-                         if (amountOfNameQualificationRequired == 0)
-                            {
-                           // DQ (3/30/2019): Experiment with commenting this out!
-                              amountOfNameQualificationRequired++;
-                            }
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                         mfprintf(mlog [ WARN ] ) ("Found case of name qualification required because the variable is associated with SgPointerMemberType: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
-#endif
-                       }
 #endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    mfprintf(mlog [ WARN ] ) ("SgVarRefExp's SgDeclarationStatement: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+                         mfprintf(mlog [ WARN ] ) ("SgVarRefExp's SgDeclarationStatement: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
-                    setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+                         setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
 
-                 // DQ (12/23/2015): If there are multiple symbols with the same name then we require the name qualification.
-                 // See test2015_140.C for an example.
-                    SgName name = initializedName->get_name().str();
+                      // DQ (12/23/2015): If there are multiple symbols with the same name then we require the name qualification.
+                      // See test2015_140.C for an example.
+                         SgName name = initializedName->get_name().str();
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    mfprintf(mlog [ WARN ] ) ("SgVarRefExp's SgDeclarationStatement: initializedName->get_name() = %s \n",name.str());
+                         mfprintf(mlog [ WARN ] ) ("SgVarRefExp's SgDeclarationStatement: initializedName->get_name() = %s \n",name.str());
 #endif
 
-                 // size_t numberOfAliasSymbols = currentScope->count_alias_symbol(name);
-                    int numberOfAliasSymbols = currentScope->count_alias_symbol(name);
-                 // if (numberOfAliasSymbols > 1)
+                      // size_t numberOfAliasSymbols = currentScope->count_alias_symbol(name);
+                         int numberOfAliasSymbols = currentScope->count_alias_symbol(name);
+                      // if (numberOfAliasSymbols > 1)
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    mfprintf(mlog [ WARN ] ) ("SgVarRefExp's SgDeclarationStatement: numberOfAliasSymbols              = %d \n",numberOfAliasSymbols);
-                    mfprintf(mlog [ WARN ] ) ("SgVarRefExp's SgDeclarationStatement: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+                         mfprintf(mlog [ WARN ] ) ("SgVarRefExp's SgDeclarationStatement: numberOfAliasSymbols              = %d \n",numberOfAliasSymbols);
+                         mfprintf(mlog [ WARN ] ) ("SgVarRefExp's SgDeclarationStatement: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
 
-                    if (numberOfAliasSymbols > 1 && amountOfNameQualificationRequired == 0)
-                       {
-                      // DQ (3/15/2017): Added support to use message streams.
-                         mfprintf(mlog [ WARN ] ) ("WARNING: name qualification can be required when there are multiple base classes with the same referenced variable via SgAliasSymbol \n");
-                       }
-                      else
-                       {
-                      // DQ (12/23/2015): Note that this is not a count of the SgVariableSymbol IR nodes.
-                      // size_t numberOfSymbolsWithSameName = currentScope->count_symbol(name);
-                         int numberOfSymbolsWithSameName = (int)currentScope->count_symbol(name);
-
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                         mfprintf(mlog [ WARN ] ) ("SgVarRefExp's SgDeclarationStatement: numberOfSymbolsWithSameName       = %d \n",numberOfSymbolsWithSameName);
-#endif
-
-                      // if (numberOfSymbolsWithSameName > 1)
-                      // if (numberOfSymbolsWithSameName > 1 && amountOfNameQualificationRequired == 0)
-                         if ((numberOfSymbolsWithSameName - numberOfAliasSymbols) > 1 && amountOfNameQualificationRequired == 0)
+                         if (numberOfAliasSymbols > 1 && amountOfNameQualificationRequired == 0)
                             {
                            // DQ (3/15/2017): Added support to use message streams.
-                              mfprintf(mlog [ WARN ] ) ("WARNING: name qualification can be required when there are multiple base classes with the same referenced variable via SgVariableSymbol \n");
-
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              mfprintf(mlog [ WARN ] ) ("WARNING: name qualification can be required when there are multiple base classes with the same referenced variable via SgVariableSymbol \n");
-#endif
+                              mfprintf(mlog [ WARN ] ) ("WARNING: name qualification can be required when there are multiple base classes with the same referenced variable via SgAliasSymbol \n");
                             }
-                      // ROSE_ASSERT(numberOfSymbolsWithSameName < 2);
-                      // if (numberOfSymbolsWithSameName >= 2 && amountOfNameQualificationRequired == 0)
-                         if ((numberOfSymbolsWithSameName - numberOfAliasSymbols) > 1 && amountOfNameQualificationRequired == 0)
+                           else
                             {
-                           // DQ (3/15/2017): Added support to use message streams.
-                              mfprintf(mlog [ WARN ] ) ("   --- numberOfSymbolsWithSameName       = %d \n",numberOfSymbolsWithSameName);
-                              mfprintf(mlog [ WARN ] ) ("   --- amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+                           // DQ (12/23/2015): Note that this is not a count of the SgVariableSymbol IR nodes.
+                           // size_t numberOfSymbolsWithSameName = currentScope->count_symbol(name);
+                              int numberOfSymbolsWithSameName = (int)currentScope->count_symbol(name);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              mfprintf(mlog [ WARN ] ) ("   --- numberOfSymbolsWithSameName       = %d \n",numberOfSymbolsWithSameName);
-                              mfprintf(mlog [ WARN ] ) ("   --- amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+                              mfprintf(mlog [ WARN ] ) ("SgVarRefExp's SgDeclarationStatement: numberOfSymbolsWithSameName       = %d \n",numberOfSymbolsWithSameName);
 #endif
+
+                           // if (numberOfSymbolsWithSameName > 1)
+                           // if (numberOfSymbolsWithSameName > 1 && amountOfNameQualificationRequired == 0)
+                              if ((numberOfSymbolsWithSameName - numberOfAliasSymbols) > 1 && amountOfNameQualificationRequired == 0)
+                                 {
+                                // DQ (3/15/2017): Added support to use message streams.
+                                   mfprintf(mlog [ WARN ] ) ("WARNING: name qualification can be required when there are multiple base classes with the same referenced variable via SgVariableSymbol \n");
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                   mfprintf(mlog [ WARN ] ) ("WARNING: name qualification can be required when there are multiple base classes with the same referenced variable via SgVariableSymbol \n");
+#endif
+                                 }
+                           // ROSE_ASSERT(numberOfSymbolsWithSameName < 2);
+                           // if (numberOfSymbolsWithSameName >= 2 && amountOfNameQualificationRequired == 0)
+                              if ((numberOfSymbolsWithSameName - numberOfAliasSymbols) > 1 && amountOfNameQualificationRequired == 0)
+                                 {
+                                // DQ (3/15/2017): Added support to use message streams.
+                                   mfprintf(mlog [ WARN ] ) ("   --- numberOfSymbolsWithSameName       = %d \n",numberOfSymbolsWithSameName);
+                                   mfprintf(mlog [ WARN ] ) ("   --- amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                   mfprintf(mlog [ WARN ] ) ("   --- numberOfSymbolsWithSameName       = %d \n",numberOfSymbolsWithSameName);
+                                   mfprintf(mlog [ WARN ] ) ("   --- amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+                                 }
+                            // ROSE_ASSERT(numberOfSymbolsWithSameName < 2 || amountOfNameQualificationRequired > 0);
+
+                            // DQ (12/23/2015): This fails for the LULESH-OMP tests, I think I need to relax this (it is a new assection).
+                            // It might be that we need to also check that these are all SgVariableSymbol (since there could be different 
+                            // kinds of SgSymbol (which would have to be allowed)).
+                            // ROSE_ASSERT((numberOfSymbolsWithSameName - numberOfAliasSymbols) <= 1 || amountOfNameQualificationRequired > 0);
                             }
-                       // ROSE_ASSERT(numberOfSymbolsWithSameName < 2 || amountOfNameQualificationRequired > 0);
-
-                       // DQ (12/23/2015): This fails for the LULESH-OMP tests, I think I need to relax this (it is a new assection).
-                       // It might be that we need to also check that these are all SgVariableSymbol (since there could be different 
-                       // kinds of SgSymbol (which would have to be allowed)).
-                       // ROSE_ASSERT((numberOfSymbolsWithSameName - numberOfAliasSymbols) <= 1 || amountOfNameQualificationRequired > 0);
+                      // ROSE_ASSERT(numberOfAliasSymbols < 2);
+                         ROSE_ASSERT(numberOfAliasSymbols <= 1 || amountOfNameQualificationRequired > 0);
                        }
-                 // ROSE_ASSERT(numberOfAliasSymbols < 2);
-                    ROSE_ASSERT(numberOfAliasSymbols <= 1 || amountOfNameQualificationRequired > 0);
-                  }
 
-            // End of new test...
-             }
-            else
-             {
-            // DQ (7/23/2011): This case happens when the SgVarRefExp can not be associated with a statement.
-            // I think this only happens when a constant variable is used in an array index of an array type.
-#if 0
-               mfprintf(mlog [ WARN ] ) ("Case of TransformationSupport::getStatement(varRefExp) == NULL explictlySpecifiedCurrentScope = %p \n",explictlySpecifiedCurrentScope);
-#endif
-            // DQ (7/24/2011): This fails for the tests/nonsmoke/functional/CompileTests/OpenMP_tests/objectLastprivate.cpp test code.
-            // ASSERT_not_null(explictlySpecifiedCurrentScope);
-               if (explictlySpecifiedCurrentScope != NULL)
-                  {
-                 // DQ (4/19/2019): Now that we (optionally) also pass in the explictlySpecifiedCurrentStatement, we might want to use it directly.
-#if 0
-                    mfprintf(mlog [ WARN ] ) ("case of SgVarRefExp: Using explictlySpecifiedCurrentScope for the value of currentStatement: need to check this! \n");
-#endif
-                    currentStatement = explictlySpecifiedCurrentScope;
-
-                    SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
-                    ASSERT_not_null(variableSymbol);
-
-                    SgInitializedName* initializedName = variableSymbol->get_declaration();
-                    ASSERT_not_null(initializedName);
-
-                    SgNode * parent = initializedName->get_parent();
-
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    mfprintf(mlog [ WARN ] ) ("In case SgVarRefExp: (currentStatement == NULL) Calling nameQualificationDepth() variableDeclaration = %p initializedName->get_parent() = %p = %s \n", variableDeclaration, parent, parent ? parent->class_name().c_str() : "");
-#endif
-
-                    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(parent);
-                    SgDeclarationScope * decl_scope = isSgDeclarationScope(parent);
-                    if (variableDeclaration != NULL) {
-                      int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,explictlySpecifiedCurrentScope,currentStatement);
-                      setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
-                    } else if (decl_scope != NULL) {
-                      // NOP that is a nontype template parameter
-                    } else {
-                      SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(parent);
-                      SgTemplateClassDefinition * tpldef = isSgTemplateClassDefinition(parent);
-                      SgTemplateParameter* tplParam = isSgTemplateParameter(parent);
-                      SgTemplateInstantiationDefn * templateInstantiationDefn = isSgTemplateInstantiationDefn(parent);
-                      
-                      int amountOfNameQualificationRequired = nameQualificationDepth(initializedName,explictlySpecifiedCurrentScope,currentStatement);
-                      if (functionParameterList != NULL) {
-                        setNameQualification(varRefExp,functionParameterList,amountOfNameQualificationRequired);
-                      } else if (tpldef != NULL) {
-                        mfprintf(mlog [ WARN ] )("WARNING: In NameQualificationTraversal::evaluateInheritedAttribute: Found SgInitializedName whose parent is a template class definition. It does not sound right!!!\n");
-                        ASSERT_not_null(tpldef->get_parent());
-                        SgDeclarationStatement * tpldecl = isSgDeclarationStatement(tpldef->get_parent());
-                        ASSERT_not_null(tpldecl);
-                        ROSE_ASSERT(isSgTemplateClassDeclaration(tpldecl));
-                        setNameQualification(varRefExp,tpldecl,amountOfNameQualificationRequired);
-                      } else if (templateInstantiationDefn != NULL) {
-                        setNameQualification(varRefExp,templateInstantiationDefn->get_declaration(),amountOfNameQualificationRequired);
-                      } else if (tplParam != NULL) {
-#if 0
-                        mfprintf(mlog [ WARN ] )("tplParam = %p (%s)\n", tplParam, tplParam ? tplParam->class_name().c_str() : "");
-#endif
-                        ASSERT_not_null(tplParam->get_parent());
-                        SgDeclarationStatement * tpldecl = isSgDeclarationStatement(tplParam->get_parent());
-                        ASSERT_not_null(tpldecl);
-#if 0
-                        mfprintf(mlog [ WARN ] )("tpldecl = %p (%s)\n", tpldecl, tpldecl ? tpldecl->class_name().c_str() : "");
-#endif
-                        ROSE_ASSERT(
-                            isSgTemplateFunctionDeclaration(tpldecl) ||
-                            isSgTemplateMemberFunctionDeclaration(tpldecl) ||
-                            isSgTemplateClassDeclaration(tpldecl) ||
-                            isSgTemplateTypedefDeclaration(tpldecl) ||
-                            isSgTemplateVariableDeclaration(tpldecl) ||
-                            isSgNonrealDecl(tpldecl)
-                        );
-                        setNameQualification(varRefExp,tpldecl,amountOfNameQualificationRequired);
-                      } else {
-                        mfprintf(mlog [ WARN ] )("ERROR: Unexpected parent for SgInitializedName: parent = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
-                        ROSE_ASSERT(false);
-                      }
-                    }
-                  }
-                 else if (variableDeclaration != NULL)
-                  {
-                    int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,explictlySpecifiedCurrentScope,currentStatement);
-                    setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+                 // End of new test...
                   }
                  else
                   {
-                  // TV (09/13/2018): in ROSE/tutorial/: ./loopOptimization --edg:no_warnings -w -bk1 -fs0 -c /data1/roseenv/src/tmp-merge/tutorial/inputCode_LoopOptimization_blocking.C
-                    mfprintf(mlog [ WARN ] )("WARNING: Unexpected conditions in NameQualificationTraversal::evaluateInheritedAttribute.");
+                 // DQ (7/23/2011): This case happens when the SgVarRefExp can not be associated with a statement.
+                 // I think this only happens when a constant variable is used in an array index of an array type.
+#if 0
+                    mfprintf(mlog [ WARN ] ) ("Case of TransformationSupport::getStatement(varRefExp) == NULL explictlySpecifiedCurrentScope = %p \n",explictlySpecifiedCurrentScope);
+#endif
+                 // DQ (7/24/2011): This fails for the tests/nonsmoke/functional/CompileTests/OpenMP_tests/objectLastprivate.cpp test code.
+                 // ASSERT_not_null(explictlySpecifiedCurrentScope);
+                    if (explictlySpecifiedCurrentScope != NULL)
+                       {
+                      // DQ (4/19/2019): Now that we (optionally) also pass in the explictlySpecifiedCurrentStatement, we might want to use it directly.
+#if 0
+                         mfprintf(mlog [ WARN ] ) ("case of SgVarRefExp: Using explictlySpecifiedCurrentScope for the value of currentStatement: need to check this! \n");
+#endif
+                         currentStatement = explictlySpecifiedCurrentScope;
+
+                         SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+                         ASSERT_not_null(variableSymbol);
+
+                         SgInitializedName* initializedName = variableSymbol->get_declaration();
+                         ASSERT_not_null(initializedName);
+
+                         SgNode * parent = initializedName->get_parent();
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         mfprintf(mlog [ WARN ] ) ("In case SgVarRefExp: (currentStatement == NULL) Calling nameQualificationDepth() variableDeclaration = %p initializedName->get_parent() = %p = %s \n", variableDeclaration, parent, parent ? parent->class_name().c_str() : "");
+#endif
+
+                         SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(parent);
+                         SgDeclarationScope * decl_scope = isSgDeclarationScope(parent);
+                         if (variableDeclaration != NULL) {
+                           int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,explictlySpecifiedCurrentScope,currentStatement);
+                           setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+                         } else if (decl_scope != NULL) {
+                           // NOP that is a nontype template parameter
+                         } else {
+                           SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(parent);
+                           SgTemplateClassDefinition * tpldef = isSgTemplateClassDefinition(parent);
+                           SgTemplateParameter* tplParam = isSgTemplateParameter(parent);
+                           SgTemplateInstantiationDefn * templateInstantiationDefn = isSgTemplateInstantiationDefn(parent);
+
+                           int amountOfNameQualificationRequired = nameQualificationDepth(initializedName,explictlySpecifiedCurrentScope,currentStatement);
+                           if (functionParameterList != NULL) {
+                             setNameQualification(varRefExp,functionParameterList,amountOfNameQualificationRequired);
+                           } else if (tpldef != NULL) {
+                             mfprintf(mlog [ WARN ] )("WARNING: In NameQualificationTraversal::evaluateInheritedAttribute: Found SgInitializedName whose parent is a template class definition. It does not sound right!!!\n");
+                             ASSERT_not_null(tpldef->get_parent());
+                             SgDeclarationStatement * tpldecl = isSgDeclarationStatement(tpldef->get_parent());
+                             ASSERT_not_null(tpldecl);
+                             ROSE_ASSERT(isSgTemplateClassDeclaration(tpldecl));
+                             setNameQualification(varRefExp,tpldecl,amountOfNameQualificationRequired);
+                           } else if (templateInstantiationDefn != NULL) {
+                             setNameQualification(varRefExp,templateInstantiationDefn->get_declaration(),amountOfNameQualificationRequired);
+                           } else if (tplParam != NULL) {
+#if 0
+                             mfprintf(mlog [ WARN ] )("tplParam = %p (%s)\n", tplParam, tplParam ? tplParam->class_name().c_str() : "");
+#endif
+                             ASSERT_not_null(tplParam->get_parent());
+                             SgDeclarationStatement * tpldecl = isSgDeclarationStatement(tplParam->get_parent());
+                             ASSERT_not_null(tpldecl);
+#if 0
+                             mfprintf(mlog [ WARN ] )("tpldecl = %p (%s)\n", tpldecl, tpldecl ? tpldecl->class_name().c_str() : "");
+#endif
+                             ROSE_ASSERT(
+                                 isSgTemplateFunctionDeclaration(tpldecl) ||
+                                 isSgTemplateMemberFunctionDeclaration(tpldecl) ||
+                                 isSgTemplateClassDeclaration(tpldecl) ||
+                                 isSgTemplateTypedefDeclaration(tpldecl) ||
+                                 isSgTemplateVariableDeclaration(tpldecl) ||
+                                 isSgNonrealDecl(tpldecl)
+                             );
+                             setNameQualification(varRefExp,tpldecl,amountOfNameQualificationRequired);
+                           } else {
+                             mfprintf(mlog [ WARN ] )("ERROR: Unexpected parent for SgInitializedName: parent = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
+                             ROSE_ASSERT(false);
+                           }
+                         }
+                       }
+                      else if (variableDeclaration != NULL)
+                       {
+                         int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,explictlySpecifiedCurrentScope,currentStatement);
+                         setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+                       }
+                      else
+                       {
+                       // TV (09/13/2018): in ROSE/tutorial/: ./loopOptimization --edg:no_warnings -w -bk1 -fs0 -c /data1/roseenv/src/tmp-merge/tutorial/inputCode_LoopOptimization_blocking.C
+                         mfprintf(mlog [ WARN ] )("WARNING: Unexpected conditions in NameQualificationTraversal::evaluateInheritedAttribute.");
+                       }
                   }
-             }
 
             // DQ (2/16/2019): End of false branch for: if (isDataMemberReference == false)
              }
             else
              {
+#if 0
+               mfprintf(mlog [ WARN ] ) ("Test 2: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
+               ROSE_ASSERT(false);
+#endif
+#if 0
+            // DQ (7/24/3030): This variable declaration hides an outer declaration using the same variable name.
+               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
 
+            // DQ (7/24/2020): Debugging Cxx20_tests/test2020_122.C and Cxx_tests/test2020_14.C.
+               bool inDesignatedInitializer = false;
+               if (variableDeclaration == variableDeclaration->get_definingDeclaration())
+                  {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("SgVarRefExp is not in a defining SgVariableDeclaration: might be in a SgDesignatedInitializer \n");
+                    SgExprListExp* exprListExp = isSgExprListExp(varRefExp->get_parent());
+                    if (exprListExp != NULL)
+                       {
+                         SgDesignatedInitializer* designatedInitializer = isSgDesignatedInitializer(exprListExp->get_parent());
+                         if (designatedInitializer != NULL)
+                            {
+                              inDesignatedInitializer = true;
+
+                              printf ("Found case of SgVarRefExp in SgDesignatedInitializer (no name qualification is required (allowed)) \n");
+                              ROSE_ASSERT(false);
+                            }
+                       }
+#endif
+                 // variableDeclaration = NULL;
+                  }
+#endif
             // DQ (1/14/2020): To support Cxx11_tests/test2020_50.C, a variable in an un-named union we could just argue 
             // that if the union is un-named then the variable declaration should not be considered to be a member 
             // (then the name qualification could proceed using the branch above).
@@ -10984,6 +11048,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #endif
              }
+#if 0
+          mfprintf(mlog [ WARN ] ) ("Test 3: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
+          ROSE_ASSERT(false);
+#endif
         }
 
   // DQ (6/9/2011): Added support for test2011_79.C (enum values can require name qualification).

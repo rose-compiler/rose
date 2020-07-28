@@ -69,6 +69,10 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (BasicBlock,                "BasicBlock",                "BASIC_BLOCK_STMT");
      NEW_TERMINAL_MACRO (Global,                    "Global",                    "GLOBAL_STMT" );
      NEW_TERMINAL_MACRO (IfStmt,                    "IfStmt",                    "IF_STMT" );
+
+  // DQ (7/25/2020): Adding C++17 constexpr_if statement.
+  // NEW_TERMINAL_MACRO (IfConstexprStatement,      "IfConstexprStatement",      "IF_CONSTEXPR_STATEMENT" );
+
   // NEW_TERMINAL_MACRO (FunctionDefinition,        "FunctionDefinition",        "FUNC_DEFN_STMT" );
      NEW_TERMINAL_MACRO (WhileStmt,                 "WhileStmt",                 "WHILE_STMT" );
      NEW_TERMINAL_MACRO (DoWhileStmt,               "DoWhileStmt",               "DO_WHILE_STMT" );
@@ -435,10 +439,11 @@ Grammar::setUpStatements ()
   // other variables or expressions.  They are only l-values if and only if the rhs is a l-value (I think).
   // CR (10/22/2018): Added JovialForThenStatement
      NEW_NONTERMINAL_MACRO (ScopeStatement,
-          Global                       | BasicBlock           | IfStmt                    | ForStatement       | FunctionDefinition |
-          ClassDefinition              | WhileStmt            | DoWhileStmt               | SwitchStatement    | CatchOptionStmt    |
-          NamespaceDefinitionStatement | BlockDataStatement   | AssociateStatement        | FortranDo          | ForAllStatement    |
-          UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement      | JavaLabelStatement | MatlabForStatement |
+          Global                       | BasicBlock           | IfStmt                    | /* IfConstexprStatement   | */ 
+          ForStatement                 | FunctionDefinition   |
+          ClassDefinition              | WhileStmt            | DoWhileStmt               | SwitchStatement        | CatchOptionStmt    |
+          NamespaceDefinitionStatement | BlockDataStatement   | AssociateStatement        | FortranDo              | ForAllStatement    |
+          UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement      | JavaLabelStatement     | MatlabForStatement |
           FunctionParameterScope       | DeclarationScope     | RangeBasedForStatement    | JovialForThenStatement | AdaAcceptStmt  |
           AdaPackageSpec               | AdaPackageBody       | AdaTaskSpec               | AdaTaskBody                  
      /* | TemplateInstantiationDefn */ ,
@@ -659,6 +664,7 @@ Grammar::setUpStatements ()
      ScopeStatement.setDataPrototype    ( "std::set<SgSymbol*>","hidden_declaration_list","",
                                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+
      FunctionTypeTable.setFunctionPrototype( "HEADER_FUNCTION_TYPE_TABLE", "../Grammar/Statement.code" );
      FunctionTypeTable.setDataPrototype    ( "SgSymbolTable*","function_type_table","= NULL",
                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
@@ -827,6 +833,15 @@ Grammar::setUpStatements ()
                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      IfStmt.setDataPrototype ( "SgStatement*", "false_body",  "= NULL",
                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/26/2020): C++17 specific feature support for "if constexpr() {} else {}".
+     IfStmt.setDataPrototype ( "bool", "is_if_constexpr_statement", "= false",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     IfStmt.setDataPrototype ( "bool", "if_constexpr_value_known", "= false",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     IfStmt.setDataPrototype ( "bool", "if_constexpr_value", "= false",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // IfStmt.setAutomaticGenerationOfDestructor(false);
 
@@ -855,6 +870,18 @@ Grammar::setUpStatements ()
   // DQ (12/7/2010): Fortran specific, has associated else keyword before if (is an else-if statement).
      IfStmt.setDataPrototype     ( "bool", "is_else_if_statement", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 0
+  // DQ (7/25/2020): Adding support for C++17 constexpr if statement, but might be better 
+  // to add a constexpr data member flag to the regular SgIfStmt.
+     IfConstexprStatement.setFunctionPrototype ( "HEADER_IF_CONST_EXPR_STATEMENT", "../Grammar/Statement.code" );
+     IfConstexprStatement.setDataPrototype ( "SgStatement*",  "conditional", "= NULL",
+                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     IfConstexprStatement.setDataPrototype ( "SgStatement*", "true_body",   "= NULL",
+                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     IfConstexprStatement.setDataPrototype ( "SgStatement*", "false_body",  "= NULL",
+                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
 
      ForStatement.setFunctionPrototype ( "HEADER_FOR_STATEMENT", "../Grammar/Statement.code" );
      ForStatement.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );

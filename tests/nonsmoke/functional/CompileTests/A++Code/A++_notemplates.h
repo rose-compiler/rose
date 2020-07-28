@@ -1330,8 +1330,16 @@ friend class intArray_Aggregate_Operator;
         friend void APP_view    ( const doubleArray & X , const char *Label );
         friend void APP_display ( const doubleArray & X , const char *Label );
 #else
+
+     // DQ (7/23/2020): This might be dependent on EDG more than GNU version 10.
+#if ((__GNUC__ == 10) && (__GNUC_MINOR__ >= 1) && (__GNUC_PATCHLEVEL__ >= 0))
+     // GNU 10 requires default arguments of friend functions to appear in the definitions.
+        friend void APP_view    ( const doubleArray & X , const char *Label );
+        friend void APP_display ( const doubleArray & X , const char *Label );
+#else
         friend void APP_view    ( const doubleArray & X , const char *Label = "" );
         friend void APP_display ( const doubleArray & X , const char *Label = "" );
+#endif
 #endif
 
      // This is a member function defined in the BaseArray class
@@ -3952,8 +3960,15 @@ friend class intArray_Aggregate_Operator;
         friend void APP_view    ( const floatArray & X , const char *Label );
         friend void APP_display ( const floatArray & X , const char *Label );
 #else
+     // DQ (7/23/2020): This might be dependent on EDG more than GNU version 10.
+#if ((__GNUC__ == 10) && (__GNUC_MINOR__ >= 1) && (__GNUC_PATCHLEVEL__ >= 0))
+     // GNU 10 requires default arguments of friend functions to appear in the definitions.
+        friend void APP_view    ( const floatArray & X , const char *Label );
+        friend void APP_display ( const floatArray & X , const char *Label );
+#else
         friend void APP_view    ( const floatArray & X , const char *Label = "" );
         friend void APP_display ( const floatArray & X , const char *Label = "" );
+#endif
 #endif
 
      // This is a member function defined in the BaseArray class
@@ -6574,8 +6589,15 @@ friend class intArray_Aggregate_Operator;
         friend void APP_view    ( const intArray & X , const char *Label );
         friend void APP_display ( const intArray & X , const char *Label );
 #else
+     // DQ (7/23/2020): This might be dependent on EDG more than GNU version 10.
+#if ((__GNUC__ == 10) && (__GNUC_MINOR__ >= 1) && (__GNUC_PATCHLEVEL__ >= 0))
+     // GNU 10 requires default arguments of friend functions to appear in the definitions.
+        friend void APP_view    ( const intArray & X , const char *Label );
+        friend void APP_display ( const intArray & X , const char *Label );
+#else
         friend void APP_view    ( const intArray & X , const char *Label = "" );
         friend void APP_display ( const intArray & X , const char *Label = "" );
+#endif
 #endif
      // This is a member function defined in the BaseArray class
         int Array_ID () const;

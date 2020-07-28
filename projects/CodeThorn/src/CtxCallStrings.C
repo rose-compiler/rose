@@ -9,6 +9,8 @@ namespace CodeThorn
 
 namespace
 {
+  size_t finiteCallStringMaxLen = 4;
+  
   /// REVERSING the ordering, sorts Label() first;
   ///   which is a requirement for the use of lower_bound and upper_bound 
   ///   in FiniteReturnHandler.
@@ -178,12 +180,12 @@ namespace
       return res;
     }    
     
-    constexpr size_t MAX_OVERLAP = CTX_CALL_STRING_MAX_LENGTH-1;
+    const size_t MAX_OVERLAP = getFiniteCallStringMaxLength()-1;
 
     // if all labels in the common subrange match
-    const size_t len     = caller.size();
-    const size_t overlap = std::min(len, MAX_OVERLAP);
-    const size_t ofs     = len-overlap;
+    const size_t len         = caller.size();
+    const size_t overlap     = std::min(len, MAX_OVERLAP);
+    const size_t ofs         = len-overlap;
     
     ROSE_ASSERT(overlap+1 == callee.size());
     return std::equal(std::next(caller.begin(), ofs), caller.end(), callee.begin()); 
@@ -321,7 +323,7 @@ void allCallInvoke( const CtxLattice<InfiniteCallString>& src,
                     CtxAnalysis<InfiniteCallString>& /* not used */,
                     Labeler& labeler,
                     Label lbl
-               )
+                  )
 {
   defaultCallInvoke(src, tgt, labeler, lbl);
 }
@@ -428,7 +430,7 @@ void FiniteCallString::callReturn(Labeler& labeler, CodeThorn::Label lbl)
 
 bool FiniteCallString::callerOf(const FiniteCallString& target, Label callsite) const
 {
-  ROSE_ASSERT(CTX_CALL_STRING_MAX_LENGTH > 0 && target.size());
+  ROSE_ASSERT(target.size());
   
   constexpr bool fixedLen = FiniteCallString::FIXED_LEN_REP;
 
@@ -439,7 +441,7 @@ bool FiniteCallString::callerOf(const FiniteCallString& target, Label callsite) 
   // (3) if all labels in the common subrange match
   return (  (!target.empty())
          && (target.last() == callsite)
-         && callerCalleeLengths(fixedLen, size(), target.size(), CTX_CALL_STRING_MAX_LENGTH)
+         && callerCalleeLengths(fixedLen, size(), target.size(), getFiniteCallStringMaxLength())
          && callerCalleePrefix(*this, target)
          );
 }
@@ -500,6 +502,21 @@ std::ostream& operator<<(std::ostream& os, const FiniteCallString& el)
 {
   return prnctx(os, el);
 }
+
+/// sets the finite call string max length
+void setFiniteCallStringMaxLength(size_t len)
+{
+  ROSE_ASSERT(len >= 1);
+  
+  finiteCallStringMaxLen = len;
+}
+
+/// returns the finite call string max length
+size_t getFiniteCallStringMaxLength()
+{
+  return finiteCallStringMaxLen;
+}
+
 
 int callstring_creation_counter = 0;
 int callstring_deletion_counter = 0;
