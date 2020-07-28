@@ -1,4 +1,5 @@
 // DQ (7/24/2020): the compare header file is required to support the <=> operator.
+
 #include <compare>
 
 int main() 

@@ -7858,10 +7858,11 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
            compilerNameString.push_back("-std=c++20");
          }
 
+#if defined(BACKEND_CXX_IS_GNU_COMPILER)
       // DQ (7/26/2020): the GNU 10.2 C++20 "coroutine" header file requires GNU to be used with -fcoroutines
       // using the macro "__cpp_impl_coroutine" to control internal access.
          compilerNameString.push_back("-fcoroutines");
-
+#endif
          break;
        }
        case e_f77_standard:
