@@ -2,6 +2,7 @@
 #include <CompSliceObserver.h>
 #include <GraphUpdate.h>
 #include <PtrMap.h>
+#include <assert.h>
 
 template <class SelfInfo, class RelInfo, class Analysis> 
 class CompSliceRegistry 
@@ -49,6 +50,7 @@ class CompSliceRegistry
       for (typename PtrMapWrap<CompSlice, SliceNode>::Iterator p = nodeMap.GetIterator();
            !p.ReachEnd(); ++p) {
          const CompSlice *tmp = *p;
+         assert(tmp != NULL);
          tmp->DetachObserver(*this);
       }
    }

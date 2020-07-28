@@ -1045,7 +1045,7 @@ context-free syntax
   '(' TablePresetList ')'         -> OptTablePresetList    {cons("OptTablePresetlist")}
   % empty %                       -> OptTablePresetList    {cons("no-table-preset-list")}
 
-  '(' BlockPresetList ')'         -> OptBlockPresetList    {cons("OptBlockPresetlist")}
+  '(' BlockPresetList ')'         -> OptBlockPresetList    {cons("OptBlockPresetlist"), prefer}
   % empty %                       -> OptBlockPresetList    {cons("no-table-preset-list")}
 
 %% 2.2 TYPE DECLARATIONS
@@ -2056,7 +2056,7 @@ context-free syntax
   'LBOUND'                    -> WhichBound           {cons("LBOUND")}
   'UBOUND'                    -> WhichBound           {cons("UBOUND")}
 
-  TableName                   -> BoundsArgument
+  TableName                   -> BoundsArgument       {cons("Name"), prefer}
   TableTypeName               -> BoundsArgument
 
   CompileTimeNumericFormula   -> DimensionNumber
@@ -2084,7 +2084,7 @@ context-free syntax
 %%
   'NENT' '(' NentArgument ')' -> NentFunction         {cons("NentFunction")}
 
-  TableName                   -> NentArgument
+  TableName                   -> NentArgument         {cons("Name"), prefer}
   TableTypeName               -> NentArgument
 
 

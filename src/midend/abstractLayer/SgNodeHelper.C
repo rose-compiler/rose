@@ -15,7 +15,7 @@
 using namespace std;
 
 // set to true for matching C++ ctor calls
-const bool SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL = false;
+bool SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL = false;
 //~ const bool SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL = true;
 
 /*!
@@ -2015,7 +2015,7 @@ namespace
     return SG_DEREF(vars[0]);
   }
   
-  struct ExtendedCallMatcher : sg::DispatchHandler<SgNodeHelper::ExtendedCallInfo>
+  struct ExtendedCallMatcherInner : sg::DispatchHandler<SgNodeHelper::ExtendedCallInfo>
   {
     void handle(SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
     
@@ -2062,16 +2062,68 @@ namespace
     ReturnType eval_nullcheck(SgNode* n);
   };
   
-  ExtendedCallMatcher::ReturnType
-  ExtendedCallMatcher::eval(SgNode* n)
+  ExtendedCallMatcherInner::ReturnType
+  ExtendedCallMatcherInner::eval(SgNode* n)
   {
-    return sg::dispatch(ExtendedCallMatcher(), n);
+    return sg::dispatch(ExtendedCallMatcherInner(), n);
   }
   
-  ExtendedCallMatcher::ReturnType
-  ExtendedCallMatcher::eval_nullcheck(SgNode* n)
+  ExtendedCallMatcherInner::ReturnType
+  ExtendedCallMatcherInner::eval_nullcheck(SgNode* n)
   {
-    return n ? eval(n) : ExtendedCallMatcher::ReturnType();
+    return n ? eval(n) : ReturnType();
+  }
+
+
+  
+  struct ExtendedCallMatcherOuter : sg::DispatchHandler<SgNodeHelper::ExtendedCallInfo>
+  {
+    void handle(SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
+    
+    // no matches (root and children)
+    void handle(SgExpression&)               { /* no match */ }
+    void handle(SgStatement&)                { /* no match */ }
+    void handle(SgProject&)                  { /* no match */ }
+    void handle(SgFile&)                     { /* no match */ }
+    void handle(SgFileList&)                 { /* no match */ }
+    void handle(SgInitializedName&)          { /* no match */ }
+    void handle(SgPragma&)                   { /* no match */ }
+    
+    // root nodes (get to the bottom of them)
+    void handle(SgExprStatement& n)          { res = eval(n.get_expression()); }
+    
+    void handle(SgReturnStmt& n)             { res = eval_nullcheck(n.get_expression()); } 
+    
+    void handle(SgVariableDeclaration& n)    
+    { 
+      SgInitializedName& var = onlyDecl(n);
+      SgInitializer*     ini = var.get_initializer();
+      
+      if (ini) res = eval(ini); 
+      
+      // \todo test for implicit call constructor
+    }
+    
+    // convenience functions
+    
+    static
+    ReturnType eval(SgExpression* n);
+
+    static
+    ReturnType eval_nullcheck(SgExpression* n);
+  };
+  
+  
+  ExtendedCallMatcherOuter::ReturnType
+  ExtendedCallMatcherOuter::eval(SgExpression* n)
+  {
+    return sg::dispatch(ExtendedCallMatcherInner(), n);
+  }
+  
+  ExtendedCallMatcherOuter::ReturnType
+  ExtendedCallMatcherOuter::eval_nullcheck(SgExpression* n)
+  {
+    return n ? eval(n) : ReturnType();
   }
 }     
       
@@ -2084,7 +2136,7 @@ SgNodeHelper::matchExtendedNormalizedCall(SgNode* n)
   if (!SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL) 
     return SgNodeHelper::ExtendedCallInfo();
     
-  SgNodeHelper::ExtendedCallInfo res = ExtendedCallMatcher::eval(n);
+  SgNodeHelper::ExtendedCallInfo res = sg::dispatch(ExtendedCallMatcherOuter(), n);
     
   // for every match of matchFunctionCall, res should also match.  
   ROSE_ASSERT(  !TEST_EXTENDED_NORMALIZED_CALL 

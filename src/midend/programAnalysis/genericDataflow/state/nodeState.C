@@ -131,7 +131,10 @@ void NodeState::setLatticeAbove(const Analysis* analysis, vector<Lattice*>& latt
                 // Empty out the current mapping of analysis in dfInfoAbove
                 for(vector<Lattice*>::iterator it = w->second.begin(); 
                     it != w->second.end(); it++)
-                { delete *it; }
+                {
+                  ROSE_ASSERT((*it) != NULL);
+                  delete *it;
+                }
                 w->second.clear();
                 
                 // Create the new mapping
@@ -624,7 +627,10 @@ void NodeState::setFacts(const Analysis* analysis, const vector<NodeFact*>& newF
                 for(vector<NodeFact*>::iterator it = factsIt->second.begin();
                     it != factsIt->second.end(); it++)
                 //{ delete it->second; }
-                { delete *it; }
+                {
+                   assert((*it) != NULL);
+                   delete *it;
+                }
                 factsIt->second.clear();
                 factsIt->second = newFacts;
         }
@@ -814,6 +820,7 @@ void NodeState::initNodeStateMap(bool (*filter) (CFGNode cfgn))
         for(set<FunctionState*>::iterator it=allFuncs.begin(); it!=allFuncs.end(); it++)
         {
                 const Function& func = (*it)->func;
+                assert(func.get_definition() != NULL);
                 DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
 
              // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.

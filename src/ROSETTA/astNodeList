@@ -285,6 +285,7 @@ SgAsteriskShapeExp
 SgAttribute
 SgAttributeSpecificationStatement
 SgAutoType
+SgAwaitExpression
 SgBackspaceStatement
 SgBaseClass
 SgExpBaseClass
@@ -311,6 +312,7 @@ SgCatchStatementSeq
 SgCharVal
 SgChar16Val
 SgChar32Val
+SgChooseExpression
 SgClassDecl_attr
 SgClassDeclaration
 SgClassDefinition
@@ -406,6 +408,7 @@ SgFileList
 SgFloatVal
 SgFloat128Val
 SgFloat80Val
+SgFoldExpression
 SgFlushStatement
 SgForAllStatement
 SgForInitStatement
@@ -651,6 +654,7 @@ SgReferenceType
 SgRemOp
 SgRenamePair
 SgRenameSymbol
+SgReplicationOp
 SgReturnStmt
 SgRewindStatement
 SgRshiftAssignOp
@@ -667,6 +671,7 @@ SgSizeOfOp
 SgAlignOfOp
 SgJavaInstanceOfOp
 SgSourceFile
+SgSpaceshipOp
 SgSpawnStmt
 SgSyncAllStatement
 SgSyncImagesStatement
