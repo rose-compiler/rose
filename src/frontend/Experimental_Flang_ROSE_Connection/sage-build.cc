@@ -678,16 +678,16 @@ void Build(const parser::TypeDeclarationStmt &x, T* scope)
 
    SgVariableDeclaration* var_decl = nullptr;
    SgType* type = nullptr;
-   SgExpression* init_expr = nullptr;
+   SgExpression* init = nullptr;
 
    // need name and type
    std::string name{};
 
    Build(std::get<0>(x.t), type);        // DeclarationTypeSpec
    Build(std::get<1>(x.t), scope);       // std::list<AttrSpec>
-   Build(std::get<2>(x.t), name);        // std::list<EntityDecl>
+   Build(std::get<2>(x.t), name, init);  // std::list<EntityDecl>
 
-   builder.Enter(var_decl, name, type, init_expr);
+   builder.Enter(var_decl, name, type, init);
    builder.Leave(var_decl);
 }
 
@@ -800,16 +800,16 @@ void Build(const parser::IntrinsicTypeSpec::DoubleComplex &x, SgType* &type)
    std::cout << "TYPE IS : DoubleComplex\n";
 }
 
-void Build(const std::list<Fortran::parser::EntityDecl> &x, std::string &name)
+void Build(const std::list<Fortran::parser::EntityDecl> &x, std::string &name, SgExpression* &init)
 {
    std::cout << "Rose::builder::Build(std::list) for EntityDecl\n";
 
    for (const auto &elem : x) {
-      Build(elem, name);
+      Build(elem, name, init);
    }
 }
 
-void Build(const parser::EntityDecl &x, std::string &name)
+void Build(const parser::EntityDecl &x, std::string &name, SgExpression* &init)
 {
    //  std::tuple<ObjectName, std::optional<ArraySpec>, std::optional<CoarraySpec>,
    //      std::optional<CharLength>, std::optional<Initialization>>
@@ -832,7 +832,7 @@ void Build(const parser::EntityDecl &x, std::string &name)
    }
 
    if (auto & opt = std::get<4>(x.t)) {    // Initialization
-      Build(opt.value(), scope);
+      Build(opt.value(), init);
    }
 }
 
@@ -862,10 +862,18 @@ void Build(const parser::CharLength &x, T* scope)
    std::cout << "Rose::builder::Build(CharLength)\n";
 }
 
-template<typename T>
-void Build(const parser::Initialization &x, T* scope)
+void Build(const parser::Initialization &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(Initialization)\n";
+   //  std::variant<ConstantExpr, NullInit, InitialDataTarget,
+   //      std::list<common::Indirection<DataStmtValue>>>
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::ConstantExpr &y)  { Build(y, expr); },
+         [&] (const auto &y)                                { ; }
+      },
+      x.u);
 }
 
    // ArraySpec
