@@ -9,6 +9,7 @@
 #include "sage3basic.h"
 #include "roseInternal.h"
 #include "AstNodeVisitMapping.h"
+#include <assert.h>
 #include <iostream>
 
 // #include <string>
@@ -183,8 +184,9 @@ AstPDFGeneration_private::edit_page(size_t pageNumber, SgNode* node, PDFInherite
     Sg_File_Info* fi = sgLocNode->get_file_info();
     ostringstream temp;
     temp<<fi->get_filename()<<" "<<fi->get_line()<<":"<<fi->get_col();
-    if(fi)
+    if (fi != NULL)
       HPDF_Page_ShowTextNextLine(currentPage,temp.str().c_str());
+    assert(fi != NULL);
     if (fi->isTransformation()) 
       HPDF_Page_ShowTextNextLine(currentPage,"IsTransformation:1");
     else
