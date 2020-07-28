@@ -92,8 +92,9 @@ using namespace Rose;
       FunctionState* fState = *it;
       // compose the output file name as filename_mangled_function_name.dot
       Function *func = & (fState->getFunc());
-      assert (func != NULL);
+      assert(func != NULL);
       SgFunctionDefinition* proc = func->get_definition();
+      assert(proc != NULL);
       string file_name = StringUtility::stripPathFromFileName(proc->get_file_info()->get_filename());
       string file_func_name= file_name+ "_"+proc->get_mangled_name().getString();
   

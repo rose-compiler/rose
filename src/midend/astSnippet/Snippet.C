@@ -326,6 +326,7 @@ SnippetFile::findSnippetFunctions()
                     SgFunctionDeclaration *fdecl = fdef->get_declaration();
                     SgFunctionType *ftype = fdecl ? fdecl->get_type() : NULL;
                     SgType *rettype = ftype ? ftype->get_return_type() : NULL;
+                    ROSE_ASSERT(fdecl != NULL);
                     if (rettype==SageBuilder::buildVoidType() && // snippets must return void
                         !boost::contains(fdecl->get_qualified_name().getString(), "<")) // and not have funky names
                         functions[fdef->get_declaration()->get_qualified_name()].push_back(fdef);

@@ -36,6 +36,7 @@ InterProceduralAnalysis::~InterProceduralAnalysis() {}
 // state - the function's NodeState
 bool UnstructuredPassIntraAnalysis::runAnalysis(const Function& func, NodeState* state)
 {
+        ROSE_ASSERT(func.get_definition()!=NULL);
         DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
 
      // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
@@ -796,6 +797,7 @@ bool ContextInsensitiveInterProceduralDataflow::transfer(
                                 Dbg::dbg << "ContextInsensitiveInterProceduralDataflow::transfer Incoming Dataflow info modified\n";
                         // Record that the callee function needs to be re-analyzed because of new information from the caller
                         TraverseCallGraphDataflow::addToRemaining(getFunc(callee));
+                        ROSE_ASSERT(getFunc(callee) != NULL);
                         remainingDueToCallers.insert(getFunc(callee));
                 }
                 
