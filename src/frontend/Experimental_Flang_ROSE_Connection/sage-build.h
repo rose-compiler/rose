@@ -263,6 +263,11 @@ template<typename T> void Build(const Fortran::parser::  OmpEndLoopDirective&x, 
 void Build(const Fortran::parser::NonLabelDoStmt&x, SgExpression* &expr);
 void Build(const Fortran::parser::   LoopControl&x, SgExpression* &expr);
 
+// IfConstruct
+template<typename T> void Build(const Fortran::parser::              IfThenStmt&x, T* scope);
+template<typename T> void Build(const Fortran::parser::IfConstruct::  ElseBlock&x, T* scope);
+template<typename T> void Build(const Fortran::parser::IfConstruct::ElseIfBlock&x, T* scope);
+
 // SpecificationConstruct
 template<typename T> void Build(const Fortran::parser::            DerivedTypeDef&x, T* scope);
 template<typename T> void Build(const Fortran::parser::                   EnumDef&x, T* scope);

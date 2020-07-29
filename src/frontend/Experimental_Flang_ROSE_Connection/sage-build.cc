@@ -1853,6 +1853,26 @@ template<typename T>
 void Build(const parser::IfConstruct&x, T* scope)
 {
    std::cout << "Rose::builder::Build(IfConstruct)\n";
+   //   std::tuple<Statement<IfThenStmt>, Block, std::list<ElseIfBlock>,
+   //      std::optional<ElseBlock>, Statement<EndIfStmt>>
+}
+
+template<typename T>
+void Build(const parser::IfThenStmt&x, T* scope)
+{
+   std::cout << "Rose::builder::Build(IfThenStmt)\n";
+}
+
+template<typename T>
+void Build(const parser::IfConstruct::ElseBlock&x, T* scope)
+{
+   std::cout << "Rose::builder::Build(ElseBlock)\n";
+}
+
+template<typename T>
+void Build(const parser::IfConstruct::ElseIfBlock&x, T* scope)
+{
+   std::cout << "Rose::builder::Build(ElseIfBlock)\n";
 }
 
 template<typename T>
