@@ -857,6 +857,7 @@ void cfgRWTransaction::do_insertBefore(SgNode* n, SgExpression* newNode)
                 SgVarRefExp* replacement = NULL;
 
                 //SgAssignInitializer* init = splitExpression_GB(isSgReturnStmt(n)->get_expression(), replacement, "", getAccessType(n)!=readAccess);
+                ROSE_ASSERT(replacement != NULL);
                 insertBeforeExpression(replacement, newNode);
         }
         else if(isSgStatement(n))
@@ -992,7 +993,8 @@ void cfgRWTransaction::do_insertAfter(SgNode* n, SgExpression* newNode)
                              // SgVarRefExp* replacement;
                                 SgVarRefExp* replacement = NULL;
 
-                                //SgAssignInitializer* init = splitExpression_GB(isSgExpression(n), replacement, "", getAccessType(n)!=readAccess);
+                             // SgAssignInitializer* init = splitExpression_GB(isSgExpression(n), replacement, "", getAccessType(n)!=readAccess);
+                                ROSE_ASSERT(replacement != NULL);
                                 insertBeforeExpression(replacement, newNode);
                         }
                 }

@@ -245,7 +245,8 @@ SgAssignOp* convertInitializerIntoAssignment(SgAssignInitializer* init)
    {
 #ifndef CXX_IS_ROSE_CODE_GENERATION
      using namespace SageBuilder;
-     assert (SageInterface::isDefaultConstructible(init->get_operand_i()->get_type()));
+     // Liao 2020/7/23: this function is not accurate for template classes with specialization
+     //assert (SageInterface::isDefaultConstructible(init->get_operand_i()->get_type())); 
      SgStatement* stmt = getStatementOfExpression(init);
      assert (stmt);
      SgScopeStatement* parent = isSgScopeStatement(stmt->get_parent());

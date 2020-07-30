@@ -97,6 +97,7 @@ IntraFWDataflow::getInitialWorklist(const Function &func, bool firstVisit, bool 
 VirtualCFG::dataflow*
 IntraBWDataflow::getInitialWorklist(const Function &func, bool firstVisit, bool analyzeDueToCallers, const set<Function> &calleesUpdated, NodeState *fState)
 {
+  ROSE_ASSERT(func.get_definition() != NULL);
   DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
   DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition(),filter);
 
@@ -168,9 +169,9 @@ vector<DataflowNode> IntraBWDataflow::getDescendants(const DataflowNode &n)
 { return gatherDescendants(n.inEdges(),  &DataflowEdge::source); }
 
 DataflowNode IntraFWDataflow::getUltimate(const Function &func)
-{ return cfgUtils::getFuncEndCFG(func.get_definition(), filter); }
+{ assert(func.get_definition() != NULL); return cfgUtils::getFuncEndCFG(func.get_definition(), filter); }
 DataflowNode IntraBWDataflow::getUltimate(const Function &func)
-{ return cfgUtils::getFuncStartCFG(func.get_definition(), filter); }
+{ assert(func.get_definition() != NULL); return cfgUtils::getFuncStartCFG(func.get_definition(), filter); }
 
 // Runs the intra-procedural analysis on the given function. Returns true if 
 // the function's NodeState gets modified as a result and false otherwise.
