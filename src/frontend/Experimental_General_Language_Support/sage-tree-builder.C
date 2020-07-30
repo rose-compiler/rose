@@ -92,7 +92,8 @@ void SageTreeBuilder::Enter(SgBasicBlock* &block)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgBasicBlock* &) \n";
 
-   block = SageBuilder::buildBasicBlock_nfi();
+   // Set the parent (at least temporarily) so that symbols can be traced.
+   block = SageBuilder::buildBasicBlock_nfi(SageBuilder::topScopeStack());
 
    SageBuilder::pushScopeStack(block);
 }
@@ -469,6 +470,20 @@ Leave(SgNamespaceDeclarationStatement* namespace_decl)
 }
 
 void SageTreeBuilder::
+Enter(SgExprStatement* &proc_call_stmt, const std::string &proc_name,
+      SgExprListExp* param_list, const std::string &abort_phrase)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgExprStatement* &, ...) \n";
+
+   SgFunctionCallExp* proc_call_exp;
+
+   Enter(proc_call_exp, proc_name, param_list);
+
+   // TODO: AbortPhrase for Jovial
+   proc_call_stmt = SageBuilder::buildExprStatement_nfi(proc_call_exp);
+}
+
+void SageTreeBuilder::
 Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExpression*> &vars, const std::string& label)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgExprStatement* &, ...) \n";
@@ -498,7 +513,7 @@ Leave(SgExprStatement* expr_stmt)
 }
 
 void SageTreeBuilder::
-Enter(SgFunctionCallExp* &func_call, std::string &name, SgExprListExp* params)
+Enter(SgFunctionCallExp* &func_call, const std::string &name, SgExprListExp* params)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionCallExp* &, ...) \n";
 
@@ -1147,6 +1162,7 @@ SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope)
 {
    SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, scope);
    SageInterface::setSourcePosition(var_ref);
+
    return var_ref;
 }
 

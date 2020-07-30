@@ -323,7 +323,7 @@ void allCallInvoke( const CtxLattice<InfiniteCallString>& src,
                     CtxAnalysis<InfiniteCallString>& /* not used */,
                     Labeler& labeler,
                     Label lbl
-               )
+                  )
 {
   defaultCallInvoke(src, tgt, labeler, lbl);
 }

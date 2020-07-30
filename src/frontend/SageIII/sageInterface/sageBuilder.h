@@ -666,6 +666,7 @@ BUILD_BINARY_PROTO(PntrArrRefExp)
 BUILD_BINARY_PROTO(RshiftAssignOp)
 BUILD_BINARY_PROTO(JavaUnsignedRshiftAssignOp)
 
+BUILD_BINARY_PROTO(ReplicationOp)
 BUILD_BINARY_PROTO(RshiftOp)
 BUILD_BINARY_PROTO(JavaUnsignedRshiftOp)
 BUILD_BINARY_PROTO(ScopeOp)
@@ -683,6 +684,9 @@ BUILD_BINARY_PROTO(LeftDivideOp);
 BUILD_BINARY_PROTO(ElementwiseLeftDivideOp);
 BUILD_BINARY_PROTO(ElementwiseAddOp);
 BUILD_BINARY_PROTO(ElementwiseSubtractOp);
+
+// DQ (7/25/2020): Adding C++20 support
+BUILD_BINARY_PROTO(SpaceshipOp)
 
 #undef BUILD_BINARY_PROTO
 
@@ -882,6 +886,19 @@ ROSE_DLL_API SgLambdaCapture* buildLambdaCapture_nfi(SgExpression* capture_varia
 
 ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList    ();
 ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList_nfi();
+
+// DQ (7/25/2020): Adding C++17 support
+ ROSE_DLL_API SgFoldExpression * buildFoldExpression(SgExpression* operands, std::string operator_token_string, bool is_left_associative);
+ROSE_DLL_API SgFoldExpression * buildFoldExpression_nfi(SgExpression* operands, std::string operator_token_string, bool is_left_associative);
+
+// DQ (7/25/2020): Adding C++20 support
+ROSE_DLL_API SgAwaitExpression * buildAwaitExpression();
+ROSE_DLL_API SgAwaitExpression * buildAwaitExpression_nfi();
+
+// DQ (7/25/2020): Adding C++20 support
+ROSE_DLL_API SgChooseExpression * buildChooseExpression();
+ROSE_DLL_API SgChooseExpression * buildChooseExpression_nfi();
+
 
 //@}
 
@@ -1262,6 +1279,10 @@ ROSE_DLL_API SgEmptyDeclaration* buildEmptyDeclaration();
 ROSE_DLL_API SgBasicBlock * buildBasicBlock(SgStatement * stmt1 = NULL, SgStatement* stmt2 = NULL, SgStatement* stmt3 = NULL, SgStatement* stmt4 = NULL, SgStatement* stmt5 = NULL, SgStatement* stmt6 = NULL, SgStatement* stmt7 = NULL, SgStatement* stmt8 = NULL, SgStatement* stmt9 = NULL, SgStatement* stmt10 = NULL);
 ROSE_DLL_API SgBasicBlock * buildBasicBlock_nfi();
 SgBasicBlock * buildBasicBlock_nfi(const std::vector<SgStatement*>&);
+
+// CR (7/24/2020): Added additional functionality
+//! Build a SgBasicBlock and set its parent. This function does NOT link the parent scope to the block.
+SgBasicBlock * buildBasicBlock_nfi(SgScopeStatement* parent);
 
 //! Build an assignment statement from lefthand operand and right hand operand
 ROSE_DLL_API SgExprStatement*
@@ -1701,7 +1722,7 @@ T* buildUnaryExpression_nfi(SgExpression* operand) {
 
 //---------------------binary expressions-----------------------
 
-//! Template function to build a binary expression of type T, taking care of parent pointers, file info, lvalue, etc. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
+//! Template function to build a binary expression of type T, taking care of parent pointers, file info, lvalue, etc. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildReplicationOp,buildScopeOp(),buildSubtractOp()buildXorAssignOp()
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.
  * Doxygen is not smart enough to handle macro expansion.
  */
@@ -1722,7 +1743,7 @@ T* buildUnaryExpression_nfi(SgExpression* operand) {
    return result;
  }
 
-//! Template function to build a binary expression of type T, taking care of parent pointers, but without file-info. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
+//! Template function to build a binary expression of type T, taking care of parent pointers, but without file-info. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildReplicationOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.
  * Doxygen is not smart enough to handle macro expansion.
  */

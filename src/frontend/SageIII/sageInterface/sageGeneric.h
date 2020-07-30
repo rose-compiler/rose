@@ -15,7 +15,7 @@
 
 #if __cplusplus >= 201103L
 #include <type_traits>
-#endif 
+#endif
 
 #if !defined(NDEBUG)
 #include <typeinfo>
@@ -182,7 +182,7 @@ namespace sg
     VisitDispatcher(RoseVisitor&& rosevisitor, std::false_type)
     : rv(std::move(rosevisitor))
     {}
-    
+
     // lvalue ctor
     VisitDispatcher(const RoseVisitor& rosevisitor, std::true_type)
     : rv(rosevisitor)
@@ -210,6 +210,7 @@ namespace sg
     GEN_VISIT(SgAdaPackageSpecDecl)
     GEN_VISIT(SgAdaPackageSymbol)
     GEN_VISIT(SgAdaRangeConstraint)
+    GEN_VISIT(SgAdaRenamingDecl)
     GEN_VISIT(SgAdaSubtype)
     GEN_VISIT(SgAdaTaskBody)
     GEN_VISIT(SgAdaTaskBodyDecl)
@@ -600,6 +601,7 @@ namespace sg
     GEN_VISIT(SgRemOp)
     GEN_VISIT(SgRenamePair)
     GEN_VISIT(SgRenameSymbol)
+    GEN_VISIT(SgReplicationOp)
     GEN_VISIT(SgReturnStmt)
     GEN_VISIT(SgRewindStatement)
     GEN_VISIT(SgRshiftAssignOp)
@@ -901,7 +903,7 @@ namespace sg
     GEN_VISIT(SgFinishExp)
     GEN_VISIT(SgHereExp)
     GEN_VISIT(SgDotDotExp)
-    
+
     /*
         GEN_VISIT(SgAsmArm64AtOperand)
     GEN_VISIT(SgAsmArm64CImmediateOperand)
@@ -1142,7 +1144,7 @@ namespace sg
     GEN_VISIT(SgAsmBinaryAddressSymbol)
     GEN_VISIT(SgAsmBinaryDataSymbol)
     GEN_VISIT(SgBinaryComposite)
-    * 
+    *
     GEN_VISIT(SgComprehensionList)
 
     GEN_VISIT(SgDirectedGraph)
@@ -1158,7 +1160,7 @@ namespace sg
 
 #undef GEN_VISIT
 
-  
+
 
 #if __cplusplus >= 201103L
   template <class RoseVisitor>
@@ -1168,17 +1170,17 @@ namespace sg
   {
     typedef typename std::remove_reference<RoseVisitor>::type  RoseVisitorNoref;
     typedef typename std::remove_const<RoseVisitorNoref>::type RoseHandler;
-     
+
     ROSE_ASSERT(n);
 
-    VisitDispatcher<RoseHandler> vis( std::forward<RoseVisitor>(rv), 
+    VisitDispatcher<RoseHandler> vis( std::forward<RoseVisitor>(rv),
                                       std::is_lvalue_reference<RoseVisitor>()
                                     );
 
     n->accept(vis);
     return std::move(vis).rv;
   }
-#else  
+#else
   template <class RoseVisitor>
   inline
   RoseVisitor
@@ -1190,7 +1192,7 @@ namespace sg
 
     n->accept(vis);
     return vis.rv;
-  }  
+  }
 #endif
 
 
@@ -1280,7 +1282,7 @@ namespace sg
     //~ return std::move(rv);
     return _dispatch(std::forward<RoseVisitor>(rv), const_cast<SgNode*>(n));
   }
-#else  
+#else
   template <class RoseVisitor>
   inline
   RoseVisitor
@@ -1420,7 +1422,7 @@ namespace sg
 
 #if __cplusplus >= 201103L
     TypeRecoveryHandler(TypeRecoveryHandler&&) = default;
-    
+
     TypeRecoveryHandler()                                      = delete;
     TypeRecoveryHandler(const TypeRecoveryHandler&)            = delete;
     TypeRecoveryHandler& operator=(const TypeRecoveryHandler&) = delete;

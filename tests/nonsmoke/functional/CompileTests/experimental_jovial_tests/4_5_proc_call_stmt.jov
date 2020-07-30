@@ -1,0 +1,18 @@
+START
+
+REF PROC proc'in'out'1 (in'param'1 : out'param'1);
+  BEGIN
+    ITEM in'param'1  S 4;
+    ITEM out'param'1 S 4;
+  END
+
+PROGRAM UserDefinedProcedureCall;
+BEGIN
+
+ITEM var'in S = 13;
+ITEM var'out S;
+
+proc'in'out'1(var'in, var'out);
+
+END
+TERM

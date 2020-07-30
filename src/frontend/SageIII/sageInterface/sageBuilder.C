@@ -7454,6 +7454,9 @@ BUILD_BINARY_DEF(XorAssignOp)
 BUILD_BINARY_DEF(VarArgCopyOp)
 BUILD_BINARY_DEF(VarArgStartOp)
 
+// CR(07/26/2018): Jovial operators
+BUILD_BINARY_DEF(ReplicationOp);
+
 //SK(08/20/2015): Matlab operators
 BUILD_BINARY_DEF(PowerOp);
 BUILD_BINARY_DEF(ElementwisePowerOp);
@@ -7464,12 +7467,15 @@ BUILD_BINARY_DEF(ElementwiseLeftDivideOp);
 BUILD_BINARY_DEF(ElementwiseAddOp);
 BUILD_BINARY_DEF(ElementwiseSubtractOp);
 
+// DQ (7/25/2020): Adding C++20 support
+BUILD_BINARY_DEF(SpaceshipOp)
+
 #undef BUILD_BINARY_DEF
 
 
 
-// Rasmussen ( 1/25/2018):
-//           (10/30/2018): Fixed case when this function is called with NULL dim_info object.
+// CR ( 1/25/2018):
+//    (10/30/2018): Fixed case when this function is called with NULL dim_info object.
 SgArrayType* SageBuilder::buildArrayType(SgType* base_type, SgExprListExp* dim_info)
    {
      ROSE_ASSERT(base_type != NULL);
@@ -10011,6 +10017,18 @@ SgBasicBlock* SageBuilder::buildBasicBlock_nfi(const vector<SgStatement*>& stmts
      return result;
    }
 
+// CR (7/24/2020): Added additional functionality.
+// Build a SgBasicBlock and set its parent. This function does NOT link the parent scope to the block.
+SgBasicBlock*
+SageBuilder::buildBasicBlock_nfi(SgScopeStatement* parent)
+{
+   SgBasicBlock* block = buildBasicBlock_nfi();
+   block->set_parent(parent);
+
+   return block;
+}
+
+
 SgGotoStatement *
 SageBuilder::buildGotoStatement(SgLabelStatement *  label)
 {
@@ -11893,6 +11911,68 @@ SageBuilder::buildLambdaCaptureList_nfi()
 
      setOneSourcePositionNull(lambdaCaptureList);
      return lambdaCaptureList;
+   }
+
+// DQ (7/25/2020): Adding C++17 support
+SgFoldExpression* 
+SageBuilder::buildFoldExpression(SgExpression* operands, string operator_token_string, bool is_left_associative)
+   {
+     SgFoldExpression* result = new SgFoldExpression(NULL,operands,operator_token_string,is_left_associative);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+
+SgFoldExpression*
+SageBuilder::buildFoldExpression_nfi(SgExpression* operands, string operator_token_string, bool is_left_associative)
+   {
+     SgFoldExpression* result = new SgFoldExpression(NULL,operands,operator_token_string,is_left_associative);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionNull(result);
+     return result;
+   }
+
+// DQ (7/25/2020): Adding C++20 support
+SgAwaitExpression*
+SageBuilder::buildAwaitExpression()
+   {
+     SgAwaitExpression* result = new SgAwaitExpression(NULL,NULL);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+SgAwaitExpression*
+SageBuilder::buildAwaitExpression_nfi()
+   {
+     SgAwaitExpression* result = new SgAwaitExpression(NULL,NULL);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionNull(result);
+     return result;
+   }
+
+// DQ (7/25/2020): Adding C++20 support
+SgChooseExpression*
+SageBuilder::buildChooseExpression()
+   {
+     SgChooseExpression* result = new SgChooseExpression(NULL,NULL);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+
+SgChooseExpression*
+SageBuilder::buildChooseExpression_nfi()
+   {
+     SgChooseExpression* result = new SgChooseExpression(NULL,NULL);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionNull(result);
+     return result;
    }
 
 
