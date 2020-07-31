@@ -285,6 +285,8 @@ namespace
     SgDeclarationStatement& dcl    = SG_DEREF( n.get_declaration() ); 
     SgDeclarationStatement* defdcl = dcl.get_definingDeclaration();
     
+    logWarn() << dcl.get_mangled_name() << std::endl;
+    
     return defdcl ? SG_ASSERT_TYPE(SgClassDeclaration, *defdcl).get_definition()
                   : nullptr
                   ;
@@ -544,6 +546,15 @@ namespace
   //
   // C++ normalizing transformers
   
+  SgMemberFunctionDeclaration* 
+  obtainDefaultCtorIfAvail(SgType& ty);
+  
+  /// inserts the initialization of a member variable into a block (i.e., ctor body).
+  /// \note 
+  ///   the ast representation deviates from standard C++
+  ///   e.g., for struct S { S() {}; std::string s; };
+  ///     varrefexp(s) = initializer-expr 
+  ///   is inserted into the block
   struct VarCtorInserter
   {
       VarCtorInserter(SgBasicBlock& where, SgInitializedName& what, SgInitializer* how)
@@ -552,9 +563,27 @@ namespace
       
       SgInitializer* mkDefaultInitializer() 
       {
-        // \todo once we build missing constructor bodies, this should become
-        //       SgConstructorInitializer.
-        return sb::buildAssignInitializer(sb::buildNullExpression(), var.get_type());
+        SgType&                      varty = SG_DEREF(var.get_type());
+        SgMemberFunctionDeclaration* ctor  = obtainDefaultCtorIfAvail(varty);
+        
+        if (ctor == nullptr)
+        {
+          // return an empty assign initializer, if the type does not have a ctor
+          return sb::buildAssignInitializer(sb::buildNullExpression(), &varty);
+        }
+        
+        SgClassDefinition&           clsdef = getClassDef(*ctor); 
+        SgClassDeclaration*          clazz  = isSgClassDeclaration(clsdef.get_parent());
+      
+        ROSE_ASSERT(clazz);
+        return sb::buildConstructorInitializer( ctor,
+                                                sb::buildExprListExp(), 
+                                                SgClassType::createType(clazz),
+                                                false /* need name */,
+                                                false /* need qualifier */,
+                                                false /* need parenthesis after name */,
+                                                false /* associated class unknown */
+                                              );
       } 
       
       void execute() 
@@ -800,6 +829,29 @@ namespace
     
     return obtainGeneratableFunction(clsdef, dtorname, ctorargs);
   }
+  
+  SgMemberFunctionDeclaration* 
+  obtainDefaultCtorIfAvail(SgType& ty)
+  {
+    using ExprListGuard = std::unique_ptr<SgExprListExp>;
+    // \todo also skip usingg declarations (aka SgTemplateTypedefs)
+    constexpr unsigned char STRIP_MODIFIER_ALIAS = SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE; 
+    
+    SgType*            elemty = ty.stripType(STRIP_MODIFIER_ALIAS);
+    SgClassType*       clsty  = isSgClassType(elemty);
+    
+    if (!clsty) return nullptr;
+    
+    logInfo() << "link to default ctor" << std::endl;
+    
+    // args is temporary
+    //~ SgExprListExp      emptyargs;
+    ExprListGuard      emptyargs{ sb::buildExprListExp() };
+    SgClassDefinition& clsdef = getClassDef(SG_DEREF(clsty->get_declaration()));
+    
+    return &obtainGeneratableCtor( clsdef, *emptyargs );
+  }
+
 
   struct BaseCtorInserter
   {
@@ -924,7 +976,7 @@ namespace
       return sgnode;
     }
     
-    void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
+    void handle(SgNode& n)         { SG_UNEXPECTED_NODE(n); }
     
     void handle(SgModifierType& n) { descend(n.get_base_type()); }
     void handle(SgTypedefType& n)  { descend(n.get_base_type()); }
@@ -961,6 +1013,8 @@ namespace
       
       void execute() 
       {
+        logWarn() << "in " << var.get_name() << std::endl;
+        
         SgExpression& destructed = SG_DEREF( sb::buildVarRefExp(&var, nullptr) );
         SgStatement*  dtorcall   = sg::dispatch(DtorCallCreator(destructed), var.get_type());
         ROSE_ASSERT(dtorcall);
@@ -1247,11 +1301,13 @@ namespace
         
         if (!res.first /* not trivial */ && !res.second /* no user defined dtor */) 
         {
-          //~ if (nameOf(n) == "configurationItem")
           {
-            logInfo() << "enqueue gen dtor: " << nameOf(n) << "\n"
-                      << typeid(*(n.get_parent())).name() << " @" << n.get_parent() << "\n"
-                      << typeid(*(n.get_parent()->get_parent())).name() << " @" << n.get_parent()->get_parent() 
+            SgNode& parent      = SG_DEREF(n.get_parent());
+            SgNode& grandparent = SG_DEREF(parent.get_parent());
+            
+            logInfo() << "generate dtor: " << nameOf(n) 
+                      << "\n       parent: " << typeid(parent).name() << " @" << &parent
+                      << "\n  grandparent: " << typeid(grandparent).name() << " @" << &grandparent 
                       << std::endl;
           }
           
@@ -1288,15 +1344,12 @@ namespace
     //~ ast.setWithTemplates(false);
     for (auto i=ast.begin(); i!=ast.end(); ++i)
     { 
-      if (Normalization::isTemplateNode(*i))
+      // only traverse nodes one and if they are not templated 
+      if (Normalization::isTemplateNode(*i) || alreadyProcessed(knownNodes, *i))
       {
         i.skipChildrenOnForward();
         continue;
       } 
-      
-      // a node should only be traversed once..
-      if (alreadyProcessed(knownNodes, *i))
-        continue; 
       
       // never seen and not a template    
       sg::dispatch(CxxTransformer(transformations), *i);
