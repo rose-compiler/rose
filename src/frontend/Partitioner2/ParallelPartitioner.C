@@ -3,7 +3,10 @@
 #include <sage3basic.h>
 #include <Partitioner2/ParallelPartitioner.h>
 
+#include <BinaryBestMapAddress.h>
 #include <BinaryDataFlow.h>
+#include <BinarySymbolicExpr.h>
+#include <boost/format.hpp>
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/WorkList.h>
@@ -189,8 +192,8 @@ DecodeInstruction::run() {
     // CFG successors exist. Beware: other threads might be adding these same vertices if they're reachable from other
     // instructions as well.
     if (insn) {
-        auto successors = partitioner().computedConcreteSuccessors(insnVa);
-        bool isFunctionCall = partitioner().isFunctionCall(insnVa);
+        auto successors = partitioner().computedConcreteSuccessors(insnVa, Accuracy::DEFAULT);
+        bool isFunctionCall = partitioner().isFunctionCall(insnVa, Accuracy::DEFAULT);
 
         if (isFunctionCall) {
             // Add the edge from the call source to the return target.
@@ -220,7 +223,7 @@ DecodeInstruction::run() {
         }
     }
 
-#if 1 // DEBUGGING [Robb Matzke 2020-07-10]
+#if 0 // DEBUGGING [Robb Matzke 2020-07-10]
     if (mlog[DEBUG]) {
         mlog[DEBUG] <<"control flow graph after inserting:\n";
         partitioner().printInsnCfg(mlog[DEBUG]);
@@ -322,6 +325,15 @@ Partitioner::Partitioner(const MemoryMap::Ptr &memory, Disassembler *decoder, co
         if ((node.value().accessibility() & MemoryMap::EXECUTABLE) != 0)
             nExeVas_ += node.key().size();
     }
+}
+
+Accuracy
+Partitioner::choose(Accuracy a, Accuracy b) {
+    if (a != Accuracy::DEFAULT)
+        return a;
+    if (b != Accuracy::DEFAULT)
+        return b;
+    return Accuracy::LOW;
 }
 
 MemoryMap::Ptr
@@ -511,11 +523,165 @@ Partitioner::basicBlockContaining(rose_addr_t va) const {
     return retval;
 }
 
+Borrowed<CachedItem<Semantics::RiscOperatorsPtr, uint64_t>>
+Partitioner::basicBlockSemantics(const InsnInfo::List &insns) {
+    Semantics::RiscOperatorsPtr ops;
+    ASSERT_forbid(insns.empty());
+
+    // Do we already have semantics for some prefix of these instructions? A common case for this call is that we've already
+    // computed the semantics for a basic block, but now we're adding one additional instruction to the block.
+    InsnInfo::List prefix = insns;
+    while (!prefix.empty()) {
+        auto key = InsnInfo::hash(prefix);
+        if (auto cached = prefix.back()->cached().semantics.take(key)) {
+            ops = *cached;
+            break;
+        }
+        prefix.pop_back();
+    }
+
+    // We might have already computed the semantics for this same requested block.
+    if (prefix.size() == insns.size())
+        return borrow(insns.back()->cached().semantics, InsnInfo::hash(insns), ops);
+
+    // If we don't know the semantics for any prefix, then create a new initial state and start from the beginning. Otherwise,
+    // we have two choices: we could copy the semantics and add the after-prefix instructions, or we could just take the state
+    // and modify it. We do the latter because it's unlikely that anyone's going to ever again ask for semantics for only the
+    // first part of this basic block--they'll always ask for the whole block.
+    if (prefix.empty()) {
+        SmtSolver::Ptr solver; // FIXME[Robb Matzke 2020-07-29]: use a solver for semantics? Probably not needed.
+        const RegisterDictionary *regdict = instructionCache().decoder()->registerDictionary();
+        ops = Semantics::RiscOperators::instance(regdict, solver, settings_.semanticMemoryParadigm);
+        BaseSemantics::MemoryStatePtr mem = ops->currentState()->memoryState();
+        if (auto ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
+            ml->memoryMap(memoryMap());
+        } else if (auto mm = boost::dynamic_pointer_cast<Semantics::MemoryMapState>(mem)) {
+            mm->memoryMap(memoryMap());
+        }
+    } else {
+        // FIXME[Robb Matzke 2020-07-29]: Is this going to cause problems? Is some other thread using the old state still?
+        prefix.back()->cached().semantics.reset();
+    }
+
+    // Add the non-prefix instructions to the semantic state. If there's a semantic failure then erase the current state (it would
+    // be wrong anyway. If there is no current state then there's no point in processing the instruction.
+    if (ops->currentState()) {
+        if (BaseSemantics::DispatcherPtr protoCpu = instructionCache().decoder()->dispatcher()) {
+            BaseSemantics::DispatcherPtr cpu = protoCpu->create(ops);
+            for (auto insn = insns.begin() + prefix.size(); insn != insns.end(); ++insn) {
+                try {
+                    cpu->processInstruction((*insn)->ast().lock().get());
+                } catch (...) {
+                    ops->currentState(Semantics::StatePtr());
+                    break;
+                }
+            }
+        } else {
+            ops->currentState(Semantics::StatePtr());
+        }
+    }
+    
+    return borrow(insns.back()->cached().semantics, InsnInfo::hash(insns), ops);
+}
+
+std::vector<SymbolicExpr::Ptr>
+Partitioner::splitSuccessors(const BaseSemantics::RiscOperatorsPtr &ops) {
+    ASSERT_not_null(ops);
+    ASSERT_not_null(ops->currentState());
+    std::vector<SymbolicExpr::Ptr> retval;
+    const RegisterDescriptor IP = instructionCache().decoder()->instructionPointerRegister();
+    BaseSemantics::SValuePtr dfltIp = ops->undefined_(IP.nBits());
+    SymbolicExpr::Ptr ip = Semantics::SValue::promote(ops->peekRegister(IP, dfltIp))->get_expression();
+    if (ip->isIntegerConstant() || ip->isIntegerVariable()) {
+        retval.push_back(ip);
+    } else if (SymbolicExpr::InteriorPtr inode = ip->isInteriorNode()) {
+        if (inode->getOperator() == SymbolicExpr::OP_ITE) {
+            if (inode->child(0)->isIntegerConstant())
+                retval.push_back(inode->child(0));
+            if (inode->child(1)->isIntegerConstant())
+                retval.push_back(inode->child(1));
+            if (retval.empty())
+                retval.push_back(SymbolicExpr::makeIntegerVariable(IP.nBits()));
+        } else if (inode->getOperator() == SymbolicExpr::OP_SET) {
+            for (SymbolicExpr::Ptr member: inode->children()) {
+                if (member->isIntegerConstant())
+                    retval.push_back(member);
+            }
+            if (retval.empty())
+                retval.push_back(SymbolicExpr::makeIntegerVariable(IP.nBits()));
+        } else {
+            retval.push_back(SymbolicExpr::makeIntegerVariable(IP.nBits()));
+        }
+    }
+    return retval;
+}
+    
+std::vector<SymbolicExpr::Ptr>
+Partitioner::computeSuccessors(const InsnInfo::List &insns, Accuracy accuracy) {
+    accuracy = choose(accuracy, settings_.successorAccuracy);
+    std::vector<SymbolicExpr::Ptr> retval;
+    const RegisterDescriptor IP = instructionCache().decoder()->instructionPointerRegister();
+
+    if (Accuracy::HIGH == accuracy) {
+        auto borrowedOps = basicBlockSemantics(insns);
+        Semantics::RiscOperatorsPtr ops = borrowedOps.get().orElse(nullptr);
+        if (ops && ops->currentState())
+            return splitSuccessors(ops);
+    }
+
+    // Low accuracy (whether requested or because high accuracy is unavailable)
+    if (!insns.empty()) {
+        ASSERT_not_null(insns.back());
+        bool complete = true;
+        AddressSet succs = insns.back()->ast().lock().get()->getSuccessors(complete /*out*/);
+        for (rose_addr_t va: succs.values())
+            retval.push_back(SymbolicExpr::makeIntegerConstant(IP.nBits(), va));
+        if (!complete)
+            retval.push_back(SymbolicExpr::makeIntegerVariable(IP.nBits()));
+    }
+
+    ASSERT_forbid(retval.empty());
+    return retval;
+}
+        
+
+
+std::vector<SymbolicExpr::Ptr>
+Partitioner::computeSuccessors(rose_addr_t insnVa, Accuracy accuracy) {
+    accuracy = choose(accuracy, settings_.successorAccuracy);
+    InsnInfo::List insns;
+    switch (accuracy) {
+        case Accuracy::HIGH: {
+            InsnInfo::List insns = basicBlockEndingAt(insnVa, settings_.maxAnalysisBBlockSize);
+            // Once we hit the max basic block size we avoid using high accuracy because it becomes inefficient. Here's why...
+            // Blocks are typically extended one instruction at a time, and adding an instruction to a small block is efficient
+            // because we just take the previous instruction's semantics and modify it with the new instruction, then cache it
+            // at the new instruction.  But when the basic block size surpasses the max analysis size, then the InsnInfo::List
+            // will no longer include the first instructions, and therefore the hash will no longer match the cached semantic
+            // hash. This is correct behavior since the semantics of instructions 0..N is different than 1..N+1. However, it
+            // means that the semantics for 1..N+1 need to be created from scratch by processing all N instructions. This
+            // happens each time the basic block is extended by one instruction.  To avoid this bad behavior, if
+            // basicBlockEndingAt returns a block of the maximum size (since we can't tell if the block could have been even
+            // bigger) we switch to LOW accuracy mode which doesn't require semantics.
+            return computeSuccessors(insns, insns.size() == settings_.maxAnalysisBBlockSize ? Accuracy::LOW : Accuracy::HIGH);
+        }
+        case Accuracy::LOW:
+            if (InsnInfo::Ptr insnInfo = existingInstruction(insnVa)) {
+                insns.push_back(insnInfo);
+                return computeSuccessors(insns, Accuracy::LOW);
+            } else {
+                return {};
+            }
+        default:
+            ASSERT_not_reachable("invalid accuracy");
+    }
+}
+
 AddressSet
-Partitioner::computedConcreteSuccessors(rose_addr_t insnVa) {
-    switch (settings_.successorAccuracy) {
+Partitioner::computedConcreteSuccessors(rose_addr_t insnVa, Accuracy accuracy) {
+    accuracy = choose(accuracy, settings_.successorAccuracy);
+    switch (accuracy) {
         case Accuracy::LOW: {
-            // No need to cache this because it's already fast.
             if (InstructionPtr insn = existingInstructionAst(insnVa)) {
                 bool complete = true;
                 return insn->getSuccessors(complete/*out*/);
@@ -525,29 +691,24 @@ Partitioner::computedConcreteSuccessors(rose_addr_t insnVa) {
         }
 
         case Accuracy::HIGH: {
-            InsnInfo::List insns = basicBlockEndingAt(insnVa, settings_.maxAnalysisBBlockSize);
-            if (insns.empty())
-                return AddressSet();
-            auto key = InsnInfo::hash(insns);
-
-            // Are successors already cached for this set of instruction addresses?
-            if (auto cached = insns.back()->cached().computedConcreteSuccessors.get(key))
-                return *cached;
-
-            // Calculate the successors and cache them.
-            auto locked = lockInCache(insns);
-            bool complete = true;
-            AddressSet successors = locked.insns.front()->getSuccessors(locked.insns, complete/*out*/, memoryMap());
-            insns.back()->cached().computedConcreteSuccessors.set(key, successors);
-            return successors;
+            AddressSet retval;
+            std::vector<SymbolicExpr::Ptr> symbolicSuccessors = computeSuccessors(insnVa, accuracy);
+            for (SymbolicExpr::Ptr expr: symbolicSuccessors) {
+                if (auto ival = expr->toUnsigned())
+                    retval.insert(*ival);
+            }
+            return retval;
         }
+
+        default:
+            ASSERT_not_reachable("invalid accuracy");
     }
-    ASSERT_not_reachable("invalid successor accuracy setting");
 }
 
 bool
-Partitioner::isFunctionCall(rose_addr_t insnVa) {
-    switch (settings_.functionCallDetectionAccuracy) {
+Partitioner::isFunctionCall(rose_addr_t insnVa, Accuracy accuracy) {
+    accuracy = choose(accuracy, settings_.functionCallDetectionAccuracy);
+    switch (accuracy) {
         case Accuracy::LOW: {
             // No need to cache this because it's already fast.
             if (InstructionPtr insn = existingInstructionAst(insnVa)) {
@@ -574,8 +735,10 @@ Partitioner::isFunctionCall(rose_addr_t insnVa) {
             insns.back()->cached().isFunctionCall.set(key, retval);
             return retval;
         }
+
+        default:
+            ASSERT_not_reachable("invalid accuracy");
     }
-    ASSERT_not_reachable("invalid function call accuracy setting");
 }
 
 Partitioner::CreateLinkedCfgVertices
@@ -709,7 +872,7 @@ Partitioner::dumpInsnCfg(std::ostream &out, const Rose::BinaryAnalysis::Partitio
             out <<"  from " <<addrToString(edge.source()->value()->address())
                 <<" via " <<edge.value() <<" #" <<edge.id() <<"\n";
         for (auto edge: vertex.outEdges())
-            out <<"  to   " <<addrToString(edge.source()->value()->address())
+            out <<"  to   " <<addrToString(edge.target()->value()->address())
                 <<" via " <<edge.value() <<" #" <<edge.id() <<"\n";
     }
 }
@@ -756,6 +919,40 @@ Partitioner::addressOrder(const InsnInfo::List &a, const InsnInfo::List &b) {
     return InsnInfo::addressOrder(a.front(), b.front());
 }
 
+rose_addr_t
+Partitioner::remap() {
+    ASSERT_forbid2(isRunning(), "not thread safe");
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    debug <<"remapping memory\n";
+
+    BestMapAddress bma;
+    bma.settings().nThreads = 0;                        // all hardware threads
+    bma.nBits(instructionCache().decoder()->instructionPointerRegister().nBits());
+    for (auto vertex: insnCfg_.vertices()) {
+        if (vertex.value()->functionReasons().isAnySet()) {
+            bma.insertEntryAddress(vertex.value()->address());
+        }
+        for (auto edge: vertex.outEdges()) {
+            if (edge.value().types().isAnySet(E_FUNCTION_CALL | E_FUNCTION_XFER))
+                bma.insertTargetAddress(edge.target()->value()->address());
+        }
+    }
+
+    std::vector<rose_addr_t> deltas = bma.analyze().bestDeltas();
+    std::sort(deltas.begin(), deltas.end());
+    if (!deltas.empty()) {
+        if (debug) {
+            Diagnostics::mfprintf(debug)("remap deltas (%6.2%% accuracy):", 100.0 * bma.bestDeltaRatio());
+            for (rose_addr_t va: deltas)
+                debug <<" " <<StringUtility::addrToString(va, bma.nBits());
+            debug <<"\n";
+        }
+        return deltas[0];
+    }
+
+    return 0;
+}
+
 void
 Partitioner::transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &out) {
     ASSERT_forbid2(isRunning(), "not thread safe");
@@ -778,6 +975,40 @@ Partitioner::transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &ou
         auto bblock = BasicBlock::instance(insns.front()->address(), out);
         for (auto &insnInfo: insns)
             bblock->append(out, insnInfo->ast().take());
+
+        // Create the basic block successors. The serial partitioner uses Semantics::SValues to store the address, so we need
+        // to jump through some hoops since our edges don't store this information. Fortunately, most successors are constants
+        // that we can obtain directly from the CFG edges. The only extra one we need is if there's a branch to an
+        // indeterminate address.
+        auto borrowedOps = basicBlockSemantics(insns);
+        BaseSemantics::RiscOperatorsPtr ops = borrowedOps.get().orElse(nullptr);
+        ASSERT_not_null(ops);
+        const RegisterDescriptor IP = instructionCache().decoder()->instructionPointerRegister();
+        rose_addr_t lastInsnVa = insns.back()->address();
+        auto vertex = insnCfg_.findVertexKey(lastInsnVa);
+        ASSERT_require(vertex != insnCfg_.vertices().end());
+        for (auto edge: vertex->outEdges()) {
+            rose_addr_t targetVa = edge.target()->value()->address();
+            BaseSemantics::SValuePtr targetExpr = ops->number_(IP.nBits(), targetVa);
+            edge.value().types().each([targetExpr, bblock](EdgeType et) {
+                    bblock->insertSuccessor(targetExpr, et);
+                });
+        }
+        if (ops->currentState()) {
+            std::vector<SymbolicExpr::Ptr> successors = splitSuccessors(ops);
+            for (auto edge: successors) {
+                if (!edge->isIntegerConstant()) {
+                    BaseSemantics::SValuePtr targetExpr = ops->undefined_(IP.nBits());
+                    bblock->insertSuccessor(targetExpr, E_NORMAL);
+                }
+            }
+        } else {
+            bool complete;
+            insns.back()->ast().lock().get()->getSuccessors(complete /*out*/);
+            if (!complete)
+                bblock->insertSuccessor(ops->undefined_(IP.nBits()), E_NORMAL);
+        }
+        
         out.detachBasicBlock(bblock);
         out.attachBasicBlock(bblock);
     }
@@ -804,50 +1035,72 @@ Partitioner::transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &ou
 // Function assignment ("Fa") assigns each instruction to a specific function.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using FaState = std::set<rose_addr_t>;                // set of function entry addresses
+struct FaState {
+    std::set<rose_addr_t> owningFunctions;
+    bool isEntryPoint;
+
+    FaState()
+        : isEntryPoint(false) {}
+
+    explicit FaState(rose_addr_t va)
+        : owningFunctions{va}, isEntryPoint(true) {}
+
+    std::string toString() const {
+        std::ostringstream ss;
+        if (isEntryPoint)
+            ss <<"entry-point";
+        for (auto owner = owningFunctions.begin(); owner != owningFunctions.end(); ++owner)
+            ss <<(ss.str().empty() ? "" : ", ") <<addrToString(*owner);
+        return ss.str();
+    }
+};
 
 struct FaTransfer {
     FaState operator()(const InsnCfg&, size_t vertexId, const FaState &state) const {
         return state;
     }
 
-    std::string printState(const FaState &state) const {
-        std::ostringstream ss;
-        for (auto iter = state.begin(); iter != state.end(); ++iter)
-            ss <<(iter == state.begin() ? "" : " ") <<addrToString(*iter);
-        return ss.str();
+    std::string toString(const FaState &state) const {
+        return state.toString();
     }
 };
 
 struct FaMerge {
     bool operator()(FaState &a, const FaState &b) const {
-        bool changed = false;
-        for (rose_addr_t va: b) {
-            if (a.insert(va).second)
-                changed = true;
-        }
-        return changed;
+        size_t oldSize = a.owningFunctions.size();
+        a.owningFunctions.insert(b.owningFunctions.begin(), b.owningFunctions.end());
+        return oldSize != a.owningFunctions.size();
     }
 };
 
 struct FaEdgePredicate {
-    bool operator()(const InsnCfg&, const InsnCfg::Edge &edge, const FaState&) {
-        return !edge.value().types().isAnySet(E_FUNCTION_CALL |
-                                              E_FUNCTION_RETURN |
-                                              E_FUNCTION_XFER);
+    bool operator()(const InsnCfg&, const InsnCfg::Edge &edge, const FaState&/*incoming*/, const FaState &outgoing) {
+        // Don't follow edges that that are related to function calls.
+        if (edge.value().types().isAnySet(E_FUNCTION_CALL | E_FUNCTION_RETURN | E_FUNCTION_XFER))
+            return false;
+
+        // Don't follow edges into a function entry point.
+        return !outgoing.isEntryPoint;
     }
 };
 
 std::map<rose_addr_t /*funcVa*/, AddressSet /*insnVas*/>
 Partitioner::assignFunctions() {
     ASSERT_forbid2(isRunning(), "not thread safe");
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+#if 1 // DEBUGGING [Robb Matzke 2020-07-30]
+    debug.enable();
+#endif
+    debug <<"assigning blocks to functions...\n";
+    Sawyer::Stopwatch timer;
 
-    // Create the dataflow engine. For each CFG vertex that has a non-empty function reason, initialize it's state in the data
+    // Create the dataflow engine. For each CFG vertex that has a non-empty function reason, initialize its state in the data
     // flow and mark it as a starting point. As a side effect, if any vertex has an incoming edge that would cause the vertex
     // to be a function entry point, then mark it as such.
     using DfEngine = Rose::BinaryAnalysis::DataFlow::Engine<InsnCfg, FaState, FaTransfer, FaMerge, FaEdgePredicate>;
     FaTransfer xfer;
     DfEngine dfEngine(insnCfg_, xfer, FaMerge(), FaEdgePredicate());
+    size_t nFunctions = 0;
     for (auto vertex: insnCfg_.vertices()) {
         if (vertex.value()->functionReasons().isClear(SgAsmFunction::FUNC_CALL_TARGET)) {
             for (auto edge: vertex.inEdges()) {
@@ -856,22 +1109,58 @@ Partitioner::assignFunctions() {
             }
         }
 
-        if (!vertex.value()->functionReasons().isEmpty())
-            dfEngine.insertStartingVertex(vertex.id(), FaState{vertex.value()->address()});
+        if (!vertex.value()->functionReasons().isEmpty()) {
+            dfEngine.insertStartingVertex(vertex.id(), FaState(vertex.value()->address()));
+            ++nFunctions;
+        }
     }
+    debug <<"dataflow is starting with " <<StringUtility::plural(nFunctions, "functions") <<"\n";
 
     // Run until a fixed point is reached. We've set up the problem so that we're guaranteed to reach a fixed point. Once this
     // completes, every vertex reachable from a function entry point will have a non-empty set of function owners, and vertices
     // that are not reachable will have an empty set.
     dfEngine.runToFixedPoint();
+    debug <<"dataflow reached fixed point after " <<StringUtility::plural(dfEngine.nIterations(), "steps") <<"\n";
 
     // FIXME[Robb Matzke 2020-07-08]: What to do about unowned instructions?  Maybe we don't care about them because we have
     // more work to do? Or should we create additional functions to which they should be assigned? If so, what addresses should
     // we use as the function entry points?
-    if (mlog[ERROR]) {
+    if (mlog[ERROR] || debug) {
+        size_t nUnassigned = 0;
         for (size_t i = 0; i < insnCfg_.nVertices(); ++i) {
-            if (dfEngine.getInitialState(i).empty())
-                mlog[ERROR] <<"CFG vertex " <<addrToString(insnCfg_.findVertex(i)->value()->address()) <<" is not in any function\n";
+            if (dfEngine.getInitialState(i).owningFunctions.empty() && dfEngine.getInitialState(i).isEntryPoint) {
+                ++nUnassigned;
+                //debug <<"CFG vertex " <<addrToString(insnCfg_.findVertex(i)->value()->address()) <<" is not in any function\n";
+            }
+        }
+        if (nUnassigned > 0)
+            mlog[ERROR] <<StringUtility::plural(nUnassigned, "instructions") <<" are not assigned to any function\n";
+    }
+
+    // Check how many functions are at addresses that are not mapped or not executable. If there's a lot, then it might be
+    // because the specimen is mapped at the wrong address and all the function calls (which typically have absolute targets)
+    // are therefore even pointing at instructions.
+    if (mlog[WARN] || debug) {
+        size_t nEmptyFuncs = 0;
+        for (auto &vertex: insnCfg_.vertices()) {
+            if (vertex.value()->functionReasons().isAnySet() && vertex.value()->wasDecoded() && !vertex.value()->ast())
+                ++nEmptyFuncs;
+        }
+        double emptyRate = nFunctions > 0 ? 1.0 * nEmptyFuncs / nFunctions : 0.0;
+        if (emptyRate > 0.05 /*arbitrary*/) {
+            SAWYER_MESG_OR(mlog[WARN], debug)
+                <<boost::format("possible specimen mapping error: %6.2f%% of functions are at invalid memory\n")
+                %(100*emptyRate);
+#if 0 // [Robb Matzke 2020-07-31]
+            SAWYER_MESG_OR(mlog[WARN], debug) <<"looking for a better address at which to map the specimen...\n");
+            if (rose_addr_t shift = remap()) {
+                size_t nBits = instructionCache().decoder()->instructionPointerRegister().nBits();
+                mlog[WARN] <<"results may improve if you shift the specimen by "
+                           <<StringUtility::addrToString(shift, nBits) <<StringUtility::plural(shift, "bytes") <<" in memory\n";
+            } else {
+                mlog[WARN] <<"unable to find any better mapping address\n";
+            }
+#endif
         }
     }
 
@@ -879,12 +1168,13 @@ Partitioner::assignFunctions() {
     // lets assume yes.
     std::map<rose_addr_t /*funcVa*/, AddressSet /*insnVas*/> retval;
     for (size_t i = 0; i < insnCfg_.nVertices(); ++i) {
-        for (rose_addr_t funcVa: dfEngine.getInitialState(i)) {
+        for (rose_addr_t funcVa: dfEngine.getInitialState(i).owningFunctions) {
             rose_addr_t insnVa = insnCfg_.findVertex(i)->value()->address();
             retval[funcVa].insert(insnVa);
         }
     }
 
+    debug <<"assigning blocks to functions; took " <<timer <<" seconds\n";
     return retval;
 }
 
