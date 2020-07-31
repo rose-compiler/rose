@@ -1235,6 +1235,7 @@ class ApplyLoopSplittingImpl
        for (PtrSetWrap<LoopTreeNode>::const_iterator listp = stmtlist.begin();
            !listp.ReachEnd(); listp.Advance()) {
          LoopTreeNode* curstmt = listp.Current();
+         assert(curstmt != NULL);
          LoopTreeSplitStmt()(curstmt, loop, mid);
        }
        SelectPtrSet<LoopTreeNode> sel(stmtlist);
