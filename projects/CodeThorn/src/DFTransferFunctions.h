@@ -21,10 +21,13 @@ public:
   virtual void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pointerAnalysisInterface) { _pointerAnalysisInterface=pointerAnalysisInterface; }
   CodeThorn::PointerAnalysisInterface* getPointerAnalysisInterface() { return _pointerAnalysisInterface; }
 
+  // this is the main transfer function
   virtual void transfer(CodeThorn::Edge edge, Lattice& element);
   virtual void transferCondition(Edge edge, Lattice& element);
 
+  // called for those nodes that are not conditionals and selection on edge annotations is not necessary
   virtual void transfer(CodeThorn::Label lab, Lattice& element);
+
   virtual void transferExpression(CodeThorn::Label label, SgExpression* expr, Lattice& element);
   virtual void transferEmptyStmt(CodeThorn::Label label, SgStatement* stmt, Lattice& element);
   virtual void transferDeclaration(CodeThorn::Label label, SgVariableDeclaration* decl, Lattice& element);
@@ -44,7 +47,6 @@ public:
   VariableId getParameterVariableId(int paramNr);
   VariableId getResultVariableId();
   bool isExternalFunctionCall(Label l);
-  //protected:
  public:
   CodeThorn::PointerAnalysisInterface* _pointerAnalysisInterface;
   virtual void setSkipUnknownFunctionCalls(bool flag);
