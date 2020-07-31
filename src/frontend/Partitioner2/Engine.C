@@ -2360,14 +2360,20 @@ Engine::discoverFunctions(Partitioner &partitioner) {
 
         // No pending basic blocks, so look for a function prologue. This creates a pending basic block for the function's
         // entry block, so go back and look for more basic blocks again.
-        std::vector<Function::Ptr> newFunctions = makeNextPrologueFunction(partitioner, nextPrologueVa, nextPrologueVa /*out*/);
-        if (!newFunctions.empty())
-            continue;
+        if (nextPrologueVa < partitioner.memoryMap()->hull().greatest()) {
+            std::vector<Function::Ptr> newFunctions =
+                makeNextPrologueFunction(partitioner, nextPrologueVa, nextPrologueVa /*out*/);
+            if (nextPrologueVa < partitioner.memoryMap()->hull().greatest())
+                ++nextPrologueVa;
+            if (!newFunctions.empty())
+                continue;
+        }
 
         // Scan inter-function code areas to find basic blocks that look reasonable and process them with instruction semantics
         // to find calls to functions that we don't know about yet.
         if (settings_.partitioner.findingInterFunctionCalls) {
-            newFunctions = makeFunctionFromInterFunctionCalls(partitioner, nextInterFunctionCallVa /*in,out*/);
+            std::vector<Function::Ptr> newFunctions =
+                makeFunctionFromInterFunctionCalls(partitioner, nextInterFunctionCallVa /*in,out*/);
             if (!newFunctions.empty())
                 continue;
         }
