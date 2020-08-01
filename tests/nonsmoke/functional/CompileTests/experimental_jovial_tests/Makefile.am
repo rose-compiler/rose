@@ -99,6 +99,7 @@ COMPOOL_TESTCODES = \
  rose-issue-2687.cpl                    \
  rose-issue-2690.cpl                    \
  rose-issue-2691.cpl                    \
+ rose-issue-2698.cpl                    \
  rose-issue-2701.cpl                    \
  rose-issue-2702.cpl                    \
  rose-issue-2766.cpl                    \
