@@ -699,7 +699,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
            // cout << "new class name = " << shadow_name << endl;
            // Get lambda function, class declaration, and others
            SgLambdaExp* lambdaExp = isSgLambdaExp(classdecl->get_parent());
-           SgClassDeclaration* defingingclassdecl  = isSgClassDeclaration(classdecl->get_definingDeclaration());
+           //SgClassDeclaration* defingingclassdecl  = isSgClassDeclaration(classdecl->get_definingDeclaration());
            SgMemberFunctionDeclaration* lambdaFunc = isSgMemberFunctionDeclaration(lambdaExp->get_lambda_function());
            SgLambdaCaptureList* lambdaCaptureList = lambdaExp->get_lambda_capture_list();
            SgLambdaCapturePtrList captureList = lambdaCaptureList->get_capture_list();
@@ -809,8 +809,8 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
          else if(hasLambdaFuncArg)
          {
            SgLambdaExp* lambdaExp = isSgLambdaExp(classdecl->get_parent());
-           SgClassDeclaration* defingingclassdecl  = isSgClassDeclaration(classdecl->get_definingDeclaration());
-           SgMemberFunctionDeclaration* lambdaFunc = isSgMemberFunctionDeclaration(lambdaExp->get_lambda_function());
+           //SgClassDeclaration* defingingclassdecl  = isSgClassDeclaration(classdecl->get_definingDeclaration());
+           //SgMemberFunctionDeclaration* lambdaFunc = isSgMemberFunctionDeclaration(lambdaExp->get_lambda_function());
            SgAssignInitializer* assignInitializer = new SgAssignInitializer(SgNULL_FILE, actualArg, formalArg->get_type());
            ASSERT_not_null(assignInitializer);
            initializer = isSgInitializer(assignInitializer);
