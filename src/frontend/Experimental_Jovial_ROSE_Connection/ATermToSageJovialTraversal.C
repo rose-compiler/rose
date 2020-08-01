@@ -2917,8 +2917,7 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedPresetSublist(ATerm term, S
          // MATCHED PresetIndexSpecifier
       } else return ATfalse;
 
-   // Fill the list of PresetValuesOption(s)
-   //
+   // Fill list of PresetValuesOption(s)
       ATermList tail = (ATermList) ATmake("<term>", t_preset_values_option);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
@@ -2982,7 +2981,7 @@ ATbool ATermToSageJovialTraversal::traverse_PresetValuesOption(ATerm term, SgExp
    printf("... traverse_PresetValuesOption: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_rep_count, t_item_preset_value;
+   ATerm t_rep_count, t_item_preset_value, t_preset_values_option;
 
    preset = nullptr;
 
@@ -2991,10 +2990,34 @@ ATbool ATermToSageJovialTraversal::traverse_PresetValuesOption(ATerm term, SgExp
          // MATCHED OptItemPresetValue
       } else return ATfalse;
    }
-   else if (ATmatch(term, "PresetValuesOptionRep(<term>,<term>)", &t_rep_count, &t_item_preset_value)) {
-      // TODO: Add traversal for RepetitionCount '(' {PresetValuesOption ','}+ ')' -> PresetValuesOption
-      cerr << "WARNING UNIMPLEMENTED: PresetValuesOptionRep\n";
-      return ATtrue;
+   else if (ATmatch(term, "PresetValuesOptionRep(<term>,<term>)", &t_rep_count, &t_preset_values_option)) {
+      SgExpression* rep_count = nullptr;
+      SgExprListExp* values_option_list = SageBuilder::buildExprListExp_nfi();
+      setSourcePosition(values_option_list, t_preset_values_option);
+
+      if (traverse_NumericFormula(t_rep_count, rep_count)) {
+         // MATCHED NumericFormula for repetition count
+      } else return ATfalse;
+
+   // Fill list of PresetValuesOption(s)
+      ATermList tail = (ATermList) ATmake("<term>", t_preset_values_option);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+
+         SgExpression* preset_value = nullptr;
+         if (traverse_PresetValuesOption(head, preset_value)) {
+            // MATCHED PresetValuesOption, optional so ok if nullptr
+            if (preset_value != nullptr) {
+               values_option_list->get_expressions().push_back(preset_value);
+               preset_value->set_parent(values_option_list);
+            }
+         } else return ATfalse;
+      }
+      ROSE_ASSERT(rep_count);
+
+      preset = SageBuilder::buildReplicationOp_nfi(rep_count,values_option_list);
+      setSourcePosition(preset, term);
    }
    else return ATfalse;
 
