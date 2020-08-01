@@ -13,17 +13,8 @@
 
 
 void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info) 
-   {
-      ASSERT_not_null(expr);
-
-    // Check if this expression requires parentheses.  If so, process the opening parentheses now.
-    //
-    AstIntAttribute *parenthesis_attribute = (AstIntAttribute *) expr->getAttribute("x10-parentheses-count");
-    if (parenthesis_attribute) { // Output the left paren
-        for (int i = 0; i < parenthesis_attribute -> getValue(); i++) {
-            curprint("(");
-        }
-    }
+  {
+    ASSERT_not_null(expr);
 
     switch (expr->variantT())
        {
@@ -67,12 +58,12 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
           case V_SgMinusOp:             unparseUnaryOperator(expr, "-", info);   break;
           case V_SgNotOp:               unparseUnaryOperator(expr, "NOT ", info);break;
 
-
           case V_SgPntrArrRefExp:       unparseArrayOp(expr, info);              break;
 
        // initializers
-          case V_SgAssignInitializer:    unparseAssnInit    (expr, info);        break;
-          case V_SgJovialTablePresetExp: unparseTablePreset (expr, info);        break;
+          case V_SgAssignInitializer:    unparseAssnInit     (expr, info);       break;
+          case V_SgJovialTablePresetExp: unparseTablePreset  (expr, info);       break;
+          case V_SgReplicationOp:        unparseReplicationOp(expr, info);       break;
 
           case V_SgNullExpression:                                               break;
 
@@ -80,16 +71,6 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
              std::cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << std::endl;
              ROSE_ASSERT(false);
              break;
-       }
-
-    // If this expression requires closing parentheses, emit them now.
-    //
-    if (parenthesis_attribute)
-       {
-       // Output the right parentheses
-          for (int i = 0; i < parenthesis_attribute -> getValue(); i++) {
-             curprint(")");
-          }
        }
    }
 
@@ -458,6 +439,18 @@ Unparse_Jovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info)
         // Unparse the PresetValuesOption
            unparseExpression(specified_sublist->get_expressions()[1], info);
         }
+  }
+
+void
+Unparse_Jovial::unparseReplicationOp(SgExpression* expr, SgUnparse_Info& info)
+  {
+     SgReplicationOp* rep_op = isSgReplicationOp(expr);
+     ASSERT_not_null(rep_op);
+
+     unparseExpression(rep_op->get_lhs_operand(), info);
+     curprint("(");
+     unparseExpression(rep_op->get_rhs_operand(), info);
+     curprint(")");
   }
 
 //----------------------------------------------------------------------------
