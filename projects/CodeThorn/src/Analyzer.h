@@ -354,6 +354,8 @@ namespace CodeThorn {
     bool isFeasiblePathContext(CallString& cs,Label lab);
 
     std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
+
+    // forwarding functions for EStateTransferFunctions (backward compatibility)
     std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallExternal(Edge edge, const EState* estate);
@@ -370,7 +372,7 @@ namespace CodeThorn {
     std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
-
+    
     // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
     typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
     typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;

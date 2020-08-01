@@ -14,8 +14,8 @@ namespace CodeThorn {
 class DFTransferFunctions {
 public:
   DFTransferFunctions();
-  CodeThorn::Labeler* getLabeler() { return _programAbstractionLayer->getLabeler(); }
-  VariableIdMapping* getVariableIdMapping() { return _programAbstractionLayer->getVariableIdMapping(); }
+  virtual CodeThorn::Labeler* getLabeler() { return _programAbstractionLayer->getLabeler(); }
+  virtual VariableIdMapping* getVariableIdMapping() { return _programAbstractionLayer->getVariableIdMapping(); }
   virtual void setProgramAbstractionLayer(CodeThorn::ProgramAbstractionLayer* pal) {_programAbstractionLayer=pal; }
   // allow for some pointer analysis to be used directly
   virtual void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pointerAnalysisInterface) { _pointerAnalysisInterface=pointerAnalysisInterface; }
