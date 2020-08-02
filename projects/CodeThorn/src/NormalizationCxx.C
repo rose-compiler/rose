@@ -1302,9 +1302,11 @@ namespace
         //   - or has a definition 
         if (!ctor || !needsCompilerGeneration(*ctor))
         {
-          SgClassDeclaration& cls = SG_DEREF(n.get_class_decl()); 
+          SgClassDeclaration* cls = n.get_class_decl(); 
           
-          logInfo() << "no need to gen ctor: " << cls.get_name() << "/ " << ctor 
+          logInfo() << "no need to gen ctor: " 
+                    << (cls ? std::string(cls->get_name()) : std::string("null")) 
+                    << "/ " << ctor 
                     << std::endl;
           return;
         }
