@@ -759,17 +759,45 @@ namespace
     return dcl;
   }
   
+  SgTemplateArgumentPtrList* 
+  cloneTemplateArguments(SgTemplateInstantiationMemberFunctionDecl* dcl)
+  {
+    if (dcl == nullptr) return nullptr;
+    
+    SgTemplateArgumentPtrList& templargs = dcl->get_templateArguments();
+    SgTemplateArgumentPtrList& res = SG_DEREF(new SgTemplateArgumentPtrList);
+    
+    res.reserve(templargs.size());
+    for (SgTemplateArgument* tparam : templargs)
+      res.push_back(si::deepCopy(tparam));
+      
+    return &res;
+  }
+  
 
   SgMemberFunctionDeclaration&
   mkCtorDtorDef(SgClassDefinition& clsdef, SgMemberFunctionDeclaration& nondef, bool ctor)
   {
+    typedef SgTemplateInstantiationMemberFunctionDecl TemplateMemberFunction;
+    
     ROSE_ASSERT(nondef.get_definingDeclaration() == nullptr);
     
-    SgName                       nm  = nondef.get_name();
-    SgType&                      ty  = SG_DEREF(nondef.get_orig_return_type());
-    SgFunctionParameterList&     lst = SG_DEREF(sb::buildFunctionParameterList());
-    SgMemberFunctionDeclaration& dcl = SG_DEREF(sb::buildDefiningMemberFunctionDeclaration(nm, &ty, &lst, &clsdef, nullptr, false, 0, &nondef, nullptr));
-    SgFunctionParameterScope&    psc = SG_DEREF(new SgFunctionParameterScope(dummyFileInfo()));
+    SgName                       nm   = nondef.get_name();
+    SgType&                      ty   = SG_DEREF(nondef.get_orig_return_type());
+    SgFunctionParameterList&     lst  = SG_DEREF(sb::buildFunctionParameterList());
+    TemplateMemberFunction*      tmpl = isSgTemplateInstantiationMemberFunctionDecl(&nondef);
+    SgMemberFunctionDeclaration* pdcl = sb::buildDefiningMemberFunctionDeclaration( nm, 
+                                                                                    &ty, 
+                                                                                    &lst, 
+                                                                                    &clsdef, 
+                                                                                    nullptr /* decorator list */, 
+                                                                                    tmpl != nullptr /* build template instance */, 
+                                                                                    0, 
+                                                                                    &nondef, 
+                                                                                    cloneTemplateArguments(tmpl)
+                                                                                  );
+    SgMemberFunctionDeclaration& dcl  = SG_DEREF(pdcl);
+    SgFunctionParameterScope&    psc  = SG_DEREF(new SgFunctionParameterScope(dummyFileInfo()));
     
     ROSE_ASSERT(dcl.get_parent() != nullptr);
     ROSE_ASSERT(dcl.get_definition() != nullptr);
@@ -1123,8 +1151,8 @@ namespace
   {
     // \todo how do we distinguish from a generated definition and
     //       a constructor defined in a different translation unit?
-    return (  n.get_definingDeclaration() != nullptr
-           || isGenerateableCtor(n)
+    return (  n.get_definingDeclaration() == nullptr
+           && isGenerateableCtor(n)
            );
   }
 
@@ -1273,7 +1301,13 @@ namespace
         //   - no declaration
         //   - or has a definition 
         if (!ctor || !needsCompilerGeneration(*ctor))
+        {
+          SgClassDeclaration& cls = SG_DEREF(n.get_class_decl()); 
+          
+          logInfo() << "no need to gen ctor: " << cls.get_name() << "/ " << ctor 
+                    << std::endl;
           return;
+        }
           
         cont.emplace_back(ConstructorGenerator(*ctor));
       }
