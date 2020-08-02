@@ -539,27 +539,46 @@ namespace SgNodeHelper {
   bool nodeCanBeChanged(SgLocatedNode * lnode);
 #endif
 
+
+  /// Result structure of extended C++ function call matching @ref matchExtendedNormalizedCall
+  /// \details
+  ///   extended matches function, constructor (on stack and w/new), and destructor calls.
   struct ExtendedCallInfo
   {
+      /// no-match constructor
       ExtendedCallInfo()
       : rep(NULL)
       {}   
     
+      /// node @ref callnode contanins some function call
       ExtendedCallInfo(SgLocatedNode& callnode)
       : rep(&callnode)
       {}   
-    
+   
+      /// the call or a parent node (e.g., new expression) 
       SgLocatedNode*            representativeNode() const;
-      SgFunctionCallExp*        callExpression()     const;              
+
+      /// returns the call expression if this represents a "normal" call
+      /// or nullptr otherwise.
+      SgFunctionCallExp*        callExpression()     const;     
+
+      /// returns the constructor initialization node
+      /// of nullptr.
       SgConstructorInitializer* ctorInitializer()    const;              
-      SgPointerDerefExp*        functionPointer()    const; 
-      
+
+      /// returns the function pointer expression representing the target
+      ///  (if this is a function pointer call)
+      //  or the nullptr otherise.
+      SgExpression*             functionPointer()    const; 
+     
+      /// true iff this structure represents a match 
       operator bool() const { return rep != NULL; }
       
     private:
       SgLocatedNode* rep;
   };
-  
+ 
+  /// matches C and C++ function calls (also ctor and dtor) 
   ExtendedCallInfo
   matchExtendedNormalizedCall(SgNode*);
 } // end of namespace SgNodeHelper
