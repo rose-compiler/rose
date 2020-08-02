@@ -179,6 +179,10 @@ NameQualificationInheritedAttribute::NameQualificationInheritedAttribute ( const
      referenceNode    = X.referenceNode;
 
 #if 0
+  // DQ (8/1/2020): Need to copy the STL map.
+     namespaceAliasDeclarationMap = X.namespaceAliasDeclarationMap;
+#endif
+#if 0
   // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
 
   // DQ (2/7/2019): Name qualification can under rare circumstances depends on the type.
@@ -224,6 +228,14 @@ void NameQualificationInheritedAttribute::set_referenceNode(SgNode* node)
    }
 
 #if 0
+NameQualificationInheritedAttribute::namespaceAliasMapType & 
+NameQualificationInheritedAttribute::get_namespaceAliasDeclarationMap()
+   {
+     return namespaceAliasDeclarationMap;
+   }
+#endif
+
+#if 0
   // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
 
 SgPointerMemberType* NameQualificationInheritedAttribute::get_usingPointerToMemberType()
@@ -251,15 +263,26 @@ void NameQualificationInheritedAttribute::set_containsFunctionArgumentsOfPointer
 // Synthesized Attribute
 // *********************
 
+#if 1
 NameQualificationSynthesizedAttribute::NameQualificationSynthesizedAttribute()
    {
   // Default constructor
+   }
+#endif
+
+NameQualificationSynthesizedAttribute::NameQualificationSynthesizedAttribute( SgNode* astNode )
+   {
+  // DQ (8/2/2020): Added support for debugging.
+     node = astNode;
    }
 
 
 NameQualificationSynthesizedAttribute::NameQualificationSynthesizedAttribute ( const NameQualificationSynthesizedAttribute & X )
    {
   // Copy constructor.
+
+  // DQ (8/2/2020): Added support for debugging.
+     node = X.node;
    }
 
 
@@ -1619,6 +1642,11 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          ASSERT_not_null(namespaceAliasDeclaration);
 
                          SgNamespaceSymbol* namespaceSymbol = isSgNamespaceSymbol(symbol);
+
+                      // DQ (8/1/2020): Record the associated NamespaceAliasDeclarationStatement so it can be used instead in namequalification.
+                      // SgNamespaceDeclarationStatement* namespaceDeclaration = namespaceAliasDeclaration->get_namespaceDeclaration();
+                      // namespaceAliasDeclarationMap.insert(pair<SgNamespaceDeclarationStatement,SgNamespaceAliasDeclarationStatement>(namespaceDeclaration,namespaceAliasDeclaration));
+                      // printf ("case V_SgNamespaceAliasDeclarationStatement: namespaceAliasDeclarationMap.size() = %zu \n",namespaceAliasDeclarationMap.size());
 
                       // DQ (6/5/2011): Added support for case where namespaceSymbol == NULL.
                       // ASSERT_not_null(namespaceSymbol);
@@ -5777,11 +5805,18 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
    {
      ASSERT_not_null(n);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
      mfprintf(mlog [ WARN ] ) ("\n\n****************************************************** \n");
      mfprintf(mlog [ WARN ] ) ("****************************************************** \n");
      mfprintf(mlog [ WARN ] ) ("Inside of NameQualificationTraversal::evaluateInheritedAttribute(): node = %p = %s = %s \n",n,n->class_name().c_str(),SageInterface::get_name(n).c_str());
      mfprintf(mlog [ WARN ] ) ("****************************************************** \n");
+#endif
+
+#if 0
+  // DQ (8/1/2020): Setup a reference to the namespace alias map (so that the map is available in member functions of NameQualificationTraversal).
+  // Specifically the function setNameQualificationSupport() requires this information so that any reference to a namespace declaration that
+  // is in the map will use the alias as a priority.
+     namespaceAliasDeclarationMapFromInheritedAttribute = &(inheritedAttribute.get_namespaceAliasDeclarationMap());
 #endif
 
 #if 0
@@ -9291,17 +9326,42 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           mfprintf(mlog [ WARN ] ) ("In namespace qualification: namespaceAliasDeclaration = %p name = %s \n",namespaceAliasDeclaration,namespaceAliasDeclaration->get_name().str());
           mfprintf(mlog [ WARN ] ) ("   --- is_alias_for_another_namespace_alias = %s \n",namespaceAliasDeclaration->get_is_alias_for_another_namespace_alias() ? "true" : "false");
 #endif
+          string namespaceDeclarationName;
        // SgNamespaceDeclarationStatement* namespaceDeclaration = namespaceAliasDeclaration->get_namespaceDeclaration();
           SgDeclarationStatement* namespaceDeclaration = NULL;
           if (namespaceAliasDeclaration->get_is_alias_for_another_namespace_alias() == true)
              {
                namespaceDeclaration = namespaceAliasDeclaration->get_namespaceAliasDeclaration();
+
+            // DQ (8/1/2020): Set the name.
+               namespaceDeclarationName = namespaceAliasDeclaration->get_namespaceAliasDeclaration()->get_name();
              }
             else
              {
                namespaceDeclaration = namespaceAliasDeclaration->get_namespaceDeclaration();
+
+            // DQ (8/1/2020): Set the name.
+               namespaceDeclarationName = namespaceAliasDeclaration->get_namespaceDeclaration()->get_name();
              }
           ASSERT_not_null(namespaceDeclaration);
+
+       // DQ (8/1/2020): Record the associated NamespaceAliasDeclarationStatement so it can be used instead in namequalification.
+       // inheritedAttribute.get_namespaceAliasDeclarationMap().insert(pair<SgDeclarationStatement*,SgNamespaceAliasDeclarationStatement*>(namespaceDeclaration,namespaceAliasDeclaration));
+
+          namespaceAliasDeclarationMap.insert(pair<SgDeclarationStatement*,SgNamespaceAliasDeclarationStatement*>(namespaceDeclaration,namespaceAliasDeclaration));
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+          printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+          printf ("In evaluateInheritedAttribute(): Saved namespace alias: %s to namespace declaration = %s \n",namespaceAliasDeclaration->get_name().str(),namespaceDeclarationName.c_str());
+#if 0
+          printf (" --- inheritedAttribute.get_namespaceAliasDeclarationMap().size() = %zu \n",inheritedAttribute.get_namespaceAliasDeclarationMap().size());
+          ROSE_ASSERT(namespaceAliasDeclarationMapFromInheritedAttribute != NULL);
+          printf (" --- namespaceAliasDeclarationMapFromInheritedAttribute->size() = %zu \n",namespaceAliasDeclarationMapFromInheritedAttribute->size());
+#else
+          printf (" --- namespaceAliasDeclarationMap.size() = %zu \n",namespaceAliasDeclarationMap.size());
+#endif
+          printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+#endif
           SgScopeStatement* currentScope = namespaceAliasDeclaration->get_scope();
           ASSERT_not_null(currentScope);
 
@@ -10538,6 +10598,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                 // ROSE_ASSERT(false);
                                  }
                             }
+#if 0
+                         mfprintf(mlog [ WARN ] ) ("Test 1.2: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
+                         ROSE_ASSERT(false);
+#endif
                        }
                       else
                        {
@@ -10862,8 +10926,17 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                             }
                       // ROSE_ASSERT(numberOfAliasSymbols < 2);
                          ROSE_ASSERT(numberOfAliasSymbols <= 1 || amountOfNameQualificationRequired > 0);
+
+#if 0
+                         mfprintf(mlog [ WARN ] ) ("Test 1.25: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
+                         ROSE_ASSERT(false);
+#endif
                        }
 
+#if 0
+                    mfprintf(mlog [ WARN ] ) ("Test 1.3: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
+                    ROSE_ASSERT(false);
+#endif
                  // End of new test...
                   }
                  else
@@ -10940,7 +11013,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                              );
                              setNameQualification(varRefExp,tpldecl,amountOfNameQualificationRequired);
                            } else {
-                             mfprintf(mlog [ WARN ] )("ERROR: Unexpected parent for SgInitializedName: parent = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
+                          // mfprintf(mlog [ WARN ] )("ERROR: Unexpected parent for SgInitializedName: parent = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
+                             printf("ERROR: Unexpected parent for SgInitializedName: parent = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
                              ROSE_ASSERT(false);
                            }
                          }
@@ -10955,8 +11029,17 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                        // TV (09/13/2018): in ROSE/tutorial/: ./loopOptimization --edg:no_warnings -w -bk1 -fs0 -c /data1/roseenv/src/tmp-merge/tutorial/inputCode_LoopOptimization_blocking.C
                          mfprintf(mlog [ WARN ] )("WARNING: Unexpected conditions in NameQualificationTraversal::evaluateInheritedAttribute.");
                        }
+
+#if 0
+                    mfprintf(mlog [ WARN ] ) ("Test 1.5: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
+                    ROSE_ASSERT(false);
+#endif
                   }
 
+#if 0
+               mfprintf(mlog [ WARN ] ) ("Test 1.7: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
+               ROSE_ASSERT(false);
+#endif
             // DQ (2/16/2019): End of false branch for: if (isDataMemberReference == false)
              }
             else
@@ -12117,7 +12200,11 @@ NameQualificationSynthesizedAttribute
 NameQualificationTraversal::evaluateSynthesizedAttribute(SgNode* n, NameQualificationInheritedAttribute inheritedAttribute, SynthesizedAttributesList synthesizedAttributeList)
    {
   // This is not used now but will likely be used later.
-     NameQualificationSynthesizedAttribute returnAttribute;
+  // NameQualificationSynthesizedAttribute returnAttribute;
+     NameQualificationSynthesizedAttribute returnAttribute(n);
+
+  // DQ (8/2/2020): Added assertion.
+     ROSE_ASSERT(n != NULL);
 
 // #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
 #if 0
@@ -12275,9 +12362,77 @@ NameQualificationTraversal::evaluateSynthesizedAttribute(SgNode* n, NameQualific
 #endif
         }
 
+  // Iterate over the synthesizedAttributeList.
+     SynthesizedAttributesList::iterator i = synthesizedAttributeList.begin();
+     while (i != synthesizedAttributeList.end())
+        {
+          NameQualificationSynthesizedAttribute synthesizedAttribute = *i;
+       // ROSE_ASSERT(synthesizedAttribute != NULL);
+          SgNode* synthesizedAttributeNode = synthesizedAttribute.node;
+
+       // DQ (8/2/2020): Not clear why this can be NULL.
+       // ROSE_ASSERT(synthesizedAttributeNode != NULL);
+
+          if (synthesizedAttributeNode != NULL)
+             {
+#if 0
+               printf ("iterate over synthesizedAttributeList: synthesizedAttributeNode = %p = %s \n",synthesizedAttributeNode,synthesizedAttributeNode->class_name().c_str());
+#endif
+               SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration = isSgNamespaceAliasDeclarationStatement(synthesizedAttributeNode);
+               if (namespaceAliasDeclaration != NULL)
+                  {
+                    SgDeclarationStatement* declaration = namespaceAliasDeclaration->get_is_alias_for_another_namespace_alias() ? 
+                                                               isSgDeclarationStatement(namespaceAliasDeclaration->get_namespaceAliasDeclaration()) : 
+                                                               isSgDeclarationStatement(namespaceAliasDeclaration->get_namespaceDeclaration());
+                    ROSE_ASSERT(declaration != NULL);
+#if 0
+                    printf ("namespaceAliasDeclaration = %p = %s \n",namespaceAliasDeclaration,namespaceAliasDeclaration->class_name().c_str());
+                    printf ("Before erase: namespaceAliasDeclarationMap.size() = %zu \n",namespaceAliasDeclarationMap.size());
+#endif
+#if 0
+                 // Debugging the list.
+                    namespaceAliasMapType::iterator j = namespaceAliasDeclarationMap.begin();
+                    while (j != namespaceAliasDeclarationMap.end())
+                       {
+                         SgDeclarationStatement*               tmp_Declaration               = j->first;
+                         SgNamespaceAliasDeclarationStatement* tmp_namespaceAliasDeclaration = j->second;
+
+                         printf ("tmp_Declaration               = %p = %s \n",tmp_Declaration,tmp_Declaration->class_name().c_str());
+                         printf ("tmp_namespaceAliasDeclaration = %p \n",tmp_namespaceAliasDeclaration);
+
+                         j++;
+                       }
+#endif 
+#if 0
+                    printf ("Found a SgNamespaceAliasDeclarationStatement: Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                 // ROSE_ASSERT(namespaceAliasDeclarationMap.find(declaration) != namespaceAliasDeclarationMap.end());
+                    if (namespaceAliasDeclarationMap.find(declaration) != namespaceAliasDeclarationMap.end())
+                       {
+                         namespaceAliasMapType::iterator i = namespaceAliasDeclarationMap.find(declaration);
+                         ROSE_ASSERT(i != namespaceAliasDeclarationMap.end());
+                         namespaceAliasDeclarationMap.erase(i);
+#if 0
+                         printf ("After erase: namespaceAliasDeclarationMap.size() = %zu \n",namespaceAliasDeclarationMap.size());
+#endif
+#if 0
+                         printf ("Found a SgNamespaceAliasDeclarationStatement: Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                  }
+             }
+
+          i++;
+        }
+
+  // DQ (8/2/2020): Added assertion.
+     ROSE_ASSERT(returnAttribute.node != NULL);
 
      return returnAttribute;
    }
+
 
 #define DEBUG_TRAVERSE_NONREAL_FOR_SCOPE 0
 
@@ -12831,56 +12986,61 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
             else
              {
 #endif
-          SgScopeStatement * scope = traverseNonrealDeclForCorrectScope(variableDeclaration);
-          string qualifier = setNameQualificationSupport(scope,amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
+               SgScopeStatement * scope = traverseNonrealDeclForCorrectScope(variableDeclaration);
+               string qualifier = setNameQualificationSupport(scope,amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
-          varRefExp->set_global_qualification_required(outputGlobalQualification);
-          varRefExp->set_name_qualification_length(outputNameQualificationLength);
+               varRefExp->set_global_qualification_required(outputGlobalQualification);
+               varRefExp->set_name_qualification_length(outputNameQualificationLength);
 
-       // There should be no type evaluation required for a variable reference, as I recall.
-          ROSE_ASSERT(outputTypeEvaluation == false);
-          varRefExp->set_type_elaboration_required(outputTypeEvaluation);
-
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualification(): varRefExp->get_name_qualification_length()     = %d \n",varRefExp->get_name_qualification_length());
-          mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualification(): varRefExp->get_type_elaboration_required()     = %s \n",varRefExp->get_type_elaboration_required() ? "true" : "false");
-          mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualification(): varRefExp->get_global_qualification_required() = %s \n",varRefExp->get_global_qualification_required() ? "true" : "false");
-#endif
-
-          if (qualifiedNameMapForNames.find(varRefExp) == qualifiedNameMapForNames.end())
-             {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),varRefExp,varRefExp->class_name().c_str());
-#endif
-               qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(varRefExp,qualifier));
-             }
-            else
-             {
-            // DQ (6/20/2011): We see this case in test2011_87.C.
-            // If it already existes then overwrite the existing information.
-               std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(varRefExp);
-               ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+            // There should be no type evaluation required for a variable reference, as I recall.
+               ROSE_ASSERT(outputTypeEvaluation == false);
+               varRefExp->set_type_elaboration_required(outputTypeEvaluation);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               string previousQualifier = i->second.c_str();
-               mfprintf(mlog [ WARN ] ) ("WARNING: test 2: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+               mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualification(): varRefExp->get_name_qualification_length()     = %d \n",varRefExp->get_name_qualification_length());
+               mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualification(): varRefExp->get_type_elaboration_required()     = %s \n",varRefExp->get_type_elaboration_required() ? "true" : "false");
+               mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualification(): varRefExp->get_global_qualification_required() = %s \n",varRefExp->get_global_qualification_required() ? "true" : "false");
 #endif
-               if (i->second != qualifier)
+
+               if (qualifiedNameMapForNames.find(varRefExp) == qualifiedNameMapForNames.end())
                   {
-                 // DQ (7/23/2011): Multiple uses of the SgVarRefExp expression in SgArrayType will cause
-                 // the name qualification to be reset each time.  This is OK since it is used to build
-                 // the type name that will be saved.
-                    i->second = qualifier;
-#if 0
-                    mfprintf(mlog [ WARN ] ) ("Note: name in qualifiedNameMapForNames already exists and is different... \n");
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    mfprintf(mlog [ WARN ] ) ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),varRefExp,varRefExp->class_name().c_str());
 #endif
+                    qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(varRefExp,qualifier));
                   }
-             }
+                 else
+                  {
+                 // DQ (6/20/2011): We see this case in test2011_87.C.
+                 // If it already existes then overwrite the existing information.
+                    std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(varRefExp);
+                    ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    string previousQualifier = i->second.c_str();
+                    mfprintf(mlog [ WARN ] ) ("WARNING: test 2: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+#endif
+                    if (i->second != qualifier)
+                       {
+                      // DQ (7/23/2011): Multiple uses of the SgVarRefExp expression in SgArrayType will cause
+                      // the name qualification to be reset each time.  This is OK since it is used to build
+                      // the type name that will be saved.
+                         i->second = qualifier;
+#if 0
+                         mfprintf(mlog [ WARN ] ) ("Note: name in qualifiedNameMapForNames already exists and is different... \n");
+#endif
+                       }
+                  }
 #if 0
        // DQ (1/14/2020): Adding support to ignore un-named classes.
              }
 #endif
         }
+
+#if 0
+     mfprintf(mlog [ WARN ] ) ("Leaving setNameQualification(SgVarRefExp*) \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 
@@ -15086,6 +15246,7 @@ NameQualificationTraversal::setNameQualification(SgEnumDeclaration* enumDeclarat
         }
    }
 
+
 string
 NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope, const int inputNameQualificationLength, int & output_amountOfNameQualificationRequired , bool & outputGlobalQualification, bool & outputTypeEvaluation )
    {
@@ -15102,6 +15263,17 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
      mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualificationSupport(): scope = %p = %s = %s inputNameQualificationLength = %d \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str(),inputNameQualificationLength);
 #endif
 
+#if 0
+     printf ("test 6: qualifierString = %s \n",qualifierString.c_str());
+#endif
+
+  // DQ (8/1/2020): This should always be true.
+  // ROSE_ASSERT(namespaceAliasDeclarationMapFromInheritedAttribute != NULL);
+
+#if 0
+     printf ("In setNameQualificationSupport(): namespaceAliasDeclarationMap.size() = %zu \n",namespaceAliasDeclarationMap.size());
+#endif
+
      for (int i = 0; i < inputNameQualificationLength; i++)
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -15112,7 +15284,9 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
        // DQ (8/19/2014): This is used to control the generation of qualified names for un-named namespaces
        // (and maybe also other un-named language constructs).
           bool skip_over_scope = false;
-
+#if 0
+          printf ("test 7: qualifierString = %s \n",qualifierString.c_str());
+#endif
        // This requirement to visit the template arguments occurs for templaed functions and templated member functions as well.
           SgTemplateInstantiationDefn* templateClassDefinition = isSgTemplateInstantiationDefn(scope);
           if (templateClassDefinition != NULL)
@@ -15208,7 +15382,9 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
              {
             // scope_name = scope->class_name().c_str();
                scope_name = SageInterface::get_name(scope).c_str();
-
+#if 0
+               printf ("test 8: qualifierString = %s \n",qualifierString.c_str());
+#endif
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) ("Before test for __anonymous_ un-named scopes: scope_name = %s \n",scope_name.c_str());
 #endif
@@ -15256,7 +15432,9 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                   {
                  // DQ (4/6/2013): Added test (this would be better to add to the AST consistancy tests).
                  // ROSE_ASSERT(scope->get_isUnNamed() == false);
-
+#if 0
+                    printf ("test 9: qualifierString = %s \n",qualifierString.c_str());
+#endif
                     SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(scope);
                     if (namespaceDefinition != NULL)
                        {
@@ -15272,6 +15450,42 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                               mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualificationSupport(): found un-named namespace: namespaceDefinition = %p \n",namespaceDefinition);
 #endif
                               skip_over_scope = true;
+                            }
+                           else
+                            {
+                           // DQ (8/1/2020): Adding support for references to the NamespaceAlias (required for new failing test code).
+#if 0
+                              printf ("Adding support for references to the NamespaceAlias \n");
+#endif
+                           // DQ (8/1/2020): This should always be true.
+                           // ROSE_ASSERT(namespaceAliasDeclarationMapFromInheritedAttribute != NULL);
+#if 0
+                           // printf ("namespaceAliasDeclarationMapFromInheritedAttribute->size() = %zu \n",namespaceAliasDeclarationMapFromInheritedAttribute->size());
+                              printf ("namespaceAliasDeclarationMap.size() = %zu \n",namespaceAliasDeclarationMap.size());
+#endif
+                           // if (namespaceAliasDeclarationMapFromInheritedAttribute->find(namespaceDeclaration) != namespaceAliasDeclarationMapFromInheritedAttribute->end())
+                              if (namespaceAliasDeclarationMap.find(namespaceDeclaration) != namespaceAliasDeclarationMap.end())
+                                 {
+                                // SgDeclarationStatement* declaration = namespaceAliasDeclarationMapFromInheritedAttribute->operator[](namespaceDeclaration);
+                                // SgDeclarationStatement* declaration = namespaceAliasDeclarationMap[namespaceDeclaration];
+                                   SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration = namespaceAliasDeclarationMap[namespaceDeclaration];
+                                   ROSE_ASSERT(namespaceAliasDeclaration != NULL);
+#if 0
+                                   printf ("test 10: qualifierString = %s \n",qualifierString.c_str());
+#endif
+                                // qualifierString = " /* use the namspace alias */ ";
+
+                                // DQ (8/2/2020): Reset the name of the scope.
+                                   scope_name = namespaceAliasDeclaration->get_name();
+#if 0
+                                   printf ("Exiting as a test! \n");
+                                   ROSE_ASSERT(false);
+#endif
+                                 }
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
                             }
                        }
                       else
@@ -15365,7 +15579,9 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                                  }
                             }
                        }
-
+#if 0
+                    printf ("test 11: qualifierString = %s \n",qualifierString.c_str());
+#endif
                  // DQ (2/13/2019): Detect error in use of un-named scope (e.g. SgBasicBlock).
                  // if (scope_name.substr(0,2) == "0x")
                     if (scope_name.substr(0,2) == "0x" && isSgGlobal(scope) == NULL)
@@ -15418,6 +15634,9 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) (" --- outputGlobalQualification = %s \n",outputGlobalQualification ? "true" : "false");
 #endif
+#if 0
+               printf ("test 12: qualifierString = %s \n",qualifierString.c_str());
+#endif
             // qualifierString = scope_name + "::" + qualifierString;
                if (outputGlobalQualification == true)
                   {
@@ -15433,7 +15652,13 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                        }
                       else
                        {
+#if 0
+                         printf ("test 13: qualifierString = %s \n",qualifierString.c_str());
+#endif
                          qualifierString = scope_name + "::" + qualifierString;
+#if 0
+                         printf ("test 14: qualifierString = %s \n",qualifierString.c_str());
+#endif
                        }
                   }
              }
@@ -15453,12 +15678,19 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
         }
 
 #if 0
+     printf ("test 15: qualifierString = %s \n",qualifierString.c_str());
+#endif
+#if 0
      mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualificationSupport(): After loop over name qualifiction depth: inputNameQualificationLength = %d \n",inputNameQualificationLength);
 #endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
+     printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
      mfprintf(mlog [ WARN ] ) ("Leaving NameQualificationTraversal::setNameQualificationSupport(): outputGlobalQualification = %s output_amountOfNameQualificationRequired = %d qualifierString = %s \n",
           outputGlobalQualification ? "true" : "false",output_amountOfNameQualificationRequired,qualifierString.c_str());
+     printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
+     printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
 #endif
 
   // DQ (6/12/2011): Make sure we have not generated a qualified name with "::::" because of an scope translated to an empty name.
@@ -15475,6 +15707,19 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
           qualifierString = "";
         }
      ROSE_ASSERT(qualifierString.substr(0,2) != "0x");
+
+#if 0
+  // DQ (8/1/2020): Debugging namespace alias name qualification.
+     if (inputNameQualificationLength > 0)
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
+#if 0
+     printf ("test 16: qualifierString = %s \n",qualifierString.c_str());
+#endif
 
      return qualifierString;
    }
