@@ -286,11 +286,13 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                          printf ("decl->get_parent()               = %p = %s = %s \n",decl->get_parent(),decl->get_parent()->class_name().c_str(),get_name(decl->get_parent()).c_str());
                          printf ("decl->get_parent()->get_parent() = %p = %s = %s \n",decl->get_parent()->get_parent(),decl->get_parent()->get_parent()->class_name().c_str(),get_name(decl->get_parent()->get_parent()).c_str());
 #endif
+#if 0
                          SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(decl->get_parent()->get_parent());
                          if (namespaceDefinitionStatement != NULL)
                             {
                               namespaceDefinitionStatement->get_file_info()->display("namespaceDefinitionStatement: debug");
                             }
+#endif
 #if 0
                          if (isSgCtorInitializerList(decl) != NULL)
                             {
