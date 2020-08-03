@@ -1230,11 +1230,11 @@ IsGoto( const AstNodePtr& _s, AstNodePtr* dest)
     break;
   case V_SgReturnStmt: 
     if (dest != 0) {
-      SgNode *scope = 0;
+      SgNode *scope = NULL;
       for (scope = s->get_parent(); 
-           scope->variantT() != V_SgFunctionDefinition;
+           ((scope != NULL) && (scope->variantT() != V_SgFunctionDefinition));
            scope = scope->get_parent()){
-        assert(scope != 0);
+        assert(scope != NULL);
       }
       *dest = AstNodePtrImpl(scope);
     }
@@ -2380,6 +2380,7 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
         assert(false);
      }
      SgType* t = AstNodeTypeImpl(_ftype).get_ptr();
+     ROSE_ASSERT(t != NULL);
      if (t->variantT() == V_SgPointerType)
         t = static_cast<SgPointerType*>(t)->get_base_type();
      SgFunctionType* ftype = isSgFunctionType(t);

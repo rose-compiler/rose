@@ -176,7 +176,9 @@ ModifyCopyArrayCollect( DepCompCopyArrayCollect& collect, DepCompAstRefGraphCrea
                break;
           if (cuts.size() == unit.refs.size()) {
              assert(origroot != unit.root);
-             LoopTreeNode* n = origroot, *p = GetEnclosingLoop(n,interface);
+             LoopTreeNode* n = origroot;
+             assert(n != NULL);
+             LoopTreeNode* p = GetEnclosingLoop(n,interface);
              LoopTreeNode* rootloop = (unit.root->GetLoopInfo() == 0)? 0 : unit.root;
              while (n != rootloop && p != rootloop) {
                  n = p;
