@@ -117,8 +117,8 @@ public:
 
     /** Settings for the emulation. */
     struct Settings {
-        bool markingArgvAsInput;                        // whether to mark the characters of the argv strings as inputs
-        bool markingEnvpAsInput;                        // whether to mark the characters of the envp strings as inputs
+        bool markingArgvAsInput;                        /** Whether to mark the characters of the argv strings as inputs. */
+        bool markingEnvpAsInput;                        /** Whether to mark the characters of the envp strings as inputs. */
 
         Settings()
             : markingArgvAsInput(true),                 // normally considered as input
@@ -219,7 +219,7 @@ private:
     void systemCall();
 
     // Mark locations of specimen command-line arguments.
-    void markProgramArguments();
+    void markProgramArguments(const SmtSolver::Ptr&);
 };
 
 /**< Pointer to virtual CPU. */
@@ -242,6 +242,9 @@ public:
 public:
     /** Concrete instruction pointer. */
     rose_addr_t concreteInstructionPointer() const;
+
+    /** Single step the concrete part of the executor with absolutely no regard for keeping the symbolic part up to date. */
+    void concreteSingleStep();
 
     /** True if subordinate process has terminated.
      *
@@ -284,11 +287,32 @@ public:
         Partitioner2::DisassemblerSettings disassembler;
         Partitioner2::PartitionerSettings partitioner;
         Emulation::RiscOperators::Settings emulationSettings;
+
+        bool traceSemantics;                            /** Whether to debug semantic steps by using a semantic tracer. */
+        bool traceState;                                /** Whether to output machine state after each instruction. */
+
+        Settings()
+            : traceSemantics(false), traceState(false) {}
+    };
+
+    /** Information about a called function. */
+    struct FunctionCall {
+        std::string printableName;                      /** Name suitable for printing in diagnostic messages. */
+        rose_addr_t sourceVa;                           /** Address from which the function was called. */
+        rose_addr_t targetVa;                           /** Address that was called. */
+        rose_addr_t stackVa;                            /** Stack pointer when function is first called. */
+
+        FunctionCall()
+            : sourceVa(0), targetVa(0), stackVa(0) {}
+
+        FunctionCall(const std::string &printableName, rose_addr_t sourceVa, rose_addr_t targetVa, rose_addr_t stackVa)
+            : printableName(printableName), sourceVa(sourceVa), targetVa(targetVa), stackVa(stackVa) {}
     };
 
 private:
     Settings settings_;
     InputVariables inputVariables_;
+    std::vector<FunctionCall> functionCallStack_;
 
 protected:
     ConcolicExecutor() {}
@@ -333,6 +357,13 @@ private:
 
     // Run the execution
     void run(const DatabasePtr&, const TestCase::Ptr&, const Emulation::DispatcherPtr&);
+
+    // Handle function calls. This is mainly for debugging so we have some idea where we are in the execution when an error
+    // occurs.  Returns true if the call stack changed.
+    bool updateCallStack(const Emulation::DispatcherPtr&, SgAsmInstruction*);
+
+    // Print function call stack on multiple lines
+    void printCallStack(std::ostream&);
 
     // Handle conditional branches
     void handleBranch(const DatabasePtr&, const TestCase::Ptr&, const Emulation::DispatcherPtr&, SgAsmInstruction*,

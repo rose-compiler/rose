@@ -6,21 +6,31 @@ LDADD    = $(ROSE_LIBS)
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    trivial.C \
+   test2020_01.C \
+   test2020_03.C \
    test2020_04.C \
+   test2020_06.C \
    test2020_08.C \
    test2020_09.C \
    test2020_15.C \
+   test2020_16.C \
    test2020_17.C \
    test2020_18.C \
    test2020_19.C \
    test2020_20.C \
    test2020_23.C \
    test2020_27.C \
+   test2020_30.C \
+   test2020_37.C \
    test2020_39.C \
    test2020_40.C \
+   test2020_69.C \
    test2020_70.C \
+   test2020_71.C \
    test2020_72.C \
+   test2020_73.C \
    test2020_74.C \
+   test2020_76.C \
    test2020_77.C \
    test2020_78.C \
    test2020_79.C \
@@ -50,25 +60,27 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_104.C \
    test2020_110.C \
    test2020_111.C \
+   test2020_114.C \
+   test2020_115.C \
    test2020_116.C \
    test2020_118.C \
+   test2020_119.C \
    test2020_120.C \
    test2020_121.C \
-   test2020_122.C
+   test2020_122.C \
+   test2020_124.C \
+   test2020_125.C \
+   test2020_126.C
 
 TESTCODE_CURRENTLY_FAILING = \
-   test2020_01.C \
    test2020_02.C \
-   test2020_03.C \
    test2020_05.C \
-   test2020_06.C \
    test2020_07.C \
    test2020_10.C \
    test2020_11.C \
    test2020_12.C \
    test2020_13.C \
    test2020_14.C \
-   test2020_16.C \
    test2020_21.C \
    test2020_22.C \
    test2020_24.C \
@@ -76,14 +88,12 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_26.C \
    test2020_28.C \
    test2020_29.C \
-   test2020_30.C \
    test2020_31.C \
    test2020_32.C \
    test2020_33.C \
    test2020_34.C \
    test2020_35.C \
    test2020_36.C \
-   test2020_37.C \
    test2020_38.C \
    test2020_41.C \
    test2020_42.C \
@@ -113,11 +123,7 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_66.C \
    test2020_67.C \
    test2020_68.C \
-   test2020_69.C \
-   test2020_71.C \
-   test2020_73.C \
    test2020_75.C \
-   test2020_76.C \
    test2020_82.C \
    test2020_99.C \
    test2020_105.C \
@@ -127,9 +133,8 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_109.C \
    test2020_112.C \
    test2020_113.C \
-   test2020_114.C \
-   test2020_115.C \
-   test2020_117.C 
+   test2020_117.C \
+   test2020_123.C 
 
 # DQ (7/21/2020): These test codes have not yet been fixed up to be valid test codes for C++20 support in ROSE.
 # They may fail for issues unrelated to C++20 support in EDG 6.0.
@@ -212,7 +217,11 @@ TEST_TRANSLATOR=../../testTranslator
 if ROSE_USING_GCC_VERSION_LATER_10_1
 LANG_FLAGS = -std=c++20
 else
+if USING_CLANG_COMPILER
+LANG_FLAGS = -std=c++20
+else
 LANG_FLAGS = -std=c++17
+endif
 endif
 
 ROSE_FLAGS =
@@ -264,8 +273,9 @@ else  # NOT USING_GNU_COMPILER
 if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
 	@echo "USING_CLANG_COMPILER == true"
+# DQ (7/27/2020): Adding these C++20 tests for clang (using clang version 10.0).
 # DQ (2/28/2017): Skip these tests until we can return to this problem later.
-#	@$(MAKE) $(PASSING_TEST_Source_passed)
+	@$(MAKE) $(PASSING_TEST_Source_passed)
 else # NOT USING_CLANG_COMPILER
 	@echo "USING_CLANG_COMPILER == false"
 if USING_INTEL_COMPILER

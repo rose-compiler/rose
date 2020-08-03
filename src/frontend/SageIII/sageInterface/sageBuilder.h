@@ -685,6 +685,9 @@ BUILD_BINARY_PROTO(ElementwiseLeftDivideOp);
 BUILD_BINARY_PROTO(ElementwiseAddOp);
 BUILD_BINARY_PROTO(ElementwiseSubtractOp);
 
+// DQ (7/25/2020): Adding C++20 support
+BUILD_BINARY_PROTO(SpaceshipOp)
+
 #undef BUILD_BINARY_PROTO
 
 //! Build a conditional expression ?:
@@ -883,6 +886,19 @@ ROSE_DLL_API SgLambdaCapture* buildLambdaCapture_nfi(SgExpression* capture_varia
 
 ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList    ();
 ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList_nfi();
+
+// DQ (7/25/2020): Adding C++17 support
+ ROSE_DLL_API SgFoldExpression * buildFoldExpression(SgExpression* operands, std::string operator_token_string, bool is_left_associative);
+ROSE_DLL_API SgFoldExpression * buildFoldExpression_nfi(SgExpression* operands, std::string operator_token_string, bool is_left_associative);
+
+// DQ (7/25/2020): Adding C++20 support
+ROSE_DLL_API SgAwaitExpression * buildAwaitExpression();
+ROSE_DLL_API SgAwaitExpression * buildAwaitExpression_nfi();
+
+// DQ (7/25/2020): Adding C++20 support
+ROSE_DLL_API SgChooseExpression * buildChooseExpression();
+ROSE_DLL_API SgChooseExpression * buildChooseExpression_nfi();
+
 
 //@}
 

@@ -797,8 +797,8 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      unp->cur.insert_newline(1);
 
-     curprint("(");
-     unp->cur.insert_newline(1);
+     curprint_indented("(\n", info);
+     info.inc_nestingLevel();
 
      int n = enum_decl->get_enumerators().size();
      foreach(SgInitializedName* init_name, enum_decl->get_enumerators())
@@ -812,14 +812,14 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
            SgEnumVal* enum_val = isSgEnumVal(assign_expr->get_operand());
            ASSERT_not_null(enum_val);
 
-           curprint("  ");
-           curprint(tostring(enum_val->get_value()));
+           curprint_indented(tostring(enum_val->get_value()), info);
            curprint(name);
            if (--n > 0) curprint(",");
            unp->cur.insert_newline(1);
         }
+     info.dec_nestingLevel();
 
-     curprint(");");
+     curprint_indented(");", info);
      unp->cur.insert_newline(1);
    }
 

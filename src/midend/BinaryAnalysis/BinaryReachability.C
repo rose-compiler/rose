@@ -676,7 +676,7 @@ struct TransferFunction {
         return state;
     }
 
-    std::string printState(Reachability::ReasonFlags state) {
+    std::string toString(Reachability::ReasonFlags state) {
         return StringUtility::toHex2(state.vector(), 32, false, false);
     }
 };

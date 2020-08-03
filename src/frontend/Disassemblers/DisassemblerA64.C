@@ -157,8 +157,49 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
         insn->set_raw_bytes(SgUnsignedCharList(r.csi->bytes+0, r.csi->bytes+r.csi->size));
         insn->set_operandList(operands);
         insn->set_condition(detail.cc);
+        insn->set_updatesFlags(detail.update_flags);
         operands->set_parent(insn);
         retval = insn;
+
+        // Capstone doesn't provide a condition argument for some instructions, nor does it indicate the condition as part of
+        // the mnemonic like it does for the B.cond instructions. Therefore, we adjust the mnemonic ourselves.
+        if (insn->get_kind() != A64InstructionKind::ARM64_INS_B && insn->get_condition() != A64InstructionCondition::ARM64_CC_INVALID) {
+            std::string cond;
+            switch (insn->get_condition()) {
+                case ARM64_CC_INVALID: ASSERT_not_reachable("impossible");
+                case ARM64_CC_EQ: cond = ".eq"; break;
+                case ARM64_CC_NE: cond = ".ne"; break;
+                case ARM64_CC_HS: cond = ".hs"; break;
+                case ARM64_CC_LO: cond = ".lo"; break;
+                case ARM64_CC_MI: cond = ".mi"; break;
+                case ARM64_CC_PL: cond = ".pl"; break;
+                case ARM64_CC_VS: cond = ".vs"; break;
+                case ARM64_CC_VC: cond = ".vc"; break;
+                case ARM64_CC_HI: cond = ".hi"; break;
+                case ARM64_CC_LS: cond = ".ls"; break;
+                case ARM64_CC_GE: cond = ".ge"; break;
+                case ARM64_CC_LT: cond = ".lt"; break;
+                case ARM64_CC_GT: cond = ".gt"; break;
+                case ARM64_CC_LE: cond = ".le"; break;
+                case ARM64_CC_AL: cond = ".al"; break;
+                case ARM64_CC_NV: cond = ".nv"; break;
+            }
+            if (!boost::ends_with(insn->get_mnemonic(), cond))
+                insn->set_mnemonic(insn->get_mnemonic() + cond);
+        }
+
+        // Work around capstone bugs
+        if (BitOps::bits(opcode(insn), 24, 31) == 0b10011000) {
+            // LDRSW (literal) is decoded incorrectly. The second operand should be a 32-bit memory read, not an immediate
+            // value.
+            if (auto ival = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[1])) {
+                auto memref = new SgAsmMemoryReferenceExpression;
+                memref->set_address(ival);
+                memref->set_type(SageBuilderAsm::buildTypeU32());
+                insn->get_operandList()->get_operands()[1] = memref;
+            }
+        }
+
     } else {
         ASSERT_not_reachable("invalid ARM architecture");
     }
@@ -191,25 +232,25 @@ DisassemblerArm::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
         case ARM64_OP_INVALID:
             ASSERT_not_reachable("invalid operand type from Capstone");
 
-        case ARM64_OP_REG: {    // register operand
+        case ARM64_OP_REG: {                            // register operand
             RegisterDescriptor reg = makeRegister(op.reg);
             reg = subRegister(reg, op.vector_index, op.vess);
             retval = new SgAsmDirectRegisterExpression(reg);
             retval->set_type(registerType(reg, op.vas));
             //retval = extractElement(retval, op.vess, op.vector_index);
-            retval = extendOperand(retval, op.ext, retval->get_type(), op.shift.type, op.shift.value);
+            retval = extendOperand(retval, insn, op.ext, retval->get_type(), op.shift.type, op.shift.value);
             break;
         }
 
-        case ARM64_OP_IMM:      // immediate operand
+        case ARM64_OP_IMM:                              // immediate operand
             // Capstone doesn't have any types. It just stores all immediate values in a 64 bit field and assumes that the
             // instruction semantics and unparser will only use that part of the field that is applicable for this instruction
             // and argument type.
             retval = new SgAsmIntegerValueExpression(op.imm, SageBuilderAsm::buildTypeU64());
-            retval = extendOperand(retval, op.ext, retval->get_type(), op.shift.type, op.shift.value);
+            retval = extendOperand(retval, insn, op.ext, retval->get_type(), op.shift.type, op.shift.value);
             break;
 
-        case ARM64_OP_MEM: {    // memory operand
+        case ARM64_OP_MEM: {                            // memory operand
             RegisterDescriptor reg = makeRegister(op.mem.base);
             auto base = new SgAsmDirectRegisterExpression(reg);
             base->set_type(registerType(reg, ARM64_VAS_INVALID));
@@ -230,7 +271,7 @@ DisassemblerArm::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
                         case ARM64_SFT_LSL:
                             addr = SageBuilderAsm::buildLslExpression(addr, disp, u64);
                             break;
-                        case ARM64_SFT_MSL: // Same as LSL but filling low bits with ones
+                        case ARM64_SFT_MSL:             // Same as LSL but filling low bits with ones
                             addr = SageBuilderAsm::buildMslExpression(addr, disp, u64);
                             break;
                         case ARM64_SFT_LSR:
@@ -250,7 +291,7 @@ DisassemblerArm::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
                 auto disp = new SgAsmIntegerValueExpression(op.mem.disp, u64);
                 addr = SageBuilderAsm::buildAddExpression(addr, disp, u64);
             }
-            addr = extendOperand(addr, op.ext, addr->get_type(), op.shift.type, op.shift.value);
+            addr = extendOperand(addr, insn, op.ext, addr->get_type(), op.shift.type, op.shift.value);
 
             auto mre = new SgAsmMemoryReferenceExpression;
             mre->set_address(addr);
@@ -259,35 +300,42 @@ DisassemblerArm::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
             break;
         }
 
-        case ARM64_OP_FP:       // floating-point operand
+        case ARM64_OP_FP:                               // floating-point operand
             retval = SageBuilderAsm::buildValueFloat(op.fp, SageBuilderAsm::buildIeee754Binary64());
             break;
 
-        case ARM64_OP_CIMM:     // C-immediate
+        case ARM64_OP_CIMM:                             // C-immediate
             retval = new SgAsmA64CImmediateOperand(op.sys);
             retval->set_type(SageBuilderAsm::buildTypeU(1)); // FIXME: not sure what the type should be, but probably not this
             break;
 
-        case ARM64_OP_REG_MRS:  // MRS register operand
-        case ARM64_OP_REG_MSR:  // MSR register operand
-            retval = new SgAsmA64SysMoveOperand(op.reg);
+        case ARM64_OP_REG_MRS:                          // MRS register operand
+        case ARM64_OP_REG_MSR: {                        // MSR register operand
+#if 1
+            // Capstone appears to decode this incorrectly, so we do it according to the ARM documentation instead.
+            uint32_t reg = BitOps::bits(opcode(insn), 5, 19);
+#else
+            uint32_t reg = op.reg;
+#endif
+            retval = new SgAsmA64SysMoveOperand(reg);
             retval->set_type(SageBuilderAsm::buildTypeU(1)); // FIXME: not sure what the type should be, but probably not this
             break;
+        }
 
-        case ARM64_OP_PSTATE:   // PState operand
+        case ARM64_OP_PSTATE:                           // PState operand
             break;
 
-        case ARM64_OP_SYS:      // SYS operand for IC/DC/AT/TLBI
+        case ARM64_OP_SYS:                              // SYS operand for IC/DC/AT/TLBI
             retval = new SgAsmA64AtOperand((A64AtOperation)op.sys);
             retval->set_type(SageBuilderAsm::buildTypeU(1)); // FIXME: not sure what the type should be, but probably not this
             break;
 
-        case ARM64_OP_PREFETCH: // prefetch operand
+        case ARM64_OP_PREFETCH:                         // prefetch operand
             retval = new SgAsmA64PrefetchOperand(op.prefetch);
             retval->set_type(SageBuilderAsm::buildTypeU(1)); // FIXME: not sure what the type should be, but probably not this
             break;
 
-        case ARM64_OP_BARRIER:  // memory barrier operand for ISB/DMB/DSB instruction
+        case ARM64_OP_BARRIER:                          // memory barrier operand for ISB/DMB/DSB instruction
             retval = new SgAsmA64BarrierOperand(op.barrier);
             retval->set_type(SageBuilderAsm::buildTypeU(4)); // the operation is just a constant from 0 through 16
             break;
@@ -365,8 +413,10 @@ DisassemblerArm::subRegister(RegisterDescriptor reg, int idx, arm64_vess elmtSiz
 //}
 
 SgAsmExpression*
-DisassemblerArm::extendOperand(SgAsmExpression *expr, arm64_extender extender, SgAsmType *dstType, arm64_shifter shifter,
-                               unsigned shiftAmount) const {
+DisassemblerArm::extendOperand(SgAsmExpression *expr, const cs_insn &insn, arm64_extender extender, SgAsmType *dstType,
+                               arm64_shifter shifter, unsigned shiftAmount) const {
+    using namespace ::Rose::BitOps;
+
     ASSERT_not_null(expr);
     ASSERT_not_null(expr->get_type());
 
@@ -537,12 +587,26 @@ DisassemblerArm::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_arm64
     }
 }
 
+uint32_t
+DisassemblerArm::opcode(const cs_insn &insn) {
+    uint32_t code = insn.bytes[0] | (insn.bytes[1] << 8) | (insn.bytes[2] << 16) | (insn.bytes[3] << 24);
+    return ByteOrder::disk_to_host(byteOrder(), code);
+}
+
+uint32_t
+DisassemblerArm::opcode(SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+    const std::vector<uint8_t> &bytes = insn->get_raw_bytes();
+    ASSERT_require(bytes.size() == 4);
+    uint32_t code = bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24);
+    return ByteOrder::disk_to_host(byteOrder(), code);
+}
+
 SgAsmType*
 DisassemblerArm::typeForMemoryRead(const cs_insn &insn) {
     using namespace ::Rose::BitOps;
     using Kind = ::Rose::BinaryAnalysis::A64InstructionKind;
-    // FIXME: This is for little endian. Will need to be swapped for big endian when we implement that.
-    uint32_t code = (insn.bytes[0] << 0) | (insn.bytes[1] << 8) | (insn.bytes[2] << 16) | (insn.bytes[3] << 24);
+    uint32_t code = opcode(insn);
 
     switch ((Kind)insn.id) {
         //--------------------------------------------------------------------------------------------------------
@@ -801,7 +865,8 @@ DisassemblerArm::typeForMemoryRead(const cs_insn &insn) {
                 bits(code, 22, 29) == 0b10110110 || // STP (SIMD&FP) Pre-index
                 bits(code, 22, 29) == 0b10110100) { // STP (SIMD&FP) Signed offset
                 uint32_t opc = bits(code, 30, 31);
-                return SageBuilderAsm::buildTypeU(8 << (2 + opc));
+                // Memory access is twice as wide as the registers because we're loading or storing two registers.
+                return SageBuilderAsm::buildTypeU(8 << (3 + opc));
             } else if (bits(code, 22, 30) == 0b010100001 || // LDNP
                        bits(code, 22, 30) == 0b010100011 || // LDP Post-index
                        bits(code, 22, 30) == 0b010100111 || // LDP Pre-index
@@ -810,7 +875,8 @@ DisassemblerArm::typeForMemoryRead(const cs_insn &insn) {
                        bits(code, 22, 30) == 0b010100010 || // STP Post-index
                        bits(code, 22, 30) == 0b010100110 || // STP Pre-index
                        bits(code, 22, 30) == 0b010100100) { // STP Signed offset
-                return SageBuilderAsm::buildTypeU(bit(code, 31) ? 64 : 32);
+                // Memory access is twice as wide as the registers because we're loading or storing two registers.
+                return SageBuilderAsm::buildTypeU(bit(code, 31) ? 128 : 64);
             } else {
                 ASSERT_not_reachable("invalid opcode");
             }

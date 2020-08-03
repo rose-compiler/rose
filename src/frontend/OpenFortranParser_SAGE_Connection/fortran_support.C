@@ -4351,6 +4351,7 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
 
                break;
 
+          case AttrSpec_CONTIGUOUS:   variableDeclaration->get_declarationModifier().get_storageModifier().setContiguous();    break;
           case AttrSpec_POINTER:
           case AttrSpec_COPOINTER:
           case ComponentAttrSpec_pointer:
@@ -4362,7 +4363,6 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
           case AttrSpec_NON_OVERRIDABLE:
           case AttrSpec_DEFERRED:
             // printf ("Error: Are these F08 attribute specs? astAttributeSpec = %d \n",astAttributeSpec);
-          case AttrSpec_CONTIGUOUS:
                break;
 
           case ComponentAttrSpec_access_spec:

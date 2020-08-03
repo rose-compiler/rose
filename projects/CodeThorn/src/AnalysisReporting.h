@@ -8,7 +8,7 @@ namespace CodeThorn {
   class AnalysisReporting {
   public:
     // generates reports, if result files are specified in ctopt
-    static void generateVerificationReports(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer);
+    static void generateVerificationReports(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer,bool reportDetectedErrorLines);
     static void generateAstNodeStats(CodeThornOptions& ctOpt, SgProject* sageProject);
     static void generateNullPointerAnalysisStats(CodeThorn::Analyzer* analyzer);
     static void generateAnalysisStatsRawData(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer);

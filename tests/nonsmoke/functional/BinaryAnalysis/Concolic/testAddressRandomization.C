@@ -18,7 +18,7 @@ int main() {
         e01->args(std::vector<std::string>{"--address-randomization=true"});
         db->save(e01);
 
-        auto executor = LinuxExecutor::instance();
+        auto executor = LinuxExecutor::instance(db);
         executor->useAddressRandomization(true);
         auto result = executor->execute(e01);
         int status = result->exitStatus();
@@ -30,7 +30,7 @@ int main() {
         e02->args(std::vector<std::string>{"--address-randomization=false"});
         db->save(e02);
 
-        auto executor = LinuxExecutor::instance();
+        auto executor = LinuxExecutor::instance(db);
         executor->useAddressRandomization(false);
         auto result = executor->execute(e02);
         int status = result->exitStatus();

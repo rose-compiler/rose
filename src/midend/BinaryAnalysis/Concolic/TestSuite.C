@@ -40,6 +40,18 @@ TestSuite::printableName(const Database::Ptr &db) {
     return retval;
 }
 
+std::string
+TestSuite::timestamp() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return timestamp_;
+}
+
+void
+TestSuite::timestamp(const std::string &s) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    timestamp_ = s;
+}
+
 } // namespace
 } // namespace
 } // namespace

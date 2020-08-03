@@ -97,6 +97,7 @@ IntraFWDataflow::getInitialWorklist(const Function &func, bool firstVisit, bool 
 VirtualCFG::dataflow*
 IntraBWDataflow::getInitialWorklist(const Function &func, bool firstVisit, bool analyzeDueToCallers, const set<Function> &calleesUpdated, NodeState *fState)
 {
+  ROSE_ASSERT(func.get_definition() != NULL);
   DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition(),filter);
   DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition(),filter);
 

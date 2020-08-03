@@ -14,8 +14,10 @@ void CodeThorn::ProgramLocationsReport::setAllLocationsOfInterest(LabelSet loc) 
 }
 
 LabelSet CodeThorn::ProgramLocationsReport::verifiedLocations(){
-  LabelSet u=unverifiedLocations();
-  return allLocations-u;
+  LabelSet a=allLocations;
+  a-=definitiveLocations;
+  a-=potentialLocations;
+  return a;
 }
 
 LabelSet CodeThorn::ProgramLocationsReport::falsifiedLocations() {
@@ -153,20 +155,36 @@ void CodeThorn::ProgramLocationsReport::writeResultFile(string fileName, CodeTho
 }
 
 void CodeThorn::ProgramLocationsReport::writeResultToStream(std::ostream& stream, CodeThorn::Labeler* labeler) {
-    for(auto lab : definitiveLocations) {
-      stream<<"definitive: "<<programLocation(labeler,lab);
-      stream<<": "<<sourceCodeAtProgramLocation(labeler,lab);
-      stream<<endl;
-    }
-    for(auto lab : potentialLocations) {
-      stream<<"potential: "<<programLocation(labeler,lab);
-      stream<<": "<<sourceCodeAtProgramLocation(labeler,lab);
-      stream<<endl;
-    }
+  writeAllDefinitiveLocationsToStream(stream,labeler,true,true,true);
+  writeAllPotentialLocationsToStream(stream,labeler,true,true,true);
+}
+
+void CodeThorn::ProgramLocationsReport::writeAllDefinitiveLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation, bool sourceCode) {
+  writeLocationsToStream(stream,labeler,definitiveLocations,"definitive",true,true);
+}
+void CodeThorn::ProgramLocationsReport::writeAllPotentialLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation, bool sourceCode) {
+  writeLocationsToStream(stream,labeler,definitiveLocations,"definitive",true,true);
+}
+
+void CodeThorn::ProgramLocationsReport::writeLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, LabelSet& set, string qualifier, bool programLocation, bool sourceCode) {
+  for(auto lab : set) {
+    if(qualifier.size()>0)
+      stream<<qualifier;
+    if(qualifier.size()>0&&(programLocation||sourceCode))
+      stream<<": ";
+    if(programLocation)
+      stream<<this->programLocation(labeler,lab);
+    if(programLocation&&sourceCode)
+      stream<<": ";
+    if(sourceCode)
+      stream<<sourceCodeAtProgramLocation(labeler,lab);
+    stream<<endl;
+  }
 }
 
 void ProgramLocationsReport::writeLocationsVerificationReport(std::ostream& os, Labeler* labeler) {
-  int n=allLocations.size();
+  int int_n=allLocations.size();
+  double n=(double)int_n;
   LabelSet verified=verifiedLocations();
   int v=verified.size();
   LabelSet falsified=falsifiedLocations();
@@ -174,17 +192,21 @@ void ProgramLocationsReport::writeLocationsVerificationReport(std::ostream& os, 
   LabelSet unverified=unverifiedLocations();
   int u=unverified.size();
   os<<std::fixed<<std::setprecision(2);
-  os<<"Falsified Locations  : "<<f<<"["<<f/n*100<<"]"<<endl;
-  os<<"Verified Locations   : "<<v<<"["<<v/n*100<<"]"<<endl;
-  os<<"Unverified Locations : "<<u<<"["<<u/n*100<<"]"<<endl;
+  os<<"Proven     locations: "<<setw(6)<<f+v<<" ["<<setw(6)<<(f+v)/n*100.0<<"%]"<<endl;
+  os<<" Verified  locations: "<<setw(6)<< v <<" ["<<setw(6)<<v/n*100.0<<"%]"<<endl;
+  os<<" Falsified locations: "<<setw(6)<< f <<" ["<<setw(6)<<f/n*100.0<<"%]"<<endl;
+  os<<"Unproven   locations: "<<setw(6)<< u <<" ["<<setw(6)<<u/n*100.0<<"%]"<<endl;
+  os<<"Total      locations: "<<setw(6)<<int_n<<endl;
+#if 0
   os<<"Detected Errors:"<<endl;
   if(f==0) {
     cout<<"None."<<endl;
   } else {
     for(auto lab:definitiveLocations) {
-      os<<sourceCodeAtProgramLocation(labeler,lab);
+      os<<sourceCodeAtProgramLocation(labeler,lab)<<endl;
     }
   }
+#endif
 }
 
 void ProgramLocationsReport::writeFunctionsVerificationReport(std::ostream& os, Labeler* labeler) {
