@@ -366,24 +366,8 @@ void configureRose() {
   Rose::Diagnostics::mprefix->showThreadId(false);
   Rose::Diagnostics::mprefix->showElapsedTime(false);
 
-  string turnOffRoseWarnings=string("Rose(none,>=error),Rose::EditDistance(none,>=error),Rose::FixupAstDeclarationScope(none,>=error),")
-    +"Rose::FixupAstSymbolTablesToSupportAliasedSymbols(none,>=error),"
-    +"Rose::EditDistance(none,>=error),"
-    +"Rose::TestChildPointersInMemoryPool(none,>=error),Rose::UnparseLanguageIndependentConstructs(none,>=error),"
-    +"rose_ir_node(none,>=error)";
-  // result string must be checked
-  string result=Rose::Diagnostics::mfacilities.control(turnOffRoseWarnings); 
-  if(result!="") {
-    cerr<<result<<endl;
-    cerr<<"Error in logger initialization."<<endl;
-    exit(1);
-  }
-
-  // see class Options in src/roseSupport/utility_functions.h
-  Rose::global_options.set_frontend_notes(false);
-  Rose::global_options.set_frontend_warnings(false);
-  Rose::global_options.set_backend_warnings(false);
-
+  CodeThorn::turnOffRoseWarnings();
+  
   signal(SIGSEGV, handler);   // install handler for backtrace
 }
 

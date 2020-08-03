@@ -51,6 +51,8 @@
 #include "CallString.h"
 #include "CodeThornOptions.h"
 #include "LTLOptions.h"
+#include "DFAnalysisBase.h"
+#include "EStateTransferFunctions.h"
 
 namespace CodeThorn {
 
@@ -76,7 +78,7 @@ namespace CodeThorn {
    * \date 2012.
    */
 
-  class Analyzer {
+  class Analyzer : public DFAnalysisBase {
     friend class Solver;
     friend class Solver5;
     friend class Solver8;
@@ -299,7 +301,7 @@ namespace CodeThorn {
     CodeThornOptions& getOptionsRef();
     void setLtlOptions(LTLOptions ltlOptions);
     LTLOptions& getLtlOptionsRef();
-  protected:
+    //protected:
     /* these functions are used for the internal timer for resource management
        this function is protected to ensure it is not used from outside. It is supposed to be used
        only for internal timing managing the max-time option resource.
@@ -352,6 +354,8 @@ namespace CodeThorn {
     bool isFeasiblePathContext(CallString& cs,Label lab);
 
     std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
+
+    // forwarding functions for EStateTransferFunctions (backward compatibility)
     std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallExternal(Edge edge, const EState* estate);
@@ -368,7 +372,7 @@ namespace CodeThorn {
     std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
-
+    
     // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
     typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
     typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
@@ -486,12 +490,13 @@ namespace CodeThorn {
     AnalyzedFunctionsContainerType analyzedFunctions;
     typedef std::unordered_set<SgFunctionCallExp*> ExternalFunctionsContainerType;
     ExternalFunctionsContainerType externalFunctions;
-    //xxx
+
   private:
     //std::unordered_map<int,const EState*> _summaryStateMap;
     std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;
-    const CodeThorn::PState* _initialPStateStored=0;
-    const CodeThorn::ConstraintSet* _emptycsetstored=0;
+    const CodeThorn::PState* _initialPStateStored=nullptr;
+    const CodeThorn::ConstraintSet* _emptycsetstored=nullptr;
+    CodeThorn::EStateTransferFunctions* _estateTransferFunctions=nullptr;
   }; // end of class Analyzer
 } // end of namespace CodeThorn
 
