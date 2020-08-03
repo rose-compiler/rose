@@ -855,7 +855,7 @@ void __builtin_coro_resume(void* _M_fr_ptr);
 void __builtin_coro_destroy(void* _M_fr_ptr);
 // std::compare_three_way()(__a.address(), __b.address());
 void* __builtin_coro_promise(void* _M_fr_ptr, unsigned long, bool);
-constexpr bool __atomic_always_lock_free(unsigned long, unsigned long);
+ROSE_CONSTEXPR bool __atomic_always_lock_free(unsigned long, unsigned long);
 // extern unsigned long ATOMIC_CHAR8_T_LOCK_FREE;
 const unsigned long __GCC_ATOMIC_CHAR8_T_LOCK_FREE = 2;
 #endif

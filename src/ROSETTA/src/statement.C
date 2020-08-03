@@ -537,6 +537,8 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaTaskSpecDecl,       "AdaTaskSpecDecl", "ADA_TASK_SPEC_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaTaskTypeDecl,       "AdaTaskTypeDecl", "ADA_TASK_TYPE_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaTaskBodyDecl,       "AdaTaskBodyDecl", "ADA_TASK_BODY_DECL_STMT" );
+  // PP (07/14/20): Adding Ada renaming declarations 
+     NEW_TERMINAL_MACRO (AdaRenamingDecl,       "AdaRenamingDecl", "ADA_RENAMING_DECL_STMT" );
 
      NEW_NONTERMINAL_MACRO (DeclarationStatement,
           FunctionParameterList                   | VariableDeclaration       | VariableDefinition           |
@@ -554,9 +556,8 @@ Grammar::setUpStatements ()
           StaticAssertionDeclaration              | OmpDeclareSimdStatement   | MicrosoftAttributeDeclaration|
           JovialCompoolStatement                  | JovialDirectiveStatement  | JovialDefineDeclaration      |
           JovialOverlayDeclaration                | NonrealDecl               | EmptyDeclaration             |
-          AdaPackageBodyDecl           |
-          AdaPackageSpecDecl                      | AdaTaskSpecDecl           | AdaTaskBodyDecl              | 
-          AdaTaskTypeDecl
+          AdaPackageBodyDecl                      | AdaPackageSpecDecl        | AdaRenamingDecl              | 
+          AdaTaskSpecDecl                         | AdaTaskBodyDecl           | AdaTaskTypeDecl           
           /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
@@ -3043,7 +3044,12 @@ Grammar::setUpStatements ()
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaTaskBodyDecl.setDataPrototype ( "SgAdaTaskBody*", "definition", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);                  
-                                     
+     AdaRenamingDecl.setFunctionPrototype  ( "HEADER_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaRenamingDecl.setDataPrototype ( "SgName", "name", "= \"\"",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaRenamingDecl.setDataPrototype ( "SgDeclarationStatement*", "renamed", "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);                  
+                              
 
 #if USE_FORTRAN_IR_NODES
      ProgramHeaderStatement.setFunctionPrototype ( "HEADER_PROGRAM_HEADER_STATEMENT", "../Grammar/Statement.code" );
@@ -4156,6 +4162,7 @@ Grammar::setUpStatements ()
      AdaTaskSpecDecl.setFunctionSource   ( "SOURCE_ADA_TASK_SPEC_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaTaskTypeDecl.setFunctionSource   ( "SOURCE_ADA_TASK_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaTaskBodyDecl.setFunctionSource   ( "SOURCE_ADA_TASK_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaRenamingDecl.setFunctionSource   ( "SOURCE_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
     
   // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit 
   // token-based unparsing to work with greater precision. For example, used to add an include directive with 
