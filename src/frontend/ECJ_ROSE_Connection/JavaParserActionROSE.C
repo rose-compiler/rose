@@ -3150,11 +3150,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, 
             annotation -> set_parent(method_declaration);
             annotations_attribute -> setNode(annotation, i);
         }
+        ROSE_ASSERT(method_declaration != NULL);
         method_declaration -> setAttribute("annotations", annotations_attribute);
     }
 
     SgScopeStatement *type_space = isSgScopeStatement(astJavaScopeStack.pop());
-    ROSE_ASSERT(type_space);
+    ROSE_ASSERT(type_space != NULL);
 
     if (SgProject::get_verbose() > 0)
         printf ("Exiting  cactionMethodDeclarationEnd (method) \n");
