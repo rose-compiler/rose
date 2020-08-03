@@ -11,6 +11,8 @@ using namespace Rose::BinaryAnalysis;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
 
+static const rose_addr_t startingVa = 0;
+
 static MemoryMap::Ptr
 parseBytes(int argc, char *argv[]) {
     std::vector<uint8_t> bytes;
@@ -21,10 +23,10 @@ parseBytes(int argc, char *argv[]) {
     std::reverse(bytes.begin(), bytes.end());
 
     auto map = MemoryMap::instance();
-    map->insert(AddressInterval::baseSize(0, bytes.size()),
+    map->insert(AddressInterval::baseSize(startingVa, bytes.size()),
                 MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(bytes.size()),
                                    0, MemoryMap::READ_EXECUTE, "data"));
-    map->at(0).write(bytes);
+    map->at(startingVa).write(bytes);
     return map;
 }
 

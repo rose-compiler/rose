@@ -238,7 +238,7 @@ public:
         while (tmp) {
             bool found = false;
             for (size_t i=0; i<constants.size() && !found; ++i) {
-                if (Vector(tmp & constants[i]) == Vector(constants[i])) {
+                if (Vector(tmp & constants[i]) == Vector(constants[i]) && constants[i] != 0) {
                     retval.push_back(Enum(constants[i]));
                     tmp &= ~constants[i];
                     found = true;
@@ -251,6 +251,39 @@ public:
         }
         return retval;
     }
+
+    /** Split a vector into the individual bits values. */
+    std::vector<Enum> split(Vector &leftovers /*out*/) const {
+        std::vector<Enum> retval;
+        for (size_t i = 0; i < 8*sizeof(Enum); ++i) {
+            Enum e = static_cast<Enum>(uint64_t(1) << i);
+            if (isSet(e))
+                retval.push_back(e);
+        }
+        return retval;
+    }
+
+#if __cplusplus >= 201103L
+    /** Call a functor for each constant in the bit vector.
+     *
+     *  The functor is called with one argument each time. */
+    template<class F>
+    void each(std::vector<int64_t> constants, const F &functor) const {
+        Vector leftovers;
+        for (Enum e: split(constants, leftovers))
+            functor(e);
+    }
+
+    /** Call a functor for each bit in the bit vector.
+     *
+     *  The functor is called with one argument each time. */
+    template<class F>
+    void each(const F &functor) const {
+        Vector leftovers;
+        for (Enum e: split(leftovers))
+            functor(e);
+    }
+#endif
 
     /** Convert to string.
      *

@@ -115,7 +115,7 @@ RiscOperators::instance(const Settings &settings, const P2::Partitioner &partiti
     ops->writeRegister(path, ops->boolean_(true));
 
     // Mark program inputs
-    ops->markProgramArguments();
+    ops->markProgramArguments(solver);
 
     return ops;
 }
@@ -255,7 +255,9 @@ RiscOperators::peekMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SV
 }
 
 void
-RiscOperators::markProgramArguments() {
+RiscOperators::markProgramArguments(const SmtSolver::Ptr &solver) {
+    ASSERT_not_null(solver);
+
     // For Linux ELF x86 and amd64, the argc and argv values are on the stack, not in registers. Also note that there is
     // no return address on the stack (i.e., the stack pointer is pointing at argc, not a return address). This means all the
     // stack argument offsets are four (or eight) bytes less than usual.
@@ -279,7 +281,9 @@ RiscOperators::markProgramArguments() {
     SValueFormatter fmt;
     fmt.expr_formatter.show_comments = SymbolicExpr::Formatter::CMT_AFTER;
 
+    //---------------------------------------------------------------------------------------------------------------------------
     // argc
+    //---------------------------------------------------------------------------------------------------------------------------
     rose_addr_t argcVa = process_->readRegister(SP).toInteger();
     size_t argc = process_->readMemory(argcVa, wordSizeBytes, ByteOrder::ORDER_LSB).toInteger();
 
@@ -291,7 +295,16 @@ RiscOperators::markProgramArguments() {
     SAWYER_MESG(debug) <<"  argc @" <<StringUtility::addrToString(argcVa) <<" = " <<argc
                        <<"; symbolic = " <<(*symbolicArgc + fmt) <<"\n";
 
+    // The argc value cannot be less than 1 since it always points to at least the program name.
+#if 1 // [Robb Matzke 2020-07-17]: Breaks concolic demo 0
+    SymbolicExpr::Ptr argcConstraint = SymbolicExpr::makeSignedGt(symbolicArgc->get_expression(),
+                                                                  SymbolicExpr::makeInteger(SP.nBits(), 0));
+    solver->insert(argcConstraint);
+#endif
+
+    //---------------------------------------------------------------------------------------------------------------------------
     // argv
+    //---------------------------------------------------------------------------------------------------------------------------
     rose_addr_t argvVa = argcVa + wordSizeBytes;
     SAWYER_MESG(debug) <<"  argv @" <<StringUtility::addrToString(argvVa) <<" = [\n";
     for (size_t i = 0; i < argc; ++i) {
@@ -316,7 +329,9 @@ RiscOperators::markProgramArguments() {
     SAWYER_MESG(debug) <<"    " <<argc <<": @" <<StringUtility::addrToString(argvVa + argc * wordSizeBytes) <<" null\n"
                        <<"  ]\n";
 
+    //---------------------------------------------------------------------------------------------------------------------------
     // envp
+    //---------------------------------------------------------------------------------------------------------------------------
     rose_addr_t envpVa = argvVa + (argc+1) * wordSizeBytes;
     SAWYER_MESG(debug) <<"  envp @" <<StringUtility::addrToString(envpVa) <<" = [\n";
     size_t nEnvVars = 0;                                // number of environment variables, excluding null terminator
@@ -347,7 +362,9 @@ RiscOperators::markProgramArguments() {
     }
     SAWYER_MESG(debug) <<"  ]\n";
 
+    //---------------------------------------------------------------------------------------------------------------------------
     // auxv
+    //---------------------------------------------------------------------------------------------------------------------------
     // Not marking these as inputs because the user that's running the program doesn't have much influence.
     rose_addr_t auxvVa = envpVa + (nEnvVars + 1) * wordSizeBytes;
     SAWYER_MESG(debug) <<"  auxv @" <<StringUtility::addrToString(auxvVa) <<" = [\n";
@@ -390,16 +407,30 @@ Dispatcher::concreteInstructionPointer() const {
 }
 
 void
+Dispatcher::concreteSingleStep() {
+    emulationOperators()->process()->singleStep();
+}
+
+void
 Dispatcher::processInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
 
-    // Symbolic execution
-    Super::processInstruction(insn);
+    // We need to single step the concrete execution regardless of whether the symbolic throw an exception, and we need
+    // to make sure the symbolic execution happens before the concrete execution.
+    struct Resources {
+        Dispatcher *self;
+        SgAsmInstruction *insn;
+        Resources(Dispatcher *self, SgAsmInstruction *insn)
+            : self(self), insn(insn) {}
+        ~Resources() {
+            Debugger::Ptr process = self->emulationOperators()->process();
+            process->executionAddress(insn->get_address());
+            process->singleStep();
+        }
+    } r(this, insn);
 
-    // Concrete execution
-    Debugger::Ptr process = emulationOperators()->process();
-    process->executionAddress(insn->get_address());
-    process->singleStep();
+    // Symbolic execution (happens before the code above)
+    Super::processInstruction(insn);
 }
 
 bool
@@ -422,10 +453,20 @@ ConcolicExecutor::instance() {
 // class method
 std::vector<Sawyer::CommandLine::SwitchGroup>
 ConcolicExecutor::commandLineSwitches(Settings &settings /*in,out*/) {
-    std::vector<Sawyer::CommandLine::SwitchGroup> sgroups;
+    using namespace Sawyer::CommandLine;
+
+    std::vector<SwitchGroup> sgroups;
     sgroups.push_back(P2::Engine::loaderSwitches(settings.loader));
     sgroups.push_back(P2::Engine::disassemblerSwitches(settings.disassembler));
     sgroups.push_back(P2::Engine::partitionerSwitches(settings.partitioner));
+
+    SwitchGroup ce("Concolic executor switches");
+    Rose::CommandLine::insertBooleanSwitch(ce, "show-states", settings.traceState,
+                                           "Show the virtual machine state after each instruction is processed.");
+    Rose::CommandLine::insertBooleanSwitch(ce, "show-semantics", settings.traceSemantics,
+                                           "Show the semantic operations that are performed for each instruction.");
+    sgroups.push_back(ce);
+
     return sgroups;
 }
 
@@ -514,18 +555,20 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
 
     // Create the semantics layers. The symbolic semantics uses a Partitioner, and the concrete semantics uses a suborinate
     // process which is created from the specimen.
+    SmtSolver::Ptr solver = SmtSolver::instance("best");
     P2::Partitioner partitioner = partition(db, testCase->specimen());
     Debugger::Ptr process = makeProcess(db, testCase, tempDir);
     Emulation::RiscOperatorsPtr ops =
         Emulation::RiscOperators::instance(settings_.emulationSettings, partitioner, process, inputVariables_,
-                                           Emulation::SValue::instance(), SmtSolver::Ptr());
+                                           Emulation::SValue::instance(), solver);
 
-#if 0 // [Robb Matzke 2019-12-11]
-    Emulation::DispatcherPtr cpu = Emulation::Dispatcher::instance(ops);
-#else // DEBUGGING
-    IS::BaseSemantics::RiscOperatorsPtr trace = IS::TraceSemantics::RiscOperators::instance(ops);
-    Emulation::DispatcherPtr cpu = Emulation::Dispatcher::instance(trace);
-#endif
+    Emulation::DispatcherPtr cpu;
+    if (settings_.traceSemantics) {
+        IS::BaseSemantics::RiscOperatorsPtr trace = IS::TraceSemantics::RiscOperators::instance(ops);
+        cpu = Emulation::Dispatcher::instance(trace);
+    } else {
+        cpu = Emulation::Dispatcher::instance(ops);
+    }
 
     run(db, testCase, cpu);
     testCase->concolicResult(1);
@@ -534,6 +577,75 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
     // FIXME[Robb Matzke 2020-01-16]
     std::vector<TestCase::Ptr> newCases;
     return newCases;
+}
+
+bool
+ConcolicExecutor::updateCallStack(const Emulation::DispatcherPtr &cpu, SgAsmInstruction *insn) {
+    ASSERT_not_null(cpu);
+    ASSERT_not_null(insn);                              // the instruction that was just executed
+
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    bool wasChanged = false;
+
+    Emulation::RiscOperatorsPtr ops = cpu->emulationOperators();
+    const P2::Partitioner &partitioner = ops->partitioner();
+    P2::BasicBlock::Ptr bb = partitioner.basicBlockContainingInstruction(insn->get_address());
+    if (!bb || bb->nInstructions() == 0) {
+        SAWYER_MESG(debug) <<"no basic block at " <<StringUtility::addrToString(insn->get_address()) <<"\n";
+        return wasChanged;                              // we're executing something that ROSE didn't disassemble
+    }
+
+    // Get the current stack pointer.
+    const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
+    if (SP.isEmpty())
+        return wasChanged;                              // no stack pointer for this architecture?!
+    SymbolicExpr::Ptr sp = Emulation::SValue::promote(ops->peekRegister(SP, ops->undefined_(SP.nBits())))->get_expression();
+    Sawyer::Optional<uint64_t> stackVa = sp->toUnsigned();
+    if (!stackVa) {
+        SAWYER_MESG(debug) <<"no concrete SP after function call at " <<StringUtility::addrToString(insn->get_address());
+        return wasChanged;                              // no concrete stack pointer. This should be unusual
+    }
+
+    // If the stack pointer is larger than the saved stack pointer for the most recent function on the stack (assuming
+    // stack-grows-down), then pop that function from the call stack under the assumption that we've returned from that
+    // function.
+    while (!functionCallStack_.empty() && functionCallStack_.back().stackVa < *stackVa) {
+        SAWYER_MESG(debug) <<"assume returned from " <<functionCallStack_.back().printableName <<"\n";
+        functionCallStack_.pop_back();
+        wasChanged = true;
+    }
+
+    // If the last instruction we just executed looks like a function call then push a new record onto our function call stack.
+    if (partitioner.basicBlockIsFunctionCall(bb) && insn->get_address() == bb->instructions().back()->get_address()) {
+        // Get a name for the function we just called, if possible.
+        const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
+        SymbolicExpr::Ptr ip = Emulation::SValue::promote(ops->peekRegister(IP, ops->undefined_(IP.nBits())))->get_expression();
+        Sawyer::Optional<uint64_t> calleeVa = ip->toUnsigned();
+        std::string calleeName;
+        if (calleeVa) {
+            if (P2::Function::Ptr callee = partitioner.functionExists(*calleeVa)) {
+                calleeName = callee->printableName();
+            } else {
+                calleeName = "function " + StringUtility::addrToString(*calleeVa);
+            }
+        } else {
+            SAWYER_MESG(debug) <<"no concrete IP after function call at " <<StringUtility::addrToString(insn->get_address());
+            return wasChanged;
+        }
+
+        // Push this function call onto the stack.
+        SAWYER_MESG(debug) <<"assume call to " <<calleeName <<" at " <<StringUtility::addrToString(insn->get_address()) <<"\n";
+        functionCallStack_.push_back(FunctionCall(calleeName, insn->get_address(), calleeVa.orElse(0), *stackVa));
+        wasChanged = true;
+    }
+
+    return wasChanged;
+}
+
+void
+ConcolicExecutor::printCallStack(std::ostream &out) {
+    for (const FunctionCall &call: functionCallStack_)
+        out <<"  call to " <<call.printableName <<" from " <<StringUtility::addrToString(call.sourceVa) <<"\n";
 }
 
 void
@@ -612,12 +724,13 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
 
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     Sawyer::Message::Stream trace(mlog[TRACE]);
+    Sawyer::Message::Stream where(mlog[WHERE]);
     Sawyer::Message::Stream error(mlog[ERROR]);
 
     Emulation::RiscOperatorsPtr ops = cpu->emulationOperators();
+    SmtSolver::Ptr solver = ops->solver();
     ops->printInputVariables(debug);
     const P2::Partitioner &partitioner = ops->partitioner();
-    SmtSolver::Ptr solver = SmtSolver::instance("best");
 
     // Process instructions in execution order
     rose_addr_t executionVa = cpu->concreteInstructionPointer();
@@ -626,24 +739,50 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
         if (insn) {
             SAWYER_MESG_OR(trace, debug) <<"executing " <<partitioner.unparse(insn) <<"\n";
         } else {
-            SAWYER_MESG_OR(trace, debug) <<"executing " <<StringUtility::addrToString(executionVa)
-                                         <<": not mapped or not executable\n";
-            // FIXME[Robb Matzke 2020-06-26]: we need a better way to handle this
-            ASSERT_always_not_null2(insn, StringUtility::addrToString(executionVa) + " is not a valid execution address");
+            // FIXME[Robb Matzke 2020-07-13]: I'm not sure how this ends up happening yet. Perhaps one way is because we don't
+            // handle certain system calls like mmap, brk, etc. In any case, report an error and execute the instruction concretely.
+            SAWYER_MESG(error) <<"executing " <<StringUtility::addrToString(executionVa)
+                               <<": not mapped or not executable\n";
+            cpu->concreteSingleStep();
+            continue;
         }
 
         try {
             cpu->processInstruction(insn);
+        } catch (const IS::BaseSemantics::Exception &e) {
+            if (error) {
+                error <<e.what() <<", occurred at:\n";
+                printCallStack(error);
+                error <<"  insn " <<partitioner.unparse(insn) <<"\n";
+                error <<"machine state at time of error:\n" <<(*ops->currentState()+"  ");
+            }
+// TEMPORARILY COMMENTED OUT FOR DEBUGGING [Robb Matzke 2020-07-13]. This exception is thrown when we get an address wrong,
+// like for "mov eax, gs:[16]", and the debugger is reporting that the memory cannot be read.  We should probably be using
+// debugger-specific exceptions for this kind of thing.
+//        } catch (std::runtime_error &e) {
+//            if (error) {
+//                error <<e.what() <<", occurred at:\n";
+//                printCallStack(error);
+//                error <<"  insn " <<partitioner.unparse(insn) <<"\n";
+//                error <<"machine state at time of error:\n" <<(*ops->currentState()+"  ");
+//            }
         } catch (const Emulation::Exit &e) {
             SAWYER_MESG_OR(trace, debug) <<"subordinate has exited with status " <<*e.status() <<"\n";
             break;
         }
+
         if (cpu->isTerminated()) {
             SAWYER_MESG_OR(trace, debug) <<"subordinate has terminated\n";
             break;
         }
-        SAWYER_MESG(debug) <<"state after instruction:\n" <<(*ops->currentState()+"  ");
+
+        if (settings_.traceState)
+            SAWYER_MESG(debug) <<"state after instruction:\n" <<(*ops->currentState()+"  ");
         executionVa = cpu->concreteInstructionPointer();
+        if (updateCallStack(cpu, insn) && where) {
+            where <<"function call stack:\n";
+            printCallStack(where);
+        }
         handleBranch(db, testCase, cpu, insn, solver);
     }
 }
@@ -792,7 +931,7 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
         }
     }
 }
-                
+
 bool
 ConcolicExecutor::areSimilar(const TestCase::Ptr &a, const TestCase::Ptr &b) const {
     if (a->specimen() != b->specimen())

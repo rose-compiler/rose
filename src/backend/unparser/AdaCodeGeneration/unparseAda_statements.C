@@ -403,6 +403,7 @@ namespace
       prn(": ");
       unparseModifiers(*this, n);
 
+      ASSERT_not_null(first);
       type(first->get_type());
 
       if (SgExpression* exp = first->get_initializer())

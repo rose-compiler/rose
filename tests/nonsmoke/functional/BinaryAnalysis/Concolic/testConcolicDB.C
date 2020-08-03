@@ -245,7 +245,7 @@ void runTestcase(concolic::Database::Ptr db, concolic::TestCaseId testcaseId)
 {
   typedef std::auto_ptr<concolic::ConcreteExecutor::Result> ExecutionResult;
 
-  concolic::LinuxExecutorPtr exec     = concolic::LinuxExecutor::instance();
+  concolic::LinuxExecutorPtr exec     = concolic::LinuxExecutor::instance(db);
   concolic::TestCasePtr      testcase = db->object(testcaseId, concolic::Update::YES);
 
   assert(testcase.getRawPointer());
