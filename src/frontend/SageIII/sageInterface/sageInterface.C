@@ -19291,7 +19291,7 @@ SageInterface::deleteAST ( SgNode* n )
                                 /remove SgFunctionSymbol
                                 /////////////////////////////////////////////////*/
 
-                                if(isSgFunctionDeclaration(node) && isSgMemberFunctionDeclaration(node)==NULL){
+                                if ((isSgFunctionDeclaration(node) != NULL) && (isSgMemberFunctionDeclaration(node) == NULL)){
                                         if(isSgFunctionDeclaration(node)->get_scope()!=NULL){
                                              if(isSgFunctionDeclaration(node)->get_scope()->get_symbol_table()!=NULL)
                                                 {
