@@ -13529,7 +13529,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                               const bool stmt_present = (p->get_loop_body() == targetStmt || p->get_test() == targetStmt);
 
                           // \pp \todo what if !stmt_present
-                              ROSE_ASSERT(stmt_present);
+                              ROSE_ASSERT(stmt_present != NULL);
                               insertStatement(p, newStmt, insertBefore);
                             }
                            else
@@ -13544,6 +13544,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                                else
                                  {
                                 // It appears that all of the recursive calls are untimately calling this location.
+                                   ROSE_ASSERT(isSgStatement(parent) != NULL);
                                    isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
                                  }
                             }
