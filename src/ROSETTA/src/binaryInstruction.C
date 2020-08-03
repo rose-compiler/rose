@@ -215,6 +215,18 @@ void Grammar::setUpBinaryInstructions() {
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
+#ifdef DOCUMENTATION
+        /** Property: Whether this instruction updates N, Z, C, and/or V status flags.
+         *
+         * @{ */
+        bool get_updatesFlags() const;
+        void set_updatesFlags(bool);
+        /** @} */
+#else
+        AsmA64Instruction.setDataPrototype("bool", "updatesFlags", "= false",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
         DECLARE_OTHERS(AsmA64Instruction);
 #if defined(SgAsmA64Instruction_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
