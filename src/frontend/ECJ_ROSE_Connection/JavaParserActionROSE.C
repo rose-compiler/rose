@@ -406,12 +406,13 @@ cout.flush();
         }
 
         SgClassDeclaration *bound_declaration = isSgClassDeclaration(bound_type -> getAssociatedDeclaration() -> get_definingDeclaration());
-        ROSE_ASSERT(bound_declaration);
+        ROSE_ASSERT(bound_declaration != NULL);
         SgBaseClass *base = new SgBaseClass(bound_declaration); // TODO: Why can't one associate attributes with an SgBaseClass?
         base -> set_parent(parameter_definition);
         parameter_definition -> prepend_inheritance(base);
     }
 
+    ROSE_ASSERT(parameter_type != NULL);
     parameter_type -> setAttribute("type", new AstRegExAttribute(parameter_type -> get_name().getString() + type_parameter_bounds_name));
 
 // TODO: Remove this!!!
