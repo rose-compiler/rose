@@ -90,7 +90,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.12.11";
+const std::string versionString="1.12.12";
 
 // handler for generating backtrace
 void handler(int sig) {
@@ -978,9 +978,10 @@ int main( int argc, char * argv[] ) {
     }
 
     if(ctOpt.analysisList().size()>0) {
+      const bool reportDetectedErrorLines=true;
+      AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines);
       AnalysisReporting::generateAnalysisStatsRawData(ctOpt,analyzer);
       AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
-      AnalysisReporting::generateVerificationReports(ctOpt,analyzer);
     }
 
     long pstateSetSize=analyzer->getPStateSet()->size();

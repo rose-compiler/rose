@@ -34,7 +34,7 @@ LinuxExitStatus::instance(const std::string& databaseUri, const std::string &tes
 
 void
 LinuxExitStatus::run() {
-    LinuxExecutor::Ptr concreteExecutor = LinuxExecutor::instance();
+    LinuxExecutor::Ptr concreteExecutor = LinuxExecutor::instance(database());
     ConcolicExecutor::Ptr concolicExecutor = ConcolicExecutor::instance();
 
     while (!isFinished()) {

@@ -82,10 +82,16 @@ Unparse_Jovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
    {
      ASSERT_not_null(type);
 
+  // Warning: This function may be called if there is an initializer because the type
+  // could be wrapped as an SgModifierType.  When the compool rcmp file is unparsed
+  // this won't be called which leads to confusion. Care must be taken if the default
+  // for the size value isn't appropriate for the type, in particular, SgJovialBitType.
+  //
      switch (type->variantT())
         {
-          case V_SgTypeFixed:   unparseTypeSize(isSgTypeFixed(type), info);    break;
-          case V_SgTypeString:  unparseTypeSize(isSgTypeString(type), info);   break;
+          case V_SgTypeFixed:     unparseTypeSize(isSgTypeFixed(type), info);     break;
+          case V_SgTypeString:    unparseTypeSize(isSgTypeString(type), info);    break;
+          case V_SgJovialBitType: unparseTypeSize(isSgJovialBitType(type), info); break;
           default:
              {
                 SgExpression* size = type->get_type_kind();

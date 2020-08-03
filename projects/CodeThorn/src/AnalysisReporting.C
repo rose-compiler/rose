@@ -12,15 +12,30 @@ using namespace CodeThorn;
 
 namespace CodeThorn {
 
-  void AnalysisReporting::generateVerificationReports(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer) {
+  void AnalysisReporting::generateVerificationReports(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer, bool reportDetectedErrorLines) {
     for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
       string analysisName=analysisInfo.second;
       if(ctOpt.getAnalysisSelectionFlag(analysisSel)) {
+        cout<<"\nAnalysis results for "<<analysisName<<" analysis:"<<endl;
         ProgramLocationsReport report=analyzer->getExprAnalyzer()->getProgramLocationsReport(analysisSel);
         report.setAllLocationsOfInterest(analyzer->getCFAnalyzer()->setOfLabelsOfInterest());
         report.writeLocationsVerificationReport(cout,analyzer->getLabeler());
         //report->writeFunctionsVerificationReport(cout,analyzer->getLabeler());
+        if(reportDetectedErrorLines) {
+          LabelSet violatingLabels=report.falsifiedLocations();
+          if(report.numDefinitiveLocations()>0) {
+            cout<<"Proven errors in program:"<<endl;
+            report.writeAllDefinitiveLocationsToStream(cout,analyzer->getLabeler(),false,true,true);
+          } else {
+            LabelSet u=report.unverifiedLocations();
+            if(u.size()==0) {
+              cout<<"No violations exist (program verified)."<<endl;
+            } else {
+              cout<<"No violations proven (violations may exist in unverified portion of program)."<<endl;
+            }
+          }
+        }
       }
     }
   }
@@ -29,22 +44,12 @@ namespace CodeThorn {
     for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
       string analysisName=analysisInfo.second;
-      if(ctOpt.getAnalysisSelectionFlag(analysisSel)||ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
-        ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getViolatingLocations(analysisSel);
-        if(ctOpt.getAnalysisSelectionFlag(analysisSel)) {
-          cout<<"\nResults for "<<analysisName<<" analysis:"<<endl;
-          if(locations.numTotalLocations()>0) {
-            locations.writeResultToStream(cout,analyzer->getLabeler());
-          } else {
-            cout<<"No violations detected."<<endl;
-          }
-        }
-        if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
-          string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
-          if(!ctOpt.quiet)
-            cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
-          locations.writeResultFile(fileName,analyzer->getLabeler());
-        }
+      if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
+        ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getProgramLocationsReport(analysisSel);
+        string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
+        if(!ctOpt.quiet)
+          cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
+        locations.writeResultFile(fileName,analyzer->getLabeler());
       }
     }
   }

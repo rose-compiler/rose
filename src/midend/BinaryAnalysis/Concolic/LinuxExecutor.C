@@ -256,6 +256,14 @@ createLinuxResult(int errcode, std::string outstr, std::string errstr, double ra
   return res;
 }
 
+LinuxExecutor::LinuxExecutor(const Database::Ptr &db)
+    : ConcreteExecutor(db), useAddressRandomization_(false) {}
+
+LinuxExecutor::Ptr
+LinuxExecutor::instance(const Database::Ptr &db) {
+    return Ptr(new LinuxExecutor(db));
+}
+
 LinuxExecutor::Result*
 LinuxExecutor::execute(const TestCase::Ptr& tc)
 {
@@ -337,6 +345,14 @@ LinuxExecutor::Result*
 LinuxExecutor::execute(const TestCase::Ptr& tc)
 {
   ROSE_ASSERT(!"NOT_LINUX");
+}
+
+LinuxExecutor::LinuxExecutor(const Database::Ptr &db)
+    : ConcreteExecutor(db), useAddressRandomization_(false) {}
+
+LinuxExecutor::Ptr
+LinuxExecutor::instance(const Database::Ptr &db) {
+    return Ptr(new LinuxExecutor(db));
 }
 
 #endif

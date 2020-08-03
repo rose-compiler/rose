@@ -7,22 +7,23 @@
 #include <BinaryLoader.h>
 #include <BinarySerialIo.h>
 #include <BinaryVxcoreParser.h>
-#include <CommandLine.h>
-#include <Diagnostics.h>
-#include <DisassemblerM68k.h>
-#include <DisassemblerPowerpc.h>
-#include <DisassemblerX86.h>
-#include <SRecord.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
+#include <CommandLine.h>
+#include <Diagnostics.h>
+#include <DisassemblerM68k.h>
+#include <DisassemblerMips.h>
+#include <DisassemblerPowerpc.h>
+#include <DisassemblerX86.h>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/ModulesLinux.h>
 #include <Partitioner2/ModulesM68k.h>
+#include <Partitioner2/ModulesMips.h>
 #include <Partitioner2/ModulesPe.h>
 #include <Partitioner2/ModulesPowerpc.h>
 #include <Partitioner2/ModulesX86.h>
@@ -34,6 +35,7 @@
 #include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/Stopwatch.h>
+#include <SRecord.h>
 
 #ifdef ROSE_HAVE_LIBYAML
 #include <yaml-cpp/yaml.h>
@@ -1559,6 +1561,7 @@ Engine::createGenericPartitioner() {
         p.functionPrologueMatchers().push_back(Modules::MatchThunk::instance(functionMatcherThunks()));
     p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
     p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
+    p.functionPrologueMatchers().push_back(ModulesMips::MatchRetAddiu::instance());
     p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
     p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
     p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
@@ -1598,6 +1601,13 @@ Engine::createTunedPartitioner() {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
+        return boost::move(p);
+    }
+
+    if (dynamic_cast<DisassemblerMips*>(disassembler_)) {
+        checkCreatePartitionerPrerequisites();
+        Partitioner p = createBarePartitioner();
+        p.functionPrologueMatchers().push_back(ModulesMips::MatchRetAddiu::instance());
         return boost::move(p);
     }
 
@@ -2350,14 +2360,20 @@ Engine::discoverFunctions(Partitioner &partitioner) {
 
         // No pending basic blocks, so look for a function prologue. This creates a pending basic block for the function's
         // entry block, so go back and look for more basic blocks again.
-        std::vector<Function::Ptr> newFunctions = makeNextPrologueFunction(partitioner, nextPrologueVa, nextPrologueVa /*out*/);
-        if (!newFunctions.empty())
-            continue;
+        if (nextPrologueVa < partitioner.memoryMap()->hull().greatest()) {
+            std::vector<Function::Ptr> newFunctions =
+                makeNextPrologueFunction(partitioner, nextPrologueVa, nextPrologueVa /*out*/);
+            if (nextPrologueVa < partitioner.memoryMap()->hull().greatest())
+                ++nextPrologueVa;
+            if (!newFunctions.empty())
+                continue;
+        }
 
         // Scan inter-function code areas to find basic blocks that look reasonable and process them with instruction semantics
         // to find calls to functions that we don't know about yet.
         if (settings_.partitioner.findingInterFunctionCalls) {
-            newFunctions = makeFunctionFromInterFunctionCalls(partitioner, nextInterFunctionCallVa /*in,out*/);
+            std::vector<Function::Ptr> newFunctions =
+                makeFunctionFromInterFunctionCalls(partitioner, nextInterFunctionCallVa /*in,out*/);
             if (!newFunctions.empty())
                 continue;
         }

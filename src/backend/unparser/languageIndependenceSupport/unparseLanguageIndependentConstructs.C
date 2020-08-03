@@ -8371,13 +8371,14 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
 
        // DQ (2/5/2015): Need to define the precedence of this new C++11 operator.
        // The rules say that this can never be ambigious, so it's precedence is not important (I am not yet clear on this point).
-          case V_SgNoexceptOp:        // return 15;
+          case V_SgNoexceptOp:       // return 15;
 
        // DQ (2/6/2015): Need to define the precedence of this new C++11 operator (but it is not clear to me that this is correcct).
        // I am so far unable to find data on the precedence of the lambda expression.
           case V_SgLambdaExp:        // return 15;
-                                     precedence_value = 15; break;
 
+       // CR (7/31/2020): Replication operator used in Jovial (and potentially Fortran) initialization
+          case V_SgReplicationOp:    precedence_value = 15; break;
 
           case V_SgFunctionCallExp:
              {
