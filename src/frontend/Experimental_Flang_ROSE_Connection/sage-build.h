@@ -215,17 +215,17 @@ void Build(const Fortran::parser::Expr::Multiply &x, SgExpression* &expr);
 void Build(const Fortran::parser::  Expr::Divide &x, SgExpression* &expr);
 void Build(const Fortran::parser::     Expr::Add &x, SgExpression* &expr);
 void Build(const Fortran::parser::Expr::Subtract &x, SgExpression* &expr);
-template<typename T> void Build(const Fortran::parser::  Expr::Concat &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::      Expr::LT &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::      Expr::LE &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::      Expr::EQ &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::      Expr::NE &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::      Expr::GE &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::      Expr::GT &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::     Expr::AND &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::      Expr::OR &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::     Expr::EQV &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::    Expr::NEQV &x, T* &expr);
+void Build(const Fortran::parser::  Expr::Concat &x, SgExpression* &expr);
+void Build(const Fortran::parser::      Expr::LT &x, SgExpression* &expr);
+void Build(const Fortran::parser::      Expr::LE &x, SgExpression* &expr);
+void Build(const Fortran::parser::      Expr::EQ &x, SgExpression* &expr);
+void Build(const Fortran::parser::      Expr::NE &x, SgExpression* &expr);
+void Build(const Fortran::parser::      Expr::GE &x, SgExpression* &expr);
+void Build(const Fortran::parser::      Expr::GT &x, SgExpression* &expr);
+void Build(const Fortran::parser::     Expr::AND &x, SgExpression* &expr);
+void Build(const Fortran::parser::      Expr::OR &x, SgExpression* &expr);
+void Build(const Fortran::parser::     Expr::EQV &x, SgExpression* &expr);
+void Build(const Fortran::parser::    Expr::NEQV &x, SgExpression* &expr);
 
 void Build(const Fortran::parser::  StructureComponent &x, SgExpression* &expr);
 void Build(const Fortran::parser::        ArrayElement &x, SgExpression* &expr);
@@ -258,6 +258,10 @@ template<typename T> void Build(const Fortran::parser::      ForallConstruct&x, 
 template<typename T> void Build(const Fortran::parser::    CompilerDirective&x, T* scope);
 template<typename T> void Build(const Fortran::parser::      OpenMPConstruct&x, T* scope);
 template<typename T> void Build(const Fortran::parser::  OmpEndLoopDirective&x, T* scope);
+
+// DoConstruct
+void Build(const Fortran::parser::NonLabelDoStmt&x, SgExpression* &expr);
+void Build(const Fortran::parser::   LoopControl&x, SgExpression* &expr);
 
 // SpecificationConstruct
 template<typename T> void Build(const Fortran::parser::            DerivedTypeDef&x, T* scope);
