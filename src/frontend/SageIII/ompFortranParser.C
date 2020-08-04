@@ -173,6 +173,7 @@ static bool ofs_is_omp_sentinels()
 static char* ofs_copy_lower(const char* str)
 {
   char* strlower = (char*)malloc(sizeof(char)*strlen(str)+1);
+  assert(strlower != NULL);
   strcpy(strlower, str);
   size_t i;
   for (i=0; i< strlen(strlower); i++)

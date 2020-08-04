@@ -11,6 +11,15 @@ using namespace CodeThorn;
 MemTransferFunctions::MemTransferFunctions() {
 }
 
+void MemTransferFunctions::transferCondition(Edge edge, Lattice& element0) {
+  // throws bad_cast exception when downcasting to the wrong type
+  MemPropertyState& element=dynamic_cast<MemPropertyState&>(element0);
+  cout<<"DEBUG: transferCondition: edge:"<<edge.toString()<<endl;
+  // default implementation
+  Label lab0=edge.source();
+  transfer(lab0,element);
+}
+
 void MemTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element0) {
   // throws bad_cast exception when downcasting to the wrong type
   MemPropertyState& element=dynamic_cast<MemPropertyState&>(element0);

@@ -1980,6 +1980,11 @@ src/frontend/CxxFrontend/EDG/EDG_6.0/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_6.0/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_6.0/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_6.0/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.1/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.1/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.1/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.1/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.1/lib/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
 

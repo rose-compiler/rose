@@ -286,11 +286,13 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                          printf ("decl->get_parent()               = %p = %s = %s \n",decl->get_parent(),decl->get_parent()->class_name().c_str(),get_name(decl->get_parent()).c_str());
                          printf ("decl->get_parent()->get_parent() = %p = %s = %s \n",decl->get_parent()->get_parent(),decl->get_parent()->get_parent()->class_name().c_str(),get_name(decl->get_parent()->get_parent()).c_str());
 #endif
+#if 0
                          SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(decl->get_parent()->get_parent());
                          if (namespaceDefinitionStatement != NULL)
                             {
                               namespaceDefinitionStatement->get_file_info()->display("namespaceDefinitionStatement: debug");
                             }
+#endif
 #if 0
                          if (isSgCtorInitializerList(decl) != NULL)
                             {
@@ -13529,7 +13531,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                               const bool stmt_present = (p->get_loop_body() == targetStmt || p->get_test() == targetStmt);
 
                           // \pp \todo what if !stmt_present
-                              ROSE_ASSERT(stmt_present);
+                              ROSE_ASSERT(stmt_present != NULL);
                               insertStatement(p, newStmt, insertBefore);
                             }
                            else
@@ -13544,6 +13546,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                                else
                                  {
                                 // It appears that all of the recursive calls are untimately calling this location.
+                                   ROSE_ASSERT(isSgStatement(parent) != NULL);
                                    isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
                                  }
                             }
@@ -19291,7 +19294,7 @@ SageInterface::deleteAST ( SgNode* n )
                                 /remove SgFunctionSymbol
                                 /////////////////////////////////////////////////*/
 
-                                if(isSgFunctionDeclaration(node) && isSgMemberFunctionDeclaration(node)==NULL){
+                                if ((isSgFunctionDeclaration(node) != NULL) && (isSgMemberFunctionDeclaration(node) == NULL)){
                                         if(isSgFunctionDeclaration(node)->get_scope()!=NULL){
                                              if(isSgFunctionDeclaration(node)->get_scope()->get_symbol_table()!=NULL)
                                                 {

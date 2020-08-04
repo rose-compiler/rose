@@ -162,7 +162,7 @@ TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) 
 }
 
 std::string
-TaintedFlow::TransferFunction::printState(const StatePtr &state) {
+TaintedFlow::TransferFunction::toString(const StatePtr &state) {
     if (!state)
         return "null state";
     std::ostringstream ss;

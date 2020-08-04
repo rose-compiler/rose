@@ -2,5 +2,5 @@ include_rules
 
 run $(public_header) -o include/rose/Concolic ConcolicExecutor.h
 
-run $(librose_compile) ConcolicExecutor.C Database.C Database2.C ExecutionManager.C LinuxExecutor.C LinuxExitStatus.C \
-    Specimen.C TestCase.C TestSuite.C Utility.C
+run $(librose_compile) ConcolicExecutor.C ConcreteExecutor.C Database.C Database2.C ExecutionManager.C LinuxExecutor.C LinuxExitStatus.C \
+    LinuxTraceExecutor.C Specimen.C TestCase.C TestSuite.C Utility.C

@@ -27,11 +27,11 @@ int main() {
     // Run all tests
     for (auto testCaseId: db->needConcreteTesting(1)) {
         auto testCase = db->object(testCaseId);
-        auto executor = LinuxExecutor::instance();
+        auto executor = LinuxExecutor::instance(db);
         auto result = executor->execute(testCase);      // leaked?
         int status = result->exitStatus();
         ASSERT_always_require(WIFEXITED(status));
-        db->insertConcreteResults(testCase, *result);
+        db->saveConcreteResult(testCase, result);
     }
 }
 

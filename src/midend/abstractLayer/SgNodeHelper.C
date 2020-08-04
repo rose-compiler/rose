@@ -1986,7 +1986,7 @@ SgConstructorInitializer* SgNodeHelper::ExtendedCallInfo::ctorInitializer() cons
   return isSgConstructorInitializer(rep); 
 }
 
-SgPointerDerefExp* 
+SgExpression* 
 SgNodeHelper::ExtendedCallInfo::functionPointer() const 
 { 
   SgCallExpression* call = isSgCallExpression(rep);
@@ -1999,8 +1999,9 @@ SgNodeHelper::ExtendedCallInfo::functionPointer() const
   {
     tgt = comma->get_rhs_operand();
   }
- 
-  return isSgPointerDerefExp(tgt);
+
+  ROSE_ASSERT(tgt && tgt->get_type());
+  return isSgFunctionType(tgt->get_type()->findBaseType()) ? tgt : NULL;
 }
 
       

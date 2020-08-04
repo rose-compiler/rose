@@ -122,8 +122,10 @@ public:
    void Enter(SgVariableDeclaration* &, const std::string &, SgType*, SgExpression*);
    void Leave(SgVariableDeclaration*);
 
-   void Enter(SgEnumDeclaration* &, const std::string &, std::list<SgInitializedName*> &);
+   void Enter(SgEnumDeclaration* &, const std::string &);
    void Leave(SgEnumDeclaration*);
+
+   void Enter(SgEnumVal* &, const std::string &, SgEnumDeclaration*, int);
 
    void Enter(SgTypedefDeclaration* &, const std::string &, SgType*);
    void Leave(SgTypedefDeclaration*);

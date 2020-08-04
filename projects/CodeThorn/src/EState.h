@@ -27,6 +27,7 @@ typedef int EStateId;
 
 #include "HashFun.h"
 #include "HSetMaintainer.h"
+#include "PropertyState.h"
 
 namespace CodeThorn {
 
@@ -38,7 +39,7 @@ namespace CodeThorn {
   * \date 2012.
  */
 
-  class EState {
+  class EState : public Lattice {
   public:
     EState():_label(Label()),_pstate(0),_constraints(0){}
     EState(Label label, const CodeThorn::PState* pstate):_label(label),_pstate(pstate),_constraints(0){}
@@ -70,6 +71,14 @@ namespace CodeThorn {
     std::string programPosToString(Labeler* labeler) const;
     // uses isApproximatedBy of PState
     bool isApproximatedBy(const CodeThorn::EState* other) const;
+
+    // required for PropertyState class
+    bool approximatedBy(PropertyState& other) const;
+    // required for PropertyState class
+    bool isBot() const; 
+    // required for PropertyState class
+    void combine(PropertyState& other);
+    
   private:
     Label _label;
     const CodeThorn::PState* _pstate;
@@ -77,6 +86,7 @@ namespace CodeThorn {
   public:
     CodeThorn::InputOutput io;
     CallString callString;
+    
   };
 
   // define order for EState elements (necessary for EStateSet)

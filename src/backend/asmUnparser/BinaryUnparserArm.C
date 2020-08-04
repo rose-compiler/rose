@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <BinaryUnparserArm.h>
 
+#include <BitOps.h>
 #include <boost/regex.hpp>
 #include <stringify.h>
 
@@ -40,9 +41,7 @@ Arm::unparseArmCondition(A64InstructionCondition cond) {
 void
 Arm::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_, State&) const {
     SgAsmA64Instruction *insn = isSgAsmA64Instruction(insn_);
-    ASSERT_not_null2(insn, "not an ARM instruction");
-    std::string result = insn->get_mnemonic();
-    out <<result;
+    out <<insn->get_mnemonic();
 }
 
 void
@@ -246,12 +245,13 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
         }
 
     } else if (SgAsmA64SysMoveOperand *op = isSgAsmA64SysMoveOperand(expr)) {
-        unsigned op0 = (op->access() >> 14) & 1;
-        unsigned op1 = (op->access() >> 11) & 7;
-        unsigned crn = (op->access() >>  7) & 0xf;
-        unsigned crm = (op->access() >>  3) & 0xf;
-        unsigned op2 = op->access() & 7;
-        out <<"s" <<(op0 + 2) <<"_" <<op1 <<"_c" <<crn <<"_c" <<crm <<"_" <<op2;
+        using namespace Rose::BitOps;
+        unsigned op0 = bit(op->access(), 14) ? 3 : 2;
+        unsigned op1 = bits(op->access(), 11, 13);
+        unsigned crn = bits(op->access(), 7, 10);
+        unsigned crm = bits(op->access(), 3, 6);
+        unsigned op2 = bits(op->access(), 0, 2);
+        out <<"s" <<op0 <<"_" <<op1 <<"_c" <<crn <<"_c" <<crm <<"_" <<op2;
 
     } else if (SgAsmA64CImmediateOperand *op = isSgAsmA64CImmediateOperand(expr)) {
         out <<"c" <<op->immediate();

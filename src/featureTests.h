@@ -24,7 +24,7 @@
 
 // Whether to enable concolic testing.
 #if !defined(ROSE_ENABLE_CONCOLIC_TESTING) && \
-    __cplusplus >= 201103L && \
+    __cplusplus >= 201402L && \
     (defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)) && \
     BOOST_VERSION >= 106400
 #define ROSE_ENABLE_CONCOLIC_TESTING

@@ -3370,6 +3370,7 @@ SgFile::callFrontEnd()
                     case V_SgBinaryComposite:
                        {
                          SgBinaryComposite* binary = const_cast<SgBinaryComposite*>(isSgBinaryComposite(this));
+                         ROSE_ASSERT(binary != NULL);
                          frontendErrorLevel = binary->buildAST(localCopy_argv, inputCommandLine);
                          break;
                        }

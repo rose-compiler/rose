@@ -74,6 +74,18 @@ Specimen::printableName(const Database::Ptr &db) {
     return retval;
 }
 
+std::string
+Specimen::timestamp() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return timestamp_;
+}
+
+void
+Specimen::timestamp(const std::string &s) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    timestamp_ = s;
+}
+
 void Specimen::content(std::vector<uint8_t> binary_data) {
   content_ = binary_data;
   read_only_ = empty_ = false;
