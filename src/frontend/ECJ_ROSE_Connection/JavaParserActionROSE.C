@@ -406,12 +406,13 @@ cout.flush();
         }
 
         SgClassDeclaration *bound_declaration = isSgClassDeclaration(bound_type -> getAssociatedDeclaration() -> get_definingDeclaration());
-        ROSE_ASSERT(bound_declaration);
+        ROSE_ASSERT(bound_declaration != NULL);
         SgBaseClass *base = new SgBaseClass(bound_declaration); // TODO: Why can't one associate attributes with an SgBaseClass?
         base -> set_parent(parameter_definition);
         parameter_definition -> prepend_inheritance(base);
     }
 
+    ROSE_ASSERT(parameter_type != NULL);
     parameter_type -> setAttribute("type", new AstRegExAttribute(parameter_type -> get_name().getString() + type_parameter_bounds_name));
 
 // TODO: Remove this!!!
@@ -3149,11 +3150,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, 
             annotation -> set_parent(method_declaration);
             annotations_attribute -> setNode(annotation, i);
         }
+        ROSE_ASSERT(method_declaration != NULL);
         method_declaration -> setAttribute("annotations", annotations_attribute);
     }
 
     SgScopeStatement *type_space = isSgScopeStatement(astJavaScopeStack.pop());
-    ROSE_ASSERT(type_space);
+    ROSE_ASSERT(type_space != NULL);
 
     if (SgProject::get_verbose() > 0)
         printf ("Exiting  cactionMethodDeclarationEnd (method) \n");

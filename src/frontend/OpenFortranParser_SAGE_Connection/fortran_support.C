@@ -3109,6 +3109,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
                if (initializedName->get_initializer() != NULL)
                   {
                     SgExpression* initializer = initializedName->get_initializer();
+                    ROSE_ASSERT(initializer != NULL);
                     printf ("--- initializedName->get_initializer() = %p = %s = %s \n",initializer,initializer->class_name().c_str(),SageInterface::get_name(initializer).c_str());
                   }
              }
