@@ -240,10 +240,10 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*, typename Ca
     typedef CallContext                                                     context_t;
     typedef std::map<context_t, Lattice*, typename CallContext::comparator> context_map;
 
-    using context_map::value_type;
-    using context_map::iterator;
-    using context_map::const_iterator;
-    using context_map::const_reverse_iterator;
+    using typename context_map::value_type;
+    using typename context_map::iterator;
+    using typename context_map::const_iterator;
+    using typename context_map::const_reverse_iterator;
     using context_map::begin;
     using context_map::end;
     using context_map::rbegin;
@@ -271,14 +271,14 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*, typename Ca
     }
 
     bool isBot() const ROSE_OVERRIDE { return context_map::size() == 0; }
-
+/*
     bool isBot() 
     {
       const CtxLattice<context_t>& self = *this;
 
       return self.isBot();
     }
-
+*/
     bool approximatedBy(Lattice& other) const ROSE_OVERRIDE
     {
       const CtxLattice<context_t>& that = dynamic_cast<CtxLattice<context_t>& >(other);
@@ -326,8 +326,32 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*, typename Ca
       std::for_each(begin(), end(), CtxLatticeStreamer(os, vm));
       os << "}";
     }
+        
+    bool callLosesPrecision(const_iterator pos) const
+    {
+      return equalPostfixB(pos, std::prev(pos)) || equalPostfixE(pos, std::next(pos));
+    }
 
   private:
+    bool equalPostfix(const_iterator lhs, const_iterator rhs) const 
+    {
+      return lhs->first.mergedAfterCall(rhs->first);
+    }
+    
+    bool equalPostfixB(const_iterator lhs, const_iterator rhs) const 
+    {
+      if (lhs == begin()) return false;
+      
+      return equalPostfix(lhs, rhs);
+    }
+    
+    bool equalPostfixE(const_iterator lhs, const_iterator rhs) const
+    {
+      if (rhs == end()) return false;
+      
+      return equalPostfix(lhs, rhs);
+    }  
+  
     PropertyStateFactory& compPropertyFactory;
 
     // CtxLattice(const CtxLattice&) = delete;
