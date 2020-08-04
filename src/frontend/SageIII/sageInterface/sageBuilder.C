@@ -18039,6 +18039,7 @@ SageBuilder::errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, S
              {
             // Handle the scope for all statements.
                SgScopeStatement* scope_copy     = statement_copy->get_scope();
+               ROSE_ASSERT(statement_original != NULL);
                SgScopeStatement* scope_original = statement_original->get_scope();
                ROSE_ASSERT(scope_copy     != NULL);
                ROSE_ASSERT(scope_original != NULL);
