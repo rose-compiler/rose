@@ -263,12 +263,11 @@ void NameQualificationInheritedAttribute::set_containsFunctionArgumentsOfPointer
 // Synthesized Attribute
 // *********************
 
-#if 1
 NameQualificationSynthesizedAttribute::NameQualificationSynthesizedAttribute()
    {
   // Default constructor
+     node = NULL;
    }
-#endif
 
 NameQualificationSynthesizedAttribute::NameQualificationSynthesizedAttribute( SgNode* astNode )
    {
