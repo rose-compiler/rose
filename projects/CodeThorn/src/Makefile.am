@@ -96,6 +96,7 @@ CODETHORN_HEADER_FILES=\
   EquivalenceChecking.h \
   EState.h \
   ExprAnalyzer.h \
+  EStateTransferFunctions.h \
   FIConstAnalysis.h \
   Flow.h \
   FunctionCallMapping.h \
@@ -212,6 +213,7 @@ CODETHORN_SOURCE_FILES=\
   EquivalenceChecking.C \
   EState.C \
   ExprAnalyzer.C \
+  EStateTransferFunctions.C \
   FIConstAnalysis.C \
   Flow.C \
   FunctionCallMapping.C \
