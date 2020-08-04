@@ -1971,6 +1971,52 @@ bool nodeCanBeChanged(SgLocatedNode * lnode) {
 }
 #endif
 
+namespace // anonymous 
+{ 
+  struct FunctionPointer : sg::DispatchHandler<SgExpression*>
+  {
+    void handle(SgNode& n)       { SG_UNEXPECTED_NODE(n); }
+    
+    void handle(SgCommaOpExp& n) { res = eval(n.get_rhs_operand()); }
+    void handle(SgCastExp& n)    { res = eval(n.get_operand()); } // needed?
+    
+    template <class SageType>
+    bool testType(SgExpression& n, SageType* (*tester)(SgNode*))
+    {
+      SgType* ty = n.get_type();
+      
+      ROSE_ASSERT(ty);
+      ty = ty->stripType( SgType::STRIP_MODIFIER_TYPE 
+                        | SgType::STRIP_REFERENCE_TYPE 
+                        | SgType::STRIP_RVALUE_REFERENCE_TYPE 
+                        | SgType::STRIP_TYPEDEF_TYPE
+                        );
+                            
+      return tester(ty);
+    }  
+
+    void handle(SgExpression& n) 
+    { 
+      if (testType(n, isSgPointerType)) 
+        res = &n;
+    }
+     
+    void handle(SgPointerDerefExp& n)
+    {
+      if (testType(n, isSgFunctionType))
+        res = &n;
+    }
+    
+    static
+    SgExpression* eval(SgExpression* ex);
+  };
+  
+  SgExpression* FunctionPointer::eval(SgExpression* ex)
+  {
+    return sg::dispatch(FunctionPointer(), ex); 
+  }
+}
+
 SgLocatedNode* SgNodeHelper::ExtendedCallInfo::representativeNode() const    
 { 
   return rep; 
@@ -1989,19 +2035,10 @@ SgConstructorInitializer* SgNodeHelper::ExtendedCallInfo::ctorInitializer() cons
 SgExpression* 
 SgNodeHelper::ExtendedCallInfo::functionPointer() const 
 { 
-  SgCallExpression* call = isSgCallExpression(rep);
+  if (SgCallExpression* call = isSgCallExpression(rep)) 
+    return FunctionPointer::eval(call->get_function());
   
-  if (!call) return NULL;
-  
-  SgExpression*     tgt  = call->get_function();
-  
-  while (SgCommaOpExp* comma = isSgCommaOpExp(tgt))
-  {
-    tgt = comma->get_rhs_operand();
-  }
-
-  ROSE_ASSERT(tgt && tgt->get_type());
-  return isSgFunctionType(tgt->get_type()->findBaseType()) ? tgt : NULL;
+  return NULL;
 }
 
       
