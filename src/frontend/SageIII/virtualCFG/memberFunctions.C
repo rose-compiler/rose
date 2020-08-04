@@ -677,6 +677,7 @@ unsigned int SgForStatement::cfgFindChildIndex(SgNode* n)
                          cerr<<n->class_name()<<endl;
                          if (isSgLocatedNode(n))
                          {
+                           ROSE_ASSERT(isSgLocatedNode(n) != NULL);
                            isSgLocatedNode(n)->get_file_info()->display();
                          }
                          ROSE_ASSERT (!"Bad child in for statement");

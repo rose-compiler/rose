@@ -132,7 +132,7 @@ void NodeState::setLatticeAbove(const Analysis* analysis, vector<Lattice*>& latt
                 for(vector<Lattice*>::iterator it = w->second.begin(); 
                     it != w->second.end(); it++)
                 {
-                  ROSE_ASSERT((*it) != NULL);
+                  assert((*it) != NULL);
                   delete *it;
                 }
                 w->second.clear();
