@@ -6495,8 +6495,9 @@ SgComplexVal* SageBuilder::buildComplexVal(SgValueExp* real_value, SgValueExp* i
 
 SgComplexVal* SageBuilder::buildComplexVal_nfi(SgValueExp* real_value, SgValueExp* imaginary_value, const std::string& str)
 {
+  ROSE_ASSERT(imaginary_value != NULL);
   SgComplexVal* result = new SgComplexVal(real_value,imaginary_value,imaginary_value->get_type(),str);
-  ROSE_ASSERT(result);
+  ROSE_ASSERT(result != NULL);
 
 // DQ (12/31/2008): set and test the parents
   if (real_value != NULL)
