@@ -7264,6 +7264,7 @@ bool SageInterface::isMain(const SgNode* n)
  }
  else
  {
+   ROSE_ASSERT(isSgStatement(n) != NULL);
    if (isSgFunctionDeclaration(n) &&
        (SageInterface::is_Java_language() || isSgGlobal(isSgStatement(n)->get_scope())) &&
        isSgFunctionDeclaration(n)->get_name() == "main")
