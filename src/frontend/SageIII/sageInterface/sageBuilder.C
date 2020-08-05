@@ -8673,6 +8673,7 @@ SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters
 SgFunctionCallExp*
 SageBuilder::buildFunctionCallExp(SgExpression* f, SgExprListExp* parameters/*=NULL*/)
    {
+     ROSE_ASSERT(f != NULL);
      SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
      ROSE_ASSERT(func_call_expr != NULL);
 
