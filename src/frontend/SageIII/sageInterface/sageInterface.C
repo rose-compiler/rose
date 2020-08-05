@@ -22337,6 +22337,7 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
       {
         // we move int i; to be for (int i=0; ...);
         SgForStatement* stmt = isSgForStatement (target_scope);
+        ROSE_ASSERT(stmt != NULL);
         SgStatementPtrList& stmt_list = stmt->get_init_stmt();
         // Try to match a pattern like for (i=0; ...) here
         // assuming there is only one assignment like i=0
