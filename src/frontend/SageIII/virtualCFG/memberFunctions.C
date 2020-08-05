@@ -2093,12 +2093,19 @@ SgAdaExitStmt::cfgOutEdges(unsigned int idx) {
 #endif /* THIS_IS_AN_ADA_EXAMPLE */ 
   
   switch (caseIdx) {
-    case 0: makeEdge(CFGNode(this, idx), this->get_condition()->cfgForBeginning(), result); break;
+    case 0: makeEdge(CFGNode(this, idx), this->get_condition()->cfgForBeginning(), result); 
+            break;
+
     case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this->get_loop()), result);
             
             // the following out edge could be optional depending if there is a condition or not; 
             if (has_condition)
-              makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+            {
+              makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); 
+            }
+            
+            break;
+
     default: ROSE_ASSERT (!"Bad index for SgAdaExitStmt");
   }
   return result;
