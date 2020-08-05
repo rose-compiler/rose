@@ -20584,6 +20584,7 @@ SgArrayType *SageBuilder::getUniqueJavaArrayType(SgType *base_type, int num_dime
         base_type = getUniqueJavaArrayType(base_type, num_dimensions - 1);
     }
 
+    ROSE_ASSERT(base_type != NULL);
     AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) base_type -> getAttribute("array");
     if (attribute == NULL) {
         SgArrayType *array_type = SageBuilder::buildArrayType(base_type);
