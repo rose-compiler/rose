@@ -1395,70 +1395,115 @@ void Build(const parser::Expr::Subtract&x, SgExpression* &expr)
    expr = SageBuilderCpp17::buildSubtractOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::Concat&x, T* &expr)
+void Build(const parser::Expr::Concat&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(Concat)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildConcatenationOp_nfi(lhs, rhs);
+
 }
 
-template<typename T>
-void Build(const parser::Expr::LT&x, T* &expr)
+void Build(const parser::Expr::LT&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(LT)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildLessThanOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::LE&x, T* &expr)
+void Build(const parser::Expr::LE&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(LE)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildLessOrEqualOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::EQ&x, T* &expr)
+void Build(const parser::Expr::EQ&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(EQ)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildEqualityOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::NE&x, T* &expr)
+void Build(const parser::Expr::NE&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(NE)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildNotEqualOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::GE&x, T* &expr)
+void Build(const parser::Expr::GE&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(GE)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildGreaterOrEqualOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::GT&x, T* &expr)
+void Build(const parser::Expr::GT&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(GT)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildGreaterThanOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::AND&x, T* &expr)
+void Build(const parser::Expr::AND&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(AND)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildAndOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::OR&x, T* &expr)
+void Build(const parser::Expr::OR&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(OR)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildOrOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::EQV&x, T* &expr)
+void Build(const parser::Expr::EQV&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(EQV)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildEqualityOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::NEQV&x, T* &expr)
+void Build(const parser::Expr::NEQV&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(NEQV)\n";
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildNotEqualOp_nfi(lhs, rhs);
 }
 
 template<typename T>
@@ -1548,6 +1593,7 @@ void Build(const parser::BlockConstruct&x, T* scope)
 
    semantics::Symbol *symbol = block_name.symbol;
 
+#if 0
    if (symbol) {
       const parser::CharBlock &srcName = symbol->name();
       std::cout << "The symbol name is " << srcName.ToString() << "\n";
@@ -1580,6 +1626,7 @@ void Build(const parser::BlockConstruct&x, T* scope)
          std::cout << "No scope was introduced by " << block_name.ToString() << "()\n";
       }
    }
+#endif
 
    const auto &block = std::get<2>(x.t);
    std::cout << "The block is of type: " << typeid(block).name() << "\n";
@@ -1749,6 +1796,28 @@ template<typename T>
 void Build(const parser::DoConstruct&x, T* scope)
 {
    std::cout << "Rose::builder::Build(DoConstruct)\n";
+   //  std::tuple<Statement<NonLabelDoStmt>, Block, Statement<EndDoStmt>> t;
+   //  bool IsDoNormal() const;  bool IsDoWhile() const; bool IsDoConcurrent() const;
+
+   SgStatement* block_stmt{nullptr};
+   SgWhileStmt* while_stmt{nullptr};
+   SgExpression* condition{nullptr};
+
+   // Traverse NonLabelDoStmt to get the loop condition
+   Build(std::get<0>(x.t).statement, condition);
+
+   // Enter SageTreeBuilder if is DoWhile
+   if (x.IsDoWhile()) {
+      builder.Enter(while_stmt, condition);
+   }
+
+   // Traverse the body
+   Build(std::get<1>(x.t), block_stmt);
+
+   // Leave SageTreeBuilder
+   if (x.IsDoWhile()) {
+      builder.Leave(while_stmt, true /* has_end_do_stmt */);
+   }
 }
 
 template<typename T>
@@ -1797,6 +1866,45 @@ template<typename T>
 void Build(const parser::OmpEndLoopDirective&x, T* scope)
 {
    std::cout << "Rose::builder::Build(OmpEndLoopDirective)\n";
+}
+
+// DoConstruct
+void Build(const parser::NonLabelDoStmt&x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(NonLabelDoStmt)\n";
+   //   std::tuple<std::optional<Name>, std::optional<LoopControl>> t;
+
+   if (auto & opt = std::get<1>(x.t)) {    // std::optional<LoopControl>
+      Build(opt.value(), expr);
+   }
+}
+
+void Build(const parser::LoopControl&x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(LoopControl)\n";
+   //  std::variant<Bounds, ScalarLogicalExpr, Concurrent> u;
+   //  using Bounds = LoopBounds<ScalarName, ScalarExpr>;
+   // struct LoopBounds { VAR name;  BOUND lower, upper;  std::optional<BOUND> step; }
+
+   std::string name;
+   SgExpression * lower_bound = nullptr, * upper_bound = nullptr;
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::LoopControl::Bounds &y)
+            {
+#if 0
+               name = y.name.thing.ToString();
+               std::cout << "the name in the loop control is " << name << "\n";
+
+               Build(y.lower.thing.value(), lower_bound);
+               Build(y.upper.thing.value(), upper_bound);
+#endif
+            },
+         [&] (const parser::LoopControl::Concurrent &y) { ; },
+         [&] (const auto &y) { Build(y, expr); }, // ScalarLogicalExpr
+      },
+      x.u);
 }
 
    // SpecificationConstruct
