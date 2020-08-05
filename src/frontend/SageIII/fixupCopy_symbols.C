@@ -912,7 +912,7 @@ SgIfStmt::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
      this->get_true_body()->fixupCopy_symbols(ifStatement_copy->get_true_body(),help);
 
      ROSE_ASSERT((this->get_false_body() != NULL) == (ifStatement_copy->get_false_body() != NULL));
-     if (isSgScopeStatement(ifStatement_copy->get_false_body())) 
+     if (isSgScopeStatement(ifStatement_copy->get_false_body()) != NULL) 
         {
        // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->get_symbol_table() != NULL);
        // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->get_symbol_table()->size()  == 0);
