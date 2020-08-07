@@ -369,12 +369,15 @@ InitializeExplicitScopes::visit ( SgNode *node)
                          typedefDeclaration,typedefDeclaration->get_name().str());
                     typedefDeclaration->get_file_info()->display("Invistigating possibly incorrectly set typedef scope");
 #endif
-                    ROSE_ASSERT(typedefDeclaration->get_parent() != NULL);
+                    ROSE_ASSERT((typedefDeclaration->get_parent()) != NULL);
                     SgScopeStatement* parentScope = isSgScopeStatement(typedefDeclaration->get_parent());
                     if (parentScope == NULL)
                        {
                          printf ("typedefDeclaration->get_parent() = %p = %s \n",typedefDeclaration->get_parent(),typedefDeclaration->get_parent()->class_name().c_str());
+                         ROSE_ASSERT((typedefDeclaration->get_parent()->get_parent()) != NULL);
                          printf ("typedefDeclaration->get_parent()->get_parent() = %p = %s \n",typedefDeclaration->get_parent()->get_parent(),typedefDeclaration->get_parent()->get_parent()->class_name().c_str());
+
+                         ROSE_ASSERT((typedefDeclaration->get_parent()->get_parent()->get_parent()) != NULL);
                          printf ("typedefDeclaration->get_parent()->get_parent() = %p = %s \n",typedefDeclaration->get_parent()->get_parent()->get_parent(),typedefDeclaration->get_parent()->get_parent()->get_parent()->class_name().c_str());
                          typedefDeclaration->get_parent()->get_parent()->get_file_info()->display("Error: typedefDeclaration->get_parent()->get_parent(): debug");
                          typedefDeclaration->get_parent()->get_parent()->get_parent()->get_file_info()->display("Error: typedefDeclaration->get_parent()->get_parent()->get_parent(): debug");
