@@ -6495,8 +6495,9 @@ SgComplexVal* SageBuilder::buildComplexVal(SgValueExp* real_value, SgValueExp* i
 
 SgComplexVal* SageBuilder::buildComplexVal_nfi(SgValueExp* real_value, SgValueExp* imaginary_value, const std::string& str)
 {
+  ROSE_ASSERT(imaginary_value != NULL);
   SgComplexVal* result = new SgComplexVal(real_value,imaginary_value,imaginary_value->get_type(),str);
-  ROSE_ASSERT(result);
+  ROSE_ASSERT(result != NULL);
 
 // DQ (12/31/2008): set and test the parents
   if (real_value != NULL)
@@ -8673,6 +8674,7 @@ SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters
 SgFunctionCallExp*
 SageBuilder::buildFunctionCallExp(SgExpression* f, SgExprListExp* parameters/*=NULL*/)
    {
+     ROSE_ASSERT(f != NULL);
      SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
      ROSE_ASSERT(func_call_expr != NULL);
 
@@ -20583,6 +20585,7 @@ SgArrayType *SageBuilder::getUniqueJavaArrayType(SgType *base_type, int num_dime
         base_type = getUniqueJavaArrayType(base_type, num_dimensions - 1);
     }
 
+    ROSE_ASSERT(base_type != NULL);
     AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) base_type -> getAttribute("array");
     if (attribute == NULL) {
         SgArrayType *array_type = SageBuilder::buildArrayType(base_type);

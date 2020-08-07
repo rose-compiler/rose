@@ -654,6 +654,7 @@ EdgeConditionKind CFGEdge::condition() const
     // Find positions of ancestors of "from" and "to" in children of "lca"
     unsigned int positionOfChild1, positionOfChild2;
     {
+      ROSE_ASSERT(lca != NULL);
       vector<SgNode*> children = lca->get_traversalSuccessorContainer();
       positionOfChild1 = src == lca ? (srcEnd ? children.size() : 0) :
                          find(children.begin(), children.end(),
