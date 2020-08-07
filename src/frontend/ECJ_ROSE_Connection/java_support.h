@@ -118,6 +118,7 @@ public:
     SgExpression *popExpression() {
         SgNode *n = pop();
         if (! isSgExpression(n)) {
+            ROSE_ASSERT(isSgClassDefinition(n) !- NULL);
             cerr << "Invalid attempt to pop a Component node of type "
                      << (isSgClassDefinition(n) ? isSgClassDefinition(n) -> get_qualified_name().getString() : n -> class_name())
                      << " as an SgExpression"
