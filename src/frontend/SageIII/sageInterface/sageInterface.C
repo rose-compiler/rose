@@ -7255,22 +7255,33 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool incl
 
 bool SageInterface::isMain(const SgNode* n)
 {
- bool result = false;
- // Liao 1/5/2010, handle Fortran main entry: SgProgramHeaderStatement
- if (SageInterface::is_Fortran_language())
- {
-   if (isSgProgramHeaderStatement(n))
-     result = true;
- }
- else
- {
-   ROSE_ASSERT(isSgStatement(n) != NULL);
-   if (isSgFunctionDeclaration(n) &&
-       (SageInterface::is_Java_language() || isSgGlobal(isSgStatement(n)->get_scope())) &&
-       isSgFunctionDeclaration(n)->get_name() == "main")
-   result = true;
- }
-
+   bool result = false;
+   // Liao 1/5/2010, handle Fortran main entry: SgProgramHeaderStatement
+   if (SageInterface::is_Fortran_language()) {
+      if (isSgProgramHeaderStatement(n)) {
+         result = true;
+      }
+   }
+   else {
+      if (isSgFunctionDeclaration(n) != NULL) {
+         bool either = false;
+         if (SageInterface::is_Java_language()) {
+            either = true;
+         }
+         else {
+            ROSE_ASSERT(isSgStatement(n) != NULL);
+            if (isSgGlobal(isSgStatement(n)->get_scope())) {
+               either = true;
+            }
+         }
+         if (either) {
+            ROSE_ASSERT(isSgFunctionDeclaration(n) != NULL);
+            if (isSgFunctionDeclaration(n)->get_name() == "main") {
+               result = true;
+            }
+         }
+      }
+   }
    return result;
 }
 
