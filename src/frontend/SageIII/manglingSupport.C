@@ -347,6 +347,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                case V_SgNamespaceDefinitionStatement:
                   {
                     const SgNamespaceDefinitionStatement* def = isSgNamespaceDefinitionStatement (scope);
+		    ROSE_ASSERT(def != NULL);
                     mangled_name = def->get_mangled_name().getString();
 #if 0
                     printf ("In manglingSupport.C: mangleQualifiersToString(): mangled name for scope = %p = %s is: %s \n",scope,scope->class_name().c_str(),mangled_name.c_str());
@@ -361,7 +362,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                   {
                  // 'scope' is part of scope for locally defined classes
                     const SgFunctionDefinition* def = isSgFunctionDefinition (scope);
-                    ROSE_ASSERT (def);
+		    ROSE_ASSERT(def != NULL);
                     mangled_name = def->get_mangled_name().getString();
                     break;
                   }
