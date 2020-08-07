@@ -10322,9 +10322,10 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
 void SageInterface::removeAllOriginalExpressionTrees(SgNode* top) {
   struct Visitor: public AstSimpleProcessing {
     virtual void visit(SgNode* n) {
-      if (isSgValueExp(n)) {
+      if (isSgValueExp(n) != NULL) {
         isSgValueExp(n)->set_originalExpressionTree(NULL);
-      } else if (isSgCastExp(n)) {
+      }
+      else if (isSgCastExp(n) != NULL) {
         isSgCastExp(n)->set_originalExpressionTree(NULL);
       }
     }
