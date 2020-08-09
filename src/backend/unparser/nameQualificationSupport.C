@@ -1366,6 +1366,353 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
           mfprintf(mlog [ WARN ] ) ("Initial lookup: name = %s currentScope = %p = %s \n",name.str(),currentScope,currentScope->class_name().c_str());
 #endif
 
+
+#if 0
+       // DQ (8/9/2020): Alternatively, I will try a different fix for Cxx_tests/test2020_20.C.  It might be better to use the 
+       // unmodified name qualification, and instead fix the support for using namespace directives and control which symbols are
+       // introduced as SgAliasSymbols.
+       // DQ (8/5/2020): When a using namespace declaration is used, the name qualification rules are different because the symbols
+       // from the using namespace directive's namespace are not allowed to hide existing symbols from lookups not accounting for
+       // alias symbols.  So we need to see if the target symbol is visable through the parent, but skipping matches that would 
+       // come from SgAliasSymbols (which are introduced to represent symbols that are shared bewteeen where they are declared and 
+       // where they are aliased via a using namespace directive.
+       // bool symbol_is_visible_ignoring_alias_symbols = false;
+          SgSymbol* trial_lookup_symbol = SageInterface::lookupSymbolInParentScopesIgnoringAliasSymbols (name,currentScope,templateParameterList,templateArgumentList);
+
+#define DEBUG_NONALIAS_SYMBOL_SUPPORT 0
+
+          if (trial_lookup_symbol != NULL)
+             {
+// #if 0
+#if DEBUG_NONALIAS_SYMBOL_SUPPORT
+               printf ("Found a symbol via the lookup ignoring alias symbols \n");
+
+            // Check is this is the kind of symbol that matches the declaration sought.
+               printf ("Check is this is the kind of symbol that matches the declaration sought \n");
+#endif
+            // This can not be a SgAliasSymbol.
+               ROSE_ASSERT(isSgAliasSymbol(trial_lookup_symbol) == NULL);
+
+            // Still need to verify this is the symbol associated with the target declaration.
+            // symbol_is_visible_ignoring_alias_symbols = true;
+
+               int numberOfSymbols = currentScope->count_symbol(name);
+
+#if DEBUG_NONALIAS_SYMBOL_SUPPORT
+               printf ("trial_lookup_symbol = %p = %s \n",trial_lookup_symbol,trial_lookup_symbol->class_name().c_str());
+               printf (" --- numberOfSymbols = %d \n",numberOfSymbols);
+#endif
+               SgDeclarationStatement* trial_declaration = NULL;
+               SgInitializedName* trial_initializedName = NULL;
+               switch (trial_lookup_symbol->variantT())
+                  {
+                    case V_SgClassSymbol:
+                       {
+                         SgClassSymbol* class_symbol = isSgClassSymbol(trial_lookup_symbol);
+                         ROSE_ASSERT(class_symbol != NULL);
+
+                         trial_declaration = class_symbol->get_declaration();
+                         break;
+                       }
+
+                    case V_SgVariableSymbol:
+                       {
+                         SgVariableSymbol* variable_symbol = isSgVariableSymbol(trial_lookup_symbol);
+                         ROSE_ASSERT(variable_symbol != NULL);
+
+                         trial_initializedName = variable_symbol->get_declaration();
+                         trial_declaration = NULL;
+                         break;
+                       }
+
+                    case V_SgFunctionSymbol:
+                       {
+                         SgFunctionSymbol* function_symbol = isSgFunctionSymbol(trial_lookup_symbol);
+                         ROSE_ASSERT(function_symbol != NULL);
+
+                         trial_declaration = function_symbol->get_declaration();
+                         break;
+                       }
+
+                    case V_SgTypedefSymbol:
+                       {
+                         SgTypedefSymbol* typedef_symbol = isSgTypedefSymbol(trial_lookup_symbol);
+                         ROSE_ASSERT(typedef_symbol != NULL);
+
+                         trial_declaration = typedef_symbol->get_declaration();
+                         break;
+                       }
+
+                    case V_SgEnumSymbol:
+                       {
+                         SgEnumSymbol* enum_symbol = isSgEnumSymbol(trial_lookup_symbol);
+                         ROSE_ASSERT(enum_symbol != NULL);
+
+                         trial_declaration = enum_symbol->get_declaration();
+                         break;
+                       }
+
+                    case V_SgNamespaceSymbol:
+                       {
+                         SgNamespaceSymbol* namespace_symbol = isSgNamespaceSymbol(trial_lookup_symbol);
+                         ROSE_ASSERT(namespace_symbol != NULL);
+
+                         trial_declaration = namespace_symbol->get_declaration();
+                         break;
+                       }
+
+                    case V_SgTemplateClassSymbol:
+                       {
+                         SgTemplateClassSymbol* templateClass_symbol = isSgTemplateClassSymbol(trial_lookup_symbol);
+                         ROSE_ASSERT(templateClass_symbol != NULL);
+
+                         trial_declaration = templateClass_symbol->get_declaration();
+                         break;
+                       }
+
+                    case V_SgEnumFieldSymbol:
+                       {
+                         SgEnumFieldSymbol* enumField_symbol = isSgEnumFieldSymbol(trial_lookup_symbol);
+                         ROSE_ASSERT(enumField_symbol != NULL);
+
+                         trial_initializedName = enumField_symbol->get_declaration();
+                         trial_declaration = NULL;
+                         break;
+                       }
+
+                    case V_SgTemplateFunctionSymbol:
+                       {
+                         SgTemplateFunctionSymbol* templateFunction_symbol = isSgTemplateFunctionSymbol(trial_lookup_symbol);
+                         ROSE_ASSERT(templateFunction_symbol != NULL);
+
+                         trial_declaration = templateFunction_symbol->get_declaration();
+                         break;
+                       }
+
+                    case V_SgTemplateVariableSymbol:
+                       {
+                         SgTemplateVariableSymbol* templateVariable_symbol = isSgTemplateVariableSymbol(trial_lookup_symbol);
+                         ROSE_ASSERT(templateVariable_symbol != NULL);
+
+                         trial_initializedName = templateVariable_symbol->get_declaration();
+                         trial_declaration = NULL;
+                         break;
+                       }
+
+                    case V_SgNonrealSymbol:
+                       {
+                         SgNonrealSymbol* nonreal_symbol = isSgNonrealSymbol(trial_lookup_symbol);
+                         ROSE_ASSERT(nonreal_symbol != NULL);
+
+                         trial_declaration = nonreal_symbol->get_declaration();
+                         break;
+                       }
+
+                    case V_SgTemplateTypedefSymbol:
+                       {
+                         SgTemplateTypedefSymbol* templateTypedef_symbol = isSgTemplateTypedefSymbol(trial_lookup_symbol);
+                         ROSE_ASSERT(templateTypedef_symbol != NULL);
+
+                         trial_declaration = templateTypedef_symbol->get_declaration();
+                         break;
+                       }
+
+                    case V_SgTemplateMemberFunctionSymbol:
+                       {
+                         SgTemplateMemberFunctionSymbol* templateMemberFunction_symbol = isSgTemplateMemberFunctionSymbol(trial_lookup_symbol);
+                         ROSE_ASSERT(templateMemberFunction_symbol != NULL);
+
+                         trial_declaration = templateMemberFunction_symbol->get_declaration();
+                         break;
+                       }
+
+                    case V_SgMemberFunctionSymbol:
+                       {
+                         SgMemberFunctionSymbol* memberFunction_symbol = isSgMemberFunctionSymbol(trial_lookup_symbol);
+                         ROSE_ASSERT(memberFunction_symbol != NULL);
+
+                         trial_declaration = memberFunction_symbol->get_declaration();
+                         break;
+                       }
+
+                    default:
+                       {
+                         printf ("Switch default reached: trial_lookup_symbol = %p = %s \n",trial_lookup_symbol,trial_lookup_symbol->class_name().c_str());
+                         ROSE_ASSERT(false);
+                       }
+                  }
+#if 0
+              printf ("Not yet implemented! \n");
+              ROSE_ASSERT(false);
+#endif
+
+#if DEBUG_NONALIAS_SYMBOL_SUPPORT
+              printf ("declaration       = %p = %s \n",declaration,declaration->class_name().c_str());
+#endif
+              if (trial_declaration != NULL)
+                 {
+#if DEBUG_NONALIAS_SYMBOL_SUPPORT
+                   printf ("trial_declaration = %p = %s \n",trial_declaration,trial_declaration->class_name().c_str());
+#endif
+                   if (trial_declaration->variantT() == declaration->variantT())
+                      {
+                     // We can return zero, since the symbol is visible.
+                     // return return_value;
+                     // return 0;
+                        if (trial_declaration == declaration)
+                           {
+#if DEBUG_NONALIAS_SYMBOL_SUPPORT
+                             printf ("Addressing possible namespace aliasing: trial_declaration == declaration: returning zero \n");
+#endif
+                          // DQ (8/8/2020): Uncomment so that we can test Cxx_tests/test2020_20.C.
+                          // return 0;
+
+                          // DQ (8/6/2020): Need to addess examples such as Cxx_tests/test2017_40.C.
+                             SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(trial_declaration);
+                             if (templateInstantiationFunctionDecl != NULL)
+                                {
+                               // Keep going with the rest of the function.
+                                }
+                               else
+                                {
+                               // For other cases we can return 0.
+                                  SgScopeStatement* local_scope = declaration->get_scope();
+                                  ROSE_ASSERT(local_scope != NULL);
+                                  size_t numberOfSymbols      = local_scope->count_symbol(name);
+                                  size_t numberOfAliasSymbols = local_scope->count_alias_symbol(name);
+#if DEBUG_NONALIAS_SYMBOL_SUPPORT
+                                  printf ("Addressing possible namespace aliasing: trial_declaration != NULL: templateInstantiationFunctionDecl != NULL: local_scope = %p = %s \n",local_scope,local_scope->class_name().c_str());
+                                  printf ("Addressing possible namespace aliasing: trial_declaration != NULL: templateInstantiationFunctionDecl != NULL: numberOfSymbols      = %zu \n",numberOfSymbols);
+                                  printf ("Addressing possible namespace aliasing: trial_declaration != NULL: templateInstantiationFunctionDecl != NULL: numberOfAliasSymbols = %zu \n",numberOfAliasSymbols);
+#endif
+#if DEBUG_NONALIAS_SYMBOL_SUPPORT
+                                  printf ("Addressing possible namespace aliasing: trial_declaration != NULL: templateInstantiationFunctionDecl != NULL: returning zero \n");
+#endif
+                               // DQ (8/8/2020): Comment this out as a test to make Cxx11_tests/test2020_08.C work.
+                                  return 0;
+                                }
+                           }
+                          else
+                           {
+                          // Keep going with the rest of the function.
+                           }
+                      }
+                     else
+                      {
+                     // Keep going with the rest of the function.
+                      }
+                 }
+                else
+                 {
+                   if (trial_initializedName != NULL)
+                      {
+                     // The solution here is to find the variable declaration associated with the trial_initializedName.
+#if 1
+
+#if DEBUG_NONALIAS_SYMBOL_SUPPORT
+                        printf ("Addressing possible namespace aliasing: trial_initializedName = %p name = %s: declaration = %p = %s \n",
+                             trial_initializedName,trial_initializedName->get_name().str(),declaration,declaration->class_name().c_str());
+#endif
+                        bool includingSelf = false;
+                        SgVariableDeclaration* enclosing_variableDeclaration = SageInterface::getEnclosingNode<SgVariableDeclaration>(trial_initializedName,includingSelf);
+
+#if DEBUG_NONALIAS_SYMBOL_SUPPORT
+                        printf ("Addressing possible namespace aliasing: trial_initializedName != NULL: enclosing_variableDeclaration = %p \n",enclosing_variableDeclaration);
+#endif
+                        if (enclosing_variableDeclaration != NULL)
+                           {
+                             if (enclosing_variableDeclaration == declaration)
+                                {
+#if DEBUG_NONALIAS_SYMBOL_SUPPORT
+                                  printf ("Addressing possible namespace aliasing: trial_initializedName != NULL: enclosing_variableDeclaration == declaration: returning zero \n");
+#endif
+#if 0
+#if DEBUG_NONALIAS_SYMBOL_SUPPORT
+                                  printf ("Calling nameQualificationTypeSupport(): trial_initializedName = %p name = %s \n",trial_initializedName,trial_initializedName->get_name().str());
+#endif
+                               // Refactored this code.
+                               // nameQualificationTypeSupport (type,currentScope,initializedName);
+                                  ROSE_ASSERT(trial_initializedName != NULL);
+                                  nameQualificationTypeSupport (trial_initializedName->get_type(),currentScope,trial_initializedName);
+#endif
+                               // DQ (8/8/2020): Trying to debug Cxx_tests/test2020_20.C
+                                  return 0;
+                                }
+                               else
+                                {
+                               // Might need to check if there is another one, but if there is (see Cxx_tests/test2007_09.C) then we still need to keep going.
+                               // Keep going with the rest of the function.
+
+#if DEBUG_NONALIAS_SYMBOL_SUPPORT
+                                  printf ("Addressing possible namespace aliasing: trial_initializedName != NULL: enclosing_variableDeclaration != declaration: returning zero \n");
+#endif
+                               // DQ (8/8/2020): return 0 to debug Cxx_tests/test2020_20.C
+                               // return 0;
+                                }
+                           }
+                          else
+                           {
+#if 0
+                             printf ("enclosing_variableDeclaration == NULL \n");
+                             ROSE_ASSERT(false);
+#else
+                             printf (" --- not associated with a SgVariableDeclaration: so keep going \n");
+                             SgNonrealDecl* nonrealDecl = isSgNonrealDecl(declaration);
+                             if (nonrealDecl != NULL)
+                                {
+                               // Keep going with the rest of the function.
+                                }
+                               else
+                                {
+#if DEBUG_NONALIAS_SYMBOL_SUPPORT
+                                  printf ("enclosing_variableDeclaration == NULL && nonrealDecl != NULL: but keep going \n");
+#endif
+#if 0
+                                  printf ("enclosing_variableDeclaration == NULL && nonrealDecl != NULL \n");
+                                  ROSE_ASSERT(false);
+#endif
+                                }
+#endif
+                           }
+#endif
+
+#if 0
+
+#error "DEAD CODE!"
+
+#if 1
+#if 1
+                        printf ("Addressing possible namespace aliasing: trial_initializedName != NULL: returning zero \n");
+#endif
+                        return 0;
+#else
+#error "DEAD CODE!"
+                     // The declaration is the not a SgInitializedName, so need to think about this case.
+                        if (trial_initializedName == declaration)
+                           {
+                             return 0;
+                           }
+                          else
+                           {
+                          // Keep going with the rest of the function.
+                           }
+#endif
+
+#error "DEAD CODE!"
+
+#endif
+                      }
+                     else
+                      {
+                     // Keep going with the rest of the function.
+                      }
+                 }
+
+           // We can return zero, since the symbol is visible.
+           // return return_value;
+            }
+#endif
+
        // DQ (8/16/2013): Added support for more precise symbol lookup (which requires the template parameters and template arguments).
        // DQ 8/21/2012): this is looking in the parent scopes of the currentScope and thus not including the currentScope.
        // This is a bug for test2011_31.C where there is a variable who's name hides the name in the parent scopes (and it not detected).
@@ -5799,6 +6146,708 @@ NameQualificationTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDecla
    }
 
 
+// void NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScopeStatement* currentScope, SgInitializedName* initializedName, SgStatement* currentStatement, SgStatement* positionStatement )
+void
+NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScopeStatement* currentScope, SgInitializedName* initializedName )
+   {
+  // DQ (8/8/2020): this is code refactored from the evaluateInheritedAttribute() function within the SgInitializeName handling.
+  // This code support the name qualification of the type associated with a SgInitializedName (it might be useful else where as well).
+
+       // else for type handling.
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: initializedName->get_type(): before stripType(): type = %p = %s \n",type,type->class_name().c_str());
+#endif
+       // DQ (4/15/2019): Reset the type so that we don't miss the SgPointerMemberType.
+       // unsigned char bit_array = SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | 
+       //                           SgType::STRIP_POINTER_TYPE  | SgType::STRIP_POINTER_TYPE   | SgType::STRIP_ARRAY_TYPE;
+          unsigned char bit_array = SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | 
+                                    SgType::STRIP_POINTER_TYPE  | SgType::STRIP_ARRAY_TYPE;
+          type = type->stripType(bit_array);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_INITIALIZED_NAME
+          mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: initializedName->get_type(): after stripType(): type = %p = %s \n",type,type->class_name().c_str());
+#endif
+
+
+#if 0
+       // DQ (4/17/2019): Need more general type support, required for more complex nesting of SgPointerMemberType types.
+
+#if 0
+          mfprintf(mlog [ WARN ] ) ("######################################################## \n");
+          mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: Checking for SgPointerMemberType \n");
+          mfprintf(mlog [ WARN ] ) ("######################################################## \n");
+#endif
+
+          SgPointerMemberType* pointerMemberType = isSgPointerMemberType(type);
+          if (pointerMemberType != NULL)
+             {
+            // DQ (4/9/2019): If this is a pointer to member type then we will need name qualification for the SgInitializedName and its type.
+            // The name qualification for the base type will be attached a the name qualification for the type, and the name qualification 
+            // for the pointer to member class will be attached to the SgInitializedName.
+#if 0
+               mfprintf(mlog [ WARN ] ) ("############################################################################## \n");
+               mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: Processing the SgInitializedName IR node name directly \n");
+               mfprintf(mlog [ WARN ] ) ("############################################################################## \n");
+#endif
+
+            // DQ (4/11/2019): This is the old function API, but did not handle the case where the SgClassDefinition was not available.
+            // SgClassDefinition* classDefinition = pointerMemberType->get_class_of();
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(pointerMemberType->get_class_declaration_of());
+
+            // DQ (4/10/2019): The definition might not be available, but this means more that we should change the API to for 
+            // get_class_of() to return the SgClassDeclaration (and the firstNondefiing one if the defining declaration is not available).
+            // ASSERT_not_null(classDefinition);
+            // if (classDefinition != NULL)
+               if (classDeclaration != NULL)
+                  {
+                 // SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+                    ASSERT_not_null(classDeclaration);
+
+                    SgDeclarationStatement* declarationForInitializedName = classDeclaration;
+                    ASSERT_not_null(declarationForInitializedName);
+
+                    SgDeclarationStatement* positionStatement = isSgDeclarationStatement(initializedName->get_parent());
+                    ASSERT_not_null(positionStatement);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    mfprintf(mlog [ WARN ] ) ("Correcting associated declaration: declarationForInitializedName = %p = %s \n",declarationForInitializedName,declarationForInitializedName->class_name().c_str());
+                    mfprintf(mlog [ WARN ] ) ("Correcting associated declaration: positionStatement = %p = %s \n",positionStatement,positionStatement->class_name().c_str());
+#endif
+                 // int amountOfNameQualificationRequiredForName = nameQualificationDepth(initializedName,currentScope,variableDeclaration);
+                 // int amountOfNameQualificationRequiredForName = nameQualificationDepth(initializedName,currentScope,declarationForInitializedName);
+                    int amountOfNameQualificationRequiredForName = nameQualificationDepth(declarationForInitializedName,currentScope,positionStatement);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    mfprintf(mlog [ WARN ] ) ("SgInitializedName: SgPointerMemberType: name: amountOfNameQualificationRequiredForName = %d \n",amountOfNameQualificationRequiredForName);
+#endif
+                 // bool skipGlobalNameQualification = true;
+                    bool skipGlobalNameQualification = false;
+                 // setNameQualificationOnName(initializedName,declaration,amountOfNameQualificationRequiredForName,skipGlobalNameQualification);
+                 // setNameQualificationOnName(initializedName,positionStatement,amountOfNameQualificationRequiredForName,skipGlobalNameQualification);
+                    setNameQualificationOnName(initializedName,declarationForInitializedName,amountOfNameQualificationRequiredForName,skipGlobalNameQualification);
+                  }
+                 else
+                  {
+                 // DQ (4/11/2019): If this is not a SgClassDeclaration thenit can be a nonreal declaration which is not handled yet.
+                  }
+             }
+#else
+
+#if 0
+          mfprintf(mlog [ WARN ] ) ("Commented out SgPointerMemberType code to compute the name qualification on the name (calling setNameQualificationOnName()) \n");
+#endif
+
+#endif
+
+#if 0
+       // DQ (3/31/2019): debugging support.
+          if (debugging == true)
+             {
+               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+             }
+#endif
+          SgStatement* currentStatement = TransformationSupport::getStatement(initializedName);
+          ASSERT_not_null(currentStatement);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+          mfprintf(mlog [ WARN ] ) ("case of SgInitializedName: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+#endif
+
+#if DEBUG_INITIALIZED_NAME
+          mfprintf(mlog [ WARN ] ) ("################################################################## \n");
+          mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: Processing the SgInitializedName IR's type \n");
+          mfprintf(mlog [ WARN ] ) ("################################################################## \n");
+#endif
+
+       // DQ (4/19/2019): It might be that we should call this after the traveral over each type instead of before we traverse the type.
+       // traverseType(initializedName->get_type(),initializedName,currentScope,currentStatement);
+
+       // DQ (4/19/2019): Added current statement to paremter list for recursive call.
+       // DQ (4/18/2019): I think we need to traverse the type doing a proper type travesal, since it can consist of 
+       // long chains of types that each must be name qualified. The example of a chain of SgPointerToMemberTypes is 
+       // the best example of this.
+          ASSERT_not_null(currentScope);
+
+       // DQ (4/27/2019): Refactored this code to be outside of the flase block below, so it can be used both there 
+       // and outside the false branch afterward.
+          SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(initializedName->get_type());
+
+       // DQ (4/22/2019): If we have resolved the type (after stripType() function) to a SgPointerMemberType, then 
+       // we need to traverse the type using a type traversal.  Else we can handle it normally.
+       // generateNestedTraversalWithExplicitScope(type,currentScope,currentStatement,initializedName);
+       // traverseType(initializedName->get_type(),initializedName,currentScope,currentStatement);
+          SgPointerMemberType* pointerMemberType = isSgPointerMemberType(type);
+          if (pointerMemberType != NULL)
+             {
+#if DEBUG_INITIALIZED_NAME
+               mfprintf(mlog [ WARN ] ) ("########################################################################## \n");
+               mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: Calling generateNestedTraversalWithExplicitScope() \n");
+               mfprintf(mlog [ WARN ] ) ("########################################################################## \n");
+#endif
+               generateNestedTraversalWithExplicitScope(type,currentScope,currentStatement,initializedName);
+
+            // DQ (4/19/2019): It might be that we should call this after the traveral over each type instead of before we traverse the type.
+            // This way we save the correctly computed string for each type after the different parts of name qualificaiton are in place.
+               traverseType(initializedName->get_type(),initializedName,currentScope,currentStatement);
+
+#if DEBUG_INITIALIZED_NAME
+               mfprintf(mlog [ WARN ] ) ("#################################################################################################### \n");
+               mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: DONE: Processing the recursive evaluation of the SgInitializedName IR's type \n");
+               mfprintf(mlog [ WARN ] ) ("#################################################################################################### \n");
+#endif
+             }
+            else
+             {
+#if DEBUG_INITIALIZED_NAME
+               mfprintf(mlog [ WARN ] ) ("Normal processing of type (no recursive call to evaluate the type) \n");
+#endif
+            // The code for the normal processing of the type is below.
+
+#if DEBUG_INITIALIZED_NAME
+               mfprintf(mlog [ WARN ] ) ("######################################################################### \n");
+               mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: Normal Processing the SgInitializedName IR's type \n");
+               mfprintf(mlog [ WARN ] ) ("######################################################################### \n");
+#endif
+
+#if 0
+               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+
+#if 0
+            // DQ (4/27/2019): I really want to put this "}" at the end of where the initializedName's type is processed.
+            // }
+#endif
+
+#if 0
+            // DQ (3/31/2019): debugging support.
+               if (debugging == true)
+                  {
+                    mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+                  }
+#endif
+
+            // DQ (4/27/2019): refactoring: As a result of the block processing of the type being extended, and this variable 
+            // being used outside of that block, we need to move this variable declaration to be outside of this block at the 
+            // top of this block.
+            // We want to handle types from every where a SgInitializedName might be used.
+            // SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(initializedName->get_type());
+
+            // DQ (4/22/2019): If there is a SgPointerMemberType, then don't processs as a normal type.
+               if (pointerMemberType != NULL)
+                  {
+                    if (declaration != NULL)
+                       {
+                         mfprintf(mlog [ WARN ] ) ("None null declaration where detected valid SgPointerMemberType: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+                       }
+                    ROSE_ASSERT(declaration == NULL);
+                  }
+
+
+#if 0
+            // SgPointerMemberType* pointerMemberType = isSgPointerMemberType(initializedName->get_type());
+               if (pointerMemberType != NULL)
+                  {
+                    SgType* baseType = pointerMemberType->get_base_type();
+                    ASSERT_not_null(baseType);
+#error "DEAD CODE!"
+                    SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(baseType);
+                    if (memberFunctionType != NULL)
+                       {
+                         SgType* returnType = memberFunctionType->get_return_type();
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         mfprintf(mlog [ WARN ] ) ("Case of SgPointerMemberType: Reset associated declaration: returnType = %p = %s \n",returnType,returnType->class_name().c_str());
+#endif
+                         ASSERT_not_null(returnType);
+                      // declaration = getDeclarationAssociatedWithType(memberFunctionType->get_return_type());
+                         declaration = getDeclarationAssociatedWithType(returnType);
+                       }
+                      else
+                       {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         mfprintf(mlog [ WARN ] ) ("Case of SgPointerMemberType: Reset associated declaration: baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+#endif
+                         declaration = getDeclarationAssociatedWithType(baseType);
+                       }
+                  }
+#else
+
+#if 0
+               mfprintf(mlog [ WARN ] ) ("Commented out SgPointerMemberType code to compute the associated declaration \n");
+#endif
+
+#endif
+
+#if 1
+            // DQ (4/14/2019): Add support for declType.
+
+            // DQ (4/14/2019): An alternative might be to support this in the getDeclarationAssociatedWithType() function.
+
+               SgDeclType* declType = isSgDeclType(type);
+               if (declType != NULL)
+                  {
+                 // Not clear if we need to worry about when the base type of the SgPointerMemberType is a SgDeclType.
+#if 0
+                    mfprintf(mlog [ WARN ] ) ("################################################################################## \n");
+                    mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: Processing the SgInitializedName decltype IR node directly \n");
+                    mfprintf(mlog [ WARN ] ) ("################################################################################## \n");
+#endif
+
+                 // We need to handle any possible name qualification of a type or SgVarRefExp used as decltype argument.
+                    SgExpression* baseExpression = declType->get_base_expression();
+                    SgType*       baseType       = declType->get_base_type();
+                    if (baseExpression != NULL)
+                       {
+                      // Need name qualification for expression used in decltype().
+#if 0
+                         mfprintf(mlog [ WARN ] ) ("Make a recursive call from this context (processing decltype taking SgExpression) \n");
+#endif
+                      // DQ (8/8/2020): Removed reference to "n".
+                      // DQ (6/30/2013): Added to support using generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
+                      // SgStatement* currentStatement = TransformationSupport::getStatement(n);
+                         SgStatement* currentStatement = TransformationSupport::getStatement(initializedName);
+#if 0
+                         mfprintf(mlog [ WARN ] ) ("SgInitializedName: decltype: currentStatement = %p = %s \n",currentStatement,currentStatement != NULL ? currentStatement->class_name().c_str() : "null");
+#endif
+#if 0
+                         mfprintf(mlog [ WARN ] ) ("Exiting as a test! (before recursive call) \n");
+                         ROSE_ASSERT(false);
+#endif
+                      // DQ (9/14/2015): Added debugging code.
+                      // DQ (9/14/2015): This can be an expression in a type, in which case we don't have an associated scope.
+                         if (currentStatement == NULL)
+                            {
+                           // This can be an expression in a type, in which case we don't have an associated scope.
+                              mfprintf(mlog [ WARN ] ) ("Note: This can be an expression in a type, in which case we don't have an associated scope: baseExpression = %p = %s \n",
+                                      baseExpression,baseExpression->class_name().c_str());
+                            }
+                           else
+                            {
+                              ASSERT_not_null(currentStatement);
+                              SgScopeStatement* currentScope = currentStatement->get_scope();
+                              ASSERT_not_null(currentScope);
+#if 0
+                              mfprintf(mlog [ WARN ] ) ("SgInitializedName: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+                           // DQ (6/30/2013): For the recursive call use generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
+                           // generateNameQualificationSupport(originalExpressionTree,referencedNameSet);
+                              generateNestedTraversalWithExplicitScope(baseExpression,currentScope);
+                            }
+#if 0
+                         mfprintf(mlog [ WARN ] ) ("Exiting as a test! (after recursive call) \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                      else
+                       {
+                      // Need name qualification for type used in decltype().  Not clear what I good example is of this!
+                         ASSERT_not_null(baseType);
+#if 0
+                         mfprintf(mlog [ WARN ] ) ("REPORT ME: Unknow case: SgInitializedName: decltype: calling getDeclarationAssociatedWithType(): baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+#endif
+                         declaration = getDeclarationAssociatedWithType(baseType);
+#if 0
+                         mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                  }
+#else
+               mfprintf(mlog [ WARN ] ) ("Commented out code specific to support of SgDeclType \n");
+#endif
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               mfprintf(mlog [ WARN ] ) ("Case of SgInitializedName: getDeclarationAssociatedWithType(): type = %p = %s declaration = %p \n",initializedName->get_type(),initializedName->get_type()->class_name().c_str(),declaration);
+#endif
+
+            // DQ (4/22/2019): The detect of a SgPointerMemberType will force a type traversal, which means 
+            // we don't process the type as a normal type.  Even if it has a valid declaration.
+            // Note: "Normal Type" in the name below means not having pointer to member types and being 
+            // a type derived from a declaration.
+               bool processAsNormalTypeThatMightRequireNameQualification = ((pointerMemberType == NULL) && (declaration != NULL));
+
+#if 0
+               mfprintf(mlog [ WARN ] ) ("Need to dig deeper past modifiers, etc. to find possible array types \n");
+
+            // DQ (4/27/2019): I don't think we want to force this through the true branch below.
+               SgArrayType* arrayType = isSgArrayType(initializedName->get_type());
+               if (arrayType != NULL)
+                  {
+                    mfprintf(mlog [ WARN ] ) ("Process the SgArrayType to find name qualification (for the index more than for the type) \n");
+
+                    processAsNormalTypeThatMightRequireNameQualification = true;
+                  }
+#endif
+
+#if DEBUG_INITIALIZED_NAME || 0
+               mfprintf(mlog [ WARN ] ) ("processAsNormalTypeThatMightRequireNameQualification = %s \n",processAsNormalTypeThatMightRequireNameQualification ? "true" : "false");
+#endif
+            // if (declaration != NULL)
+               if (processAsNormalTypeThatMightRequireNameQualification == true)
+                  {
+                    SgStatement* currentStatement = TransformationSupport::getStatement(initializedName);
+                    ASSERT_not_null(currentStatement);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_INITIALIZED_NAME
+                    mfprintf(mlog [ WARN ] ) ("case of SgInitializedName: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+#endif
+                    SgScopeStatement* currentScope = currentStatement->get_scope();
+                    ASSERT_not_null(currentScope);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_INITIALIZED_NAME
+                    mfprintf(mlog [ WARN ] ) ("case of SgInitializedName: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+                 // DQ (2/21/2019): The constructor initializers need to start their name qualification from the class declaration.
+                 // bool debugging = false;
+                    SgCtorInitializerList* ctorInitializerList = isSgCtorInitializerList(initializedName->get_parent());
+                    if (ctorInitializerList != NULL)
+                       {
+                         SgClassDefinition* classDefinition = isSgClassDefinition(initializedName->get_scope());
+#if 0
+                      // DQ (2/21/2019): This is either a SgDeclarationScope or a SgClassDefinition.
+                         if (classDefinition == NULL)
+                            {
+                              mfprintf(mlog [ WARN ] ) ("case SgInitializedName: initializedName->get_scope(): classDefinition == NULL: initializedName->get_scope() = %p = %s \n",
+                                   initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
+                            }
+                      // ASSERT_not_null(classDefinition);
+#endif
+                         if (classDefinition != NULL)
+                            {
+                              SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+                              ASSERT_not_null(classDeclaration);
+
+                              currentScope = classDeclaration->get_scope();
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              mfprintf(mlog [ WARN ] ) ("Found case of SgInitializedName in constructor preinitialization list: currentScope = %p = %s \n",
+                                   currentScope,currentScope->class_name().c_str());
+#endif
+                            }
+                      // debugging = true;
+                       }
+
+                 // int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,currentStatement);
+                 // int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentStatement);
+                    int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,currentStatement);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_INITIALIZED_NAME
+                    mfprintf(mlog [ WARN ] ) ("SgInitializedName's (%s) type: amountOfNameQualificationRequiredForType = %d \n",
+                         initializedName->get_name().str(),amountOfNameQualificationRequiredForType);
+#endif
+#if 0
+                 // DQ (1/3/2020): Debugging code for Cxx11_tests/test2020_07.C.
+                    if (initializedName->get_name() == "var_2")
+                       {
+                         mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+                       }
+#endif
+#if 1
+                 // DQ (8/4/2012): This is redundant code with where the SgInitializedName appears in the SgVariableDeclaration.
+                 // **************************************************
+                 // DQ (8/4/2012): The type being used might not have to be qualified if it is associated with a SgClassDeclaration 
+                 // that has not been defined yet.  This fixes test2012_165.C.
+                 // **************************************************
+                    bool skipGlobalNameQualification = skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(declaration);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    mfprintf(mlog [ WARN ] ) ("case of SgInitializedName: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+#if 0
+                 // DQ (2/21/2019): debugging support.
+                    if (debugging == true)
+                       {
+                         mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+                       }
+#endif
+                 // DQ (8/4/2012): However, this quasi-pathological case does not apply to template instantiations 
+                 // (only non-template classes or maybe named types more generally?).  Handle template declarations similarly.
+                 // OR enum declarations (since they can have a forward declaration (except that this is a common languae extension...).
+                    if (isSgTemplateInstantiationDecl(declaration) != NULL || isSgEnumDeclaration(declaration) != NULL || isSgNonrealDecl(declaration) != NULL)
+                       {
+                      // Do the regularly schedule name qualification for these cases.
+                         skipGlobalNameQualification = false;
+                       }
+                      else
+                       {
+                      // Look back through the scopes and see if we are in a template instantiation or template scope, 
+                      // if so then do the regularly scheduled name qualification.
+
+                         SgScopeStatement* scope = declaration->get_scope();
+                      // mfprintf(mlog [ WARN ] ) ("case of SgInitializedName: scope = %p = %s \n",scope,scope->class_name().c_str());
+                         int distanceBackThroughScopes = amountOfNameQualificationRequiredForType;
+                      // mfprintf(mlog [ WARN ] ) ("case of SgInitializedName: distanceBackThroughScopes = %d \n",distanceBackThroughScopes);
+                         while (distanceBackThroughScopes > 0 && scope != NULL)
+                            {
+                           // Traverse backwards through the scopes checking for a SgTemplateClassDefinition scope
+                           // If we traverse off the end of SgGlobal then the amountOfNameQualificationRequiredForType 
+                           // value was trying to trigger global qualification, so this is not a problem.
+                           // We at least need isSgTemplateInstantiationDefn, not clear about isSgTemplateClassDefinition.
+
+                              if (isSgTemplateInstantiationDefn(scope) != NULL || isSgTemplateClassDefinition(scope) != NULL)
+                                 {
+                                   skipGlobalNameQualification = false;
+                                 }
+
+                              ASSERT_not_null(scope);
+                              scope = scope->get_scope();
+
+                              distanceBackThroughScopes--;
+                            }
+                       }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_INITIALIZED_NAME
+                    mfprintf(mlog [ WARN ] ) ("Test of Type used in SgInitializedName: declaration = %p = %s skipGlobalNameQualification = %s \n",declaration,declaration->class_name().c_str(),skipGlobalNameQualification ? "true" : "false");
+#endif
+                 // DQ (4/26/2019): Need to call setNameQualificationForType so that we can save the name qualification string using the SgInitializedName as the key.
+                 // DQ (8/4/2012): Added support to permit global qualification be be skipped explicitly (see test2012_164.C and test2012_165.C for examples where this is important).
+                 // setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
+                    setNameQualificationOnType(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
+
+#if DEBUG_INITIALIZED_NAME
+                    mfprintf(mlog [ WARN ] ) ("@@@@@@@@@ Calling traverseType() to save type as string if it is contained types that would be shared AND name qualified \n");
+#endif
+                 // DQ (4/27/2019): I think we need to call this function to handle the name qualification on template 
+                 // arguments where the type is a template instantiation.
+                    SgStatement* associatedStatement = currentScope;
+
+                    SgNode* initializedNameParent = initializedName->get_parent();
+                    ASSERT_not_null(initializedNameParent);
+
+#if DEBUG_INITIALIZED_NAME || 0
+                    mfprintf(mlog [ WARN ] ) ("initializedNameParent = %p = %s \n",initializedNameParent,initializedNameParent->class_name().c_str());
+#endif
+                    bool skipTraverseType = false;
+                    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedNameParent);
+                    if (variableDeclaration != NULL)
+                       {
+#if DEBUG_INITIALIZED_NAME
+                         mfprintf(mlog [ WARN ] ) ("variableDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration() = %s \n",
+                              variableDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration() ? "true" : "false");
+#endif
+                         // DQ (5/26/2019): I think this should be the reversed.
+                      // skipTraverseType = variableDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration();
+                         if (variableDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration() == true)
+                            {
+                              skipTraverseType = true;
+                            }
+                           else
+                            {
+                           // The name of the type will have to be output!
+                            }
+                       }
+                      else
+                       {
+#if DEBUG_INITIALIZED_NAME
+                         mfprintf(mlog [ WARN ] ) ("initializedNameParent = %p = %s \n",initializedNameParent,initializedNameParent->class_name().c_str());
+#endif
+                       }
+
+#if 0
+                    SgTypedefType* typedefType = isSgTypedefType(initializedName->get_type());
+                    if (typedefType != NULL)
+                       {
+                         SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(typedefType->get_declaration());
+                         ASSERT_not_null(typedefDeclaration);
+
+#if DEBUG_INITIALIZED_NAME || 0
+                         mfprintf(mlog [ WARN ] ) ("typedefDeclaration->get_typedefBaseTypeContainsDefiningDeclaration() = %s \n",
+                              typedefDeclaration->get_typedefBaseTypeContainsDefiningDeclaration() ? "true" : "false");
+#endif
+                         skipTraverseType = typedefDeclaration->get_typedefBaseTypeContainsDefiningDeclaration();
+                       }
+#endif
+#if 0
+                 // DQ (5/25/2019): If we don't skip the type traversal because  amountOfNameQualificationRequiredForType == 0, 
+                 // then we don't need this code here!
+                 // DQ (5/25/2019): If this is associated with a template instantiaton, then we need to save the 
+                 // typename as a string to preservce context of any nested template argument name qualification.
+                    SgClassType* classType = isSgClassType(initializedName->get_type());
+                    if (classType != NULL)
+                       {
+                         ASSERT_not_null(classType->get_declaration());
+#if DEBUG_INITIALIZED_NAME
+                         mfprintf(mlog [ WARN ] ) ("classType->get_declaration() = %s \n",classType->get_declaration()->class_name().c_str());
+#endif
+                         SgTemplateInstantiationDecl* templateInstantiationDecl = isSgTemplateInstantiationDecl(classType->get_declaration());
+                         if (templateInstantiationDecl != NULL)
+                            {
+                              skipTraverseType = false;
+                            }
+                       }
+#endif
+#if 0
+                 // DQ (5/25/2019): This will be a problem when template instantiations require name qualificaiton 
+                 // or are output in different contexts requiring different name qualifications.
+#if DEBUG_INITIALIZED_NAME
+                    mfprintf(mlog [ WARN ] ) ("amountOfNameQualificationRequiredForType == 0, so skipTraverseType = true initializedName->get_type() = %p = %s \n",
+                         initializedName->get_type(),initializedName->get_type()->class_name().c_str());
+#endif
+                 // DQ (4/28/2019): We still need to generate the string for the type, because it could be a template 
+                 // instantiation which has template parameter that are name qualified (see test2019_423.C).
+                 // FIXME: LOOK AT THIS IN THE MORNING!!!!!
+                 // DQ (4/27/2019): Adding logic to skip calling traverseType() so much when it is not needed.
+                 // However, we can't skip the string generation of the type if this is a template instantiation.
+                    if (amountOfNameQualificationRequiredForType == 0)
+                       {
+#if DEBUG_INITIALIZED_NAME
+                         mfprintf(mlog [ WARN ] ) ("set skipTraverseType = true: amountOfNameQualificationRequiredForType == 0, so skipTraverseType = true initializedName->get_type() = %p = %s \n",
+                              initializedName->get_type(),initializedName->get_type()->class_name().c_str());
+#endif
+                         mfprintf(mlog [ WARN ] ) ("Just because there is not name qualification, does not mean that types from template instatiations with template arguments should not be saved as strings \n");
+                      // skipTraverseType = true;
+                       }
+#endif
+#if 0
+                    if (skipTraverseType == true)
+                       {
+                         mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+                       }
+#endif
+
+#if DEBUG_INITIALIZED_NAME || 0
+                    mfprintf(mlog [ WARN ] ) ("skipTraverseType = %s \n",skipTraverseType ? "true" : "false");
+                    mfprintf(mlog [ WARN ] ) ("initializedName->get_type() = %p = %s \n",initializedName->get_type(),initializedName->get_type()->class_name().c_str());
+#endif
+                 // mfprintf(mlog [ WARN ] ) ("Calling traverseType ALWAYS! \n");
+                    if (skipTraverseType == false)
+                       {
+                         traverseType(initializedName->get_type(),initializedName,currentScope,associatedStatement);
+                       }
+#if 0
+                    mfprintf(mlog [ WARN ] ) ("processAsNormalTypeThatMightRequireNameQualification == true: Looking for specific variable name: initializedName->get_name() = |%s| \n",initializedName->get_name().str());
+                 // if (initializedName->get_name().str() == "N")
+                    if (initializedName->get_name() == "N")
+                       {
+#if 0
+                         mfprintf(mlog [ WARN ] ) ("Detected initializedName->get_name().str() == \"N\": Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+#endif
+#if 0
+                    mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+                  {
+                 // DQ (8/23/2014): This case is demonstrated by test2014_145.C. where a SgInitializedName is used in a SgArrayType.
+                 // However, it would provide greater symetry to handle the SgInitializedName objects in the processing of the 
+                 // SgFunctionParameterList similar to how they are handling in the SgVariableDeclaration.
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    mfprintf(mlog [ WARN ] ) ("Case of SgInitializedName: getDeclarationAssociatedWithType() == NULL (this not associated with a type)  \n");
+#endif
+
+#if 0
+                 // DQ (2/7/2019): Set the pointer to member type in the inherited attribute so that we can know when to
+                 // add name qualification to variables or function arguments being assigned to this initializedName.
+                    SgPointerMemberType* pointerMemberType = isSgPointerMemberType(initializedName->get_type());
+                    if (pointerMemberType != NULL)
+                       {
+                         inheritedAttribute.set_usingPointerToMemberType(pointerMemberType);
+                         ASSERT_not_null(inheritedAttribute.get_usingPointerToMemberType());
+#if 0
+                         mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+#endif
+
+#if 1
+                 // DQ (4/10/2019): I think we need to call this function to handle the name qualification on template 
+                 // arguments where the type is a template instantiation.
+                 // DQ (8/23/2014): Adding this to support SgInitializedName in SgArrayType in function parameter lists.
+                 // SgDeclarationStatement* associatedDeclaration = NULL;
+
+                 // DQ (8/8/2020): This is passed in as a function parameter.
+                 // SgScopeStatement* currentScope = inheritedAttribute.get_currentScope();
+                    ASSERT_not_null(currentScope);
+
+                    SgStatement* associatedStatement = currentScope;
+
+                 // int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,associatedDeclaration);
+                    int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,associatedStatement);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    mfprintf(mlog [ WARN ] ) ("SgInitializedName's type: amountOfNameQualificationRequiredForType = %d \n",amountOfNameQualificationRequiredForType);
+#endif
+                 // bool skipGlobalNameQualification = false;
+                 // setNameQualificationOnType(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
+                 // setNameQualificationOnType(initializedName,associatedStatement,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
+#if 0
+                 // DQ (4/27/2019): Debugging test2019_414.C.
+                    SgArrayType* tmp_arrayType = isSgArrayType(initializedName->get_type());
+                    if (tmp_arrayType != NULL)
+                       {
+                         mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+                       }
+#endif
+#if 0
+                    mfprintf(mlog [ WARN ] ) ("amountOfNameQualificationRequiredForType = %d Calling traverseType() \n",amountOfNameQualificationRequiredForType);
+#endif
+                 // DQ (4/27/2019): This will avoid over use of the generated string mechanism to represent types, but 
+                 // we need to allow template instantiations to be processed.
+                 // DQ (4/10/2019): I think we need to call this function to handle the name qualification on template 
+                 // arguments where the type is a template instantiation.
+                 // traverseType(initializedName->get_type(),initializedName,currentScope,associatedStatement);
+                    if (amountOfNameQualificationRequiredForType > 0)
+                       {
+#if 1
+                         mfprintf(mlog [ WARN ] ) ("Calling traverseType() on initializedName->get_type(): amountOfNameQualificationRequiredForType > 0: amountOfNameQualificationRequiredForType = %d Calling traverseType() \n",
+                              amountOfNameQualificationRequiredForType);
+#endif
+                         traverseType(initializedName->get_type(),initializedName,currentScope,associatedStatement);
+                       }
+#endif
+#if 0
+                    mfprintf(mlog [ WARN ] ) ("Looking for specific variable name: initializedName->get_name() = %s \n",initializedName->get_name().str());
+#endif
+#if 0
+                 // if (initializedName->get_name().str() == "N")
+                    if (initializedName->get_name() == "N")
+                       {
+#if 1
+                         mfprintf(mlog [ WARN ] ) ("Detected initializedName->get_name().str() == \"N\": Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+#endif
+#if 0
+                    mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+#endif
+
+#if DEBUG_INITIALIZED_NAME
+               mfprintf(mlog [ WARN ] ) ("######################################################################## \n");
+               mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: DONE: Processing the SgInitializedName IR's type \n");
+               mfprintf(mlog [ WARN ] ) ("######################################################################## \n");
+#endif
+
+#if 0
+            // DQ (4/27/2019): Debugging test2019_414.C.
+               SgArrayType* tmp_arrayType = isSgArrayType(initializedName->get_type());
+               if (tmp_arrayType != NULL)
+                  {
+                    mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+                  }
+#endif
+
+            // DQ (4/27/2019): This is the new location of the end of the block to process the SgInitializedName's type.
+             }
+
+       // endif for type handling.
+
+   }
+
+
+
+
 NameQualificationInheritedAttribute
 NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificationInheritedAttribute inheritedAttribute)
    {
@@ -6971,9 +8020,30 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #endif
 
+       // DQ (8/8/2020): Moved from the refactored code below.
+          SgStatement* currentStatement = TransformationSupport::getStatement(initializedName);
+          ASSERT_not_null(currentStatement);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+          mfprintf(mlog [ WARN ] ) ("case of SgInitializedName: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+#endif
+
+       // DQ (8/8/2020): Moved from the refactored code below.
+       // DQ (4/27/2019): Refactored this code to be outside of the flase block below, so it can be used both there 
+       // and outside the false branch afterward.
+          SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(initializedName->get_type());
+
           SgType* type = initializedName->get_type();
           ASSERT_not_null(type);
 
+#if 1
+       // if for type handling.
+       // Refactored this code.
+          nameQualificationTypeSupport (type,currentScope,initializedName);
+#else
+
+#error "DEAD CODE!"
+
+       // else for type handling.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: initializedName->get_type(): before stripType(): type = %p = %s \n",type,type->class_name().c_str());
 #endif
@@ -6988,6 +8058,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: initializedName->get_type(): after stripType(): type = %p = %s \n",type,type->class_name().c_str());
 #endif
 
+// #error "DEAD CODE!"
 
 #if 0
        // DQ (4/17/2019): Need more general type support, required for more complex nesting of SgPointerMemberType types.
@@ -6997,6 +8068,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: Checking for SgPointerMemberType \n");
           mfprintf(mlog [ WARN ] ) ("######################################################## \n");
 #endif
+
+// #error "DEAD CODE!"
 
           SgPointerMemberType* pointerMemberType = isSgPointerMemberType(type);
           if (pointerMemberType != NULL)
@@ -7013,6 +8086,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // DQ (4/11/2019): This is the old function API, but did not handle the case where the SgClassDefinition was not available.
             // SgClassDefinition* classDefinition = pointerMemberType->get_class_of();
                SgClassDeclaration* classDeclaration = isSgClassDeclaration(pointerMemberType->get_class_declaration_of());
+
+// #error "DEAD CODE!"
 
             // DQ (4/10/2019): The definition might not be available, but this means more that we should change the API to for 
             // get_class_of() to return the SgClassDeclaration (and the firstNondefiing one if the defining declaration is not available).
@@ -7037,6 +8112,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  // int amountOfNameQualificationRequiredForName = nameQualificationDepth(initializedName,currentScope,declarationForInitializedName);
                     int amountOfNameQualificationRequiredForName = nameQualificationDepth(declarationForInitializedName,currentScope,positionStatement);
 
+// #error "DEAD CODE!"
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     mfprintf(mlog [ WARN ] ) ("SgInitializedName: SgPointerMemberType: name: amountOfNameQualificationRequiredForName = %d \n",amountOfNameQualificationRequiredForName);
 #endif
@@ -7051,13 +8128,19 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  // DQ (4/11/2019): If this is not a SgClassDeclaration thenit can be a nonreal declaration which is not handled yet.
                   }
              }
+// #error "DEAD CODE!"
+
 #else
+
+// #error "DEAD CODE!"
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("Commented out SgPointerMemberType code to compute the name qualification on the name (calling setNameQualificationOnName()) \n");
 #endif
 
 #endif
+
+// #error "DEAD CODE!"
 
 #if 0
        // DQ (3/31/2019): debugging support.
@@ -7067,8 +8150,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                ROSE_ASSERT(false);
              }
 #endif
-
-          SgStatement* currentStatement = TransformationSupport::getStatement(initializedName);
+       // DQ (8/8/2020): This was moved to before the refactored code.
+       // SgStatement* currentStatement = TransformationSupport::getStatement(initializedName);
           ASSERT_not_null(currentStatement);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
           mfprintf(mlog [ WARN ] ) ("case of SgInitializedName: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
@@ -7080,6 +8163,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           mfprintf(mlog [ WARN ] ) ("################################################################## \n");
 #endif
 
+// #error "DEAD CODE!"
+
        // DQ (4/19/2019): It might be that we should call this after the traveral over each type instead of before we traverse the type.
        // traverseType(initializedName->get_type(),initializedName,currentScope,currentStatement);
 
@@ -7089,9 +8174,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        // the best example of this.
           ASSERT_not_null(currentScope);
 
+       // DQ (8/8/2020): This was moved to before the refactored code.
        // DQ (4/27/2019): Refactored this code to be outside of the flase block below, so it can be used both there 
        // and outside the false branch afterward.
-          SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(initializedName->get_type());
+       // SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(initializedName->get_type());
 
        // DQ (4/22/2019): If we have resolved the type (after stripType() function) to a SgPointerMemberType, then 
        // we need to traverse the type using a type traversal.  Else we can handle it normally.
@@ -7172,7 +8258,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   {
                     SgType* baseType = pointerMemberType->get_base_type();
                     ASSERT_not_null(baseType);
-
+#error "DEAD CODE!"
                     SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(baseType);
                     if (memberFunctionType != NULL)
                        {
@@ -7337,7 +8423,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
                               currentScope = classDeclaration->get_scope();
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              mfprintf(mlog [ WARN ] ) ("Found case of SgInitializedName in constructor preinitialization list: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                              mfprintf(mlog [ WARN ] ) ("Found case of SgInitializedName in constructor preinitialization list: currentScope = %p = %s \n",
+                                   currentScope,currentScope->class_name().c_str());
 #endif
                             }
                       // debugging = true;
@@ -7348,11 +8435,12 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,currentStatement);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_INITIALIZED_NAME
-                    mfprintf(mlog [ WARN ] ) ("SgInitializedName's (%s) type: amountOfNameQualificationRequiredForType = %d \n",initializedName->get_name().str(),amountOfNameQualificationRequiredForType);
+                    mfprintf(mlog [ WARN ] ) ("SgInitializedName's (%s) type: amountOfNameQualificationRequiredForType = %d \n",
+                         initializedName->get_name().str(),amountOfNameQualificationRequiredForType);
 #endif
 #if 0
                  // DQ (1/3/2020): Debugging code for Cxx11_tests/test2020_07.C.
-                    if (initializedName->get_name() == "var_1")
+                    if (initializedName->get_name() == "var_2")
                        {
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
                          ROSE_ASSERT(false);
@@ -7656,6 +8744,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
             // DQ (4/27/2019): This is the new location of the end of the block to process the SgInitializedName's type.
              }
+
+#error "DEAD CODE!"
+
+       // endif for type handling.
+#endif
 
 #if DEBUG_INITIALIZED_NAME
           mfprintf(mlog [ WARN ] ) ("########################################################################### \n");
@@ -8024,14 +9117,14 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               mfprintf(mlog [ WARN ] ) ("Calling setNameQualification() (operating on the TYPE of the SgInitializedName) \n");
 #endif
-#if DEBUG_INITIALIZED_NAME
+#if DEBUG_INITIALIZED_NAME || 0
                               mfprintf(mlog [ WARN ] ) ("######################################################################################################################################################### \n");
                               mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: Processing the SgInitializedName IR node's type ((ctor != NULL && (functionType != NULL || memberFunctionType != NULL)) == false) \n");
                               mfprintf(mlog [ WARN ] ) ("######################################################################################################################################################### \n");
 #endif
 #if 1
                               int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,associatedStatement);
-#if DEBUG_INITIALIZED_NAME
+#if DEBUG_INITIALIZED_NAME || 0
                               mfprintf(mlog [ WARN ] ) ("amountOfNameQualificationRequiredForType = %d \n",amountOfNameQualificationRequiredForType);
 #endif
 #endif
@@ -8050,6 +9143,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
                       // DQ (4/28/2019): Ignore case of implementing the support for name qualification for this case here (it is implemented elsewhere).
                       // Additionally, this is likely not the correct implementation anyway.
+
+#error "DEAD CODE!"
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          mfprintf(mlog [ WARN ] ) ("Calling setNameQualification(): constructorInitializer == NULL: (operating on the TYPE of the SgInitializedName) \n");
@@ -8072,6 +9167,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                       // setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
                          setNameQualificationOnType(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
                       // setNameQualificationOnName(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
+
+#error "DEAD CODE!"
+
 #endif
                        }
                   }
@@ -10801,6 +11899,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          mfprintf(mlog [ WARN ] ) ("variableDeclaration = %p \n",variableDeclaration);
                          mfprintf(mlog [ WARN ] ) ("currentScope        = %p = %s \n",currentScope,currentScope->class_name().c_str());
                          mfprintf(mlog [ WARN ] ) ("currentStatement    = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+                         variableDeclaration->get_file_info()->display("Before nameQualificationDepth()");
 #endif
                          int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,currentScope,currentStatement);
 
