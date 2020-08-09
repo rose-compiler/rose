@@ -1948,11 +1948,14 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_15.C \
    test2020_16.C \
    test2020_17.C \
+   test2020_18.C \
    test2020_19.C \
    test2020_20.C \
    test2020_21.C \
    test2020_22.C \
    test2020_23.C \
+   test2020_24.C \
+   test2020_25.C \
    test_CplusplusMacro_Cpp.C \
    test_int_lexemes.C \
    test_int_lexemes_donot_pass.C \
@@ -2358,7 +2361,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2018_28.C \
    test2018_31.C \
    test2019_25.C \
-   test2020_18.C \
    test_gnu.C
 
 if ROSE_USING_GCC_VERSION_LATER_4_4
