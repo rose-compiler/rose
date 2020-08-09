@@ -1948,6 +1948,11 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_15.C \
    test2020_16.C \
    test2020_17.C \
+   test2020_19.C \
+   test2020_20.C \
+   test2020_21.C \
+   test2020_22.C \
+   test2020_23.C \
    test_CplusplusMacro_Cpp.C \
    test_int_lexemes.C \
    test_int_lexemes_donot_pass.C \
@@ -2353,6 +2358,7 @@ TESTCODE_CURRENTLY_FAILING = \
    test2018_28.C \
    test2018_31.C \
    test2019_25.C \
+   test2020_18.C \
    test_gnu.C
 
 if ROSE_USING_GCC_VERSION_LATER_4_4
@@ -2719,11 +2725,21 @@ TEST_TEMPLATE_TRANSLATOR = ../../testTemplates
 # This test translator will work for test2015_32.C - test2015_36.C
 # I will make this in the a better organized set of tests later.
 # DQ (10/12/2015): Note that tests test2015_37.C through test2015_54.C are these tests.
-testTemplateExample: $(TEST_TEMPLATE_TRANSLATOR)
+testTemplateExample: testTemplateExample_1 testTemplateExample_2 testTemplateExample_3 testTemplateExample_4 testTemplateExample_5
+
+testTemplateExample_1: $(TEST_TEMPLATE_TRANSLATOR) 
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_32.C
+
+testTemplateExample_2: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_33.C
+
+testTemplateExample_3: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_34.C
+
+testTemplateExample_4: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_35.C
+
+testTemplateExample_5: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_36.C
 
 
@@ -2851,8 +2867,11 @@ hpctoolkit:
 #	hpcviewer /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc-debug_mode_off/tests/nonsmoke/functional/CompileTests/Cxx_tests/hpctoolkit-lt-testTranslator-database-11205 &
 
 check-local:
-	@$(MAKE) $(PASSING_TEST_Source_passed)
-	@$(MAKE) test_pdf_generation
+#	@$(MAKE) $(PASSING_TEST_Source_passed)
+	@$(MAKE) test_pdf_generation $(PASSING_TEST_Source_passed) \
+          test_unparse_includes_option.passed test_unparse_includes_option_with_link.passed \
+          test_common_configure_test_with_link_part_1.passed test_common_configure_test_with_link_part_2.passed testTemplateExample
+#	@$(MAKE) test_pdf_generation
 #	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed
