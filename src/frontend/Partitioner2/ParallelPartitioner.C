@@ -942,7 +942,7 @@ Partitioner::remap() {
     std::sort(deltas.begin(), deltas.end());
     if (!deltas.empty()) {
         if (debug) {
-            Diagnostics::mfprintf(debug)("remap deltas (%6.2%% accuracy):", 100.0 * bma.bestDeltaRatio());
+            Diagnostics::mfprintf(debug)("remap deltas (%6.2f%% accuracy):", 100.0 * bma.bestDeltaRatio());
             for (rose_addr_t va: deltas)
                 debug <<" " <<StringUtility::addrToString(va, bma.nBits());
             debug <<"\n";
