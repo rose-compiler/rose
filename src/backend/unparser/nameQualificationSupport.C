@@ -16379,6 +16379,10 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 #endif
           string scope_name;
 
+       // DQ (8/9/2020): When we process a namespace alias, we can break out of the loop over the length of 
+       // the required namespace name qualification depth (I think).  See Cxx_tests/test2020_24.C for an example.
+          bool breakOutOfLoop = false;
+
        // DQ (8/19/2014): This is used to control the generation of qualified names for un-named namespaces
        // (and maybe also other un-named language constructs).
           bool skip_over_scope = false;
@@ -16575,6 +16579,8 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 
                                 // DQ (8/2/2020): Reset the name of the scope.
                                    scope_name = namespaceAliasDeclaration->get_name();
+
+                                   breakOutOfLoop = true;
 #if 0
                                    printf ("Exiting as a test! \n");
                                    ROSE_ASSERT(false);
@@ -16773,6 +16779,15 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 
        // We have to loop over scopes that are not named scopes!
           scope = scope->get_scope();
+
+          if (breakOutOfLoop == true)
+             {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("breakOutOfLoop == true: short curcuit this loop over the name qualification depth (becasue we used a namespace alias) \n");
+#endif
+               break;
+             }
+
         }
 
 #if 0
