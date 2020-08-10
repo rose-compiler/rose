@@ -660,7 +660,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupp
 
         SgTemplateParameterList *template_parameter_list = new SgTemplateParameterList();
         template_parameter_list -> set_args(final_list);
-	ROSE_ASSERT(class_definition->get_declaration() != NULL);
+        ROSE_ASSERT(class_definition->get_declaration() != NULL);
         class_definition -> get_declaration() -> setAttribute("type_parameters", new AstSgNodeAttribute(template_parameter_list));
     }
 
