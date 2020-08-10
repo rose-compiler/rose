@@ -176,10 +176,16 @@ Unparse_Jovial::unparseJovialType(SgPointerType* pointer_type, SgUnparse_Info& i
      curprint(" ");
 
   // The type name is optional
-     SgNamedType* named_type = isSgNamedType(pointer_type->get_base_type());
-     if (named_type != NULL)
+     if (SgNamedType* named_type = isSgNamedType(pointer_type->get_base_type()))
         {
            curprint(named_type->get_name());
+        }
+     else if (SgTypeUnknown* unknown_type = isSgTypeUnknown(pointer_type->get_base_type()))
+        {
+           if (unknown_type->get_has_type_name())
+              {
+                 curprint(unknown_type->get_type_name());
+              }
         }
   }
 
