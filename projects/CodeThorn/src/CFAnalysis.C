@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 Markus Schordan                       *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 //#define ALTERNATIVE_LOCAL_EDGE_HANDLING
