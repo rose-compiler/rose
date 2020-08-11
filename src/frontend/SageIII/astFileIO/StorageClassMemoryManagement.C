@@ -518,6 +518,7 @@ EasyStorage<Sawyer::Container::BitVector>::storeDataInEasyStorageClass(const Saw
         // there is still space in the actual block
         if (offset < Base::getSizeOfData() && Base::actual != NULL) {
             while ((unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize) {
+                assert(words != NULL);
                 assert(idx <= nWords);
                 *Base::actual++ = 0==idx ? excess : words[idx-1];
                 ++idx;
@@ -527,6 +528,7 @@ EasyStorage<Sawyer::Container::BitVector>::storeDataInEasyStorageClass(const Saw
         while (Base::blockSize < (unsigned long)offset) {
             Base::actual = Base::getNewMemoryBlock();
             while ((unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize) {
+                assert(words != NULL);
                 assert(idx <= nWords);
                 *Base::actual++ = 0==idx ? excess : words[idx-1];
                 ++idx;
@@ -537,6 +539,7 @@ EasyStorage<Sawyer::Container::BitVector>::storeDataInEasyStorageClass(const Saw
     }
     // put (the rest of) the data in a new memory block
     while (idx <= nWords) {
+        assert(words != NULL);
         assert(idx <= nWords);
         *Base::actual++ = 0==idx ? excess : words[idx-1];
         ++idx;

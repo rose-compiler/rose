@@ -6199,6 +6199,89 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
      return symbol;
    }
 
+
+
+SgSymbol*
+SageInterface::lookupSymbolInParentScopesIgnoringAliasSymbols (const SgName & name, SgScopeStatement *currentScope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
+   {
+// DQ (8/5/2020): the "using namespace" directive will not hide existing visability of symbols in resolving visability.
+// So we need to test if a symbol is visible exclusing matching alises due to using direectives before we can decide to
+// persue name space qualification. This is best demonstrated by Cxx_tests/test2020_18.C, test2020_19.C, test2020_20.C, 
+// and test2020_21.C.
+
+     SgSymbol* symbol = NULL;
+     if (currentScope == NULL)
+        {
+          currentScope = SageBuilder::topScopeStack();
+        }
+
+     ROSE_ASSERT(currentScope != NULL);
+
+#define DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS 0
+
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
+     printf ("In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): currentScope = %p = %s (templateParameterList = %p templateArgumentList = %p) \n",
+          currentScope,currentScope->class_name().c_str(),templateParameterList,templateArgumentList);
+#endif
+
+     while ((currentScope != NULL) && (symbol == NULL))
+        {
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
+          printf("   --- In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): name = %s currentScope = %p = %s \n",
+               name.str(),currentScope,currentScope->class_name().c_str());
+#endif
+
+       // DQ (8/16/2013): Changed API to support template parameters and template arguments.
+       // symbol = cscope->lookup_symbol(name);
+          symbol = currentScope->lookup_symbol(name,templateParameterList,templateArgumentList);
+
+          if (isSgAliasSymbol(symbol) != NULL)
+             {
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
+               printf ("Found a SgAliasSymbol: reset to NULL: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
+               symbol = NULL;
+             }
+
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS && 1
+       // debug
+          printf("   --- In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): symbol = %p \n",symbol);
+          currentScope->print_symboltable("In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): debug");
+#endif
+          if (currentScope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               currentScope = isSgGlobal(currentScope) ? NULL : currentScope->get_scope();
+            else
+               currentScope = NULL;
+
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
+          printf ("   --- In SageInterface:: (base of loop) lookupSymbolInParentScopesIgnoringAliasSymbols(): cscope = %p symbol = %p \n\n",currentScope,symbol);
+#endif
+        }
+
+     if (symbol == NULL)
+        {
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
+          printf ("Warning: In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): could not locate the specified name %s in any outer symbol table (templateParameterList = %p templateArgumentList = %p) \n",
+               name.str(),templateParameterList,templateArgumentList);
+#endif
+       // ROSE_ASSERT(false);
+        }
+
+#if 0
+     printf ("Support for lookupSymbolInParentScopesIgnoringAliasSymbols() is not yet implemented \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return symbol;
+   }
+
+
+
+
+
+
+
+
 #if 0
 // DQ (7/13/2011): This was part of a merge conflict with the above modified function.
 // It appeas they are the same so this one is commented out.
@@ -7255,21 +7338,33 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool incl
 
 bool SageInterface::isMain(const SgNode* n)
 {
- bool result = false;
- // Liao 1/5/2010, handle Fortran main entry: SgProgramHeaderStatement
- if (SageInterface::is_Fortran_language())
- {
-   if (isSgProgramHeaderStatement(n))
-     result = true;
- }
- else
- {
-   if (isSgFunctionDeclaration(n) &&
-       (SageInterface::is_Java_language() || isSgGlobal(isSgStatement(n)->get_scope())) &&
-       isSgFunctionDeclaration(n)->get_name() == "main")
-   result = true;
- }
-
+   bool result = false;
+   // Liao 1/5/2010, handle Fortran main entry: SgProgramHeaderStatement
+   if (SageInterface::is_Fortran_language()) {
+      if (isSgProgramHeaderStatement(n)) {
+         result = true;
+      }
+   }
+   else {
+      if (isSgFunctionDeclaration(n) != NULL) {
+         bool either = false;
+         if (SageInterface::is_Java_language()) {
+            either = true;
+         }
+         else {
+            ROSE_ASSERT(isSgStatement(n) != NULL);
+            if (isSgGlobal(isSgStatement(n)->get_scope())) {
+               either = true;
+            }
+         }
+         if (either) {
+            ROSE_ASSERT(isSgFunctionDeclaration(n) != NULL);
+            if (isSgFunctionDeclaration(n)->get_name() == "main") {
+               result = true;
+            }
+         }
+      }
+   }
    return result;
 }
 
@@ -22337,6 +22432,7 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
       {
         // we move int i; to be for (int i=0; ...);
         SgForStatement* stmt = isSgForStatement (target_scope);
+        ROSE_ASSERT(stmt != NULL);
         SgStatementPtrList& stmt_list = stmt->get_init_stmt();
         // Try to match a pattern like for (i=0; ...) here
         // assuming there is only one assignment like i=0

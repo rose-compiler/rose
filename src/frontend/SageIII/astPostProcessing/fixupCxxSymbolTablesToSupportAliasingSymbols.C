@@ -346,13 +346,15 @@ FixupAstSymbolTablesToSupportAliasedSymbols::isDefinedThroughPrivateBaseClass ( 
 
 // DQ (8/23/2011): Made this a static function so that I could call it from the Java support.
 void
-FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgNode* causalNode, SgAccessModifier::access_modifier_enum accessLevel )
+FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope ( 
+   SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgNode* causalNode, SgAccessModifier::access_modifier_enum accessLevel, bool calledFromUsingDirective )
    {
      ROSE_ASSERT(referencedScope != NULL);
      ROSE_ASSERT(currentScope    != NULL);
 
 #if ALIAS_SYMBOL_DEBUGGING || 0
-     printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): referencedScope = %p = %s currentScope = %p = %s accessLevel = %d \n",referencedScope,referencedScope->class_name().c_str(),currentScope,currentScope->class_name().c_str(),accessLevel);
+     printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): referencedScope = %p = %s currentScope = %p = %s accessLevel = %d \n",
+          referencedScope,referencedScope->class_name().c_str(),currentScope,currentScope->class_name().c_str(),accessLevel);
      printf ("   --- referencedScope = %s \n",SageInterface::get_name(referencedScope).c_str());
      printf ("   --- currentScope = %s \n",SageInterface::get_name(currentScope).c_str());
      printf ("   --- causalNode = %s \n",SageInterface::get_name(causalNode).c_str());
@@ -360,7 +362,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
      SgSymbolTable* symbolTable = referencedScope->get_symbol_table();
      ROSE_ASSERT(symbolTable != NULL);
-     
+
 #if 0
      printf ("AST Fixup: Building Symbol Table for %p = %s at: \n",scope,scope->sage_class_name());
      referencedScope->get_file_info()->display("Symbol Table Location");
@@ -568,7 +570,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                ROSE_ASSERT(baseScope != NULL);
 
 #if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
-               printf ("baseClassDeclaration = %p = %s name = %s \n",baseClassDeclaration,baseClassDeclaration->class_name().c_str(),baseClassDeclaration->get_name().str());
+            // DQ (8/9/2020): The variable baseClassDeclaration is not defined.
+            // printf ("baseClassDeclaration = %p = %s name = %s \n",baseClassDeclaration,baseClassDeclaration->class_name().c_str(),baseClassDeclaration->get_name().str());
+               printf ("baseScope = %p = %s \n",baseScope,baseScope->class_name().c_str());
 #endif
             // SgClassDefinition* classDefinition = classDeclaration->get_definition();
             // ROSE_ASSERT(classDefinition != NULL);
@@ -580,7 +584,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                  // If it is a private base class then we don't want to build the alias symbol, but if it is public or protected then we do want
                  // to insert the symbol (through a SgAliasSymbol).
 #if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
-                    printf ("FOUND original_symbol in baseClassDeclaration = %s \n",baseClassDeclaration->get_name().str());
+                 // printf ("FOUND original_symbol in baseClassDeclaration = %s \n",baseClassDeclaration->get_name().str());
 
                  // SgAliasSymbol* aliasSymbol = isSgAliasSymbol(original_symbol);
                  // size_t count_alias_symbol (const SgName &n);
@@ -719,7 +723,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                  else
                   {
 #if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
-                    printf ("NOT found original_symbol in baseClassDeclaration = %s \n",baseClassDeclaration->get_name().str());
+                 // printf ("NOT found original_symbol in baseClassDeclaration = %s \n",baseClassDeclaration->get_name().str());
+                    printf ("NOT found original_symbol baseClassAliasSymbol == NULL: baseScope = %p = %s \n",baseScope,baseScope->class_name().c_str());
 #endif
                   }
 
@@ -741,6 +746,65 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
           if ( (declarationAccessLevel >= accessLevel) || (isSgBaseClass(causalNode) != NULL && definedThroughPrivateBaseClass == false))
              {
             // This declaration is visible, so build an alias.
+
+
+            // DQ (8/9/2020): Check and see if the name is visible without referencing SgAliasSymbols.
+            // SgDeclarationStatement* declarationFromSymbol = isSgDeclarationStatement(symbolBasis);
+               SgTemplateParameterPtrList* templateParameterList = NULL;
+               SgTemplateArgumentPtrList*  templateArgumentList  = NULL;
+               if (declarationFromSymbol != NULL)
+                  {
+                    templateParameterList = SageBuilder::getTemplateParameterList(declarationFromSymbol);
+                    templateArgumentList  = SageBuilder::getTemplateArgumentList(declarationFromSymbol);
+                  }
+
+#if ALIAS_SYMBOL_DEBUGGING || 0
+               printf ("Calling SageInterface::lookupSymbolInParentScopesIgnoringAliasSymbols() \n");
+               printf (" --- name = %s \n",name.str());
+               printf (" --- currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+               printf (" --- currentScope name = %s \n",SageInterface::get_name(currentScope).c_str());
+#endif
+            // DQ (8/9/2020): I think this should only be called from the case of a SgUsingDirectiveStatement.
+               SgSymbol* trial_lookup_symbol = NULL;
+               if (calledFromUsingDirective == true)
+                  {
+                    trial_lookup_symbol = SageInterface::lookupSymbolInParentScopesIgnoringAliasSymbols (name,currentScope,templateParameterList,templateArgumentList);
+
+                 // DQ (8/9/2020): Ignore case of SgEnumSymbol symbols (see Cxx11_tests/test2019_448.C).
+                    SgEnumSymbol* enumSymbol = isSgEnumSymbol(trial_lookup_symbol);
+                    if (enumSymbol != NULL)
+                       {
+#if ALIAS_SYMBOL_DEBUGGING || 0
+                         printf ("Detected a trial_lookup_symbol == SgEnumSymbol: reset trial_lookup_symbol = NULL \n");
+#endif
+                         trial_lookup_symbol = NULL;
+                       }
+                  }
+
+#if ALIAS_SYMBOL_DEBUGGING || 0
+               printf ("DONE: Calling SageInterface::lookupSymbolInParentScopesIgnoringAliasSymbols() \n");
+               printf (" --- trial_lookup_symbol = %p \n",trial_lookup_symbol);
+               if (trial_lookup_symbol != NULL)
+                  {
+                    printf (" --- trial_lookup_symbol = %p = %s \n",trial_lookup_symbol,trial_lookup_symbol->class_name().c_str());
+                  }
+#endif
+#if 1
+            // DQ (8/9/2020): start of case to exclude symbols that can be found based on name only and not using SgAliasSymbols.
+               if (trial_lookup_symbol != NULL)
+                  {
+#if ALIAS_SYMBOL_DEBUGGING || 0
+                    printf ("trial_lookup_symbol != NULL: a symbol with this name is visible in paranet scopes: need to exclude this symbol \n");
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+#endif
+                  {
+                 // DQ (8/9/2020): Original code before supporting exclusion of symbols in parent scopes.
 
 #if ALIAS_SYMBOL_DEBUGGING || 0
                printf ("This declaration is visible, so build an alias \n");
@@ -988,7 +1052,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                        }
                   }
 
-            // DQ (2/15/2019): Assume it does not already exist, becuase we want multiple base classes to represent it with multiple (different) SgAliasSymbols.
+            // DQ (2/15/2019): Assume it does not already exist, because we want multiple base classes to represent it with multiple (different) SgAliasSymbols.
             // alreadyExists = false;
 
                if ( alreadyExists == false)
@@ -1056,6 +1120,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                     printf ("Exiting as a test! \n");
                     ROSE_ASSERT(false);
 #endif
+                  }
+
+                 // DQ (8/9/2020): end of case to exclude symbols that can be found based on name only and not using SgAliasSymbols.
                   }
              }
             else
@@ -1188,7 +1255,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 #if 0
                printf ("Calling injectSymbolsFromReferencedScopeIntoCurrentScope() for usingDirectiveStatement = %p = %s \n",node,node->class_name().c_str());
 #endif
-               injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,usingDirectiveStatement,SgAccessModifier::e_default);
+            // DQ (8/9/2020): We need to define a mode so that within injectSymbolsFromReferencedScopeIntoCurrentScope() we can handle this as a special case.
+               bool calledFromUsingDirective = true;
+               injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,usingDirectiveStatement,SgAccessModifier::e_default,calledFromUsingDirective);
              }
 
 #if 0
@@ -1255,9 +1324,11 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                  ROSE_ASSERT(false);
                }
 
-               if (referencedScope != NULL) {
-                 injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,classDefinition,baseClass,accessLevel);
-               }
+               if (referencedScope != NULL) 
+                  {
+                    bool calledFromUsingDirective = false;
+                    injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,classDefinition,baseClass,accessLevel,calledFromUsingDirective);
+                  }
              }
         }
 
