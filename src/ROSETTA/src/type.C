@@ -359,6 +359,11 @@ Grammar::setUpTypes ()
   // TypeUnknown.setFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
   // TypeUnknown.setFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
+  // CR (8/9/2020): Jovial allows implicit forward declarations of typed pointers
+     TypeUnknown.setDataPrototype("std::string", "type_name", "= \"\"",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TypeUnknown.setDataPrototype("bool", "has_type_name", "= false",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (1/31/2006): Need to support addition of builtin_type pointers into the IR using ROSETTA
   // static $CLASSNAME* builtin_type;
