@@ -95,8 +95,10 @@ CODETHORN_HEADER_FILES=\
   DotGraphCfgFrontend.h \
   EquivalenceChecking.h \
   EState.h \
-  ExprAnalyzer.h \
+  EStateAnalysis.h \
+  EStateFactory.h \
   EStateTransferFunctions.h \
+  ExprAnalyzer.h \
   FIConstAnalysis.h \
   Flow.h \
   FunctionCallMapping.h \
@@ -212,8 +214,10 @@ CODETHORN_SOURCE_FILES=\
   DotGraphCfgFrontend.C \
   EquivalenceChecking.C \
   EState.C \
-  ExprAnalyzer.C \
+  EStateAnalysis.C \
+  EStateFactory.C \
   EStateTransferFunctions.C \
+  ExprAnalyzer.C \
   FIConstAnalysis.C \
   Flow.C \
   FunctionCallMapping.C \
