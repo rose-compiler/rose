@@ -1398,9 +1398,11 @@ ATbool ATermToSageJovialTraversal::traverse_OptTypeName(ATerm term, SgType* & ty
       if (traverse_Name(t_type_name, type_name)) {
          type = SageInterface::lookupNamedTypeInParentScopes(type_name, SageBuilder::topScopeStack());
          if (type == nullptr) {
-            cerr << "WARNING UNIMPLEMENTED: OptTypeName for name: " << type_name << endl;
-            //DELETE_ME - TEMPORARY - ensure that there is some type (what about primitive types?)
-            type = SageBuilder::buildVoidType();
+            // Ensure that there is some type (what about primitive types?)
+            SgTypeUnknown* unknown_type = SageBuilder::buildUnknownType();
+            unknown_type->set_type_name(type_name);
+            unknown_type->set_has_type_name(true);
+            type = unknown_type;
          }
       }
       else return ATfalse;
