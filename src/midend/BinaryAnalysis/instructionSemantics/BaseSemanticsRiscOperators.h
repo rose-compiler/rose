@@ -352,6 +352,21 @@ public:
      *  Note that the order of arguments for this method is the reverse of the @ref SymbolicExpr concatenation function. */
     virtual SValuePtr concat(const SValuePtr &lowBits, const SValuePtr &highBits) = 0;
 
+    /** Aliases for concatenation.
+     *
+     *  It's hard to remember whether the arguments of the concatenation operator are low bits followed by high bits, or high
+     *  bits followed by low bits, and getting it wrong doesn't result in any kind of immediate error. This alias makes it more
+     *  clear.
+     *
+     * @{ */
+    SValuePtr concatLoHi(const SValuePtr &lowBits, const SValuePtr &highBits) {
+        return concat(lowBits, highBits);
+    }
+    SValuePtr concatHiLo(const SValuePtr &highBits, const SValuePtr &lowBits) {
+        return concat(lowBits, highBits);
+    }
+    /** @} */
+
     /** Split a value into two narrower values. Returns the two parts as a pair consisting of the low-order bits of @p a and
      *  the high-order bits of @p a. The returned low-order bits are bits zero (inclusive) to @p splitPoint (exclusvie) and
      *  has width @p splitPoint. The returned high-order bits are bits @p splitPoint (inclusive) to the width of @p a
