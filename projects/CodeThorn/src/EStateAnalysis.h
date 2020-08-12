@@ -9,7 +9,7 @@
 #include "CFAnalysis.h"
 #include "EState.h"
 #include "DFAnalysisBase.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "DFAstAttribute.h"
 #include "EStateTransferFunctions.h"
 

@@ -625,7 +625,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
     }
   }
 
-  if(_analyzer->getInterpreterMode()!=IM_CONCRETE) {
+  if(_analyzer->getInterpreterMode()!=IM_ENABLED) {
     int constvalue=0;
     if(_analyzer->getLabeler()->isStdOutVarLabel(lab,&varId)) {
       newio.recordVariable(InputOutput::STDOUT_VAR,varId);

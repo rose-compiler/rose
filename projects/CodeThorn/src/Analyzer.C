@@ -9,7 +9,7 @@
 #include "CodeThornCommandLineOptions.h"
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "SvcompWitness.h"
 #include "CodeThornException.h"
 
@@ -555,7 +555,7 @@ CodeThorn::Analyzer::VariableDeclarationList CodeThorn::Analyzer::computeUsedGlo
     CodeThorn::Analyzer::VariableDeclarationList usedGlobalVariableDeclarationList;
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
 #ifdef DO_NOT_FILTER_VARS
-    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,getVariableIdMapping());
+    VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
 #endif
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
@@ -1866,7 +1866,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     // this will not filter any variables
     VariableIdSet setOfUsedVars;
 #else
-    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,variableIdMapping);
+    VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,variableIdMapping);
 #endif
     SAWYER_MESG(logger[TRACE])<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 

@@ -3,7 +3,7 @@
 #include "addressTakenAnalysis.h"
 #include "defUseQuery.h"
 #include "TimeMeasurement.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 //#include "CommandLineOptions.h"
 
 /*************************************************************
@@ -12,7 +12,7 @@
  *************************************************************/
 
 using namespace CodeThorn;
-using namespace AnalysisAbstractionLayer;
+using namespace AstUtility;
 using namespace CodeThorn;
 
 class TestDefUseVarsInfoTraversal : public AstSimpleProcessing

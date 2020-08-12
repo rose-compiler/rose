@@ -21,7 +21,7 @@ SgProject* CodeThorn::ProgramAbstractionLayer::getRoot() {
 
 void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
   _root=root;
-  cout << "INIT: Normalizing " << getNormalizationLevel() << endl;
+  cout << "INIT: Normalization level " << getNormalizationLevel() << endl;
   CodeThorn::Normalization lowering;
   lowering.setInliningOption(getInliningOption());
   lowering.normalizeAst(root,getNormalizationLevel());
