@@ -646,7 +646,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupp
         list<SgTemplateParameter *> parameter_list;
         for (int i = 0; i < number_of_type_parameters; i++) { // Reverse the content of the stack.
             SgClassDeclaration *parameter_decl = isSgClassDeclaration(astJavaComponentStack.pop());
-            ROSE_ASSERT(parameter_decl = NULL);
+            ROSE_ASSERT(parameter_decl != NULL);
             SgTemplateParameter *parameter = new SgTemplateParameter(parameter_decl -> get_type(), NULL);
             parameter_list.push_front(parameter);
         }
@@ -6515,7 +6515,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatement(JNIEnv *env, jclass, 
 JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatementEnd(JNIEnv *env, jclass, jint num_resources, jint num_catch_blocks, jboolean has_finally_block, jobject jToken) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionTryStatement() \n");
-     
+
     SgBasicBlock *finally_body = (SgBasicBlock *) (has_finally_block ? astJavaComponentStack.popStatement() : NULL);
     ROSE_ASSERT(finally_body == NULL || isSgBasicBlock(finally_body));
 
