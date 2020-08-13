@@ -2726,9 +2726,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd(JNIEnv *
         AstSgNodeListAttribute *annotations_attribute = new AstSgNodeListAttribute();
         for (int i = num_annotations - 1; i >= 0; i--) {
             SgExpression *annotation = astJavaComponentStack.popExpression();
-            annotation -> set_parent(constructor_declaration);
+            annotation->set_parent(constructor_declaration);
             annotations_attribute -> setNode(annotation, i);
         }
+        ROSE_ASSERT(constructor_declaration != NULL);
         constructor_declaration -> setAttribute("annotations", annotations_attribute);
     }
 
