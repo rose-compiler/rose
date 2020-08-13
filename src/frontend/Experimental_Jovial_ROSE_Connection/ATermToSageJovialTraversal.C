@@ -1849,6 +1849,9 @@ ATbool ATermToSageJovialTraversal::traverse_Dimension(ATerm term, SgExprListExp*
    }
    else if (ATmatch(term, "DimensionSTAR()")) {
       expr_enum = LanguageTranslation::e_star_dimension;
+      lower_bound = SageBuilder::buildNullExpression_nfi();
+      upper_bound = new SgAsteriskShapeExp();
+      setSourcePosition(upper_bound, term);
    }
    else return ATfalse;
 
