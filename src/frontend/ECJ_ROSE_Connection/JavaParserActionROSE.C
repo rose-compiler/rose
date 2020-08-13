@@ -755,14 +755,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportEnd(JNIEnv *env, 
     // TODO:  Review this because of the package issue and the inability to build a global AST.
     //
     ROSE_ASSERT(outerScope != NULL);
-    if (isSgClassDefinition(outerScope) && isSgJavaPackageDeclaration(isSgClassDefinition(outerScope) -> get_declaration())) { // a type in a package?
-        isSgClassDefinition(outerScope) -> append_member(class_declaration);
+    if ((isSgClassDefinition(outerScope) != NULL) && (isSgJavaPackageDeclaration(isSgClassDefinition(outerScope)->get_declaration()) != NULL)) { // a type in a package?
+        isSgClassDefinition(outerScope)->append_member(class_declaration);
     }
-    else if (isSgClassDefinition(outerScope) && (! isSgJavaPackageDeclaration(isSgClassDefinition(outerScope) -> get_declaration()))) { // an inner type?
+    else if ((isSgClassDefinition(outerScope) != NULL) && (isSgJavaPackageDeclaration(isSgClassDefinition(outerScope)->get_declaration()) == NULL)) { // an inner type?
         ; // Ignore an inner type here as it will be proceessed later when the class member declarations are visited.
           // See Java_JavaParser_cactionBuildInnerTypeSupport(...).
     }
-    else if (isSgBasicBlock(outerScope)) { // a local type declaration?
+    else if (isSgBasicBlock(outerScope) != NULL) { // a local type declaration?
         astJavaComponentStack.push(class_declaration);
     }
     else { // What is this?
