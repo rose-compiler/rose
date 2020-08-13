@@ -565,10 +565,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupp
     // Temporarily pop this type definition off the stack to that we can process its super class and interfaces.
     // We will push it back when we are done processing this type header.
     //
-    ROSE_ASSERT(! astJavaScopeStack.empty());
+    ROSE_ASSERT( ! astJavaScopeStack.empty());
     SgClassDefinition *class_definition = isSgClassDefinition(astJavaScopeStack.pop());
 
     if (SgProject::get_verbose() > 0) {
+        ROSE_ASSERT(class_definition != NULL);
         cout << "Type " << class_definition -> get_qualified_name()
              << " has "
              << (has_super_class ? "a super class" : "no super class")
