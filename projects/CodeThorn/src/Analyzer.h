@@ -94,7 +94,7 @@ namespace CodeThorn {
     void initAstNodeInfo(SgNode* node);
     virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initLabeledAssertNodes(SgProject* root);
-
+    
     void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
     ExplorationMode getExplorationMode() { return _explorationMode; }
 

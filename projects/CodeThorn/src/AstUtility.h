@@ -6,6 +6,7 @@
 #include "VariableIdMapping.h"
 #include "PointerAnalysisInterface.h"
 #include "AbstractValue.h"
+#include "CodeThornOptions.h"
 
 namespace AstUtility {
   CodeThorn::VariableIdSet globalVariables(SgProject* project, CodeThorn::VariableIdMapping* variableIdMapping);
@@ -21,5 +22,6 @@ namespace AstUtility {
   std::set<CodeThorn::VariableId> determineSetOfConstAssignVars2(CodeThorn::VariableIdMapping* vim, SgNode* astRoot);
   CodeThorn::AbstractValueSet determineVarsInAssertConditions(SgNode* node, CodeThorn::VariableIdMapping* variableIdMapping);
 
+  void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt);
 }
 #endif

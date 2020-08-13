@@ -2623,4 +2623,3 @@ list<EState> CodeThorn::Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyz
   }
   return newEStateList;
 }
-

@@ -88,155 +88,18 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "Solver5.h"
+#include "Solver8.h"
+#include "ltlthorn-lib/Solver10.h"
+#include "ltlthorn-lib/Solver11.h"
+#include "ltlthorn-lib/Solver12.h"
+
 const std::string versionString="1.12.12";
 
-void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
-                   CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
-  analyzer->setOptionOutputWarnings(ctOpt.printWarnings);
-  analyzer->setPrintDetectedViolations(ctOpt.printViolations);
-
-  // this must be set early, as subsequent initialization depends on this flag
-  if (ltlOpt.ltlDriven) {
-    analyzer->setModeLTLDriven(true);
-  }
-
-  if (ltlOpt.cegpra.ltlPropertyNrIsSet() || ltlOpt.cegpra.checkAllProperties) {
-    analyzer->setMaxTransitionsForcedTop(1); //initial over-approximated model
-    ltlOpt.noInputInputTransitions=true;
-    ltlOpt.withLTLCounterExamples=true;
-    ltlOpt.counterExamplesWithOutput=true;
-    cout << "STATUS: CEGPRA activated (with it LTL counterexamples that include output states)." << endl;
-    cout << "STATUS: CEGPRA mode: will remove input state --> input state transitions in the approximated STG." << endl;
-  }
-
-  if (ltlOpt.counterExamplesWithOutput) {
-    ltlOpt.withLTLCounterExamples=true;
-  }
-
-  if(ctOpt.stgTraceFileName.size()>0) {
-    analyzer->setStgTraceFileName(ctOpt.stgTraceFileName);
-  }
-
-  if(ctOpt.analyzedProgramCLArgs.size()>0) {
-    string clOptions=ctOpt.analyzedProgramCLArgs;
-    vector<string> clOptionsVector=Parse::commandLineArgs(clOptions);
-    analyzer->setCommandLineOptions(clOptionsVector);
-  }
-
-  if(ctOpt.inputValues.size()>0) {
-    cout << "STATUS: input-values="<<ctOpt.inputValues<<endl;
-    set<int> intSet=Parse::integerSet(ctOpt.inputValues);
-    for(set<int>::iterator i=intSet.begin();i!=intSet.end();++i) {
-      analyzer->insertInputVarValue(*i);
-    }
-    cout << "STATUS: input-values stored."<<endl;
-  }
-
-  if(ctOpt.inputSequence.size()>0) {
-    cout << "STATUS: input-sequence="<<ctOpt.inputSequence<<endl;
-    list<int> intList=Parse::integerList(ctOpt.inputSequence);
-    for(list<int>::iterator i=intList.begin();i!=intList.end();++i) {
-      analyzer->addInputSequenceValue(*i);
-    }
-  }
-
-  if(ctOpt.explorationMode.size()>0) {
-    string explorationMode=ctOpt.explorationMode;
-    if(explorationMode=="depth-first") {
-      analyzer->setExplorationMode(EXPL_DEPTH_FIRST);
-    } else if(explorationMode=="breadth-first") {
-      analyzer->setExplorationMode(EXPL_BREADTH_FIRST);
-    } else if(explorationMode=="loop-aware") {
-      analyzer->setExplorationMode(EXPL_LOOP_AWARE);
-    } else if(explorationMode=="loop-aware-sync") {
-      analyzer->setExplorationMode(EXPL_LOOP_AWARE_SYNC);
-    } else if(explorationMode=="random-mode1") {
-      analyzer->setExplorationMode(EXPL_RANDOM_MODE1);
-    } else {
-      logger[ERROR] <<"unknown state space exploration mode specified with option --exploration-mode."<<endl;
-      exit(1);
-    }
-  } else {
-    // default value
-    analyzer->setExplorationMode(EXPL_BREADTH_FIRST);
-  }
-
-  if (ctOpt.maxIterations!=-1 || ctOpt.maxIterationsForcedTop!=-1) {
-    if(ctOpt.explorationMode!="loop-aware" && ctOpt.explorationMode!="loop-aware-sync") {
-      cout << "Error: \"max-iterations[-forced-top]\" modes currently require \"--exploration-mode=loop-aware[-sync]\"." << endl;
-      exit(1);
-    }
-  }
-
-  analyzer->setAbstractionMode(ctOpt.abstractionMode);
-  analyzer->setMaxTransitions(ctOpt.maxTransitions);
-  analyzer->setMaxIterations(ctOpt.maxIterations);
-
-  if(ctOpt.maxIterationsForcedTop!=-1) {
-    analyzer->setMaxIterationsForcedTop(ctOpt.maxIterationsForcedTop);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
-  }
-
-  // TODO: Analyzer::GTM_IO is only mode used now, all others are deprecated
-  if(ctOpt.maxTransitionsForcedTop!=-1) {
-    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
-  } else if(ctOpt.maxTransitionsForcedTop1!=-1) {
-    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop1);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
-  } else if(ctOpt.maxTransitionsForcedTop2!=-1) {
-    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop2);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCF);
-  } else if(ctOpt.maxTransitionsForcedTop3!=-1) {
-    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop3);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCFPTR);
-  } else if(ctOpt.maxTransitionsForcedTop4!=-1) {
-    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop4);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_COMPOUNDASSIGN);
-  } else if(ctOpt.maxTransitionsForcedTop5!=-1) {
-    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop5);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_FLAGS);
-  }
-
-  if (ctOpt.maxMemory!=1) {
-    analyzer->setMaxBytes(ctOpt.maxMemory);
-  }
-  if (ctOpt.maxTime!=1) {
-    analyzer->setMaxSeconds(ctOpt.maxTime);
-  }
-  if (ctOpt.maxMemoryForcedTop!=-1) {
-    analyzer->setMaxBytesForcedTop(ctOpt.maxMemoryForcedTop);
-  }
-  if (ctOpt.maxTimeForcedTop!=-1) {
-    analyzer->setMaxSecondsForcedTop(ctOpt.maxTimeForcedTop);
-  }
-
-  if(ctOpt.displayDiff!=-1) {
-    analyzer->setDisplayDiff(ctOpt.displayDiff);
-  }
-  if(ctOpt.resourceLimitDiff!=-1) {
-    analyzer->setResourceLimitDiff(ctOpt.resourceLimitDiff);
-  }
-
+Solver* createSolver(CodeThornOptions& ctOpt) {
   Solver* solver = nullptr;
-  // overwrite solver ID based on other options
-  if(analyzer->getModeLTLDriven()) {
-    ctOpt.solver=11;
-  }
-  int solverId=ctOpt.solver;
-  // solverId sanity checks
-  if(analyzer->getExplorationMode() == EXPL_LOOP_AWARE_SYNC &&
-     solverId != 12) {
-    logger[ERROR] <<"Exploration mode loop-aware-sync requires solver 12, but solver "<<solverId<<" was selected."<<endl;
-    exit(1);
-  }
-  if(analyzer->getModeLTLDriven() &&
-     solverId != 11) {
-    logger[ERROR] <<"Ltl-driven mode requires solver 11, but solver "<<solverId<<" was selected."<<endl;
-    exit(1);
-  }
   // solver "factory"
-  switch(solverId) {
+  switch(ctOpt.solver) {
   case 5 :  {  
     solver = new Solver5(); break;
   }
@@ -253,11 +116,11 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
     solver = new Solver12(); break;
   }
   default :  { 
-    logger[ERROR] <<"Unknown solver ID: "<<solverId<<endl;
+    logger[ERROR] <<"Unknown solver ID: "<<ctOpt.solver<<endl;
     exit(1);
   }
   }
-  analyzer->setSolver(solver);
+  return solver;
 }
 
 void configureRersSpecialization() {
@@ -445,8 +308,9 @@ int main( int argc, char * argv[] ) {
     analyzer->setIgnoreFunctionPointers(ctOpt.ignoreFunctionPointers);
     analyzer->setStdFunctionSemantics(ctOpt.stdFunctions);
 
-    analyzerSetup(analyzer, logger, ctOpt, ltlOpt, parProOpt);
-
+    analyzer->setup(analyzer, logger, ctOpt, ltlOpt, parProOpt);
+    analyzer->setSolver(createSolver(ctOpt));
+    
     switch(int mode=ctOpt.interpreterMode) {
     case 0: analyzer->setInterpreterMode(IM_DISABLED); break;
     case 1: analyzer->setInterpreterMode(IM_ENABLED); break;
@@ -784,7 +648,21 @@ int main( int argc, char * argv[] ) {
     timer.start();
     analyzer->printStatusMessageLine("==============================================================");
     if(!analyzer->getModeLTLDriven() && ctOpt.z3BasedReachabilityAnalysis==false && ctOpt.ssa==false) {
-      analyzer->runSolver();
+      switch(ctOpt.abstractionMode) {
+      case 0:
+      case 1:
+        analyzer->runSolver();
+        break;
+      case 2:
+        cout<<"INFO: PA framework: initialization."<<endl;
+        SgProject* project=isSgProject(root);
+        ROSE_ASSERT(project);
+        analyzer->initialize(project);
+        cout<<"INFO: running PA Framework solver."<<endl;
+        analyzer->run();
+        cout<<"INFO: PA framework: finished."<<endl;
+        exit(0);
+      }
     }
     double analysisRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
@@ -993,7 +871,7 @@ int main( int argc, char * argv[] ) {
       SpotConnection spotConnection(ltl_filename);
       spotConnection.setModeLTLDriven(analyzer->getModeLTLDriven());
       if (analyzer->getModeLTLDriven()) {
-	analyzer->setSpotConnection(&spotConnection);
+        analyzer->setSpotConnection(&spotConnection);
       }
 
       SAWYER_MESG(logger[TRACE]) << "STATUS: generating LTL results"<<endl;
