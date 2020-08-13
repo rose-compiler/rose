@@ -128,6 +128,7 @@ namespace VirtualCFG {
           s << "false";
           break;
         case eckCaseLabel:
+          ROSE_ASSERT(caseLabel() != NULL);
           s << caseLabel()->unparseToString();
           break;
         case eckDefault:
