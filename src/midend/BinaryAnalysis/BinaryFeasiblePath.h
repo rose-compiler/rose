@@ -110,7 +110,7 @@ public:
             rose_addr_t minValid;                       /**< Minnimum address that is not treated as a null dereference */
 
             NullDeref()
-                : check(false), mode(MUST), constOnly(false) {}
+                : check(false), mode(MUST), constOnly(false), minValid(1024) {}
         } nullDeref;                                    /**< Settings for null-dereference analysis. */
 
         std::string exprParserDoc;                      /**< String documenting how expressions are parsed, empty for default. */

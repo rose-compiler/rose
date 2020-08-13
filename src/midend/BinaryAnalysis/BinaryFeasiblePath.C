@@ -1579,6 +1579,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     std::string indent = debug ? "    " : "";
     if (paths_.isEmpty())
         return;
+    if (settings().nullDeref.minValid == 0)
+        mlog[WARN] <<"minimum valid address is set to zero; no null derefs are possible\n";
 
     // Debugging
     if (trace || debug) {
