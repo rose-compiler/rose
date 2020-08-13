@@ -66,7 +66,7 @@ struct IP_add: P {
                 SValuePtr elmtA = ops->extract(a, i*elmtNBits, (i+1)*elmtNBits);
                 SValuePtr elmtB = ops->extract(b, i*elmtNBits, (i+1)*elmtNBits);
                 SValuePtr sum = ops->add(elmtA, elmtB);
-                result = result ? ops->concat(result, sum) : sum;
+                result = result ? ops->concatLoHi(result, sum) : sum;
             }
         } else {
             SValuePtr carryIn = ops->boolean_(false);
@@ -76,6 +76,34 @@ struct IP_add: P {
                 d->updateNZCV(result, carryOut);
         }
         d->write(args[0], result);
+    }
+};
+
+struct IP_addp: P {
+    void p(D d, Ops ops, I insn, A args) {
+        if (args.size() == 2) {
+            SValuePtr a = d->read(args[1]);
+            SValuePtr aLo = ops->extract(a, 0, args[0]->get_nBits());
+            SValuePtr aHi = ops->extract(a, args[0]->get_nBits(), a->get_width());
+            SValuePtr result = ops->add(aLo, aHi);
+            d->write(args[0], result);
+        } else {
+            assert_args(insn, args, 3);
+            SValuePtr a = d->read(args[1]);
+            SValuePtr b = d->read(args[2]);
+            SValuePtr combined = ops->concatHiLo(b, a);
+            SgAsmVectorType *vectorType = isSgAsmVectorType(args[1]->get_type());
+            ASSERT_not_null(vectorType);
+            size_t elmtNBits = vectorType->get_elmtType()->get_nBits();
+            SValuePtr result;
+            for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
+                SValuePtr aElmt = ops->extract(combined, 2*i*elmtNBits, 2*i*elmtNBits + elmtNBits);
+                SValuePtr bElmt = ops->extract(combined, 2*i*elmtNBits + elmtNBits, 2*(i+1)*elmtNBits);
+                SValuePtr resultElmt = ops->add(aElmt, bElmt);
+                result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
+            }
+            d->write(args[0], result);
+        }
     }
 };
 
@@ -132,6 +160,28 @@ struct IP_b: P {
     }
 };
 
+struct IP_bfm: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 4);
+        size_t immR = d->read(args[2])->get_number();
+        size_t immS = d->read(args[3])->get_number();
+        bool n = 64 == args[0]->get_nBits();
+        d->bitfieldMove(ops, args[0], args[1], n, immR, immS);
+    }
+};
+
+struct IP_bfxil: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 4);
+        size_t lsb = d->read(args[2])->get_number();
+        size_t width = d->read(args[3])->get_number();
+        uint64_t immR = lsb;
+        uint64_t immS = lsb + width - 1;
+        bool n = 64 == args[0]->get_nBits();
+        d->bitfieldMove(ops, args[0], args[1], n, immR, immS);
+    }
+};
+
 struct IP_bic: P {
     void p(D d, Ops ops, I insn, A args) {
         if (args.size() == 2) {
@@ -144,7 +194,7 @@ struct IP_bic: P {
             for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
                 SValuePtr elmtA = ops->extract(a, i*elmtNBits, (i+1)*elmtNBits);
                 SValuePtr elmtResult = ops->and_(elmtA, bInv);
-                result = result ? ops->concat(result, elmtResult) : elmtResult;
+                result = result ? ops->concatLoHi(result, elmtResult) : elmtResult;
             }
             d->write(args[0], result);
         } else {
@@ -188,6 +238,14 @@ struct IP_br: P {
         assert_args(insn, args, 1);
         SValuePtr targetVa = d->read(args[0]);
         ops->writeRegister(d->REG_PC, targetVa);
+    }
+};
+
+struct IP_brk: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+        size_t imm = d->read(args[0])->get_number();
+        ops->interrupt((int)A64Exception::brk, imm);
     }
 };
 
@@ -249,6 +307,219 @@ struct IP_ccmp: P {
     }
 };
 
+struct IP_cls: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr src = d->read(args[0]);
+        SValuePtr result;
+        if (SgAsmVectorType *vectorType = isSgAsmVectorType(args[1]->get_type())) {
+            size_t elmtNBits = vectorType->get_elmtType()->get_nBits();
+            for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
+                SValuePtr srcElmt = ops->extract(src, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr resultElmt = ops->countLeadingOnes(srcElmt);
+                result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
+            }
+        } else {
+            result = ops->countLeadingOnes(src);
+        }
+        d->write(args[0], result);
+    }
+};
+
+struct IP_clz: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr src = d->read(args[0]);
+        SValuePtr result;
+        if (SgAsmVectorType *vectorType = isSgAsmVectorType(args[1]->get_type())) {
+            size_t elmtNBits = vectorType->get_elmtType()->get_nBits();
+            for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
+                SValuePtr srcElmt = ops->extract(src, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr resultElmt = ops->countLeadingZeros(srcElmt);
+                result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
+            }
+        } else {
+            result = ops->countLeadingZeros(src);
+        }
+        d->write(args[0], result);
+    }
+};
+
+struct IP_cmeq: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValuePtr a = d->read(args[1]);
+        SValuePtr b = d->read(args[2]);
+        SValuePtr result;
+        if (auto vectorType = isSgAsmVectorType(args[1]->get_type())) {
+            size_t elmtNBits = vectorType->get_elmtType()->get_nBits();
+            SValuePtr zeros = ops->number_(elmtNBits, 0);
+            SValuePtr ones = ops->invert(zeros);
+            for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
+                SValuePtr aElmt = ops->extract(a, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr bElmt = ops->extract(b, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr resultElmt = ops->ite(ops->isEqual(aElmt, bElmt), ones, zeros);
+                result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
+            }
+        } else {
+            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr ones = ops->invert(zeros);
+            result = ops->ite(ops->isEqual(a, b), ones, zeros);
+        }
+        d->write(args[0], result);
+    }
+};
+
+struct IP_cmge: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValuePtr a = d->read(args[1]);
+        SValuePtr b = d->read(args[2]);
+        SValuePtr result;
+        if (auto vectorType = isSgAsmVectorType(args[1]->get_type())) {
+            size_t elmtNBits = vectorType->get_elmtType()->get_nBits();
+            SValuePtr zeros = ops->number_(elmtNBits, 0);
+            SValuePtr ones = ops->invert(zeros);
+            for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
+                SValuePtr aElmt = ops->extract(a, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr bElmt = ops->extract(b, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr resultElmt = ops->ite(ops->isSignedGreaterThanOrEqual(aElmt, bElmt), ones, zeros);
+                result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
+            }
+        } else {
+            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr ones = ops->invert(zeros);
+            result = ops->ite(ops->isSignedGreaterThanOrEqual(a, b), ones, zeros);
+        }
+        d->write(args[0], result);
+    }
+};
+
+struct IP_cmgt: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValuePtr a = d->read(args[1]);
+        SValuePtr b = d->read(args[2]);
+        SValuePtr result;
+        if (auto vectorType = isSgAsmVectorType(args[1]->get_type())) {
+            size_t elmtNBits = vectorType->get_elmtType()->get_nBits();
+            SValuePtr zeros = ops->number_(elmtNBits, 0);
+            SValuePtr ones = ops->invert(zeros);
+            for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
+                SValuePtr aElmt = ops->extract(a, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr bElmt = ops->extract(b, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr resultElmt = ops->ite(ops->isSignedGreaterThan(aElmt, bElmt), ones, zeros);
+                result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
+            }
+        } else {
+            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr ones = ops->invert(zeros);
+            result = ops->ite(ops->isSignedGreaterThan(a, b), ones, zeros);
+        }
+        d->write(args[0], result);
+    }
+};
+
+struct IP_cmhi: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValuePtr a = d->read(args[1]);
+        SValuePtr b = d->read(args[2]);
+        SValuePtr result;
+        if (auto vectorType = isSgAsmVectorType(args[1]->get_type())) {
+            size_t elmtNBits = vectorType->get_elmtType()->get_nBits();
+            SValuePtr zeros = ops->number_(elmtNBits, 0);
+            SValuePtr ones = ops->invert(zeros);
+            for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
+                SValuePtr aElmt = ops->extract(a, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr bElmt = ops->extract(b, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr resultElmt = ops->ite(ops->isUnsignedGreaterThan(aElmt, bElmt), ones, zeros);
+                result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
+            }
+        } else {
+            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr ones = ops->invert(zeros);
+            result = ops->ite(ops->isUnsignedGreaterThan(a, b), ones, zeros);
+        }
+        d->write(args[0], result);
+    }
+};
+
+struct IP_cmhs: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValuePtr a = d->read(args[1]);
+        SValuePtr b = d->read(args[2]);
+        SValuePtr result;
+        if (auto vectorType = isSgAsmVectorType(args[1]->get_type())) {
+            size_t elmtNBits = vectorType->get_elmtType()->get_nBits();
+            SValuePtr zeros = ops->number_(elmtNBits, 0);
+            SValuePtr ones = ops->invert(zeros);
+            for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
+                SValuePtr aElmt = ops->extract(a, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr bElmt = ops->extract(b, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr resultElmt = ops->ite(ops->isUnsignedGreaterThanOrEqual(aElmt, bElmt), ones, zeros);
+                result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
+            }
+        } else {
+            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr ones = ops->invert(zeros);
+            result = ops->ite(ops->isUnsignedGreaterThanOrEqual(a, b), ones, zeros);
+        }
+        d->write(args[0], result);
+    }
+};
+
+struct IP_cmle: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValuePtr a = d->read(args[1]);
+        SValuePtr b = d->read(args[2]);
+        SValuePtr result;
+        if (auto vectorType = isSgAsmVectorType(args[1]->get_type())) {
+            size_t elmtNBits = vectorType->get_elmtType()->get_nBits();
+            SValuePtr zeros = ops->number_(elmtNBits, 0);
+            SValuePtr ones = ops->invert(zeros);
+            for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
+                SValuePtr aElmt = ops->extract(a, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr bElmt = ops->extract(b, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr resultElmt = ops->ite(ops->isSignedLessThanOrEqual(aElmt, bElmt), ones, zeros);
+                result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
+            }
+        } else {
+            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr ones = ops->invert(zeros);
+            result = ops->ite(ops->isSignedLessThanOrEqual(a, b), ones, zeros);
+        }
+        d->write(args[0], result);
+    }
+};
+
+struct IP_cmlt: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValuePtr a = d->read(args[1]);
+        SValuePtr b = d->read(args[2]);
+        SValuePtr result;
+        if (auto vectorType = isSgAsmVectorType(args[1]->get_type())) {
+            size_t elmtNBits = vectorType->get_elmtType()->get_nBits();
+            SValuePtr zeros = ops->number_(elmtNBits, 0);
+            SValuePtr ones = ops->invert(zeros);
+            for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
+                SValuePtr aElmt = ops->extract(a, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr bElmt = ops->extract(b, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr resultElmt = ops->ite(ops->isSignedLessThan(aElmt, bElmt), ones, zeros);
+                result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
+            }
+        } else {
+            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr ones = ops->invert(zeros);
+            result = ops->ite(ops->isSignedLessThan(a, b), ones, zeros);
+        }
+        d->write(args[0], result);
+    }
+};
+
 struct IP_cmn: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -289,6 +560,17 @@ struct IP_cinv: P {
         SValuePtr cond = d->conditionHolds(insn->get_condition());
         SValuePtr src = d->read(args[1]);
         SValuePtr result = ops->ite(cond, ops->invert(src), src);
+        d->write(args[0], result);
+    }
+};
+
+struct IP_cneg: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr cond = d->conditionHolds(insn->get_condition());
+        SValuePtr src = d->read(args[1]);
+        SValuePtr srcNeg = ops->negate(src);
+        SValuePtr result = ops->ite(cond, srcNeg, src);
         d->write(args[0], result);
     }
 };
@@ -358,6 +640,13 @@ struct IP_csneg: P {
     }
 };
 
+struct IP_dmb: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+        // no operation required for semantics
+    }
+};
+
 struct IP_dup: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -367,8 +656,18 @@ struct IP_dup: P {
         ASSERT_require(nElmts * src->get_width() == args[0]->get_nBits());
         SValuePtr toWrite;
         for (size_t i = 0; i < nElmts; ++i)
-            toWrite = toWrite ? ops->concat(toWrite, src) : src;
+            toWrite = toWrite ? ops->concatLoHi(toWrite, src) : src;
         d->write(args[0], toWrite);
+    }
+};
+
+struct IP_eon: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValuePtr a = d->read(args[1]);
+        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->get_width());
+        SValuePtr result = ops->xor_(a, ops->invert(b));
+        d->write(args[0], result);
     }
 };
 
@@ -378,6 +677,18 @@ struct IP_eor: P {
         SValuePtr a = d->read(args[1]);
         SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->get_width());
         SValuePtr result = ops->xor_(a, b);
+        d->write(args[0], result);
+    }
+};
+
+struct IP_extr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 4);
+        SValuePtr a = d->read(args[1]);
+        SValuePtr b = d->read(args[2]);
+        size_t lsb = d->read(args[3])->get_number();
+        SValuePtr src = ops->concatHiLo(a, b);
+        SValuePtr result = ops->extract(src, lsb, lsb + args[0]->get_nBits());
         d->write(args[0], result);
     }
 };
@@ -629,6 +940,20 @@ struct IP_mov: P {
     }
 };
 
+struct IP_movi: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        auto vectorType = isSgAsmVectorType(args[0]->get_type());
+        ASSERT_not_null(vectorType);
+        size_t elmtNBits = vectorType->get_elmtType()->get_nBits();
+        SValuePtr src = ops->unsignedExtend(d->read(args[1]), elmtNBits);
+        SValuePtr result;
+        for (size_t i = 0; i < vectorType->get_nElmts(); ++i)
+            result = result ? ops->concatLoHi(result, src) : src;
+        d->write(args[0], result);
+    }
+};
+
 struct IP_movk: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -647,12 +972,12 @@ struct IP_movk: P {
         SValuePtr oldBits = d->read(args[0]);
         SValuePtr result;
         if (shiftAmount > 0) {
-            result = ops->concat(ops->extract(oldBits, 0, shiftAmount), newBits);
+            result = ops->concatLoHi(ops->extract(oldBits, 0, shiftAmount), newBits);
         } else {
             result = newBits;
         }
         if (shiftAmount + 16 < oldBits->get_width())
-            result = ops->concat(result, ops->extract(oldBits, shiftAmount+16, oldBits->get_width()));
+            result = ops->concatLoHi(result, ops->extract(oldBits, shiftAmount+16, oldBits->get_width()));
         d->write(args[0], result);
     }
 };
@@ -703,7 +1028,7 @@ struct IP_mul: P {
                     SValuePtr elmtA = ops->extract(a, i*elmtNBits, (i+1)*elmtNBits);
                     SValuePtr elmtB = ops->extract(b, i*elmtNBits, (i+1)*elmtNBits);
                     SValuePtr elmtResult = ops->unsignedExtend(ops->unsignedMultiply(elmtA, elmtB), elmtNBits);
-                    result = result ? ops->concat(result, elmtResult) : elmtResult;
+                    result = result ? ops->concatLoHi(result, elmtResult) : elmtResult;
                 }
             } else {
                 // Vector * scalar, element-wise
@@ -711,7 +1036,7 @@ struct IP_mul: P {
                 for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
                     SValuePtr elmtA = ops->extract(a, i*elmtNBits, (i+1)*elmtNBits);
                     SValuePtr elmtResult = ops->unsignedExtend(ops->unsignedMultiply(elmtA, b), elmtNBits);
-                    result = result ? ops->concat(result, elmtResult) : elmtResult;
+                    result = result ? ops->concatLoHi(result, elmtResult) : elmtResult;
                 }
             }
         } else {
@@ -741,7 +1066,7 @@ struct IP_neg: P {
             for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
                 SValuePtr elmt = ops->extract(value, i*elmtNBits, (i+1)*elmtNBits);
                 SValuePtr elmtResult = ops->negate(elmt);
-                result = result ? ops->concat(result, elmtResult) : elmtResult;
+                result = result ? ops->concatLoHi(result, elmtResult) : elmtResult;
             }
         } else {
             result = ops->negate(value);
@@ -850,7 +1175,7 @@ struct IP_rev: P {
         SValuePtr result;
         for (size_t i = 0; i < nBytes; ++i) {
             SValuePtr byte = ops->extract(value, i*8, (i+1)*8);
-            result = result ? ops->concat(byte, result) : byte;
+            result = result ? ops->concatLoHi(byte, result) : byte;
         }
         d->write(args[0], result);
     }
@@ -869,9 +1194,33 @@ struct IP_rev16: P {
             for (size_t j = bytesPerContainer; j > 0; --j) {
                 size_t lsb = i * containerSize + (j-1) * 8;
                 SValuePtr byte = ops->extract(value, lsb, lsb+8);
-                result = result ? ops->concat(result, byte) : byte;
+                result = result ? ops->concatLoHi(result, byte) : byte;
             }
         }
+        d->write(args[0], result);
+    }
+};
+
+struct IP_ror: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValuePtr src = d->read(args[1]);
+        SValuePtr amount = d->read(args[2]);
+        SValuePtr result = ops->rotateRight(src, amount);
+        d->write(args[0], result);
+    }
+};
+
+struct IP_sbc: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValuePtr a = d->read(args[0]);
+        SValuePtr b = d->read(args[1]);
+        SValuePtr carryIn = ops->readRegister(d->REG_CPSR_C);
+        SValuePtr carryOut;
+        SValuePtr result = ops->addWithCarries(a, ops->invert(b), carryIn, carryOut);
+        if (insn->get_updatesFlags())
+            d->updateNZCV(result, carryOut);
         d->write(args[0], result);
     }
 };
@@ -952,12 +1301,49 @@ struct IP_smull: P {
     }
 };
 
+struct IP_stlxr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        // ROSE assumes that the PE always has exclusive access to all memory
+        assert_args(insn, args, 3);
+        SValuePtr value = d->read(args[1]);
+        d->write(args[2], value);
+        SValuePtr status = ops->number_(args[0]->get_nBits(), 0);
+        d->write(args[0], status);
+    }
+};
+
+struct IP_stlxrb: P {
+    void p(D d, Ops ops, I insn, A args) {
+        // ROSE assumes that the PE always has exclusive access to all memory.
+        assert_args(insn, args, 3);
+        // Note: ARM documentation doesn't explicitly truncate the "data = X[t]", but I think that's a mistake given the
+        // corresponding "data = bits(8) UNKNOWN" from the same "if" and the following "Mem[address, 1, ...] = data".
+        SValuePtr value = ops->unsignedExtend(d->read(args[1]), 8);
+        d->write(args[2], value);
+        SValuePtr status = ops->number_(args[0]->get_nBits(), 0);
+        d->write(args[0], status);
+    }
+};
+
+struct IP_stlxrh: P {
+    void p(D d, Ops ops, I insn, A args) {
+        // ROSE assumes that the PE always has exclusive access to all memory.
+        assert_args(insn, args, 3);
+        // Note: ARM documentation doesn't explicitly truncate the "data = X[t]", but I think that's a mistake given the
+        // corresponding "data = bits(16) UNKNOWN" from the same "if" and the following "Mem[address, 2, ...] = data".
+        SValuePtr value = ops->unsignedExtend(d->read(args[1]), 16);
+        d->write(args[2], value);
+        SValuePtr status = ops->number_(args[0]->get_nBits(), 0);
+        d->write(args[0], status);
+    }
+};
+
 struct IP_stp: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         SValuePtr first = d->read(args[0]);
         SValuePtr second = d->read(args[1]);
-        SValuePtr pair = ops->concat(first, second);
+        SValuePtr pair = ops->concatLoHi(first, second);
         d->write(args[2], pair);
     }
 };
@@ -1062,7 +1448,7 @@ struct IP_sub: P {
                 SValuePtr elmtMinuend = ops->extract(minuend, i*elmtNBits, (i+1)*elmtNBits);
                 SValuePtr elmtSubtrahend = ops->extract(subtrahend, i*elmtNBits, (i+1)*elmtNBits);
                 SValuePtr difference = ops->subtract(elmtMinuend, elmtSubtrahend);
-                result = result ? ops->concat(result, difference) : difference;
+                result = result ? ops->concatLoHi(result, difference) : difference;
             }
             ASSERT_forbid(insn->get_updatesFlags());
         } else {
@@ -1233,6 +1619,49 @@ struct IP_umulh: P {
     }
 };
 
+struct IP_umull: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValuePtr a = d->read(args[1]);
+        SValuePtr b = d->read(args[2]);
+        SValuePtr product = ops->unsignedMultiply(a, b);
+        d->write(args[0], product);
+    }
+};
+
+struct IP_xtn: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        auto vectorType = isSgAsmVectorType(args[1]->get_type());
+        ASSERT_not_null(vectorType);
+        size_t elmtNBits = vectorType->get_elmtType()->get_nBits();
+        SValuePtr src = d->read(args[1]);
+        SValuePtr result;
+        for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
+            SValuePtr elmt = ops->extract(src, i*elmtNBits, i*elmtNBits + elmtNBits/2);
+            result = result ? ops->concat(result, elmt) : elmt;
+        }
+        result = ops->concatLoHi(result, ops->number_(vectorType->get_nBits()/2, 0));
+        d->write(args[0], result);
+    }
+};
+
+struct IP_xtn2: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        auto vectorType = isSgAsmVectorType(args[1]->get_type());
+        ASSERT_not_null(vectorType);
+        size_t elmtNBits = vectorType->get_elmtType()->get_nBits();
+        SValuePtr src = d->read(args[1]);
+        SValuePtr result;
+        for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
+            SValuePtr elmt = ops->extract(src, i*elmtNBits, i*elmtNBits + elmtNBits/2);
+            result = result ? ops->concat(result, elmt) : elmt;
+        }
+        result = ops->concatHiLo(result, ops->number_(vectorType->get_nBits()/2, 0));
+        d->write(args[0], result);
+    }
+};
 
 } // namespace
 
@@ -1241,6 +1670,7 @@ struct IP_umulh: P {
 void
 DispatcherA64::initializeInsnDispatchTable() {
     iproc_set(ARM64_INS_ADD,    new A64::IP_add);
+    iproc_set(ARM64_INS_ADDP,   new A64::IP_addp);
     //iproc_set(ARM64_INS_ADDS,   new A64::IP_adds); -- see ARM64_INS_ADD
     iproc_set(ARM64_INS_ADR,    new A64::IP_adr);
     iproc_set(ARM64_INS_ADRP,   new A64::IP_adrp);
@@ -1248,26 +1678,42 @@ DispatcherA64::initializeInsnDispatchTable() {
     iproc_set(ARM64_INS_ASR,    new A64::IP_asr);
     //iproc_set(ARM64_INS_ASRV,   new A64::IP_asrv); -- see ARM64_INS_ASR
     iproc_set(ARM64_INS_B,      new A64::IP_b);
+    iproc_set(ARM64_INS_BFM,    new A64::IP_bfm);
+    iproc_set(ARM64_INS_BFXIL,  new A64::IP_bfxil);
     iproc_set(ARM64_INS_BIC,    new A64::IP_bic);
     iproc_set(ARM64_INS_BL,     new A64::IP_bl);
     iproc_set(ARM64_INS_BLR,    new A64::IP_blr);
     iproc_set(ARM64_INS_BR,     new A64::IP_br);
+    iproc_set(ARM64_INS_BRK,    new A64::IP_brk);
     iproc_set(ARM64_INS_CBNZ,   new A64::IP_cbnz);
     iproc_set(ARM64_INS_CBZ,    new A64::IP_cbz);
     iproc_set(ARM64_INS_CCMN,   new A64::IP_ccmn);
     iproc_set(ARM64_INS_CCMP,   new A64::IP_ccmp);
     iproc_set(ARM64_INS_CINC,   new A64::IP_cinc);
     iproc_set(ARM64_INS_CINV,   new A64::IP_cinv);
+    iproc_set(ARM64_INS_CLS,    new A64::IP_cls);
+    iproc_set(ARM64_INS_CLZ,    new A64::IP_clz);
+    iproc_set(ARM64_INS_CMEQ,   new A64::IP_cmeq);
+    iproc_set(ARM64_INS_CMGE,   new A64::IP_cmge);
+    iproc_set(ARM64_INS_CMGT,   new A64::IP_cmgt);
+    iproc_set(ARM64_INS_CMHI,   new A64::IP_cmhi);
+    iproc_set(ARM64_INS_CMHS,   new A64::IP_cmhs);
+    iproc_set(ARM64_INS_CMLE,   new A64::IP_cmle);
+    iproc_set(ARM64_INS_CMLT,   new A64::IP_cmlt);
     iproc_set(ARM64_INS_CMN,    new A64::IP_cmn);
     iproc_set(ARM64_INS_CMP,    new A64::IP_cmp);
+    iproc_set(ARM64_INS_CNEG,   new A64::IP_cneg);
     iproc_set(ARM64_INS_CSEL,   new A64::IP_csel);
     iproc_set(ARM64_INS_CSET,   new A64::IP_cset);
     iproc_set(ARM64_INS_CSETM,  new A64::IP_csetm);
     iproc_set(ARM64_INS_CSINC,  new A64::IP_csinc);
     iproc_set(ARM64_INS_CSINV,  new A64::IP_csinv);
     iproc_set(ARM64_INS_CSNEG,  new A64::IP_csneg);
+    iproc_set(ARM64_INS_DMB,    new A64::IP_dmb);
     iproc_set(ARM64_INS_DUP,    new A64::IP_dup);
+    iproc_set(ARM64_INS_EON,    new A64::IP_eon);
     iproc_set(ARM64_INS_EOR,    new A64::IP_eor);
+    iproc_set(ARM64_INS_EXTR,   new A64::IP_extr);
     iproc_set(ARM64_INS_INS,    new A64::IP_ins);
     iproc_set(ARM64_INS_LDAR,   new A64::IP_ldar);
     iproc_set(ARM64_INS_LDARB,  new A64::IP_ldarb);
@@ -1295,6 +1741,7 @@ DispatcherA64::initializeInsnDispatchTable() {
     iproc_set(ARM64_INS_LSR,    new A64::IP_lsr);
     iproc_set(ARM64_INS_MADD,   new A64::IP_madd);
     iproc_set(ARM64_INS_MOV,    new A64::IP_mov);
+    iproc_set(ARM64_INS_MOVI,   new A64::IP_movi);
     iproc_set(ARM64_INS_MOVK,   new A64::IP_movk);
     iproc_set(ARM64_INS_MOVN,   new A64::IP_movn);
     iproc_set(ARM64_INS_MOVZ,   new A64::IP_movz);
@@ -1312,6 +1759,9 @@ DispatcherA64::initializeInsnDispatchTable() {
     iproc_set(ARM64_INS_RET,    new A64::IP_ret);
     iproc_set(ARM64_INS_REV,    new A64::IP_rev);
     iproc_set(ARM64_INS_REV16,  new A64::IP_rev16);
+    iproc_set(ARM64_INS_ROR,    new A64::IP_ror);
+    //iproc_set(ARM64_INS_RORV,   new A64::IP_rorv); -- see AMD64_INS_ROR
+    iproc_set(ARM64_INS_SBC,    new A64::IP_sbc);
     iproc_set(ARM64_INS_SBFIZ,  new A64::IP_sbfiz);
     iproc_set(ARM64_INS_SBFM,   new A64::IP_sbfm);
     iproc_set(ARM64_INS_SBFX,   new A64::IP_sbfx);
@@ -1319,6 +1769,9 @@ DispatcherA64::initializeInsnDispatchTable() {
     iproc_set(ARM64_INS_SMADDL, new A64::IP_smaddl);
     iproc_set(ARM64_INS_SMULH,  new A64::IP_smulh);
     iproc_set(ARM64_INS_SMULL,  new A64::IP_smull);
+    iproc_set(ARM64_INS_STLXR,  new A64::IP_stlxr);
+    iproc_set(ARM64_INS_STLXRB, new A64::IP_stlxrb);
+    iproc_set(ARM64_INS_STLXRH, new A64::IP_stlxrh);
     iproc_set(ARM64_INS_STP,    new A64::IP_stp);
     iproc_set(ARM64_INS_STR,    new A64::IP_str);
     iproc_set(ARM64_INS_STRB,   new A64::IP_strb);
@@ -1344,6 +1797,9 @@ DispatcherA64::initializeInsnDispatchTable() {
     iproc_set(ARM64_INS_UMADDL, new A64::IP_umaddl);
     iproc_set(ARM64_INS_UMOV,   new A64::IP_umov);
     iproc_set(ARM64_INS_UMULH,  new A64::IP_umulh);
+    iproc_set(ARM64_INS_UMULL,  new A64::IP_umull);
+    iproc_set(ARM64_INS_XTN,    new A64::IP_xtn);
+    iproc_set(ARM64_INS_XTN2,   new A64::IP_xtn2);
 }
 
 void
@@ -1576,6 +2032,34 @@ DispatcherA64::decodeBitMasks(size_t m, bool immN, uint64_t immS/*6 bits*/, uint
     std::cerr <<"ROBB: returning wmask=" <<StringUtility::toBinary(wmask) <<", tmask=" <<StringUtility::toBinary(tmask) <<"\n";
 #endif
     return std::make_pair(wmask, tmask);
+}
+
+void
+DispatcherA64::bitfieldMove(RiscOperators *ops, SgAsmExpression *dstExpr, SgAsmExpression *srcExpr, bool n,
+                            uint64_t immR, uint64_t immS) {
+    ASSERT_not_null(dstExpr);
+    ASSERT_not_null(srcExpr);
+    ASSERT_require(dstExpr->get_nBits() == srcExpr->get_nBits());
+
+    size_t dataSize = dstExpr->get_nBits();
+    auto wtmasks = decodeBitMasks(dataSize, n, immS, immR, false);
+    SValuePtr wmask = ops->number_(dataSize, wtmasks.first);
+    SValuePtr tmask = ops->number_(dataSize, wtmasks.second);
+
+    SValuePtr src = read(srcExpr);
+    SValuePtr dst = read(dstExpr);
+
+    // Perform bitfield move on low bits
+    SValuePtr r = ops->number_(6, immR);
+    SValuePtr botLhs = ops->and_(dst, ops->invert(wmask));
+    SValuePtr botRhs = ops->and_(ops->rotateRight(src, r), wmask);
+    SValuePtr bot = ops->or_(botLhs, botRhs);
+
+    // Combine extension bits and result bits
+    SValuePtr combinedLhs = ops->and_(dst, ops->invert(tmask));
+    SValuePtr combinedRhs = ops->and_(bot, tmask);
+    SValuePtr combined = ops->or_(combinedLhs, combinedRhs);
+    write(dstExpr, combined);
 }
 
 void

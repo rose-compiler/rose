@@ -359,10 +359,10 @@ public:
      *  clear.
      *
      * @{ */
-    SValuePtr concatLoHi(const SValuePtr &lowBits, const SValuePtr &highBits) {
+    virtual SValuePtr concatLoHi(const SValuePtr &lowBits, const SValuePtr &highBits) {
         return concat(lowBits, highBits);
     }
-    SValuePtr concatHiLo(const SValuePtr &highBits, const SValuePtr &lowBits) {
+    virtual SValuePtr concatHiLo(const SValuePtr &highBits, const SValuePtr &lowBits) {
         return concat(lowBits, highBits);
     }
     /** @} */
@@ -381,6 +381,18 @@ public:
     /** Returns position of most significant set bit; zero when no bits are set. The return value will have the same width as
      * the operand, although this can be safely truncated to the log-base-2 + 1 width. */
     virtual SValuePtr mostSignificantSetBit(const SValuePtr &a) = 0;
+
+    /** Count leading zero bits.
+     *
+     *  Counts the number of consecutive clear bits starting with the msb. The return value is the same width as the
+     *  argument. */
+    virtual SValuePtr countLeadingZeros(const SValuePtr &a);
+
+    /** Count leading one bits.
+     *
+     *  Counts the number of consecutive set bits starting with the msb.  The return value is the same width as the
+     *  argument. */
+    virtual SValuePtr countLeadingOnes(const SValuePtr &a);
 
     /** Rotate bits to the left. The return value will have the same width as operand @p a.  The @p nbits is interpreted as
      *  unsigned. The behavior is modulo the width of @p a regardles of whether the implementation makes that a special case or
