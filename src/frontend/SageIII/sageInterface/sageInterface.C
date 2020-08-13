@@ -12310,36 +12310,41 @@ bool SageInterface::mergeAssignmentWithDeclaration(SgExprStatement* assign_stmt,
 bool SageInterface::mergeDeclarationWithAssignment(SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
 {
   bool rt= true;
-  ROSE_ASSERT(decl != NULL);
-  ROSE_ASSERT(assign_stmt != NULL);
 
   // Sanity check of assign statement: must be a form of var = xxx;
+  ROSE_ASSERT(assign_stmt != NULL);
   SgAssignOp * assign_op = isSgAssignOp (assign_stmt->get_expression());
   if (assign_op == NULL)
     return false;
   SgVarRefExp* assign_op_var = isSgVarRefExp(assign_op->get_lhs_operand());
-  if (assign_op_var == NULL) return false;
+  if (assign_op_var == NULL)
+    return false;
 
   // Sanity check of the variable declaration: it should not have an existing initializer
+  ROSE_ASSERT(decl != NULL);
   SgInitializedName * decl_var = SageInterface::getFirstInitializedName (decl);
-  if (decl_var->get_initptr()!= NULL ) return false;
+  if (decl_var->get_initptr()!= NULL)
+     return false;
 
   // check if two variables match
   // In translation, it is possible the declaration has not yet been inserted into its scope.
   // finding its symbol can return NULL.
   // But we still want to do the merge.
+  ROSE_ASSERT(decl_var != NULL);
   SgSymbol* decl_var_symbol = decl_var->get_symbol_from_symbol_table();
-  if (decl_var_symbol!=NULL)
-  {
+  if (decl_var_symbol != NULL) {
     // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
-    // if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
-    if (assign_op_var->get_symbol() != decl_var_symbol)  return false;
+    // if (assign_op_var->get_symbol() != decl_var_symbol)
+    //    return NULL;
+    if (assign_op_var->get_symbol() != decl_var_symbol)
+       return false;
   }
   else
   { // fallback to comparing variable names instead
     // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
     // if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL;
-    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return false;
+    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name())
+       return false;
   }
 
   // Everything looks fine now. Do the merge.
