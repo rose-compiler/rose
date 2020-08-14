@@ -11148,7 +11148,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
 }
 
 // Rasmussen (2/20/2020): Added builder for Jovial fixed type
-SgTypeFixed* SageBuilder::buildFixedType(SgExpression* fraction, SgExpression* scale)
+SgTypeFixed* SageBuilder::buildFixedType(SgExpression* scale, SgExpression* fraction)
 {
   SgTypeFixed * result = SgTypeFixed::createType(scale, fraction);
   ROSE_ASSERT(result);

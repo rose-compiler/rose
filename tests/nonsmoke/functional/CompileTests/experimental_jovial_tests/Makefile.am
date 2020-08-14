@@ -54,8 +54,10 @@ JOVIAL_TESTCODES = \
  6_3_5_shift_function.jov               \
  6_3_6_abs_function.jov                 \
  6_3_10_nwdsen_function.jov             \
+ 9_0_directives.jov                     \
  rose-issue-1507.jov                    \
  rose-issue-1516.jov                    \
+ rose-issue-2100.jov                    \
  rose-issue-2143_j.jov                  \
  rose-issue-2775.jov                    \
  rose-issue-2776.jov                    \
@@ -83,8 +85,7 @@ JOVIAL_PARSER_TESTCODES = \
  5_1_1_integer-term.jov                 \
  5_2_1_relational_expressions_a.jov     \
  6_3_2_next_function_pointer.jov        \
- 6_3_2_next_function_status.jov         \
- 9_0_directives.jov
+ 6_3_2_next_function_status.jov
 
 COMPOOL_TESTCODES = \
  simple_compool.cpl                     \
@@ -110,7 +111,8 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-12.cpl                   \
  rose-issue-rc-14.cpl                   \
  rose-issue-rc-16.cpl                   \
- rose-issue-rc-49.cpl
+ rose-issue-rc-49.cpl                   \
+ rose-issue-rc-56.cpl
 
 COMPOOL_DIRECTIVE_TESTCODES = \
  9_1_compool_directive.cpl
@@ -165,7 +167,6 @@ JOVIAL_TESTCODES_PASS_TRAVERSE = \
  rose-issue-2144.cpl
 
 JOVIAL_TESTCODES_WORKING_ON = \
- rose-issue-2100.jov                    \
  rose-issue-2101.jov                    \
  rose-issue-2102.jov                    \
  rose-issue-2104.jov                    \
