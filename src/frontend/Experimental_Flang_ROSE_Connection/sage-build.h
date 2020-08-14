@@ -230,6 +230,7 @@ template<typename T> void Build(const Fortran::parser::       WhereConstruct&x, 
 template<typename T> void Build(const Fortran::parser::      ForallConstruct&x, T* scope);
 template<typename T> void Build(const Fortran::parser::    CompilerDirective&x, T* scope);
 template<typename T> void Build(const Fortran::parser::      OpenMPConstruct&x, T* scope);
+template<typename T> void Build(const Fortran::parser::     OpenACCConstruct&x, T* scope);
 template<typename T> void Build(const Fortran::parser::  OmpEndLoopDirective&x, T* scope);
 
 // DoConstruct
@@ -237,14 +238,15 @@ void Build(const Fortran::parser::NonLabelDoStmt&x, SgExpression* &expr);
 void Build(const Fortran::parser::   LoopControl&x, SgExpression* &expr);
 
 // SpecificationConstruct
-template<typename T> void Build(const Fortran::parser::            DerivedTypeDef&x, T* scope);
-template<typename T> void Build(const Fortran::parser::                   EnumDef&x, T* scope);
-template<typename T> void Build(const Fortran::parser::            InterfaceBlock&x, T* scope);
-template<typename T> void Build(const Fortran::parser::              StructureDef&x, T* scope);
-template<typename T> void Build(const Fortran::parser::    OtherSpecificationStmt&x, T* scope);
-template<typename T> void Build(const Fortran::parser::               GenericStmt&x, T* scope);
-template<typename T> void Build(const Fortran::parser::  ProcedureDeclarationStmt&x, T* scope);
-template<typename T> void Build(const Fortran::parser::OpenMPDeclarativeConstruct&x, T* scope);
+template<typename T> void Build(const Fortran::parser::             DerivedTypeDef&x, T* scope);
+template<typename T> void Build(const Fortran::parser::                    EnumDef&x, T* scope);
+template<typename T> void Build(const Fortran::parser::             InterfaceBlock&x, T* scope);
+template<typename T> void Build(const Fortran::parser::               StructureDef&x, T* scope);
+template<typename T> void Build(const Fortran::parser::     OtherSpecificationStmt&x, T* scope);
+template<typename T> void Build(const Fortran::parser::                GenericStmt&x, T* scope);
+template<typename T> void Build(const Fortran::parser::   ProcedureDeclarationStmt&x, T* scope);
+template<typename T> void Build(const Fortran::parser:: OpenMPDeclarativeConstruct&x, T* scope);
+template<typename T> void Build(const Fortran::parser::OpenACCDeclarativeConstruct&x, T* scope);
 
 // AttrSpec
 template<typename T> void Build(const Fortran::parser::               AccessSpec &x, T* scope);
