@@ -2308,12 +2308,13 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
 
                          if (nondefiningDeclaration == NULL)
                             {
+                              SgNode* parentNode = functionDeclaration->get_parent();
                            // DQ (9/13/2011): Reported as possible NULL value in static analysis of ROSE code.
-                              ROSE_ASSERT(functionDeclaration->get_parent() != NULL);
+                              ROSE_ASSERT(parentNode != NULL);
 
                               printf ("Error: nondefiningDeclaration == NULL for functionDeclaration = %p = %s \n",functionDeclaration,SageInterface::get_name(functionDeclaration).c_str());
                               printf ("   definingDeclaration = %p \n",definingDeclaration);
-                              printf ("   functionDeclaration->get_parent() = %p = %s \n",functionDeclaration->get_parent(),functionDeclaration->get_parent()->class_name().c_str());
+                              printf ("   functionDeclaration->get_parent() = %p = %s \n",parentNode,parentNode->class_name().c_str());
                             }
                          ROSE_ASSERT(nondefiningDeclaration != NULL);
 #if PRINT_DEVELOPER_WARNINGS
