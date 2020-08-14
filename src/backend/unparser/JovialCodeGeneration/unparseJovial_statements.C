@@ -989,13 +989,6 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgInitializer* init = initializedName->get_initializer();
      ASSERT_not_null(type);
 
-  // Type could be an SgModifierType, if so, save trouble and unwrap here
-     if (SgModifierType* modifier_type = isSgModifierType(type))
-        {
-           type = modifier_type->get_base_type();
-           ASSERT_not_null(type);
-        }
-
      info.set_inVarDecl();
 
   // pretty printing
@@ -1005,6 +998,13 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgClassDeclaration* type_decl = isSgClassDeclaration(type->getAssociatedDeclaration());
      if (type_decl) {
         is_block = (type_decl->get_class_type() == SgClassDeclaration::e_jovial_block);
+
+     // Type could be an SgModifierType, for tables and blocks, save trouble and unwrap here
+        if (SgModifierType* modifier_type = isSgModifierType(type))
+           {
+              type = modifier_type->get_base_type();
+              ASSERT_not_null(type);
+           }
      }
 
      bool type_has_base_type = false;
