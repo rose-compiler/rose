@@ -86,6 +86,7 @@ int main(int argc, char* argv[]) {
   ROSE_INITIALIZE;
   CodeThorn::initDiagnostics();
   cout<<"Woodpecker diagnostics initialized."<<endl;
+  CodeThorn::turnOffRoseWarnings();
   
   Rose::Diagnostics::mprefix->showProgramName(false);
   Rose::Diagnostics::mprefix->showThreadId(false);

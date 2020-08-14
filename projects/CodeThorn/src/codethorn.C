@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "rose.h"
@@ -90,7 +88,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.12.11";
+const std::string versionString="1.12.12";
 
 // handler for generating backtrace
 void handler(int sig) {
@@ -366,24 +364,8 @@ void configureRose() {
   Rose::Diagnostics::mprefix->showThreadId(false);
   Rose::Diagnostics::mprefix->showElapsedTime(false);
 
-  string turnOffRoseWarnings=string("Rose(none,>=error),Rose::EditDistance(none,>=error),Rose::FixupAstDeclarationScope(none,>=error),")
-    +"Rose::FixupAstSymbolTablesToSupportAliasedSymbols(none,>=error),"
-    +"Rose::EditDistance(none,>=error),"
-    +"Rose::TestChildPointersInMemoryPool(none,>=error),Rose::UnparseLanguageIndependentConstructs(none,>=error),"
-    +"rose_ir_node(none,>=error)";
-  // result string must be checked
-  string result=Rose::Diagnostics::mfacilities.control(turnOffRoseWarnings); 
-  if(result!="") {
-    cerr<<result<<endl;
-    cerr<<"Error in logger initialization."<<endl;
-    exit(1);
-  }
-
-  // see class Options in src/roseSupport/utility_functions.h
-  Rose::global_options.set_frontend_notes(false);
-  Rose::global_options.set_frontend_warnings(false);
-  Rose::global_options.set_backend_warnings(false);
-
+  CodeThorn::turnOffRoseWarnings();
+  
   signal(SIGSEGV, handler);   // install handler for backtrace
 }
 
@@ -978,9 +960,10 @@ int main( int argc, char * argv[] ) {
     }
 
     if(ctOpt.analysisList().size()>0) {
+      const bool reportDetectedErrorLines=true;
+      AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines);
       AnalysisReporting::generateAnalysisStatsRawData(ctOpt,analyzer);
       AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
-      AnalysisReporting::generateVerificationReports(ctOpt,analyzer);
     }
 
     long pstateSetSize=analyzer->getPStateSet()->size();

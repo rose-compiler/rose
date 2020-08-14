@@ -10,6 +10,7 @@ namespace CodeThorn
 class MemTransferFunctions : public CodeThorn::DFTransferFunctions {
 public:
   MemTransferFunctions();
+  void transferCondition(CodeThorn::Edge Edge, CodeThorn::Lattice& element);
   void transferExpression(CodeThorn::Label label, SgExpression* expr, CodeThorn::Lattice& element);
   void transferDeclaration(CodeThorn::Label label, SgVariableDeclaration* decl, CodeThorn::Lattice& element);
   void transferReturnStmtExpr(CodeThorn::Label label, SgExpression* expr, CodeThorn::Lattice& element);

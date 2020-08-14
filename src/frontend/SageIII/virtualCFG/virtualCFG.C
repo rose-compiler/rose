@@ -128,6 +128,7 @@ namespace VirtualCFG {
           s << "false";
           break;
         case eckCaseLabel:
+          ROSE_ASSERT(caseLabel() != NULL);
           s << caseLabel()->unparseToString();
           break;
         case eckDefault:
@@ -654,6 +655,7 @@ EdgeConditionKind CFGEdge::condition() const
     // Find positions of ancestors of "from" and "to" in children of "lca"
     unsigned int positionOfChild1, positionOfChild2;
     {
+      ROSE_ASSERT(lca != NULL);
       vector<SgNode*> children = lca->get_traversalSuccessorContainer();
       positionOfChild1 = src == lca ? (srcEnd ? children.size() : 0) :
                          find(children.begin(), children.end(),
@@ -762,7 +764,7 @@ EdgeConditionKind CFGEdge::condition() const
       return vector<SgInitializedName*>(); // Common case, since these cannot be arbitrary jumps
     }
     vector<SgInitializedName*> scopesLeaving;
-    if (srcNode->get_parent() == tgtNode && isSgScopeStatement(srcNode)) {
+    if ((srcNode->get_parent() == tgtNode) && (isSgScopeStatement(srcNode) != NULL)) {
       scopesLeaving = findVariablesDirectlyInScope(isSgScopeStatement(srcNode));
     } else if (srcNode->get_parent() == tgtNode || tgtNode->get_parent() == srcNode) {
       scopesLeaving = vector<SgInitializedName*>(); // We assume that these are consecutive program points

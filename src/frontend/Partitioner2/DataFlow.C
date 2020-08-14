@@ -658,7 +658,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
 }
 
 std::string
-TransferFunction::printState(const BaseSemantics::StatePtr &state) {
+TransferFunction::toString(const BaseSemantics::StatePtr &state) {
     if (!state)
         return "null state";
     std::ostringstream ss;

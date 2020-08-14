@@ -7338,21 +7338,33 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool incl
 
 bool SageInterface::isMain(const SgNode* n)
 {
- bool result = false;
- // Liao 1/5/2010, handle Fortran main entry: SgProgramHeaderStatement
- if (SageInterface::is_Fortran_language())
- {
-   if (isSgProgramHeaderStatement(n))
-     result = true;
- }
- else
- {
-   if (isSgFunctionDeclaration(n) &&
-       (SageInterface::is_Java_language() || isSgGlobal(isSgStatement(n)->get_scope())) &&
-       isSgFunctionDeclaration(n)->get_name() == "main")
-   result = true;
- }
-
+   bool result = false;
+   // Liao 1/5/2010, handle Fortran main entry: SgProgramHeaderStatement
+   if (SageInterface::is_Fortran_language()) {
+      if (isSgProgramHeaderStatement(n)) {
+         result = true;
+      }
+   }
+   else {
+      if (isSgFunctionDeclaration(n) != NULL) {
+         bool either = false;
+         if (SageInterface::is_Java_language()) {
+            either = true;
+         }
+         else {
+            ROSE_ASSERT(isSgStatement(n) != NULL);
+            if (isSgGlobal(isSgStatement(n)->get_scope())) {
+               either = true;
+            }
+         }
+         if (either) {
+            ROSE_ASSERT(isSgFunctionDeclaration(n) != NULL);
+            if (isSgFunctionDeclaration(n)->get_name() == "main") {
+               result = true;
+            }
+         }
+      }
+   }
    return result;
 }
 
@@ -10393,9 +10405,10 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
 void SageInterface::removeAllOriginalExpressionTrees(SgNode* top) {
   struct Visitor: public AstSimpleProcessing {
     virtual void visit(SgNode* n) {
-      if (isSgValueExp(n)) {
+      if (isSgValueExp(n) != NULL) {
         isSgValueExp(n)->set_originalExpressionTree(NULL);
-      } else if (isSgCastExp(n)) {
+      }
+      else if (isSgCastExp(n) != NULL) {
         isSgCastExp(n)->set_originalExpressionTree(NULL);
       }
     }
@@ -12297,36 +12310,41 @@ bool SageInterface::mergeAssignmentWithDeclaration(SgExprStatement* assign_stmt,
 bool SageInterface::mergeDeclarationWithAssignment(SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
 {
   bool rt= true;
-  ROSE_ASSERT(decl != NULL);
-  ROSE_ASSERT(assign_stmt != NULL);
 
   // Sanity check of assign statement: must be a form of var = xxx;
+  ROSE_ASSERT(assign_stmt != NULL);
   SgAssignOp * assign_op = isSgAssignOp (assign_stmt->get_expression());
   if (assign_op == NULL)
     return false;
   SgVarRefExp* assign_op_var = isSgVarRefExp(assign_op->get_lhs_operand());
-  if (assign_op_var == NULL) return false;
+  if (assign_op_var == NULL)
+    return false;
 
   // Sanity check of the variable declaration: it should not have an existing initializer
+  ROSE_ASSERT(decl != NULL);
   SgInitializedName * decl_var = SageInterface::getFirstInitializedName (decl);
-  if (decl_var->get_initptr()!= NULL ) return false;
+  if (decl_var->get_initptr()!= NULL)
+     return false;
 
   // check if two variables match
   // In translation, it is possible the declaration has not yet been inserted into its scope.
   // finding its symbol can return NULL.
   // But we still want to do the merge.
+  ROSE_ASSERT(decl_var != NULL);
   SgSymbol* decl_var_symbol = decl_var->get_symbol_from_symbol_table();
-  if (decl_var_symbol!=NULL)
-  {
+  if (decl_var_symbol != NULL) {
     // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
-    // if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
-    if (assign_op_var->get_symbol() != decl_var_symbol)  return false;
+    // if (assign_op_var->get_symbol() != decl_var_symbol)
+    //    return NULL;
+    if (assign_op_var->get_symbol() != decl_var_symbol)
+       return false;
   }
   else
   { // fallback to comparing variable names instead
     // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
     // if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL;
-    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return false;
+    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name())
+       return false;
   }
 
   // Everything looks fine now. Do the merge.
@@ -13614,7 +13632,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                               const bool stmt_present = (p->get_loop_body() == targetStmt || p->get_test() == targetStmt);
 
                           // \pp \todo what if !stmt_present
-                              ROSE_ASSERT(stmt_present);
+                              ROSE_ASSERT(stmt_present != NULL);
                               insertStatement(p, newStmt, insertBefore);
                             }
                            else
@@ -13629,6 +13647,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                                else
                                  {
                                 // It appears that all of the recursive calls are untimately calling this location.
+                                   ROSE_ASSERT(isSgStatement(parent) != NULL);
                                    isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
                                  }
                             }
@@ -19436,7 +19455,7 @@ SageInterface::deleteAST ( SgNode* n )
                                 /remove SgFunctionSymbol
                                 /////////////////////////////////////////////////*/
 
-                                if(isSgFunctionDeclaration(node) && isSgMemberFunctionDeclaration(node)==NULL){
+                                if ((isSgFunctionDeclaration(node) != NULL) && (isSgMemberFunctionDeclaration(node) == NULL)){
                                         if(isSgFunctionDeclaration(node)->get_scope()!=NULL){
                                              if(isSgFunctionDeclaration(node)->get_scope()->get_symbol_table()!=NULL)
                                                 {
@@ -22483,6 +22502,7 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
       {
         // we move int i; to be for (int i=0; ...);
         SgForStatement* stmt = isSgForStatement (target_scope);
+        ROSE_ASSERT(stmt != NULL);
         SgStatementPtrList& stmt_list = stmt->get_init_stmt();
         // Try to match a pattern like for (i=0; ...) here
         // assuming there is only one assignment like i=0

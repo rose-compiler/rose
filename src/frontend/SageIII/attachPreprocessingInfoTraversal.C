@@ -2335,6 +2335,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #else
                             SgLocatedNode* targetNode = previousLocatedNode;
 #endif
+                            ROSE_ASSERT(targetNode != NULL);
                          // printf ("In SgFile: previousLocNodePtr = %s \n",previousLocNodePtr->sage_class_name());
                          // printf ("In SgSourceFile: initial value of targetNode = %p = %s \n",targetNode,targetNode->class_name().c_str());
 
@@ -2349,6 +2350,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                     }
                                }
 
+                            ROSE_ASSERT(targetNode->get_file_info() != NULL);
                          // This case appears for test2008_08.f90: the SgProgramHeaderStatement is not present in the source code
                          // so we can't attach a comment to it.
                          // if (targetNode->get_file_info()->get_file_id() < 0)
@@ -2369,7 +2371,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                               // DQ (9/25/2013): FIXME: I don't like this design using a break statement at this specific location (in the middle of the case implementation) in this case.
                                  break;
-                                 
+
                               // return returnSynthesizeAttribute;
                                }
 

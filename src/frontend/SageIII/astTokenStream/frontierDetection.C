@@ -667,6 +667,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
 #if 0
                     printf ("Adding attribute: test 3: blue \n");
 #endif
+                    ROSE_ASSERT(statement != NULL);
                     statement->setAttribute(name,attribute);
                   }
              }

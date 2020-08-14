@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "sage3basic.h"
@@ -369,6 +367,10 @@ string EStateSet::toString(VariableIdMapping* variableIdMapping) const {
   return ss.str();
 }
 
+std::string EState::labelString() const {
+  return "L"+label().toString();
+}
+
 bool EState::isApproximatedBy(const EState* other) const {
   ROSE_ASSERT(label()==other->label()); // ensure same location
   ROSE_ASSERT(constraints()==other->constraints()); // pointer equality
@@ -379,6 +381,52 @@ bool EState::isApproximatedBy(const EState* other) const {
   return pstate()->isApproximatedBy(*const_cast<PState*>(other->pstate())) && (io.isBot()||(io==other->io));
 }
 
-std::string EState::labelString() const {
-  return "L"+label().toString();
+// required for PropertyState
+bool EState::approximatedBy(PropertyState& other) const {
+  // This function is always read only
+  // EStates are used in hash sets and therefore only const pointers exist
+  return isApproximatedBy(const_cast<const EState*>(&dynamic_cast<EState&>(other)));
 }
+// required for PropertyState
+bool EState::isBot() const {
+  // dummy implementation - TODO
+  return false;
+}
+// required for PropertyState
+void EState::combine(PropertyState& other0) {
+  // see Amalyzer::combine for original implementation
+  EState& other=dynamic_cast<EState&>(other0);
+  ROSE_ASSERT(label()==other.label());
+  ROSE_ASSERT(constraints()==other.constraints()); // pointer equality
+  if(callString!=other.callString) {
+    cerr<<"combining estates with different callstrings at label:"<<this->label().toString()<<endl;
+    cerr<<"cs1: "<<this->callString.toString()<<endl;
+    cerr<<"cs2: "<<other.callString.toString()<<endl;
+  }
+
+  // updates of four entries: label,callstring,pstate,io:
+
+  // (1) this->label remains unchanged
+
+  // (2) this->callString remains unchanged
+
+  // (3) updated pstate entry
+  PState ps1=*this->pstate();
+  PState ps2=*other.pstate();
+  PState newPState=PState::combine(ps1,ps2);
+  // allowing in-place update for framework not maintaining a state set, not compatible with use in sorted containers
+  *(const_cast<PState*>(this->pstate()))=newPState; 
+
+  // (4) update IO entry
+  InputOutput newIO;
+  if(this->io.isBot()) {
+    this->io=other.io;
+  } else if(other.io.isBot()) {
+    // this->io remains unchanged
+  } else {
+    ROSE_ASSERT(this->io==other.io);
+    // this->io remains unchanged
+  }
+  
+}
+

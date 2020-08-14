@@ -14,17 +14,20 @@ namespace CodeThorn {
 class DFTransferFunctions {
 public:
   DFTransferFunctions();
-  CodeThorn::Labeler* getLabeler() { return _programAbstractionLayer->getLabeler(); }
-  VariableIdMapping* getVariableIdMapping() { return _programAbstractionLayer->getVariableIdMapping(); }
+  virtual CodeThorn::Labeler* getLabeler() { return _programAbstractionLayer->getLabeler(); }
+  virtual VariableIdMapping* getVariableIdMapping() { return _programAbstractionLayer->getVariableIdMapping(); }
   virtual void setProgramAbstractionLayer(CodeThorn::ProgramAbstractionLayer* pal) {_programAbstractionLayer=pal; }
   // allow for some pointer analysis to be used directly
   virtual void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pointerAnalysisInterface) { _pointerAnalysisInterface=pointerAnalysisInterface; }
   CodeThorn::PointerAnalysisInterface* getPointerAnalysisInterface() { return _pointerAnalysisInterface; }
 
+  // this is the main transfer function
   virtual void transfer(CodeThorn::Edge edge, Lattice& element);
   virtual void transferCondition(Edge edge, Lattice& element);
 
+  // called for those nodes that are not conditionals and selection on edge annotations is not necessary
   virtual void transfer(CodeThorn::Label lab, Lattice& element);
+
   virtual void transferExpression(CodeThorn::Label label, SgExpression* expr, Lattice& element);
   virtual void transferEmptyStmt(CodeThorn::Label label, SgStatement* stmt, Lattice& element);
   virtual void transferDeclaration(CodeThorn::Label label, SgVariableDeclaration* decl, Lattice& element);
@@ -44,7 +47,6 @@ public:
   VariableId getParameterVariableId(int paramNr);
   VariableId getResultVariableId();
   bool isExternalFunctionCall(Label l);
-  //protected:
  public:
   CodeThorn::PointerAnalysisInterface* _pointerAnalysisInterface;
   virtual void setSkipUnknownFunctionCalls(bool flag);

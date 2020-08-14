@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #ifndef DFANALYSISBASE_H
@@ -54,11 +52,11 @@ class DFAnalysisBase {
 #if 0
   void attachResultsToAst(string);
 #endif
-  Labeler* getLabeler() const;
-  CFAnalysis* getCFAnalyzer();
-  VariableIdMappingExtended* getVariableIdMapping();
-  FunctionIdMapping* getFunctionIdMapping();
-  Flow* getFlow() const;
+  virtual Labeler* getLabeler() const;
+  virtual CFAnalysis* getCFAnalyzer();
+  virtual VariableIdMappingExtended* getVariableIdMapping();
+  virtual FunctionIdMapping* getFunctionIdMapping();
+  virtual Flow* getFlow() const;
   virtual Lattice* getPreInfo(Label lab);
   virtual Lattice* getPostInfo(Label lab);
   void attachInInfoToAst(string attributeName);

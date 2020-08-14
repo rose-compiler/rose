@@ -3,6 +3,7 @@
 
 #include "commandline_processing.h"
 
+#include <BitOps.h>
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -298,7 +299,19 @@ ROSE_UTIL_API std::string addrToString(const Sawyer::Container::IntervalSet<Sawy
                                        size_t nbits = 0);
 
 
-
+/** Convert a number to a binary string. */
+template<typename Unsigned>
+std::string toBinary(Unsigned value, size_t nBits = 0, size_t groupSize = 4, const std::string groupSeparator = "_") {
+    if (0 == nBits)
+        nBits = BitOps::nBits(value);
+    std::string retval;
+    for (size_t i = nBits; i > 0; --i) {
+        retval += BitOps::bit(value, i-1) ? '1' : '0';
+        if (groupSize > 0 && i > 1 && (i-1) % groupSize == 0)
+            retval += groupSeparator;
+    }
+    return retval;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Number parsing

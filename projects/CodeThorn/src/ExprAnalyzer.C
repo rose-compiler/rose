@@ -1,13 +1,11 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "sage3basic.h"
 #include "ExprAnalyzer.h"
 #include "CodeThornException.h"
-#include "Analyzer.h" // dependency on process-functions
+#include "Analyzer.h" // dependency on analyzer->transferAssignOp 
 #include "CppStdUtilities.h"
 #include "CodeThornCommandLineOptions.h"
 #include "CodeThornLib.h"

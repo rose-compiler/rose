@@ -39,6 +39,10 @@ concept CallContext
   
   /// updates the call context according to the function call invocation at @ref lab
   void callInvoke(const Labeler&, Label lab);
+  
+  /// compares the postfix of two call strings. 
+  ///   if true, a call would require merging lattices 
+  bool mergedAfterCall(const InfiniteCallString& cand) const;
 
   /// defines a strict weak ordering on call contexts.
   friend
@@ -114,6 +118,9 @@ struct InfiniteCallString : private std::vector<Label>
     bool callerOf(const InfiniteCallString& target, Label callsite) const;
     void callInvoke(const Labeler&, Label lbl);
     void callReturn(Labeler& labeler, Label lbl);
+
+    /// Always false for infinite call strings.
+    bool mergedAfterCall(const InfiniteCallString& cand) const;
 
     friend
     std::ostream&
@@ -562,6 +569,9 @@ struct FiniteCallString
     /// \post
     ///   size() == pre.size()-1
     void callReturn(Labeler& labeler, Label lbl);
+    
+    /// compares the last n-1 elements with the same elements in @cand
+    bool mergedAfterCall(const FiniteCallString& cand) const;
 
     friend
     std::ostream&

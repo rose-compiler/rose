@@ -118,6 +118,7 @@ public:
     SgExpression *popExpression() {
         SgNode *n = pop();
         if (! isSgExpression(n)) {
+            ROSE_ASSERT(isSgClassDefinition(n) != NULL);
             cerr << "Invalid attempt to pop a Component node of type "
                      << (isSgClassDefinition(n) ? isSgClassDefinition(n) -> get_qualified_name().getString() : n -> class_name())
                      << " as an SgExpression"
@@ -168,16 +169,16 @@ public:
 class ScopeStack : private list<SgScopeStatement *> {
 public:
     void push(SgScopeStatement *n) {
-if (isSgLocatedNode(n) && n != globalScope) {
-Sg_File_Info *file_info = isSgLocatedNode(n) -> get_startOfConstruct();
-if (file_info == NULL)
-cout << "Null file_info found while pushing scope node " << n -> class_name() << endl;
-else if (file_info -> get_filenameString().size() == 0)
-cout << "file_info with null string found while pushing scope node " << n -> class_name() << endl;
-//else 
-//cout << "file_info with file: " << file_info -> get_filenameString() << ", found while pushing scope node " << n -> class_name() << endl;
-cout.flush();
-}
+        if ((isSgLocatedNode(n) != NULL) && n != globalScope) {
+           Sg_File_Info *file_info = isSgLocatedNode(n) -> get_startOfConstruct();
+           if (file_info == NULL)
+              cout << "Null file_info found while pushing scope node " << n -> class_name() << endl;
+           else if (file_info -> get_filenameString().size() == 0)
+              cout << "file_info with null string found while pushing scope node " << n -> class_name() << endl;
+         //else 
+         //cout << "file_info with file: " << file_info -> get_filenameString() << ", found while pushing scope node " << n -> class_name() << endl;
+           cout.flush();
+        }
         if (SgProject::get_verbose() > 0) {
             cerr << "***Pushing Stack node ";
             if (isSgClassDefinition(n))
@@ -208,13 +209,14 @@ cout.flush();
 }
        if (SgProject::get_verbose() > 0) {
             cerr << "***Popping Stack node ";
-            if (isSgClassDefinition(n))
+            if (isSgClassDefinition(n) != NULL)
                  cerr << isSgClassDefinition(n) -> get_qualified_name().getString();
-            else if (isSgFunctionDefinition(n))
+            else if (isSgFunctionDefinition(n) != NULL)
                  cerr << isSgFunctionDefinition(n) -> get_declaration() -> get_name().getString();
-            else if (isSgFunctionDefinition(n))
+            else if (isSgFunctionDefinition(n) != NULL)
                  cerr << isSgFunctionDefinition(n) -> get_declaration() -> get_name().getString();
-            else cerr << n -> class_name();
+            else
+                 cerr << n -> class_name();
             cerr << endl;
             cerr.flush();
         }

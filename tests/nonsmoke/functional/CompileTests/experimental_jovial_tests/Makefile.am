@@ -99,12 +99,18 @@ COMPOOL_TESTCODES = \
  rose-issue-2687.cpl                    \
  rose-issue-2690.cpl                    \
  rose-issue-2691.cpl                    \
+ rose-issue-2698.cpl                    \
  rose-issue-2701.cpl                    \
  rose-issue-2702.cpl                    \
  rose-issue-2766.cpl                    \
  rose-issue-2777.cpl                    \
+ rose-issue-rc-6.cpl                    \
+ rose-issue-rc-7.cpl                    \
  rose-issue-rc-9.cpl                    \
- rose-issue-rc-16.cpl
+ rose-issue-rc-12.cpl                   \
+ rose-issue-rc-14.cpl                   \
+ rose-issue-rc-16.cpl                   \
+ rose-issue-rc-49.cpl
 
 COMPOOL_DIRECTIVE_TESTCODES = \
  9_1_compool_directive.cpl
