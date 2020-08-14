@@ -59,17 +59,17 @@ std::optional<SourcePosition> FirstSourcePosition(const parser::SpecificationPar
 #endif
    }
 
-   const auto & use_stmts{std::get<1>(x.t)};
+   const auto & use_stmts{std::get<std::list<parser::Statement<common::Indirection<parser::UseStmt>>>>(x.t)};
    if (use_stmts.size() > 0) {
       return std::optional<SourcePosition>{BuildSourcePosition(use_stmts.front(), Order::begin)};
    }
 
-   const auto & import_stmts{std::get<2>(x.t)};
+   const auto & import_stmts{std::get<std::list<parser::Statement<common::Indirection<parser::ImportStmt>>>>(x.t)};
    if (import_stmts.size() > 0) {
       return std::optional<SourcePosition>{BuildSourcePosition(import_stmts.front(), Order::begin)};
    }
 
-   const auto & implicit_part_stmts{std::get<3>(x.t).v};
+   const auto & implicit_part_stmts{std::get<parser::ImplicitPart>(x.t).v};
    if (implicit_part_stmts.size() > 0) {
       std::cout << "... implicit_part_stmts list count is " << implicit_part_stmts.size() << "\n";
       //      const auto & implicit_part_stmt
@@ -194,10 +194,10 @@ void Build(const parser::SpecificationPart &x, T* scope)
 {
    std::cout << "Rose::builder::Build(SpecificationPart)\n";
 
-   const auto & implicit_part = std::get<3>(x.t);
+   const auto & implicit_part = std::get<parser::ImplicitPart>(x.t);
    Build(implicit_part, scope);
 
-   const auto & decl_construct = std::get<4>(x.t);
+   const auto & decl_construct = std::get<std::list<parser::DeclarationConstruct>>(x.t);
    Build(decl_construct, scope);
 
 }
@@ -238,7 +238,7 @@ void Build(const parser::ExecutableConstruct &x, T* scope)
                 { Build(y.statement.value(), scope); },
          // common:: Indirection - AssociateConstruct, BlockConstruct, CaseConstruct, ChangeTeamConstruct,
          // CriticalConstruct, DoConstruct, IfConstruct, SelectRankConstruct, SelectTypeConstruct,
-         // WhereConstruct, ForallConstruct, CompilerDirective, OpenMPConstruct, OmpEndLoopDirective
+         // WhereConstruct, ForallConstruct, CompilerDirective, OpenMPConstruct, OpenACCConstruct, OmpEndLoopDirective
          [&] (const auto &y) { Build(y.value(), scope); },
       },
       x.u);
@@ -608,9 +608,13 @@ void Build(const parser::ImplicitPartStmt &x, T* scope)
 {
    std::cout << "Rose::builder::Build(ImplicitPartStmt)\n";
 
-   // Statement<common::Indirection<> - ImplicitStmt, ParameterStmt, OldParameterStmt, FormatStmt, EntryStmt
-   auto ImplicitPartStmtVisitor = [&] (const auto &y) { Build(y.statement.value(), scope); };
-   std::visit(ImplicitPartStmtVisitor, x.u);
+   std::visit(
+      common::visitors{
+         [&](const common::Indirection<parser::CompilerDirective> &y) { Build(y.value(), scope); },
+         // Statement<common::Indirection<> - ImplicitStmt, ParameterStmt, OldParameterStmt, FormatStmt, EntryStmt
+         [&](const auto &y) { Build(y.statement.value(), scope); },
+      },
+      x.u);
 }
 
 template<typename T>
@@ -657,12 +661,13 @@ void Build(const parser::SpecificationConstruct &x, T* scope)
 
    std::visit(
       common::visitors{
-         [&](const common::Indirection<parser::DerivedTypeDef> &y)             { Build(y.value(), scope); },
-         [&](const common::Indirection<parser::EnumDef> &y)                    { Build(y.value(), scope); },
-         [&](const common::Indirection<parser::InterfaceBlock> &y)             { Build(y.value(), scope); },
-         [&](const common::Indirection<parser::StructureDef> &y)               { Build(y.value(), scope); },
-         [&](const common::Indirection<parser::CompilerDirective> &y)          { Build(y.value(), scope); },
-         [&](const common::Indirection<parser::OpenMPDeclarativeConstruct> &y) { Build(y.value(), scope); },
+         [&](const common::Indirection<parser::DerivedTypeDef> &y)              { Build(y.value(), scope); },
+         [&](const common::Indirection<parser::EnumDef> &y)                     { Build(y.value(), scope); },
+         [&](const common::Indirection<parser::InterfaceBlock> &y)              { Build(y.value(), scope); },
+         [&](const common::Indirection<parser::StructureDef> &y)                { Build(y.value(), scope); },
+         [&](const common::Indirection<parser::CompilerDirective> &y)           { Build(y.value(), scope); },
+         [&](const common::Indirection<parser::OpenMPDeclarativeConstruct>  &y) { Build(y.value(), scope); },
+         [&](const common::Indirection<parser::OpenACCDeclarativeConstruct> &y) { Build(y.value(), scope); },
          [&](const parser::Statement<parser::OtherSpecificationStmt> &y)     { Build(y.statement, scope); },
          // Statement<common::Indirection<>> - GenericStmt, ParameterStmt,
          // OldParameterStmt, ProcedureDeclarationStmt, TypeDeclarationStmt
@@ -1871,6 +1876,12 @@ void Build(const parser::OpenMPConstruct&x, T* scope)
 }
 
 template<typename T>
+void Build(const parser::OpenACCConstruct&x, T* scope)
+{
+   std::cout << "Rose::builder::Build(OpenACConstruct)\n";
+}
+
+template<typename T>
 void Build(const parser::OmpEndLoopDirective&x, T* scope)
 {
    std::cout << "Rose::builder::Build(OmpEndLoopDirective)\n";
@@ -1985,6 +1996,12 @@ template<typename T>
 void Build(const parser::OpenMPDeclarativeConstruct&x, T* scope)
 {
    std::cout << "Rose::builder::Build(OpenMPDeclarativeConstruct)\n";
+}
+
+template<typename T>
+void Build(const parser::OpenACCDeclarativeConstruct&x, T* scope)
+{
+   std::cout << "Rose::builder::Build(OpenACCDeclarativeConstruct)\n";
 }
 
    // AttrSpec
