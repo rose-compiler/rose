@@ -736,8 +736,15 @@ HEADER_ACCESS_MODIFIER_START
                e_private   = 1,        /*!< private access (local to class members) */
                e_protected = 2,        /*!< protected access (local to class members and membrs of derived classes) */
                e_public    = 3,        /*!< public access (access within enclosing namespace) */
+#if 0
+            // DQ (8/11/2020): Original code.
                e_default   = e_public, /*!< default value (public access) */  /*NO_STRINGIFY*/
                e_undefined = 4,        /*!< fortran default value */
+#else
+            // DQ (8/11/2020): new code for bug Cxx_tests/test2020_28.C.
+               e_default   = 4,        /*!< default value (public access) */  /*NO_STRINGIFY*/
+               e_undefined = 5,        /*!< fortran default value */
+#endif
                e_last_modifier         /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -7160,7 +7167,9 @@ HEADER_UNPARSE_INFO_START
                a_unset_access     = 1, /*!< default value */
                a_private_access   = 2, /*!< private access value */
                a_protected_access = 3, /*!< protected access value */
-               a_public_access    = 4  /*!< public access value */
+               a_public_access    = 4,  /*!< public access value */
+            // DQ (8/12/2020): added a new value to support when this is not set explicitly (see Cxx_tests/test2020_28.C).
+               a_default_access   = 5  /*!< public access value */
              };
 
      private:
@@ -7181,6 +7190,10 @@ HEADER_UNPARSE_INFO_START
           void set_isProtectedAccess();
           bool isPublicAccess() const;
           void set_isPublicAccess();
+
+       // DQ (8/12/2020): Adding a default value for when it is not set explicitly.
+          bool isDefaultAccess() const;
+          void set_isDefaultAccess();
 
           bool isPointerToSomething() const;
           void set_isPointerToSomething();
@@ -19928,6 +19941,17 @@ SgUnparse_Info::isPublicAccess() const
 void
 SgUnparse_Info::set_isPublicAccess()
    { p_access_attribute = a_public_access; }  
+
+// DQ (8/12/2020): Adding a default value for when it is not set explicitly.
+bool
+SgUnparse_Info::isDefaultAccess() const
+   { return p_access_attribute == a_default_access; }
+
+void
+SgUnparse_Info::set_isDefaultAccess()
+   { p_access_attribute = a_default_access; }  
+
+
 
 bool
 SgUnparse_Info::isPointerToSomething() const

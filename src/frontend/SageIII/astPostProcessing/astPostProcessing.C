@@ -224,6 +224,12 @@ void postProcessingSupport (SgNode* node)
           SageInterface::checkForInitializers(node);
 #endif
 
+#if 0
+       // DQ (8/12/2020): Adding support for debugging access permissions (see Cxx_tests/test2020_28.C).
+          printf ("Calling checkAccessPermissions() at START of astPostprocessing \n");
+          SageInterface::checkAccessPermissions(node);
+#endif
+
 // DQ (10/27/2015): Added test to detect cycles in typedef types.
 #define DEBUG_TYPEDEF_CYCLES 0
 
@@ -679,6 +685,12 @@ void postProcessingSupport (SgNode* node)
           SageInterface::checkForInitializers(node);
 #endif
 
+#if 0
+       // DQ (8/12/2020): Adding support for debugging access permissions (see Cxx_tests/test2020_28.C).
+          printf ("Calling checkAccessPermissions() at END of astPostprocessing \n");
+          SageInterface::checkAccessPermissions(node);
+#endif
+
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("DONE: Postprocessing AST build using new EDG/Sage Translation Interface. \n");
 #endif
@@ -1002,7 +1014,6 @@ void postProcessingSupport (SgNode* node)
                        }
                   }
              }
-
         }
    }
 
