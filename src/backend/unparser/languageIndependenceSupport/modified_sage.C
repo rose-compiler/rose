@@ -1389,11 +1389,21 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
      printf ("info.isPrivateAccess()   = %s \n",info.isPrivateAccess()   ? "true" : "false");
      printf ("info.isProtectedAccess() = %s \n",info.isProtectedAccess() ? "true" : "false");
      printf ("info.isPublicAccess()    = %s \n",info.isPublicAccess()    ? "true" : "false");
-  // printf ("info.isDefaultAccess()   = %s \n",info.isDefaultAccess()   ? "true" : "false");
+     printf ("info.isDefaultAccess()   = %s \n",info.isDefaultAccess()   ? "true" : "false");
+
+     if (decl_stmt == decl_stmt->get_definingDeclaration())
+        {
+          printf ("decl_stmt = %p is the DEFINING declaration \n",decl_stmt);
+        }
+       else
+        {
+          printf ("decl_stmt = %p is the NON-defining declaration \n",decl_stmt);
+        }
 
      printf ("decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()   = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()   ? "true" : "false");
      printf ("decl_stmt->get_declarationModifier().get_accessModifier().isProtected() = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
      printf ("decl_stmt->get_declarationModifier().get_accessModifier().isPublic()    = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isPublic()    ? "true" : "false");
+     printf ("decl_stmt->get_declarationModifier().get_accessModifier().isDefault()   = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isDefault()   ? "true" : "false");
 #endif
 
      if (info.CheckAccess())
@@ -1431,19 +1441,39 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
                       // Initially for the first data member of a class, the info values for isPrivateAccess,
                       // isProtectedAccess, and isPublicAccess, are not set.  In this case the flag is set
                       // to true (here).  This forces the first access keyword to be output.
-                         flag = true;
+                      // flag = true;
+
+                         if (info.isDefaultAccess())
+                            {
+                           // If the current declaration access setting if different from the one stored in
+                           // info then set flag to true, so that the access specified will be output.
+                              if (!decl_stmt->get_declarationModifier().get_accessModifier().isDefault())
+                                 {
+                                // DQ (8/12/2020): test this line that was previously commented out.
+                                   flag = true;
+                                 }
+                            }
+                           else
+                            {
+                           // Initially for the first data member of a class, the info values for isPrivateAccess,
+                           // isProtectedAccess, and isPublicAccess, are not set.  In this case the flag is set
+                           // to true (here).  This forces the first access keyword to be output.
+                              flag = true;
+                            }
                        }
                   }
              }
 
        // Unset the access so it can be reset from an error value below
           info.set_isUnsetAccess();
+
 #if 0
        // Note that a better implementation would take the "flag" out of the 3 nested conditionals below.
           printf ("flag = %s \n",flag ? "true" : "false");
           printf ("decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()   = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()   ? "true" : "false");
           printf ("decl_stmt->get_declarationModifier().get_accessModifier().isProtected() = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
           printf ("decl_stmt->get_declarationModifier().get_accessModifier().isPublic()    = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isPublic()    ? "true" : "false");
+          printf ("decl_stmt->get_declarationModifier().get_accessModifier().isDefault()   = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isDefault()   ? "true" : "false");
 #endif
           if (decl_stmt->get_declarationModifier().get_accessModifier().isPrivate())
              {
@@ -1467,6 +1497,7 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
                   }
                  else
                   {
+#if 0
                  /* default, always print Public */
                     ROSE_ASSERT (decl_stmt->get_declarationModifier().get_accessModifier().isPublic() == true);
                     info.set_isPublicAccess();
@@ -1475,14 +1506,40 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
                          curprint( "public: ");
                       // printf ("Output PUBLIC keyword! \n");
                        }
+#else
+                 // DQ (8/12/2020): Default and Public are no longer the same thing.
+                    if (decl_stmt->get_declarationModifier().get_accessModifier().isPublic() == true)
+                       {
+                         info.set_isPublicAccess();
+                         if (flag)
+                            {
+                              curprint( "public: ");
+                           // printf ("Output PUBLIC keyword! \n");
+                            }
+                       }
+                      else
+                       {
+                      // default case, nothing to be output.
+                         if (decl_stmt->get_declarationModifier().get_accessModifier().isDefault() == true)
+                            {
+                              info.set_isDefaultAccess();
+                              if (flag)
+                                 {
+                                   curprint(" /* default access mode */ ");
+                                 }
+                            }
+                       }
+
+#endif
                   }
              }
 #if 0
           printf ("Was this reset: info.isPrivateAccess()   = %s \n",info.isPrivateAccess()   ? "true" : "false");
           printf ("Was this reset: info.isProtectedAccess() = %s \n",info.isProtectedAccess() ? "true" : "false");
           printf ("Was this reset: info.isPublicAccess()    = %s \n",info.isPublicAccess()    ? "true" : "false");
+          printf ("Was this reset: info.isDefaultAccess()   = %s \n",info.isDefaultAccess()    ? "true" : "false");
 #endif
-       // If must have been set to one of the three values (but not left unset
+       // If must have been set to one of the three values (but not left unset)
           ROSE_ASSERT(info.isUnsetAccess() == false);
         }
    }
@@ -1509,11 +1566,17 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
            printf ("/* output extern keyword */ \n");
 #endif
           curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
-          if (decl_stmt->isExternBrace())
+          if (decl_stmt->isExternBrace() == true)
              {
+#if 0
+                printf ("/* output extern brace */ \n");
+#endif
                curprint( "{ ");
              }
         }
+#if 0
+     printf ("Leaving outputExternLinkageSpecifier() decl_stmt = %p = %s decl_stmt->isExternBrace() = %s \n",decl_stmt,decl_stmt->class_name().c_str(),decl_stmt->isExternBrace() ? "true" : "false");
+#endif
    }
 
 void
@@ -1730,6 +1793,10 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
    {
   // DQ (8/29/2005): These specifiers have to be output in a different order for g++ 3.3.x and 3.4.x
 
+#if 0
+     printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): TOP \n");
+#endif
+
 #ifdef __GNUC__
    #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 3) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 4)
      outputTemplateSpecializationSpecifier(decl_stmt);
@@ -1763,7 +1830,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 #endif
 
 #if 0
-     printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): TOP \n");
+     printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): after initial calls \n");
 #endif
 
      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);
@@ -1778,6 +1845,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // ASSERT_not_null(functionDeclaration);
           if (functionDeclaration == NULL)
              {
+#if 0
+               printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): functionDeclaration == NULL: output friend keyword \n");
+#endif
                curprint( "friend ");
              }
 #else
@@ -1785,6 +1855,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
           ASSERT_not_null(functionDeclaration);
           ASSERT_not_null(functionDeclaration->get_parent());
           ASSERT_not_null(functionDeclaration->get_scope());
+
+#error "DEAD CODE!"
+
           if (functionDeclaration->get_parent() == functionDeclaration->get_scope())
              {
                curprint("friend ");
@@ -1832,6 +1905,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
             // curprint( "friend ");
                if (isSgClassDefinition(decl_stmt->get_parent()) != NULL)
                   {
+#if 0
+                    printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): functionDeclaration != NULL: output friend keyword \n");
+#endif
                     curprint( "friend ");
                   }
              }
@@ -2265,6 +2341,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
           curprint(decl_stmt->get_declarationModifier().get_microsoft_uuid_string());
           curprint("\")) ");
         }
+#if 0
+     printf ("Leaving printSpecifier2() \n");
+#endif
    }
 
 

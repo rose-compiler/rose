@@ -15242,7 +15242,9 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
   // unparsing, and specifically add a null declaration so that we can attach the #include directive directly to that statement.
      bool supportTokenUnparsing = false;
 
-    bool successful = false;
+ // DQ (8/12/2020): This is a compiler warning.
+ // bool successful = false;
+
     if (scope == NULL)
         scope = SageBuilder::topScopeStack();
     ROSE_ASSERT(scope);
@@ -15352,7 +15354,8 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
 #endif
               }
 
-           successful = true;
+        // DQ (8/12/2020): This is a compiler warning.
+        // successful = true;
            break;
          }
       }
@@ -15367,7 +15370,9 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
                 content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
        ROSE_ASSERT(result);
        globalScope->addToAttachedPreprocessingInfo(result,position);
-       successful = true;
+
+    // DQ (8/12/2020): This is a compiler warning.
+    // successful = true;
     }
 
  // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
@@ -15383,6 +15388,7 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
     // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
     // The caller function should decide what to do if insertion is failed: ignore vs. assert failure.
     //ROSE_ASSERT(successful==true);
+
     return result;
   }
 
@@ -18074,6 +18080,60 @@ SageInterface::lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::
    }
 
 
+void
+SageInterface::checkAccessPermissions ( SgNode* astNode )
+   {
+  // DQ (8/12/2020): Check the access permissions of all defining and nodefining declarations (debugging support for Cxx_tests/test2020_28.C).
+
+     class DeclarationTraversal : public AstSimpleProcessing
+        {
+          public:
+            // DeclarationTraversal() {}
+
+               void visit (SgNode* node)
+                  {
+                    SgDeclarationStatement* decl = isSgDeclarationStatement(node);
+                    if (decl != NULL)
+                       {
+                         SgDeclarationStatement* definingDeclaration         = isSgDeclarationStatement(decl->get_definingDeclaration());
+                         SgDeclarationStatement* firstNondefiningDeclaration = isSgDeclarationStatement(decl->get_firstNondefiningDeclaration());
+                         SgDeclarationStatement* otherDeclaration            = NULL;
+
+                      // Output access modifier information for each declaration.
+                         printf ("Found declaration = %p = %s name = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+                         if (decl != definingDeclaration && decl != firstNondefiningDeclaration)
+                            {
+                              otherDeclaration = decl;
+                            }
+
+                         if (definingDeclaration != NULL)
+                            {
+                              definingDeclaration->get_declarationModifier().get_accessModifier().display("definingDeclaration: accessModifier");
+                            }
+
+                         if (firstNondefiningDeclaration != NULL)
+                            {
+                              firstNondefiningDeclaration->get_declarationModifier().get_accessModifier().display("firstNondefiningDeclaration: accessModifier");
+                            }
+
+                         if (otherDeclaration != NULL)
+                            {
+                              otherDeclaration->get_declarationModifier().get_accessModifier().display("otherDeclaration: accessModifier");
+                            }
+
+                      // Adding space for formatting.
+                         printf ("\n");
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+     DeclarationTraversal traversal;
+     traversal.traverse(astNode, preorder);
+   }
+
+
+
 //! Generate copies for a list of declarations and insert them into a different targetScope.
 vector<SgDeclarationStatement*>
 generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& dependentDeclarations, SgScopeStatement* targetScope)
@@ -20494,7 +20554,11 @@ bool SageInterface::isUseByAddressVariableRef(SgVarRefExp* ref)
     if (isSgFunctionCallExp(grandparent)) // Is used as a function call's parameter
     {
       // find which parameter ref is in SgExpressionPtrList
-      int param_index =0;
+
+   // DQ (8/12/2020): This is a compiler warning where it is used below in comparision between signed and unsigned types.
+   // int param_index = 0;
+      size_t param_index = 0;
+
       SgExpressionPtrList expList = isSgExprListExp(ref->get_parent())->get_expressions();
       Rose_STL_Container<SgExpression*>::const_iterator iter= expList.begin();
       for (; iter!=expList.end(); iter++)
@@ -20516,7 +20580,7 @@ bool SageInterface::isUseByAddressVariableRef(SgVarRefExp* ref)
         // printf() has only two arguments to express variable arguments.
         // The third argument index ==2 will be out of bounds for nameList[index]
         // So we must check the bound first.
-        if (param_index>=nameList.size() ||isSgTypeEllipse(nameList[param_index]->get_type()) )
+        if (param_index >= nameList.size() ||isSgTypeEllipse(nameList[param_index]->get_type()) )
         {
           if (isSgReferenceType(ref))
             result = true;
