@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "EStateTransferFunctions.h"
 #include "Analyzer.h"
+#include "AstUtility.h"
 
 using namespace std;
 using namespace Sawyer::Message;
@@ -9,26 +10,6 @@ Sawyer::Message::Facility CodeThorn::EStateTransferFunctions::logger;
 
 namespace CodeThorn {
 
-  // utility function
-  SgNode* findExprNodeInAstUpwards(VariantT variant,SgNode* node) {
-    while(node!=nullptr&&isSgExpression(node)&&(node->variantT()!=variant)) {
-      node=node->get_parent();
-    }
-    if(node)
-      // if the search did not find the node and continued to the stmt level
-      // this check ensures that a nullptr is returned
-      return isSgExpression(node);
-    else
-      return nullptr;
-  }
-  CTIOLabeler* EStateTransferFunctions::getLabeler() {
-    ROSE_ASSERT(_analyzer);
-    return _analyzer->getLabeler();
-  }
-  VariableIdMappingExtended* EStateTransferFunctions::getVariableIdMapping() {
-    ROSE_ASSERT(_analyzer);
-    return _analyzer->getVariableIdMapping();
-  }
   EStateTransferFunctions::EStateTransferFunctions () {
     initDiagnostics();
   }
@@ -40,6 +21,14 @@ void EStateTransferFunctions::initDiagnostics() {
     Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
   }
 }
+  CTIOLabeler* EStateTransferFunctions::getLabeler() {
+    ROSE_ASSERT(_analyzer);
+    return _analyzer->getLabeler();
+  }
+  VariableIdMappingExtended* EStateTransferFunctions::getVariableIdMapping() {
+    ROSE_ASSERT(_analyzer);
+    return _analyzer->getVariableIdMapping();
+  }
   bool EStateTransferFunctions::getOptionOutputWarnings() {
     return _analyzer->getOptionOutputWarnings();
   }
@@ -658,7 +647,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
         // transferFunctions where the external function call is handled as an expression
         if(isFunctionCallWithAssignmentFlag) {
           // here only the specific format x=f(...) can exist
-          SgAssignOp* assignOp=isSgAssignOp(findExprNodeInAstUpwards(V_SgAssignOp,funCall));
+          SgAssignOp* assignOp=isSgAssignOp(AstUtility::findExprNodeInAstUpwards(V_SgAssignOp,funCall));
           ROSE_ASSERT(assignOp);
           return transferAssignOp(assignOp,edge,estate);
         } else {
@@ -678,7 +667,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
     }
     if(isFunctionCallWithAssignmentFlag) {
       // here only the specific format x=f(...) can exist
-      SgAssignOp* assignOp=isSgAssignOp(findExprNodeInAstUpwards(V_SgAssignOp,funCall));
+      SgAssignOp* assignOp=isSgAssignOp(AstUtility::findExprNodeInAstUpwards(V_SgAssignOp,funCall));
       ROSE_ASSERT(assignOp);
       return transferAssignOp(assignOp,edge,estate);
     } else {

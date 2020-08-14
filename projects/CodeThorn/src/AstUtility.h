@@ -21,7 +21,6 @@ namespace AstUtility {
   std::set<CodeThorn::AbstractValue> determineSetOfCompoundIncVars(CodeThorn::VariableIdMapping* vim, SgNode* astRoot);
   std::set<CodeThorn::VariableId> determineSetOfConstAssignVars2(CodeThorn::VariableIdMapping* vim, SgNode* astRoot);
   CodeThorn::AbstractValueSet determineVarsInAssertConditions(SgNode* node, CodeThorn::VariableIdMapping* variableIdMapping);
-
-  void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt);
+  SgNode* findExprNodeInAstUpwards(VariantT variant,SgNode* node);
 }
 #endif

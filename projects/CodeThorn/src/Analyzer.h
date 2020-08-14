@@ -155,13 +155,13 @@ namespace CodeThorn {
     ExprAnalyzer* getExprAnalyzer();
 
     // access  functions for computed information
-    VariableIdMappingExtended* getVariableIdMapping();
-    FunctionIdMapping* getFunctionIdMapping();
+    VariableIdMappingExtended* getVariableIdMapping() override;
+    FunctionIdMapping* getFunctionIdMapping() override;
     FunctionCallMapping* getFunctionCallMapping();
     FunctionCallMapping2* getFunctionCallMapping2();
     Label getFunctionEntryLabel(SgFunctionRefExp* funRefExp);
-    CTIOLabeler* getLabeler() const;
-    Flow* getFlow();
+    CTIOLabeler* getLabeler() const override;
+    Flow* getFlow(); // this is NOT overriding 'DFAnalysis::getFlow() const'
     CodeThorn::PStateSet* getPStateSet();
     EStateSet* getEStateSet();
     TransitionGraph* getTransitionGraph();

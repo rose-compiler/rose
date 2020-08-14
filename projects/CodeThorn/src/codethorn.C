@@ -58,9 +58,6 @@
 #include "z3-prover-connection/SSAGenerator.h"
 #include "z3-prover-connection/ReachabilityAnalyzerZ3.h"
 
-// ParProAutomata
-#include "ltlthorn-lib/ParProAutomata.h"
-
 #if defined(__unix__) || defined(__unix) || defined(unix)
 #include <sys/resource.h>
 #endif
@@ -203,17 +200,29 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
   }
 }
 
+void setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt) {
+  switch(int argVal=ctOpt.functionResolutionMode) {
+  case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
+  case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
+  case 3: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_ID_MAPPING;break;
+  case 4: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;break;
+  default: 
+    cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
+    exit(1);
+  }
+}
+
 void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
   cout << "------------------------------------------"<<endl;
   cout << "RUNNING CHECKS FOR EXPR ANALYZER:"<<endl;
   cout << "------------------------------------------"<<endl;
   SgProject* sageProject=frontend(argc,argv);
-  Normalization lowering;
+  Normalization normalization;
   if(ctOpt.normalizeAll) {
     if(ctOpt.quiet==false) {
       cout<<"STATUS: normalizing program."<<endl;
     }
-    lowering.normalizeAst(sageProject,2);
+    normalization.normalizeAst(sageProject,2);
   }
   ExprAnalyzer* exprAnalyzer=new ExprAnalyzer();
   VariableIdMappingExtended* vid=new VariableIdMappingExtended();
@@ -247,6 +256,123 @@ void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
   delete exprAnalyzer;
 }
 
+void processCtOptGenerateAssertions(CodeThornOptions& ctOpt, Analyzer* analyzer, SgProject* root) {
+  if (ctOpt.generateAssertions) {
+    AssertionExtractor assertionExtractor(analyzer);
+    assertionExtractor.computeLabelVectorOfEStates();
+    assertionExtractor.annotateAst();
+    AstAnnotator ara(analyzer->getLabeler());
+    ara.annotateAstAttributesAsCommentsBeforeStatements  (root,"ctgen-pre-condition");
+    SAWYER_MESG(logger[TRACE]) << "STATUS: Generated assertions."<<endl;
+  }
+}
+
+IOAnalyzer* createAnalyzer(CodeThornOptions& ctOpt, LTLOptions& ltlOpt) {
+  IOAnalyzer* analyzer;
+  if(ctOpt.dr.checkShuffleAlgorithm) {
+    analyzer = new ReadWriteAnalyzer();
+  } else {
+    analyzer = new IOAnalyzer();
+  }
+  analyzer->setOptions(ctOpt);
+  analyzer->setLtlOptions(ltlOpt);
+  return analyzer;
+}
+
+void internalChecks(CodeThornOptions& ctOpt, int argc, char * argv[]) {
+  if(ctOpt.internalChecks) {
+    if(CodeThorn::internalChecks(argc,argv)==false) {
+      mfacilities.shutdown();
+      exit(1);
+    } else {
+      mfacilities.shutdown();
+      exit(0);
+    }
+  }
+}
+
+
+void runInlinerIfRequested(CodeThornOptions& ctOpt, Normalization& normalization, SgProject* sageProject) {
+  if(ctOpt.inlineFunctions) {
+    InlinerBase* inliner=normalization.getInliner();
+    if(RoseInliner* roseInliner=dynamic_cast<CodeThorn::RoseInliner*>(inliner)) {
+      roseInliner->inlineDepth=ctOpt.inlineFunctionsDepth;
+    }
+    inliner->inlineFunctions(sageProject);
+    size_t numInlined=inliner->getNumInlinedFunctions();
+    SAWYER_MESG(logger[TRACE])<<"inlined "<<numInlined<<" functions"<<endl;
+  }
+}
+
+void runVisualizer(CodeThornOptions& ctOpt, Analyzer* analyzer, SgNode* root) {
+  Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
+  if (ctOpt.visualization.icfgFileName.size()>0) {
+    string cfgFileName=ctOpt.visualization.icfgFileName;
+    DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
+    ddvis.setDotGraphName("CFG");
+    ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,false);
+    cout << "generated "<<cfgFileName<<endl;
+  }
+  if(ctOpt.visualization.viz) {
+    cout << "generating graphviz files:"<<endl;
+    visualizer.setOptionMemorySubGraphs(ctOpt.visualization.tg1EStateMemorySubgraphs);
+    string dotFile="digraph G {\n";
+    dotFile+=visualizer.transitionGraphToDot();
+    dotFile+="}\n";
+    write_file("transitiongraph1.dot", dotFile);
+    cout << "generated transitiongraph1.dot."<<endl;
+    string dotFile3=visualizer.foldedTransitionGraphToDot();
+    write_file("transitiongraph2.dot", dotFile3);
+    cout << "generated transitiongraph2.dot."<<endl;
+
+    string datFile1=(analyzer->getTransitionGraph())->toString(analyzer->getVariableIdMapping());
+    write_file("transitiongraph1.dat", datFile1);
+    cout << "generated transitiongraph1.dat."<<endl;
+
+    assert(analyzer->startFunRoot);
+    //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
+    //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
+    SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;
+    analyzer->generateAstNodeInfo(root);
+    cout << "generating AST node info ... "<<endl;
+    dotFile=AstTerm::functionAstTermsWithNullValuesToDot(root);
+    write_file("ast.dot", dotFile);
+    cout << "generated ast.dot."<<endl;
+
+    SAWYER_MESG(logger[TRACE]) << "Option VIZ: generating cfg dot file ..."<<endl;
+    write_file("cfg_non_clustered.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
+    DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
+    ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),"cfg.dot",false);
+    cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
+    cout << "=============================================================="<<endl;
+  }
+  if(ctOpt.visualization.vizTg2) {
+    string dotFile3=visualizer.foldedTransitionGraphToDot();
+    write_file("transitiongraph2.dot", dotFile3);
+    cout << "generated transitiongraph2.dot."<<endl;
+  }
+
+  if (ctOpt.visualization. dotIOStg.size()>0) {
+    string filename=ctOpt.visualization. dotIOStg;
+    cout << "generating dot IO graph file:"<<filename<<endl;
+    string dotFile="digraph G {\n";
+    dotFile+=visualizer.transitionGraphWithIOToDot();
+    dotFile+="}\n";
+    write_file(filename, dotFile);
+    cout << "=============================================================="<<endl;
+  }
+
+  if (ctOpt.visualization.dotIOStgForcedTop.size()>0) {
+    string filename=ctOpt.visualization.dotIOStgForcedTop;
+    cout << "generating dot IO graph file for an abstract STG:"<<filename<<endl;
+    string dotFile="digraph G {\n";
+    dotFile+=visualizer.abstractTransitionGraphToDot();
+    dotFile+="}\n";
+    write_file(filename, dotFile);
+    cout << "=============================================================="<<endl;
+  }
+}
+
 int main( int argc, char * argv[] ) {
   try {
     ROSE_INITIALIZE;
@@ -259,37 +385,16 @@ int main( int argc, char * argv[] ) {
 
     CodeThornOptions ctOpt;
     LTLOptions ltlOpt; // to be moved into separate tool
-    ParProOptions parProOpt; // to be moved into separate tool
+    ParProOptions parProOpt; // options only available in parprothorn
     parseCommandLine(argc, argv, logger,versionString,ctOpt,ltlOpt,parProOpt);
 
     // Start execution
     mfacilities.control(ctOpt.logLevel);
     SAWYER_MESG(logger[TRACE]) << "Log level is " << ctOpt.logLevel << endl;
 
-    // ParPro command line options
-    bool exitRequest=CodeThorn::ParProAutomata::handleCommandLineArguments(parProOpt,ctOpt,ltlOpt,logger);
-    if(exitRequest) {
-      exit(0);
-    }
+    IOAnalyzer* analyzer=createAnalyzer(ctOpt,ltlOpt);
 
-    IOAnalyzer* analyzer;
-    if(ctOpt.dr.checkShuffleAlgorithm) {
-      analyzer = new ReadWriteAnalyzer();
-    } else {
-      analyzer = new IOAnalyzer();
-    }
-    analyzer->setOptions(ctOpt);
-    analyzer->setLtlOptions(ltlOpt);
-
-    if(ctOpt.internalChecks) {
-      if(CodeThorn::internalChecks(argc,argv)==false) {
-        mfacilities.shutdown();
-        return 1;
-      } else {
-        mfacilities.shutdown();
-        return 0;
-      }
-    }
+    internalChecks(ctOpt,argc,argv);
 
     if(ctOpt.exprEvalTest) {
       exprEvalTest(argc,argv,ctOpt);
@@ -301,6 +406,7 @@ int main( int argc, char * argv[] ) {
     SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls;
     if (ctOpt.callStringLength >= 2) 
       setFiniteCallStringMaxLength(ctOpt.callStringLength);
+
     configureOptionSets(ctOpt);
 
     analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;
@@ -323,26 +429,10 @@ int main( int argc, char * argv[] ) {
       analyzer->setInterpreterModeOutputFileName(outFileName);
       CppStdUtilities::writeFile(outFileName,""); // touch file
     }
-    {
-      switch(int argVal=ctOpt.functionResolutionMode) {
-      case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
-      case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
-      case 3: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_ID_MAPPING;break;
-      case 4: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;break;
-      default: 
-        cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
-        exit(1);
-      }
-    }
-    // analyzer->setFunctionResolutionMode(ctOpt.functionResolutionMode);
-    // needs to set CFAnalysis functionResolutionMode
 
-    int numThreads=ctOpt.threads; // default is 1
-    if(numThreads<=0) {
-      cerr<<"Error: number of threads must be greater or equal 1."<<endl;
-      exit(1);
-    }
-    analyzer->setNumberOfThreadsToUse(numThreads);
+    setFunctionResolutionModeInCFAnalysis(ctOpt);
+
+    analyzer->setNumberOfThreadsToUse(ctOpt.threads);
 
     string option_start_function="main";
     if(ctOpt.startFunctionName.size()>0) {
@@ -360,6 +450,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE]) <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
       ctOpt.rers.stdErrLikeFailedAssert=true;
     }
+    analyzer->setTreatStdErrLikeFailedAssert(ctOpt.rers.stdErrLikeFailedAssert);
 
     if(ctOpt.svcomp.svcompMode) {
       analyzer->enableSVCompFunctionSemantics();
@@ -371,7 +462,6 @@ int main( int argc, char * argv[] ) {
       analyzer->setExternalErrorFunctionName(ctOpt.svcomp.detectedErrorFunctionName);
     }
 
-    analyzer->setTreatStdErrLikeFailedAssert(ctOpt.rers.stdErrLikeFailedAssert);
 
     // Build the AST used by ROSE
     if(ctOpt.status) {
@@ -380,8 +470,6 @@ int main( int argc, char * argv[] ) {
 
     SgProject* sageProject = 0;
     vector<string> argvList(argv,argv+argc);
-    //string turnOffRoseLoggerWarnings="-rose:log none";
-    //    argvList.push_back(turnOffRoseLoggerWarnings);
     if(ctOpt.ompAst||ctOpt.dr.detection) {
       SAWYER_MESG(logger[TRACE])<<"selected OpenMP AST."<<endl;
       argvList.push_back("-rose:OpenMP:ast_only");
@@ -403,10 +491,10 @@ int main( int argc, char * argv[] ) {
 
     /* perform normalization before variable ids are computed */
     timer.start();
-    Normalization lowering;
-    lowering.options.printPhaseInfo=ctOpt.normalizePhaseInfo;
+    Normalization normalization;
+    normalization.options.printPhaseInfo=ctOpt.normalizePhaseInfo;
     if(ctOpt.normalizeFCalls) {
-      lowering.normalizeAst(sageProject,1);
+      normalization.normalizeAst(sageProject,1);
       SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
     }
 
@@ -415,30 +503,16 @@ int main( int argc, char * argv[] ) {
         cout<<"STATUS: normalizing program."<<endl;
       }
       //SAWYER_MESG(logger[INFO])<<"STATUS: normalizing program."<<endl;
-      lowering.normalizeAst(sageProject,2);
+      normalization.normalizeAst(sageProject,2);
     }
     double normalizationRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
-    /* Context sensitive analysis using call strings.
-     */
-    {
-      analyzer->setOptionContextSensitiveAnalysis(ctOpt.contextSensitive);
-      //Call strings length abrivation is not supported yet.
-      //CodeThorn::CallString::setMaxLength(_ctOpt.callStringLength);
-    }
+    analyzer->setOptionContextSensitiveAnalysis(ctOpt.contextSensitive);
 
     /* perform inlining before variable ids are computed, because
      * variables are duplicated by inlining. */
-    if(ctOpt.inlineFunctions) {
-      InlinerBase* inliner=lowering.getInliner();
-      if(RoseInliner* roseInliner=dynamic_cast<CodeThorn::RoseInliner*>(inliner)) {
-        roseInliner->inlineDepth=ctOpt.inlineFunctionsDepth;
-      }
-      inliner->inlineFunctions(sageProject);
-      size_t numInlined=inliner->getNumInlinedFunctions();
-      SAWYER_MESG(logger[TRACE])<<"inlined "<<numInlined<<" functions"<<endl;
-    }
-
+    runInlinerIfRequested(ctOpt,normalization,sageProject);
+    
     {
       bool unknownFunctionsFile=ctOpt.externalFunctionsCSVFileName.size()>0;
       bool showProgramStats=ctOpt.programStats;
@@ -941,15 +1015,7 @@ int main( int argc, char * argv[] ) {
     }
     double totalLtlRunTime =  infPathsOnlyTime + stdIoOnlyTime + spotLtlAnalysisTime;
 
-    // TEST
-    if (ctOpt.generateAssertions) {
-      AssertionExtractor assertionExtractor(analyzer);
-      assertionExtractor.computeLabelVectorOfEStates();
-      assertionExtractor.annotateAst();
-      AstAnnotator ara(analyzer->getLabeler());
-      ara.annotateAstAttributesAsCommentsBeforeStatements  (sageProject,"ctgen-pre-condition");
-      SAWYER_MESG(logger[TRACE]) << "STATUS: Generated assertions."<<endl;
-    }
+    processCtOptGenerateAssertions(ctOpt, analyzer, sageProject);
 
     double arrayUpdateExtractionRunTime=0.0;
     double arrayUpdateSsaNumberingRunTime=0.0;
@@ -1091,75 +1157,8 @@ int main( int argc, char * argv[] ) {
       cout << "generated "<<filename<<endl;
     }
 
-
-    {
-      Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
-      if (ctOpt.visualization.icfgFileName.size()>0) {
-        string cfgFileName=ctOpt.visualization.icfgFileName;
-        DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
-        ddvis.setDotGraphName("CFG");
-        ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,false);
-        cout << "generated "<<cfgFileName<<endl;
-      }
-      if(ctOpt.visualization.viz) {
-        cout << "generating graphviz files:"<<endl;
-        visualizer.setOptionMemorySubGraphs(ctOpt.visualization.tg1EStateMemorySubgraphs);
-        string dotFile="digraph G {\n";
-        dotFile+=visualizer.transitionGraphToDot();
-        dotFile+="}\n";
-        write_file("transitiongraph1.dot", dotFile);
-        cout << "generated transitiongraph1.dot."<<endl;
-        string dotFile3=visualizer.foldedTransitionGraphToDot();
-        write_file("transitiongraph2.dot", dotFile3);
-        cout << "generated transitiongraph2.dot."<<endl;
-
-        string datFile1=(analyzer->getTransitionGraph())->toString(analyzer->getVariableIdMapping());
-        write_file("transitiongraph1.dat", datFile1);
-        cout << "generated transitiongraph1.dat."<<endl;
-
-        assert(analyzer->startFunRoot);
-        //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
-        //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
-        SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;
-        analyzer->generateAstNodeInfo(sageProject);
-        cout << "generating AST node info ... "<<endl;
-        dotFile=AstTerm::functionAstTermsWithNullValuesToDot(sageProject);
-        write_file("ast.dot", dotFile);
-        cout << "generated ast.dot."<<endl;
-
-        SAWYER_MESG(logger[TRACE]) << "Option VIZ: generating cfg dot file ..."<<endl;
-        write_file("cfg_non_clustered.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
-        DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
-        ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),"cfg.dot",false);
-        cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
-        cout << "=============================================================="<<endl;
-      }
-      if(ctOpt.visualization.vizTg2) {
-        string dotFile3=visualizer.foldedTransitionGraphToDot();
-        write_file("transitiongraph2.dot", dotFile3);
-        cout << "generated transitiongraph2.dot."<<endl;
-      }
-
-      if (ctOpt.visualization. dotIOStg.size()>0) {
-        string filename=ctOpt.visualization. dotIOStg;
-        cout << "generating dot IO graph file:"<<filename<<endl;
-        string dotFile="digraph G {\n";
-        dotFile+=visualizer.transitionGraphWithIOToDot();
-        dotFile+="}\n";
-        write_file(filename, dotFile);
-        cout << "=============================================================="<<endl;
-      }
-
-      if (ctOpt.visualization.dotIOStgForcedTop.size()>0) {
-        string filename=ctOpt.visualization.dotIOStgForcedTop;
-        cout << "generating dot IO graph file for an abstract STG:"<<filename<<endl;
-        string dotFile="digraph G {\n";
-        dotFile+=visualizer.abstractTransitionGraphToDot();
-        dotFile+="}\n";
-        write_file(filename, dotFile);
-        cout << "=============================================================="<<endl;
-      }
-    }
+    runVisualizer(ctOpt,analyzer,root);
+    
     // InputPathGenerator
 #if 1
     {

@@ -36,6 +36,14 @@ void checkZ3Options(CodeThornOptions& ctOpt) {
 #endif	
 }
 
+void checkNumThreads(CodeThornOptions& ctOpt) {
+  int numThreads=ctOpt.threads; // default is 1
+  if(numThreads<=0) {
+    cerr<<"Error: number of threads must be greater or equal 1."<<endl;
+    exit(1);
+  }
+}
+
 CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger, std::string version,
                                                 CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
 
@@ -415,6 +423,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 
   checkSpotOptions(ltlOpt,parProOpt);
   checkZ3Options(ctOpt);
+  checkNumThreads(ctOpt);
 
   return args;
 }

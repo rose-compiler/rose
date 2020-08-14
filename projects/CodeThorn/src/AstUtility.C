@@ -207,3 +207,15 @@ AbstractValueSet AstUtility::determineVarsInAssertConditions(SgNode* node, Varia
   }
   return usedVarsInAssertConditions;
 }
+// utility function
+SgNode* AstUtility::findExprNodeInAstUpwards(VariantT variant,SgNode* node) {
+  while(node!=nullptr&&isSgExpression(node)&&(node->variantT()!=variant)) {
+    node=node->get_parent();
+  }
+  if(node)
+    // if the search did not find the node and continued to the stmt level
+    // this check ensures that a nullptr is returned
+    return isSgExpression(node);
+  else
+    return nullptr;
+}
