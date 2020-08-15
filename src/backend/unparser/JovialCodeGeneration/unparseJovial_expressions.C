@@ -12,6 +12,11 @@
 #endif
 
 
+void Unparse_Jovial::unparseNullptrVal (SgExpression* expr, SgUnparse_Info& info)
+  {
+     curprint("NULL");
+  }
+
 void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info) 
   {
     ASSERT_not_null(expr);

@@ -7550,7 +7550,7 @@ ATbool ATermToSageJovialTraversal::traverse_PointerLiteral(ATerm term, SgExpress
 #endif
 
    if (ATmatch(term, "Null()")) {
-     // MATCHED Null
+      expr = SageBuilder::buildNullptrValExp_nfi();
    } else return ATfalse;
 
    return ATtrue;
