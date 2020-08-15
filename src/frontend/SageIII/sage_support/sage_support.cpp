@@ -3362,6 +3362,7 @@ SgFile::callFrontEnd()
                     case V_SgSourceFile:
                        {
                          SgSourceFile* sourceFile = const_cast<SgSourceFile*>(isSgSourceFile(this));
+                         ROSE_ASSERT(sourceFile != NULL);
                          frontendErrorLevel = sourceFile->buildAST(localCopy_argv, inputCommandLine);
                          break;
                        }
@@ -3370,6 +3371,7 @@ SgFile::callFrontEnd()
                     case V_SgBinaryComposite:
                        {
                          SgBinaryComposite* binary = const_cast<SgBinaryComposite*>(isSgBinaryComposite(this));
+                         ROSE_ASSERT(binary != NULL);
                          frontendErrorLevel = binary->buildAST(localCopy_argv, inputCommandLine);
                          break;
                        }

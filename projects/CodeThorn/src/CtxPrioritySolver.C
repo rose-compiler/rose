@@ -119,6 +119,16 @@ namespace
 
 namespace // auxiliary local functions
 {
+  template <class Map, class Key>
+  typename Map::iterator
+  iteratorAt(Map& map, const Key& key)
+  {
+    typename Map::iterator pos = map.find(key); 
+    ROSE_ASSERT(pos != map.end() && pos->second);
+    
+    return pos;
+  }
+  
   namespace ct = CodeThorn;
   
   struct IsCalleeCaller
@@ -260,18 +270,6 @@ CtxPrioritySolver::preInfoLattice(Label lab, const ContextString& ctx)
   return *sub; 
 }
 
-
-CtxLatticeRange<CtxPrioritySolver::ContextString>::iterator
-CtxPrioritySolver::preInfoLatticeIterator(Label lab, const ContextString& ctx)
-{
-  typedef CtxLatticeRange<ContextString>::iterator Iterator;
-  
-  CtxLattice<ContextString>& ctxlat = preInfoLattice(lab);
-  Iterator                   pos = ctxlat.find(ctx); 
-  ROSE_ASSERT(pos != ctxlat.end() && pos->second);
-  
-  return pos;
-}
 
 
 struct PriorityComparator
@@ -442,15 +440,16 @@ CtxPrioritySolver::runSolver()
   
   while (!worklist.isEmpty()) 
   {
-    WorkListElem         el   = worklist.take();
-    Edge                 edge = el.first;
-    const ContextString& ctx  = el.second;
-    Label                lab0 = edge.source();
-    Label                lab1 = edge.target();
+    WorkListElem             el   = worklist.take();
+    Edge                     edge = el.first;
+    const ContextString&     ctx  = el.second;
+    Label                    lab0 = edge.source();
+    Label                    lab1 = edge.target();
 
     logDbg() << "computing edge " << lab0 << "->" << lab1 << std::endl;
     
-    Iterator                 preIt = preInfoLatticeIterator(lab0, ctx);
+    context_lattice_t&       ctxlat = preInfoLattice(lab0);
+    const Iterator           preIt  = iteratorAt(ctxlat, ctx);
     std::unique_ptr<Lattice> info{cloneLattice(_initialElementFactory.componentFactory(), *preIt->second)};
     
     if (!info->isBot()) 
@@ -463,15 +462,16 @@ CtxPrioritySolver::runSolver()
       logDbg() << "transfer function result: " << lab0 << " / " << ctx << ": " << LazyToString(info)
                << std::endl;
                
-      // propagate the state to the respective context in lab1 
+      // Propagate the state to the respective context in lab1 
       //   and add the outflowing edges to the worklist.
       // Three cases are distinguished: "normal" edge, a call edge, 
       //   and return edge.
       if (labeler().isFunctionCallLabel(lab0))
       {
-        // update the context by appending the lbl (1:1 mapping)
-        
+        // create a copy for modification
         ContextString callctx(ctx);
+        
+        //~ callctx.callLosesPrecision(preIt); 
         
         callctx.callInvoke(labeler(), lab0);
         propagate(callctx, *info, lab1, worklist);

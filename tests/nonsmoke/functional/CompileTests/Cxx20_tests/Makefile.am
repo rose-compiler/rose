@@ -7,7 +7,6 @@ LDADD    = $(ROSE_LIBS)
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    trivial.C \
    test2020_01.C \
-   test2020_03.C \
    test2020_04.C \
    test2020_06.C \
    test2020_08.C \
@@ -46,7 +45,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_90.C \
    test2020_91.C \
    test2020_92.C \
-   test2020_93.C \
    test2020_94.C \
    test2020_95.C \
    test2020_96.C \
@@ -64,13 +62,20 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_115.C \
    test2020_116.C \
    test2020_118.C \
-   test2020_119.C \
    test2020_120.C \
-   test2020_121.C \
    test2020_122.C \
    test2020_124.C \
    test2020_125.C \
    test2020_126.C
+
+if !USING_CLANG_COMPILER
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2020_03.C \
+   test2020_93.C \
+   test2020_119.C \
+   test2020_121.C 
+endif
+
 
 TESTCODE_CURRENTLY_FAILING = \
    test2020_02.C \

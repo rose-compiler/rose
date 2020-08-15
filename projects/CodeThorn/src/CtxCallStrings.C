@@ -192,6 +192,8 @@ namespace
     ROSE_ASSERT(overlap+1 == callee.size());
     return std::equal(std::next(caller.begin(), ofs), caller.end(), callee.begin()); 
   }
+  
+
 
 #if OBSOLETE_CODE
   struct IsCallerCallee
@@ -303,6 +305,12 @@ bool InfiniteCallString::callerOf(const InfiniteCallString& target, Label callsi
          && (this->size() + 1) == target.size()
          && std::equal(begin(), end(), target.begin())
          );
+}
+
+bool InfiniteCallString::mergedAfterCall(const InfiniteCallString&) const
+{
+  // infinite call strings 
+  return false;
 }
 
 bool InfiniteCallString::operator==(const InfiniteCallString& that) const
@@ -448,11 +456,19 @@ bool FiniteCallString::callerOf(const FiniteCallString& target, Label callsite) 
          );
 }
 
+bool FiniteCallString::mergedAfterCall(const FiniteCallString& other) const
+{
+  if (!FiniteCallString::FIXED_LEN_REP && (size() != other.size()))
+    return false;
+    
+  return std::equal(std::next(begin()), end(), std::next(other.begin()));
+}
 
 bool FiniteCallString::operator==(const FiniteCallString& that) const
 {
   return rep == that.rep;
 }
+
 
 void allCallInvoke( const CtxLattice<FiniteCallString>& src,
                     CtxLattice<FiniteCallString>& tgt,

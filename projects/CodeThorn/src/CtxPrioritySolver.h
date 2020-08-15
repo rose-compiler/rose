@@ -66,11 +66,7 @@ struct CtxPrioritySolver : DFAbstractSolver
     /// retrieves the preInfoLattice at @ref 
     CtxLattice<ContextString>&
     preInfoLattice(Label lab);
-    
-    /// retrieves an iterator for context at label @ref lab and context @ref ctx 
-    CtxLatticeRange<ContextString>::iterator
-    preInfoLatticeIterator(Label lab, const ContextString& ctx);
-    
+        
     /// propagates updated state @ref lat at context @ref ctx to @ref tgt, 
     /// and adds all of @ref tgt out-edges to the worklist @ref wkl
     /// \tparam W the worklist type

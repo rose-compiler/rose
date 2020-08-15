@@ -1031,7 +1031,21 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
    // DQ (3/20/2019): Need to eliminate possible undefined symbols in this file when it will be compiled into 
    // a dynamic shared library.  Any undefined symbols will cause an error when loading the library using dlopen().
    // convertFunctionDefinitionsToFunctionPrototypes(new_file);
-      SageInterface::convertFunctionDefinitionsToFunctionPrototypes(new_file);
+      //SageInterface::convertFunctionDefinitionsToFunctionPrototypes(new_file);
+      //Liao, 2020/8/11 We only convert non-static functions into prototypes. 
+      //Static function definitions should be preserved or undefined function during making of shared lib.
+      std::vector<SgFunctionDeclaration*> functionList = generateFunctionDefinitionsList(new_file);
+
+      std::vector<SgFunctionDeclaration*>::iterator i = functionList.begin();
+      while (i != functionList.end())
+      { 
+        SgFunctionDeclaration* functionDeclaration = *i;
+        ROSE_ASSERT(functionDeclaration != NULL);
+        // Transform into prototype.
+        if (!isStatic(functionDeclaration))
+          replaceDefiningFunctionDeclarationWithFunctionPrototype(functionDeclaration);
+        i++;
+      }
 #endif
 
 #if 0

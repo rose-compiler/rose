@@ -989,6 +989,13 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgInitializer* init = initializedName->get_initializer();
      ASSERT_not_null(type);
 
+  // Type could be an SgModifierType, if so, save trouble and unwrap here
+     if (SgModifierType* modifier_type = isSgModifierType(type))
+        {
+           type = modifier_type->get_base_type();
+           ASSERT_not_null(type);
+        }
+
      info.set_inVarDecl();
 
   // pretty printing
