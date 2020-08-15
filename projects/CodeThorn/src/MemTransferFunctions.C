@@ -4,7 +4,7 @@ using namespace std;
 
 #include "CollectionOperators.h"
 #include "MemTransferFunctions.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 
 using namespace CodeThorn;
 

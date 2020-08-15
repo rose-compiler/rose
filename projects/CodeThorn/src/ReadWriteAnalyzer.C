@@ -1,5 +1,5 @@
 #include "ReadWriteAnalyzer.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "AstNodeInfo.h"
 #include "CollectionOperators.h"
 #include "CodeThornException.h"
@@ -139,7 +139,7 @@ void ReadWriteAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* r
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
     logger[TRACE]<< globalVars.size()<<endl;
 
-    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,variableIdMapping);
+    VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,variableIdMapping);
 
     logger[TRACE]<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 

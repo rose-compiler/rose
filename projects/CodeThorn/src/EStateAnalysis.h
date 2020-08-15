@@ -1,5 +1,5 @@
-#ifndef MemANALYSIS_H
-#define MemANALYSIS_H
+#ifndef EStateANALYSIS_H
+#define EStateANALYSIS_H
 
 // Author: Markus Schordan, 2013.
 
@@ -7,29 +7,29 @@
 #include "VariableIdMapping.h"
 #include "Labeler.h"
 #include "CFAnalysis.h"
-#include "MemPropertyState.h"
+#include "EState.h"
 #include "DFAnalysisBase.h"
 #include "AstUtility.h"
 #include "DFAstAttribute.h"
-#include "MemTransferFunctions.h"
+#include "EStateTransferFunctions.h"
 
 namespace CodeThorn {
 
-class MemPropertyStateFactory : public PropertyStateFactory {
+class EStateFactory : public PropertyStateFactory {
  public:
-  MemPropertyStateFactory();
+  EStateFactory();
   virtual PropertyState* create();
-  virtual ~MemPropertyStateFactory();
+  virtual ~EStateFactory();
 };
 
 /*!
   * \author Markus Schordan
   * \date 2013.
  */
-class MemAnalysis : public DFAnalysisBase {
+class EStateAnalysis : public DFAnalysisBase {
  public:
-  MemAnalysis();
-  ~MemAnalysis();
+  EStateAnalysis();
+  ~EStateAnalysis();
   virtual void initializeExtremalValue(Lattice* element);
   void initialize(SgProject* root);
 

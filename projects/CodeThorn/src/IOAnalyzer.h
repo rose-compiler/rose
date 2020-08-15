@@ -2,6 +2,7 @@
 #define IO_ANALYZER_H
 
 #include "Analyzer.h"
+#include "ltlthorn-lib/ParProOptions.h"
 
 namespace CodeThorn {
   /*! 
@@ -22,7 +23,9 @@ namespace CodeThorn {
 
   public:
     static void initDiagnostics();
-
+    void configureOptions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt);
+    void setup(Analyzer* analyzer, Sawyer::Message::Facility logger,
+               CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt);
     // overwritten or extended analyzer functions
     virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void resetAnalysis();
