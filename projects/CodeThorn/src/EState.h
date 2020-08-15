@@ -67,14 +67,13 @@ namespace CodeThorn {
     bool isRersTopified(CodeThorn::VariableIdMapping* vid) const;
     std::string predicateToString(CodeThorn::VariableIdMapping* vid) const;
     std::string programPosToString(Labeler* labeler) const;
+
     // uses isApproximatedBy of PState
     bool isApproximatedBy(const CodeThorn::EState* other) const;
 
     // required for PropertyState class
-    bool approximatedBy(PropertyState& other) const;
-    // required for PropertyState class
     bool isBot() const; 
-    // required for PropertyState class
+    bool approximatedBy(PropertyState& other) const;
     void combine(PropertyState& other);
     
   private:

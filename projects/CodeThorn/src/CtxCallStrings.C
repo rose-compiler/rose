@@ -1,5 +1,7 @@
 #include <algorithm>
 
+#include "sage3basic.h"
+
 #include "CtxCallStrings.h"
 
 #include "CtxAnalysis.h"

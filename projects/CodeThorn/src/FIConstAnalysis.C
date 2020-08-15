@@ -3,7 +3,7 @@
 #include "FIConstAnalysis.h"
 #include "AbstractValue.h"
 #include "CPAstAttribute.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "AstTerm.h"
 
 using namespace CodeThorn;
@@ -319,7 +319,7 @@ int VariableConstInfo::uniqueConst(VariableId varId) {
 VarConstSetMap FIConstAnalysis::computeVarConstValues(SgProject* project, SgFunctionDefinition* mainFunctionRoot, VariableIdMapping& variableIdMapping) {
   VarConstSetMap varConstIntMap;  
 
-  VariableIdSet varIdSet=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
+  VariableIdSet varIdSet=AstUtility::usedVariablesInsideFunctions(project,&variableIdMapping);
 
   // initialize map such that it is resized to number of variables of interest
   for(VariableIdSet::iterator i=varIdSet.begin();i!=varIdSet.end();++i) {
@@ -331,7 +331,7 @@ VarConstSetMap FIConstAnalysis::computeVarConstValues(SgProject* project, SgFunc
   cout << "STATUS: Number of global variables: ";
   list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
   cout << globalVars.size()<<endl;
-  VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
+  VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,&variableIdMapping);
   cout << "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 #if 0
   int filteredVars=0;

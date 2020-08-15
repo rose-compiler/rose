@@ -7,6 +7,11 @@
 #include "FunctionCallMapping.h"
 #include "Diagnostics.h"
 #include "CodeThornLib.h"
+#include "LTLThornLib.h"
+
+// handler
+#include <signal.h>
+#include <execinfo.h>
 
 using namespace Sawyer::Message;
 
@@ -45,3 +50,29 @@ void CodeThorn::turnOffRoseWarnings() {
   Rose::global_options.set_frontend_warnings(false);
   Rose::global_options.set_backend_warnings(false);
 }
+
+// handler for generating backtrace
+void handler(int sig) {
+  void *array[10];
+  size_t size;
+
+  size = backtrace (array, 10);
+  printf ("Obtained %zd stack frames.\n", size);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "Error: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+  exit(1);
+}
+
+void CodeThorn::configureRose() {
+  CodeThorn::initDiagnostics();
+
+  Rose::Diagnostics::mprefix->showProgramName(false);
+  Rose::Diagnostics::mprefix->showThreadId(false);
+  Rose::Diagnostics::mprefix->showElapsedTime(false);
+
+  turnOffRoseWarnings();
+  signal(SIGSEGV, handler);   // install handler for backtrace
+}
+
