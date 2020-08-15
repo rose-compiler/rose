@@ -2623,3 +2623,82 @@ list<EState> CodeThorn::Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyz
   }
   return newEStateList;
 }
+
+void CodeThorn::Analyzer::configureOptionSets(CodeThornOptions& ctOpt) {
+  string optionName="options-set";  // only used for error reporting
+  int optionValue=ctOpt.optionsSet; // only used for error reporting
+  switch(optionValue) {
+  case 0:
+    // fall-through for default
+    break;
+  case 1:
+    ctOpt.arraysNotInState=false;
+    ctOpt.inStateStringLiterals=true;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=true;
+    ctOpt.stdFunctions=true;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=1;
+    AbstractValue::strictChecking=false;
+    break;
+  case 2:
+    ctOpt.arraysNotInState=false;
+    ctOpt.inStateStringLiterals=true;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=false;
+    ctOpt.stdFunctions=true;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=1;
+    AbstractValue::strictChecking=false;
+    break;
+  case 3:
+    ctOpt.arraysNotInState=false;
+    ctOpt.inStateStringLiterals=false;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=false;
+    ctOpt.stdFunctions=false;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=1;
+    AbstractValue::strictChecking=false;
+    break;
+  case 4:
+    ctOpt.arraysNotInState=false;
+    ctOpt.inStateStringLiterals=false;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=false;
+    ctOpt.stdFunctions=false;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=1;
+    AbstractValue::strictChecking=true;
+    break;
+  case 11:
+    ctOpt.arraysNotInState=false;
+    ctOpt.inStateStringLiterals=true;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=false;
+    ctOpt.stdFunctions=false;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=0;
+    break;
+  default:
+    cerr<<"Error: unsupported "<<optionName<<" value: "<<optionValue<<endl;
+    exit(1);
+  }
+}
+
+void CodeThorn::Analyzer::setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt) {
+  switch(int argVal=ctOpt.functionResolutionMode) {
+  case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
+  case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
+  case 3: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_ID_MAPPING;break;
+  case 4: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;break;
+  default: 
+    cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
+    exit(1);
+  }
+}

@@ -49,6 +49,7 @@
 #include "CallString.h"
 #include "CodeThornOptions.h"
 #include "LTLOptions.h"
+#include "ltlthorn-lib/ParProOptions.h"
 #include "DFAnalysisBase.h"
 #include "EStateTransferFunctions.h"
 
@@ -229,7 +230,9 @@ namespace CodeThorn {
         not supported yet) */
     void setOptionContextSensitiveAnalysis(bool flag);
     bool getOptionContextSensitiveAnalysis();
-
+  protected:
+    void configureOptionSets(CodeThornOptions& ctOpt);
+  public:
     enum GlobalTopifyMode {GTM_IO, GTM_IOCF, GTM_IOCFPTR, GTM_COMPOUNDASSIGN, GTM_FLAGS};
     void setGlobalTopifyMode(GlobalTopifyMode mode);
     void setExternalErrorFunctionName(std::string externalErrorFunctionName);
@@ -244,10 +247,11 @@ namespace CodeThorn {
        if set they are used to initialize the initial state with argv and argc domain abstractions
     */
     void setCommandLineOptions(vector<string> clOptions);
-
+  protected:
+    void setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt);
+  public:
     // TODO: move to flow analyzer (reports label,init,final sets)
     static std::string astNodeInfoAttributeAndNodeToString(SgNode* node);
-
     SgNode* startFunRoot;
     PropertyValueTable reachabilityResults;
     boost::unordered_map <std::string,int*> mapGlobalVarAddress;

@@ -9,7 +9,6 @@
 //~ #include <deque>
 //~ #include <list>
 
-#include <rose.h>
 #include <Labeler.h>
 
 #include "CtxLattice.h"

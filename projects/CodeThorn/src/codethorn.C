@@ -93,33 +93,6 @@ using namespace Sawyer::Message;
 
 const std::string versionString="1.12.12";
 
-Solver* createSolver(CodeThornOptions& ctOpt) {
-  Solver* solver = nullptr;
-  // solver "factory"
-  switch(ctOpt.solver) {
-  case 5 :  {  
-    solver = new Solver5(); break;
-  }
-  case 8 :  {  
-    solver = new Solver8(); break;
-  }
-  case 10 :  {  
-    solver = new Solver10(); break;
-  }
-  case 11 :  {  
-    solver = new Solver11(); break;
-  }
-  case 12 :  {  
-    solver = new Solver12(); break;
-  }
-  default :  { 
-    logger[ERROR] <<"Unknown solver ID: "<<ctOpt.solver<<endl;
-    exit(1);
-  }
-  }
-  return solver;
-}
-
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
   // only included in hybrid RERS analyzers.
@@ -131,85 +104,6 @@ void configureRersSpecialization() {
   extern void RERS_Problem_FunctionPointerInit();
   RERS_Problem_FunctionPointerInit();
 #endif
-}
-
-void configureOptionSets(CodeThornOptions& ctOpt) {
-  string optionName="options-set";  // only used for error reporting
-  int optionValue=ctOpt.optionsSet; // only used for error reporting
-  switch(optionValue) {
-  case 0:
-    // fall-through for default
-    break;
-  case 1:
-    ctOpt.arraysNotInState=false;
-    ctOpt.inStateStringLiterals=true;
-    ctOpt.ignoreUnknownFunctions=true;
-    ctOpt.ignoreFunctionPointers=true;
-    ctOpt.stdFunctions=true;
-    ctOpt.contextSensitive=true;
-    ctOpt.normalizeAll=true;
-    ctOpt.abstractionMode=1;
-    AbstractValue::strictChecking=false;
-    break;
-  case 2:
-    ctOpt.arraysNotInState=false;
-    ctOpt.inStateStringLiterals=true;
-    ctOpt.ignoreUnknownFunctions=true;
-    ctOpt.ignoreFunctionPointers=false;
-    ctOpt.stdFunctions=true;
-    ctOpt.contextSensitive=true;
-    ctOpt.normalizeAll=true;
-    ctOpt.abstractionMode=1;
-    AbstractValue::strictChecking=false;
-    break;
-  case 3:
-    ctOpt.arraysNotInState=false;
-    ctOpt.inStateStringLiterals=false;
-    ctOpt.ignoreUnknownFunctions=true;
-    ctOpt.ignoreFunctionPointers=false;
-    ctOpt.stdFunctions=false;
-    ctOpt.contextSensitive=true;
-    ctOpt.normalizeAll=true;
-    ctOpt.abstractionMode=1;
-    AbstractValue::strictChecking=false;
-    break;
-  case 4:
-    ctOpt.arraysNotInState=false;
-    ctOpt.inStateStringLiterals=false;
-    ctOpt.ignoreUnknownFunctions=true;
-    ctOpt.ignoreFunctionPointers=false;
-    ctOpt.stdFunctions=false;
-    ctOpt.contextSensitive=true;
-    ctOpt.normalizeAll=true;
-    ctOpt.abstractionMode=1;
-    AbstractValue::strictChecking=true;
-    break;
-  case 11:
-    ctOpt.arraysNotInState=false;
-    ctOpt.inStateStringLiterals=true;
-    ctOpt.ignoreUnknownFunctions=true;
-    ctOpt.ignoreFunctionPointers=false;
-    ctOpt.stdFunctions=false;
-    ctOpt.contextSensitive=true;
-    ctOpt.normalizeAll=true;
-    ctOpt.abstractionMode=0;
-    break;
-  default:
-    cerr<<"Error: unsupported "<<optionName<<" value: "<<optionValue<<endl;
-    exit(1);
-  }
-}
-
-void setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt) {
-  switch(int argVal=ctOpt.functionResolutionMode) {
-  case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
-  case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
-  case 3: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_ID_MAPPING;break;
-  case 4: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;break;
-  default: 
-    cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
-    exit(1);
-  }
 }
 
 void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
@@ -267,6 +161,33 @@ void processCtOptGenerateAssertions(CodeThornOptions& ctOpt, Analyzer* analyzer,
   }
 }
 
+Solver* createSolver(CodeThornOptions& ctOpt) {
+  Solver* solver = nullptr;
+  // solver "factory"
+  switch(ctOpt.solver) {
+  case 5 :  {  
+    solver = new Solver5(); break;
+  }
+  case 8 :  {  
+    solver = new Solver8(); break;
+  }
+  case 10 :  {  
+    solver = new Solver10(); break;
+  }
+  case 11 :  {  
+    solver = new Solver11(); break;
+  }
+  case 12 :  {  
+    solver = new Solver12(); break;
+  }
+  default :  { 
+    logger[ERROR] <<"Unknown solver ID: "<<ctOpt.solver<<endl;
+    exit(1);
+  }
+  }
+  return solver;
+}
+
 IOAnalyzer* createAnalyzer(CodeThornOptions& ctOpt, LTLOptions& ltlOpt) {
   IOAnalyzer* analyzer;
   if(ctOpt.dr.checkShuffleAlgorithm) {
@@ -279,7 +200,7 @@ IOAnalyzer* createAnalyzer(CodeThornOptions& ctOpt, LTLOptions& ltlOpt) {
   return analyzer;
 }
 
-void internalChecks(CodeThornOptions& ctOpt, int argc, char * argv[]) {
+void optionallyRunInternalChecks(CodeThornOptions& ctOpt, int argc, char * argv[]) {
   if(ctOpt.internalChecks) {
     if(CodeThorn::internalChecks(argc,argv)==false) {
       mfacilities.shutdown();
@@ -292,7 +213,7 @@ void internalChecks(CodeThornOptions& ctOpt, int argc, char * argv[]) {
 }
 
 
-void runInlinerIfRequested(CodeThornOptions& ctOpt, Normalization& normalization, SgProject* sageProject) {
+void optionallyRunInliner(CodeThornOptions& ctOpt, Normalization& normalization, SgProject* sageProject) {
   if(ctOpt.inlineFunctions) {
     InlinerBase* inliner=normalization.getInliner();
     if(RoseInliner* roseInliner=dynamic_cast<CodeThorn::RoseInliner*>(inliner)) {
@@ -304,7 +225,7 @@ void runInlinerIfRequested(CodeThornOptions& ctOpt, Normalization& normalization
   }
 }
 
-void runVisualizer(CodeThornOptions& ctOpt, Analyzer* analyzer, SgNode* root) {
+void optionallyRunVisualizer(CodeThornOptions& ctOpt, Analyzer* analyzer, SgNode* root) {
   Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
   if (ctOpt.visualization.icfgFileName.size()>0) {
     string cfgFileName=ctOpt.visualization.icfgFileName;
@@ -373,6 +294,140 @@ void runVisualizer(CodeThornOptions& ctOpt, Analyzer* analyzer, SgNode* root) {
   }
 }
 
+void optionallyGenerateExternalFunctionsFile(CodeThornOptions& ctOpt, SgProject* sageProject) {
+  bool unknownFunctionsFile=ctOpt.externalFunctionsCSVFileName.size()>0;
+  bool showProgramStats=ctOpt.programStats;
+  bool showProgramStatsOnly=ctOpt.programStatsOnly;
+  if(unknownFunctionsFile||showProgramStats||showProgramStatsOnly) {
+    ProgramInfo programInfo(sageProject);
+    programInfo.compute();
+    if(unknownFunctionsFile) {
+      programInfo.writeFunctionCallNodesToFile(ctOpt.externalFunctionsCSVFileName);
+    }
+    if(showProgramStats||showProgramStatsOnly) {
+      programInfo.printDetailed();
+    }
+    if(showProgramStatsOnly) {
+      exit(0);
+    }
+  }
+}
+
+void optionallyGenerateAstStatistics(CodeThornOptions& ctOpt, SgProject* sageProject) {
+  if(ctOpt.info.printAstNodeStats||ctOpt.info.astNodeStatsCSVFileName.size()>0) {
+    // from: src/midend/astDiagnostics/AstStatistics.C
+    if(ctOpt.info.printAstNodeStats) {
+      ROSE_Statistics::AstNodeTraversalStatistics astStats;
+      string s=astStats.toString(sageProject);
+      cout<<s; // output includes newline at the end
+    }
+    if(ctOpt.info.astNodeStatsCSVFileName.size()>0) {
+      ROSE_Statistics::AstNodeTraversalCSVStatistics astCSVStats;
+      string fileName=ctOpt.info.astNodeStatsCSVFileName;
+      astCSVStats.setMinCountToShow(1); // default value is 1
+      if(!CppStdUtilities::writeFile(fileName, astCSVStats.toString(sageProject))) {
+        cerr<<"Error: cannot write AST node statistics to CSV file "<<fileName<<endl;
+        exit(1);
+      }
+    }
+  }
+}
+
+void optionallyGenerateSourceProgramAndExit(CodeThornOptions& ctOpt, SgProject* sageProject) {
+  if(ctOpt.unparse) {
+    sageProject->unparse(0,0);
+    exit(0);
+  }
+}
+
+void optionallyGenerateTraversalInfoAndExit(CodeThornOptions& ctOpt, SgProject* sageProject) {
+  if(ctOpt.info.astTraversalCSVFileName.size()>0) {
+    RoseAst ast(sageProject);
+    std::ofstream myfile;
+    myfile.open(ctOpt.info.astTraversalCSVFileName.c_str(),std::ios::out);
+    for(auto n : ast) {
+      myfile<<n->class_name();
+      if(ctOpt.info.astTraversalCSVMode>=2) {
+        myfile<<","<<SgNodeHelper::sourceFilenameLineColumnToString(n);
+      }
+      myfile<<endl;
+    }
+    myfile.close();
+    exit(0);
+  }
+}
+
+void optionallyRunRoseAstChecks(CodeThornOptions& ctOpt, SgProject* sageProject) {
+  if(ctOpt.runRoseAstChecks) {
+    cout << "ROSE tests started."<<endl;
+    // Run internal consistency tests on AST
+    AstTests::runAllTests(sageProject);
+
+    // test: constant expressions
+    {
+      SAWYER_MESG(logger[TRACE]) <<"STATUS: testing constant expressions."<<endl;
+      CppConstExprEvaluator* evaluator=new CppConstExprEvaluator();
+      list<SgExpression*> exprList=AstUtility::exprRootList(sageProject);
+      logger[INFO] <<"found "<<exprList.size()<<" expressions."<<endl;
+      for(list<SgExpression*>::iterator i=exprList.begin();i!=exprList.end();++i) {
+        EvalResult r=evaluator->traverse(*i);
+        if(r.isConst()) {
+          SAWYER_MESG(logger[TRACE])<<"Found constant expression: "<<(*i)->unparseToString()<<" eq "<<r.constValue()<<endl;
+        }
+      }
+      delete evaluator;
+    }
+    cout << "ROSE tests finished."<<endl; 
+    mfacilities.shutdown();
+    exit(0);
+  }
+}
+
+void optionallyRunIOSequenceGenerator(CodeThornOptions& ctOpt, IOAnalyzer* analyzer) {
+  if(ctOpt.rers.iSeqFile.size()>0) {
+    int iseqLen=0;
+    if(ctOpt.rers.iSeqLength!=-1) {
+      iseqLen=ctOpt.rers.iSeqLength;
+    } else {
+      logger[ERROR] <<"input-sequence file specified, but no sequence length."<<endl;
+      exit(1);
+    }
+    string fileName=ctOpt.rers.iSeqFile;
+    SAWYER_MESG(logger[TRACE]) <<"STATUS: computing input sequences of length "<<iseqLen<<endl;
+    IOSequenceGenerator iosgen;
+    if(ctOpt.rers.iSeqRandomNum!=-1) {
+      int randomNum=ctOpt.rers.iSeqRandomNum;
+      SAWYER_MESG(logger[TRACE]) <<"STATUS: reducing input sequence set to "<<randomNum<<" random elements."<<endl;
+      iosgen.computeRandomInputPathSet(iseqLen,*analyzer->getTransitionGraph(),randomNum);
+    } else {
+      iosgen.computeInputPathSet(iseqLen,*analyzer->getTransitionGraph());
+    }
+    SAWYER_MESG(logger[TRACE]) <<"STATUS: generating input sequence file "<<fileName<<endl;
+    iosgen.generateFile(fileName);
+  } else {
+    if(ctOpt.rers.iSeqLength!=-1) {
+      logger[ERROR] <<"input sequence length specified without also providing a file name (use option --iseq-file)."<<endl;
+      exit(1);
+    }
+  }
+}
+
+void optionallyAnnotateTermsAndUnparse(CodeThornOptions& ctOpt, SgProject* sageProject, Analyzer* analyzer) {
+  if (ctOpt.annotateTerms) {
+    // TODO: it might be useful to be able to select certain analysis results to be annotated only
+    logger[INFO] << "Annotating term representations."<<endl;
+    AstTermRepresentationAttribute::attachAstTermRepresentationAttributes(sageProject);
+    AstAnnotator ara(analyzer->getLabeler());
+    ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
+  }
+
+  if (ctOpt.annotateTerms||ctOpt.generateAssertions) {
+    logger[INFO] << "Generating annotated program."<<endl;
+    //backend(sageProject);
+    sageProject->unparse(0,0);
+  }
+}
+
 int main( int argc, char * argv[] ) {
   try {
     ROSE_INITIALIZE;
@@ -386,87 +441,25 @@ int main( int argc, char * argv[] ) {
     CodeThornOptions ctOpt;
     LTLOptions ltlOpt; // to be moved into separate tool
     ParProOptions parProOpt; // options only available in parprothorn
-    parseCommandLine(argc, argv, logger,versionString,ctOpt,ltlOpt,parProOpt);
 
-    // Start execution
-    mfacilities.control(ctOpt.logLevel);
-    SAWYER_MESG(logger[TRACE]) << "Log level is " << ctOpt.logLevel << endl;
+    parseCommandLine(argc, argv, logger,versionString,ctOpt,ltlOpt,parProOpt);
+    mfacilities.control(ctOpt.logLevel); SAWYER_MESG(logger[TRACE]) << "Log level is " << ctOpt.logLevel << endl;
 
     IOAnalyzer* analyzer=createAnalyzer(ctOpt,ltlOpt);
 
-    internalChecks(ctOpt,argc,argv);
-
+    optionallyRunInternalChecks(ctOpt,argc,argv);
     if(ctOpt.exprEvalTest) {
       exprEvalTest(argc,argv,ctOpt);
       return 0;
     }
-
-    AbstractValue::byteMode=ctOpt.byteMode;
-    AbstractValue::strictChecking=ctOpt.strictChecking;
-    SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls;
-    if (ctOpt.callStringLength >= 2) 
-      setFiniteCallStringMaxLength(ctOpt.callStringLength);
-
-    configureOptionSets(ctOpt);
-
-    analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;
-    analyzer->setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
-    analyzer->setIgnoreFunctionPointers(ctOpt.ignoreFunctionPointers);
-    analyzer->setStdFunctionSemantics(ctOpt.stdFunctions);
-
-    analyzer->setup(analyzer, logger, ctOpt, ltlOpt, parProOpt);
+    analyzer->configureOptions(ctOpt,ltlOpt,parProOpt);
     analyzer->setSolver(createSolver(ctOpt));
     
-    switch(int mode=ctOpt.interpreterMode) {
-    case 0: analyzer->setInterpreterMode(IM_DISABLED); break;
-    case 1: analyzer->setInterpreterMode(IM_ENABLED); break;
-    default:
-      cerr<<"Unknown interpreter mode "<<mode<<" provided on command line (supported: 0..1)."<<endl;
-      exit(1);
-    }
-    string outFileName=ctOpt.interpreterModeOuputFileName;
-    if(outFileName!="") {
-      analyzer->setInterpreterModeOutputFileName(outFileName);
-      CppStdUtilities::writeFile(outFileName,""); // touch file
-    }
-
-    setFunctionResolutionModeInCFAnalysis(ctOpt);
-
-    analyzer->setNumberOfThreadsToUse(ctOpt.threads);
-
-    string option_start_function="main";
-    if(ctOpt.startFunctionName.size()>0) {
-      option_start_function = ctOpt.startFunctionName;
-    }
-
     // parse command line options for data race detection
     DataRaceDetection dataRaceDetection;
     dataRaceDetection.setOptions(ctOpt);
     dataRaceDetection.handleCommandLineOptions(*analyzer);
-    dataRaceDetection.setVisualizeReadWriteAccesses(ctOpt.visualization.visualizeRWSets);
-
-    // handle RERS mode: reconfigure options
-    if(ctOpt.rers.rersMode) {
-      SAWYER_MESG(logger[TRACE]) <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
-      ctOpt.rers.stdErrLikeFailedAssert=true;
-    }
-    analyzer->setTreatStdErrLikeFailedAssert(ctOpt.rers.stdErrLikeFailedAssert);
-
-    if(ctOpt.svcomp.svcompMode) {
-      analyzer->enableSVCompFunctionSemantics();
-      string errorFunctionName="__VERIFIER_error";
-      analyzer->setExternalErrorFunctionName(errorFunctionName);
-    }
-
-    if(ctOpt.svcomp.detectedErrorFunctionName.size()>0) {
-      analyzer->setExternalErrorFunctionName(ctOpt.svcomp.detectedErrorFunctionName);
-    }
-
-
-    // Build the AST used by ROSE
-    if(ctOpt.status) {
-      cout<< "STATUS: Parsing and creating AST started."<<endl;
-    }
+    dataRaceDetection.setVisualizeReadWriteAccesses(ctOpt.visualization.visualizeRWSets); 
 
     SgProject* sageProject = 0;
     vector<string> argvList(argv,argv+argc);
@@ -511,67 +504,14 @@ int main( int argc, char * argv[] ) {
 
     /* perform inlining before variable ids are computed, because
      * variables are duplicated by inlining. */
-    runInlinerIfRequested(ctOpt,normalization,sageProject);
-    
-    {
-      bool unknownFunctionsFile=ctOpt.externalFunctionsCSVFileName.size()>0;
-      bool showProgramStats=ctOpt.programStats;
-      bool showProgramStatsOnly=ctOpt.programStatsOnly;
-      if(unknownFunctionsFile||showProgramStats||showProgramStatsOnly) {
-        ProgramInfo programInfo(sageProject);
-        programInfo.compute();
-        if(unknownFunctionsFile) {
-          ROSE_ASSERT(analyzer);
-          programInfo.writeFunctionCallNodesToFile(ctOpt.externalFunctionsCSVFileName);
-        }
-        if(showProgramStats||showProgramStatsOnly) {
-          programInfo.printDetailed();
-        }
-        if(showProgramStatsOnly) {
-          exit(0);
-        }
-      }
-    }
+    optionallyRunInliner(ctOpt,normalization, sageProject);
+    optionallyGenerateExternalFunctionsFile(ctOpt, sageProject);
+    optionallyGenerateAstStatistics(ctOpt, sageProject);
+    optionallyGenerateTraversalInfoAndExit(ctOpt, sageProject);
+    optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
 
-    if(ctOpt.unparse) {
-      sageProject->unparse(0,0);
-      return 0;
-    }
+    if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
 
-    if(ctOpt.info.printAstNodeStats||ctOpt.info.astNodeStatsCSVFileName.size()>0) {
-      // from: src/midend/astDiagnostics/AstStatistics.C
-      if(ctOpt.info.printAstNodeStats) {
-        ROSE_Statistics::AstNodeTraversalStatistics astStats;
-        string s=astStats.toString(sageProject);
-        cout<<s; // output includes newline at the end
-      }
-      if(ctOpt.info.astNodeStatsCSVFileName.size()>0) {
-        ROSE_Statistics::AstNodeTraversalCSVStatistics astCSVStats;
-        string fileName=ctOpt.info.astNodeStatsCSVFileName;
-        astCSVStats.setMinCountToShow(1); // default value is 1
-        if(!CppStdUtilities::writeFile(fileName, astCSVStats.toString(sageProject))) {
-          cerr<<"Error: cannot write AST node statistics to CSV file "<<fileName<<endl;
-          exit(1);
-        }
-      }
-    }
-    if(ctOpt.info.astTraversalCSVFileName.size()>0) {
-      RoseAst ast(sageProject);
-      std::ofstream myfile;
-      myfile.open(ctOpt.info.astTraversalCSVFileName.c_str(),std::ios::out);
-      for(auto n : ast) {
-        myfile<<n->class_name();
-        if(ctOpt.info.astTraversalCSVMode>=2) {
-          myfile<<","<<SgNodeHelper::sourceFilenameLineColumnToString(n);
-        }
-        myfile<<endl;
-      }
-      myfile.close();
-      exit(0);
-    }
-    if(ctOpt.status) {
-      cout<<"STATUS: analysis started."<<endl;
-    }
     // TODO: introduce ProgramAbstractionLayer
     analyzer->initializeVariableIdMapping(sageProject);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
@@ -595,30 +535,7 @@ int main( int argc, char * argv[] ) {
         }
       }
     }
-    
-    if(ctOpt.runRoseAstChecks) {
-      cout << "ROSE tests started."<<endl;
-      // Run internal consistency tests on AST
-      AstTests::runAllTests(sageProject);
-
-      // test: constant expressions
-      {
-        SAWYER_MESG(logger[TRACE]) <<"STATUS: testing constant expressions."<<endl;
-        CppConstExprEvaluator* evaluator=new CppConstExprEvaluator();
-        list<SgExpression*> exprList=AstUtility::exprRootList(sageProject);
-        logger[INFO] <<"found "<<exprList.size()<<" expressions."<<endl;
-        for(list<SgExpression*>::iterator i=exprList.begin();i!=exprList.end();++i) {
-          EvalResult r=evaluator->traverse(*i);
-          if(r.isConst()) {
-            SAWYER_MESG(logger[TRACE])<<"Found constant expression: "<<(*i)->unparseToString()<<" eq "<<r.constValue()<<endl;
-          }
-        }
-        delete evaluator;
-      }
-      cout << "ROSE tests finished."<<endl; 
-      mfacilities.shutdown();
-      return 0;
-    }
+    optionallyRunRoseAstChecks(ctOpt,sageProject);
 
     // TODO: exit here if no analysis option is selected
     // exit(0);
@@ -661,17 +578,13 @@ int main( int argc, char * argv[] ) {
     }
 
     timer.start();
-#if 0
-    if(!analyzer->getVariableIdMapping()->isUniqueVariableSymbolMapping()) {
-      logger[WARN] << "Variable<->Symbol mapping not bijective."<<endl;
-      //varIdMap.reportUniqueVariableSymbolMappingViolations();
-    }
-#endif
-#if 0
-    analyzer->getVariableIdMapping()->toStream(cout);
-#endif
 
     SAWYER_MESG(logger[TRACE])<< "INIT: creating solver "<<analyzer->getSolver()->getId()<<"."<<endl;
+    
+    string option_start_function="main";
+    if(ctOpt.startFunctionName.size()>0) {
+      option_start_function = ctOpt.startFunctionName;
+    }
 
     if(option_specialize_fun_name!="") {
       analyzer->initializeSolver(option_specialize_fun_name,root,true);
@@ -1157,88 +1070,31 @@ int main( int argc, char * argv[] ) {
       cout << "generated "<<filename<<endl;
     }
 
-    runVisualizer(ctOpt,analyzer,root);
-    
-    // InputPathGenerator
-#if 1
-    {
-      if(ctOpt.rers.iSeqFile.size()>0) {
-        int iseqLen=0;
-        if(ctOpt.rers.iSeqLength!=-1) {
-          iseqLen=ctOpt.rers.iSeqLength;
-        } else {
-          logger[ERROR] <<"input-sequence file specified, but no sequence length."<<endl;
-          exit(1);
-        }
-        string fileName=ctOpt.rers.iSeqFile;
-        SAWYER_MESG(logger[TRACE]) <<"STATUS: computing input sequences of length "<<iseqLen<<endl;
-        IOSequenceGenerator iosgen;
-        if(ctOpt.rers.iSeqRandomNum!=-1) {
-          int randomNum=ctOpt.rers.iSeqRandomNum;
-          SAWYER_MESG(logger[TRACE]) <<"STATUS: reducing input sequence set to "<<randomNum<<" random elements."<<endl;
-          iosgen.computeRandomInputPathSet(iseqLen,*analyzer->getTransitionGraph(),randomNum);
-        } else {
-          iosgen.computeInputPathSet(iseqLen,*analyzer->getTransitionGraph());
-        }
-        SAWYER_MESG(logger[TRACE]) <<"STATUS: generating input sequence file "<<fileName<<endl;
-        iosgen.generateFile(fileName);
-      } else {
-        if(ctOpt.rers.iSeqLength!=-1) {
-          logger[ERROR] <<"input sequence length specified without also providing a file name (use option --iseq-file)."<<endl;
-          exit(1);
-        }
-      }
-    }
-#endif
+    optionallyRunVisualizer(ctOpt,analyzer,root);
+    optionallyRunIOSequenceGenerator(ctOpt, analyzer);
+    optionallyAnnotateTermsAndUnparse(ctOpt, sageProject, analyzer);
 
-#if 0
-    {
-      cout << "EStateSet:\n"<<analyzer->getEStateSet()->toString(analyzer->getVariableIdMapping())<<endl;
-      cout << "ConstraintSet:\n"<<analyzer->getConstraintSetMaintainer()->toString()<<endl;
-      if(analyzer->variableValueMonitor.isActive())
-        cout << "VariableValueMonitor:\n"<<analyzer->variableValueMonitor.toString(analyzer->getVariableIdMapping())<<endl;
-      cout << "MAP:"<<endl;
-      cout << analyzer->getLabeler()->toString();
-    }
-#endif
-
-    if (ctOpt.annotateTerms) {
-      // TODO: it might be useful to be able to select certain analysis results to be annotated only
-      logger[INFO] << "Annotating term representations."<<endl;
-      AstTermRepresentationAttribute::attachAstTermRepresentationAttributes(sageProject);
-      AstAnnotator ara(analyzer->getLabeler());
-      ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
-    }
-
-    if (ctOpt.annotateTerms||ctOpt.generateAssertions) {
-      logger[INFO] << "Generating annotated program."<<endl;
-      //backend(sageProject);
-      sageProject->unparse(0,0);
-    }
-
-    // reset terminal
-    if(ctOpt.status)
-      cout<<color("normal")<<"done."<<endl;
+    if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
 
     // main function try-catch
   } catch(const CodeThorn::Exception& e) {
-    cerr << "CodeThorn::Exception raised: " << e.what() << endl;
+    cerr << "Error: " << e.what() << endl;
     mfacilities.shutdown();
     return 1;
   } catch(const std::exception& e) {
-    cerr<< "std::exception raised: " << e.what() << endl;
+    cerr<< "Error: " << e.what() << endl;
     mfacilities.shutdown();
     return 1;
   } catch(char const* str) {
-    cerr<< "*Exception raised: " << str << endl;
+    cerr<< "Error: " << str << endl;
     mfacilities.shutdown();
     return 1;
   } catch(string str) {
-    cerr<< "Exception raised: " << str << endl;
+    cerr<< "Error: " << str << endl;
     mfacilities.shutdown();
     return 1;
   } catch(...) {
-    cerr<< "Unknown exception raised." << endl;
+    cerr<< "Error: Unknown exception raised." << endl;
     mfacilities.shutdown();
     return 1;
   }

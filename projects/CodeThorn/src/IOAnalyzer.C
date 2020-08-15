@@ -8,6 +8,8 @@
 #include "TimeMeasurement.h"
 #include "CodeThornCommandLineOptions.h"
 #include "Miscellaneous2.h"
+#include "CtxCallStrings.h"
+#include "CppStdUtilities.h"
 
 #include <unordered_set>
 
@@ -434,4 +436,63 @@ void IOAnalyzer::setup(Analyzer* analyzer, Sawyer::Message::Facility logger,
     logger[ERROR] <<"Ltl-driven mode requires solver 11, but solver "<<solverId<<" was selected."<<endl;
     exit(1);
   }
+}
+
+void CodeThorn::IOAnalyzer::configureOptions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
+  AbstractValue::byteMode=ctOpt.byteMode;
+  AbstractValue::strictChecking=ctOpt.strictChecking;
+
+    SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls;
+    if (ctOpt.callStringLength >= 2) 
+      setFiniteCallStringMaxLength(ctOpt.callStringLength);
+
+    configureOptionSets(ctOpt);
+
+    optionStringLiteralsInState=ctOpt.inStateStringLiterals;
+    setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
+    setIgnoreFunctionPointers(ctOpt.ignoreFunctionPointers);
+    setStdFunctionSemantics(ctOpt.stdFunctions);
+
+    setup(this, logger, ctOpt, ltlOpt, parProOpt);
+    //setSolver(createSolver(ctOpt));
+    
+    switch(int mode=ctOpt.interpreterMode) {
+    case 0: setInterpreterMode(IM_DISABLED); break;
+    case 1: setInterpreterMode(IM_ENABLED); break;
+    default:
+      cerr<<"Unknown interpreter mode "<<mode<<" provided on command line (supported: 0..1)."<<endl;
+      exit(1);
+    }
+    string outFileName=ctOpt.interpreterModeOuputFileName;
+    if(outFileName!="") {
+      setInterpreterModeOutputFileName(outFileName);
+      CppStdUtilities::writeFile(outFileName,""); // touch file
+    }
+
+    setFunctionResolutionModeInCFAnalysis(ctOpt);
+
+    setNumberOfThreadsToUse(ctOpt.threads);
+
+   // handle RERS mode: reconfigure options
+    if(ctOpt.rers.rersMode) {
+      SAWYER_MESG(logger[TRACE]) <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
+      ctOpt.rers.stdErrLikeFailedAssert=true;
+    }
+    setTreatStdErrLikeFailedAssert(ctOpt.rers.stdErrLikeFailedAssert);
+
+    if(ctOpt.svcomp.svcompMode) {
+      enableSVCompFunctionSemantics();
+      string errorFunctionName="__VERIFIER_error";
+      setExternalErrorFunctionName(errorFunctionName);
+    }
+
+    if(ctOpt.svcomp.detectedErrorFunctionName.size()>0) {
+      setExternalErrorFunctionName(ctOpt.svcomp.detectedErrorFunctionName);
+    }
+
+
+    // Build the AST used by ROSE
+    if(ctOpt.status) {
+      cout<< "STATUS: Parsing and creating AST started."<<endl;
+    }
 }
