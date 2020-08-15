@@ -3139,6 +3139,11 @@ SageInterface::OutputLocalSymbolTables::visit ( SgNode* node )
   // DQ (6/27/2005): Output the local symbol table from each scope.
   // printf ("node = %s \n",node->sage_class_name());
 
+#if 1
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
      SgScopeStatement* scope = isSgScopeStatement(node);
      if (scope != NULL)
         {
@@ -13632,7 +13637,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                               const bool stmt_present = (p->get_loop_body() == targetStmt || p->get_test() == targetStmt);
 
                           // \pp \todo what if !stmt_present
-                              ROSE_ASSERT(stmt_present != NULL);
+                           // ROSE_ASSERT(stmt_present != NULL);
                               insertStatement(p, newStmt, insertBefore);
                             }
                            else
@@ -18148,6 +18153,71 @@ SageInterface::checkAccessPermissions ( SgNode* astNode )
 
   // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
      DeclarationTraversal traversal;
+     traversal.traverse(astNode, preorder);
+   }
+
+
+void
+SageInterface::checkSymbolTables ( SgNode* astNode )
+   {
+  // DQ (8/14/2020): Check the symbol tables for specific scopes (debugging support).
+
+     class ScopeTraversal : public AstSimpleProcessing
+        {
+          public:
+               void visit (SgNode* node)
+                  {
+                    SgScopeStatement* scope = isSgScopeStatement(node);
+                    if (scope != NULL)
+                       {
+                         SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(scope);
+                         if (functionDefinition != NULL)
+                            {
+                              SgFunctionDeclaration* functionDeclaration = functionDefinition->get_declaration();
+                              ROSE_ASSERT(functionDeclaration != NULL);
+
+                              string functionName = functionDeclaration->get_name();
+
+                              printf ("functionName = %s \n",functionName.c_str());
+
+                              if (functionName == "main")
+                                 {
+
+                                   SgBasicBlock* functionBody = functionDefinition->get_body();
+                                   ROSE_ASSERT(functionBody != NULL);
+                                   SgSymbolTable* symbolTable = functionBody->get_symbol_table();
+                                   ROSE_ASSERT(symbolTable != NULL);
+
+                                // Print out the symbol table.
+                                   symbolTable->print();
+                                 }
+                            }
+
+                         SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(scope);
+                         if (namespaceDefinition != NULL)
+                            {
+                              SgNamespaceDeclarationStatement* namespaceDeclaration = namespaceDefinition->get_namespaceDeclaration();
+                              ROSE_ASSERT(namespaceDeclaration != NULL);
+
+                              string namespaceName = namespaceDeclaration->get_name();
+
+                              printf ("namespaceName = %s \n",namespaceName.c_str());
+
+                              if (namespaceName == "B")
+                                 {
+                                   SgSymbolTable* symbolTable = namespaceDefinition->get_symbol_table();
+                                   ROSE_ASSERT(symbolTable != NULL);
+
+                                // Print out the symbol table.
+                                   symbolTable->print();
+                                 }
+                            }
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+     ScopeTraversal traversal;
      traversal.traverse(astNode, preorder);
    }
 

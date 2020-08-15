@@ -3141,13 +3141,15 @@ TestAstSymbolTables::visit ( SgNode* node )
                                    declarationStatement,declarationStatement->class_name().c_str(),SageInterface::get_name(declarationStatement).c_str(),
                                    symbol,symbol->class_name().c_str(),SageInterface::get_name(scope).c_str(),
                                    scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
+#if 0
                               declarationStatement->get_startOfConstruct()->display("declarationStatement->get_symbol_from_symbol_table() == NULL: debug");
-
+#endif
+#if 0
                               printf ("******************** START **********************\n");
                               printf ("In AST Consistantcy tests: Output the symbol table for scope = %p = %s: \n",scope,scope->class_name().c_str());
                               SageInterface::outputLocalSymbolTables(scope);
                               printf ("******************** DONE ***********************\n");
-
+#endif
 #if 1
                            // DQ (2/28/2018): Added testing (Tristan indicates that this is a problem for Fortran, above).
                               ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() != NULL);

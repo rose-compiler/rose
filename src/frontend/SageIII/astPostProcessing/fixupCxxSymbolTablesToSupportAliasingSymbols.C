@@ -84,7 +84,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::isDefinedThroughPrivateBaseClass ( 
      ROSE_ASSERT(classDeclaration != NULL);
      ROSE_ASSERT(symbol           != NULL);
 
-#if 1
+#if 0
      printf ("In isDefinedThroughPrivateBaseClass(): classDeclaration = %p = %s symbol = %p = %s \n",classDeclaration,SageInterface::get_name(classDeclaration).c_str(),symbol,symbol->class_name().c_str());
 #endif
 
@@ -171,12 +171,12 @@ FixupAstSymbolTablesToSupportAliasedSymbols::isDefinedThroughPrivateBaseClass ( 
 
                     if (baseClass != NULL)
                        {
-#if 1
+#if 0
                          printf ("Found a base class \n");
 #endif
                          SgClassDeclaration* baseClass_classDeclaration = baseClass->get_base_class();
                          ROSE_ASSERT(baseClass_classDeclaration != NULL);
-#if 1
+#if 0
                          printf ("RECURSIVE CALL: isDefinedThroughPrivateBaseClass(): baseClass_classDeclaration = %p = %s \n",
                               baseClass_classDeclaration,baseClass_classDeclaration->get_name().str());
 #endif
@@ -219,7 +219,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::isDefinedThroughPrivateBaseClass ( 
      ROSE_ASSERT(classDeclaration != NULL);
      ROSE_ASSERT(symbol           != NULL);
 
-#if 1
+#if 0
      printf ("In isDefinedThroughPrivateBaseClass(): classDeclaration = %p = %s symbol = %p = %s \n",classDeclaration,SageInterface::get_name(classDeclaration).c_str(),symbol,symbol->class_name().c_str());
 #endif
 
@@ -227,7 +227,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::isDefinedThroughPrivateBaseClass ( 
      SgAliasSymbol* aliasSymbol = isSgAliasSymbol(symbol);
      if (aliasSymbol != NULL)
         {
-#if 1
+#if 0
           printf ("In isDefinedThroughPrivateBaseClass(): FOUND SgAliasSymbol! \n");
 #endif
 
@@ -311,12 +311,12 @@ FixupAstSymbolTablesToSupportAliasedSymbols::isDefinedThroughPrivateBaseClass ( 
 
                     if (baseClass != NULL)
                        {
-#if 1
+#if 0
                          printf ("Found a base class \n");
 #endif
                          SgClassDeclaration* baseClass_classDeclaration = baseClass->get_base_class();
                          ROSE_ASSERT(baseClass_classDeclaration != NULL);
-#if 1
+#if 0
                          printf ("RECURSIVE CALL: isDefinedThroughPrivateBaseClass(): baseClass_classDeclaration = %p = %s \n",
                               baseClass_classDeclaration,baseClass_classDeclaration->get_name().str());
 #endif
@@ -737,13 +737,28 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 #endif
              }
 
+#if ALIAS_SYMBOL_DEBUGGING || 0
+          printf ("declarationAccessLevel         = %d \n",declarationAccessLevel);
+          printf ("accessLevel                    = %d \n",accessLevel);
+          printf ("causalNode                     = %p = %s \n",causalNode,causalNode->class_name().c_str());
+          printf ("definedThroughPrivateBaseClass = %s \n",definedThroughPrivateBaseClass ? "true" : "false");
+#endif
+
+       // DQ (8/15/2020): We need to account for the access permission being a new value SgAccessModifier::e_default.
        // DQ (1/24/2019): Added support for where we detect that a symbol should not be aliased because it 
        // comes from a pribvate base class derivation in a nested derivation.
        // DQ (12/23/2015): See test2015_140.C for where even private base classes will require representations 
        // of it's symbols in the derived class (to support correct name qualification).
        // if (declarationAccessLevel >= accessLevel)
        // if ( (declarationAccessLevel >= accessLevel) || isSgBaseClass(causalNode) != NULL)
+#if 1
+       // DQ (8/15/2020): This original code is fine as long as the accessLevel is set properly as function input.
           if ( (declarationAccessLevel >= accessLevel) || (isSgBaseClass(causalNode) != NULL && definedThroughPrivateBaseClass == false))
+#else
+          if ( (declarationAccessLevel == SgAccessModifier::e_public) || 
+               (declarationAccessLevel >= accessLevel) || 
+               (isSgBaseClass(causalNode) != NULL && definedThroughPrivateBaseClass == false))
+#endif
              {
             // This declaration is visible, so build an alias.
 
@@ -763,19 +778,38 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                printf (" --- name = %s \n",name.str());
                printf (" --- currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
                printf (" --- currentScope name = %s \n",SageInterface::get_name(currentScope).c_str());
+               printf (" --- calledFromUsingDirective = %s \n",calledFromUsingDirective ? "true" : "false");
 #endif
+#if 1
+            // DQ (8/14/2020): Activated this code back to what it was.
+            // DQ (8/14/2020): Commented out this fix to test Cxx_tests/test2020_33.C.
             // DQ (8/9/2020): I think this should only be called from the case of a SgUsingDirectiveStatement.
                SgSymbol* trial_lookup_symbol = NULL;
                if (calledFromUsingDirective == true)
                   {
                     trial_lookup_symbol = SageInterface::lookupSymbolInParentScopesIgnoringAliasSymbols (name,currentScope,templateParameterList,templateArgumentList);
-
+#if 0
+                    printf ("trial_lookup_symbol = %p \n",trial_lookup_symbol);
+                    if (trial_lookup_symbol != NULL)
+                       {
+                         printf ("trial_lookup_symbol = %p = %s \n",trial_lookup_symbol,trial_lookup_symbol->class_name().c_str());
+                       }
+#endif
                  // DQ (8/9/2020): Ignore case of SgEnumSymbol symbols (see Cxx11_tests/test2019_448.C).
                     SgEnumSymbol* enumSymbol = isSgEnumSymbol(trial_lookup_symbol);
                     if (enumSymbol != NULL)
                        {
 #if ALIAS_SYMBOL_DEBUGGING || 0
                          printf ("Detected a trial_lookup_symbol == SgEnumSymbol: reset trial_lookup_symbol = NULL \n");
+#endif
+                         trial_lookup_symbol = NULL;
+                       }
+                 // DQ (8/9/2020): Ignore case of SgEnumSymbol symbols (see Cxx11_tests/test2019_448.C).
+                    SgNamespaceSymbol* namespaceSymbol = isSgNamespaceSymbol(trial_lookup_symbol);
+                    if (namespaceSymbol != NULL)
+                       {
+#if ALIAS_SYMBOL_DEBUGGING || 0
+                         printf ("Detected a trial_lookup_symbol == SgNamespaceSymbol: reset trial_lookup_symbol = NULL \n");
 #endif
                          trial_lookup_symbol = NULL;
                        }
@@ -789,7 +823,6 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                     printf (" --- trial_lookup_symbol = %p = %s \n",trial_lookup_symbol,trial_lookup_symbol->class_name().c_str());
                   }
 #endif
-#if 1
             // DQ (8/9/2020): start of case to exclude symbols that can be found based on name only and not using SgAliasSymbols.
                if (trial_lookup_symbol != NULL)
                   {
@@ -802,6 +835,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 #endif
                   }
                  else
+            // DQ (8/14/2020): Commented out this fix to test Cxx_tests/test2020_33.C.
 #endif
                   {
                  // DQ (8/9/2020): Original code before supporting exclusion of symbols in parent scopes.
@@ -816,6 +850,10 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
             // the symbol table support.
             // Note that this change improves the performance from 15 minutes to 5 seconds for the outlining example.
                bool alreadyExists = currentScope->symbol_exists(name);
+
+            // DQ (8/14/2020): The prolem here (demonstrated in test code: Cxx_tests/test2020_33.C) is
+            // that there could be two or more symbols with the same alias and so we can't just check the name.
+
 
 #if ALIAS_SYMBOL_DEBUGGING || 0
                printf ("alreadyExists = %s \n",alreadyExists ? "true" : "false");
@@ -867,30 +905,58 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                               alreadyExists = false; // reset to be false
                            // using less expensive equal_range(), which can be O(logN) instead of O(N)
                            // This matters since this function is called inside another loop with complexity of O(N) already.
+
+                              ROSE_ASSERT(currentScope != NULL);
+#if ALIAS_SYMBOL_DEBUGGING
+                              printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
                               rose_hash_multimap * internal_table = currentScope->get_symbol_table()->get_table();
                               ROSE_ASSERT (internal_table != NULL);
+#if ALIAS_SYMBOL_DEBUGGING
+                              printf ("internal_table->size() = %zu \n",internal_table->size());
+#endif
                               std::pair<rose_hash_multimap::iterator, rose_hash_multimap::iterator> range = internal_table ->equal_range (name);
                               for (rose_hash_multimap::iterator i = range.first; i != range.second; ++i)
-                              {
-                                SgSymbol * orig_current_symbol = i->second; 
-                                ROSE_ASSERT (orig_current_symbol != NULL);
+                                 {
+                                   SgSymbol * orig_current_symbol = i->second; 
+                                   ROSE_ASSERT (orig_current_symbol != NULL);
+#if ALIAS_SYMBOL_DEBUGGING
+                                   printf ("In loop: orig_current_symbol = %p = %s name = %s \n",orig_current_symbol,
+                                        orig_current_symbol->class_name().c_str(),SageInterface::get_name(orig_current_symbol).c_str());
+#endif
                                 // strip off alias symbols
-                                SgSymbol * non_alias_symbol = orig_current_symbol; 
-                                while (isSgAliasSymbol(non_alias_symbol))
-                                {
-                                  non_alias_symbol = isSgAliasSymbol(non_alias_symbol) ->get_alias();
-                                  ROSE_ASSERT (non_alias_symbol != NULL);
-                                }
-                                SgNode* associatedDeclaration = i->second->get_symbol_basis();
-                                assert(associatedDeclaration != NULL);
+                                   SgSymbol * non_alias_symbol = orig_current_symbol; 
+                                   while (isSgAliasSymbol(non_alias_symbol))
+                                      {
+                                        non_alias_symbol = isSgAliasSymbol(non_alias_symbol) ->get_alias();
+                                        ROSE_ASSERT (non_alias_symbol != NULL);
+#if ALIAS_SYMBOL_DEBUGGING
+                                        printf ("In loop: non_alias_symbol = %p = %s name = %s \n",non_alias_symbol,
+                                             non_alias_symbol->class_name().c_str(),SageInterface::get_name(non_alias_symbol).c_str());
+#endif
+                                      }
+                                   SgNode* associatedDeclaration = i->second->get_symbol_basis();
+                                   assert(associatedDeclaration != NULL);
+#if ALIAS_SYMBOL_DEBUGGING
+                                   printf ("In loop: associatedDeclaration = %p = %s \n",associatedDeclaration,associatedDeclaration->class_name().c_str());
+                                   printf ("In loop: symbolBasis = %p = %s \n",symbolBasis,symbolBasis->class_name().c_str());
+#endif
                                 // same basis and same symbol type
                                 // The assumption is that no two symbols can share the same basis declaration TODO double check this!
-                                if (associatedDeclaration == symbolBasis && (non_alias_symbol->variantT() == symbol->variantT()))
-                                {
-                                  alreadyExists = true;
-                                  break;
-                                }
-                              } // end for
+                                   if (associatedDeclaration == symbolBasis && (non_alias_symbol->variantT() == symbol->variantT()))
+                                      {
+#if ALIAS_SYMBOL_DEBUGGING
+                                        printf ("In loop: setting alreadyExists = true \n");
+#endif
+                                        alreadyExists = true;
+
+                                     // DQ (8/14/2020): Commented out.
+                                     // break;
+                                      }
+                                 } // end for
+#if ALIAS_SYMBOL_DEBUGGING
+                              printf ("After more detailed evaluation: alreadyExists = %s \n",alreadyExists ? "true" : "false");
+#endif
                               break;
                             }
 
@@ -1149,8 +1215,10 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
   // debugging
      symbolTable->print("In injectSymbolsFromReferencedScopeIntoCurrentScope(): printing out the symbol tables");
 #endif
+
 #if ALIAS_SYMBOL_DEBUGGING
-     printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): referencedScope = %p = %s currentScope = %p = %s accessLevel = %d \n",referencedScope,referencedScope->class_name().c_str(),currentScope,currentScope->class_name().c_str(),accessLevel);
+     printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): referencedScope = %p = %s currentScope = %p = %s accessLevel = %d \n",
+          referencedScope,referencedScope->class_name().c_str(),currentScope,currentScope->class_name().c_str(),accessLevel);
 #endif
    }
 
@@ -1246,6 +1314,10 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                   }
              }
 
+#if 0
+          printf ("referencedScope = %p = %s name = %s \n",referencedScope,referencedScope->class_name().c_str(),SageInterface::get_name(referencedScope).c_str());
+#endif
+
        // Note that "std", as a predefined namespace, can have a null definition, so we can't 
        // insist that we inject all symbols in namespaces that we can't see explicitly.
           if (referencedScope != NULL)
@@ -1257,7 +1329,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 #endif
             // DQ (8/9/2020): We need to define a mode so that within injectSymbolsFromReferencedScopeIntoCurrentScope() we can handle this as a special case.
                bool calledFromUsingDirective = true;
-               injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,usingDirectiveStatement,SgAccessModifier::e_default,calledFromUsingDirective);
+            // injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,usingDirectiveStatement,SgAccessModifier::e_default,calledFromUsingDirective);
+               injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,usingDirectiveStatement,SgAccessModifier::e_public,calledFromUsingDirective);
              }
 
 #if 0

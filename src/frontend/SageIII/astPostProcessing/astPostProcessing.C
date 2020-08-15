@@ -691,6 +691,12 @@ void postProcessingSupport (SgNode* node)
           SageInterface::checkAccessPermissions(node);
 #endif
 
+#if 0
+       // DQ (8/14/2020): Adding support for debugging symbol visability (see Cxx_tests/test2020_33.C).
+          printf ("Calling checkAccessPermissions() at END of astPostprocessing \n");
+          SageInterface::checkSymbolTables(node);
+#endif
+
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("DONE: Postprocessing AST build using new EDG/Sage Translation Interface. \n");
 #endif

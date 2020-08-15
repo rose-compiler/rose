@@ -604,6 +604,9 @@ SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::ma
 // DQ (8/12/2020): Check the access permissions of all defining and nodefining declarations.
 void checkAccessPermissions ( SgNode* );
 
+// DQ (8/14/2020): Check the symbol tables for specific scopes (debugging support).
+void checkSymbolTables ( SgNode* );
+
 //@}
 
 //------------------------------------------------------------------------
