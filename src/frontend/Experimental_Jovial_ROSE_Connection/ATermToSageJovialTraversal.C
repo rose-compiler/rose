@@ -4672,11 +4672,9 @@ ATbool ATermToSageJovialTraversal::traverse_AssignmentStatement(ATerm term)
          // MATCHED Formula
       } else return ATfalse;
 
-      if (vars.size() > 1) {
-         cerr << "WARNING UNIMPLEMENTED: AssignmentStatement - with multiple variables\n";
-      }
       if (rhs == nullptr) {
-         cerr << "WARNING UNIMPLEMENTED: AssignmentStatement - could be FunctionCall, or StatusConstant, or PointerLiteral, etc.\n";
+         cerr << "WARNING UNIMPLEMENTED: AssignmentStatement "
+              << "- could be FunctionCall, or StatusConstant, or PointerLiteral, etc.\n";
          return ATtrue;
       }
 

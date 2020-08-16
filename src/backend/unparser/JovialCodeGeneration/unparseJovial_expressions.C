@@ -93,12 +93,24 @@ Unparse_Jovial::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseAssignOp(SgExpression* expr, SgUnparse_Info& info) 
   {
-     SgBinaryOp* op = isSgBinaryOp(expr);
+     SgAssignOp* op = isSgAssignOp(expr);
      ASSERT_not_null(op);
 
-     unparseExpression(op->get_lhs_operand(), info);
+     SgExpression* lhs = op->get_lhs_operand();
+     SgExpression* rhs = op->get_rhs_operand();
+
+     unparseExpression(lhs, info);
+
+  // An assignment statement may have multiple variables
+     while (SgAssignOp* assign_op = isSgAssignOp(rhs))
+        {
+           curprint(",");
+           unparseExpression(assign_op->get_lhs_operand(), info);
+           rhs = assign_op->get_rhs_operand();
+        }
+
      curprint(" = ");
-     unparseExpression(op->get_rhs_operand(), info);
+     unparseExpression(rhs, info);
      curprint(";");
   }
 
