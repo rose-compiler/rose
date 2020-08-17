@@ -138,6 +138,7 @@ Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, int pos, ObserveTransform &
     n1 = n->Clone();
     for ( LoopTreeNode *cur1 = n->FirstChild(); cur1 != tmp1; ) {
       LoopTreeNode* t = cur1;
+      assert(cur1 != NULL);
       cur1 = cur1->NextSibling();
       UnlinkNode(t);
       t->Link( n1, LoopTreeNode::AsLastChild);
@@ -1192,6 +1193,7 @@ operator()( LoopTreeNode* repl, LoopTreeNode* init,
   if (opt2 != 0) {
      c.set_opt(opt2);
      LoopTreeNode *r = new LoopTreeCopyArray(c);
+     assert(save != NULL);
      InsertNode(r,save,-1); 
   }
 }
@@ -1233,6 +1235,7 @@ class ApplyLoopSplittingImpl
        for (PtrSetWrap<LoopTreeNode>::const_iterator listp = stmtlist.begin();
            !listp.ReachEnd(); listp.Advance()) {
          LoopTreeNode* curstmt = listp.Current();
+         assert(curstmt != NULL);
          LoopTreeSplitStmt()(curstmt, loop, mid);
        }
        SelectPtrSet<LoopTreeNode> sel(stmtlist);
@@ -1241,6 +1244,7 @@ class ApplyLoopSplittingImpl
        OptimizeLoopTree(loop);       
        OptimizeLoopTree(loop1); 
        ++cur;
+       assert(loop1 != NULL);
        if (!loop1->SelfRemove())
           SplitLoop(loop1, cur, end);
        if (!loop->SelfRemove()) 

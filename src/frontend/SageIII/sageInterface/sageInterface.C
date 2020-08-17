@@ -286,11 +286,13 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                          printf ("decl->get_parent()               = %p = %s = %s \n",decl->get_parent(),decl->get_parent()->class_name().c_str(),get_name(decl->get_parent()).c_str());
                          printf ("decl->get_parent()->get_parent() = %p = %s = %s \n",decl->get_parent()->get_parent(),decl->get_parent()->get_parent()->class_name().c_str(),get_name(decl->get_parent()->get_parent()).c_str());
 #endif
+#if 0
                          SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(decl->get_parent()->get_parent());
                          if (namespaceDefinitionStatement != NULL)
                             {
                               namespaceDefinitionStatement->get_file_info()->display("namespaceDefinitionStatement: debug");
                             }
+#endif
 #if 0
                          if (isSgCtorInitializerList(decl) != NULL)
                             {
@@ -6197,6 +6199,89 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
      return symbol;
    }
 
+
+
+SgSymbol*
+SageInterface::lookupSymbolInParentScopesIgnoringAliasSymbols (const SgName & name, SgScopeStatement *currentScope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
+   {
+// DQ (8/5/2020): the "using namespace" directive will not hide existing visability of symbols in resolving visability.
+// So we need to test if a symbol is visible exclusing matching alises due to using direectives before we can decide to
+// persue name space qualification. This is best demonstrated by Cxx_tests/test2020_18.C, test2020_19.C, test2020_20.C, 
+// and test2020_21.C.
+
+     SgSymbol* symbol = NULL;
+     if (currentScope == NULL)
+        {
+          currentScope = SageBuilder::topScopeStack();
+        }
+
+     ROSE_ASSERT(currentScope != NULL);
+
+#define DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS 0
+
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
+     printf ("In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): currentScope = %p = %s (templateParameterList = %p templateArgumentList = %p) \n",
+          currentScope,currentScope->class_name().c_str(),templateParameterList,templateArgumentList);
+#endif
+
+     while ((currentScope != NULL) && (symbol == NULL))
+        {
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
+          printf("   --- In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): name = %s currentScope = %p = %s \n",
+               name.str(),currentScope,currentScope->class_name().c_str());
+#endif
+
+       // DQ (8/16/2013): Changed API to support template parameters and template arguments.
+       // symbol = cscope->lookup_symbol(name);
+          symbol = currentScope->lookup_symbol(name,templateParameterList,templateArgumentList);
+
+          if (isSgAliasSymbol(symbol) != NULL)
+             {
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
+               printf ("Found a SgAliasSymbol: reset to NULL: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
+               symbol = NULL;
+             }
+
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS && 1
+       // debug
+          printf("   --- In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): symbol = %p \n",symbol);
+          currentScope->print_symboltable("In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): debug");
+#endif
+          if (currentScope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               currentScope = isSgGlobal(currentScope) ? NULL : currentScope->get_scope();
+            else
+               currentScope = NULL;
+
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
+          printf ("   --- In SageInterface:: (base of loop) lookupSymbolInParentScopesIgnoringAliasSymbols(): cscope = %p symbol = %p \n\n",currentScope,symbol);
+#endif
+        }
+
+     if (symbol == NULL)
+        {
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
+          printf ("Warning: In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): could not locate the specified name %s in any outer symbol table (templateParameterList = %p templateArgumentList = %p) \n",
+               name.str(),templateParameterList,templateArgumentList);
+#endif
+       // ROSE_ASSERT(false);
+        }
+
+#if 0
+     printf ("Support for lookupSymbolInParentScopesIgnoringAliasSymbols() is not yet implemented \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return symbol;
+   }
+
+
+
+
+
+
+
+
 #if 0
 // DQ (7/13/2011): This was part of a merge conflict with the above modified function.
 // It appeas they are the same so this one is commented out.
@@ -7253,21 +7338,33 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool incl
 
 bool SageInterface::isMain(const SgNode* n)
 {
- bool result = false;
- // Liao 1/5/2010, handle Fortran main entry: SgProgramHeaderStatement
- if (SageInterface::is_Fortran_language())
- {
-   if (isSgProgramHeaderStatement(n))
-     result = true;
- }
- else
- {
-   if (isSgFunctionDeclaration(n) &&
-       (SageInterface::is_Java_language() || isSgGlobal(isSgStatement(n)->get_scope())) &&
-       isSgFunctionDeclaration(n)->get_name() == "main")
-   result = true;
- }
-
+   bool result = false;
+   // Liao 1/5/2010, handle Fortran main entry: SgProgramHeaderStatement
+   if (SageInterface::is_Fortran_language()) {
+      if (isSgProgramHeaderStatement(n)) {
+         result = true;
+      }
+   }
+   else {
+      if (isSgFunctionDeclaration(n) != NULL) {
+         bool either = false;
+         if (SageInterface::is_Java_language()) {
+            either = true;
+         }
+         else {
+            ROSE_ASSERT(isSgStatement(n) != NULL);
+            if (isSgGlobal(isSgStatement(n)->get_scope())) {
+               either = true;
+            }
+         }
+         if (either) {
+            ROSE_ASSERT(isSgFunctionDeclaration(n) != NULL);
+            if (isSgFunctionDeclaration(n)->get_name() == "main") {
+               result = true;
+            }
+         }
+      }
+   }
    return result;
 }
 
@@ -10308,9 +10405,10 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
 void SageInterface::removeAllOriginalExpressionTrees(SgNode* top) {
   struct Visitor: public AstSimpleProcessing {
     virtual void visit(SgNode* n) {
-      if (isSgValueExp(n)) {
+      if (isSgValueExp(n) != NULL) {
         isSgValueExp(n)->set_originalExpressionTree(NULL);
-      } else if (isSgCastExp(n)) {
+      }
+      else if (isSgCastExp(n) != NULL) {
         isSgCastExp(n)->set_originalExpressionTree(NULL);
       }
     }
@@ -12212,36 +12310,41 @@ bool SageInterface::mergeAssignmentWithDeclaration(SgExprStatement* assign_stmt,
 bool SageInterface::mergeDeclarationWithAssignment(SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
 {
   bool rt= true;
-  ROSE_ASSERT(decl != NULL);
-  ROSE_ASSERT(assign_stmt != NULL);
 
   // Sanity check of assign statement: must be a form of var = xxx;
+  ROSE_ASSERT(assign_stmt != NULL);
   SgAssignOp * assign_op = isSgAssignOp (assign_stmt->get_expression());
   if (assign_op == NULL)
     return false;
   SgVarRefExp* assign_op_var = isSgVarRefExp(assign_op->get_lhs_operand());
-  if (assign_op_var == NULL) return false;
+  if (assign_op_var == NULL)
+    return false;
 
   // Sanity check of the variable declaration: it should not have an existing initializer
+  ROSE_ASSERT(decl != NULL);
   SgInitializedName * decl_var = SageInterface::getFirstInitializedName (decl);
-  if (decl_var->get_initptr()!= NULL ) return false;
+  if (decl_var->get_initptr()!= NULL)
+     return false;
 
   // check if two variables match
   // In translation, it is possible the declaration has not yet been inserted into its scope.
   // finding its symbol can return NULL.
   // But we still want to do the merge.
+  ROSE_ASSERT(decl_var != NULL);
   SgSymbol* decl_var_symbol = decl_var->get_symbol_from_symbol_table();
-  if (decl_var_symbol!=NULL)
-  {
+  if (decl_var_symbol != NULL) {
     // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
-    // if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
-    if (assign_op_var->get_symbol() != decl_var_symbol)  return false;
+    // if (assign_op_var->get_symbol() != decl_var_symbol)
+    //    return NULL;
+    if (assign_op_var->get_symbol() != decl_var_symbol)
+       return false;
   }
   else
   { // fallback to comparing variable names instead
     // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
     // if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL;
-    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return false;
+    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name())
+       return false;
   }
 
   // Everything looks fine now. Do the merge.
@@ -12452,12 +12555,14 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
   ROSE_ASSERT(from != NULL);
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+#if 0  // This is not accurate for template class specializations. We disable this assertion for now. The worst case is compilation error later.
   if (!SageInterface::isCopyConstructible(from->get_type())) {
     std::cerr << "Type " << from->get_type()->unparseToString() << " of expression " << from->unparseToString() << " is not copy constructible" << std::endl;
     ROSE_ASSERT (false);
   }
 
   assert (SageInterface::isCopyConstructible(from->get_type())); // How do we report errors?
+#endif
   SgStatement* stmt = getStatementOfExpression(from);
   assert (stmt);
   if (!isSgForInitStatement(stmt->get_parent())) {
@@ -13527,7 +13632,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                               const bool stmt_present = (p->get_loop_body() == targetStmt || p->get_test() == targetStmt);
 
                           // \pp \todo what if !stmt_present
-                              ROSE_ASSERT(stmt_present);
+                              ROSE_ASSERT(stmt_present != NULL);
                               insertStatement(p, newStmt, insertBefore);
                             }
                            else
@@ -13542,6 +13647,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                                else
                                  {
                                 // It appears that all of the recursive calls are untimately calling this location.
+                                   ROSE_ASSERT(isSgStatement(parent) != NULL);
                                    isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
                                  }
                             }
@@ -19289,7 +19395,7 @@ SageInterface::deleteAST ( SgNode* n )
                                 /remove SgFunctionSymbol
                                 /////////////////////////////////////////////////*/
 
-                                if(isSgFunctionDeclaration(node) && isSgMemberFunctionDeclaration(node)==NULL){
+                                if ((isSgFunctionDeclaration(node) != NULL) && (isSgMemberFunctionDeclaration(node) == NULL)){
                                         if(isSgFunctionDeclaration(node)->get_scope()!=NULL){
                                              if(isSgFunctionDeclaration(node)->get_scope()->get_symbol_table()!=NULL)
                                                 {
@@ -19873,12 +19979,12 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                        {
                          SgFunctionDeclaration * funcDecl = isSgFunctionDeclaration(declaration);
                          ROSE_ASSERT (funcDecl);
-                         //cout<<"found a function declaration to be moved ..."<<endl;
                        }
                      break;
                      case V_SgAttributeSpecificationStatement:
                      case V_SgEmptyDeclaration:
                      case V_SgFortranIncludeLine:
+                     case V_SgJovialDirectiveStatement:
                      case V_SgPragmaDeclaration:
                        break;
                     default:
@@ -22332,6 +22438,7 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
       {
         // we move int i; to be for (int i=0; ...);
         SgForStatement* stmt = isSgForStatement (target_scope);
+        ROSE_ASSERT(stmt != NULL);
         SgStatementPtrList& stmt_list = stmt->get_init_stmt();
         // Try to match a pattern like for (i=0; ...) here
         // assuming there is only one assignment like i=0
@@ -23269,6 +23376,23 @@ SageInterface::translateToUseCppDeclarations( SgNode* n )
      printf ("Leaving translateToUseCppDeclarations(): DONE: Calling traversal.traverse() \n");
    }
 
+void SageInterface::recursivePrintCurrentAndParent (SgNode* n)
+{
+  // print current level's info
+  if (!n) return; 
+  cout<<"--------------"<<endl;
+  cout<<n<<":"<<n->class_name()<<  endl;
+  if (SgLocatedNode * lnode = isSgLocatedNode(n))
+  { 
+    cout<<"file info:\t ";
+    lnode->get_file_info()->display();
+    cout<<"\n unparseToString:\t ";
+    lnode->unparseToString();
+  }  
+
+  // track back to its parent
+  recursivePrintCurrentAndParent (n->get_parent());
+} 
 
 void SageInterface:: saveToPDF(SgNode* node)
 {
@@ -24826,3 +24950,43 @@ SageInterface::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node)
 #endif
    }
 
+
+
+// DQ (7/14/2020): Added test for initializers to support debugging of Cxx11_tests/test2020_69.C.
+void
+SageInterface::checkForInitializers( SgNode* node )
+   {
+  // This function checks variable declarations for initializers.  An issue (bug) in EDG 6.0 
+  // support for variable declarations initialized using lambda functions is that the initalizer
+  // is discarded at some point in the processing of the AST.  This function reports on all 
+  // variable declarations and if they contain initializers and if so what kind of initializer.
+
+     ROSE_ASSERT(node != NULL);
+
+  // Preorder traversal to uniquely label the scopes (SgScopeStatements)
+     class CheckInitializerTraversal : public AstSimpleProcessing
+        {
+          public:
+               void visit (SgNode* node)
+                  {
+                    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(node);
+                    if (variableDeclaration != NULL)
+                       {
+                         SgInitializedName* initializedName = getFirstInitializedName(variableDeclaration);
+                         SgExpression* initializer = initializedName->get_initializer();
+
+                         printf ("variableDeclaration = %p initializedName = %p = %s initializer = %p \n",
+                              variableDeclaration,initializedName,initializedName->get_name().str(),initializer);
+
+                         if (initializer != NULL)
+                            {
+                              printf (" --- initializer = %s \n",initializer->class_name().c_str());
+                            }
+                       }
+                  }
+        };
+
+    // Now buid the traveral object and call the traversal (preorder) on the project.
+       CheckInitializerTraversal traversal;
+       traversal.traverse(node, preorder);
+   }

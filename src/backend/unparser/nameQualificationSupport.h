@@ -45,6 +45,15 @@ class NameQualificationInheritedAttribute
           bool containsFunctionArgumentsOfPointerMemberType;
 #endif
 
+#if 0
+       // DQ (8/1/2020): Namespace alias need to have a priority when they are available.
+       // std::map<SgDeclarationStatement*,SgNamespaceAliasDeclarationStatement*> namespaceAliasDeclarationMap;
+          namespaceAliasMapType namespaceAliasDeclarationMap;
+     public:
+          typedef std::map<SgDeclarationStatement*,SgNamespaceAliasDeclarationStatement*> namespaceAliasMapType;
+#endif
+
+
      public:
 
           NameQualificationInheritedAttribute();
@@ -59,9 +68,15 @@ class NameQualificationInheritedAttribute
        // DQ (4/19/2019): Added support to include current statement (required for nested traversals 
        // of types to support name qualification for SgPointerMemberType).
           SgStatement* get_currentStatement();
-          void set_currentStatement(SgStatement* statement);         
+          void set_currentStatement(SgStatement* statement);
           SgNode* get_referenceNode();
-          void set_referenceNode(SgNode* referenceNode);         
+          void set_referenceNode(SgNode* referenceNode);
+
+#if 0
+       // DQ (8/1/2020): access function for namespaceAliasDeclarationMap
+          namespaceAliasMapType & get_namespaceAliasDeclarationMap();
+       // void set_namespaceAliasMap(namespaceAliasMapType & namespaceAliasMap);
+#endif
 
 #if 0
        // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
@@ -80,7 +95,11 @@ class NameQualificationInheritedAttribute
 class NameQualificationSynthesizedAttribute
    {
      public:
+          SgNode* node;
+
+     public:
           NameQualificationSynthesizedAttribute();
+          NameQualificationSynthesizedAttribute(SgNode* astNode);
           NameQualificationSynthesizedAttribute( const NameQualificationSynthesizedAttribute & X );
    };
 
@@ -152,10 +171,21 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // DQ (4/19/2019): Added support to include current statement (required for nested traversals 
        // of types to support name qualification for SgPointerMemberType).
           SgStatement* explictlySpecifiedCurrentStatement;
+#if 0
+       // DQ (8/1/2020): Namespace alias need to have a priority when they are available.
+          NameQualificationInheritedAttribute::namespaceAliasMapType* namespaceAliasDeclarationMapFromInheritedAttribute;
+#endif
+#if 1
+       // DQ (8/2/2020): This is added to by the inherited attribute evaluation and subtracted from by the synthesized attribute evaluation.
+       // DQ (8/1/2020): Namespace alias need to have a priority when they are available.
+       // std::map<SgDeclarationStatement*,SgNamespaceAliasDeclarationStatement*> namespaceAliasDeclarationMap;
+          typedef std::map<SgDeclarationStatement*,SgNamespaceAliasDeclarationStatement*> namespaceAliasMapType;
+          namespaceAliasMapType namespaceAliasDeclarationMap;
+#endif
 
      public:
        // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
-//        static Sawyer::Message::Facility mlog;
+       // static Sawyer::Message::Facility mlog;
           static void initDiagnostics();
 
      public:
@@ -200,6 +230,12 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // SgName associatedName(SgScopeStatement* scope);
           SgDeclarationStatement* associatedDeclaration ( SgScopeStatement* scope );
           SgDeclarationStatement* associatedDeclaration ( SgType* type );
+
+       // DQ (8/8/2020): this is code refactored from the evaluateInheritedAttribute() function within the SgInitializeName handling.
+       // This code support the name qualification of the type associated with a SgInitializedName (it might be useful else where as well).
+       // void nameQualificationTypeSupport ( SgType* type, SgScopeStatement* currentScope, SgStatement* positionStatement );
+       // void nameQualificationTypeSupport  ( SgType* type, SgScopeStatement* currentScope, SgInitializedName* initializedName, SgStatement* currentStatement, SgStatement* positionStatement );
+          void nameQualificationTypeSupport  ( SgType* type, SgScopeStatement* currentScope, SgInitializedName* initializedName );
 
        // These don't really need to be virtual, since we don't derive from this class.
           virtual NameQualificationInheritedAttribute evaluateInheritedAttribute(SgNode* n, NameQualificationInheritedAttribute inheritedAttribute);

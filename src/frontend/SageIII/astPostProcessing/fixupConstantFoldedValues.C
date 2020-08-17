@@ -277,8 +277,22 @@ void removeConstantFoldedValue(SgProject * project) {
 
       if (replace_folded_by_child) {
         child->set_parent(folded->get_parent()); // prevent replacement from creating self loop if child is direct descendant of folded
+#if 0
+        printf ("child = %p = %s \n",child,child->class_name().c_str());
+#endif
+#if 1
+     // DQ (7/23/2020): Only required now for C++11 code using EDG 6.0 and GNU 10.1 (see Cxx11_tests/test2015_02.C).
+     // DQ (7/18/2020): Added support to permit Cxx11_tests/test2020_69.C to pass.
+        SgLambdaExp* lambdaExp = isSgLambdaExp(child);
+        if (lambdaExp == NULL)
+           {
+             replace_set[folded] = child;
+             delete_set.insert(folded);
+           }
+#else
         replace_set[folded] = child;
         delete_set.insert(folded);
+#endif
       } else {
         delete_set.insert(child);
       }
@@ -302,9 +316,16 @@ struct RemoveOriginalExpressionTrees : public ROSE_VisitTraversal {
     ROSE_ASSERT(node != NULL);
 
     SgExpression * exp = isSgExpression(node);
+#if 0
+    printf ("In RemoveOriginalExpressionTrees::visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
     if (exp != NULL) {
       SgExpression * oet = exp->get_originalExpressionTree();
       if (oet != NULL) {
+#if 0
+        printf ("In RemoveOriginalExpressionTrees::visit(): calling deleteExpressionAndOriginalExpressionTree()oet = %p = %s \n",oet,oet->class_name().c_str());
+#endif
         exp->set_originalExpressionTree(NULL);
         deleteExpressionAndOriginalExpressionTree(oet);
       }
@@ -314,12 +335,24 @@ struct RemoveOriginalExpressionTrees : public ROSE_VisitTraversal {
 
 //! This removes the original expression tree from value expressions where it has been constant folded by EDG.
 void resetConstantFoldedValues( SgNode* node ) {
+
+#if 1
   if (!isSgProject(node) || !((SgProject *)node)->get_frontendConstantFolding()) {
     TimingPerformance timer1 ("Fixup Constant Folded Values (replace with original expression trees):");
+
+#if 1
     removeConstantFoldedValue((SgProject *)node);
+#else
+    printf ("In resetConstantFoldedValues(): Skipping call to removeConstantFoldedValue() \n");
+#endif
+
   } else {
     TimingPerformance timer1 ("Fixup Constant Folded Values (remove the original expression tree, leaving the constant folded values):");
     RemoveOriginalExpressionTrees astFixupTraversal;
     astFixupTraversal.traverseMemoryPool();
   }
+#else
+    printf ("In resetConstantFoldedValues(): Skipping body of resetConstantFoldedValues() \n");
+#endif
+
 }

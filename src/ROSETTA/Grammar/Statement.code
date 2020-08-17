@@ -3473,6 +3473,11 @@ HEADER_ADA_TASK_BODY_STATEMENT_START
 SgName get_mangled_name() const ROSE_OVERRIDE;
 HEADER_ADA_TASK_BODY_STATEMENT_END
 
+HEADER_ADA_RENAMING_DECL_STATEMENT_START
+SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE; 
+SgName get_mangled_name() const ROSE_OVERRIDE; 
+HEADER_ADA_RENAMING_DECL_STATEMENT_END
+
 
 HEADER_PROGRAM_HEADER_STATEMENT_START
   /* HEADER_LIST_DECLARATIONS */
@@ -17657,11 +17662,12 @@ SgTemplateTypedefDeclaration::post_construction_initialization()
         }
 #endif
 
+  // Liao 2020/8/6: This is not always true: AST copy of SgTemplateTypedefDeclaration will pass the original type.      
   // DQ (2/27/2018): This should be null, since we just changed the semantics to defer the construction of the type (now consistant with other IR nodes).
   // DQ (2/25/2018): This should be non-null, but we might hae to make sure it is not overwritten.
   // ROSE_ASSERT(p_type != NULL);
   // p_type = NULL;
-     ROSE_ASSERT(p_type == NULL);
+  // ROSE_ASSERT(p_type == NULL);
 
 #if 0
   // DQ (2/25/2018): Added debugging support.
@@ -17678,7 +17684,7 @@ SgTemplateTypedefDeclaration::post_construction_initialization()
 
   // DQ (2/25/2018): This should be non-null, since we just built the new type.
   // ROSE_ASSERT(p_type != NULL);
-     ROSE_ASSERT(p_type == NULL);
+  // ROSE_ASSERT(p_type == NULL);
 
      ROSE_ASSERT (get_base_type() != NULL);
      ROSE_ASSERT (get_base_type()->get_typedefs() != NULL);
@@ -20186,6 +20192,30 @@ SgAdaTaskBodyDecl::get_mangled_name() const
   return name;
 }
 SOURCE_ADA_TASK_BODY_DECL_STATEMENT_END
+
+SOURCE_ADA_RENAMING_DECL_STATEMENT_START
+void SgAdaRenamingDecl::post_construction_initialization() {}
+
+SgSymbol* 
+SgAdaRenamingDecl::get_symbol_from_symbol_table() const 
+{
+  SgScopeStatement* scope = get_scope();
+  
+  ROSE_ASSERT(scope);
+  return scope->find_symbol_from_declaration(this); 
+}
+
+SgName 
+SgAdaRenamingDecl::get_mangled_name() const
+{
+  std::string name = "ada$ren$";
+  
+  name.append(get_name());
+  return name;
+}
+SOURCE_ADA_RENAMING_DECL_STATEMENT_END
+
+
 
 SOURCE_ADA_TASK_SPEC_STATEMENT_START
 void SgAdaTaskSpec::post_construction_initialization() {}
