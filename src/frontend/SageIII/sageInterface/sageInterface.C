@@ -3139,7 +3139,7 @@ SageInterface::OutputLocalSymbolTables::visit ( SgNode* node )
   // DQ (6/27/2005): Output the local symbol table from each scope.
   // printf ("node = %s \n",node->sage_class_name());
 
-#if 1
+#if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif
