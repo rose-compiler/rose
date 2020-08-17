@@ -1200,7 +1200,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      SgStorageModifier & storage = initializedName->get_storageModifier();
      if (storage.isExtern())
         {
-#if 0
+#if 1
           printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the extern keyword \n");
 #endif
           curprint("extern ");
@@ -1828,6 +1828,9 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 
 #if 0
      printf ("In Unparse_ExprStmt::unparseLanguageSpecificStatement(): Selecting an unparse function for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+#if 0
+          curprint("/* In Unparse_ExprStmt::unparseLanguageSpecificStatement(): Selecting an unparse function */");
 #endif
 
      switch (stmt->variantT())
@@ -5102,7 +5105,23 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if (funcdecl_stmt->isExternBrace())
              {
-               curprint(" }");
+#if 0
+               printf ("Inside of unparseFuncDeclStmt(): Output extern closing brace \n");
+               curprint("/* Inside of unparseFuncDeclStmt(): Output extern closing brace */ \n");
+#endif
+#if 0
+            // DQ (8/16/2020): I think that this is redundant with the use of braces on the class containing such extern c declarations.
+            // These extern brace cases are handled via the CPP preprocessor support.
+            // curprint(" }");
+               if (info.get_extern_C_with_braces() == true)
+                  {
+                    curprint(" }");
+                  }
+
+            // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+            // ROSE_ASSERT(info.get_extern_C_with_braces() == true);
+               info.set_extern_C_with_braces(false);
+#endif
              }
         }
        else
@@ -5471,8 +5490,19 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   {
 #if 0
                     printf ("In Unparse_ExprStmt::unparseFuncDeclStmt(): output extern brace \n");
+                    curprint("/* Inside of Unparse_ExprStmt::unparseFuncDeclStmt(): Output extern closing brace */ \n");
 #endif
-                    curprint(" }");
+#if 0
+                 // curprint(" }");
+                    if (info.get_extern_C_with_braces() == true)
+                       {
+                         curprint(" }");
+                       }
+
+                 // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+                 // ROSE_ASSERT(info.get_extern_C_with_braces() == true);
+                    info.set_extern_C_with_braces(false);
+#endif
                   }
              }
             else
@@ -6380,9 +6410,21 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if (mfuncdecl_stmt->isExternBrace())
              {
+#if 1
+               printf ("Inside of unparseMFuncDeclStmt(): Output extern closing brace \n");
+               curprint("/* Inside of unparseMFuncDeclStmt(): Output extern closing brace */ \n");
+#endif
+#if 0
+            // DQ (8/16/2020): I think that this is redundant with the use of braces on the class containing such extern c declarations.
+            // These extern brace cases are handled via the CPP preprocessor support.
                unp->cur.format(mfuncdecl_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
                curprint ( string(" }"));
                unp->cur.format(mfuncdecl_stmt, info, FORMAT_AFTER_BASIC_BLOCK2);
+
+            // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+            // ROSE_ASSERT(info.get_extern_C_with_braces() == true);
+               info.set_extern_C_with_braces(false);
+#endif
              }
         }
        else 
@@ -6851,7 +6893,19 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint(";");
                if (mfuncdecl_stmt->isExternBrace())
                   {
+#if 0
+                    printf ("Inside of unparseMFuncDeclStmt(): Output extern closing brace \n");
+                    curprint("/* Inside of unparseMFuncDeclStmt(): Output extern closing brace */ \n");
+#endif
+#if 0
+                 // DQ (8/16/2020): I think that this is redundant with the use of braces on the class containing such extern c declarations.
+                 // These extern brace cases are handled via the CPP preprocessor support.
                     curprint(" }");
+
+                 // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+                 // ROSE_ASSERT(info.get_extern_C_with_braces() == true);
+                    info.set_extern_C_with_braces(false);
+#endif
                   }
              }
             else
@@ -8730,6 +8784,9 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           classdecl_stmt->get_from_template() ? "true" : "false");
 #endif
 #if 0
+     curprint("/* Inside of Unparse_ExprStmt::unparseClassDeclStmt() */ \n");
+#endif
+#if 0
      if (classdecl_stmt->get_from_template() == true)
           curprint ( string("/* Unparser comment: Templated Class Declaration Function */"));
      Sg_File_Info* classDeclarationfileInfo = classdecl_stmt->get_file_info();
@@ -9029,7 +9086,19 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                if (classdecl_stmt->isExternBrace())
                   {
+#if 0
+                    printf ("Inside of unparseClassDeclStmt(): Output extern closing brace \n");
+                    curprint("/* Inside of unparseClassDeclStmt(): Output extern closing brace */ \n");
+#endif
+#if 0
+                 // DQ (8/16/2020): I think that this is redundant with the use of braces on the class containing such extern c declarations.
+                 // These extern brace cases are handled via the CPP preprocessor support.
                     curprint(" }");
+
+                 // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+                 // ROSE_ASSERT(info.get_extern_C_with_braces() == true);
+                    info.set_extern_C_with_braces(false);
+#endif
                   }
              }
         }
@@ -9709,6 +9778,10 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                if (enum_stmt->isExternBrace())
                   {
                     curprint(" }");
+
+                 // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+                 // ROSE_ASSERT(info.get_extern_C_with_braces() == true);
+                    info.set_extern_C_with_braces(false);
                   }
              }
 #endif
@@ -9734,7 +9807,19 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ( string(";"));
           if (enum_stmt->isExternBrace())
              {
+#if 0
+               printf ("Inside of unparseEnumDeclStmt(): Output extern closing brace \n");
+               curprint("/* Inside of unparseEnumDeclStmt(): Output extern closing brace */ \n");
+#endif
+#if 0
+            // DQ (8/16/2020): I think that this is redundant with the use of braces on the class containing such extern c declarations.
+            // These extern brace cases are handled via the CPP preprocessor support.
                curprint(" }");
+
+            // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+            // ROSE_ASSERT(info.get_extern_C_with_braces() == true);
+               info.set_extern_C_with_braces(false);
+#endif
              }
         }
 

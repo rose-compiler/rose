@@ -1545,16 +1545,21 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
    }
 
 
+// DQ (8/15/2020): Adding support for state so that we can avoid nested extern "C" specifications.
+// void Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_stmt )
 void
-Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_stmt )
+Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_stmt, SgUnparse_Info& info )
    {
      ASSERT_not_null(decl_stmt);
 
-#if 0
+#define DEBUG_EXTERN 0
+
+#if DEBUG_EXTERN
      printf ("Inside of outputExternLinkageSpecifier() decl_stmt = %p = %s decl_stmt->isExternBrace() = %s \n",decl_stmt,decl_stmt->class_name().c_str(),decl_stmt->isExternBrace() ? "true" : "false");
      printf ("   --- decl_stmt->isExternBrace()                                            = %s \n",decl_stmt->isExternBrace() ? "true" : "false");
      printf ("   --- decl_stmt->get_declarationModifier().get_storageModifier().isExtern() = %s \n",decl_stmt->get_declarationModifier().get_storageModifier().isExtern() ? "true" : "false");
      printf ("   --- decl_stmt->get_linkage().empty()                                      = %s \n",decl_stmt->get_linkage().empty() ? "true" : "false");
+     printf ("   --- info.get_extern_C_with_braces()                                       = %s \n",info.get_extern_C_with_braces() ? "true" : "false");
      curprint ("\n/* Inside of outputExternLinkageSpecifier() */ \n ");
 #endif
 
@@ -1562,22 +1567,41 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
   // if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage())
      if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage().empty() == false)
         {
-#if 0
+#if DEBUG_EXTERN
            printf ("/* output extern keyword */ \n");
 #endif
-          curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
-          if (decl_stmt->isExternBrace() == true)
+          if (info.get_extern_C_with_braces() == false)
              {
-#if 0
-                printf ("/* output extern brace */ \n");
+            // curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
+               if (decl_stmt->isExternBrace() == true)
+                  {
+#if DEBUG_EXTERN
+                    printf ("/* output extern brace */ \n");
 #endif
-               curprint( "{ ");
+#if 0
+                 // DQ (8/16/2020): I think that this is redundant with the use of braces on the class containing such extern c declarations.
+                 // These extern brace cases are handled via the CPP preprocessor support.
+                    curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
+                    curprint( "{ ");
+
+                 // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+                    ROSE_ASSERT(info.get_extern_C_with_braces() == false);
+                    info.set_extern_C_with_braces(true);
+#endif
+                  }
+                 else
+                  {
+                    curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
+                  }
              }
         }
-#if 0
+
+#if DEBUG_EXTERN
      printf ("Leaving outputExternLinkageSpecifier() decl_stmt = %p = %s decl_stmt->isExternBrace() = %s \n",decl_stmt,decl_stmt->class_name().c_str(),decl_stmt->isExternBrace() ? "true" : "false");
+     printf ("   --- info.get_extern_C_with_braces()                                       = %s \n",info.get_extern_C_with_braces() ? "true" : "false");
 #endif
    }
+
 
 void
 Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement* decl_stmt )
@@ -1800,7 +1824,10 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 #ifdef __GNUC__
    #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 3) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 4)
      outputTemplateSpecializationSpecifier(decl_stmt);
-     outputExternLinkageSpecifier(decl_stmt);
+
+  // DQ (8/15/2020): Adding support for state so that we can avoid nested extern "C" specifications.
+  // outputExternLinkageSpecifier(decl_stmt);
+     outputExternLinkageSpecifier(decl_stmt,info);
    #endif
 // #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 3) || ( (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 3) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 4) )
    #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 3) || ( (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 3) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 4) )
@@ -1813,10 +1840,14 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
   // if (isSgTemplateInstantiationFunctionDecl(decl_stmt) == NULL && isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) == NULL)
      if (isSgTemplateInstantiationFunctionDecl(decl_stmt) == NULL && isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) == NULL && isSgTemplateVariableDeclaration(decl_stmt) == NULL)
         {
-          outputExternLinkageSpecifier(decl_stmt);
+       // DQ (8/15/2020): Adding support for state so that we can avoid nested extern "C" specifications.
+       // outputExternLinkageSpecifier(decl_stmt);
+          outputExternLinkageSpecifier(decl_stmt,info);
         }
    #else
-     outputExternLinkageSpecifier(decl_stmt);
+  // DQ (8/15/2020): Adding support for state so that we can avoid nested extern "C" specifications.
+  // outputExternLinkageSpecifier(decl_stmt);
+     outputExternLinkageSpecifier(decl_stmt,info);
    #endif
 
      outputTemplateSpecializationSpecifier(decl_stmt);
@@ -2127,6 +2158,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // if (isSgTemplateVariableDeclaration(decl_stmt) == NULL)
           if ( (decl_stmt->get_declarationModifier().isFriend() == false) && (isSgTemplateVariableDeclaration(decl_stmt) == NULL) )
              {
+#if 0
+               printf ("In Unparse_MOD_SAGE::printSpecifier2(): Output the extern keyword \n");
+#endif
                curprint("extern ");
              }
         }

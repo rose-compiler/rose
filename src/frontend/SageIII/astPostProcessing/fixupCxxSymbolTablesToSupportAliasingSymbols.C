@@ -18,6 +18,8 @@ Sawyer::Message::Facility FixupAstSymbolTablesToSupportAliasedSymbols::mlog;
 void
 fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
    {
+  // DQ (8/16/2020): This function is called for Fortran, and yet it has been modified to be more specific to C++ rules.
+
   // DQ (4/14/2010): For Cxx only.  
   // Adding support for symbol aliasing as a result of using declarations
   // (and other use directives, etc.).
@@ -32,8 +34,8 @@ fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
   // DQ (4/17/2010): Comment this new option out for now while I focus on getting the 
   // language only configure options into place.
 
-#if ALIAS_SYMBOL_DEBUGGING
-     printf ("Inside of fixupAstSymbolTablesToSupportAliasedSymbols(node = %p = %s) \n",node,node->class_name().c_str());
+#if ALIAS_SYMBOL_DEBUGGING || 0
+     printf ("########################## Inside of fixupAstSymbolTablesToSupportAliasedSymbols(node = %p = %s) \n",node,node->class_name().c_str());
 #endif
 
   // I think the default should be preorder so that the interfaces would be more uniform
@@ -781,6 +783,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                printf (" --- calledFromUsingDirective = %s \n",calledFromUsingDirective ? "true" : "false");
 #endif
 #if 1
+            // DQ (8/15/2020): This code may be inapproriate for Fortran rules.
+
             // DQ (8/14/2020): Activated this code back to what it was.
             // DQ (8/14/2020): Commented out this fix to test Cxx_tests/test2020_33.C.
             // DQ (8/9/2020): I think this should only be called from the case of a SgUsingDirectiveStatement.
@@ -851,7 +855,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
             // Note that this change improves the performance from 15 minutes to 5 seconds for the outlining example.
                bool alreadyExists = currentScope->symbol_exists(name);
 
-            // DQ (8/14/2020): The prolem here (demonstrated in test code: Cxx_tests/test2020_33.C) is
+            // DQ (8/14/2020): The problem here (demonstrated in test code: Cxx_tests/test2020_33.C) is
             // that there could be two or more symbols with the same alias and so we can't just check the name.
 
 
@@ -950,7 +954,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 #endif
                                         alreadyExists = true;
 
-                                     // DQ (8/14/2020): Commented out.
+                                     // DQ (8/15/2020): Not clear if this is correct.
+                                     // DQ (8/14/2020): Commented out. 
                                      // break;
                                       }
                                  } // end for
@@ -1327,10 +1332,19 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 #if 0
                printf ("Calling injectSymbolsFromReferencedScopeIntoCurrentScope() for usingDirectiveStatement = %p = %s \n",node,node->class_name().c_str());
 #endif
+#if 1
+            // DQ (8/15/2020): This code may be inapproriate for Fortran rules (but required for Cxx_tests/test2004_79.C).
+
             // DQ (8/9/2020): We need to define a mode so that within injectSymbolsFromReferencedScopeIntoCurrentScope() we can handle this as a special case.
                bool calledFromUsingDirective = true;
             // injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,usingDirectiveStatement,SgAccessModifier::e_default,calledFromUsingDirective);
                injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,usingDirectiveStatement,SgAccessModifier::e_public,calledFromUsingDirective);
+#else
+            // DQ (8/15/2020): This is the original code.
+               bool calledFromUsingDirective = true;
+               injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,usingDirectiveStatement,SgAccessModifier::e_default,calledFromUsingDirective);
+            // injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,usingDirectiveStatement,SgAccessModifier::e_public,calledFromUsingDirective);
+#endif
              }
 
 #if 0

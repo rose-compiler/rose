@@ -4136,7 +4136,9 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
           printOutComments(stmt);
         }
 #endif
-
+#if 0
+     curprint ("/* In Unparse_ExprStmt::unparseAttachedPreprocessingInfo() */ \n");
+#endif
 #if 0
      printOutComments(stmt);
 #endif
@@ -4397,10 +4399,33 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                          case PreprocessingInfo::ClinkageSpecificationEnd:
                               if ( !info.SkipComments() )
                                  {
+#if 0
+                                   curprint ( string("/* case PreprocessingInfo::ClinkageSpecification (Start/End)") + (*i)->getString() + " */ \n");
+#endif
                                    if (unp->opt.get_unparse_includes_opt() == true)
                                         curprint (  string("// ") + (*i)->getString());
                                      else
                                         curprint ( (*i)->getString());
+#if 0
+                                   curprint ( string("/* DONE: case PreprocessingInfo::ClinkageSpecification (Start/End)") + (*i)->getString() + " */ \n");
+#endif
+
+                                   if ( (*i)->getTypeOfDirective() == PreprocessingInfo::ClinkageSpecificationStart)
+                                      {
+#if 0
+                                        printf ("calling info.set_extern_C_with_braces(true) \n");
+#endif
+                                        info.set_extern_C_with_braces(true);
+                                      }
+                                     else
+                                      {
+                                        ROSE_ASSERT( (*i)->getTypeOfDirective() == PreprocessingInfo::ClinkageSpecificationEnd );
+#if 0
+                                        printf ("calling info.set_extern_C_with_braces(false) \n");
+#endif
+                                        info.set_extern_C_with_braces(false);
+                                      }
+
                                  }
                               break;
 
@@ -4561,9 +4586,9 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
         }
 
 #if 0
-     printf ("In unparseAttachedPreprocessingInfo(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+     printf ("Leaving unparseAttachedPreprocessingInfo(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
   // curprint ("\n /* Inside of unparseAttachedPreprocessingInfo() */ \n");
-     curprint (string("/* Inside of unparseAttachedPreprocessingInfo() stmt = ") + stmt->class_name() + " */ \n");
+     curprint (string("/* Leaving unparseAttachedPreprocessingInfo() stmt = ") + stmt->class_name() + " */ \n");
 #endif
    }
 
