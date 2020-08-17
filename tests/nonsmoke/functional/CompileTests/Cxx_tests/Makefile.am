@@ -1958,6 +1958,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_25.C \
    test2020_26.C \
    test2020_27.C \
+   test2020_28.C \
+   test2020_29.C \
    test2020_30.C \
    test2020_31.C \
    test2020_32.C \
@@ -2368,8 +2370,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2018_28.C \
    test2018_31.C \
    test2019_25.C \
-   test2020_28.C \
-   test2020_29.C \
    test_gnu.C
 
 if ROSE_USING_GCC_VERSION_LATER_4_4

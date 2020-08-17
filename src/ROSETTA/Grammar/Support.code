@@ -7541,6 +7541,11 @@ HEADER_UNPARSE_INFO_START
           void inc_nestingLevel();
           void dec_nestingLevel();
 
+       // DQ (8/16/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+       // We need to build the access functions directly because of the static data member.
+          static bool get_extern_C_with_braces();
+          static void set_extern_C_with_braces( bool extern_C_with_braces );
+
 HEADER_UNPARSE_INFO_END
 
 
@@ -8874,6 +8879,9 @@ SgSymbolTable::remove( const SgSymbol* symbol )
           assert(false);
         }
 #endif
+
+#if 1
+  // DQ (8/15/2020): Original code before the chagne below.
      assert(elementToDelete != get_table()->end());
 
   // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase(elementToDelete->second);"
@@ -8884,6 +8892,37 @@ SgSymbolTable::remove( const SgSymbol* symbol )
      p_symbolSet.erase(elementToDelete->second);
 
      get_table()->erase(elementToDelete);
+#else
+  // DQ (8/15/2020): The internal support for using directives in C++ has been modified to correctly filter 
+  // the addition of symbols which could lead to ambiguity.  Craig and I think that the rules no implemented
+  // may be inconsistant with the use of the lower level infrastructire for Fortran.  And we are sorting 
+  // this out.  For now it is not an error to remove a symbol that is not present in the symbol table.
+  // assert(elementToDelete != get_table()->end());
+     if (elementToDelete != get_table()->end())
+        {
+       // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase(elementToDelete->second);"
+       // get_table()->erase(elementToDelete);
+
+       // DQ (3/10/2007): Remove the symbol from the symbol set used to test for if the symbol exists
+       // p_symbolSet.erase(symbol);
+          p_symbolSet.erase(elementToDelete->second);
+
+          get_table()->erase(elementToDelete);
+        }
+       else
+        {
+       // assert(exists(symbol) == true);
+          if (exists(symbol) == true)
+             {
+            // Nothing to do, this should have been found above.
+             }
+            else
+             {
+               printf ("The symbol to remove was not in the symbol table for this scope: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+             }
+        }
+
+#endif
    }
 
 
@@ -19652,7 +19691,25 @@ SgUnparse_Info::set_forceDefaultConstructorToTriggerError( bool forceDefaultCons
      p_forceDefaultConstructorToTriggerError = forceDefaultConstructorToTriggerError;
    }
  
+/*! \brief Extern C support when using braces.
 
+     When using braced extern C we need to avoid nesting of these structures in the generated code.
+ */
+// DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+bool SgUnparse_Info::p_extern_C_with_braces = false;
+
+bool
+SgUnparse_Info::get_extern_C_with_braces()
+   {
+     return p_extern_C_with_braces;
+   }
+ 
+void
+SgUnparse_Info::set_extern_C_with_braces( bool extern_C_with_braces)
+   {
+     p_extern_C_with_braces = extern_C_with_braces;
+   }
+ 
 
 // Default constructor defined here because the automatically generated constructor
 // would not be generated with the error checking that I require to debug the use of
@@ -19782,6 +19839,9 @@ SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
 
      p_user_defined_literal = X.p_user_defined_literal;
 
+  // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+  // p_extern_C_with_braces = X.p_extern_C_with_braces;
+
      return *this;
    }
 
@@ -19908,6 +19968,9 @@ SgUnparse_Info::post_construction_initialization()
   // DQ (12/26/2019): When supporting multiple files, the defining declaration in a named type must refer to the 
   // defining declaration associated with the appropriate file (to be unparsed correctly).
      p_declstatement_associated_with_type = NULL;
+
+  // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+  // p_extern_C_with_braces = false;
    }
 
 bool
@@ -20906,6 +20969,9 @@ SgUnparse_Info::display ( const std::string & label ) const
   // DQ (4/28/2017): Added information required for use of generated names in the output of types for template 
   // arguments as used in symbol table lookup.
      printf ("p_use_generated_name_for_template_arguments = %s \n",p_use_generated_name_for_template_arguments ? "true" : "false");
+
+  // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+     printf ("p_extern_C_with_braces                 = %s \n",p_extern_C_with_braces ? "true" : "false");
    }
 
 string
@@ -20951,6 +21017,9 @@ SgUnparse_Info::displayString ( const std::string & label ) const
 
   // DQ (2/3/2019): Adding support to know when we are in a typedef.
      STRINGIFY_INFO_MEMBER_DATA_OUTPUT_MACRO(inTypedefDecl)
+
+  // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+  // STRINGIFY_INFO_MEMBER_DATA_OUTPUT_MACRO(extern_C_with_braces)
 
      switch (p_access_attribute)
         {

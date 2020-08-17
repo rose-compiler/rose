@@ -37,6 +37,11 @@ void AstPostProcessing (SgNode* node)
      printf ("+++++++++++++++++++++++++++++++++++++++++++++++ \n");
 #endif
 
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
   // DQ (1/31/2014): We want to enforce this, but for now issue a warning if it is not followed.
   // Later I want to change the function's API to onoy take a SgProject.  Note that this is 
   // related to a performance bug that was fixed by Gergo a few years ago.  The fix could be
