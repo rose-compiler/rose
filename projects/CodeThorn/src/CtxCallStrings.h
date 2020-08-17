@@ -9,7 +9,7 @@
 //~ #include <deque>
 //~ #include <list>
 
-#include <rose.h>
+#include <sage3basic.h>
 #include <Labeler.h>
 
 #include "CtxLattice.h"
@@ -38,6 +38,10 @@ concept CallContext
   
   /// updates the call context according to the function call invocation at @ref lab
   void callInvoke(const Labeler&, Label lab);
+  
+  /// compares the postfix of two call strings. 
+  ///   if true, a call would require merging lattices 
+  bool mergedAfterCall(const InfiniteCallString& cand) const;
 
   /// defines a strict weak ordering on call contexts.
   friend
@@ -114,6 +118,9 @@ struct InfiniteCallString : private std::vector<Label>
     void callInvoke(const Labeler&, Label lbl);
     void callReturn(Labeler& labeler, Label lbl);
 
+    /// Always false for infinite call strings.
+    bool mergedAfterCall(const InfiniteCallString& cand) const;
+
     friend
     std::ostream&
     operator<<(std::ostream& os, const InfiniteCallString& el);
@@ -144,8 +151,14 @@ std::ostream& operator<<(std::ostream& os, const InfiniteCallString& el);
 //
 // FiniteCallString
 
-/// maximal logical length of a finite call string
-static constexpr size_t CTX_CALL_STRING_MAX_LENGTH = 4;
+/// sets the finite call string max length
+/// \brief modifying the call string length while some analysis runs
+///        is undefined.
+/// \param len len must be >= 2
+void setFiniteCallStringMaxLength(size_t len);
+
+/// returns the finite call string max length
+size_t getFiniteCallStringMaxLength();
 
 /// Comparator class
 struct FiniteCallStringComparator;
@@ -155,6 +168,8 @@ template <class _BaseT>
 struct ext_sequence : _BaseT
 {
   typedef _BaseT base;
+  
+  static constexpr bool FIXED_LEN_REP = true;
   
   using base::base;
   
@@ -191,6 +206,9 @@ struct CtorDtorCounter
 
 #endif
 
+
+#if REQUIRES_CONSTANT_SIZE_CALL_STRING_LENGTH
+
 template <class T>
 struct SimpleString // : CtorDtorCounter
 {
@@ -200,7 +218,7 @@ struct SimpleString // : CtorDtorCounter
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
     
     SimpleString(size_t initsize, T val)
-    : len(CTX_CALL_STRING_MAX_LENGTH)
+    : len(getFiniteCallStringMaxLength())
     {
       ROSE_ASSERT(initsize == size_t(len));
       
@@ -222,7 +240,7 @@ struct SimpleString // : CtorDtorCounter
     
     void push_back(T el)
     {
-      ROSE_ASSERT(len == CTX_CALL_STRING_MAX_LENGTH-1);
+      ROSE_ASSERT(len == getFiniteCallStringMaxLength()-1);
       
       data[len] = el;  
       ++len;
@@ -230,7 +248,7 @@ struct SimpleString // : CtorDtorCounter
     
     void pop_back()
     {
-      ROSE_ASSERT(len == CTX_CALL_STRING_MAX_LENGTH);
+      ROSE_ASSERT(len == getFiniteCallStringMaxLength());
       
       --len;
     }
@@ -276,9 +294,10 @@ struct SimpleString // : CtorDtorCounter
         
   private:
     int len;
-    T   data[CTX_CALL_STRING_MAX_LENGTH];
+    T   data[getFiniteCallStringMaxLength()];
 };
 
+#endif /* REQUIRES_CONSTANT_SIZE_CALL_STRING_LENGTH */
 
 /// This class is a simple implementation of a fixed length call string
 ///   that is based on an exchangable underlying representation @ref _ImplT/
@@ -301,12 +320,12 @@ struct ContextSequence
     typedef typename impl::const_reverse_iterator const_reverse_iterator;
     typedef typename impl::const_iterator         const_iterator;
     
-    static const bool FIXED_LEN_REP = true;
+    static constexpr bool FIXED_LEN_REP = true;
   
     ContextSequence()
-    : data(CTX_CALL_STRING_MAX_LENGTH, Label())
+    : data(getFiniteCallStringMaxLength(), Label())
     {
-      ROSE_ASSERT(data.size() == CTX_CALL_STRING_MAX_LENGTH);
+      ROSE_ASSERT(data.size() == getFiniteCallStringMaxLength());
     }
     
     ContextSequence(const ContextSequence&)            = default;
@@ -325,7 +344,7 @@ struct ContextSequence
     /// removed.
     void append(Label lbl)
     {
-      ROSE_ASSERT(data.size() == CTX_CALL_STRING_MAX_LENGTH);
+      ROSE_ASSERT(data.size() == getFiniteCallStringMaxLength());
       
       data.pop_front();
       data.push_back(lbl);
@@ -334,7 +353,7 @@ struct ContextSequence
     /// removes the most recent call label from the sequence
     void remove()
     {
-      ROSE_ASSERT(data.size() == CTX_CALL_STRING_MAX_LENGTH);
+      ROSE_ASSERT(data.size() == getFiniteCallStringMaxLength());
       data.pop_back();
     }
     
@@ -393,13 +412,13 @@ struct ContextSequenceCOW
     typedef typename impl::const_reverse_iterator const_reverse_iterator;
     typedef typename impl::const_iterator         const_iterator;
     
-    static const bool FIXED_LEN_REP = _ImplT::FIXED_LEN_REP;
+    static constexpr bool FIXED_LEN_REP = _ImplT::FIXED_LEN_REP;
   
     ContextSequenceCOW()
-    : data(new impl(CTX_CALL_STRING_MAX_LENGTH, Label()))
+    : data(new impl(getFiniteCallStringMaxLength(), Label()))
     {
       ROSE_ASSERT(data->cnt > 0);
-      ROSE_ASSERT(data->size() == CTX_CALL_STRING_MAX_LENGTH);
+      ROSE_ASSERT(data->size() == getFiniteCallStringMaxLength());
     }
     
     ContextSequenceCOW(const ContextSequenceCOW& orig)
@@ -418,7 +437,7 @@ struct ContextSequenceCOW
       
       --data->cnt;
       
-      data = orig->data;
+      data = orig.data;
       ++data->cnt;
       
       return *this;
@@ -445,7 +464,7 @@ struct ContextSequenceCOW
     {
       privatizeIfShared();
       
-      ROSE_ASSERT(data->size() == CTX_CALL_STRING_MAX_LENGTH);
+      ROSE_ASSERT(data->size() == getFiniteCallStringMaxLength());
       
       data->pop_front();
       data->push_back(lbl);
@@ -456,7 +475,7 @@ struct ContextSequenceCOW
     {
       privatizeIfShared();
       
-      ROSE_ASSERT(data->size() == CTX_CALL_STRING_MAX_LENGTH);
+      ROSE_ASSERT(data->size() == getFiniteCallStringMaxLength());
       data->pop_back();
     }
     
@@ -490,21 +509,21 @@ struct ContextSequenceCOW
     ContextSequenceCOW& operator=(ContextSequenceCOW&&) = delete;
 };
 
-/// a context holds up to @ref CTX_CALL_STRING_MAX_LENGTH as contexts
+/// a context holds up to @ref getFiniteCallStringMaxLength() as contexts
 ///   when calls return, the contexts is mapped on to all feasible contexts
 ///   in the caller.
 // \todo the base rep could be replaced by a ring-buffer for efficiency
 struct FiniteCallString 
 {
     // pick the underlying sequence representation
-    typedef SimpleString<Label>                       sequence; // 0.2% (1s/475s)faster than vector (on some whole application)
-    //~ typedef ext_sequence< std::vector<Label> >        sequence; // seems slightly faster than alternatives below
+    //~ typedef SimpleString<Label>                       sequence; // 0.2% (1s/475s)faster than vector (on some whole application)
+    typedef ext_sequence< std::vector<Label> >        sequence; // seems slightly faster than alternatives below
     //~ typedef ext_sequence< std::basic_string<Label> >  sequence;
     //~ typedef std::deque<Label>                         sequence;
     //~ typedef std::list<Label>                          sequence;
     
-    typedef ContextSequence< sequence >               context_string;
-    //~ typedef ContextSequenceCOW< sequence >            context_string; // COW wrapper makes things slightly slower...
+    //~ typedef ContextSequence< sequence >               context_string;
+    typedef ContextSequenceCOW< sequence >            context_string; // COW wrapper makes things slightly slower...
     
     // string comparison reverses "normal" sort to place NO_LABEL first.
     //   (required by callsite merging in FiniteReturnHandler)
@@ -540,7 +559,7 @@ struct FiniteCallString
 
     /// adds lbl to this call-string
     /// \post
-    ///   size() == min(CTX_CALL_STRING_MAX_LENGTH, pre.size()+1)
+    ///   size() == min(getFiniteCallStringMaxLength(), pre.size()+1)
     void callInvoke(const Labeler&, Label lbl);
 
     /// removes lbl from this call-string.
@@ -549,6 +568,9 @@ struct FiniteCallString
     /// \post
     ///   size() == pre.size()-1
     void callReturn(Labeler& labeler, Label lbl);
+    
+    /// compares the last n-1 elements with the same elements in @cand
+    bool mergedAfterCall(const FiniteCallString& cand) const;
 
     friend
     std::ostream&

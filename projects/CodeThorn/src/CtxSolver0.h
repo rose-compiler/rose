@@ -5,8 +5,8 @@
 #include "WorkListSeq.h"
 #include "Flow.h"
 #include "Lattice.h"
+#include "CtxPropertyStateFactory.h"
 #include "CtxLattice.h"
-#include "CtxAnalysis.h"
 #include "CtxTransfer.h"
 #include "CtxCallStrings.h"
 #include "PropertyState.h"
@@ -41,12 +41,15 @@ struct CtxLatticeRange
 struct CtxSolver0 : DFAbstractSolver
 {
     // define your call context
-    //~ typedef InfiniteCallString context_t;
-    typedef FiniteCallString context_t;
+    //~ typedef InfiniteCallString ContextString;
+    typedef FiniteCallString      ContextString;
+    typedef WorkListSeq<Edge>     InitialWorklist;
+    typedef std::vector<Lattice*> LatticeContainer;
+
   
-    CtxSolver0( WorkListSeq<Edge>& initWorklist,
-	              std::vector<Lattice*>& analyzerDataPreInfo,
-	              std::vector<Lattice*>& analyzerDataPostInfo,
+    CtxSolver0( InitialWorklist& initWorklist,
+	              LatticeContainer& analyzerDataPreInfo,
+	              LatticeContainer& analyzerDataPostInfo,
 	              PropertyStateFactory& initialElementFactory,
 	              Flow& flow,
 	              DFTransferFunctions& transferFunctions,
@@ -61,9 +64,9 @@ struct CtxSolver0 : DFAbstractSolver
   private:
     //
     // internal types
-    typedef WorkListSeq<std::pair<Edge, context_t> > InternalWorklist; 
-    typedef CtxPropertyStateFactory<context_t>       StateFactory;
-    typedef CtxTransfer<context_t>                   TransferFunction;
+    typedef WorkListSeq<std::pair<Edge, ContextString> > InternalWorklist; 
+    typedef CtxPropertyStateFactory<ContextString>       StateFactory;
+    typedef CtxTransfer<ContextString>                   TransferFunction;
   
     //
     // private functions
@@ -75,25 +78,21 @@ struct CtxSolver0 : DFAbstractSolver
     /// \details
     ///    this is only interesting at function returns when the context is
     ///    infinite.
-    CtxLatticeRange<context_t>
-    mappedCtxRange(Label lab, CtxLatticeRange<context_t>::iterator ctxpos);
+    CtxLatticeRange<ContextString>
+    mappedCtxRange(Label lab, CtxLatticeRange<ContextString>::iterator ctxpos);
   
     /// retrieves the preInfoLattice at @ref lab with context @ref ctx
     Lattice&
-    preInfoLattice(Label lab, context_t ctx);
+    preInfoLattice(Label lab, const ContextString& ctx);
 
-    /// retrieves the preInfoLattice at @ref 
-    CtxLattice<context_t>&
+    /// retrieves the preInfoLattice at @ref lbl 
+    CtxLattice<ContextString>&
     preInfoLattice(Label lab);
-    
-    /// retrieves an iterator for context at label @ref lab and context @ref ctx 
-    CtxLatticeRange<context_t>::iterator
-    preInfoLatticeIterator(Label lab, context_t ctx);
-    
+        
     /// propagates updated state @ref lat at context @ref ctx to @ref tgt, 
     /// and adds all of @ref tgt out-edges to the worklist @ref wkl
     void
-    propagate(const context_t& ctx, Lattice& lat, Label tgt, InternalWorklist& wkl);
+    propagate(const ContextString&, Lattice& lat, Label tgt, InternalWorklist& wkl);
     
     /// accesses the labeler
     Labeler&
@@ -105,15 +104,14 @@ struct CtxSolver0 : DFAbstractSolver
     preprocessWorklist();
 
     //
-    // data members
-    
-    WorkListSeq<Edge>&     _workList;
-    std::vector<Lattice*>& _analyzerDataPreInfo;
-    std::vector<Lattice*>& _analyzerDataPostInfo;
-    StateFactory&          _initialElementFactory;
-    Flow&                  _flow;
-    TransferFunction&      _transferFunctions;
-    Labeler&               _labeler;
+    // data members    
+    InitialWorklist&  _workList;
+    LatticeContainer& _analyzerDataPreInfo;
+    LatticeContainer& _analyzerDataPostInfo;
+    StateFactory&     _initialElementFactory;
+    Flow&             _flow;
+    TransferFunction& _transferFunctions;
+    Labeler&          _labeler;    
 };
 
 }

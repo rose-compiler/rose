@@ -2,7 +2,6 @@
 #define ADDRESSTAKENANALYSIS_H
 
 /*************************************************************
- * Copyright: (C) 2013 by Sriram Aananthakrishnan            *
  * Author   : Sriram Aananthakrishnan                        *
  * email    : aananthakris1@llnl.gov                         *
  *************************************************************/

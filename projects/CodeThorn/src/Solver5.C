@@ -138,7 +138,6 @@ void Solver5::run() {
                   _analyzer->addToWorkList(newEStatePtr);
                   break;
                 case 1:
-                case 3:
                   {
                   // performing merge
 #pragma omp critical(SUMMARY_STATES_MAP)
@@ -167,7 +166,7 @@ void Solver5::run() {
                   _analyzer->addToWorkList(newEStatePtr);  
                   break;
                   case 2: 
-                    cout<<"Mode 2 (topifying) not available for this option yet."<<endl;
+                    cerr<<"Error: abstraction mode 2 not suppored in solver 5."<<endl;
                     exit(1);
                 }
                 default:

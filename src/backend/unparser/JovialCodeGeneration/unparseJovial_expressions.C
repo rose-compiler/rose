@@ -12,18 +12,14 @@
 #endif
 
 
-void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info) 
-   {
-      ASSERT_not_null(expr);
+void Unparse_Jovial::unparseNullptrVal (SgExpression* expr, SgUnparse_Info& info)
+  {
+     curprint("NULL");
+  }
 
-    // Check if this expression requires parentheses.  If so, process the opening parentheses now.
-    //
-    AstIntAttribute *parenthesis_attribute = (AstIntAttribute *) expr->getAttribute("x10-parentheses-count");
-    if (parenthesis_attribute) { // Output the left paren
-        for (int i = 0; i < parenthesis_attribute -> getValue(); i++) {
-            curprint("(");
-        }
-    }
+void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info) 
+  {
+    ASSERT_not_null(expr);
 
     switch (expr->variantT())
        {
@@ -67,12 +63,12 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
           case V_SgMinusOp:             unparseUnaryOperator(expr, "-", info);   break;
           case V_SgNotOp:               unparseUnaryOperator(expr, "NOT ", info);break;
 
-
           case V_SgPntrArrRefExp:       unparseArrayOp(expr, info);              break;
 
        // initializers
-          case V_SgAssignInitializer:    unparseAssnInit    (expr, info);        break;
-          case V_SgJovialTablePresetExp: unparseTablePreset (expr, info);        break;
+          case V_SgAssignInitializer:    unparseAssnInit     (expr, info);       break;
+          case V_SgJovialTablePresetExp: unparseTablePreset  (expr, info);       break;
+          case V_SgReplicationOp:        unparseReplicationOp(expr, info);       break;
 
           case V_SgNullExpression:                                               break;
 
@@ -81,16 +77,6 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
              ROSE_ASSERT(false);
              break;
        }
-
-    // If this expression requires closing parentheses, emit them now.
-    //
-    if (parenthesis_attribute)
-       {
-       // Output the right parentheses
-          for (int i = 0; i < parenthesis_attribute -> getValue(); i++) {
-             curprint(")");
-          }
-       }
    }
 
 void
@@ -98,18 +84,33 @@ Unparse_Jovial::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
   {
      SgStringVal* string_val = isSgStringVal(expr);
      ASSERT_not_null(string_val);
-     curprint(string_val->get_value());
+
+  // Add quotes back to the string (removed from string coming from parser)
+     std::string quoted_string = "'" + string_val->get_value() + "'";
+     curprint(quoted_string);
   }
 
 void
 Unparse_Jovial::unparseAssignOp(SgExpression* expr, SgUnparse_Info& info) 
   {
-     SgBinaryOp* op = isSgBinaryOp(expr);
+     SgAssignOp* op = isSgAssignOp(expr);
      ASSERT_not_null(op);
 
-     unparseExpression(op->get_lhs_operand(), info);
+     SgExpression* lhs = op->get_lhs_operand();
+     SgExpression* rhs = op->get_rhs_operand();
+
+     unparseExpression(lhs, info);
+
+  // An assignment statement may have multiple variables
+     while (SgAssignOp* assign_op = isSgAssignOp(rhs))
+        {
+           curprint(",");
+           unparseExpression(assign_op->get_lhs_operand(), info);
+           rhs = assign_op->get_rhs_operand();
+        }
+
      curprint(" = ");
-     unparseExpression(op->get_rhs_operand(), info);
+     unparseExpression(rhs, info);
      curprint(";");
   }
 
@@ -274,33 +275,8 @@ Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
       unparseExpression(func_call->get_function(), info);
 
    // argument list
-      SgUnparse_Info ninfo(info);
       curprint("(");
-      if (func_call->get_args()) {
-         SgInitializedNamePtrList::iterator formal = formal_params.begin();
-         SgExpressionPtrList::iterator actual = actual_params.begin();
-
-         bool firstOutParam = false;
-         bool foundOutParam = false;
-
-         while (actual != actual_params.end()) {
-
-         // TODO - Change temporary hack of using storage modifier isMutable to represent an out parameter
-            if ((*formal)->get_storageModifier().isMutable() && foundOutParam == false)
-               {
-                  firstOutParam = true;
-                  foundOutParam = true;
-                  curprint(":");
-               }
-            formal++;
-
-            unparseExpression((*actual), ninfo);
-            actual++;
-            if (actual != actual_params.end() && firstOutParam == false) {
-               curprint(",");
-            }
-         }
-      }
+      unparseExpression(func_call->get_args(), info);
       curprint(")");
    }
 
@@ -480,6 +456,18 @@ Unparse_Jovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info)
         // Unparse the PresetValuesOption
            unparseExpression(specified_sublist->get_expressions()[1], info);
         }
+  }
+
+void
+Unparse_Jovial::unparseReplicationOp(SgExpression* expr, SgUnparse_Info& info)
+  {
+     SgReplicationOp* rep_op = isSgReplicationOp(expr);
+     ASSERT_not_null(rep_op);
+
+     unparseExpression(rep_op->get_lhs_operand(), info);
+     curprint("(");
+     unparseExpression(rep_op->get_rhs_operand(), info);
+     curprint(")");
   }
 
 //----------------------------------------------------------------------------

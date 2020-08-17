@@ -92,7 +92,8 @@ void SageTreeBuilder::Enter(SgBasicBlock* &block)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgBasicBlock* &) \n";
 
-   block = SageBuilder::buildBasicBlock_nfi();
+   // Set the parent (at least temporarily) so that symbols can be traced.
+   block = SageBuilder::buildBasicBlock_nfi(SageBuilder::topScopeStack());
 
    SageBuilder::pushScopeStack(block);
 }
@@ -469,6 +470,20 @@ Leave(SgNamespaceDeclarationStatement* namespace_decl)
 }
 
 void SageTreeBuilder::
+Enter(SgExprStatement* &proc_call_stmt, const std::string &proc_name,
+      SgExprListExp* param_list, const std::string &abort_phrase)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgExprStatement* &, ...) \n";
+
+   SgFunctionCallExp* proc_call_exp;
+
+   Enter(proc_call_exp, proc_name, param_list);
+
+   // TODO: AbortPhrase for Jovial
+   proc_call_stmt = SageBuilder::buildExprStatement_nfi(proc_call_exp);
+}
+
+void SageTreeBuilder::
 Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExpression*> &vars, const std::string& label)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgExprStatement* &, ...) \n";
@@ -476,6 +491,10 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
    SgEnumVal* old_val = isSgEnumVal(rhs);
 
    if (old_val && old_val->get_value() == -1) {
+      // I don't think this is true anymore as the SgEnumVal is found by symbol lookup
+      // Need to test for assignment to a status
+      ROSE_ASSERT(false);
+
       SgEnumType* enum_type = isSgEnumType(vars[0]->get_type());
       ROSE_ASSERT(enum_type);
       SgEnumVal* enum_val = ReplaceEnumVal(enum_type, old_val->get_name());
@@ -484,7 +503,16 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
       delete old_val;
    }
 
-   SgAssignOp* assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(vars[0], rhs);
+   SgAssignOp* assign_op = nullptr;
+   SgExpression* new_rhs = rhs;
+
+// Jovial may have more than one variable in an assignment statement
+   for (int i = vars.size()-1; i >= 0; i--) {
+      assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(vars[i], new_rhs);
+      new_rhs = assign_op;
+   }
+   ROSE_ASSERT(assign_op);
+
    assign_stmt = SageBuilder::buildExprStatement_nfi(assign_op);
 }
 
@@ -498,7 +526,7 @@ Leave(SgExprStatement* expr_stmt)
 }
 
 void SageTreeBuilder::
-Enter(SgFunctionCallExp* &func_call, std::string &name, SgExprListExp* params)
+Enter(SgFunctionCallExp* &func_call, const std::string &name, SgExprListExp* params)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionCallExp* &, ...) \n";
 
@@ -975,36 +1003,11 @@ Leave(SgVariableDeclaration* var_decl)
 }
 
 void SageTreeBuilder::
-Enter(SgEnumDeclaration* &enum_decl, const std::string &name, std::list<SgInitializedName*> &status_list)
+Enter(SgEnumDeclaration* &enum_decl, const std::string &name)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgEnumDeclaration* &, ...) \n";
 
    enum_decl = SageBuilder::buildEnumDeclaration_nfi(name, SageBuilder::topScopeStack());
-   ROSE_ASSERT(enum_decl);
-
-   BOOST_FOREACH(SgInitializedName* status_constant, status_list) {
-      enum_decl->append_enumerator(status_constant);
-      status_constant->set_scope(enum_decl->get_scope());
-
-      SgEnumType* enum_type = isSgEnumType(status_constant->get_typeptr());
-      ROSE_ASSERT(enum_type);
-      enum_type->set_declaration(enum_decl);
-
-      SgEnumFieldSymbol* enum_field_symbol = new SgEnumFieldSymbol(status_constant);
-      ROSE_ASSERT(enum_field_symbol);
-      enum_decl->get_scope()->insert_symbol(status_constant->get_name(), enum_field_symbol);
-
-      SgAssignInitializer* assign_init = isSgAssignInitializer(status_constant->get_initializer());
-      ROSE_ASSERT(assign_init);
-      ROSE_ASSERT(assign_init->get_operand_i());
-      SgIntVal* intval = isSgIntVal(assign_init->get_operand_i());
-      ROSE_ASSERT(intval);
-
-      SgEnumVal* new_operand = SageBuilder::buildEnumVal(intval->get_value(), enum_decl,
-                                                         status_constant->get_name());
-      assign_init->set_operand_i(new_operand);
-      delete intval;
-   }
 }
 
 void SageTreeBuilder::
@@ -1013,6 +1016,29 @@ Leave(SgEnumDeclaration* enum_decl)
    mlog[TRACE] << "SageTreeBuilder::Leave(SgEnumDeclaration*) \n";
 
    SageInterface::appendStatement(enum_decl, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgEnumVal* &enum_val, const std::string &name, SgEnumDeclaration* enum_decl, int value)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgEnumVal*) \n";
+
+   ROSE_ASSERT(enum_decl);
+   SgEnumType* enum_type = enum_decl->get_type();
+
+   enum_val = SageBuilder::buildEnumVal(value, enum_decl, name);
+   SageInterface::setSourcePosition(enum_val);
+
+   SgAssignInitializer* initializer = SageBuilder::buildAssignInitializer_nfi(enum_val, enum_type);
+   SgInitializedName* init_name = SageBuilder::buildInitializedName_nfi(name, enum_type, initializer);
+   SageInterface::setSourcePosition(init_name);
+
+   enum_decl->append_enumerator(init_name);
+   init_name->set_scope(enum_decl->get_scope());
+
+   SgEnumFieldSymbol* enum_field_symbol = new SgEnumFieldSymbol(init_name);
+   ROSE_ASSERT(enum_field_symbol);
+   enum_decl->get_scope()->insert_symbol(name, enum_field_symbol);
 }
 
 void SageTreeBuilder::
@@ -1147,6 +1173,7 @@ SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope)
 {
    SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, scope);
    SageInterface::setSourcePosition(var_ref);
+
    return var_ref;
 }
 

@@ -33,7 +33,7 @@ gcc_home=`dirname ${gcc_bin}`
 
 # Override the default gcc if needed (e.g. when GNAT gcc is not wanted):
 # For Charles on LC:
-gcc_home=/usr/tce/packages/gcc/gcc-8.1.0
+# gcc_home=/usr/tce/packages/gcc/gcc-8.1.0
 # For Dan on NFS:
 # gcc_home=/nfs/casc/overture/ROSE/opt/rhel7/x86_64/gcc/4.8.4/mpc/1.0/mpfr/3.1.2/gmp/5.1.2
 export CC=${gcc_home}/bin/gcc

@@ -251,6 +251,7 @@ public:
      *  vector. */
     bool get(size_t idx) const {
         checkRange(idx);
+        assert(data() != NULL);
         return BitVectorSupport::get(data(), idx);
     }
 

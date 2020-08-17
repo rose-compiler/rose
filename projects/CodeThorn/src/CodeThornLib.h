@@ -6,6 +6,8 @@
 namespace CodeThorn {
   void initDiagnostics();
   extern Sawyer::Message::Facility logger;
+  void turnOffRoseWarnings();
+  void configureRose();
 }
 
 #endif

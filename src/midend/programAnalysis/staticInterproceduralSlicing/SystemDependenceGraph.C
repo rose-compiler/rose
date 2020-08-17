@@ -7,6 +7,7 @@
 #include <list>
 using namespace std;
 
+#include <assert.h>
 
 bool SystemDependenceGraph::isKnownLibraryFunction(SgFunctionDeclaration *fDec)
 {
@@ -43,6 +44,7 @@ void SystemDependenceGraph::createConnectionsForLibaryFunction(SgFunctionDeclara
 // DependenceNode * formalIn,*formalOut,*entry,*formalReturn;
    DependenceNode * formalIn,*entry,*formalReturn;
 
+  ROSE_ASSERT(ii != NULL);
   entry=getNode(DependenceNode::ENTRY,ii->getFunctionEntry());
   formalReturn=getNode(DependenceNode::FORMALRETURN,ii->getFormalReturn());
   if (fName.getString()==string("printf___Fb_i_Gb_RST__Pb__Cc__Pe____sep__e_Fe_")
@@ -70,6 +72,7 @@ void SystemDependenceGraph::createSafeConfiguration(SgFunctionDeclaration *fDec)
 {
   InterproceduralInfo * ii=getInterproceduralInformation(fDec);
   DependenceNode * formalIn,*formalOut,*entry,*formalReturn;
+  assert(ii != NULL);
   entry=getNode(DependenceNode::ENTRY,ii->getFunctionEntry());
   formalReturn=getNode(DependenceNode::FORMALRETURN,ii->getFormalReturn());
   for (int i=0;i<ii->getFormalCount();i++)
@@ -635,6 +638,7 @@ void SystemDependenceGraph::doInterproceduralConnections(InterproceduralInfo * i
 void SystemDependenceGraph::addFunction(FunctionDependenceGraph * pdg)
 {
 
+  ROSE_ASSERT(pdg->getInterprocedural() != NULL);
   SgFunctionDeclaration *func = pdg->getInterprocedural()->getFunctionDeclaration();
 
   ROSE_ASSERT(func != NULL);

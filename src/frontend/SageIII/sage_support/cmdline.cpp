@@ -6759,6 +6759,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
        }
        case e_cxx20_standard: {
          inputCommandLine.push_back("--c++20");
+
+      // DQ (7/26/2020): This macro is required in GNU 10.x header files to gain access to the 
+      // coroutine support ("coroutine" header file returns an error with out it).
+         inputCommandLine.push_back("-D__cpp_impl_coroutine");
          break;
        }
        case e_upcxx_standard: {
@@ -7853,6 +7857,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
          } else {
            compilerNameString.push_back("-std=c++20");
          }
+
+#if defined(BACKEND_CXX_IS_GNU_COMPILER)
+      // DQ (7/26/2020): the GNU 10.2 C++20 "coroutine" header file requires GNU to be used with -fcoroutines
+      // using the macro "__cpp_impl_coroutine" to control internal access.
+         compilerNameString.push_back("-fcoroutines");
+#endif
          break;
        }
        case e_f77_standard:

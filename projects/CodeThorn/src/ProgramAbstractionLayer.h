@@ -35,7 +35,6 @@ namespace CodeThorn {
     Flow* getFlow(bool backwardflow = false);
     CFAnalysis* getCFAnalyzer();
   private:
-    bool _modeArrayElementVariableId=false;
     Labeler* _labeler=nullptr;
     VariableIdMappingExtended* _variableIdMapping=nullptr;
     FunctionIdMapping* _functionIdMapping=nullptr;

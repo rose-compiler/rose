@@ -15,6 +15,7 @@
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/regex.hpp>
 #include <boost/serialization/nvp.hpp>
+#include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
 #include <ctime>
 #include <fstream>
@@ -78,6 +79,7 @@ initSchema(Sawyer::Database::Connection db) {
            " concrete_rank real,"                       // null if concrete executor not run yet
            " concrete_result bytea,"                    // null if concrete executor not run yet
            " concolic_result integer,"                  // non-null if concolic executor has been run
+           " concrete_interesting integer not null default 1," // concrete results are uninteresting if present? (bool)
            " test_suite integer not null,"
            " constraint fk_specimen foreign key (specimen) references specimens (id),"
            " constraint fk_test_suite foreign key (test_suite) references test_suites (id))");
@@ -120,10 +122,11 @@ updateObject(const Database::Ptr &db, TestSuiteId id, const TestSuite::Ptr &obj)
     ASSERT_not_null(db);
     ASSERT_require(id);
     ASSERT_not_null(obj);
-    auto iter = db->connection().stmt("select name from test_suites where id = ?id").bind("id", *id).begin();
+    auto iter = db->connection().stmt("select name, created_ts from test_suites where id = ?id").bind("id", *id).begin();
     if (!iter)
         throw Exception("no such test_suite in database where id=" + boost::lexical_cast<std::string>(*id));
     obj->name(*iter->get<std::string>(0));
+    obj->timestamp(*iter->get<std::string>(1));
 }
 
 static void
@@ -135,8 +138,9 @@ updateDb(const Database::Ptr &db, TestSuiteId id, const TestSuite::Ptr &obj) {
     if (*db->connection().stmt("select count(*) from test_suites where id = ?id").bind("id", *id).get<size_t>()) {
         stmt = db->connection().stmt("update test_suites set name = ?name where id = ?id");
     } else {
+        std::string ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
         stmt = db->connection().stmt("insert into test_suites (id, created_ts, name) values (?id, ?ts, ?name)")
-               .bind("ts", timestamp());
+               .bind("ts", ts);
     }
 
     // Test suites must have unique names. Try the ID if no name was specified
@@ -154,11 +158,12 @@ updateObject(const Database::Ptr &db, SpecimenId id, const Specimen::Ptr &obj) {
     ASSERT_not_null(db);
     ASSERT_require(id);
     ASSERT_not_null(obj);
-    auto iter = db->connection().stmt("select name, content from specimens where id = ?id").bind("id", *id).begin();
+    auto iter = db->connection().stmt("select name, created_ts, content from specimens where id = ?id").bind("id", *id).begin();
     if (!iter)
         throw Exception("no such specimen in database where id=" + boost::lexical_cast<std::string>(*id));
     obj->name(iter->get<std::string>(0).orDefault());
-    obj->content(iter->get<Specimen::BinaryData>(1).orDefault());
+    obj->timestamp(iter->get<std::string>(1).orDefault());
+    obj->content(iter->get<Specimen::BinaryData>(2).orDefault());
 }
 
 static void
@@ -170,9 +175,10 @@ updateDb(const Database::Ptr &db, SpecimenId id, const Specimen::Ptr &obj) {
     if (*db->connection().stmt("select count(*) from specimens where id = ?id").bind("id", *id).get<size_t>()) {
         stmt = db->connection().stmt("update specimens set name = ?name, content = ?content where id = ?id");
     } else {
+        std::string ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
         stmt = db->connection().stmt("insert into specimens (id, created_ts, name, content, test_suite)"
                                      " values (?id, ?ts, ?name, ?content, ?test_suite)")
-               .bind("ts", timestamp())
+               .bind("ts", ts)
                .bind("test_suite", *db->id(db->testSuite()));
     }
     stmt
@@ -187,8 +193,10 @@ updateObject(const Database::Ptr &db, TestCaseId id, const TestCase::Ptr &obj) {
     ASSERT_not_null(db);
     ASSERT_require(id);
     ASSERT_not_null(obj);
-    //                                        0     1         2         3     4     5              6
-    auto iter = db->connection().stmt("select name, executor, specimen, argv, envp, concrete_rank, concolic_result"
+    //                                        0     1         2         3     4     5              6                7
+    auto iter = db->connection().stmt("select name, executor, specimen, argv, envp, concrete_rank, concolic_result, created_ts,"
+                                      // 8
+                                      " concrete_interesting"
                                       " from test_cases"
                                       " where id = ?id"
                                       " order by created_ts").bind("id", *id).begin();
@@ -200,6 +208,8 @@ updateObject(const Database::Ptr &db, TestCaseId id, const TestCase::Ptr &obj) {
     obj->args(StringUtility::split('\0', *iter->get<std::string>(3)));
     obj->concreteRank(iter->get<double>(5));
     obj->concolicResult(iter->get<size_t>(6));
+    obj->timestamp(*iter->get<std::string>(7));
+    obj->concreteIsInteresting(*iter->get<int>(8) != 0);
 
     std::vector<EnvValue> env;
     for (std::string str: StringUtility::split('\0', *iter->get<std::string>(4))) {
@@ -219,13 +229,15 @@ updateDb(const Database::Ptr &db, TestCaseId id, const TestCase::Ptr &obj) {
     if (*db->connection().stmt("select count(*) from test_cases where id = ?id").bind("id", *id).get<size_t>()) {
         stmt = db->connection().stmt("update test_cases set id = ?id, name = ?name, executor = ?executor,"
                                      " specimen = ?specimen, argv = ?argv, envp = ?envp, concrete_rank = ?concrete_rank,"
+                                     " concrete_interesting = ?interesting,"
                                      " concolic_result = ?concolic_result where id = ?id");
     } else {
+        std::string ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
         stmt = db->connection().stmt("insert into test_cases (id, created_ts, name, executor, specimen, argv, envp,"
-                                     " concrete_rank, concolic_result, test_suite)"
+                                     " concrete_rank, concrete_interesting, concolic_result, test_suite)"
                                      " values (?id, ?ts, ?name, ?executor, ?specimen, ?argv, ?envp,"
-                                     " ?concrete_rank, ?concolic_result, ?test_suite)")
-               .bind("ts", timestamp())
+                                     " ?concrete_rank, ?interesting, ?concolic_result, ?test_suite)")
+               .bind("ts", ts)
                .bind("test_suite", *db->id(db->testSuite()));
     }
 
@@ -236,7 +248,7 @@ updateDb(const Database::Ptr &db, TestCaseId id, const TestCase::Ptr &obj) {
             envp += '\0';
         envp += pair.first + "=" + pair.second;
     }
-    
+
     stmt
         .bind("id", *id)
         .bind("name", obj->name())
@@ -245,6 +257,7 @@ updateDb(const Database::Ptr &db, TestCaseId id, const TestCase::Ptr &obj) {
         .bind("argv", StringUtility::join('\0', obj->args()))
         .bind("envp", envp)
         .bind("concrete_rank", obj->concreteRank())
+        .bind("interesting", obj->concreteIsInteresting() ? 1 : 0)
         .bind("concolic_result", obj->concolicResult())
         .run();
 }
@@ -514,6 +527,78 @@ Database::eraseRba(SpecimenId id) {
     connection().stmt("update specimens set rba = null where id = ?id").bind("id", *id).run();
 }
 
+bool
+Database::concreteResultExists(TestCaseId id) {
+    return connection_.stmt("select count(*) from test_cases where id = ?id and concrete_result is not null")
+        .bind("id", *id).get<size_t>().orElse(0) != 0;
+}
+
+void
+Database::saveConcreteResult(const TestCase::Ptr &testCase, const ConcreteExecutor::Result *details) {
+    ASSERT_not_null(testCase);
+    TestCaseId id = save(testCase);
+
+    if (details) {
+        double rank = details->rank();
+        if (rose_isnan(rank))
+            rank = 0.0;
+        bool interesting = details->isInteresting();
+
+        std::stringstream ss;
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+        {
+            boost::archive::xml_oarchive archive(ss);
+            archive.register_type<LinuxTraceExecutor::Result>();
+            archive <<BOOST_SERIALIZATION_NVP(details);
+        }
+#else
+        throw Exception("concrete execution results cannot be saved (no serialization capability)");
+#endif
+        connection().stmt("update test_cases"
+                          " set concrete_rank = ?rank, concrete_interesting = ?interesting, concrete_result = ?details"
+                          " where id = ?id")
+            .bind("rank", rank)
+            .bind("interesting", interesting ? 1 : 0)
+            .bind("details", ss.str())
+            .bind("id", *id)
+            .run();
+
+        testCase->concreteRank(rank);
+        testCase->concreteIsInteresting(interesting);
+
+    } else {
+        connection().stmt("update test_cases"
+                          " set concrete_rank = null, concrete_interesting = 0, concrete_result = null"
+                          " where id = ?id")
+            .bind("id", *id)
+            .run();
+
+        testCase->concreteRank(Sawyer::Nothing());
+        testCase->concreteIsInteresting(false);
+    }
+
+    save(testCase);
+}
+
+std::unique_ptr<ConcreteExecutor::Result>
+Database::readConcreteResult(TestCaseId id) {
+    ConcreteExecutor::Result *details = nullptr;
+    Sawyer::Optional<std::string> bytes = connection().stmt("select concrete_result from test_cases where id = ?id")
+                                          .bind("id", *id)
+                                          .get<std::string>();
+    if (bytes) {
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+        std::istringstream ss(*bytes);
+        boost::archive::xml_iarchive archive(ss);
+        archive.register_type<LinuxTraceExecutor::Result>();
+        archive >> BOOST_SERIALIZATION_NVP(details);
+#else
+        throw Exception("concrete execution results cannot be read (no serialization capability)");
+#endif
+    }
+    return std::unique_ptr<ConcreteExecutor::Result>(details);
+}
+
 void
 Database::assocTestCaseWithTestSuite(TestCaseId testCase, TestSuiteId testSuite) {
     connection().stmt("update specimen set test_suite = ?ts where id = ?tc")
@@ -555,28 +640,6 @@ Database::needConcolicTesting(size_t n) {
     for (auto row: stmt.bind("n", n))
         retval.push_back(TestCaseId(*row.get<size_t>(0)));
     return retval;
-}
-
-void
-Database::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result& details) {
-    TestCaseId tc = id(testCase);
-    double rank = details.rank();
-    if (rose_isnan(rank))
-        rank = 0.0;                                     // some databases can't handle NaN
-
-    std::stringstream ss;
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-    boost::archive::xml_oarchive archive(ss);
-    archive <<BOOST_SERIALIZATION_NVP(details);
-#else
-    throw Exception("concrete execution results cannot be saved");
-#endif
-
-    connection().stmt("update test_cases set concrete_rank = ?rank, concrete_result = ?bytes where id = ?id")
-        .bind("id", static_cast<Sawyer::Optional<size_t> >(tc))
-        .bind("rank", rank)
-        .bind("bytes", ss.str())
-        .run();
 }
 
 bool

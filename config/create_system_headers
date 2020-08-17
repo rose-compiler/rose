@@ -45,11 +45,14 @@ process_headers()
 # echo "Parameter 1 = $1"
 # echo "Parameter 2 = $2"
 # echo "Parameter 3 = $3"
+# echo "Parameter 4 = $4"
 # echo "roseHome = $roseHome"
 # echo "src_dir = $src_dir"
 # echo "target_base_dir = $target_base_dir"
 # echo "target_parent_dir = $target_parent_dir"
 # echo "target_dir = $target_dir"
+# echo "Top of process headers: GCC_VERSION       = $GCC_VERSION"
+# echo "Top of process headers: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
 # echo "*****************************************"
 
 # now check that the parent directory of target_dir exists and is writable
@@ -76,9 +79,12 @@ process_headers()
   # find "$src_dir/." -type f -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|ln -s '&' '$target_dir/\\1'|p" | sh -s &
     [ -n "$VERBOSE" ] && echo "Done copying"
     # Find the special-case files to process
+
+  # This is an example of the code required to process specific header files.
     find "$src_dir/." -name c++config.h -a -type f -a -print 2>/dev/null | \
     while read srcName; do
      # echo "processing files in directory $srcDirName to put into $targetDirName"
+     # echo "processing files in directory $src_dir to put into $target_dir (srcName = $srcName)"
      # this is not the most efficient thing to do ...
        targetName="`echo "$srcName" | sed "s|$src_dir|$target_dir|g"`"
        rm "$targetName" # In case targetName is a link to something in the base include directory
@@ -430,11 +436,46 @@ if [[ "$OSTYPE" = solaris2* ]]; then
 fi
 ###### End of fixup for missing err.h on Solaris
 
+# echo "Processing header files to language = $language"
+
 # if [ is_C_compiler = "yes" ]
 if [ "x$language" = "xc" ]
 then
     [ -n "$VERBOSE" ] && echo "We are handling C compiler specific details, so copy the ROSE specific fix for complex.h to $system_headers_directory" >&2
     cp "$roseHome/config/rose_specific_complex.h" "$system_headers_directory/complex.h"
+fi
+
+# DQ (7/26/2020): This might have to be specific to GNU, or GNU 10.x
+if [ "x$language" = "xc++" ]
+then
+  # echo "compilerVendorName = $compilerVendorName"
+    if [ "x$compilerVendorName" = "xgnu" ]; then
+      # DQ (7/26/2020): Need to make this dependent on GNU 10.x (specifically it is a problem for GNU 6.1, and likely other versions of GNU)
+      # echo "Processing C++ specific header files (compare, coroutine, and tuple) for GNU 10.x and C++20 support)."
+      # echo "system_headers_directory = $system_headers_directory"
+
+      # DQ (7/27/2020): debugging info
+      # echo "Valid GNU compiler: GCC_VERSION       = $GCC_VERSION"
+      # echo "Valid GNU compiler: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
+        if [ "x$GCC_VERSION" = "x10" ]; then
+
+          # echo "Passed test for GNU version 10.x: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
+
+          # ls $system_headers_directory/../hdrs5
+            [ -n "$VERBOSE" ] && echo "We are handling C++ compiler specific details, so copy the ROSE specific fix for compare to $system_headers_directory" >&2
+            mv "$system_headers_directory/../hdrs5/compare" "$system_headers_directory/../hdrs5/compare_original"
+            cp "$roseHome/config/rose_specific_compare" "$system_headers_directory/../hdrs5/compare"
+            [ -n "$VERBOSE" ] && echo "We are handling C++ compiler specific details, so copy the ROSE specific fix for coroutine to $system_headers_directory" >&2
+            mv "$system_headers_directory/../hdrs5/coroutine" "$system_headers_directory/../hdrs5/coroutine_original"
+            cp "$roseHome/config/rose_specific_coroutine" "$system_headers_directory/../hdrs5/coroutine"
+            [ -n "$VERBOSE" ] && echo "We are handling C++ compiler specific details, so copy the ROSE specific fix for tuple to $system_headers_directory" >&2
+            mv "$system_headers_directory/../hdrs5/tuple" "$system_headers_directory/../hdrs5/tuple_original"
+            cp "$roseHome/config/rose_specific_tuple" "$system_headers_directory/../hdrs5/tuple"
+
+          # echo "After copying rose_specific header files:"
+          # ls $system_headers_directory/../hdrs5
+         fi
+    fi
 fi
 
 error_code=$?

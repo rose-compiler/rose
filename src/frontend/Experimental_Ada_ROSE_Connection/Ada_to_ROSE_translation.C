@@ -204,6 +204,9 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
           current_unit = current_unit->Next;
         }
 
+#if FIRST_CONVERSION
+
+
 #if 1
      printf ("End of initial traversal of Ada IR node data structure: asisMap.size() = %zu \n",asisMap.size());
 #endif
@@ -1175,7 +1178,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
 #endif
-
+#endif /* FIRST_CONVERSION */
      secondConversion(head_nodes, file);
    }
 
@@ -4791,7 +4794,7 @@ void
                printf ("genericActualPart: \n");
                processAssociationList(genericActualPart);
 
-#if DEBUG_UNTYPED_NODE_GENERATION
+#if 0 /*DEBUG_UNTYPED_NODE_GENERATION*/
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
@@ -5284,7 +5287,7 @@ void
           default:
              {
                printf ("Default reached in processDeclaration(): declarationKind = %d declarationKind = %s \n",declarationKind,declarationKindName(declarationKind).c_str());
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
              }
         }
 
@@ -6485,7 +6488,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
              {
                Declaration_List & enumerationLiteralDeclarations = x.Enumeration_Literal_Declarations;
                processDeclarationList(enumerationLiteralDeclarations);
-#if 1
+#if 0
                printf ("Not implemented! \n");
                ROSE_ASSERT(false);
 #endif
@@ -6715,7 +6718,7 @@ Ada_ROSE_Translation::processAccessType ( Access_Type_Struct & x )
           case Not_An_Access_Type_Definition:
              {
                printf ("ERROR: case Not_An_Access_Type_Definition \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
                break;
              }
 
@@ -9259,7 +9262,7 @@ Ada_ROSE_Translation::typeKindName (Type_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::typeKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
              }
         }
 

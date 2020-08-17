@@ -58,8 +58,16 @@ namespace
     void handle(const SgTemplateFunctionDeclaration&)       { yes(); }
     void handle(const SgTemplateFunctionDefinition&)        { yes(); }
     void handle(const SgTemplateMemberFunctionDeclaration&) { yes(); }
-    void handle(const SgTemplateTypedefDeclaration&)        { yes(); }
     void handle(const SgTemplateVariableDeclaration&)       { yes(); }
+    
+    // \note this is a using declaration, thus could be outside template
+    void handle(const SgTemplateTypedefDeclaration& n)        
+    { 
+      if (n.get_templateParameters().size())
+        yes();
+      else
+        nope();
+    } 
   };  
 
   // \note SgConstructorInitializer should not be handled through CallGraph..
@@ -83,12 +91,12 @@ namespace
     return std::move(targets);
   }
   
-  std::string typeRep(SgPointerDerefExp* funderef)
+  std::string typeRep(SgExpression& targetexp)
   {
-    ROSE_ASSERT(funderef);
-    
-    SgFunctionType* funty = isSgFunctionType( funderef->get_type()->findBaseType() );
-    ROSE_ASSERT( funty );
+    ROSE_ASSERT(targetexp.get_type());
+
+    SgFunctionType* funty = isSgFunctionType( targetexp.get_type()->findBaseType() );
+    ROSE_ASSERT(funty);
     
     return funty->get_mangled().getString();
   }
@@ -151,7 +159,8 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
     }
   }
 
-  int numCalls = 0;
+  int numCalls             = 0;
+  int unresolvedFunptrCall = 0; // could correctly remain unresolved
   for (Label lbl : *labeler)
   {
     if (!labeler->isFunctionCallLabel(lbl))
@@ -173,34 +182,47 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
     ++numCalls;
     SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(theNode);
 
-    if (SgPointerDerefExp* callNode = callinfo.functionPointer())
+    if (SgExpression* targetNode = callinfo.functionPointer())
     {
       // function pointer calls are handled separately in order to  
       //   use the ROSE AST instead of the memory pool.
-      std::string  key = typeRep(callNode);
+      std::string  key = typeRep(*targetNode);
       auto         aa = funDecls.lower_bound(key);
-      auto         zz = funDecls.end();
+      decltype(aa) zz = funDecls.end();
+      bool         added = false;
       map_entry_t& map_entry = mapping[lbl];  
       
       while (aa != zz && aa->first == key)
       {
         addEntry(map_entry, aa->second);
 
+        added = true; 
         ++aa;
+      }
+      
+      if (added == 0)
+      {
+        mapping.erase(lbl);
+        ++unresolvedFunptrCall;
+        logWarn() << "unresolved pointer call (possibly no function with that type exists): " 
+                  << callinfo.callExpression()->unparseToString()
+                  << std::endl;
       }
     }
     else if (SgCallExpression* callexpr = callinfo.callExpression())
     {
       // handles explicit function calls (incl. virtual functions)
       std::vector<SgFunctionDeclaration*> tgts(callTargets(callexpr, classHierarchy));
+      map_entry_t&                        map_entry = mapping[lbl];
       
       for (SgFunctionDeclaration* fdcl : tgts)
       {
-        addEntry(mapping[lbl], fdcl);
+        addEntry(map_entry, fdcl);
       }
       
       if (tgts.size() == 0)
       {
+        mapping.erase(lbl);
         logWarn() << "unable to resolve target for calling: " << callexpr->unparseToString() 
                   << std::endl;
       }
@@ -224,8 +246,11 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
       // \todo handle implicit (ctor) calls
     }
   }
+  
+  const int resolved = unresolvedFunptrCall + mapping.size();
 
-  logInfo()<<"Resolved "<<mapping.size()<<" ("<< percent(mapping.size(), numCalls) << "%) function calls."<<std::endl;
+  logInfo() << "Resolved " << mapping.size() << " (" << percent(resolved, numCalls) << "%) function calls."
+            << std::endl;
 }
 
 std::string FunctionCallMapping2::toString()

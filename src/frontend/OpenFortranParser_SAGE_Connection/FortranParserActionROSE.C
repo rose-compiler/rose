@@ -12439,6 +12439,7 @@ void c_action_case_value()
         if( inserted )
         {
             // this is an artificial do-terminator inserted by the scanner and 'label' has no position info
+            ROSE_ASSERT(label != NULL);
             label->line = astScopeStack.front()->get_startOfConstruct()->get_line();
             label->col = astScopeStack.front()->get_startOfConstruct()->get_col();
         }

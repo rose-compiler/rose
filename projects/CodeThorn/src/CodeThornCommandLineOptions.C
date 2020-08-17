@@ -36,6 +36,14 @@ void checkZ3Options(CodeThornOptions& ctOpt) {
 #endif	
 }
 
+void checkNumThreads(CodeThornOptions& ctOpt) {
+  int numThreads=ctOpt.threads; // default is 1
+  if(numThreads<=0) {
+    cerr<<"Error: number of threads must be greater or equal 1."<<endl;
+    exit(1);
+  }
+}
+
 CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger, std::string version,
                                                 CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
 
@@ -116,7 +124,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("visualize-read-write-sets", po::value< bool >(&ctOpt.visualization.visualizeRWSets)->default_value(false)->implicit_value(true), "Generate a read/write-set graph that illustrates the read and write accesses of the involved threads.")
     ("viz", po::value< bool >(&ctOpt.visualization.viz)->default_value(false)->implicit_value(true),"Generate visualizations of AST, CFG, and transition system as dot files (ast.dot, cfg.dot, transitiongraph1/2.dot.")
     ("viz-tg2", po::value< bool >(&ctOpt.visualization.vizTg2)->default_value(false)->implicit_value(true),"Generate transition graph 2 (.dot).")
-    ("cfg", po::value< string >(&ctOpt.visualization.icfgFileName), "Generate inter-procedural cfg as dot file. Each function is visualized as one dot cluster.")
+    ("cfg", po::value< string >(&ctOpt.visualization.icfgFileName), "same as --icfg.")
+    ("icfg", po::value< string >(&ctOpt.visualization.icfgFileName), "Generate inter-procedural cfg as dot file. Each function is visualized as one dot cluster.")
+    ("call-graph", po::value< string >(&ctOpt.visualization.callGraphFileName), "Generate call graph as dot file. Each function is one node.")
     ;
 
   parallelProgramOptions.add_options()
@@ -153,6 +163,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("normalize-all", po::value< bool >(&ctOpt.normalizeAll)->default_value(false)->implicit_value(true),"Normalize all expressions before analysis.")
     ("normalize-fcalls", po::value< bool >(&ctOpt.normalizeFCalls)->default_value(false)->implicit_value(true),"Normalize only expressions with function calls.")
     ("normalize-extended", po::value<bool >(&ctOpt.extendedNormalizedCppFunctionCalls)->default_value(false)->implicit_value(true),"Normalize CPP function calls.")
+    ("normalize-phase-info", po::value<bool > (&ctOpt.normalizePhaseInfo)->default_value(false)->implicit_value(true),"Print phase progression info on stdout during normalization.")
     ("strict-checking", po::value<bool >(&ctOpt.strictChecking)->default_value(false)->implicit_value(true),"Perform strict checking in semantics (mostly useful for testing), otherwise compute conservative value.")
     ("inline", po::value< bool >(&ctOpt.inlineFunctions)->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("inlinedepth",po::value< int >(&ctOpt.inlineFunctionsDepth)->default_value(10),"Default value is 10. A higher value inlines more levels of function calls.")
@@ -182,7 +193,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("ignore-unknown-functions",po::value< bool >(&ctOpt.ignoreUnknownFunctions)->default_value(true)->implicit_value(true), "Ignore function pointers (functions are not called).")
     ("function-resolution-mode",po::value< int >(&ctOpt.functionResolutionMode)->default_value(4),"1:Translation unit only, 2:slow lookup, 3: -, 4: complete resolution (including function pointers)")
     ("context-sensitive",po::value< bool >(&ctOpt.contextSensitive)->default_value(true)->implicit_value(true),"Perform context sensitive analysis. Uses call strings with arbitrary length, recursion is not supported yet.")
-    ("abstraction-mode",po::value< int >(&ctOpt.abstractionMode)->default_value(0),"Select abstraction mode (0: equality merge (explicit model checking), 1: approximating merge (abstract model checking).")
+    ("abstraction-mode",po::value< int >(&ctOpt.abstractionMode)->default_value(0),"Select abstraction mode (0: equality merge (explicit model checking), 1: approximating merge (abstract model checking), 2: approximating merge (separate solver)")
     ("interpreter-mode",po::value< int >(&ctOpt.interpreterMode)->default_value(0),"Select interpretation mode. 0: default, 1: execute stdout functions.")
     ("interpreter-mode-file",po::value< string >(&ctOpt.interpreterModeOuputFileName)->default_value(""),"Select interpretation mode output file (otherwise stdout is used).")
     ("print-warnings",po::value< bool >(&ctOpt.printWarnings)->default_value(false)->implicit_value(true),"Print warnings on stdout during analysis (this can slow down the analysis significantly)")
@@ -191,6 +202,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("callstring-length",po::value< int >(&ctOpt.callStringLength)->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ("unit-test-expr-analyzer", po::value< bool >(&ctOpt.exprEvalTest)->default_value(false)->implicit_value(true), "Run expr eval test (with input program).")
     ("byte-mode", po::value< bool >(&ctOpt.byteMode)->default_value(false)->implicit_value(true),"switches from index-based addresses to byte-based addresses in state representation.")
+    ("test-selector",po::value< int >(&ctOpt.testSelector)->default_value(0)->implicit_value(0),"Option for selecting dev tests.")
     ;
 
   rersOptions.add_options()
@@ -411,6 +423,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 
   checkSpotOptions(ltlOpt,parProOpt);
   checkZ3Options(ctOpt);
+  checkNumThreads(ctOpt);
 
   return args;
 }

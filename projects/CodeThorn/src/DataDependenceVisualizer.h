@@ -10,7 +10,7 @@
 #include <string>
 
 #include "RDAstAttribute.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "CFAnalysis.h"
 #include "UDAstAttribute.h"
 

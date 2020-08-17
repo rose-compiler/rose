@@ -63,22 +63,22 @@ int main() {
     // Run the "exp2" test suite concretely, which should all exit with non-zero value
     for (auto testCaseId: db->needConcreteTesting(10)) {
         auto testCase = db->object(testCaseId);
-        auto executor = LinuxExecutor::instance();
+        auto executor = LinuxExecutor::instance(db);
         auto result = executor->execute(testCase);      // leaked?
         int status = result->exitStatus();
         ASSERT_always_require(WIFEXITED(status) && WEXITSTATUS(status) != 0);
-        db->insertConcreteResults(testCase, *result);
+        db->saveConcreteResult(testCase, result);
     }
 
     // Run the "exp" test suite concretely, which should all exit with zero
     db->testSuite(exp);
     for (auto testCaseId: db->needConcreteTesting(10)) {
         auto testCase = db->object(testCaseId);
-        auto executor = LinuxExecutor::instance();
+        auto executor = LinuxExecutor::instance(db);
         auto result = executor->execute(testCase);      // leaked?
         int status = result->exitStatus();
         ASSERT_always_require(WIFEXITED(status) && WEXITSTATUS(status) == 0);
-        db->insertConcreteResults(testCase, *result);
+        db->saveConcreteResult(testCase, result);
     }
 }
 

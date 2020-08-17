@@ -88,6 +88,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("print-violations",po::value< bool >(&ctOpt.printViolations)->default_value(false)->implicit_value(true),"Print detected violations on stdout during analysis (this can slow down the analysis significantly)")
     ("options-set",po::value< int >(&ctOpt.optionsSet)->default_value(2)->implicit_value(0),"Use a predefined set of default options (2:default|1..3:abstract)|11:concrete)).")
     ("callstring-length",po::value< int >(&ctOpt.callStringLength)->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
+    ("byte-mode", po::value< bool >(&ctOpt.byteMode)->default_value(false)->implicit_value(true),"switches from index-based addresses to byte-based addresses in state representation.")
+    ("test-selector",po::value< int >(&ctOpt.testSelector)->default_value(0)->implicit_value(0),"Option for selecting dev tests.")
     ;
 
   visibleOptions.add_options()            

@@ -2,9 +2,7 @@
 #define WORKLISTSEQ_H
 
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include <set>
@@ -37,6 +35,8 @@ namespace CodeThorn {
     
     auto end() const -> decltype( workList.end() ) 
     { return workList.end(); }
+    
+    void clear() { workList.clear(); }
   };
   
 } // end of namespace CodeThorn

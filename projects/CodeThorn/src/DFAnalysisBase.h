@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #ifndef DFANALYSISBASE_H
@@ -29,7 +27,7 @@ namespace CodeThorn {
 #include "PropertyState.h"
 
 class DFAnalysisBase {
- public:
+ public:  
   DFAnalysisBase();
   virtual ~DFAnalysisBase();
   void setExtremalLabels(LabelSet extremalLabels);
@@ -46,7 +44,7 @@ class DFAnalysisBase {
   virtual Lattice* initializeGlobalVariables(SgProject* root);
   // initializes an element with the combined global initialization state and the extremal value
   virtual void initializeTransferFunctions();
-  virtual void initializeSolver(bool defaultSolver = true);
+  virtual void initializeSolver();
   void determineExtremalLabels(SgNode* startFunRoot=0,bool onlySingleStartLabel=true);
   void run();
 
@@ -54,11 +52,11 @@ class DFAnalysisBase {
 #if 0
   void attachResultsToAst(string);
 #endif
-  Labeler* getLabeler();
-  CFAnalysis* getCFAnalyzer();
-  VariableIdMappingExtended* getVariableIdMapping();
-  FunctionIdMapping* getFunctionIdMapping();
-  Flow* getFlow() const;
+  virtual Labeler* getLabeler() const;
+  virtual CFAnalysis* getCFAnalyzer();
+  virtual VariableIdMappingExtended* getVariableIdMapping();
+  virtual FunctionIdMapping* getFunctionIdMapping();
+  virtual Flow* getFlow() const;
   virtual Lattice* getPreInfo(Label lab);
   virtual Lattice* getPostInfo(Label lab);
   void attachInInfoToAst(string attributeName);

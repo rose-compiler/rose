@@ -2,7 +2,6 @@
 #define LABELER_H
 
 /*************************************************************
- * Copyright: (C) 2012 Markus Schordan                       *
  * Author   : Markus Schordan                                *
  *************************************************************/
 
@@ -130,9 +129,10 @@ class LabelProperty {
  */
 class LabelSet : public std::set<Label> {
  public:
-  // temporary until all sets are properly using the std:algorithms for set operations
   LabelSet operator+(LabelSet& s2);
   LabelSet& operator+=(LabelSet& s2);
+  LabelSet operator-(LabelSet& s2);
+  LabelSet& operator-=(LabelSet& s2);
 
   std::string toString();
   bool isElement(Label lab);

@@ -1,13 +1,11 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "sage3basic.h"
 #include "ExprAnalyzer.h"
 #include "CodeThornException.h"
-#include "Analyzer.h" // dependency on process-functions
+#include "Analyzer.h" // dependency on analyzer->transferAssignOp 
 #include "CppStdUtilities.h"
 #include "CodeThornCommandLineOptions.h"
 #include "CodeThornLib.h"
@@ -1656,13 +1654,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       evalFunctionCallArguments(funCall,estate);
       estate.io.recordVerificationError();
       return listify(res);
-    } else if(funName=="printf" && (getInterpreterMode()==IM_CONCRETE)) {
+    } else if(funName=="printf" && (getInterpreterMode()==IM_ENABLED)) {
       // call fprint function in mode CONCRETE and generate output
       // (1) obtain arguments from estate
       // (2) marshall arguments
       // (3) perform function call (causing side effect on stdout (or written to provided file))
       return execFunctionCallPrintf(funCall,estate);
-    } else if(funName=="scanf" && (getInterpreterMode()==IM_CONCRETE)) {
+    } else if(funName=="scanf" && (getInterpreterMode()==IM_ENABLED)) {
       // call scanf function in mode CONCRETE and generate output
       // (1) obtain arguments from estate
       // (2) marshall arguments
@@ -1987,11 +1985,16 @@ enum MemoryAccessBounds ExprAnalyzer::checkMemoryAccessBounds(AbstractValue addr
   }
 }    
 
-ProgramLocationsReport ExprAnalyzer::getViolatingLocations(enum AnalysisSelector analysisSelector) {
+ProgramLocationsReport ExprAnalyzer::getProgramLocationsReport(enum AnalysisSelector analysisSelector) {
   ProgramLocationsReport report;
 #pragma omp critical(VIOLATIONRECORDING)
   report=_violatingLocations.at(analysisSelector);
   return report;
+}
+
+// deprecated
+ProgramLocationsReport ExprAnalyzer::getViolatingLocations(enum AnalysisSelector analysisSelector) {
+  return getProgramLocationsReport(analysisSelector);
 }
 
 void ExprAnalyzer::initViolatingLocations() {

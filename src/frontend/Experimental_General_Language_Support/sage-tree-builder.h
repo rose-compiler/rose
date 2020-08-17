@@ -42,6 +42,7 @@ class SgWhileStmt;
 class SgJovialCompoolStatement;
 class SgJovialDefineDeclaration;
 class SgJovialDirectiveStatement;
+class SgJovialForThenStatement;
 class SgJovialOverlayDeclaration;
 class SgJovialTableStatement;
 
@@ -121,8 +122,10 @@ public:
    void Enter(SgVariableDeclaration* &, const std::string &, SgType*, SgExpression*);
    void Leave(SgVariableDeclaration*);
 
-   void Enter(SgEnumDeclaration* &, const std::string &, std::list<SgInitializedName*> &);
+   void Enter(SgEnumDeclaration* &, const std::string &);
    void Leave(SgEnumDeclaration*);
+
+   void Enter(SgEnumVal* &, const std::string &, SgEnumDeclaration*, int);
 
    void Enter(SgTypedefDeclaration* &, const std::string &, SgType*);
    void Leave(SgTypedefDeclaration*);
@@ -132,6 +135,7 @@ public:
    void Enter(SgNamespaceDeclarationStatement* &, const std::string &, const SourcePositionPair &);
    void Leave(SgNamespaceDeclarationStatement*);
 
+   void Enter(SgExprStatement* &, const std::string &, SgExprListExp*, const std::string &);
    void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &, const std::string &);
    void Leave(SgExprStatement*);
 
@@ -159,7 +163,7 @@ public:
 
 // Expressions
 //
-   void Enter(SgFunctionCallExp* &, std::string &name, SgExprListExp* params);
+   void Enter(SgFunctionCallExp* &, const std::string &name, SgExprListExp* params);
 
 // Jovial specific nodes
 //

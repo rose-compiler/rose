@@ -139,7 +139,7 @@ namespace CodeThorn {
       return getTypeSize(BITYPE_INT); // enum size is of size int in C++
 
     default:
-      SAWYER_MESG(CodeThorn::logger[WARN])<<"VID:TSM:Unknown type:  "<<sgType->unparseToString()<<":"<<AstTerm::astTermWithNullValuesToString(sgType)<<endl;
+      //SAWYER_MESG(CodeThorn::logger[WARN])<<"VID:TSM:Unknown type:  "<<sgType->unparseToString()<<":"<<AstTerm::astTermWithNullValuesToString(sgType)<<endl;
       return 0;
     }
     return 0;

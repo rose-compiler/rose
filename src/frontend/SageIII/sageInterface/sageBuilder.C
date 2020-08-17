@@ -6495,8 +6495,9 @@ SgComplexVal* SageBuilder::buildComplexVal(SgValueExp* real_value, SgValueExp* i
 
 SgComplexVal* SageBuilder::buildComplexVal_nfi(SgValueExp* real_value, SgValueExp* imaginary_value, const std::string& str)
 {
+  ROSE_ASSERT(imaginary_value != NULL);
   SgComplexVal* result = new SgComplexVal(real_value,imaginary_value,imaginary_value->get_type(),str);
-  ROSE_ASSERT(result);
+  ROSE_ASSERT(result != NULL);
 
 // DQ (12/31/2008): set and test the parents
   if (real_value != NULL)
@@ -7454,6 +7455,9 @@ BUILD_BINARY_DEF(XorAssignOp)
 BUILD_BINARY_DEF(VarArgCopyOp)
 BUILD_BINARY_DEF(VarArgStartOp)
 
+// CR(07/26/2018): Jovial operators
+BUILD_BINARY_DEF(ReplicationOp);
+
 //SK(08/20/2015): Matlab operators
 BUILD_BINARY_DEF(PowerOp);
 BUILD_BINARY_DEF(ElementwisePowerOp);
@@ -7464,12 +7468,15 @@ BUILD_BINARY_DEF(ElementwiseLeftDivideOp);
 BUILD_BINARY_DEF(ElementwiseAddOp);
 BUILD_BINARY_DEF(ElementwiseSubtractOp);
 
+// DQ (7/25/2020): Adding C++20 support
+BUILD_BINARY_DEF(SpaceshipOp)
+
 #undef BUILD_BINARY_DEF
 
 
 
-// Rasmussen ( 1/25/2018):
-//           (10/30/2018): Fixed case when this function is called with NULL dim_info object.
+// CR ( 1/25/2018):
+//    (10/30/2018): Fixed case when this function is called with NULL dim_info object.
 SgArrayType* SageBuilder::buildArrayType(SgType* base_type, SgExprListExp* dim_info)
    {
      ROSE_ASSERT(base_type != NULL);
@@ -8667,6 +8674,7 @@ SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters
 SgFunctionCallExp*
 SageBuilder::buildFunctionCallExp(SgExpression* f, SgExprListExp* parameters/*=NULL*/)
    {
+     ROSE_ASSERT(f != NULL);
      SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
      ROSE_ASSERT(func_call_expr != NULL);
 
@@ -10011,6 +10019,18 @@ SgBasicBlock* SageBuilder::buildBasicBlock_nfi(const vector<SgStatement*>& stmts
      return result;
    }
 
+// CR (7/24/2020): Added additional functionality.
+// Build a SgBasicBlock and set its parent. This function does NOT link the parent scope to the block.
+SgBasicBlock*
+SageBuilder::buildBasicBlock_nfi(SgScopeStatement* parent)
+{
+   SgBasicBlock* block = buildBasicBlock_nfi();
+   block->set_parent(parent);
+
+   return block;
+}
+
+
 SgGotoStatement *
 SageBuilder::buildGotoStatement(SgLabelStatement *  label)
 {
@@ -11128,7 +11148,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
 }
 
 // Rasmussen (2/20/2020): Added builder for Jovial fixed type
-SgTypeFixed* SageBuilder::buildFixedType(SgExpression* fraction, SgExpression* scale)
+SgTypeFixed* SageBuilder::buildFixedType(SgExpression* scale, SgExpression* fraction)
 {
   SgTypeFixed * result = SgTypeFixed::createType(scale, fraction);
   ROSE_ASSERT(result);
@@ -11893,6 +11913,68 @@ SageBuilder::buildLambdaCaptureList_nfi()
 
      setOneSourcePositionNull(lambdaCaptureList);
      return lambdaCaptureList;
+   }
+
+// DQ (7/25/2020): Adding C++17 support
+SgFoldExpression* 
+SageBuilder::buildFoldExpression(SgExpression* operands, string operator_token_string, bool is_left_associative)
+   {
+     SgFoldExpression* result = new SgFoldExpression(NULL,operands,operator_token_string,is_left_associative);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+
+SgFoldExpression*
+SageBuilder::buildFoldExpression_nfi(SgExpression* operands, string operator_token_string, bool is_left_associative)
+   {
+     SgFoldExpression* result = new SgFoldExpression(NULL,operands,operator_token_string,is_left_associative);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionNull(result);
+     return result;
+   }
+
+// DQ (7/25/2020): Adding C++20 support
+SgAwaitExpression*
+SageBuilder::buildAwaitExpression()
+   {
+     SgAwaitExpression* result = new SgAwaitExpression(NULL,NULL);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+SgAwaitExpression*
+SageBuilder::buildAwaitExpression_nfi()
+   {
+     SgAwaitExpression* result = new SgAwaitExpression(NULL,NULL);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionNull(result);
+     return result;
+   }
+
+// DQ (7/25/2020): Adding C++20 support
+SgChooseExpression*
+SageBuilder::buildChooseExpression()
+   {
+     SgChooseExpression* result = new SgChooseExpression(NULL,NULL);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+
+SgChooseExpression*
+SageBuilder::buildChooseExpression_nfi()
+   {
+     SgChooseExpression* result = new SgChooseExpression(NULL,NULL);
+     ROSE_ASSERT(result != NULL);
+
+     setOneSourcePositionNull(result);
+     return result;
    }
 
 
@@ -17959,6 +18041,7 @@ SageBuilder::errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, S
              {
             // Handle the scope for all statements.
                SgScopeStatement* scope_copy     = statement_copy->get_scope();
+               ROSE_ASSERT(statement_original != NULL);
                SgScopeStatement* scope_original = statement_original->get_scope();
                ROSE_ASSERT(scope_copy     != NULL);
                ROSE_ASSERT(scope_original != NULL);
@@ -20471,6 +20554,7 @@ SgSourceFile *SageBuilder::buildJavaSourceFile(SgProject *project, string direct
     //
     // Create a package statement and add it to the source file
     //
+    ROSE_ASSERT(package_definition->get_declaration() != NULL);
     SgJavaPackageStatement *package_statement = SageBuilder::buildJavaPackageStatement(package_definition -> get_declaration() -> get_qualified_name().getString());
     package_statement -> set_parent(package_definition);
     sourcefile -> set_package(package_statement);
@@ -20502,6 +20586,7 @@ SgArrayType *SageBuilder::getUniqueJavaArrayType(SgType *base_type, int num_dime
         base_type = getUniqueJavaArrayType(base_type, num_dimensions - 1);
     }
 
+    ROSE_ASSERT(base_type != NULL);
     AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) base_type -> getAttribute("array");
     if (attribute == NULL) {
         SgArrayType *array_type = SageBuilder::buildArrayType(base_type);

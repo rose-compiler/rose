@@ -11,6 +11,9 @@ template <typename S, typename T>
 ParseAndSetMember<S,T> createParseAndSetMember( T S::*mptr)
 {}
 
+// DQ (7/23/2020): Added for GNU 10 version of STL.
+#include <string>
+
 #include <map>
 namespace LEOS {
     enum functionsType {

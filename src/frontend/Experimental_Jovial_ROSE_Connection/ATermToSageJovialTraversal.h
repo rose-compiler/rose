@@ -86,13 +86,13 @@ ATbool traverse_CharacterLiteral         (ATerm term, std::string &str_literal);
 
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
 ATbool    match_StatusItemDescription (ATerm term);
-ATbool traverse_StatusItemDescription (ATerm term, std::list<SgInitializedName*> &status_list, Sawyer::Optional<SgExpression*> &status_size);
-ATbool traverse_StatusConstant        (ATerm term, SgInitializedName* &init_name, SgType* &enum_type, SgExpression* init_expr);
+ATbool traverse_StatusItemDescription (ATerm term, SgEnumDeclaration* enum_decl, Sawyer::Optional<SgExpression*> &status_size);
+ATbool traverse_StatusConstant        (ATerm term, SgEnumDeclaration* enum_decl, int value);
 ATbool traverse_StatusConstant        (ATerm term, SgExpression* &expr);
-ATbool traverse_DefaultSublist        (ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type);
-ATbool traverse_OptDefaultSublist     (ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type);
-ATbool traverse_StatusList            (ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type);
-ATbool traverse_SpecifiedSublist      (ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type);
+ATbool traverse_DefaultSublist        (ATerm term, SgEnumDeclaration* enum_decl);
+ATbool traverse_OptDefaultSublist     (ATerm term, SgEnumDeclaration* enum_decl);
+ATbool traverse_StatusList            (ATerm term, SgEnumDeclaration* enum_decl);
+ATbool traverse_SpecifiedSublist      (ATerm term, SgEnumDeclaration* enum_decl);
 
 // 2.1.1.7 POINTER TYPE DESCRIPTIONS
 ATbool traverse_PointerItemDescription (ATerm term, SgType* & type);
@@ -138,9 +138,10 @@ ATbool traverse_ConstantDeclaration(ATerm term, int def_or_ref = 0);
 // 2.1.4 BLOCK DECLARATION
 ATbool traverse_BlockDeclaration   (ATerm term, int def_or_ref = 0);
 ATbool traverse_BlockBodyPart      (ATerm term, SgJovialTableStatement* block_decl);
-ATbool traverse_BlockPreset        (ATerm term, SgExprListExp* preset_list);
+ATbool traverse_BlockPreset        (ATerm term, SgExprListExp* &preset_list);
 ATbool traverse_BlockPresetList    (ATerm term, SgExprListExp* preset_list);
-ATbool traverse_OptBlockPresetList (ATerm term, SgExprListExp* preset_list);
+ATbool traverse_OptBlockPresetList (ATerm term, SgExprListExp* &preset_list);
+ATbool traverse_OptTablePresetList (ATerm term, SgExpression*  &preset_list);
 
 // 2.1.5 ALLOCATION OF DATA OBJECTS
 ATbool traverse_OptAllocationSpecifier(ATerm term, Sawyer::Optional<LanguageTranslation::ExpressionKind> &modifier_enum);
