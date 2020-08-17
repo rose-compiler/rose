@@ -330,6 +330,7 @@ private:
     Partitioner2::ControlFlowGraph paths_;              // all possible paths, feasible or otherwise
     Partitioner2::CfgConstVertexSet pathsBeginVertices_;// vertices of paths_ where searching starts
     Partitioner2::CfgConstVertexSet pathsEndVertices_;  // vertices of paths_ where searching stops
+    bool isDirectedSearch_;                             // use pathsEndVertices_?
     Partitioner2::CfgConstEdgeSet cfgAvoidEdges_;       // CFG edges to avoid
     Partitioner2::CfgConstVertexSet cfgEndAvoidVertices_;// CFG end-of-path and other avoidance vertices
     FunctionSummarizer::Ptr functionSummarizer_;        // user-defined function for handling function summaries
@@ -347,7 +348,7 @@ private:
 public:
     /** Constructs a new feasible path analyzer. */
     FeasiblePath()
-        : registers_(NULL) {}
+        : registers_(NULL), isDirectedSearch_(true) {}
 
     virtual ~FeasiblePath() {}
 
@@ -361,6 +362,7 @@ public:
         paths_.clear();
         pathsBeginVertices_.clear();
         pathsEndVertices_.clear();
+        isDirectedSearch_ = true;
         cfgAvoidEdges_.clear();
         cfgEndAvoidVertices_.clear();
         reachedBlockVas_.clear();
@@ -503,10 +505,11 @@ public:
 
     /** Determine whether any ending vertex is reachable.
      *
-     *  Returns true if any of the @p endVertices can be reached from the @p beginVertex by following the edges of the graph. */
-    static bool isAnyEndpointReachable(const Partitioner2::ControlFlowGraph &cfg,
-                                       const Partitioner2::ControlFlowGraph::ConstVertexIterator &beginVertex,
-                                       const Partitioner2::CfgConstVertexSet &endVertices);
+     *  Returns true if any of the @p endVertices can be reached from the @p beginVertex by following the edges of the graph.
+     *  However, if @ref isDirectedSearch is false, then the end vertices are ignored and this function always returns true. */
+    bool isAnyEndpointReachable(const Partitioner2::ControlFlowGraph &cfg,
+                                const Partitioner2::ControlFlowGraph::ConstVertexIterator &beginVertex,
+                                const Partitioner2::CfgConstVertexSet &endVertices);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Functions for describing the search space
@@ -516,7 +519,9 @@ public:
     /** Specify search boundary.
      *
      *  This function initializes the analysis by specifying starting and ending CFG vertices and the vertices and edges that
-     *  should be avoided.
+     *  should be avoided.  If the @p cfgEndVertices is supplied (even if empty) then the search is directed. A directed search
+     *  considers only the subset of the CFG that consists of vertices and edges that appear on some path from any of the @p
+     *  cfgBeginVertices to any of the @p cfgEndVertices.
      *
      * @{ */
     void
@@ -531,8 +536,26 @@ public:
                       const Partitioner2::ControlFlowGraph::ConstVertexIterator &cfgEndVertex,
                       const Partitioner2::CfgConstVertexSet &cfgAvoidVertices = Partitioner2::CfgConstVertexSet(),
                       const Partitioner2::CfgConstEdgeSet &cfgAvoidEdges = Partitioner2::CfgConstEdgeSet());
+    void
+    setSearchBoundary(const Partitioner2::Partitioner &partitioner,
+                      const Partitioner2::CfgConstVertexSet &cfgBeginVertices,
+                      const Partitioner2::CfgConstVertexSet &cfgAvoidVertices = Partitioner2::CfgConstVertexSet(),
+                      const Partitioner2::CfgConstEdgeSet &cfgAvoidEdges = Partitioner2::CfgConstEdgeSet());
+    void
+    setSearchBoundary(const Partitioner2::Partitioner &partitioner,
+                      const Partitioner2::ControlFlowGraph::ConstVertexIterator &cfgBeginVertex,
+                      const Partitioner2::CfgConstVertexSet &cfgAvoidVertices = Partitioner2::CfgConstVertexSet(),
+                      const Partitioner2::CfgConstEdgeSet &cfgAvoidEdges = Partitioner2::CfgConstEdgeSet());
     /** @} */
 
+    /** Property: Whether search is directed or not.
+     *
+     *  A directed search attempts to find a path that reaches one of a set of goal vertices, set by the @p setSearchBoundary
+     *  functions that take a @c cfgEndVertex or @c cfgEndVertices argument.  On the other hand, an undirected search just
+     *  keeps following paths to explore the entire execution space. */
+    bool isDirectedSearch() const {
+        return isDirectedSearch_;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Functions for searching for paths

@@ -414,12 +414,12 @@ operator<<(std::ostream &out, const CfgPath &path) {
 
 std::vector<bool>
 findPathEdges(const ControlFlowGraph &graph, const CfgConstVertexSet &beginVertices,
-              const CfgConstVertexSet &endVertices, const CfgConstVertexSet &avoidVertices,
-              const CfgConstEdgeSet &avoidEdges, bool avoidCallsAndReturns) {
+              const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges,
+              bool avoidCallsAndReturns) {
     using namespace Sawyer::Container::Algorithm;
 
-    // Mark edges that are reachable with a forward traversal from any starting vertex, avoiding certain vertices and edges.
-    std::vector<bool> forwardReachable(graph.nEdges(), false);
+    // Find all edges that are reachable with a forward traversal from any starting vertex, avoiding certain vertices and edges.
+    std::vector<bool> retval(graph.nEdges(), false);
     BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &beginVertex, beginVertices.values()) {
         ASSERT_require(graph.isValidVertex(beginVertex));
         typedef DepthFirstForwardGraphTraversal<const ControlFlowGraph> ForwardTraversal;
@@ -436,7 +436,7 @@ findPathEdges(const ControlFlowGraph &graph, const CfgConstVertexSet &beginVerti
                     } else if (avoidEdges.exists(t.edge())) {
                         t.skipChildren();
                     } else {
-                        forwardReachable[t.edge()->id()] = true;
+                        retval[t.edge()->id()] = true;
                     }
                     break;
                 default:
@@ -444,6 +444,17 @@ findPathEdges(const ControlFlowGraph &graph, const CfgConstVertexSet &beginVerti
             }
         }
     }
+    return retval;
+}
+
+std::vector<bool>
+findPathEdges(const ControlFlowGraph &graph, const CfgConstVertexSet &beginVertices,
+              const CfgConstVertexSet &endVertices, const CfgConstVertexSet &avoidVertices,
+              const CfgConstEdgeSet &avoidEdges, bool avoidCallsAndReturns) {
+    using namespace Sawyer::Container::Algorithm;
+
+    // Mark edges that are reachable with a forward traversal from any starting vertex, avoiding certain vertices and edges.
+    std::vector<bool> forwardReachable = findPathEdges(graph, beginVertices, avoidVertices, avoidEdges, avoidCallsAndReturns);
 
     // Mark edges that are reachable with a backward traversal from any ending vertex, avoiding certain vertices and edges.
     std::vector<bool> significant(graph.nEdges(), false);
@@ -557,6 +568,41 @@ eraseUnreachablePaths(ControlFlowGraph &graph /*in,out*/, CfgConstVertexSet &beg
 
 void
 findPaths(const ControlFlowGraph &cfg, ControlFlowGraph &paths /*out*/, CfgVertexMap &vmap /*out*/,
+          const CfgConstVertexSet &beginVertices,
+          const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges,
+          bool avoidCallsAndReturns) {
+    paths.clear();
+    vmap.clear();
+
+    // Find all edges and insert them along with incident vertices.
+    std::vector<bool> goodEdges = findPathEdges(cfg, beginVertices, avoidVertices, avoidEdges, avoidCallsAndReturns);
+    BOOST_FOREACH (const ControlFlowGraph::Edge &edge, cfg.edges()) {
+        if (goodEdges[edge.id()]) {
+            if (!vmap.forward().exists(edge.source())) {
+                ControlFlowGraph::VertexIterator newPathTarget = paths.insertVertex(edge.source()->value());
+                vmap.insert(edge.source(), newPathTarget);
+            }
+            if (!vmap.forward().exists(edge.target())) {
+                ControlFlowGraph::VertexIterator newPathTarget = paths.insertVertex(edge.target()->value());
+                vmap.insert(edge.target(), newPathTarget);
+            }
+            paths.insertEdge(vmap.forward()[edge.source()], vmap.forward()[edge.target()], edge.value());
+        }
+    }
+
+    // Make sure begin vertices are present. They were probably inserted above except if the vertex has no incident edges, in
+    // which case the begin vertex should be inserted only if it can be a singleton path.
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &beginVertex, beginVertices.values()) {
+        if (!vmap.forward().exists(beginVertex) &&                      // not inserted above
+            !avoidVertices.exists(beginVertex)) {                       // not an avoided vertex
+            ControlFlowGraph::VertexIterator newPathTarget = paths.insertVertex(beginVertex->value());
+            vmap.insert(beginVertex, newPathTarget);
+        }
+    }
+}
+
+void
+findPaths(const ControlFlowGraph &cfg, ControlFlowGraph &paths /*out*/, CfgVertexMap &vmap /*out*/,
           const CfgConstVertexSet &beginVertices, const CfgConstVertexSet &endVertices,
           const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges,
           bool avoidCallsAndReturns) {
@@ -593,9 +639,23 @@ findPaths(const ControlFlowGraph &cfg, ControlFlowGraph &paths /*out*/, CfgVerte
 
 void
 findFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /*out*/, CfgVertexMap &vmap /*out*/,
+                  const CfgConstVertexSet &beginVertices,
+                  const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges) {
+    return findPaths(srcCfg, paths, vmap, beginVertices, avoidVertices, avoidEdges, true);
+}
+
+void
+findFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /*out*/, CfgVertexMap &vmap /*out*/,
                   const CfgConstVertexSet &beginVertices, const CfgConstVertexSet &endVertices,
                   const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges) {
     return findPaths(srcCfg, paths, vmap, beginVertices, endVertices, avoidVertices, avoidEdges, true);
+}
+
+void
+findInterFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /*out*/, CfgVertexMap &vmap /*out*/,
+                       const CfgConstVertexSet &beginVertices,
+                       const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges) {
+    return findPaths(srcCfg, paths, vmap, beginVertices, avoidVertices, avoidEdges, false);
 }
 
 void
