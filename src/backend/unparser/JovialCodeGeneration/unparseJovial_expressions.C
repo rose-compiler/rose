@@ -437,7 +437,8 @@ Unparse_Jovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info)
      ASSERT_not_null(default_sublist);
      ASSERT_not_null(specified_sublist);
 
-     bool has_specified_sublist = (specified_sublist->get_expressions().size() == 2);
+     int sublist_size = specified_sublist->get_expressions().size();
+     bool has_specified_sublist = (sublist_size > 0);
 
   // Unparse the optional DefaultPresetSublist
      if (default_sublist->get_expressions().size() > 0)
@@ -448,13 +449,21 @@ Unparse_Jovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info)
 
      if (has_specified_sublist)
         {
-        // Unparse the PresetIndexSpecifier
-           curprint("POS(");
-           unparseExpression(specified_sublist->get_expressions()[0], info);
-           curprint("): ");
+        // They come in pairs
+           ROSE_ASSERT((sublist_size % 2) == 0);
 
-        // Unparse the PresetValuesOption
-           unparseExpression(specified_sublist->get_expressions()[1], info);
+           for (int i=0; i < 1+sublist_size/2; i+=2)
+              {
+              // Unparse the PresetIndexSpecifier
+                 curprint("\n");
+                 curprint_indented("    POS(", info);
+                 unparseExpression(specified_sublist->get_expressions()[i], info);
+                 curprint("): ");
+
+              // Unparse the PresetValuesOption
+                 unparseExpression(specified_sublist->get_expressions()[i+1], info);
+                 if (i+2 < sublist_size) curprint(",");
+              }
         }
   }
 
