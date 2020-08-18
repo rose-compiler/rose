@@ -1591,7 +1591,32 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
                   }
                  else
                   {
+#if DEBUG_EXTERN
+                    printf ("/* info.get_extern_C_with_braces() == false: output extern keyword only */ \n");
+#endif
                     curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
+                  }
+             }
+            else
+             {
+#if DEBUG_EXTERN
+               printf ("/* info.get_extern_C_with_braces() == true: output extern keyword only */ \n");
+#endif
+            // DQ (8/17/2020): This is required for test2020_37.C but not for test2020_28.C.
+            // curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
+            // curprint( "extern ");
+            // curprint( "extern /* testing */ ");
+
+            // DQ (8/18/2020): friend functions cannot use the extern storage specification.
+               if (decl_stmt->get_declarationModifier().isFriend() == true)
+                  {
+                   /* Suppress the extern keyword */
+                   // curprint( "/* Suppress the extern keyword */ ");
+                  }
+                 else
+                  {
+                 // curprint( "extern /* not a friend declaration */ ");
+                    curprint( "extern ");
                   }
              }
         }

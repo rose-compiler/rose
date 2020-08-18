@@ -4415,6 +4415,9 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
 #if 0
                                         printf ("calling info.set_extern_C_with_braces(true) \n");
 #endif
+#if 0
+                                        curprint ( string("/* calling info.set_extern_C_with_braces(true): case PreprocessingInfo::ClinkageSpecificationStart") + (*i)->getString() + " */ \n");
+#endif
                                         info.set_extern_C_with_braces(true);
                                       }
                                      else
@@ -4422,6 +4425,9 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                         ROSE_ASSERT( (*i)->getTypeOfDirective() == PreprocessingInfo::ClinkageSpecificationEnd );
 #if 0
                                         printf ("calling info.set_extern_C_with_braces(false) \n");
+#endif
+#if 0
+                                        curprint ( string("/* calling info.set_extern_C_with_braces(true): case PreprocessingInfo::ClinkageSpecificationEnd") + (*i)->getString() + " */ \n");
 #endif
                                         info.set_extern_C_with_braces(false);
                                       }
