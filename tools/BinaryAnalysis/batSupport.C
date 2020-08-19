@@ -432,4 +432,107 @@ PathSelector::maybeTerminate() const {
         _exit(0);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Instruction histograms
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#if __cplusplus >= 201402L
+
+InsnHistogram
+computeInsnHistogram(const InstructionProvider &insns, const MemoryMap::Ptr &map) {
+    InsnHistogram histogram;
+    rose_addr_t va = 0;
+    while (map->atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
+        const rose_addr_t aligned = alignUp(va, insns.instructionAlignment());
+        if (va != aligned) {
+            va = aligned;
+        } else if (SgAsmInstruction *insn = insns[va]) {
+            ++histogram[insn->get_mnemonic()];
+            va += insn->get_size();
+        } else {
+            ++va;
+        }
+    }
+    return histogram;
+}
+
+void
+saveInsnHistogram(const InsnHistogram &histogram, const boost::filesystem::path &fileName) {
+    auto io = SerialOutput::instance();
+    io->format(SerialIo::XML);
+    io->open(fileName);
+    io->saveObject(SerialIo::USER_DEFINED, histogram);
+}
+
+InsnHistogram
+loadInsnHistogram(const boost::filesystem::path &fileName) {
+    auto io = SerialInput::instance();
+    io->format(SerialIo::XML);
+    io->open(fileName);
+    return io->loadObject<InsnHistogram>(SerialIo::USER_DEFINED);
+}
+
+std::vector<InsnHistogram>
+splitInsnHistogram(const InsnHistogram &histogram, size_t nParts) {
+    ASSERT_require(nParts > 0);
+    std::vector<std::pair<std::string, size_t>> records(histogram.begin(), histogram.end());
+    std::sort(records.begin(), records.end(), [](auto &a, auto &b) { return a.second > b.second; });
+    size_t partSize = (records.size() + nParts - 1) / nParts;
+    std::vector<InsnHistogram> parts(nParts);
+    for (size_t i = 0; i < records.size(); ++i)
+        parts[i/partSize].insert(records[i]);
+    return parts;
+}
+
+void
+mergeInsnHistogram(InsnHistogram &histogram, const InsnHistogram &other) {
+    for (auto &pair: other)
+        histogram[pair.first] += pair.second;
+}
+
+double
+compareInsnHistograms(const std::vector<InsnHistogram> &aParts, const InsnHistogram &b) {
+    std::vector<InsnHistogram> bParts = splitInsnHistogram(b, aParts.size());
+    size_t totalDiff = 0, maxDiff = 0;
+    for (size_t i = 0; i < aParts.size(); ++i) {
+        maxDiff += std::max(i - 0, (bParts.size()-1) - i) * aParts[i].size();
+        for (const auto &record: aParts[i]) {
+            const std::string &label = record.first;
+            size_t foundAt = bParts.size() - 1;
+            for (size_t j = 0; j < bParts.size(); ++j) {
+                if (bParts[j].find(label) != bParts[j].end()) {
+                    foundAt = j;
+                    break;
+                }
+            }
+            size_t diff = std::max(i, foundAt) - std::min(i, foundAt);
+            totalDiff += diff;
+        }
+    }
+    return 1.0 * totalDiff / maxDiff;
+}
+
+double
+compareInsnHistograms(const InsnHistogram &a, const InsnHistogram &b, size_t nParts) {
+    std::vector<InsnHistogram> aParts = splitInsnHistogram(a, nParts);
+    return compareInsnHistograms(aParts, b);
+}
+
+void
+printInsnHistogram(const InsnHistogram &histogram, std::ostream &out) {
+    size_t runningTotal = 0, grandTotal = 0;
+    for (auto pair: histogram)
+        grandTotal += pair.second;
+    std::vector<std::pair<std::string, size_t>> results(histogram.begin(), histogram.end());
+    std::sort(results.begin(), results.end(), [](auto &a, auto &b) { return a.second > b.second; });
+    std::cout <<"Instruction           N      N%   Total  Total%\n";
+    for (auto pair: results) {
+        runningTotal += pair.second;
+        out <<(boost::format("%-15s\t%7d\t%7.3f\t%7d\t%7.3f\n")
+               %pair.first %pair.second %(100.0 * pair.second / grandTotal)
+               %runningTotal %(100.0 * runningTotal / grandTotal));
+    }
+}
+
+#endif
+
 } // namespace

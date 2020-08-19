@@ -7,7 +7,9 @@
 #include <Partitioner2/Function.h>                      // rose
 #include <Partitioner2/Partitioner.h>                   // rose
 
+#include <boost/filesystem.hpp>
 #include <fstream>
+#include <map>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <set>
@@ -185,6 +187,67 @@ public:
      *  without any in-process cleanup. */
     void maybeTerminate() const;
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Instruction histograms
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#if __cplusplus >= 201402L
+
+/** Instruction histogram.
+ *
+ *  Maps instruction mnemonics to number of occurrences. */
+using InsnHistogram = std::map<std::string, size_t>;
+
+/** Compute histogram from memory map.
+ *
+ *  Scans the executable parts of the memory map like a linear sweeep disassembler would do in order to obtain a histogram
+ *  describing how frequently each instruction mnemonic appears. */
+InsnHistogram
+computeInsnHistogram(const Rose::BinaryAnalysis::InstructionProvider&, const Rose::BinaryAnalysis::MemoryMap::Ptr&);
+
+/** Save an instruction histogram in a file. */
+void
+saveInsnHistogram(const InsnHistogram&, const boost::filesystem::path&);
+
+/** Load an instruction histogram from a file. */
+InsnHistogram
+loadInsnHistogram(const boost::filesystem::path&);
+
+/** Merge one histogram into another.
+ *
+ *  The contents of the @p other histogram are merged into the first argument. */
+void
+mergeInsnHistogram(InsnHistogram &histogram, const InsnHistogram &other);
+
+/** Split a histogram into parts.
+ *
+ *  The return value is a vector of sub-histograms with the first histogram being the most frequent instructions, second is the
+ *  next frequent instructions, etc. All the histograms have the same number of symbols, except the last histograms may have
+ *  one fewer instruction than the first histogram. */
+std::vector<InsnHistogram>
+splitInsnHistogram(const InsnHistogram&, size_t nParts);
+
+/** Compare two histograms.
+ *
+ *  Both histograms are split into parts by calling @ref splitInsnHistogram. Then an amount of difference is calculated by
+ *  comparing the locations of the mnemonics in the first set of histograms with which part they appear in among the second set
+ *  of histograms. If a mnemonic appears only in the first histogram then it is assumed to appear in the last part of the second
+ *  histogram.  The total difference is the sum of absolute differences between the part numbers. This function returns a relative
+ *  amount of difference between 0.0 and 1.0 as the ratio of total difference to the total possible difference.
+ *
+ *  For the sake of performance when comparing one histogram with many others, the first histogram can be split prior to the
+ *  comparison loop, in which case the @p nParts argument is omitted.
+ *
+ * @{ */
+double compareInsnHistograms(const InsnHistogram&, const InsnHistogram&, size_t nParts);
+double compareInsnHistograms(const std::vector<InsnHistogram>&, const InsnHistogram&);
+/** @} */
+
+/** Pretty print a histogram. */
+void
+printInsnHistogram(const InsnHistogram&, std::ostream&);
+
+#endif
 
 } // namespace
 
