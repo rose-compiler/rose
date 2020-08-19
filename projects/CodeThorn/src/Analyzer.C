@@ -2194,7 +2194,7 @@ CodeThorn::EStateSet* CodeThorn::Analyzer::getEStateSet() { return &estateSet; }
 CodeThorn::PStateSet* CodeThorn::Analyzer::getPStateSet() { return &pstateSet; }
 TransitionGraph* CodeThorn::Analyzer::getTransitionGraph() { return &transitionGraph; }
 ConstraintSetMaintainer* CodeThorn::Analyzer::getConstraintSetMaintainer() { return &constraintSetMaintainer; }
-std::list<FailedAssertion> CodeThorn::Analyzer::getFirstAssertionOccurences(){return _firstAssertionOccurences;}
+std::list<CodeThorn::FailedAssertion> CodeThorn::Analyzer::getFirstAssertionOccurences(){return _firstAssertionOccurences;}
 
 void CodeThorn::Analyzer::setCommandLineOptions(vector<string> clOptions) {
   _commandLineOptions=clOptions;

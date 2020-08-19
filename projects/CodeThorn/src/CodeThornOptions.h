@@ -11,7 +11,7 @@ namespace CodeThorn {
 }
 
 
-struct CodeThornOptions : public Options {
+struct CodeThornOptions : public CodeThorn::Options {
   // hidden options
   int maxTransitionsForcedTop1;
   int maxTransitionsForcedTop2;
