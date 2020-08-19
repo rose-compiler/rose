@@ -791,64 +791,6 @@ int main( int argc, char * argv[] ) {
       }
 #endif	
 
-    if(ctOpt.ssa) {
-      SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
-      ssaGen->generateSSAForm();
-      exit(0);
-    }
-
-    for(auto analysisInfo : ctOpt.analysisList()) {
-      AnalysisSelector analysisSel=analysisInfo.first;
-      string analysisName=analysisInfo.second;
-      if(ctOpt.getAnalysisSelectionFlag(analysisSel)||ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
-        ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getViolatingLocations(analysisSel);
-        if(ctOpt.getAnalysisSelectionFlag(analysisSel)) {
-          cout<<"\nResults for "<<analysisName<<" analysis:"<<endl;
-          if(locations.numTotalLocations()>0) {
-            locations.writeResultToStream(cout,analyzer->getLabeler());
-          } else {
-            cout<<"No violations detected."<<endl;
-          }
-        }
-        if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
-          string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
-          if(!ctOpt.quiet)
-            cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
-          locations.writeResultFile(fileName,analyzer->getLabeler());
-        }
-      }
-    }
-
-    if(ctOpt.analyzedFunctionsCSVFileName.size()>0) {
-      string fileName=ctOpt.analyzedFunctionsCSVFileName;
-      if(!ctOpt.quiet)
-        cout<<"Writing list of analyzed functions to file "<<fileName<<endl;
-      string s=analyzer->analyzedFunctionsToString();
-      if(!CppStdUtilities::writeFile(fileName, s)) {
-        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
-      }
-    }
-
-    if(ctOpt.analyzedFilesCSVFileName.size()>0) {
-      string fileName=ctOpt.analyzedFilesCSVFileName;
-      if(!ctOpt.quiet)
-        cout<<"Writing list of analyzed files to file "<<fileName<<endl;
-      string s=analyzer->analyzedFilesToString();
-      if(!CppStdUtilities::writeFile(fileName, s)) {
-        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
-      }
-    }
-
-    if(ctOpt.externalFunctionsCSVFileName.size()>0) {
-      string fileName=ctOpt.externalFunctionsCSVFileName;
-      if(!ctOpt.quiet)
-        cout<<"Writing list of external functions to file "<<fileName<<endl;
-      string s=analyzer->externalFunctionsToString();
-      if(!CppStdUtilities::writeFile(fileName, s)) {
-        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
-      }
-    }
-
     long pstateSetSize=analyzer->getPStateSet()->size();
     long pstateSetBytes=analyzer->getPStateSet()->memorySize();
     long pstateSetMaxCollisions=analyzer->getPStateSet()->maxCollisions();

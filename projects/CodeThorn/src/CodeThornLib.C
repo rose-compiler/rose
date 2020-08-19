@@ -91,6 +91,20 @@ using namespace Sawyer::Message;
 
 using namespace Sawyer::Message;
 
+// handler for generating backtrace
+void codethornBackTraceHandler(int sig) {
+  void *array[10];
+  size_t size;
+
+  size = backtrace (array, 10);
+  printf ("Obtained %zd stack frames.\n", size);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "Error: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+  exit(1);
+}
+
 void CodeThorn::initDiagnostics() {
   Rose::Diagnostics::initialize();
   // general logger for CodeThorn library functions
@@ -127,20 +141,6 @@ void CodeThorn::turnOffRoseWarnings() {
   Rose::global_options.set_backend_warnings(false);
 }
 
-// handler for generating backtrace
-void handler(int sig) {
-  void *array[10];
-  size_t size;
-
-  size = backtrace (array, 10);
-  printf ("Obtained %zd stack frames.\n", size);
-
-  // print out all the frames to stderr
-  fprintf(stderr, "Error: signal %d:\n", sig);
-  backtrace_symbols_fd(array, size, STDERR_FILENO);
-  exit(1);
-}
-
 void CodeThorn::configureRose() {
   CodeThorn::initDiagnostics();
 
@@ -149,10 +149,10 @@ void CodeThorn::configureRose() {
   Rose::Diagnostics::mprefix->showElapsedTime(false);
 
   turnOffRoseWarnings();
-  signal(SIGSEGV, handler);   // install handler for backtrace
+  signal(SIGSEGV, codethornBackTraceHandler);   // install handler for backtrace
 }
 
-void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
+void CodeThorn::exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
   cout << "------------------------------------------"<<endl;
   cout << "RUNNING CHECKS FOR EXPR ANALYZER:"<<endl;
   cout << "------------------------------------------"<<endl;
@@ -196,6 +196,7 @@ void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
   delete exprAnalyzer;
 }
 
+namespace CodeThorn {
 void optionallyRunExprEvalTestAndExit(CodeThornOptions& ctOpt,int argc, char * argv[]) {
   if(ctOpt.exprEvalTest) {
     exprEvalTest(argc,argv,ctOpt);
@@ -671,3 +672,4 @@ void runSolver(CodeThornOptions& ctOpt,Analyzer* analyzer, SgProject* sageProjec
   }
   tc.analysisRunTime=tc.timer.getTimeDurationAndStop().milliSeconds();
 }
+} // end of namespace CodeThorn

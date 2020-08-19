@@ -33,7 +33,7 @@ void CodeThorn::initDiagnosticsLTL() {
   CounterexampleGenerator::initDiagnostics();
 }
 
-void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* analyzer, TimingCollector& tc) {
+void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* analyzer, TimingCollector& tc) {
   long pstateSetSize=analyzer->getPStateSet()->size();
   long pstateSetBytes=analyzer->getPStateSet()->memorySize();
   long pstateSetMaxCollisions=analyzer->getPStateSet()->maxCollisions();
@@ -379,7 +379,7 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
     cout << "generated "<<filename<<endl;
   }
 }
-void optionallyInitializePatternSearchSolver(CodeThornOptions& ctOpt,IOAnalyzer* analyzer,TimingCollector& timingCollector) {
+void CodeThorn::optionallyInitializePatternSearchSolver(CodeThornOptions& ctOpt,IOAnalyzer* analyzer,TimingCollector& timingCollector) {
     // pattern search: requires that exploration mode is set,
     // otherwise no pattern search is performed
     if(ctOpt.patSearch.explorationMode.size()>0) {
