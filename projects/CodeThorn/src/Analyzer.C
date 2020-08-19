@@ -648,13 +648,6 @@ string CodeThorn::Analyzer::analyzerStateToString() {
   return ss.str();
 }
 
-bool CodeThorn::Analyzer::isInWorkList(const EState* estate) {
-  for(EStateWorkList::iterator i=estateWorkListCurrent->begin();i!=estateWorkListCurrent->end();++i) {
-    if(*i==estate) return true;
-  }
-  return false;
-}
-
 void CodeThorn::Analyzer::incIterations() {
   if(isPrecise()) {
 #pragma omp atomic
@@ -930,21 +923,6 @@ void CodeThorn::Analyzer::swapWorkLists() {
   incIterations();
 }
 
-
-const EState* CodeThorn::Analyzer::addToWorkListIfNew(EState estate) {
-  EStateSet::ProcessingResult res=process(estate);
-  if(res.first==true) {
-    const EState* newEStatePtr=res.second;
-    ROSE_ASSERT(newEStatePtr);
-    addToWorkList(newEStatePtr);
-    return newEStatePtr;
-  } else {
-    // logger[DEBUG] << "EState already exists. Not added:"<<estate.toString()<<endl;
-    const EState* existingEStatePtr=res.second;
-    ROSE_ASSERT(existingEStatePtr);
-    return existingEStatePtr;
-  }
-}
 
 // set the size of an element determined by this type
 void CodeThorn::Analyzer::setElementSize(VariableId variableId, SgType* elementType) {

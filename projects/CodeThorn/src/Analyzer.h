@@ -118,8 +118,6 @@ namespace CodeThorn {
     void reduceStgToInOutAssertErrStates();
     void reduceStgToInOutAssertWorklistStates();
 
-    const EState* popWorkList();
-
     // initialize command line arguments provided by option "--cl-options" in PState
     void initializeCommandLineArgumentsInState(PState& initialPState);
     void initializeVariableIdMapping(SgProject*);
@@ -317,10 +315,9 @@ namespace CodeThorn {
 
     std::string analyzerStateToString();
 
-    void addToWorkList(const EState* estate);
-    const EState* addToWorkListIfNew(EState estate);
-    bool isInWorkList(const EState* estate);
+    void addToWorkList(const EState* estate); 
     bool isEmptyWorkList();
+    const EState* popWorkList();
     const EState* topWorkList();
     void swapWorkLists();
 
