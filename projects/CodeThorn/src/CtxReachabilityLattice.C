@@ -20,7 +20,7 @@ void CtxReachabilityLattice::combine(Lattice& other)
     
 bool CtxReachabilityLattice::isBot() const 
 {
-  return isReachable();
+  return !isReachable();
 }
     
 void CtxReachabilityLattice::toStream(std::ostream& os, VariableIdMapping* vim) 

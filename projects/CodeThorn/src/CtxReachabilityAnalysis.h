@@ -9,9 +9,11 @@
 #include <boost/range/iterator_range.hpp>
 
 #include "DFAnalysisBase.h"
-#include "CtxReachabilityTransfer.h"
+#include "ProgramAbstractionLayer.h"
 #include "CtxLattice.h"
+#include "CtxAnalysis.h"
 #include "CtxCallStrings.h"
+#include "CtxReachabilityTransfer.h"
 #include "CtxReachabilityFactory.h"
 //~ #include "CtxReachabilityLattice.h"
 
@@ -97,7 +99,7 @@ struct CtxLabeler : Labeler
     {
       return original;
     }
-    
+
     const RelabelingMap& relabelMap() const
     {
       return remapping;
@@ -111,39 +113,28 @@ struct CtxLabeler : Labeler
     const size_t      startlbl;  ///< first label (\todo should be original.last+1)
 };
 
-struct CtxReachabilityAnalysis : DFAnalysisBase 
+struct CtxReachabilityAnalysis : CtxAnalysis<FiniteCallString> 
 {
-    typedef DFAnalysisBase   base;
-    typedef FiniteCallString context_t;               
+    typedef FiniteCallString       context_t;
+    typedef CtxAnalysis<context_t> base;
     
-    CtxReachabilityAnalysis()
-    : base(), reachabilityTransfer()
-    {
-      _transferFunctions = &reachabilityTransfer;
-      _transferFunctions->setInitialElementFactory(&reachabilityFactory);
-    }
-
-    CtxReachabilityFactory&  factory()  { return reachabilityFactory;  }
-    CtxReachabilityTransfer& transfer() { return reachabilityTransfer; }
+    CtxReachabilityAnalysis(CtxReachabilityFactory& reachabilityFactory, CtxReachabilityTransfer& reachabilityTransfer)
+    : base(reachabilityFactory, reachabilityTransfer)
+    {}
     
     /// unfolds the context information on the labels 
     ///   and creates a new labeler and CFG
     std::pair<CtxLabeler<context_t>*, Flow*> 
     unfold();
 
-    void initializeSolver() ROSE_OVERRIDE;
-    
-    const CtxLattice<context_t>&
-    getCtxLattice(Label lbl)
-    {
-      return dynamic_cast<CtxLattice<context_t>&>(SG_DEREF(getPreInfo(lbl)));
-    }
-
-  private:
-    CtxReachabilityTransfer reachabilityTransfer;
-    CtxReachabilityFactory  reachabilityFactory;
+    void initializeSolver() ROSE_OVERRIDE;    
 };
 
+
+/// uses the reachability analysis to unfold the ICFG and returns
+///   a new labeler and new ICFG
+std::pair<CtxLabeler<FiniteCallString>*, Flow*> 
+unfoldCFG(ProgramAbstractionLayer& pla, SgFunctionDefinition& entryPoint);
 
 
 } // namespace CodeThorn
