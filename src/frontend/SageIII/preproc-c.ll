@@ -1541,9 +1541,11 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
                     printf ("In getPreprocessorDirectives(): DONE: calling yylex() \n");
 #endif
 
+#if 0
+                 // DQ (8/17/2020): Debugging code.
                  // Writes all gathered information to stdout
-                 // preprocessorList.display("TEST Collection of Comments and CPP Directives");
-
+                    preprocessorList.display("TEST Collection of Comments and CPP Directives");
+#endif
                  // bugfix (9/29/2001)
                  // The semantics required here is to move the elements accumulated into the
                  // preprocessorList into the preprocessorInfoList and delete them from the

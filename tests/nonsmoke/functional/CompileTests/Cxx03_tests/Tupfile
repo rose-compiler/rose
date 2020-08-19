@@ -1,0 +1,19 @@
+include_rules
+
+ifeq (@(ENABLE_TESTS),yes)
+ifeq (@(ENABLE_CXX_ANALYSIS),yes)
+
+TESTCODES_REQUIRED_TO_PASS = \
+test2020_03.C 
+
+#FIXME: These tests don't produce any output. Is that intended?
+run for specimen in $(TESTCODES_REQUIRED_TO_PASS); do \
+    $(test) ../../testTranslator -o $specimen \
+        --disabled-if \
+	    'veq("@(EDG_VERSION)","4.9") && "@(CXX_TARGET_VENDOR)" eq "gnu" && vge("@(CXX_TARGET_VERSION)", "5")' \
+	    "C++11 input not supported for EDG-4.9 and GNU>=5" \
+	../../testTranslator -rose:Cxx11 -rose:skip_unparse_asm_commands -rose:verbose 0 -I. -c $specimen; \
+    done
+
+endif
+endif
