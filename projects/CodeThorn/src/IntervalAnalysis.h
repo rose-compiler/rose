@@ -9,7 +9,6 @@
 #include "CFAnalysis.h"
 #include "DFAnalysisBase.h"
 #include "RDLattice.h"
-#include "WorkList.h"
 #include "AstUtility.h"
 #include "DFAstAttribute.h"
 #include "IntervalPropertyState.h"

@@ -319,7 +319,6 @@ namespace CodeThorn {
 
     void addToWorkList(const EState* estate);
     const EState* addToWorkListIfNew(EState estate);
-    const EState* takeFromWorkList();
     bool isInWorkList(const EState* estate);
     bool isEmptyWorkList();
     const EState* topWorkList();

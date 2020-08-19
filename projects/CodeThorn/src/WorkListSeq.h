@@ -7,16 +7,12 @@
 
 #include <set>
 #include <deque>
-//~ #include <list>
-
-//~ #include "WorkList.h"
 #include "CodeThornException.h"
 
 namespace CodeThorn {
 
   template <typename Element>
   class WorkListSeq  {
-      //~ std::list<Element> workList;
       std::deque<Element> workList;
   
   public:    

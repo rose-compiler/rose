@@ -9,7 +9,6 @@
 #include "CFAnalysis.h"
 #include "RDLattice.h"
 #include "DFAnalysisBase.h"
-#include "WorkList.h"
 #include "AstUtility.h"
 #include "DFAstAttribute.h"
 #include "RDTransferFunctions.h"

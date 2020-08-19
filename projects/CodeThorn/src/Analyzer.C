@@ -921,19 +921,6 @@ const EState* CodeThorn::Analyzer::popWorkList() {
   return estate;
 }
 
-// not used anywhere
-const EState* CodeThorn::Analyzer::takeFromWorkList() {
-  const EState* co=0;
-#pragma omp critical(ESTATEWL)
-  {
-    if(estateWorkListCurrent->size()>0) {
-      co=*estateWorkListCurrent->begin();
-      estateWorkListCurrent->pop_front();
-    }
-  }
-  return co;
-}
-
 // this function has to be protected by a critical section
 // currently called once inside a critical section
 void CodeThorn::Analyzer::swapWorkLists() {
