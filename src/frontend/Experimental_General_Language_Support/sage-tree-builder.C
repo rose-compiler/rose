@@ -1201,6 +1201,17 @@ SgExpression* buildFloatVal_nfi(const std::string &str)
    return SageBuilder::buildFloatVal_nfi(str);
 }
 
+SgExpression* buildComplexVal_nfi(SgExpression* real_value, SgExpression* imaginary_value, const std::string &str)
+{
+   SgValueExp* real = isSgValueExp(real_value);
+   SgValueExp* imaginary = isSgValueExp(imaginary_value);
+
+   //   ROSE_ASSERT(real);
+   //   ROSE_ASSERT(imaginary);
+
+   return SageBuilder::buildComplexVal_nfi(real, imaginary, str);
+}
+
 SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope)
 {
    SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, scope);
