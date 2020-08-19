@@ -211,6 +211,12 @@ namespace SageBuilderCpp17 {
 // Types
    SgType* buildBoolType();
    SgType* buildIntType();
+   SgType* buildFloatType();
+   SgType* buildCharType();
+   SgType* buildDoubleType();
+   SgType* buildComplexType(SgType* base_type = nullptr);
+   SgType* buildStringType(SgExpression* stringLengthExpression);
+   SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_shape_list);
 
 // Operators
    SgExpression*  buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs);
@@ -230,6 +236,7 @@ namespace SageBuilderCpp17 {
    SgExpression*  buildBoolValExp_nfi(bool value);
    SgExpression*  buildIntVal_nfi(int);
    SgExpression*  buildStringVal_nfi(std::string);
+   SgExpression*  buildFloatVal_nfi(const std::string &);
    SgExpression*  buildExprListExp_nfi();
    SgExpression*  buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope = NULL);
    SgExpression*  buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs);

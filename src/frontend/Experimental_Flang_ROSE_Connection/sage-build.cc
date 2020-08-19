@@ -772,37 +772,90 @@ void Build(const parser::IntegerTypeSpec &x, SgType* &type)
 void Build(const parser::IntrinsicTypeSpec::Real &x, SgType* &type)
 {
    std::cout << "Rose::builder::Build(Real)\n";
-   std::cout << "TYPE IS : Real\n";
+
+   type = SageBuilderCpp17::buildFloatType();
 }
 
 void Build(const parser::IntrinsicTypeSpec::DoublePrecision &x, SgType* &type)
 {
    std::cout << "Rose::builder::Build(DoublePrecision)\n";
-   std::cout << "TYPE IS : DoublePrecision\n";
+
+   type = SageBuilderCpp17::buildDoubleType();
 }
 
 void Build(const parser::IntrinsicTypeSpec::Complex &x, SgType* &type)
 {
    std::cout << "Rose::builder::Build(Complex)\n";
-   std::cout << "TYPE IS : Complex\n";
+
+   SgType* base_type = SageBuilderCpp17::buildIntType();
+   type = SageBuilderCpp17::buildComplexType(base_type);
 }
 
 void Build(const parser::IntrinsicTypeSpec::Character &x, SgType* &type)
 {
    std::cout << "Rose::builder::Build(Character)\n";
-   std::cout << "TYPE IS : Character\n";
+
+   SgExpression* expr = nullptr;
+
+   if (auto & opt = x.selector) {    // std::optional<CharSelector> selector
+      Build(opt.value(), expr);
+      type = SageBuilderCpp17::buildStringType(expr);
+   } else {
+      type = SageBuilderCpp17::buildCharType();
+   }
 }
 
 void Build(const parser::IntrinsicTypeSpec::Logical &x, SgType* &type)
 {
    std::cout << "Rose::builder::Build(Logical)\n";
-   std::cout << "TYPE IS : Logical\n";
+
+   type = SageBuilderCpp17::buildBoolType();
 }
 
 void Build(const parser::IntrinsicTypeSpec::DoubleComplex &x, SgType* &type)
 {
    std::cout << "Rose::builder::Build(DoubleComplex)\n";
-   std::cout << "TYPE IS : DoubleComplex\n";
+
+   SgType* base_type = SageBuilderCpp17::buildDoubleType();
+   type = SageBuilderCpp17::buildComplexType(base_type);
+}
+
+void Build(const parser::CharSelector &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(CharSelector)\n";
+   // std::variant<LengthSelector, LengthAndKind> u;
+
+   auto CharSelectorVisitor = [&](const auto& y) { Build(y, expr); };
+   std::visit(CharSelectorVisitor, x.u);
+}
+
+void Build(const parser::LengthSelector &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(LengthSelector)\n";
+   //  std::variant<TypeParamValue, CharLength> u;
+
+   auto LengthSelectorVisitor = [&](const auto& y) { Build(y, expr); };
+   std::visit(LengthSelectorVisitor, x.u);
+}
+
+void Build(const parser::CharSelector::LengthAndKind &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(LengthAndKind)\n";
+   //    std::optional<TypeParamValue> length;
+   //    ScalarIntConstantExpr kind;
+}
+
+void Build(const parser::TypeParamValue &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(TypeParamVale)\n";
+   //  std::variant<ScalarIntExpr, Star, Deferred> u;
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::ScalarIntExpr &y)  { Build(y, expr); },
+         [&] (const auto &y)                                 { ; },
+      },
+      x.u);
 }
 
 void Build(const std::list<Fortran::parser::EntityDecl> &x, std::string &name, SgExpression* &init)
@@ -833,7 +886,7 @@ void Build(const parser::EntityDecl &x, std::string &name, SgExpression* &init)
    }
 
    if (auto & opt = std::get<3>(x.t)) {    // CharLength
-      Build(opt.value(), scope);
+      //      Build(opt.value(), scope);
    }
 
    if (auto & opt = std::get<4>(x.t)) {    // Initialization
@@ -861,8 +914,7 @@ void Build(const parser::CoarraySpec &x, T* scope)
    std::cout << "Rose::builder::Build(CoarraySpec)\n";
 }
 
-template<typename T>
-void Build(const parser::CharLength &x, T* scope)
+void Build(const parser::CharLength &x, SgExpression* &)
 {
    std::cout << "Rose::builder::Build(CharLength)\n";
 }

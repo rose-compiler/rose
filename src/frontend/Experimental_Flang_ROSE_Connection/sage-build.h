@@ -84,7 +84,7 @@ void Build(const std::list<Fortran::parser:: EntityDecl> &x, std::string &, SgEx
 template<typename T> void Build(const Fortran::parser::              AttrSpec &x, T* scope);
 template<typename T> void Build(const Fortran::parser::             ArraySpec &x, T* scope);
 template<typename T> void Build(const Fortran::parser::           CoarraySpec &x, T* scope);
-template<typename T> void Build(const Fortran::parser::            CharLength &x, T* scope);
+void Build(const Fortran::parser::            CharLength &x, SgExpression* &);
 void Build(const Fortran::parser::        Initialization &x, SgExpression* &);
 void Build(const Fortran::parser::     IntrinsicTypeSpec &x,       SgType* &);
 void Build(const Fortran::parser::       IntegerTypeSpec &x,       SgType* &);
@@ -107,6 +107,11 @@ void Build(const Fortran::parser::IntrinsicTypeSpec::        Complex &x, SgType*
 void Build(const Fortran::parser::IntrinsicTypeSpec::      Character &x, SgType* &);
 void Build(const Fortran::parser::IntrinsicTypeSpec::        Logical &x, SgType* &);
 void Build(const Fortran::parser::IntrinsicTypeSpec::  DoubleComplex &x, SgType* &);
+
+void Build(const Fortran::parser::               CharSelector &x, SgExpression* &expr);
+void Build(const Fortran::parser::             LengthSelector &x, SgExpression* &expr);
+void Build(const Fortran::parser::CharSelector::LengthAndKind &x, SgExpression* &expr);
+void Build(const Fortran::parser::             TypeParamValue &x, SgExpression* &expr);
 
 // DeclarationConstruct
 template<typename T> void Build(const Fortran::parser::        DataStmt &x, T* scope);

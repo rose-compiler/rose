@@ -1071,6 +1071,42 @@ SgType* buildIntType()
    return SageBuilder::buildIntType();
 }
 
+SgType* buildFloatType()
+{
+   return SageBuilder::buildFloatType();
+}
+
+SgType* buildCharType()
+{
+   return SageBuilder::buildCharType();
+}
+
+SgType* buildDoubleType()
+{
+   return SageBuilder::buildDoubleType();
+}
+
+SgType* buildComplexType(SgType* base_type)
+{
+   return SageBuilder::buildComplexType(base_type);
+}
+
+SgType* buildStringType(SgExpression* stringLengthExpression)
+{
+   return SageBuilder::buildStringType(stringLengthExpression);
+}
+
+SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_shape_list)
+{
+   SgExprListExp* dim_info = SageBuilder::buildExprListExp_nfi();
+
+   BOOST_FOREACH(SgExpression* expr, explicit_shape_list) {
+      dim_info->get_expressions().push_back(expr);
+   }
+
+   return SageBuilder::buildArrayType(base_type, dim_info);
+}
+
 // Operators
 //
 SgExpression* buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs)
@@ -1158,6 +1194,11 @@ SgExpression* buildIntVal_nfi(int value = 0)
 SgExpression* buildStringVal_nfi(std::string value)
 {
    return SageBuilder::buildStringVal_nfi(value);
+}
+
+SgExpression* buildFloatVal_nfi(const std::string &str)
+{
+   return SageBuilder::buildFloatVal_nfi(str);
 }
 
 SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope)
