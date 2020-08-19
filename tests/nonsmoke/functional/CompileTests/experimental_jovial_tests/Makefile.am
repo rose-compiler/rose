@@ -89,6 +89,7 @@ JOVIAL_PARSER_TESTCODES = \
  6_3_2_next_function_status.jov
 
 COMPOOL_TESTCODES = \
+ define_dollar.cpl                      \
  simple_compool.cpl                     \
  status_type.cpl                        \
  2_4_define.cpl                         \
@@ -116,6 +117,7 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-49.cpl                   \
  rose-issue-rc-50.cpl                   \
  rose-issue-rc-53.cpl                   \
+ rose-issue-rc-55.cpl                   \
  rose-issue-rc-56.cpl
 
 COMPOOL_DIRECTIVE_TESTCODES = \
@@ -127,7 +129,6 @@ COMPOOL_DIRECTIVE_TESTCODES = \
 
 COMPOOL_PARSER_TESTCODES = \
  constant_item_presets.cpl              \
- define_dollar.cpl                      \
  item_and_status_type_J.cpl             \
  simple_def_ambiguity_J.cpl             \
  size_function_J.cpl                    \
