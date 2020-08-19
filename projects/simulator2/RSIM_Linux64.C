@@ -232,7 +232,6 @@ RSIM_Linux64::initialRegistersArch(RSIM_Process*) {
         return initialRegs_;
 
     PtRegs regs;
-    memset(&regs, 0, sizeof regs);
     regs.sp = 0x00007ffffffff000ull;                    // high end of stack, exclusive
     regs.flags = 2;                                     // flag bit 1 is set, although this is a reserved bit
     return regs;
