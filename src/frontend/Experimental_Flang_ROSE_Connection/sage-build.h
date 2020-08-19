@@ -215,7 +215,6 @@ template<typename T> void Build(const Fortran::parser::        CaseConstruct&x, 
 void Build(const Fortran::parser::  CaseConstruct::Case&x, SgStatement* &stmt);
 void Build(const Fortran::parser::             CaseStmt&x, std::list<SgExpression*> &case_list);
 void Build(const Fortran::parser::         CaseSelector&x, std::list<SgExpression*> &case_list);
-void Build(const std::list<Fortran::parser::CaseValueRange> &x, std::list<SgExpression*> &case_list);
 void Build(const Fortran::parser::       CaseValueRange&x, SgExpression* &expr);
 void Build(const Fortran::parser::CaseValueRange::Range&x, SgExpression* &range);
 template<typename T> void Build(const Fortran::parser::  ChangeTeamConstruct&x, T* scope);
@@ -268,32 +267,23 @@ template<typename T> void Build(const Fortran::parser::                 Volatile
 
 
 // Traversal of needed STL template classes (optional, list, tuple, variant)                                                                
-//
-
-#if 0
-template<typename T> void Build(const std::list<T> &x, SgExpression* expr)
-{
-   std::cout << "Rose::builder::Build(std::list) for SgExpression* \n";
-
-#if 0
-   if (x.empty()) {
-      std::cout << "The list is EMPTY and is of type: " << typeid(x).name() << "\n";
-   }
-#endif
-
-   for (const auto &elem : x) {
-      Build(elem, expr);
-   }
-}
-#endif
-
-#if 1
 template<typename LT> void Build(const std::list<LT> &x, SgScopeStatement* scope)
 {
    std::cout << "Rose::builder::Build(std::list) for T* node \n";
 
    for (const auto &elem : x) {
       Build(elem, scope);
+   }
+}
+
+template<typename T> void Build(const std::list<T> &x, std::list<SgExpression*> &expr_list)
+{
+   std::cout << "Rose::builder::Build(std::list) for T* node building a list of SgExpression*\n";
+
+   for (const auto &elem : x) {
+      SgExpression* expr = nullptr;
+      Build(elem, expr);
+      expr_list.push_back(expr);
    }
 }
 
@@ -305,8 +295,6 @@ template<typename LT, typename T> void Build(const std::list<LT> &x, T* &node)
       Build(elem, node);
    }
 }
-
-#endif
 
 template<typename... A>
 void Build(const std::variant<A...> &x, SgScopeStatement* scope) {
