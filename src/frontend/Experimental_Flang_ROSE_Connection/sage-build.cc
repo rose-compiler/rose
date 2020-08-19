@@ -1731,17 +1731,6 @@ void Build(const parser::CaseSelector&x, std::list<SgExpression*> &case_list)
       x.u);
 }
 
-void Build(const std::list<parser::CaseValueRange> &x, std::list<SgExpression*> &case_list)
-{
-   std::cout << "Rose::builder::Build(std::list) for CaseValueRange \n";
-
-   for (const auto &elem : x) {
-      SgExpression* case_expr = nullptr;
-      Build(elem, case_expr);
-      case_list.push_back(case_expr);
-   }
-}
-
 void Build(const parser::CaseValueRange&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(CaseValueRange)\n";
