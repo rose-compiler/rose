@@ -1225,6 +1225,11 @@ SgExpression* buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpressi
    return SageBuilder::buildSubscriptExpression_nfi(lower_bound, upper_bound, stride);
 }
 
+SgExpression* buildPntrArrRefExp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildPntrArrRefExp_nfi(lhs, rhs);
+}
+
 SgExpression* buildAsteriskShapeExp_nfi()
 {
    SgAsteriskShapeExp* shape = new SgAsteriskShapeExp();
