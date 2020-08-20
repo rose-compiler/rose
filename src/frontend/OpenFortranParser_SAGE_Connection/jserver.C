@@ -92,12 +92,12 @@ jserver_callMethod(jclass obj_class, jmethodID method, jobjectArray args)
 };
 
 int
-jserver_callBooleanMethod(jobject obj_class, jmethodID method)
+jserver_callStaticBooleanMethod(jclass obj_class, jmethodID method)
 {
     int retv = 0; 
     JNIEnv *env = get_env();
 
-    retv = env->CallBooleanMethod(obj_class, method);
+    retv = env->CallStaticBooleanMethod(obj_class, method);
     return retv;
 };
 
@@ -167,7 +167,11 @@ jserver_start(JvmT* je)
   //----------------------------------------------------------------------------
   // Create and load the Java VM.
   //----------------------------------------------------------------------------
-  int res = JNI_CreateJavaVM(&(je->jvm), (void **)&(je->env), &jvm_args);
+  jint res = JNI_CreateJavaVM(&(je->jvm), (void **)&(je->env), &jvm_args);
+
+  if (res != JNI_OK) {
+      printf("Failed to create Java VM\n");
+  }
 
 //sanity check
   JNIEnv* env = get_env();
