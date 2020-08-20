@@ -504,6 +504,11 @@ void Build(const parser::Name &x, SgExpression* &expr)
    std::cout << "Rose::builder::Build(Name)\n";
 }
 
+void Build(const parser::NamedConstant &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(NamedConstant)\n";
+}
+
 void Build(const parser::Expr &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(Expr)\n";
@@ -527,6 +532,15 @@ void Build(const parser::Expr &x, SgExpression* &expr)
 void Build(const parser::Expr::IntrinsicBinary &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(IntrinsicBinary)\n";
+}
+
+void Build(const parser::ConstantValue &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(ConstantValue)\n";
+   // std::variant<LiteralConstant, NamedConstant> u;
+
+   auto ConstantValueVisitor = [&] (const auto &y) { Build(y, expr); };
+   std::visit(ConstantValueVisitor, x.u);
 }
 
 void Build(const parser::LiteralConstant &x, SgExpression* &expr)
@@ -1032,6 +1046,33 @@ template<typename T>
 void Build(const parser::ErrorRecovery &x, T* scope)
 {
    std::cout << "Rose::builder::Build(ErrorRecovery)\n";
+}
+
+   // DataStmt
+void Build(const parser::DataStmtValue &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(DataStmtValue)\n";
+   // std::tuple<std::optional<DataStmtRepeat>, DataStmtConstant> t;
+
+   Build(std::get<parser::DataStmtConstant>(x.t), expr);
+}
+
+void Build(const parser::DataStmtConstant &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(DataStmtConstant)\n";
+   // CharBlock source;
+   // mutable TypedExpr typedExpr;
+   // std::variant<Scalar<ConstantValue>, Scalar<ConstantSubobject>,
+   //     SignedIntLiteralConstant, SignedRealLiteralConstant,
+   //     SignedComplexLiteralConstant, NullInit, InitialDataTarget,
+   //     StructureConstructor> u;
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::Scalar<parser::ConstantValue> &y) { Build(y.thing, expr); },
+         [&] (const auto &y) { ; }
+      },
+      x.u);
 }
 
    // ActionStmt
