@@ -556,52 +556,80 @@ void Build(const parser::LiteralConstant &x, SgExpression* &expr)
 }
 
    // LiteralConstant
-template<typename T>
-void Build(const parser::HollerithLiteralConstant &x, T* &expr)
+void Build(const parser::HollerithLiteralConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(HollerithLiteralConstant)\n";
 }
 
-template<typename T>
-void Build(const parser::IntLiteralConstant &x, T* &expr)
+void Build(const parser::IntLiteralConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(IntLiteralConstant)\n";
 
    expr = SageBuilderCpp17::buildIntVal_nfi(stoi(std::get<0>(x.t).ToString()));
 }
 
-template<typename T>
-void Build(const parser::RealLiteralConstant &x, T* &expr)
+void Build(const parser::SignedIntLiteralConstant &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(SignedIntLiteralConstant)\n";
+   // std::tuple<CharBlock, std::optional<KindParam>> t;
+
+   expr = SageBuilderCpp17::buildIntVal_nfi(stoi(std::get<0>(x.t).ToString()));
+}
+
+void Build(const parser::RealLiteralConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(RealLiteralConstant)\n";
+
+   expr = SageBuilderCpp17::buildFloatVal_nfi(x.real.source.ToString());
 }
 
-template<typename T>
-void Build(const parser::ComplexLiteralConstant &x, T* &expr)
+void Build(const parser::SignedRealLiteralConstant &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(SignedRealLiteralConstant)\n";
+   // std::tuple<std::optional<Sign>, RealLiteralConstant> t;
+
+   Build(std::get<1>(x.t), expr);
+}
+
+void Build(const parser::ComplexLiteralConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(ComplexLiteralConstant)\n";
+   // std::tuple<ComplexPart, ComplexPart> t;
+
+   SgExpression * real_value = nullptr, * imaginary_value = nullptr;
+
+   Build(std::get<0>(x.t), real_value);
+   Build(std::get<1>(x.t), imaginary_value);
+
+   expr = SageBuilderCpp17::buildComplexVal_nfi(real_value, imaginary_value, "");
 }
 
-template<typename T>
-void Build(const parser::BOZLiteralConstant &x, T* &expr)
+void Build(const parser::BOZLiteralConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(BOZLiteralConstant)\n";
 }
 
-template<typename T>
-void Build(const parser::CharLiteralConstant &x, T* &expr)
+void Build(const parser::CharLiteralConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(CharLiteralConstant)\n";
-   std::string literal = x.GetString();
-   std::cout << " The CHAR LITERAL CONSTANT is \"" << literal << "\"" << std::endl;
+
+   expr = SageBuilderCpp17::buildStringVal_nfi(x.GetString());
 }
 
-template<typename T>
-void Build(const parser::LogicalLiteralConstant &x, T* &expr)
+void Build(const parser::LogicalLiteralConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(LogicalLiteralConstant)\n";
-   bool literal = std::get<0>(x.t);
-   std::cout << " The LOGICAL LITERAL CONSTANT is " << literal << std::endl;
+
+   expr = SageBuilderCpp17::buildBoolValExp_nfi(std::get<0>(x.t));
+}
+
+void Build(const parser::ComplexPart &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(ComplexPart)\n";
+   // std::variant<SignedIntLiteralConstant, SignedRealLiteralConstant, NamedConstant>
+
+   auto ComplexPartVisitor = [&](const auto& y) { Build(y, expr); };
+   std::visit(ComplexPartVisitor, x.u);
 }
 
 template<typename T>

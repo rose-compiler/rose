@@ -53,13 +53,17 @@ void Build(const Fortran::parser::         ConstantValue &x, SgExpression* &expr
 void Build(const Fortran::parser::       LiteralConstant &x, SgExpression* &expr);
 
 // LiteralConstant
-template<typename T> void Build(const Fortran::parser::HollerithLiteralConstant &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::     IntLiteralConstant &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::    RealLiteralConstant &x, T* &expr);
-template<typename T> void Build(const Fortran::parser:: ComplexLiteralConstant &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::     BOZLiteralConstant &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::    CharLiteralConstant &x, T* &expr);
-template<typename T> void Build(const Fortran::parser:: LogicalLiteralConstant &x, T* &expr);
+void Build(const Fortran::parser:: HollerithLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser::       IntLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser:: SignedIntLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser::      RealLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser::SignedRealLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser::   ComplexLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser::       BOZLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser::      CharLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser::   LogicalLiteralConstant &x, SgExpression* &expr);
+
+void Build(const Fortran::parser::ComplexPart &x, SgExpression* &expr);
 
 template<typename T> void Build(const Fortran::parser::InternalSubprogramPart &x, T* scope);
 template<typename T> void Build(const Fortran::parser::          ImplicitPart &x, T* scope);
