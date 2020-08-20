@@ -969,8 +969,14 @@ void Build(const parser::Initialization &x, SgExpression* &expr)
 
    std::visit(
       common::visitors{
-         [&] (const parser::ConstantExpr &y)  { Build(y, expr); },
-         [&] (const auto &y)                                { ; }
+         [&] (const std::list<common::Indirection<parser::DataStmtValue>> &y)
+            {
+               for (const auto &elem : y) {
+                  Build(elem.value(), expr);
+               }
+            },
+         [&] (const parser::ConstantExpr &y) { Build(y, expr); },
+         [&] (const auto &y)                               { ; }
       },
       x.u);
 }
