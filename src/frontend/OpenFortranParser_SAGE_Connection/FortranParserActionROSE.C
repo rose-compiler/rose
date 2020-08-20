@@ -7395,9 +7395,7 @@ void c_action_label(Token_t * lbl)
             ROSE_ASSERT(variableSymbol != NULL);
 
             if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
-            printf(
-                    "Found a previously defined variableSymbol = %p variable = %s \n",
-                    variableSymbol, variableName.str());
+                 printf("Found a previously defined variableSymbol = %p variable = %s \n",variableSymbol, variableName.str());
 
             // DQ (1/24/2011): Test the variable symbol just found...
             SgInitializedName* initializedName = variableSymbol->get_declaration();
@@ -7480,8 +7478,7 @@ void c_action_label(Token_t * lbl)
                    // This case is visited in the handling of Fortran statement functions (see test2007_179.f90).
                    // See also test2011_30.f90 for procedure pointers when used to call the functions to which they are pointed.
                    if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
-                   printf(
-                           "This is NOT an array type so it must be converted to a function call with argument (if arguments are required)\n");
+                        printf("This is NOT an array type so it must be converted to a function call with argument (if arguments are required)\n");
                    ROSE_ASSERT(matchingName(initializedName->get_name().str(),nameToken->text) == true);
   #if 0
                    // This will be built in R612, to trigger it we need to remove the variableSymbol
@@ -7498,6 +7495,9 @@ void c_action_label(Token_t * lbl)
                    }
                    ROSE_ASSERT(scope != NULL);
   
+#if 0
+                   printf ("Call to scope->remove_symbol(): scope = %p = %s variableSymbol = %p \n",scope,scope->class_name().c_str(),variableSymbol);
+#endif
                    //Pei-Hung In the case that variable name is same as the derived type member, we should not remove the symbol
                    // Note that we might want to clean up more than just removing the variableSymbol from the symbol table
                    scope->remove_symbol(variableSymbol);
@@ -7892,7 +7892,7 @@ void c_action_label(Token_t * lbl)
             astExpressionStack.push_front(recordReference);
         }
 
-#if 0
+#if 1
         // Output debugging information about saved state (stack) information.
         outputState("At BOTTOM of R612 c_action_data_ref()");
 #endif
