@@ -412,7 +412,8 @@ PathSelector::operator()(const FeasiblePath &fpAnalysis, const P2::CfgPath &path
     }
 
     // The user might want to show only one path per end-point.
-    if (suppressDuplicateEndpoints && !seenEndpoints_.insert(path.backVertex()->value().address()).second) {
+    if (suppressDuplicateEndpoints &&
+        !seenEndpoints_.insert(path.backVertex()->value().optionalAddress().orElse((rose_addr_t)(-1))).second) {
         ++nDuplicateEndpoints_;
         return 0;
     }
