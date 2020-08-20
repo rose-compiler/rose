@@ -186,7 +186,6 @@ void CodeThorn::exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
     }
     if(expr) {
       cout<<"Testing expr eval with empty state: "<<expr->unparseToString();
-      ExprAnalyzer::EvalMode evalMode=ExprAnalyzer::MODE_EMPTY_STATE;
       AbstractValue aVal=exprAnalyzer->evaluateExpressionWithEmptyState(expr);
       cout<<" => result value: "<<aVal.toString()<<" "<<endl;
     }
