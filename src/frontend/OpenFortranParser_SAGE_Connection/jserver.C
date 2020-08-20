@@ -175,7 +175,7 @@ jserver_start(JvmT* je)
 
 //sanity check
   JNIEnv* env = get_env();
-  ROSE_ASSERT(env->GetVersion() == JNI_VERSION_1_8);
+  ROSE_ASSERT(env->GetVersion() >= JNI_VERSION_1_8);
 
   if (res<0 || je->jvm==NULL || je->env==NULL)
   {
