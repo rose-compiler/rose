@@ -118,10 +118,13 @@ if test "x$USE_JAVA" = x1; then
      JAVA_VERSION=`${JAVA} -version 2>&1 | grep "openjdk version" | sed 's/openjdk version//' | sed 's/"//g'`
    fi
 
-    JAVA_VERSION_MAJOR=`echo ${JAVA_VERSION}   | awk 'BEGIN {FS="."} {print [$]1}'`
-    JAVA_VERSION_MINOR=`echo ${JAVA_VERSION}   | awk 'BEGIN {FS="."} {print [$]2}'`
-    JAVA_VERSION_PATCH=`echo ${JAVA_VERSION}   | awk 'BEGIN {FS="."} {print [$]3}' | awk 'BEGIN {FS="(\ |_)"} {print [$]1}'`
-    JAVA_VERSION_RELEASE=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]3}' | awk 'BEGIN {FS="(\ |_)"} {print [$]2}'`
+    JAVA_VERSION_RELEASE=$(echo ${JAVA_VERSION} | cut -d\  -f2)
+    JAVA_VERSION_=$(echo ${JAVA_VERSION} | cut -d\  -f1)
+    JAVA_VERSION_MAJOR=$(echo ${JAVA_VERSION_} | cut -d. -f1)
+    JAVA_VERSION_MINOR=$(echo ${JAVA_VERSION_} | cut -d. -f2)
+    test -z $JAVA_VERSION_MINOR && JAVA_VERSION_MINOR=0
+    JAVA_VERSION_PATCH=$(echo ${JAVA_VERSION_} | cut -d. -f3)
+    test -z $JAVA_VERSION_PATCH && JAVA_VERSION_PATCH=0
 
     AC_MSG_CHECKING([JAVA_VERSION])
     AC_MSG_RESULT([${JAVA_VERSION}])
@@ -148,13 +151,6 @@ if test "x$USE_JAVA" = x1; then
       echo "JAVA_VERSION_PATCH = $JAVA_VERSION_PATCH"
       echo "JAVA_VERSION_RELEASE = $JAVA_VERSION_RELEASE"
       ROSE_MSG_ERROR([An error occurred while trying to determine your java version: one or more extracted major, minor, patch and release version numbers displayed above are empty. Please look into rose/config/support-java.m4 to make sure the extraction commands inside the m4 file work as expected.])
-    else
-      if test ${JAVA_VERSION_MAJOR} -lt 1 ||
-        (test ${JAVA_VERSION_MAJOR} -eq 1 &&
-         test ${JAVA_VERSION_MINOR} -lt 7)
-      then
-        ROSE_MSG_ERROR([Detected unsupported java -version. ROSE currently requires JDK 1.7+])
-      fi
     fi
   else
     AC_MSG_ERROR([java not found in $JAVA_PATH])
