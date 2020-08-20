@@ -24,13 +24,15 @@ JOVIAL_TESTCODES = \
  1_2_3_main-program-module_c.jov        \
  1_2_3_main-program-module_d.jov        \
  2_1_1_4_bit_type.jov                   \
- 2_1_6_block_preset_list.jov            \
  2_1_1_7_pointer_type.jov               \
  2_1_2_simple_table_var.jov             \
  2_1_2_compound_table_var.jov           \
+ 2_1_2_1_table_dimension_list_a.jov     \
+ 2_1_2_1_table_dimension_list_b.jov     \
  2_1_2_2_structure_spec.jov             \
  2_1_2_3_packing_spec.jov               \
  2_1_3_constant_table_var.jov           \
+ 2_1_6_block_preset_list.jov            \
  2_4_define_j.jov                       \
  4_2_loop_stmt_while_a.jov              \
  4_2_loop_stmt_while_b.jov              \
@@ -74,8 +76,6 @@ JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \
  tables_and_pointers.jov                \
  2_1_1_5_char_item_desc.jov             \
- 2_1_2_1_table_dimension_list_a.jov     \
- 2_1_2_1_table_dimension_list_b.jov     \
  4_2_loop_stmt_b1.jov                   \
  4_2_loop_stmt_d1.jov                   \
  4_3_if_else_stmt.jov                   \
