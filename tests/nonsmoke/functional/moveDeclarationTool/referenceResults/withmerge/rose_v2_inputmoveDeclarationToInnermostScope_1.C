@@ -2,8 +2,8 @@
 int main()
 {
   int k;
-// k is used in the same scope in which it is declared
   k = 0;
+// k is used in the same scope in which it is declared
 // simplest use-def chain
 {
 {
@@ -16,8 +16,8 @@ int main()
 // use with multiple defs
 {
       int j = 0;
-// deeper scope, should be trimmed
 {
+// deeper scope, should be trimmed
         j = 0;
       }
     }
@@ -25,12 +25,12 @@ int main()
       int j;
 {
 {
-// initially built into scope tree, later trimmed. 
           j = 0;
+// initially built into scope tree, later trimmed. 
         }
       }
-//this should trigger trimming the previous path 
       j = 2;
+//this should trigger trimming the previous path 
     }
   }
   return 0;

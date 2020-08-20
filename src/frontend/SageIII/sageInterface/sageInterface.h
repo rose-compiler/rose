@@ -601,6 +601,12 @@ bool isIndexOperator( SgExpression* exp );
 //! Used to support token unparsing (when the output the trailing token sequence).
 SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap);
 
+// DQ (8/12/2020): Check the access permissions of all defining and nodefining declarations.
+void checkAccessPermissions ( SgNode* );
+
+// DQ (8/14/2020): Check the symbol tables for specific scopes (debugging support).
+void checkSymbolTables ( SgNode* );
+
 //@}
 
 //------------------------------------------------------------------------

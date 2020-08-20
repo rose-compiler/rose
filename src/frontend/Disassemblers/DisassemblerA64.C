@@ -198,6 +198,18 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
                 memref->set_type(SageBuilderAsm::buildTypeU32());
                 insn->get_operandList()->get_operands()[1] = memref;
             }
+        } else if (insn->get_kind() == A64InstructionKind::ARM64_INS_XTN) {
+            // The XTN instruction is disassembled incorrectly: the type of the destination argument is wrong.  XTN reads the
+            // elements of the source vector, truncates each to half its width, packs the half-sizes together, and writes them
+            // to the low half of the destination register while clearing the upper half of the destination.  I.e., it writes
+            // as many bits as it reads. However, the destination type is only half as wide as the source type. In contrast,
+            // the XTN2 instruction which is the same except it writes the result to the upper half of the destination while
+            // clearing the lower half, has the correct type.
+            ASSERT_require(insn->nOperands() == 2);
+            ASSERT_require(insn->operand(0)->get_nBits() * 2 == insn->operand(1)->get_nBits());
+            SgAsmVectorType *dstType = isSgAsmVectorType(insn->operand(0)->get_type());
+            ASSERT_not_null(dstType);
+            insn->operand(0)->set_type(SageBuilderAsm::buildTypeVector(2 * dstType->get_nElmts(), dstType->get_elmtType()));
         }
 
     } else {

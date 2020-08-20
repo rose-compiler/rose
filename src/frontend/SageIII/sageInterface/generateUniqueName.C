@@ -1130,14 +1130,15 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                          accessString = "__public_access_";
                          break;
                        }
-#if 0
+
+                 // DQ (8/17/2020): Uncommented this code, now that e_default != e_public.
                  // This case is equal to SgAccessModifier::e_public (so it is redundant to list it here)
                     case SgAccessModifier::e_default: 
                        {
                          accessString = "__default_access_";
                          break;
                        }
-#endif
+
                     default:
                        {
                          printf ("Error: default reached in SageInterface::generateUniqueName (declaration prefix) \n");

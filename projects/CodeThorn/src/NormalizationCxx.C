@@ -21,6 +21,8 @@ namespace CodeThorn
   
 namespace 
 {
+  constexpr bool ERROR_TOLERANT = true;
+  
   // auxiliary wrapper for printing Sg_File_Info objects 
   struct SrcLoc
   {
@@ -69,6 +71,12 @@ namespace
   auto logWarn() -> decltype(Normalization::logger[Sawyer::Message::WARN])
   {
     return Normalization::logger[Sawyer::Message::WARN];  
+  }
+  
+  inline
+  auto logError() -> decltype(Normalization::logger[Sawyer::Message::ERROR])
+  {
+    return Normalization::logger[Sawyer::Message::ERROR];  
   }
   
   inline
@@ -247,6 +255,14 @@ namespace
       func_t         func;
       result_cache_t cache;
   };
+  
+  template <class Fn>
+  std::ostream& operator<<(std::ostream& os, const Memoizer<Fn>& memo)
+  {
+    return os << memo.hits() 
+              << " <hits -- size> " 
+              << memo.size();
+  }
   
   template <class Fn>
   inline
@@ -507,6 +523,17 @@ namespace
     return (pos != lst.end()) ? (*pos)->get_initializer() : var.get_initializer();
   }
   
+  struct ConstructorInitializerListError : std::logic_error
+  {
+    using base = std::logic_error;
+    
+    ConstructorInitializerListError(const std::string& what, SgInitializedName* ini)
+    : base(what), initname(ini)
+    {}
+    
+    SgInitializedName* initname;
+  };
+  
   struct SameClassDef
   {
     explicit
@@ -516,8 +543,12 @@ namespace
     
     bool operator()(SgInitializedName* cand)
     {
-      ROSE_ASSERT(cand && cand->get_initializer());
+      if (ERROR_TOLERANT && !(cand && cand->get_initializer()))
+      {
+        throw ConstructorInitializerListError("unusual constructor list element", cand);
+      }
       
+      ROSE_ASSERT(cand && cand->get_initializer());
       SgConstructorInitializer* ctorini = isSgConstructorInitializer(cand->get_initializer());
       
       // if it is not a base class initialization, it must be member variable initialization
@@ -610,7 +641,7 @@ namespace
     return true;
   }
   
-  bool parametersHaveDefaultValues(SgMemberFunctionDeclaration*, SgInitializedNamePtrList& parms, size_t from)
+  bool parametersHaveDefaultValues(SgMemberFunctionDeclaration* fn, SgInitializedNamePtrList& parms, size_t from)
   {
     const size_t eoparams = parms.size();
     
@@ -619,7 +650,13 @@ namespace
       SgInitializedName& parm = SG_DEREF(parms.at(i));
       
       if (!parm.get_initializer())
+      {
+        logError() << "Did not find parameter default value in declaration of " << fn->get_name() 
+                   << ". Incomplete checking for sibling declarations."
+                   << std::endl; 
+        
         return false;
+      }
     }
     
     // \todo check for other declarations visible at the call site
@@ -1016,7 +1053,7 @@ namespace
       SgMemberFunctionDeclaration& dtordcl  = obtainGeneratableDtor(clsdef, args);
       SgMemberFunctionSymbol*      mfunsym  = SG_ASSERT_TYPE(SgMemberFunctionSymbol, dtordcl.search_for_symbol_from_symbol_table());
       SgMemberFunctionRefExp&      mfunref  = SG_DEREF( sb::buildMemberFunctionRefExp( mfunsym,
-                                                                                       false /* \todo virtual call */,
+                                                                                       false /* a destructed variable has full type -> no virtual call */,
                                                                                        false /* need qualifier */
                                                                                      ));
       SgDotExp&                    callee   = SG_DEREF( sb::buildDotExp(&elem, &mfunref) );
@@ -1092,9 +1129,9 @@ namespace
         // \todo cannot yet handle SgTemplateInstantiationMemberFunctionDecl
         if (isSgTemplateInstantiationMemberFunctionDecl(&ctor))
         {
-          logWarn() << "Definition for SgTemplateInstantiationMemberFunctionDecl not generated: "
-                    << ctor.get_name()
-                    << std::endl;
+          logError() << "Definition for SgTemplateInstantiationMemberFunctionDecl not generated: "
+                     << ctor.get_name()
+                     << std::endl;
           return;
         }
         
@@ -1199,21 +1236,34 @@ namespace
                        return std::move(res);
                      } 
                    );
+                   
+  auto getAllVirtualBases = 
+           memoizer( [](const SgClassDefinition* cls) -> SgBaseClassPtrList
+                     {
+                       SgBaseClassPtrList res;
+                     
+                       for (SgBaseClass* cand : cls->get_inheritances())
+                       {
+                         ROSE_ASSERT(cand);
+                                       
+                         if (isVirtualBase(*cand))
+                           res.push_back(cand);
+                       }
+                                                   
+                       return std::move(res);
+                     }
+                   );
   
   void clearMemoized()
   {
-    logInfo() << getDirectNonVirtualBases.hits() 
-              << " <hits -- size> " 
-              << getDirectNonVirtualBases.size()
-              << " getDirectNonVirtualBases - cache\n" 
-              << getMemberVars.hits() 
-              << " <hits -- size> " 
-              << getMemberVars.size() 
-              << " getMemberVars - cache\n" 
+    logInfo() << getDirectNonVirtualBases << " getDirectNonVirtualBases - cache\n" 
+              << getAllVirtualBases       << " getAllVirtualBases - cache\n" 
+              << getMemberVars            << " getMemberVars - cache\n" 
               << std::endl;
     
-    getMemberVars.clear();
     getDirectNonVirtualBases.clear();
+    getAllVirtualBases.clear();
+    getMemberVars.clear();
   }
 
   // end memoized functors
@@ -1229,7 +1279,8 @@ namespace
     SgCtorInitializerList& lst = SG_DEREF( fun.get_CtorInitializerList() );
 
     // explicitly construct all member variables;
-    //   execute the transformations in reverse order
+    //   execute the transformations in reverse order 
+    //   (the last transformation appears first in code)
     for (SgInitializedName* var : adapt::reverse(getMemberVars(&cls)))
     {
       SgInitializer* ini = getMemberInitializer(*var, lst);
@@ -1239,11 +1290,37 @@ namespace
     
     // explicitly construct all direct non-virtual bases;
     //   execute the transformations in reverse order
+    //   (the last transformation appears first in code)
     for (SgBaseClass* base : adapt::reverse(getDirectNonVirtualBases(&cls)))
     {
-      SgInitializer* ini = getBaseInitializer(*base, lst);
-      
-      cont.emplace_back(BaseCtorInserter(blk, *base, ini));
+      try
+      {
+        SgInitializer* ini = getBaseInitializer(*base, lst);
+        
+        cont.emplace_back(BaseCtorInserter(blk, *base, ini));
+      }
+      catch (const ConstructorInitializerListError& err)
+      {
+        logError() << "Constructor Initializer List Error in: " << fun.get_name() << std::endl;
+        
+        if (err.initname == nullptr) 
+          logError() << "An SgInitializedName element is NULL" << std::endl;
+        else if (err.initname->get_initializer() == nullptr)
+          logError() << "An SgInitializedName element " << err.initname->get_name() << " has a NULL initializer: "
+                     << err.initname->unparseToString() 
+                     << std::endl;
+        else 
+          logError() << "Unknown condition" << std::endl;
+        
+        logError() << "Skipping generation of one base class initializer!" << std::endl;
+      }
+    }
+    
+    // log errors for unhandled virtual base classes
+    if (getAllVirtualBases(&cls).size())
+    {
+      logError() << "virtual base class normalization in constructor NOT YET IMPLEMENTED: " << fun.get_name() 
+                 << std::endl;
     } 
       
     // the initializer list is emptied.

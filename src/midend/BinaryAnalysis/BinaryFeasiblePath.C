@@ -1181,6 +1181,16 @@ FeasiblePath::setSearchBoundary(const P2::Partitioner &partitioner,
     setSearchBoundary(partitioner, cfgBeginVertices, cfgEndVertices, cfgAvoidVertices, cfgAvoidEdges);
 }
 
+void
+FeasiblePath::setSearchBoundary(const P2::Partitioner &partitioner,
+                                const P2::ControlFlowGraph::ConstVertexIterator &cfgBeginVertex,
+                                const P2::CfgConstVertexSet &cfgAvoidVertices,
+                                const P2::CfgConstEdgeSet &cfgAvoidEdges) {
+    P2::CfgConstVertexSet cfgBeginVertices;
+    cfgBeginVertices.insert(cfgBeginVertex);
+    setSearchBoundary(partitioner, cfgBeginVertices, cfgAvoidVertices, cfgAvoidEdges);
+}
+
 P2::ControlFlowGraph::ConstVertexIterator
 FeasiblePath::pathToCfg(const P2::ControlFlowGraph::ConstVertexIterator &pathVertex) const {
     if (hasVirtualAddress(pathVertex))
@@ -1208,6 +1218,7 @@ FeasiblePath::setSearchBoundary(const P2::Partitioner &partitioner,
                                 const P2::CfgConstEdgeSet &cfgAvoidEdges) {
     reset();
     partitioner_ = &partitioner;
+    isDirectedSearch_ = true;
 
     // Find top-level paths. These paths don't traverse into function calls unless they must do so in order to reach an ending
     // vertex.
@@ -1225,6 +1236,31 @@ FeasiblePath::setSearchBoundary(const P2::Partitioner &partitioner,
     // blocks.
     cfgEndAvoidVertices_ = cfgAvoidVertices;
     cfgEndAvoidVertices_.insert(cfgEndVertices);
+    cfgAvoidEdges_ = cfgAvoidEdges;
+}
+
+void
+FeasiblePath::setSearchBoundary(const P2::Partitioner &partitioner,
+                                const P2::CfgConstVertexSet &cfgBeginVertices,
+                                const P2::CfgConstVertexSet &cfgAvoidVertices,
+                                const P2::CfgConstEdgeSet &cfgAvoidEdges) {
+    reset();
+    partitioner_ = &partitioner;
+    isDirectedSearch_ = false;
+
+    // Find top-level paths. These paths don't traverse into function calls unless they must do so in order to reach an ending
+    // vertex.
+    findInterFunctionPaths(partitioner.cfg(), paths_/*out*/, vmap_/*out*/,
+                           cfgBeginVertices, cfgAvoidVertices, cfgAvoidEdges);
+    if (paths_.isEmpty())
+        return;
+
+    // Paths graph equivalents of CFG arguments.
+    pathsBeginVertices_ = cfgToPaths(cfgBeginVertices);
+    pathsEndVertices_.clear();
+
+    // When finding paths through a called function, avoid the usual vertices and edges.
+    cfgEndAvoidVertices_ = cfgAvoidVertices;
     cfgAvoidEdges_ = cfgAvoidEdges;
 }
 
@@ -1384,6 +1420,8 @@ bool
 FeasiblePath::isAnyEndpointReachable(const P2::ControlFlowGraph &cfg,
                                      const P2::ControlFlowGraph::ConstVertexIterator &beginVertex,
                                      const P2::CfgConstVertexSet &endVertices) {
+    if (!isDirectedSearch_)
+        return true;
     if (endVertices.empty())
         return false;
     typedef Sawyer::Container::Algorithm::DepthFirstForwardVertexTraversal<const P2::ControlFlowGraph> Traversal;
@@ -1579,6 +1617,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     std::string indent = debug ? "    " : "";
     if (paths_.isEmpty())
         return;
+    if (settings().nullDeref.minValid == 0)
+        mlog[WARN] <<"minimum valid address is set to zero; no null derefs are possible\n";
 
     // Debugging
     if (trace || debug) {
@@ -1586,8 +1626,12 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
         SAWYER_MESG_OR(trace, debug) <<"  paths graph saved in " <<emitPathGraph(callId, graphId) <<"\n";
         BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsBeginVertices_.values())
             SAWYER_MESG_OR(trace, debug) <<"  begin at vertex " <<partitioner().vertexName(v) <<"\n";
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsEndVertices_.values())
-            SAWYER_MESG_OR(trace, debug) <<"  end   at vertex " <<partitioner().vertexName(v) <<"\n";
+        if (isDirectedSearch()) {
+            BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsEndVertices_.values())
+                SAWYER_MESG_OR(trace, debug) <<"  end   at vertex " <<partitioner().vertexName(v) <<"\n";
+        } else {
+            SAWYER_MESG_OR(trace, debug) <<"  undirected search (no particular end vertices)\n";
+        }
     }
 
     const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();

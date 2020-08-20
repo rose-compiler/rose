@@ -1,0 +1,26 @@
+# The rosedev:u20.04 image is an Ubuntu-20.04 system on which some of
+# the steps from the rose-installers repository's
+# install-binaryanalysis-ubuntu2004 steps have already been
+# run. Namely, these steps:
+#    check-hardware-requirements
+#    install-system-dependencies
+#    install-rmc-spock
+#    get-rose-source-code (and subsequently removed)
+#    choose-rose-dependencies
+#    install-rose-dependencies
+#    rm -rf rose
+image: rosedev:u20.04
+
+rmc-build-test-install-job:
+  script: |
+    # We're not using the crazy one-command-per-element syntax, so we
+    # should arrange for commands to be printed by an alternate
+    # mechanism.
+    set -ex
+
+    # Use existing RMC/Spock installation
+    export PATH="$HOME/.spock/bin:$PATH"f
+    spock-ls
+
+    pwd
+    ls -l $HOME

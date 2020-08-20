@@ -36,6 +36,22 @@ std::vector<Function::Ptr> findPltFunctions(const Partitioner&, SgAsmInterpretat
 size_t findPltFunctions(const Partitioner&, SgAsmElfFileHeader*, std::vector<Function::Ptr>&);
 /** @} */
 
+/** Find the dynamic linking PLT GOT section. */
+SgAsmGenericSection* findPltGot(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader);
+
+/** Information about the procedure lookup table. */
+struct PltInfo {
+    SgAsmGenericSection *section;
+    size_t firstOffset;                                 /**< Byte offset w.r.t. section for first valid entry. */
+    size_t entrySize;                                   /**< Size of each entry in bytes. */
+
+    PltInfo()
+        : section(NULL), firstOffset(0), entrySize(0) {}
+};
+
+/** Find information about the PLT. */
+PltInfo findPlt(const Partitioner&, SgAsmElfFileHeader*);
+
 /** Get a list of all ELF sections by name.
  *
  *  Returns an empty list if the interpretation is null or it doesn't have any sections that match the specified name. */
@@ -124,6 +140,13 @@ public:
 
     // [Robb Matzke 2018-04-06]: deprecated: use gotEntryVa
     rose_addr_t memAddress() const { return gotEntryVa_; }
+
+private:
+    SgAsmInstruction* matchNop(const Partitioner&, rose_addr_t va);
+    SgAsmInstruction* matchPush(const Partitioner&, rose_addr_t va);
+    SgAsmInstruction* matchDirectJump(const Partitioner&, rose_addr_t va);
+    SgAsmInstruction* matchIndirectJump(const Partitioner&, rose_addr_t va,
+                                        rose_addr_t &indirectVa /*out*/, size_t &indirectNBytes /*out*/);
 };
 
 /** Build may-return white and black lists. */
