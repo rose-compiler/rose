@@ -2351,6 +2351,7 @@ tests/nonsmoke/functional/CompileTests/C99_tests/Makefile
 tests/nonsmoke/functional/CompileTests/C11_tests/Makefile
 tests/nonsmoke/functional/CompileTests/CudaTests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx_tests/Makefile
+tests/nonsmoke/functional/CompileTests/Cxx03_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx11_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx14_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx17_tests/Makefile

@@ -1015,9 +1015,9 @@ PreprocessingInfo::display (const string & label) const
 
 std::string
 PreprocessingInfo::relativePositionName (const RelativePositionType & position)
-{
-    return stringifyPreprocessingInfoRelativePositionType(position);
-}
+   {
+     return stringifyPreprocessingInfoRelativePositionType(position);
+   }
 
 
 PreprocessingInfo::RelativePositionType
@@ -1028,7 +1028,7 @@ PreprocessingInfo::getRelativePosition(void) const
      return relativePosition;
    }
 
-  void
+void
 PreprocessingInfo::setRelativePosition( RelativePositionType relPos )
    {
      ROSE_ASSERT(this != NULL);

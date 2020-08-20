@@ -143,6 +143,10 @@ CtxReachabilityAnalysis::unfold()
     if (!ctxlat.isBot())
       ctxlabeler.expandLabels(lbl, ctxlat);
   }
+  
+  logWarn() << "Generated " << ctxlabeler.numberOfLabels() 
+            << " new labels from " << labeler.numberOfLabels()
+            << std::endl;
 
   // unfold control flow edges
   for (const ContextLabeler::RelabelingMap::value_type& mapping: ctxlabeler.relabelMap())
@@ -163,6 +167,24 @@ CtxReachabilityAnalysis::unfold()
   return std::make_pair(&ctxlabeler, &ctxflow);
 }
 
+std::pair<CtxLabeler<FiniteCallString>*, Flow*> 
+unfoldCFG(ProgramAbstractionLayer& pla, SgFunctionDefinition& entryPoint)
+{
+  CtxReachabilityFactory  factory;
+  CtxReachabilityTransfer transfer;
+  CtxReachabilityAnalysis analysis{factory, transfer};
+  
+  analysis.initialize(nullptr, &pla);
+  analysis.initializeTransferFunctions();
+  analysis.initializeGlobalVariables(pla.getRoot());
+  analysis.determineExtremalLabels(&entryPoint);
+  //~ analysis.setNoTopologicalSort(!USE_TOPOLOGICAL_SORTED_WORKLIST);
+  
+  analysis.run();
+  return analysis.unfold();
+}
+
+
 //
 // CtxLabeler template member-function implementations  
 
@@ -172,6 +194,8 @@ CtxLabeler<ContextString>::expandLabels(Label orig, const CtxLattice<ContextStri
 {
   using RelabelKey   = typename RelabelingMap::key_type;
   using RelabelValue = typename RelabelingMap::value_type;
+  
+  logWarn() << "expand -> " << std::distance(lat.begin(), lat.end());
   
   for (const std::pair<context_t, Lattice*>& el : lat)
   {

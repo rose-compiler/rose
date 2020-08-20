@@ -312,8 +312,9 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                                  {
                                    mfprintf(mlog[WARN]) ("     firstNondefiningDeclaration->get_parent() = %s \n",firstNondefiningDeclaration->get_parent()->class_name().c_str());
                                  }
+#if 0
                               firstNondefiningDeclaration->get_startOfConstruct()->display("firstNondefiningDeclarationScope == NULL: debug");
-
+#endif
                            // DQ (3/4/2009): This test fails for the AST copy mechanism on test2005_163.C
                               mfprintf(mlog[WARN]) ("Warning: failing test: firstNondefiningDeclarationScope != NULL \n");
                               mfprintf(mlog[WARN]) ("This test fails for the AST copy mechanism on test2005_163.C \n");
