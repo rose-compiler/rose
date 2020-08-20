@@ -242,6 +242,7 @@ namespace SageBuilderCpp17 {
    SgExpression*  buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope = NULL);
    SgExpression*  buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs);
    SgExpression*  buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride);
+   SgExpression*  buildAsteriskShapeExp_nfi();
    SgExpression*  buildNullExpression_nfi();
    SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &);
 
