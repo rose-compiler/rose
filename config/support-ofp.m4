@@ -6,7 +6,7 @@ AC_DEFUN([ROSE_SUPPORT_OFP],
 # Used in ../src/3rdPartyLibraries/fortran-parser/Makefile.am
 # and     ../src/frontend/SageIII/sageSupport.C
 #
-default_ofp_version=20200704
+default_ofp_version=20200819
 
 ofp_major_version_number=0
 ofp_minor_version_number=8
