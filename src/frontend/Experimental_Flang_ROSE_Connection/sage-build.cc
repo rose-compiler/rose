@@ -1449,10 +1449,38 @@ void Build(const parser::CharLiteralConstantSubstring&x, T* &expr)
    std::cout << "Rose::builder::Build(CharLiteralConstantSubstring)\n";
 }
 
-template<typename T>
-void Build(const parser::ArrayConstructor&x, T* &expr)
+void Build(const parser::ArrayConstructor&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(ArrayConstructor)\n";
+
+   Build(x.v, expr);
+}
+
+void Build(const parser::AcSpec&x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(AcSpec)\n";
+   //  std::optional<TypeSpec> type;
+   //  std::list<AcValue> values;
+
+   std::list<SgExpression*> acvalue_list;
+
+   Build(x.values, acvalue_list);
+
+   SgExprListExp* initializers = SageBuilderCpp17::buildExprListExp_nfi(acvalue_list);
+   expr = SageBuilderCpp17::buildAggregateInitializer_nfi(initializers);
+}
+
+void Build(const parser::AcValue&x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(AcValue)\n";
+   //  std::variant<Triplet, common::Indirection<Expr>, common::Indirection<AcImpliedDo>> u;
+
+   std::visit(
+      common::visitors{
+         [&](const common::Indirection<parser::Expr>  &y) { Build(y.value(), expr); },
+         [&](const auto &y) { ; },
+      },
+      x.u);
 }
 
 template<typename T>

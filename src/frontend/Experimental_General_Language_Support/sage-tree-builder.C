@@ -1230,6 +1230,11 @@ SgExpression* buildPntrArrRefExp_nfi(SgExpression* lhs, SgExpression* rhs)
    return SageBuilder::buildPntrArrRefExp_nfi(lhs, rhs);
 }
 
+SgExpression* buildAggregateInitializer_nfi(SgExprListExp* initializers, SgType* type)
+{
+   return SageBuilder::buildAggregateInitializer_nfi(initializers, type);
+}
+
 SgExpression* buildAsteriskShapeExp_nfi()
 {
    SgAsteriskShapeExp* shape = new SgAsteriskShapeExp();
