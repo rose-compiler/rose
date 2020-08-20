@@ -103,14 +103,14 @@ if test "x$USE_JAVA" = x1; then
 
   JAVA_BIN="${JAVA_PATH}/bin"
   JAVA="${JAVA_BIN}/java"
-# echo "JAVA = ${JAVA}"
+
   AC_MSG_CHECKING(for java)
   if test -x "${JAVA}"; then
     AC_MSG_RESULT(yes)
 
   AC_MSG_NOTICE([JAVA = "$JAVA"])
 
-    # Determine java version, e.g. java version "1.7.0_51"
+    # Determine java version, e.g. java version "1.7.0_51" or "12.0.1 2019-04-16"
     JAVA_VERSION=`${JAVA} -version 2>&1 | grep "java version" | sed 's/java version//' | sed 's/"//g'`
 
 # try to detect openjdk if previous command fails , Liao 3/11/2019
@@ -118,10 +118,10 @@ if test "x$USE_JAVA" = x1; then
      JAVA_VERSION=`${JAVA} -version 2>&1 | grep "openjdk version" | sed 's/openjdk version//' | sed 's/"//g'`
    fi
 
-    JAVA_VERSION_MAJOR=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]1}'`
-    JAVA_VERSION_MINOR=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]2}'`
-    JAVA_VERSION_PATCH=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]3}' | awk 'BEGIN {FS="_"} {print [$]1}'`
-    JAVA_VERSION_RELEASE=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]3}' | awk 'BEGIN {FS="_"} {print [$]2}'`
+    JAVA_VERSION_MAJOR=`echo ${JAVA_VERSION}   | awk 'BEGIN {FS="."} {print [$]1}'`
+    JAVA_VERSION_MINOR=`echo ${JAVA_VERSION}   | awk 'BEGIN {FS="."} {print [$]2}'`
+    JAVA_VERSION_PATCH=`echo ${JAVA_VERSION}   | awk 'BEGIN {FS="."} {print [$]3}' | awk 'BEGIN {FS="(\ |_)"} {print [$]1}'`
+    JAVA_VERSION_RELEASE=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]3}' | awk 'BEGIN {FS="(\ |_)"} {print [$]2}'`
 
     AC_MSG_CHECKING([JAVA_VERSION])
     AC_MSG_RESULT([${JAVA_VERSION}])
@@ -197,13 +197,11 @@ if test "x$USE_JAVA" = x1; then
     AC_MSG_ERROR([javac not found in $JAVA_PATH])
   fi
 
-  JAVAH="${JAVA_BIN}/javah"
-  AC_MSG_CHECKING(for javah)
-  if test -x "${JAVAH}"; then
-    AC_MSG_RESULT(yes)
-  else
-    AC_MSG_ERROR([javah not found in $JAVA_PATH])
-  fi
+# javah (JAVAH) has been removed from openjdk version 12.0.1 and replaced by an improved javac.
+# Thus JAVAH has been removed below, starting with the following line [CR 2019.04.30]
+#
+#  JAVAH="${JAVA_BIN}/javah"
+
 fi
 
 # DQ (10/13/2010): Added checking for jar command (common in Linux, but not on some platforms; e.g NMI machines).
@@ -228,7 +226,7 @@ if test "x$USE_JAVA" = x1; then
 # LDFLAGS="-Xlinker -rpath ${JAVA_HOME}/jre/lib/server $LDFLAGS"
 
 # AM_COND_IF([OS_MACOSX],[JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/darwin"],[JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/linux"])
-AM_COND_IF([OS_MACOSX],[LDFLAGS="-Xlinker -rpath ${JAVA_HOME}/jre/lib/server $LDFLAGS"],[])
+AM_COND_IF([OS_MACOSX],[LDFLAGS="-Xlinker -rpath ${JAVA_HOME}/lib/server $LDFLAGS"],[])
 
 fi
 
@@ -264,7 +262,6 @@ AC_SUBST(JAVA_JVM_PATH)
 AC_SUBST(JAVA_JVM_INCLUDE)
 AC_SUBST(JAVA)
 AC_SUBST(JAVAC)
-AC_SUBST(JAVAH)
 AC_SUBST(JAR)
 
 # Java Version Information
@@ -298,7 +295,6 @@ AC_MSG_NOTICE([    C++ header switches (JAVA_JVM_INCLUDE): $JAVA_JVM_INCLUDE])
 AC_MSG_NOTICE([    C++ link switches (JAVA_JVM_LINK):      $JAVA_JVM_LINK])
 AC_MSG_NOTICE([    Runtime command (JAVA):                 $JAVA])
 AC_MSG_NOTICE([    Compiler command (JAVAC):               $JAVAC])
-AC_MSG_NOTICE([    Header generator (JAVAH):               $JAVAH])
 AC_MSG_NOTICE([    Archive tool (JAR):                     $JAR])
 
 # End macro ROSE_SUPPORT_JAVA.

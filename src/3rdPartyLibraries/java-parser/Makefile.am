@@ -45,11 +45,12 @@ JavaParserSupport.class: ${srcdir}/JavaParserSupport.java
 ecjASTVisitor.class:  ${srcdir}/ExtendedASTVisitor.java ${srcdir}/ecjASTVisitor.java
 	$(JAVAC) -cp ${srcdir}/ecj-3.8.2.jar:${srcdir}:. ${srcdir}/ExtendedASTVisitor.java ${srcdir}/ecjASTVisitor.java
 
-# These are the commands to generate the files we need (in the build tree).
-# JavaTraversal.class JavaTraversal.h: ${srcdir}/JavaTraversal.java
-JavaTraversal.h: ${srcdir}/JavaTraversal.java
+# The file JavaTraversal.C is no longer used.  It #includes JavaTraversal.h which can
+# no longer be built with openjdk (at least by version 12.0).  Thus JavaTraversal.h
+# does not need to be created [CR 2019.05.05].
+JavaTraversal.class: ${srcdir}/JavaTraversal.java
 	$(JAVAC) -cp ${srcdir}/ecj-3.8.2.jar ${srcdir}/JavaTraversal.java
-	$(JAVAH) -jni JavaTraversal
+#	$(JAVAH) -jni JavaTraversal
 
 # DQ (4/16/2011): Added support for Java specific tokens (to support source position information in ROSE).
 JavaToken.class: ${srcdir}/JavaToken.java
