@@ -1682,8 +1682,14 @@ void Build(const parser::StructureComponent&x, SgExpression* &expr)
 void Build(const parser::ArrayElement&x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(ArrayElement)\n";
-   Build(x.base, expr);        // DataRef
-   Build(x.subscripts, expr);  // std::list<SectionSubscript>
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+
+   Build(x.base, lhs);        // DataRef
+   Build(x.subscripts, rhs);  // std::list<SectionSubscript>
+
+   // build an SgPntrArrRefExp
+   expr = SageBuilderCpp17::buildPntrArrRefExp_nfi(lhs, rhs);
 }
 
 void Build(const parser::CoindexedNamedObject&x, SgExpression* &expr)
