@@ -724,15 +724,19 @@ void Build(const parser::TypeDeclarationStmt &x, T* scope)
    std::cout << "Rose::builder::Build(TypeDeclarationStmt)\n";
 
    SgVariableDeclaration* var_decl = nullptr;
-   SgType* type = nullptr;
+   SgType * type = nullptr, * base_type = nullptr;
    SgExpression* init = nullptr;
 
    // need name and type
    std::string name{};
 
-   Build(std::get<0>(x.t), type);        // DeclarationTypeSpec
-   Build(std::get<1>(x.t), scope);       // std::list<AttrSpec>
-   Build(std::get<2>(x.t), name, init);  // std::list<EntityDecl>
+   Build(std::get<0>(x.t), base_type);                    // DeclarationTypeSpec
+   Build(std::get<1>(x.t), scope);                        // std::list<AttrSpec>
+   Build(std::get<2>(x.t), name, init, type, base_type);  // std::list<EntityDecl>
+
+   if (!type) {
+      type = base_type;
+   }
 
    builder.Enter(var_decl, name, type, init);
    builder.Leave(var_decl);
@@ -791,7 +795,8 @@ void Build(const parser::AttrSpec &x, T* scope)
    //      Parameter, Pointer, Protected, Save, Target, Value, Volatile>
    std::cout << "Rose::builder::Build(AttrSpec)\n";
 
-   auto AttrSpecVisitor = [&] (const auto &y) { Build(y, scope); };
+   //   auto AttrSpecVisitor = [&] (const auto &y) { Build(y, scope); };
+   auto AttrSpecVisitor = [&] (const auto &y) { ; };
    std::visit(AttrSpecVisitor, x.u);
 }
 
@@ -900,16 +905,16 @@ void Build(const parser::TypeParamValue &x, SgExpression* &expr)
       x.u);
 }
 
-void Build(const std::list<Fortran::parser::EntityDecl> &x, std::string &name, SgExpression* &init)
+void Build(const std::list<Fortran::parser::EntityDecl> &x, std::string &name, SgExpression* &init, SgType* &type, SgType* base_type)
 {
    std::cout << "Rose::builder::Build(std::list) for EntityDecl\n";
 
    for (const auto &elem : x) {
-      Build(elem, name, init);
+      Build(elem, name, init, type, base_type);
    }
 }
 
-void Build(const parser::EntityDecl &x, std::string &name, SgExpression* &init)
+void Build(const parser::EntityDecl &x, std::string &name, SgExpression* &init, SgType* &type, SgType* base_type)
 {
    //  std::tuple<ObjectName, std::optional<ArraySpec>, std::optional<CoarraySpec>,
    //      std::optional<CharLength>, std::optional<Initialization>>
@@ -920,7 +925,7 @@ void Build(const parser::EntityDecl &x, std::string &name, SgExpression* &init)
 
    SgScopeStatement *scope = nullptr;
    if (auto & opt = std::get<1>(x.t)) {    // ArraySpec
-      Build(opt.value(), scope);
+      Build(opt.value(), type, base_type);
    }
 
    if (auto & opt = std::get<2>(x.t)) {    // CoarraySpec
@@ -937,17 +942,28 @@ void Build(const parser::EntityDecl &x, std::string &name, SgExpression* &init)
 }
 
    // EntityDecl
-template<typename T>
-void Build(const parser::ArraySpec &x, T* scope)
+void Build(const parser::ArraySpec &x, SgType* &type, SgType* base_type)
 {
    std::cout << "Rose::builder::Build(ArraySpec)\n";
-
-   SgExpression* expr = nullptr;
-
    // std::list<ExplicitShapeSpec>, std::list<AssumedShapeSpec>, DeferredShapeSpecList,
    // AssumedSizeSpec, ImpliedShapeSpec, AssumedRankSpec
-   auto ArraySpecVisitor = [&](const auto& y) { Build(y, expr); };
-   std::visit(ArraySpecVisitor, x.u);
+
+   SgExpression* expr = nullptr;
+   std::list<SgExpression*> expr_list;
+
+   std::visit(
+      common::visitors{
+         [&] (const std::list<parser::ExplicitShapeSpec> &y)
+            {
+               Build(y, expr_list);
+               type = SageBuilderCpp17::buildArrayType(base_type, expr_list);
+            },
+         [&] (const auto &y)
+            {
+               Build(y, expr);
+            }
+      },
+      x.u);
 }
 
 template<typename T>
