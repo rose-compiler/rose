@@ -1372,53 +1372,59 @@ void Build(const parser::PrintStmt&x, T* scope)
    std::cout << "Rose::builder::Build(PrintStmt)\n";
 #endif
 
-   Build(std::get<0>(x.t), scope);   // Format
-   Build(std::get<1>(x.t), scope);   // OutputItem
+   std::list<SgExpression*> output_item_list;
+
+   SgExpression* format = nullptr;
+
+   Build(std::get<0>(x.t), format);           // Format
+   Build(std::get<1>(x.t), output_item_list); // std::list<OutputItem>
+
+   SgPrintStatement* print_stmt = nullptr;
+
+   builder.Enter(print_stmt, format, output_item_list);
+   builder.Leave(print_stmt);
 }
 
-template<typename T>
-void Build(const parser::Format&x, T* scope)
+void Build(const parser::Format&x, SgExpression* &format)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Format)\n";
 #endif
 
-   //   auto FormatVisitor = [&] (const auto &y) { Build(y, scope); };
-   //   std::visit(FormatVisitor, x.u);   // DefaultCharExpr, Label, Star
+   auto FormatVisitor = [&] (const auto &y) { Build(y, format); };
+   std::visit(FormatVisitor, x.u);   // DefaultCharExpr, Label, Star
 }
 
-template<typename T>
-void Build(const parser::DefaultCharExpr&x, T* scope)
+void Build(const parser::DefaultCharExpr&x, SgExpression* &expr)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DefaultCharExpr)\n";
 #endif
 }
 
-template<typename T>
-void Build(const parser::Label&x, T* scope)
+void Build(const parser::Label&x, SgExpression* &expr)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Label)\n";
 #endif
 }
 
-template<typename T>
-void Build(const parser::Star&x, T* scope)
+void Build(const parser::Star&x, SgExpression* &expr)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Star)\n";
 #endif
+
+   expr = SageBuilderCpp17::buildAsteriskShapeExp_nfi();
 }
 
-template<typename T>
-void Build(const parser::OutputItem&x, T* scope)
+void Build(const parser::OutputItem&x, SgExpression* &expr)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(OutputItem)\n";
 #endif
 
-   SgExpression* expr = nullptr;
+   expr = nullptr;
 
    std::visit(
       common::visitors{
