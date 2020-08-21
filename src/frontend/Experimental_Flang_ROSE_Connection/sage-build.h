@@ -18,6 +18,7 @@ class SgScopeStatement;
 class SgStatement;
 class SgType;
 
+#define PRINT_FLANG_TRAVERSAL 0
 
 namespace Rose::builder {
 
@@ -286,7 +287,9 @@ template<typename T> void Build(const Fortran::parser::                 Volatile
 // Traversal of needed STL template classes (optional, list, tuple, variant)                                                                
 template<typename LT> void Build(const std::list<LT> &x, SgScopeStatement* scope)
 {
-   std::cout << "Rose::builder::Build(std::list) for T* node \n";
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list) for T* node\n";
+#endif
 
    for (const auto &elem : x) {
       Build(elem, scope);
@@ -295,7 +298,9 @@ template<typename LT> void Build(const std::list<LT> &x, SgScopeStatement* scope
 
 template<typename T> void Build(const std::list<T> &x, std::list<SgExpression*> &expr_list)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(std::list) for T* node building a list of SgExpression*\n";
+#endif
 
    for (const auto &elem : x) {
       SgExpression* expr = nullptr;
@@ -306,7 +311,9 @@ template<typename T> void Build(const std::list<T> &x, std::list<SgExpression*> 
 
 template<typename LT, typename T> void Build(const std::list<LT> &x, T* &node)
 {
-   std::cout << "Rose::builder::Build(std::list) for T* &node \n";
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list) for T* &node\n";
+#endif
 
    for (const auto &elem : x) {
       Build(elem, node);
@@ -317,13 +324,17 @@ template<typename... A>
 void Build(const std::variant<A...> &x, SgScopeStatement* scope) {
    try {
       auto & indirection = std::get<Fortran::common::Indirection<Fortran::parser::MainProgram, false>>(x);
-      std::cout << "Rose::builder::Build(const std::variant<A...>): MainProgram \n";
+#if PRINT_FLANG_TRAVERSAL
+      std::cout << "Rose::builder::Build(const std::variant<A...>): MainProgram\n";
+#endif
       Build(indirection.value(), scope);
    }
    catch (const std::bad_variant_access&)
       {
+#if PRINT_FLANG_TRAVERSAL
          std::cout << "Rose::builder::Build(const std::variant<A...>) WARNING ProgramUnit variant not found type: "
                    << typeid(x).name() << "\n";
+#endif
       }
 }
 
