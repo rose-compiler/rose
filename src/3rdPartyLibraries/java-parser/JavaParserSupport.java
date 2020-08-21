@@ -16,7 +16,6 @@ import org.eclipse.jdt.internal.compiler.lookup.*;
 import org.eclipse.jdt.internal.compiler.parser.*;
 import org.eclipse.jdt.internal.compiler.problem.*;
 import org.eclipse.jdt.internal.compiler.util.*;
-import org.omg.Dynamic.Parameter;
 
 class JavaParserSupport {
     class DuplicateTypeException extends Exception {
