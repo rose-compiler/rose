@@ -530,6 +530,12 @@ Label Labeler::functionCallReturnLabel(SgNode* node) {
   else
     return lab+1;
 }
+
+Label Labeler::getFunctionCallReturnLabelFromCallLabel(Label callLabel) {
+  ROSE_ASSERT(isFunctionCallLabel(callLabel));
+  return functionCallReturnLabel(getNode(callLabel));
+}
+
 Label Labeler::blockBeginLabel(SgNode* node) {
   ROSE_ASSERT(isSgBasicBlock(node));
   return getLabel(node);

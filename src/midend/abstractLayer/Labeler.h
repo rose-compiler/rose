@@ -171,23 +171,23 @@ class Labeler {
   std::string toString();
   Label functionCallLabel(SgNode* node);
   Label functionCallReturnLabel(SgNode* node);
-  Label blockBeginLabel(SgNode* node);
-  Label blockEndLabel(SgNode* node);
   Label functionEntryLabel(SgNode* node);
   Label functionExitLabel(SgNode* node);
+  Label blockBeginLabel(SgNode* node);
+  Label blockEndLabel(SgNode* node);
   Label joinLabel(SgNode *node);
   Label forkLabel(SgNode *node);
   Label workshareLabel(SgNode *node);
   Label barrierLabel(SgNode *node);
 
   // info obtained from LabelProperty
-  bool isFunctionEntryLabel(Label lab);
-  bool isFunctionExitLabel(Label lab);
-  bool isEmptyStmtLabel(Label lab);
-  bool isBlockBeginLabel(Label lab);
-  bool isBlockEndLabel(Label lab);
   bool isFunctionCallLabel(Label lab);
   bool isFunctionCallReturnLabel(Label lab);
+  bool isFunctionEntryLabel(Label lab);
+  bool isFunctionExitLabel(Label lab);
+  bool isBlockBeginLabel(Label lab);
+  bool isBlockEndLabel(Label lab);
+  bool isEmptyStmtLabel(Label lab);
   bool isFirstLabelOfMultiLabeledNode(Label lab);
   bool isSecondLabelOfMultiLabeledNode(Label lab);
 
@@ -203,6 +203,8 @@ class Labeler {
   // by default false for all labels. This must be set by the CF analysis.
   bool isExternalFunctionCallLabel(Label lab);
   void setExternalFunctionCallLabel(Label lab);
+
+  Label getFunctionCallReturnLabelFromCallLabel(Label callLabel);
 
   class iterator {
   public:
