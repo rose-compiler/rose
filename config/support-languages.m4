@@ -446,14 +446,14 @@ done
 #
 # Versions greater than 1.8 may work but haven't been tested [Rasmussen, 2019.02.27]
 #
-if test "x$support_fortran_frontend" = "xyes" ; then
-    if test "x$JAVA_VERSION_MAJOR" != x13; then
-	AC_MSG_FAILURE([Java version for Fortran front-end must be openjdk version 13.0.x [major version not 13]])
-    fi
-    if test "x$JAVA_VERSION_MINOR" != x0; then
-	AC_MSG_FAILURE([Java version for Fortran front-end must be openjdk version 13.0.x [minor version not 0]])
-    fi
-fi
+#if test "x$support_fortran_frontend" = "xyes" ; then
+#    if test "x$JAVA_VERSION_MAJOR" != x13; then
+#	AC_MSG_FAILURE([Java version for Fortran front-end must be openjdk version 13.0.x [major version not 13]])
+#    fi
+#    if test "x$JAVA_VERSION_MINOR" != x0; then
+#	AC_MSG_FAILURE([Java version for Fortran front-end must be openjdk version 13.0.x [minor version not 0]])
+#    fi
+#fi
 
 
 #########################################################################################
