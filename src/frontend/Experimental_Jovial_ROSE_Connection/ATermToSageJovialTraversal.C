@@ -6424,19 +6424,14 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
          setSourcePosition(var_ref, t_name);
       } else return ATfalse;
 
-   // May have a subscript
+   // May have a subscript(s)
       if (traverse_Subscript(t_subscript, subscript)) {
          array_subscripts = SageBuilder::buildExprListExp_nfi();
          setSourcePosition(array_subscripts, t_subscript);
 
-         if (subscript.size() > 1) {
-            cerr << "WARNING UNIMPLEMENTED: TableItem - subscript.size() > 1 not fully implemented\n";
-            cerr << "--->    TableItem: name is " << name << endl;
-            cerr << "--->    found subscript # is " << subscript.size() << ": subscript[0] is " << subscript[0] << endl;
+         for (int i=0; i< subscript.size(); i++) {
+            array_subscripts->get_expressions().push_back(subscript[i]);
          }
-
-         array_subscripts->get_expressions().push_back(subscript[0]);
-
       }
       else {
          cerr << "WARNING UNIMPLEMENTED: TableItem - has a subscript with size (probably 0?) " << subscript.size() << std::endl;
@@ -6802,10 +6797,6 @@ ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCa
       } else return ATfalse;
    } else return ATfalse;
 
-   // BlockReference              -> LocArgument
-   // TODO
-   cerr << "WARNING UNIMPLEMENTED: LocFunction - BlockReference argument needs reproducer \n";
-
    ROSE_ASSERT(loc_arg_expr);
 
    // build the parameter list
@@ -6813,11 +6804,15 @@ ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCa
    params->append_expression(loc_arg_expr);
 
    SgType* return_type = SageBuilder::buildPointerType(SgTypeUnknown::createType());
-   // TODO - this should be fixed in post processing, following is a comment in SageBuilder::buildVarRefExp
-       // if not found: put fake init name and symbol here and
-       // waiting for a postProcessing phase to clean it up
-       // two features: no scope and unknown type for initializedName
-   cerr << "WARNING UNIMPLEMENTED: LocFunction - return type is pointer to SgTypeUnknown \n";
+   // TODO: I'm not sure how to type the pointer, perhaps it should be pointer to void
+       // Punting for the moment to translation stage.
+       // The following is a comment in SageBuilder::buildVarRefExp:
+           // if not found: put fake init name and symbol here and
+           // waiting for a postProcessing phase to clean it up
+           // two features: no scope and unknown type for initializedName
+       //
+       // Reproducers are rose-issue-rc-51.cpl and rose-issue-rc-52.cpl
+       // -------------------------------------------------------------
 
    func_call = SageBuilder::buildFunctionCallExp("LOC", return_type, params, SageBuilder::topScopeStack());
    ROSE_ASSERT(func_call);

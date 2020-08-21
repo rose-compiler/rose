@@ -2,6 +2,30 @@
 #include <fstream>
 #include <string>
 
+// Return true if character c is whitespace
+static bool whitespace_char(int c)
+{
+   return (c == ' ' || c == '\t' || c == '\n'|| c == '\v' || c == '\f' || c == '\r');
+}
+
+// Return true if character c may start a name
+static bool start_name_char(int c)
+{
+   if (c == '$') return true;
+   else if (c >= 'A' && c <= 'Z') return true;
+   else if (c >= 'a' && c <= 'z') return true;
+   return false;
+}
+
+// Return true if character c may be part of a name
+static bool name_char(int c)
+{
+   if (start_name_char(c)) return true;
+   else if (c == '\'') return true;
+   else if (c >= '0' && c <= '9') return true;
+   return false;
+}
+
 //
 // Replace the double quote symbol " with ? in the DefineString of a
 // DefineDeclaration.  The " symbol wrecks havoc on the current lexer,
@@ -9,44 +33,93 @@
 //
 static int preprocess(std::istream & in_stream, std::ostream & out_stream)
 {
-   enum State {start, D, E1, F, I, N, E2, quote1};
+   enum State {
+      D, E1, F, I, N, E2, WS, name_start, name,
+      define_quote1, define_quote2, end_comment_quote
+   };
+   State start = D;
    int c, state = start;
+
+// This is implemented as a finite state machine
 
    while ((c = in_stream.get()) != EOF) {
       switch (state) {
-        case start:
-           if (c == 'd' || c == 'D') state = D;
-           break;
         case D:
-           if (c == 'e' || c == 'E') state = E1;
-           else state = start;
+           if (c == 'd' || c == 'D') state = E1;
+           else if (c == '"') state = end_comment_quote; // beginning of a comment
            break;
         case E1:
-           if (c == 'f' || c == 'F') state = F;
+           if (c == 'e' || c == 'E') state = F;
            else state = start;
            break;
         case F:
-           if (c == 'i' || c == 'I') state = I;
+           if (c == 'f' || c == 'F') state = I;
            else state = start;
            break;
         case I:
-           if (c == 'n' || c == 'N') state = N;
+           if (c == 'i' || c == 'I') state = N;
            else state = start;
            break;
         case N:
-           if (c == 'e' || c == 'E') state = E2;
+           if (c == 'n' || c == 'N') state = E2;
            else state = start;
            break;
         case E2:
+           if (c == 'e' || c == 'E') state = WS;
+           else state = start;
+           break;
+        case WS:
+           if (whitespace_char(c)) {
+              state = name_start;
+           }
+           else {
+              // make sure that "UNDEFINED" isn't recognized as part of a DEFINE statement
+              state = start;
+           }
+           break;
+        case name_start:
+           if (whitespace_char(c)) {
+              break; // keep looking for start of DefineName
+           }
+           else if (start_name_char(c)) {
+              state = name;
+           }
+           else {
+              // make sure that "UNDEFINED" isn't recognized as part of a DEFINE statement
+              state = start;
+           }
+           break;
+        case name:
+           if (name_char(c)) {
+              break; // keep looking for characters in DefineName
+           }
+           else if (whitespace_char(c)) {
+              state = define_quote1; // look for starting quote
+           }
+           else if (c == '"') {
+              state = define_quote2; // look for ending quote
+              c = '?'; // change '"' to '?' to make lexer happy
+           }
+           else {
+              // make sure that "UNDEFINED" isn't recognized as part of a DEFINE statement
+              state = start;
+           }
+           break;
+        case define_quote1:
            if (c == '"') {
-              state = quote1;
+              state = define_quote2; // start of the DefinitionPart
               c = '?'; // change '"' to '?' to make lexer happy
            }
            break;
-        case quote1:
+        case define_quote2:
            if (c == '"') {
-              state = start;
+              state = start; // end of the DefinitionPart
               c = '?'; // change '"' to '?' to make lexer happy
+           }
+           break;
+        case end_comment_quote:
+           if (c == '"') {
+              state = start; // found end of the comment
            }
            break;
         default:
