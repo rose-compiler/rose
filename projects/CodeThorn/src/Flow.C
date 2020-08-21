@@ -10,7 +10,8 @@
 using namespace CodeThorn;
 using namespace std;
 
-Edge::Edge():_source(0),_target(0),_annotation(""){
+Edge::Edge() {
+  // all default constructed values for the 4 private member variables are as intended
 }
 Edge::Edge(Label source0,Label target0):_source(source0),_target(target0),_annotation(""){
   // _types is an empty set by default (we may want to use EDGE_UNKNOWN instead)
@@ -20,6 +21,10 @@ Edge::Edge(Label source0,EdgeType et,Label target0):_source(source0),_target(tar
 }
 Edge::Edge(Label source0,set<EdgeType> tset,Label target0):_source(source0),_target(target0),_annotation(""){
   _types=tset;
+}
+
+bool Edge::isValid() const {
+  return _source.isValid() && _target.isValid();
 }
 
 bool Edge::isType(EdgeType et) const {
@@ -634,6 +639,16 @@ Flow Flow::inEdges(Label label) {
   flow.setDotOptionDisplayLabel(_dotOptionDisplayLabel);
   flow.setDotOptionDisplayStmt(_dotOptionDisplayStmt);
   return flow;
+}
+
+Edge Flow::outEdgeOfType(Label label, EdgeType type) {
+  Flow flow=outEdgesOfType(label,type);
+  if(flow.size()==1) {
+    return *flow.begin();
+  } else {
+    Edge invalidEdge;
+    return invalidEdge;
+  }
 }
 
 Flow Flow::outEdges(Label label) {
