@@ -28,6 +28,7 @@ class SgIfStmt;
 class SgInitializedName;
 class SgLocatedNode;
 class SgNamespaceDeclarationStatement;
+class SgPrintStatement;
 class SgProcessControlStatement;
 class SgProgramHeaderStatement;
 class SgScopeStatement;
@@ -155,6 +156,9 @@ public:
 
    void Enter(SgDefaultOptionStmt* &);
    void Leave(SgDefaultOptionStmt*);
+
+   void Enter(SgPrintStatement* &, SgExpression*, std::list<SgExpression*> &);
+   void Leave(SgPrintStatement*);
 
    void Enter(SgWhileStmt* &, SgExpression*);
    void Leave(SgWhileStmt*, bool has_end_do_stmt=false);

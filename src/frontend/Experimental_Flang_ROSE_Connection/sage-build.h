@@ -155,11 +155,11 @@ template<typename T> void Build(const Fortran::parser::             OpenStmt &x,
 template<typename T> void Build(const Fortran::parser::PointerAssignmentStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::            PrintStmt &x, T* scope);
 
-template<typename T> void Build(const Fortran::parser::               Format &x, T* scope);
-template<typename T> void Build(const Fortran::parser::      DefaultCharExpr &x, T* scope);
-template<typename T> void Build(const Fortran::parser::                Label &x, T* scope);
-template<typename T> void Build(const Fortran::parser::                 Star &x, T* scope);
-template<typename T> void Build(const Fortran::parser::           OutputItem &x, T* scope);
+void Build(const Fortran::parser::               Format &x, SgExpression* &expr);
+void Build(const Fortran::parser::      DefaultCharExpr &x, SgExpression* &expr);
+void Build(const Fortran::parser::                Label &x, SgExpression* &expr);
+void Build(const Fortran::parser::                 Star &x, SgExpression* &expr);
+void Build(const Fortran::parser::           OutputItem &x, SgExpression* &expr);
 template<typename T> void Build(const Fortran::parser::      OutputImpliedDo &x, T* scope);
 
 template<typename T> void Build(const Fortran::parser::             ReadStmt &x, T* scope);

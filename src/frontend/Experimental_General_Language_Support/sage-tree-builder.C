@@ -690,6 +690,32 @@ Leave(SgDefaultOptionStmt* default_option_stmt)
 }
 
 void SageTreeBuilder::
+Enter(SgPrintStatement* &print_stmt, SgExpression* format, std::list<SgExpression*> &expr_list)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgPrintStmt* &, ...) \n";
+
+   ROSE_ASSERT(format);
+
+   print_stmt = new SgPrintStatement();
+   ROSE_ASSERT(print_stmt);
+   SageInterface::setSourcePosition(print_stmt);
+
+   print_stmt->set_format(format);
+
+   SgExprListExp* io_stmt_list = SageBuilderCpp17::buildExprListExp_nfi(expr_list);
+   print_stmt->set_io_stmt_list(io_stmt_list);
+}
+
+void SageTreeBuilder::
+Leave(SgPrintStatement* print_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgPrintStmt*, ...) \n";
+   ROSE_ASSERT(print_stmt);
+
+   SageInterface::appendStatement(print_stmt, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
 Enter(SgWhileStmt* &while_stmt, SgExpression* condition)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgWhileStmt* &, ...) \n";
