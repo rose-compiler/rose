@@ -34,6 +34,10 @@ Label::Label(const Label& other) {
   _labelId=other._labelId;
 }
 
+bool Label::isValid() const {
+  return _labelId!=NO_LABEL_ID;
+}
+
 //Copy assignemnt operator
 Label& Label::operator=(const Label& other) {
   // prevent self-assignment
@@ -378,7 +382,7 @@ void Labeler::createLabels(SgNode* root) {
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_FORK));
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_JOIN));
       } else if(isSgOmpForStatement(*i) || isSgOmpSectionsStatement(*i)
-                  || isSgOmpSimdStatement(*i) || isSgOmpForSimdStatement(*i)) {
+                || isSgOmpSimdStatement(*i) || isSgOmpForSimdStatement(*i)) {
         assert(num == 2);
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_WORKSHARE));
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_BARRIER));
@@ -583,6 +587,10 @@ Label Labeler::barrierLabel(SgNode *node) {
 
 bool Labeler::isConditionLabel(Label lab) {
   return SgNodeHelper::isCond(getNode(lab));
+}
+
+bool Labeler::isLoopConditionLabel(Label lab) {
+  return SgNodeHelper::isLoopCond(getNode(lab));
 }
 
 bool Labeler::isSwitchExprLabel(Label lab) {
