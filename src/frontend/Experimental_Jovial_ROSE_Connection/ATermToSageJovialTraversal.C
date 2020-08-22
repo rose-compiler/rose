@@ -4134,29 +4134,39 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
 
    std::string name;
    SgType* return_type = NULL;
-   std::list<FormalParameter> param_list;
+   std::list<FormalParameter> param_name_list;
+
+   SgFunctionDeclaration* function_decl = nullptr;
+   SgFunctionParameterList* param_list = nullptr;
+   SgBasicBlock* param_scope = nullptr;
 
    if (ATmatch(term, "FunctionDefinition(<term>,<term>,<term>)", &t_func_heading, &t_dirs, &t_proc_body)) {
-      cerr << "WARNING UNIMPLEMENTED: FunctionDefinition\n";
-      ROSE_ASSERT(false);
 
-      if (traverse_FunctionHeading(t_func_heading, name, return_type, param_list, modifiers)) {
+      if (traverse_FunctionHeading(t_func_heading, name, return_type, param_name_list, modifiers)) {
          // MATCHED FunctionHeading
       } else return ATfalse;
 
-      // OUT OF ORDER to get function scope
-      // fix this
-
-      if (traverse_SubroutineBody(t_proc_body)) {
-         // MATCHED FunctionBody
-      } else return ATfalse;
+   // Enter SageTreeBuilder for SgFunctionParameterList
+      sage_tree_builder.Enter(param_list, param_scope);
 
       if (traverse_DirectiveList(t_dirs)) {
          // MATCHED ReducibleDirective*
       } else return ATfalse;
 
+      if (traverse_SubroutineBody(t_proc_body)) {
+         // MATCHED FunctionBody
+      } else return ATfalse;
+
+   // Leave SageTreeBuilder for SgFunctionParameterList
+      sage_tree_builder.Leave(param_list, param_scope, param_name_list);
    }
    else return ATfalse;
+
+// Enter SageTreeBuilder for SgFunctionDeclaration
+   sage_tree_builder.Enter(function_decl, name, return_type, param_list, modifiers);
+
+// Leave SageTreeBuilder for SgFunctionDeclaration
+   sage_tree_builder.Leave(function_decl, param_scope);
 
    return ATtrue;
 }
@@ -4777,6 +4787,9 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
    else return ATfalse;
 
 #if 0
+!!!!!!!!!!!!
+BROKEN
+!!!!!!!!!!!!
 // WHILE then optional BY or THEN (increment expression)
    if (phrase1_enum == e_while_phrase_expr) {
       if (phrase2_enum == e_by_phrase_expr) {
@@ -4907,6 +4920,7 @@ ATbool ATermToSageJovialTraversal::traverse_OptContinuation(ATerm term, SgExpres
    phrase_enum2 = Jovial_ROSE_Translation::e_unknown;
 
    if (ATmatch(term, "no-continuation")) {
+      // MATCHED no-continuation
    } else if (traverse_Continuation(term, phrase1, phrase2, phrase_enum1, phrase_enum2)) {
       // MATCHED Continuation
    } else return ATfalse;
