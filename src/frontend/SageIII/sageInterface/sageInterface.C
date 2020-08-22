@@ -23295,7 +23295,7 @@ std::vector<SgC_PreprocessorDirectiveStatement*>
 SageInterface::translateStatementToUseCppDeclarations( SgStatement* statement, SgScopeStatement* scope)
    {
 
-#if 1
+#if 0
      printOutComments(statement);
 #endif
 
