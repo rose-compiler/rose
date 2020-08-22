@@ -98,6 +98,7 @@ CODETHORN_HEADER_FILES=\
   EStateAnalysis.h \
   EStateFactory.h \
   EStateTransferFunctions.h \
+  EStateWorkList.h \
   ExprAnalyzer.h \
   FIConstAnalysis.h \
   Flow.h \
@@ -219,6 +220,7 @@ CODETHORN_SOURCE_FILES=\
   EStateAnalysis.C \
   EStateFactory.C \
   EStateTransferFunctions.C \
+  EStateWorkList.C \
   ExprAnalyzer.C \
   FIConstAnalysis.C \
   Flow.C \

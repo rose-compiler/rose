@@ -52,6 +52,7 @@
 #include "ltlthorn-lib/ParProOptions.h"
 #include "DFAnalysisBase.h"
 #include "EStateTransferFunctions.h"
+#include "EStateWorkList.h"
 
 namespace CodeThorn {
 
@@ -76,7 +77,8 @@ namespace CodeThorn {
    * \date 2012.
    */
 
-  class EStateWorkList {
+
+    class EStatePriorityWorkList {
   public:
     typedef std::list<const EState*>::iterator iterator;
     bool empty();
@@ -91,7 +93,7 @@ namespace CodeThorn {
   private:
     std::list<const EState*> _list;
   };
-  
+
   class Analyzer : public DFAnalysisBase {
     friend class Solver;
     friend class Solver5;
@@ -103,7 +105,6 @@ namespace CodeThorn {
     friend class VariableValueMonitor;
     friend class ExprAnalyzer;
   public:
-    //typedef std::list<const EState*> EStateWorkList;
     static void initDiagnostics();
     Analyzer();
     virtual ~Analyzer();
