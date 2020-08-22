@@ -2686,10 +2686,20 @@ ROSEAttributesList::generateFileIdListFromLineDirectives()
                  // ROSE_ASSERT(quotedFilename[0] == '\"');
                     if (quotedFilename[0] == '\"')
                        {
-                         ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
-                         std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
+                      // DQ (8/22/2020): C_tests/test2020_22.c demonstrates that this is not reasonable.
+                      // ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
+
+                      // DQ (8/22/2020): find the closing quote.
+                         size_t positionOfNextQuote = quotedFilename.find("\"",1);
 #if 0
-                         printf ("filename = %s \n",filename.c_str());
+                         printf ("positionOfNextQuote     = %zu \n",positionOfNextQuote);
+                         printf ("quotedFilename.length() = %zu \n",quotedFilename.length());
+#endif
+                      // std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
+                         ROSE_ASSERT(positionOfNextQuote <= quotedFilename.length()-1);
+                         std::string filename = quotedFilename.substr(1,positionOfNextQuote-1);
+#if 0
+                         printf ("In generateFileIdListFromLineDirectives(): filename = |%s| \n",filename.c_str());
 #endif
                       // Add the new filename to the static map stored in the Sg_File_Info (no action if filename is already in the map).
                          Sg_File_Info::addFilenameToMap(filename);
