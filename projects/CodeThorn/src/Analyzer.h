@@ -55,7 +55,6 @@
 
 namespace CodeThorn {
 
-  typedef std::list<const EState*> EStateWorkList;
   typedef std::pair<int, const EState*> FailedAssertion;
   typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
@@ -77,6 +76,22 @@ namespace CodeThorn {
    * \date 2012.
    */
 
+  class EStateWorkList {
+  public:
+    typedef std::list<const EState*>::iterator iterator;
+    bool empty();
+    void push_front(const EState* el);
+    void pop_front();
+    const EState* front();
+    void push_back(const EState*);
+    size_t size();
+    void clear();
+    iterator begin();
+    iterator end();
+  private:
+    std::list<const EState*> _list;
+  };
+  
   class Analyzer : public DFAnalysisBase {
     friend class Solver;
     friend class Solver5;
@@ -88,6 +103,7 @@ namespace CodeThorn {
     friend class VariableValueMonitor;
     friend class ExprAnalyzer;
   public:
+    //typedef std::list<const EState*> EStateWorkList;
     static void initDiagnostics();
     Analyzer();
     virtual ~Analyzer();

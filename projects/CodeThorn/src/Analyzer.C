@@ -29,6 +29,42 @@ using namespace Sawyer::Message;
 
 Sawyer::Message::Facility CodeThorn::Analyzer::logger;
 
+size_t CodeThorn::EStateWorkList::size() {
+  return _list.size();
+}
+
+bool CodeThorn::EStateWorkList::empty() {
+  return _list.empty();
+}
+
+void CodeThorn::EStateWorkList::clear() {
+  return _list.clear();
+}
+
+void CodeThorn::EStateWorkList::push_front(const EState* el) {
+  _list.push_front(el);
+}
+
+const CodeThorn::EState* CodeThorn::EStateWorkList::front() {
+  return _list.front();
+}
+
+void CodeThorn::EStateWorkList::pop_front() {
+  _list.pop_front();
+}
+
+void CodeThorn::EStateWorkList::push_back(const EState* el) {
+  _list.push_back(el);
+}
+
+CodeThorn::EStateWorkList::iterator CodeThorn::EStateWorkList::begin() {
+  return _list.begin();
+}
+
+CodeThorn::EStateWorkList::iterator CodeThorn::EStateWorkList::end() {
+  return _list.end();
+}
+
 CodeThorn::Analyzer::Analyzer():
   startFunRoot(0),
   cfanalyzer(0),
@@ -142,7 +178,7 @@ CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const Co
     localWorkList.push_back(currentEStatePtr);
     while(!localWorkList.empty()) {
       // logger[DEBUG]<<"local work list size: "<<localWorkList.size()<<endl;
-      const EState* currentEStatePtr=*localWorkList.begin();
+      const EState* currentEStatePtr=localWorkList.front();
       localWorkList.pop_front();
       if(isFailedAssertEState(currentEStatePtr)) {
         // ensure we do not compute any successors of a failed assert state
@@ -888,7 +924,7 @@ const EState* CodeThorn::Analyzer::topWorkList() {
 #pragma omp critical(ESTATEWL)
   {
     if(!estateWorkListCurrent->empty())
-      estate=*estateWorkListCurrent->begin();
+      estate=estateWorkListCurrent->front();
   }
   return estate;
 }
@@ -897,7 +933,7 @@ const EState* CodeThorn::Analyzer::popWorkList() {
 #pragma omp critical(ESTATEWL)
   {
     if(!estateWorkListCurrent->empty())
-      estate=*estateWorkListCurrent->begin();
+      estate=estateWorkListCurrent->front();
     if(estate) {
       estateWorkListCurrent->pop_front();
       if(getExplorationMode()==EXPL_LOOP_AWARE && isLoopCondLabel(estate->label())) {

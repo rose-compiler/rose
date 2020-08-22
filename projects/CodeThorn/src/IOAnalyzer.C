@@ -34,7 +34,7 @@ IOAnalyzer::IOAnalyzer() {
 
 void IOAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
   Analyzer::initializeSolver(functionToStartAt, root, oneFunctionOnly);
-  const EState* currentEState=*(estateWorkListCurrent->begin());
+  const EState* currentEState=estateWorkListCurrent->front();
   ROSE_ASSERT(currentEState);
   if(getModeLTLDriven()) {
     setStartEState(currentEState);
