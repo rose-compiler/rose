@@ -4113,7 +4113,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
   // Get atached preprocessing info
      AttachedPreprocessingInfoType *prepInfoPtr = stmt->getAttachedPreprocessingInfo();
 
-#if 0
+#if 1
   // Debugging added by DQ (only output debug information if comments/directives exist for this statement).
      if ( (prepInfoPtr != NULL) && (prepInfoPtr->empty() == false) )
         {
