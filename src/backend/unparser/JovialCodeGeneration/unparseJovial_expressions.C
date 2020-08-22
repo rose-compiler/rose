@@ -274,9 +274,32 @@ Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
    // function name
       unparseExpression(func_call->get_function(), info);
 
-   // argument list
+   // unparse arguments individually to separate the input and output parameters
+   //
+      bool firstOutParam = false;
+      bool foundOutParam = false;
+
       curprint("(");
-      unparseExpression(func_call->get_args(), info);
+
+      int i = 0;
+// Replace following with C++11
+      foreach(SgInitializedName* arg, formal_params)
+//    for (SgInitializedName* arg : formal_params)
+        {
+           if (arg->get_storageModifier().isMutable() && foundOutParam == false)
+              {
+                 firstOutParam = true;
+                 foundOutParam = true;
+                 curprint(":");
+              }
+
+           // Don't output comma if this is the first out parameter
+           if (i > 0 && firstOutParam == false) curprint(",");
+           firstOutParam = false;
+
+        // curprint(arg->get_name());
+           unparseExpression(actual_params[i++], info);
+        }
       curprint(")");
    }
 
