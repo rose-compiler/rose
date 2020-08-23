@@ -850,7 +850,10 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_51b.C \
    test2020_54.C \
    test2020_55.C \
-   test2020_56.C
+   test2020_56.C \
+   test2020_71.C \
+   test2020_72.C \
+   test2020_73.C 
 
 # NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
 
