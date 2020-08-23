@@ -53,6 +53,7 @@
 #include "DFAnalysisBase.h"
 #include "EStateTransferFunctions.h"
 #include "EStateWorkList.h"
+#include "EStatePriorityWorkList.h"
 
 namespace CodeThorn {
 
@@ -77,22 +78,6 @@ namespace CodeThorn {
    * \date 2012.
    */
 
-
-    class EStatePriorityWorkList {
-  public:
-    typedef std::list<const EState*>::iterator iterator;
-    bool empty();
-    void push_front(const EState* el);
-    void pop_front();
-    const EState* front();
-    void push_back(const EState*);
-    size_t size();
-    void clear();
-    iterator begin();
-    iterator end();
-  private:
-    std::list<const EState*> _list;
-  };
 
   class Analyzer : public DFAnalysisBase {
     friend class Solver;
