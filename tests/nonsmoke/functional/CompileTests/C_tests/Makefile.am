@@ -607,7 +607,12 @@ TESTCODE_CURRENTLY_FAILING = \
      test2018_39.c \
      test2018_40.c \
      test2020_20.c \
-     test2020_21.c 
+     test2020_21.c \
+     test2020_23.c \
+     test2020_24.c \
+     test2020_25.c \
+     test2020_26.c \
+     test2020_27.c 
 
 # DQ (1/16/2017): Clang C support appears to be missign the typeof operator (C11 mode).
 if !USING_CLANG_COMPILER
@@ -1206,7 +1211,8 @@ EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
         test2015_156.h \
         test2015_157.h \
         test2015_159.h \
-        test2020_03.h
+        test2020_03.h \
+        test2020_26.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests
