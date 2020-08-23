@@ -23,6 +23,7 @@
 #include "RersSpecialization.h"
 #include "RERS_empty_specialization.h"
 #include "CodeThornLib.h"
+#include "TopologicalSort.h"
 
 using namespace std;
 using namespace Sawyer::Message;
@@ -65,7 +66,6 @@ CodeThorn::Analyzer::Analyzer():
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
   }
-  setWorkLists(_explorationMode);
   estateSet.max_load_factor(0.7);
   pstateSet.max_load_factor(0.7);
   constraintSetMaintainer.max_load_factor(0.7);
@@ -99,19 +99,26 @@ void CodeThorn::Analyzer::setWorkLists(ExplorationMode explorationMode) {
     estateWorkListCurrent=new EStateWorkList();
     estateWorkListNext=new EStateWorkList();
     break;
-  case EXPL_TOPOLOGIC_SORT:
+  case EXPL_TOPOLOGIC_SORT: {
+    ROSE_ASSERT(getLabeler());
+    ROSE_ASSERT(getFlow()->getStartLabel().isValid());
+    TopologicalSort topSort(*getLabeler(),*getFlow());
+    std::list<Label> labelList=topSort.topologicallySortedLabelList();
+    cout<<"Topologic Sort:";
+    for(auto label : labelList) {
+      cout<<label.toString()<<" ";
+    }
+    cout<<endl;
     estateWorkListCurrent = new EStatePriorityWorkList();
     estateWorkListNext = new EStatePriorityWorkList(); // currently not used in loop aware mode
     cout<<"STATUS: using topologic worklist."<<endl;
     break;
   }
+  }
 }
 
 void CodeThorn::Analyzer::setExplorationMode(ExplorationMode em) {
-  if(em!=_explorationMode) {
-    _explorationMode=em;
-    setWorkLists(_explorationMode);
-  }
+  _explorationMode=em;
 }
 
 ExplorationMode CodeThorn::Analyzer::getExplorationMode() {
@@ -1771,7 +1778,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     SAWYER_MESG(logger[ERROR]) << "Function '"<<funtofind<<"' not found.\n";
     exit(1);
   } else {
-    SAWYER_MESG(logger[TRACE])<< "INFO: starting at function '"<<funtofind<<"'."<<endl;
+    SAWYER_MESG(logger[INFO])<< "starting at function '"<<funtofind<<"'."<<endl;
   }
   SAWYER_MESG(logger[TRACE])<< "INIT: Initializing AST node info."<<endl;
   initAstNodeInfo(root);
@@ -1798,7 +1805,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     getFunctionCallMapping()->setClassHierarchy(new ClassHierarchyWrapper(*chw));
   }
   else
-    SAWYER_MESG(logger[WARN])<< "WARN: Need an SgProject object for building the class hierarchy\n"
+    SAWYER_MESG(logger[WARN])<< "WARN: Need a SgProject object for building the class hierarchy\n"
                              << "      virtual function call analysis not available!"
                              << std::endl;
 
@@ -1815,20 +1822,19 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
 
 
   // logger[DEBUG]<< "mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
-  SAWYER_MESG(logger[TRACE])<< "INIT: Building CFGs."<<endl;
+  SAWYER_MESG(logger[INFO])<< "INIT: Building CFGs."<<endl;
 
-  if(oneFunctionOnly)
-    flow=cfanalyzer->flow(startFunRoot);
-  else
-    flow=cfanalyzer->flow(root);
-
+  flow=cfanalyzer->flow(root);
+  Label slab=getLabeler()->getLabel(startFunRoot);
+  ROSE_ASSERT(slab.isValid());
+  flow.setStartLabel(slab);
   // Runs consistency checks on the fork / join and workshare / barrier nodes in the parallel CFG
   // If the --omp-ast flag is not selected by the user, the parallel nodes are not inserted into the CFG
   if (_ctOpt.ompAst) {
     cfanalyzer->forkJoinConsistencyChecks(flow);
   }
 
-  SAWYER_MESG(logger[TRACE])<< "STATUS: Building CFGs finished."<<endl;
+  SAWYER_MESG(logger[INFO])<< "STATUS: Building CFGs finished."<<endl;
   if(_ctOpt.reduceCfg) {
     int cnt=cfanalyzer->optimizeFlow(flow);
     SAWYER_MESG(logger[TRACE])<< "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
@@ -1840,7 +1846,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   InterFlow interFlow=cfanalyzer->interFlow(flow);
   SAWYER_MESG(logger[TRACE])<< "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
   cfanalyzer->intraInterFlow(flow,interFlow);
-  SAWYER_MESG(logger[TRACE])<< "INIT: ICFG OK. (size: " << flow.size() << " edges)"<<endl;
+  SAWYER_MESG(logger[INFO])<< "INIT: ICFG OK. (size: " << flow.size() << " edges)"<<endl;
 
 #if 0
   if(_ctOpt.reduceCfg) {
@@ -1903,6 +1909,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     SAWYER_MESG(logger[TRACE])<< "INIT: no global scope.";
   }
 
+  setWorkLists(_explorationMode);
   estate.io.recordNone(); // ensure that extremal value is different to bot
   const EState* initialEState=processNew(estate);
   ROSE_ASSERT(initialEState);

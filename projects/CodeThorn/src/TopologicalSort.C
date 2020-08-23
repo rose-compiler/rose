@@ -7,7 +7,9 @@ namespace CodeThorn {
   }
 
   std::list<Label> TopologicalSort::topologicallySortedLabelList() {
-    semanticRevPostOrderTraversal(flow.getStartLabel());
+    Label slab=flow.getStartLabel();
+    ROSE_ASSERT(slab.isValid());
+    semanticRevPostOrderTraversal(slab);
     return revPostOrderList;
   }
 
@@ -42,16 +44,18 @@ namespace CodeThorn {
       // to track this information read only to obtain label. The
       // label is removed from the list when the traversal returns
       // from the call (see above case for FunctionCallLabel)
-      Label callLabel=callLabels.back(); // read only
-
-      //assert(flow.succ(lab).exists(callReturnNode));
-
-      // make sure the traversal returns to the call site. Note, a
-      // function is visited at most once. Therefore, all subsequent
-      // calls are sorted directly from call-label to callreturn-label
-      // even if there is no direct edge
-      Label callReturnLabel=labeler.getFunctionCallReturnLabelFromCallLabel(callLabel);
-      semanticRevPostOrderTraversal(callReturnLabel);
+      if(callLabels.size()>0) {
+        Label callLabel=callLabels.back(); // read only
+        
+        //assert(flow.succ(lab).exists(callReturnNode));
+        
+        // make sure the traversal returns to the call site. Note, a
+        // function is visited at most once. Therefore, all subsequent
+        // calls are sorted directly from call-label to callreturn-label
+        // even if there is no direct edge
+        Label callReturnLabel=labeler.getFunctionCallReturnLabelFromCallLabel(callLabel);
+        semanticRevPostOrderTraversal(callReturnLabel);
+      }
     } else {
       // for all other nodes use default traversal order
       for(auto slab : flow.succ(lab)) {
