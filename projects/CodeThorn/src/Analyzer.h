@@ -98,9 +98,9 @@ namespace CodeThorn {
     virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initLabeledAssertNodes(SgProject* root);
     
-    void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
-    ExplorationMode getExplorationMode() { return _explorationMode; }
-
+    void setExplorationMode(ExplorationMode em);
+    ExplorationMode getExplorationMode();
+    
     void setSolver(Solver* solver);
     Solver* getSolver();
 
@@ -249,6 +249,8 @@ namespace CodeThorn {
     void setCommandLineOptions(vector<string> clOptions);
   protected:
     void setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt);
+    void deleteWorkLists();
+    void setWorkLists(ExplorationMode explorationMode);
   public:
     // TODO: move to flow analyzer (reports label,init,final sets)
     static std::string astNodeInfoAttributeAndNodeToString(SgNode* node);
@@ -421,8 +423,8 @@ namespace CodeThorn {
     FunctionCallMapping functionCallMapping;
     FunctionCallMapping2 functionCallMapping2;
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
-    EStateWorkList* estateWorkListCurrent;
-    EStateWorkList* estateWorkListNext;
+    EStateWorkList* estateWorkListCurrent=0;
+    EStateWorkList* estateWorkListNext=0;
     EStateSet estateSet;
     PStateSet pstateSet;
     ConstraintSetMaintainer constraintSetMaintainer;

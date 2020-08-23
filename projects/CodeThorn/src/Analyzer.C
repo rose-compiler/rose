@@ -65,6 +65,28 @@ CodeThorn::Analyzer::Analyzer():
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
   }
+  setWorkLists(_explorationMode);
+  estateSet.max_load_factor(0.7);
+  pstateSet.max_load_factor(0.7);
+  constraintSetMaintainer.max_load_factor(0.7);
+  resetInputSequenceIterator();
+  exprAnalyzer.setAnalyzer(this);
+  ROSE_ASSERT(_estateTransferFunctions==nullptr);
+  _estateTransferFunctions=new EStateTransferFunctions();
+  _estateTransferFunctions->setAnalyzer(this);
+}
+
+void CodeThorn::Analyzer::deleteWorkLists() {
+  if(estateWorkListCurrent) {
+    delete estateWorkListCurrent;
+  }
+  if(estateWorkListNext) {
+    delete estateWorkListNext;
+  }
+}
+
+void CodeThorn::Analyzer::setWorkLists(ExplorationMode explorationMode) {
+  deleteWorkLists();
   switch(_explorationMode) {
   case EXPL_UNDEFINED:
     cerr<<"Error: undefined exploration mode in constructing of Analyzer."<<endl;
@@ -74,24 +96,26 @@ CodeThorn::Analyzer::Analyzer():
   case EXPL_LOOP_AWARE:
   case EXPL_LOOP_AWARE_SYNC:
   case EXPL_RANDOM_MODE1:
-    //estateWorkListCurrent = &estateWorkListOne;
-    //estateWorkListNext = &estateWorkListTwo; // only relevant for loop aware mode
     estateWorkListCurrent=new EStateWorkList();
     estateWorkListNext=new EStateWorkList();
     break;
   case EXPL_TOPOLOGIC_SORT:
     estateWorkListCurrent = new EStatePriorityWorkList();
     estateWorkListNext = new EStatePriorityWorkList(); // currently not used in loop aware mode
+    cout<<"STATUS: using topologic worklist."<<endl;
     break;
   }
-  estateSet.max_load_factor(0.7);
-  pstateSet.max_load_factor(0.7);
-  constraintSetMaintainer.max_load_factor(0.7);
-  resetInputSequenceIterator();
-  exprAnalyzer.setAnalyzer(this);
-  ROSE_ASSERT(_estateTransferFunctions==nullptr);
-  _estateTransferFunctions=new EStateTransferFunctions();
-  _estateTransferFunctions->setAnalyzer(this);
+}
+
+void CodeThorn::Analyzer::setExplorationMode(ExplorationMode em) {
+  if(em!=_explorationMode) {
+    _explorationMode=em;
+    setWorkLists(_explorationMode);
+  }
+}
+
+ExplorationMode CodeThorn::Analyzer::getExplorationMode() {
+  return _explorationMode;
 }
 
 CodeThorn::Analyzer::~Analyzer() {
@@ -107,12 +131,7 @@ CodeThorn::Analyzer::~Analyzer() {
   delete getFunctionCallMapping2()->getClassHierarchy();
   delete getFunctionCallMapping()->getClassHierarchy();
   delete _estateTransferFunctions;
-  if(estateWorkListCurrent) {
-    delete estateWorkListCurrent;
-  }
-  if(estateWorkListNext) {
-    delete estateWorkListNext;
-  }
+  deleteWorkLists();
 }
 
 CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const CodeThorn::EState* currentEStatePtr) {
