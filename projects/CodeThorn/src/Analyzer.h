@@ -423,8 +423,6 @@ namespace CodeThorn {
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
     EStateWorkList* estateWorkListCurrent;
     EStateWorkList* estateWorkListNext;
-    EStateWorkList estateWorkListOne;
-    EStateWorkList estateWorkListTwo;
     EStateSet estateSet;
     PStateSet pstateSet;
     ConstraintSetMaintainer constraintSetMaintainer;

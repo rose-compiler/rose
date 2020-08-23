@@ -354,6 +354,8 @@ void IOAnalyzer::setup(Analyzer* analyzer, Sawyer::Message::Facility logger,
       analyzer->setExplorationMode(EXPL_LOOP_AWARE_SYNC);
     } else if(explorationMode=="random-mode1") {
       analyzer->setExplorationMode(EXPL_RANDOM_MODE1);
+    } else if(explorationMode=="topologic-sort") {
+      analyzer->setExplorationMode(EXPL_TOPOLOGIC_SORT);
     } else {
       logger[ERROR] <<"unknown state space exploration mode specified with option --exploration-mode."<<endl;
       exit(1);

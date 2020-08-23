@@ -65,8 +65,25 @@ CodeThorn::Analyzer::Analyzer():
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
   }
-  estateWorkListCurrent = &estateWorkListOne;
-  estateWorkListNext = &estateWorkListTwo;
+  switch(_explorationMode) {
+  case EXPL_UNDEFINED:
+    cerr<<"Error: undefined exploration mode in constructing of Analyzer."<<endl;
+    exit(1);
+  case EXPL_DEPTH_FIRST:
+  case EXPL_BREADTH_FIRST:
+  case EXPL_LOOP_AWARE:
+  case EXPL_LOOP_AWARE_SYNC:
+  case EXPL_RANDOM_MODE1:
+    //estateWorkListCurrent = &estateWorkListOne;
+    //estateWorkListNext = &estateWorkListTwo; // only relevant for loop aware mode
+    estateWorkListCurrent=new EStateWorkList();
+    estateWorkListNext=new EStateWorkList();
+    break;
+  case EXPL_TOPOLOGIC_SORT:
+    estateWorkListCurrent = new EStatePriorityWorkList();
+    estateWorkListNext = new EStatePriorityWorkList(); // currently not used in loop aware mode
+    break;
+  }
   estateSet.max_load_factor(0.7);
   pstateSet.max_load_factor(0.7);
   constraintSetMaintainer.max_load_factor(0.7);
@@ -90,6 +107,12 @@ CodeThorn::Analyzer::~Analyzer() {
   delete getFunctionCallMapping2()->getClassHierarchy();
   delete getFunctionCallMapping()->getClassHierarchy();
   delete _estateTransferFunctions;
+  if(estateWorkListCurrent) {
+    delete estateWorkListCurrent;
+  }
+  if(estateWorkListNext) {
+    delete estateWorkListNext;
+  }
 }
 
 CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const CodeThorn::EState* currentEStatePtr) {
@@ -673,6 +696,9 @@ void CodeThorn::Analyzer::addToWorkList(const EState* estate) {
       exit(1);
     }
     switch(_explorationMode) {
+    case EXPL_UNDEFINED:
+      cerr<<"Error: undefined state exploration mode. Bailing out."<<endl;
+      exit(1);
     case EXPL_DEPTH_FIRST: estateWorkListCurrent->push_front(estate);break;
     case EXPL_BREADTH_FIRST: estateWorkListCurrent->push_back(estate);break;
     case EXPL_RANDOM_MODE1: {
@@ -704,6 +730,11 @@ void CodeThorn::Analyzer::addToWorkList(const EState* estate) {
       }
       break;
     }
+    case EXPL_TOPOLOGIC_SORT:
+      // must be estatePriorityWorkList
+      ROSE_ASSERT(dynamic_cast<EStatePriorityWorkList*>(estateWorkListCurrent));
+      estateWorkListCurrent->push_front(estate);
+      break;
     default:
       SAWYER_MESG(logger[ERROR])<<"unknown exploration mode."<<endl;
       exit(1);

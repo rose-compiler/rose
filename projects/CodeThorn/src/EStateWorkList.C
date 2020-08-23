@@ -1,5 +1,8 @@
 #include "EStateWorkList.h"
 
+CodeThorn::EStateWorkList::~EStateWorkList() {
+}
+
 size_t CodeThorn::EStateWorkList::size() {
   return _list.size();
 }

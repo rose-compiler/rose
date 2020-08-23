@@ -3,7 +3,6 @@
 
 #include <list>
 
-
 namespace CodeThorn {
 
   class EState;
@@ -11,16 +10,17 @@ namespace CodeThorn {
   class EStateWorkList {
   public:
     typedef std::list<const EState*>::iterator iterator;
-    bool empty();
-    void push_front(const EState* el);
-    void pop_front();
-    const EState* front();
-    void push_back(const EState*);
-    size_t size();
-    void clear();
-    iterator begin();
-    iterator end();
-  private:
+    virtual bool empty();
+    virtual void push_front(const EState* el);
+    virtual void pop_front();
+    virtual const EState* front();
+    virtual void push_back(const EState*);
+    virtual size_t size();
+    virtual void clear();
+    virtual iterator begin();
+    virtual iterator end();
+    virtual ~EStateWorkList();
+  protected:
     std::list<const EState*> _list;
   };
 }
