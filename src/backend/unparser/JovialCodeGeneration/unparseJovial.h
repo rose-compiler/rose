@@ -21,6 +21,7 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info);
           virtual void unparseLanguageSpecificExpression (SgExpression* expr, SgUnparse_Info& info);
 
+          virtual void unparseNullptrVal             (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseStringVal              (SgExpression* expr, SgUnparse_Info& info);  
 
           virtual void unparseDefineDeclStmt         (SgStatement* stmt, SgUnparse_Info& info);
@@ -29,7 +30,6 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseCompoolStmt            (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseProgHdrStmt            (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseProcDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
-      //  virtual void unparseFuncDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseFuncDefnStmt           (SgStatement* stmt, SgUnparse_Info& info);
 
           virtual void unparseNamespaceDeclarationStatement(SgStatement* stmt, SgUnparse_Info& info);
@@ -54,7 +54,8 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
 
           virtual void unparseEnumDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseOverlayDeclStmt        (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseTableDeclStmt          (SgStatement* stmt, SgUnparse_Info& info);
+                  void unparseTableDeclStmt          (SgStatement* stmt, SgUnparse_Info& info);
+                  void unparseTableBody              (SgClassDefinition* table_def, SgUnparse_Info& info);
 
           virtual void unparseVarDeclStmt            (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseVarDecl                (SgStatement* stmt, SgInitializedName* initializedName, SgUnparse_Info& info);

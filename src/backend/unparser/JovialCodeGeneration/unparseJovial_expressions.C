@@ -12,6 +12,11 @@
 #endif
 
 
+void Unparse_Jovial::unparseNullptrVal (SgExpression* expr, SgUnparse_Info& info)
+  {
+     curprint("NULL");
+  }
+
 void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info) 
   {
     ASSERT_not_null(expr);
@@ -88,12 +93,24 @@ Unparse_Jovial::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseAssignOp(SgExpression* expr, SgUnparse_Info& info) 
   {
-     SgBinaryOp* op = isSgBinaryOp(expr);
+     SgAssignOp* op = isSgAssignOp(expr);
      ASSERT_not_null(op);
 
-     unparseExpression(op->get_lhs_operand(), info);
+     SgExpression* lhs = op->get_lhs_operand();
+     SgExpression* rhs = op->get_rhs_operand();
+
+     unparseExpression(lhs, info);
+
+  // An assignment statement may have multiple variables
+     while (SgAssignOp* assign_op = isSgAssignOp(rhs))
+        {
+           curprint(",");
+           unparseExpression(assign_op->get_lhs_operand(), info);
+           rhs = assign_op->get_rhs_operand();
+        }
+
      curprint(" = ");
-     unparseExpression(op->get_rhs_operand(), info);
+     unparseExpression(rhs, info);
      curprint(";");
   }
 
@@ -257,9 +274,32 @@ Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
    // function name
       unparseExpression(func_call->get_function(), info);
 
-   // argument list
+   // unparse arguments individually to separate the input and output parameters
+   //
+      bool firstOutParam = false;
+      bool foundOutParam = false;
+
       curprint("(");
-      unparseExpression(func_call->get_args(), info);
+
+      int i = 0;
+// Replace following with C++11
+      foreach(SgInitializedName* arg, formal_params)
+//    for (SgInitializedName* arg : formal_params)
+        {
+           if (arg->get_storageModifier().isMutable() && foundOutParam == false)
+              {
+                 firstOutParam = true;
+                 foundOutParam = true;
+                 curprint(":");
+              }
+
+           // Don't output comma if this is the first out parameter
+           if (i > 0 && firstOutParam == false) curprint(",");
+           firstOutParam = false;
+
+        // curprint(arg->get_name());
+           unparseExpression(actual_params[i++], info);
+        }
       curprint(")");
    }
 
@@ -420,7 +460,8 @@ Unparse_Jovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info)
      ASSERT_not_null(default_sublist);
      ASSERT_not_null(specified_sublist);
 
-     bool has_specified_sublist = (specified_sublist->get_expressions().size() == 2);
+     int sublist_size = specified_sublist->get_expressions().size();
+     bool has_specified_sublist = (sublist_size > 0);
 
   // Unparse the optional DefaultPresetSublist
      if (default_sublist->get_expressions().size() > 0)
@@ -431,13 +472,21 @@ Unparse_Jovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info)
 
      if (has_specified_sublist)
         {
-        // Unparse the PresetIndexSpecifier
-           curprint("POS(");
-           unparseExpression(specified_sublist->get_expressions()[0], info);
-           curprint("): ");
+        // They come in pairs
+           ROSE_ASSERT((sublist_size % 2) == 0);
 
-        // Unparse the PresetValuesOption
-           unparseExpression(specified_sublist->get_expressions()[1], info);
+           for (int i=0; i < 1+sublist_size/2; i+=2)
+              {
+              // Unparse the PresetIndexSpecifier
+                 curprint("\n");
+                 curprint_indented("    POS(", info);
+                 unparseExpression(specified_sublist->get_expressions()[i], info);
+                 curprint("): ");
+
+              // Unparse the PresetValuesOption
+                 unparseExpression(specified_sublist->get_expressions()[i+1], info);
+                 if (i+2 < sublist_size) curprint(",");
+              }
         }
   }
 

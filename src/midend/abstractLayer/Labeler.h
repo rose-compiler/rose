@@ -199,6 +199,19 @@ class Labeler {
   bool isConditionLabel(Label lab);
   bool isLoopConditionLabel(Label lab);
   bool isSwitchExprLabel(Label lab);
+  
+  /** tests if @ref call and @ref ret are call and return labels of 
+   *  the same function call
+   */ 
+  virtual 
+  bool areCallAndReturnLabels(Label call, Label ret);
+
+  /** returns the call label for the provided return label. */
+  virtual 
+  Label getCallForReturnLabel(Label ret);
+  
+  virtual
+  LabelProperty getProperty(Label lbl); 
 
   // by default false for all labels. This must be set by the CF analysis.
   bool isExternalFunctionCallLabel(Label lab);

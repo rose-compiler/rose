@@ -670,6 +670,29 @@ bool Labeler::isBarrierLabel(Label lab) {
   return mappingLabelToLabelProperty[lab.getId()].isBarrierLabel();
 }
 
+bool Labeler::areCallAndReturnLabels(Label call, Label ret) 
+{
+  return (  isFunctionCallLabel(call) 
+         && isFunctionCallReturnLabel(ret)
+         && call.getId()+1 == ret.getId()   // alternatively, the underlying node could be compared
+         );
+}
+  
+Label Labeler::getCallForReturnLabel(Label ret) 
+{
+  ROSE_ASSERT(isFunctionCallReturnLabel(ret));
+  
+  Label call(ret.getId() - 1);
+  ROSE_ASSERT(isFunctionCallLabel(call));
+  
+  return call;
+}
+
+LabelProperty Labeler::getProperty(Label lbl)
+{
+  return mappingLabelToLabelProperty.at(lbl.getId());
+}
+
 LabelSet Labeler::getLabelSet(set<SgNode*>& nodeSet) {
   LabelSet lset;
   for(set<SgNode*>::iterator i=nodeSet.begin();i!=nodeSet.end();++i) {
