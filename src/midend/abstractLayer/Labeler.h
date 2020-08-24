@@ -192,6 +192,19 @@ class Labeler {
   bool isJoinLabel(Label lab);
   bool isWorkshareLabel(Label lab);
   bool isBarrierLabel(Label lab);
+  
+  /** tests if @ref call and @ref ret are call and return labels of 
+   *  the same function call
+   */ 
+  virtual 
+  bool areCallAndReturnLabels(Label call, Label ret);
+
+  /** returns the call label for the provided return label. */
+  virtual 
+  Label getCallForReturnLabel(Label ret);
+  
+  virtual
+  LabelProperty getProperty(Label lbl); 
 
 #if 1
   // by default false for all labels. This must be set by the CF analysis.

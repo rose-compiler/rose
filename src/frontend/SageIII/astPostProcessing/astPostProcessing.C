@@ -37,6 +37,11 @@ void AstPostProcessing (SgNode* node)
      printf ("+++++++++++++++++++++++++++++++++++++++++++++++ \n");
 #endif
 
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
   // DQ (1/31/2014): We want to enforce this, but for now issue a warning if it is not followed.
   // Later I want to change the function's API to onoy take a SgProject.  Note that this is 
   // related to a performance bug that was fixed by Gergo a few years ago.  The fix could be
@@ -222,6 +227,12 @@ void postProcessingSupport (SgNode* node)
        // DQ (7/14/2020): DEBUGGING: Check initializers.
           printf ("Test 1 in postProcessingSupport() \n");
           SageInterface::checkForInitializers(node);
+#endif
+
+#if 0
+       // DQ (8/12/2020): Adding support for debugging access permissions (see Cxx_tests/test2020_28.C).
+          printf ("Calling checkAccessPermissions() at START of astPostprocessing \n");
+          SageInterface::checkAccessPermissions(node);
 #endif
 
 // DQ (10/27/2015): Added test to detect cycles in typedef types.
@@ -679,6 +690,18 @@ void postProcessingSupport (SgNode* node)
           SageInterface::checkForInitializers(node);
 #endif
 
+#if 0
+       // DQ (8/12/2020): Adding support for debugging access permissions (see Cxx_tests/test2020_28.C).
+          printf ("Calling checkAccessPermissions() at END of astPostprocessing \n");
+          SageInterface::checkAccessPermissions(node);
+#endif
+
+#if 0
+       // DQ (8/14/2020): Adding support for debugging symbol visability (see Cxx_tests/test2020_33.C).
+          printf ("Calling checkAccessPermissions() at END of astPostprocessing \n");
+          SageInterface::checkSymbolTables(node);
+#endif
+
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("DONE: Postprocessing AST build using new EDG/Sage Translation Interface. \n");
 #endif
@@ -1002,7 +1025,6 @@ void postProcessingSupport (SgNode* node)
                        }
                   }
              }
-
         }
    }
 

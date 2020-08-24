@@ -106,27 +106,27 @@ RemoveInitializedNamePtr::evaluateInheritedAttribute (
                  //      && !(mfdnode->get_parent()->variantT() == V_SgGlobal) /* but do not cut off at nodes ref.to by SgGlobal */)
 
                  // DQ (9/13/2011): Reported as possible NULL value in static analysis of ROSE code.
-                    ROSE_ASSERT(mfdnode->get_parent() != NULL);
+                    if (mfdnode->get_definition()->get_parent() != NULL) {
+                       if (mfdnode->get_definition()->get_parent() != node) { /* cut off in class */
+                          ROSE_ASSERT(mfdnode->get_parent() != NULL);
+                          if ( ! (mfdnode->get_parent()->variantT() == V_SgGlobal)) { /* but do not cut off at nodes ref.to by SgGlobal */
+                             printf ("mfdnode->get_parent() = %p = %s \n",mfdnode->get_parent(),mfdnode->get_parent()->sage_class_name());
+                             ROSE_ASSERT(mfdnode->get_definition()->get_parent() == node);
+                             ROSE_ASSERT(mfdnode->get_parent()->variantT() != V_SgGlobal);
 
-                    if ( (mfdnode->get_definition()->get_parent() != NULL) && 
-                         (mfdnode->get_definition()->get_parent() != node) && /* cut off in class */
-                       !(mfdnode->get_parent()->variantT() == V_SgGlobal) /* but do not cut off at nodes ref.to by SgGlobal */) 
-                       {
-                         printf ("mfdnode->get_parent() = %p = %s \n",mfdnode->get_parent(),mfdnode->get_parent()->sage_class_name());
-                         ROSE_ASSERT(mfdnode->get_definition()->get_parent() == node);
-                         ROSE_ASSERT(mfdnode->get_parent()->variantT() != V_SgGlobal);
+                          // DQ (12/5/2003): This case is now an error and should no longer be required.  The
+                          // fix was made in the EDG/SAGE interface code so to test that fix we make it an error here.
+                             printf ("In AstFixes.C: Eliminated this fix of the AST (now an error, fix is not required) \n");
+                             ROSE_ASSERT (false);
 
-                      // DQ (12/5/2003): This case is now an error and should no longer be required.  The
-                      // fix was made in the EDG/SAGE interface code so to test that fix we make it an error here.
-                         printf ("In AstFixes.C: Eliminated this fix of the AST (now an error, fix is not required) \n");
-                         ROSE_ASSERT (false);
-
-                      // DQ (5/18/2005): Removed definition_ref since it is redundant with definingDeclaration and firstNondefiningDeclaration.
-                      // DQ This code is not reached but left as documentation about how the problem was previously fixed
-                      // mfdnode->set_definition_ref(mfdnode->get_definition()); // copy definition pointer
-                         mfdnode->set_definition(NULL); // nullify pointer to definition because it is
-                                                     // reachable from SgGlobal->SgMemberFunctionDeclaration as well
+                          // DQ (5/18/2005): Removed definition_ref since it is redundant with definingDeclaration and firstNondefiningDeclaration.
+                          // DQ This code is not reached but left as documentation about how the problem was previously fixed
+                          // mfdnode->set_definition_ref(mfdnode->get_definition()); // copy definition pointer
+                             mfdnode->set_definition(NULL); // nullify pointer to definition because it is
+                                                            // reachable from SgGlobal->SgMemberFunctionDeclaration as well
+                          }
                        }
+                    }
                   }
                break;
              }

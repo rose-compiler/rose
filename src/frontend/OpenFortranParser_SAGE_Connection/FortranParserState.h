@@ -53,8 +53,10 @@ struct CaseValueRange {
    CaseValueRange() { reset(); }
 
    int numValues;
+   bool hasSuffix;
+   bool hasSuffixExpr;
    SgExpression* values[2];
-   void reset() {numValues=0; values[0]=NULL; values[1]=NULL;}
+   void reset() {numValues=0; hasSuffix=false; hasSuffixExpr=false; values[0]=NULL; values[1]=NULL;}
 };
 
 } // namespace Rose

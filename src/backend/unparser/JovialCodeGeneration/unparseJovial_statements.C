@@ -938,6 +938,15 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
      unp->cur.insert_newline(1);
 
+  // Unparse table body
+     unparseTableBody(table_def, info);
+   }
+
+void
+Unparse_Jovial::unparseTableBody(SgClassDefinition* table_def, SgUnparse_Info& info)
+   {
+     ASSERT_not_null(table_def);
+
   // Unparse body if present
      if (table_def->get_members().size() > 0)
         {
@@ -959,7 +968,7 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     {
                        // do nothing for a null declaration (may want to unparse ";\n")
                     }
-                 else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
+                 else cerr << "WARNING UNIMPLEMENTED: Unparse of unknown table member type \n";
               }
            info.dec_nestingLevel();
 
@@ -998,6 +1007,13 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgClassDeclaration* type_decl = isSgClassDeclaration(type->getAssociatedDeclaration());
      if (type_decl) {
         is_block = (type_decl->get_class_type() == SgClassDeclaration::e_jovial_block);
+
+     // Type could be an SgModifierType, for tables and blocks, save trouble and unwrap here
+        if (SgModifierType* modifier_type = isSgModifierType(type))
+           {
+              type = modifier_type->get_base_type();
+              ASSERT_not_null(type);
+           }
      }
 
      bool type_has_base_type = false;
@@ -1118,31 +1134,10 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
            SgClassDefinition* table_def = table_decl->get_definition();
            ASSERT_not_null(table_def);
 
-           if (table_def->get_members().size() > 0)
-              {
-                 curprint(";\n");
+           curprint(";\n");
 
-                 info.inc_nestingLevel();
-                 curprint_indented("BEGIN\n", info);
-
-                 info.inc_nestingLevel();
-                 foreach(SgDeclarationStatement* item_decl, table_def->get_members())
-                    {
-                       if (isSgVariableDeclaration(item_decl))
-                          {
-                             unparseVarDeclStmt(item_decl, info);
-                          }
-                       else if (isSgEmptyDeclaration(item_decl))
-                          {
-                             // do nothing for a null declaration (may want to unparse ";\n")
-                          }
-                       else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
-                    }
-                 info.dec_nestingLevel();
-
-                 curprint_indented("END\n", info);
-                 info.dec_nestingLevel();
-              }
+        // Unparse table body
+           unparseTableBody(table_def, info);
         }
      else
         {
