@@ -62,7 +62,8 @@ initializeParallelPartitioner(PP::Partitioner &pp, P2::Partitioner &p) {
         for (auto function: functions) {
             debug <<"insert staring point " <<StringUtility::addrToString(function->address())
                   <<" from function prologue matcher\n";
-            pp.makeInstruction(function->address());
+            PP::InsnInfo::Ptr insn = pp.makeInstruction(function->address());
+            insn->functionReasons(function->reasons());
             pp.scheduleDecodeInstruction(function->address());
         }
         if (searchVa == p.memoryMap()->hull().greatest())

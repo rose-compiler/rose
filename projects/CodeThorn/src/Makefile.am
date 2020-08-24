@@ -49,7 +49,10 @@ CODETHORN_SOLO_HEADER_FILES=\
   CtxAttribute.h \
   CtxLattice.h \
   CtxPropertyStateFactory.h \
+  CtxReachabilityFactory.h \
+  CtxReachabilityTransfer.h \
   CtxTransfer.h \
+  DataDependenceVisualizer.h \
   EqualityMaintainer.h \
   Evaluator.h \
   ExecutionTrace.h \
@@ -84,8 +87,10 @@ CODETHORN_HEADER_FILES=\
   CppStdUtilities.h \
   CTIOLabeler.h \
   CtxCallStrings.h \
-  CtxSolver0.h \
   CtxPrioritySolver.h \
+  CtxReachabilityAnalysis.h \
+  CtxReachabilityLattice.h \
+  CtxSolver0.h \
   DataDependenceVisualizer.h \
   DataRaceDetection.h \
   defUseQuery.h \
@@ -208,8 +213,10 @@ CODETHORN_SOURCE_FILES=\
   CppStdUtilities.C \
   CTIOLabeler.C \
   CtxCallStrings.C \
-  CtxSolver0.C \
   CtxPrioritySolver.C \
+  CtxReachabilityAnalysis.C \
+  CtxReachabilityLattice.C \
+  CtxSolver0.C \
   DataDependenceVisualizer.C \
   defUseQuery.C \
   DataRaceDetection.C \

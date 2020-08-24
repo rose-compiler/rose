@@ -503,7 +503,16 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
       delete old_val;
    }
 
-   SgAssignOp* assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(vars[0], rhs);
+   SgAssignOp* assign_op = nullptr;
+   SgExpression* new_rhs = rhs;
+
+// Jovial may have more than one variable in an assignment statement
+   for (int i = vars.size()-1; i >= 0; i--) {
+      assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(vars[i], new_rhs);
+      new_rhs = assign_op;
+   }
+   ROSE_ASSERT(assign_op);
+
    assign_stmt = SageBuilder::buildExprStatement_nfi(assign_op);
 }
 

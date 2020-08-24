@@ -1,0 +1,8 @@
+START
+PROGRAM main;
+BEGIN
+  ITEM temp1 U;
+  ITEM temp2 U;
+  temp1, temp2 = 5;
+END
+TERM

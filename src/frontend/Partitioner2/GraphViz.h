@@ -6,9 +6,9 @@
 
 #include <ostream>
 #include <BinaryNoOperation.h>
+#include <BinarySourceLocations.h>
 #include <boost/regex.hpp>
 #include <Color.h>
-#include <DwarfLineMapper.h>
 #include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/FunctionCallGraph.h>
 
@@ -445,7 +445,7 @@ class ROSE_DLL_API CfgEmitter: public BaseEmitter<ControlFlowGraph> {
     Color::HSV funcEnterColor_;                         // background color for function entrance blocks
     Color::HSV funcReturnColor_;                        // background color for function return blocks
     Color::HSV warningColor_;                           // background color for special nodes and warnings
-    DwarfLineMapper srcMapper_;                         // maps addresses to source code (optional)
+    SourceLocations srcMapper_;                         // maps addresses to source code (optional)
     static unsigned long versionDate_;                  // date code from "dot -V", like 20100126
     NoOperation noOpAnalysis_;
 
@@ -586,9 +586,9 @@ public:
      *  If an address to source mapping is provided then source location information will be shown in each vertex.
      *
      * @{ */
-    const DwarfLineMapper& srcMapper() const { return srcMapper_; }
-    DwarfLineMapper& srcMapper() { return srcMapper_; }
-    void srcMapper(const DwarfLineMapper &mapper) { srcMapper_ = mapper; }
+    const SourceLocations& srcMapper() const { return srcMapper_; }
+    SourceLocations& srcMapper() { return srcMapper_; }
+    void srcMapper(const SourceLocations &mapper) { srcMapper_ = mapper; }
     /** @} */
 
 

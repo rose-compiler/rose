@@ -17,6 +17,8 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
+#include <sstream>
 
 namespace Rose {
 
@@ -196,11 +198,10 @@ static SgFile* parseJavaFile(const std::string &fileName)
     // Read in the file as a string.  Easiest way is to use the MemoryMap facilities.
     std::string sourceCode;
     {
-        using namespace BinaryAnalysis;
-        MemoryMap::Buffer::Ptr buffer = MemoryMap::MappedBuffer::instance(fileName);
-        char *charBuf = new char[buffer->size()];
-        buffer->read((uint8_t*)charBuf, 0, buffer->size());
-        sourceCode = std::string(charBuf, buffer->size());
+        std::ostringstream ss;
+        std::ifstream file(fileName.c_str());
+        ss <<file.rdbuf();
+        sourceCode = ss.str();
     }
 
     // Get the package name etc. from the file contents.  We must know these before we can parse the file.

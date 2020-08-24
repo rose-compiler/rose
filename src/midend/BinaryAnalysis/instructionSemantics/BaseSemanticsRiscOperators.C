@@ -142,6 +142,19 @@ RiscOperators::subtractCarry(const SValuePtr &minuend, const SValuePtr &subtrahe
 }
 
 SValuePtr
+RiscOperators::countLeadingZeros(const SValuePtr &a) {
+    SValuePtr idx = mostSignificantSetBit(a);
+    SValuePtr width = number_(a->get_width(), a->get_width());
+    SValuePtr diff = subtract(number_(a->get_width(), a->get_width()-1), idx);
+    return ite(equalToZero(a), width, diff);
+}
+
+SValuePtr
+RiscOperators::countLeadingOnes(const SValuePtr &a) {
+    return countLeadingZeros(invert(a));
+}
+
+SValuePtr
 RiscOperators::isEqual(const SValuePtr &a, const SValuePtr &b) {
     return equalToZero(xor_(a, b));
 }

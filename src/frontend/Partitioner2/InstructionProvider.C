@@ -24,8 +24,10 @@ InstructionProvider::operator[](rose_addr_t va) const {
                     ASSERT_require(insn->get_size()==1);
                 }
             }
+            ASSERT_not_null(insn);
+            ASSERT_require(insn->get_address() == va);
+            insnMap_.insert(va, insn);
         }
-        insnMap_.insert(va, insn);
     }
     return insn;
 }
