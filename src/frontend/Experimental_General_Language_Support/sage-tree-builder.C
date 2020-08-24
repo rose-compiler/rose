@@ -728,6 +728,67 @@ Leave(SgWhileStmt* while_stmt, bool has_end_do_stmt)
    SageInterface::appendStatement(while_stmt, SageBuilder::topScopeStack());
 }
 
+void SageTreeBuilder::
+Enter(SgImplicitStatement* &implicit_stmt, bool none_external, bool none_type)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgImplicitStatement* &, bool none_external, bool none_type)\n";
+   // Implicit None
+
+   implicit_stmt = new SgImplicitStatement(true /* implicit none*/);
+   ROSE_ASSERT(implicit_stmt);
+   SageInterface::setSourcePosition(implicit_stmt);
+
+   if (none_external && none_type) {
+      implicit_stmt->set_implicit_spec(SgImplicitStatement::e_none_external_and_type);
+   }
+   else if (none_external) {
+      implicit_stmt->set_implicit_spec(SgImplicitStatement::e_none_external);
+   }
+   else if (none_type) {
+      implicit_stmt->set_implicit_spec(SgImplicitStatement::e_none_type);
+   }
+}
+
+void SageTreeBuilder::
+Enter(SgImplicitStatement* &implicit_stmt, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &implicit_spec_list)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgImplicitStatement* &, implicit_spec_list)\n";
+   // Implicit with Implicit-Spec
+
+   // Step through the list of Implicit Specs
+   for (std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>> implicit_spec : implicit_spec_list) {
+      SgType* type;
+      std::list<std::tuple<char, boost::optional<char>>> letter_spec_list;
+      std::tie(type, letter_spec_list) = implicit_spec;
+
+      std::cout << "The type is " << type->class_name() << " and the letters are ";
+
+      // Traverse the list of letter specs
+      for (std::tuple<char, boost::optional<char>> letter_spec : letter_spec_list) {
+         char first;
+         boost::optional<char> second;
+         std::tie(first, second) = letter_spec;
+
+         std::cout << first;
+
+         if (second) {
+            std::cout << " - " << second;
+         }
+         std::cout << "\n";
+      }
+   }
+
+}
+
+void SageTreeBuilder::
+Leave(SgImplicitStatement* implicit_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgImplicitStatement*, ...) \n";
+   ROSE_ASSERT(implicit_stmt);
+
+   SageInterface::appendStatement(implicit_stmt, SageBuilder::topScopeStack());
+}
+
 SgEnumVal* SageTreeBuilder::
 ReplaceEnumVal(SgEnumType* enum_type, const std::string &name)
 {
@@ -826,24 +887,20 @@ Leave(SgJovialDirectiveStatement* directive)
 }
 
 void SageTreeBuilder::
-Enter(SgJovialForThenStatement* &for_stmt, SgExpression* init_expr, SgExpression* incr_expr,
-         SgExpression* test_expr)
+Enter(SgJovialForThenStatement* &for_stmt, SgExpression* init_expr, SgExpression* while_expr,
+      SgExpression* by_or_then_expr, SgJovialForThenStatement::loop_statement_type_enum loop_type)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialForThenStatement* &, ...) \n";
 
+// The increment and test expressions can be nullptr (at least from the grammar)
    ROSE_ASSERT(init_expr);
-   ROSE_ASSERT(incr_expr);
-   ROSE_ASSERT(test_expr);
 
-   SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
+   for_stmt = SageBuilder::buildJovialForThenStatement_nfi(init_expr, while_expr, by_or_then_expr);
 
-   for_stmt = new SgJovialForThenStatement(init_expr, incr_expr, test_expr, body);
-   ROSE_ASSERT(for_stmt);
-   SageInterface::setSourcePosition(for_stmt);
+   SgBasicBlock* body = for_stmt->get_loop_body();
+   ROSE_ASSERT(body);
 
-   if (SageInterface::is_language_case_insensitive()) {
-      for_stmt->setCaseInsensitive(true);
-   }
+   for_stmt->set_loop_statement_type(loop_type);
 
    SageBuilder::pushScopeStack(body);
 }

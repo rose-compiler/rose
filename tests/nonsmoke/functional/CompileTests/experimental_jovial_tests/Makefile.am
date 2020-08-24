@@ -34,6 +34,10 @@ JOVIAL_TESTCODES = \
  2_1_3_constant_table_var.jov           \
  2_1_6_block_preset_list.jov            \
  2_4_define_j.jov                       \
+ 4_2_loop_stmt_b.jov                    \
+ 4_2_loop_stmt_b1.jov                   \
+ 4_2_loop_stmt_d.jov                    \
+ 4_2_loop_stmt_d1.jov                   \
  4_2_loop_stmt_while_a.jov              \
  4_2_loop_stmt_while_b.jov              \
  4_3_if_stmt_a.jov                      \
@@ -65,6 +69,7 @@ JOVIAL_TESTCODES = \
  rose-issue-2776.jov                    \
  rose-issue-rc-2.jov                    \
  rose-issue-rc-19.jov                   \
+ rose-issue-rc-41a.jov                  \
  rose-issue-rc-42a.jov                  \
  rose-issue-rc-42b.jov                  \
  rose-issue-rc-69.jov
@@ -78,7 +83,6 @@ JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \
  tables_and_pointers.jov                \
  2_1_1_5_char_item_desc.jov             \
- 4_2_loop_stmt_b1.jov                   \
  4_2_loop_stmt_d1.jov                   \
  4_3_if_else_stmt.jov                   \
  4_6_return_stmt_a.jov                  \
@@ -198,9 +202,7 @@ JOVIAL_TESTCODES_WORKING_ON = \
  1_2_3_program-body_h.jov               \
  4_1_assignment_stmt_a.jov              \
  4_1_assignment_stmt_b.jov              \
- 4_2_loop_stmt_b.jov                    \
  4_2_loop_stmt_c.jov                    \
- 4_2_loop_stmt_d.jov                    \
  4_6_return_stmt_b.jov                  \
  4_10_abort_stmt_c.jov                  \
  5_1_1_integer-factor.jov               \
