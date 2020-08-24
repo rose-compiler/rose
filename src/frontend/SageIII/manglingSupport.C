@@ -373,6 +373,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                case V_SgDoWhileStmt:
                case V_SgForStatement:
                case V_SgIfStmt:
+               case V_SgJovialForThenStatement:
                case V_SgSwitchStatement:
                case V_SgWhileStmt:
                case V_SgBasicBlock:
