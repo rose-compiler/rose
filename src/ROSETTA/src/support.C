@@ -601,6 +601,10 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("static bool","extern_C_with_braces","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/24/2020): debugging Cxx_tests/test2020_44.C need to communicate when to suppress extra parenthesis use around SgFunctionType arguments.
+     Unparse_Info.setDataPrototype("bool","context_for_added_parentheses","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
      ExpBaseClass.setFunctionPrototype        ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
