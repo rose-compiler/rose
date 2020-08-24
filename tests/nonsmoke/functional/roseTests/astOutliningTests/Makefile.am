@@ -103,6 +103,10 @@ CXX2_TESTS_REQUIRED_TO_PASS =                \
 	test_37_2020.cpp \
 	ft_cfftz.cpp
 
+#This set of CPP files must contain main() to run
+CXX4_TESTS_REQUIRED_TO_RUN=	\
+	ft_cfftz_omp.cpp
+
 # DQ (11/14/2017): This is failing and I need to learn the depth of what is the problem for the outlining tests.
 # I think I need to work with Liao on this when he is back from vacation.
 #	moreTest2.cpp				
@@ -329,7 +333,7 @@ $(dlopen2_test_targets): dlopen2_%.passed: % outline
 		$(TEST_EXIT_STATUS) $@
 
 # Liao, 2020//25
-# test the new option  -rose:outline:copy_orig_file , which copies input file into a lib source file and append all outlined functions to the single lib source file. This eliminates the need to copy dependent headers and prototypes into the lib source file. 
+# Similar to dlopen3, additionally
 # combined with -rose:unparseHeaderFiles -rose:unparseHeaderFilesRootFolder
 dlopen3_test_targets = $(addprefix dlopen3_,  $(addsuffix .passed, $(CXX2_TESTS_REQUIRED_TO_PASS)))
 TEST_TARGETS += $(dlopen3_test_targets)
@@ -347,8 +351,30 @@ $(dlopen3_test_targets): dlopen3_%.passed: % outline
 		$(TEST_EXIT_STATUS) $@
 
 # shortcut to test the dlopen feature
-test_dlopen: $(dlopen_test_targets) $(dlopen2_test_targets) $(dlopen3_test_targets)
 test_dlopen3: $(dlopen3_test_targets)
+
+# Liao, 2020/8/2r
+# 
+# combined with -rose:unparseHeaderFiles -rose:unparseHeaderFilesRootFolder
+dlopen4_test_targets = $(addprefix dlopen4_,  $(addsuffix .passed, $(CXX4_TESTS_REQUIRED_TO_RUN)))
+TEST_TARGETS += $(dlopen4_test_targets)
+dlopen4_test_flags = -fpermissive	\
+	-rose:outline:select_omp_loop           \
+	-rose:outline:use_dlopen		\
+	-rose:outline:copy_orig_file		\
+	-I$(abs_top_srcdir)/projects/autoTuning	\
+	-rose:unparseHeaderFilesRootFolder unparseHeaderRoot_dlopen4
+
+$(dlopen4_test_targets): dlopen4_%.passed: % outline
+	@$(RTH_RUN) \
+		TITLE="outine dlopen4 $(notdir $<) [$@]" \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen4_test_flags) -c $(abspath $<)" \
+		$(TEST_EXIT_STATUS) $@
+
+# shortcut to test the dlopen feature
+test_dlopen: $(dlopen_test_targets) $(dlopen2_test_targets) $(dlopen3_test_targets) $(dlopen4_test_targets)
+test_dlopen4: $(dlopen4_test_targets)
 
 
 #------------------------------------------------------------------------------------------------------------------------
