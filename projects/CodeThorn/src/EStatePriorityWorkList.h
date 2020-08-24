@@ -6,6 +6,7 @@
 #include <sstream>
 #include <vector>
 #include "EStateWorkList.h"
+#include "TopologicalSort.h"
 
 // Author: Markus Schordan, 2020.
 
@@ -43,7 +44,7 @@ struct PriorityElement {
   
   class EStatePriorityWorkList : public EStateWorkList {
   public:
-    EStatePriorityWorkList();
+    EStatePriorityWorkList(CodeThorn::TopologicalSort::LabelToPriorityMap map);
     bool empty();
     void push_front(const EState* el);
     void pop_front();
@@ -59,6 +60,7 @@ struct PriorityElement {
     //typedef std::priority_queue <EStatePriElem> EStateMaxPriorityQueueType;
     typedef EStateMinPriorityQueueType EStatePriorityQueueType;
  protected:
+    TopologicalSort::LabelToPriorityMap _labelToPriorityMap;
     EStatePriorityQueueType _list;
   };
 }

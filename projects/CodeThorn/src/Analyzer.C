@@ -104,13 +104,17 @@ void CodeThorn::Analyzer::setWorkLists(ExplorationMode explorationMode) {
     ROSE_ASSERT(getFlow()->getStartLabel().isValid());
     TopologicalSort topSort(*getLabeler(),*getFlow());
     std::list<Label> labelList=topSort.topologicallySortedLabelList();
+#if 0
     cout<<"Topologic Sort:";
     for(auto label : labelList) {
       cout<<label.toString()<<" ";
     }
     cout<<endl;
-    estateWorkListCurrent = new EStatePriorityWorkList();
-    estateWorkListNext = new EStatePriorityWorkList(); // currently not used in loop aware mode
+#endif
+    TopologicalSort::LabelToPriorityMap map=topSort.labelToPriorityMap();
+    ROSE_ASSERT(map.size()>0);
+    estateWorkListCurrent = new EStatePriorityWorkList(map);
+    estateWorkListNext = new EStatePriorityWorkList(map); // currently not used in loop aware mode
     cout<<"STATUS: using topologic worklist."<<endl;
     break;
   }

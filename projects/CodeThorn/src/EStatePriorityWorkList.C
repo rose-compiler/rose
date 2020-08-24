@@ -1,4 +1,7 @@
+#include "sage3basic.h"
+#include "EState.h"
 #include "EStatePriorityWorkList.h"
+#include "TopologicalSort.h"
 #include <iostream>
 
 namespace CodeThorn {
@@ -7,7 +10,8 @@ bool operator==(const PriorityElement<const EState*>& e1, const PriorityElement<
 bool operator!=(const PriorityElement<const EState*>& c1, const PriorityElement<const EState*>& c2) { return !(c1==c2); }
 }
   
-CodeThorn::EStatePriorityWorkList::EStatePriorityWorkList() {
+CodeThorn::EStatePriorityWorkList::EStatePriorityWorkList(TopologicalSort::LabelToPriorityMap map) {
+  _labelToPriorityMap=map;
 }
 
 size_t CodeThorn::EStatePriorityWorkList::size() {
@@ -28,8 +32,14 @@ void CodeThorn::EStatePriorityWorkList::clear() {
 
 void CodeThorn::EStatePriorityWorkList::push_front(const EState* el) {
   // there is only one push method
-  static int priority=0; // this gives a normal work list (push_back does not work)
-  priority++;
+  //static int priority=0; // this gives a normal work list (push_back does not work)
+  //priority++;
+  ROSE_ASSERT(_labelToPriorityMap.size()>0);
+  int priority=_labelToPriorityMap[el->label()];
+  if(priority==0) {
+    std::cerr<<"Error: push_front: priority=0 for estate lab:"<<el->label().toString()<<std::endl;
+    exit(1);
+  }
   _list.push(PriorityElement<const EState*>(priority,el));
 }
 
@@ -40,6 +50,13 @@ void CodeThorn::EStatePriorityWorkList::push_back(const EState* el) {
 
 const CodeThorn::EState* CodeThorn::EStatePriorityWorkList::front() {
     auto el=_list.top();
+    int priority=el.priority;
+    //std::cout<<"DEBUG: EPWL: front(): pri:"<<el.priority<<" data:"<<el.data<<std::endl;
+    if(priority==0) {
+      std::cerr<<"Error: push_front: priority=0 for estate lab:"<<el.data->label().toString()<<std::endl;
+      
+      exit(1);
+    }
     return el.data;
 }
 
