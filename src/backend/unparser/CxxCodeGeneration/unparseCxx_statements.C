@@ -991,6 +991,10 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
 #if 0
+     printf ("In unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = %" PRIuPTR " \n",funcdecl_stmt->get_args().size());
+     curprint( string("\n/* In unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = ") + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
+#endif
+#if 0
      printf ("In unparseFunctionParameterDeclaration(): TOP \n");
      printf ("   --- funcdecl_stmt                                 = %p = %s \n",funcdecl_stmt,funcdecl_stmt->get_name().str());
      printf ("   --- funcdecl_stmt->get_type_syntax_is_available() = %s \n",funcdecl_stmt->get_type_syntax_is_available() ? "true" : "false");
@@ -1200,7 +1204,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      SgStorageModifier & storage = initializedName->get_storageModifier();
      if (storage.isExtern())
         {
-#if 1
+#if 0
           printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the extern keyword \n");
 #endif
           curprint("extern ");
@@ -1312,6 +1316,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
             // If we are using Clang then we might require this, GNU accepts with or without..
                if (isSgEnumType(tmp_type) != NULL)
                   {
+#error "DEAD CODE!"
                     ninfo.set_SkipClassSpecifier();
                   }
 #endif
@@ -1463,7 +1468,9 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
              {
                unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
              }
-
+#if 0
+          curprint("\n/* unparseFunctionArgs(): in loop over args: funcdecl_stmt->get_args().size() = " + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
+#endif
        // DQ (1/17/2014): Adding support in C to output function prototypes without function parameters.
        // unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
        // if (outputFunctionParameters == true)
@@ -1480,6 +1487,9 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
 #if 0
                     printf ("In unparseFunctionArgs(): Output the syntax for function parameters: (*p_syntax)->get_name() = %s \n",(*p_syntax)->get_name().str());
 #endif
+#if 0
+                    curprint("\n/* unparseFunctionArgs(): calling unparseFunctionParameterDeclaration (with syntax) */ \n");
+#endif
                     unparseFunctionParameterDeclaration (funcdecl_stmt,*p_syntax,false,info);
 
 #if 0
@@ -1489,6 +1499,9 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
                   }
                  else
                   {
+#if 0
+                    curprint("\n/* unparseFunctionArgs(): calling unparseFunctionParameterDeclaration (without syntax) */ \n");
+#endif
                     unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
                   }
              }

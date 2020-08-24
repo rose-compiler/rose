@@ -1922,7 +1922,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // DQ (9/9/2016): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES && 0
   // DQ (10/30/2013): Debugging support for file info data for each IR node (added comment only)
      printf ("Unparse statement (%p): %s name = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
 
@@ -6874,6 +6874,7 @@ UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnpa
      ASSERT_not_null(expr_list);
 
 #if 0
+     printf ("In unparseExprList(): expr = %p = %s \n",expr,expr->class_name().c_str());
      curprint("/* output SgExprListExp */");
 #endif
 
@@ -6900,8 +6901,32 @@ UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnpa
                        }
                   }
 #endif
+#if 0
+            // DQ (8/24/2020): debugging Cxx_tests/test2020_44.C need to communicate when to suppress extra parenthesis use around SgFunctionType arguments.
+               printf ("*i = %p = %s type = %s \n",*i,(*i)->class_name().c_str(),(*i)->get_type()->class_name().c_str());
+#endif
+            // DQ (8/24/2020): Added new data member to SgUnparse_Info.
+               bool context_for_added_parentheses = newinfo.get_context_for_added_parentheses();
+#if 0
+               printf ("context_for_added_parentheses = %s \n",context_for_added_parentheses ? "true" : "false");
+#endif
+            // DQ (8/24/2020): Function types need an extra parenthesis, set Cxx_tests/test2020_44.C).
+               bool needParen = (isSgFunctionType((*i)->get_type()) != NULL);
+
+               needParen = needParen && (context_for_added_parentheses == false);
+
+               if (needParen == true)
+                  {
+                    curprint("(");
+                  }
 
                unparseExpression(*i, newinfo);
+
+               if (needParen == true)
+                  {
+                    curprint(")");
+                  }
+
                i++;
                if (i != expr_list->get_expressions().end())
                   {
@@ -6913,6 +6938,11 @@ UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnpa
                   }
              }
         }
+
+#if 0
+     printf ("Leaving unparseExprList(): expr = %p = %s \n",expr,expr->class_name().c_str());
+     curprint("/* Leaving output SgExprListExp */");
+#endif
    }
 
 
@@ -8727,6 +8757,10 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgFoldExpression:   precedence_value = 0; break;
           case V_SgAwaitExpression:  precedence_value = 0; break;
           case V_SgChooseExpression: precedence_value = 0; break;
+
+       // DQ (8/23/2020): Working on Cxx_tests/test2020_44.C (niehter setting appear to make a difference here).
+       // case V_SgConstructorInitializer: precedence_value = 0; break;
+       // case V_SgConstructorInitializer: precedence_value = 16; break;
 
           default:
              {
