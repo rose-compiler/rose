@@ -1117,6 +1117,21 @@ SgType* buildComplexType(SgType* base_type)
    return SageBuilder::buildComplexType(base_type);
 }
 
+SgType* buildBoolType(SgExpression* kind_expr)
+{
+   return SageBuilder::buildBoolType(kind_expr);
+}
+
+SgType* buildIntType(SgExpression* kind_expr)
+{
+   return SageBuilder::buildIntType(kind_expr);
+}
+
+SgType* buildFloatType(SgExpression* kind_expr)
+{
+   return SageBuilder::buildFloatType(kind_expr);
+}
+
 SgType* buildStringType(SgExpression* stringLengthExpression)
 {
    return SageBuilder::buildStringType(stringLengthExpression);
