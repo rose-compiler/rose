@@ -6815,16 +6815,8 @@ ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCa
    SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
    params->append_expression(loc_arg_expr);
 
-   SgType* return_type = SageBuilder::buildPointerType(SgTypeUnknown::createType());
-   // TODO: I'm not sure how to type the pointer, perhaps it should be pointer to void
-       // Punting for the moment to translation stage.
-       // The following is a comment in SageBuilder::buildVarRefExp:
-           // if not found: put fake init name and symbol here and
-           // waiting for a postProcessing phase to clean it up
-           // two features: no scope and unknown type for initializedName
-       //
-       // Reproducers are rose-issue-rc-51.cpl and rose-issue-rc-52.cpl
-       // -------------------------------------------------------------
+   SgType* return_type = loc_arg_expr->get_type();
+   ROSE_ASSERT(return_type);
 
    func_call = SageBuilder::buildFunctionCallExp("LOC", return_type, params, SageBuilder::topScopeStack());
    ROSE_ASSERT(func_call);

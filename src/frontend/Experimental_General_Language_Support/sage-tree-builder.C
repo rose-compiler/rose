@@ -42,7 +42,7 @@ SgGlobal* initialize_global_scope(SgSourceFile* file)
  // by "1" the start and end will not be the same value.
     globalScope->get_endOfConstruct()->set_line(1);
 
-ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());//TEMPORARY
+    ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());//TEMPORARY
     ROSE_ASSERT(SageBuilder::emptyScopeStack() == true);
     SageBuilder::pushScopeStack(globalScope);
 
@@ -749,13 +749,18 @@ Enter(SgImplicitStatement* &implicit_stmt, bool none_external, bool none_type)
    }
 }
 
+#ifdef CPP_ELEVEN
 void SageTreeBuilder::
 Enter(SgImplicitStatement* &implicit_stmt, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &implicit_spec_list)
+#else
+void SageTreeBuilder::Enter(SgImplicitStatement* &implicit_stmt)
+#endif
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgImplicitStatement* &, implicit_spec_list)\n";
    // Implicit with Implicit-Spec
 
    // Step through the list of Implicit Specs
+#ifdef CPP_ELEVEN
    for (std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>> implicit_spec : implicit_spec_list) {
       SgType* type;
       std::list<std::tuple<char, boost::optional<char>>> letter_spec_list;
@@ -777,6 +782,9 @@ Enter(SgImplicitStatement* &implicit_stmt, std::list<std::tuple<SgType*, std::li
          std::cout << "\n";
       }
    }
+#else
+   implicit_stmt = nullptr;
+#endif
 
 }
 
