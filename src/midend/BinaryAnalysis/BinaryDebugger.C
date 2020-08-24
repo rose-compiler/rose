@@ -327,7 +327,7 @@ Debugger::registerDictionary() const {
     ASSERT_not_null(disassembler_);
     return disassembler_->registerDictionary();
 }
-    
+
 void
 Debugger::init() {
 
@@ -719,6 +719,48 @@ Debugger::readRegister(RegisterDescriptor desc) {
     return bits;
 }
 
+void
+Debugger::writeRegister(RegisterDescriptor desc, const Sawyer::Container::BitVector &bits) {
+    using namespace Sawyer::Container;
+
+    // Side effect is to update the regsPage if necessary.
+    (void) readRegister(desc);
+
+    // Look up register according to kernel word size rather than the actual size of the register.
+    RegisterDescriptor base(desc.majorNumber(), desc.minorNumber(), 0, kernelWordSize());
+
+    // Update the register page with the new data and write it to the process. Assume that memory is little endian.
+    size_t nUserBytes = (desc.offset() + desc.nBits() + 7) / 8;
+    size_t userOffset = 0;
+    if (userRegDefs_.getOptional(base).assignTo(userOffset)) {
+        ASSERT_require(userOffset + nUserBytes <= sizeof regsPage_);
+        for (size_t i = 0; i < nUserBytes; ++i)
+            regsPage_[userOffset + i] = bits.toInteger(BitVector::BitRange::baseSize(i*8, 8));
+        sendCommand(PTRACE_SETREGS, child_, 0, regsPage_);
+    } else if (userFpRegDefs_.getOptional(base).assignTo(userOffset)) {
+        ASSERT_require(userOffset + nUserBytes <= sizeof regsPage_);
+        for (size_t i = 0; i < nUserBytes; ++i)
+            regsPage_[userOffset + i] = bits.toInteger(BitVector::BitRange::baseSize(i*8, 8));
+#ifdef PTRACE_SETFPREGS
+        sendCommand(PTRACE_SETFPREGS, child_, 0, regsPage_);
+#elif defined(_MSC_VER)
+#pragma message("unable to save FP registers on this platform")
+#else
+#warning "unable to save FP registers on this platform"
+#endif
+    } else {
+        throw std::runtime_error("register is not available");
+    }
+}
+
+void
+Debugger::writeRegister(RegisterDescriptor desc, uint64_t value) {
+    using namespace Sawyer::Container;
+    BitVector bits(desc.nBits());
+    bits.fromInteger(value);
+    writeRegister(desc, bits);
+}
+
 Sawyer::Container::BitVector
 Debugger::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
     using namespace Sawyer::Container;
@@ -803,6 +845,56 @@ Debugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
 # endif
     throw std::runtime_error("cannot read subordinate memory (not implemented)");
 #endif
+}
+
+size_t
+Debugger::writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *buffer) {
+#ifdef __linux__
+    if (0 == nBytes)
+        return 0;
+
+    struct T {
+        int fd;
+        T(): fd(-1) {}
+        ~T() {
+            if (-1 != fd)
+                close(fd);
+        }
+    } mem;
+
+    // We could use PTRACE_POKEDATA, but it can be very slow if we're writing lots of memory since it only reads one word at a
+    // time. We'd also need to worry about alignment so we don't inadvertently write past the end of a memory region when we're
+    // try to write the last byte. Writing to  /proc/N/mem is faster and easier.
+    std::string memName = "/proc/" + StringUtility::numberToString(child_) + "/mem";
+    if (-1 == (mem.fd = open(memName.c_str(), O_RDWR)))
+        throw std::runtime_error("cannot open \"" + memName + "\": " + strerror(errno));
+    if (-1 == lseek(mem.fd, va, SEEK_SET))
+        return 0;                                       // bad address
+    size_t totalWritten = 0;
+    while (nBytes > 0) {
+        ssize_t nWritten = write(mem.fd, buffer, nBytes);
+        if (-1 == nWritten) {
+            if (EINTR == errno)
+                continue;
+        } else if (0 == nWritten) {
+            return totalWritten;
+        } else {
+            ASSERT_require(nWritten > 0);
+            ASSERT_require((size_t)nWritten <= nBytes);
+            nBytes -= nWritten;
+            buffer += nWritten;
+            totalWritten += nWritten;
+        }
+    }
+    return totalWritten;
+#else
+# ifdef _MSC_VER
+#   pragma message("writing to subordinate memory is not implemented")
+# else
+#   warning "writing to subordinate memory is not implemented"
+# endif
+#endif
+    throw std::runtime_error("cannot write to subordinate memory (not implemented)");
 }
 
 std::string

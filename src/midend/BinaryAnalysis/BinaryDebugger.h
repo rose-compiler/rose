@@ -67,7 +67,7 @@ public:
         /** Default construct an empty specimen descriptor. */
         Specimen()
             : persona_(getPersonality()), pid_(-1) {}
-        
+
         /** Construct a specimen description for a process. */
         Specimen(int pid) /*implicit*/
             : flags_(DEFAULT_FLAGS), persona_(getPersonality()), pid_(pid) {}
@@ -85,7 +85,7 @@ public:
             : flags_(DEFAULT_FLAGS), persona_(getPersonality()), program_(nameAndArgs.front()),
               arguments_(nameAndArgs.begin()+1, nameAndArgs.end()), pid_(-1) {
         }
-        
+
     public:
         /** Property: Name of executable program to run.
          *
@@ -141,7 +141,7 @@ public:
          *  multiple times to add multiple variables. The variables are added to the subordinate process without affecting this
          *  calling process. Additions happen after removals. */
         void insertEnvironmentVariable(const std::string &name, const std::string &value);
-        
+
         /** Property: Current working directory for running a program.
          *
          *  This property is only used for starting a new program, not for attaching to a process (which already has
@@ -196,7 +196,7 @@ public:
         bool randomizedAddresses() const;
         void randomizedAddresses(bool);
         /** @} */
-        
+
         /** Property: Process ID.
          *
          *  This is the identification number for a specimen process to which the debugger should be attached. Setting
@@ -275,7 +275,7 @@ public:
     static Ptr instance(const Specimen &specimen) {
         return Ptr(new Debugger(specimen));
     }
-    
+
     //----------------------------------------
     // Attaching to subordinate
     //----------------------------------------
@@ -348,7 +348,7 @@ public:
      *  rejected, and whether the tracing operation should continue or stop.  A default constructed @ref FilterAction will
      *  append the current address to the trace and continue tracing, which is normally what one wants. */
     typedef BitFlags<FilterActionFlags> FilterAction;
-    
+
     /** Run the program and return an execution trace.
      *
      *  At each step along the execution, the @p filter functor is invoked and passed the current execution address. The return
@@ -383,12 +383,33 @@ public:
      * @endcode */
     Sawyer::Container::BitVector readRegister(RegisterDescriptor);
 
+    /** Write subordinate register.
+     *
+     *  @{ */
+    void writeRegister(RegisterDescriptor, const Sawyer::Container::BitVector&);
+    void writeRegister(RegisterDescriptor, uint64_t value);
+    /** @} */
+
     /** Read subordinate memory as a bit vector.
      *
      * @code
      *  uint64_t value = debugger->readMemory(0x12345678, 4, ByteOrder::ORDER_LSB).toInteger();
      * @endcode */
     Sawyer::Container::BitVector readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness order);
+
+    /** Writes some bytes to subordinate memory.
+     *
+     *  Returns the number of bytes written. */
+    size_t writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *bytes);
+
+    /** Write subordinate memory.
+     *
+     *  Writes something to memory. */
+    template<typename T>
+    void writeMemory(rose_addr_t va, const T &value) {
+        size_t n = writeMemory(va, sizeof(T), (const uint8_t*)&value);
+        ASSERT_always_require(n == sizeof(T));
+    }
 
     /** Read subordinate memory.
      *
@@ -416,14 +437,14 @@ public:
     Disassembler* disassembler() const {
         return disassembler_;
     }
-    
+
     /** Returns the last status from a call to waitpid. */
     int waitpidStatus() const { return wstat_; }
 
 public:
     /**  Initialize diagnostic output. This is called automatically when ROSE is initialized.  */
     static void initDiagnostics();
-    
+
 private:
     // Initialize tables during construction
     void init();
