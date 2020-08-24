@@ -93,6 +93,7 @@ void Build(const Fortran::parser::             ArraySpec &x, SgType* &type, SgTy
 template<typename T> void Build(const Fortran::parser::           CoarraySpec &x, T* scope);
 void Build(const Fortran::parser::            CharLength &x, SgExpression* &);
 void Build(const Fortran::parser::        Initialization &x, SgExpression* &);
+void Build(const Fortran::parser::          KindSelector &x, SgExpression* &);
 void Build(const Fortran::parser::     IntrinsicTypeSpec &x,       SgType* &);
 void Build(const Fortran::parser::       IntegerTypeSpec &x,       SgType* &);
 
