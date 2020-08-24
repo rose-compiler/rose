@@ -3,10 +3,10 @@
 
 #include "CPAstAttribute.h"
 #include "VariableIdMapping.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "FIConstAnalysis.h"
 
-using namespace AnalysisAbstractionLayer;
+using namespace AstUtility;
 
 /*! 
   * \author Markus Schordan

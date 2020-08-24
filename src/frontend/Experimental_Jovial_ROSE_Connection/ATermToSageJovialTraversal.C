@@ -1849,6 +1849,9 @@ ATbool ATermToSageJovialTraversal::traverse_Dimension(ATerm term, SgExprListExp*
    }
    else if (ATmatch(term, "DimensionSTAR()")) {
       expr_enum = LanguageTranslation::e_star_dimension;
+      lower_bound = SageBuilder::buildNullExpression_nfi();
+      upper_bound = new SgAsteriskShapeExp();
+      setSourcePosition(upper_bound, term);
    }
    else return ATfalse;
 
@@ -4131,29 +4134,39 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
 
    std::string name;
    SgType* return_type = NULL;
-   std::list<FormalParameter> param_list;
+   std::list<FormalParameter> param_name_list;
+
+   SgFunctionDeclaration* function_decl = nullptr;
+   SgFunctionParameterList* param_list = nullptr;
+   SgBasicBlock* param_scope = nullptr;
 
    if (ATmatch(term, "FunctionDefinition(<term>,<term>,<term>)", &t_func_heading, &t_dirs, &t_proc_body)) {
-      cerr << "WARNING UNIMPLEMENTED: FunctionDefinition\n";
-      ROSE_ASSERT(false);
 
-      if (traverse_FunctionHeading(t_func_heading, name, return_type, param_list, modifiers)) {
+      if (traverse_FunctionHeading(t_func_heading, name, return_type, param_name_list, modifiers)) {
          // MATCHED FunctionHeading
       } else return ATfalse;
 
-      // OUT OF ORDER to get function scope
-      // fix this
-
-      if (traverse_SubroutineBody(t_proc_body)) {
-         // MATCHED FunctionBody
-      } else return ATfalse;
+   // Enter SageTreeBuilder for SgFunctionParameterList
+      sage_tree_builder.Enter(param_list, param_scope);
 
       if (traverse_DirectiveList(t_dirs)) {
          // MATCHED ReducibleDirective*
       } else return ATfalse;
 
+      if (traverse_SubroutineBody(t_proc_body)) {
+         // MATCHED FunctionBody
+      } else return ATfalse;
+
+   // Leave SageTreeBuilder for SgFunctionParameterList
+      sage_tree_builder.Leave(param_list, param_scope, param_name_list);
    }
    else return ATfalse;
+
+// Enter SageTreeBuilder for SgFunctionDeclaration
+   sage_tree_builder.Enter(function_decl, name, return_type, param_list, modifiers);
+
+// Leave SageTreeBuilder for SgFunctionDeclaration
+   sage_tree_builder.Leave(function_decl, param_scope);
 
    return ATtrue;
 }
@@ -4669,11 +4682,9 @@ ATbool ATermToSageJovialTraversal::traverse_AssignmentStatement(ATerm term)
          // MATCHED Formula
       } else return ATfalse;
 
-      if (vars.size() > 1) {
-         cerr << "WARNING UNIMPLEMENTED: AssignmentStatement - with multiple variables\n";
-      }
       if (rhs == nullptr) {
-         cerr << "WARNING UNIMPLEMENTED: AssignmentStatement - could be FunctionCall, or StatusConstant, or PointerLiteral, etc.\n";
+         cerr << "WARNING UNIMPLEMENTED: AssignmentStatement "
+              << "- could be FunctionCall, or StatusConstant, or PointerLiteral, etc.\n";
          return ATtrue;
       }
 
@@ -4776,6 +4787,9 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
    else return ATfalse;
 
 #if 0
+!!!!!!!!!!!!
+BROKEN
+!!!!!!!!!!!!
 // WHILE then optional BY or THEN (increment expression)
    if (phrase1_enum == e_while_phrase_expr) {
       if (phrase2_enum == e_by_phrase_expr) {
@@ -4906,6 +4920,7 @@ ATbool ATermToSageJovialTraversal::traverse_OptContinuation(ATerm term, SgExpres
    phrase_enum2 = Jovial_ROSE_Translation::e_unknown;
 
    if (ATmatch(term, "no-continuation")) {
+      // MATCHED no-continuation
    } else if (traverse_Continuation(term, phrase1, phrase2, phrase_enum1, phrase_enum2)) {
       // MATCHED Continuation
    } else return ATfalse;
@@ -6423,19 +6438,14 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
          setSourcePosition(var_ref, t_name);
       } else return ATfalse;
 
-   // May have a subscript
+   // May have a subscript(s)
       if (traverse_Subscript(t_subscript, subscript)) {
          array_subscripts = SageBuilder::buildExprListExp_nfi();
          setSourcePosition(array_subscripts, t_subscript);
 
-         if (subscript.size() > 1) {
-            cerr << "WARNING UNIMPLEMENTED: TableItem - subscript.size() > 1 not fully implemented\n";
-            cerr << "--->    TableItem: name is " << name << endl;
-            cerr << "--->    found subscript # is " << subscript.size() << ": subscript[0] is " << subscript[0] << endl;
+         for (int i=0; i< subscript.size(); i++) {
+            array_subscripts->get_expressions().push_back(subscript[i]);
          }
-
-         array_subscripts->get_expressions().push_back(subscript[0]);
-
       }
       else {
          cerr << "WARNING UNIMPLEMENTED: TableItem - has a subscript with size (probably 0?) " << subscript.size() << std::endl;
@@ -6801,10 +6811,6 @@ ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCa
       } else return ATfalse;
    } else return ATfalse;
 
-   // BlockReference              -> LocArgument
-   // TODO
-   cerr << "WARNING UNIMPLEMENTED: LocFunction - BlockReference argument needs reproducer \n";
-
    ROSE_ASSERT(loc_arg_expr);
 
    // build the parameter list
@@ -6812,11 +6818,15 @@ ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCa
    params->append_expression(loc_arg_expr);
 
    SgType* return_type = SageBuilder::buildPointerType(SgTypeUnknown::createType());
-   // TODO - this should be fixed in post processing, following is a comment in SageBuilder::buildVarRefExp
-       // if not found: put fake init name and symbol here and
-       // waiting for a postProcessing phase to clean it up
-       // two features: no scope and unknown type for initializedName
-   cerr << "WARNING UNIMPLEMENTED: LocFunction - return type is pointer to SgTypeUnknown \n";
+   // TODO: I'm not sure how to type the pointer, perhaps it should be pointer to void
+       // Punting for the moment to translation stage.
+       // The following is a comment in SageBuilder::buildVarRefExp:
+           // if not found: put fake init name and symbol here and
+           // waiting for a postProcessing phase to clean it up
+           // two features: no scope and unknown type for initializedName
+       //
+       // Reproducers are rose-issue-rc-51.cpl and rose-issue-rc-52.cpl
+       // -------------------------------------------------------------
 
    func_call = SageBuilder::buildFunctionCallExp("LOC", return_type, params, SageBuilder::topScopeStack());
    ROSE_ASSERT(func_call);
@@ -7547,7 +7557,7 @@ ATbool ATermToSageJovialTraversal::traverse_PointerLiteral(ATerm term, SgExpress
 #endif
 
    if (ATmatch(term, "Null()")) {
-     // MATCHED Null
+      expr = SageBuilder::buildNullptrValExp_nfi();
    } else return ATfalse;
 
    return ATtrue;

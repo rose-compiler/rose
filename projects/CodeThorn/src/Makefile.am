@@ -49,7 +49,10 @@ CODETHORN_SOLO_HEADER_FILES=\
   CtxAttribute.h \
   CtxLattice.h \
   CtxPropertyStateFactory.h \
+  CtxReachabilityFactory.h \
+  CtxReachabilityTransfer.h \
   CtxTransfer.h \
+  DataDependenceVisualizer.h \
   EqualityMaintainer.h \
   Evaluator.h \
   ExecutionTrace.h \
@@ -59,13 +62,14 @@ CODETHORN_SOLO_HEADER_FILES=\
   SetAlgo.h \
   WorkListSeq.h \
   WorkList.h
-
+  
+  
 # codethorn library header files (each with a corresponding source file)
 CODETHORN_HEADER_FILES=\
   AbstractValue.h \
   addressTakenAnalysis.h \
   AliasAnalysis.h \
-  AnalysisAbstractionLayer.h \
+  AstUtility.h \
   AnalysisAstAnnotator.h \
   AnalysisReporting.h \
   Analyzer.h \
@@ -75,6 +79,7 @@ CODETHORN_HEADER_FILES=\
   BoolLattice.h \
   CallString.h \
   CFAnalysis.h \
+  CodeThornLib.h \
   CommandLineOptions.h \
   ConstraintRepresentation.h \
   ContNodeAttribute.h \
@@ -84,8 +89,10 @@ CODETHORN_HEADER_FILES=\
   CppStdUtilities.h \
   CTIOLabeler.h \
   CtxCallStrings.h \
-  CtxSolver0.h \
   CtxPrioritySolver.h \
+  CtxReachabilityAnalysis.h \
+  CtxReachabilityLattice.h \
+  CtxSolver0.h \
   DataDependenceVisualizer.h \
   DataRaceDetection.h \
   defUseQuery.h \
@@ -95,8 +102,10 @@ CODETHORN_HEADER_FILES=\
   DotGraphCfgFrontend.h \
   EquivalenceChecking.h \
   EState.h \
-  ExprAnalyzer.h \
+  EStateAnalysis.h \
+  EStateFactory.h \
   EStateTransferFunctions.h \
+  ExprAnalyzer.h \
   FIConstAnalysis.h \
   Flow.h \
   FunctionCallMapping.h \
@@ -183,7 +192,7 @@ CODETHORN_SOURCE_FILES=\
   AbstractValue.C \
   addressTakenAnalysis.C \
   AliasAnalysis.C \
-  AnalysisAbstractionLayer.C \
+  AstUtility.C \
   AnalysisAstAnnotator.C \
   AnalysisReporting.C \
   Analyzer.C \
@@ -193,6 +202,7 @@ CODETHORN_SOURCE_FILES=\
   BoolLattice.C \
   CallString.C \
   CFAnalysis.C \
+  CodeThornLib.C \
   CommandLineOptions.C \
   ConstraintRepresentation.C \
   ContNodeAttribute.C \
@@ -202,8 +212,10 @@ CODETHORN_SOURCE_FILES=\
   CppStdUtilities.C \
   CTIOLabeler.C \
   CtxCallStrings.C \
-  CtxSolver0.C \
   CtxPrioritySolver.C \
+  CtxReachabilityAnalysis.C \
+  CtxReachabilityLattice.C \
+  CtxSolver0.C \
   DataDependenceVisualizer.C \
   defUseQuery.C \
   DataRaceDetection.C \
@@ -212,8 +224,10 @@ CODETHORN_SOURCE_FILES=\
   DotGraphCfgFrontend.C \
   EquivalenceChecking.C \
   EState.C \
-  ExprAnalyzer.C \
+  EStateAnalysis.C \
+  EStateFactory.C \
   EStateTransferFunctions.C \
+  ExprAnalyzer.C \
   FIConstAnalysis.C \
   Flow.C \
   FunctionCallMapping.C \
@@ -302,13 +316,11 @@ libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3
 codethornincludedir = $(pkgincludedir)/codethorn
 codethorninclude_HEADERS=\
   $(CODETHORN_SOLO_HEADER_FILES) \
-  $(CODETHORN_HEADER_FILES) \
-  CodeThornLib.h
+  $(CODETHORN_HEADER_FILES) 
 
 # codethorn (core) library sources
 libcodethorn_la_SOURCES=\
-  $(CODETHORN_SOURCE_FILES) \
-  CodeThornLib.C
+  $(CODETHORN_SOURCE_FILES)
 
 ################################################################
 # LIBRARY: LTLTHORN/ (for linear temporal logic verification)

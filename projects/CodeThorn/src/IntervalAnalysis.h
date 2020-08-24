@@ -10,7 +10,7 @@
 #include "DFAnalysisBase.h"
 #include "RDLattice.h"
 #include "WorkList.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "DFAstAttribute.h"
 #include "IntervalPropertyState.h"
 

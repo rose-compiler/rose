@@ -116,7 +116,7 @@ void DeadCodeAnalysis::writeDeadAssignmentResultFile(CodeThorn::LVAnalysis* lvAn
         if(option_trace) {
           cout << endl << "association: " << association->unparseToString() << endl;
         }
-        VariableIdSet assignedVars = AnalysisAbstractionLayer::defVariables(association, 
+        VariableIdSet assignedVars = AstUtility::defVariables(association, 
                                                                             *lvAnalysis->getVariableIdMapping(), 
                                                                             lvAnalysis->getPointerAnalysis());
         /*const*/ LVLattice& liveVarsLattice = *static_cast<LVLattice*>(lvAnalysis->getPreInfo(label.getId()));

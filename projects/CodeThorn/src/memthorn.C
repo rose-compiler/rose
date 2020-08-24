@@ -22,7 +22,7 @@
 #include "AstMatching.h"
 #include "ltlthorn-lib/SpotConnection.h"
 #include "ltlthorn-lib/CounterexampleAnalyzer.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "ArrayElementAccessData.h"
 #include "PragmaHandler.h"
 #include "Miscellaneous2.h"
@@ -48,6 +48,7 @@
 #include "DataDependenceVisualizer.h" // also used for clustered ICFG
 #include "Evaluator.h" // CppConstExprEvaluator
 #include "MemAnalysis.h"
+#include "EStateAnalysis.h"
 
 // ParProAutomata
 #include "ltlthorn-lib/ParProAutomata.h"
@@ -81,104 +82,6 @@ using namespace Sawyer::Message;
 
 const std::string versionString="0.8.0";
 
-// handler for generating backtrace
-void handler(int sig) {
-  void *array[10];
-  size_t size;
-
-  size = backtrace (array, 10);
-  printf ("Obtained %zd stack frames.\n", size);
-
-  // print out all the frames to stderr
-  fprintf(stderr, "Error: signal %d:\n", sig);
-  backtrace_symbols_fd(array, size, STDERR_FILENO);
-  exit(1);
-}
-
-bool isExprRoot(SgNode* node) {
-  if(SgExpression* exp=isSgExpression(node)) {
-    return isSgStatement(exp->get_parent());
-  }
-  return false;
-}
-
-list<SgExpression*> exprRootList(SgNode *node) {
-  RoseAst ast(node);
-  list<SgExpression*> exprList;
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(isExprRoot(*i)) {
-      SgExpression* expr=isSgExpression(*i);
-      ROSE_ASSERT(expr);
-      exprList.push_back(expr);
-      i.skipChildrenOnForward();
-    }
-  }
-  return exprList;
-}
-
-set<AbstractValue> determineSetOfCompoundIncVars(VariableIdMapping* vim, SgNode* astRoot) {
-  ROSE_ASSERT(vim);
-  ROSE_ASSERT(astRoot);
-  RoseAst ast(astRoot) ;
-  set<AbstractValue> compoundIncVarsSet;
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgCompoundAssignOp* compoundAssignOp=isSgCompoundAssignOp(*i)) {
-      SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(compoundAssignOp));
-      if(lhsVar) {
-        compoundIncVarsSet.insert(vim->variableId(lhsVar));
-      }
-    }
-  }
-  return compoundIncVarsSet;
-}
-
-set<VariableId> determineSetOfConstAssignVars2(VariableIdMapping* vim, SgNode* astRoot) {
-  ROSE_ASSERT(vim);
-  ROSE_ASSERT(astRoot);
-  RoseAst ast(astRoot) ;
-  set<VariableId> constAssignVars;
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
-      SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(assignOp));
-      SgIntVal* rhsIntVal=isSgIntVal(SgNodeHelper::getRhs(assignOp));
-      if(lhsVar && rhsIntVal) {
-        constAssignVars.insert(vim->variableId(lhsVar));
-      }
-    }
-  }
-  return constAssignVars;
-}
-
-void configureRose() {
-  ROSE_INITIALIZE;
-  CodeThorn::initDiagnostics();
-  CodeThorn::initDiagnosticsLTL();
-
-  Rose::Diagnostics::mprefix->showProgramName(false);
-  Rose::Diagnostics::mprefix->showThreadId(false);
-  Rose::Diagnostics::mprefix->showElapsedTime(false);
-
-  string turnOffRoseWarnings=string("Rose(none,>=error),Rose::EditDistance(none,>=error),Rose::FixupAstDeclarationScope(none,>=error),")
-    +"Rose::FixupAstSymbolTablesToSupportAliasedSymbols(none,>=error),"
-    +"Rose::EditDistance(none,>=error),"
-    +"Rose::TestChildPointersInMemoryPool(none,>=error),Rose::UnparseLanguageIndependentConstructs(none,>=error),"
-    +"rose_ir_node(none,>=error)";
-  // result string must be checked
-  string result=Rose::Diagnostics::mfacilities.control(turnOffRoseWarnings); 
-  if(result!="") {
-    cerr<<result<<endl;
-    cerr<<"Error in logger initialization."<<endl;
-    exit(1);
-  }
-
-  // see class Options in src/roseSupport/utility_functions.h
-  Rose::global_options.set_frontend_notes(false);
-  Rose::global_options.set_frontend_warnings(false);
-  Rose::global_options.set_backend_warnings(false);
-
-  signal(SIGSEGV, handler);   // install handler for backtrace
-}
-
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
   // only included in hybrid RERS analyzers.
@@ -192,9 +95,34 @@ void configureRersSpecialization() {
 #endif
 }
 
+void runMemAnalysis(SgProject* astRoot, SgNode* startFunRoot) {
+  MemAnalysis* memAnalysis=new MemAnalysis();
+  memAnalysis->initialize(astRoot);
+  ROSE_ASSERT(memAnalysis->getVariableIdMapping());
+  ROSE_ASSERT(memAnalysis->getFunctionIdMapping());
+  
+  memAnalysis->determineExtremalLabels(startFunRoot,false);
+  memAnalysis->initializeTransferFunctions();
+  memAnalysis->initializeGlobalVariables(astRoot);
+  memAnalysis->run();
+}
+
+void runEStateAnalysis(SgProject* astRoot, SgNode* startFunRoot) {
+  EStateAnalysis* estateAnalysis=new EStateAnalysis();
+  estateAnalysis->initialize(astRoot);
+  ROSE_ASSERT(estateAnalysis->getVariableIdMapping());
+  ROSE_ASSERT(estateAnalysis->getFunctionIdMapping());
+
+  estateAnalysis->determineExtremalLabels(startFunRoot,false);
+  estateAnalysis->initializeTransferFunctions();
+  estateAnalysis->initializeGlobalVariables(astRoot);
+  estateAnalysis->run();
+}
+
 int main( int argc, char * argv[] ) {
   try {
-    configureRose();
+    ROSE_INITIALIZE;
+    CodeThorn::configureRose();
     configureRersSpecialization();
 
     TimeMeasurement timer;
@@ -221,7 +149,7 @@ int main( int argc, char * argv[] ) {
 
     // Build the AST used by ROSE
     if(ctOpt.status) {
-      cout<< "STATUS: Parsing and creating AST started!"<<endl;
+      cout<< "STATUS: Parsing and creating AST started."<<endl;
     }
 
     SgProject* astRoot = 0;
@@ -297,6 +225,7 @@ int main( int argc, char * argv[] ) {
         // found exactly one function. Analyse this function.
         SgFunctionDefinition* functionDef=*funDefs.begin();
         startFunction=SgNodeHelper::getFunctionName(functionDef);
+        startFunRoot=completeAst.findFunctionByName(startFunction);
       } else if(funDefs.size()>1) {
         cerr<<"Error: no main function and more than one function in translation unit."<<endl;
         exit(1);
@@ -306,17 +235,20 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    MemAnalysis* memAnalysis=new MemAnalysis();
-    memAnalysis->initialize(astRoot);
-    ROSE_ASSERT(memAnalysis->getVariableIdMapping());
-    ROSE_ASSERT(memAnalysis->getFunctionIdMapping());
-    ROSE_ASSERT(memAnalysis->getFunctionIdMapping());
-
-    memAnalysis->determineExtremalLabels(startFunRoot,false);
-    memAnalysis->initializeTransferFunctions();
-    memAnalysis->initializeGlobalVariables(astRoot);
-    memAnalysis->run();
-    
+    switch(ctOpt.testSelector) {
+    case 0:
+      cout<<"No analysis selected."<<endl;
+      break;
+    case 1: {
+      cout<<"Running MemState analysis."<<endl;
+      runMemAnalysis(astRoot, startFunRoot);
+      break;
+    }
+    case 2: {
+      cout<<"Running EState analysis."<<endl;
+      runEStateAnalysis(astRoot, startFunRoot);
+    }
+    }
     // reset terminal
     if(ctOpt.status)
       cout<<color("normal")<<"done."<<endl;

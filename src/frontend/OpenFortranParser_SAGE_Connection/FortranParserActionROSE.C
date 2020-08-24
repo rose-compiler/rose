@@ -7395,9 +7395,7 @@ void c_action_label(Token_t * lbl)
             ROSE_ASSERT(variableSymbol != NULL);
 
             if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
-            printf(
-                    "Found a previously defined variableSymbol = %p variable = %s \n",
-                    variableSymbol, variableName.str());
+                 printf("Found a previously defined variableSymbol = %p variable = %s \n",variableSymbol, variableName.str());
 
             // DQ (1/24/2011): Test the variable symbol just found...
             SgInitializedName* initializedName = variableSymbol->get_declaration();
@@ -7480,8 +7478,7 @@ void c_action_label(Token_t * lbl)
                    // This case is visited in the handling of Fortran statement functions (see test2007_179.f90).
                    // See also test2011_30.f90 for procedure pointers when used to call the functions to which they are pointed.
                    if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
-                   printf(
-                           "This is NOT an array type so it must be converted to a function call with argument (if arguments are required)\n");
+                        printf("This is NOT an array type so it must be converted to a function call with argument (if arguments are required)\n");
                    ROSE_ASSERT(matchingName(initializedName->get_name().str(),nameToken->text) == true);
   #if 0
                    // This will be built in R612, to trigger it we need to remove the variableSymbol
@@ -7498,6 +7495,9 @@ void c_action_label(Token_t * lbl)
                    }
                    ROSE_ASSERT(scope != NULL);
   
+#if 0
+                   printf ("Call to scope->remove_symbol(): scope = %p = %s variableSymbol = %p \n",scope,scope->class_name().c_str(),variableSymbol);
+#endif
                    //Pei-Hung In the case that variable name is same as the derived type member, we should not remove the symbol
                    // Note that we might want to clean up more than just removing the variableSymbol from the symbol table
                    scope->remove_symbol(variableSymbol);
@@ -7892,7 +7892,7 @@ void c_action_label(Token_t * lbl)
             astExpressionStack.push_front(recordReference);
         }
 
-#if 0
+#if 1
         // Output debugging information about saved state (stack) information.
         outputState("At BOTTOM of R612 c_action_data_ref()");
 #endif
@@ -11486,36 +11486,66 @@ void c_action_case_selector(Token_t *defaultToken)
       }
  }
 
-/**
- * R814
+/** R814
  * case_value_range
+ *
+ * @param hasColon True if there is a colon (will have an upper-bound)
  */
-void c_action_case_value_range()
+void c_action_case_value_range(ofp_bool hasColon)
  {
-    mlog[TRACE] << "In c_action_case_value_range() \n";
+    mlog[TRACE] << "In c_action_case_value_range(): hasColon = " << hasColon << "\n";;
+
+    SgExpression* lowerBound = NULL;
+    SgExpression* upperBound = NULL;
+    SgExpression* range = NULL;
 
     CaseValueRange* caseValueRange = getCaseValueRange();
 
-    SgExpression* lowerBound = caseValueRange->values[0];
-    SgExpression* upperBound = caseValueRange->values[1];
-
- // Add range expressions to key list
- // WARNIBG: this will need to change once COLON's in parser are figured out
-    if (caseValueRange->numValues == 1) {
-       getCaseStmt()->key->get_expressions().push_back(lowerBound);
-    }
-    else {
-        if (upperBound == NULL) {
-            upperBound = SageBuilder::buildNullExpression_nfi();
-        }
-        SgExpression* stride = new SgIntVal(1,"1");
-        SageInterface::setSourcePosition(stride);
-
-        SgExpression* range = SageBuilder::buildSubscriptExpression_nfi(lowerBound, upperBound, stride);
-        getCaseStmt()->key->get_expressions().push_back(range);
+    if (caseValueRange->hasSuffix) {
+    // If c_action_case_value_range_suffix is called there is a colon
+       hasColon = true;
     }
 
- // finished with this CaseValueRange instance
+    if (hasColon == false)
+      {
+      // There is only a lower-bound (lb)
+         range = caseValueRange->values[0];
+      }
+    else
+      {
+      // There is a colon, could be (lb:), (:ub), or (lb:ub)
+
+      // A stride is necessary to build an SgSubscriptExpression
+         SgExpression* stride = new SgIntVal(1,"1");
+         SageInterface::setSourcePosition(stride);
+
+         if (caseValueRange->hasSuffix == false)
+           {
+            // There is no lower-bound (:ub)
+              ROSE_ASSERT(caseValueRange->numValues == 1);
+              lowerBound = SageBuilder::buildNullExpression_nfi();
+              upperBound = caseValueRange->values[0];
+           }
+         else if (caseValueRange->hasSuffix && (caseValueRange->hasSuffixExpr == false))
+           {
+              ROSE_ASSERT(caseValueRange->numValues == 1);
+              lowerBound = caseValueRange->values[0];
+              upperBound = SageBuilder::buildNullExpression_nfi();
+           }
+         else
+           {
+              ROSE_ASSERT(caseValueRange->numValues == 2);
+              lowerBound = caseValueRange->values[0];
+              upperBound = caseValueRange->values[1];
+           }
+
+         range = SageBuilder::buildSubscriptExpression_nfi(lowerBound, upperBound, stride);
+      }
+
+    ROSE_ASSERT(range);
+    getCaseStmt()->key->get_expressions().push_back(range);
+
+ // Finished with this CaseValueRange instance
     caseValueRange->reset();
  }
 
@@ -11539,16 +11569,16 @@ void c_action_case_value_range_list(int count)
  }
 
 /**
- * Unknown rule.
+ * Internal rule.
  * case_value_range_suffix
  *
+ * @param hasSuffixExpr True if there is an upper-bound expression
  */
-void c_action_case_value_range_suffix()
+void c_action_case_value_range_suffix(ofp_bool hasSuffixExpr)
  {
-  // This function needs to be modified in the parser to provide
-  // information on colons in the ranges
-  //
     mlog[TRACE] << "In c_action_case_value_range_suffix() \n";
+    getCaseValueRange()->hasSuffix = true;
+    getCaseValueRange()->hasSuffixExpr = hasSuffixExpr;
  }
 
 /**

@@ -53,7 +53,7 @@ namespace CodeThorn {
     bool isBot() {return result.isBot();}
   };
   
-  enum InterpreterMode { IM_ABSTRACT, IM_CONCRETE };
+  enum InterpreterMode { IM_DISABLED, IM_ENABLED };
   // ACCESS_ERROR is null pointer dereference is detected. ACCESS_NON_EXISTING if pointer is lattice bottom element.
   enum MemoryAccessBounds {ACCESS_ERROR,ACCESS_DEFINITELY_NP, ACCESS_DEFINITELY_INSIDE_BOUNDS, ACCESS_POTENTIALLY_OUTSIDE_BOUNDS, ACCESS_DEFINITELY_OUTSIDE_BOUNDS, ACCESS_NON_EXISTING};
   
@@ -360,7 +360,7 @@ namespace CodeThorn {
     bool _ignoreFunctionPointers=false;
     Analyzer* _analyzer=nullptr;
     bool _printDetectedViolations=false;
-    enum InterpreterMode _interpreterMode=IM_ABSTRACT;
+    enum InterpreterMode _interpreterMode=IM_DISABLED;
     std::string _interpreterModeFileName;
     bool _optionOutputWarnings=false;
   public:

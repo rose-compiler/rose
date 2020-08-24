@@ -352,6 +352,21 @@ public:
      *  Note that the order of arguments for this method is the reverse of the @ref SymbolicExpr concatenation function. */
     virtual SValuePtr concat(const SValuePtr &lowBits, const SValuePtr &highBits) = 0;
 
+    /** Aliases for concatenation.
+     *
+     *  It's hard to remember whether the arguments of the concatenation operator are low bits followed by high bits, or high
+     *  bits followed by low bits, and getting it wrong doesn't result in any kind of immediate error. This alias makes it more
+     *  clear.
+     *
+     * @{ */
+    virtual SValuePtr concatLoHi(const SValuePtr &lowBits, const SValuePtr &highBits) {
+        return concat(lowBits, highBits);
+    }
+    virtual SValuePtr concatHiLo(const SValuePtr &highBits, const SValuePtr &lowBits) {
+        return concat(lowBits, highBits);
+    }
+    /** @} */
+
     /** Split a value into two narrower values. Returns the two parts as a pair consisting of the low-order bits of @p a and
      *  the high-order bits of @p a. The returned low-order bits are bits zero (inclusive) to @p splitPoint (exclusvie) and
      *  has width @p splitPoint. The returned high-order bits are bits @p splitPoint (inclusive) to the width of @p a
@@ -366,6 +381,18 @@ public:
     /** Returns position of most significant set bit; zero when no bits are set. The return value will have the same width as
      * the operand, although this can be safely truncated to the log-base-2 + 1 width. */
     virtual SValuePtr mostSignificantSetBit(const SValuePtr &a) = 0;
+
+    /** Count leading zero bits.
+     *
+     *  Counts the number of consecutive clear bits starting with the msb. The return value is the same width as the
+     *  argument. */
+    virtual SValuePtr countLeadingZeros(const SValuePtr &a);
+
+    /** Count leading one bits.
+     *
+     *  Counts the number of consecutive set bits starting with the msb.  The return value is the same width as the
+     *  argument. */
+    virtual SValuePtr countLeadingOnes(const SValuePtr &a);
 
     /** Rotate bits to the left. The return value will have the same width as operand @p a.  The @p nbits is interpreted as
      *  unsigned. The behavior is modulo the width of @p a regardles of whether the implementation makes that a special case or

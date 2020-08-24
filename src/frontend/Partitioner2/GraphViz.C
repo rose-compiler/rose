@@ -579,14 +579,11 @@ CfgEmitter::sourceLocation(const ControlFlowGraph::ConstVertexIterator &vertex) 
     ASSERT_require(graph_.isValidVertex(vertex));
     if (vertex->value().type() != V_BASIC_BLOCK)
         return "";
-    DwarfLineMapper::SrcInfo srcInfo = srcMapper_.addr2src(vertex->value().address());
-    if (srcInfo.file_id == Sg_File_Info::NULL_FILE_ID || srcInfo.line_num == 0)
+    SourceLocation srcInfo = srcMapper_.get(vertex->value().address());
+    if (srcInfo.isEmpty())
         return "";
-    std::string fileName = Sg_File_Info::getFilenameFromID(srcInfo.file_id);
-    size_t slash = fileName.rfind('/');
-    if (slash != std::string::npos && slash+1 < fileName.size())
-        fileName = fileName.substr(slash+1);
-    return fileName + ":" + StringUtility::numberToString(srcInfo.line_num);
+    boost::filesystem::path fileName = srcInfo.fileName().filename();
+    return fileName.string() + ":" + StringUtility::numberToString(srcInfo.line());
 }
 
 std::string

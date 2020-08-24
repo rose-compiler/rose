@@ -92,7 +92,7 @@ struct CodeThornOptions : public Options {
   int optionsSet=0;
   int callStringLength=-1; // not used yet
   bool byteMode=false; // switches between byte-addresses and index-based addresses in PState
-      
+  int testSelector=0;
   
   // RERS C-subset program options
   struct Rers {

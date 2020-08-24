@@ -199,7 +199,7 @@ Debugger::Specimen::prepareEnvAdjustments() const {
         std::strcpy(*entryPtr, var.c_str());
         ++entryPtr;
     }
-    ASSERT_require(entryPtr - retval == erasures.size() + setEnvVars_.size());
+    ASSERT_require((size_t)(entryPtr - retval) == erasures.size() + setEnvVars_.size());
     ASSERT_require(NULL == *entryPtr);
     return retval;
 }

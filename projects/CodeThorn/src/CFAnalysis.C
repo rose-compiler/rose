@@ -1156,7 +1156,8 @@ namespace
 }
 
 
-Flow CFAnalysis::flow(SgNode* node) {
+Flow CFAnalysis::flow(SgNode* n) {
+  SgNode* const node = n;
   ROSE_ASSERT(node);
 
   Flow edgeSet;
@@ -1233,6 +1234,7 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgFunctionDefinition: {
     //~ Sg_File_Info& fi = SG_DEREF(node->get_file_info());
     //~ std::cerr <<"[Trace] Building CFG for function: "<<SgNodeHelper::getFunctionName(node)<< " :" << fi.displayString() << endl;
+    std::cerr <<"[Trace] Building CFG for function: "<<SgNodeHelper::getFunctionName(node)<< " :" << endl;
     
     // PP (04/09/20)
     // do nothing for function definitions that did not receive a label

@@ -130,6 +130,10 @@ public:
     // From ARM documentation: "Decode AArch64 bitfield and logical immediate masks which use a similar encoding structure."
     std::pair<uint64_t, uint64_t> decodeBitMasks(size_t m, bool immN, uint64_t imms, uint64_t immr, bool immediate);
 
+    // Handles the rather tricky BFM instruction, which is a general case of a few other instructions.
+    void bitfieldMove(BaseSemantics::RiscOperators *ops, SgAsmExpression *dst, SgAsmExpression *src, bool n,
+                      uint64_t immR, uint64_t immS);
+
     // Handles the rather tricky UBFM instruction, which is a general case of a few other instructions.
     void unsignedBitfieldMove(BaseSemantics::RiscOperators *ops, SgAsmExpression *dst, SgAsmExpression *src, bool n,
                               uint64_t immR, uint64_t immS);

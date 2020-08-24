@@ -8,7 +8,7 @@ using namespace std;
 #include "Labeler.h"
 #include "VariableIdMapping.h"
 #include "IntervalTransferFunctions.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 
 CodeThorn::IntervalTransferFunctions::IntervalTransferFunctions():
   _cppExprEvaluator(0),

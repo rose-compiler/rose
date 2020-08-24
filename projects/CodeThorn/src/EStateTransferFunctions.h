@@ -13,11 +13,16 @@ namespace CodeThorn {
   public:
     EStateTransferFunctions();
     static void initDiagnostics();
+    // must be set
     void setAnalyzer(CodeThorn::Analyzer* analyzer);
     Analyzer* getAnalyzer();
+    // obtained from analyzer
     ExprAnalyzer* getExprAnalyzer();
+    // obtained from analyzer
     CTIOLabeler* getLabeler() override;
+    // obtained from analyzer
     VariableIdMappingExtended* getVariableIdMapping() override;
+    
     
     EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset);
     EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset, InputOutput io);

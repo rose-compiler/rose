@@ -9,7 +9,6 @@
 //~ #include <deque>
 //~ #include <list>
 
-//~ #include <rose.h>
 #include <sage3basic.h>
 #include <Labeler.h>
 
