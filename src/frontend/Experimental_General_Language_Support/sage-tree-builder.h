@@ -25,6 +25,7 @@ class SgFunctionParameterList;
 class SgFunctionParameterScope;
 class SgGlobal;
 class SgIfStmt;
+class SgImplicitStatement;
 class SgInitializedName;
 class SgLocatedNode;
 class SgNamespaceDeclarationStatement;
@@ -159,6 +160,14 @@ public:
    void Enter(SgWhileStmt* &, SgExpression*);
    void Leave(SgWhileStmt*, bool has_end_do_stmt=false);
 
+   void Enter(SgImplicitStatement* &implicit_stmt, bool none_external = false, bool none_type = false);
+#ifdef CPP_ELEVEN
+   void Enter(SgImplicitStatement* &, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &);
+#else
+   void Enter(SgImplicitStatement* &);
+#endif
+   void Leave(SgImplicitStatement*);
+
    SgEnumVal* ReplaceEnumVal(SgEnumType*, const std::string &);
 
 // Expressions
@@ -173,7 +182,8 @@ public:
    void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, bool is_compool=false);
    void Leave(SgJovialDirectiveStatement*);
 
-   void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*);
+   void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*,
+                                           SgJovialForThenStatement::loop_statement_type_enum);
    void Leave(SgJovialForThenStatement*);
 
    void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);

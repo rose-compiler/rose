@@ -547,8 +547,8 @@ Unparse_Jovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info
      SgJovialForThenStatement* for_stmt = isSgJovialForThenStatement(stmt);
      ASSERT_not_null(for_stmt);
      ASSERT_not_null(for_stmt->get_initialization());
-     ASSERT_not_null(for_stmt->get_then_expression());
      ASSERT_not_null(for_stmt->get_while_expression());
+     ASSERT_not_null(for_stmt->get_by_or_then_expression());
      ASSERT_not_null(for_stmt->get_loop_body());
 
      curprint_indented("FOR ", info);
@@ -563,15 +563,82 @@ Unparse_Jovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info
      curprint(":");
      unparseExpression(init_expr->get_rhs_operand_i(), info);
 
-  // then increment
-     curprint(" THEN ");
-     unparseExpression(for_stmt->get_then_expression(), info);
-
-  // while condition
-     if ( ! isSgNullExpression(for_stmt->get_while_expression()) )
+     switch (for_stmt->get_loop_statement_type())
         {
-           curprint(" WHILE ");
-           unparseExpression(for_stmt->get_while_expression(), info);
+        case SgJovialForThenStatement::e_for_while_stmt:
+           {
+              if (!isSgNullExpression(for_stmt->get_while_expression()))
+                 {
+                    curprint(" WHILE ");
+                    unparseExpression(for_stmt->get_while_expression(), info);
+                 }
+              break;
+           }
+        case SgJovialForThenStatement::e_for_while_then_stmt:
+           {
+              if (!isSgNullExpression(for_stmt->get_while_expression()))
+                 {
+                    curprint(" WHILE ");
+                    unparseExpression(for_stmt->get_while_expression(), info);
+                 }
+              if (!isSgNullExpression(for_stmt->get_by_or_then_expression()))
+                 {
+                    curprint(" THEN ");
+                    unparseExpression(for_stmt->get_by_or_then_expression(), info);
+                 }
+              break;
+           }
+        case SgJovialForThenStatement::e_for_while_by_stmt:
+           {
+              if (!isSgNullExpression(for_stmt->get_while_expression()))
+                 {
+                    curprint(" WHILE ");
+                    unparseExpression(for_stmt->get_while_expression(), info);
+                 }
+              if (!isSgNullExpression(for_stmt->get_by_or_then_expression()))
+                 {
+                    curprint(" BY ");
+                    unparseExpression(for_stmt->get_by_or_then_expression(), info);
+                 }
+              break;
+           }
+        case SgJovialForThenStatement::e_for_then_while_stmt:
+           {
+              if (!isSgNullExpression(for_stmt->get_by_or_then_expression()))
+                 {
+                    curprint(" THEN ");
+                    unparseExpression(for_stmt->get_by_or_then_expression(), info);
+                 }
+              if (!isSgNullExpression(for_stmt->get_while_expression()))
+                 {
+                    curprint(" WHILE ");
+                    unparseExpression(for_stmt->get_while_expression(), info);
+                 }
+              break;
+           }
+        case SgJovialForThenStatement::e_for_by_while_stmt:
+           {
+              if (!isSgNullExpression(for_stmt->get_by_or_then_expression()))
+                 {
+                    curprint(" BY ");
+                    unparseExpression(for_stmt->get_by_or_then_expression(), info);
+                 }
+              if (!isSgNullExpression(for_stmt->get_while_expression()))
+                 {
+                    curprint(" WHILE ");
+                    unparseExpression(for_stmt->get_while_expression(), info);
+                 }
+              break;
+           }
+        case SgJovialForThenStatement::e_for_only_stmt:
+           {
+              break;
+           }
+        default:
+           {
+              cout << "Warning: In Jovial unparser, SgJovialForThenStatement::loop_statement_type not handled is "
+                   << for_stmt->get_loop_statement_type() << endl;
+           }
         }
 
      curprint(";");

@@ -4754,14 +4754,17 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
-   SgExpression* var_ref = NULL;
-   SgExpression* init    = NULL;
-   SgExpression* phrase1 = NULL;
-   SgExpression* phrase2 = NULL;
+   SgExpression* var_ref = nullptr;
+   SgExpression* init    = nullptr;
+   SgExpression* phrase1 = nullptr;
+   SgExpression* phrase2 = nullptr;
 
    int phrase1_enum = Jovial_ROSE_Translation::e_unknown;
    int phrase2_enum = Jovial_ROSE_Translation::e_unknown;
+   SgJovialForThenStatement::loop_statement_type_enum loop_type_enum = SgJovialForThenStatement::e_unknown;
 
+   SgExpression* while_expr = nullptr;
+   SgExpression* by_or_then_expr = nullptr;
    SgJovialForThenStatement* for_stmt = nullptr;
 
    if (ATmatch(term, "ForStatement(<term>,<term>,<term>)", &t_labels, &t_clause, &t_stmt)) {
@@ -4773,11 +4776,46 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
          // MATCHED ForClause
       } else return ATfalse;
 
+      ROSE_ASSERT(var_ref);
+      ROSE_ASSERT(init);
+
       SgAssignOp* initialization = SageBuilder::buildAssignOp_nfi(var_ref, init);
       setSourcePosition(initialization, t_clause);
 
-      // Begin SageTreeBuilder
-      sage_tree_builder.Enter(for_stmt, initialization, phrase1, phrase2);
+   // WHILE then optional BY or THEN (increment expression)
+      if (phrase1_enum == e_while_phrase_expr) {
+         while_expr = phrase1;
+         by_or_then_expr = phrase2;
+         if (phrase2_enum == e_by_phrase_expr) {
+            loop_type_enum = SgJovialForThenStatement::e_for_while_by_stmt;
+         }
+         else if (phrase2_enum == e_then_phrase_expr) {
+            loop_type_enum = SgJovialForThenStatement::e_for_while_then_stmt;
+         }
+         else if (phrase2_enum == Jovial_ROSE_Translation::e_unknown) {
+            loop_type_enum = SgJovialForThenStatement::e_for_while_stmt;
+         }
+      }
+   // BY (increment expression) then optional WHILE
+      else if (phrase1_enum == e_by_phrase_expr) {
+         while_expr = phrase2;
+         by_or_then_expr = phrase1;
+         loop_type_enum = SgJovialForThenStatement::e_for_by_while_stmt;
+      }
+   // THEN (increment expression) then optional WHILE
+      else if (phrase1_enum == e_then_phrase_expr) {
+         while_expr = phrase2;
+         by_or_then_expr = phrase1;
+         loop_type_enum = SgJovialForThenStatement::e_for_then_while_stmt;
+      }
+   // No WHILE, THEN, or BY expressions
+      else {
+         loop_type_enum = SgJovialForThenStatement::e_for_only_stmt;
+      }
+      ROSE_ASSERT(loop_type_enum != SgJovialForThenStatement::e_unknown);
+
+   // Begin SageTreeBuilder
+      sage_tree_builder.Enter(for_stmt, initialization, while_expr, by_or_then_expr, loop_type_enum);
 
       // Match ControlledStatement (body of loop)
       if (traverse_Statement(t_stmt)) {
@@ -4785,43 +4823,6 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
       } else return ATfalse;
    }
    else return ATfalse;
-
-#if 0
-!!!!!!!!!!!!
-BROKEN
-!!!!!!!!!!!!
-// WHILE then optional BY or THEN (increment expression)
-   if (phrase1_enum == e_while_phrase_expr) {
-      if (phrase2_enum == e_by_phrase_expr) {
-         stmt_enum = e_for_while_by_stmt;
-      }
-      else if (phrase2_enum == e_then_phrase_expr) {
-         stmt_enum = e_for_while_then_stmt;
-      }
-      else {
-         // let the BY usage be the default as it matches C increment usage
-         stmt_enum = e_for_while_by_stmt;
-         phrase2 = UntypedBuilder::buildUntypedNullExpression();
-      }
-      for_stmt = new SgUntypedForStatement("", stmt_enum, initialization, phrase1, phrase2, body, "");
-   }
-// BY (increment expression) then optional WHILE
-   else if (phrase1_enum == e_by_phrase_expr) {
-      stmt_enum = e_for_by_while_stmt;
-      if (phrase2_enum != e_while_phrase_expr) {
-         phrase2 = UntypedBuilder::buildUntypedNullExpression();
-      }
-      for_stmt = new SgUntypedForStatement("", stmt_enum, initialization, phrase2, phrase1, body, "");
-   }
-// THEN (increment expression) then optional WHILE
-   else if (phrase1_enum == e_then_phrase_expr) {
-      stmt_enum = e_for_then_while_stmt;
-      if (phrase2_enum != e_while_phrase_expr) {
-         phrase2 = UntypedBuilder::buildUntypedNullExpression();
-      }
-      for_stmt = new SgUntypedForStatement("", stmt_enum, initialization, phrase2, phrase1, body, "");
-   }
-#endif
 
    ROSE_ASSERT(for_stmt);
    setSourcePosition(for_stmt, term);
@@ -4857,7 +4858,7 @@ ATbool ATermToSageJovialTraversal::traverse_ForClause(ATerm term, SgExpression* 
          // MATCHED ControlItem
          SgVariableSymbol* var_sym;
 
-         // if this is 
+         // TODO: if this is a control letter there won't be a var_sym
          var_sym = SageInterface::lookupVariableSymbolInParentScopes(var_name, SageBuilder::topScopeStack());
          ROSE_ASSERT(var_sym);
          var_ref = SageBuilder::buildVarRefExp_nfi(var_sym);
@@ -4898,9 +4899,6 @@ ATbool ATermToSageJovialTraversal::traverse_ControlClause(ATerm term, SgExpressi
       if (traverse_OptContinuation(t_continuation, phrase1, phrase2, phrase1_enum, phrase2_enum)) {
          // MATCHED OptContinuation
       } else return ATfalse;
-
-   return ATtrue;
-
    }
    else return ATfalse;
 
@@ -6817,16 +6815,8 @@ ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCa
    SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
    params->append_expression(loc_arg_expr);
 
-   SgType* return_type = SageBuilder::buildPointerType(SgTypeUnknown::createType());
-   // TODO: I'm not sure how to type the pointer, perhaps it should be pointer to void
-       // Punting for the moment to translation stage.
-       // The following is a comment in SageBuilder::buildVarRefExp:
-           // if not found: put fake init name and symbol here and
-           // waiting for a postProcessing phase to clean it up
-           // two features: no scope and unknown type for initializedName
-       //
-       // Reproducers are rose-issue-rc-51.cpl and rose-issue-rc-52.cpl
-       // -------------------------------------------------------------
+   SgType* return_type = loc_arg_expr->get_type();
+   ROSE_ASSERT(return_type);
 
    func_call = SageBuilder::buildFunctionCallExp("LOC", return_type, params, SageBuilder::topScopeStack());
    ROSE_ASSERT(func_call);
