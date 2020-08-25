@@ -83,7 +83,6 @@ JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \
  tables_and_pointers.jov                \
  2_1_1_5_char_item_desc.jov             \
- 4_2_loop_stmt_d1.jov                   \
  4_3_if_else_stmt.jov                   \
  4_6_return_stmt_a.jov                  \
  4_7_goto_stmt_a.jov                    \
