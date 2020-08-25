@@ -444,6 +444,15 @@ void Build(const parser::Name &x, SgExpression* &expr)
 #endif
 }
 
+void Build(const parser::Name &x, std::string &name)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(Name) - build std::string\n";
+#endif
+
+   name = x.ToString();
+}
+
 void Build(const parser::NamedConstant &x, SgExpression* &expr)
 {
 #if PRINT_FLANG_TRAVERSAL
@@ -1642,6 +1651,50 @@ void Build(const parser::OldParameterStmt&x, T* scope)
 #endif
 }
 
+template<typename T>
+void Build(const parser::CommonStmt&x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(CommonStmt)\n";
+#endif
+
+   Build(x.blocks, scope);   // std::list<Block> blocks;
+}
+
+template<typename T>
+void Build(const parser::CommonStmt::Block&x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(CommonStmt::Block)\n";
+#endif
+
+   std::string name;
+   if (auto & opt = std::get<0>(x.t)) {   // std::optional<Name>
+      Build(opt.value(), name);
+      std::cout << "The name of the CommonStmt::Block is " << name << "\n";
+   }
+
+   std::list<SgCommonBlockObject*> common_block_object_list;
+   Build(std::get<1>(x.t), common_block_object_list);
+}
+
+void Build(const parser::CommonBlockObject&x, SgCommonBlockObject* &common_block_object)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(CommonBlockObject)\n";
+#endif
+
+   std::string name;
+   Build(std::get<parser::Name>(x.t), name);
+   std::cout << "The name of the CommonBlockObject is " << name << "\n";
+
+#if 0
+   if (auto & opt = std::get<1>(x.t)) {   // std::optional<ArraySpec>
+   }
+#endif
+
+}
+
    // Expr
 template<typename T>
 void Build(const parser::CharLiteralConstantSubstring&x, T* &expr)
@@ -2431,6 +2484,19 @@ void Build(const parser::OtherSpecificationStmt&x, T* scope)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(OtherSpecificationStmt)\n";
 #endif
+
+   std::visit(
+      common::visitors{
+         [&] (const common::Indirection<parser::  CommonStmt> &y) { Build(y.value(), scope); },
+         [&] (const common::Indirection<parser::NamelistStmt> &y) { Build(y.value(), scope); },
+         // common::Indirection -
+         // AccessStmt, AllocatableStmt, AsynchronousStmt, BindStmt, CodimensionStmt, ContiguousStmt,
+         // DimensionStmt, ExternalStmt, IntentStmt, IntrinsicStmt, OptionalStmt, PointerStmt, ProtectedStmt,
+         // SaveStmt, TargetStmt, ValueStmt, VolatileStmt, CommonStmt, EquivalenceStmt, BasedPointerStmt
+         [&] (const auto &y) { ; },
+      },
+      x.u);
+
 }
 
 template<typename T>
