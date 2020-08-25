@@ -77,11 +77,11 @@ public:
      *
      * @{ */
     rose_addr_t address() const {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
         return startVa_;
     }
     void address(rose_addr_t va) {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
         startVa_ = va;
     }
     /** @} */
@@ -126,7 +126,7 @@ public:
      *
      *  Returns true if the function was added, false if it was already an owner of the vertex. */
     bool insertOwningFunction(const Function::Ptr &function) {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
         ASSERT_not_null(function);
         return owningFunctions_.insert(function);
     }
@@ -136,7 +136,7 @@ public:
      *  Causes the specified function to no longer be listed as an owner of this vertex. Does nothing if the function is not an
      *  owner to begin with. */
     void eraseOwningFunction(const Function::Ptr &function) {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
         if (function != NULL)
             owningFunctions_.erase(function);
     }

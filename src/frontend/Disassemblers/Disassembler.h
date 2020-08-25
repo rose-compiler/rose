@@ -103,6 +103,7 @@ protected:
     ByteOrder::Endianness p_byteOrder;                  /**< Byte order of instructions in memory. */
     size_t p_wordSizeBytes;                             /**< Basic word size in bytes. */
     std::string p_name;                                 /**< Name by which this dissassembler is registered. */
+    size_t instructionAlignment_;                       /**< Positive alignment constraint for instruction addresses. */
 
     /** Prototypical dispatcher for creating real dispatchers */
     InstructionSemantics2::BaseSemantics::DispatcherPtr p_proto_dispatcher;
@@ -128,6 +129,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_byteOrder);
         s & BOOST_SERIALIZATION_NVP(p_wordSizeBytes);
         s & BOOST_SERIALIZATION_NVP(p_name);
+        if (version >= 2)
+            s & BOOST_SERIALIZATION_NVP(instructionAlignment_);
     }
 #endif
 
@@ -136,7 +139,7 @@ private:
     //                                  Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    Disassembler(): p_registers(NULL), p_byteOrder(ByteOrder::ORDER_LSB), p_wordSizeBytes(4) {}
+    Disassembler(): p_registers(NULL), p_byteOrder(ByteOrder::ORDER_LSB), p_wordSizeBytes(4), instructionAlignment_(1) {}
     virtual ~Disassembler() {}
 
 
@@ -228,6 +231,11 @@ public:
     void wordSizeBytes(size_t nbytes) { p_wordSizeBytes = nbytes; }
     /** @} */
 
+    /** Property: Instruction alignment requirement.
+     *
+     *  The alignment that's required for instruction addresses. The return value is a positive number of bytes. */
+    size_t instructionAlignment() const;
+    
     /** Properties: Register dictionary.
      *
      *  Specifies the registers available on this architecture.  Rather than using hard-coded class, number, and position
@@ -362,7 +370,7 @@ private:
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Disassembler, 1);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Disassembler, 2);
 
 #endif
 #endif
