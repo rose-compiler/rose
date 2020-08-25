@@ -17034,7 +17034,7 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
         }
      ROSE_ASSERT (sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
 
-#if 1
+#if 0
   // DQ (5/22/2020): If this is processing a previously processed file, then this 
   // will cause comments and CPP directives to be collected twice. This happens
   // in the case where we build a copy of the source file to support construction 
@@ -17047,7 +17047,7 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
      ROSE_ASSERT(filePreprocInfo != NULL);
 #endif
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project): calling attachPreprocessingInfo() \n");
 #endif
 
