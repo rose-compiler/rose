@@ -4,7 +4,7 @@
 #include "Options.h"
 #include <string>
 
-struct LTLOptions : public Options {
+struct LTLOptions : public CodeThorn::Options {
   // general LTL options
   std::string spotVerificationResultsCSVFileName;
   std::string ltlStatisticsCSVFileName;

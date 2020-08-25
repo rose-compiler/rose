@@ -44,6 +44,21 @@ namespace CppStdUtilities {
   // regular expression 'regex' (e.g. "a,b,c" is split into a vector
   // of 3 strings)
   std::vector<std::string> splitByRegex(const std::string& input, const std::string& regex);
+
+  // prints an arbitrary container, elements must provide '<<' operator
+  template<class Container>
+    void printContainer(const Container& s, const char* seperator = " ", std::ostream& output = std::cout) {
+    for(typename Container::const_iterator iter = s.begin();
+        iter != s.end();
+        iter++) {
+      if(iter!=s.begin()) {
+        output << seperator;
+      }
+      output << *iter;
+    }
+    output << std::endl;
+  }
+
 #endif
 
 }
