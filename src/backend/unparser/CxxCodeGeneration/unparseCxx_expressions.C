@@ -528,7 +528,7 @@ Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgU
      SgFunctionParameterRefExp* functionParameterRefExp = isSgFunctionParameterRefExp(expr);
      ASSERT_not_null(functionParameterRefExp);
 
-#if 1
+#if 0
      printf ("In unparseFunctionParameterRefExpression = %p = %s \n",functionParameterRefExp,functionParameterRefExp->class_name().c_str());
      printf ("   --- functionParameterRefExp->get_parameter_number()    = %d \n",functionParameterRefExp->get_parameter_number());
      printf ("   --- functionParameterRefExp->get_parameter_levels_up() = %d \n",functionParameterRefExp->get_parameter_levels_up());
@@ -7851,7 +7851,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
      printf ("In unparseConInit(): set SkipClassSpecifier() \n");
 #endif
-#if DEBUG_CONSTRUCTOR_INITIALIZER
+#if DEBUG_CONSTRUCTOR_INITIALIZER || 0
      printf ("In unparseConInit(): con_init->get_type()                        = %p = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str());
      printf ("In unparseConInit(): con_init->get_need_name()                   = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
      printf ("In unparseConInit(): con_init->get_is_explicit_cast()            = %s \n",(con_init->get_is_explicit_cast() == true) ? "true" : "false");
@@ -7865,7 +7865,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
   // DQ (1/18/2019): Test the current SgConstructorInitializer.
      bool this_constructor_initializer_is_using_Cxx11_initializer_list = isAssociatedWithCxx11_initializationList(con_init,info);
 
-#if DEBUG_CONSTRUCTOR_INITIALIZER
+#if DEBUG_CONSTRUCTOR_INITIALIZER || 0
      printf ("In unparseConInit(): this_constructor_initializer_is_using_Cxx11_initializer_list = %s \n",(this_constructor_initializer_is_using_Cxx11_initializer_list == true) ? "true" : "false");
 #endif
 
@@ -7874,7 +7874,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
   // As a result of this we have to detect this and treat it special.  For now we will do this by recognizing the name.
   // To make this worse, it appears that the code generation requires us to look ahead in the AST for this case of a constructor 
   // initializer refering to a class named "initialization_list".  This is even more ridiculous!
-#if DEBUG_CONSTRUCTOR_INITIALIZER
+#if DEBUG_CONSTRUCTOR_INITIALIZER || 0
      bool process_using_cxx11_initialization_list_syntax = false;
 #endif
      bool current_constructor_initializer_is_for_initialization_list_member_function = false;
@@ -8433,12 +8433,44 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
        // bool newinfo_input = con_init->get_is_braced_initialized();
        // bool newinfo_input = con_init->get_is_braced_initialized() || con_init->get_is_explicit_cast();
        // bool newinfo_input = con_init->get_is_braced_initialized() || con_init->get_is_explicit_cast();
-          bool newinfo_input = con_init->get_is_braced_initialized() || con_init->get_is_explicit_cast() || (use_braces_instead_of_parenthisis == false);
+       // bool newinfo_input = con_init->get_is_braced_initialized() || con_init->get_is_explicit_cast() || (use_braces_instead_of_parenthisis == false);
+          bool newinfo_input = con_init->get_is_braced_initialized() || con_init->get_is_explicit_cast() && (use_braces_instead_of_parenthisis == false);
+       // bool newinfo_input = (con_init->get_is_braced_initialized() || con_init->get_is_explicit_cast()) && (use_braces_instead_of_parenthisis == false);
+
+          if (this_constructor_initializer_is_using_Cxx11_initializer_list == true)
+             {
 #if 0
-          printf ("con_init->get_is_braced_initialized() = %s \n",con_init->get_is_braced_initialized() ? "true" : "false");
-          printf ("use_braces_instead_of_parenthisis = %s \n",use_braces_instead_of_parenthisis ? "true" : "false");
-          printf ("newinfo_input = %s \n",newinfo_input ? "true" : "false");
+               printf ("In unparseConInit(): this_constructor_initializer_is_using_Cxx11_initializer_list == true, so reset newinfo_input == true \n");
 #endif
+               newinfo_input = true;
+             }
+#if 0
+       // DQ (8/24/2020): Adding debugging support for Cxx_tests/test2020_44.C.
+          if (isSgFunctionType(con_init->get_type()) != NULL)
+             {
+               printf ("In unparseConInit(): con_init                                   = %p = %s \n",con_init,con_init->class_name().c_str());
+               printf ("In unparseConInit(): con_init->get_type()                        = %p = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str());
+               printf ("In unparseConInit(): con_init->get_need_name()                   = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
+               printf ("In unparseConInit(): con_init->get_is_explicit_cast()            = %s \n",(con_init->get_is_explicit_cast() == true) ? "true" : "false");
+               printf ("In unparseConInit(): con_init->get_is_braced_initialized()       = %s \n",(con_init->get_is_braced_initialized() == true) ? "true" : "false");
+               printf ("In unparseConInit(): con_init->get_associated_class_unknown()    = %s \n",(con_init->get_associated_class_unknown() == true) ? "true" : "false");
+               printf ("In unparseConInit(): con_init->get_need_parenthesis_after_name() = %s \n",(con_init->get_need_parenthesis_after_name() == true) ? "true" : "false");
+
+               printf ("In unparseConInit(): this_constructor_initializer_is_using_Cxx11_initializer_list = %s \n",
+                    (this_constructor_initializer_is_using_Cxx11_initializer_list == true) ? "true" : "false");
+               printf ("In unparseConInit(): current_constructor_initializer_is_for_initialization_list_member_function = %s \n",
+                    (current_constructor_initializer_is_for_initialization_list_member_function == true) ? "true" : "false");
+#if 0
+               printf ("con_init->get_is_braced_initialized() = %s \n",con_init->get_is_braced_initialized() ? "true" : "false");
+               printf ("con_init->get_is_is_explicit_cast()   = %s \n",con_init->get_is_explicit_cast() ? "true" : "false");
+               printf ("use_braces_instead_of_parenthisis     = %s \n",use_braces_instead_of_parenthisis ? "true" : "false");
+               printf ("newinfo_input                         = %s \n",newinfo_input ? "true" : "false");
+#endif
+            // curprint ( string("\n /* con_init->get_need_name()        = ") + (con_init->get_need_name() ? "true" : "false") + " */ \n");
+            // curprint ( string("\n /* con_init->get_is_explicit_cast() = ") + (con_init->get_is_explicit_cast() ? "true" : "false") + " */ \n");
+        }
+#endif
+
        // newinfo.set_current_constructor_initializer_is_for_initialization_list_member_function(newinfo_input);
           newinfo.set_context_for_added_parentheses(newinfo_input);
 
