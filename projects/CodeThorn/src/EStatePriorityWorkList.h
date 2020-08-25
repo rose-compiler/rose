@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <cstddef>
 #include "EStateWorkList.h"
 #include "TopologicalSort.h"
 
@@ -50,7 +51,7 @@ struct PriorityElement {
     void pop_front();
     const EState* front();
     void push_back(const EState*);
-    size_t size();
+    std::size_t size();
     void clear();
     EStateWorkList::iterator begin();
     EStateWorkList::iterator end();

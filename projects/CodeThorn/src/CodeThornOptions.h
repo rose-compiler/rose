@@ -93,6 +93,7 @@ struct CodeThornOptions : public CodeThorn::Options {
   int callStringLength=-1; // not used yet
   bool byteMode=false; // switches between byte-addresses and index-based addresses in PState
   int testSelector=0;
+  bool intraProcedural=false;
   
   // RERS C-subset program options
   struct Rers {
@@ -191,7 +192,8 @@ struct CodeThornOptions : public CodeThorn::Options {
 
   } info;
 
-   bool activeOptionsRequireZ3Library();
+  bool getInterProceduralFlag();
+  bool activeOptionsRequireZ3Library();
    bool getAnalysisSelectionFlag(CodeThorn::AnalysisSelector asel);
    std::string getAnalysisReportFileName(CodeThorn::AnalysisSelector asel);
    typedef std::list<std::pair<CodeThorn::AnalysisSelector,std::string> > AnalysisListType;

@@ -3,7 +3,7 @@
 CodeThorn::EStateWorkList::~EStateWorkList() {
 }
 
-size_t CodeThorn::EStateWorkList::size() {
+std::size_t CodeThorn::EStateWorkList::size() {
   return _list.size();
 }
 
