@@ -400,6 +400,8 @@ elif [ ! -r "$rose_system_cdefs_h" ]; then
     # Fix cdefs.h path for later versions of Mac OSX [Craig Rasmussen, 2019-01-23]
     if [[ "$OSTYPE" == "darwin18" ]]; then
         real_system_cdefs_h="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/include/sys/cdefs.h"
+    elif [[ "$OSTYPE" == "darwin19" ]]; then
+        real_system_cdefs_h="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/cdefs.h"
     fi
 
     if [ ! -r "$real_system_cdefs_h" ]; then
