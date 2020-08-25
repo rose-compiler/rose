@@ -11,8 +11,6 @@
 
 // for measurements only
 #include "TimeMeasurement.cpp"
-// to make ROSE policy check succeed only
-#include "ShowSeq.h"
 
 class TestTraversal : public AstSimpleProcessing {
 public:

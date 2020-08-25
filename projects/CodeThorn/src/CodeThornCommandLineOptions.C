@@ -203,6 +203,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("unit-test-expr-analyzer", po::value< bool >(&ctOpt.exprEvalTest)->default_value(false)->implicit_value(true), "Run expr eval test (with input program).")
     ("byte-mode", po::value< bool >(&ctOpt.byteMode)->default_value(false)->implicit_value(true),"switches from index-based addresses to byte-based addresses in state representation.")
     ("test-selector",po::value< int >(&ctOpt.testSelector)->default_value(0)->implicit_value(0),"Option for selecting dev tests.")
+    ("intra",po::value< bool >(&ctOpt.intraProcedural)->default_value(false)->implicit_value(true),"Select intra-procedural analysis.")
     ;
 
   rersOptions.add_options()
@@ -242,7 +243,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("colors", po::value< bool >(&ctOpt.colors)->default_value(true)->implicit_value(true),"Use colors in output.")
     ("csv-stats",po::value< string >(&ctOpt.csvStatsFileName),"Output statistics into a CSV file <arg>.")
     ("display-diff",po::value< int >(&ctOpt.displayDiff)->default_value(-1),"Print statistics every <arg> computed estates.")
-    ("exploration-mode",po::value< string >(&ctOpt.explorationMode), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync)")
+    ("exploration-mode",po::value< string >(&ctOpt.explorationMode), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync|topologic-sort)")
     ("quiet", po::value< bool >(&ctOpt.quiet)->default_value(false)->implicit_value(true), "Produce no output on screen.")
     ("help,h", "Produce this help message.")
     ("help-all", "Show all help options.")
@@ -425,6 +426,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   checkZ3Options(ctOpt);
   checkNumThreads(ctOpt);
 
+  cout<<"CodeThornCommandLineOptions: ctopt.intraProcedural:"<<ctOpt.intraProcedural<<endl;
   return args;
 }
 

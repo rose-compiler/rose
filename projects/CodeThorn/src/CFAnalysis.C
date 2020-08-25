@@ -2,8 +2,6 @@
  * Author   : Markus Schordan                                *
  *************************************************************/
 
-//#define ALTERNATIVE_LOCAL_EDGE_HANDLING
-
 #include "sage3basic.h"
 #include "sageGeneric.h"
 #include "sageInterface.h"
@@ -145,11 +143,11 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
   ROSE_ASSERT(functionResolutionMode == FRM_FUNCTION_CALL_MAPPING);
   // 1) for each call use AST information to find its corresponding called function
   // 2) create a set of <call,entry,exit,callreturn> edges
-  logger[INFO]<<"establishing inter-flow 2 ..."<<endl;
+  SAWYER_MESG(logger[INFO])<<"establishing inter-flow 2 ..."<<endl;
   InterFlow interFlow;
   LabelSet callLabs=functionCallLabels(flow);
   int callLabsNum=callLabs.size();
-  logger[INFO]<<"number of function call labels: "<<callLabsNum<<endl;
+  SAWYER_MESG(logger[INFO])<<"number of function call labels: "<<callLabsNum<<endl;
   
   for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
     SgNode* callNode=getNode(*i);
@@ -162,7 +160,7 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
     SgNodeHelper::ExtendedCallInfo callInfo = SgNodeHelper::matchExtendedNormalizedCall(callNode);
     if(!callInfo)
     {
-      logger[ERROR] << callNode->unparseToString() << std::endl;
+      SAWYER_MESG(logger[ERROR]) << callNode->unparseToString() << std::endl;
       throw CodeThorn::Exception("interFlow2: unknown call expression");
     }
 
@@ -171,7 +169,7 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
       FunctionCallTargetSet funCallTargetSet=determineFunctionDefinition5(*i, callInfo.representativeNode());
       Label callLabel,entryLabel,exitLabel,callReturnLabel;
       if(funCallTargetSet.size()==0) {
-        logger[WARN] << "undefined call target: " << callNode->unparseToString() 
+        SAWYER_MESG(logger[WARN]) << "undefined call target: " << callNode->unparseToString() 
                      << " <" << typeid(*callNode).name() << ">"
                      << std::endl;
         callLabel=*i;
@@ -180,7 +178,7 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
         callReturnLabel=labeler->functionCallReturnLabel(callNode);
         interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
       } else {
-        logger[TRACE] << "defined call target: " << callNode->unparseToString() 
+        SAWYER_MESG(logger[TRACE]) << "defined call target: " << callNode->unparseToString() 
                       << " <" << typeid(*callNode).name() << ">"
                       << std::endl;
         for(auto fct : funCallTargetSet) {
@@ -196,7 +194,7 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
           callReturnLabel=labeler->functionCallReturnLabel(callNode);
           interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
           
-          //~ logger[TRACE] << "iflow2b " 
+          //~ SAWYER_MESG(logger[TRACE]) << "iflow2b " 
                         //~ << callLabel << ", " << entryLabel << ", " << exitLabel << ", " << callReturnLabel
                         //~ << std::endl;
         }
@@ -204,7 +202,7 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
       break;
     }
     default:
-      logger[ERROR]<<endl<<"Unsupported function resolution mode."<<endl;
+      SAWYER_MESG(logger[ERROR])<<endl<<"Unsupported function resolution mode."<<endl;
       exit(1);
     }
   }
@@ -218,11 +216,11 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
 
   // 1) for each call use AST information to find its corresponding called function
   // 2) create a set of <call,entry,exit,callreturn> edges
-  logger[INFO]<<"establishing inter-flow ..."<<endl;
+  SAWYER_MESG(logger[INFO])<<"establishing inter-flow ..."<<endl;
   InterFlow interFlow;
   LabelSet callLabs=functionCallLabels(flow);
   int callLabsNum=callLabs.size();
-  logger[INFO]<<"number of function call labels: "<<callLabsNum<<endl;
+  SAWYER_MESG(logger[INFO])<<"number of function call labels: "<<callLabsNum<<endl;
   int callLabNr=0;
   int externalFunCalls=0;
   int externalFunCallsWithoutDecl=0;
@@ -284,7 +282,7 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
       break;
     }
     default:
-      logger[ERROR]<<endl<<"Unsupported function resolution mode."<<endl;
+      SAWYER_MESG(logger[ERROR])<<endl<<"Unsupported function resolution mode."<<endl;
       exit(1);
     }
 
@@ -938,6 +936,14 @@ int CFAnalysis::reduceBlockEndNodes(Flow& flow) {
   return cnt;
 }
 
+void CFAnalysis::setInterProcedural(bool flag) {
+  _interProcedural=flag;
+}
+
+bool CFAnalysis::getInterProcedural() {
+  return _interProcedural;
+}
+
 int CFAnalysis::reduceToFunctionEntryNodes(Flow& flow) {
   LabelSet labs=flow.nodeLabels();
   int cnt=0;
@@ -949,54 +955,44 @@ int CFAnalysis::reduceToFunctionEntryNodes(Flow& flow) {
   return cnt;
 }
 
-
-void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
+void CFAnalysis::createInterProceduralCallEdges(Flow& flow, InterFlow& interFlow) {
   for(InterFlow::iterator i=interFlow.begin();i!=interFlow.end();++i) {
     if((*i).entry==Labeler::NO_LABEL && (*i).exit==Labeler::NO_LABEL) {
-#ifdef ALTERNATIVE_LOCAL_EDGE_HANDLING
-      // replace local edge with external edge
-      Edge localEdge=Edge((*i).call,EDGE_LOCAL,(*i).callReturn);
-      Flow::iterator localEdgeIter=flow.find(localEdge);
-      if(localEdgeIter!=flow.end()) {
-        //cout<<"DEBUG: changing local to external edge (before): "<<(*localEdgeIter).toString()<<endl;
-#if 0
-        (*localEdgeIter).removeType(EDGE_LOCAL);
-        (*localEdgeIter).addType(EDGE_EXTERNAL);
-#else
-        EdgeTypeSet tset=localEdgeIter.getTypes();
-        tset.erase(EDGE_LOCAL);
-        tset.insert(EDGE_EXTERNAL);
-        getLabeler()->setExternalFunctionCallLabel((*i).call);
-        localEdgeIter.setTypes(tset);
-#endif
-        //cout<<"DEBUG: changing local to external edge (after): "<<(*localEdgeIter).toString()<<endl;
-        //Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);
-        //Flow::iterator externalEdgeIter=flow.find(externalEdge);
-        //cout<<"DEBUG: checking external edge (after): "<<(*externalEdgeIter).toString()<<endl;
-      } else {
-        cerr<<"Error: did not find local edge of external call. CFG construction failed at "<<SgNodeHelper::sourceLineColumnToString(getNode((*i).call))<<endl;
-      }
-#else
       Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);
       // register in Labeler as external function call
       getLabeler()->setExternalFunctionCallLabel((*i).call);
       flow.insert(externalEdge);
-#endif
     } else {
       Edge callEdge=Edge((*i).call,EDGE_CALL,(*i).entry);
       flow.insert(callEdge);
       Edge callReturnEdge=Edge((*i).exit,EDGE_CALLRETURN,(*i).callReturn);
       flow.insert(callReturnEdge);
 
-#ifdef ALTERNATIVE_LOCAL_EDGE_HANDLING
-      // nothing to do. Local edges are created during intra-procedural CFG analysis.
-#else
       if(_createLocalEdge) {
         Edge localEdge=Edge((*i).call,EDGE_LOCAL,(*i).callReturn);
         flow.insert(localEdge);
       }
-#endif
     }
+  }
+}
+
+void CFAnalysis::createIntraProceduralCallEdges(Flow& flow, InterFlow& interFlow) {
+  // in case intra-procedural analysis is requested, model every function call as external
+  for(InterFlow::iterator i=interFlow.begin();i!=interFlow.end();++i) {
+    Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);
+    // register in Labeler as external function call
+    getLabeler()->setExternalFunctionCallLabel((*i).call);
+    flow.insert(externalEdge);
+  }
+}
+
+void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
+  if(getInterProcedural()) {
+    SAWYER_MESG(logger[INFO])<<"Creating inter-procedural analysis."<<endl;
+    createInterProceduralCallEdges(flow,interFlow);
+  } else {
+    SAWYER_MESG(logger[INFO])<<"Creating intra-procedural analysis."<<endl;
+    createIntraProceduralCallEdges(flow,interFlow);
   }
 }
 
@@ -1710,8 +1706,8 @@ SgFunctionDefinition* CFAnalysis::determineFunctionDefinition3(SgFunctionCallExp
   if(node) {
     if(SgFunctionRefExp* funRef=isSgFunctionRefExp(node)) {
       funDef=getFunctionIdMapping()->resolveFunctionRef(funRef);
-      if(funDef) logger[TRACE]<<"Resolved to "<<funDef;
-      else logger[TRACE]<<"NOT resolved.";
+      if(funDef) SAWYER_MESG(logger[TRACE])<<"Resolved to "<<funDef;
+      else SAWYER_MESG(logger[TRACE])<<"NOT resolved.";
     }
   }
 #if 0
@@ -1744,7 +1740,7 @@ SgFunctionDefinition* CFAnalysis::determineFunctionDefinition3(SgFunctionCallExp
     }
   }
 #endif
-  logger[TRACE]<<" FunDef: "<<funDef<<endl;
+  SAWYER_MESG(logger[TRACE])<<" FunDef: "<<funDef<<endl;
   return funDef;
 }
 

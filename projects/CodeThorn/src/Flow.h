@@ -59,6 +59,11 @@ namespace CodeThorn {
     EdgeTypeSet getTypes() const { return _types; }
     std::string getAnnotation() const { return _annotation; }
     void setAnnotation(std::string annotation) { _annotation = annotation;}
+
+    /* an edge is valid if source and target labels are valid
+       a default constructed edge is not valid */
+    bool isValid() const;
+
   private:
     Label _source;
     Label _target;
@@ -149,6 +154,9 @@ namespace CodeThorn {
 #endif
     Flow edgesOfType(EdgeType edgeType);
     Flow outEdgesOfType(Label label, EdgeType edgeType);
+    // this function only returns a valid edge if exactly one edge exists
+    Edge outEdgeOfType(Label label, EdgeType edgeType);
+
     Label getStartLabel() { return _startLabel; }
     void setStartLabel(Label label) { _startLabel = label; }
     void setDotOptionDisplayLabel(bool opt);
@@ -166,7 +174,7 @@ namespace CodeThorn {
     std::size_t deleteEdges(EdgeType edgeType);
     std::size_t deleteEdges(Flow& flow);
     void establishBoostGraph();
-    
+
     //! inverts all edges in the graph. The root node is updated. This operation is only successful if
     //! the original graph had exactly one final node (which becomes the start node of the new graph).
     CodeThorn::Flow reverseFlow();

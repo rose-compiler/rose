@@ -60,10 +60,8 @@ CODETHORN_SOLO_HEADER_FILES=\
   HSetMaintainer.h \
   ReadWriteData.h \
   SetAlgo.h \
-  WorkListSeq.h \
-  WorkList.h
-  
-  
+  WorkListSeq.h
+
 # codethorn library header files (each with a corresponding source file)
 CODETHORN_HEADER_FILES=\
   AbstractValue.h \
@@ -105,6 +103,8 @@ CODETHORN_HEADER_FILES=\
   EStateAnalysis.h \
   EStateFactory.h \
   EStateTransferFunctions.h \
+  EStateWorkList.h \
+  EStatePriorityWorkList.h \
   ExprAnalyzer.h \
   FIConstAnalysis.h \
   Flow.h \
@@ -178,6 +178,7 @@ CODETHORN_HEADER_FILES=\
   Specialization.h \
   SvcompWitness.h \
   TimeMeasurement.h \
+  TopologicalSort.h \
   TransitionGraph.h \
   TransitionGraphReducer.h \
   TypeSizeMapping.h \
@@ -227,6 +228,8 @@ CODETHORN_SOURCE_FILES=\
   EStateAnalysis.C \
   EStateFactory.C \
   EStateTransferFunctions.C \
+  EStateWorkList.C \
+  EStatePriorityWorkList.C \
   ExprAnalyzer.C \
   FIConstAnalysis.C \
   Flow.C \
@@ -299,6 +302,7 @@ CODETHORN_SOURCE_FILES=\
   Specialization.C \
   SvcompWitness.C \
   TimeMeasurement.C \
+  TopologicalSort.C \
   TransitionGraph.C \
   TransitionGraphReducer.C \
   TypeSizeMapping.C \

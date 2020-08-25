@@ -52,10 +52,11 @@
 #include "ltlthorn-lib/ParProOptions.h"
 #include "DFAnalysisBase.h"
 #include "EStateTransferFunctions.h"
+#include "EStateWorkList.h"
+#include "EStatePriorityWorkList.h"
 
 namespace CodeThorn {
 
-  typedef std::list<const EState*> EStateWorkList;
   typedef std::pair<int, const EState*> FailedAssertion;
   typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
@@ -77,6 +78,7 @@ namespace CodeThorn {
    * \date 2012.
    */
 
+
   class Analyzer : public DFAnalysisBase {
     friend class Solver;
     friend class Solver5;
@@ -96,9 +98,9 @@ namespace CodeThorn {
     virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initLabeledAssertNodes(SgProject* root);
     
-    void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
-    ExplorationMode getExplorationMode() { return _explorationMode; }
-
+    void setExplorationMode(ExplorationMode em);
+    ExplorationMode getExplorationMode();
+    
     void setSolver(Solver* solver);
     Solver* getSolver();
 
@@ -117,8 +119,6 @@ namespace CodeThorn {
     void reduceStgToInOutAssertStates();
     void reduceStgToInOutAssertErrStates();
     void reduceStgToInOutAssertWorklistStates();
-
-    const EState* popWorkList();
 
     // initialize command line arguments provided by option "--cl-options" in PState
     void initializeCommandLineArgumentsInState(PState& initialPState);
@@ -249,6 +249,8 @@ namespace CodeThorn {
     void setCommandLineOptions(vector<string> clOptions);
   protected:
     void setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt);
+    void deleteWorkLists();
+    void setWorkLists(ExplorationMode explorationMode);
   public:
     // TODO: move to flow analyzer (reports label,init,final sets)
     static std::string astNodeInfoAttributeAndNodeToString(SgNode* node);
@@ -317,11 +319,9 @@ namespace CodeThorn {
 
     std::string analyzerStateToString();
 
-    void addToWorkList(const EState* estate);
-    const EState* addToWorkListIfNew(EState estate);
-    const EState* takeFromWorkList();
-    bool isInWorkList(const EState* estate);
+    void addToWorkList(const EState* estate); 
     bool isEmptyWorkList();
+    const EState* popWorkList();
     const EState* topWorkList();
     void swapWorkLists();
 
@@ -423,10 +423,8 @@ namespace CodeThorn {
     FunctionCallMapping functionCallMapping;
     FunctionCallMapping2 functionCallMapping2;
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
-    EStateWorkList* estateWorkListCurrent;
-    EStateWorkList* estateWorkListNext;
-    EStateWorkList estateWorkListOne;
-    EStateWorkList estateWorkListTwo;
+    EStateWorkList* estateWorkListCurrent=0;
+    EStateWorkList* estateWorkListNext=0;
     EStateSet estateSet;
     PStateSet pstateSet;
     ConstraintSetMaintainer constraintSetMaintainer;

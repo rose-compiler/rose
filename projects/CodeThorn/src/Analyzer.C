@@ -23,6 +23,7 @@
 #include "RersSpecialization.h"
 #include "RERS_empty_specialization.h"
 #include "CodeThornLib.h"
+#include "TopologicalSort.h"
 
 using namespace std;
 using namespace Sawyer::Message;
@@ -65,8 +66,6 @@ CodeThorn::Analyzer::Analyzer():
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
   }
-  estateWorkListCurrent = &estateWorkListOne;
-  estateWorkListNext = &estateWorkListTwo;
   estateSet.max_load_factor(0.7);
   pstateSet.max_load_factor(0.7);
   constraintSetMaintainer.max_load_factor(0.7);
@@ -75,6 +74,59 @@ CodeThorn::Analyzer::Analyzer():
   ROSE_ASSERT(_estateTransferFunctions==nullptr);
   _estateTransferFunctions=new EStateTransferFunctions();
   _estateTransferFunctions->setAnalyzer(this);
+}
+
+void CodeThorn::Analyzer::deleteWorkLists() {
+  if(estateWorkListCurrent) {
+    delete estateWorkListCurrent;
+  }
+  if(estateWorkListNext) {
+    delete estateWorkListNext;
+  }
+}
+
+void CodeThorn::Analyzer::setWorkLists(ExplorationMode explorationMode) {
+  deleteWorkLists();
+  switch(_explorationMode) {
+  case EXPL_UNDEFINED:
+    cerr<<"Error: undefined exploration mode in constructing of Analyzer."<<endl;
+    exit(1);
+  case EXPL_DEPTH_FIRST:
+  case EXPL_BREADTH_FIRST:
+  case EXPL_LOOP_AWARE:
+  case EXPL_LOOP_AWARE_SYNC:
+  case EXPL_RANDOM_MODE1:
+    estateWorkListCurrent=new EStateWorkList();
+    estateWorkListNext=new EStateWorkList();
+    break;
+  case EXPL_TOPOLOGIC_SORT: {
+    ROSE_ASSERT(getLabeler());
+    ROSE_ASSERT(getFlow()->getStartLabel().isValid());
+    TopologicalSort topSort(*getLabeler(),*getFlow());
+    std::list<Label> labelList=topSort.topologicallySortedLabelList();
+#if 0
+    cout<<"Topologic Sort:";
+    for(auto label : labelList) {
+      cout<<label.toString()<<" ";
+    }
+    cout<<endl;
+#endif
+    TopologicalSort::LabelToPriorityMap map=topSort.labelToPriorityMap();
+    ROSE_ASSERT(map.size()>0);
+    estateWorkListCurrent = new EStatePriorityWorkList(map);
+    estateWorkListNext = new EStatePriorityWorkList(map); // currently not used in loop aware mode
+    cout<<"STATUS: using topologic worklist."<<endl;
+    break;
+  }
+  }
+}
+
+void CodeThorn::Analyzer::setExplorationMode(ExplorationMode em) {
+  _explorationMode=em;
+}
+
+ExplorationMode CodeThorn::Analyzer::getExplorationMode() {
+  return _explorationMode;
 }
 
 CodeThorn::Analyzer::~Analyzer() {
@@ -90,6 +142,7 @@ CodeThorn::Analyzer::~Analyzer() {
   delete getFunctionCallMapping2()->getClassHierarchy();
   delete getFunctionCallMapping()->getClassHierarchy();
   delete _estateTransferFunctions;
+  deleteWorkLists();
 }
 
 CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const CodeThorn::EState* currentEStatePtr) {
@@ -142,7 +195,7 @@ CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const Co
     localWorkList.push_back(currentEStatePtr);
     while(!localWorkList.empty()) {
       // logger[DEBUG]<<"local work list size: "<<localWorkList.size()<<endl;
-      const EState* currentEStatePtr=*localWorkList.begin();
+      const EState* currentEStatePtr=localWorkList.front();
       localWorkList.pop_front();
       if(isFailedAssertEState(currentEStatePtr)) {
         // ensure we do not compute any successors of a failed assert state
@@ -648,13 +701,6 @@ string CodeThorn::Analyzer::analyzerStateToString() {
   return ss.str();
 }
 
-bool CodeThorn::Analyzer::isInWorkList(const EState* estate) {
-  for(EStateWorkList::iterator i=estateWorkListCurrent->begin();i!=estateWorkListCurrent->end();++i) {
-    if(*i==estate) return true;
-  }
-  return false;
-}
-
 void CodeThorn::Analyzer::incIterations() {
   if(isPrecise()) {
 #pragma omp atomic
@@ -680,6 +726,9 @@ void CodeThorn::Analyzer::addToWorkList(const EState* estate) {
       exit(1);
     }
     switch(_explorationMode) {
+    case EXPL_UNDEFINED:
+      cerr<<"Error: undefined state exploration mode. Bailing out."<<endl;
+      exit(1);
     case EXPL_DEPTH_FIRST: estateWorkListCurrent->push_front(estate);break;
     case EXPL_BREADTH_FIRST: estateWorkListCurrent->push_back(estate);break;
     case EXPL_RANDOM_MODE1: {
@@ -711,6 +760,11 @@ void CodeThorn::Analyzer::addToWorkList(const EState* estate) {
       }
       break;
     }
+    case EXPL_TOPOLOGIC_SORT:
+      // must be estatePriorityWorkList
+      ROSE_ASSERT(dynamic_cast<EStatePriorityWorkList*>(estateWorkListCurrent));
+      estateWorkListCurrent->push_front(estate);
+      break;
     default:
       SAWYER_MESG(logger[ERROR])<<"unknown exploration mode."<<endl;
       exit(1);
@@ -895,7 +949,7 @@ const EState* CodeThorn::Analyzer::topWorkList() {
 #pragma omp critical(ESTATEWL)
   {
     if(!estateWorkListCurrent->empty())
-      estate=*estateWorkListCurrent->begin();
+      estate=estateWorkListCurrent->front();
   }
   return estate;
 }
@@ -904,7 +958,7 @@ const EState* CodeThorn::Analyzer::popWorkList() {
 #pragma omp critical(ESTATEWL)
   {
     if(!estateWorkListCurrent->empty())
-      estate=*estateWorkListCurrent->begin();
+      estate=estateWorkListCurrent->front();
     if(estate) {
       estateWorkListCurrent->pop_front();
       if(getExplorationMode()==EXPL_LOOP_AWARE && isLoopCondLabel(estate->label())) {
@@ -921,19 +975,6 @@ const EState* CodeThorn::Analyzer::popWorkList() {
   return estate;
 }
 
-// not used anywhere
-const EState* CodeThorn::Analyzer::takeFromWorkList() {
-  const EState* co=0;
-#pragma omp critical(ESTATEWL)
-  {
-    if(estateWorkListCurrent->size()>0) {
-      co=*estateWorkListCurrent->begin();
-      estateWorkListCurrent->pop_front();
-    }
-  }
-  return co;
-}
-
 // this function has to be protected by a critical section
 // currently called once inside a critical section
 void CodeThorn::Analyzer::swapWorkLists() {
@@ -943,21 +984,6 @@ void CodeThorn::Analyzer::swapWorkLists() {
   incIterations();
 }
 
-
-const EState* CodeThorn::Analyzer::addToWorkListIfNew(EState estate) {
-  EStateSet::ProcessingResult res=process(estate);
-  if(res.first==true) {
-    const EState* newEStatePtr=res.second;
-    ROSE_ASSERT(newEStatePtr);
-    addToWorkList(newEStatePtr);
-    return newEStatePtr;
-  } else {
-    // logger[DEBUG] << "EState already exists. Not added:"<<estate.toString()<<endl;
-    const EState* existingEStatePtr=res.second;
-    ROSE_ASSERT(existingEStatePtr);
-    return existingEStatePtr;
-  }
-}
 
 // set the size of an element determined by this type
 void CodeThorn::Analyzer::setElementSize(VariableId variableId, SgType* elementType) {
@@ -1756,7 +1782,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     SAWYER_MESG(logger[ERROR]) << "Function '"<<funtofind<<"' not found.\n";
     exit(1);
   } else {
-    SAWYER_MESG(logger[TRACE])<< "INFO: starting at function '"<<funtofind<<"'."<<endl;
+    SAWYER_MESG(logger[INFO])<< "starting at function '"<<funtofind<<"'."<<endl;
   }
   SAWYER_MESG(logger[TRACE])<< "INIT: Initializing AST node info."<<endl;
   initAstNodeInfo(root);
@@ -1783,7 +1809,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     getFunctionCallMapping()->setClassHierarchy(new ClassHierarchyWrapper(*chw));
   }
   else
-    SAWYER_MESG(logger[WARN])<< "WARN: Need an SgProject object for building the class hierarchy\n"
+    SAWYER_MESG(logger[WARN])<< "WARN: Need a SgProject object for building the class hierarchy\n"
                              << "      virtual function call analysis not available!"
                              << std::endl;
 
@@ -1794,26 +1820,25 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   cfanalyzer->setFunctionIdMapping(getFunctionIdMapping());
   cfanalyzer->setFunctionCallMapping(getFunctionCallMapping());
   cfanalyzer->setFunctionCallMapping2(getFunctionCallMapping2());
-
+  cfanalyzer->setInterProcedural(_ctOpt.getInterProceduralFlag());
   getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
   getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
 
 
   // logger[DEBUG]<< "mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
-  SAWYER_MESG(logger[TRACE])<< "INIT: Building CFGs."<<endl;
+  SAWYER_MESG(logger[INFO])<< "INIT: Building CFGs."<<endl;
 
-  if(oneFunctionOnly)
-    flow=cfanalyzer->flow(startFunRoot);
-  else
-    flow=cfanalyzer->flow(root);
-
+  flow=cfanalyzer->flow(root);
+  Label slab=getLabeler()->getLabel(startFunRoot);
+  ROSE_ASSERT(slab.isValid());
+  flow.setStartLabel(slab);
   // Runs consistency checks on the fork / join and workshare / barrier nodes in the parallel CFG
   // If the --omp-ast flag is not selected by the user, the parallel nodes are not inserted into the CFG
   if (_ctOpt.ompAst) {
     cfanalyzer->forkJoinConsistencyChecks(flow);
   }
 
-  SAWYER_MESG(logger[TRACE])<< "STATUS: Building CFGs finished."<<endl;
+  SAWYER_MESG(logger[INFO])<< "STATUS: Building CFGs finished."<<endl;
   if(_ctOpt.reduceCfg) {
     int cnt=cfanalyzer->optimizeFlow(flow);
     SAWYER_MESG(logger[TRACE])<< "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
@@ -1825,7 +1850,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   InterFlow interFlow=cfanalyzer->interFlow(flow);
   SAWYER_MESG(logger[TRACE])<< "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
   cfanalyzer->intraInterFlow(flow,interFlow);
-  SAWYER_MESG(logger[TRACE])<< "INIT: ICFG OK. (size: " << flow.size() << " edges)"<<endl;
+  SAWYER_MESG(logger[INFO])<< "INIT: ICFG OK. (size: " << flow.size() << " edges)"<<endl;
 
 #if 0
   if(_ctOpt.reduceCfg) {
@@ -1888,6 +1913,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     SAWYER_MESG(logger[TRACE])<< "INIT: no global scope.";
   }
 
+  setWorkLists(_explorationMode);
   estate.io.recordNone(); // ensure that extremal value is different to bot
   const EState* initialEState=processNew(estate);
   ROSE_ASSERT(initialEState);
@@ -2229,7 +2255,7 @@ CodeThorn::EStateSet* CodeThorn::Analyzer::getEStateSet() { return &estateSet; }
 CodeThorn::PStateSet* CodeThorn::Analyzer::getPStateSet() { return &pstateSet; }
 TransitionGraph* CodeThorn::Analyzer::getTransitionGraph() { return &transitionGraph; }
 ConstraintSetMaintainer* CodeThorn::Analyzer::getConstraintSetMaintainer() { return &constraintSetMaintainer; }
-std::list<FailedAssertion> CodeThorn::Analyzer::getFirstAssertionOccurences(){return _firstAssertionOccurences;}
+std::list<CodeThorn::FailedAssertion> CodeThorn::Analyzer::getFirstAssertionOccurences(){return _firstAssertionOccurences;}
 
 void CodeThorn::Analyzer::setCommandLineOptions(vector<string> clOptions) {
   _commandLineOptions=clOptions;
@@ -2289,12 +2315,10 @@ CodeThorn::Analyzer::MemoryUpdateList
 CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estatePtr) {
   MemoryUpdateList memoryUpdateList;
   CallString cs=estatePtr->callString;
-  //cout<<"DEBUG: AssignOp: "<<nextNodeToAnalyze2->unparseToString()<<endl;
   EState currentEState=*estatePtr;
   SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
   SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
   list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(rhs,currentEState, CodeThorn::ExprAnalyzer::MODE_VALUE);
-  //list<EState> estateList;
   for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
     VariableId lhsVar;
     bool isLhsVar=exprAnalyzer.checkIfVariableAndDetermineVarId(lhs,lhsVar);
@@ -2554,7 +2578,7 @@ list<EState> CodeThorn::Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyz
   list<SingleEvalResultConstInt> evalResultListF=exprAnalyzer.evaluateExpression(nextNodeToAnalyze2,currentEState,false);
   list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(nextNodeToAnalyze2,currentEState,true);
   //  if(evalResultListF.size()!=evalResultList.size()) {
-    cout<<"DEBUG: different evalresultList sizes (false vs true):"<<evalResultList.size()<<":"<<evalResultListF.size()<<endl;
+  //cout<<"DEBUG: different evalresultList sizes (false vs true):"<<evalResultList.size()<<":"<<evalResultListF.size()<<endl;
     for(list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
         i!=evalResultList.end();
         ++i) {
