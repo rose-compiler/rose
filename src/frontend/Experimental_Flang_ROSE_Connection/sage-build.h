@@ -12,6 +12,7 @@
 // WARNING: This file has been designed to compile with -std=c++17
 // This limits the use of ROSE header files at the moment.
 //
+class SgCommonBlockObject;
 class SgExpression;
 class SgExprListExp;
 class SgScopeStatement;
@@ -47,6 +48,7 @@ void Build(const Fortran::parser::         ActualArgSpec &x, SgExpression* &expr
 void Build(const Fortran::parser::             ActualArg &x, SgExpression* &expr);
 void Build(const Fortran::parser::               Keyword &x, SgExpression* &expr);
 void Build(const Fortran::parser::                  Name &x, SgExpression* &expr);
+void Build(const Fortran::parser::                  Name &x, std::string   &name);
 void Build(const Fortran::parser::         NamedConstant &x, SgExpression* &expr);
 void Build(const Fortran::parser::                  Expr &x, SgExpression* &expr);
 void Build(const Fortran::parser:: Expr::IntrinsicBinary &x, SgExpression* &expr);
@@ -185,6 +187,10 @@ template<typename T> void Build(const Fortran::parser::         NamelistStmt &x,
 template<typename T> void Build(const Fortran::parser::        ParameterStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::     OldParameterStmt &x, T* scope);
 
+template<typename T> void Build(const Fortran::parser::           CommonStmt &x, T* scope);
+template<typename T> void Build(const Fortran::parser::    CommonStmt::Block &x, T* scope);
+void Build(const Fortran::parser::CommonBlockObject&x, SgCommonBlockObject* &common_block_object);
+
 // Expr
 template<typename T> void traverseBinaryExprs(const T &x, SgExpression* &lhs, SgExpression* &rhs);
 
@@ -297,16 +303,16 @@ template<typename LT> void Build(const std::list<LT> &x, SgScopeStatement* scope
    }
 }
 
-template<typename T> void Build(const std::list<T> &x, std::list<SgExpression*> &expr_list)
+template<typename LT, typename T> void Build(const std::list<LT> &x, std::list<T*> &rose_node_list)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(std::list) for T* node building a list of SgExpression*\n";
+   std::cout << "Rose::builder::Build(std::list) for LT* node building a list of T*\n";
 #endif
 
    for (const auto &elem : x) {
-      SgExpression* expr = nullptr;
-      Build(elem, expr);
-      expr_list.push_back(expr);
+      T* rose_node = nullptr;
+      Build(elem, rose_node);
+      rose_node_list.push_back(rose_node);
    }
 }
 
