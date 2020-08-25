@@ -2,6 +2,7 @@
 #define EStateWorkList_H
 
 #include <list>
+#include <cstddef>
 
 namespace CodeThorn {
 
@@ -15,7 +16,7 @@ namespace CodeThorn {
     virtual void pop_front();
     virtual const EState* front();
     virtual void push_back(const EState*);
-    virtual size_t size();
+    virtual std::size_t size();
     virtual void clear();
     virtual iterator begin();
     virtual iterator end();
