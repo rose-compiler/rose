@@ -96,7 +96,7 @@ SgAsmInstruction *
 DisassemblerMips::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t insn_va, AddressSet *successors)
 {
     // Instructions are always four-byte, naturally-aligned, in big- or little-endian order.
-    if (insn_va & 0x03)
+    if (insn_va % instructionAlignment_ != 0)
         throw Exception("non-aligned instruction", insn_va);
     uint32_t insn_disk; // instruction in file byte order
     if (4!=map->at(insn_va).limit(4).require(MemoryMap::EXECUTABLE).read((uint8_t*)&insn_disk).size())
@@ -3624,6 +3624,7 @@ DisassemblerMips::init(ByteOrder::Endianness sex)
     REG_SP = registerDictionary()->findOrThrow("sp");
 
     wordSizeBytes(4);
+    instructionAlignment_ = 4;
     byteOrder(sex);
     callingConventions(CallingConvention::dictionaryMips());
 

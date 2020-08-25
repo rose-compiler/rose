@@ -238,6 +238,12 @@ Disassembler::lookup(const std::string &name)
     return retval;
 }
 
+size_t
+Disassembler::instructionAlignment() const {
+    ASSERT_require(instructionAlignment_ > 0);
+    return instructionAlignment_;
+}
+
 /* Disassemble one instruction. */
 SgAsmInstruction *
 Disassembler::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_t buf_size, rose_addr_t start_va,

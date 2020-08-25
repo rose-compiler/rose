@@ -962,7 +962,7 @@ DisassemblerM68k::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va
 {
     State state; // all mutable state for this function and its descendences is stored here.
     start_instruction(state, map, start_va);
-    if (0!=start_va%2)
+    if (start_va % instructionAlignment_ != 0)
         throw Exception("instruction is not properly aligned", start_va);
     uint8_t buf[sizeof(state.iwords)]; // largest possible instruction
     size_t nbytes = map->at(start_va).limit(sizeof buf).require(MemoryMap::EXECUTABLE).read(buf).size();
@@ -4863,6 +4863,7 @@ DisassemblerM68k::init()
     p_proto_dispatcher->set_register_dictionary(regdict);
 
     wordSizeBytes(2);
+    instructionAlignment_ = 2;
     byteOrder(ByteOrder::ORDER_MSB);
     callingConventions(CallingConvention::dictionaryM68k());
 
