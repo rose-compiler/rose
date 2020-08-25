@@ -10,6 +10,8 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 
 #include <boost/config.hpp>
 #ifndef BOOST_WINDOWS
@@ -581,41 +583,73 @@ MemoryMap::insertProcess(const std::string &locatorString) {
     insertProcess(pid, doAttach);
 }
 
-// FIXME[Robb P. Matzke 2014-10-09]: No idea how to do this in Microsoft Windows!
-#ifdef BOOST_WINDOWS                                    // FIXME[Robb P. Matzke 2014-10-10]
-MemoryMap::insertProcess(int pid, Attach::Boolean doAttach) {
-    throw std::runtime_error("MemoryMap::insertProcess is not available on Microsoft Windows");
+// class method
+std::vector<MemoryMap::ProcessMapRecord>
+MemoryMap::readProcessMap(pid_t pid) {
+    std::vector<MemoryMap::ProcessMapRecord> records;
+
+    //               1           2               3                    4              5         6         7
+    //               first       last+1          accessibility        offset         device    inode     comment
+    boost::regex re("([0-9a-f]+)-([0-9a-f]+)\\s+([-r][-w][-x][-p])\\s+([0-9a-f]+)\\s+(\\S+)\\s+(\\d+)\\s+(.*)");
+
+    boost::filesystem::path mapsName = "/proc/" + boost::lexical_cast<std::string>(pid) + "/maps";
+    std::ifstream maps(mapsName.c_str());
+    while (maps) {
+        std::string line = rose_getline(maps);
+        boost::smatch matched;
+        if (!boost::regex_match(line, matched, re))
+            break;
+
+        // virtual addresses
+        ProcessMapRecord record;
+        rose_addr_t beginVa = rose_strtoull(matched.str(1).c_str(), NULL, 16);
+        rose_addr_t endVa = rose_strtoull(matched.str(2).c_str(), NULL, 16);
+        if (endVa <= beginVa)
+            break;
+        record.interval = AddressInterval::hull(beginVa, endVa - 1);
+
+        // accessibility
+        if (matched.str(3)[0] == 'r')
+            record.accessibility |= READABLE;
+        if (matched.str(3)[1] == 'w')
+            record.accessibility |= WRITABLE;
+        if (matched.str(3)[2] == 'x')
+            record.accessibility |= EXECUTABLE;
+        if (matched.str(3)[3] == 'p')
+            record.accessibility |= PRIVATE;
+
+        // the rest of the fields
+        record.fileOffset = rose_strtoull(matched.str(4).c_str(), NULL, 16);
+        record.deviceName = matched.str(5);
+        record.inode = boost::lexical_cast<size_t>(matched.str(6));
+        record.comment = matched.str(7);
+        records.push_back(record);
+    }
+    return records;
 }
-#else
+
 void
 MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
+#ifdef __linux__
     // Resources that need to be cleaned up on return or exception
-    struct T {
-        FILE *mapsFile;                                 // file for /proc/xxx/maps
-        char *buf;                                      // line read from /proc/xxx/maps
-        size_t bufsz;                                   // bytes allocated for "buf"
-        int memFile;                                    // file for /proc/xxx/mem
-        pid_t resumeProcess;                            // subordinate process to resume
-        T(): mapsFile(NULL), buf(NULL), bufsz(0), memFile(-1), resumeProcess(-1) {}
-        ~T() {
-            if (mapsFile)
-                fclose(mapsFile);
-            if (buf)
-                free(buf);
-            if (memFile>=0)
+    struct Resources {
+        int memFile;
+        pid_t resumeProcess;
+        Resources(): memFile(-1), resumeProcess(-1) {}
+        ~Resources() {
+            if (-1 != memFile)
                 close(memFile);
-            if (resumeProcess != -1)
+            if (-1 != resumeProcess)
                 ptrace(PTRACE_DETACH, resumeProcess, 0, 0);
         }
-    } local;
+    } r;
 
-
-    // We need to attach to the process with ptrace before we can read from its /proc/xxx/mem file.  We'll have
-    // to detach if anything goes wrong or when we finish.
+    // We need to attach to the process with ptrace before we're allowed to read from its /proc/xxx/mem file. We should also
+    // stop it while we read its state.
     if (doAttach) {
         if (-1 == ptrace(PTRACE_ATTACH, pid, 0, 0))
             throw insertProcessError("cannot attach to", pid, strerror(errno));
-    int wstat = 0;
+        int wstat = 0;
         if (-1 == waitpid(pid, &wstat, 0))
             throw insertProcessError("cannot wait for", pid, strerror(errno));
         if (WIFEXITED(wstat))
@@ -623,113 +657,67 @@ MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
         if (WIFSIGNALED(wstat))
             throw insertProcessError("cannot read from", pid, "died with " +
                                      boost::to_lower_copy(std::string(strsignal(WTERMSIG(wstat)))));
-        local.resumeProcess = pid;
+        r.resumeProcess = pid;
         ASSERT_require2(WIFSTOPPED(wstat) && WSTOPSIG(wstat)==SIGSTOP, "subordinate process did not stop");
     }
 
-    // Prepare to read subordinate's memory
-    std::string mapsName = "/proc/" + StringUtility::numberToString(pid) + "/maps";
-    if (NULL==(local.mapsFile = fopen(mapsName.c_str(), "r")))
-        throw insertProcessError("cannot open " + mapsName + " for", pid, strerror(errno));
-    std::string memName = "/proc/" + StringUtility::numberToString(pid) + "/mem";
-    if (-1 == (local.memFile = open(memName.c_str(), O_RDONLY)))
+    // Read memory
+    std::vector<ProcessMapRecord> mapRecords = readProcessMap(pid);
+    std::string memName = "/proc/" + boost::lexical_cast<std::string>(pid) + "/mem";
+    if (-1 == (r.memFile = open(memName.c_str(), O_RDONLY)))
         throw insertProcessError("cannot open " + memName + " for" + strerror(errno));
+    BOOST_FOREACH (ProcessMapRecord &record, mapRecords) {
+        std::string segmentName = "proc:" + boost::lexical_cast<std::string>(pid);
+        if (!record.comment.empty())
+            segmentName += "(" + record.comment + ")";
 
-    // Read each line from the /proc/xxx/maps to figure out what memory is mapped in the subordinate process. The format for
-    // the part we're interested in is /^([0-9a-f]+)-([0-9a-f]+) ([-r][-w][-x])/ where $1 is the inclusive starting address, $2
-    // is the exclusive ending address, and $3 are the permissions.
-    int mapsFileLineNumber = 0;
-    while (rose_getline(&local.buf, &local.bufsz, local.mapsFile)>0) {
-        ++mapsFileLineNumber;
-
-        // Begin address
-        char *s=local.buf, *rest=s;
-        errno = 0;
-        rose_addr_t begin = rose_strtoull(s, &rest, 16);
-        if (errno!=0 || rest==s || '-'!=*rest) {
-            throw insertProcessError("syntax error for beginning address at " + mapsName + ":" +
-                                     StringUtility::numberToString(mapsFileLineNumber) + " for", pid,
-                                     "\"" + StringUtility::cEscape(local.buf) + "\"");
-        }
-
-        // End address
-        s = rest+1;
-        rose_addr_t end = rose_strtoull(s, &rest, 16);
-        if (errno!=0 || rest==s || ' '!=*rest) {
-            throw insertProcessError("syntax error for ending address at " + mapsName + ":" +
-                                     StringUtility::numberToString(mapsFileLineNumber) + " for", pid,
-                                     "\"" + StringUtility::cEscape(local.buf) + "\"");
-        }
-        if (begin >= end) {
-            throw insertProcessError("invalid address range at " + mapsName + ":" +
-                                     StringUtility::numberToString(mapsFileLineNumber) + " for", pid,
-                                     "\"" + StringUtility::cEscape(local.buf) + "\"");
-        }
-
-        // Access permissions
-        s = ++rest;
-        if ((s[0]!='r' && s[0]!='-') || (s[1]!='w' && s[1]!='-') || (s[2]!='x' && s[2]!='-')) {
-            throw insertProcessError("invalid access permissions at " + mapsName + ":" +
-                                     StringUtility::numberToString(mapsFileLineNumber) + " for", pid,
-                                     "\"" + StringUtility::cEscape(local.buf) + "\"");
-        }
-        unsigned accessibility = ('r'==s[0] ? READABLE : 0) | ('w'==s[1] ? WRITABLE : 0) | ('x'==s[2] ? EXECUTABLE : 0);
-
-        // Skip over unused fields
-        for (size_t nSpaces=0; nSpaces<4 && *s; ++s) {
-            if (isspace(*s))
-                ++nSpaces;
-        }
-        while (isspace(*s)) ++s;
-
-        // Segment name according to the kernel
-        std::string kernelSegmentName;
-        while (*s && !isspace(*s))
-            kernelSegmentName += *s++;
-
-        // Create memory segment, but don't insert it until after we read all the data
-        std::string segmentName = "proc:" + StringUtility::numberToString(pid);
-        AddressInterval segmentInterval = AddressInterval::baseSize(begin, end-begin);
-        Segment segment = Segment::anonymousInstance(segmentInterval.size(), accessibility,
-                                                     segmentName + "(" + kernelSegmentName + ")");
-
+#if 0 // [Robb Matzke 2020-08-25]: This would be cool if it worked (No such device: iostream error)
+        // Map data from the subordinate process into our memory segment
+        Buffer::Ptr buffer = MappedBuffer::instance(memName, boost::iostreams::mapped_file::readonly,
+                                                    record.fileOffset, record.interval.size());
+        ASSERT_not_null(buffer);
+#else
         // Copy data from the subordinate process into our memory segment
-        if (-1 == lseek(local.memFile, begin, SEEK_SET))
+        Buffer::Ptr buffer = AllocatingBuffer::instance(record.interval.size());
+        size_t nRemaining = record.interval.size();
+        if (-1 == lseek(r.memFile, record.interval.least(), SEEK_SET))
             throw insertProcessError("seek failed in " + memName + " for", pid, strerror(errno));
-        size_t nRemain = segmentInterval.size();
         rose_addr_t segmentBufferOffset = 0;
-        while (nRemain > 0) {
+        while (nRemaining > 0) {
             uint8_t chunkBuf[8192];
-            size_t chunkSize = std::min(nRemain, sizeof chunkBuf);
-            ssize_t nRead = ::read(local.memFile, chunkBuf, chunkSize);
+            size_t chunkSize = std::min(nRemaining, sizeof chunkBuf);
+            ssize_t nRead = ::read(r.memFile, chunkBuf, chunkSize);
             if (-1==nRead) {
                 if (EINTR==errno)
                     continue;
-                mlog[WARN] <<strerror(errno) <<" during read from " <<memName <<" for segment " <<kernelSegmentName
-                           <<" at " <<segmentInterval <<"\n";
+                mlog[WARN] <<strerror(errno) <<" during read from " <<memName <<" for segment " <<record.comment
+                           <<" at " <<record.interval <<"\n";
                 segmentName += "[" + boost::to_lower_copy(std::string(strerror(errno))) + "]";
                 break;
             } else if (0==nRead) {
-                mlog[WARN] <<"short read from " <<memName <<" for segment " <<kernelSegmentName <<" at " <<segmentInterval <<"\n";
+                mlog[WARN] <<"short read from " <<memName <<" for segment " <<record.comment <<" at " <<record.interval <<"\n";
                 segmentName += "[short read]";
                 break;
             }
-            rose_addr_t nWrite = segment.buffer()->write(chunkBuf, segmentBufferOffset, nRead);
+            rose_addr_t nWrite = buffer->write(chunkBuf, segmentBufferOffset, nRead);
             ASSERT_always_require(nWrite == (rose_addr_t)nRead);
-            nRemain -= chunkSize;
+            nRemaining -= chunkSize;
             segmentBufferOffset += chunkSize;
         }
-        if (nRemain > 0) {
-            // If a read failed, map only what we could read
-            segmentInterval = AddressInterval::baseSize(segmentInterval.least(), segmentInterval.size()-nRemain);
-        }
+
+        // If a read failed, map only what we could read
+        if (nRemaining > 0)
+            record.interval = AddressInterval::baseSize(record.interval.least(), record.interval.size()-nRemaining);
+#endif
 
         // Insert segment into memory map
-        if (!segmentInterval.isEmpty())
-            insert(segmentInterval, segment);
+        if (!record.interval.isEmpty())
+            insert(record.interval, Segment(buffer, 0, record.accessibility, segmentName));
     }
-}
+#else
+    throw std::runtime_error("MemoryMap::insertProcess is not available on this system");
 #endif
+}
 
 SgUnsignedCharList
 MemoryMap::readVector(rose_addr_t va, size_t desired, unsigned requiredPerms) const
