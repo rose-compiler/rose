@@ -14,7 +14,7 @@ CodeThorn::EStatePriorityWorkList::EStatePriorityWorkList(TopologicalSort::Label
   _labelToPriorityMap=map;
 }
 
-size_t CodeThorn::EStatePriorityWorkList::size() {
+std::size_t CodeThorn::EStatePriorityWorkList::size() {
   return _list.size();
 }
 

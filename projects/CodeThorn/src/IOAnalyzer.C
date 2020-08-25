@@ -440,61 +440,63 @@ void IOAnalyzer::setup(Analyzer* analyzer, Sawyer::Message::Facility logger,
   }
 }
 
-void CodeThorn::IOAnalyzer::configureOptions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
+void CodeThorn::IOAnalyzer::configureOptions(CodeThornOptions ctOpt, LTLOptions ltlOpt, ParProOptions parProOpt) {
+  setOptions(ctOpt);
+  setLtlOptions(ltlOpt);
   AbstractValue::byteMode=ctOpt.byteMode;
   AbstractValue::strictChecking=ctOpt.strictChecking;
 
-    SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls;
-    if (ctOpt.callStringLength >= 2) 
-      setFiniteCallStringMaxLength(ctOpt.callStringLength);
+  SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls;
+  if (ctOpt.callStringLength >= 2) 
+    setFiniteCallStringMaxLength(ctOpt.callStringLength);
 
-    configureOptionSets(ctOpt);
+  configureOptionSets(ctOpt);
 
-    optionStringLiteralsInState=ctOpt.inStateStringLiterals;
-    setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
-    setIgnoreFunctionPointers(ctOpt.ignoreFunctionPointers);
-    setStdFunctionSemantics(ctOpt.stdFunctions);
+  optionStringLiteralsInState=ctOpt.inStateStringLiterals;
+  setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
+  setIgnoreFunctionPointers(ctOpt.ignoreFunctionPointers);
+  setStdFunctionSemantics(ctOpt.stdFunctions);
 
-    setup(this, logger, ctOpt, ltlOpt, parProOpt);
-    //setSolver(createSolver(ctOpt));
+  setup(this, logger, ctOpt, ltlOpt, parProOpt);
+  //setSolver(createSolver(ctOpt));
     
-    switch(int mode=ctOpt.interpreterMode) {
-    case 0: setInterpreterMode(IM_DISABLED); break;
-    case 1: setInterpreterMode(IM_ENABLED); break;
-    default:
-      cerr<<"Unknown interpreter mode "<<mode<<" provided on command line (supported: 0..1)."<<endl;
-      exit(1);
-    }
-    string outFileName=ctOpt.interpreterModeOuputFileName;
-    if(outFileName!="") {
-      setInterpreterModeOutputFileName(outFileName);
-      CppStdUtilities::writeFile(outFileName,""); // touch file
-    }
+  switch(int mode=ctOpt.interpreterMode) {
+  case 0: setInterpreterMode(IM_DISABLED); break;
+  case 1: setInterpreterMode(IM_ENABLED); break;
+  default:
+    cerr<<"Unknown interpreter mode "<<mode<<" provided on command line (supported: 0..1)."<<endl;
+    exit(1);
+  }
+  string outFileName=ctOpt.interpreterModeOuputFileName;
+  if(outFileName!="") {
+    setInterpreterModeOutputFileName(outFileName);
+    CppStdUtilities::writeFile(outFileName,""); // touch file
+  }
 
-    setFunctionResolutionModeInCFAnalysis(ctOpt);
+  setFunctionResolutionModeInCFAnalysis(ctOpt);
 
-    setNumberOfThreadsToUse(ctOpt.threads);
+  setNumberOfThreadsToUse(ctOpt.threads);
 
-   // handle RERS mode: reconfigure options
-    if(ctOpt.rers.rersMode) {
-      SAWYER_MESG(logger[TRACE]) <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
-      ctOpt.rers.stdErrLikeFailedAssert=true;
-    }
-    setTreatStdErrLikeFailedAssert(ctOpt.rers.stdErrLikeFailedAssert);
+  // handle RERS mode: reconfigure options
+  if(ctOpt.rers.rersMode) {
+    SAWYER_MESG(logger[TRACE]) <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
+    ctOpt.rers.stdErrLikeFailedAssert=true;
+  }
+  setTreatStdErrLikeFailedAssert(ctOpt.rers.stdErrLikeFailedAssert);
 
-    if(ctOpt.svcomp.svcompMode) {
-      enableSVCompFunctionSemantics();
-      string errorFunctionName="__VERIFIER_error";
-      setExternalErrorFunctionName(errorFunctionName);
-    }
+  if(ctOpt.svcomp.svcompMode) {
+    enableSVCompFunctionSemantics();
+    string errorFunctionName="__VERIFIER_error";
+    setExternalErrorFunctionName(errorFunctionName);
+  }
 
-    if(ctOpt.svcomp.detectedErrorFunctionName.size()>0) {
-      setExternalErrorFunctionName(ctOpt.svcomp.detectedErrorFunctionName);
-    }
+  if(ctOpt.svcomp.detectedErrorFunctionName.size()>0) {
+    setExternalErrorFunctionName(ctOpt.svcomp.detectedErrorFunctionName);
+  }
 
 
-    // Build the AST used by ROSE
-    if(ctOpt.status) {
-      cout<< "STATUS: Parsing and creating AST started."<<endl;
-    }
+  // Build the AST used by ROSE
+  if(ctOpt.status) {
+    cout<< "STATUS: Parsing and creating AST started."<<endl;
+  }
 }

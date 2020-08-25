@@ -136,12 +136,17 @@ class CFAnalysis {
   enum FunctionResolutionMode { FRM_TRANSLATION_UNIT, FRM_WHOLE_AST_LOOKUP, FRM_FUNCTION_ID_MAPPING, FRM_FUNCTION_CALL_MAPPING };
   static FunctionResolutionMode functionResolutionMode;
   static Sawyer::Message::Facility logger;
+  void setInterProcedural(bool flag);
+  bool getInterProcedural();
  protected:
   SgFunctionDefinition* determineFunctionDefinition2(SgFunctionCallExp* funCall);
   SgFunctionDefinition* determineFunctionDefinition3(SgFunctionCallExp* funCall);
   FunctionCallTargetSet determineFunctionDefinition4(SgFunctionCallExp* funCall);
   FunctionCallTargetSet determineFunctionDefinition5(Label lbl, SgLocatedNode* astnode);
   static void initDiagnostics();
+  void createInterProceduralCallEdges(Flow& flow, InterFlow& interFlow);
+  void createIntraProceduralCallEdges(Flow& flow, InterFlow& interFlow);
+  bool _interProcedural=true;
  private:
   SgStatement* getCaseOrDefaultBodyStmt(SgNode* node);
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);

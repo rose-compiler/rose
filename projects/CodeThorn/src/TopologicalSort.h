@@ -23,7 +23,7 @@ class TopologicalSort {
   // computes reverse post-order of labels in revPostOrderList
   void semanticRevPostOrderTraversal(Label lab);
 
- private:  
+ private:
   Labeler& labeler;
   Flow& flow;
   std::map<Label,bool> visited;
