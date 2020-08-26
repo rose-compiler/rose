@@ -587,6 +587,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2020_17.c \
      test2020_18.c \
      test2020_19.c \
+     test2020_21.c \
      test2020_22.c
 
 
@@ -607,12 +608,12 @@ TESTCODE_CURRENTLY_FAILING = \
      test2018_39.c \
      test2018_40.c \
      test2020_20.c \
-     test2020_21.c \
      test2020_23.c \
      test2020_24.c \
      test2020_25.c \
      test2020_26.c \
-     test2020_27.c 
+     test2020_27.c \
+     test2020_28.c 
 
 # DQ (1/16/2017): Clang C support appears to be missign the typeof operator (C11 mode).
 if !USING_CLANG_COMPILER
