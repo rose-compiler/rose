@@ -1224,7 +1224,7 @@ int main( int argc, char * argv[] ) {
         write_file("transitiongraph1.dat", datFile1);
         cout << "generated transitiongraph1.dat."<<endl;
 
-        assert(analyzer->startFunRoot);
+        //assert(analyzer->startFunRoot);
         //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
         //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
         SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;

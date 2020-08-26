@@ -31,7 +31,7 @@ using namespace Sawyer::Message;
 Sawyer::Message::Facility CodeThorn::Analyzer::logger;
 
 CodeThorn::Analyzer::Analyzer():
-  startFunRoot(0),
+  _startFunRoot(0),
   cfanalyzer(0),
   _globalTopifyMode(GTM_IO),
   _stgReducer(&estateSet, &transitionGraph),
@@ -1679,8 +1679,8 @@ void CodeThorn::Analyzer::initializeCommandLineArgumentsInState(PState& initialP
   // TODO1: add formal paramters of solo-function
   // SgFunctionDefinition* startFunRoot: node of function
   // estate=analyzeVariableDeclaration(SgVariableDeclaration*,estate,estate.label());
-  string functionName=SgNodeHelper::getFunctionName(startFunRoot);
-  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(startFunRoot);
+  string functionName=SgNodeHelper::getFunctionName(_startFunRoot);
+  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(_startFunRoot);
   VariableId argcVarId;
   VariableId argvVarId;
   size_t mainFunArgNr=0;
@@ -1771,18 +1771,26 @@ void CodeThorn::Analyzer::stopAnalysisTimer() {
   SAWYER_MESG(logger[INFO])<<"INFO: solver timer stopped."<<endl;
 }
 
+SgNode* CodeThorn::Analyzer::getStartFunRoot() {
+  return _startFunRoot;
+}
+
+// change: pass in a set of labels (
 void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
   startAnalysisTimer();
   ROSE_ASSERT(root);
   resetInputSequenceIterator();
-  std::string funtofind=functionToStartAt;
   RoseAst completeast(root);
-  startFunRoot=completeast.findFunctionByName(funtofind);
-  if(startFunRoot==0) {
-    SAWYER_MESG(logger[ERROR]) << "Function '"<<funtofind<<"' not found.\n";
-    exit(1);
-  } else {
-    SAWYER_MESG(logger[INFO])<< "starting at function '"<<funtofind<<"'."<<endl;
+
+  // START_INIT 2
+  if(_ctOpt.getInterProceduralFlag()) {
+    _startFunRoot=completeast.findFunctionByName(functionToStartAt);
+    if(_startFunRoot==0) {
+      SAWYER_MESG(logger[ERROR]) << "Function '"<<functionToStartAt<<"' not found.\n";
+      exit(1);
+    } else {
+      SAWYER_MESG(logger[INFO])<< "starting at function '"<<functionToStartAt<<"'."<<endl;
+    }
   }
   SAWYER_MESG(logger[TRACE])<< "INIT: Initializing AST node info."<<endl;
   initAstNodeInfo(root);
@@ -1796,23 +1804,19 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   
   getFunctionCallMapping2()->setLabeler(labeler);
 
-  if (SgProject* prj = isSgProject(root))
-  {
+  if (SgProject* prj = isSgProject(root)) {
     ClassHierarchyWrapper* chw = new ClassHierarchyWrapper(prj);
-    
-    if (SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL)
-    { 
+    if (SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL) { 
       getFunctionCallMapping2()->setClassHierarchy(chw);
       getFunctionCallMapping2()->computeFunctionCallMapping(prj);
     }
-    
     getFunctionCallMapping()->setClassHierarchy(new ClassHierarchyWrapper(*chw));
-  }
-  else
+  } else {
     SAWYER_MESG(logger[WARN])<< "WARN: Need a SgProject object for building the class hierarchy\n"
                              << "      virtual function call analysis not available!"
                              << std::endl;
-
+  }
+  
   //FunctionIdMapping* funIdMapping=new FunctionIdMapping();
   //ROSE_ASSERT(isSgProject(root));
   //funIdMapping->computeFunctionSymbolMapping(isSgProject(root));
@@ -1828,10 +1832,11 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   // logger[DEBUG]<< "mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   SAWYER_MESG(logger[INFO])<< "INIT: Building CFGs."<<endl;
 
-  flow=cfanalyzer->flow(root);
-  Label slab=getLabeler()->getLabel(startFunRoot);
-  ROSE_ASSERT(slab.isValid());
-  flow.setStartLabel(slab);
+  flow=cfanalyzer->flow(root); // START_INIT 3
+  Label slab2=getLabeler()->getLabel(_startFunRoot);
+  ROSE_ASSERT(slab2.isValid());
+  ROSE_ASSERT(getLabeler()->isFunctionEntryLabel(slab2));
+  flow.setStartLabel(slab2);
   // Runs consistency checks on the fork / join and workshare / barrier nodes in the parallel CFG
   // If the --omp-ast flag is not selected by the user, the parallel nodes are not inserted into the CFG
   if (_ctOpt.ompAst) {
@@ -1868,6 +1873,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
       cout<<"STATUS: created "<<getVariableIdMapping()->numberOfRegisteredStringLiterals()<<" string literals in initial state."<<endl;
     }
   }
+  // START_INIT 5
   const PState* initialPStateStored=processNew(initialPState);
   ROSE_ASSERT(initialPStateStored);
   //SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
@@ -1875,12 +1881,12 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   ROSE_ASSERT(cfanalyzer);
   ConstraintSet cset;
   const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
-  Label startLabel=cfanalyzer->getLabel(startFunRoot);
-  transitionGraph.setStartLabel(startLabel);
+
+  Label slab=flow.getStartLabel();
+  transitionGraph.setStartLabel(slab);
   transitionGraph.setAnalyzer(this);
 
-  EState estate(startLabel,initialPStateStored,emptycsetstored);
-
+  EState estate(slab,initialPStateStored,emptycsetstored);
   if(SgProject* project=isSgProject(root)) {
     SAWYER_MESG(logger[TRACE])<< "STATUS: Number of global variables: ";
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
@@ -1895,6 +1901,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
 #endif
     SAWYER_MESG(logger[TRACE])<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 
+    // START_INIT 6
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
       VariableId globalVarId=variableIdMapping->variableId(*i);
@@ -1914,13 +1921,24 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   }
 
   setWorkLists(_explorationMode);
-  estate.io.recordNone(); // ensure that extremal value is different to bot
-  const EState* initialEState=processNew(estate);
-  ROSE_ASSERT(initialEState);
-  variableValueMonitor.init(initialEState);
-  addToWorkList(initialEState);
-  SAWYER_MESG(logger[TRACE]) << "INIT: start state (extremal value): "<<initialEState->toString(variableIdMapping)<<endl;
-
+  
+  if(_ctOpt.getInterProceduralFlag()) {
+    const EState* initialEState=processNew(estate); // START_INIT 6
+    estate.io.recordNone(); // ensure that extremal value is different to bot
+    ROSE_ASSERT(initialEState);
+    variableValueMonitor.init(initialEState);
+    addToWorkList(initialEState); // START_INIT 7: ADD TO WORKLIST HERE!!!
+    SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(variableIdMapping)<<endl;
+  } else {
+    LabelSet entryLabels=cfanalyzer->functionEntryLabels(flow);
+    cout<<"STATUS: intra-procedural analysis with "<<entryLabels.size()<<" functions."<<endl;
+    // initialize intra-procedural analysis with all function entry points
+    const EState* initialEState=processNew(estate); // START_INIT 6
+    ROSE_ASSERT(initialEState);
+    variableValueMonitor.init(initialEState);
+    addToWorkList(initialEState); // START_INIT 7: ADD TO WORKLIST HERE!!!
+    SAWYER_MESG(logger[INFO]) << "INIT: start state intra-procedural (extremal value): "<<initialEState->toString(variableIdMapping)<<endl;
+  }
   // initialize summary states map for abstract model checking mode
   initializeSummaryStates(initialPStateStored,emptycsetstored);
 

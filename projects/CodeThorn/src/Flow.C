@@ -268,6 +268,31 @@ Flow::Flow() {
   resetDotOptions(); 
 }
 
+Label Flow::getStartLabel() {
+  if(_startLabelSet.size()==1) {
+    return *_startLabelSet.begin();
+  } else if(_startLabelSet.size()==0) {
+    cerr<<"Flow::getStartLabel: start label requested, but no start label available.";
+    exit(1);
+  } else {
+    cout<<"WARNING: start label requested, but more than one start label available. Choosing randomly one of the registered start labels."<<endl;
+    return *_startLabelSet.begin();
+  }
+}
+void Flow::setStartLabel(Label label) {
+  LabelSet ls;
+  ls.insert(label);
+  _startLabelSet=ls;
+}
+
+void Flow::setStartLabelSet(LabelSet labelSet) {
+  _startLabelSet = labelSet;
+}
+
+LabelSet Flow::getStartLabelSet() {
+  return _startLabelSet;
+}
+
 CodeThorn::Flow Flow::reverseFlow() {
   Flow reverseFlow;
   for(Flow::iterator i=begin();i!=end();++i) {

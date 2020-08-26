@@ -247,14 +247,15 @@ namespace CodeThorn {
        if set they are used to initialize the initial state with argv and argc domain abstractions
     */
     void setCommandLineOptions(vector<string> clOptions);
+    SgNode* getStartFunRoot();
   protected:
     void setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt);
     void deleteWorkLists();
     void setWorkLists(ExplorationMode explorationMode);
+    SgNode* _startFunRoot;
   public:
     // TODO: move to flow analyzer (reports label,init,final sets)
     static std::string astNodeInfoAttributeAndNodeToString(SgNode* node);
-    SgNode* startFunRoot;
     PropertyValueTable reachabilityResults;
     boost::unordered_map <std::string,int*> mapGlobalVarAddress;
     boost::unordered_map <int*,std::string> mapAddressGlobalVar;

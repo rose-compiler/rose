@@ -157,8 +157,11 @@ namespace CodeThorn {
     // this function only returns a valid edge if exactly one edge exists
     Edge outEdgeOfType(Label label, EdgeType edgeType);
 
-    Label getStartLabel() { return _startLabel; }
-    void setStartLabel(Label label) { _startLabel = label; }
+    void setStartLabel(Label label);
+    Label getStartLabel();
+    void setStartLabelSet(LabelSet labelSet);
+    LabelSet getStartLabelSet();
+
     void setDotOptionDisplayLabel(bool opt);
     void setDotOptionDisplayStmt(bool opt);
     void setDotOptionEdgeAnnotationsOnly(bool opt);
@@ -187,7 +190,7 @@ namespace CodeThorn {
     std::string _fixedColor;
     std::string _fixedNodeColor;
     bool _dotOptionHeaderFooter;
-    Label _startLabel;
+    LabelSet _startLabelSet;
 #ifdef USE_SAWYER_GRAPH
     SawyerCfg  _sawyerFlowGraph;
 #else

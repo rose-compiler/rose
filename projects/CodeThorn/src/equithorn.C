@@ -677,8 +677,8 @@ int main( int argc, char * argv[] ) {
       // in all other cases exit with error.
       RoseAst completeAst(root);
       string startFunction=option_start_function;
-      SgNode* startFunRoot=completeAst.findFunctionByName(startFunction);
-      if(startFunRoot==0) {
+      SgNode* _startFunRoot=completeAst.findFunctionByName(startFunction);
+      if(_startFunRoot==0) {
         // no main function exists. check if a single function exists in the translation unit
         SgProject* project=isSgProject(root);
         ROSE_ASSERT(project);
@@ -1270,9 +1270,9 @@ int main( int argc, char * argv[] ) {
         write_file("transitiongraph1.dat", datFile1);
         cout << "generated transitiongraph1.dat."<<endl;
 
-        assert(analyzer->startFunRoot);
-        //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
-        //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
+        //assert(analyzer->_startFunRoot);
+        //analyzer->generateAstNodeInfo(analyzer->_startFunRoot);
+        //dotFile=astTermWithNullValuesToDot(analyzer->_startFunRoot);
         SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;
         analyzer->generateAstNodeInfo(sageProject);
         cout << "generating AST node info ... "<<endl;
