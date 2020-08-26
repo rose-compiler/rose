@@ -10,6 +10,8 @@
 //
 class SgBasicBlock;
 class SgCaseOptionStmt;
+class SgCommonBlock;
+class SgCommonBlockObject;
 class SgDefaultOptionStmt;
 class SgDerivedTypeStatement;
 class SgEnumDeclaration;
@@ -189,6 +191,11 @@ public:
    void Enter(SgJovialTableStatement* &, const std::string &, const SourcePositionPair &, bool is_block=false);
    void Leave(SgJovialTableStatement*);
 
+// Fortran specific nodes
+//
+   void Enter(SgCommonBlock* &, std::list<SgCommonBlockObject*> &);
+   void Leave(SgCommonBlock* common_block);
+
 private:
    TraversalContext context_;
 
@@ -254,6 +261,9 @@ namespace SageBuilderCpp17 {
    SgExpression*  buildAsteriskShapeExp_nfi();
    SgExpression*  buildNullExpression_nfi();
    SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &);
+
+// Other
+   SgCommonBlockObject* buildCommonBlockObject(std::string name = "", SgExprListExp* expr_list = nullptr);
 
 } // namespace SageBuilderCpp17
 } // namespace builder

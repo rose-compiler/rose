@@ -1074,6 +1074,31 @@ Leave(SgTypedefDeclaration* type_def)
    SageInterface::appendStatement(type_def, SageBuilder::topScopeStack());
 }
 
+// Fortran specific nodes
+
+void SageTreeBuilder::
+Enter(SgCommonBlock* &common_block, std::list<SgCommonBlockObject*> &common_block_object_list)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgCommonBlock* &, ...) \n";
+
+   common_block = SageBuilder::buildCommonBlock();
+   SageInterface::setSourcePosition(common_block);
+
+   SgCommonBlockObjectPtrList & list = common_block->get_block_list();
+
+   BOOST_FOREACH(SgCommonBlockObject* common_block_object, common_block_object_list) {
+      list.push_back(common_block_object);
+   }
+}
+
+void SageTreeBuilder::
+Leave(SgCommonBlock* common_block)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgCommonBlock*) \n";
+
+   SageInterface::appendStatement(common_block, SageBuilder::topScopeStack());
+}
+
 // template <typename T>
 void SageTreeBuilder::
 importModule(const std::string &module_name)
@@ -1298,6 +1323,13 @@ SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &list)
       expr_list->get_expressions().push_back(expr);
    }
    return expr_list;
+}
+
+SgCommonBlockObject* buildCommonBlockObject(std::string name, SgExprListExp* expr_list)
+{
+   SgCommonBlockObject* common_block_object = SageBuilder::buildCommonBlockObject(name, expr_list);
+   SageInterface::setSourcePosition(common_block_object);
+   return common_block_object;
 }
 
 } // namespace SageBuilderCpp17

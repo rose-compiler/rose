@@ -440,8 +440,11 @@ void Build(const parser::Keyword &x, SgExpression* &expr)
 void Build(const parser::Name &x, SgExpression* &expr)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(Name)\n";
+   std::cout << "Rose::builder::Build(Name) - build SgVarRefExp\n";
 #endif
+
+   std::string name = x.ToString();
+   expr = SageBuilderCpp17::buildVarRefExp_nfi(name);
 }
 
 void Build(const parser::Name &x, std::string &name)
@@ -1658,41 +1661,59 @@ void Build(const parser::CommonStmt&x, T* scope)
    std::cout << "Rose::builder::Build(CommonStmt)\n";
 #endif
 
-   Build(x.blocks, scope);   // std::list<Block> blocks;
+   // Flang::parser::CommonStmt -> SgCommonBlock in ROSE
+
+   std::list<SgCommonBlockObject*> common_block_object_list;
+   Build(x.blocks, common_block_object_list);   // std::list<Block> blocks;
+
+   SgCommonBlock* common_block = nullptr;
+   builder.Enter(common_block, common_block_object_list);
+   builder.Leave(common_block);
 }
 
-template<typename T>
-void Build(const parser::CommonStmt::Block&x, T* scope)
+void Build(const parser::CommonStmt::Block&x, SgCommonBlockObject* &common_block_object)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CommonStmt::Block)\n";
 #endif
 
+   // Flang::parser::CommonStmt::Block -> SgCommonBlockObject in ROSE
+
+   // Get name of CommonStmt::Block
    std::string name;
    if (auto & opt = std::get<0>(x.t)) {   // std::optional<Name>
       Build(opt.value(), name);
       std::cout << "The name of the CommonStmt::Block is " << name << "\n";
    }
 
-   std::list<SgCommonBlockObject*> common_block_object_list;
-   Build(std::get<1>(x.t), common_block_object_list);
+   // Build std::list of variable references built from names in Flang::Parser::CommonBlockObject
+   std::list<SgExpression*> var_ref_list;
+   Build(std::get<1>(x.t), var_ref_list);
+
+   // Build SgExprListExp from std::list of variable references
+   SgExprListExp* sg_list = SageBuilderCpp17::buildExprListExp_nfi(var_ref_list);
+
+   // Build ROSE SgCommonBlockObject from name of CommonStmt::Block and sg_list of variable references
+   common_block_object = SageBuilderCpp17::buildCommonBlockObject(name, sg_list);
 }
 
-void Build(const parser::CommonBlockObject&x, SgCommonBlockObject* &common_block_object)
+void Build(const parser::CommonBlockObject&x, SgExpression* &var_ref)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CommonBlockObject)\n";
 #endif
 
-   std::string name;
-   Build(std::get<parser::Name>(x.t), name);
-   std::cout << "The name of the CommonBlockObject is " << name << "\n";
+   // Flang::parser::CommonBlockObject -> an SgExpression in the SgExprListExp member of SgCommonBlockObject in ROSE
+
+   parser::Name name = std::get<parser::Name>(x.t);
+   std::cout << "The name of the CommonBlockObject is " << name.ToString() << "\n";
+
+   Build(name, var_ref);
 
 #if 0
    if (auto & opt = std::get<1>(x.t)) {   // std::optional<ArraySpec>
    }
 #endif
-
 }
 
    // Expr
