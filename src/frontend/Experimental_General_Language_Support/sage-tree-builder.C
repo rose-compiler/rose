@@ -542,6 +542,43 @@ Enter(SgFunctionCallExp* &func_call, const std::string &name, SgExprListExp* par
 }
 
 void SageTreeBuilder::
+Enter(SgReplicationOp* &rep_op, const std::string &name, SgExpression* value)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgReplicationOp* &, ...) \n";
+
+   SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   ROSE_ASSERT(symbol);
+
+   SgVarRefExp* count = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+   rep_op = SageBuilder::buildReplicationOp_nfi(count, value);
+}
+
+void SageTreeBuilder::
+Enter(SgCastExp* &cast_expr, const std::string &name, SgExpression* cast_operand)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgCastExp* &, ...) \n";
+
+   SgTypedefSymbol* typedef_symbol = SageInterface::lookupTypedefSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   ROSE_ASSERT(typedef_symbol);
+
+   SgType* conv_type = typedef_symbol->get_type();
+   cast_expr = SageBuilder::buildCastExp_nfi(cast_operand, conv_type, SgCastExp::e_default);
+}
+
+void SageTreeBuilder::
+Enter(SgVarRefExp* &var_ref, const std::string &name)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgVarRefExp* &, ...) \n";
+
+   SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   ROSE_ASSERT(symbol);
+
+   // TODO: not implemented yet
+   std::cerr << "WARNING UNIMPLEMENTED: Enter(SgVarRefExp* &, ...) for " << name << std::endl;
+   ROSE_ASSERT(false);
+}
+
+void SageTreeBuilder::
 Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, SgBasicBlock* false_body)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgIfStmt* &, ...) \n";

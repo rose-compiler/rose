@@ -173,6 +173,9 @@ public:
 // Expressions
 //
    void Enter(SgFunctionCallExp* &, const std::string &name, SgExprListExp* params);
+   void Enter(SgReplicationOp* &, const std::string &name, SgExpression* value);
+   void Enter(SgCastExp* &, const std::string &name, SgExpression* cast_operand);
+   void Enter(SgVarRefExp* &, const std::string &name);
 
 // Jovial specific nodes
 //

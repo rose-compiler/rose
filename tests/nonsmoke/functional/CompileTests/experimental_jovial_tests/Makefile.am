@@ -115,6 +115,7 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-6.cpl                    \
  rose-issue-rc-7.cpl                    \
  rose-issue-rc-9.cpl                    \
+ rose-issue-rc-11.cpl                   \
  rose-issue-rc-12.cpl                   \
  rose-issue-rc-14.cpl                   \
  rose-issue-rc-15.cpl                   \
