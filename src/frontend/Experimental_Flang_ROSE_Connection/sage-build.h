@@ -188,8 +188,8 @@ template<typename T> void Build(const Fortran::parser::        ParameterStmt &x,
 template<typename T> void Build(const Fortran::parser::     OldParameterStmt &x, T* scope);
 
 template<typename T> void Build(const Fortran::parser::           CommonStmt &x, T* scope);
-template<typename T> void Build(const Fortran::parser::    CommonStmt::Block &x, T* scope);
-void Build(const Fortran::parser::CommonBlockObject&x, SgCommonBlockObject* &common_block_object);
+void Build(const Fortran::parser::    CommonStmt::Block &x, SgCommonBlockObject* &);
+void Build(const Fortran::parser::    CommonBlockObject &x, SgExpression*        &);
 
 // Expr
 template<typename T> void traverseBinaryExprs(const T &x, SgExpression* &lhs, SgExpression* &rhs);
