@@ -6695,7 +6695,6 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
    ATerm t_name, t_param_list;
    std::string name;
    SgExprListExp* param_list = nullptr;
-   SgFunctionCallExp* func_call = nullptr;
 
    expr = nullptr;
 
@@ -6709,29 +6708,74 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
       if (traverse_ActualParameterList(t_param_list, param_list)) {
          // MATCHED ActualParameterList
       } else return ATfalse;
-   } else return ATfalse;
+   }
+   else return ATfalse;
 
-// Begin SageTreeBuilder
-   sage_tree_builder.Enter(func_call, name, param_list);
+   // Several different options due to ambiguous grammar:
+   //  1. function call
+   //  2. type conversion
+   //  3. variable
+   //     a. Table initialization replication operator
+   //     b. Table reference TODO (haven't implemented or tested this)
 
-// Check to see if there actually is a function call (ambiguous with type conversion)
-   if (func_call) {
+// The symbol is used to disambiguate the design of the grammar.
+// For Jovial the symbol should be present, unfortuately this is not true for Fortran
+//
+   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   ROSE_ASSERT(symbol);
+
+// Look for function call
+//
+   if (isSgFunctionSymbol(symbol)) {
+      SgFunctionCallExp* func_call = nullptr;
+      sage_tree_builder.Enter(func_call, name, param_list);
       sage_tree_builder.Leave(func_call);
       expr = func_call;
    }
-   else {
-   // This is a type conversion, build a SgCaseExp
+
+// Look for type conversion
+//
+   else if (isSgTypedefSymbol(symbol)) {
+      SgCastExp* cast_expr = nullptr;
+
       ROSE_ASSERT(param_list->get_expressions().size() == 1);
+      SgExpression* cast_operand = param_list->get_expressions()[0];
+      ROSE_ASSERT(cast_operand);
 
-      SgExpression* cast_formula = param_list->get_expressions()[0];
-      SgTypedefSymbol* typedef_symbol = SageInterface::lookupTypedefSymbolInParentScopes(name, SageBuilder::topScopeStack());
-      ROSE_ASSERT(typedef_symbol);
-
-      SgType* conv_type = typedef_symbol->get_type();
-      expr = SageBuilder::buildCastExp_nfi(cast_formula, conv_type, SgCastExp::e_default);
+      sage_tree_builder.Enter(cast_expr, name, cast_operand);
+      sage_tree_builder.Leave(cast_expr);
+      expr = cast_expr;
    }
-   ROSE_ASSERT(expr);
 
+// Look for table variable or table initialization replication operator
+//
+   else if (isSgVariableSymbol(symbol)) {
+      if (param_list->get_expressions().size() == 0) {
+         // not sure if param_list is correct, probably because this should be an array refererence I think
+         SgVarRefExp* var_ref = nullptr;
+         cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall - table reference " << name << endl;
+
+         sage_tree_builder.Enter(var_ref, name);
+         sage_tree_builder.Leave(var_ref);
+         expr = var_ref;
+      }
+      else if (param_list->get_expressions().size() == 1) {
+         SgReplicationOp* rep_op = nullptr;
+         SgExpression* value = param_list->get_expressions()[0];
+         ROSE_ASSERT(value);
+
+         sage_tree_builder.Enter(rep_op, name, value);
+         sage_tree_builder.Leave(rep_op);
+         expr = rep_op;
+      }
+      else {
+         // don't think this should happen
+         cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall - unknown cause " << name << endl;
+         ROSE_ASSERT(false);
+      }
+   }
+
+   ROSE_ASSERT(expr);
    setSourcePosition(expr, term);
 
    return ATtrue;
