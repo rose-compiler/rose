@@ -27,6 +27,7 @@ void Build(const Fortran::parser::Program &x, Fortran::parser::CookedSource &coo
 
 template<typename T> void Build(const Fortran::parser::ProgramUnit &x, T* scope);
 template<typename T> void Build(const Fortran::parser::MainProgram &x, T* scope);
+template<typename T> void Build(const Fortran::parser::     Module &x, T* scope);
 
 template<typename T> void Build(const Fortran::parser::     SpecificationPart &x, T* scope);
 template<typename T> void Build(const Fortran::parser::         ExecutionPart &x, T* scope);
