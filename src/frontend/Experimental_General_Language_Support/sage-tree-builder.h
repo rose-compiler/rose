@@ -219,6 +219,9 @@ namespace SageBuilderCpp17 {
    SgType* buildCharType();
    SgType* buildDoubleType();
    SgType* buildComplexType(SgType* base_type = nullptr);
+   SgType* buildBoolType(SgExpression* kind_expr);
+   SgType* buildIntType(SgExpression* kind_expr);
+   SgType* buildFloatType(SgExpression* kind_expr);
    SgType* buildStringType(SgExpression* stringLengthExpression);
    SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_shape_list);
 

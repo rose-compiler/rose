@@ -822,6 +822,20 @@ void Build(const parser::AttrSpec &x, T* scope)
    std::visit(AttrSpecVisitor, x.u);
 }
 
+void Build(const parser::KindSelector &x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(KindSelector)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::ScalarIntConstantExpr  &y) { Build(y.thing.thing, expr); },
+         [&] (const parser::KindSelector::StarSize &y) { ; },
+      },
+      x.u);
+}
+
 void Build(const parser::IntrinsicTypeSpec &x, SgType* &type)
 {
 #if PRINT_FLANG_TRAVERSAL
@@ -839,7 +853,13 @@ void Build(const parser::IntegerTypeSpec &x, SgType* &type)
    std::cout << "Rose::builder::Build(IntegerTypeSpec)\n";
 #endif
 
-   type = SageBuilderCpp17::buildIntType();
+   if (auto & kind = x.v) {   // std::optional<KindSelector>
+      SgExpression* kind_expr = nullptr;
+      Build(kind.value(), kind_expr);
+      type = SageBuilderCpp17::buildIntType(kind_expr);
+   } else {
+      type = SageBuilderCpp17::buildIntType();
+   }
 }
 
 void Build(const parser::IntrinsicTypeSpec::Real &x, SgType* &type)
@@ -848,7 +868,13 @@ void Build(const parser::IntrinsicTypeSpec::Real &x, SgType* &type)
    std::cout << "Rose::builder::Build(Real)\n";
 #endif
 
-   type = SageBuilderCpp17::buildFloatType();
+   if (auto & kind = x.kind) {   // std::optional<KindSelector>
+      SgExpression* kind_expr = nullptr;
+      Build(kind.value(), kind_expr);
+      type = SageBuilderCpp17::buildFloatType(kind_expr);
+   } else {
+      type = SageBuilderCpp17::buildFloatType();
+   }
 }
 
 void Build(const parser::IntrinsicTypeSpec::DoublePrecision &x, SgType* &type)
@@ -892,7 +918,13 @@ void Build(const parser::IntrinsicTypeSpec::Logical &x, SgType* &type)
    std::cout << "Rose::builder::Build(Logical)\n";
 #endif
 
-   type = SageBuilderCpp17::buildBoolType();
+   if (auto & kind = x.kind) {   // std::optional<KindSelector>
+      SgExpression* kind_expr = nullptr;
+      Build(kind.value(), kind_expr);
+      type = SageBuilderCpp17::buildBoolType(kind_expr);
+   } else {
+      type = SageBuilderCpp17::buildBoolType();
+   }
 }
 
 void Build(const parser::IntrinsicTypeSpec::DoubleComplex &x, SgType* &type)
