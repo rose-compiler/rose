@@ -112,7 +112,15 @@ void Build(const parser::ProgramUnit &x, T* scope)
    std::cout << "Rose::builder::Build(ProgramUnit)\n";
 #endif
 
-   Build(x.u, scope);
+   std::visit(
+      common::visitors{
+         [&] (const common::Indirection<parser::MainProgram> &y)  { Build(y.value(), scope); },
+         [&] (const common::Indirection<parser::Module> &y)       { Build(y.value(), scope); },
+         // common::Indirection<FunctionSubprogram>, common::Indirection<SubroutineSubprogram>,
+         // common::Indirection<Submodule>, common::Indirection<BlockData>
+         [&] (const auto &y) { ; },
+      },
+      x.u);
 }
 
 template<typename T>
@@ -193,6 +201,16 @@ void Build(const parser::MainProgram &x, T* scope)
    builder.setFortranEndProgramStmt(program_decl, end_name, end_label);
 
    builder.Leave(program_decl);
+}
+
+// Module
+
+template<typename T>
+void Build(const parser::Module &x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(Module)\n";
+#endif
 }
 
 template<typename T>
