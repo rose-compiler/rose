@@ -1617,6 +1617,9 @@ list<EState> CodeThorn::Analyzer::transferEdgeEState(Edge edge, const EState* es
     return transferVariableDeclaration(decl,edge,estate);
   } else if(isSgExprStatement(nextNodeToAnalyze1) || SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
     return transferExprStmt(nextNodeToAnalyze1, edge, estate);
+  } else if(isSgStatementExpression(nextNodeToAnalyze1)) {
+    // GNU extension
+    return transferGnuExtensionStmtExpr(nextNodeToAnalyze1, edge, estate);
   } else if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
     // TODO: this case should be handled as part of transferExprStmt (or ExpressionRoot)
     //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
@@ -1791,7 +1794,11 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     } else {
       SAWYER_MESG(logger[INFO])<< "starting at function '"<<functionToStartAt<<"'."<<endl;
     }
+  } else {
+    // temporary to remain compatible
+    _startFunRoot=completeast.findFunctionByName(functionToStartAt);
   }
+    
   SAWYER_MESG(logger[TRACE])<< "INIT: Initializing AST node info."<<endl;
   initAstNodeInfo(root);
 
@@ -1922,22 +1929,25 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
 
   setWorkLists(_explorationMode);
   
+  estate.io.recordNone(); // ensure that extremal value is different to bot
   if(_ctOpt.getInterProceduralFlag()) {
     const EState* initialEState=processNew(estate); // START_INIT 6
-    estate.io.recordNone(); // ensure that extremal value is different to bot
     ROSE_ASSERT(initialEState);
     variableValueMonitor.init(initialEState);
     addToWorkList(initialEState); // START_INIT 7: ADD TO WORKLIST HERE!!!
     SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(variableIdMapping)<<endl;
   } else {
     LabelSet entryLabels=cfanalyzer->functionEntryLabels(flow);
-    cout<<"STATUS: intra-procedural analysis with "<<entryLabels.size()<<" functions."<<endl;
-    // initialize intra-procedural analysis with all function entry points
-    const EState* initialEState=processNew(estate); // START_INIT 6
-    ROSE_ASSERT(initialEState);
-    variableValueMonitor.init(initialEState);
-    addToWorkList(initialEState); // START_INIT 7: ADD TO WORKLIST HERE!!!
-    SAWYER_MESG(logger[INFO]) << "INIT: start state intra-procedural (extremal value): "<<initialEState->toString(variableIdMapping)<<endl;
+    cout<<"STATUS: intra-procedural analysis with "<<entryLabels.size()<<" start functions."<<endl;
+    for(auto slab : entryLabels) {
+      // initialize intra-procedural analysis with all function entry points
+      estate.setLabel(slab);
+      const EState* initialEState=processNew(estate); // START_INIT 6
+      ROSE_ASSERT(initialEState);
+      variableValueMonitor.init(initialEState);
+      addToWorkList(initialEState); // START_INIT 7: ADD TO WORKLIST HERE!!!
+      SAWYER_MESG(logger[INFO]) << "INIT: start state intra-procedural (extremal value): "<<initialEState->toString(variableIdMapping)<<endl;
+    }
   }
   // initialize summary states map for abstract model checking mode
   initializeSummaryStates(initialPStateStored,emptycsetstored);
@@ -2566,6 +2576,11 @@ std::list<EState> CodeThorn::Analyzer::transferVariableDeclaration(SgVariableDec
 std::list<EState> CodeThorn::Analyzer::transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate) {
   ROSE_ASSERT(_estateTransferFunctions);
   return _estateTransferFunctions->transferExprStmt(nextNodeToAnalyze1,edge,estate);
+}
+
+std::list<EState> CodeThorn::Analyzer::transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate) {
+  ROSE_ASSERT(_estateTransferFunctions);
+  return _estateTransferFunctions->transferGnuExtensionStmtExpr(nextNodeToAnalyze1,edge,estate);
 }
 
 list<EState> CodeThorn::Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate) {

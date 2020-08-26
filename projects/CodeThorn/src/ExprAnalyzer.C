@@ -333,6 +333,7 @@ AbstractValue ExprAnalyzer::evaluateExpressionWithEmptyState(SgExpression* expr)
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,EState estate, EvalMode mode) {
   ROSE_ASSERT(estate.pstate()); // ensure state exists
+
   // initialize with default values from argument(s)
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -352,7 +353,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
     exit(1);
   }
 #endif
+  if(SgStatementExpression* gnuExtensionStmtExpr=isSgStatementExpression(node)) {
+    cout<<"WARNING: ignoring GNU extension StmtExpr."<<endl;
+    res.result=AbstractValue::createTop();
+    return listify(res);
+  }
 
+  
   if(SgConditionalExp* condExp=isSgConditionalExp(node)) {
     return evalConditionalExpr(condExp,estate,mode);
   }

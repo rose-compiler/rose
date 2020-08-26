@@ -796,6 +796,11 @@ std::list<EState> EStateTransferFunctions::transferVariableDeclaration(SgVariabl
   return elistify(_analyzer->analyzeVariableDeclaration(decl,*estate, edge.target()));
 }
 
+  std::list<EState> EStateTransferFunctions::transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate) {
+    //cout<<"WARNING: ignoring GNU extension StmtExpr (EStateTransferFunctions::transferGnuExtensionStmtExpr)"<<endl;
+    return elistify(*estate);
+  }
+
 std::list<EState> EStateTransferFunctions::transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate) {
   SgNode* nextNodeToAnalyze2=0;
   if(isSgExprStatement(nextNodeToAnalyze1))
