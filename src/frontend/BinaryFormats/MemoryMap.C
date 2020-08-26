@@ -75,7 +75,6 @@ void
 MemoryMap::Inconsistent::print(std::ostream &o, bool verbose) const
 {
     o <<leader("inconsistent mapping") <<" for " <<new_range <<" vs. " <<old_range <<details(verbose);
-        
 }
 
 void
@@ -109,7 +108,7 @@ MemoryMap::SyntaxError::print(std::ostream &o, bool verbose) const
 std::string
 MemoryMap::segmentTitle(const Segment &segment) {
     std::string s;
-    
+
     s += (segment.accessibility() & READABLE)  !=0 ? "r" : "-";
     s += (segment.accessibility() & WRITABLE)  !=0 ? "w" : "-";
     s += (segment.accessibility() & EXECUTABLE)!=0 ? "x" : "-";
@@ -125,7 +124,7 @@ MemoryMap::segmentTitle(const Segment &segment) {
 
     if (otherAccess != 0)
         s += " access=" + StringUtility::addrToString(otherAccess, 8*sizeof otherAccess);
-    
+
     if (!segment.name().empty()) {
         static const size_t limit = 100;
         std::string name = escapeString(segment.name());
@@ -229,7 +228,7 @@ MemoryMap::insertFile(const std::string &locatorString) {
         if (!optionalVa)
             throw insertFileError(locatorString, "virtual address expected");
     }
-    
+
     // Virtual size
     Sawyer::Optional<size_t> optionalVSize;
     if ('+'==*s) {
@@ -274,7 +273,7 @@ MemoryMap::insertFile(const std::string &locatorString) {
         if (!optionalOffset)
             throw insertFileError(locatorString, "file offset expected");
     }
-    
+
     // File size
     Sawyer::Optional<size_t> optionalFSize;
     if ('+'==*s) {
@@ -297,9 +296,9 @@ MemoryMap::insertFile(const std::string &locatorString) {
         throw insertFileError(locatorString, "invalid file name");
     std::string segmentName = FileSystem::toString(boost::filesystem::path(fileName).filename());
 
-    //-------------------------------- 
+    //--------------------------------
     // Open the file and read the data
-    //-------------------------------- 
+    //--------------------------------
 
     // Open the file and seek to the start of data
     std::ifstream file(fileName.c_str());
@@ -434,7 +433,7 @@ MemoryMap::insertData(const std::string &locatorString) {
         if (!optionalVa)
             throw insertDataError(locatorString, "virtual address expected");
     }
-    
+
     // Virtual size
     Sawyer::Optional<size_t> optionalVSize;
     if ('+' == *s) {
@@ -462,7 +461,7 @@ MemoryMap::insertData(const std::string &locatorString) {
             accessFlags |= EXECUTABLE;
         }
     }
-    
+
     // Second colon
     if (':'!=*s) {
         if (*s && accessFlags)
@@ -499,7 +498,7 @@ MemoryMap::insertData(const std::string &locatorString) {
         mlog[WARN] <<"data is empty; nothing to map for \"" <<StringUtility::cEscape(locatorString) <<"\"\n";
         return AddressInterval();
     }
-    
+
     // Find a place to map the file
     ASSERT_require(optionalVSize);
     if (!optionalVa) {
@@ -576,7 +575,7 @@ MemoryMap::insertProcess(const std::string &locatorString) {
     }
     if (':'!=*s++)
         throw insertProcessError("second colon expected in \"" + StringUtility::cEscape(locatorString) + "\"");
-    
+
     pid_t pid = 0;
     if (!parseInteger<pid_t>(s /*in,out*/).assignTo(pid))
         throw insertProcessError("process ID expected");
@@ -794,34 +793,54 @@ MemoryMap::findAny(const Extent &limits, const std::vector<uint8_t> &bytesToFind
 
 Sawyer::Optional<rose_addr_t>
 MemoryMap::findAny(const AddressInterval &limits, const std::vector<uint8_t> &bytesToFind,
-                   unsigned requiredPerms, unsigned prohibitedPerms) const
-{
-    if (!limits || bytesToFind.empty())
+                   unsigned requiredPerms, unsigned prohibitedPerms) const {
+    if (limits.isEmpty())
         return Sawyer::Nothing();
 
-    // Read a bunch of bytes at a time.  If the buffer size is large then we'll have fewer read calls before finding a match,
-    // which is good if a match is unlikely.  But if a match is likely, then it's better to use a smaller buffer so we don't
-    // ready more than necessary to find a match.  We'll compromise by starting with a small buffer that grows up to some
-    // limit.
-    size_t nremaining = limits.size();                  // bytes remaining to search (could be zero if limits is universe)
-    size_t bufsize = 8;                                 // initial buffer size
-    uint8_t buffer[4096];                               // full buffer
+    // Start small, then increase to bufMaxSize.
+    std::vector<uint8_t> buf(10 * bytesToFind.size());
+    size_t bufMaxSize = std::max(buf.size(), (size_t)65536);
 
-    Sawyer::Optional<rose_addr_t> atVa = this->at(limits.least()).require(requiredPerms).prohibit(prohibitedPerms).next();
-    while (atVa && *atVa <= limits.greatest()) {
-        if (nremaining > 0)                             // zero implies entire address space
-            bufsize = std::min(bufsize, nremaining);
-        size_t nread = at(*atVa).limit(bufsize).require(requiredPerms).prohibit(prohibitedPerms).read(buffer).size();
-        assert(nread > 0);                              // because of the next() calls
-        for (size_t offset=0; offset<nread; ++offset) {
-            if (std::find(bytesToFind.begin(), bytesToFind.end(), buffer[offset]) != bytesToFind.end())
-                return *atVa + offset;                  // found
+    // Search...
+    rose_addr_t va = limits.least();
+    AddressInterval prevBuffer;                         // location of buffer previous time through loop
+    while (atOrAfter(va).require(requiredPerms).prohibit(prohibitedPerms).next().assignTo(va)) {
+        // Since the thing for which we're searching could overlap between two buffers (the previous loop iteration and this
+        // iteration), we might need to preserve some of the previous buffer contents.
+        size_t bufOffset = 0;                        // where in the buffer to put the memory about to be read
+        if (!prevBuffer.isEmpty() && prevBuffer.greatest() + 1 == va) {
+            bufOffset = bytesToFind.size() - 1;      // number of bytes that need to be preserved from previous iteration
+            memmove(buf.data(), buf.data() + (prevBuffer.size() - bufOffset), bufOffset); // move to front of buffer
         }
-        atVa = at(*atVa+nread).require(requiredPerms).prohibit(prohibitedPerms).next();
-        bufsize = std::min(2*bufsize, sizeof buffer);   // use a larger buffer next time if possible
-        nremaining -= nread;                            // ok if nremaining is already zero
-    }
 
+        // Read memory into the buffer and describe what the buffer contains.
+        size_t maxRead = buf.size() - bufOffset;
+        size_t nRead = at(va).require(requiredPerms).prohibit(prohibitedPerms).limit(maxRead).read(buf.data() + bufOffset).size();
+        ASSERT_require(nRead > 0);
+        AddressInterval curBuffer = AddressInterval::baseSize(va - bufOffset, bufOffset + nRead);
+
+        // Search
+        for (size_t i = 0; i + bytesToFind.size() < curBuffer.size(); ++i) {
+            bool found = true;
+            for (size_t j = 0; j < bytesToFind.size(); ++j) {
+                if (buf[i+j] != bytesToFind[j]) {
+                    found = false;
+                    break;
+                }
+            }
+            if (found)
+                return curBuffer.least() + i;
+        }
+
+        // Avoid overflow
+        if (curBuffer.greatest() == hull().greatest())
+            break;
+        va = curBuffer.greatest() + 1;
+
+        // Next time through the loop, maybe read even more.
+        buf.resize(std::min(bufMaxSize, 2*buf.size()));
+        prevBuffer = curBuffer;
+    }
     return Sawyer::Nothing();
 }
 
