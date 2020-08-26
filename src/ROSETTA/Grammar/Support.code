@@ -19842,6 +19842,8 @@ SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
   // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
   // p_extern_C_with_braces = X.p_extern_C_with_braces;
 
+  // DQ (8/24/2020): debugging Cxx_tests/test2020_44.C need to communicate when to suppress extra parenthesis use around SgFunctionType arguments.
+     p_context_for_added_parentheses = X.p_context_for_added_parentheses;
      return *this;
    }
 
@@ -19971,6 +19973,9 @@ SgUnparse_Info::post_construction_initialization()
 
   // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
   // p_extern_C_with_braces = false;
+
+  // DQ (8/24/2020): debugging Cxx_tests/test2020_44.C need to communicate when to suppress extra parenthesis use around SgFunctionType arguments.
+     p_context_for_added_parentheses = false;
    }
 
 bool
@@ -20972,6 +20977,9 @@ SgUnparse_Info::display ( const std::string & label ) const
 
   // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
      printf ("p_extern_C_with_braces                 = %s \n",p_extern_C_with_braces ? "true" : "false");
+
+  // DQ (8/24/2020): debugging Cxx_tests/test2020_44.C need to communicate when to suppress extra parenthesis use around SgFunctionType arguments.
+     printf ("p_context_for_added_parentheses        = %s \n",p_context_for_added_parentheses ? "true" : "false");
    }
 
 string
