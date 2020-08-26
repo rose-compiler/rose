@@ -792,15 +792,12 @@ void LabelProperty::setExternalFunctionCallLabel() {
   IO Labeler Implementation
 */
 
-// note: calling Labeler(start) would be wrong because it would call createLabels twice.
-IOLabeler::IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping):Labeler() {
+IOLabeler::IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping):Labeler(start) {
   _variableIdMapping=variableIdMapping;
-  createLabels(start);
-  // initialize all labels' property with additional IO info
+  // add IO info to each label property
   for(LabelToLabelPropertyMapping::iterator i=mappingLabelToLabelProperty.begin();i!=mappingLabelToLabelProperty.end();++i) {
     (*i).initializeIO(variableIdMapping);
   }
-  computeNodeToLabelMapping();
 }
 
 IOLabeler::~IOLabeler() {
