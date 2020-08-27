@@ -612,22 +612,8 @@ Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgProcessControlStatement* &, ...) \n";
 
-   SgExpression* code = nullptr;
-   SgExpression* quiet = nullptr;
-
-   if (opt_code) {
-      code = *opt_code;
-   }
-   else {
-      code = SageBuilder::buildNullExpression_nfi();
-   }
-
-   if (opt_quiet) {
-      quiet = *opt_quiet;
-   }
-   else {
-      quiet = SageBuilder::buildNullExpression_nfi();
-   }
+   SgExpression* code =  (opt_code)  ? *opt_code  : SageBuilder::buildNullExpression_nfi();
+   SgExpression* quiet = (opt_quiet) ? *opt_quiet : SageBuilder::buildNullExpression_nfi();
 
    ROSE_ASSERT(code);
    control_stmt = new SgProcessControlStatement(code);
@@ -689,6 +675,26 @@ Leave(SgSwitchStatement* switch_stmt)
    ROSE_ASSERT(switch_stmt);
 
    SageBuilder::popScopeStack();  // switch statement body
+}
+
+void SageTreeBuilder::
+Enter(SgReturnStmt* &return_stmt, const boost::optional<SgExpression*> &opt_expr)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgReturnStmt* &, ...) \n";
+
+   SgExpression* return_expr = (opt_expr) ? *opt_expr : SageBuilder::buildNullExpression_nfi();
+   ROSE_ASSERT(return_expr);
+
+   return_stmt = SageBuilder::buildReturnStmt_nfi(return_expr);
+}
+
+void SageTreeBuilder::
+Leave(SgReturnStmt* return_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgReturnStmt*, ...) \n";
+   ROSE_ASSERT(return_stmt);
+
+   SageInterface::appendStatement(return_stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::

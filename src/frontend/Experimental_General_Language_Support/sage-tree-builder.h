@@ -151,6 +151,9 @@ public:
    void Enter(SgSwitchStatement* &, SgExpression*, const SourcePositionPair &);
    void Leave(SgSwitchStatement*);
 
+   void Enter(SgReturnStmt* &, const boost::optional<SgExpression*> &);
+   void Leave(SgReturnStmt*);
+
    void Enter(SgCaseOptionStmt* &, SgExprListExp*);
    void Leave(SgCaseOptionStmt*);
 
