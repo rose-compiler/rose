@@ -158,6 +158,7 @@ namespace CodeThorn {
     Edge outEdgeOfType(Label label, EdgeType edgeType);
 
     void setStartLabel(Label label);
+    void addStartLabel(Label label);
     Label getStartLabel();
     void setStartLabelSet(LabelSet labelSet);
     LabelSet getStartLabelSet();

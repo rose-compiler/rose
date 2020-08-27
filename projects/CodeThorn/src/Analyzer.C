@@ -101,7 +101,7 @@ void CodeThorn::Analyzer::setWorkLists(ExplorationMode explorationMode) {
     break;
   case EXPL_TOPOLOGIC_SORT: {
     ROSE_ASSERT(getLabeler());
-    ROSE_ASSERT(getFlow()->getStartLabel().isValid());
+    ROSE_ASSERT(getFlow()->getStartLabelSet().size()>0);
     TopologicalSort topSort(*getLabeler(),*getFlow());
     std::list<Label> labelList=topSort.topologicallySortedLabelList();
 #if 0
@@ -1840,10 +1840,16 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   SAWYER_MESG(logger[INFO])<< "INIT: Building CFGs."<<endl;
 
   flow=cfanalyzer->flow(root); // START_INIT 3
-  Label slab2=getLabeler()->getLabel(_startFunRoot);
-  ROSE_ASSERT(slab2.isValid());
-  ROSE_ASSERT(getLabeler()->isFunctionEntryLabel(slab2));
-  flow.setStartLabel(slab2);
+  if(_ctOpt.getInterProceduralFlag()) {
+    Label slab2=getLabeler()->getLabel(_startFunRoot);
+    ROSE_ASSERT(slab2.isValid());
+    ROSE_ASSERT(getLabeler()->isFunctionEntryLabel(slab2));
+    flow.addStartLabel(slab2);
+  } else {
+    LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(flow);
+    flow.setStartLabelSet(entryLabels);
+  }
+
   // Runs consistency checks on the fork / join and workshare / barrier nodes in the parallel CFG
   // If the --omp-ast flag is not selected by the user, the parallel nodes are not inserted into the CFG
   if (_ctOpt.ompAst) {
@@ -1937,9 +1943,9 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     addToWorkList(initialEState); // START_INIT 7: ADD TO WORKLIST HERE!!!
     SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(variableIdMapping)<<endl;
   } else {
-    LabelSet entryLabels=cfanalyzer->functionEntryLabels(flow);
-    cout<<"STATUS: intra-procedural analysis with "<<entryLabels.size()<<" start functions."<<endl;
-    for(auto slab : entryLabels) {
+    LabelSet startLabels=flow.getStartLabelSet();
+    cout<<"STATUS: intra-procedural analysis with "<<startLabels.size()<<" start functions."<<endl;
+    for(auto slab : startLabels) {
       // initialize intra-procedural analysis with all function entry points
       estate.setLabel(slab);
       const EState* initialEState=processNew(estate); // START_INIT 6

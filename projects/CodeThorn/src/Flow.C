@@ -285,6 +285,10 @@ void Flow::setStartLabel(Label label) {
   _startLabelSet=ls;
 }
 
+void Flow::addStartLabel(Label label) {
+  _startLabelSet.insert(label);
+}
+
 void Flow::setStartLabelSet(LabelSet labelSet) {
   _startLabelSet = labelSet;
 }

@@ -426,7 +426,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   checkZ3Options(ctOpt);
   checkNumThreads(ctOpt);
 
-  cout<<"CodeThornCommandLineOptions: ctopt.intraProcedural:"<<ctOpt.intraProcedural<<endl;
   return args;
 }
 
