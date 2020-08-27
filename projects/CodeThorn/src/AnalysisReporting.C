@@ -19,7 +19,7 @@ namespace CodeThorn {
       if(ctOpt.getAnalysisSelectionFlag(analysisSel)) {
         cout<<"\nAnalysis results for "<<analysisName<<" analysis:"<<endl;
         ProgramLocationsReport report=analyzer->getExprAnalyzer()->getProgramLocationsReport(analysisSel);
-        report.setAllLocationsOfInterest(analyzer->getCFAnalyzer()->setOfLabelsOfInterest());
+        report.setAllLocationsOfInterest(analyzer->getCFAnalyzer()->labelsOfIntersetSet());
         report.writeLocationsVerificationReport(cout,analyzer->getLabeler());
         //report->writeFunctionsVerificationReport(cout,analyzer->getLabeler());
         if(reportDetectedErrorLines) {

@@ -63,8 +63,8 @@ class CFAnalysis {
   bool isVoidFunction(Label entryNode);
   LabelSetSet functionLabelSetSets(Flow& flow);
   LabelSet functionLabelSet(Label entryLabel, Flow& flow);
-  LabelSet setOfInitialLabelsOfStmtsInBlock(SgNode* node);
-  LabelSet setOfLabelsOfInterest();
+  LabelSet initialLabelsOfStmtsInBlockSet(SgNode* node);
+  LabelSet labelsOfIntersetSet();
   /**
    * \brief Computes the control flow for an AST subtree rooted at node.
    */

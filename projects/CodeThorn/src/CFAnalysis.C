@@ -1018,7 +1018,7 @@ SgNode* CFAnalysis::correspondingLoopConstruct(SgNode* node) {
   return node;
 }
 
-LabelSet CFAnalysis::setOfLabelsOfInterest() {
+LabelSet CFAnalysis::labelsOfIntersetSet() {
   LabelSet ls;
   Labeler& labeler=*getLabeler();
   for(auto l : labeler) {
@@ -1029,7 +1029,7 @@ LabelSet CFAnalysis::setOfLabelsOfInterest() {
   return ls;
 }
 
-LabelSet CFAnalysis::setOfInitialLabelsOfStmtsInBlock(SgNode* node) {
+LabelSet CFAnalysis::initialLabelsOfStmtsInBlockSet(SgNode* node) {
   LabelSet ls;
   if(node==0)
     return ls;
@@ -1057,15 +1057,15 @@ Flow CFAnalysis::controlDependenceGraph(Flow& controlFlow) {
     if(SgNodeHelper::isLoopCond(condition)) {
       SgNode* loopBody=SgNodeHelper::getLoopBody(stmt);
       //cerr<<"DEBUG: loopBody:"<<loopBody->class_name()<<endl;
-      LabelSet loopBodyInitLabels=setOfInitialLabelsOfStmtsInBlock(loopBody);
+      LabelSet loopBodyInitLabels=initialLabelsOfStmtsInBlockSet(loopBody);
       targetLabels=loopBodyInitLabels;
     }
     // if
     if(isSgIfStmt(stmt)) {
       SgNode* trueBranch=SgNodeHelper::getTrueBranch(stmt);
-      LabelSet trueBranchInitLabels=setOfInitialLabelsOfStmtsInBlock(trueBranch);
+      LabelSet trueBranchInitLabels=initialLabelsOfStmtsInBlockSet(trueBranch);
       SgNode* falseBranch=SgNodeHelper::getFalseBranch(stmt);
-      LabelSet falseBranchInitLabels=setOfInitialLabelsOfStmtsInBlock(falseBranch);
+      LabelSet falseBranchInitLabels=initialLabelsOfStmtsInBlockSet(falseBranch);
       targetLabels=trueBranchInitLabels+falseBranchInitLabels;
     }
     for(LabelSet::iterator j=targetLabels.begin();j!=targetLabels.end();++j) {
