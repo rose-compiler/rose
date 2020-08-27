@@ -26,9 +26,13 @@ namespace Rose::builder {
 // Converts parsed program to ROSE Sage nodes
 void Build(const Fortran::parser::Program &x, Fortran::parser::CookedSource &cooked);
 
-template<typename T> void Build(const Fortran::parser::ProgramUnit &x, T* scope);
-template<typename T> void Build(const Fortran::parser::MainProgram &x, T* scope);
-template<typename T> void Build(const Fortran::parser::     Module &x, T* scope);
+template<typename T> void Build(const Fortran::parser::           ProgramUnit &x, T* scope);
+template<typename T> void Build(const Fortran::parser::           MainProgram &x, T* scope);
+template<typename T> void Build(const Fortran::parser::                Module &x, T* scope);
+template<typename T> void Build(const Fortran::parser::    FunctionSubprogram &x, T* scope);
+template<typename T> void Build(const Fortran::parser::  SubroutineSubprogram &x, T* scope);
+template<typename T> void Build(const Fortran::parser::             Submodule &x, T* scope);
+template<typename T> void Build(const Fortran::parser::             BlockData &x, T* scope);
 
 template<typename T> void Build(const Fortran::parser::     SpecificationPart &x, T* scope);
 template<typename T> void Build(const Fortran::parser::         ExecutionPart &x, T* scope);
