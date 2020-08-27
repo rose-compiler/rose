@@ -1865,9 +1865,9 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   if(oneFunctionOnly) {
     SAWYER_MESG(logger[TRACE])<<"INFO: analyzing one function only."<<endl;
   }
-  InterFlow interFlow=cfanalyzer->interFlow(flow);
-  SAWYER_MESG(logger[TRACE])<< "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
-  cfanalyzer->intraInterFlow(flow,interFlow);
+  _interFlow=cfanalyzer->interFlow(flow);
+  SAWYER_MESG(logger[TRACE])<< "INIT: Inter-Flow OK. (size: " << _interFlow.size()*2 << " edges)"<<endl;
+  cfanalyzer->intraInterFlow(flow,_interFlow);
   SAWYER_MESG(logger[INFO])<< "INIT: ICFG OK. (size: " << flow.size() << " edges)"<<endl;
 
 #if 0
@@ -2285,6 +2285,7 @@ CodeThorn::FunctionIdMapping* CodeThorn::Analyzer::getFunctionIdMapping() { retu
 CodeThorn::FunctionCallMapping* CodeThorn::Analyzer::getFunctionCallMapping() { return &functionCallMapping; }
 CodeThorn::FunctionCallMapping2* CodeThorn::Analyzer::getFunctionCallMapping2() { return &functionCallMapping2; }
 CodeThorn::Flow* CodeThorn::Analyzer::getFlow() { return &flow; }
+CodeThorn::InterFlow* CodeThorn::Analyzer::getInterFlow() { return &_interFlow; }
 CodeThorn::EStateSet* CodeThorn::Analyzer::getEStateSet() { return &estateSet; }
 CodeThorn::PStateSet* CodeThorn::Analyzer::getPStateSet() { return &pstateSet; }
 TransitionGraph* CodeThorn::Analyzer::getTransitionGraph() { return &transitionGraph; }

@@ -7,6 +7,7 @@
 #include "Labeler.h"
 
 #include "Sawyer/Graph.h"
+#include <map>
 
 namespace CodeThorn {
 
@@ -85,7 +86,8 @@ namespace CodeThorn {
 #ifdef USE_SAWYER_GRAPH
     class iterator : public SawyerCfg::EdgeIterator {
     public: 
-      iterator(const SawyerCfg::EdgeIterator& it) : SawyerCfg::EdgeIterator(it) {}
+
+  iterator(const SawyerCfg::EdgeIterator& it) : SawyerCfg::EdgeIterator(it) {}
       Edge operator*();
       iterator& operator++() { SawyerCfg::EdgeIterator::operator++(); return *this; }
       iterator operator++(int) { return iterator(SawyerCfg::EdgeIterator::operator++(1)); }
@@ -219,7 +221,10 @@ namespace CodeThorn {
    */
   class InterFlow : public std::set<InterEdge> {
   public:
+    // type used to map any label to a respective function
+    typedef std::map<Label,Label> LabelToFunctionMap;
     std::string toString() const;
+    std::string dotCallGraph(InterFlow::LabelToFunctionMap& map) const;
   };
 
 } // end namespace CodeThorn

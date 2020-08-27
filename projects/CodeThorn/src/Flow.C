@@ -204,6 +204,19 @@ string InterFlow::toString() const {
   return res;
 }
 
+std::string InterFlow::dotCallGraph(LabelToFunctionMap& map) const {
+  stringstream ss;
+  ss<<"digraph G {\n";
+  for(InterFlow::iterator i=begin();i!=end();++i) {
+    InterEdge ie=*i;
+    if(ie.entry.isValid()&&ie.exit.isValid()) {
+      ss<<map[ie.call].toString()<<"->"<<ie.call.toString()<<endl;
+    }
+  }
+  ss<<"}";
+  return ss.str();
+}
+
 bool CodeThorn::operator<(const InterEdge& e1, const InterEdge& e2) {
   if(e1.call!=e2.call) 
     return e1.call<e2.call;

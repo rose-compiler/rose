@@ -32,6 +32,7 @@ namespace CodeThorn {
     }
     return map;
   }
+
   // computes reverse post-order of labels in revPostOrderList
   void TopologicalSort::semanticRevPostOrderTraversal(Label lab) {
     // this is used to allow for invalid edges (whoes target is an invalid labell)

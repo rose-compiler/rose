@@ -163,6 +163,7 @@ namespace CodeThorn {
     Label getFunctionEntryLabel(SgFunctionRefExp* funRefExp);
     CTIOLabeler* getLabeler() const override;
     Flow* getFlow(); // this is NOT overriding 'DFAnalysis::getFlow() const'
+    InterFlow* getInterFlow();
     CodeThorn::PStateSet* getPStateSet();
     EStateSet* getEStateSet();
     TransitionGraph* getTransitionGraph();
@@ -410,6 +411,7 @@ namespace CodeThorn {
     void incIterations();
 
     Flow flow;
+    InterFlow _interFlow;
     CFAnalysis* cfanalyzer;
     std::list<std::pair<SgLabelStatement*,SgNode*> > _assertNodes;
     GlobalTopifyMode _globalTopifyMode;

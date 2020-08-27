@@ -126,8 +126,9 @@ LabelSetSet CFAnalysis::functionLabelSetSets(Flow& flow) {
   return result;
 }
 
-CFAnalysis::LabelToFunctionMap CFAnalysis::labelToFunctionMap(Flow& flow) {
-  CFAnalysis::LabelToFunctionMap map;
+// TODO?: move this function to Flow
+InterFlow::LabelToFunctionMap CFAnalysis::labelToFunctionMap(Flow& flow) {
+  InterFlow::LabelToFunctionMap map;
   LabelSet entryLabels=functionEntryLabels(flow);
   for(auto entryLabel : entryLabels) {
     LabelSet insideFunctionLabels=functionLabelSet(entryLabel,flow);

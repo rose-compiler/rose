@@ -66,11 +66,9 @@ class CFAnalysis {
   LabelSet functionLabelSet(Label entryLabel, Flow& flow);
   LabelSet initialLabelsOfStmtsInBlockSet(SgNode* node);
   LabelSet labelsOfIntersetSet();
-  // type used to map any label to a respective function
-  typedef std::map<Label,Label> LabelToFunctionMap;
   // computes a map where the entry label of the corresponding function is provided
   // if the label is not inside a function then the returned label is an invalid label
-  LabelToFunctionMap labelToFunctionMap(Flow& flow);
+  InterFlow::LabelToFunctionMap labelToFunctionMap(Flow& flow);
   /**
    * \brief Computes the control flow for an AST subtree rooted at node.
    */

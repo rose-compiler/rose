@@ -612,7 +612,21 @@ void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,Analyzer* ana
     AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
   }
 }
-
+void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,Analyzer* analyzer) {
+  std::string fileName=ctOpt.visualization.callGraphFileName;
+  if(fileName.size()>0) {
+    InterFlow::LabelToFunctionMap map=analyzer->getCFAnalyzer()->labelToFunctionMap(*analyzer->getFlow());
+    cout<<"DEBUG: labeltofunctionmap size:"<<map.size()<<endl;
+    std::string dotFileString=analyzer->getInterFlow()->dotCallGraph(map);
+    cout<<"DEBUG: interflow size:"<<analyzer->getInterFlow()->size()<<endl;
+    if(!CppStdUtilities::writeFile(fileName, dotFileString)) {
+      cerr<<"Error: could not generate callgraph dot file "<<fileName<<endl;
+      exit(1);
+    } else {
+      cout<<"Generated call graph dot file "<<fileName<<endl;
+    }
+  }
+}
   // START_INIT 1
 void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,Analyzer* analyzer,SgNode* root, TimingCollector& tc) {
   tc.startTimer();
