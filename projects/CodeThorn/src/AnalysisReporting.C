@@ -129,6 +129,7 @@ namespace CodeThorn {
 
   void AnalysisReporting::generateVerificationCallGraph(CodeThorn::Analyzer* analyzer, string analysisName, ProgramLocationsReport& report) {
     string fileName=analysisName+"-cg.dot";
+    string fileName2=analysisName+"-cg2.dot";
     cout<<"Generating verification call graph for "<<analysisName<<" analysis."<<endl;
     LabelSet verified=report.verifiedLocations();
     LabelSet falsified=report.falsifiedLocations();
@@ -195,6 +196,21 @@ namespace CodeThorn {
         cgNodes<<entryLabel.toString()<<" [style=filled, fillcolor="<<nodeColor<<","<<dotFunctionName<<"]"<<endl;
     }
 
+    // without function name, only label id
+    stringstream cgNodes2;
+    for (auto entryLabel : functionEntryLabels ) {
+      switch(fMap[entryLabel]) {
+      case FALSIFIED: nodeColor="red";numFalsifiedFunctions++;break;
+      case UNVERIFIED: nodeColor="orange";numUnverifiedFunctions++;break;
+      case VERIFIED: nodeColor="green";numVerifiedFunctions++;break;
+      case INCONSISTENT: nodeColor="gray";break;
+      }
+      std::string functionName=SgNodeHelper::getFunctionName(analyzer->getLabeler()->getNode(entryLabel));
+      std::string dotFunctionName="label=\""+entryLabel.toString()+"\"";
+      if(nodeColor!="gray")
+        cgNodes2<<entryLabel.toString()<<" [style=filled, fillcolor="<<nodeColor<<","<<dotFunctionName<<"]"<<endl;
+    }
+
     // print stats
     int numProvenFunctions=numVerifiedFunctions+numFalsifiedFunctions;
     int numTotalFunctions=numProvenFunctions+numUnverifiedFunctions;
@@ -205,12 +221,18 @@ namespace CodeThorn {
     cout<<"Total      functions: "<<numTotalFunctions<<endl;
     
     std::string dotFileString=cgBegin+cgNodes.str()+cgEdges+cgEnd;
-    //cout<<"DEBUG: interflow size:"<<analyzer->getInterFlow()->size()<<endl;
     if(!CppStdUtilities::writeFile(fileName, dotFileString)) {
       cerr<<"Error: could not generate callgraph dot file "<<fileName<<endl;
       exit(1);
     } else {
       cout<<"Generated verification call graph "<<fileName<<endl;
+    }
+    std::string dotFileString2=cgBegin+cgNodes2.str()+cgEdges+cgEnd;
+    if(!CppStdUtilities::writeFile(fileName2, dotFileString2)) {
+      cerr<<"Error: could not generate callgraph dot file "<<fileName<<endl;
+      exit(1);
+    } else {
+      cout<<"Generated verification call graph "<<fileName2<<endl;
     }
   }
 

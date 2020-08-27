@@ -200,9 +200,8 @@ void EStateTransferFunctions::initDiagnostics() {
             //cout<<"Resolved function pointer"<<endl;
           }
         } else {
-          // abort
-          cerr<<"Error: function pointer is top or bot. Not supported: "<<funCall->unparseToString()<<":"<<funcPtrVal.toString(getVariableIdMapping())<<endl;
-          exit(1);
+          //cerr<<"INFO: function pointer is top or bot. Not supported: "<<funCall->unparseToString()<<":"<<funcPtrVal.toString(getVariableIdMapping())<<endl;
+          // continue but pass the information now to *all* outgoing static edges (maximum imprecision)
         }
       }
     }

@@ -1541,13 +1541,18 @@ std::list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionRefExp(SgFunctionR
   //cout<<"DEBUG: isForwardDecl:"<<SgNodeHelper::isForwardFunctionDeclaration(funDecl)<<endl;
   //cout<<"DEBUG: fundecl:"<<funDecl->unparseToString()<<endl;
   SgFunctionDefinition* funDef=funDecl->get_definition();
-  ROSE_ASSERT(funDef);
-  Label funLab=_analyzer->getLabeler()->functionEntryLabel(funDef);
+  if(funDef) {
+    Label funLab=_analyzer->getLabeler()->functionEntryLabel(funDef);
   
-  // label of corresponding entry label of function of node; if function is external, then label is an invalid label.
-  //cout<<"DEBUG: evalFunctionRefExp: label:"<<funLab.toString()<<endl;
-  res.init(estate,AbstractValue::createAddressOfFunction(funLab));
-  return listify(res);
+    // label of corresponding entry label of function of node; if function is external, then label is an invalid label.
+    //cout<<"DEBUG: evalFunctionRefExp: label:"<<funLab.toString()<<endl;
+    res.init(estate,AbstractValue::createAddressOfFunction(funLab));
+    return listify(res);
+  } else {
+    SAWYER_MESG(logger[WARN])<<"ExprAnalyzer::evalFunctionRefExp: funRefExp==0 (function pointer? - creating top)"<<endl;
+    res.init(estate,AbstractValue::createTop());
+    return listify(res);
+  }
 }
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode) {
   //  cout<<"DEBUG: evalRValueVarRefExp:"<<node->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;

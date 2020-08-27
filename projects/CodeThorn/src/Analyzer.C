@@ -1683,6 +1683,10 @@ void CodeThorn::Analyzer::initializeCommandLineArgumentsInState(PState& initialP
   // SgFunctionDefinition* startFunRoot: node of function
   // estate=analyzeVariableDeclaration(SgVariableDeclaration*,estate,estate.label());
   string functionName=SgNodeHelper::getFunctionName(_startFunRoot);
+  if(_startFunRoot==0) {
+    // no main function, therefore nothing to initialize
+    return;
+  }
   SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(_startFunRoot);
   VariableId argcVarId;
   VariableId argvVarId;
@@ -1835,7 +1839,8 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
   getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
 
-
+  CallString::setMaxLength(_ctOpt.callStringLength);
+  
   // logger[DEBUG]<< "mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   SAWYER_MESG(logger[INFO])<< "INIT: Building CFGs."<<endl;
 
@@ -2374,6 +2379,10 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else if(variableIdMapping->hasPointerType(lhsVar)) {
         // assume here that only arrays (pointers to arrays) are assigned
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+      } else if(SgTypeString* lhsTypeTypeString=isSgTypeString(variableIdMapping->getType(lhsVar))) {
+        // assume here that only arrays (pointers to arrays) are assigned
+        SAWYER_MESG(logger[WARN])<<"DEBUG: LHS assignment: typestring band aid"<<endl;
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else if(variableIdMapping->hasReferenceType(lhsVar)) {
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
