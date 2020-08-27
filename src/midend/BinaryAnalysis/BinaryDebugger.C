@@ -330,6 +330,7 @@ Debugger::registerDictionary() const {
 
 void
 Debugger::init() {
+    syscallVa_.reset();
 
     // Initialize register information.  This is very architecture and OS-dependent. See <sys/user.h> for details, but be
     // warned that even <sys/user.h> is only a guideline!  The header defines two versions of user_regs_struct, one for 32-bit
@@ -507,6 +508,7 @@ Debugger::detach(Sawyer::Optional<DetachMode> how) {
     }
     child_ = 0;
     regsPageStatus_ = REGPAGE_NONE;
+    syscallVa_.reset();
 }
 
 void
@@ -738,15 +740,15 @@ Debugger::writeRegister(RegisterDescriptor desc, const Sawyer::Container::BitVec
             regsPage_[userOffset + i] = bits.toInteger(BitVector::BitRange::baseSize(i*8, 8));
         sendCommand(PTRACE_SETREGS, child_, 0, regsPage_);
     } else if (userFpRegDefs_.getOptional(base).assignTo(userOffset)) {
+#ifdef __linux
         ASSERT_require(userOffset + nUserBytes <= sizeof regsPage_);
         for (size_t i = 0; i < nUserBytes; ++i)
             regsPage_[userOffset + i] = bits.toInteger(BitVector::BitRange::baseSize(i*8, 8));
-#ifdef PTRACE_SETFPREGS
         sendCommand(PTRACE_SETFPREGS, child_, 0, regsPage_);
 #elif defined(_MSC_VER)
-#pragma message("unable to save FP registers on this platform")
+        #pragma message("unable to save FP registers on this platform")
 #else
-#warning "unable to save FP registers on this platform"
+        #warning "unable to save FP registers on this platform"
 #endif
     } else {
         throw std::runtime_error("register is not available");
@@ -975,6 +977,28 @@ Debugger::setPersonality(unsigned long bits) {
 #endif
 }
 
+Sawyer::Optional<rose_addr_t>
+Debugger::findSystemCall() {
+    std::vector<uint8_t> needle{0xcd, 0x80};            // x86: INT 0x80
+
+    // Make sure the syscall is still there if we already found it. This is reasonally fast.
+    if (syscallVa_) {
+        std::vector<uint8_t> buf(needle.size());
+        size_t nRead = readMemory(*syscallVa_, buf.size(), buf.data());
+        if (nRead != buf.size() || !std::equal(buf.begin(), buf.end(), needle.begin()))
+            syscallVa_.reset();
+    }
+
+    // If we haven't found a syscall (even if we previously searched for one) then search now.  This is not a very efficient
+    // way to do this, but at least it's simple.
+    if (!syscallVa_) {
+        MemoryMap::Ptr map = MemoryMap::instance();
+        map->insertProcess(":noattach:" + boost::lexical_cast<std::string>(child_));
+        syscallVa_ = map->findAny(AddressInterval::whole(), std::vector<uint8_t>{0xcd, 0x80}, MemoryMap::EXECUTABLE);
+    }
+
+    return syscallVa_;
+}
 } // namespace
 } // namespace
 

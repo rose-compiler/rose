@@ -238,6 +238,7 @@ private:
     uint8_t regsPage_[512];                             // latest register information read from subordinate
     RegPageStatus regsPageStatus_;                      // what are the contents of regPage_?
     Disassembler *disassembler_;                        // how to disassemble instructions
+    Sawyer::Optional<rose_addr_t> syscallVa_;           // address of some executable system call instruction.
 
     //----------------------------------------
     // Real constructors
@@ -459,6 +460,10 @@ private:
     // Get/set personality in a portable way
     static unsigned long getPersonality();
     static void setPersonality(unsigned long);
+
+    // Address of a system call instruction. The initial search can be expensive, so the result is cached.
+    Sawyer::Optional<rose_addr_t> findSystemCall();
+
 };
 
 std::ostream& operator<<(std::ostream&, const Debugger::Specimen&);
