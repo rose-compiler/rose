@@ -330,7 +330,7 @@ void API::link(SgNode* src, SgNode * dst, API::link_kind_e kind, unsigned short 
 }
 
 void API::toGraphViz(const std::string & filename) const {
-  std::ofstream out(filename);
+  std::ofstream out(filename.c_str());
   toGraphViz(out);
   out.close();
 }
