@@ -112,15 +112,8 @@ void Build(const parser::ProgramUnit &x, T* scope)
    std::cout << "Rose::builder::Build(ProgramUnit)\n";
 #endif
 
-   std::visit(
-      common::visitors{
-         [&] (const common::Indirection<parser::MainProgram> &y)  { Build(y.value(), scope); },
-         [&] (const common::Indirection<parser::Module> &y)       { Build(y.value(), scope); },
-         // common::Indirection<FunctionSubprogram>, common::Indirection<SubroutineSubprogram>,
-         // common::Indirection<Submodule>, common::Indirection<BlockData>
-         [&] (const auto &y) { ; },
-      },
-      x.u);
+   auto ProgramUnitVisitor = [&](const auto& y) { Build(y.value(), scope); };
+   std::visit(ProgramUnitVisitor, x.u);
 }
 
 template<typename T>
@@ -210,6 +203,38 @@ void Build(const parser::Module &x, T* scope)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Module)\n";
+#endif
+}
+
+template<typename T>
+void Build(const parser::FunctionSubprogram &x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(FunctionSubprogram)\n";
+#endif
+}
+
+template<typename T>
+void Build(const parser::SubroutineSubprogram &x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(SubroutineSubprogram)\n";
+#endif
+}
+
+template<typename T>
+void Build(const parser::Submodule &x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(Submodule)\n";
+#endif
+}
+
+template<typename T>
+void Build(const parser::BlockData &x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(BlockData)\n";
 #endif
 }
 
