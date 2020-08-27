@@ -11,6 +11,7 @@
 #include "Flow.h"
 #include "FunctionIdMapping.h"
 #include "FunctionCallMapping.h"
+#include <map>
 
 namespace CodeThorn {
 
@@ -65,6 +66,11 @@ class CFAnalysis {
   LabelSet functionLabelSet(Label entryLabel, Flow& flow);
   LabelSet initialLabelsOfStmtsInBlockSet(SgNode* node);
   LabelSet labelsOfIntersetSet();
+  // type used to map any label to a respective function
+  typedef std::map<Label,Label> LabelToFunctionMap;
+  // computes a map where the entry label of the corresponding function is provided
+  // if the label is not inside a function then the returned label is an invalid label
+  LabelToFunctionMap labelToFunctionMap(Flow& flow);
   /**
    * \brief Computes the control flow for an AST subtree rooted at node.
    */
@@ -136,7 +142,7 @@ class CFAnalysis {
   enum FunctionResolutionMode { FRM_TRANSLATION_UNIT, FRM_WHOLE_AST_LOOKUP, FRM_FUNCTION_ID_MAPPING, FRM_FUNCTION_CALL_MAPPING };
   static FunctionResolutionMode functionResolutionMode;
   static Sawyer::Message::Facility logger;
-  void setInterProcedural(bool flag);
+  void setInterProcedural(bool flag); // by default true
   bool getInterProcedural();
  protected:
   SgFunctionDefinition* determineFunctionDefinition2(SgFunctionCallExp* funCall);
