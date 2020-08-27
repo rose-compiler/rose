@@ -354,7 +354,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
   }
 #endif
   if(SgStatementExpression* gnuExtensionStmtExpr=isSgStatementExpression(node)) {
-    cout<<"WARNING: ignoring GNU extension StmtExpr."<<endl;
+    //cout<<"WARNING: ignoring GNU extension StmtExpr."<<endl;
     res.result=AbstractValue::createTop();
     return listify(res);
   }

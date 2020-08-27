@@ -224,7 +224,8 @@ namespace CodeThorn {
     // type used to map any label to a respective function
     typedef std::map<Label,Label> LabelToFunctionMap;
     std::string toString() const;
-    std::string dotCallGraph(InterFlow::LabelToFunctionMap& map) const;
+    std::string dotCallGraph(LabelToFunctionMap& map) const;
+    std::string dotCallGraphEdges(LabelToFunctionMap& map) const;
   };
 
 } // end namespace CodeThorn

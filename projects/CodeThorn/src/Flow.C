@@ -204,17 +204,18 @@ string InterFlow::toString() const {
   return res;
 }
 
-std::string InterFlow::dotCallGraph(LabelToFunctionMap& map) const {
+std::string InterFlow::dotCallGraphEdges(LabelToFunctionMap& map) const {
   stringstream ss;
-  ss<<"digraph G {\n";
   for(InterFlow::iterator i=begin();i!=end();++i) {
     InterEdge ie=*i;
     if(ie.entry.isValid()&&ie.exit.isValid()) {
-      ss<<map[ie.call].toString()<<"->"<<ie.call.toString()<<endl;
+      ss<<map[ie.call].toString()<<"->"<<ie.entry.toString()<<endl;
     }
   }
-  ss<<"}";
   return ss.str();
+}
+std::string InterFlow::dotCallGraph(LabelToFunctionMap& map) const {
+  return "digraph G {\n"+dotCallGraphEdges(map)+"}\n";
 }
 
 bool CodeThorn::operator<(const InterEdge& e1, const InterEdge& e2) {
@@ -811,6 +812,40 @@ set<string> Flow::getAllAnnotations() {
     result.insert((*i).getAnnotation());
   }
   return result;
+}
+
+LabelSet Flow::reachableNodes(Label start) {
+  return reachableNodesButNotBeyondTargetNode(start,Labeler::NO_LABEL);
+}
+
+LabelSet Flow::reachableNodesButNotBeyondTargetNode(Label start, Label target) {
+  LabelSet reachableNodes;
+  reachableNodes.insert(start);
+  if(target==start) {
+    return reachableNodes;
+  }
+  LabelSet toVisitSet=succ(start);
+  size_t oldSize=0;
+  size_t newSize=0;
+  do {
+    LabelSet newToVisitSet;
+    for(LabelSet::iterator i=toVisitSet.begin();i!=toVisitSet.end();++i) {
+      if(*i==target) {
+        reachableNodes.insert(*i);
+        continue;
+      }
+      LabelSet succSet=succ(*i);
+      for(LabelSet::iterator j=succSet.begin();j!=succSet.end();++j) {
+        if(reachableNodes.find(*j)==reachableNodes.end())
+          newToVisitSet.insert(*j);
+      }
+    }
+    toVisitSet=newToVisitSet;
+    oldSize=reachableNodes.size();
+    reachableNodes+=toVisitSet;
+    newSize=reachableNodes.size();
+  } while(oldSize!=newSize);
+  return reachableNodes;
 }
 
 #ifdef USE_SAWYER_GRAPH

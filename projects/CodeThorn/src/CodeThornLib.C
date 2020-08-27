@@ -607,7 +607,7 @@ void optionallyAnalyzeAssertions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, IO
 void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,Analyzer* analyzer) {
   if(ctOpt.analysisList().size()>0) {
     const bool reportDetectedErrorLines=true;
-    AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines);
+    AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
     AnalysisReporting::generateAnalysisStatsRawData(ctOpt,analyzer);
     AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
   }

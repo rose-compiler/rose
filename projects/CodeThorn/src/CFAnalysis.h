@@ -63,9 +63,10 @@ class CFAnalysis {
   int numberOfFunctionParameters(Label entryNode);
   bool isVoidFunction(Label entryNode);
   LabelSetSet functionLabelSetSets(Flow& flow);
+  // returns the set of all labels in a function (excluding SgBasicBlock labels)
   LabelSet functionLabelSet(Label entryLabel, Flow& flow);
   LabelSet initialLabelsOfStmtsInBlockSet(SgNode* node);
-  LabelSet labelsOfIntersetSet();
+  LabelSet labelsOfInterestSet();
   // computes a map where the entry label of the corresponding function is provided
   // if the label is not inside a function then the returned label is an invalid label
   InterFlow::LabelToFunctionMap labelToFunctionMap(Flow& flow);

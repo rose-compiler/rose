@@ -133,6 +133,7 @@ InterFlow::LabelToFunctionMap CFAnalysis::labelToFunctionMap(Flow& flow) {
   for(auto entryLabel : entryLabels) {
     LabelSet insideFunctionLabels=functionLabelSet(entryLabel,flow);
     for(auto funLocLabel : insideFunctionLabels) {
+      // need all labels for verification of functions
       map[funLocLabel]=entryLabel;
     }
   }
@@ -140,9 +141,18 @@ InterFlow::LabelToFunctionMap CFAnalysis::labelToFunctionMap(Flow& flow) {
 }
 
 LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
-    Label exitLabel=correspondingFunctionExitLabel(entryLabel);
-    LabelSet fLabels=flow.reachableNodesButNotBeyondTargetNode(entryLabel,exitLabel);
-    return fLabels;
+  LabelSet fLabels;
+  SgNode* functionDef=getLabeler()->getNode(entryLabel);
+  RoseAst ast(functionDef);
+  for(auto node : ast) {
+    if(!isSgBasicBlock(node)) {
+      Label lab=getLabeler()->getLabel(node);
+      if(lab.isValid()) {
+        fLabels.insert(lab);
+      }
+    }
+  }
+  return fLabels;
 }
 
 template <class SageNode>
@@ -1031,7 +1041,7 @@ SgNode* CFAnalysis::correspondingLoopConstruct(SgNode* node) {
   return node;
 }
 
-LabelSet CFAnalysis::labelsOfIntersetSet() {
+LabelSet CFAnalysis::labelsOfInterestSet() {
   LabelSet ls;
   Labeler& labeler=*getLabeler();
   for(auto l : labeler) {
@@ -1117,33 +1127,6 @@ Flow CFAnalysis::WhileAndDoWhileLoopFlow(SgNode* node,
     edgeSet.insert(e);
   }
   return edgeSet;
-}
-
-LabelSet Flow::reachableNodes(Label start) {
-  return reachableNodesButNotBeyondTargetNode(start,Labeler::NO_LABEL);
-}
-
-// MS: will possibly be replaced with an implementation from the BOOST graph library
-LabelSet Flow::reachableNodesButNotBeyondTargetNode(Label start, Label target) {
-  LabelSet reachableNodes;
-  LabelSet toVisitSet=succ(start);
-  size_t oldSize=0;
-  size_t newSize=0;
-  do {
-    LabelSet newToVisitSet;
-    for(LabelSet::iterator i=toVisitSet.begin();i!=toVisitSet.end();++i) {
-      LabelSet succSet=succ(*i);
-      for(LabelSet::iterator j=succSet.begin();j!=succSet.end();++j) {
-        if(reachableNodes.find(*j)==reachableNodes.end())
-          newToVisitSet.insert(*j);
-      }
-    }
-    toVisitSet=newToVisitSet;
-    oldSize=reachableNodes.size();
-    reachableNodes+=toVisitSet;
-    newSize=reachableNodes.size();
-  } while(oldSize!=newSize);
-  return reachableNodes;
 }
 
 namespace
