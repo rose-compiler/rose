@@ -442,6 +442,24 @@ public:
     /** Returns the last status from a call to waitpid. */
     int waitpidStatus() const { return wstat_; }
 
+    /** Cause the subordinate to execute a system call. */
+    int remoteSystemCall(int syscallNumber, std::vector<uint64_t> args);
+
+    /** Cause the subordinate to open a file.
+     *
+     *  The subordinate will be coerced into opening the specified file, and the file descriptor in the subordinate is
+     *  returned. */
+    int remoteOpenFile(const boost::filesystem::path &fileName, unsigned flags, mode_t mode);
+
+    /** Cause the subordinate to close a file. */
+    int remoteCloseFile(unsigned remoteFd);
+
+    /** Map a new memory region in the subordinate.
+     *
+     *  This is similar to the @c mmap function, except it operates on the subordinate process. */
+    rose_addr_t remoteMmap(rose_addr_t va, size_t nBytes, unsigned prot, unsigned flags, const boost::filesystem::path&,
+                           off_t offset);
+
 public:
     /**  Initialize diagnostic output. This is called automatically when ROSE is initialized.  */
     static void initDiagnostics();
