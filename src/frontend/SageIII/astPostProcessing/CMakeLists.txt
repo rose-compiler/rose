@@ -40,7 +40,8 @@ set(astPostProcessingSources
   fixupFileInfoFlags.C
   fixupTemplateArguments.C
   addPrototypesForTemplateInstantiations.C
-  markSharedDeclarationsForOutputInCodeGeneration.C)
+  markSharedDeclarationsForOutputInCodeGeneration.C
+  fixupInitializers.C)
 
 if(NOT enable-c)
   set(astPostProcessingSources ${astPostProcessingSources} dummy.C)
@@ -77,6 +78,7 @@ install(FILES  astPostProcessing.h       fixupDefiningAndNondefiningDeclarations
     fixupTemplateArguments.h
     addPrototypesForTemplateInstantiations.h
     markSharedDeclarationsForOutputInCodeGeneration.h addIncludeDirectives.h
+    fixupInitializers.h
 
     DESTINATION ${INCLUDE_INSTALL_DIR})
 
