@@ -1,22 +1,16 @@
 // RC-65:
 
-    struct htab {
+struct htab 
+   {
+     int size;
+   };
 
-      int size;
+typedef struct htab * htab_t;
 
-    };
+#define htab_size(htab)  ((htab)->size)
 
-    typedef struct htab * htab_t;
-
-     
-
-    #define htab_size(htab)  ((htab)->size)
-
-     
-
-    int (htab_size) (htab_t htab) {
-
-      return htab_size(htab);
-
-    }
+int (htab_size) (htab_t htab) 
+   {
+     return htab_size(htab);
+   }
 
