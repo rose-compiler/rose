@@ -589,7 +589,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2020_19.c \
      test2020_21.c \
      test2020_22.c \
-     test2020_28.c 
+     test2020_28.c \
+     test2020_29.c \
+     test2020_30.c \
+     test2020_31.c \
+     test2020_32.c 
 
 
 TESTCODE_CURRENTLY_FAILING = \
