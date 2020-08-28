@@ -6115,6 +6115,12 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
         }
 
      bool addParens = false;
+
+#if 0
+     printf ("In unparseCastOp(): cast_op->cast_type() = %d \n",cast_op->cast_type());
+     curprint("/* In unparseCastOp() before switch */ \n ");
+#endif
+
      switch(cast_op->cast_type())
         {
           case SgCastExp::e_unknown:
@@ -6226,9 +6232,10 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                  // check if the expression that we are casting is not a string
 
                  // DQ (7/26/2013): This should also be true (all of the source position info should be consistant).
-                    if (cast_op->get_file_info()->isCompilerGenerated()) {
-                      printf("[Unparse_ExprStmt::unparseCastOp] Fatal: cast_op->get_file_info()->isCompilerGenerated() but !cast_op->get_startOfConstruct()->isCompilerGenerated().\n");
-                    }
+                    if (cast_op->get_file_info()->isCompilerGenerated()) 
+                       {
+                         printf("[Unparse_ExprStmt::unparseCastOp] Fatal: cast_op->get_file_info()->isCompilerGenerated() but !cast_op->get_startOfConstruct()->isCompilerGenerated().\n");
+                       }
                     ROSE_ASSERT(cast_op->get_file_info()->isCompilerGenerated() == false);
 
                  // DQ (7/31/2013): This appears to happen for at least one test in projects/arrayOptimization.
@@ -6254,11 +6261,29 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                       // DQ (10/18/2012): Added to unset ";" usage in defining declaration.
                          newinfo.unset_SkipSemiColon();
 
+                      // DQ (8/27/2020): unset the SkipClassSpecifier flag, at least for C.
+                         newinfo.unset_SkipClassSpecifier();
+#if 0
+                         printf ("In unparseCastOp(): output cast to associated type: unset_SkipClassSpecifier() \n");
+#endif
+#if 0
+                         newinfo.display("In unparseCastOp(): calling unparseType(): first part");
+#endif
+
                       // DQ (10/17/2012): We have to separate these out if we want to output the defining declarations.
                          newinfo.set_isTypeFirstPart();
                          unp->u_type->unparseType(cast_op->get_type(), newinfo);
+#if 0
+                         curprint("/* unparseCastOp SgCastExp::c_cast_e after unparse first type */ ");
+#endif
+#if 0
+                         newinfo.display("In unparseCastOp(): calling unparseType(): second part");
+#endif
                          newinfo.set_isTypeSecondPart();
                          unp->u_type->unparseType(cast_op->get_type(), newinfo);
+#if 0
+                         curprint("/* unparseCastOp SgCastExp::c_cast_e after unparse second type */ ");
+#endif
                          curprint(")");
                        }
                  // cast_op->get_operand_i()->variant() == STRING_VAL
@@ -8434,8 +8459,13 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
        // bool newinfo_input = con_init->get_is_braced_initialized() || con_init->get_is_explicit_cast();
        // bool newinfo_input = con_init->get_is_braced_initialized() || con_init->get_is_explicit_cast();
        // bool newinfo_input = con_init->get_is_braced_initialized() || con_init->get_is_explicit_cast() || (use_braces_instead_of_parenthisis == false);
-          bool newinfo_input = con_init->get_is_braced_initialized() || con_init->get_is_explicit_cast() && (use_braces_instead_of_parenthisis == false);
+       // bool newinfo_input = con_init->get_is_braced_initialized() || con_init->get_is_explicit_cast() && (use_braces_instead_of_parenthisis == false);
        // bool newinfo_input = (con_init->get_is_braced_initialized() || con_init->get_is_explicit_cast()) && (use_braces_instead_of_parenthisis == false);
+          bool newinfo_input = con_init->get_is_braced_initialized() || con_init->get_is_explicit_cast() && (use_braces_instead_of_parenthisis == false);
+
+       // DQ (8/27/2020): Check the form that avoids a compiler warning with clearer use of parentheses.
+          bool alternative_value = con_init->get_is_braced_initialized() || (con_init->get_is_explicit_cast() && (use_braces_instead_of_parenthisis == false));
+          ROSE_ASSERT(alternative_value == newinfo_input);
 
           if (this_constructor_initializer_is_using_Cxx11_initializer_list == true)
              {
