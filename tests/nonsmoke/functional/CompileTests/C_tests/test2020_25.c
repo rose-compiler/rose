@@ -3,7 +3,8 @@
 #ifndef BYTE
 # define BYTE
 # define INSIDE_RECURSION
-# include "rc-67-0.c"
+// # include "rc-67-0.c"
+# include "test2020_25.c"
 # undef INSIDE_RECURSION
 #endif
 

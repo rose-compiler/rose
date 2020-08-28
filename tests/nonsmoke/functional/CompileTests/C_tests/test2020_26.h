@@ -4,6 +4,7 @@ typedef struct {} X;
 
 X * bar (X *, int);
 
-// This appears to be a recursive macro (might have to implement option to generate *.i and *.ii intermediate files to avoid re-expansion of macros.
+// This appears to be a recursive macro (might have to implement option to 
+// generate *.i and *.ii intermediate files to avoid re-expansion of macros.
 #define bar(s) bar (s, 0) 
 
