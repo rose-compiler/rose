@@ -1,14 +1,15 @@
 // RC-61:  Tristan
 
-    struct _direntry {};
+struct _direntry {};
 
-     
+void foo() 
+   {
+     struct { struct _direntry * next; } anchor;
 
-    void foo() {
+  // For C langauge support "struct" must be output in generated code.
+     for (; (struct _direntry *)( anchor.next ); ) 
+        {
+        }
 
-      struct { struct _direntry * next; } anchor;
-
-      for (; (struct _direntry *)( anchor.next ); ) {}
-
-    }
+   }
 
