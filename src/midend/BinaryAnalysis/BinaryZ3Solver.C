@@ -208,6 +208,8 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 }
                 break;
             }
+            case SymbolicExpr::OP_CONVERT:
+                throw Exception("OP_CONVERT is not implemented yet");
             case SymbolicExpr::OP_EQ:
                 retval = outputBinary("=", inode, BOOLEAN);
                 break;
@@ -219,6 +221,30 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
             case SymbolicExpr::OP_EXTRACT:
                 retval = outputExtract(inode);
                 break;
+            case SymbolicExpr::OP_FP_ABS:
+            case SymbolicExpr::OP_FP_NEGATE:
+            case SymbolicExpr::OP_FP_ADD:
+            case SymbolicExpr::OP_FP_MUL:
+            case SymbolicExpr::OP_FP_DIV:
+            case SymbolicExpr::OP_FP_MULADD:
+            case SymbolicExpr::OP_FP_SQRT:
+            case SymbolicExpr::OP_FP_MOD:
+            case SymbolicExpr::OP_FP_ROUND:
+            case SymbolicExpr::OP_FP_MIN:
+            case SymbolicExpr::OP_FP_MAX:
+            case SymbolicExpr::OP_FP_LE:
+            case SymbolicExpr::OP_FP_LT:
+            case SymbolicExpr::OP_FP_GE:
+            case SymbolicExpr::OP_FP_GT:
+            case SymbolicExpr::OP_FP_EQ:
+            case SymbolicExpr::OP_FP_ISNORM:
+            case SymbolicExpr::OP_FP_ISSUBNORM:
+            case SymbolicExpr::OP_FP_ISZERO:
+            case SymbolicExpr::OP_FP_ISINFINITE:
+            case SymbolicExpr::OP_FP_ISNAN:
+            case SymbolicExpr::OP_FP_ISNEG:
+            case SymbolicExpr::OP_FP_ISPOS:
+                throw Exception("floating point operations are not implemented yet");
             case SymbolicExpr::OP_INVERT: {
                 ASSERT_require(inode->nChildren() == 1);
                 SExprTypePair child = outputExpression(inode->child(0));
@@ -261,6 +287,8 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
             case SymbolicExpr::OP_READ:
                 retval = outputRead(inode);
                 break;
+            case SymbolicExpr::OP_REINTERPRET:
+                throw Exception("OP_REINTERPRET not implemented");
             case SymbolicExpr::OP_ROL:
                 retval = outputRotateLeft(inode);
                 break;
@@ -335,9 +363,6 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 break;
             case SymbolicExpr::OP_ZEROP:
                 retval = outputZerop(inode);
-                break;
-            default:
-                // to suppress warnings since an error follows. Please remove this when floating-point is implemented
                 break;
         }
     }
@@ -531,6 +556,8 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                     z3expr = z3::concat(z3expr, children[i].first);
                 return Z3ExprTypePair(z3expr, BIT_VECTOR);
             }
+            case SymbolicExpr::OP_CONVERT:
+                throw Exception("OP_CONVERT is not implemented yet");
             case SymbolicExpr::OP_EXTRACT:
                 return ctxExtract(inode);
             case SymbolicExpr::OP_INVERT: {
@@ -544,6 +571,30 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                 }
                 return Z3ExprTypePair(z3expr, child.second);
             }
+            case SymbolicExpr::OP_FP_ABS:
+            case SymbolicExpr::OP_FP_NEGATE:
+            case SymbolicExpr::OP_FP_ADD:
+            case SymbolicExpr::OP_FP_MUL:
+            case SymbolicExpr::OP_FP_DIV:
+            case SymbolicExpr::OP_FP_MULADD:
+            case SymbolicExpr::OP_FP_SQRT:
+            case SymbolicExpr::OP_FP_MOD:
+            case SymbolicExpr::OP_FP_ROUND:
+            case SymbolicExpr::OP_FP_MIN:
+            case SymbolicExpr::OP_FP_MAX:
+            case SymbolicExpr::OP_FP_LE:
+            case SymbolicExpr::OP_FP_LT:
+            case SymbolicExpr::OP_FP_GE:
+            case SymbolicExpr::OP_FP_GT:
+            case SymbolicExpr::OP_FP_EQ:
+            case SymbolicExpr::OP_FP_ISNORM:
+            case SymbolicExpr::OP_FP_ISSUBNORM:
+            case SymbolicExpr::OP_FP_ISZERO:
+            case SymbolicExpr::OP_FP_ISINFINITE:
+            case SymbolicExpr::OP_FP_ISNAN:
+            case SymbolicExpr::OP_FP_ISNEG:
+            case SymbolicExpr::OP_FP_ISPOS:
+                throw Exception("floating point operations are not implemented yet");
             case SymbolicExpr::OP_ITE: {
                 ASSERT_require(inode->nChildren() == 3);
                 Etv alternatives;
@@ -597,6 +648,8 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
             }
             case SymbolicExpr::OP_READ:
                 return ctxRead(inode);
+            case SymbolicExpr::OP_REINTERPRET:
+                throw Exception("OP_REINTERPRET not implemented");
             case SymbolicExpr::OP_ROL:
                 return ctxRotateLeft(inode);
             case SymbolicExpr::OP_ROR:
@@ -671,9 +724,6 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                 return ctxWrite(inode);
             case SymbolicExpr::OP_ZEROP:
                 return ctxZerop(inode);
-            default:
-                // to suppress warnings since an error follows. Please remove this when floating-point is implemented
-                break;
         }
     }
     ASSERT_not_reachable("unhandled case " + stringify::Rose::BinaryAnalysis::SymbolicExpr::Operator(inode->getOperator(), "") +
