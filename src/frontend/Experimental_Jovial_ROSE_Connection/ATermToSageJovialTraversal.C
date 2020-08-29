@@ -3490,10 +3490,7 @@ ATbool ATermToSageJovialTraversal::traverse_FormalDefineParameterList(ATerm term
 
          // add comma separator
          if (first == false) params += ',';
-//TODO - fix rest of issue RC-79 with this
-#if 0
          first = false;
-#endif
 
          if (ATmatch(head, "FormalDefineParameter(<str>)", &letter)) {
             // MATCHED Letter

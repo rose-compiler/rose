@@ -34,7 +34,7 @@ static bool name_char(int c)
 static int preprocess(std::istream & in_stream, std::ostream & out_stream)
 {
    enum State {
-      D, E1, F, I, N, E2, WS, name_start, name,
+      D, E1, F, I, N, E2, WS, name_start, name, close_paren,
       define_quote1, define_quote2, end_comment_quote
    };
    State start = D;
@@ -93,6 +93,9 @@ static int preprocess(std::istream & in_stream, std::ostream & out_stream)
            if (name_char(c)) {
               break; // keep looking for characters in DefineName
            }
+           else if (c == '(') {
+              state = close_paren; // look for the end of a macro variable list
+           }
            else if (whitespace_char(c)) {
               state = define_quote1; // look for starting quote
            }
@@ -103,6 +106,11 @@ static int preprocess(std::istream & in_stream, std::ostream & out_stream)
            else {
               // make sure that "UNDEFINED" isn't recognized as part of a DEFINE statement
               state = start;
+           }
+           break;
+        case close_paren:
+           if (c == ')') {
+              state = define_quote1;
            }
            break;
         case define_quote1:
