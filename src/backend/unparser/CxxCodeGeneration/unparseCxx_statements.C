@@ -1705,11 +1705,19 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
                printf ("DONE: Output the comments and CCP directives for the SgInitializedName function args = %p \n",*p);
 #endif
             // Output declarations for function parameters (using old-style K&R syntax)
-            // printf ("Output declarations for function parameters (using old-style K&R syntax) \n");
+#if 0
+               printf ("Output declarations for function parameters (using old-style K&R syntax) \n");
+               curprint(" /* Output declarations for function parameters (using old-style K&R syntax) */ ");
+#endif
                unparseFunctionParameterDeclaration(funcdecl_stmt,*p,true,ninfo2);
-
+#if 0
+               printf ("DONE: Output declarations for function parameters (using old-style K&R syntax) \n");
+               curprint(" /* DONE: Output declarations for function parameters (using old-style K&R syntax) */ ");
+#endif
                curprint( ";");
+
                unp->u_sage->curprint_newline();
+
                p++;
              }
         }
