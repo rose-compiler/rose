@@ -780,7 +780,7 @@ void Build(const parser::TypeDeclarationStmt &x, T* scope)
    }
 
    builder.Enter(var_decl, name, type, init);
-   builder.Leave(var_decl);
+   builder.Leave(var_decl, modifier_enum_list);
 }
 
 void Build(const parser::DeclarationTypeSpec &x, SgType* &type)

@@ -1014,6 +1014,34 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
 }
 
 void SageTreeBuilder::
+Leave(SgVariableDeclaration* var_decl, std::list<LanguageTranslation::ExpressionKind> &modifier_enum_list)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) with modifiers \n";
+
+   BOOST_FOREACH(LanguageTranslation::ExpressionKind modifier_enum, modifier_enum_list) {
+      switch(modifier_enum)
+       {
+         case LanguageTranslation::ExpressionKind::e_type_modifier_intent_in:
+            {
+               var_decl->get_declarationModifier().get_typeModifier().setIntent_in();
+               break;
+            }
+         case LanguageTranslation::ExpressionKind::e_type_modifier_intent_out:
+            {
+               var_decl->get_declarationModifier().get_typeModifier().setIntent_out();
+               break;
+            }
+         case LanguageTranslation::ExpressionKind::e_type_modifier_intent_inout:
+            {
+               var_decl->get_declarationModifier().get_typeModifier().setIntent_inout();
+               break;
+            }
+         default: break;
+       }
+   }
+}
+
+void SageTreeBuilder::
 Leave(SgVariableDeclaration* var_decl)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) \n";

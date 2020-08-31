@@ -123,6 +123,7 @@ public:
    void Leave(SgDerivedTypeStatement*);
 
    void Enter(SgVariableDeclaration* &, const std::string &, SgType*, SgExpression*);
+   void Leave(SgVariableDeclaration*, std::list<LanguageTranslation::ExpressionKind> &);
    void Leave(SgVariableDeclaration*);
 
    void Enter(SgEnumDeclaration* &, const std::string &);
