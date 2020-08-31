@@ -19525,24 +19525,27 @@ SageInterface::deleteAST ( SgNode* n )
                                 /remove SgFunctionSymbol
                                 /////////////////////////////////////////////////*/
 
-                                if ((isSgFunctionDeclaration(node) != NULL) && (isSgMemberFunctionDeclaration(node) == NULL)){
-                                        if(isSgFunctionDeclaration(node)->get_scope()!=NULL){
-                                             if(isSgFunctionDeclaration(node)->get_scope()->get_symbol_table()!=NULL)
-                                                {
-                                                        SgSymbol* symbol = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
-                                                        ClassicVisitor visitor((SgFunctionSymbol *)symbol);
-                                                        traverseMemoryPoolVisitorPattern(visitor);
-                                                        if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete
-                                                                ((SgFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
-                                                                delete symbol;
-                                                                //printf("A SgFunctionSymbol was deleted\n");
-                                                        }
-                                                        ClassicVisitor visitor1((SgFunctionDeclaration *)node);
-                                                        traverseMemoryPoolVisitorPattern(visitor1);
-                                                }
-                                        }
+                                {
+                                   SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(node); 
+                                   if (funcDecl != NULL){
+                                      if (isSgMemberFunctionDeclaration(node) == NULL) {
+                                         if (funcDecl->get_scope() != NULL) {
+                                            if (funcDecl->get_scope()->get_symbol_table() != NULL) {
+                                               SgSymbol* symbol = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
+                                               ClassicVisitor visitor((SgFunctionSymbol *)symbol);
+                                               traverseMemoryPoolVisitorPattern(visitor);
+                                               if (visitor.get_num_Function_pointers()==1) { //only one reference to this FunctionSymbol => safe to delete
+                                                  ((SgFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                  delete symbol;
+                                                //printf("A SgFunctionSymbol was deleted\n");
+                                               }
+                                               ClassicVisitor visitor1((SgFunctionDeclaration *)node);
+                                               traverseMemoryPoolVisitorPattern(visitor1);
+                                            }
+                                         }
+                                      }
+                                   }
                                 }
-
 
                                 if(isSgFunctionRefExp(node) !=NULL)
                                 {
