@@ -5774,6 +5774,8 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
    else return ATfalse;
 
    if (var_name != nullptr) {
+   // Variables (except for ControlLetter) must have been declared
+   // TODO: Use SageTreeBuilder to declare ControlLetter index variables
       SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(var_name, SageBuilder::topScopeStack());
       ROSE_ASSERT(var_sym);
       expr = SageBuilder::buildVarRefExp_nfi(var_sym);
@@ -5878,7 +5880,8 @@ ATbool ATermToSageJovialTraversal::traverse_ExponentiationOp(ATerm term, SgExpre
 
    ATerm t_lhs, t_rhs;
    SgExpression * lhs = nullptr, * rhs = nullptr;
-   std::string op_name;
+
+   expr = nullptr;
 
    if (ATmatch(term, "ExponentiationOp(<term>,<term>)", &t_lhs, &t_rhs)) {
       if (traverse_NumericFactor(t_lhs, lhs)) {
@@ -5891,7 +5894,10 @@ ATbool ATermToSageJovialTraversal::traverse_ExponentiationOp(ATerm term, SgExpre
    }
    else return ATfalse;
 
-   ROSE_ASSERT(expr);
+   ROSE_ASSERT(lhs);
+   ROSE_ASSERT(rhs);
+
+   expr = SageBuilder::buildExponentiationOp_nfi(lhs, rhs);
 
    return ATtrue;
 }
@@ -6646,6 +6652,7 @@ ATbool ATermToSageJovialTraversal::traverse_NamedConstant(ATerm term, SgExpressi
    if (ATmatch(term, "ControlLetter(<str>)" , &letter)) {
       // MATCHED ControlLetter
       cerr << "WARNING UNIMPLEMENTED: NamedConstant - ControlLetter " << letter << endl;
+      ROSE_ASSERT(false);
    } else return ATfalse;
 
       //  ConstantItemName            -> NamedConstant         {prefer}  %% ambiguous with ConstantTableName

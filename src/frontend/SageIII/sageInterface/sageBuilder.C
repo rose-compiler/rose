@@ -12585,6 +12585,11 @@ SageBuilder::buildJovialForThenStatement_nfi(SgExpression* init_expr,
      ROSE_ASSERT(for_stmt);
      setOneSourcePositionNull(for_stmt);
 
+     if (topScopeStack()) {
+        for_stmt->set_parent(topScopeStack());
+     }
+     body->set_parent(for_stmt);
+
      if (SageInterface::is_language_case_insensitive()) {
         for_stmt->setCaseInsensitive(true);
      }

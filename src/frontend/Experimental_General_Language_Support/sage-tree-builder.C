@@ -953,6 +953,9 @@ Enter(SgJovialForThenStatement* &for_stmt, SgExpression* init_expr, SgExpression
 
    for_stmt->set_loop_statement_type(loop_type);
 
+// Append now (before Leave is called) so that symbol lookup will work
+   SageInterface::appendStatement(for_stmt, SageBuilder::topScopeStack());
+
    SageBuilder::pushScopeStack(body);
 }
 
@@ -962,7 +965,6 @@ Leave(SgJovialForThenStatement* for_stmt)
    mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialForThenStatement*, ...) \n";
 
    SageBuilder::popScopeStack();  // for body
-   SageInterface::appendStatement(for_stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
