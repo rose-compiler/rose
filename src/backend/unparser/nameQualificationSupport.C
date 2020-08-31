@@ -2147,6 +2147,112 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                    mfprintf(mlog [ WARN ] ) ("After using the function type: symbol = %p \n",symbol);
 #endif
                                  }
+                                else
+                                 {
+
+                                // DQ (8/30/2020): Adding support for a more sophisticated level of function ambiguity resolution.
+                                // Here we add the lookup of same named functions in the scopes defined by the types associated 
+                                // with function parameters.
+
+#define DEBUG_FUNCTION_AMBIGUITY 0
+
+#if DEBUG_FUNCTION_AMBIGUITY
+                                   printf ("\n\nWe found the correct function, but now we need to check for any other possible matches that would drive more name qualification \n");
+
+                                   printf ("Before loop over function parameter types: foundAnOverloadedFunctionWithSameName = %s \n",foundAnOverloadedFunctionWithSameName ? "true" : "false");
+                                   printf ("Before loop over function parameter types: foundAnOverloadedFunctionInSameScope = %s \n",foundAnOverloadedFunctionInSameScope   ? "true" : "false");
+                                   printf (" --- currentScope   = %p = %s name = %s \n",currentScope,currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+                                   printf (" --- functionSymbol = %p = %s name = %s \n",functionSymbol,functionSymbol->class_name().c_str(),SageInterface::get_name(functionSymbol).c_str());
+#endif
+                                   SgDeclarationStatement* declaration = functionSymbol->get_declaration();
+                                   ROSE_ASSERT(declaration != NULL);
+#if DEBUG_FUNCTION_AMBIGUITY
+                                   printf (" --- declaration = %p = %s name = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
+#endif
+                                // Use the scopes of the function parameters to look for where there could be an ambiguity.
+                                   SgFunctionParameterTypeList* functionParameterTypeList = functionType->get_argument_list(); 
+                                   ROSE_ASSERT(functionParameterTypeList != NULL);
+
+                                   SgTypePtrList & typeList = functionParameterTypeList->get_arguments();
+                                   for (SgTypePtrList::iterator i = typeList.begin(); i != typeList.end(); i++)
+                                      {
+                                     // for each type in the parameter type list.
+                                        SgType* parameter_type = *i;
+#if DEBUG_FUNCTION_AMBIGUITY
+                                        printf ("parameter_type = %p = %s \n",parameter_type,parameter_type->class_name().c_str());
+#endif
+                                        unsigned char strip_bit_array = SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | 
+                                             SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE | 
+                                             SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_POINTER_MEMBER_TYPE;
+
+                                        SgType* stripped_parameter_type = parameter_type->stripType(strip_bit_array);
+#if DEBUG_FUNCTION_AMBIGUITY
+                                        printf ("stripped_parameter_type = %p = %s \n",stripped_parameter_type,stripped_parameter_type->class_name().c_str());
+#endif
+                                        SgNamedType* parameter_namedType = isSgNamedType(stripped_parameter_type);
+                                        if (parameter_namedType != NULL)
+                                           {
+                                             SgDeclarationStatement* parameter_declaration = parameter_namedType->get_declaration();
+                                             ROSE_ASSERT(parameter_declaration != NULL);
+#if DEBUG_FUNCTION_AMBIGUITY
+                                             printf ("parameter_declaration = %p = %s \n",parameter_declaration,parameter_declaration->class_name().c_str());
+#endif
+                                             SgScopeStatement* parameter_scope = declaration->get_scope();
+                                             ROSE_ASSERT(parameter_scope != NULL);
+#if DEBUG_FUNCTION_AMBIGUITY
+                                          // printf ("parameter_scope = %p = %s \n",parameter_scope,parameter_scope->class_name().c_str());
+                                             printf ("parameter_scope = %p = %s name = %s \n",parameter_scope,parameter_scope->class_name().c_str(),SageInterface::get_name(parameter_scope).c_str());
+#endif
+
+                                          // Check if this is in the parent scopes.
+                                             bool detectedInParentScope = false;
+                                             SgScopeStatement* tmp_scope = currentScope;
+                                          // while (tmp_scope != NULL && tmp_scope != parameter_scope)
+                                             while (tmp_scope != NULL && isSgGlobal(tmp_scope) == NULL && tmp_scope != parameter_scope)
+                                                {
+#if DEBUG_FUNCTION_AMBIGUITY
+                                                  printf ("tmp_scope = %p = %s name = %s \n",tmp_scope,tmp_scope->class_name().c_str(),SageInterface::get_name(tmp_scope).c_str());
+#endif
+                                                  tmp_scope = tmp_scope->get_scope();
+                                                  if (tmp_scope != NULL && tmp_scope == parameter_scope)
+                                                     {
+#if DEBUG_FUNCTION_AMBIGUITY
+                                                       printf ("Found parameter_scope in parent scopes \n");
+#endif
+                                                       detectedInParentScope = true;
+                                                     }
+                                                }
+
+                                             ROSE_ASSERT(tmp_scope != NULL);
+#if DEBUG_FUNCTION_AMBIGUITY
+                                             printf ("detectedInParentScope = %s \n",detectedInParentScope ? "true" : "false");
+                                             printf ("After loop: tmp_scope = %p = %s name = %s \n",tmp_scope,tmp_scope->class_name().c_str(),SageInterface::get_name(tmp_scope).c_str());
+#endif
+                                             SgGlobal* globalScope = isSgGlobal(tmp_scope);
+                                          // if (detectedInParentScope == true)
+                                             if (detectedInParentScope == true && globalScope == NULL)
+                                                {
+                                                  SgSymbol* parameter_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,functionType,parameter_scope);
+                                                  if (parameter_symbol != NULL)
+                                                     {
+#if DEBUG_FUNCTION_AMBIGUITY
+                                                       printf ("Found an ambiguity: parameter_symbol = %p = %s \n",parameter_symbol,parameter_symbol->class_name().c_str());
+#endif
+                                                       foundAnOverloadedFunctionWithSameName = true;
+                                                       foundAnOverloadedFunctionInSameScope  = false;
+                                                     }
+                                                }
+                                           }
+                                      }
+#if DEBUG_FUNCTION_AMBIGUITY
+                                   printf ("After loop over function parameter types: foundAnOverloadedFunctionWithSameName = %s \n",foundAnOverloadedFunctionWithSameName ? "true" : "false");
+                                   printf ("After loop over function parameter types: foundAnOverloadedFunctionInSameScope = %s \n",foundAnOverloadedFunctionInSameScope   ? "true" : "false");
+#endif
+#if 0
+                                   printf("Exiting as a test! \n");
+                                   ROSE_ASSERT(false);
+#endif
+                                 }
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
                               ROSE_ASSERT(false);
@@ -2158,6 +2264,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          mfprintf(mlog [ WARN ] ) ("$$$$$$$$$ --- templateInstantiationMemberFunctionDeclaration = %p \n",templateInstantiationMemberFunctionDeclaration);
                          if (templateInstantiationMemberFunctionDeclaration != NULL)
                             {
+#error "DEAD CODE!"
                            // Evaluate all template arguments.
                               evaluateNameQualificationForTemplateArgumentList (templateInstantiationMemberFunctionDeclaration->get_templateArguments(),currentScope,positionStatement);
                             }
@@ -3694,7 +3801,10 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                  {
                                 // DQ (4/12/2014): Now we know that it can be found, but we still need to check if there would 
                                 // be another function that could be used and for which we need name qualification to avoid.
-
+#if 0
+                                   printf ("Using foundAnOverloadedFunctionWithSameName = %s \n",foundAnOverloadedFunctionWithSameName ? "true" : "false");
+                                   printf ("Using foundAnOverloadedFunctionInSameScope  = %s \n",foundAnOverloadedFunctionInSameScope  ? "true" : "false");
+#endif
                                 // DQ (4/12/2014): We need to use the recorded value foundAnOverloadedFunctionWithSameName because we may want to have force name qualification.
                                    if (foundAnOverloadedFunctionWithSameName == true)
                                       {
@@ -3719,7 +3829,13 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                         ROSE_ASSERT(false);
 #endif
                                       }
-
+#if 0
+                                   printf ("Using qualificationDepth = %d \n",qualificationDepth);
+#endif
+#if 0
+                                   printf("Exiting as a test! \n");
+                                   ROSE_ASSERT(false);
+#endif
                                 // DQ (6/20/2011): But we don't check for if there was another declaration that might be a problem (overloaded functions don't count!)...
                                 // This function is visible from where it is referenced. 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)

@@ -1965,10 +1965,15 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_32.C \
    test2020_33.C \
    test2020_34.C \
+   test2020_37.C \
+   test2020_38.C \
+   test2020_39.C \
+   test2020_40.C \
    test2020_41.C \
    test2020_42.C \
-   test2017_44.C \
+   test2020_43.C \
    test2020_44.C \
+   test2020_45.C \
    test2020_46.C \
    test2020_47.C \
    test2020_49.C \
@@ -1977,6 +1982,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_52.C \
    test2020_53.C \
    test2020_54.C \
+   test2020_55.C \
    test_CplusplusMacro_Cpp.C \
    test_int_lexemes.C \
    test_int_lexemes_donot_pass.C \
@@ -2384,14 +2390,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_25.C \
    test2020_35.C \
    test2020_36.C \
-   test2020_37.C \
-   test2020_38.C \
-   test2020_39.C \
-   test2020_40.C \
-   test2020_42.C \
-   test2020_43.C \
-   test2020_45.C \
-   test2020_46.C \
    test_gnu.C
 
 if ROSE_USING_GCC_VERSION_LATER_4_4
