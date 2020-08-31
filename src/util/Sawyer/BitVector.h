@@ -251,8 +251,9 @@ public:
      *  vector. */
     bool get(size_t idx) const {
         checkRange(idx);
-        assert(data() != NULL);
-        return BitVectorSupport::get(data(), idx);
+        const Word* theData = data();
+        assert(theData != NULL);
+        return BitVectorSupport::get(theData, idx);
     }
 
     /** Assign zero to some bits.
