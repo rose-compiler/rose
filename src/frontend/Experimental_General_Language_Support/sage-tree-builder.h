@@ -111,10 +111,12 @@ public:
 
    void Enter(SgFunctionParameterList* &, SgBasicBlock* &);
    void Leave(SgFunctionParameterList*, SgBasicBlock*, const std::list<LanguageTranslation::FormalParameter> &);
+   void Leave(SgFunctionParameterList*, SgBasicBlock*, const std::list<std::string> &);
 
    void Enter(SgFunctionDeclaration* &, const std::string &, SgType*, SgFunctionParameterList*,
                                         const LanguageTranslation::FunctionModifierList &);
    void Leave(SgFunctionDeclaration*, SgBasicBlock*);
+   void Leave(SgFunctionDeclaration*, SgBasicBlock*, bool end_stmt_name);
 
    void Enter(SgFunctionDefinition* &);
    void Leave(SgFunctionDefinition*);
@@ -125,6 +127,7 @@ public:
    void Enter(SgVariableDeclaration* &, const std::string &, SgType*, SgExpression*);
    void Leave(SgVariableDeclaration*, std::list<LanguageTranslation::ExpressionKind> &);
    void Leave(SgVariableDeclaration*);
+
 
    void Enter(SgEnumDeclaration* &, const std::string &);
    void Leave(SgEnumDeclaration*);

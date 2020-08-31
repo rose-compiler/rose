@@ -299,6 +299,21 @@ Leave(SgFunctionParameterList* param_list, SgBasicBlock* param_scope, const std:
 }
 
 void SageTreeBuilder::
+Leave(SgFunctionParameterList* param_list, SgBasicBlock* param_scope, const std::list<std::string> &dummy_arg_name_list)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionParameterList* for Fortran) \n";
+
+   BOOST_FOREACH(std::string name, dummy_arg_name_list) {
+      // don't have access to type information now, will fix later
+      SgType* type = SageBuilder::buildVoidType();
+      SgInitializedName* init_name = SageBuilder::buildInitializedName(name, type);
+      param_list->append_arg(init_name);
+   }
+
+   SageBuilder::popScopeStack(); // remove parameter scope from the stack
+}
+
+void SageTreeBuilder::
 Enter(SgFunctionDefinition* &function_def)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionDefinition*) \n";
@@ -413,6 +428,18 @@ Leave(SgFunctionDeclaration* function_decl, SgBasicBlock* param_scope)
    SageBuilder::popScopeStack();  // function definition
 
    SageInterface::appendStatement(function_decl, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Leave(SgFunctionDeclaration* function_decl, SgBasicBlock* param_scope, bool have_end_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
+
+   if (have_end_stmt) {
+      function_decl->set_named_in_end_statement(have_end_stmt);
+   }
+
+   Leave(function_decl, param_scope);
 }
 
 void SageTreeBuilder::
