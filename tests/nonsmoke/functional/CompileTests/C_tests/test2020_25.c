@@ -1,5 +1,8 @@
 // RC-67:
 
+// The solution to this problem could be to just recognize when an #include filename 
+// matches the current source file name and remove the #include directive.
+
 #ifndef BYTE
 # define BYTE
 # define INSIDE_RECURSION

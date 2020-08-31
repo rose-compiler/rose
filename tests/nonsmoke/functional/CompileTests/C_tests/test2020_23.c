@@ -1,5 +1,8 @@
 // RC-65:
 
+// We might be able to fix this by detecting names of constructs that match
+// those in the macros defined, and then just remove the associated #define.
+
 struct htab 
    {
      int size;
