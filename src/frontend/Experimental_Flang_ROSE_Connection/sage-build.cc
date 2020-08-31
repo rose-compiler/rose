@@ -220,6 +220,43 @@ void Build(const parser::SubroutineSubprogram &x, T* scope)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(SubroutineSubprogram)\n";
 #endif
+
+   SgFunctionParameterList* param_list{nullptr};
+   SgBasicBlock* param_scope{nullptr};
+   SgFunctionDeclaration* function_decl{nullptr};
+   LanguageTranslation::FunctionModifierList function_modifiers;
+   std::string name;
+
+   // Traverse SubroutineStmt to get parameter list, parameter scope, and name
+   Build(std::get<0>(x.t).statement, param_list, param_scope, name);
+
+   // Begin SageTreeBuilder
+   builder.Enter(function_decl, name, nullptr /* return_type */, param_list, function_modifiers);
+
+   SgScopeStatement* subroutine_scope{nullptr};
+
+   // Traverse SpecificationPart
+   Build(std::get<parser::SpecificationPart>(x.t), subroutine_scope);
+
+   // Traverse ExecutionPart
+   Build(std::get<parser::ExecutionPart>(x.t), subroutine_scope);
+
+   // std::optional<InternalSubprogramPart>
+#if 0
+   if (auto & opt = std::get<3>(x.t)) {
+   }
+#endif
+
+   bool have_end_stmt = false;
+
+   // EndSubroutineStmt - std::optional<Name> v;
+   if (auto & opt = std::get<4>(x.t).statement.v) {
+      have_end_stmt = true;
+   }
+
+   // Leave SageTreeBuilder
+   // TODO: fix parameters in the Leave
+   builder.Leave(function_decl, param_scope, have_end_stmt);
 }
 
 template<typename T>
@@ -347,6 +384,55 @@ void Build(const parser::AssignmentStmt &x, T* scope)
    // Begin SageTreeBuilder
    builder.Enter(assign_stmt, rhs, vars, std::string()/* no label*/);
    builder.Leave(assign_stmt);
+}
+
+void Build(const parser::SubroutineStmt &x, SgFunctionParameterList* &param_list, SgBasicBlock* &param_scope, std::string &name)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(SubroutineStmt)\n";
+#endif
+
+   std::list<std::string> dummy_arg_name_list;
+
+   // TODO: PrefixSpec
+   //   Build(std::get<0>(x.t));                   // std::list<PrefixSpec>
+   Build(std::get<1>(x.t), name);                  // Name
+   Build(std::get<2>(x.t), dummy_arg_name_list);   // std::list<DummyArg>
+
+   // Enter SageTreeBuilder for SgFunctionParameterList
+   builder.Enter(param_list, param_scope);
+
+   // Leave SageTreeBuilder for SgFunctionParameterList
+   builder.Leave(param_list, param_scope, dummy_arg_name_list);
+
+#if 0
+   if (auto & opt = std::get<3>(x.t)) {            // std::optional<LanguageBindingSpec>
+      Build(opt.value(), expr);
+   }
+#endif
+}
+
+void Build(const parser::PrefixSpec &x)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(PrefixSpec)\n";
+#endif
+
+   // std::variant<DeclarationTypeSpec, Elemental, Impure, Module, Non_Recursive, Pure, Recursive> u;
+}
+
+void Build(const parser::DummyArg &x, std::string &name)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(DummyArg)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const Fortran::parser::Name &y) { name = y.ToString(); },
+         [&] (const Fortran::parser::Star &y) { ; },
+      },
+      x.u);
 }
 
 void Build(const parser::Variable &x, SgExpression* &expr)
