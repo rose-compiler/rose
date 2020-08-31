@@ -13648,12 +13648,13 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                                    p->set_body(newparent);
                                    newparent->set_parent(parent);
                                    insertStatement(targetStmt, newStmt,insertBefore);
-                                }
+                                 }
                                else
                                  {
                                 // It appears that all of the recursive calls are untimately calling this location.
-                                   ROSE_ASSERT(isSgStatement(parent) != NULL);
-                                   isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
+                                   SgStatement* stmnt = isSgStatement(parent);
+                                   ROSE_ASSERT(stmnt != NULL);
+                                   stmnt->insert_statement(targetStmt,newStmt,insertBefore);
                                  }
                             }
                        }
