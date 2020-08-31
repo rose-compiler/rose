@@ -74,6 +74,7 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-42b.jov                  \
  rose-issue-rc-69.jov                   \
  rose-issue-rc-85.jov                   \
+ rose-issue-rc-86.jov                   \
  rose-issue-rc-88.jov
 
 # status_enumval.jov                     \
