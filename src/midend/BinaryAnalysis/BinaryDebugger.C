@@ -982,7 +982,7 @@ Debugger::findSystemCall() {
 #if __cplusplus >= 201103L
     std::vector<uint8_t> needle{0xcd, 0x80};            // x86: INT 0x80
 #else
-    // FIXME[Robb Matzke 2020-08-31]: remove this once Jenkins has been fully migrated to C++11
+    // FIXME[Robb Matzke 2020-08-31]: delete this when Jenkins is no longer running C++03
     std::vector<uint8_t> needle(1, 0xcd);
     needle.push_back(0x80);
 #endif
@@ -1000,7 +1000,14 @@ Debugger::findSystemCall() {
     if (!syscallVa_) {
         MemoryMap::Ptr map = MemoryMap::instance();
         map->insertProcess(":noattach:" + boost::lexical_cast<std::string>(child_));
+#if __cplusplus >= 201103L
         syscallVa_ = map->findAny(AddressInterval::whole(), std::vector<uint8_t>{0xcd, 0x80}, MemoryMap::EXECUTABLE);
+#else
+        // FIXME[Robb Matzke 2020-08-31]: delete this when Jenkins is no longer running C++03
+        std::vector<uint8_t> x(1, 0xcd);
+        x.push_back(0x80);
+        syscallVa_ = map->findAny(AddressInterval::whole(), x, MemoryMap::EXECUTABLE);
+#endif
     }
 
     return syscallVa_;
@@ -1128,7 +1135,6 @@ Debugger::remoteMmap(rose_addr_t va, size_t nBytes, unsigned prot, unsigned flag
     x.push_back(offset);
     int retval = remoteSystemCall(90 /*mmap*/, x);
 #endif
-
     remoteCloseFile(fd);
     return retval;
 }
