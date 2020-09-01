@@ -281,7 +281,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 #endif
 
 #if DEBUG_SAGE_ACCESS_FUNCTIONS
-                 // DQ (6/12/2007): New access function tests using DEBUG_SAGE_ACCESS_FUNCTIONS and 
+                 // DQ (6/12/2007): New access function tests using DEBUG_SAGE_ACCESS_FUNCTIONS and
                  // DEBUG_SAGE_ACCESS_FUNCTIONS_ASSERTION in sage3.h indicate this is required.
                     if (firstNondefiningDeclaration->get_scope() != NULL)
                        {
@@ -299,27 +299,24 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 
                  // DQ (3/5/2007): We want the scope obtainted through the parent so that we can test the existance of firstNondefiningDeclaration in the child list
                     SgScopeStatement* firstNondefiningDeclarationScope = isSgScopeStatement(firstNondefiningDeclaration->get_parent());
-                    if (firstNondefiningDeclarationScope == NULL)
-                       {
-                         SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(firstNondefiningDeclaration->get_parent());
+                    if (firstNondefiningDeclarationScope == NULL) {
+                       SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(firstNondefiningDeclaration->get_parent());
 
                       // Only report this if it is not someting defined in a typedef.
-                         if (typedefDeclaration == NULL)
-                            {
-                              mfprintf(mlog[WARN]) ("Error: firstNondefiningDeclaration->get_parent() = %p \n",firstNondefiningDeclaration->get_parent());
-                              mfprintf(mlog[WARN]) ("     firstNondefiningDeclaration = %p = %s \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
-                              if (firstNondefiningDeclaration->get_parent() != NULL)
-                                 {
-                                   mfprintf(mlog[WARN]) ("     firstNondefiningDeclaration->get_parent() = %s \n",firstNondefiningDeclaration->get_parent()->class_name().c_str());
-                                 }
+                       if (typedefDeclaration == NULL) {
+                          mfprintf(mlog[WARN]) ("Error: firstNondefiningDeclaration->get_parent() = %p \n",firstNondefiningDeclaration->get_parent());
+                          mfprintf(mlog[WARN]) ("     firstNondefiningDeclaration = %p = %s \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+                          if (firstNondefiningDeclaration->get_parent() != NULL) {
+                             mfprintf(mlog[WARN]) ("     firstNondefiningDeclaration->get_parent() = %s \n",firstNondefiningDeclaration->get_parent()->class_name().c_str());
+                          }
 #if 0
-                              firstNondefiningDeclaration->get_startOfConstruct()->display("firstNondefiningDeclarationScope == NULL: debug");
+                          firstNondefiningDeclaration->get_startOfConstruct()->display("firstNondefiningDeclarationScope == NULL: debug");
 #endif
-                           // DQ (3/4/2009): This test fails for the AST copy mechanism on test2005_163.C
-                              mfprintf(mlog[WARN]) ("Warning: failing test: firstNondefiningDeclarationScope != NULL \n");
-                              mfprintf(mlog[WARN]) ("This test fails for the AST copy mechanism on test2005_163.C \n");
-                            }
+                         // DQ (3/4/2009): This test fails for the AST copy mechanism on test2005_163.C
+                          mfprintf(mlog[WARN]) ("Warning: failing test: firstNondefiningDeclarationScope != NULL \n");
+                          mfprintf(mlog[WARN]) ("This test fails for the AST copy mechanism on test2005_163.C \n");
                        }
+                    }
                  // ROSE_ASSERT(firstNondefiningDeclarationScope != NULL);
 
 
