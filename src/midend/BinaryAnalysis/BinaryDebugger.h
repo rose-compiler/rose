@@ -238,6 +238,7 @@ private:
     uint8_t regsPage_[512];                             // latest register information read from subordinate
     RegPageStatus regsPageStatus_;                      // what are the contents of regPage_?
     Disassembler *disassembler_;                        // how to disassemble instructions
+    Sawyer::Optional<rose_addr_t> syscallVa_;           // address of some executable system call instruction.
 
     //----------------------------------------
     // Real constructors
@@ -441,6 +442,24 @@ public:
     /** Returns the last status from a call to waitpid. */
     int waitpidStatus() const { return wstat_; }
 
+    /** Cause the subordinate to execute a system call. */
+    int remoteSystemCall(int syscallNumber, std::vector<uint64_t> args);
+
+    /** Cause the subordinate to open a file.
+     *
+     *  The subordinate will be coerced into opening the specified file, and the file descriptor in the subordinate is
+     *  returned. */
+    int remoteOpenFile(const boost::filesystem::path &fileName, unsigned flags, mode_t mode);
+
+    /** Cause the subordinate to close a file. */
+    int remoteCloseFile(unsigned remoteFd);
+
+    /** Map a new memory region in the subordinate.
+     *
+     *  This is similar to the @c mmap function, except it operates on the subordinate process. */
+    rose_addr_t remoteMmap(rose_addr_t va, size_t nBytes, unsigned prot, unsigned flags, const boost::filesystem::path&,
+                           off_t offset);
+
 public:
     /**  Initialize diagnostic output. This is called automatically when ROSE is initialized.  */
     static void initDiagnostics();
@@ -459,6 +478,10 @@ private:
     // Get/set personality in a portable way
     static unsigned long getPersonality();
     static void setPersonality(unsigned long);
+
+    // Address of a system call instruction. The initial search can be expensive, so the result is cached.
+    Sawyer::Optional<rose_addr_t> findSystemCall();
+
 };
 
 std::ostream& operator<<(std::ostream&, const Debugger::Specimen&);

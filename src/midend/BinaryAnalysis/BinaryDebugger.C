@@ -330,6 +330,7 @@ Debugger::registerDictionary() const {
 
 void
 Debugger::init() {
+    syscallVa_.reset();
 
     // Initialize register information.  This is very architecture and OS-dependent. See <sys/user.h> for details, but be
     // warned that even <sys/user.h> is only a guideline!  The header defines two versions of user_regs_struct, one for 32-bit
@@ -507,6 +508,7 @@ Debugger::detach(Sawyer::Optional<DetachMode> how) {
     }
     child_ = 0;
     regsPageStatus_ = REGPAGE_NONE;
+    syscallVa_.reset();
 }
 
 void
@@ -738,15 +740,15 @@ Debugger::writeRegister(RegisterDescriptor desc, const Sawyer::Container::BitVec
             regsPage_[userOffset + i] = bits.toInteger(BitVector::BitRange::baseSize(i*8, 8));
         sendCommand(PTRACE_SETREGS, child_, 0, regsPage_);
     } else if (userFpRegDefs_.getOptional(base).assignTo(userOffset)) {
+#ifdef __linux
         ASSERT_require(userOffset + nUserBytes <= sizeof regsPage_);
         for (size_t i = 0; i < nUserBytes; ++i)
             regsPage_[userOffset + i] = bits.toInteger(BitVector::BitRange::baseSize(i*8, 8));
-#ifdef PTRACE_SETFPREGS
         sendCommand(PTRACE_SETFPREGS, child_, 0, regsPage_);
 #elif defined(_MSC_VER)
-#pragma message("unable to save FP registers on this platform")
+        #pragma message("unable to save FP registers on this platform")
 #else
-#warning "unable to save FP registers on this platform"
+        #warning "unable to save FP registers on this platform"
 #endif
     } else {
         throw std::runtime_error("register is not available");
@@ -973,6 +975,168 @@ Debugger::setPersonality(unsigned long bits) {
     if (bits != 0)
         mlog[WARN] <<"unable to set process execution domain for this architecture\n";
 #endif
+}
+
+Sawyer::Optional<rose_addr_t>
+Debugger::findSystemCall() {
+#if __cplusplus >= 201103L
+    std::vector<uint8_t> needle{0xcd, 0x80};            // x86: INT 0x80
+#else
+    // FIXME[Robb Matzke 2020-08-31]: delete this when Jenkins is no longer running C++03
+    std::vector<uint8_t> needle(1, 0xcd);
+    needle.push_back(0x80);
+#endif
+
+    // Make sure the syscall is still there if we already found it. This is reasonally fast.
+    if (syscallVa_) {
+        std::vector<uint8_t> buf(needle.size());
+        size_t nRead = readMemory(*syscallVa_, buf.size(), buf.data());
+        if (nRead != buf.size() || !std::equal(buf.begin(), buf.end(), needle.begin()))
+            syscallVa_.reset();
+    }
+
+    // If we haven't found a syscall (even if we previously searched for one) then search now.  This is not a very efficient
+    // way to do this, but at least it's simple.
+    if (!syscallVa_) {
+        MemoryMap::Ptr map = MemoryMap::instance();
+        map->insertProcess(":noattach:" + boost::lexical_cast<std::string>(child_));
+#if __cplusplus >= 201103L
+        syscallVa_ = map->findAny(AddressInterval::whole(), std::vector<uint8_t>{0xcd, 0x80}, MemoryMap::EXECUTABLE);
+#else
+        // FIXME[Robb Matzke 2020-08-31]: delete this when Jenkins is no longer running C++03
+        std::vector<uint8_t> x(1, 0xcd);
+        x.push_back(0x80);
+        syscallVa_ = map->findAny(AddressInterval::whole(), x, MemoryMap::EXECUTABLE);
+#endif
+    }
+
+    return syscallVa_;
+}
+
+int
+Debugger::remoteSystemCall(int syscallNumber, std::vector<uint64_t> args) {
+    // Find a system call that we can hijack to do our bidding.
+    Sawyer::Optional<rose_addr_t> syscallVa = findSystemCall();
+    if (!syscallVa)
+        return -1;
+
+    // Registers that we'll need later, one per syscall argument.
+    // FIXME[Robb Matzke 2020-08-26]: This is i386 specific, but I'm not sure what the best way is to figure out whether the
+    // subordinate is using the syscall numbers for i386, x86-64, or something else.
+    RegisterDescriptor syscallReg(x86_regclass_gpr, x86_gpr_ax, 0, 32);
+    std::vector<RegisterDescriptor> regs;
+#if 1 // i386
+    switch (args.size()) {
+        case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bp, 0, 32));
+        case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32));
+        case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32));
+        case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32));
+        case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_cx, 0, 32));
+        case 1: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bx, 0, 32));
+    }
+#else // x86-64
+    switch (args.size()) {
+        case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 9,          0, 32));
+        case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 8,          0, 32));
+        case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 10,         0, 32));
+        case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32));
+        case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32));
+        case 1: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32));
+    }
+#endif
+    std::reverse(regs.begin(), regs.end());
+
+    // Save registers we're about to overwrite
+    std::vector<Sawyer::Container::BitVector> savedRegs(args.size());
+    for (size_t i = 0; i < args.size(); ++i)
+        savedRegs[i] = readRegister(regs[i]);
+    Sawyer::Container::BitVector savedSyscallReg = readRegister(syscallReg);
+
+    // Assign arguments to registers
+    for (size_t i = 0; i < args.size(); ++i)
+        writeRegister(regs[i], args[i]);
+    writeRegister(syscallReg, syscallNumber);
+
+    // Single step through the syscall instruction
+    rose_addr_t ip = executionAddress();
+    executionAddress(*syscallVa);
+    singleStep();
+    executionAddress(ip);
+    int retval = readRegister(syscallReg).toSignedInteger();
+
+    // Restore registers
+    for (size_t i = 0; i < args.size(); ++i)
+        writeRegister(regs[i], savedRegs[i]);
+    writeRegister(syscallReg, savedSyscallReg);
+    return retval;
+}
+
+int
+Debugger::remoteOpenFile(const boost::filesystem::path &fileName, unsigned flags, mode_t mode) {
+    // Find some writable memory in which to write the file name
+    Sawyer::Optional<rose_addr_t> nameVa;
+    std::vector<MemoryMap::ProcessMapRecord> mapRecords = MemoryMap::readProcessMap(child_);
+    BOOST_FOREACH (const MemoryMap::ProcessMapRecord &record, mapRecords) {
+        if ((record.accessibility & MemoryMap::READ_WRITE) == MemoryMap::READ_WRITE &&
+            record.interval.size() > fileName.string().size()) {
+            nameVa = record.interval.least();
+            break;
+        }
+    }
+    if (!nameVa)
+        return -1;
+
+    // Write the file name to the subordinate's memory, saving what was there previously.
+    std::vector<uint8_t> savedName(fileName.string().size() + 1);
+    readMemory(*nameVa, fileName.string().size() + 1, savedName.data());
+    writeMemory(*nameVa, fileName.string().size()+1, (const uint8_t*)fileName.c_str());
+
+#if __cplusplus >= 201103L
+    int retval = remoteSystemCall(5 /*open*/, std::vector<uint64_t>{*nameVa, flags, mode});
+#else
+    // FIXME[Robb Matzke 2020-08-31]: delete this when Jenkins is no longer running C++03
+    std::vector<uint64_t> x(1, *nameVa);
+    x.push_back(flags);
+    x.push_back(mode);
+    int retval = remoteSystemCall(5 /*open*/, x);
+#endif
+
+    // Restore saved memory
+    writeMemory(*nameVa, savedName.size(), savedName.data());
+    return retval;
+}
+
+int
+Debugger::remoteCloseFile(unsigned fd) {
+#if __cplusplus >= 201103L
+    return remoteSystemCall(6 /*close*/, std::vector<uint64_t>{fd});
+#else
+    // FIXME[Robb Matzke 2020-08-31]: delete this when Jenkins is no longer running C++03
+    return remoteSystemCall(6 /*close*/, std::vector<uint64_t>(1, fd));
+#endif
+}
+
+rose_addr_t
+Debugger::remoteMmap(rose_addr_t va, size_t nBytes, unsigned prot, unsigned flags, const boost::filesystem::path &fileName,
+                     off_t offset_) {
+    uint64_t offset = boost::numeric_cast<uint64_t>(offset_);
+    int fd = remoteOpenFile(fileName, O_RDONLY, 0);
+    if (fd < 0)
+        return fd;
+#if __cplusplus >= 201103L
+    int retval = remoteSystemCall(90 /*mmap*/, std::vector<uint64_t>{va, nBytes, prot, flags, (unsigned)fd, offset});
+#else
+    // FIXME[Robb Matzke 2020-08-31]: delete this when Jenkins is no longer running C++03
+    std::vector<uint64_t> x(1, va);
+    x.push_back(nBytes);
+    x.push_back(prot);
+    x.push_back(flags);
+    x.push_back((unsigned)fd);
+    x.push_back(offset);
+    int retval = remoteSystemCall(90 /*mmap*/, x);
+#endif
+    remoteCloseFile(fd);
+    return retval;
 }
 
 } // namespace
