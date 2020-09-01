@@ -3,9 +3,7 @@
 #define ROSE_AST_H
 
 /*************************************************************
- * Copyright: (C) 2012 Markus Schordan                       *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include <stack>
