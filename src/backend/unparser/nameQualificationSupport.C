@@ -2166,80 +2166,88 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                                    SgDeclarationStatement* declaration = functionSymbol->get_declaration();
                                    ROSE_ASSERT(declaration != NULL);
+                                   bool isFriendFunction = (declaration->get_declarationModifier().isFriend() == true);
 #if DEBUG_FUNCTION_AMBIGUITY
                                    printf (" --- declaration = %p = %s name = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
+                                   printf (" --- isFriendFunction = %s \n",isFriendFunction ? "true" : "false");
 #endif
-                                // Use the scopes of the function parameters to look for where there could be an ambiguity.
-                                   SgFunctionParameterTypeList* functionParameterTypeList = functionType->get_argument_list(); 
-                                   ROSE_ASSERT(functionParameterTypeList != NULL);
-
-                                   SgTypePtrList & typeList = functionParameterTypeList->get_arguments();
-                                   for (SgTypePtrList::iterator i = typeList.begin(); i != typeList.end(); i++)
+                                // DQ (8/31/2020): friend functions are not processed using this parameter based lookup.
+                                // Specifically, less name qualification is allowed for GNU versions after 7.x and in 
+                                // particular version 10.2. Also an error for clang version 10.x.
+                                   if (isFriendFunction == false)
                                       {
-                                     // for each type in the parameter type list.
-                                        SgType* parameter_type = *i;
-#if DEBUG_FUNCTION_AMBIGUITY
-                                        printf ("parameter_type = %p = %s \n",parameter_type,parameter_type->class_name().c_str());
-#endif
-                                        unsigned char strip_bit_array = SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | 
-                                             SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE | 
-                                             SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_POINTER_MEMBER_TYPE;
+                                     // Use the scopes of the function parameters to look for where there could be an ambiguity.
+                                        SgFunctionParameterTypeList* functionParameterTypeList = functionType->get_argument_list(); 
+                                        ROSE_ASSERT(functionParameterTypeList != NULL);
 
-                                        SgType* stripped_parameter_type = parameter_type->stripType(strip_bit_array);
-#if DEBUG_FUNCTION_AMBIGUITY
-                                        printf ("stripped_parameter_type = %p = %s \n",stripped_parameter_type,stripped_parameter_type->class_name().c_str());
-#endif
-                                        SgNamedType* parameter_namedType = isSgNamedType(stripped_parameter_type);
-                                        if (parameter_namedType != NULL)
+                                        SgTypePtrList & typeList = functionParameterTypeList->get_arguments();
+                                        for (SgTypePtrList::iterator i = typeList.begin(); i != typeList.end(); i++)
                                            {
-                                             SgDeclarationStatement* parameter_declaration = parameter_namedType->get_declaration();
-                                             ROSE_ASSERT(parameter_declaration != NULL);
+                                          // for each type in the parameter type list.
+                                             SgType* parameter_type = *i;
 #if DEBUG_FUNCTION_AMBIGUITY
-                                             printf ("parameter_declaration = %p = %s \n",parameter_declaration,parameter_declaration->class_name().c_str());
+                                             printf ("parameter_type = %p = %s \n",parameter_type,parameter_type->class_name().c_str());
 #endif
-                                             SgScopeStatement* parameter_scope = declaration->get_scope();
-                                             ROSE_ASSERT(parameter_scope != NULL);
+                                             unsigned char strip_bit_array = SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | 
+                                                  SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE | 
+                                                  SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_POINTER_MEMBER_TYPE;
+
+                                             SgType* stripped_parameter_type = parameter_type->stripType(strip_bit_array);
 #if DEBUG_FUNCTION_AMBIGUITY
-                                          // printf ("parameter_scope = %p = %s \n",parameter_scope,parameter_scope->class_name().c_str());
-                                             printf ("parameter_scope = %p = %s name = %s \n",parameter_scope,parameter_scope->class_name().c_str(),SageInterface::get_name(parameter_scope).c_str());
+                                             printf ("stripped_parameter_type = %p = %s \n",stripped_parameter_type,stripped_parameter_type->class_name().c_str());
+#endif
+                                             SgNamedType* parameter_namedType = isSgNamedType(stripped_parameter_type);
+                                             if (parameter_namedType != NULL)
+                                                {
+                                                  SgDeclarationStatement* parameter_declaration = parameter_namedType->get_declaration();
+                                                  ROSE_ASSERT(parameter_declaration != NULL);
+#if DEBUG_FUNCTION_AMBIGUITY
+                                                  printf ("parameter_declaration = %p = %s \n",parameter_declaration,parameter_declaration->class_name().c_str());
+#endif
+                                                  SgScopeStatement* parameter_scope = declaration->get_scope();
+                                                  ROSE_ASSERT(parameter_scope != NULL);
+#if DEBUG_FUNCTION_AMBIGUITY
+                                               // printf ("parameter_scope = %p = %s \n",parameter_scope,parameter_scope->class_name().c_str());
+                                                  printf ("parameter_scope = %p = %s name = %s \n",parameter_scope,parameter_scope->class_name().c_str(),SageInterface::get_name(parameter_scope).c_str());
 #endif
 
-                                          // Check if this is in the parent scopes.
-                                             bool detectedInParentScope = false;
-                                             SgScopeStatement* tmp_scope = currentScope;
-                                          // while (tmp_scope != NULL && tmp_scope != parameter_scope)
-                                             while (tmp_scope != NULL && isSgGlobal(tmp_scope) == NULL && tmp_scope != parameter_scope)
-                                                {
-#if DEBUG_FUNCTION_AMBIGUITY
-                                                  printf ("tmp_scope = %p = %s name = %s \n",tmp_scope,tmp_scope->class_name().c_str(),SageInterface::get_name(tmp_scope).c_str());
-#endif
-                                                  tmp_scope = tmp_scope->get_scope();
-                                                  if (tmp_scope != NULL && tmp_scope == parameter_scope)
+                                               // Check if this is in the parent scopes.
+                                                  bool detectedInParentScope = false;
+                                                  SgScopeStatement* tmp_scope = currentScope;
+                                               // while (tmp_scope != NULL && tmp_scope != parameter_scope)
+                                                  while (tmp_scope != NULL && isSgGlobal(tmp_scope) == NULL && tmp_scope != parameter_scope)
                                                      {
 #if DEBUG_FUNCTION_AMBIGUITY
-                                                       printf ("Found parameter_scope in parent scopes \n");
+                                                       printf ("tmp_scope = %p = %s name = %s \n",tmp_scope,tmp_scope->class_name().c_str(),SageInterface::get_name(tmp_scope).c_str());
 #endif
-                                                       detectedInParentScope = true;
+                                                       tmp_scope = tmp_scope->get_scope();
+                                                       if (tmp_scope != NULL && tmp_scope == parameter_scope)
+                                                          {
+#if DEBUG_FUNCTION_AMBIGUITY
+                                                            printf ("Found parameter_scope in parent scopes \n");
+#endif
+                                                            detectedInParentScope = true;
+                                                          }
                                                      }
-                                                }
 
-                                             ROSE_ASSERT(tmp_scope != NULL);
+                                                  ROSE_ASSERT(tmp_scope != NULL);
 #if DEBUG_FUNCTION_AMBIGUITY
-                                             printf ("detectedInParentScope = %s \n",detectedInParentScope ? "true" : "false");
-                                             printf ("After loop: tmp_scope = %p = %s name = %s \n",tmp_scope,tmp_scope->class_name().c_str(),SageInterface::get_name(tmp_scope).c_str());
+                                                  printf ("detectedInParentScope = %s \n",detectedInParentScope ? "true" : "false");
+                                                  printf ("After loop: tmp_scope = %p = %s name = %s \n",tmp_scope,tmp_scope->class_name().c_str(),SageInterface::get_name(tmp_scope).c_str());
 #endif
-                                             SgGlobal* globalScope = isSgGlobal(tmp_scope);
-                                          // if (detectedInParentScope == true)
-                                             if (detectedInParentScope == true && globalScope == NULL)
-                                                {
-                                                  SgSymbol* parameter_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,functionType,parameter_scope);
-                                                  if (parameter_symbol != NULL)
+                                                  SgGlobal* globalScope = isSgGlobal(tmp_scope);
+                                               // if (detectedInParentScope == true)
+                                                  if (detectedInParentScope == true && globalScope == NULL)
                                                      {
+                                                       SgSymbol* parameter_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,functionType,parameter_scope);
+                                                       if (parameter_symbol != NULL)
+                                                          {
 #if DEBUG_FUNCTION_AMBIGUITY
-                                                       printf ("Found an ambiguity: parameter_symbol = %p = %s \n",parameter_symbol,parameter_symbol->class_name().c_str());
+                                                            printf ("Found an ambiguity: parameter_symbol = %p = %s \n",parameter_symbol,parameter_symbol->class_name().c_str());
 #endif
-                                                       foundAnOverloadedFunctionWithSameName = true;
-                                                       foundAnOverloadedFunctionInSameScope  = false;
+                                                            foundAnOverloadedFunctionWithSameName = true;
+                                                            foundAnOverloadedFunctionInSameScope  = false;
+                                                          }
                                                      }
                                                 }
                                            }
