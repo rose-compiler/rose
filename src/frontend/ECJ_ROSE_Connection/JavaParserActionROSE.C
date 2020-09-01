@@ -648,7 +648,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupp
         for (int i = 0; i < number_of_type_parameters; i++) { // Reverse the content of the stack.
             SgClassDeclaration *parameter_decl = isSgClassDeclaration(astJavaComponentStack.pop());
             ROSE_ASSERT(parameter_decl != NULL);
-            SgTemplateParameter *parameter = new SgTemplateParameter(parameter_decl -> get_type(), NULL);
+            SgTemplateParameter *parameter = new SgTemplateParameter(parameter_decl->get_type(), NULL);
             parameter_list.push_front(parameter);
         }
 
@@ -660,9 +660,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupp
         }
 
         SgTemplateParameterList *template_parameter_list = new SgTemplateParameterList();
-        template_parameter_list -> set_args(final_list);
-        ROSE_ASSERT(class_definition->get_declaration() != NULL);
-        class_definition -> get_declaration() -> setAttribute("type_parameters", new AstSgNodeAttribute(template_parameter_list));
+        template_parameter_list->set_args(final_list);
+        SgClassDeclaration* class_declaration = class_definition->get_declaration();
+        ROSE_ASSERT(class_declaration != NULL);
+        class_declaration->setAttribute("type_parameters", new AstSgNodeAttribute(template_parameter_list));
     }
 
     AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("extensions");
