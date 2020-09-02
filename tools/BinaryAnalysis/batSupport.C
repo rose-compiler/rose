@@ -380,6 +380,12 @@ size_t
 PathSelector::operator()(const FeasiblePath &fpAnalysis, const P2::CfgPath &path, SgAsmInstruction *offendingInstruction) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
+    // Suppress all paths?  This is used when we want to create only summaries.
+    if (suppressAll) {
+        ++nSuppressed_;
+        return 0;
+    }
+
     // Suppress uninteresting paths.
     if (suppressUninteresting) {
         std::pair<size_t, size_t> lastIndices = path.lastInsnIndex(offendingInstruction);
@@ -389,6 +395,7 @@ PathSelector::operator()(const FeasiblePath &fpAnalysis, const P2::CfgPath &path
             // Interesting because the path starts in unnamed user code and ends in a function whose name we know from library
             // attribution results.
         } else {
+            ++nSuppressed_;
             ++nUninteresting_;
             return 0;
         }
@@ -398,6 +405,7 @@ PathSelector::operator()(const FeasiblePath &fpAnalysis, const P2::CfgPath &path
 
     // If a non-empty set of path hashes is specified, then suppress all but those that are present in the set.
     if (!requiredHashes.empty() && requiredHashes.find(hash) == requiredHashes.end()) {
+        ++nSuppressed_;
         ++nWrongHashes_;
         return 0;
     }
@@ -407,6 +415,7 @@ PathSelector::operator()(const FeasiblePath &fpAnalysis, const P2::CfgPath &path
     // Therefore, in order to prevent printing redundant paths, we hash each path and print it only if we haven't seen the hash
     // before.
     if (suppressDuplicatePaths && !seenPaths_.insert(hash).second) {
+        ++nSuppressed_;
         ++nDuplicatePaths_;
         return 0;
     }
@@ -414,13 +423,17 @@ PathSelector::operator()(const FeasiblePath &fpAnalysis, const P2::CfgPath &path
     // The user might want to show only one path per end-point.
     if (suppressDuplicateEndpoints &&
         !seenEndpoints_.insert(path.backVertex()->value().optionalAddress().orElse((rose_addr_t)(-1))).second) {
+        ++nSuppressed_;
         ++nDuplicateEndpoints_;
         return 0;
     }
 
     // Have we selected too many paths already?
-    if (nSelected_ >= maxPaths)
+    if (nSelected_ >= maxPaths) {
+        ++nSuppressed_;
+        ++nLimitExceeded_;
         return 0;
+    }
 
     // Assume the path should be shown
     return ++nSelected_;

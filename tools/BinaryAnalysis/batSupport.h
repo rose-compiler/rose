@@ -116,6 +116,7 @@ void assignCallingConventions(const Rose::BinaryAnalysis::Partitioner2::Partitio
 class PathSelector {
 public:
     // Settings
+    bool suppressAll;                                   /**< Show no output. Useful when generating only summaries. */
     bool suppressUninteresting;                         /**< Suppress paths that are "uninteresting". */
     bool suppressDuplicatePaths;                        /**< Suppress paths that have the same CFG execution sequence. */
     bool suppressDuplicateEndpoints;                    /**< Suppress paths that end at the same address. */
@@ -126,22 +127,24 @@ private:
     SAWYER_THREAD_TRAITS::Mutex mutex_;                 // protects the following data members
     std::set<uint64_t> seenPaths_;
     std::set<rose_addr_t> seenEndpoints_;
+    size_t nSuppressed_;                                // number of paths suppressed for any reason
     size_t nUninteresting_;                             // number of uninteresting paths suppressed
     size_t nDuplicatePaths_;                            // number of duplicate paths suppressed
     size_t nDuplicateEndpoints_;                        // number of duplicate endpoints suppressed
     size_t nWrongHashes_;                               // number of suppressions due to not being a specified hash
+    size_t nLimitExceeded_;                             // number of suppressions due to maxPaths being exceeded
     size_t nSelected_;                                  // number of times operator() returned true
 
 public:
     PathSelector()
-        : suppressUninteresting(false), suppressDuplicatePaths(false), suppressDuplicateEndpoints(false),
-          maxPaths(Rose::UNLIMITED), nUninteresting_(0), nDuplicatePaths_(0), nDuplicateEndpoints_(0), nWrongHashes_(0),
-          nSelected_(0) {}
+        : suppressAll(false), suppressUninteresting(false), suppressDuplicatePaths(false), suppressDuplicateEndpoints(false),
+          maxPaths(Rose::UNLIMITED), nSuppressed_(0), nUninteresting_(0), nDuplicatePaths_(0), nDuplicateEndpoints_(0),
+          nWrongHashes_(0), nLimitExceeded_(0), nSelected_(0) {}
 
 public:
     /** Reset statistics. */
     void resetStats() {
-        nUninteresting_ = nDuplicatePaths_ = nDuplicateEndpoints_ = nSelected_ = 0;
+        nSuppressed_ = nUninteresting_ = nDuplicatePaths_ = nDuplicateEndpoints_ = nLimitExceeded_ = nSelected_ = 0;
     }
 
     /** Return non-zero if the path should be shown, zero if suppressed.
@@ -158,22 +161,42 @@ public:
                       const Rose::BinaryAnalysis::Partitioner2::CfgPath &path,
                       SgAsmInstruction *offendingInstruction);
 
-    /** Property: Number of uninteresting paths suppressed. */
+    /** Property: Total number of paths suppressed.
+     *
+     *  This is the number of paths suppressed for any reason. */
+    size_t nSuppressed() const { return nSuppressed_; }
+
+    /** Property: Number of uninteresting paths suppressed.
+     *
+     *  This does not include those paths suppressed due to all paths being suppressed. */
     size_t nUninteresting() const { return nUninteresting_; }
 
-    /** Property: Number of paths suppressed due to non-matching hashes. */
+    /** Property: Number of paths suppressed due to non-matching hashes.
+     *
+     *  This does not include those paths suppressed due to all paths being suppressed, or those paths suppressed due to being
+     *  deemed uninteresting paths. */
     size_t nWrongHashes() const { return nWrongHashes_; }
 
     /** Property: Number of duplicate paths suppressed.
      *
-     *  This does not include paths that were suppressed because they were deemed to be uninteresting. */
+     *  This does not include paths suppressed due to all paths being suppressed, paths suppressed due to being deemed uninteresting,
+     *  or paths suppressed because they didn't match the set of required path hashes. */
     size_t nDuplicatePaths() const { return nDuplicatePaths_; }
 
     /** Property: Number of duplicate endpoints suppressed.
      *
-     *  This does not include paths that were suppressed because they were deemed to be unintersting or because the entire path
-     *  was a duplicate. */
+     *  This does not include paths suppressed due to all paths being suppressed, paths suppressed due to being deemed
+     *  uninteresting, paths suppressed because they didn't match the set of required path hashes, or paths suppressed because
+     *  the entire path was a duplicate. */
     size_t nDuplicateEndpoints() const { return nDuplicateEndpoints_; }
+
+    /** Property: Number of paths suppressed due to limit being exceeded.
+     *
+     *  This is the number of paths that were suppressed because we've already shown the maximum permitted number of
+     *  paths. This count does not include paths suppressed due to all paths being suppressed, paths suppressed due to being deemed
+     *  uninteresting, paths suppressed because they didn't match the set of required path hashes, paths suppressed because
+     *  the entire path was a duplicate, or paths suppressed because their end points were duplicates. */
+    size_t nLimitExceeded() const { return nLimitExceeded_; }
 
     /** Property: Number of paths selected.
      *
