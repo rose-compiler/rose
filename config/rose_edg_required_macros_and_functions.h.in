@@ -106,7 +106,13 @@
 // to turn off 64-bit support.
 // #define __i386__
 // #undef __x86_64__
-#undef _MSC_VER
+
+// DQ (9/2/2020): Heather reported this as a bug when using MS headers.
+// #undef _MSC_VER
+// Heather reports additional macros that may be required are: 
+// _MX64 = 100 
+// _MAMD = 100
+// DQ (9/2/2020): She is sending us more details about this.
 
 // DQ (4/23/2017): This is required to avoid calling wine-2.0.1/include/winscard.h which calls wtypes.h (which does not exist).
 // Also prevents call to headef file "unknown.h"
@@ -161,6 +167,10 @@ typedef long long int __int128_t;
   #define FE_UNDERFLOW    16
   #define FE_INEXACT      32
   #define _FENV_PUBAPI   /* do not change this line! */
+
+/* DQ (9/2/2020): Added to support ROSE-2511 (Cxx11_tests/test2020_79.C) */
+  #define FE_ALL_EXCEPT (FE_INEXACT | FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID)
+
   extern int  _FENV_PUBAPI feclearexcept (int __excepts) ;
   extern int  _FENV_PUBAPI fegetexceptflag (fexcept_t *__flagp, int __excepts) ;
   extern int  _FENV_PUBAPI fesetexceptflag (const fexcept_t *__flagp, int __excepts) ;
