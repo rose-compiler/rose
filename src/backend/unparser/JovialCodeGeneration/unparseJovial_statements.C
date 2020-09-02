@@ -644,8 +644,31 @@ Unparse_Jovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info
      curprint(";");
      unp->cur.insert_newline(1);
 
-  // for body
-     unparseStatement(for_stmt->get_loop_body(), info);
+  // Don't unparse control letters (variable declarations are compiler generated)
+     SgBasicBlock* loop_body = isSgBasicBlock(for_stmt->get_loop_body());
+     ROSE_ASSERT(loop_body);
+
+  // Loop body
+  //
+  // Due to wierd construction (basic block containing a basic block) the basic block for the loop
+  // may be the last statement. The other statement (if present) will be the compiler generated control
+  // variable declaration. However a SimpleStatement for the loop body won't have the extra basic block.
+     if (loop_body->get_statements().size() == 1) {
+        loop_body = isSgBasicBlock(for_stmt->get_loop_body()->get_statements()[0]);
+     }
+     else if (loop_body->get_statements().size() == 2) {
+     // Degenerate case of a null loop body (see rose-issue-rc-42b.jov), don't unparse variable declaration
+        SgVariableDeclaration* var_decl = isSgVariableDeclaration(for_stmt->get_loop_body()->get_statements()[0]);
+        if (var_decl) SageInterface::removeStatement(var_decl);
+        loop_body = isSgBasicBlock(for_stmt->get_loop_body()->get_statements()[1]);
+     }
+
+     if (!loop_body) {
+        loop_body = isSgBasicBlock(for_stmt->get_loop_body());
+     }
+     ROSE_ASSERT(loop_body);
+
+     unparseStatement(loop_body, info);
      unp->cur.insert_newline(1);
    }
 
