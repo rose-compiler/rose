@@ -304,9 +304,8 @@ Leave(SgFunctionParameterList* param_list, SgBasicBlock* param_scope, const std:
    mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionParameterList* for Fortran) \n";
 
    BOOST_FOREACH(std::string name, dummy_arg_name_list) {
-      // don't have access to type information now, will fix later
-      SgType* type = SageBuilder::buildVoidType();
-      SgInitializedName* init_name = SageBuilder::buildInitializedName(name, type);
+      SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(name, param_scope);
+      SgInitializedName* init_name = symbol->get_declaration();
       param_list->append_arg(init_name);
    }
 
