@@ -306,8 +306,9 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                        if (typedefDeclaration == NULL) {
                           mfprintf(mlog[WARN]) ("Error: firstNondefiningDeclaration->get_parent() = %p \n",firstNondefiningDeclaration->get_parent());
                           mfprintf(mlog[WARN]) ("     firstNondefiningDeclaration = %p = %s \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
-                          if (firstNondefiningDeclaration->get_parent() != NULL) {
-                             mfprintf(mlog[WARN]) ("     firstNondefiningDeclaration->get_parent() = %s \n",firstNondefiningDeclaration->get_parent()->class_name().c_str());
+                          SgNode* nonDefDclParent = firstNondefiningDeclaration->get_parent();
+                          if (nonDefDclParent != NULL) {
+                             mfprintf(mlog[WARN]) ("     firstNondefiningDeclaration->get_parent() = %s \n",nonDefDclParent->class_name().c_str());
                           }
 #if 0
                           firstNondefiningDeclaration->get_startOfConstruct()->display("firstNondefiningDeclarationScope == NULL: debug");
