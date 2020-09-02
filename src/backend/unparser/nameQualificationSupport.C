@@ -10931,6 +10931,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  // ROSE_ASSERT(classChain.size() == 1);
                     if (classChain.size() > 1)
                        {
+                      // DQ (9/2/2020): This happens for Cxx11_tests/test2020_78.C
                          mfprintf(mlog [ WARN ] ) ("Note: Not clear how this happens: classChain.size() > 1 size = %zu \n",classChain.size());
                        }
                  // ROSE_ASSERT(classChain.empty() == true || classChain.size() == 1);

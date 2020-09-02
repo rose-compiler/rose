@@ -1419,7 +1419,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2014_108.C \
    test2014_109.C \
    test2014_10.C \
-   test2014_110.C \
    test2014_112.C \
    test2014_114.C \
    test2014_115.C \
@@ -1985,6 +1984,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_55.C \
    test2020_56.C \
    test2020_57.C \
+   test2020_58.C \
    test_CplusplusMacro_Cpp.C \
    test_int_lexemes.C \
    test_int_lexemes_donot_pass.C \
@@ -1992,12 +1992,17 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test_wchars.C \
    X.C
 
+if !USING_CLANG_COMPILER
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2014_110.C
+endif
+
 TESTCODE_CURRENTLY_FAILING = \
    certSignalExample.C \
    c++trick.C \
    lexPhase2003_02.C \
    longFile.C \
-    math.C \
+   math.C \
    restrict_template_parameter.C \
    test2004_25.C \
    test2004_35.C \
@@ -2424,8 +2429,11 @@ else
 endif
 
 if ROSE_USING_GCC_VERSION_LATER_4_8
+if !USING_CLANG_COMPILER
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-     test2015_126.C \
+     test2015_126.C 
+endif
+  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2015_127.C \
      test2015_129.C 
 else
