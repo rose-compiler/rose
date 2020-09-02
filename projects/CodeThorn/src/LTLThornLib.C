@@ -1,10 +1,14 @@
 #include "sage3basic.h"
+
+#include <string>     // std::string, std::stoi
+
 #include "IOAnalyzer.h"
 #include "ReadWriteAnalyzer.h"
 #include "CounterexampleGenerator.h"
 #include "CodeThornLib.h"
 #include "LTLThornLib.h"
 #include "Miscellaneous2.h"
+#include "CppStdUtilities.h"
 
 #include "ltlthorn-lib/SpotConnection.h"
 #include "ltlthorn-lib/CounterexampleAnalyzer.h"
@@ -31,6 +35,34 @@ void CodeThorn::initDiagnosticsLTL() {
   IOAnalyzer::initDiagnostics();
   ReadWriteAnalyzer::initDiagnostics();
   CounterexampleGenerator::initDiagnostics();
+}
+
+bool CodeThorn::readAndParseLTLRersMappingFile(string ltlRersMappingFileName, std::set<int>& ltlInAlphabet, std::set<int>& ltlOutAlphabet) {
+  CppStdUtilities::DataFileVector dataFileVector;
+  bool readStatus=CppStdUtilities::readDataFile(ltlRersMappingFileName,dataFileVector);
+  if(readStatus==false)
+    return readStatus;
+  int lineNr=1;
+  for(std::string line : dataFileVector) {
+    std::vector<std::string> lineEntries=CppStdUtilities::splitByComma(line);
+    if(lineEntries.size()!=2) {
+      cerr<<"Error: format error in rers mapping file. More than two entries in line "<<lineNr<<endl;
+      exit(1);
+    }
+    string ioString=lineEntries[0];
+    int value=std::stoi(lineEntries[1]);
+    cout<<"DEBUG: Parsing mapping file: line "<<lineNr<<": "<<ioString<<" <=> "<<value<<endl;
+    if(ioString[0]=='i') {
+      // not checking the actual mapping here, because it is guaranteed to be consecutive (and the current implementation depends on it)
+      ltlInAlphabet.insert(value);
+    } else if(ioString[0]=='o') {
+      // not checking the actual mapping here, because it is guaranteed to be consecutive (and the current implementation depends on it)
+      ltlOutAlphabet.insert(value);
+    } else {
+      cout<<"WARNING: unknown entry in rers mapping file line "<<lineNr<<": "<<ioString<<" (ignoring it)"<<endl;
+    }
+  }
+  return true;
 }
 
 void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* analyzer, TimingCollector& tc) {
@@ -166,6 +198,22 @@ void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAna
     } else {
       // TODO: fail, if no output alphabet is provided
     }
+    if(ltlOpt.ltlRersMappingFileName.size()>0) {
+      // load and parse file into ltlInAlphabet and ltlOutAlphabet
+      if(!readAndParseLTLRersMappingFile(ltlOpt.ltlRersMappingFileName,ltlInAlphabet,ltlOutAlphabet)) {
+        cerr<<"Error: could not open RERS mapping file "<<ltlOpt.ltlRersMappingFileName<<endl;
+        exit(1);
+      }
+    }
+    if(ltlInAlphabet.size()==0) {
+      cerr<<"Error: no LTL input alphabet provided."<<endl;
+      exit(1);
+    }
+    if(ltlOutAlphabet.size()==0) {
+      cerr<<"Error: no LTL output alphabet provided."<<endl;
+      exit(1);
+    }
+
     PropertyValueTable* ltlResults=nullptr;
     SpotConnection spotConnection(ltl_filename);
     spotConnection.setModeLTLDriven(analyzer->getModeLTLDriven());

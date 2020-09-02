@@ -73,6 +73,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("keep-error-states",  po::value< bool >(&ltlOpt.keepErrorStates)->default_value(false)->implicit_value(true), "Do not reduce error states for the LTL analysis.")      
     ("ltl-in-alphabet",po::value< string >(&ltlOpt.ltlInAlphabet),"Specify an input alphabet used by the LTL formulae. (e.g. \"{1,2,3}\")")
     ("ltl-out-alphabet",po::value< string >(&ltlOpt.ltlOutAlphabet),"Specify an output alphabet used by the LTL formulae. (e.g. \"{19,20,21,22,23,24,25,26}\")")
+    ("ltl-rers-mapping-file",po::value< string >(&ltlOpt.ltlRersMappingFileName),"File containing input/ouput alphabets and mapping (as provided in RERS)")
     ("ltl-driven", po::value< bool >(&ltlOpt.ltlDriven)->default_value(false)->implicit_value(true), "Select mode to verify LTLs driven by SPOT's access to the state transitions.")
     ("reset-analyzer", po::value< bool >(&ltlOpt.resetAnalyzer)->default_value(false)->implicit_value(true), "Reset the analyzer and therefore the state transition graph before checking the next property. Only affects ltl-driven mode.")
     ("no-input-input",  po::value< bool >(&ltlOpt.noInputInputTransitions)->default_value(false)->implicit_value(true), "(deprecated) remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [yes|=no]")
