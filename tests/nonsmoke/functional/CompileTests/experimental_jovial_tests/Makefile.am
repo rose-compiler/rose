@@ -70,6 +70,7 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-2.jov                    \
  rose-issue-rc-19.jov                   \
  rose-issue-rc-41a.jov                  \
+ rose-issue-rc-41b.jov                  \
  rose-issue-rc-42a.jov                  \
  rose-issue-rc-42b.jov                  \
  rose-issue-rc-69.jov                   \

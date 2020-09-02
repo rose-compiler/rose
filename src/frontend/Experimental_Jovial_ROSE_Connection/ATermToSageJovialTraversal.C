@@ -4773,6 +4773,17 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
          // MATCHED LabelList
       } else return ATfalse;
 
+      // First just look for ControlItem (variable name) and traverse fully once
+      // we have a for statement. This is needed in order for a possible ControlLetter
+      // variable reference to be created in the for statement scope.
+      std::string control_var_name;
+      if (traverse_ForClause(t_clause, control_var_name)) {
+         // MATCHED ForClause
+      } else return ATfalse;
+
+   // Begin SageTreeBuilder
+      sage_tree_builder.Enter(for_stmt, control_var_name);
+
       if (traverse_ForClause(t_clause, var_ref, init, phrase1, phrase2, phrase1_enum, phrase2_enum)) {
          // MATCHED ForClause
       } else return ATfalse;
@@ -4814,9 +4825,12 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
          loop_type_enum = SgJovialForThenStatement::e_for_only_stmt;
       }
       ROSE_ASSERT(loop_type_enum != SgJovialForThenStatement::e_unknown);
+      ROSE_ASSERT(for_stmt);
 
-   // Begin SageTreeBuilder
-      sage_tree_builder.Enter(for_stmt, initialization, while_expr, by_or_then_expr, loop_type_enum);
+      for_stmt->set_initialization(initialization);
+      for_stmt->set_while_expression(while_expr);
+      for_stmt->set_by_or_then_expression(by_or_then_expr);
+      for_stmt->set_loop_statement_type(loop_type_enum);
 
       // Match ControlledStatement (body of loop)
       if (traverse_Statement(t_stmt)) {
@@ -4830,6 +4844,26 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
 
 // End SageTreeBuilder
    sage_tree_builder.Leave(for_stmt);
+
+   return ATtrue;
+}
+
+ATbool ATermToSageJovialTraversal::traverse_ForClause(ATerm term, std::string &control_var_name)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ForClause: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_item, t_clause;
+   char* var_name;
+
+   if (ATmatch(term, "ForClause(<term>,<term>)", &t_item, &t_clause)) {
+      if (ATmatch(t_item, "<str>" , &var_name)) {
+         control_var_name = var_name;
+      }
+      else return ATfalse;
+   }
+   else return ATfalse;
 
    return ATtrue;
 }
@@ -4858,10 +4892,9 @@ ATbool ATermToSageJovialTraversal::traverse_ForClause(ATerm term, SgExpression* 
       if (ATmatch(t_item, "<str>" , &var_name)) {
          // MATCHED ControlItem
          SgVariableSymbol* var_sym;
-
-         // TODO: if this is a control letter there won't be a var_sym
          var_sym = SageInterface::lookupVariableSymbolInParentScopes(var_name, SageBuilder::topScopeStack());
          ROSE_ASSERT(var_sym);
+
          var_ref = SageBuilder::buildVarRefExp_nfi(var_sym);
          setSourcePosition(var_ref, t_item);
       }
@@ -5774,11 +5807,11 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
    else return ATfalse;
 
    if (var_name != nullptr) {
-   // Variables (except for ControlLetter) must have been declared
-   // TODO: Use SageTreeBuilder to declare ControlLetter index variables
-      SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(var_name, SageBuilder::topScopeStack());
-      ROSE_ASSERT(var_sym);
-      expr = SageBuilder::buildVarRefExp_nfi(var_sym);
+      SgVarRefExp* var_ref;
+      sage_tree_builder.Enter(var_ref, var_name, /*compiler_generate*/true);
+      sage_tree_builder.Leave(var_ref);
+
+      expr = var_ref;
       setSourcePosition(expr, term);
    }
 

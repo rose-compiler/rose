@@ -566,16 +566,26 @@ Enter(SgCastExp* &cast_expr, const std::string &name, SgExpression* cast_operand
 }
 
 void SageTreeBuilder::
-Enter(SgVarRefExp* &var_ref, const std::string &name)
+Enter(SgVarRefExp* &var_ref, const std::string &name, bool compiler_generate)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgVarRefExp* &, ...) \n";
 
-   SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(name, SageBuilder::topScopeStack());
-   ROSE_ASSERT(symbol);
+   SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   if (!var_sym && compiler_generate) {
+      SgVariableDeclaration* var_decl;
 
-   // TODO: not implemented yet
-   std::cerr << "WARNING UNIMPLEMENTED: Enter(SgVarRefExp* &, ...) for " << name << std::endl;
-   ROSE_ASSERT(false);
+      //TODO: check for single letter for name (Jovial control letter) and type is not really known
+      SgType* type = SageBuilder::buildIntType();
+
+      // Build variable declaration for the control letter
+      Enter(var_decl, name, type, nullptr);
+      Leave(var_decl);
+
+      var_sym = SageInterface::lookupVariableSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   }
+   ROSE_ASSERT(var_sym);
+
+   var_ref = SageBuilder::buildVarRefExp_nfi(var_sym);
 }
 
 void SageTreeBuilder::
@@ -938,6 +948,40 @@ Leave(SgJovialDirectiveStatement* directive)
 }
 
 void SageTreeBuilder::
+Enter(SgJovialForThenStatement* &for_stmt, const std::string &init_var_name)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialForThenStatement* &, ...) \n";
+
+   SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
+   SgScopeStatement* scope = SageBuilder::topScopeStack();
+
+   for_stmt = new SgJovialForThenStatement(nullptr, nullptr, nullptr, body);
+   ROSE_ASSERT(for_stmt);
+   SageInterface::setOneSourcePositionNull(for_stmt);
+
+   for_stmt->set_parent(scope);
+   body->set_parent(for_stmt);
+
+   if (SageInterface::is_language_case_insensitive()) {
+      for_stmt->setCaseInsensitive(true);
+   }
+
+// Push stack for loop initialization variable (possible) declaration
+   SageBuilder::pushScopeStack(for_stmt);
+
+   SgVarRefExp* init_var;
+   Enter(init_var, init_var_name, true);
+   Leave(init_var);
+
+   SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(init_var_name, for_stmt);
+   ROSE_ASSERT(var_sym);
+
+// Append now (before Leave is called) so that symbol lookup will work
+   SageInterface::appendStatement(for_stmt, scope);
+   SageBuilder::pushScopeStack(body);
+}
+
+void SageTreeBuilder::
 Enter(SgJovialForThenStatement* &for_stmt, SgExpression* init_expr, SgExpression* while_expr,
       SgExpression* by_or_then_expr, SgJovialForThenStatement::loop_statement_type_enum loop_type)
 {
@@ -964,7 +1008,17 @@ Leave(SgJovialForThenStatement* for_stmt)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialForThenStatement*, ...) \n";
 
+   ROSE_ASSERT(for_stmt);
+
+   if (for_stmt->get_while_expression() == NULL) {
+      for_stmt->set_while_expression(SageBuilder::buildNullExpression_nfi());
+   }
+   if (for_stmt->get_by_or_then_expression() == NULL) {
+      for_stmt->set_by_or_then_expression(SageBuilder::buildNullExpression_nfi());
+   }
+
    SageBuilder::popScopeStack();  // for body
+   SageBuilder::popScopeStack();  // for statement
 }
 
 void SageTreeBuilder::

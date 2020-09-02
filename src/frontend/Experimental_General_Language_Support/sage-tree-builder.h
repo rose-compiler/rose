@@ -178,7 +178,7 @@ public:
    void Enter(SgFunctionCallExp* &, const std::string &name, SgExprListExp* params);
    void Enter(SgReplicationOp* &, const std::string &name, SgExpression* value);
    void Enter(SgCastExp* &, const std::string &name, SgExpression* cast_operand);
-   void Enter(SgVarRefExp* &, const std::string &name);
+   void Enter(SgVarRefExp* &, const std::string &name, bool compiler_generate=false);
 
 // Jovial specific nodes
 //
@@ -188,6 +188,7 @@ public:
    void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, bool is_compool=false);
    void Leave(SgJovialDirectiveStatement*);
 
+   void Enter(SgJovialForThenStatement* &, const std::string &);
    void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*,
                                            SgJovialForThenStatement::loop_statement_type_enum);
    void Leave(SgJovialForThenStatement*);
