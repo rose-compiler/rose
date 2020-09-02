@@ -216,7 +216,7 @@ InitializeExplicitScopes::visit ( SgNode *node)
                               ROSE_ASSERT(initializedName != NULL);
                               SgNode* parentNode = initializedName->get_parent();
                               ROSE_ASSERT(parentNode != NULL);
-                              char *className = parentNode->sage_class_name();
+                              const char *className = parentNode->sage_class_name();
                               if (className != NULL) {
                                  printf ("Error: default reached initializedName->get_parent() = %s \n",
                                    parentNode->sage_class_name());
