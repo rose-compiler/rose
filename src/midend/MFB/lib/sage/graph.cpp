@@ -258,7 +258,7 @@ void API::add(SgNode * n) {
       }
           
       if (tpl_params != NULL && tpl_params->size() > 0) {
-        unsigned short cnt;
+        unsigned short cnt = 0;
         for (SgTemplateParameterPtrList::const_iterator it = tpl_params->begin(); it != tpl_params->end(); it++) {
           ROSE_ASSERT( (*it)->get_type() || (*it)->get_expression() || (*it)->get_templateDeclaration() || (*it)->get_initializedName() );
 
@@ -273,7 +273,7 @@ void API::add(SgNode * n) {
       }
 
       if (tpl_args != NULL && tpl_args->size() > 0) {
-        unsigned short cnt;
+        unsigned short cnt = 0;
         for (SgTemplateArgumentPtrList::const_iterator it = tpl_args->begin(); it != tpl_args->end(); it++) {
           ROSE_ASSERT( (*it)->get_type() || (*it)->get_expression() || (*it)->get_templateDeclaration() || (*it)->get_initializedName() );
 
