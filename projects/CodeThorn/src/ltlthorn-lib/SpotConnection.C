@@ -636,21 +636,6 @@ std::string SpotConnection::formatIOChar(std::string prop, bool firstEntry, bool
   return result;
 }
 
-std::string SpotConnection::int2PropName(int ioVal, int maxInputVal)  {
-  std::string result;
-  if (ioVal >maxInputVal && ioVal <= 26) {
-    result = "o";  //an output variable follows (RERS mapping)
-  } else if (ioVal >= 1 && ioVal <= maxInputVal) {
-    result = "i";  //an input variable follows (RERS mapping)
-  } else {
-    cerr << "ERROR: input/output variable not recognized (not rers format)" << endl;
-    assert(0);
-  }
-  char atomicProp = (char) (ioVal + ((int) 'A') - 1);
-  result += boost::lexical_cast<string>(atomicProp);
-  return result;
-}
-
 std::string SpotConnection::spinSyntax(std::string ltlFormula) {
   spot::ltl::parse_error_list pel;
   const spot::ltl::formula* formula = spot::ltl::parse(ltlFormula, pel);
@@ -740,22 +725,6 @@ void SpotConnection::checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool w
   reportUndefinedFunction();
 }
 
-// TODO: move to a more appropriate class (does not utilize SPOT, but handles the RERS input/output encoding)
-std::string SpotConnection::int2PropName(int ioVal, int maxInputVal)  {
-  std::string result;
-  if (ioVal >maxInputVal && ioVal <= 26) {
-    result = "o";  //an output variable follows (RERS mapping)
-  } else if (ioVal >= 1 && ioVal <= maxInputVal) {
-    result = "i";  //an input variable follows (RERS mapping)
-  } else {
-    cerr << "ERROR: input/output variable not recognized (not rers format)" << endl;
-    assert(0);
-  }
-  char atomicProp = (char) (ioVal + ((int) 'A') - 1);
-  result += boost::lexical_cast<string>(atomicProp);
-  return result;
-}
-
 std::string SpotConnection::spinSyntax(std::string ltlFormula) {
   reportUndefinedFunction();
   string s;
@@ -773,3 +742,21 @@ void SpotConnection::reportUndefinedFunction() {
 }
 
 #endif
+
+// TODO: move to a more appropriate class (does not utilize SPOT, but handles the RERS input/output encoding)
+// therefore this function is always included, with and without SPOT.
+std::string SpotConnection::int2PropName(int ioVal, int maxInputVal)  {
+  std::string result;
+  if (ioVal >maxInputVal && ioVal <= 26) {
+    result = "o";  //an output variable follows (RERS mapping)
+  } else if (ioVal >= 1 && ioVal <= maxInputVal) {
+    result = "i";  //an input variable follows (RERS mapping)
+  } else {
+    cerr << "ERROR: input/output variable not recognized (not rers format)" << endl;
+    assert(0);
+  }
+  char atomicProp = (char) (ioVal + ((int) 'A') - 1);
+  result += boost::lexical_cast<string>(atomicProp);
+  return result;
+}
+

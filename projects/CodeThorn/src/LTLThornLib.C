@@ -31,13 +31,92 @@ using namespace boost;
 #include "Diagnostics.h"
 using namespace Sawyer::Message;
 
+
+namespace CodeThorn {
+  void LtlRersMapping::addInput(char c,int v) {
+    _inputMappingCharInt[c]=v;
+    _inputMappingIntChar[v]=c;
+  }
+  void LtlRersMapping::addOutput(char c,int v) {
+    _outputMappingCharInt[c]=v;
+    _outputMappingIntChar[v]=c;
+  }
+  std::set<char> LtlRersMapping::getInputCharSet() {
+    std::set<char> set;
+    for(auto entry : _inputMappingCharInt) {
+      set.insert(entry.first);
+    }
+    return set;
+  }
+  std::set<int> LtlRersMapping::getInputValueSet() {
+    std::set<int> set;
+    for(auto entry : _inputMappingCharInt) {
+      set.insert(entry.second);
+    }
+    return set;
+  }
+  std::set<char> LtlRersMapping::getOutputCharSet() {
+    std::set<char> set;
+    for(auto entry : _outputMappingCharInt) {
+      set.insert(entry.first);
+    }
+    return set;
+  }
+  std::set<int> LtlRersMapping::getOutputValueSet() {
+    std::set<int> set;
+    for(auto entry : _outputMappingCharInt) {
+      set.insert(entry.second);
+    }
+    return set;
+  }
+  int LtlRersMapping::getValue(char c) {
+    auto iterI=_inputMappingCharInt.find(c);
+    if(iterI!=_inputMappingCharInt.end())
+      return (*iterI).second;
+    auto iterO=_outputMappingCharInt.find(c);
+    if(iterO!=_outputMappingCharInt.end())
+      return (*iterO).second;
+    return -1;
+  }
+  char LtlRersMapping::getChar(int value) {
+    auto iterI=_inputMappingIntChar.find(value);
+    if(iterI!=_inputMappingIntChar.end())
+      return (*iterI).second;
+    auto iterO=_outputMappingIntChar.find(value);
+    if(iterO!=_outputMappingIntChar.end())
+      return (*iterO).second;
+    return '_';
+  }
+  std::string LtlRersMapping::getIOString(int value) {
+    auto iterI=_inputMappingIntChar.find(value);
+    if(iterI!=_inputMappingIntChar.end())
+      return string("i")+(*iterI).second;
+    auto iterO=_outputMappingIntChar.find(value);
+    if(iterO!=_outputMappingIntChar.end())
+      return string("o")+(*iterO).second;
+    return "x_";
+  }
+  bool LtlRersMapping::isInput(char c) {
+    return _inputMappingCharInt.find(c)!=_inputMappingCharInt.end();
+  }
+  bool LtlRersMapping::isInput(int value) {
+    return _inputMappingIntChar.find(value)!=_inputMappingIntChar.end();
+  }
+  bool LtlRersMapping::isOutput(char c) {
+    return _outputMappingCharInt.find(c)!=_inputMappingCharInt.end();
+  }
+  bool LtlRersMapping::isOutput(int value) {
+    return _outputMappingIntChar.find(value)!=_inputMappingIntChar.end();
+  }
+}
+
 void CodeThorn::initDiagnosticsLTL() {
   IOAnalyzer::initDiagnostics();
   ReadWriteAnalyzer::initDiagnostics();
   CounterexampleGenerator::initDiagnostics();
 }
 
-bool CodeThorn::readAndParseLTLRersMappingFile(string ltlRersMappingFileName, std::set<int>& ltlInAlphabet, std::set<int>& ltlOutAlphabet) {
+bool CodeThorn::readAndParseLTLRersMappingFile(string ltlRersMappingFileName, CodeThorn::LtlRersMapping& rersLtlMapping) {
   CppStdUtilities::DataFileVector dataFileVector;
   bool readStatus=CppStdUtilities::readDataFile(ltlRersMappingFileName,dataFileVector);
   if(readStatus==false)
@@ -53,11 +132,9 @@ bool CodeThorn::readAndParseLTLRersMappingFile(string ltlRersMappingFileName, st
     int value=std::stoi(lineEntries[1]);
     cout<<"DEBUG: Parsing mapping file: line "<<lineNr<<": "<<ioString<<" <=> "<<value<<endl;
     if(ioString[0]=='i') {
-      // not checking the actual mapping here, because it is guaranteed to be consecutive (and the current implementation depends on it)
-      ltlInAlphabet.insert(value);
+      rersLtlMapping.addInput(ioString[1],value);
     } else if(ioString[0]=='o') {
-      // not checking the actual mapping here, because it is guaranteed to be consecutive (and the current implementation depends on it)
-      ltlOutAlphabet.insert(value);
+      rersLtlMapping.addOutput(ioString[1],value);
     } else {
       cout<<"WARNING: unknown entry in rers mapping file line "<<lineNr<<": "<<ioString<<" (ignoring it)"<<endl;
     }
@@ -182,6 +259,7 @@ void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAna
     }
 
     timer.start();
+    LtlRersMapping ltlRersMapping;
     std::set<int> ltlInAlphabet;// = analyzer->getInputVarValues();
     //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
     if (ltlOpt.ltlInAlphabet.size()>0) {
@@ -200,7 +278,8 @@ void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAna
     }
     if(ltlOpt.ltlRersMappingFileName.size()>0) {
       // load and parse file into ltlInAlphabet and ltlOutAlphabet
-      if(!readAndParseLTLRersMappingFile(ltlOpt.ltlRersMappingFileName,ltlInAlphabet,ltlOutAlphabet)) {
+      // input/output alphabet
+      if(!readAndParseLTLRersMappingFile(ltlOpt.ltlRersMappingFileName,ltlRersMapping)) {
         cerr<<"Error: could not open RERS mapping file "<<ltlOpt.ltlRersMappingFileName<<endl;
         exit(1);
       }
