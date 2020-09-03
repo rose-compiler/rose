@@ -733,13 +733,16 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2020_74.C \
    test2020_75.C \
    test2020_76.C \
+   test2020_77.C \
    test2020_78.C \
    test2020_79.C \
    test2020_81.C \
    test2020_83.C \
    test2020_84.C \
    test2020_85.C \
-   test2020_86.C 
+   test2020_86.C \
+   test2020_88.C \
+   test2020_89.C 
 
 
 TESTCODE_CURRENTLY_FAILING = \
@@ -864,7 +867,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_71.C \
    test2020_72.C \
    test2020_73.C \
-   test2020_77.C \
    test2020_80.C \
    test2020_82.C 
 
