@@ -3710,6 +3710,7 @@ __m128i __builtin_ia32_pslld128(__v4si, __v4si);
 __m128i __builtin_ia32_psllq128(__v2di, __v2di);
 __m128i __builtin_ia32_psraw128 (__v8hi, __v8hi);
 __m128i __builtin_ia32_psrad128 (__v4si, __v4si);
+__v2di __builtin_ia32_pslldqi128 (__v2di, int);
 __m128i __builtin_ia32_psrlw128 (__v8hi, __v8hi);
 __m128i __builtin_ia32_psrld128 (__v4si, __v4si);
 __m128i __builtin_ia32_psrlq128 (__v2di, __v2di);
