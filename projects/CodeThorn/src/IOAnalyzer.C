@@ -198,7 +198,7 @@ void IOAnalyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerDat
     estateWorkListCurrent = &newEStateWorkList;
     TransitionGraph newTransitionGraph;
     transitionGraph = newTransitionGraph;
-    Label startLabel=cfanalyzer->getLabel(startFunRoot);
+    Label startLabel=flow.getStartLabel();
     transitionGraph.setStartLabel(startLabel);
     list<int> newInputSequence;
     _inputSequence = newInputSequence;

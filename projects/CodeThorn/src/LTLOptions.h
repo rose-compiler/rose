@@ -16,6 +16,13 @@ struct LTLOptions : public CodeThorn::Options {
   bool keepErrorStates=false;
   std::string ltlInAlphabet;  // format: "{NUM,NUM,...}"
   std::string ltlOutAlphabet; // format: "{NUM,NUM,...}"
+  /* rers 2020 mapping file format: 
+     iA<TAB>1
+     iB<TAB>2
+     oC<TAB>3 // output alphabet begins right after input alphabet mapping
+     oD<TAB>4
+  */
+  std::string ltlRersMappingFileName; 
   bool ltlDriven=false;
   bool resetAnalyzer=false;
   bool noInputInputTransitions=false; // deprecated

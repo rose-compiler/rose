@@ -15,6 +15,7 @@
 #include "SpotTgba.h"
 #include "ParProSpotTgba.h"
 #include "PropertyValueTable.h"
+#include "LTLRersMapping.h"
 
 //SPOT includes
 #include "ltlparse/public.hh"
@@ -87,12 +88,12 @@ namespace CodeThorn {
       // counterexample input sequence. If "spuriousNoAnswers" is set to true, falsified properties will be reported also for STGs 
       // that are not precise.)
       void checkLtlProperties(TransitionGraph& stg,
-					std::set<int> inVals, std::set<int> outVals, bool withCounterExample, bool spuriousNoAnswers);
+                              CodeThorn::LtlRersMapping ltlRersMapping, bool withCounterExample, bool spuriousNoAnswers);
       // variant for model checking the state space of parallel automata
       void checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<std::string> annotationsOfModeledTransitions);
       // similar to "checkLtlProperties" above, but only checks a single property (property id specified as a parameter)
       void checkSingleProperty(int propertyNum, TransitionGraph& stg,
-						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers);
+                               CodeThorn::LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers);
       // model checking of "ltlProperty" on "stg"
       PropertyValue checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, set<std::string> annotationsOfModeledTransitions);
       ParProSpotTgba* toTgba(ParProTransitionGraph& stg);
@@ -123,7 +124,7 @@ namespace CodeThorn {
       // returns a set of atomic propositions (variables in the LTL formulae) representing the given "ioVals" I/O values.
       // "maxInputVal" determines the greatest value to be prepended with an 'i' for input. Every integer greater than that
       // will be prepended with 'o'
-      spot::ltl::atomic_prop_set* getAtomicProps(std::set<int> ioVals, int maxInputVal);
+      spot::ltl::atomic_prop_set* getAtomicProps(CodeThorn::LtlRersMapping ltlRersMapping);
       // reads in a list of LTL formulas (file in RERS format, meaining only lines containing formulae begin with '(')
       std::list<std::string>* loadFormulae(istream& input);
 
@@ -178,14 +179,17 @@ namespace CodeThorn {
       PropertyValueTable* getLtlResults();
       void resetLtlResults();
       void resetLtlResults(int property);
-      std::string int2PropName(int ioVal, int maxInVal);
       void setModeLTLDriven(bool ltlDriven);
       std::string spinSyntax(std::string ltlFormula);
       std::set<std::string> atomicPropositions(std::string ltlFormula);
+
+      // deprecated, use ltlRersMapping.getIOString(ioVal) instead, only used by Solver 10
+      std::string int2PropName(int ioVal, int maxInVal);
+
   private:
       void reportUndefinedFunction();
   };
 };
-#endif
+#endif // end of HAVE_SPOT guard
 
-#endif // end of "#ifndef SPOT_CONNECTION_H"
+#endif // end of SPOT_CONNECTION_H guard

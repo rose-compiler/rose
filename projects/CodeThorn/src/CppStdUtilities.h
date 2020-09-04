@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 namespace CppStdUtilities {
 
@@ -31,18 +32,20 @@ namespace CppStdUtilities {
   // e.g. "bba" is a postfix of "cccbba"
   bool isPostfix(std::string const &postfix, std::string const &s);
 
-#if GCC_VERSION >= 40900
   // splits a string by commas into a vector of strings (C++11, requires at least gcc 4.9)
   std::vector<std::string> splitByComma(const std::string& input);
 
+    // splits a string by tabs into a vector of strings (C++11, requires at least gcc 4.9)
+  std::vector<std::string> splitByTab(const std::string& input);
+
   // splits a string by spaces into a vector of strings. Consecutive
-  // spaces are considered as one separator. e.g. "a b c" is split
+  // spaces are considered as one separator. e.g. "a  b  c" is split
   // into a vector of 3 strings.
   std::vector<std::string> splitBySpaces(const std::string& input);
 
   // splits a given string 'input' into a vector of strings, using the
-  // regular expression 'regex' (e.g. "a,b,c" is split into a vector
-  // of 3 strings)
+  // regular expression 'regex' (e.g. std::regex re(",");
+  // splitByRegex("a,b,c",re) is split into a vector of 3 strings)
   std::vector<std::string> splitByRegex(const std::string& input, const std::string& regex);
 
   // prints an arbitrary container, elements must provide '<<' operator
@@ -51,16 +54,13 @@ namespace CppStdUtilities {
     for(typename Container::const_iterator iter = s.begin();
         iter != s.end();
         iter++) {
-      if(iter!=s.begin()) {
+      if(std::distance(s.begin(),iter)!=0) {
         output << seperator;
       }
       output << *iter;
     }
     output << std::endl;
   }
-
-#endif
-
 }
 
 #endif

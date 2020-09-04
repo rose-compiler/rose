@@ -906,22 +906,37 @@ int main( int argc, char * argv[] ) {
       }
 
       timer.start();
-      std::set<int> ltlInAlphabet = analyzer->getInputVarValues();
-      //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
+
+      LtlRersMapping ltlRersMapping;
       if (ltlOpt.ltlInAlphabet.size()>0) {
-        string setstring=ltlOpt.ltlInAlphabet;
-        ltlInAlphabet=Parse::integerSet(setstring);
-        SAWYER_MESG(logger[TRACE]) << "LTL input alphabet explicitly selected: "<< setstring << endl;
+        ltlRersMapping.addInputAsciiValueSetWithOffsetA(ltlOpt.ltlInAlphabet);
       }
-      //take ltl output alphabet if specifically described, otherwise take the old RERS specific 21...26 (a.k.a. oU...oZ)
-      std::set<int> ltlOutAlphabet = Parse::integerSet("{21,22,23,24,25,26}");
       if (ltlOpt.ltlOutAlphabet.size()>0) {
-        string setstring=ltlOpt.ltlOutAlphabet;
-        ltlOutAlphabet=Parse::integerSet(setstring);
-        SAWYER_MESG(logger[TRACE]) << "LTL output alphabet explicitly selected: "<< setstring << endl;
-      } else {
-        // TODO: fail, if no output alphabet is provided
+        ltlRersMapping.addOutputAsciiValueSetWithOffsetA(ltlOpt.ltlOutAlphabet);
       }
+      if(ltlOpt.ltlRersMappingFileName.size()>0) {
+        // load and parse file into ltlInAlphabet and ltlOutAlphabet
+        // input/output alphabet
+        if(!readAndParseLTLRersMappingFile(ltlOpt.ltlRersMappingFileName,ltlRersMapping)) {
+          cerr<<"Error: could not open RERS mapping file "<<ltlOpt.ltlRersMappingFileName<<endl;
+          exit(1);
+        }
+        // set input/output alphabets here as well
+      }
+   
+      std::set<int> ltlInAlphabet;// = analyzer->getInputVarValues();
+      std::set<int> ltlOutAlphabet;
+      ltlInAlphabet=ltlRersMapping.getInputValueSet();
+      ltlOutAlphabet=ltlRersMapping.getOutputValueSet();
+      if(ltlInAlphabet.size()==0) {
+        cerr<<"Error: no LTL input alphabet provided."<<endl;
+        exit(1);
+      }
+      if(ltlOutAlphabet.size()==0) {
+        cerr<<"Error: no LTL output alphabet provided."<<endl;
+        exit(1);
+      }
+
       PropertyValueTable* ltlResults=nullptr;
       SpotConnection spotConnection(ltl_filename);
       spotConnection.setModeLTLDriven(analyzer->getModeLTLDriven());
@@ -934,9 +949,9 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE]) << "LTL: check properties."<<endl;
       if (ltlOpt.propertyNrToCheck!=-1) {
         int propertyNum = ltlOpt.propertyNrToCheck;
-        spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+        spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlRersMapping, withCounterexample, spuriousNoAnswers);
       } else {
-        spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+        spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlRersMapping, withCounterexample, spuriousNoAnswers);
       }
       spotLtlAnalysisTime=timer.getTimeDurationAndStop().milliSeconds();
       SAWYER_MESG(logger[TRACE]) << "LTL: get results from spot connection."<<endl;
@@ -958,11 +973,11 @@ int main( int argc, char * argv[] ) {
           ceAnalyzer.setMaxCounterexamples(ltlOpt.cegpra.maxIterations);
         }
         if (ltlOpt.cegpra.checkAllProperties) {
-          ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlInAlphabet, ltlOutAlphabet);
+          ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlRersMapping);
         } else {  // cegpra for single LTL property
           //ROSE_ASSERT(ltlOpt.cegpra.ltlPropertyNr!=-1);
           int property = ltlOpt.cegpra.ltlPropertyNr;
-          ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);
+          ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlRersMapping);
         }
       }
 
@@ -1224,7 +1239,7 @@ int main( int argc, char * argv[] ) {
         write_file("transitiongraph1.dat", datFile1);
         cout << "generated transitiongraph1.dat."<<endl;
 
-        assert(analyzer->startFunRoot);
+        //assert(analyzer->startFunRoot);
         //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
         //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
         SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;

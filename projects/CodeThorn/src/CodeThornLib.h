@@ -50,6 +50,7 @@ namespace CodeThorn {
   void optionallyWriteSVCompWitnessFile(CodeThornOptions& ctOpt, Analyzer* analyzer);
   void optionallyAnalyzeAssertions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, IOAnalyzer* analyzer, TimingCollector& tc);
   void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,Analyzer* analyzer);
+  void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,Analyzer* analyzer);
   void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,Analyzer* analyzer,SgNode* root, TimingCollector& tc);
   void runSolver(CodeThornOptions& ctOpt,Analyzer* analyzer, SgProject* sageProject,TimingCollector& tc);
   void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt);

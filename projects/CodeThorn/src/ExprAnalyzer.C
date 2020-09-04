@@ -333,6 +333,7 @@ AbstractValue ExprAnalyzer::evaluateExpressionWithEmptyState(SgExpression* expr)
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,EState estate, EvalMode mode) {
   ROSE_ASSERT(estate.pstate()); // ensure state exists
+
   // initialize with default values from argument(s)
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -352,7 +353,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
     exit(1);
   }
 #endif
+  if(SgStatementExpression* gnuExtensionStmtExpr=isSgStatementExpression(node)) {
+    //cout<<"WARNING: ignoring GNU extension StmtExpr."<<endl;
+    res.result=AbstractValue::createTop();
+    return listify(res);
+  }
 
+  
   if(SgConditionalExp* condExp=isSgConditionalExp(node)) {
     return evalConditionalExpr(condExp,estate,mode);
   }
@@ -1534,13 +1541,18 @@ std::list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionRefExp(SgFunctionR
   //cout<<"DEBUG: isForwardDecl:"<<SgNodeHelper::isForwardFunctionDeclaration(funDecl)<<endl;
   //cout<<"DEBUG: fundecl:"<<funDecl->unparseToString()<<endl;
   SgFunctionDefinition* funDef=funDecl->get_definition();
-  ROSE_ASSERT(funDef);
-  Label funLab=_analyzer->getLabeler()->functionEntryLabel(funDef);
+  if(funDef) {
+    Label funLab=_analyzer->getLabeler()->functionEntryLabel(funDef);
   
-  // label of corresponding entry label of function of node; if function is external, then label is an invalid label.
-  //cout<<"DEBUG: evalFunctionRefExp: label:"<<funLab.toString()<<endl;
-  res.init(estate,AbstractValue::createAddressOfFunction(funLab));
-  return listify(res);
+    // label of corresponding entry label of function of node; if function is external, then label is an invalid label.
+    //cout<<"DEBUG: evalFunctionRefExp: label:"<<funLab.toString()<<endl;
+    res.init(estate,AbstractValue::createAddressOfFunction(funLab));
+    return listify(res);
+  } else {
+    SAWYER_MESG(logger[WARN])<<"ExprAnalyzer::evalFunctionRefExp: funRefExp==0 (function pointer? - creating top)"<<endl;
+    res.init(estate,AbstractValue::createTop());
+    return listify(res);
+  }
 }
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode) {
   //  cout<<"DEBUG: evalRValueVarRefExp:"<<node->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
@@ -1549,13 +1561,16 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
     res.init(estate,AbstractValue::createTop());
     return listify(res);
   }  
-  SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<"MODE:"<<mode<<endl;
+  SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<"MODE:"<<mode<<" Symbol:"<<node->get_symbol()<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue::createBot());
 
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
-  ROSE_ASSERT(varId.isValid());
+  if(!varId.isValid()) {
+    SAWYER_MESG(logger[ERROR])<<"Invalid varId: "<<node->unparseToString()<<" Parent: "<<node->get_parent()->unparseToString()<<" Symbol:"<<node->get_symbol()<<endl;
+    ROSE_ASSERT(varId.isValid());
+  }
   // check if var is a struct member. if yes return struct-offset.
   //cout<<"DEBUG1: VarRefExp: "<<_variableIdMapping->variableName(varId)<<endl;
   if(isMemberVariable(varId)) {

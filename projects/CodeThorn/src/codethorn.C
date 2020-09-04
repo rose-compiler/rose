@@ -193,6 +193,7 @@ int main( int argc, char * argv[] ) {
     optionallyAnalyzeAssertions(ctOpt, ltlOpt, analyzer, tc);
     optionallyRunZ3AndExit(ctOpt,analyzer);
     optionallyGenerateVerificationReports(ctOpt,analyzer);
+    optionallyGenerateCallGraphDotFile(ctOpt,analyzer);
     runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);
     processCtOptGenerateAssertions(ctOpt, analyzer, sageProject);
     optionallyRunVisualizer(ctOpt,analyzer,root);

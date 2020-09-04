@@ -6,6 +6,7 @@
 #include "CodeThornException.h"
 
 #include <unordered_set>
+#include <cstdlib>
 
 using namespace CodeThorn;
 using namespace std;
@@ -31,10 +32,14 @@ void TransitionGraphReducer::reduceStgToStatesSatisfying(function<bool(const ESt
   visited.insert(_stg->getStartEState());
   // traverse the entire _stg
   cout<<"STATUS: traversing AST and creating reduced graph ... "<<endl;
+  int wl=1;
+  int err=system("tput civis"); // turn off cursor
+  ROSE_ASSERT(err!=-1);
   while (!worklist.empty()) {
     const EState* current = *worklist.begin();
     ROSE_ASSERT(current);
     worklist.pop_front();
+    wl--;
     ROSE_ASSERT(predicate(current) || current == _stg->getStartEState());
     // similar to Analyzer's "subSolver"
     list<const EState*> successors = successorsOfStateSatisfying(current, predicate);
@@ -42,11 +47,17 @@ void TransitionGraphReducer::reduceStgToStatesSatisfying(function<bool(const ESt
       if (visited.find(*i) == visited.end()) {
         worklist.push_back(*i);
         visited.insert(*i);
+        wl++;
       }
       Edge* newEdge = new Edge(current->label(),EDGE_PATH,(*i)->label());
       reducedStg->add(Transition(current, *newEdge, *i));
     }
+    cout<<"\rReduction progress: WL:"<<wl<<" Visited: "<<visited.size();
   }
+  cout<<endl;
+  err=system("tput cnorm"); // turn on cursor
+  ROSE_ASSERT(err!=-1);
+
   // replace old stg (local variable of analyzer, stack frame) with reduced one
   *_stg = *reducedStg;
   // "garbage collection": Remove all states from _states that were bypassed during the reduction

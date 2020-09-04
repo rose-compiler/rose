@@ -162,7 +162,7 @@ namespace PredefinedSemanticFunctions {
         //cout<<"DEBUG: currentPosValue:"<<currentPosValue.toString()<<endl;
         // if the memory location that is read, does not exist, it is an out-of-bounds access
         if(currentPosValue.isBot()) {
-          cout<<estate.pstate()->toString()<<endl;
+          //cout<<estate.pstate()->toString()<<endl;
           exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate.label());
           break;
         }
