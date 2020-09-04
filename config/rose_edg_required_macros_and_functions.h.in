@@ -107,8 +107,9 @@
 // #define __i386__
 // #undef __x86_64__
 
+// DQ (9/4/2020): Thisis required for WINE support (need to rethink how to support MS Windows header files and WINE.
 // DQ (9/2/2020): Heather reported this as a bug when using MS headers.
-// #undef _MSC_VER
+#undef _MSC_VER
 // Heather reports additional macros that may be required are: 
 // _MX64 = 100 
 // _MAMD = 100
