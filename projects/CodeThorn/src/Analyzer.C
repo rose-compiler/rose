@@ -2137,7 +2137,7 @@ void CodeThorn::Analyzer::swapStgWithBackup() {
   * \date 2019.
  */
 
-#define FAST_GRAPH_REDUCE
+//#define FAST_GRAPH_REDUCE
 void CodeThorn::Analyzer::reduceStg(function<bool(const EState*)> predicate) {
 #ifdef FAST_GRAPH_REDUCE
   // MS 3/17/2019: new faster implementation
