@@ -53,7 +53,7 @@ bool CodeThorn::readAndParseLTLRersMappingFile(string ltlRersMappingFileName, Co
     }
     string ioString=lineEntries[0];
     int value=std::stoi(lineEntries[1]);
-    cout<<"DEBUG: Parsing mapping file: line "<<lineNr<<": "<<ioString<<" <=> "<<value<<endl;
+    cout<<"INFO: mapping: line "<<lineNr<<": "<<ioString<<" <=> "<<value<<endl;
     if(ioString.size()==2&&ioString[0]=='i') {
       rersLtlMapping.addInput(ioString[1],value);
     } else if(ioString.size()==2&&ioString[0]=='o') {
@@ -63,10 +63,6 @@ bool CodeThorn::readAndParseLTLRersMappingFile(string ltlRersMappingFileName, Co
     }
     lineNr++;
   }
-  cout<<"DEBUG:";CppStdUtilities::printContainer(rersLtlMapping.getInputCharSet(),",",cout);
-  cout<<"DEBUG:";CppStdUtilities::printContainer(rersLtlMapping.getInputValueSet(),",",cout);
-  cout<<"DEBUG:";CppStdUtilities::printContainer(rersLtlMapping.getOutputCharSet(),",",cout);
-  cout<<"DEBUG:";CppStdUtilities::printContainer(rersLtlMapping.getOutputValueSet(),",",cout);
   return true;
 }
 

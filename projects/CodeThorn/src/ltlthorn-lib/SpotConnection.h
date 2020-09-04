@@ -124,7 +124,7 @@ namespace CodeThorn {
       // returns a set of atomic propositions (variables in the LTL formulae) representing the given "ioVals" I/O values.
       // "maxInputVal" determines the greatest value to be prepended with an 'i' for input. Every integer greater than that
       // will be prepended with 'o'
-      spot::ltl::atomic_prop_set* getAtomicProps(std::set<int> ioVals, int maxInputVal);
+      spot::ltl::atomic_prop_set* getAtomicProps(CodeThorn::LtlRersMapping ltlRersMapping);
       // reads in a list of LTL formulas (file in RERS format, meaining only lines containing formulae begin with '(')
       std::list<std::string>* loadFormulae(istream& input);
 
@@ -179,10 +179,13 @@ namespace CodeThorn {
       PropertyValueTable* getLtlResults();
       void resetLtlResults();
       void resetLtlResults(int property);
-      std::string int2PropName(int ioVal, int maxInVal);
       void setModeLTLDriven(bool ltlDriven);
       std::string spinSyntax(std::string ltlFormula);
       std::set<std::string> atomicPropositions(std::string ltlFormula);
+
+      // deprecated, use ltlRersMapping.getIOString(ioVal) instead, only used by Solver 10
+      std::string int2PropName(int ioVal, int maxInVal);
+
   private:
       void reportUndefinedFunction();
   };

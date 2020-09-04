@@ -18,6 +18,7 @@ namespace CodeThorn {
     std::set<int> getInputValueSet();
     std::set<char> getOutputCharSet();
     std::set<int> getOutputValueSet();
+    std::set<int> getInputOutputValueSet();
     int getValue(char c);
     char getChar(int value);
     std::string getIOString(int value); // e.g. "iA" or "oZ"

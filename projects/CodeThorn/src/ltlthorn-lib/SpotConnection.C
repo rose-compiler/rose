@@ -69,21 +69,14 @@ void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg,
     return;  //neither falsification nor verification works
   } 
 
-  std::set<int> inVals=ltlRersMapping.getInputValueSet();
-  std::set<int> outVals=ltlRersMapping.getOutputValueSet();
-
-  //prepare the analysis
-  //determine largest input Value, then merge input and output alphabet
-  int maxInputVal = *( std::max_element(inVals.begin(), inVals.end()) );
-  std::set<int> ioValues = inVals;
-  ioValues.insert(outVals.begin(), outVals.end());
   //initializing the atomic propositions used based on I/O values
-  spot::ltl::atomic_prop_set* sap = getAtomicProps(ioValues, maxInputVal);
+  spot::ltl::atomic_prop_set* sap = getAtomicProps(ltlRersMapping);
+
   //instantiate a new dictionary for atomic propositions 
   // (will be used by the model tgba as well as by the ltl formula tgbas)
   spot::bdd_dict dict;
   //create a tgba from CodeThorn's STG model
-  SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, inVals, outVals);
+  SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, ltlRersMapping.getInputValueSet(), ltlRersMapping.getOutputValueSet());
   LtlProperty ltlProperty; 
   ltlProperty.ltlString = ltlResults->getFormula(propertyNum);
   ltlProperty.propertyNumber = propertyNum;
@@ -172,20 +165,13 @@ void SpotConnection::checkLtlProperties(TransitionGraph& stg,
     return;  //neither falsification nor verification works
   } else {  //prepare the analysis
 
-    std::set<int> inVals=ltlRersMapping.getInputValueSet();
-    std::set<int> outVals=ltlRersMapping.getOutputValueSet();
-
-    //determine largest input Value, then merge input and output alphabet
-    int maxInputVal = *( std::max_element(inVals.begin(), inVals.end()) );
-    std::set<int> ioValues = inVals;
-    ioValues.insert(outVals.begin(), outVals.end());
     //initializing the atomic propositions used based on I/O values
-    spot::ltl::atomic_prop_set* sap = getAtomicProps(ioValues, maxInputVal);
+    spot::ltl::atomic_prop_set* sap = getAtomicProps(ltlRersMapping);
     //instantiate a new dictionary for atomic propositions 
     // (will be used by the model tgba as well as by the ltl formula tgbas)
     spot::bdd_dict dict;
     //create a tgba from CodeThorn's STG model
-    SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, inVals, outVals);
+    SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, ltlRersMapping.getInputValueSet(), ltlRersMapping.getOutputValueSet());
     std::string* pCounterExample; 
     ROSE_ASSERT(ltlResults);
     std::list<int>* yetToEvaluate = ltlResults->getPropertyNumbers(PROPERTY_VALUE_UNKNOWN);
@@ -393,13 +379,15 @@ spot::ltl::atomic_prop_set* SpotConnection::getAtomicProps(string ltlFormula) {
   return result;
 }
 
-spot::ltl::atomic_prop_set* SpotConnection::getAtomicProps(std::set<int> ioVals, int maxInputVal) {
+// TODO 3
+spot::ltl::atomic_prop_set* SpotConnection::getAtomicProps(LtlRersMapping ltlRersMapping) {
+  std::set<int> ioVals=ltlRersMapping.getInputOutputValueSet();
   std::string ltl_props = "";
   bool firstEntry = true;
   for (std::set<int>::iterator i = ioVals.begin(); i != ioVals.end(); ++i) {
     if (!firstEntry)
       ltl_props += " & ";
-    ltl_props += int2PropName(*i, maxInputVal);
+    ltl_props += ltlRersMapping.getIOString(*i); // e.g. iA
     firstEntry = false;
   }
   spot::ltl::parse_error_list pel;
@@ -437,10 +425,10 @@ std::list<std::string>* SpotConnection::loadFormulae(istream& input) {
       nextFormula = new LtlProperty();
     } else if (line.size()==0) {
       // empty line found (no spaces, only '\n')
-    } else if (line.size()>0 && line.at(0) == '#' && line.at(1)=='i') {
+    } else if (line.size()>=2 && line.at(0) == '#' && line.at(1)=='i') {
       // found inputs line (must match inputs array content)
       cout<<"LTL PARSER: detected inputs line: "<<line<<endl;
-    } else if (line.size()>0 && line.at(0) == '#' && line.at(1)=='o') {
+    } else if (line.size()>=2 && line.at(0) == '#' && line.at(1)=='o') {
       // found inputs line
       cout<<"LTL PARSER: detected outputs line: "<<line<<endl;
     } else {
@@ -751,20 +739,4 @@ void SpotConnection::reportUndefinedFunction() {
 
 #endif
 
-// TODO: move to a more appropriate class (does not utilize SPOT, but handles the RERS input/output encoding)
-// therefore this function is always included, with and without SPOT.
-std::string SpotConnection::int2PropName(int ioVal, int maxInputVal)  {
-  std::string result;
-  if (ioVal >maxInputVal && ioVal <= 26) {
-    result = "o";  //an output variable follows (RERS mapping)
-  } else if (ioVal >= 1 && ioVal <= maxInputVal) {
-    result = "i";  //an input variable follows (RERS mapping)
-  } else {
-    cerr << "ERROR: input/output variable not recognized (not rers format)" << endl;
-    assert(0);
-  }
-  char atomicProp = (char) (ioVal + ((int) 'A') - 1);
-  result += boost::lexical_cast<string>(atomicProp);
-  return result;
-}
 

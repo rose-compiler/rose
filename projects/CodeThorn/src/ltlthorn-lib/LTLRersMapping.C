@@ -55,6 +55,12 @@ namespace CodeThorn {
     }
     return set;
   }
+  std::set<int> LtlRersMapping::getInputOutputValueSet() {
+    std::set<int> set=getInputValueSet();
+    std::set<int> oset=getOutputValueSet();
+    set.insert(oset.begin(),oset.end());
+    return set;
+  }
   int LtlRersMapping::getValue(char c) {
     auto iterI=_inputMappingCharInt.find(c);
     if(iterI!=_inputMappingCharInt.end())
