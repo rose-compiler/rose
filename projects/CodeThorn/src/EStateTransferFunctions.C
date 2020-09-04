@@ -467,8 +467,25 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge,
   }
 }
 
-std::list<EState> EStateTransferFunctions::transferFunctionExit(Edge edge, const EState* estate) {
-  EState currentEState=*estate;
+  std::list<EState> EStateTransferFunctions::transferFunctionEntry(Edge edge, const EState* estate) {
+    Label lab=estate->label();
+    SgNode* node=_analyzer->getLabeler()->getNode(lab);
+    SgFunctionDefinition* funDef=isSgFunctionDefinition(node);
+    if(funDef) {
+      string functionName=SgNodeHelper::getFunctionName(node);
+      //cout<<"DEBUG: Analyzing function "<<functionName<<endl;
+      SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+      SAWYER_MESG(logger[TRACE])<<"Function:"<<functionName<<" Parameters: ";
+      for(auto fParam : formalParameters) {
+        SAWYER_MESG(logger[TRACE])<<fParam->unparseToString()<<" sym:"<<fParam->search_for_symbol_from_symbol_table()<<endl;
+      }
+      SAWYER_MESG(logger[TRACE])<<endl;
+    }
+    return transferIdentity(edge,estate);
+  }
+  
+  std::list<EState> EStateTransferFunctions::transferFunctionExit(Edge edge, const EState* estate) {
+    EState currentEState=*estate;
   if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.source()))) {
     // 1) determine all local variables (including formal parameters) of function
     // 2) delete all local variables from state

@@ -54,7 +54,7 @@ namespace CppStdUtilities {
     for(typename Container::const_iterator iter = s.begin();
         iter != s.end();
         iter++) {
-      if(iter!=s.begin()) {
+      if(std::distance(s.begin(),iter)!=0) {
         output << seperator;
       }
       output << *iter;

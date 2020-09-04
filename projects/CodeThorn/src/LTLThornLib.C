@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 
 #include <string>     // std::string, std::stoi
+#include <regex>
 
 #include "IOAnalyzer.h"
 #include "ReadWriteAnalyzer.h"
@@ -15,6 +16,7 @@
 #include "ltlthorn-lib/Solver10.h"
 #include "ltlthorn-lib/Solver11.h"
 #include "ltlthorn-lib/Solver12.h"
+#include "CodeThornException.h"
 
 #include <execinfo.h>
 #include <unistd.h>
@@ -76,7 +78,7 @@ namespace CodeThorn {
     auto iterO=_outputMappingCharInt.find(c);
     if(iterO!=_outputMappingCharInt.end())
       return (*iterO).second;
-    return -1;
+    throw CodeThorn::Exception(string("LtlRersMapping::getValue unknown char: ")+c);
   }
   char LtlRersMapping::getChar(int value) {
     auto iterI=_inputMappingIntChar.find(value);
@@ -85,7 +87,9 @@ namespace CodeThorn {
     auto iterO=_outputMappingIntChar.find(value);
     if(iterO!=_outputMappingIntChar.end())
       return (*iterO).second;
-    return '_';
+    stringstream ss;
+    ss<<value;
+    throw CodeThorn::Exception(string("LtlRersMapping::getChar unknown value: ")+ss.str());
   }
   std::string LtlRersMapping::getIOString(int value) {
     auto iterI=_inputMappingIntChar.find(value);
@@ -94,7 +98,9 @@ namespace CodeThorn {
     auto iterO=_outputMappingIntChar.find(value);
     if(iterO!=_outputMappingIntChar.end())
       return string("o")+(*iterO).second;
-    return "x_";
+    stringstream ss;
+    ss<<value;
+    throw CodeThorn::Exception(string("LtlRersMapping::getIOString unknown value: ")+ss.str());
   }
   bool LtlRersMapping::isInput(char c) {
     return _inputMappingCharInt.find(c)!=_inputMappingCharInt.end();
@@ -123,22 +129,27 @@ bool CodeThorn::readAndParseLTLRersMappingFile(string ltlRersMappingFileName, Co
     return readStatus;
   int lineNr=1;
   for(std::string line : dataFileVector) {
-    std::vector<std::string> lineEntries=CppStdUtilities::splitByComma(line);
+    std::vector<std::string> lineEntries=CppStdUtilities::splitByRegex(line,",|\\t|\\s+");
     if(lineEntries.size()!=2) {
-      cerr<<"Error: format error in rers mapping file. More than two entries in line "<<lineNr<<endl;
+      cerr<<"Error: format error in rers mapping file. Not exactly two entries in line "<<lineNr<<endl;
       exit(1);
     }
     string ioString=lineEntries[0];
     int value=std::stoi(lineEntries[1]);
     cout<<"DEBUG: Parsing mapping file: line "<<lineNr<<": "<<ioString<<" <=> "<<value<<endl;
-    if(ioString[0]=='i') {
+    if(ioString.size()==2&&ioString[0]=='i') {
       rersLtlMapping.addInput(ioString[1],value);
-    } else if(ioString[0]=='o') {
+    } else if(ioString.size()==2&&ioString[0]=='o') {
       rersLtlMapping.addOutput(ioString[1],value);
     } else {
       cout<<"WARNING: unknown entry in rers mapping file line "<<lineNr<<": "<<ioString<<" (ignoring it)"<<endl;
     }
+    lineNr++;
   }
+  cout<<"DEBUG:";CppStdUtilities::printContainer(rersLtlMapping.getInputCharSet(),",",cout);
+  cout<<"DEBUG:";CppStdUtilities::printContainer(rersLtlMapping.getInputValueSet(),",",cout);
+  cout<<"DEBUG:";CppStdUtilities::printContainer(rersLtlMapping.getOutputCharSet(),",",cout);
+  cout<<"DEBUG:";CppStdUtilities::printContainer(rersLtlMapping.getOutputValueSet(),",",cout);
   return true;
 }
 
@@ -283,6 +294,9 @@ void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAna
         cerr<<"Error: could not open RERS mapping file "<<ltlOpt.ltlRersMappingFileName<<endl;
         exit(1);
       }
+      // set input/output alphabets here as well
+      ltlInAlphabet=ltlRersMapping.getInputValueSet();
+      ltlOutAlphabet=ltlRersMapping.getOutputValueSet();
     }
     if(ltlInAlphabet.size()==0) {
       cerr<<"Error: no LTL input alphabet provided."<<endl;

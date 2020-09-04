@@ -1561,13 +1561,16 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
     res.init(estate,AbstractValue::createTop());
     return listify(res);
   }  
-  SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<"MODE:"<<mode<<endl;
+  SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<"MODE:"<<mode<<" Symbol:"<<node->get_symbol()<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue::createBot());
 
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
-  ROSE_ASSERT(varId.isValid());
+  if(!varId.isValid()) {
+    SAWYER_MESG(logger[ERROR])<<"Invalid varId: "<<node->unparseToString()<<" Parent: "<<node->get_parent()->unparseToString()<<" Symbol:"<<node->get_symbol()<<endl;
+    ROSE_ASSERT(varId.isValid());
+  }
   // check if var is a struct member. if yes return struct-offset.
   //cout<<"DEBUG1: VarRefExp: "<<_variableIdMapping->variableName(varId)<<endl;
   if(isMemberVariable(varId)) {

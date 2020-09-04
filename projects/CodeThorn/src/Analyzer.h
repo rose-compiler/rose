@@ -364,6 +364,7 @@ namespace CodeThorn {
     std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallExternal(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallReturn(Edge edge, const EState* estate);
+    std::list<EState> transferFunctionEntry(Edge edge, const EState* estate);
     std::list<EState> transferFunctionExit(Edge edge, const EState* estate);
     std::list<EState> transferReturnStmt(Edge edge, const EState* estate);
     std::list<EState> transferCaseOptionStmt(SgCaseOptionStmt* stmt,Edge edge, const EState* estate);
