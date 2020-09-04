@@ -3203,9 +3203,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
   // ROSE_ASSERT(struct_name->get_declaration() != NULL);
 
 #if 0
-     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
-     printf ("In buildMemberFunctionType() return_type = %p typeList = %p struct_name = %p = %s = %s mfunc_specifier = %u \n",
-          return_type,typeList,struct_name,struct_name->class_name().c_str(),struct_name->get_declaration()->get_name().str(),mfunc_specifier);
+     printf("struct_name = %p ( %s )\n", struct_name, struct_name->class_name().c_str());
 #endif
 
   // SgDeclarationStatement* declaration = struct_name->get_declaration();
