@@ -20589,11 +20589,11 @@ SgSourceFile *SageBuilder::buildJavaSourceFile(SgProject *project, string direct
     //
     // Create a package statement and add it to the source file
     //
-    SgFunctionDeclaration* pkgDefDecl = package_definition->get_declaration();
+    SgClassDeclaration* pkgDefDecl = package_definition->get_declaration();
     ROSE_ASSERT(pkgDefDecl != NULL);
     SgJavaPackageStatement *package_statement = SageBuilder::buildJavaPackageStatement(pkgDefDecl->get_qualified_name().getString());
-    package_statement -> set_parent(package_definition);
-    sourcefile -> set_package(package_statement);
+    package_statement->set_parent(package_definition);
+    sourcefile->set_package(package_statement);
 
     //
     // Initialize an import-list for the sourcefile
