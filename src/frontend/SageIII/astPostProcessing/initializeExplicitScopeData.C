@@ -214,10 +214,16 @@ InitializeExplicitScopes::visit ( SgNode *node)
                             {
                            // DQ (9/13/2011): Reported as possible NULL value in static analysis of ROSE code.
                               ROSE_ASSERT(initializedName != NULL);
-                              ROSE_ASSERT(initializedName->get_parent() != NULL);
-
-                              printf ("Error: default reached initializedName->get_parent() = %s \n",
-                                   initializedName->get_parent()->sage_class_name());
+                              SgNode* parentNode = initializedName->get_parent();
+                              ROSE_ASSERT(parentNode != NULL);
+                              const char *className = parentNode->sage_class_name();
+                              if (className != NULL) {
+                                 printf ("Error: default reached initializedName->get_parent() = %s \n",
+                                   parentNode->sage_class_name());
+                              }
+                              else {
+                                 printf ("Error: default reached initializedName->get_parent() = NULL \n");
+                              }
                               ROSE_ASSERT(false);
                             }
                        }
