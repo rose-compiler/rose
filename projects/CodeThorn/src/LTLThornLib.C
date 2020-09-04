@@ -43,6 +43,20 @@ namespace CodeThorn {
     _outputMappingCharInt[c]=v;
     _outputMappingIntChar[v]=c;
   }
+
+  void LtlRersMapping::addInputAsciiValueSetWithOffsetA(std::string setString) {
+    set<int> valueSet=CodeThorn::Parse::integerSet(setString);
+    for(auto val : valueSet) {
+      addInput('A'+val-1,val);
+    }
+  }
+  void LtlRersMapping::addOutputAsciiValueSetWithOffsetA(std::string setString) {
+    set<int> valueSet=CodeThorn::Parse::integerSet(setString);
+    for(auto val : valueSet) {
+      addOutput('A'+val-1,val);
+    }
+  }
+
   std::set<char> LtlRersMapping::getInputCharSet() {
     std::set<char> set;
     for(auto entry : _inputMappingCharInt) {
@@ -274,18 +288,11 @@ void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAna
     std::set<int> ltlInAlphabet;// = analyzer->getInputVarValues();
     //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
     if (ltlOpt.ltlInAlphabet.size()>0) {
-      string setstring=ltlOpt.ltlInAlphabet;
-      ltlInAlphabet=CodeThorn::Parse::integerSet(setstring);
-      SAWYER_MESG(logger[TRACE]) << "LTL input alphabet explicitly selected: "<< setstring << endl;
+      ltlRersMapping.addInputAsciiValueSetWithOffsetA(ltlOpt.ltlInAlphabet);
     }
-    //take ltl output alphabet if specifically described, otherwise take the old RERS specific 21...26 (a.k.a. oU...oZ)
-    std::set<int> ltlOutAlphabet;// = Parse::integerSet("{21,22,23,24,25,26}");
+    std::set<int> ltlOutAlphabet;
     if (ltlOpt.ltlOutAlphabet.size()>0) {
-      string setstring=ltlOpt.ltlOutAlphabet;
-      ltlOutAlphabet=CodeThorn::Parse::integerSet(setstring);
-      SAWYER_MESG(logger[TRACE]) << "LTL output alphabet explicitly selected: "<< setstring << endl;
-    } else {
-      // TODO: fail, if no output alphabet is provided
+      ltlRersMapping.addOutputAsciiValueSetWithOffsetA(ltlOpt.ltlOutAlphabet);
     }
     if(ltlOpt.ltlRersMappingFileName.size()>0) {
       // load and parse file into ltlInAlphabet and ltlOutAlphabet
@@ -295,9 +302,9 @@ void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAna
         exit(1);
       }
       // set input/output alphabets here as well
-      ltlInAlphabet=ltlRersMapping.getInputValueSet();
-      ltlOutAlphabet=ltlRersMapping.getOutputValueSet();
     }
+    ltlInAlphabet=ltlRersMapping.getInputValueSet();
+    ltlOutAlphabet=ltlRersMapping.getOutputValueSet();
     if(ltlInAlphabet.size()==0) {
       cerr<<"Error: no LTL input alphabet provided."<<endl;
       exit(1);

@@ -10,6 +10,10 @@ namespace CodeThorn {
   public:
     void addInput(char,int);
     void addOutput(char,int);
+    // legacy support for old format
+    void addInputAsciiValueSetWithOffsetA(std::string);
+    // legacy support for old format
+    void addOutputAsciiValueSetWithOffsetA(std::string);
     std::set<char> getInputCharSet();
     std::set<int> getInputValueSet();
     std::set<char> getOutputCharSet();
