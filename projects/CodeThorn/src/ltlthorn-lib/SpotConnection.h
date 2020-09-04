@@ -15,6 +15,7 @@
 #include "SpotTgba.h"
 #include "ParProSpotTgba.h"
 #include "PropertyValueTable.h"
+#include "LTLRersMapping.h"
 
 //SPOT includes
 #include "ltlparse/public.hh"
@@ -87,12 +88,12 @@ namespace CodeThorn {
       // counterexample input sequence. If "spuriousNoAnswers" is set to true, falsified properties will be reported also for STGs 
       // that are not precise.)
       void checkLtlProperties(TransitionGraph& stg,
-					std::set<int> inVals, std::set<int> outVals, bool withCounterExample, bool spuriousNoAnswers);
+                              CodeThorn::LtlRersMapping ltlRersMapping, bool withCounterExample, bool spuriousNoAnswers);
       // variant for model checking the state space of parallel automata
       void checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<std::string> annotationsOfModeledTransitions);
       // similar to "checkLtlProperties" above, but only checks a single property (property id specified as a parameter)
       void checkSingleProperty(int propertyNum, TransitionGraph& stg,
-						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers);
+                               CodeThorn::LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers);
       // model checking of "ltlProperty" on "stg"
       PropertyValue checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, set<std::string> annotationsOfModeledTransitions);
       ParProSpotTgba* toTgba(ParProTransitionGraph& stg);
@@ -186,6 +187,6 @@ namespace CodeThorn {
       void reportUndefinedFunction();
   };
 };
-#endif
+#endif // end of HAVE_SPOT guard
 
-#endif // end of "#ifndef SPOT_CONNECTION_H"
+#endif // end of SPOT_CONNECTION_H guard

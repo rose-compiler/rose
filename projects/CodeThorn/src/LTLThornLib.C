@@ -33,103 +33,6 @@ using namespace boost;
 #include "Diagnostics.h"
 using namespace Sawyer::Message;
 
-
-namespace CodeThorn {
-  void LtlRersMapping::addInput(char c,int v) {
-    _inputMappingCharInt[c]=v;
-    _inputMappingIntChar[v]=c;
-  }
-  void LtlRersMapping::addOutput(char c,int v) {
-    _outputMappingCharInt[c]=v;
-    _outputMappingIntChar[v]=c;
-  }
-
-  void LtlRersMapping::addInputAsciiValueSetWithOffsetA(std::string setString) {
-    set<int> valueSet=CodeThorn::Parse::integerSet(setString);
-    for(auto val : valueSet) {
-      addInput('A'+val-1,val);
-    }
-  }
-  void LtlRersMapping::addOutputAsciiValueSetWithOffsetA(std::string setString) {
-    set<int> valueSet=CodeThorn::Parse::integerSet(setString);
-    for(auto val : valueSet) {
-      addOutput('A'+val-1,val);
-    }
-  }
-
-  std::set<char> LtlRersMapping::getInputCharSet() {
-    std::set<char> set;
-    for(auto entry : _inputMappingCharInt) {
-      set.insert(entry.first);
-    }
-    return set;
-  }
-  std::set<int> LtlRersMapping::getInputValueSet() {
-    std::set<int> set;
-    for(auto entry : _inputMappingCharInt) {
-      set.insert(entry.second);
-    }
-    return set;
-  }
-  std::set<char> LtlRersMapping::getOutputCharSet() {
-    std::set<char> set;
-    for(auto entry : _outputMappingCharInt) {
-      set.insert(entry.first);
-    }
-    return set;
-  }
-  std::set<int> LtlRersMapping::getOutputValueSet() {
-    std::set<int> set;
-    for(auto entry : _outputMappingCharInt) {
-      set.insert(entry.second);
-    }
-    return set;
-  }
-  int LtlRersMapping::getValue(char c) {
-    auto iterI=_inputMappingCharInt.find(c);
-    if(iterI!=_inputMappingCharInt.end())
-      return (*iterI).second;
-    auto iterO=_outputMappingCharInt.find(c);
-    if(iterO!=_outputMappingCharInt.end())
-      return (*iterO).second;
-    throw CodeThorn::Exception(string("LtlRersMapping::getValue unknown char: ")+c);
-  }
-  char LtlRersMapping::getChar(int value) {
-    auto iterI=_inputMappingIntChar.find(value);
-    if(iterI!=_inputMappingIntChar.end())
-      return (*iterI).second;
-    auto iterO=_outputMappingIntChar.find(value);
-    if(iterO!=_outputMappingIntChar.end())
-      return (*iterO).second;
-    stringstream ss;
-    ss<<value;
-    throw CodeThorn::Exception(string("LtlRersMapping::getChar unknown value: ")+ss.str());
-  }
-  std::string LtlRersMapping::getIOString(int value) {
-    auto iterI=_inputMappingIntChar.find(value);
-    if(iterI!=_inputMappingIntChar.end())
-      return string("i")+(*iterI).second;
-    auto iterO=_outputMappingIntChar.find(value);
-    if(iterO!=_outputMappingIntChar.end())
-      return string("o")+(*iterO).second;
-    stringstream ss;
-    ss<<value;
-    throw CodeThorn::Exception(string("LtlRersMapping::getIOString unknown value: ")+ss.str());
-  }
-  bool LtlRersMapping::isInput(char c) {
-    return _inputMappingCharInt.find(c)!=_inputMappingCharInt.end();
-  }
-  bool LtlRersMapping::isInput(int value) {
-    return _inputMappingIntChar.find(value)!=_inputMappingIntChar.end();
-  }
-  bool LtlRersMapping::isOutput(char c) {
-    return _outputMappingCharInt.find(c)!=_inputMappingCharInt.end();
-  }
-  bool LtlRersMapping::isOutput(int value) {
-    return _outputMappingIntChar.find(value)!=_inputMappingIntChar.end();
-  }
-}
-
 void CodeThorn::initDiagnosticsLTL() {
   IOAnalyzer::initDiagnostics();
   ReadWriteAnalyzer::initDiagnostics();
@@ -285,12 +188,9 @@ void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAna
 
     timer.start();
     LtlRersMapping ltlRersMapping;
-    std::set<int> ltlInAlphabet;// = analyzer->getInputVarValues();
-    //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
     if (ltlOpt.ltlInAlphabet.size()>0) {
       ltlRersMapping.addInputAsciiValueSetWithOffsetA(ltlOpt.ltlInAlphabet);
     }
-    std::set<int> ltlOutAlphabet;
     if (ltlOpt.ltlOutAlphabet.size()>0) {
       ltlRersMapping.addOutputAsciiValueSetWithOffsetA(ltlOpt.ltlOutAlphabet);
     }
@@ -303,6 +203,9 @@ void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAna
       }
       // set input/output alphabets here as well
     }
+   
+    std::set<int> ltlInAlphabet;// = analyzer->getInputVarValues();
+    std::set<int> ltlOutAlphabet;
     ltlInAlphabet=ltlRersMapping.getInputValueSet();
     ltlOutAlphabet=ltlRersMapping.getOutputValueSet();
     if(ltlInAlphabet.size()==0) {
@@ -326,9 +229,9 @@ void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAna
     SAWYER_MESG(logger[TRACE]) << "LTL: check properties."<<endl;
     if (ltlOpt.propertyNrToCheck!=-1) {
       int propertyNum = ltlOpt.propertyNrToCheck;
-      spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+      spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlRersMapping , withCounterexample, spuriousNoAnswers);
     } else {
-      spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+      spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlRersMapping, withCounterexample, spuriousNoAnswers);
     }
     spotLtlAnalysisTime=timer.getTimeDurationAndStop().milliSeconds();
     SAWYER_MESG(logger[TRACE]) << "LTL: get results from spot connection."<<endl;
@@ -350,12 +253,12 @@ void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAna
         ceAnalyzer.setMaxCounterexamples(ltlOpt.cegpra.maxIterations);
       }
       if (ltlOpt.cegpra.checkAllProperties) {
-        ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlInAlphabet, ltlOutAlphabet);
+        ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlRersMapping);
       } else {
         // cegpra for single LTL property
         //ROSE_ASSERT(ltlOpt.cegpra.ltlPropertyNr!=-1);
         int property = ltlOpt.cegpra.ltlPropertyNr;
-        ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);
+        ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlRersMapping);
       }
     }
 

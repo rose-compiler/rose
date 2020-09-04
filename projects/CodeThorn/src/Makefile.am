@@ -334,6 +334,7 @@ LTLTHORN_HEADER_FILES=\
   z3-prover-connection/PhiStatement.h \
   ltlthorn-lib/CounterexampleAnalyzer.h \
   ltlthorn-lib/LtsminConnection.h \
+  ltlthorn-lib/LTLRersMapping.h \
   ltlthorn-lib/ParProAutomataGenerator.h \
   ltlthorn-lib/ParProAutomata.h \
   ltlthorn-lib/ParProAnalyzer.h \
@@ -362,6 +363,7 @@ LTLTHORN_SOURCE_FILES=\
   z3-prover-connection/PhiStatement.C \
   ltlthorn-lib/CounterexampleAnalyzer.C \
   ltlthorn-lib/LtsminConnection.C \
+  ltlthorn-lib/LTLRersMapping.C \
   ltlthorn-lib/ParProAutomataGenerator.C \
   ltlthorn-lib/ParProAutomata.C \
   ltlthorn-lib/ParProAnalyzer.C \

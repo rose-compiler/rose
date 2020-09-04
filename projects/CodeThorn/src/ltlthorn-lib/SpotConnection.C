@@ -60,7 +60,7 @@ void SpotConnection::setModeLTLDriven(bool ltlDriven) {
   modeLTLDriven=ltlDriven;
 }
 void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg, 
-						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers) {
+						LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers) {
   if (stg.size() == 0 && !modeLTLDriven) {
     cout << "STATUS: the transition system used as a model is empty, LTL behavior could not be checked." << endl;
     return;
@@ -68,6 +68,10 @@ void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg,
   if (!stg.isPrecise() && !stg.isComplete()) {
     return;  //neither falsification nor verification works
   } 
+
+  std::set<int> inVals=ltlRersMapping.getInputValueSet();
+  std::set<int> outVals=ltlRersMapping.getOutputValueSet();
+
   //prepare the analysis
   //determine largest input Value, then merge input and output alphabet
   int maxInputVal = *( std::max_element(inVals.begin(), inVals.end()) );
@@ -158,7 +162,7 @@ void SpotConnection::checkAndUpdateResults(LtlProperty property, SpotTgba* ct_tg
 }
 
 void SpotConnection::checkLtlProperties(TransitionGraph& stg,
-						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers) {
+                                        LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers) {
   if (stg.size() == 0 && !modeLTLDriven) {
     cout << "STATUS: the transition system used as a model is empty, LTL behavior cannot be checked." << endl;
     return;
@@ -167,6 +171,10 @@ void SpotConnection::checkLtlProperties(TransitionGraph& stg,
     cout << "STATUS: neither falsification nor verification possible (STG is not precise and not complete)." << endl;
     return;  //neither falsification nor verification works
   } else {  //prepare the analysis
+
+    std::set<int> inVals=ltlRersMapping.getInputValueSet();
+    std::set<int> outVals=ltlRersMapping.getOutputValueSet();
+
     //determine largest input Value, then merge input and output alphabet
     int maxInputVal = *( std::max_element(inVals.begin(), inVals.end()) );
     std::set<int> ioValues = inVals;
@@ -701,7 +709,7 @@ void SpotConnection::setModeLTLDriven(bool ltlDriven) {
   reportUndefinedFunction();
 }
 void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg, 
-						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers) {
+						LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers) {
   reportUndefinedFunction();
 }
 
@@ -712,7 +720,7 @@ PropertyValue SpotConnection::checkPropertyParPro(string ltlProperty, ParProTran
 }
 
 void SpotConnection::checkLtlProperties(TransitionGraph& stg,
-						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers) {
+						LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers) {
   reportUndefinedFunction();
 }
 
