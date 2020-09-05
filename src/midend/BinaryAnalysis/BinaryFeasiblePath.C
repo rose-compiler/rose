@@ -1067,6 +1067,9 @@ FeasiblePath::processVertex(const BaseSemantics::DispatcherPtr &cpu,
             processFunctionSummary(pathsVertex, cpu, pathInsnIndex);
             ++pathInsnIndex;
             break;
+        case P2::V_NONEXISTING:
+            ++pathInsnIndex;
+            break;
         default:
             mlog[ERROR] <<"cannot comput path feasibility; invalid vertex type at "
                         <<P2::Partitioner::vertexName(*pathsVertex) <<"\n";
@@ -1197,6 +1200,8 @@ FeasiblePath::pathToCfg(const P2::ControlFlowGraph::ConstVertexIterator &pathVer
         return partitioner().findPlaceholder(virtualAddress(pathVertex));
     if (pathVertex->value().type() == P2::V_INDETERMINATE)
         return partitioner().indeterminateVertex();
+    if (pathVertex->value().type() == P2::V_NONEXISTING)
+        return partitioner().nonexistingVertex();
     ASSERT_not_implemented("cannot convert path vertex to CFG vertex");
 }
 
@@ -1575,6 +1580,7 @@ FeasiblePath::vertexSize(const P2::ControlFlowGraph::ConstVertexIterator &vertex
             return vertex->value().bblock()->nInstructions();
         case P2::V_INDETERMINATE:
         case P2::V_USER_DEFINED:
+        case P2::V_NONEXISTING:
             return 1;
         default:
             ASSERT_not_reachable("invalid path vertex type");

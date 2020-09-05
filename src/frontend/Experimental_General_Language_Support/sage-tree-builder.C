@@ -42,7 +42,7 @@ SgGlobal* initialize_global_scope(SgSourceFile* file)
  // by "1" the start and end will not be the same value.
     globalScope->get_endOfConstruct()->set_line(1);
 
-ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());//TEMPORARY
+    ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());//TEMPORARY
     ROSE_ASSERT(SageBuilder::emptyScopeStack() == true);
     SageBuilder::pushScopeStack(globalScope);
 
@@ -542,6 +542,43 @@ Enter(SgFunctionCallExp* &func_call, const std::string &name, SgExprListExp* par
 }
 
 void SageTreeBuilder::
+Enter(SgReplicationOp* &rep_op, const std::string &name, SgExpression* value)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgReplicationOp* &, ...) \n";
+
+   SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   ROSE_ASSERT(symbol);
+
+   SgVarRefExp* count = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+   rep_op = SageBuilder::buildReplicationOp_nfi(count, value);
+}
+
+void SageTreeBuilder::
+Enter(SgCastExp* &cast_expr, const std::string &name, SgExpression* cast_operand)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgCastExp* &, ...) \n";
+
+   SgTypedefSymbol* typedef_symbol = SageInterface::lookupTypedefSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   ROSE_ASSERT(typedef_symbol);
+
+   SgType* conv_type = typedef_symbol->get_type();
+   cast_expr = SageBuilder::buildCastExp_nfi(cast_operand, conv_type, SgCastExp::e_default);
+}
+
+void SageTreeBuilder::
+Enter(SgVarRefExp* &var_ref, const std::string &name)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgVarRefExp* &, ...) \n";
+
+   SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   ROSE_ASSERT(symbol);
+
+   // TODO: not implemented yet
+   std::cerr << "WARNING UNIMPLEMENTED: Enter(SgVarRefExp* &, ...) for " << name << std::endl;
+   ROSE_ASSERT(false);
+}
+
+void SageTreeBuilder::
 Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, SgBasicBlock* false_body)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgIfStmt* &, ...) \n";
@@ -575,22 +612,8 @@ Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgProcessControlStatement* &, ...) \n";
 
-   SgExpression* code = nullptr;
-   SgExpression* quiet = nullptr;
-
-   if (opt_code) {
-      code = *opt_code;
-   }
-   else {
-      code = SageBuilder::buildNullExpression_nfi();
-   }
-
-   if (opt_quiet) {
-      quiet = *opt_quiet;
-   }
-   else {
-      quiet = SageBuilder::buildNullExpression_nfi();
-   }
+   SgExpression* code =  (opt_code)  ? *opt_code  : SageBuilder::buildNullExpression_nfi();
+   SgExpression* quiet = (opt_quiet) ? *opt_quiet : SageBuilder::buildNullExpression_nfi();
 
    ROSE_ASSERT(code);
    control_stmt = new SgProcessControlStatement(code);
@@ -652,6 +675,26 @@ Leave(SgSwitchStatement* switch_stmt)
    ROSE_ASSERT(switch_stmt);
 
    SageBuilder::popScopeStack();  // switch statement body
+}
+
+void SageTreeBuilder::
+Enter(SgReturnStmt* &return_stmt, const boost::optional<SgExpression*> &opt_expr)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgReturnStmt* &, ...) \n";
+
+   SgExpression* return_expr = (opt_expr) ? *opt_expr : SageBuilder::buildNullExpression_nfi();
+   ROSE_ASSERT(return_expr);
+
+   return_stmt = SageBuilder::buildReturnStmt_nfi(return_expr);
+}
+
+void SageTreeBuilder::
+Leave(SgReturnStmt* return_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgReturnStmt*, ...) \n";
+   ROSE_ASSERT(return_stmt);
+
+   SageInterface::appendStatement(return_stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
@@ -726,6 +769,75 @@ Leave(SgWhileStmt* while_stmt, bool has_end_do_stmt)
 
    SageBuilder::popScopeStack();  // while statement body
    SageInterface::appendStatement(while_stmt, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgImplicitStatement* &implicit_stmt, bool none_external, bool none_type)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgImplicitStatement* &, bool none_external, bool none_type)\n";
+   // Implicit None
+
+   implicit_stmt = new SgImplicitStatement(true /* implicit none*/);
+   ROSE_ASSERT(implicit_stmt);
+   SageInterface::setSourcePosition(implicit_stmt);
+
+   if (none_external && none_type) {
+      implicit_stmt->set_implicit_spec(SgImplicitStatement::e_none_external_and_type);
+   }
+   else if (none_external) {
+      implicit_stmt->set_implicit_spec(SgImplicitStatement::e_none_external);
+   }
+   else if (none_type) {
+      implicit_stmt->set_implicit_spec(SgImplicitStatement::e_none_type);
+   }
+}
+
+#ifdef CPP_ELEVEN
+void SageTreeBuilder::
+Enter(SgImplicitStatement* &implicit_stmt, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &implicit_spec_list)
+#else
+void SageTreeBuilder::Enter(SgImplicitStatement* &implicit_stmt)
+#endif
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgImplicitStatement* &, implicit_spec_list)\n";
+   // Implicit with Implicit-Spec
+
+   // Step through the list of Implicit Specs
+#ifdef CPP_ELEVEN
+   for (std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>> implicit_spec : implicit_spec_list) {
+      SgType* type;
+      std::list<std::tuple<char, boost::optional<char>>> letter_spec_list;
+      std::tie(type, letter_spec_list) = implicit_spec;
+
+      std::cout << "The type is " << type->class_name() << " and the letters are ";
+
+      // Traverse the list of letter specs
+      for (std::tuple<char, boost::optional<char>> letter_spec : letter_spec_list) {
+         char first;
+         boost::optional<char> second;
+         std::tie(first, second) = letter_spec;
+
+         std::cout << first;
+
+         if (second) {
+            std::cout << " - " << second;
+         }
+         std::cout << "\n";
+      }
+   }
+#else
+   implicit_stmt = nullptr;
+#endif
+
+}
+
+void SageTreeBuilder::
+Leave(SgImplicitStatement* implicit_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgImplicitStatement*, ...) \n";
+   ROSE_ASSERT(implicit_stmt);
+
+   SageInterface::appendStatement(implicit_stmt, SageBuilder::topScopeStack());
 }
 
 SgEnumVal* SageTreeBuilder::
@@ -826,24 +938,23 @@ Leave(SgJovialDirectiveStatement* directive)
 }
 
 void SageTreeBuilder::
-Enter(SgJovialForThenStatement* &for_stmt, SgExpression* init_expr, SgExpression* incr_expr,
-         SgExpression* test_expr)
+Enter(SgJovialForThenStatement* &for_stmt, SgExpression* init_expr, SgExpression* while_expr,
+      SgExpression* by_or_then_expr, SgJovialForThenStatement::loop_statement_type_enum loop_type)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialForThenStatement* &, ...) \n";
 
+// The increment and test expressions can be nullptr (at least from the grammar)
    ROSE_ASSERT(init_expr);
-   ROSE_ASSERT(incr_expr);
-   ROSE_ASSERT(test_expr);
 
-   SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
+   for_stmt = SageBuilder::buildJovialForThenStatement_nfi(init_expr, while_expr, by_or_then_expr);
 
-   for_stmt = new SgJovialForThenStatement(init_expr, incr_expr, test_expr, body);
-   ROSE_ASSERT(for_stmt);
-   SageInterface::setSourcePosition(for_stmt);
+   SgBasicBlock* body = for_stmt->get_loop_body();
+   ROSE_ASSERT(body);
 
-   if (SageInterface::is_language_case_insensitive()) {
-      for_stmt->setCaseInsensitive(true);
-   }
+   for_stmt->set_loop_statement_type(loop_type);
+
+// Append now (before Leave is called) so that symbol lookup will work
+   SageInterface::appendStatement(for_stmt, SageBuilder::topScopeStack());
 
    SageBuilder::pushScopeStack(body);
 }
@@ -854,7 +965,6 @@ Leave(SgJovialForThenStatement* for_stmt)
    mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialForThenStatement*, ...) \n";
 
    SageBuilder::popScopeStack();  // for body
-   SageInterface::appendStatement(for_stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::

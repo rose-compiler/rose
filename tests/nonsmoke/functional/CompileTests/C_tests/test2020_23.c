@@ -1,22 +1,19 @@
 // RC-65:
 
-    struct htab {
+// We might be able to fix this by detecting names of constructs that match
+// those in the macros defined, and then just remove the associated #define.
 
-      int size;
+struct htab 
+   {
+     int size;
+   };
 
-    };
+typedef struct htab * htab_t;
 
-    typedef struct htab * htab_t;
+#define htab_size(htab)  ((htab)->size)
 
-     
-
-    #define htab_size(htab)  ((htab)->size)
-
-     
-
-    int (htab_size) (htab_t htab) {
-
-      return htab_size(htab);
-
-    }
+int (htab_size) (htab_t htab) 
+   {
+     return htab_size(htab);
+   }
 

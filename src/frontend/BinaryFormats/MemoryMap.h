@@ -408,7 +408,24 @@ public:
 
     /** Documentation string for @ref insertData. */
     static std::string insertDataDocumentation();
-    
+
+    /** Information about a process map. */
+    struct ProcessMapRecord {
+        AddressInterval interval;                       /** Mapped virtual addresses. */
+        unsigned accessibility;                         /** The accessibility flags. */
+        rose_addr_t fileOffset;                         /** Starting byte offset in the file. */
+        std::string deviceName;                         /** The device from which the data is mapped, or "00:00". */
+        size_t inode;                                   /** Inode on the device, or zero. */
+        std::string comment;                            /** Optional comment. */
+
+        ProcessMapRecord()
+            : accessibility(0), fileOffset(0), inode(0) {}
+    };
+
+    /** Obtain the memory map information for a process.
+     *
+     *  Returns an empty vector if there was an error parsing the process information. */
+    static std::vector<ProcessMapRecord> readProcessMap(pid_t);
 
 #ifdef BOOST_WINDOWS
     void insertProcess(int pid, Attach::Boolean attach);

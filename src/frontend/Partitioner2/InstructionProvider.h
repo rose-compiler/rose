@@ -185,6 +185,9 @@ public:
     /** Default memory byte order. */
     ByteOrder::Endianness defaultByteOrder() const { return disassembler_->byteOrder(); }
 
+    /** Alignment requirement for instructions. */
+    size_t instructionAlignment() const { return disassembler_->instructionAlignment(); }
+
     /** Instruction dispatcher.
      *
      *  Returns a pointer to a dispatcher used for instruction semantics.  Not all architectures support instruction semantics,

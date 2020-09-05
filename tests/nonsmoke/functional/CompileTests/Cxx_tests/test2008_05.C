@@ -3,7 +3,9 @@
 #include <unistd.h>
 #include <string.h>
 
+#if ( defined(__clang__) == 0 && (__GNUC_MINOR__ < 4) && !defined(LIE_ABOUT_GNU_VERSION_TO_EDG) )
 #pragma STDC FENV_ACCESS ON
+#endif
 
 /* Returns nonzero only iff filename is in user's home directory */
 int verify_file(char* const filename) {

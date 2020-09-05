@@ -1062,6 +1062,64 @@ PreprocessingInfo::set_file_info( Sg_File_Info* info )
      ROSE_ASSERT(file_info != NULL);
    }
 
+// DQ (8/26/2020): include directive have a filename imbedded inside, and we need to  
+// extract that for from tools (e.g. the fixup for initializers from include files).
+std::string PreprocessingInfo::get_filename_from_include_directive()
+   {
+     std::string s;
+
+  // s = "#line 12345\"foobar.h\"6789";
+  // s = "#line \"foobar.h\"";
+  // s = "#line <foobar.h>";
+  // s = "#line 12345<foobar.h>6789";
+
+     if (this->getTypeOfDirective() == CpreprocessorIncludeDeclaration)
+        {
+       // std::string line = s;
+          std::string line = internalString;
+          std::string name;
+
+          std::string tester="\"";
+
+          size_t findPos  = line.find(tester); //finds first quote mark
+
+          if (findPos == string::npos)
+             {
+#if 0
+               printf ("Could not find quoted substring, might be using <> syntax: line = %s \n",line.c_str());
+#endif
+               tester="<";
+               findPos  = line.find(tester); //finds first quote mark
+               tester=">";
+#if 0
+               printf ("Exitng as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
+          size_t findPos2 = line.find(tester, findPos+1); //finds second quote mark
+          ROSE_ASSERT(findPos2 > findPos);
+#if 0
+          printf ("findPos = %zu findPos2 = %zu \n",findPos,findPos2);
+#endif
+          name = line.substr(findPos+1,(findPos2-findPos)-1); //copies the name into name
+
+       // printf ("before adding terminal: name = |%s| \n",name.c_str());
+#if 0
+          printf ("In PreprocessingInfo::get_filename_from_include_directive(): name = |%s| \n",name.c_str());
+#endif
+          s = name;
+        }
+       else
+        {
+          printf ("Error: In PreprocessingInfo::get_filename_from_include_directive(): getTypeOfDirective != CpreprocessorIncludeDeclaration \n"); 
+          ROSE_ASSERT(false);
+        }
+
+     return s;
+   }
+
+
 // DQ (11/28/2008): Support for CPP generated linemarkers
 int
 PreprocessingInfo::get_lineNumberForCompilerGeneratedLinemarker()

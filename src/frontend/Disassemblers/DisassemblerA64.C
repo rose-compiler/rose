@@ -52,6 +52,7 @@ DisassemblerArm::init() {
             p_proto_dispatcher = InstructionSemantics2::DispatcherA64::instance();
             break;
     }
+    instructionAlignment_ = 4;
     if (name.empty())
         throw Exception("invalid ARM architecture");
     if (modes_.isSet(Mode::MODE_THUMB))
@@ -99,8 +100,8 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
     } r;
 
     // Read the encoded instruction bytes into a temporary buffer to be used by capstone
-    if (va & 0x3)
-        throw Exception("instruction pointer not word aligned", va);
+    if (va % instructionAlignment_ != 0)
+        throw Exception("instruction pointer not aligned", va);
     if (ARCH_ARM == arch_ && va > 0xfffffffc)
         throw Exception("instruction pointer out of range", va);
     uint8_t bytes[4];                                   // largest possible instruction is 4 bytes
