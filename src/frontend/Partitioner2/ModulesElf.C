@@ -65,10 +65,17 @@ PltEntryMatcher::matchNop(const Partitioner &partitioner, rose_addr_t va) {
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchPush(const Partitioner &partitioner, rose_addr_t va) {
+PltEntryMatcher::matchPush(const Partitioner &partitioner, rose_addr_t va, rose_addr_t &n /*out*/) {
+    n = 0;
+
+    // match "push C" where C is a constant
     if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.discoverInstruction(va))) {
-        if (insn->get_kind() == x86_push)
-            return insn;
+        if (insn->get_kind() == x86_push && insn->nOperands() == 1) {
+            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(insn->operand(0))) {
+                n = ival->get_absoluteValue();
+                return insn;
+            }
+        }
     }
     return NULL;
 }
@@ -201,31 +208,34 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
     gotEntryVa_ = 0;
     gotEntry_ = 0;
     gotEntryNBytes_ = 0;
+    functionNumber_ = 0;
 
     SgAsmInstruction *insn = partitioner.discoverInstruction(anchor);
 
     // Look for the PLT entry.
     if (SgAsmX86Instruction *insnX86 = isSgAsmX86Instruction(insn)) {
+        bool found = false;
         rose_addr_t indirectVa=0;
         size_t indirectSize=0;
 
-        if (0 == gotEntryNBytes_) {
-            // i386 entries look like this, and are each 16 bytes:
+        if (!found) {
+            // i386 entries that look like this, and are each 16 bytes:
             //    jmp dword [CONST]; where CONST is a GOT entry address
             //    push N;  where N is a small integer, unique for each dynamically linked function
             //    jmp X;   where X is the address of the first PLT entry
             SgAsmInstruction *ijmp = matchIndirectJump(partitioner, anchor, indirectVa /*out*/, indirectSize /*out*/);
-            SgAsmInstruction *push = ijmp ? matchPush(partitioner, ijmp->get_address() + ijmp->get_size()) : NULL;
+            SgAsmInstruction *push = ijmp ? matchPush(partitioner, ijmp->get_address() + ijmp->get_size(), functionNumber_) : NULL;
             SgAsmInstruction *djmp = push ? matchDirectJump(partitioner, push->get_address() + push->get_size()) : NULL;
             if (djmp) {
                 gotEntryNBytes_ = indirectSize;
                 gotEntryVa_ = indirectVa;
                 nBytesMatched_ = djmp->get_address() + djmp->get_size() - anchor;
+                found = true;
             }
         }
 
-        if (0 == gotEntryNBytes_) {
-            // Amd64 entries look like this, and are each 16 bytes:
+        if (!found) {
+            // Amd64 entries that look like this, and are each 16 bytes:
             //    nop;     4 bytes
             //    jmp qword [rip + CONST]; address of a GOT entry
             //    nop;     5 bytes
@@ -237,6 +247,24 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
                 gotEntryNBytes_ = indirectSize;
                 gotEntryVa_ = indirectVa;
                 nBytesMatched_ = nop2->get_address() + nop2->get_size() - anchor;
+                found = true;
+            }
+        }
+
+        if (!found) {
+            // Amd64 entries that look like this, and are each 16 bytes:
+            //    nop      ; 4 bytes
+            //    push N   ; where N is a small integer, unique for each dynamically linked function
+            //    jmp X    ; where X is the address of the first PLT entry
+            //    nop      ; 5 bytes
+            SgAsmInstruction *nop1 = matchNop(partitioner, anchor);
+            SgAsmInstruction *push = nop1 ? matchPush(partitioner, nop1->get_address() + nop1->get_size(), functionNumber_) : NULL;
+            SgAsmInstruction *djmp = push ? matchDirectJump(partitioner, push->get_address() + push->get_size()) : NULL;
+            if (djmp) {
+                gotEntryNBytes_ = 0;                    // not present in PLT entry
+                gotEntryVa_ = 0;                        // not present in PLT entry
+                nBytesMatched_ = djmp->get_address() + djmp->get_size() - anchor;
+                found = true;
             }
         }
 
