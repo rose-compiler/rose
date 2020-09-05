@@ -214,10 +214,10 @@ namespace CodeThorn {
     // print stats
     int numProvenFunctions=numVerifiedFunctions+numFalsifiedFunctions;
     int numTotalFunctions=numProvenFunctions+numUnverifiedFunctions;
-    cout<<"Proven     functions: "<<numProvenFunctions<<" [ "<<numProvenFunctions/(double)numTotalFunctions<<"%]"<<endl;
-    cout<<" Verified  functions: "<<numVerifiedFunctions<<" [ "<<numVerifiedFunctions/(double)numTotalFunctions<<"%]"<<endl;
-    cout<<" Falsified functions: "<<numFalsifiedFunctions<<" [ "<<numFalsifiedFunctions/(double)numTotalFunctions<<"%]"<<endl;
-    cout<<"Unproven   functions: "<<numUnverifiedFunctions<<" [ "<<numUnverifiedFunctions/(double)numTotalFunctions<<"%]"<<endl;
+    cout<<"Proven     functions: "<<numProvenFunctions<<" [ "<<numProvenFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
+    cout<<" Verified  functions: "<<numVerifiedFunctions<<" [ "<<numVerifiedFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
+    cout<<" Falsified functions: "<<numFalsifiedFunctions<<" [ "<<numFalsifiedFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
+    cout<<"Unproven   functions: "<<numUnverifiedFunctions<<" [ "<<numUnverifiedFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
     cout<<"Total      functions: "<<numTotalFunctions<<endl;
     
     std::string dotFileString=cgBegin+cgNodes.str()+cgEdges+cgEnd;
