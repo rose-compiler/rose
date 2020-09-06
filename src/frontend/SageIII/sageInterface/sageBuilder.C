@@ -3209,9 +3209,14 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 #endif
 
   // SgDeclarationStatement* declaration = struct_name->get_declaration();
-     SgClassDefinition* classDefinition = isSgClassDefinition(struct_name);
-     SgDeclarationScope* decl_scope = isSgDeclarationScope(struct_name);
+     SgClassDefinition*  classDefinition = isSgClassDefinition(struct_name);
+     SgDeclarationScope* decl_scope      = isSgDeclarationScope(struct_name);
 
+     if (classDefinition == NULL && decl_scope == NULL)
+        {
+          printf ("Error: (classDefinition == NULL && decl_scope == NULL): struct_name = %p = %s name = %s \n",
+                  struct_name,struct_name->class_name().c_str(),SageInterface::get_name(struct_name).c_str());
+        }
      ROSE_ASSERT(classDefinition != NULL || decl_scope != NULL);
 
      SgDeclarationStatement* declaration = NULL;
@@ -4833,7 +4838,7 @@ SgTemplateMemberFunctionDeclaration*
 SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateParameterPtrList* templateParameterList)
    {
 #if 0
-  printf("In SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration(name = %s):\n", name.str());
+     printf("In SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration(name = %s):\n", name.str());
 #endif
 
   // This function only builds template member function declarations.
@@ -4963,8 +4968,8 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
        SageInterface::setSourcePosition(nonreal_decl_scope);
        nonreal_decl_scope->get_startOfConstruct()->setCompilerGenerated();
        nonreal_decl_scope->get_endOfConstruct()->setCompilerGenerated();
-#if 1
-       printf("In SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration(name = %s): nrscope = %p (new)\n", name.str(), nonreal_decl_scope);
+#if 0
+       printf("Leaving SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration(name = %s): nrscope = %p (new)\n", name.str(), nonreal_decl_scope);
 #endif
      }
 #endif
@@ -14781,7 +14786,7 @@ SgTemplateClassDeclaration*
 SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList )
    {
 #if 0
-  printf("In SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(XXX_name = %p):\n", XXX_name.str());
+     printf("In SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(XXX_name = %p):\n", XXX_name.str());
 #endif
 
      if (scope == NULL)
