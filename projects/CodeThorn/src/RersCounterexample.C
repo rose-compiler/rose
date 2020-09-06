@@ -67,16 +67,16 @@ string RersCounterexample::toRersIOString(bool withOutput) const {
   for (RersCounterexample::const_iterator i = begin; i != end; i++ ) {
     if ( (*i)->io.isStdInIO() || (withOutput && (*i)->io.isStdOutIO()) ) {
       if (!firstSymbol) {
-	result << ";";
+        result << ";";
       }
       const PState* pstate = (*i)->pstate();
       int inOutVal = pstate->readFromMemoryLocation((*i)->io.var).getIntValue();
       if ((*i)->io.isStdInIO()) {
-	result << "i" << toRersChar(inOutVal);
-	firstSymbol = false;
+        result << "i" << toRersChar(inOutVal);
+        firstSymbol = false;
       } else if (withOutput && (*i)->io.isStdOutIO()) {
-	result << "o" << toRersChar(inOutVal);
-	firstSymbol = false;
+        result << "o" << toRersChar(inOutVal);
+        firstSymbol = false;
       } 
     }
   }

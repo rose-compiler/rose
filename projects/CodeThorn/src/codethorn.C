@@ -165,6 +165,7 @@ int main( int argc, char * argv[] ) {
     analyzer->configureOptions(ctOpt,ltlOpt,parProOpt);
     analyzer->setSolver(createSolver(ctOpt));
     analyzer->setOptionContextSensitiveAnalysis(ctOpt.contextSensitive);
+    optionallySetRersMapping(ctOpt,ltlOpt,analyzer);
     tc.stopTimer();
 
     SgProject* sageProject=runRoseFrontEnd(argc,argv,ctOpt,tc);

@@ -33,40 +33,15 @@ using namespace boost;
 #include "Diagnostics.h"
 using namespace Sawyer::Message;
 
-void CodeThorn::initDiagnosticsLTL() {
+namespace CodeThorn {
+
+void initDiagnosticsLTL() {
   IOAnalyzer::initDiagnostics();
   ReadWriteAnalyzer::initDiagnostics();
   CounterexampleGenerator::initDiagnostics();
 }
 
-bool CodeThorn::readAndParseLTLRersMappingFile(string ltlRersMappingFileName, CodeThorn::LtlRersMapping& rersLtlMapping) {
-  CppStdUtilities::DataFileVector dataFileVector;
-  bool readStatus=CppStdUtilities::readDataFile(ltlRersMappingFileName,dataFileVector);
-  if(readStatus==false)
-    return readStatus;
-  int lineNr=1;
-  for(std::string line : dataFileVector) {
-    std::vector<std::string> lineEntries=CppStdUtilities::splitByRegex(line,",|\\t|\\s+");
-    if(lineEntries.size()!=2) {
-      cerr<<"Error: format error in rers mapping file. Not exactly two entries in line "<<lineNr<<endl;
-      exit(1);
-    }
-    string ioString=lineEntries[0];
-    int value=std::stoi(lineEntries[1]);
-    cout<<"INFO: mapping: line "<<lineNr<<": "<<ioString<<" <=> "<<value<<endl;
-    if(ioString.size()==2&&ioString[0]=='i') {
-      rersLtlMapping.addInput(ioString[1],value);
-    } else if(ioString.size()==2&&ioString[0]=='o') {
-      rersLtlMapping.addOutput(ioString[1],value);
-    } else {
-      cout<<"WARNING: unknown entry in rers mapping file line "<<lineNr<<": "<<ioString<<" (ignoring it)"<<endl;
-    }
-    lineNr++;
-  }
-  return true;
-}
-
-void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* analyzer, TimingCollector& tc) {
+void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* analyzer, TimingCollector& tc) {
   long pstateSetSize=analyzer->getPStateSet()->size();
   long pstateSetBytes=analyzer->getPStateSet()->memorySize();
   long pstateSetMaxCollisions=analyzer->getPStateSet()->maxCollisions();
@@ -183,36 +158,7 @@ void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAna
     }
 
     timer.start();
-    LtlRersMapping ltlRersMapping;
-    if (ltlOpt.ltlInAlphabet.size()>0) {
-      ltlRersMapping.addInputAsciiValueSetWithOffsetA(ltlOpt.ltlInAlphabet);
-    }
-    if (ltlOpt.ltlOutAlphabet.size()>0) {
-      ltlRersMapping.addOutputAsciiValueSetWithOffsetA(ltlOpt.ltlOutAlphabet);
-    }
-    if(ltlOpt.ltlRersMappingFileName.size()>0) {
-      // load and parse file into ltlInAlphabet and ltlOutAlphabet
-      // input/output alphabet
-      if(!readAndParseLTLRersMappingFile(ltlOpt.ltlRersMappingFileName,ltlRersMapping)) {
-        cerr<<"Error: could not open RERS mapping file "<<ltlOpt.ltlRersMappingFileName<<endl;
-        exit(1);
-      }
-      // set input/output alphabets here as well
-    }
-   
-    std::set<int> ltlInAlphabet;// = analyzer->getInputVarValues();
-    std::set<int> ltlOutAlphabet;
-    ltlInAlphabet=ltlRersMapping.getInputValueSet();
-    ltlOutAlphabet=ltlRersMapping.getOutputValueSet();
-    if(ltlInAlphabet.size()==0) {
-      cerr<<"Error: no LTL input alphabet provided."<<endl;
-      exit(1);
-    }
-    if(ltlOutAlphabet.size()==0) {
-      cerr<<"Error: no LTL output alphabet provided."<<endl;
-      exit(1);
-    }
-
+    LtlRersMapping ltlRersMapping=analyzer->getLtlRersMapping();
     PropertyValueTable* ltlResults=nullptr;
     SpotConnection spotConnection(ltl_filename);
     spotConnection.setModeLTLDriven(analyzer->getModeLTLDriven());
@@ -426,7 +372,8 @@ void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAna
     cout << "generated "<<filename<<endl;
   }
 }
-void CodeThorn::optionallyInitializePatternSearchSolver(CodeThornOptions& ctOpt,IOAnalyzer* analyzer,TimingCollector& timingCollector) {
+
+void optionallyInitializePatternSearchSolver(CodeThornOptions& ctOpt,IOAnalyzer* analyzer,TimingCollector& timingCollector) {
     // pattern search: requires that exploration mode is set,
     // otherwise no pattern search is performed
     if(ctOpt.patSearch.explorationMode.size()>0) {
@@ -435,3 +382,4 @@ void CodeThorn::optionallyInitializePatternSearchSolver(CodeThornOptions& ctOpt,
       analyzer->setStartPState(*analyzer->popWorkList()->pstate());
     }
 }
+} // end of namespace

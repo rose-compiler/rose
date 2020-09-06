@@ -76,7 +76,7 @@ void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg,
   // (will be used by the model tgba as well as by the ltl formula tgbas)
   spot::bdd_dict dict;
   //create a tgba from CodeThorn's STG model
-  SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, ltlRersMapping.getInputValueSet(), ltlRersMapping.getOutputValueSet());
+  SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, ltlRersMapping);
   LtlProperty ltlProperty; 
   ltlProperty.ltlString = ltlResults->getFormula(propertyNum);
   ltlProperty.propertyNumber = propertyNum;
@@ -171,7 +171,7 @@ void SpotConnection::checkLtlProperties(TransitionGraph& stg,
     // (will be used by the model tgba as well as by the ltl formula tgbas)
     spot::bdd_dict dict;
     //create a tgba from CodeThorn's STG model
-    SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, ltlRersMapping.getInputValueSet(), ltlRersMapping.getOutputValueSet());
+    SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, ltlRersMapping);
     std::string* pCounterExample; 
     ROSE_ASSERT(ltlResults);
     std::list<int>* yetToEvaluate = ltlResults->getPropertyNumbers(PROPERTY_VALUE_UNKNOWN);
@@ -379,7 +379,6 @@ spot::ltl::atomic_prop_set* SpotConnection::getAtomicProps(string ltlFormula) {
   return result;
 }
 
-// TODO 3
 spot::ltl::atomic_prop_set* SpotConnection::getAtomicProps(LtlRersMapping ltlRersMapping) {
   std::set<int> ioVals=ltlRersMapping.getInputOutputValueSet();
   std::string ltl_props = "";
