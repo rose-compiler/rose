@@ -13,6 +13,12 @@ using namespace Rose::Diagnostics;
 #  define WARNING_FOR_NONREAL_DEVEL 0
 #endif
 
+// DQ (9/2/2020): Moved to the tope of the file from the SgInitializedName case in the evaluate inherited attribute function.
+// DQ (4/27/2019): Set these to be the same for now.
+// #define DEBUG_INITIALIZED_NAME 0
+#define DEBUG_INITIALIZED_NAME DEBUG_NAME_QUALIFICATION_LEVEL
+
+
 // ***********************************************************
 // Main calling function to support name qualification support
 // ***********************************************************
@@ -1335,6 +1341,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
        // scope.  If there is more than one then name qalification is required to dismbiguate them.
           mfprintf(mlog [ WARN ] ) ("We still need to check for more than one name in currentScope = %s \n",currentScope->class_name().c_str());
 
+#error "DEAD CODE!"
+
        // Make sure that there is no ambiguity (should be only one symbol with this name).
           size_t numberOfSymbols = globalScope->count_symbol(name);
           if (numberOfSymbols > 1)
@@ -1374,6 +1382,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 
 #define DEBUG_NONALIAS_SYMBOL_SUPPORT 0
 
+#error "DEAD CODE!"
+
           if (trial_lookup_symbol != NULL)
              {
 // #if 0
@@ -1399,6 +1409,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                SgInitializedName* trial_initializedName = NULL;
                switch (trial_lookup_symbol->variantT())
                   {
+#error "DEAD CODE!"
+
                     case V_SgClassSymbol:
                        {
                          SgClassSymbol* class_symbol = isSgClassSymbol(trial_lookup_symbol);
@@ -1418,6 +1430,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          break;
                        }
 
+#error "DEAD CODE!"
+
                     case V_SgFunctionSymbol:
                        {
                          SgFunctionSymbol* function_symbol = isSgFunctionSymbol(trial_lookup_symbol);
@@ -1427,6 +1441,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          break;
                        }
 
+#error "DEAD CODE!"
+
                     case V_SgTypedefSymbol:
                        {
                          SgTypedefSymbol* typedef_symbol = isSgTypedefSymbol(trial_lookup_symbol);
@@ -1435,6 +1451,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          trial_declaration = typedef_symbol->get_declaration();
                          break;
                        }
+
+#error "DEAD CODE!"
 
                     case V_SgEnumSymbol:
                        {
@@ -1453,6 +1471,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          trial_declaration = namespace_symbol->get_declaration();
                          break;
                        }
+
+#error "DEAD CODE!"
 
                     case V_SgTemplateClassSymbol:
                        {
@@ -1473,6 +1493,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          break;
                        }
 
+#error "DEAD CODE!"
+
                     case V_SgTemplateFunctionSymbol:
                        {
                          SgTemplateFunctionSymbol* templateFunction_symbol = isSgTemplateFunctionSymbol(trial_lookup_symbol);
@@ -1492,6 +1514,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          break;
                        }
 
+#error "DEAD CODE!"
+
                     case V_SgNonrealSymbol:
                        {
                          SgNonrealSymbol* nonreal_symbol = isSgNonrealSymbol(trial_lookup_symbol);
@@ -1510,6 +1534,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          break;
                        }
 
+#error "DEAD CODE!"
+
                     case V_SgTemplateMemberFunctionSymbol:
                        {
                          SgTemplateMemberFunctionSymbol* templateMemberFunction_symbol = isSgTemplateMemberFunctionSymbol(trial_lookup_symbol);
@@ -1527,6 +1553,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          trial_declaration = memberFunction_symbol->get_declaration();
                          break;
                        }
+
+#error "DEAD CODE!"
 
                     default:
                        {
@@ -1547,6 +1575,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if DEBUG_NONALIAS_SYMBOL_SUPPORT
                    printf ("trial_declaration = %p = %s \n",trial_declaration,trial_declaration->class_name().c_str());
 #endif
+
+#error "DEAD CODE!"
+
                    if (trial_declaration->variantT() == declaration->variantT())
                       {
                      // We can return zero, since the symbol is visible.
@@ -1559,6 +1590,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                           // DQ (8/8/2020): Uncomment so that we can test Cxx_tests/test2020_20.C.
                           // return 0;
+
+#error "DEAD CODE!"
 
                           // DQ (8/6/2020): Need to addess examples such as Cxx_tests/test2017_40.C.
                              SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(trial_declaration);
@@ -1589,6 +1622,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                            {
                           // Keep going with the rest of the function.
                            }
+#error "DEAD CODE!"
+
                       }
                      else
                       {
@@ -1609,11 +1644,15 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                         bool includingSelf = false;
                         SgVariableDeclaration* enclosing_variableDeclaration = SageInterface::getEnclosingNode<SgVariableDeclaration>(trial_initializedName,includingSelf);
 
+#error "DEAD CODE!"
+
 #if DEBUG_NONALIAS_SYMBOL_SUPPORT
                         printf ("Addressing possible namespace aliasing: trial_initializedName != NULL: enclosing_variableDeclaration = %p \n",enclosing_variableDeclaration);
 #endif
                         if (enclosing_variableDeclaration != NULL)
                            {
+#error "DEAD CODE!"
+
                              if (enclosing_variableDeclaration == declaration)
                                 {
 #if DEBUG_NONALIAS_SYMBOL_SUPPORT
@@ -1625,12 +1664,16 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                                // Refactored this code.
                                // nameQualificationTypeSupport (type,currentScope,initializedName);
+#error "DEAD CODE!"
+
                                   ROSE_ASSERT(trial_initializedName != NULL);
                                   nameQualificationTypeSupport (trial_initializedName->get_type(),currentScope,trial_initializedName);
 #endif
                                // DQ (8/8/2020): Trying to debug Cxx_tests/test2020_20.C
                                   return 0;
                                 }
+#error "DEAD CODE!"
+
                                else
                                 {
                                // Might need to check if there is another one, but if there is (see Cxx_tests/test2007_09.C) then we still need to keep going.
@@ -1642,6 +1685,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                // DQ (8/8/2020): return 0 to debug Cxx_tests/test2020_20.C
                                // return 0;
                                 }
+#error "DEAD CODE!"
+
                            }
                           else
                            {
@@ -1651,6 +1696,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #else
                              printf (" --- not associated with a SgVariableDeclaration: so keep going \n");
                              SgNonrealDecl* nonrealDecl = isSgNonrealDecl(declaration);
+#error "DEAD CODE!"
+
                              if (nonrealDecl != NULL)
                                 {
                                // Keep going with the rest of the function.
@@ -1667,6 +1714,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                 }
 #endif
                            }
+#error "DEAD CODE!"
+
 #endif
 
 #if 0
@@ -2071,8 +2120,26 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if 0
                               typeElaborationIsRequired = true;
 #else
-                           // I think we have to force an extra level of name qualification.
+                           // DQ (9/2/2020): Name qualification of functions for SgCtorInitializionList should not force name qualification.
+                           // I think we have to force an extra level of name qualification (see Cxx11_tests/test2018_121.C).
+#if 1
+#if 0
+                              printf ("Setting forceMoreNameQualification = true \n");
+#endif
                               forceMoreNameQualification = true;
+#else
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("In NameQualificationTraversal::nameQualificationDepth(): Skip setting forceMoreNameQualification = true: forceMoreNameQualification = %s \n",
+                                   forceMoreNameQualification ? "true" : "false");
+                              printf ("In NameQualificationTraversal::nameQualificationDepth(): Skip setting forceMoreNameQualification = true: declaration = %p = %s name = %s \n",
+                                   declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
+                              printf ("In NameQualificationTraversal::nameQualificationDepth(): Skip setting forceMoreNameQualification = true: currentScope = %p = %s name = %s \n",currentScope,
+                                   currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+                              printf ("In NameQualificationTraversal::nameQualificationDepth(): Skip setting forceMoreNameQualification = true: positionStatement = %p = %s name = %s \n",positionStatement,
+                                   positionStatement->class_name().c_str(),SageInterface::get_name(positionStatement).c_str());
+#endif
+                              printf ("Skip setting forceMoreNameQualification = true \n");
+#endif
 #endif
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
@@ -3298,6 +3365,15 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) ("forceMoreNameQualification = %s \n",forceMoreNameQualification ? "true" : "false");
+#endif
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("In NameQualificationTraversal::nameQualificationDepth(): forceMoreNameQualification = %s \n",forceMoreNameQualification ? "true" : "false");
+               printf ("In NameQualificationTraversal::nameQualificationDepth(): declaration = %p = %s name = %s \n",
+                    declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
+               printf ("In NameQualificationTraversal::nameQualificationDepth(): currentScope = %p = %s name = %s \n",currentScope,
+                    currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+               printf ("In NameQualificationTraversal::nameQualificationDepth(): positionStatement = %p = %s name = %s \n",positionStatement,
+                    positionStatement->class_name().c_str(),SageInterface::get_name(positionStatement).c_str());
 #endif
 
                if (forceMoreNameQualification == true)
@@ -8055,10 +8131,6 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
      if (initializedName != NULL)
         {
 
-// DQ (4/27/2019): Set these to be the same for now.
-// #define DEBUG_INITIALIZED_NAME 0
-#define DEBUG_INITIALIZED_NAME DEBUG_NAME_QUALIFICATION_LEVEL
-
        // bool debugging = false;
 #if DEBUG_INITIALIZED_NAME || 0
           mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: initializedName = %p = %s name = %s \n",initializedName,initializedName->class_name().c_str(),initializedName->get_name().str());
@@ -8094,6 +8166,27 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
           ASSERT_not_null(declarationStatement);
           SgScopeStatement* currentScope = declarationStatement->get_scope();
+
+#if 1
+       // DQ (9/2/2020): Name qualification for the SgCtorInitializerList should use the scope of the associated class declaration.
+          SgCtorInitializerList* ctorInitializerList = isSgCtorInitializerList(initializedNameParent);
+          if (ctorInitializerList != NULL)
+             {
+               SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(ctorInitializerList->get_parent());
+               ROSE_ASSERT(memberFunctionDeclaration != NULL);
+            // currentStatement = memberFunctionDeclaration->get_firstNondefiningDeclaration();
+               currentScope = memberFunctionDeclaration->get_scope();
+#if DEBUG_INITIALIZED_NAME
+               printf ("Case of SgInitializedName: from SgCtorInitializerList: currentScope = %p = %s name = %s \n",currentScope,
+                    currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+#endif
+#if 0
+               printf ("Case of SgInitializedName: case of SgCtorInitializerList before if(currentStatement == NULL): currentStatement = %p = %s name = %s \n",currentStatement,
+                    currentStatement->class_name().c_str(),SageInterface::get_name(currentStatement).c_str());
+#endif
+             }
+#endif
+
 
 #if DEBUG_INITIALIZED_NAME
           mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
@@ -8175,7 +8268,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: initializedName->get_type(): after stripType(): type = %p = %s \n",type,type->class_name().c_str());
 #endif
 
-// #error "DEAD CODE!"
+#error "DEAD CODE!"
 
 #if 0
        // DQ (4/17/2019): Need more general type support, required for more complex nesting of SgPointerMemberType types.
@@ -8186,7 +8279,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           mfprintf(mlog [ WARN ] ) ("######################################################## \n");
 #endif
 
-// #error "DEAD CODE!"
+#error "DEAD CODE!"
 
           SgPointerMemberType* pointerMemberType = isSgPointerMemberType(type);
           if (pointerMemberType != NULL)
@@ -8204,7 +8297,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // SgClassDefinition* classDefinition = pointerMemberType->get_class_of();
                SgClassDeclaration* classDeclaration = isSgClassDeclaration(pointerMemberType->get_class_declaration_of());
 
-// #error "DEAD CODE!"
+#error "DEAD CODE!"
 
             // DQ (4/10/2019): The definition might not be available, but this means more that we should change the API to for 
             // get_class_of() to return the SgClassDeclaration (and the firstNondefiing one if the defining declaration is not available).
@@ -8229,7 +8322,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  // int amountOfNameQualificationRequiredForName = nameQualificationDepth(initializedName,currentScope,declarationForInitializedName);
                     int amountOfNameQualificationRequiredForName = nameQualificationDepth(declarationForInitializedName,currentScope,positionStatement);
 
-// #error "DEAD CODE!"
+#error "DEAD CODE!"
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     mfprintf(mlog [ WARN ] ) ("SgInitializedName: SgPointerMemberType: name: amountOfNameQualificationRequiredForName = %d \n",amountOfNameQualificationRequiredForName);
@@ -8245,11 +8338,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  // DQ (4/11/2019): If this is not a SgClassDeclaration thenit can be a nonreal declaration which is not handled yet.
                   }
              }
-// #error "DEAD CODE!"
+#error "DEAD CODE!"
 
 #else
 
-// #error "DEAD CODE!"
+#error "DEAD CODE!"
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("Commented out SgPointerMemberType code to compute the name qualification on the name (calling setNameQualificationOnName()) \n");
@@ -8257,7 +8350,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #endif
 
-// #error "DEAD CODE!"
+#error "DEAD CODE!"
 
 #if 0
        // DQ (3/31/2019): debugging support.
@@ -8280,7 +8373,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           mfprintf(mlog [ WARN ] ) ("################################################################## \n");
 #endif
 
-// #error "DEAD CODE!"
+#error "DEAD CODE!"
 
        // DQ (4/19/2019): It might be that we should call this after the traveral over each type instead of before we traverse the type.
        // traverseType(initializedName->get_type(),initializedName,currentScope,currentStatement);
@@ -8368,6 +8461,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     ROSE_ASSERT(declaration == NULL);
                   }
 
+#error "DEAD CODE!"
 
 #if 0
             // SgPointerMemberType* pointerMemberType = isSgPointerMemberType(initializedName->get_type());
@@ -8397,11 +8491,15 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
 #else
 
+#error "DEAD CODE!"
+
 #if 0
                mfprintf(mlog [ WARN ] ) ("Commented out SgPointerMemberType code to compute the associated declaration \n");
 #endif
 
 #endif
+
+#error "DEAD CODE!"
 
 #if 1
             // DQ (4/14/2019): Add support for declType.
@@ -8475,6 +8573,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #else
                mfprintf(mlog [ WARN ] ) ("Commented out code specific to support of SgDeclType \n");
 #endif
+
+#error "DEAD CODE!"
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) ("Case of SgInitializedName: getDeclarationAssociatedWithType(): type = %p = %s declaration = %p \n",initializedName->get_type(),initializedName->get_type()->class_name().c_str(),declaration);
@@ -8579,6 +8679,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          ROSE_ASSERT(false);
                        }
 #endif
+
+#error "DEAD CODE!"
+
                  // DQ (8/4/2012): However, this quasi-pathological case does not apply to template instantiations 
                  // (only non-template classes or maybe named types more generally?).  Handle template declarations similarly.
                  // OR enum declarations (since they can have a forward declaration (except that this is a common languae extension...).
@@ -8775,6 +8878,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                        }
 #endif
 
+#error "DEAD CODE!"
+
 #if 1
                  // DQ (4/10/2019): I think we need to call this function to handle the name qualification on template 
                  // arguments where the type is a template instantiation.
@@ -8838,7 +8943,12 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     ROSE_ASSERT(false);
 #endif
                   }
+
+#error "DEAD CODE!"
+
 #endif
+
+#error "DEAD CODE!"
 
 #if DEBUG_INITIALIZED_NAME
                mfprintf(mlog [ WARN ] ) ("######################################################################## \n");
@@ -8864,6 +8974,16 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        // endif for type handling.
 #endif
 
+       // DQ (9/2/2020): This is the start of the non-commented out code!
+#if DEBUG_INITIALIZED_NAME
+          printf("222222222222222222222222222222222222222222222222222222222222222222222222222 \n");
+          printf("222222222222222222222222222222222222222222222222222222222222222222222222222 \n");
+          printf("222222222222222222222222222222222222222222222222222222222222222222222222222 \n");
+          printf("222222222222222222222222222222222222222222222222222222222222222222222222222 \n");
+          printf("222222222222222222222222222222222222222222222222222222222222222222222222222 \n");
+          printf("222222222222222222222222222222222222222222222222222222222222222222222222222 \n");
+#endif
+
 #if DEBUG_INITIALIZED_NAME
           mfprintf(mlog [ WARN ] ) ("########################################################################### \n");
           mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: Processing the SgInitializedName IR's name = %s \n",initializedName->get_name().str());
@@ -8876,6 +8996,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 
           bool initializedNameCouldRequireNameQualification = (initializedName->get_prev_decl_item() != NULL);
+#if DEBUG_INITIALIZED_NAME
+          printf ("Case SgInitializedName: initializedNameCouldRequireNameQualification = %s \n",initializedNameCouldRequireNameQualification ? "true" : "false");
+#endif
           if (initializedNameCouldRequireNameQualification == true)
              {
                SgInitializedName* originallyDeclaredInitializedName = initializedName->get_prev_decl_item();
@@ -8944,6 +9067,14 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // ROSE_ASSERT(currentScope == inheritedAttribute.get_currentScope());
 #endif
 
+#if 0
+          printf ("Case of SgConstructorInitializer: initializedName = %p = %s name = %s \n",
+               initializedName,initializedName->class_name().c_str(),SageInterface::get_name(initializedName).c_str());
+          printf ("Case of SgConstructorInitializer: currentScope = %p = %s name = %s \n",currentScope,
+               currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+          printf ("Case of SgConstructorInitializer: associatedDeclaration = %p = %s name = %s \n",associatedDeclaration,
+               associatedDeclaration->class_name().c_str(),SageInterface::get_name(associatedDeclaration).c_str());
+#endif
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_INITIALIZED_NAME
                mfprintf(mlog [ WARN ] ) ("================ Calling nameQualificationDepthForType to evaluate the type \n");
 #endif
@@ -9007,6 +9138,14 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           mfprintf(mlog [ WARN ] ) ("######################################################################## \n");
 #endif
             // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+#if DEBUG_INITIALIZED_NAME
+          printf("333333333333333333333333333333333333333333333333333333333333333333333333333 \n");
+          printf("333333333333333333333333333333333333333333333333333333333333333333333333333 \n");
+          printf("333333333333333333333333333333333333333333333333333333333333333333333333333 \n");
+          printf("333333333333333333333333333333333333333333333333333333333333333333333333333 \n");
+          printf("333333333333333333333333333333333333333333333333333333333333333333333333333 \n");
+#endif
 
 #if 0
        // DQ (4/26/2019): debugging support.
@@ -9179,12 +9318,54 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if DEBUG_INITIALIZED_NAME
                                    mfprintf(mlog [ WARN ] ) ("@@@@@ currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 #endif
+
+#if DEBUG_INITIALIZED_NAME
+                                   printf("444444444444444444444444444444444444444444444444444444444444444444444444444 \n");
+                                   printf("444444444444444444444444444444444444444444444444444444444444444444444444444 \n");
+                                   printf("444444444444444444444444444444444444444444444444444444444444444444444444444 \n");
+                                   printf("444444444444444444444444444444444444444444444444444444444444444444444444444 \n");
+                                   printf("444444444444444444444444444444444444444444444444444444444444444444444444444 \n");
+#endif
+#if DEBUG_INITIALIZED_NAME
+                                   printf ("Case of SgInitializedName: functionDeclaration = %p = %s name = %s \n",
+                                        functionDeclaration,functionDeclaration->class_name().c_str(),SageInterface::get_name(functionDeclaration).c_str());
+                                   printf ("Case of SgInitializedName: currentScope = %p = %s name = %s \n",currentScope,
+                                        currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+                                   printf ("Case of SgInitializedName: associatedStatement = %p = %s name = %s \n",associatedStatement,
+                                        associatedStatement->class_name().c_str(),SageInterface::get_name(associatedStatement).c_str());
+#endif
+#if DEBUG_INITIALIZED_NAME
+                                   printf ("6666666666666666666666666666666666666666666666666666666666666666666666666 \n");
+                                   printf ("6666666666666666666666666666666666666666666666666666666666666666666666666 \n");
+                                   printf ("Handling specific case of SgInitializedName from SgCtorInitializationList \n");
+                                   printf ("6666666666666666666666666666666666666666666666666666666666666666666666666 \n");
+                                   printf ("6666666666666666666666666666666666666666666666666666666666666666666666666 \n");
+#endif
 #if 1
+                                // DQ (9/3/2020): This is I think the only meaningful change to address Cxx11_tests/test2020_89.C.
+                                // DQ (9/2/2020): If this is a SgInitializedName from a SgCtorInitializationList, then we want to search for the 
+                                // class associated with the member function in the parent of the scope of the class definition.
+                                // However, this code might be too specific to this narrow case (something to look at in the morning).
+                                   SgClassDefinition* classDefinition = isSgClassDefinition(functionDeclaration->get_scope());
+                                   ROSE_ASSERT(classDefinition != NULL);
+                                   SgDeclarationStatement* associatedDeclaration = isSgClassDeclaration(classDefinition->get_declaration());
+                                   ROSE_ASSERT(associatedDeclaration != NULL);
+
+                                // DQ (9/2/2020): use the scope of the current scope.
+                                   currentScope = currentScope->get_scope();
+#if 0
+                                   printf ("Case of SgInitializedName: 9/3/2020 change: recomputed currentScope = %p = %s name = %s \n",currentScope,
+                                        currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+#endif
+                                // DQ (9/2/2020): Use alternative declarations for initialized names from ctor initialization list support.
                                 // int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,associatedStatement);
+                                // int amountOfNameQualificationRequiredForType = nameQualificationDepth(functionDeclaration,currentScope,associatedStatement);
+                                   int amountOfNameQualificationRequiredForType = nameQualificationDepth(associatedDeclaration,currentScope,associatedStatement);
+#else
                                    int amountOfNameQualificationRequiredForType = nameQualificationDepth(functionDeclaration,currentScope,associatedStatement);
+#endif
 #if DEBUG_INITIALIZED_NAME
                                    mfprintf(mlog [ WARN ] ) ("amountOfNameQualificationRequiredForType = %d \n",amountOfNameQualificationRequiredForType);
-#endif
 #endif
                                    if (initializedName->get_name() == functionName)
                                       {
@@ -9216,6 +9397,13 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                         mfprintf(mlog [ WARN ] ) ("############################################################################################################################### \n");
 #endif
                                       }
+#if DEBUG_INITIALIZED_NAME
+                                   printf("555555555555555555555555555555555555555555555555555555555555555555555555555 \n");
+                                   printf("555555555555555555555555555555555555555555555555555555555555555555555555555 \n");
+                                   printf("555555555555555555555555555555555555555555555555555555555555555555555555555 \n");
+                                   printf("555555555555555555555555555555555555555555555555555555555555555555555555555 \n");
+                                   printf("555555555555555555555555555555555555555555555555555555555555555555555555555 \n");
+#endif
                                  }
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
@@ -10921,6 +11109,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  // ROSE_ASSERT(classChain.size() == 1);
                     if (classChain.size() > 1)
                        {
+                      // DQ (9/2/2020): This happens for Cxx11_tests/test2020_78.C
                          mfprintf(mlog [ WARN ] ) ("Note: Not clear how this happens: classChain.size() > 1 size = %zu \n",classChain.size());
                        }
                  // ROSE_ASSERT(classChain.empty() == true || classChain.size() == 1);
@@ -11304,12 +11493,18 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 
           SgStatement* currentStatement = TransformationSupport::getStatement(constructorInitializer);
+
+#if 0
+          printf ("Case of SgConstructorInitializer: before if(currentStatement == NULL): currentStatement = %p = %s name = %s \n",currentStatement,
+               currentStatement->class_name().c_str(),SageInterface::get_name(currentStatement).c_str());
+#endif
+
           if (currentStatement == NULL)
              {
             // DQ (1/28/2019): This can happen when the expression is used in an array type declaration (e.g. within a variable declaration for an array).
             // NOTE: this will be possibly incorrect if there is a using declaration in the scope that would be important to the name qualification.
             // We would then need to know if the declarration declaring the array type was before or after the using declaration.
-            // Not clear what would be the best wayy to solve that problem (though it would not be in the set of directived already processed, so it might be fine).
+            // Not clear what would be the best way to solve that problem (though it would not be in the set of directived already processed, so it might be fine).
 #if 0
                mfprintf(mlog [ WARN ] ) ("In name qualification: not possible to locate statement containing constructorInitializer = %p (using first statement from current scope) \n",constructorInitializer);
 #endif
@@ -11335,9 +11530,48 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           SgScopeStatement* currentScope = currentStatement->get_scope();
           ASSERT_not_null(currentScope);
 
+#if 0
+       // DQ (9/2/2020): Name qualification for the SgCtorInitializerList should use the scope of the associated class declaration.
+          SgCtorInitializerList* ctorInitializerList = isSgCtorInitializerList(currentStatement);
+          if (ctorInitializerList != NULL)
+             {
+               SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(ctorInitializerList->get_parent());
+               ROSE_ASSERT(memberFunctionDeclaration != NULL);
+            // currentStatement = memberFunctionDeclaration->get_firstNondefiningDeclaration();
+               currentScope = memberFunctionDeclaration->get_scope();
+#if 0
+               printf ("Case of SgConstructorInitializer: currentScope = %p = %s name = %s \n",currentScope,
+                    currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+#endif
+#if 0
+               printf ("Case of SgConstructorInitializer: case of SgCtorInitializerList before if(currentStatement == NULL): currentStatement = %p = %s name = %s \n",currentStatement,
+                    currentStatement->class_name().c_str(),SageInterface::get_name(currentStatement).c_str());
+#endif
+             }
+#endif
+#if 0
+          printf ("Case of SgConstructorInitializer: memberFunctionDeclaration = %p = %s name = %s \n",
+               memberFunctionDeclaration,memberFunctionDeclaration->class_name().c_str(),SageInterface::get_name(memberFunctionDeclaration).c_str());
+          printf ("Case of SgConstructorInitializer: currentScope = %p = %s name = %s \n",currentScope,
+               currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+          printf ("Case of SgConstructorInitializer: currentStatement = %p = %s name = %s \n",currentStatement,
+               currentStatement->class_name().c_str(),SageInterface::get_name(currentStatement).c_str());
+#endif
+#if 0
+          printf ("Case of SgConstructorInitializer: currentScope: symbol_table: \n");
+          currentScope->get_symbol_table()->print("Case of SgConstructorInitializer: currentScope: symbol_table");
+#endif
+
           if (memberFunctionDeclaration != NULL)
              {
+#if 0
+               printf ("888888888888888888888888888888888888888888888888888 \n");
+               printf ("888888888888888888888888888888888888888888888888888 \n");
+               printf ("888888888888888888888888888888888888888888888888888 \n");
+               printf ("888888888888888888888888888888888888888888888888888 \n");
+#endif
                int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,currentStatement);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) ("SgConstructorInitializer's constructor member function name: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
@@ -11348,6 +11582,21 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
                mfprintf(mlog [ WARN ] ) ("DONE: Calling setNameQualification() on constructorInitializer: Exiting as a test! \n");
                ROSE_ASSERT(false);
+#endif
+#if 0
+               printf ("999999999999999999999999999999999999999999999999999 \n");
+               printf ("999999999999999999999999999999999999999999999999999 \n");
+               printf ("999999999999999999999999999999999999999999999999999 \n");
+               printf ("999999999999999999999999999999999999999999999999999 \n");
+#endif
+#if 0
+               if (amountOfNameQualificationRequired > 0)
+                  {
+#if 0
+                    printf("DONE: Calling setNameQualification() on constructorInitializer: Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
 #endif
              }
             else
