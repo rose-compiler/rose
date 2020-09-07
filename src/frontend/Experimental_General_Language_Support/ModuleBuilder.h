@@ -38,9 +38,7 @@ namespace Rose {
  *  Create an entry for the module in the moduleNAmeAstMap
  */
 
-#define  MOD_FILE_SUFFIX   ".rcmp"
 #define  SKIP_SYNTAX_CHECK "-rose:skip_syntax_check"
-
 
 #if TEMPLATES
 template <typename T>
@@ -54,10 +52,17 @@ class ModuleBuilder
 #endif
 
      public:
+       ModuleBuilder() : loadingModuleState(false), nestedSgFile(0), currentProject(nullptr)
+         {
+         }
+
        bool isRoseModuleFile();
 
        void setCurrentProject(SgProject*);
        SgProject* getCurrentProject();
+
+       void setLoadingModuleState(bool loading_state) { loadingModuleState = loading_state; }
+       bool getLoadingModuleState() { return loadingModuleState; }
 
 #if TEMPLATES
        T*   getModule (const std::string &module_name) { ROSE_ASSERT(false); }
@@ -65,24 +70,24 @@ class ModuleBuilder
 #else
        SgJovialCompoolStatement* getModule(const std::string &module_name);
        void addMapping(const std::string &module_name, SgJovialCompoolStatement* module_stmt);
+       std::string getModuleFileSuffix() {return std::string(".rcmp");}
 #endif
 
        std::string find_file_from_inputDirs(const std::string &name);
 
-       void set_inputDirs(SgProject*);
+       void setInputDirs(SgProject*);
  
      private:
+       bool loadingModuleState;
+       unsigned int nestedSgFile;
        SgProject* currentProject;
-       unsigned int nestedSgFile; 
 
        std::vector<std::string> inputDirs;
-
        ModuleMapType moduleNameMap;
 
        SgSourceFile*  createSgSourceFile(const std::string &module_name);
        void           clearMap();
        void           dumpMap();
-
   };
 
 

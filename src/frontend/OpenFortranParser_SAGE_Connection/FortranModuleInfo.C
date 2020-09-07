@@ -45,7 +45,7 @@ FortranModuleInfo::find_file_from_inputDirs(string basename ) {
        dir = inputDirs[i];
        name = dir+"/"+ basename;
 
-       string tmp = name+MOD_FILE_SUFFIX;
+       string tmp = name + module_file_suffix();
        if (boost::filesystem::exists(tmp.c_str())) {
              return name;
        }
