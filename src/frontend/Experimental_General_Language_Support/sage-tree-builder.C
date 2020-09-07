@@ -384,6 +384,8 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* re
 
    if (list_contains(modifiers, e_function_modifier_recursive))   function_decl->get_functionModifier().setRecursive();
    if (list_contains(modifiers, e_function_modifier_reentrant))   function_decl->get_functionModifier().setReentrant();
+   if (list_contains(modifiers, e_function_modifier_pure     ))   function_decl->get_functionModifier().setPure();
+   if (list_contains(modifiers, e_function_modifier_elemental))   function_decl->get_functionModifier().setElemental();
 
 #if 0
    std::cout << "---   : function_decl "  << function_decl << ": " << function_decl->class_name() << std::endl;
