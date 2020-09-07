@@ -96,11 +96,14 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolModule(ATerm term)
          // MATCHED Name
       } else return ATfalse;
 
-      sage_tree_builder.Enter(namespace_decl, name, sources);
-
+   // The directive list should be traversed before the namespace is created in case a compool
+   // directive is found and then the loaded compool module can be placed in global scope
+   // without creating the namespace. Compool directives should go in global scope.
       if (traverse_DirectiveList(t_dirs)) {
          // MATCHED DirectiveList
       } else return ATfalse;
+
+      sage_tree_builder.Enter(namespace_decl, name, sources);
 
       sage_tree_builder.Enter(compool_stmt, name, sources);
       sage_tree_builder.Leave(compool_stmt);
@@ -682,7 +685,6 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
       // Begin SageTreeBuilder
          sage_tree_builder.Enter(enum_decl, name);
          setSourcePosition(enum_decl, term);
-
       }
 
       if (traverse_ItemTypeDescription(t_type, declared_type)) {

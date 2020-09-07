@@ -134,11 +134,13 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-56.cpl                   \
  rose-issue-rc-79a.cpl                  \
  rose-issue-rc-87.cpl                   \
+ rose-issue-rc-92a.cpl                  \
  rose-issue-rc-93.cpl
 
 COMPOOL_DIRECTIVE_TESTCODES = \
  9_1_compool_directive.cpl              \
- rose-issue-rc-79b.cpl
+ rose-issue-rc-79b.cpl                  \
+ rose-issue-rc-92b.cpl
 
 # proc_refs.cpl                          
 

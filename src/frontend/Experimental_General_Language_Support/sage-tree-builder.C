@@ -446,19 +446,26 @@ Enter(SgNamespaceDeclarationStatement* &namespace_decl, const std::string &name,
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgNamespaceDeclarationStatement* &, ...) \n";
 
-   namespace_decl = SageBuilder::buildNamespaceDeclaration_nfi(name, true, SageBuilder::topScopeStack());
-   SageInterface::setSourcePosition(namespace_decl);
+// Only build a namespace if currently not loading a compool module
+   if (ModuleBuilderFactory::get_compool_builder().getLoadingModuleState() == false) {
 
-   SgNamespaceDefinitionStatement* namespace_defn = namespace_decl->get_definition();
-   ROSE_ASSERT(namespace_defn);
-   ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());
+      namespace_decl = SageBuilder::buildNamespaceDeclaration_nfi(name, true, SageBuilder::topScopeStack());
+      SageInterface::setSourcePosition(namespace_decl);
 
-// TEMPORARY: fix in SageBuilder
-   namespace_defn->setCaseInsensitive(true);
-   ROSE_ASSERT(namespace_defn->isCaseInsensitive());
+      SgNamespaceDefinitionStatement* namespace_defn = namespace_decl->get_definition();
+      ROSE_ASSERT(namespace_defn);
+      ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());
 
-   SageInterface::appendStatement(namespace_decl, SageBuilder::topScopeStack());
-   SageBuilder::pushScopeStack(namespace_defn);
+   // TEMPORARY: fix in SageBuilder
+      namespace_defn->setCaseInsensitive(true);
+      ROSE_ASSERT(namespace_defn->isCaseInsensitive());
+
+      SageInterface::appendStatement(namespace_decl, SageBuilder::topScopeStack());
+      SageBuilder::pushScopeStack(namespace_defn);
+   }
+   else {
+      namespace_decl = nullptr;
+   }
 }
 
 void SageTreeBuilder::
@@ -466,7 +473,12 @@ Leave(SgNamespaceDeclarationStatement* namespace_decl)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgNamespaceDeclarationStatement*, ...) \n";
 
-   SageBuilder::popScopeStack();  // namespace definition
+// Make sure that a compool module is not being loaded because, if so, there won't
+// be a namespace on the stack.
+//
+   if (ModuleBuilderFactory::get_compool_builder().getLoadingModuleState() == false) {
+      SageBuilder::popScopeStack();  // namespace definition
+   }
 }
 
 void SageTreeBuilder::
@@ -919,6 +931,7 @@ Enter(SgJovialDirectiveStatement* &directive, const std::string &directive_strin
         // Can't use SgJovialDirectiveStatement::e_compool enum as function parameter to SageTreeBuilder
         // because API can't see Sage nodes until C++17, so set it correctly as it is known here.
         directive->set_directive_type(SgJovialDirectiveStatement::e_compool);
+
         importModule(directive_string);
      }
 }
@@ -1026,16 +1039,24 @@ Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const So
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialCompoolStatement* &, ...) \n";
 
-   compool_decl = new SgJovialCompoolStatement(name);
-   SageInterface::setSourcePosition(compool_decl);
+// Make sure that a compool module is not being loaded because, if so, there won't
+// be a namespace on the stack.
+//
+   if (ModuleBuilderFactory::get_compool_builder().getLoadingModuleState() == false) {
+      compool_decl = new SgJovialCompoolStatement(name);
+      SageInterface::setSourcePosition(compool_decl);
 
-   compool_decl->set_definingDeclaration(compool_decl);
-   compool_decl->set_firstNondefiningDeclaration(compool_decl);
+      compool_decl->set_definingDeclaration(compool_decl);
+      compool_decl->set_firstNondefiningDeclaration(compool_decl);
 
-// TODO?
-// SageBuilder::pushScopeStack(compool_defn);
+   // TODO?
+   // SageBuilder::pushScopeStack(compool_defn);
 
-   SageInterface::appendStatement(compool_decl, SageBuilder::topScopeStack());
+      SageInterface::appendStatement(compool_decl, SageBuilder::topScopeStack());
+   }
+   else {
+      compool_decl = nullptr;
+   }
 }
 
 void SageTreeBuilder::
@@ -1227,7 +1248,22 @@ importModule(const std::string &module_name)
 {
    mlog[TRACE] << "SageTreeBuilder::importModule " << module_name << std::endl;
 
-   ModuleBuilderFactory::get_compool_builder().getModule(module_name);
+   // Compool declarations must be loaded into global scope. A compool directive may only follow a
+   // START so we should expect to be in global scope here. The compool directive should be appended
+   // to the AST after the directives are loaded allowing the unparser to ignore declarations preceding
+   // compool directives. Only declarations from the current compool directive are loaded, specifically,
+   // not compool directives within the current directive. Finally the namespace for the compool being
+   // loaded should not be created (allowing declarations to be placed in global scope). This all means
+   // that a flag (or other means) must be used to signal that a compool is being parsed as a compool
+   // directive.
+
+   ROSE_ASSERT(isSgGlobal(SageBuilder::topScopeStack()));
+
+   ModuleBuilder & compool_builder = ModuleBuilderFactory::get_compool_builder();
+
+   compool_builder.setLoadingModuleState(true);
+   compool_builder.getModule(module_name);
+   compool_builder.setLoadingModuleState(false);
 }
 
 // Temporary wrappers for SageInterface functions (needed until ROSE builds with C++17)
