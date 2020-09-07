@@ -5701,11 +5701,10 @@ isARoseModuleFile( string filename )
    {
      bool result = false;
 
-     string targetSuffix = MOD_FILE_SUFFIX;
+     string targetSuffix = FortranModuleInfo::module_file_suffix();
      size_t filenameLength = filename.size();
 
-  // if ( (filenameLength > 5) && (filename.substr(filenameLength - 5) == ".rmod") )
-     if ( (filenameLength > targetSuffix.size()) && (filename.substr(filenameLength - 5) == MOD_FILE_SUFFIX) )
+     if ( (filenameLength > targetSuffix.size()) && (filename.substr(filenameLength - 5) == FortranModuleInfo::module_file_suffix()) )
           result = true;
 #if 0
      printf ("################ filename = %s result = %s \n",filename.c_str(),(result == true) ? "true" : "false");
