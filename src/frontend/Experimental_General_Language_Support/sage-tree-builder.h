@@ -51,6 +51,12 @@ class SgJovialTableStatement;
 namespace Rose {
 namespace builder {
 
+// Need std=c++11
+//
+#ifndef nullptr
+#define nullptr NULL
+#endif
+
 // This is similar to F18 Fortran::parser::SourcePosition
 struct SourcePosition {
    std::string path;  // replaces Fortran::parser::SourceFile
