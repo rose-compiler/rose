@@ -127,7 +127,14 @@ Unparse_Jovial::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnpar
    {
      SgUnparse_Info ninfo(info);
      ninfo.set_operator_name(op);
+
+     bool need_parens = expr->get_need_paren();
+
+     if (need_parens) curprint("(");
+
      unparseUnaryExpr(expr, ninfo);
+
+     if (need_parens) curprint(")");
    }
 
 //----------------------------------------------------------------------------
