@@ -6,6 +6,10 @@
 #include <set>
 
 namespace CodeThorn {
+  /*! 
+   * \author Markus Schordan
+   * \date 2020
+   */
   class LtlRersMapping {
   public:
     void addInput(char,int);
@@ -27,7 +31,6 @@ namespace CodeThorn {
     bool isOutput(char c) const;
     bool isOutput(int value) const;
   private:
-    // data structures
     std::map<char,int> _inputMappingCharInt;
     std::map<int,char> _inputMappingIntChar;
     std::map<char,int> _outputMappingCharInt;
