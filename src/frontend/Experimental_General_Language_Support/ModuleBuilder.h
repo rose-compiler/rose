@@ -8,6 +8,11 @@
 class SgProject;
 class SgSourceFile;
 
+// Need std=c++11
+//
+#ifndef nullptr
+#define nullptr NULL
+#endif
 
 namespace Rose {
 
