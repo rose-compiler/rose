@@ -53,11 +53,11 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
           case V_SgLessOrEqualOp:       unparseBinaryOperator(expr,"<=", info);  break;
           case V_SgGreaterThanOp:       unparseBinaryOperator(expr, ">", info);  break;
           case V_SgGreaterOrEqualOp:    unparseBinaryOperator(expr,">=", info);  break;
-          case V_SgEqualityOp:          unparseBinaryOperator(expr, "=", info);  break;
           case V_SgNotEqualOp:          unparseBinaryOperator(expr,"<>", info);  break;
           case V_SgBitAndOp:            unparseBinaryOperator(expr,"AND", info); break;
           case V_SgBitOrOp:             unparseBinaryOperator(expr,"OR", info);  break;
           case V_SgBitXorOp:            unparseBinaryOperator(expr,"XOR", info); break;
+          case V_SgEqualityOp:          unparseEqualityOp    (expr,       info); break;
 
           case V_SgUnaryAddOp:          unparseUnaryOperator(expr, "+", info);   break;
           case V_SgMinusOp:             unparseUnaryOperator(expr, "-", info);   break;
@@ -243,6 +243,27 @@ Unparse_Jovial::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
      curprint("(");
      unparseExpression(arrayRefExp->get_rhs_operand(),ninfo);
      curprint(")");
+   }
+
+void
+Unparse_Jovial::unparseEqualityOp(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgEqualityOp* eqOp = isSgEqualityOp(expr);
+     ROSE_ASSERT(eqOp);
+
+     SgExpression* lhs = eqOp->get_lhs_operand();
+     SgExpression* rhs = eqOp->get_rhs_operand();
+     SgType* lhs_type = lhs->get_type();
+     SgType* rhs_type = rhs->get_type();
+
+     if (isSgJovialBitType(lhs_type) && isSgJovialBitType(rhs_type))
+        {
+           unparseBinaryOperator(expr, "EQV", info);
+        }
+     else
+        {
+           unparseBinaryOperator(expr, "=", info);
+        }
    }
 
 void
