@@ -220,6 +220,46 @@ void Build(const parser::SubroutineSubprogram &x, T* scope)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(SubroutineSubprogram)\n";
 #endif
+
+   SgFunctionParameterList* param_list{nullptr};
+   SgBasicBlock* param_scope{nullptr};
+   SgFunctionDeclaration* function_decl{nullptr};
+   LanguageTranslation::FunctionModifierList function_modifiers;
+   std::list<std::string> dummy_arg_name_list;
+   std::string name;
+
+   // Traverse SubroutineStmt to get dummy argument list and name
+   Build(std::get<0>(x.t).statement, dummy_arg_name_list, name, function_modifiers);
+
+   // Enter SageTreeBuilder for SgFunctionParameterList
+   builder.Enter(param_list, param_scope);
+
+   // Traverse SpecificationPart and ExecutionPart
+   Build(std::get<parser::SpecificationPart>(x.t), param_scope);
+   Build(std::get<parser::    ExecutionPart>(x.t), param_scope);
+
+   // Leave SageTreeBuilder for SgFunctionParameterList
+   builder.Leave(param_list, param_scope, dummy_arg_name_list);
+
+   // Begin SageTreeBuilder for SgFunctionDeclaration
+   builder.Enter(function_decl, name, nullptr /* return_type */, param_list, function_modifiers);
+
+   // EndSubroutineStmt - std::optional<Name> v;
+   bool have_end_stmt = false;
+
+   if (auto & opt = std::get<4>(x.t).statement.v) {
+      have_end_stmt = true;
+   }
+
+   // Leave SageTreeBuilder for SgFunctionDeclaration
+   builder.Leave(function_decl, param_scope, have_end_stmt);
+
+   // TODO: implement optional InternalSubprogramPart
+   // std::optional<InternalSubprogramPart>
+#if 0
+   if (auto & opt = std::get<3>(x.t)) {
+   }
+#endif
 }
 
 template<typename T>
@@ -347,6 +387,71 @@ void Build(const parser::AssignmentStmt &x, T* scope)
    // Begin SageTreeBuilder
    builder.Enter(assign_stmt, rhs, vars, std::string()/* no label*/);
    builder.Leave(assign_stmt);
+}
+
+void Build(const parser::SubroutineStmt &x, std::list<std::string> &dummy_arg_name_list, std::string &name, LanguageTranslation::FunctionModifierList &function_modifiers)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(SubroutineStmt)\n";
+#endif
+
+   Build(std::get<0>(x.t), function_modifiers);    // std::list<PrefixSpec>
+   Build(std::get<1>(x.t), name);                  // Name
+   Build(std::get<2>(x.t), dummy_arg_name_list);   // std::list<DummyArg>
+
+#if 0
+   if (auto & opt = std::get<3>(x.t)) {            // std::optional<LanguageBindingSpec>
+      Build(opt.value(), expr);
+   }
+#endif
+}
+
+void Build(const parser::PrefixSpec &x, LanguageTranslation::FunctionModifier &function_mod)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(PrefixSpec)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const Fortran::parser::PrefixSpec::Elemental &y)
+            {
+               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_elemental;
+            },
+         [&] (const Fortran::parser::PrefixSpec::Impure &y)
+            {
+               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_impure;
+            },
+         [&] (const Fortran::parser::PrefixSpec::Module &y)
+            {
+               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_module;
+            },
+         [&] (const Fortran::parser::PrefixSpec::Pure &y)
+            {
+               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_pure;
+            },
+         [&] (const Fortran::parser::PrefixSpec::Recursive &y)
+            {
+               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_recursive;
+            },
+         // DeclarationTypeSpec, Non_Recursive
+         [&] (const auto &y) { ; },
+      },
+      x.u);
+}
+
+void Build(const parser::DummyArg &x, std::string &name)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(DummyArg)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const Fortran::parser::Name &y) { name = y.ToString(); },
+         [&] (const Fortran::parser::Star &y) { ; },
+      },
+      x.u);
 }
 
 void Build(const parser::Variable &x, SgExpression* &expr)
