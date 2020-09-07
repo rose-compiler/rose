@@ -229,7 +229,7 @@ void Build(const parser::SubroutineSubprogram &x, T* scope)
    std::string name;
 
    // Traverse SubroutineStmt to get dummy argument list and name
-   Build(std::get<0>(x.t).statement, dummy_arg_name_list, name);
+   Build(std::get<0>(x.t).statement, dummy_arg_name_list, name, function_modifiers);
 
    // Enter SageTreeBuilder for SgFunctionParameterList
    builder.Enter(param_list, param_scope);
@@ -389,14 +389,13 @@ void Build(const parser::AssignmentStmt &x, T* scope)
    builder.Leave(assign_stmt);
 }
 
-void Build(const parser::SubroutineStmt &x, std::list<std::string> &dummy_arg_name_list, std::string &name)
+void Build(const parser::SubroutineStmt &x, std::list<std::string> &dummy_arg_name_list, std::string &name, LanguageTranslation::FunctionModifierList &function_modifiers)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(SubroutineStmt)\n";
 #endif
 
-   // TODO: PrefixSpec
-   //   Build(std::get<0>(x.t));                   // std::list<PrefixSpec>
+   Build(std::get<0>(x.t), function_modifiers);    // std::list<PrefixSpec>
    Build(std::get<1>(x.t), name);                  // Name
    Build(std::get<2>(x.t), dummy_arg_name_list);   // std::list<DummyArg>
 
@@ -407,13 +406,38 @@ void Build(const parser::SubroutineStmt &x, std::list<std::string> &dummy_arg_na
 #endif
 }
 
-void Build(const parser::PrefixSpec &x)
+void Build(const parser::PrefixSpec &x, LanguageTranslation::FunctionModifier &function_mod)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(PrefixSpec)\n";
 #endif
 
-   // std::variant<DeclarationTypeSpec, Elemental, Impure, Module, Non_Recursive, Pure, Recursive> u;
+   std::visit(
+      common::visitors{
+         [&] (const Fortran::parser::PrefixSpec::Elemental &y)
+            {
+               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_elemental;
+            },
+         [&] (const Fortran::parser::PrefixSpec::Impure &y)
+            {
+               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_impure;
+            },
+         [&] (const Fortran::parser::PrefixSpec::Module &y)
+            {
+               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_module;
+            },
+         [&] (const Fortran::parser::PrefixSpec::Pure &y)
+            {
+               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_pure;
+            },
+         [&] (const Fortran::parser::PrefixSpec::Recursive &y)
+            {
+               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_recursive;
+            },
+         // DeclarationTypeSpec, Non_Recursive
+         [&] (const auto &y) { ; },
+      },
+      x.u);
 }
 
 void Build(const parser::DummyArg &x, std::string &name)

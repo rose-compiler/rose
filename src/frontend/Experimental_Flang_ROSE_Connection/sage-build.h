@@ -45,8 +45,8 @@ template<typename T> void Build(const Fortran::parser::   ExecutableConstruct &x
 template<typename T> void Build(const Fortran::parser::            ActionStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::        AssignmentStmt &x, T* scope);
 
-void Build(const Fortran::parser::SubroutineStmt &x, std::list<std::string> &, std::string &);
-void Build(const Fortran::parser::    PrefixSpec &x);
+void Build(const Fortran::parser::SubroutineStmt &x, std::list<std::string> &, std::string &, LanguageTranslation::FunctionModifierList &function_modifiers);
+void Build(const Fortran::parser::    PrefixSpec &x, LanguageTranslation::FunctionModifier &function_mod);
 void Build(const Fortran::parser::      DummyArg &x, std::string &);
 
 void Build(const Fortran::parser::              Variable &x, SgExpression* &expr);
