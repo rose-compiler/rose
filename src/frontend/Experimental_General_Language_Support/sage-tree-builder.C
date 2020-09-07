@@ -299,6 +299,20 @@ Leave(SgFunctionParameterList* param_list, SgBasicBlock* param_scope, const std:
 }
 
 void SageTreeBuilder::
+Leave(SgFunctionParameterList* param_list, SgBasicBlock* param_scope, const std::list<std::string> &dummy_arg_name_list)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionParameterList* for Fortran) \n";
+
+   BOOST_FOREACH(std::string name, dummy_arg_name_list) {
+      SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(name, param_scope);
+      SgInitializedName* init_name = symbol->get_declaration();
+      param_list->append_arg(init_name);
+   }
+
+   SageBuilder::popScopeStack(); // remove parameter scope from the stack
+}
+
+void SageTreeBuilder::
 Enter(SgFunctionDefinition* &function_def)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionDefinition*) \n";
@@ -370,6 +384,8 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* re
 
    if (list_contains(modifiers, e_function_modifier_recursive))   function_decl->get_functionModifier().setRecursive();
    if (list_contains(modifiers, e_function_modifier_reentrant))   function_decl->get_functionModifier().setReentrant();
+   if (list_contains(modifiers, e_function_modifier_pure     ))   function_decl->get_functionModifier().setPure();
+   if (list_contains(modifiers, e_function_modifier_elemental))   function_decl->get_functionModifier().setElemental();
 
 #if 0
    std::cout << "---   : function_decl "  << function_decl << ": " << function_decl->class_name() << std::endl;
@@ -413,6 +429,18 @@ Leave(SgFunctionDeclaration* function_decl, SgBasicBlock* param_scope)
    SageBuilder::popScopeStack();  // function definition
 
    SageInterface::appendStatement(function_decl, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Leave(SgFunctionDeclaration* function_decl, SgBasicBlock* param_scope, bool have_end_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
+
+   if (have_end_stmt) {
+      function_decl->set_named_in_end_statement(have_end_stmt);
+   }
+
+   Leave(function_decl, param_scope);
 }
 
 void SageTreeBuilder::
