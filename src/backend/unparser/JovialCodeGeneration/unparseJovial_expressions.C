@@ -29,6 +29,7 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
        // expressions
           case V_SgSubscriptExpression: unparseSubscriptExpr(expr, info);        break;
           case V_SgAsteriskShapeExp:    unparseAsteriskShapeExpr(expr, info);    break;
+          case V_SgJovialBitVal:        unparseJovialBitVal(expr, info);         break;
 
        // symbol references
           case V_SgFunctionRefExp:      unparseFuncRef    (expr, info);          break;
@@ -78,6 +79,14 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
              break;
        }
    }
+
+void
+Unparse_Jovial::unparseJovialBitVal(SgExpression* expr, SgUnparse_Info& info)
+  {
+     SgJovialBitVal* bitval = isSgJovialBitVal(expr);
+     ASSERT_not_null(bitval);
+     curprint(bitval->get_valueString());
+  }
 
 void
 Unparse_Jovial::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)

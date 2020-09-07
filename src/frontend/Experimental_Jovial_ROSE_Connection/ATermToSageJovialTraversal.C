@@ -7588,7 +7588,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitLiteral(ATerm term, SgExpression*
 
       literal += "'";
 
-      expr = SageBuilder::buildIntVal_nfi(0, literal);
+      expr = SageBuilder::buildJovialBitVal_nfi(literal);
       setSourcePosition(expr, term);
    } else return ATfalse;
 

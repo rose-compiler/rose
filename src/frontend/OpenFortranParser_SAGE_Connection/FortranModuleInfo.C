@@ -260,7 +260,7 @@ FortranModuleInfo::createSgSourceFile(string modName)
   // modName = StringUtility::convertToLowerCase(modName);
 
   // current directory
-     string rmodFileName = modName + MOD_FILE_SUFFIX;
+     string rmodFileName = modName + module_file_suffix();
 
 #if 0
      printf ("In FortranModuleInfo::createSgSourceFile(): Searching for file rmodFileName = %s \n",rmodFileName.c_str());
