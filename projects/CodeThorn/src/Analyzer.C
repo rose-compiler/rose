@@ -31,7 +31,7 @@ using namespace Sawyer::Message;
 Sawyer::Message::Facility CodeThorn::Analyzer::logger;
 
 CodeThorn::Analyzer::Analyzer():
-  startFunRoot(0),
+  _startFunRoot(0),
   cfanalyzer(0),
   _globalTopifyMode(GTM_IO),
   _stgReducer(&estateSet, &transitionGraph),
@@ -101,7 +101,7 @@ void CodeThorn::Analyzer::setWorkLists(ExplorationMode explorationMode) {
     break;
   case EXPL_TOPOLOGIC_SORT: {
     ROSE_ASSERT(getLabeler());
-    ROSE_ASSERT(getFlow()->getStartLabel().isValid());
+    ROSE_ASSERT(getFlow()->getStartLabelSet().size()>0);
     TopologicalSort topSort(*getLabeler(),*getFlow());
     std::list<Label> labelList=topSort.topologicallySortedLabelList();
 #if 0
@@ -1605,6 +1605,8 @@ list<EState> CodeThorn::Analyzer::transferEdgeEState(Edge edge, const EState* es
   } else if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
     // "return x;": add $return=eval() [but not for "return f();"]
     return transferReturnStmt(edge,estate);
+  } else if(getLabeler()->isFunctionEntryLabel(edge.source())) {
+    return transferFunctionEntry(edge,estate);
   } else if(getLabeler()->isFunctionExitLabel(edge.source())) {
     return transferFunctionExit(edge,estate);
   } else if(getLabeler()->isFunctionCallReturnLabel(edge.source())) {
@@ -1617,6 +1619,9 @@ list<EState> CodeThorn::Analyzer::transferEdgeEState(Edge edge, const EState* es
     return transferVariableDeclaration(decl,edge,estate);
   } else if(isSgExprStatement(nextNodeToAnalyze1) || SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
     return transferExprStmt(nextNodeToAnalyze1, edge, estate);
+  } else if(isSgStatementExpression(nextNodeToAnalyze1)) {
+    // GNU extension
+    return transferGnuExtensionStmtExpr(nextNodeToAnalyze1, edge, estate);
   } else if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
     // TODO: this case should be handled as part of transferExprStmt (or ExpressionRoot)
     //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
@@ -1679,8 +1684,12 @@ void CodeThorn::Analyzer::initializeCommandLineArgumentsInState(PState& initialP
   // TODO1: add formal paramters of solo-function
   // SgFunctionDefinition* startFunRoot: node of function
   // estate=analyzeVariableDeclaration(SgVariableDeclaration*,estate,estate.label());
-  string functionName=SgNodeHelper::getFunctionName(startFunRoot);
-  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(startFunRoot);
+  string functionName=SgNodeHelper::getFunctionName(_startFunRoot);
+  if(_startFunRoot==0) {
+    // no main function, therefore nothing to initialize
+    return;
+  }
+  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(_startFunRoot);
   VariableId argcVarId;
   VariableId argvVarId;
   size_t mainFunArgNr=0;
@@ -1771,19 +1780,31 @@ void CodeThorn::Analyzer::stopAnalysisTimer() {
   SAWYER_MESG(logger[INFO])<<"INFO: solver timer stopped."<<endl;
 }
 
+SgNode* CodeThorn::Analyzer::getStartFunRoot() {
+  return _startFunRoot;
+}
+
+// change: pass in a set of labels (
 void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
   startAnalysisTimer();
   ROSE_ASSERT(root);
   resetInputSequenceIterator();
-  std::string funtofind=functionToStartAt;
   RoseAst completeast(root);
-  startFunRoot=completeast.findFunctionByName(funtofind);
-  if(startFunRoot==0) {
-    SAWYER_MESG(logger[ERROR]) << "Function '"<<funtofind<<"' not found.\n";
-    exit(1);
+
+  // START_INIT 2
+  if(_ctOpt.getInterProceduralFlag()) {
+    _startFunRoot=completeast.findFunctionByName(functionToStartAt);
+    if(_startFunRoot==0) {
+      SAWYER_MESG(logger[ERROR]) << "Function '"<<functionToStartAt<<"' not found.\n";
+      exit(1);
+    } else {
+      SAWYER_MESG(logger[INFO])<< "starting at function '"<<functionToStartAt<<"'."<<endl;
+    }
   } else {
-    SAWYER_MESG(logger[INFO])<< "starting at function '"<<funtofind<<"'."<<endl;
+    // temporary to remain compatible
+    _startFunRoot=completeast.findFunctionByName(functionToStartAt);
   }
+    
   SAWYER_MESG(logger[TRACE])<< "INIT: Initializing AST node info."<<endl;
   initAstNodeInfo(root);
 
@@ -1796,23 +1817,19 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   
   getFunctionCallMapping2()->setLabeler(labeler);
 
-  if (SgProject* prj = isSgProject(root))
-  {
+  if (SgProject* prj = isSgProject(root)) {
     ClassHierarchyWrapper* chw = new ClassHierarchyWrapper(prj);
-    
-    if (SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL)
-    { 
+    if (SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL) { 
       getFunctionCallMapping2()->setClassHierarchy(chw);
       getFunctionCallMapping2()->computeFunctionCallMapping(prj);
     }
-    
     getFunctionCallMapping()->setClassHierarchy(new ClassHierarchyWrapper(*chw));
-  }
-  else
+  } else {
     SAWYER_MESG(logger[WARN])<< "WARN: Need a SgProject object for building the class hierarchy\n"
                              << "      virtual function call analysis not available!"
                              << std::endl;
-
+  }
+  
   //FunctionIdMapping* funIdMapping=new FunctionIdMapping();
   //ROSE_ASSERT(isSgProject(root));
   //funIdMapping->computeFunctionSymbolMapping(isSgProject(root));
@@ -1824,14 +1841,22 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
   getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
 
-
+  CallString::setMaxLength(_ctOpt.callStringLength);
+  
   // logger[DEBUG]<< "mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   SAWYER_MESG(logger[INFO])<< "INIT: Building CFGs."<<endl;
 
-  flow=cfanalyzer->flow(root);
-  Label slab=getLabeler()->getLabel(startFunRoot);
-  ROSE_ASSERT(slab.isValid());
-  flow.setStartLabel(slab);
+  flow=cfanalyzer->flow(root); // START_INIT 3
+  if(_ctOpt.getInterProceduralFlag()) {
+    Label slab2=getLabeler()->getLabel(_startFunRoot);
+    ROSE_ASSERT(slab2.isValid());
+    ROSE_ASSERT(getLabeler()->isFunctionEntryLabel(slab2));
+    flow.addStartLabel(slab2);
+  } else {
+    LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(flow);
+    flow.setStartLabelSet(entryLabels);
+  }
+
   // Runs consistency checks on the fork / join and workshare / barrier nodes in the parallel CFG
   // If the --omp-ast flag is not selected by the user, the parallel nodes are not inserted into the CFG
   if (_ctOpt.ompAst) {
@@ -1847,9 +1872,9 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   if(oneFunctionOnly) {
     SAWYER_MESG(logger[TRACE])<<"INFO: analyzing one function only."<<endl;
   }
-  InterFlow interFlow=cfanalyzer->interFlow(flow);
-  SAWYER_MESG(logger[TRACE])<< "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
-  cfanalyzer->intraInterFlow(flow,interFlow);
+  _interFlow=cfanalyzer->interFlow(flow);
+  SAWYER_MESG(logger[TRACE])<< "INIT: Inter-Flow OK. (size: " << _interFlow.size()*2 << " edges)"<<endl;
+  cfanalyzer->intraInterFlow(flow,_interFlow);
   SAWYER_MESG(logger[INFO])<< "INIT: ICFG OK. (size: " << flow.size() << " edges)"<<endl;
 
 #if 0
@@ -1868,6 +1893,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
       cout<<"STATUS: created "<<getVariableIdMapping()->numberOfRegisteredStringLiterals()<<" string literals in initial state."<<endl;
     }
   }
+  // START_INIT 5
   const PState* initialPStateStored=processNew(initialPState);
   ROSE_ASSERT(initialPStateStored);
   //SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
@@ -1875,12 +1901,12 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   ROSE_ASSERT(cfanalyzer);
   ConstraintSet cset;
   const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
-  Label startLabel=cfanalyzer->getLabel(startFunRoot);
-  transitionGraph.setStartLabel(startLabel);
+
+  Label slab=flow.getStartLabel();
+  transitionGraph.setStartLabel(slab);
   transitionGraph.setAnalyzer(this);
 
-  EState estate(startLabel,initialPStateStored,emptycsetstored);
-
+  EState estate(slab,initialPStateStored,emptycsetstored);
   if(SgProject* project=isSgProject(root)) {
     SAWYER_MESG(logger[TRACE])<< "STATUS: Number of global variables: ";
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
@@ -1895,6 +1921,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
 #endif
     SAWYER_MESG(logger[TRACE])<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 
+    // START_INIT 6
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
       VariableId globalVarId=variableIdMapping->variableId(*i);
@@ -1914,13 +1941,27 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   }
 
   setWorkLists(_explorationMode);
+  
   estate.io.recordNone(); // ensure that extremal value is different to bot
-  const EState* initialEState=processNew(estate);
-  ROSE_ASSERT(initialEState);
-  variableValueMonitor.init(initialEState);
-  addToWorkList(initialEState);
-  SAWYER_MESG(logger[TRACE]) << "INIT: start state (extremal value): "<<initialEState->toString(variableIdMapping)<<endl;
-
+  if(_ctOpt.getInterProceduralFlag()) {
+    const EState* initialEState=processNew(estate); // START_INIT 6
+    ROSE_ASSERT(initialEState);
+    variableValueMonitor.init(initialEState);
+    addToWorkList(initialEState); // START_INIT 7: ADD TO WORKLIST HERE!!!
+    SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(variableIdMapping)<<endl;
+  } else {
+    LabelSet startLabels=flow.getStartLabelSet();
+    cout<<"STATUS: intra-procedural analysis with "<<startLabels.size()<<" start functions."<<endl;
+    for(auto slab : startLabels) {
+      // initialize intra-procedural analysis with all function entry points
+      estate.setLabel(slab);
+      const EState* initialEState=processNew(estate); // START_INIT 6
+      ROSE_ASSERT(initialEState);
+      variableValueMonitor.init(initialEState);
+      addToWorkList(initialEState); // START_INIT 7: ADD TO WORKLIST HERE!!!
+      SAWYER_MESG(logger[INFO]) << "INIT: start state intra-procedural (extremal value): "<<initialEState->toString(variableIdMapping)<<endl;
+    }
+  }
   // initialize summary states map for abstract model checking mode
   initializeSummaryStates(initialPStateStored,emptycsetstored);
 
@@ -2096,7 +2137,7 @@ void CodeThorn::Analyzer::swapStgWithBackup() {
   * \date 2019.
  */
 
-#define FAST_GRAPH_REDUCE
+//#define FAST_GRAPH_REDUCE
 void CodeThorn::Analyzer::reduceStg(function<bool(const EState*)> predicate) {
 #ifdef FAST_GRAPH_REDUCE
   // MS 3/17/2019: new faster implementation
@@ -2251,6 +2292,7 @@ CodeThorn::FunctionIdMapping* CodeThorn::Analyzer::getFunctionIdMapping() { retu
 CodeThorn::FunctionCallMapping* CodeThorn::Analyzer::getFunctionCallMapping() { return &functionCallMapping; }
 CodeThorn::FunctionCallMapping2* CodeThorn::Analyzer::getFunctionCallMapping2() { return &functionCallMapping2; }
 CodeThorn::Flow* CodeThorn::Analyzer::getFlow() { return &flow; }
+CodeThorn::InterFlow* CodeThorn::Analyzer::getInterFlow() { return &_interFlow; }
 CodeThorn::EStateSet* CodeThorn::Analyzer::getEStateSet() { return &estateSet; }
 CodeThorn::PStateSet* CodeThorn::Analyzer::getPStateSet() { return &pstateSet; }
 TransitionGraph* CodeThorn::Analyzer::getTransitionGraph() { return &transitionGraph; }
@@ -2339,6 +2381,10 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else if(variableIdMapping->hasPointerType(lhsVar)) {
         // assume here that only arrays (pointers to arrays) are assigned
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+      } else if(SgTypeString* lhsTypeTypeString=isSgTypeString(variableIdMapping->getType(lhsVar))) {
+        // assume here that only arrays (pointers to arrays) are assigned
+        SAWYER_MESG(logger[WARN])<<"DEBUG: LHS assignment: typestring band aid"<<endl;
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else if(variableIdMapping->hasReferenceType(lhsVar)) {
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
@@ -2520,6 +2566,10 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
   ROSE_ASSERT(_estateTransferFunctions);
   return _estateTransferFunctions->transferFunctionCallReturn(edge,estate);
 }
+std::list<EState> CodeThorn::Analyzer::transferFunctionEntry(Edge edge, const EState* estate) {
+  ROSE_ASSERT(_estateTransferFunctions);
+  return _estateTransferFunctions->transferFunctionEntry(edge,estate);
+}
 std::list<EState> CodeThorn::Analyzer::transferFunctionExit(Edge edge, const EState* estate) {
   ROSE_ASSERT(_estateTransferFunctions);
   return _estateTransferFunctions->transferFunctionExit(edge,estate);
@@ -2548,6 +2598,11 @@ std::list<EState> CodeThorn::Analyzer::transferVariableDeclaration(SgVariableDec
 std::list<EState> CodeThorn::Analyzer::transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate) {
   ROSE_ASSERT(_estateTransferFunctions);
   return _estateTransferFunctions->transferExprStmt(nextNodeToAnalyze1,edge,estate);
+}
+
+std::list<EState> CodeThorn::Analyzer::transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate) {
+  ROSE_ASSERT(_estateTransferFunctions);
+  return _estateTransferFunctions->transferGnuExtensionStmtExpr(nextNodeToAnalyze1,edge,estate);
 }
 
 list<EState> CodeThorn::Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate) {

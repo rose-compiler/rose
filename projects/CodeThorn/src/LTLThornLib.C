@@ -1,16 +1,22 @@
 #include "sage3basic.h"
+
+#include <string>     // std::string, std::stoi
+#include <regex>
+
 #include "IOAnalyzer.h"
 #include "ReadWriteAnalyzer.h"
 #include "CounterexampleGenerator.h"
 #include "CodeThornLib.h"
 #include "LTLThornLib.h"
 #include "Miscellaneous2.h"
+#include "CppStdUtilities.h"
 
 #include "ltlthorn-lib/SpotConnection.h"
 #include "ltlthorn-lib/CounterexampleAnalyzer.h"
 #include "ltlthorn-lib/Solver10.h"
 #include "ltlthorn-lib/Solver11.h"
 #include "ltlthorn-lib/Solver12.h"
+#include "CodeThornException.h"
 
 #include <execinfo.h>
 #include <unistd.h>
@@ -31,6 +37,33 @@ void CodeThorn::initDiagnosticsLTL() {
   IOAnalyzer::initDiagnostics();
   ReadWriteAnalyzer::initDiagnostics();
   CounterexampleGenerator::initDiagnostics();
+}
+
+bool CodeThorn::readAndParseLTLRersMappingFile(string ltlRersMappingFileName, CodeThorn::LtlRersMapping& rersLtlMapping) {
+  CppStdUtilities::DataFileVector dataFileVector;
+  bool readStatus=CppStdUtilities::readDataFile(ltlRersMappingFileName,dataFileVector);
+  if(readStatus==false)
+    return readStatus;
+  int lineNr=1;
+  for(std::string line : dataFileVector) {
+    std::vector<std::string> lineEntries=CppStdUtilities::splitByRegex(line,",|\\t|\\s+");
+    if(lineEntries.size()!=2) {
+      cerr<<"Error: format error in rers mapping file. Not exactly two entries in line "<<lineNr<<endl;
+      exit(1);
+    }
+    string ioString=lineEntries[0];
+    int value=std::stoi(lineEntries[1]);
+    cout<<"INFO: mapping: line "<<lineNr<<": "<<ioString<<" <=> "<<value<<endl;
+    if(ioString.size()==2&&ioString[0]=='i') {
+      rersLtlMapping.addInput(ioString[1],value);
+    } else if(ioString.size()==2&&ioString[0]=='o') {
+      rersLtlMapping.addOutput(ioString[1],value);
+    } else {
+      cout<<"WARNING: unknown entry in rers mapping file line "<<lineNr<<": "<<ioString<<" (ignoring it)"<<endl;
+    }
+    lineNr++;
+  }
+  return true;
 }
 
 void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* analyzer, TimingCollector& tc) {
@@ -150,22 +183,36 @@ void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAna
     }
 
     timer.start();
-    std::set<int> ltlInAlphabet;// = analyzer->getInputVarValues();
-    //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
+    LtlRersMapping ltlRersMapping;
     if (ltlOpt.ltlInAlphabet.size()>0) {
-      string setstring=ltlOpt.ltlInAlphabet;
-      ltlInAlphabet=CodeThorn::Parse::integerSet(setstring);
-      SAWYER_MESG(logger[TRACE]) << "LTL input alphabet explicitly selected: "<< setstring << endl;
+      ltlRersMapping.addInputAsciiValueSetWithOffsetA(ltlOpt.ltlInAlphabet);
     }
-    //take ltl output alphabet if specifically described, otherwise take the old RERS specific 21...26 (a.k.a. oU...oZ)
-    std::set<int> ltlOutAlphabet;// = Parse::integerSet("{21,22,23,24,25,26}");
     if (ltlOpt.ltlOutAlphabet.size()>0) {
-      string setstring=ltlOpt.ltlOutAlphabet;
-      ltlOutAlphabet=CodeThorn::Parse::integerSet(setstring);
-      SAWYER_MESG(logger[TRACE]) << "LTL output alphabet explicitly selected: "<< setstring << endl;
-    } else {
-      // TODO: fail, if no output alphabet is provided
+      ltlRersMapping.addOutputAsciiValueSetWithOffsetA(ltlOpt.ltlOutAlphabet);
     }
+    if(ltlOpt.ltlRersMappingFileName.size()>0) {
+      // load and parse file into ltlInAlphabet and ltlOutAlphabet
+      // input/output alphabet
+      if(!readAndParseLTLRersMappingFile(ltlOpt.ltlRersMappingFileName,ltlRersMapping)) {
+        cerr<<"Error: could not open RERS mapping file "<<ltlOpt.ltlRersMappingFileName<<endl;
+        exit(1);
+      }
+      // set input/output alphabets here as well
+    }
+   
+    std::set<int> ltlInAlphabet;// = analyzer->getInputVarValues();
+    std::set<int> ltlOutAlphabet;
+    ltlInAlphabet=ltlRersMapping.getInputValueSet();
+    ltlOutAlphabet=ltlRersMapping.getOutputValueSet();
+    if(ltlInAlphabet.size()==0) {
+      cerr<<"Error: no LTL input alphabet provided."<<endl;
+      exit(1);
+    }
+    if(ltlOutAlphabet.size()==0) {
+      cerr<<"Error: no LTL output alphabet provided."<<endl;
+      exit(1);
+    }
+
     PropertyValueTable* ltlResults=nullptr;
     SpotConnection spotConnection(ltl_filename);
     spotConnection.setModeLTLDriven(analyzer->getModeLTLDriven());
@@ -178,9 +225,9 @@ void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAna
     SAWYER_MESG(logger[TRACE]) << "LTL: check properties."<<endl;
     if (ltlOpt.propertyNrToCheck!=-1) {
       int propertyNum = ltlOpt.propertyNrToCheck;
-      spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+      spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlRersMapping , withCounterexample, spuriousNoAnswers);
     } else {
-      spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+      spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlRersMapping, withCounterexample, spuriousNoAnswers);
     }
     spotLtlAnalysisTime=timer.getTimeDurationAndStop().milliSeconds();
     SAWYER_MESG(logger[TRACE]) << "LTL: get results from spot connection."<<endl;
@@ -202,12 +249,12 @@ void CodeThorn::runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAna
         ceAnalyzer.setMaxCounterexamples(ltlOpt.cegpra.maxIterations);
       }
       if (ltlOpt.cegpra.checkAllProperties) {
-        ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlInAlphabet, ltlOutAlphabet);
+        ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlRersMapping);
       } else {
         // cegpra for single LTL property
         //ROSE_ASSERT(ltlOpt.cegpra.ltlPropertyNr!=-1);
         int property = ltlOpt.cegpra.ltlPropertyNr;
-        ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);
+        ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlRersMapping);
       }
     }
 

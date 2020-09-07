@@ -527,7 +527,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2018_05.c \
      test2018_06.c \
      test2018_07.c \
-     test2018_08.c \
      test2018_09.c \
      test2018_10.c \
      test2018_11.c \
@@ -694,6 +693,7 @@ TESTCODES_REQUIRED_TO_PASS += \
      test2015_147.c \
      test2015_148.c \
      test2015_149.c \
+     test2018_08.c \
      test2004_21.c \
      test2006_65.c
 

@@ -22,6 +22,7 @@ class TopologicalSort {
  private:
   // computes reverse post-order of labels in revPostOrderList
   void semanticRevPostOrderTraversal(Label lab);
+  void createTopologicallySortedLabelList();
 
  private:
   Labeler& labeler;

@@ -236,17 +236,20 @@ void CounterexampleAnalyzer::determineAnalysisStepResult(CEAnalysisStep& result,
 }
 
 PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(SpotConnection& spotConnection, 
-									set<int> ltlInAlphabet, set<int> ltlOutAlphabet) {
+									LtlRersMapping ltlRersMapping) {
   PropertyValueTable* currentResults = spotConnection.getLtlResults();
   // call the counterexample-guided prefix refinement for all analyzed LTL properties
   for (unsigned int i=0; i < spotConnection.getLtlResults()->size(); i++) { 
-    currentResults = cegarPrefixAnalysisForLtl(i, spotConnection, ltlInAlphabet, ltlOutAlphabet);
+    currentResults = cegarPrefixAnalysisForLtl(i, spotConnection, ltlRersMapping);
   }
   return currentResults;
 }
 
 PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int property, SpotConnection& spotConnection, 
-									set<int> ltlInAlphabet, set<int> ltlOutAlphabet) {
+									LtlRersMapping ltlRersMapping) {
+  std::set<int> ltlInAlphabet=ltlRersMapping.getInputValueSet();
+  //std::set<int> ltlOutAlphabet=ltlRersMapping.getOutputValueSet();
+
   // visualizer for in-depth model outputs (.dot files)
   Visualizer visualizer(_analyzer->getLabeler(),_analyzer->getVariableIdMapping(),
                           _analyzer->getFlow(),_analyzer->getPStateSet(),_analyzer->getEStateSet(),_analyzer->getTransitionGraph());
@@ -279,7 +282,7 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
     cout << "STATUS: property " << property << " was already analyzed. CEGAR analysis will not be started." << endl;
     return currentResults;
   }
-  spotConnection.checkSingleProperty(property, *model, ltlInAlphabet, ltlOutAlphabet, true, true);
+  spotConnection.checkSingleProperty(property, *model, ltlRersMapping, true, true);
   currentResults = spotConnection.getLtlResults();
   // (0.5) prepare for the continuous tracing of concrete states (will become the prefix of a refined abstract model)
   // store connectors in the over-approx. part of the model (single row of input states in the initial "topified" model)
@@ -375,11 +378,11 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
     }
     // (4) check if the property holds on the refined model
     spotConnection.resetLtlResults(property);
-    spotConnection.checkSingleProperty(property, *model, ltlInAlphabet, ltlOutAlphabet, true, true);
+    spotConnection.checkSingleProperty(property, *model, ltlRersMapping, true, true);
     currentResults = spotConnection.getLtlResults();
   }
   // (5) check all properties using the current model and return the result
-  spotConnection.checkLtlProperties(*model, ltlInAlphabet, ltlOutAlphabet, true, false);
+  spotConnection.checkLtlProperties(*model, ltlRersMapping, true, false);
   currentResults = spotConnection.getLtlResults();
   printStgSizeAndCeCount(model, loopCount, property);
   if (_csvOutput) {

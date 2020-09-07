@@ -6,6 +6,8 @@
 #include <iostream>
 #include "CFAnalysis.h"
 
+// Author: Markus Schordan, 2020.
+
 namespace CodeThorn {
   class ProgramLocationsReport {
   public:

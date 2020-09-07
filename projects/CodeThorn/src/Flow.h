@@ -7,6 +7,7 @@
 #include "Labeler.h"
 
 #include "Sawyer/Graph.h"
+#include <map>
 
 namespace CodeThorn {
 
@@ -85,7 +86,8 @@ namespace CodeThorn {
 #ifdef USE_SAWYER_GRAPH
     class iterator : public SawyerCfg::EdgeIterator {
     public: 
-      iterator(const SawyerCfg::EdgeIterator& it) : SawyerCfg::EdgeIterator(it) {}
+
+  iterator(const SawyerCfg::EdgeIterator& it) : SawyerCfg::EdgeIterator(it) {}
       Edge operator*();
       iterator& operator++() { SawyerCfg::EdgeIterator::operator++(); return *this; }
       iterator operator++(int) { return iterator(SawyerCfg::EdgeIterator::operator++(1)); }
@@ -157,8 +159,12 @@ namespace CodeThorn {
     // this function only returns a valid edge if exactly one edge exists
     Edge outEdgeOfType(Label label, EdgeType edgeType);
 
-    Label getStartLabel() { return _startLabel; }
-    void setStartLabel(Label label) { _startLabel = label; }
+    void setStartLabel(Label label);
+    void addStartLabel(Label label);
+    Label getStartLabel();
+    void setStartLabelSet(LabelSet labelSet);
+    LabelSet getStartLabelSet();
+
     void setDotOptionDisplayLabel(bool opt);
     void setDotOptionDisplayStmt(bool opt);
     void setDotOptionEdgeAnnotationsOnly(bool opt);
@@ -187,7 +193,7 @@ namespace CodeThorn {
     std::string _fixedColor;
     std::string _fixedNodeColor;
     bool _dotOptionHeaderFooter;
-    Label _startLabel;
+    LabelSet _startLabelSet;
 #ifdef USE_SAWYER_GRAPH
     SawyerCfg  _sawyerFlowGraph;
 #else
@@ -215,7 +221,11 @@ namespace CodeThorn {
    */
   class InterFlow : public std::set<InterEdge> {
   public:
+    // type used to map any label to a respective function
+    typedef std::map<Label,Label> LabelToFunctionMap;
     std::string toString() const;
+    std::string dotCallGraph(LabelToFunctionMap& map) const;
+    std::string dotCallGraphEdges(LabelToFunctionMap& map) const;
   };
 
 } // end namespace CodeThorn

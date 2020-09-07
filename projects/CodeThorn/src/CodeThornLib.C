@@ -276,7 +276,6 @@ void optionallyRunVisualizer(CodeThornOptions& ctOpt, Analyzer* analyzer, SgNode
     write_file("transitiongraph1.dat", datFile1);
     cout << "generated transitiongraph1.dat."<<endl;
 
-    assert(analyzer->startFunRoot);
     //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
     //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
     SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;
@@ -608,46 +607,37 @@ void optionallyAnalyzeAssertions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, IO
 void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,Analyzer* analyzer) {
   if(ctOpt.analysisList().size()>0) {
     const bool reportDetectedErrorLines=true;
-    AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines);
+    AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
     AnalysisReporting::generateAnalysisStatsRawData(ctOpt,analyzer);
     AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
   }
 }
-
+void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,Analyzer* analyzer) {
+  std::string fileName=ctOpt.visualization.callGraphFileName;
+  if(fileName.size()>0) {
+    InterFlow::LabelToFunctionMap map=analyzer->getCFAnalyzer()->labelToFunctionMap(*analyzer->getFlow());
+    cout<<"DEBUG: labeltofunctionmap size:"<<map.size()<<endl;
+    std::string dotFileString=analyzer->getInterFlow()->dotCallGraph(map);
+    cout<<"DEBUG: interflow size:"<<analyzer->getInterFlow()->size()<<endl;
+    if(!CppStdUtilities::writeFile(fileName, dotFileString)) {
+      cerr<<"Error: could not generate callgraph dot file "<<fileName<<endl;
+      exit(1);
+    } else {
+      cout<<"Generated call graph dot file "<<fileName<<endl;
+    }
+  }
+}
+  // START_INIT 1
 void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,Analyzer* analyzer,SgNode* root, TimingCollector& tc) {
   tc.startTimer();
   SAWYER_MESG(logger[TRACE])<< "INIT: initializing solver with start function "<<analyzer->getSolver()->getId()<<"."<<endl;
-  {
-    string option_start_function="main";
-    if(ctOpt.startFunctionName.size()>0) {
-      option_start_function = ctOpt.startFunctionName;
-    }
-    // if main function exists, start with main-function
-    // if a single function exist, use this function
-    // in all other cases exit with error.
-    RoseAst completeAst(root);
-    string startFunction=option_start_function;
-    SgNode* startFunRoot=completeAst.findFunctionByName(startFunction);
-    if(startFunRoot==0) {
-      // no main function exists. check if a single function exists in the translation unit
-      SgProject* project=isSgProject(root);
-      ROSE_ASSERT(project);
-      std::list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(project);
-      if(funDefs.size()==1) {
-        // found exactly one function. Analyse this function.
-        SgFunctionDefinition* functionDef=*funDefs.begin();
-        startFunction=SgNodeHelper::getFunctionName(functionDef);
-      } else if(funDefs.size()>1) {
-        cerr<<"Error: no main function and more than one function in translation unit."<<endl;
-        exit(1);
-      } else if(funDefs.size()==0) {
-        cerr<<"Error: no function in translation unit."<<endl;
-        exit(1);
-      }
-    }
-    ROSE_ASSERT(startFunction!="");
-    analyzer->initializeSolver(startFunction,root,false);
+  string startFunctionName;
+  if(ctOpt.startFunctionName.size()>0) {
+    startFunctionName = ctOpt.startFunctionName;
+  } else {
+    startFunctionName = "main";
   }
+  analyzer->initializeSolver(startFunctionName,root,false);
   tc.initRunTime=tc.timer.getTimeDurationAndStop().milliSeconds();
 }
 

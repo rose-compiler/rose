@@ -8,20 +8,23 @@ namespace CodeThorn {
   TopologicalSort::TopologicalSort(Labeler& labeler0, Flow& flow0):labeler(labeler0),flow(flow0) {
   }
 
+  void TopologicalSort::createTopologicallySortedLabelList() {
+    if(revPostOrderList.size()==0) {
+      LabelSet slabs=flow.getStartLabelSet();
+      for(auto slab : slabs) {
+        semanticRevPostOrderTraversal(slab);
+      }
+    }
+  }
+  
   std::list<Label> TopologicalSort::topologicallySortedLabelList() {
-    Label slab=flow.getStartLabel();
-    ROSE_ASSERT(slab.isValid());
-    semanticRevPostOrderTraversal(slab);
+    createTopologicallySortedLabelList();
     return revPostOrderList;
   }
 
   TopologicalSort::LabelToPriorityMap TopologicalSort::labelToPriorityMap() {
     TopologicalSort::LabelToPriorityMap map;
-    Label slab=flow.getStartLabel();
-    ROSE_ASSERT(slab.isValid());
-    if(revPostOrderList.size()==0) {
-      semanticRevPostOrderTraversal(slab);
-    }
+    createTopologicallySortedLabelList();
     int i=1;
     for(auto lab : revPostOrderList) {
       map[lab]=i;
@@ -29,6 +32,7 @@ namespace CodeThorn {
     }
     return map;
   }
+
   // computes reverse post-order of labels in revPostOrderList
   void TopologicalSort::semanticRevPostOrderTraversal(Label lab) {
     // this is used to allow for invalid edges (whoes target is an invalid labell)

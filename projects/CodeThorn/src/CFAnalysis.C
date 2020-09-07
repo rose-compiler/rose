@@ -126,10 +126,33 @@ LabelSetSet CFAnalysis::functionLabelSetSets(Flow& flow) {
   return result;
 }
 
+// TODO?: move this function to Flow
+InterFlow::LabelToFunctionMap CFAnalysis::labelToFunctionMap(Flow& flow) {
+  InterFlow::LabelToFunctionMap map;
+  LabelSet entryLabels=functionEntryLabels(flow);
+  for(auto entryLabel : entryLabels) {
+    LabelSet insideFunctionLabels=functionLabelSet(entryLabel,flow);
+    for(auto funLocLabel : insideFunctionLabels) {
+      // need all labels for verification of functions
+      map[funLocLabel]=entryLabel;
+    }
+  }
+  return map;
+}
+
 LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
-    Label exitLabel=correspondingFunctionExitLabel(entryLabel);
-    LabelSet fLabels=flow.reachableNodesButNotBeyondTargetNode(entryLabel,exitLabel);
-    return fLabels;
+  LabelSet fLabels;
+  SgNode* functionDef=getLabeler()->getNode(entryLabel);
+  RoseAst ast(functionDef);
+  for(auto node : ast) {
+    if(!isSgBasicBlock(node)) {
+      Label lab=getLabeler()->getLabel(node);
+      if(lab.isValid()) {
+        fLabels.insert(lab);
+      }
+    }
+  }
+  return fLabels;
 }
 
 template <class SageNode>
@@ -1018,7 +1041,7 @@ SgNode* CFAnalysis::correspondingLoopConstruct(SgNode* node) {
   return node;
 }
 
-LabelSet CFAnalysis::setOfLabelsOfInterest() {
+LabelSet CFAnalysis::labelsOfInterestSet() {
   LabelSet ls;
   Labeler& labeler=*getLabeler();
   for(auto l : labeler) {
@@ -1029,7 +1052,7 @@ LabelSet CFAnalysis::setOfLabelsOfInterest() {
   return ls;
 }
 
-LabelSet CFAnalysis::setOfInitialLabelsOfStmtsInBlock(SgNode* node) {
+LabelSet CFAnalysis::initialLabelsOfStmtsInBlockSet(SgNode* node) {
   LabelSet ls;
   if(node==0)
     return ls;
@@ -1057,15 +1080,15 @@ Flow CFAnalysis::controlDependenceGraph(Flow& controlFlow) {
     if(SgNodeHelper::isLoopCond(condition)) {
       SgNode* loopBody=SgNodeHelper::getLoopBody(stmt);
       //cerr<<"DEBUG: loopBody:"<<loopBody->class_name()<<endl;
-      LabelSet loopBodyInitLabels=setOfInitialLabelsOfStmtsInBlock(loopBody);
+      LabelSet loopBodyInitLabels=initialLabelsOfStmtsInBlockSet(loopBody);
       targetLabels=loopBodyInitLabels;
     }
     // if
     if(isSgIfStmt(stmt)) {
       SgNode* trueBranch=SgNodeHelper::getTrueBranch(stmt);
-      LabelSet trueBranchInitLabels=setOfInitialLabelsOfStmtsInBlock(trueBranch);
+      LabelSet trueBranchInitLabels=initialLabelsOfStmtsInBlockSet(trueBranch);
       SgNode* falseBranch=SgNodeHelper::getFalseBranch(stmt);
-      LabelSet falseBranchInitLabels=setOfInitialLabelsOfStmtsInBlock(falseBranch);
+      LabelSet falseBranchInitLabels=initialLabelsOfStmtsInBlockSet(falseBranch);
       targetLabels=trueBranchInitLabels+falseBranchInitLabels;
     }
     for(LabelSet::iterator j=targetLabels.begin();j!=targetLabels.end();++j) {
@@ -1104,33 +1127,6 @@ Flow CFAnalysis::WhileAndDoWhileLoopFlow(SgNode* node,
     edgeSet.insert(e);
   }
   return edgeSet;
-}
-
-LabelSet Flow::reachableNodes(Label start) {
-  return reachableNodesButNotBeyondTargetNode(start,Labeler::NO_LABEL);
-}
-
-// MS: will possibly be replaced with an implementation from the BOOST graph library
-LabelSet Flow::reachableNodesButNotBeyondTargetNode(Label start, Label target) {
-  LabelSet reachableNodes;
-  LabelSet toVisitSet=succ(start);
-  size_t oldSize=0;
-  size_t newSize=0;
-  do {
-    LabelSet newToVisitSet;
-    for(LabelSet::iterator i=toVisitSet.begin();i!=toVisitSet.end();++i) {
-      LabelSet succSet=succ(*i);
-      for(LabelSet::iterator j=succSet.begin();j!=succSet.end();++j) {
-        if(reachableNodes.find(*j)==reachableNodes.end())
-          newToVisitSet.insert(*j);
-      }
-    }
-    toVisitSet=newToVisitSet;
-    oldSize=reachableNodes.size();
-    reachableNodes+=toVisitSet;
-    newSize=reachableNodes.size();
-  } while(oldSize!=newSize);
-  return reachableNodes;
 }
 
 namespace
@@ -1653,50 +1649,6 @@ Flow CFAnalysis::flow(SgNode* n) {
   }
 }
 
-#if 0
-// slow lookup
-SgFunctionDefinition* CFAnalysis::determineFunctionDefinition2(SgFunctionCallExp* funCall) {
-  if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration()) {
-    if(SgDeclarationStatement* defFunDecl=funDecl->get_definingDeclaration()) {
-      if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(defFunDecl)) {
-        if(SgFunctionDefinition* funDef=funDecl2->get_definition()) {
-          return funDef;
-        } else {
-          //cout<<"INFO: no definition found for call: "<<funCall->unparseToString()<<endl;
-          //return 0;
-          // the following code is dead code: searching the AST is inefficient. This code will refactored and removed from here.
-          // forward declaration (we have not found the function definition yet)
-          // 1) use parent pointers and search for Root node (likely to be SgProject node)
-          SgNode* root=defFunDecl;
-          SgNode* parent=0;
-          while(!SgNodeHelper::isAstRoot(root)) {
-            parent=SgNodeHelper::getParent(root);
-            root=parent;
-          }
-          ROSE_ASSERT(root);
-          // 2) search in AST for the function's definition now
-          RoseAst ast(root);
-          for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-            if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(*i)) {
-              if(!SgNodeHelper::isForwardFunctionDeclaration(funDecl2)) {
-                SgSymbol* sym2=funDecl2->search_for_symbol_from_symbol_table();
-                SgSymbol* sym1=funDecl->search_for_symbol_from_symbol_table();
-                if(sym1!=0 && sym1==sym2) {
-                  SgFunctionDefinition* fundef2=funDecl2->get_definition();
-                  ROSE_ASSERT(fundef2);
-                  return fundef2;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  return 0;
-}
-#endif
-
 SgFunctionDefinition* CFAnalysis::determineFunctionDefinition3(SgFunctionCallExp* funCall) {
   //cout<<"DEBUG: CFAnalysis::determineFunctionDefinition3:"<<funCall->unparseToString()<<endl;
   SgFunctionDefinition* funDef=nullptr;
@@ -1710,36 +1662,6 @@ SgFunctionDefinition* CFAnalysis::determineFunctionDefinition3(SgFunctionCallExp
       else SAWYER_MESG(logger[TRACE])<<"NOT resolved.";
     }
   }
-#if 0
-  if(node) {
-    if(SgFunctionRefExp* funRef=isSgFunctionRefExp(node)) {
-      FunctionId funId=_functionIdMapping->getFunctionIdFromFunctionRef(funRef);
-      // TODO: get function definition from funId
-      cout<<"DEBUG: funRef:"<<funRef->unparseToString()<<endl;
-      cout<<"DEBUG: FunctionId "<<funId.toString()<<" for funCall: "<<funCall->unparseToString()<<": definition: ";
-      if(funId.isValid()) {
-#if 1
-        funDef=getFunctionIdMapping()->getFunctionDefFromFunctionId(funId);
-#else
-        SgSymbol* sym=_functionIdMapping->getSymbolFromFunctionId(funId);
-        SgFunctionSymbol* funSym=isSgFunctionSymbol(sym);
-        cout<<"funSym:"<<funSym<<" ";
-        if(funSym) {
-          SgFunctionDeclaration* funDecl=isSgFunctionDeclaration(funSym->get_declaration());
-          cout<<"funDecl:"<<funDecl<<" ";
-          if(funDecl) {
-            auto defDecl=funDecl->get_definingDeclaration();
-            cout<<"definingDecl:"<<defDecl<<" ";
-            if(SgFunctionDeclaration* funDecl=isSgFunctionDeclaration(defDecl)) {
-              funDef=funDecl->get_definition();
-            }
-          }
-        }
-#endif
-      }
-    }
-  }
-#endif
   SAWYER_MESG(logger[TRACE])<<" FunDef: "<<funDef<<endl;
   return funDef;
 }
@@ -1749,7 +1671,6 @@ FunctionCallTargetSet CFAnalysis::determineFunctionDefinition4(SgFunctionCallExp
   SAWYER_MESG(logger[TRACE])<<"CFAnalysis::determineFunctionDefinition4:"<<funCall->unparseToString()<<": ";
   ROSE_ASSERT(getFunctionCallMapping());
   FunctionCallTargetSet res=getFunctionCallMapping()->resolveFunctionCall(funCall);
-#if 1
   if(res.size()>0) {
     if(res.size()==1) {
       SAWYER_MESG(logger[TRACE]) << "RESOLVED to "<<(*res.begin()).getDefinition()<<endl;
@@ -1759,7 +1680,6 @@ FunctionCallTargetSet CFAnalysis::determineFunctionDefinition4(SgFunctionCallExp
   } else {
     SAWYER_MESG(logger[TRACE]) << "NOT RESOLVED."<<endl;
   }
-#endif
   return res;
 }
 
