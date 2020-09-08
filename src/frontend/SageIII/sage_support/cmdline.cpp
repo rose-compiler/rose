@@ -4635,7 +4635,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      ROSE_ASSERT (get_openacc_parse_only() == false); 
      ROSE_ASSERT (get_openacc_ast_only() == false);
      if ( CommandlineProcessing::isOption(argv,"-rose:","(OpenACC|openacc)",true) == true 
-         ||CommandlineProcessing::isOption(argv,"-","(openacc|fopenacc)",true) == true
+         ||CommandlineProcessing::isOption(argv,"-","(acc|openacc|fopenacc)",true) == true
          )
         {
           if ( SgProject::get_verbose() >= 1 )
