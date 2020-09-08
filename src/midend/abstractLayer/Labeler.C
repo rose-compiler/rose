@@ -34,6 +34,10 @@ Label::Label(const Label& other) {
   _labelId=other._labelId;
 }
 
+bool Label::isValid() const {
+  return _labelId!=NO_LABEL_ID;
+}
+
 //Copy assignemnt operator
 Label& Label::operator=(const Label& other) {
   // prevent self-assignment
@@ -378,7 +382,7 @@ void Labeler::createLabels(SgNode* root) {
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_FORK));
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_JOIN));
       } else if(isSgOmpForStatement(*i) || isSgOmpSectionsStatement(*i)
-                  || isSgOmpSimdStatement(*i) || isSgOmpForSimdStatement(*i)) {
+                || isSgOmpSimdStatement(*i) || isSgOmpForSimdStatement(*i)) {
         assert(num == 2);
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_WORKSHARE));
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_BARRIER));
@@ -526,6 +530,12 @@ Label Labeler::functionCallReturnLabel(SgNode* node) {
   else
     return lab+1;
 }
+
+Label Labeler::getFunctionCallReturnLabelFromCallLabel(Label callLabel) {
+  ROSE_ASSERT(isFunctionCallLabel(callLabel));
+  return functionCallReturnLabel(getNode(callLabel));
+}
+
 Label Labeler::blockBeginLabel(SgNode* node) {
   ROSE_ASSERT(isSgBasicBlock(node));
   return getLabel(node);
@@ -583,6 +593,10 @@ Label Labeler::barrierLabel(SgNode *node) {
 
 bool Labeler::isConditionLabel(Label lab) {
   return SgNodeHelper::isCond(getNode(lab));
+}
+
+bool Labeler::isLoopConditionLabel(Label lab) {
+  return SgNodeHelper::isLoopCond(getNode(lab));
 }
 
 bool Labeler::isSwitchExprLabel(Label lab) {
@@ -801,15 +815,12 @@ void LabelProperty::setExternalFunctionCallLabel() {
   IO Labeler Implementation
 */
 
-// note: calling Labeler(start) would be wrong because it would call createLabels twice.
-IOLabeler::IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping):Labeler() {
+IOLabeler::IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping):Labeler(start) {
   _variableIdMapping=variableIdMapping;
-  createLabels(start);
-  // initialize all labels' property with additional IO info
+  // add IO info to each label property
   for(LabelToLabelPropertyMapping::iterator i=mappingLabelToLabelProperty.begin();i!=mappingLabelToLabelProperty.end();++i) {
     (*i).initializeIO(variableIdMapping);
   }
-  computeNodeToLabelMapping();
 }
 
 IOLabeler::~IOLabeler() {

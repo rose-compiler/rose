@@ -10410,11 +10410,15 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
 void SageInterface::removeAllOriginalExpressionTrees(SgNode* top) {
   struct Visitor: public AstSimpleProcessing {
     virtual void visit(SgNode* n) {
-      if (isSgValueExp(n) != NULL) {
-        isSgValueExp(n)->set_originalExpressionTree(NULL);
+      SgValueExp* valueExp = isSgValueExp(n);
+      if (valueExp != NULL) {
+        valueExp->set_originalExpressionTree(NULL);
       }
-      else if (isSgCastExp(n) != NULL) {
-        isSgCastExp(n)->set_originalExpressionTree(NULL);
+      else {
+        SgCastExp* cast_exp = isSgCastExp(n);
+        if (cast_exp != NULL) {
+          cast_exp->set_originalExpressionTree(NULL);
+        }
       }
     }
   };
@@ -12426,6 +12430,7 @@ ROSE_DLL_API int SageInterface::splitVariableDeclaration (SgScopeStatement* scop
     SgVariableDeclaration *decl= isSgVariableDeclaration(*i);
     if (topLevelOnly)
     {
+      ROSE_ASSERT(decl != NULL);
       if (decl->get_scope() == scope)
       {
         splitVariableDeclaration (decl);
@@ -13648,12 +13653,13 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                                    p->set_body(newparent);
                                    newparent->set_parent(parent);
                                    insertStatement(targetStmt, newStmt,insertBefore);
-                                }
+                                 }
                                else
                                  {
                                 // It appears that all of the recursive calls are untimately calling this location.
-                                   ROSE_ASSERT(isSgStatement(parent) != NULL);
-                                   isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
+                                   SgStatement* stmnt = isSgStatement(parent);
+                                   ROSE_ASSERT(stmnt != NULL);
+                                   stmnt->insert_statement(targetStmt,newStmt,insertBefore);
                                  }
                             }
                        }
@@ -19525,24 +19531,27 @@ SageInterface::deleteAST ( SgNode* n )
                                 /remove SgFunctionSymbol
                                 /////////////////////////////////////////////////*/
 
-                                if ((isSgFunctionDeclaration(node) != NULL) && (isSgMemberFunctionDeclaration(node) == NULL)){
-                                        if(isSgFunctionDeclaration(node)->get_scope()!=NULL){
-                                             if(isSgFunctionDeclaration(node)->get_scope()->get_symbol_table()!=NULL)
-                                                {
-                                                        SgSymbol* symbol = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
-                                                        ClassicVisitor visitor((SgFunctionSymbol *)symbol);
-                                                        traverseMemoryPoolVisitorPattern(visitor);
-                                                        if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete
-                                                                ((SgFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
-                                                                delete symbol;
-                                                                //printf("A SgFunctionSymbol was deleted\n");
-                                                        }
-                                                        ClassicVisitor visitor1((SgFunctionDeclaration *)node);
-                                                        traverseMemoryPoolVisitorPattern(visitor1);
-                                                }
-                                        }
+                                {
+                                   SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(node); 
+                                   if (funcDecl != NULL){
+                                      if (isSgMemberFunctionDeclaration(node) == NULL) {
+                                         if (funcDecl->get_scope() != NULL) {
+                                            if (funcDecl->get_scope()->get_symbol_table() != NULL) {
+                                               SgSymbol* symbol = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
+                                               ClassicVisitor visitor((SgFunctionSymbol *)symbol);
+                                               traverseMemoryPoolVisitorPattern(visitor);
+                                               if (visitor.get_num_Function_pointers()==1) { //only one reference to this FunctionSymbol => safe to delete
+                                                  ((SgFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                  delete symbol;
+                                                //printf("A SgFunctionSymbol was deleted\n");
+                                               }
+                                               ClassicVisitor visitor1((SgFunctionDeclaration *)node);
+                                               traverseMemoryPoolVisitorPattern(visitor1);
+                                            }
+                                         }
+                                      }
+                                   }
                                 }
-
 
                                 if(isSgFunctionRefExp(node) !=NULL)
                                 {
