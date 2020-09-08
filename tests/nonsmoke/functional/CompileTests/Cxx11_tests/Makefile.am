@@ -730,7 +730,23 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2020_68.C \
    test2020_69.C \
    test2020_70.C \
-   test2020_74.C 
+   test2020_74.C \
+   test2020_75.C \
+   test2020_76.C \
+   test2020_77.C \
+   test2020_78.C \
+   test2020_79.C \
+   test2020_81.C \
+   test2020_83.C \
+   test2020_84.C \
+   test2020_85.C \
+   test2020_86.C \
+   test2020_88.C \
+   test2020_89.C \
+   test2020_90.C \
+   test2020_92.C \
+   test2020_93.C \
+   test2020_94.C 
 
 
 TESTCODE_CURRENTLY_FAILING = \
@@ -854,7 +870,10 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_56.C \
    test2020_71.C \
    test2020_72.C \
-   test2020_73.C 
+   test2020_73.C \
+   test2020_80.C \
+   test2020_82.C \
+   test2020_91.C 
 
 # NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
 

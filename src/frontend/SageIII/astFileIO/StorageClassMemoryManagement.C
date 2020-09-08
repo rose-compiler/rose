@@ -575,10 +575,13 @@ EasyStorage<Sawyer::Container::BitVector>::rebuildDataStoredInEasyStorageClass()
         }
         retval.resize(nBits);
 
-        // Now read the data and load it into the bit vector
+        // Now read the data and load it into the bit vector, note that since
+        // the size is known to be positive the pointer better not be nil.
         BVWord *dst = retval.data();
-        for (size_t i=1; i < (size_t)Base::getSizeOfData(); ++i)
+        assert(dst != NULL);
+        for (size_t i=1; i < (size_t)Base::getSizeOfData(); ++i) {
             *dst++ = *words++;
+        }
     }
     return retval;
 }

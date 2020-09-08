@@ -1,0 +1,6 @@
+START
+PROGRAM main;
+BEGIN
+   for X : 5;;
+END
+TERM

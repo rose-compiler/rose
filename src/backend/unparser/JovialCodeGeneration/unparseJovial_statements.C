@@ -547,8 +547,8 @@ Unparse_Jovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info
      SgJovialForThenStatement* for_stmt = isSgJovialForThenStatement(stmt);
      ASSERT_not_null(for_stmt);
      ASSERT_not_null(for_stmt->get_initialization());
-     ASSERT_not_null(for_stmt->get_then_expression());
      ASSERT_not_null(for_stmt->get_while_expression());
+     ASSERT_not_null(for_stmt->get_by_or_then_expression());
      ASSERT_not_null(for_stmt->get_loop_body());
 
      curprint_indented("FOR ", info);
@@ -563,22 +563,112 @@ Unparse_Jovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info
      curprint(":");
      unparseExpression(init_expr->get_rhs_operand_i(), info);
 
-  // then increment
-     curprint(" THEN ");
-     unparseExpression(for_stmt->get_then_expression(), info);
-
-  // while condition
-     if ( ! isSgNullExpression(for_stmt->get_while_expression()) )
+     switch (for_stmt->get_loop_statement_type())
         {
-           curprint(" WHILE ");
-           unparseExpression(for_stmt->get_while_expression(), info);
+        case SgJovialForThenStatement::e_for_while_stmt:
+           {
+              if (!isSgNullExpression(for_stmt->get_while_expression()))
+                 {
+                    curprint(" WHILE ");
+                    unparseExpression(for_stmt->get_while_expression(), info);
+                 }
+              break;
+           }
+        case SgJovialForThenStatement::e_for_while_then_stmt:
+           {
+              if (!isSgNullExpression(for_stmt->get_while_expression()))
+                 {
+                    curprint(" WHILE ");
+                    unparseExpression(for_stmt->get_while_expression(), info);
+                 }
+              if (!isSgNullExpression(for_stmt->get_by_or_then_expression()))
+                 {
+                    curprint(" THEN ");
+                    unparseExpression(for_stmt->get_by_or_then_expression(), info);
+                 }
+              break;
+           }
+        case SgJovialForThenStatement::e_for_while_by_stmt:
+           {
+              if (!isSgNullExpression(for_stmt->get_while_expression()))
+                 {
+                    curprint(" WHILE ");
+                    unparseExpression(for_stmt->get_while_expression(), info);
+                 }
+              if (!isSgNullExpression(for_stmt->get_by_or_then_expression()))
+                 {
+                    curprint(" BY ");
+                    unparseExpression(for_stmt->get_by_or_then_expression(), info);
+                 }
+              break;
+           }
+        case SgJovialForThenStatement::e_for_then_while_stmt:
+           {
+              if (!isSgNullExpression(for_stmt->get_by_or_then_expression()))
+                 {
+                    curprint(" THEN ");
+                    unparseExpression(for_stmt->get_by_or_then_expression(), info);
+                 }
+              if (!isSgNullExpression(for_stmt->get_while_expression()))
+                 {
+                    curprint(" WHILE ");
+                    unparseExpression(for_stmt->get_while_expression(), info);
+                 }
+              break;
+           }
+        case SgJovialForThenStatement::e_for_by_while_stmt:
+           {
+              if (!isSgNullExpression(for_stmt->get_by_or_then_expression()))
+                 {
+                    curprint(" BY ");
+                    unparseExpression(for_stmt->get_by_or_then_expression(), info);
+                 }
+              if (!isSgNullExpression(for_stmt->get_while_expression()))
+                 {
+                    curprint(" WHILE ");
+                    unparseExpression(for_stmt->get_while_expression(), info);
+                 }
+              break;
+           }
+        case SgJovialForThenStatement::e_for_only_stmt:
+           {
+              break;
+           }
+        default:
+           {
+              cout << "Warning: In Jovial unparser, SgJovialForThenStatement::loop_statement_type not handled is "
+                   << for_stmt->get_loop_statement_type() << endl;
+           }
         }
 
      curprint(";");
      unp->cur.insert_newline(1);
 
-  // for body
-     unparseStatement(for_stmt->get_loop_body(), info);
+  // Don't unparse control letters (variable declarations are compiler generated)
+     SgBasicBlock* loop_body = isSgBasicBlock(for_stmt->get_loop_body());
+     ROSE_ASSERT(loop_body);
+
+  // Loop body
+  //
+  // Due to wierd construction (basic block containing a basic block) the basic block for the loop
+  // may be the last statement. The other statement (if present) will be the compiler generated control
+  // variable declaration. However a SimpleStatement for the loop body won't have the extra basic block.
+     if (loop_body->get_statements().size() == 1) {
+        loop_body = isSgBasicBlock(for_stmt->get_loop_body()->get_statements()[0]);
+     }
+     else if (loop_body->get_statements().size() == 2) {
+     // Degenerate case of a null loop body (see rose-issue-rc-42b.jov), don't unparse variable declaration
+        SgVariableDeclaration* var_decl = isSgVariableDeclaration(for_stmt->get_loop_body()->get_statements()[0]);
+        if (var_decl) SageInterface::removeStatement(var_decl);
+        loop_body = isSgBasicBlock(for_stmt->get_loop_body()->get_statements()[1]);
+     }
+
+     if (!loop_body) {
+        loop_body = isSgBasicBlock(for_stmt->get_loop_body());
+     }
+     ROSE_ASSERT(loop_body);
+
+     unparseStatement(loop_body, info);
      unp->cur.insert_newline(1);
    }
 

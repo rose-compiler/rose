@@ -73,6 +73,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("keep-error-states",  po::value< bool >(&ltlOpt.keepErrorStates)->default_value(false)->implicit_value(true), "Do not reduce error states for the LTL analysis.")      
     ("ltl-in-alphabet",po::value< string >(&ltlOpt.ltlInAlphabet),"Specify an input alphabet used by the LTL formulae. (e.g. \"{1,2,3}\")")
     ("ltl-out-alphabet",po::value< string >(&ltlOpt.ltlOutAlphabet),"Specify an output alphabet used by the LTL formulae. (e.g. \"{19,20,21,22,23,24,25,26}\")")
+    ("ltl-rers-mapping-file",po::value< string >(&ltlOpt.ltlRersMappingFileName),"File containing input/ouput alphabets and mapping (as provided in RERS)")
     ("ltl-driven", po::value< bool >(&ltlOpt.ltlDriven)->default_value(false)->implicit_value(true), "Select mode to verify LTLs driven by SPOT's access to the state transitions.")
     ("reset-analyzer", po::value< bool >(&ltlOpt.resetAnalyzer)->default_value(false)->implicit_value(true), "Reset the analyzer and therefore the state transition graph before checking the next property. Only affects ltl-driven mode.")
     ("no-input-input",  po::value< bool >(&ltlOpt.noInputInputTransitions)->default_value(false)->implicit_value(true), "(deprecated) remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [yes|=no]")
@@ -203,6 +204,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("unit-test-expr-analyzer", po::value< bool >(&ctOpt.exprEvalTest)->default_value(false)->implicit_value(true), "Run expr eval test (with input program).")
     ("byte-mode", po::value< bool >(&ctOpt.byteMode)->default_value(false)->implicit_value(true),"switches from index-based addresses to byte-based addresses in state representation.")
     ("test-selector",po::value< int >(&ctOpt.testSelector)->default_value(0)->implicit_value(0),"Option for selecting dev tests.")
+    ("intra",po::value< bool >(&ctOpt.intraProcedural)->default_value(false)->implicit_value(true),"Select intra-procedural analysis.")
     ;
 
   rersOptions.add_options()
@@ -242,7 +244,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("colors", po::value< bool >(&ctOpt.colors)->default_value(true)->implicit_value(true),"Use colors in output.")
     ("csv-stats",po::value< string >(&ctOpt.csvStatsFileName),"Output statistics into a CSV file <arg>.")
     ("display-diff",po::value< int >(&ctOpt.displayDiff)->default_value(-1),"Print statistics every <arg> computed estates.")
-    ("exploration-mode",po::value< string >(&ctOpt.explorationMode), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync)")
+    ("exploration-mode",po::value< string >(&ctOpt.explorationMode), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync|topologic-sort)")
     ("quiet", po::value< bool >(&ctOpt.quiet)->default_value(false)->implicit_value(true), "Produce no output on screen.")
     ("help,h", "Produce this help message.")
     ("help-all", "Show all help options.")

@@ -214,10 +214,16 @@ InitializeExplicitScopes::visit ( SgNode *node)
                             {
                            // DQ (9/13/2011): Reported as possible NULL value in static analysis of ROSE code.
                               ROSE_ASSERT(initializedName != NULL);
-                              ROSE_ASSERT(initializedName->get_parent() != NULL);
-
-                              printf ("Error: default reached initializedName->get_parent() = %s \n",
-                                   initializedName->get_parent()->sage_class_name());
+                              SgNode* parentNode = initializedName->get_parent();
+                              ROSE_ASSERT(parentNode != NULL);
+                              const char *className = parentNode->sage_class_name();
+                              if (className != NULL) {
+                                 printf ("Error: default reached initializedName->get_parent() = %s \n",
+                                   parentNode->sage_class_name());
+                              }
+                              else {
+                                 printf ("Error: default reached initializedName->get_parent() = NULL \n");
+                              }
                               ROSE_ASSERT(false);
                             }
                        }
@@ -364,24 +370,26 @@ InitializeExplicitScopes::visit ( SgNode *node)
 
                if ( isSgGlobal(currentScope) != NULL )
                   {
+                    SgNode* typedefDeclaration_Parent = typedefDeclaration->get_parent();
 #if 0
                     printf ("Invistigating possibly incorrectly set typedef scope %p = %s \n",
                          typedefDeclaration,typedefDeclaration->get_name().str());
                     typedefDeclaration->get_file_info()->display("Invistigating possibly incorrectly set typedef scope");
 #endif
-                    ROSE_ASSERT(typedefDeclaration->get_parent() != NULL);
-                    SgScopeStatement* parentScope = isSgScopeStatement(typedefDeclaration->get_parent());
+                    ROSE_ASSERT(typedefDeclaration_Parent != NULL);
+                    SgScopeStatement* parentScope = isSgScopeStatement(typedefDeclaration_Parent);
                     if (parentScope == NULL) {
-                       printf ("typedefDeclaration->get_parent() = %p = %s \n",typedefDeclaration->get_parent(),typedefDeclaration->get_parent()->class_name().c_str());
-                       ROSE_ASSERT(typedefDeclaration->get_parent()->get_parent() != NULL);
-                       printf ("typedefDeclaration->get_parent()->get_parent() = %p = %s \n",typedefDeclaration->get_parent()->get_parent(),typedefDeclaration->get_parent()->get_parent()->class_name().c_str());
-
-                       ROSE_ASSERT(typedefDeclaration->get_parent()->get_parent()->get_parent() != NULL);
-                       printf ("typedefDeclaration->get_parent()->get_parent() = %p = %s \n",typedefDeclaration->get_parent()->get_parent()->get_parent(),typedefDeclaration->get_parent()->get_parent()->get_parent()->class_name().c_str());
-                       ROSE_ASSERT(typedefDeclaration->get_parent()->get_parent()->get_file_info() != NULL);
-                       typedefDeclaration->get_parent()->get_parent()->get_file_info()->display("Error: typedefDeclaration->get_parent()->get_parent(): debug");
-                       ROSE_ASSERT(typedefDeclaration->get_parent()->get_parent()->get_parent()->get_file_info() != NULL);
-                       typedefDeclaration->get_parent()->get_parent()->get_parent()->get_file_info()->display("Error: typedefDeclaration->get_parent()->get_parent()->get_parent(): debug");
+                       printf ("typedefDeclaration->get_parent() = %p = %s \n",typedefDeclaration_Parent,typedefDeclaration_Parent->class_name().c_str());
+                       SgNode* typedefDeclaration_GrandParent = typedefDeclaration_Parent->get_parent();
+                       ROSE_ASSERT(typedefDeclaration_GrandParent != NULL);
+                       printf ("typedefDeclaration->get_parent()->get_parent() = %p = %s \n",typedefDeclaration_GrandParent,typedefDeclaration_GrandParent->class_name().c_str());
+                       SgNode* typedefDeclaration_GreatGrandParent = typedefDeclaration_GrandParent->get_parent();
+                       ROSE_ASSERT(typedefDeclaration_GreatGrandParent != NULL);
+                       printf ("typedefDeclaration->get_parent()->get_parent() = %p = %s \n",typedefDeclaration_GreatGrandParent,typedefDeclaration_GreatGrandParent->class_name().c_str());
+                       ROSE_ASSERT(typedefDeclaration_GrandParent->get_file_info() != NULL);
+                       typedefDeclaration_GrandParent->get_file_info()->display("Error: typedefDeclaration->get_parent()->get_parent(): debug");
+                       ROSE_ASSERT(typedefDeclaration_GreatGrandParent->get_file_info() != NULL);
+                       typedefDeclaration_GreatGrandParent->get_file_info()->display("Error: typedefDeclaration->get_parent()->get_parent()->get_parent(): debug");
                     }
                     ROSE_ASSERT(parentScope != NULL);
 #if 0

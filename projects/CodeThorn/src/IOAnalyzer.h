@@ -23,7 +23,7 @@ namespace CodeThorn {
 
   public:
     static void initDiagnostics();
-    void configureOptions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt);
+    void configureOptions(CodeThornOptions ctOpt, LTLOptions ltlOpt, ParProOptions parProOpt);
     void setup(Analyzer* analyzer, Sawyer::Message::Facility logger,
                CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt);
     // overwritten or extended analyzer functions

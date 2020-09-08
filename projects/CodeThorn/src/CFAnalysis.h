@@ -11,6 +11,7 @@
 #include "Flow.h"
 #include "FunctionIdMapping.h"
 #include "FunctionCallMapping.h"
+#include <map>
 
 namespace CodeThorn {
 
@@ -62,9 +63,13 @@ class CFAnalysis {
   int numberOfFunctionParameters(Label entryNode);
   bool isVoidFunction(Label entryNode);
   LabelSetSet functionLabelSetSets(Flow& flow);
+  // returns the set of all labels in a function (excluding SgBasicBlock labels)
   LabelSet functionLabelSet(Label entryLabel, Flow& flow);
-  LabelSet setOfInitialLabelsOfStmtsInBlock(SgNode* node);
-  LabelSet setOfLabelsOfInterest();
+  LabelSet initialLabelsOfStmtsInBlockSet(SgNode* node);
+  LabelSet labelsOfInterestSet();
+  // computes a map where the entry label of the corresponding function is provided
+  // if the label is not inside a function then the returned label is an invalid label
+  InterFlow::LabelToFunctionMap labelToFunctionMap(Flow& flow);
   /**
    * \brief Computes the control flow for an AST subtree rooted at node.
    */
@@ -136,12 +141,17 @@ class CFAnalysis {
   enum FunctionResolutionMode { FRM_TRANSLATION_UNIT, FRM_WHOLE_AST_LOOKUP, FRM_FUNCTION_ID_MAPPING, FRM_FUNCTION_CALL_MAPPING };
   static FunctionResolutionMode functionResolutionMode;
   static Sawyer::Message::Facility logger;
+  void setInterProcedural(bool flag); // by default true
+  bool getInterProcedural();
  protected:
   SgFunctionDefinition* determineFunctionDefinition2(SgFunctionCallExp* funCall);
   SgFunctionDefinition* determineFunctionDefinition3(SgFunctionCallExp* funCall);
   FunctionCallTargetSet determineFunctionDefinition4(SgFunctionCallExp* funCall);
   FunctionCallTargetSet determineFunctionDefinition5(Label lbl, SgLocatedNode* astnode);
   static void initDiagnostics();
+  void createInterProceduralCallEdges(Flow& flow, InterFlow& interFlow);
+  void createIntraProceduralCallEdges(Flow& flow, InterFlow& interFlow);
+  bool _interProcedural=true;
  private:
   SgStatement* getCaseOrDefaultBodyStmt(SgNode* node);
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);

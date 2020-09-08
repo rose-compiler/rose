@@ -659,10 +659,17 @@ void postProcessingSupport (SgNode* node)
        // DQ (5/18/2017): Adding missing prototypes.
           addPrototypesForTemplateInstantiations(node);
 
+#if 0
+       // DQ (8/26/2020): The comments and CPP directives have not been added yet, so we have to do this later.
+       // DQ (8/25/2020): Fixup the initializers using include files.
           if (SgProject::get_verbose() > 1)
              {
-               printf ("Calling checkPhysicalSourcePosition() \n");
+               printf ("Calling fixupInitializersUsingIncludeFiles() \n");
              }
+
+       // DQ (8/25/2020): Remove the redundent include files for initializers.
+          fixupInitializersUsingIncludeFiles(node);
+#endif
 
        // DQ (12/20/2012): We now store the logical and physical source position information.
        // Although they are frequently the same, the use of #line directives causes them to be different.
@@ -670,6 +677,11 @@ void postProcessingSupport (SgNode* node)
        // of the comments and CPP directives into the AST.  For this the consistancy check is more helpful
        // if done befor it is used (here), instead of after the comment and CPP directive insertion in the
        // AST Consistancy tests.
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling checkPhysicalSourcePosition() \n");
+             }
+
           checkPhysicalSourcePosition(node);
 
 #if 0

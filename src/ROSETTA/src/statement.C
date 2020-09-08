@@ -3316,12 +3316,15 @@ Grammar::setUpStatements ()
      JovialForThenStatement.setFunctionPrototype ( "HEADER_JOVIAL_FOR_THEN_STATEMENT", "../Grammar/Statement.code" );
      JovialForThenStatement.setDataPrototype     ( "SgExpression*", "initialization", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     JovialForThenStatement.setDataPrototype     ( "SgExpression*", "then_expression", "= NULL",
-                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      JovialForThenStatement.setDataPrototype     ( "SgExpression*", "while_expression", "= NULL",
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JovialForThenStatement.setDataPrototype     ( "SgExpression*", "by_or_then_expression", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      JovialForThenStatement.setDataPrototype     ( "SgBasicBlock*", "loop_body", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JovialForThenStatement.setDataPrototype     ( "SgJovialForThenStatement::loop_statement_type_enum",
+                                         "loop_statement_type", "= SgJovialForThenStatement::e_unknown",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
 
   // CR (11/12/2018): Added to support Jovial COMPOOL modules
      JovialCompoolStatement.setFunctionPrototype ( "HEADER_JOVIAL_COMPOOL_STATEMENT", "../Grammar/Statement.code" );
@@ -3635,11 +3638,14 @@ Grammar::setUpStatements ()
      BlockDataStatement.setDataPrototype    ( "SgBasicBlock*", "body", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // Also need to add a list of declarations (use SgInitializedNameList, I think)
-     ImplicitStatement.setDataPrototype    ( "bool", "implicit_none", "= false",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // CR (8/3/2020): Added implicit_type enum for F2018 syntax (implicit_none becomes redundant)
+     ImplicitStatement.setDataPrototype("bool", "implicit_none", "= false",
+                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     ImplicitStatement.setDataPrototype("SgImplicitStatement::implicit_spec_enum",
+                                        "implicit_spec", "= SgImplicitStatement::e_unknown_implicit_spec",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ImplicitStatement.setDataPrototype("SgInitializedNamePtrList", "variables", "",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      StatementFunctionStatement.setDataPrototype    ( "SgFunctionDeclaration*", "function", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

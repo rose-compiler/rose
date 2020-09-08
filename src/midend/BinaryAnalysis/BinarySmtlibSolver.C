@@ -507,9 +507,35 @@ SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 retval = outputLeftAssoc("concat", children);
                 break;
             }
+            case SymbolicExpr::OP_CONVERT:
+                throw Exception("OP_CONVERT is not implemented yet");
             case SymbolicExpr::OP_EXTRACT:
                 retval = outputExtract(inode);
                 break;
+            case SymbolicExpr::OP_FP_ABS:
+            case SymbolicExpr::OP_FP_NEGATE:
+            case SymbolicExpr::OP_FP_ADD:
+            case SymbolicExpr::OP_FP_MUL:
+            case SymbolicExpr::OP_FP_DIV:
+            case SymbolicExpr::OP_FP_MULADD:
+            case SymbolicExpr::OP_FP_SQRT:
+            case SymbolicExpr::OP_FP_MOD:
+            case SymbolicExpr::OP_FP_ROUND:
+            case SymbolicExpr::OP_FP_MIN:
+            case SymbolicExpr::OP_FP_MAX:
+            case SymbolicExpr::OP_FP_LE:
+            case SymbolicExpr::OP_FP_LT:
+            case SymbolicExpr::OP_FP_GE:
+            case SymbolicExpr::OP_FP_GT:
+            case SymbolicExpr::OP_FP_EQ:
+            case SymbolicExpr::OP_FP_ISNORM:
+            case SymbolicExpr::OP_FP_ISSUBNORM:
+            case SymbolicExpr::OP_FP_ISZERO:
+            case SymbolicExpr::OP_FP_ISINFINITE:
+            case SymbolicExpr::OP_FP_ISNAN:
+            case SymbolicExpr::OP_FP_ISNEG:
+            case SymbolicExpr::OP_FP_ISPOS:
+                throw Exception("floating point operations are not implemented yet");
             case SymbolicExpr::OP_INVERT: {
                 ASSERT_require(inode->nChildren() == 1);
                 SExprTypePair child = outputExpression(inode->child(0));
@@ -552,6 +578,8 @@ SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
             case SymbolicExpr::OP_READ:
                 retval = outputRead(inode);
                 break;
+            case SymbolicExpr::OP_REINTERPRET:
+                throw Exception("OP_REINTERPRET is not implemented yet");
             case SymbolicExpr::OP_ROL:
                 retval = outputRotateLeft(inode);
                 break;
@@ -626,9 +654,6 @@ SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 break;
             case SymbolicExpr::OP_ZEROP:
                 retval = outputZerop(inode);
-                break;
-            default:
-                // to suppress warnings since an error follows. Please remove this when floating-point is implemented
                 break;
         }
     }

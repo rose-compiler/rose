@@ -11,7 +11,7 @@ namespace CodeThorn {
 }
 
 
-struct CodeThornOptions : public Options {
+struct CodeThornOptions : public CodeThorn::Options {
   // hidden options
   int maxTransitionsForcedTop1;
   int maxTransitionsForcedTop2;
@@ -93,6 +93,7 @@ struct CodeThornOptions : public Options {
   int callStringLength=-1; // not used yet
   bool byteMode=false; // switches between byte-addresses and index-based addresses in PState
   int testSelector=0;
+  bool intraProcedural=false;
   
   // RERS C-subset program options
   struct Rers {
@@ -191,15 +192,16 @@ struct CodeThornOptions : public Options {
 
   } info;
 
-   bool activeOptionsRequireZ3Library();
-   bool getAnalysisSelectionFlag(CodeThorn::AnalysisSelector asel);
-   std::string getAnalysisReportFileName(CodeThorn::AnalysisSelector asel);
-   typedef std::list<std::pair<CodeThorn::AnalysisSelector,std::string> > AnalysisListType;
-   AnalysisListType analysisList() const;
+  bool getInterProceduralFlag();
+  bool activeOptionsRequireZ3Library();
+  bool getAnalysisSelectionFlag(CodeThorn::AnalysisSelector asel);
+  std::string getAnalysisReportFileName(CodeThorn::AnalysisSelector asel);
+  typedef std::list<std::pair<CodeThorn::AnalysisSelector,std::string> > AnalysisListType;
+  AnalysisListType analysisList() const;
 
-   // default hard code init values
-   int maxExactMemorySizeRepresentation=10;
-   bool exprEvalTest=false;
+  // default hard code init values
+  int maxExactMemorySizeRepresentation=10;
+  bool exprEvalTest=false;
    
 };
 

@@ -103,6 +103,12 @@ CXX2_TESTS_REQUIRED_TO_PASS =                \
 	test_37_2020.cpp \
 	ft_cfftz.cpp
 
+#This set of CPP files must contain main() to run
+CXX4_TESTS_REQUIRED_TO_RUN=	\
+	ft_cfftz_omp.cpp
+
+CXX4_TESTS_OBJECT_REQUIRED_TO_RUN=${CXX4_TESTS_REQUIRED_TO_RUN:.cpp=.o}	
+	
 # DQ (11/14/2017): This is failing and I need to learn the depth of what is the problem for the outlining tests.
 # I think I need to work with Liao on this when he is back from vacation.
 #	moreTest2.cpp				
@@ -329,7 +335,7 @@ $(dlopen2_test_targets): dlopen2_%.passed: % outline
 		$(TEST_EXIT_STATUS) $@
 
 # Liao, 2020//25
-# test the new option  -rose:outline:copy_orig_file , which copies input file into a lib source file and append all outlined functions to the single lib source file. This eliminates the need to copy dependent headers and prototypes into the lib source file. 
+# Similar to dlopen3, additionally
 # combined with -rose:unparseHeaderFiles -rose:unparseHeaderFilesRootFolder
 dlopen3_test_targets = $(addprefix dlopen3_,  $(addsuffix .passed, $(CXX2_TESTS_REQUIRED_TO_PASS)))
 TEST_TARGETS += $(dlopen3_test_targets)
@@ -347,10 +353,55 @@ $(dlopen3_test_targets): dlopen3_%.passed: % outline
 		$(TEST_EXIT_STATUS) $@
 
 # shortcut to test the dlopen feature
-test_dlopen: $(dlopen_test_targets) $(dlopen2_test_targets) $(dlopen3_test_targets)
 test_dlopen3: $(dlopen3_test_targets)
 
+# Liao, 2020/8/24
+# Test select_omp_loop option 
+# rose_inputfile_lib.cpp
 
+dlopen4_test_targets = $(addprefix dlopen4_,  $(CXX4_TESTS_REQUIRED_TO_RUN))
+dlopen4_test_lib_targets = $(addprefix rose_, $(addsuffix .cpp, $(addsuffix _lib, $(basename $(CXX4_TESTS_REQUIRED_TO_RUN)))))
+dlopen4_test_lib_so_targets = $(addprefix rose_, $(addsuffix .so, $(addsuffix _lib, $(basename $(CXX4_TESTS_REQUIRED_TO_RUN)))))
+TEST_TARGETS += $(dlopen4_test_targets)
+dlopen4_test_flags = -fpermissive	\
+	-rose:outline:select_omp_loop           \
+	-rose:outline:use_dlopen		\
+	-rose:outline:copy_orig_file		\
+	-I$(abs_top_srcdir)/projects/autoTuning	\
+	-rose:unparseHeaderFilesRootFolder unparseHeaderRoot_dlopen4
+$(dlopen4_test_targets): dlopen4_%: % outline
+	./outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen4_test_flags) -c $(abspath $<) -rose:output $@
+
+
+$(CXX4_TESTS_OBJECT_REQUIRED_TO_RUN): %.o: dlopen4_%.cpp
+$(dlopen4_test_lib_targets): rose_%_lib.cpp: dlopen4_%.cpp
+				
+# shortcut to test the dlopen feature
+test_dlopen: $(dlopen_test_targets) $(dlopen2_test_targets) $(dlopen3_test_targets) $(dlopen4_test_targets)
+test_dlopen4: $(dlopen4_test_targets)
+
+#build rose_input_lib.so
+$(dlopen4_test_lib_so_targets):%.so: %.cpp
+	$(CXX) -I. -g -fPIC -shared $< -o $@
+	cp $@ /tmp/.
+
+# build the executables
+AUTO_TUNING_PATH = $(top_builddir)/projects/autoTuning
+
+$(AUTO_TUNING_PATH)/libautoTuning.a:
+	make -C $(AUTO_TUNING_PATH)
+
+MY_FINAL_LINK = $(AUTO_TUNING_PATH)/libautoTuning.a -Wl,--export-dynamic -g -ldl -lm
+PASSING_CXX_TEST_Executables = ${CXX4_TESTS_OBJECT_REQUIRED_TO_RUN:.o=.out}
+$(PASSING_CXX_TEST_Executables): %.out: %.o $(AUTO_TUNING_PATH)/libautoTuning.a rose_%_lib.so
+	$(LIBTOOL) --mode=link $(CXX) $< $(MY_FINAL_LINK) -o $@
+
+check_PROGRAM = $(PASSING_CXX_TEST_Executables)
+# check-TESTS happens before check-local
+TESTS =  $(check_PROGRAM)
+#test111:
+#	rm -rf ${dlopen4_test_lib_targets}
+TEST_TARGETS += $(dlopen4_test_lib_targets) $(CXX4_TESTS_OBJECT_REQUIRED_TO_RUN) $(dlopen4_test_targets) $(dlopen4_test_lib_so_targets) $(PASSING_CXX_TEST_Executables)
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining with default $(OUTLINE_FLAGS) switches
 

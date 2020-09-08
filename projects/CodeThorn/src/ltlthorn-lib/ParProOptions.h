@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 
-struct ParProOptions : public Options {
+struct ParProOptions : public CodeThorn::Options {
   int seed;
   std::string generateAutomata;
   int numAutomata;

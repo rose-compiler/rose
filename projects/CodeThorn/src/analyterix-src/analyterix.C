@@ -16,7 +16,6 @@
 #include "shared-src/ProgramStats.h"
 
 #include "Labeler.h"
-#include "WorkList.h"
 #include "CFAnalysis.h"
 #include "RDLattice.h"
 #include "DFAnalysisBase.h"

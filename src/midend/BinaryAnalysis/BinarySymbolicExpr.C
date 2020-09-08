@@ -1977,6 +1977,17 @@ ConvertSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     if (inode->type() == inode->child(0)->type())
         return inode->child(0);
 
+    // Converting one integer type to another is the same as unsigned extending/truncating.
+    if (inode->type().typeClass() == Type::INTEGER && inode->child(0)->type().typeClass() == Type::INTEGER) {
+        if (inode->type().nBits() > inode->child(0)->type().nBits()) {
+            return makeExtend(makeIntegerConstant(16, inode->type().nBits()), inode->child(0),
+                              solver, inode->comment(), inode->flags());
+        } else {
+            return makeExtract(makeIntegerConstant(16, 0), makeIntegerConstant(16, inode->type().nBits()), inode->child(0),
+                               solver, inode->comment(), inode->flags());
+        }
+    }
+
     return Ptr();
 }
 

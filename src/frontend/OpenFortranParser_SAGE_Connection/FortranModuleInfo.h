@@ -10,7 +10,6 @@
 // #include "rose.h"
 // #include "fortran_support.h"
 
-#define  MOD_FILE_SUFFIX   ".rmod"
 #define  SKIP_SYNTAX_CHECK "-rose:skip_syntax_check"
 
 // DQ (10/11/2010): Never use using declarations in a header file since
@@ -40,13 +39,13 @@ class FortranModuleInfo
        static SgModuleStatement*   getModule(std::string modName);
        static void                 addMapping(std::string modName,SgModuleStatement* modStmt);
 
+       static std::string module_file_suffix() { return std::string(".rmod"); }
        static std::string find_file_from_inputDirs(std::string name);
 
        static void set_inputDirs(SgProject* );
  
-       FortranModuleInfo(){};
-
-      ~FortranModuleInfo(){};
+       FortranModuleInfo() {};
+      ~FortranModuleInfo() {};
 
      private:
        static SgSourceFile*  createSgSourceFile(std::string modName);

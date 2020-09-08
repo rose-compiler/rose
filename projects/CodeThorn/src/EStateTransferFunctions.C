@@ -200,9 +200,8 @@ void EStateTransferFunctions::initDiagnostics() {
             //cout<<"Resolved function pointer"<<endl;
           }
         } else {
-          // abort
-          cerr<<"Error: function pointer is top or bot. Not supported: "<<funCall->unparseToString()<<":"<<funcPtrVal.toString(getVariableIdMapping())<<endl;
-          exit(1);
+          //cerr<<"INFO: function pointer is top or bot. Not supported: "<<funCall->unparseToString()<<":"<<funcPtrVal.toString(getVariableIdMapping())<<endl;
+          // continue but pass the information now to *all* outgoing static edges (maximum imprecision)
         }
       }
     }
@@ -468,8 +467,25 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge,
   }
 }
 
-std::list<EState> EStateTransferFunctions::transferFunctionExit(Edge edge, const EState* estate) {
-  EState currentEState=*estate;
+  std::list<EState> EStateTransferFunctions::transferFunctionEntry(Edge edge, const EState* estate) {
+    Label lab=estate->label();
+    SgNode* node=_analyzer->getLabeler()->getNode(lab);
+    SgFunctionDefinition* funDef=isSgFunctionDefinition(node);
+    if(funDef) {
+      string functionName=SgNodeHelper::getFunctionName(node);
+      //cout<<"DEBUG: Analyzing function "<<functionName<<endl;
+      SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+      SAWYER_MESG(logger[TRACE])<<"Function:"<<functionName<<" Parameters: ";
+      for(auto fParam : formalParameters) {
+        SAWYER_MESG(logger[TRACE])<<fParam->unparseToString()<<" sym:"<<fParam->search_for_symbol_from_symbol_table()<<endl;
+      }
+      SAWYER_MESG(logger[TRACE])<<endl;
+    }
+    return transferIdentity(edge,estate);
+  }
+  
+  std::list<EState> EStateTransferFunctions::transferFunctionExit(Edge edge, const EState* estate) {
+    EState currentEState=*estate;
   if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.source()))) {
     // 1) determine all local variables (including formal parameters) of function
     // 2) delete all local variables from state
@@ -795,6 +811,11 @@ std::list<EState> EStateTransferFunctions::transferCaseOptionStmt(SgCaseOptionSt
 std::list<EState> EStateTransferFunctions::transferVariableDeclaration(SgVariableDeclaration* decl, Edge edge, const EState* estate) {
   return elistify(_analyzer->analyzeVariableDeclaration(decl,*estate, edge.target()));
 }
+
+  std::list<EState> EStateTransferFunctions::transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate) {
+    //cout<<"WARNING: ignoring GNU extension StmtExpr (EStateTransferFunctions::transferGnuExtensionStmtExpr)"<<endl;
+    return elistify(*estate);
+  }
 
 std::list<EState> EStateTransferFunctions::transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate) {
   SgNode* nextNodeToAnalyze2=0;

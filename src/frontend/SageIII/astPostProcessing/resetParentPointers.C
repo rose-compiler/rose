@@ -1742,7 +1742,7 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
   // DQ (9/15/2014): Skip checking of parent pointers here for SgUntypedNode IR nodes (handle this case seperately).
   // All types should have NULL parent pointers (because types can be shared)
   // if (locatedNode != NULL)
-     if (locatedNode != NULL && untypedNode == NULL)
+     if ((locatedNode != NULL) && (untypedNode == NULL))
         {
           if (locatedNode->get_startOfConstruct() == NULL)
              {
@@ -1750,9 +1750,10 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
                if (isSgFunctionParameterList(node) != NULL)
                   {
                  // DQ (9/13/2011): Reported as possible NULL value in static analysis of ROSE code.
-                    ROSE_ASSERT(locatedNode->get_parent() != NULL);
+                    SgNode* parent = locatedNode->get_parent();
+                    ROSE_ASSERT(parent != NULL);
 
-                    printf ("     This is a SgFunctionParameterList, so look at the parent = %p = %s \n",locatedNode->get_parent(),locatedNode->get_parent()->class_name().c_str());
+                    printf ("     This is a SgFunctionParameterList, so look at the parent = %p = %s \n",parent,parent->class_name().c_str());
                   }
 
                if (locatedNode->get_parent() == NULL)

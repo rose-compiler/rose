@@ -121,7 +121,7 @@ bool DataRaceDetection::run(Analyzer& analyzer) {
       // TODO: SUBST remove substitution if faster without
       speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode, rewriteSystem);
       
-      SgNode* root=analyzer.startFunRoot;
+      SgNode* root=analyzer.getStartFunRoot();
       VariableId parallelIterationVar;
       LoopInfoSet loopInfoSet=DataRaceDetection::determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
       logger[TRACE]<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;
