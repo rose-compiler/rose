@@ -1290,11 +1290,12 @@ SgJavaPackageDeclaration *findPackageDeclaration(SgName &package_name) {
     SgJavaPackageDeclaration *package_declaration = NULL;
     for (list<SgName>::iterator name = name_list.begin(); name != name_list.end(); name++) {
         SgClassSymbol *package_symbol = lookupClassSymbolInScope(scope, *name);
-        if (! package_symbol)
+        if (package_symbol == NULL)
             return NULL;
-        package_declaration = isSgJavaPackageDeclaration(package_symbol -> get_declaration() -> get_definingDeclaration());
-        ROSE_ASSERT(package_declaration -> get_scope() == scope);
-        scope = package_declaration -> get_definition();
+        package_declaration = isSgJavaPackageDeclaration(package_symbol->get_declaration()->get_definingDeclaration());
+        ROSE_ASSERT(package_declaration != NULL);
+        ROSE_ASSERT(package_declaration->get_scope() == scope);
+        scope = package_declaration->get_definition();
     }
     return package_declaration;
 }
