@@ -763,13 +763,15 @@ EdgeConditionKind CFGEdge::condition() const
  // unsigned int srcIndex = src.getIndex();
     SgNode* tgtNode = tgt.getNode();
     unsigned int tgtIndex = tgt.getIndex();
-    if (isSgExpression(srcNode) && isSgExpression(tgtNode)) {
+    if ((isSgExpression(srcNode) != NULL) && (isSgExpression(tgtNode) != NULL)) {
       return vector<SgInitializedName*>(); // Common case, since these cannot be arbitrary jumps
     }
     vector<SgInitializedName*> scopesLeaving;
-    if ((srcNode->get_parent() == tgtNode) && (isSgScopeStatement(srcNode) != NULL)) {
-      scopesLeaving = findVariablesDirectlyInScope(isSgScopeStatement(srcNode));
-    } else if (srcNode->get_parent() == tgtNode || tgtNode->get_parent() == srcNode) {
+    SgScopeStatement* scope  = isSgScopeStatement(srcNode);
+    SgNode*           parent = srcNode->get_parent();
+    if ((parent == tgtNode) && (scope != NULL)) {
+      scopesLeaving = findVariablesDirectlyInScope(scope);
+    } else if (parent == tgtNode || tgtNode->get_parent() == srcNode) {
       scopesLeaving = vector<SgInitializedName*>(); // We assume that these are consecutive program points
     } else {
       scopesLeaving = genericWindUnwind(srcNode, false, tgtNode, false, getEntriesNull, getEntriesForScope<true>, getEntriesNull, getEntriesNull);
