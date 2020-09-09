@@ -6439,6 +6439,7 @@ std::vector<CFGEdge> SgJavaLabelStatement::cfgInEdges(unsigned int idx)
         // Do we need to get all continue statements that can jump here ?
         // YES
         SgFunctionDefinition* thisFunction = SageInterface::getEnclosingProcedure(this);
+        ROSE_ASSERT(thisFunction != NULL);
         std::vector<SgContinueStmt*> contVec = SageInterface::findContinueStmts(thisFunction, this->get_label().getString());
         for (unsigned int i = 0; i < contVec.size(); ++i) {
             makeEdge(CFGNode(contVec[i], 0), CFGNode(this, idx), result);
@@ -6450,6 +6451,7 @@ std::vector<CFGEdge> SgJavaLabelStatement::cfgInEdges(unsigned int idx)
         // Do we need to get all break statements that can jump here ?
         // YES
         SgFunctionDefinition* thisFunction = SageInterface::getEnclosingProcedure(this);
+        ROSE_ASSERT(thisFunction != NULL);
         std::vector<SgBreakStmt*> brkVec = SageInterface::findBreakStmts(thisFunction, this->get_label().getString());
         for (unsigned int i = 0; i < brkVec.size(); ++i) {
             makeEdge(CFGNode(brkVec[i], 0), CFGNode(this, idx), result);
