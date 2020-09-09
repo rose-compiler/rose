@@ -88,6 +88,7 @@ void makeEdge(NodeT from, NodeT to, vector<EdgeT>& result) {
 
 static void addIncomingFortranGotos(SgStatement* stmt, unsigned int index, vector<CFGEdge>& result) {
   bool hasLabel = false;
+  ROSE_ASSERT(stmt != NULL);
   if (index == 0 && stmt->get_numeric_label()) hasLabel = true;
   if (index == stmt->cfgIndexForEnd() && stmt->has_end_numeric_label()) hasLabel = true;
   if (index == 0 &&
