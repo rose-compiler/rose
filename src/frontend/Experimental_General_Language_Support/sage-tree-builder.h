@@ -107,7 +107,7 @@ public:
                                  const boost::optional<std::string> &,
                                  const boost::optional<std::string> &);
 
-   void Enter(SgFunctionParameterList* &, SgBasicBlock* &);
+   void Enter(SgFunctionParameterList* &, SgBasicBlock* &, const std::string &, SgType*);
    void Leave(SgFunctionParameterList*, SgBasicBlock*, const std::list<LanguageTranslation::FormalParameter> &);
 
    void Enter(SgFunctionDeclaration* &, const std::string &, SgType*, SgFunctionParameterList*,

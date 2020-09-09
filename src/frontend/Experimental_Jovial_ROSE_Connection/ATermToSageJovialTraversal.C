@@ -3922,7 +3922,7 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDeclaration(ATerm term, Lan
       } else return ATfalse;
 
    // Enter SageTreeBuilder for SgFunctionParameterList
-      sage_tree_builder.Enter(param_list, param_scope);
+      sage_tree_builder.Enter(param_list, param_scope, name, nullptr);
 
    // These declarations will stored in the function parameter scope
       if (traverse_Declaration(t_decl)) {
@@ -3965,7 +3965,7 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term, Lang
       } else return ATfalse;
 
    // Enter SageTreeBuilder for SgFunctionParameterList
-      sage_tree_builder.Enter(param_list, param_scope);
+      sage_tree_builder.Enter(param_list, param_scope, name, nullptr);
 
    // These declarations will stored in the function parameter scope
       if (traverse_SubroutineBody(t_proc_body)) {
@@ -4103,7 +4103,7 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDeclaration(ATerm term, Lang
       } else return ATfalse;
 
    // Enter SageTreeBuilder for SgFunctionParameterList
-      sage_tree_builder.Enter(param_list, param_scope);
+      sage_tree_builder.Enter(param_list, param_scope, name, return_type);
 
       if (traverse_DirectiveList(t_dirs)) {
          // MATCHED DirectiveList (grammar is ReducibleDirective*)
@@ -4150,7 +4150,7 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
       } else return ATfalse;
 
    // Enter SageTreeBuilder for SgFunctionParameterList
-      sage_tree_builder.Enter(param_list, param_scope);
+      sage_tree_builder.Enter(param_list, param_scope, name, return_type);
 
       if (traverse_DirectiveList(t_dirs)) {
          // MATCHED ReducibleDirective*
