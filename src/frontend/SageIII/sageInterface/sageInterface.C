@@ -22697,14 +22697,16 @@ class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterf
  }
 
  struct SageInterface::const_int_expr_t evaluateSynthesizedAttribute(SgNode *node, SynthesizedAttributesList synList) {
-   if (isSgExpression(node)) {
-     if (isSgValueExp(node)) {
-       return this->getValueExpressionValue(isSgValueExp(node));
+   if (isSgExpression(node) != NULL) {
+     SgValueExp* valueExp = isSgValueExp(node);
+     if (valueExp != NULL) {
+       return this->getValueExpressionValue(valueExp);
      }
 
-     if (isSgVarRefExp(node)) {
+     SgVarRefExp* varRefExp = isSgVarRefExp(node);
+     if (varRefExp != NULL) {
       //      std::cout << "Hit variable reference expression!" << std::endl;
-       return evaluateVariableReference(isSgVarRefExp(node));
+       return evaluateVariableReference(varRefExp);
      }
      // Early break out for assign initializer // other possibility?
      if (isSgAssignInitializer(node)) {
