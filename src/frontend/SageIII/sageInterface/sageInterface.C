@@ -20254,15 +20254,17 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
   {
     name = isSgInitializedName(current);
   }
-  else if (isSgPntrArrRefExp(current))
+  else if (isSgPntrArrRefExp(current) != NULL)
   {
     bool suc=false;
-    suc= SageInterface::isArrayReference(isSgExpression(current),&nameExp);
+    SgExpression* exp = isSgExpression(current);
+    ROSE_ASSERT(exp != NULL);
+    suc = SageInterface::isArrayReference(exp,&nameExp);
     ROSE_ASSERT(suc == true);
      // has to resolve this recursively
     return convertRefToInitializedName(nameExp, coarseGrain);
   }
-  else if (isSgVarRefExp(current))
+  else if (isSgVarRefExp(current) != NULL)
   {
     if (coarseGrain)
     {
