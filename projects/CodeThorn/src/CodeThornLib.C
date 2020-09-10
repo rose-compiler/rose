@@ -112,6 +112,7 @@ void CodeThorn::initDiagnostics() {
   Rose::Diagnostics::initAndRegister(&CodeThorn::logger, "CodeThorn");
   // class specific loggers for CodeThorn library functions
   Analyzer::initDiagnostics();
+  ExprAnalyzer::initDiagnostics();
   RewriteSystem::initDiagnostics();
   Specialization::initDiagnostics();
   Normalization::initDiagnostics();
