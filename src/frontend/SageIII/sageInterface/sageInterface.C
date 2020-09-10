@@ -21069,6 +21069,7 @@ static  bool isIfReduction(SgVarRefExp* ref1, SgVarRefExp* ref2, OmpSupport::omp
         if (SgBasicBlock* block = isSgBasicBlock (body))
         {
           // stmt2 must be the only child of the if true body
+          ROSE_ASSERT(stmt2 != NULL);
           if ( ((block->get_statements()).size() == 1) && stmt2->get_scope() == block )
             matchBody = true;
         }
