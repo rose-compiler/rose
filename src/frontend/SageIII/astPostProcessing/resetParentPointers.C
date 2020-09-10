@@ -987,6 +987,7 @@ ResetParentPointers::evaluateInheritedAttribute (
                   {
                     SgTemplateInstantiationDecl* templateInstantiation = isSgTemplateInstantiationDecl(node);
                     ROSE_ASSERT(templateInstantiation != NULL);
+                    ROSE_ASSERT(inheritedAttribute.parentNode != NULL);
                     resetParentPointersInDeclaration (templateInstantiation, inheritedAttribute.parentNode);
 
                  // TV (05/29/2018): possible if it is non-real
@@ -1009,6 +1010,7 @@ ResetParentPointers::evaluateInheritedAttribute (
                   {
                     SgTemplateInstantiationMemberFunctionDecl* templateInstantiation = isSgTemplateInstantiationMemberFunctionDecl(node);
                     ROSE_ASSERT(templateInstantiation != NULL);
+                    ROSE_ASSERT(inheritedAttribute.parentNode != NULL);
 
                  // this is likely redundant
                     resetParentPointersInDeclaration (templateInstantiation, inheritedAttribute.parentNode);
@@ -1053,6 +1055,7 @@ ResetParentPointers::evaluateInheritedAttribute (
                  // referenced within types.
                     SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
                     ROSE_ASSERT(classDeclaration != NULL);
+                    ROSE_ASSERT(inheritedAttribute.parentNode != NULL);
                     resetParentPointersInDeclaration (classDeclaration, inheritedAttribute.parentNode);
                     break;
                   }
