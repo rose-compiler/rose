@@ -10252,17 +10252,16 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
      else if (oldExp==expparent->get_false_exp()) expparent->set_false_exp(newExp);
      else
        ROSE_ASSERT(false);
-  } else if (isSgExprListExp(parent)!=NULL)
-  {
+  } else if (isSgExprListExp(parent)!=NULL) {
     SgExpressionPtrList & explist = isSgExprListExp(parent)->get_expressions();
     for (Rose_STL_Container<SgExpression*>::iterator i=explist.begin();i!=explist.end();i++)
       if (isSgExpression(*i)==oldExp) {
-        isSgExprListExp(parent)->replace_expression(oldExp,newExp);
+        SgExprListExp* parentExpListExp = isSgExprListExp(parent);
+        parentExpListExp->replace_expression(oldExp,newExp);
        // break; //replace the first occurrence only??
       }
   }
-  else if (isSgValueExp(parent))
-  {
+  else if (isSgValueExp(parent)) {
       // For compiler generated code, this could happen.
       // We can just ignore this function call since it will not appear in the final AST.
       return;
