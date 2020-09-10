@@ -43,7 +43,7 @@ ResetParentPointers::traceBackToRoot ( SgNode* node )
 
   // printf ("Starting at parentNode->sage_class_name() = %s \n",parentNode->sage_class_name());
      int counter = 0;
-     while (parentNode->get_parent() != NULL)
+     while ((parentNode != NULL) && (parentNode->get_parent() != NULL))
         {
           parentNode = parentNode->get_parent();
        // printf ("     parentNode->sage_class_name() = %s \n",parentNode->sage_class_name());
@@ -52,25 +52,28 @@ ResetParentPointers::traceBackToRoot ( SgNode* node )
             // There is likely an error so limit path lengths back to the AST root to this arbitrary distance
                printf ("Error: ResetParentPointers::traceBackToRoot path to root length (1000) exceeded \n");
                ROSE_ASSERT(parentNode != NULL);
-               ROSE_ASSERT(parentNode->get_parent() != NULL);
+               SgNode* grandParentNode = parentNode->get_parent();
+               ROSE_ASSERT(grandParentNode != NULL);
                printf ("   starting node           = %p = %s \n",node,node->sage_class_name());
                printf ("   (current node)          = %p = %s \n",parentNode,parentNode->sage_class_name());
-               printf ("   (current node's parent) = %p = %s \n",parentNode->get_parent(),parentNode->get_parent()->sage_class_name());
+               printf ("   (current node's parent) = %p = %s \n",grandParentNode,grandParentNode->sage_class_name());
 
-               ROSE_ASSERT(parentNode->get_parent()->get_parent() != NULL);
+               SgNode* greatGrandParentNode = grandParentNode->get_parent();
+               ROSE_ASSERT(greatGrandParentNode != NULL);
                printf ("   (parent node's parent)  = %p = %s \n",
-                    parentNode->get_parent()->get_parent(),parentNode->get_parent()->get_parent()->sage_class_name());
+                    greatGrandParentNode,greatGrandParentNode->sage_class_name());
 
-               ROSE_ASSERT(parentNode->get_parent()->get_parent()->get_parent() != NULL);
+               SgNode* greatGreatGrandParentNode = greatGrandParentNode->get_parent();
+               ROSE_ASSERT(greatGreatGrandParentNode != NULL);
                printf ("   (parent node's parent 2)  = %p = %s \n",
-                    parentNode->get_parent()->get_parent()->get_parent(),parentNode->get_parent()->get_parent()->get_parent()->sage_class_name());
+                    greatGreatGrandParentNode,greatGreatGrandParentNode->sage_class_name());
 
                if (node->get_file_info() != NULL)
                     node->get_file_info()->display("node");
                if (parentNode->get_file_info() != NULL)
                     parentNode->get_file_info()->display("parentNode");
-               if (parentNode->get_parent()->get_file_info() != NULL)
-                    parentNode->get_parent()->get_file_info()->display("parentNode->get_parent()");
+               if (grandParentNode->get_file_info() != NULL)
+                    grandParentNode->get_file_info()->display("parentNode->get_parent()");
 
                ROSE_ASSERT(false);
              }
