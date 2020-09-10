@@ -564,6 +564,14 @@ SgProject* runRoseFrontEnd(int argc, char * argv[], CodeThornOptions& ctOpt, Tim
     argvList.push_back("-rose:ast:read");
     argvList.push_back(ctOpt.roseAstReadFileName);
   }
+  if(ctOpt.roseAstWrite) {
+    // add ROSE option as required non-standard single dash long option
+    argvList.push_back("-rose:ast:write");
+  }
+  if(ctOpt.roseAstMerge) {
+    // add ROSE option as required non-standard single dash long option
+    argvList.push_back("-rose:ast:merge");
+  }
   SgProject* project=frontend(argvList);
   timingCollector.stopFrontEndTimer();
   return project;

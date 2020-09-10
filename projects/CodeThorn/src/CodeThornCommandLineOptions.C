@@ -97,6 +97,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     (",D", po::value< vector<string> >(&ctOpt.preProcessorDefines),"Define constants for preprocessor.")
     ("edg:no_warnings", po::bool_switch(&ctOpt.edgNoWarningsFlag),"EDG frontend flag.")
     ("rose:ast:read", po::value<std::string>(&ctOpt.roseAstReadFileName),"read in binary AST from comma separated list (no spaces)")
+    ("rose:ast:write", po::value<bool>(&ctOpt.roseAstWrite),"write AST binary file.")
+    ("rose:ast:merge", po::value<bool>(&ctOpt.roseAstWrite),"merge ASTs of read files (is implict for rose:ast:read).")
     ;
 
   cegpraOptions.add_options()
@@ -396,6 +398,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
       argv[i] = strdup("");
       ROSE_ASSERT(i+1<argc);
       argv[i+1]= strdup("");
+      continue;
+    } else if (currentArg == "--rose:ast:write"||currentArg == "--rose:ast:merge") {
+      argv[i] = strdup("");
       continue;
     }
     if (currentArg[0] != '-' ){

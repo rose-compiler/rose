@@ -25,6 +25,8 @@ struct CodeThornOptions : public CodeThorn::Options {
   std::vector<std::string> preProcessorDefines;
   bool edgNoWarningsFlag;
   std::string roseAstReadFileName;
+  bool roseAstWrite;
+  bool roseAstMerge;
   
   // visualization
   struct Visualization {
