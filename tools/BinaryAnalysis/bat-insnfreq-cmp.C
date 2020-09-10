@@ -1,3 +1,5 @@
+#if __cplusplus >= 201402L
+
 static const char *purpose = "compare instruction frequencies";
 static const char *description =
     "Reads instruction frequencies from files specified on the command-line, then compares the first file with "
@@ -76,3 +78,16 @@ main(int argc, char *argv[]) {
     for (const auto &pair: output)
         std::cout <<(boost::format("%7.3f%%") % (100.0*(1 - pair.second))) <<"\t" <<pair.first <<"\n";
 }
+
+
+#else
+
+// C++ comppiler is too old
+#include <iostream>
+
+int main(int argc, char *argv[]) {
+    std::cerr <<argv[0] <<": this tool is disabled (your C++ compiler is too old)\n";
+    return 1;
+}
+
+#endif

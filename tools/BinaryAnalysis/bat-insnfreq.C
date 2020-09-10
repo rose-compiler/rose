@@ -1,3 +1,5 @@
+#if __cplusplus >= 201402L
+
 static const char *purpose = "count instructions";
 static const char *description =
     "Scans the memory regions marked as executable and does a linear disassembly. The instruction mnemonics are listed along "
@@ -94,3 +96,14 @@ main(int argc, char *argv[]) {
         printInsnHistogram(histogram, std::cout);
     }
 }
+
+#else
+
+#include <iostream>
+
+int main(int argc, char *argv[]) {
+    std::cerr <<argv[0] <<": this tool is disabled (your C++ compiler is too old)\n";
+    return 1;
+}
+
+#endif
