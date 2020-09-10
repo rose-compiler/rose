@@ -3748,6 +3748,7 @@ supportForLabelStatements ( SgScopeStatement* scope, SgSymbolTable* symbolTable 
         {
           SgLabelStatement* labelStatement = isSgLabelStatement(labelList[i]);
 
+          ROSE_ASSERT(labelStatement != NULL);
           ROSE_ASSERT(labelStatement->get_scope() == scope);
 
           SgSymbol* symbol = new SgLabelSymbol(labelStatement);
