@@ -8078,8 +8078,9 @@ static void findContinueStmtsHelper(SgStatement* code, const std::string& fortra
   }
   vector<SgNode*> children = code->get_traversalSuccessorContainer();
   for (unsigned int i = 0; i < children.size(); ++i) {
-    if (isSgStatement(children[i])) {
-      findContinueStmtsHelper(isSgStatement(children[i]), fortranLabel, inOutermostBody, continueStmts);
+    SgStatement* stmnt = isSgStatement(children[i]);
+    if (stmnt != NULL) {
+      findContinueStmtsHelper(stmnt, fortranLabel, inOutermostBody, continueStmts);
     }
   }
 }
