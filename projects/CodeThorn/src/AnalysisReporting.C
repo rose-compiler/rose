@@ -206,9 +206,9 @@ namespace CodeThorn {
     stringstream cgNodes2;
     for (auto entryLabel : functionEntryLabels ) {
       switch(fMap[entryLabel]) {
-      case FALSIFIED: nodeColor="red";numFalsifiedFunctions++;break;
-      case UNVERIFIED: nodeColor="orange";numUnverifiedFunctions++;break;
-      case VERIFIED: nodeColor="green";numVerifiedFunctions++;break;
+      case FALSIFIED: nodeColor="red";break;
+      case UNVERIFIED: nodeColor="orange";break;
+      case VERIFIED: nodeColor="green";break;
       case INCONSISTENT: nodeColor="gray";break;
       }
       std::string functionName=SgNodeHelper::getFunctionName(analyzer->getLabeler()->getNode(entryLabel));
