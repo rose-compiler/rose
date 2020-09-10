@@ -205,6 +205,10 @@ void optionallyRunExprEvalTestAndExit(CodeThornOptions& ctOpt,int argc, char * a
 }
 
 void optionallySetRersMapping(CodeThornOptions ctOpt,LTLOptions ltlOpt,IOAnalyzer* analyzer) {
+  // guard to check if LTL checking is activated
+  if(ltlOpt.ltlRersMappingFileName.size()==0 && ltlOpt.ltlInAlphabet.size()==0 && ltlOpt.ltlOutAlphabet.size()==0)
+    return;
+  
   LtlRersMapping ltlRersMapping;
   if (ltlOpt.ltlInAlphabet.size()>0) {
     ltlRersMapping.addInputAsciiValueSetWithOffsetA(ltlOpt.ltlInAlphabet);
