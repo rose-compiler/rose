@@ -255,6 +255,7 @@ namespace VirtualCFG {
         variablesInScope.push_back(isSgInitializedName(succs[i]));
       } else if (isSgVariableDeclaration(succs[i])) {
         SgVariableDeclaration* vd = isSgVariableDeclaration(succs[i]);
+        ROSE_ASSERT(vd != NULL);
         const SgInitializedNamePtrList& vars = vd->get_variables();
         variablesInScope.insert(variablesInScope.end(), vars.rbegin(), vars.rend());
       } else if (isSgForInitStatement(succs[i])) {
@@ -262,6 +263,7 @@ namespace VirtualCFG {
         variablesInScope.insert(variablesInScope.end(), initVars.begin(), initVars.end());
       } else if (isSgFunctionParameterList(succs[i])) {
         SgFunctionParameterList* pl = isSgFunctionParameterList(succs[i]);
+        ROSE_ASSERT(pl != NULL);
         const SgInitializedNamePtrList& params = pl->get_args();
         variablesInScope.insert(variablesInScope.end(), params.begin(), params.end());
       }
