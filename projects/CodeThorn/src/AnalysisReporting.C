@@ -18,7 +18,10 @@ namespace CodeThorn {
       AnalysisSelector analysisSel=analysisInfo.first;
       string analysisName=analysisInfo.second;
       if(ctOpt.getAnalysisSelectionFlag(analysisSel)) {
-        cout<<"\nAnalysis results for "<<analysisName<<" analysis:"<<endl;
+        cout<<endl;
+        cout<<"-----------------------------------------------"<<endl;
+        cout<<"Analysis results for "<<analysisName<<" analysis:"<<endl;
+        cout<<"-----------------------------------------------"<<endl;
         ProgramLocationsReport report=analyzer->getExprAnalyzer()->getProgramLocationsReport(analysisSel);
         LabelSet labelsOfInterest1=analyzer->getCFAnalyzer()->labelsOfInterestSet();
         // filter labels for dead code
@@ -31,7 +34,11 @@ namespace CodeThorn {
         }
         report.setAllLocationsOfInterest(labelsOfInterest2);
         report.writeLocationsVerificationReport(cout,analyzer->getLabeler());
+        cout<<"-----------------------------------------------"<<endl;
+        // generate verification call graph
+        AnalysisReporting::generateVerificationCallGraph(analyzer,analysisName,report);
         //report->writeFunctionsVerificationReport(cout,analyzer->getLabeler());
+        cout<<"-----------------------------------------------"<<endl;
         if(reportDetectedErrorLines) {
           LabelSet violatingLabels=report.falsifiedLocations();
           if(report.numDefinitiveLocations()>0) {
@@ -40,14 +47,13 @@ namespace CodeThorn {
           } else {
             LabelSet u=report.unverifiedLocations();
             if(u.size()==0) {
-              cout<<"No violations exist (program verified)."<<endl;
+              cout<<"No violations exist - program verified."<<endl;
             } else {
-              cout<<"No violations proven (violations may exist in unverified portion of program)."<<endl;
+              cout<<"No violations proven - violations may exist in unverified portion of program."<<endl;
             }
           }
         }
-        // generate verification call graph
-        AnalysisReporting::generateVerificationCallGraph(analyzer,analysisName,report);
+        cout<<"-----------------------------------------------"<<endl;
       }
     }
   }
@@ -128,9 +134,9 @@ namespace CodeThorn {
   }
 
   void AnalysisReporting::generateVerificationCallGraph(CodeThorn::Analyzer* analyzer, string analysisName, ProgramLocationsReport& report) {
-    string fileName=analysisName+"-cg.dot";
+    string fileName1=analysisName+"-cg1.dot";
     string fileName2=analysisName+"-cg2.dot";
-    cout<<"Generating verification call graph for "<<analysisName<<" analysis."<<endl;
+    //cout<<"Generating verification call graph for "<<analysisName<<" analysis."<<endl;
     LabelSet verified=report.verifiedLocations();
     LabelSet falsified=report.falsifiedLocations();
     LabelSet unverified=report.unverifiedLocations();
@@ -220,20 +226,22 @@ namespace CodeThorn {
     cout<<"Unproven   functions: "<<numUnverifiedFunctions<<" [ "<<numUnverifiedFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
     cout<<"Total      functions: "<<numTotalFunctions<<endl;
     
-    std::string dotFileString=cgBegin+cgNodes.str()+cgEdges+cgEnd;
-    if(!CppStdUtilities::writeFile(fileName, dotFileString)) {
-      cerr<<"Error: could not generate callgraph dot file "<<fileName<<endl;
+    std::string dotFileString1=cgBegin+cgNodes2.str()+cgEdges+cgEnd;
+    if(!CppStdUtilities::writeFile(fileName1, dotFileString1)) {
+      cerr<<"Error: could not generate callgraph dot file "<<fileName1<<endl;
       exit(1);
     } else {
-      cout<<"Generated verification call graph "<<fileName<<endl;
+      cout<<"Generated verification call graph "<<fileName1<<endl;
     }
-    std::string dotFileString2=cgBegin+cgNodes2.str()+cgEdges+cgEnd;
+
+    std::string dotFileString2=cgBegin+cgNodes.str()+cgEdges+cgEnd;
     if(!CppStdUtilities::writeFile(fileName2, dotFileString2)) {
-      cerr<<"Error: could not generate callgraph dot file "<<fileName<<endl;
+      cerr<<"Error: could not generate callgraph dot file "<<fileName2<<endl;
       exit(1);
     } else {
       cout<<"Generated verification call graph "<<fileName2<<endl;
     }
+
   }
 
 } // end of namespace CodeThorn

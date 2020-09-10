@@ -13,11 +13,11 @@ namespace CodeThorn {
 
 struct CodeThornOptions : public CodeThorn::Options {
   // hidden options
-  int maxTransitionsForcedTop1;
-  int maxTransitionsForcedTop2;
-  int maxTransitionsForcedTop3;
-  int maxTransitionsForcedTop4;
-  int maxTransitionsForcedTop5;
+  int maxTransitionsForcedTop1=-1;
+  int maxTransitionsForcedTop2=-1;
+  int maxTransitionsForcedTop3=-1;
+  int maxTransitionsForcedTop4=-1;
+  int maxTransitionsForcedTop5=-1;
   int solver;
 
   // pass on to ROSE
@@ -96,7 +96,8 @@ struct CodeThornOptions : public CodeThorn::Options {
   bool byteMode=false; // switches between byte-addresses and index-based addresses in PState
   int testSelector=0;
   bool intraProcedural=false;
-  
+  int precisionLevel=1;
+
   // RERS C-subset program options
   struct Rers {
     std::string assertResultsOutputFileName;

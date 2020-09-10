@@ -450,7 +450,7 @@ void CodeThorn::IOAnalyzer::configureOptions(CodeThornOptions ctOpt, LTLOptions 
   if (ctOpt.callStringLength >= 2) 
     setFiniteCallStringMaxLength(ctOpt.callStringLength);
 
-  configureOptionSets(ctOpt);
+  //configureOptionSets(ctOpt);
 
   optionStringLiteralsInState=ctOpt.inStateStringLiterals;
   setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);

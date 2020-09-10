@@ -207,6 +207,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("byte-mode", po::value< bool >(&ctOpt.byteMode)->default_value(false)->implicit_value(true),"switches from index-based addresses to byte-based addresses in state representation.")
     ("test-selector",po::value< int >(&ctOpt.testSelector)->default_value(0)->implicit_value(0),"Option for selecting dev tests.")
     ("intra",po::value< bool >(&ctOpt.intraProcedural)->default_value(false)->implicit_value(true),"Select intra-procedural analysis.")
+    ("precision",po::value< int >(&ctOpt.precisionLevel),"Option for selecting level of precision.")
     ;
 
   rersOptions.add_options()
