@@ -91,6 +91,7 @@ MaxSourceExtents::SourceExtentsTraversal::evaluateSynthesizedAttribute (SgNode* 
 
      SgLocatedNode* this_locatedNode = isSgLocatedNode(n);
 
+     ROSE_ASSERT(this_locatedNode != NULL);
      bool isInSameFile = this_locatedNode->get_startOfConstruct()->isSameFile(inheritedAttribute.sourceFile);
 
 #if DEBUG_evaluateSynthesizedAttribute
