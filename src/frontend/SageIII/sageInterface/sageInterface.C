@@ -5791,7 +5791,13 @@ SageInterface::functionCallExpressionPreceedsDeclarationWhichAssociatesScope ( S
                                       {
                                      // This might be a function declaration (non-defining) used in a type or buried deeply in some sort of declaration!
                                         printf ("Strange case of parentScopeOfDeclaration == NULL in SageInterface::functionCallExpressionPreceedsDeclarationWhichAssociatesScope() \n");
-                                        printf ("declaration->get_parent() = %s \n",declaration->get_parent()->class_name().c_str());
+                                        SgNode* parent = declaration->get_parent();
+                                        if (parent != NULL) {
+                                           printf ("declaration->get_parent() = %s \n",parent->class_name().c_str());
+                                        }
+                                        else {
+                                           printf ("declaration->get_parent() = NULL \n");
+                                        }
                                         declaration->get_file_info()->display("case of parentScopeOfDeclaration == NULL");
                                         ROSE_ASSERT(false);
                                       }
