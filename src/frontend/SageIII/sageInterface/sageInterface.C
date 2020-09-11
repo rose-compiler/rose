@@ -23578,6 +23578,22 @@ bool SageInterface::insideSystemHeader (SgLocatedNode* node)
   return rtval;
 }
 
+//! Find the function type matching a function signature plus a given return type
+SgFunctionType* SageInterface::findFunctionType (SgType* return_type, SgFunctionParameterTypeList* typeList)
+{
+  ROSE_ASSERT(return_type != NULL);
+  ROSE_ASSERT(typeList != NULL);
+  SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
+  ROSE_ASSERT(fTable);
+
+  // This function make clever use of a static member function which can't be built
+  // for the case of a SgMemberFunctionType (or at least not without more work).
+  SgName typeName = SgFunctionType::get_mangled(return_type, typeList);
+  SgFunctionType* funcType = isSgFunctionType(fTable->lookup_function_type(typeName));
+
+  return funcType;
+}
+
 //! Test if two types are equivalent SgFunctionType nodes. This is necessary for template function types
 //! They may differ in one SgTemplateType pointer but identical otherwise.
 //! The algorithm is to compare return type and all argument types
