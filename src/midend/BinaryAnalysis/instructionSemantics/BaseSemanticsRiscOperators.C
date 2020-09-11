@@ -155,6 +155,22 @@ RiscOperators::countLeadingOnes(const SValuePtr &a) {
 }
 
 SValuePtr
+RiscOperators::reverseElmts(const SValuePtr &a, size_t elmtNBits) {
+    ASSERT_not_null(a);
+    ASSERT_require(elmtNBits > 0);
+    ASSERT_require(elmtNBits <= a->get_width());
+    ASSERT_require(a->get_width() % elmtNBits == 0);
+    size_t nElmts = a->get_width() / elmtNBits;
+    SValuePtr result;
+    for (size_t i = 0; i < nElmts; ++i) {
+        SValuePtr elmt = extract(a, i*elmtNBits, (i+1)*elmtNBits);
+        result = result ? concatHiLo(result, elmt) : elmt;
+    }
+    ASSERT_require(result->get_width() == a->get_width());
+    return result;
+}
+
+SValuePtr
 RiscOperators::isEqual(const SValuePtr &a, const SValuePtr &b) {
     return equalToZero(xor_(a, b));
 }
