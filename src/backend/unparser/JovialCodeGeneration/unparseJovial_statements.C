@@ -1193,7 +1193,7 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         }
 
   // WordsPerEntry (for anonymous table declarations)
-     SgJovialTableStatement* table_decl = nullptr; // C++11 replacement for NULL;
+     SgJovialTableStatement* table_decl = NULL; // C++11 nullptr
      if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
            table_decl = dynamic_cast<SgJovialTableStatement*>(var_decl->get_baseTypeDefiningDeclaration());
