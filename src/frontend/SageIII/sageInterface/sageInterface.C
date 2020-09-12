@@ -15533,7 +15533,7 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
 //    successful = true;
   }
 
-#if 1
+#if 0
      printf ("In SageInterface::insertHeader(): Marking include file for filename = %s as a transformation \n",filename.c_str());
 #endif
 
