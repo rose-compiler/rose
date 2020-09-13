@@ -15435,6 +15435,10 @@ void SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheade
   ROSE_ASSERT (stmt != NULL);
   ROSE_ASSERT (newheader != NULL);
 
+#if 0
+  printf ("In SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheader, bool asLastHeader) \n");
+#endif
+
   PreprocessingInfo::RelativePositionType position ;
 
   if (asLastHeader )
@@ -15449,23 +15453,64 @@ void SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheade
   if (comments != NULL)
   {
     PreprocessingInfo * firstExistingHeader = NULL;
-    PreprocessingInfo * lastExistingHeader = NULL;
+    PreprocessingInfo * lastExistingHeader  = NULL;
+    PreprocessingInfo * firstExistingEndif  = NULL;
+    PreprocessingInfo * lastExistingEndif   = NULL;
     AttachedPreprocessingInfoType::iterator i, firsti, lasti;
     for (i = comments->begin (); i != comments->end (); i++)
     {
+   // DQ (9/12/2020): this original code is not sufficent since when the final #include is enclosed in a 
+   // #ifdef #endif the added include directive might not be visible in the generated file.
+   // This actually happened in the case of wget application: wget.c source file.
+#if 0
+   // Original version of code.
       if ((*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+         {
+        // Only set first header for the first time
+           if ((*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+              {
+                if (firstExistingHeader == NULL)
+                   {
+                     firstExistingHeader = (*i);
+                     firsti = i;
+                   }
+             // always updates last header
+                lastExistingHeader = (*i);
+                lasti = i;
+             }
+        }
+#else
+   // DQ (9/12/2020): New version of code. Addresses insertion after last endif if it is after any #include.
+      if ( (*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorIncludeDeclaration || 
+           (*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorEndifDeclaration )
       {
         // Only set first header for the first time
-        if (firstExistingHeader == NULL)
-        {
-          firstExistingHeader = (*i);
-          firsti = i;
-        }
-        // always updates last header
-        lastExistingHeader = (*i);
-        lasti = i;
+        if ((*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+           {
+             if (firstExistingHeader == NULL)
+             {
+               firstExistingHeader = (*i);
+               firsti = i;
+             }
+           // always updates last header
+             lastExistingHeader = (*i);
+             lasti = i;
+           }
+        if ((*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorEndifDeclaration)
+           {
+             if (firstExistingEndif == NULL)
+             {
+               firstExistingEndif = (*i);
+               firsti = i;
+             }
+           // always updates last header
+             lastExistingEndif = (*i);
+             lasti = i;
+           }
       }
+#endif
     }
+
     // based on existing header positions, insert the new header
     if (asLastHeader)
     {
@@ -15514,21 +15559,25 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
   SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
   if (stmtList.size()>0) // the source file is not empty
   {
-    for (SgDeclarationStatementPtrList::iterator j = stmtList.begin ();
-        j != stmtList.end (); j++)
+    for (SgDeclarationStatementPtrList::iterator j = stmtList.begin (); j != stmtList.end (); j++)
     {
       // Attach to the first eligible located statement
       //must have this judgement, otherwise wrong file will be modified!
       //It could also be the transformation generated statements with #include attached
-      if ( ((*j)->get_file_info ())->isSameFile(globalScope->get_file_info ())||
-          ((*j)->get_file_info ())->isTransformation()
-         )
+      if ( (*j)->get_file_info()->isSameFile(globalScope->get_file_info()) || (*j)->get_file_info()->isTransformation() )
       {
-        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
-            content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
+#if 0
+        printf ("In SageInterface::insertHeader(): Found statement to attached #include: *j = %p = %s \n",*j,(*j)->class_name().c_str());
+        printf (" --- unparseToString() = %s \n",(*j)->unparseToString().c_str());
+#endif
+        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration, content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
         ROSE_ASSERT(result);
         insertHeader (*j, result, asLastHeader);
         //successful = true;
+#if 0
+        printf ("Exiting as a test! \n");
+        ROSE_ASSERT(false);
+#endif
         break;
       }
     } // end for
