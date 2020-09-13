@@ -1,0 +1,9 @@
+START 
+PROGRAM main ; 
+   BEGIN 
+"## !COPY INLINED: blank ##" 
+   STOP 0 ; 
+    
+   STOP 1 ; 
+   END 
+TERM 
