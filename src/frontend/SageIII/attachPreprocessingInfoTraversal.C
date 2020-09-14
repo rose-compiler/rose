@@ -3065,11 +3065,11 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     //                but OK to attach comments to them (just not inside them!).
                     case V_SgTemplateInstantiationMemberFunctionDecl:
                        {
+                         ROSE_ASSERT (locatedNode != NULL);
                          ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
                       // printf ("Found a SgTemplateInstantiationMemberFunctionDecl but only record it as a previousLocNodePtr \n");
 
                       // DQ (6/9/2020): This appear to be NULL in some cases I am debugging currently.
-                         ROSE_ASSERT(locatedNode != NULL);
 #if 0
                          printf ("In case V_SgTemplateInstantiationMemberFunctionDecl: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
 #endif
