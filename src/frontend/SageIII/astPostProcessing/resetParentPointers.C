@@ -207,12 +207,13 @@ ResetParentPointers::resetParentPointersInDeclaration (SgDeclarationStatement* d
                     definingDeclaration,definingDeclaration->class_name().c_str(),
                     parent,parent->class_name().c_str());
 #endif
-               if (definingDeclaration->get_parent() != NULL)
+               SgNode* defnDeclParent = definingDeclaration->get_parent();
+               if (defnDeclParent != NULL)
                   {
                     printf ("Existing parent is already set to = %p = %s \n",
-                         definingDeclaration->get_parent(),definingDeclaration->get_parent()->class_name().c_str());
+                         defnDeclParent,defnDeclParent->class_name().c_str());
                   }
-               ROSE_ASSERT(definingDeclaration->get_parent() == NULL);
+               ROSE_ASSERT(defnDeclParent == NULL);
                definingDeclaration->set_parent(parent);
              }
           ROSE_ASSERT(definingDeclaration == NULL || definingDeclaration->get_parent() != NULL);
