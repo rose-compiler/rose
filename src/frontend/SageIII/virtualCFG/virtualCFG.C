@@ -259,7 +259,9 @@ namespace VirtualCFG {
         const SgInitializedNamePtrList& vars = vd->get_variables();
         variablesInScope.insert(variablesInScope.end(), vars.rbegin(), vars.rend());
       } else if (isSgForInitStatement(succs[i])) {
-        vector<SgInitializedName*> initVars = findVariablesDirectlyInScope(isSgForInitStatement(succs[i]));
+        SgForInitStatement* forInitStmt = isSgForInitStatement(succs[i]);
+        ROSE_ASSERT(forInitStmt != NULL);
+        vector<SgInitializedName*> initVars = findVariablesDirectlyInScope(forInitStmt);
         variablesInScope.insert(variablesInScope.end(), initVars.begin(), initVars.end());
       } else if (isSgFunctionParameterList(succs[i])) {
         SgFunctionParameterList* pl = isSgFunctionParameterList(succs[i]);
