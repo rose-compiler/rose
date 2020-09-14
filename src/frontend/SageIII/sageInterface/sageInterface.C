@@ -22681,7 +22681,8 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
 
 #if 1
   //make sure the symbol is moved also since prependStatement() (in fact fixVariableDeclaration()) does not handle this detail.
-  SgVariableSymbol * sym = SageInterface::getFirstVarSym(decl);
+  SgVariableSymbol* sym = SageInterface::getFirstVarSym(decl);
+  ROSE_ASSERT(sym != NULL);
   SgScopeStatement* orig_scope = sym->get_scope();
   if (orig_scope != target_scope)
   {
