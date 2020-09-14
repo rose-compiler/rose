@@ -203,6 +203,8 @@ struct CtxTransfer : DFTransferFunctions
     CtxAnalysis<CallContext>& analysis;        ///< The analysis objects
     //~ const ctx_lattice_t&      initialElement;  ///< prototype lattice for extremal value
     ctx_lattice_t*            initialElement;  ///< prototype lattice for extremal value 
+    
+    CtxTransfer() = delete;
 };
 
 
@@ -240,9 +242,7 @@ void CtxTransfer<CallContext>::transfer(Edge edge, Lattice& element)
 {
   ctx_lattice_t& lat = dynamic_cast<ctx_lattice_t&>(element);
 
-  //~ was: this->transfer(edge.source(), element);
-  this->transfer(edge.source(), lat);
-  
+  this->transfer(edge.source(), lat);  
   std::for_each(lat.begin(), lat.end(), subTransfer(component, edge));
 
   //~ std::cerr << "# tr'd " << getLabeler()->getNode(edge.source())->unparseToString();

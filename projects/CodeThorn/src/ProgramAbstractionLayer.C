@@ -73,6 +73,20 @@ void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
   _bwFlow = _fwFlow.reverseFlow();
 }
 
+
+void CodeThorn::ProgramAbstractionLayer::setForwardFlow(const Flow& fwdflow)
+{
+  _fwFlow = fwdflow;
+  _bwFlow = _fwFlow.reverseFlow();
+}
+
+void CodeThorn::ProgramAbstractionLayer::setLabeler(Labeler* labeler)
+{
+  ROSE_ASSERT(labeler != NULL);
+  _labeler = labeler;
+}
+
+
 CodeThorn::Flow* CodeThorn::ProgramAbstractionLayer::getFlow(bool backwardflow)
 {
   if (backwardflow) return &_bwFlow;

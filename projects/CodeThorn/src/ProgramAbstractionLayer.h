@@ -33,7 +33,12 @@ namespace CodeThorn {
     void setInliningOption(bool flag);
     bool getInliningOption();
     Flow* getFlow(bool backwardflow = false);
-    CFAnalysis* getCFAnalyzer();
+    CFAnalysis* getCFAnalyzer(); 
+    
+    // PP (08/25/20) added to support working with unfolded ICFG
+    void setForwardFlow(const Flow& fwdflow);
+    void setLabeler(Labeler* labeler);
+    void clearCFAnalyzer() { _cfanalyzer = nullptr; }
   private:
     Labeler* _labeler=nullptr;
     VariableIdMappingExtended* _variableIdMapping=nullptr;

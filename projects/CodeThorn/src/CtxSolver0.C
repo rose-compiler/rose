@@ -30,31 +30,39 @@ namespace
     return nos;
   }
   
+  template <class T>
   struct LazyToString
   {
     explicit
-    LazyToString(ct::Lattice* lat)
-    : l(lat)
+    LazyToString(T* tp)
+    : obj(tp)
     {}
     
     explicit
-    LazyToString(std::unique_ptr<ct::Lattice>& lat)
-    : LazyToString(lat.get())
+    LazyToString(std::unique_ptr<T>& tp)
+    : LazyToString(tp.get())
     {}
     
     explicit
-    LazyToString(ct::Lattice& lat)
-    : LazyToString(&lat)
+    LazyToString(T& tref)
+    : LazyToString(&tref)
     {}
     
-    std::string toString() { return l->toString(); }
+    std::string toString() { return obj->toString(); }
     
-    ct::Lattice* l;
+    T* obj;
   };
   
+  template <class T>
+  LazyToString<T> lazyToString(T* tp)
+  {
+    return LazyToString<T>(tp);
+  }
+  
+  template <class T>
   inline
   std::ostream& 
-  operator<<(std::ostream& os, LazyToString lat) { return os << lat.toString(); }
+  operator<<(std::ostream& os, LazyToString<T> lat) { return os << lat.toString(); }
   
   
   // auxiliary wrapper for printing Sg_File_Info objects 
@@ -131,7 +139,7 @@ namespace // auxiliary local functions
   
   struct IsCalleeCaller
   {
-    bool operator()(const ct::FiniteCallString& retctx, const std::pair<const ct::FiniteCallString, ct::Lattice*>& callctx)
+    bool operator()(const ct::FiniteCallString& retctx, const std::pair<const ct::FiniteCallString, ct::Lattice*>& callctx) const
     {
       const bool res = callctx.first.callerOf(retctx, lbl);
       
@@ -216,16 +224,15 @@ CtxSolver0::mappedCtxRange(Label lab, CtxLatticeRange<ContextString>::iterator c
     return ResultType(ctxpos, std::next(ctxpos));
   }
   
-  Label                  callLab(lab.getId() - 1); // maybe from the labeler
-  
   // if the call context does not match the call label associated with the return
   //   return an empty range. Nothing needs to be propagated.
-  if (ctxpos->first.empty() || ctxpos->first.last() != callLab)
+  if (!ctxpos->first.isValidReturn(labeler(), lab))
     return ResultType(ctxpos, ctxpos);
   
   logDbg() << labeler().getNode(lab)->unparseToString() 
            << std::endl;
       
+  Label                      callLab = labeler().getFunctionCallLabelFromReturnLabel(lab); 
   CtxLattice<ContextString>& pre     = preInfoLattice(callLab);
   ContextString              retctx  = ctxpos->first;
   
@@ -290,23 +297,23 @@ CtxSolver0::propagate(const ContextString& tgtctx, Lattice& state, Label tgt, In
 {
   typedef std::pair<Edge, ContextString> WorkListElem;
   
-  Lattice&   tgtstate = preInfoLattice(tgt, tgtctx);
-  const bool subsumed = state.approximatedBy(tgtstate);
+  Lattice&   tgtstate  = preInfoLattice(tgt, tgtctx);
+  const bool returnLbl = labeler().isFunctionCallReturnLabel(tgt);
+  const bool subsumed  = (!returnLbl) && state.approximatedBy(tgtstate);
   
   if (subsumed) 
   {
-    logDbg() << "mapping not necessary (already approximated) " 
+    logDbg() << "mapping not necessary (already approximated): " << tgt.getId()
              << std::endl;
-    
     return;
   }
   
-  logDbg() << "mapping transfer result to: " << tgt << " / " << tgtctx << ": " << LazyToString(tgtstate)
+  logDbg() << "mapping transfer result to: " << tgt << " / " << tgtctx << ": " << lazyToString(&tgtstate)
            << std::endl;
 
   tgtstate.combine(state);
 
-  logDbg() << "new df value : " << tgt << " / " << tgtctx << ": " << LazyToString(tgtstate)
+  logDbg() << "new df value : " << tgt << " / " << tgtctx << ": " << lazyToString(&tgtstate)
            << std::endl;
            
   const size_t oldsz = wkl.size();
@@ -318,6 +325,24 @@ CtxSolver0::propagate(const ContextString& tgtctx, Lattice& state, Label tgt, In
 
   logDbg() << "added : " << (wkl.size() - oldsz) << " edges."
            << std::endl;
+}
+
+void
+CtxSolver0::activateReturnNode(const ContextString& ctx, Label callLbl, InternalWorklist& wkl)
+{
+  typedef CtxLattice<ContextString>       context_lattice_t;
+  typedef std::pair<Edge, ContextString>  WorkListElem;
+
+  Label              retnLbl = labeler().getFunctionCallReturnLabelFromCallLabel(callLbl);
+  context_lattice_t& ctxlat = preInfoLattice(retnLbl);
+  
+  if (ctxlat.find(ctx) != ctxlat.end())
+  {
+    for (Edge e : _flow.outEdges(retnLbl)) 
+    {
+      wkl.add(WorkListElem(e, ctx));
+    }
+  }
 }
 
 
@@ -351,20 +376,21 @@ CtxSolver0::runSolver()
     Label                    lab0 = edge.source();
     Label                    lab1 = edge.target();
 
-    logDbg() << "computing edge " << lab0 << "->" << lab1 << std::endl;
-    
+    logDbg() << "computing edge " << lab0 << "->" << lab1 << ": " << lazyToString(&edge) 
+             << std::endl;
+
     context_lattice_t&       ctxlat = preInfoLattice(lab0);
     const Iterator           preIt  = iteratorAt(ctxlat, ctx);
     std::unique_ptr<Lattice> info{cloneLattice(_initialElementFactory.componentFactory(), *preIt->second)};
     
     if (!info->isBot()) 
     {
-      logDbg() << "computing transfer function: " << lab0 << " / " << ctx << ": " << LazyToString(info)
+      logDbg() << "computing transfer function: " << lab0 << " / " << ctx << ": " << LazyToString<Lattice>(info)
                << std::endl;
       
       _transferFunctions.componentTransfer().transfer(edge, *info);
       
-      logDbg() << "transfer function result: " << lab0 << " / " << ctx << ": " << LazyToString(info)
+      logDbg() << "transfer function result: " << lab0 << " / " << ctx << ": " << LazyToString<Lattice>(info)
                << std::endl;
                
       // propagate the state to the respective context in lab1 
@@ -381,7 +407,8 @@ CtxSolver0::runSolver()
         //~ callctx.callLosesPrecision(preIt); 
         
         callctx.callInvoke(labeler(), lab0);
-        propagate(callctx, *info, lab1, worklist);
+        propagate(callctx, *info, lab1, worklist);        
+        activateReturnNode(callctx, lab0, worklist);
       }
       else if (labeler().isFunctionCallReturnLabel(lab0))
       {

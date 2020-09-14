@@ -59,7 +59,7 @@ CodeThorn::PASolver1::runSolver() {
   uint64_t        nodeCounter = 0;
   double          splitTime   = 0;
   
-  cout<<"INFO: solver 1 started."<<endl;
+  cout << "INFO: solver 1 started."<<endl;
   solverTimer.start();
   //ROSE_ASSERT(!_workList.isEmpty()); empty files (programs of zero length)
   while(!_workList.isEmpty()) {
@@ -86,7 +86,12 @@ CodeThorn::PASolver1::runSolver() {
 #endif /* OBSOLETE_CODE */
 
     if(_trace)
+    {
       cout<<"TRACE: computing edge "<<lab0<<"->"<<lab1<<endl;
+      cout<<"  from: " << getLabeler().getNode(lab0)->unparseToString() 
+          <<"    to: " << getLabeler().getNode(lab1)->unparseToString()
+	  <<std::endl;
+    }  
     Lattice* info=_initialElementFactory.create();
     ROSE_ASSERT(info);
     info->combine(*_analyzerDataPreInfo[lab0.getId()]);
