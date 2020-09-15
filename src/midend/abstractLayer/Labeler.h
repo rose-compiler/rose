@@ -110,6 +110,8 @@ class LabelProperty {
 
    bool isExternalFunctionCallLabel();
    void setExternalFunctionCallLabel();
+   
+   bool isValid() const { return _isValid; }
 
  private:
    bool _isValid;
@@ -208,7 +210,7 @@ class Labeler {
 
   /** returns the call label for the provided return label. */
   virtual 
-  Label getCallForReturnLabel(Label ret);
+  Label getFunctionCallLabelFromReturnLabel(Label retnLabel);
   
   virtual
   LabelProperty getProperty(Label lbl); 
@@ -217,6 +219,7 @@ class Labeler {
   bool isExternalFunctionCallLabel(Label lab);
   void setExternalFunctionCallLabel(Label lab);
 
+  virtual
   Label getFunctionCallReturnLabelFromCallLabel(Label callLabel);
 
   class iterator {

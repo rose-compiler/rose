@@ -13,6 +13,8 @@ run $(tool_compile_linkexe) --install -I. bat-cg.C           libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-container.C    libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-dis.C          libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-entropy.C      libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-insnfreq.C     libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-insnfreq-cmp.C libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-linear.C       libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-lsb.C          libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-lsd.C          libbatSupport
@@ -30,6 +32,8 @@ run $(test) bat-cfg          ./bat-cfg --self-test
 run $(test) bat-container    ./bat-container --self-test
 run $(test) bat-dis          ./bat-dis --self-test
 run $(test) bat-entropy      ./bat-entropy --self-test
+run $(test) bat-insnfreq     ./bat-insnfreq --self-test
+#run $(test) bat-insnfreq-cmp ./bat-insnfreq-cmp --self-test
 run $(test) bat-linear       ./bat-linear --self-test
 run $(test) bat-lsb          ./bat-lsb --self-test
 run $(test) bat-lsf          ./bat-lsf --self-test

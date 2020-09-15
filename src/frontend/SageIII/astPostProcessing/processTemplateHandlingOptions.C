@@ -91,14 +91,17 @@ ProcessTemplateHandlingOptions::visit ( SgNode* node )
                SgTemplateInstantiationDecl* s = isSgTemplateInstantiationDecl(node);
                if (buildImplicitTemplates == false)
                   {
+                     ROSE_ASSERT(s != NULL);
+                     Sg_File_Info* fInfo = s->get_file_info();
+                     ROSE_ASSERT(fInfo != NULL);
                  // Mark all template class instantiations except specialized template 
                  // instantiations to NOT be output in code generation
-                    if (s->get_file_info()->isOutputInCodeGeneration() == true && s->isSpecialization() == false)
+                    if (fInfo->isOutputInCodeGeneration() == true && s->isSpecialization() == false)
                        {
                          printf ("AST Fixup: This template class will not be output within code generation \n");
-                         s->get_file_info()->unsetOutputInCodeGeneration();
+                         fInfo->unsetOutputInCodeGeneration();
                        }
-                    ROSE_ASSERT (s->get_file_info()->isOutputInCodeGeneration() == false || s->isSpecialization() == true);
+                    ROSE_ASSERT (fInfo->isOutputInCodeGeneration() == false || s->isSpecialization() == true);
                   }
                break;
              }

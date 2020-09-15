@@ -3748,6 +3748,7 @@ supportForLabelStatements ( SgScopeStatement* scope, SgSymbolTable* symbolTable 
         {
           SgLabelStatement* labelStatement = isSgLabelStatement(labelList[i]);
 
+          ROSE_ASSERT(labelStatement != NULL);
           ROSE_ASSERT(labelStatement->get_scope() == scope);
 
           SgSymbol* symbol = new SgLabelSymbol(labelStatement);
@@ -5790,7 +5791,13 @@ SageInterface::functionCallExpressionPreceedsDeclarationWhichAssociatesScope ( S
                                       {
                                      // This might be a function declaration (non-defining) used in a type or buried deeply in some sort of declaration!
                                         printf ("Strange case of parentScopeOfDeclaration == NULL in SageInterface::functionCallExpressionPreceedsDeclarationWhichAssociatesScope() \n");
-                                        printf ("declaration->get_parent() = %s \n",declaration->get_parent()->class_name().c_str());
+                                        SgNode* parent = declaration->get_parent();
+                                        if (parent != NULL) {
+                                           printf ("declaration->get_parent() = %s \n",parent->class_name().c_str());
+                                        }
+                                        else {
+                                           printf ("declaration->get_parent() = NULL \n");
+                                        }
                                         declaration->get_file_info()->display("case of parentScopeOfDeclaration == NULL");
                                         ROSE_ASSERT(false);
                                       }
@@ -8078,8 +8085,9 @@ static void findContinueStmtsHelper(SgStatement* code, const std::string& fortra
   }
   vector<SgNode*> children = code->get_traversalSuccessorContainer();
   for (unsigned int i = 0; i < children.size(); ++i) {
-    if (isSgStatement(children[i])) {
-      findContinueStmtsHelper(isSgStatement(children[i]), fortranLabel, inOutermostBody, continueStmts);
+    SgStatement* stmnt = isSgStatement(children[i]);
+    if (stmnt != NULL) {
+      findContinueStmtsHelper(stmnt, fortranLabel, inOutermostBody, continueStmts);
     }
   }
 }
@@ -10252,17 +10260,16 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
      else if (oldExp==expparent->get_false_exp()) expparent->set_false_exp(newExp);
      else
        ROSE_ASSERT(false);
-  } else if (isSgExprListExp(parent)!=NULL)
-  {
+  } else if (isSgExprListExp(parent)!=NULL) {
     SgExpressionPtrList & explist = isSgExprListExp(parent)->get_expressions();
     for (Rose_STL_Container<SgExpression*>::iterator i=explist.begin();i!=explist.end();i++)
       if (isSgExpression(*i)==oldExp) {
-        isSgExprListExp(parent)->replace_expression(oldExp,newExp);
+        SgExprListExp* parentExpListExp = isSgExprListExp(parent);
+        parentExpListExp->replace_expression(oldExp,newExp);
        // break; //replace the first occurrence only??
       }
   }
-  else if (isSgValueExp(parent))
-  {
+  else if (isSgValueExp(parent)) {
       // For compiler generated code, this could happen.
       // We can just ignore this function call since it will not appear in the final AST.
       return;
@@ -15428,6 +15435,10 @@ void SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheade
   ROSE_ASSERT (stmt != NULL);
   ROSE_ASSERT (newheader != NULL);
 
+#if 0
+  printf ("In SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheader, bool asLastHeader) \n");
+#endif
+
   PreprocessingInfo::RelativePositionType position ;
 
   if (asLastHeader )
@@ -15442,23 +15453,64 @@ void SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheade
   if (comments != NULL)
   {
     PreprocessingInfo * firstExistingHeader = NULL;
-    PreprocessingInfo * lastExistingHeader = NULL;
+    PreprocessingInfo * lastExistingHeader  = NULL;
+    PreprocessingInfo * firstExistingEndif  = NULL;
+    PreprocessingInfo * lastExistingEndif   = NULL;
     AttachedPreprocessingInfoType::iterator i, firsti, lasti;
     for (i = comments->begin (); i != comments->end (); i++)
     {
+   // DQ (9/12/2020): this original code is not sufficent since when the final #include is enclosed in a 
+   // #ifdef #endif the added include directive might not be visible in the generated file.
+   // This actually happened in the case of wget application: wget.c source file.
+#if 0
+   // Original version of code.
       if ((*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+         {
+        // Only set first header for the first time
+           if ((*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+              {
+                if (firstExistingHeader == NULL)
+                   {
+                     firstExistingHeader = (*i);
+                     firsti = i;
+                   }
+             // always updates last header
+                lastExistingHeader = (*i);
+                lasti = i;
+             }
+        }
+#else
+   // DQ (9/12/2020): New version of code. Addresses insertion after last endif if it is after any #include.
+      if ( (*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorIncludeDeclaration || 
+           (*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorEndifDeclaration )
       {
         // Only set first header for the first time
-        if (firstExistingHeader == NULL)
-        {
-          firstExistingHeader = (*i);
-          firsti = i;
-        }
-        // always updates last header
-        lastExistingHeader = (*i);
-        lasti = i;
+        if ((*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+           {
+             if (firstExistingHeader == NULL)
+             {
+               firstExistingHeader = (*i);
+               firsti = i;
+             }
+           // always updates last header
+             lastExistingHeader = (*i);
+             lasti = i;
+           }
+        if ((*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorEndifDeclaration)
+           {
+             if (firstExistingEndif == NULL)
+             {
+               firstExistingEndif = (*i);
+               firsti = i;
+             }
+           // always updates last header
+             lastExistingEndif = (*i);
+             lasti = i;
+           }
       }
+#endif
     }
+
     // based on existing header positions, insert the new header
     if (asLastHeader)
     {
@@ -15507,21 +15559,25 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
   SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
   if (stmtList.size()>0) // the source file is not empty
   {
-    for (SgDeclarationStatementPtrList::iterator j = stmtList.begin ();
-        j != stmtList.end (); j++)
+    for (SgDeclarationStatementPtrList::iterator j = stmtList.begin (); j != stmtList.end (); j++)
     {
       // Attach to the first eligible located statement
       //must have this judgement, otherwise wrong file will be modified!
       //It could also be the transformation generated statements with #include attached
-      if ( ((*j)->get_file_info ())->isSameFile(globalScope->get_file_info ())||
-          ((*j)->get_file_info ())->isTransformation()
-         )
+      if ( (*j)->get_file_info()->isSameFile(globalScope->get_file_info()) || (*j)->get_file_info()->isTransformation() )
       {
-        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
-            content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
+#if 0
+        printf ("In SageInterface::insertHeader(): Found statement to attached #include: *j = %p = %s \n",*j,(*j)->class_name().c_str());
+        printf (" --- unparseToString() = %s \n",(*j)->unparseToString().c_str());
+#endif
+        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration, content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
         ROSE_ASSERT(result);
         insertHeader (*j, result, asLastHeader);
         //successful = true;
+#if 0
+        printf ("Exiting as a test! \n");
+        ROSE_ASSERT(false);
+#endif
         break;
       }
     } // end for
@@ -15539,7 +15595,7 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
 //    successful = true;
   }
 
-#if 1
+#if 0
      printf ("In SageInterface::insertHeader(): Marking include file for filename = %s as a transformation \n",filename.c_str());
 #endif
 
@@ -20254,15 +20310,17 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
   {
     name = isSgInitializedName(current);
   }
-  else if (isSgPntrArrRefExp(current))
+  else if (isSgPntrArrRefExp(current) != NULL)
   {
     bool suc=false;
-    suc= SageInterface::isArrayReference(isSgExpression(current),&nameExp);
+    SgExpression* exp = isSgExpression(current);
+    ROSE_ASSERT(exp != NULL);
+    suc = SageInterface::isArrayReference(exp,&nameExp);
     ROSE_ASSERT(suc == true);
      // has to resolve this recursively
     return convertRefToInitializedName(nameExp, coarseGrain);
   }
-  else if (isSgVarRefExp(current))
+  else if (isSgVarRefExp(current) != NULL)
   {
     if (coarseGrain)
     {
@@ -21067,6 +21125,7 @@ static  bool isIfReduction(SgVarRefExp* ref1, SgVarRefExp* ref2, OmpSupport::omp
         if (SgBasicBlock* block = isSgBasicBlock (body))
         {
           // stmt2 must be the only child of the if true body
+          ROSE_ASSERT(stmt2 != NULL);
           if ( ((block->get_statements()).size() == 1) && stmt2->get_scope() == block )
             matchBody = true;
         }
@@ -22622,7 +22681,8 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
 
 #if 1
   //make sure the symbol is moved also since prependStatement() (in fact fixVariableDeclaration()) does not handle this detail.
-  SgVariableSymbol * sym = SageInterface::getFirstVarSym(decl);
+  SgVariableSymbol* sym = SageInterface::getFirstVarSym(decl);
+  ROSE_ASSERT(sym != NULL);
   SgScopeStatement* orig_scope = sym->get_scope();
   if (orig_scope != target_scope)
   {
@@ -22697,14 +22757,16 @@ class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterf
  }
 
  struct SageInterface::const_int_expr_t evaluateSynthesizedAttribute(SgNode *node, SynthesizedAttributesList synList) {
-   if (isSgExpression(node)) {
-     if (isSgValueExp(node)) {
-       return this->getValueExpressionValue(isSgValueExp(node));
+   if (isSgExpression(node) != NULL) {
+     SgValueExp* valueExp = isSgValueExp(node);
+     if (valueExp != NULL) {
+       return this->getValueExpressionValue(valueExp);
      }
 
-     if (isSgVarRefExp(node)) {
+     SgVarRefExp* varRefExp = isSgVarRefExp(node);
+     if (varRefExp != NULL) {
       //      std::cout << "Hit variable reference expression!" << std::endl;
-       return evaluateVariableReference(isSgVarRefExp(node));
+       return evaluateVariableReference(varRefExp);
      }
      // Early break out for assign initializer // other possibility?
      if (isSgAssignInitializer(node)) {
