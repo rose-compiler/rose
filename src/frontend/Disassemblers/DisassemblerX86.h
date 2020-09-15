@@ -21,8 +21,8 @@ namespace BinaryAnalysis {
  *  really not much reason to use this class directly or to call any of these methods directly. */
 class DisassemblerX86: public Disassembler {
     /* Per-disassembler settings; see init() */
-    X86InstructionSize insnSize;                /**< Default size of instructions, based on architecture; see init() */
-    size_t wordSize;                            /**< Base word size. */
+    X86InstructionSize insnSize;                    /**< Default size of instructions, based on architecture; see init() */
+    size_t wordSize;                                /**< Base word size. */
 
     /* Per-instruction settings; see startInstruction() */
     struct State {
@@ -53,7 +53,7 @@ class DisassemblerX86: public Disassembler {
             : ip(0), insnbufat(0), segOverride(x86_segreg_none), branchPrediction(x86_branch_prediction_none),
               branchPredictionEnabled(false), rexPresent(false), rexW(false), rexR(false), rexX(false), rexB(false),
               sizeMustBe64Bit(false), operandSizeOverride(false), addressSizeOverride(false), lock(false),
-              repeatPrefix(x86_repeat_none), modregrmByteSet(false), modregrmByte(0), modeField(0), rmField(0), 
+              repeatPrefix(x86_repeat_none), modregrmByteSet(false), modregrmByte(0), modeField(0), rmField(0),
               modrm(NULL), reg(NULL), isUnconditionalJump(false) {}
     };
 
@@ -90,15 +90,15 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
 protected:
     // Default constructor for serialization
     DisassemblerX86()
-        : insnSize(x86_insnsize_none) {}
+        : insnSize(x86_insnsize_none), wordSize(0) {}
 
 public:
     explicit DisassemblerX86(size_t wordsize)
-        : insnSize(x86_insnsize_none) {
+        : insnSize(x86_insnsize_none), wordSize(0) {
         init(wordsize);
     }
 
@@ -432,8 +432,7 @@ private:
      * Supporting functions
      *========================================================================================================================*/
 private:
-
-    /** Initialize instances of this class. Called by constructor. */
+    // Initialize instances of this class. Called by constructor.
     void init(size_t wordsize);
 
 #if 0 // is this ever used?
@@ -447,14 +446,14 @@ private:
         state.segOverride = insn->get_segmentOverride();
     }
 #endif
-    
-    /** Resets disassembler state to beginning of an instruction for disassembly. */
+
+    // Resets disassembler state to beginning of an instruction for disassembly.
     void startInstruction(State &state, rose_addr_t start_va, const uint8_t *buf, size_t bufsz) const {
         state.ip = start_va;
         state.insnbuf = SgUnsignedCharList(buf, buf+bufsz);
         state.insnbufat = 0;
 
-        /* Prefix flags */
+        // Prefix flags
         state.segOverride = x86_segreg_none;
         state.branchPrediction = x86_branch_prediction_none;
         state.branchPredictionEnabled = false;
@@ -469,6 +468,10 @@ private:
         state.modrm = state.reg = NULL;
         state.isUnconditionalJump = false;
     }
+
+    // Add comments to any IP relative addition expressions. We're not constant folding these because it's sometimes useful to
+    // know that the address is relative to the instruction address, but the comment is useful for understanding the disassembly.
+    void commentIpRelative(SgAsmInstruction*);
 };
 
 } // namespace

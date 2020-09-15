@@ -50,6 +50,7 @@
 #include "CodeThornOptions.h"
 #include "LTLOptions.h"
 #include "ltlthorn-lib/ParProOptions.h"
+#include "ltlthorn-lib/LTLRersMapping.h"
 #include "DFAnalysisBase.h"
 #include "EStateTransferFunctions.h"
 #include "EStateWorkList.h"
@@ -191,7 +192,11 @@ namespace CodeThorn {
     VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
     VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
 
-    void insertInputVarValue(int i) { _inputVarValues.insert(i); }
+    void insertInputVarValue(int i);
+    std::set<int> getInputVarValues();
+    void setLtlRersMapping(CodeThorn::LtlRersMapping m); // also sets inputvarvalues
+    CodeThorn::LtlRersMapping getLtlRersMapping();
+
     void addInputSequenceValue(int i) { _inputSequence.push_back(i); }
     void resetToEmptyInputSequence() { _inputSequence.clear(); }
     void resetInputSequenceIterator() { _inputSequenceIterator=_inputSequence.begin(); }
@@ -420,8 +425,10 @@ namespace CodeThorn {
     set<AbstractValue> _smallActivityVarsSet;
     set<AbstractValue> _assertCondVarsSet;
     set<int> _inputVarValues;
+    LtlRersMapping _ltlRersMapping; // only used for LTL verification
     std::list<int> _inputSequence;
     std::list<int>::iterator _inputSequenceIterator;
+    
     ExprAnalyzer exprAnalyzer;
     VariableIdMappingExtended* variableIdMapping;
     FunctionIdMapping functionIdMapping;

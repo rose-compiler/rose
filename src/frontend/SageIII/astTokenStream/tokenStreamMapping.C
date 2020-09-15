@@ -808,45 +808,46 @@ Graph_TokenMappingTraversal::visit(SgNode* n)
        // Note that there are times when the parent is not the same as the AST parent generated from a traversal (but there are usually subtle errors).
 
        // Add an edge
-          if (n->get_parent() != NULL)
+          SgNode* parent = n->get_parent();
+          if (parent != NULL)
              {
             // DQ (10/29/2013): We need to avoid having the dot file include front-end specific IR nodes since it makes it too large.
-               if (n->get_parent()->get_file_info() == NULL)
+               if (parent->get_file_info() == NULL)
                   {
 #if 0
                     printf ("Error: In Graph_TokenMappingTraversal::visit(): n->get_parent()->get_file_info() == NULL: n = %p = %s parent = %p = %s \n",
-                         n,n->class_name().c_str(),n->get_parent(),n->get_parent()->class_name().c_str());
+                         n,n->class_name().c_str(),parent,parent->class_name().c_str());
 #endif
                   }
-            // ROSE_ASSERT(n->get_parent()->get_file_info() != NULL);
+            // ROSE_ASSERT(parent->get_file_info() != NULL);
                
-               bool parentNodeIsFrontendSpecific = n->get_parent()->get_file_info() != NULL ? n->get_parent()->get_file_info()->isFrontendSpecific() : true;
+               bool parentNodeIsFrontendSpecific = parent->get_file_info() != NULL ? parent->get_file_info()->isFrontendSpecific() : true;
                if (currentNodeIsFrontendSpecific == false && parentNodeIsFrontendSpecific == false)
                   {
                     ROSE_ASSERT(n != NULL);
-                    ROSE_ASSERT(n->get_parent() != NULL);
+                    ROSE_ASSERT(parent != NULL);
 
                  // DQ (9/11/2018): This node has no children and it is an error to call the get_childIndex() function for that IR node.
-                    if (isSgHeaderFileBody(n->get_parent()) == NULL)
+                    if (isSgHeaderFileBody(parent) == NULL)
                        {
-                         size_t child_index = n->get_parent()->get_childIndex(n);
+                         size_t child_index = parent->get_childIndex(n);
 #if 0
                          printf ("In Graph_TokenMappingTraversal::visit(): child_index = %zu \n",child_index);
-                         printf ("In Graph_TokenMappingTraversal::visit(): n->get_parent()->get_traversalSuccessorNamesContainer().size() = %zu \n",n->get_parent()->get_traversalSuccessorNamesContainer().size());
+                         printf ("In Graph_TokenMappingTraversal::visit(): n->get_parent()->get_traversalSuccessorNamesContainer().size() = %zu \n",parent->get_traversalSuccessorNamesContainer().size());
 #endif
                       // DQ (1/4/2015): Handle strange case (demonstrated by tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_11.C).
-                      // string edge_name   = n->get_parent()->get_traversalSuccessorNamesContainer()[child_index];
-                         bool name_available = (child_index < n->get_parent()->get_traversalSuccessorNamesContainer().size());
-                         string edge_name   = name_available ? n->get_parent()->get_traversalSuccessorNamesContainer()[child_index] : "unknown edge name";
+                      // string edge_name   = parent->get_traversalSuccessorNamesContainer()[child_index];
+                         bool name_available = (child_index < parent->get_traversalSuccessorNamesContainer().size());
+                         string edge_name   = name_available ? parent->get_traversalSuccessorNamesContainer()[child_index] : "unknown edge name";
 
                          if (name_available == false)
                             {
 #if 0
-                              printf ("Warning: child not found in parent list of children: for n = %p = %s and parent = %p = %s \n",n,n->class_name().c_str(),n->get_parent(),n->get_parent()->class_name().c_str());
+                              printf ("Warning: child not found in parent list of children: for n = %p = %s and parent = %p = %s \n",n,n->class_name().c_str(),parent,parent->class_name().c_str());
 #endif
                             }
 
-                         file << "\"" << StringUtility::numberToString(n->get_parent()) << "\" -> \"" << StringUtility::numberToString(n) << "\"[label=\"" << edge_name << "\" color=\"black\" weight=1];" << endl;
+                         file << "\"" << StringUtility::numberToString(parent) << "\" -> \"" << StringUtility::numberToString(n) << "\"[label=\"" << edge_name << "\" color=\"black\" weight=1];" << endl;
                        }
                   }
              }

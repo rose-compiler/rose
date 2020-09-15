@@ -26,7 +26,7 @@ bool CtxReachabilityLattice::isBot() const
 void CtxReachabilityLattice::toStream(std::ostream& os, VariableIdMapping* vim) 
 {
   if (!isReachable()) os << '!';
-  os << "reachable";
+  os << "r";
 }
 
 }

@@ -168,8 +168,8 @@ namespace CodeThorn {
     int getMemoryRegionNumElements(CodeThorn::AbstractValue ptrToRegion);
     int getMemoryRegionElementSize(CodeThorn::AbstractValue);
 
-  protected:
     static void initDiagnostics();
+  protected:
     static Sawyer::Message::Facility logger;
     AbstractValue abstractValueFromSgValueExp(SgValueExp* valueExp, EvalMode mode);
     

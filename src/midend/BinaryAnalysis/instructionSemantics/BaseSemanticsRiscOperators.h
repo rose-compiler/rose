@@ -420,6 +420,13 @@ public:
      *  bits set depending on whether the most significant bit was originally clear or set. */
     virtual SValuePtr shiftRightArithmetic(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
+    /** Reverse parts of a value.
+     *
+     *  This is a convenience wrapper around other operations. It splits the value @p a into equal sized parts, each @p
+     *  elmtNBits in width, and reverses them to create the return value.  The width of @p a must be a multiple of @p
+     *  elmtNBits. */
+    virtual SValuePtr reverseElmts(const SValuePtr &a, size_t elmtNBits);
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Comparison Operations

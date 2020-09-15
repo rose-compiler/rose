@@ -97,6 +97,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     (",D", po::value< vector<string> >(&ctOpt.preProcessorDefines),"Define constants for preprocessor.")
     ("edg:no_warnings", po::bool_switch(&ctOpt.edgNoWarningsFlag),"EDG frontend flag.")
     ("rose:ast:read", po::value<std::string>(&ctOpt.roseAstReadFileName),"read in binary AST from comma separated list (no spaces)")
+    ("rose:ast:write", po::value<bool>(&ctOpt.roseAstWrite),"write AST binary file.")
+    ("rose:ast:merge", po::value<bool>(&ctOpt.roseAstWrite),"merge ASTs of read files (is implict for rose:ast:read).")
     ;
 
   cegpraOptions.add_options()
@@ -205,6 +207,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("byte-mode", po::value< bool >(&ctOpt.byteMode)->default_value(false)->implicit_value(true),"switches from index-based addresses to byte-based addresses in state representation.")
     ("test-selector",po::value< int >(&ctOpt.testSelector)->default_value(0)->implicit_value(0),"Option for selecting dev tests.")
     ("intra",po::value< bool >(&ctOpt.intraProcedural)->default_value(false)->implicit_value(true),"Select intra-procedural analysis.")
+    ("precision",po::value< int >(&ctOpt.precisionLevel),"Option for selecting level of precision.")
     ;
 
   rersOptions.add_options()
@@ -396,6 +399,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
       argv[i] = strdup("");
       ROSE_ASSERT(i+1<argc);
       argv[i+1]= strdup("");
+      continue;
+    } else if (currentArg == "--rose:ast:write"||currentArg == "--rose:ast:merge") {
+      argv[i] = strdup("");
       continue;
     }
     if (currentArg[0] != '-' ){

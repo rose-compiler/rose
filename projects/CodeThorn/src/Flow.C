@@ -289,7 +289,7 @@ Label Flow::getStartLabel() {
     cerr<<"Flow::getStartLabel: start label requested, but no start label available.";
     exit(1);
   } else {
-    cout<<"WARNING: start label requested, but more than one start label available. Choosing randomly one of the registered start labels."<<endl;
+    //cout<<"WARNING: start label requested, but more than one start label available. Choosing randomly one of the registered start labels."<<endl;
     return *_startLabelSet.begin();
   }
 }

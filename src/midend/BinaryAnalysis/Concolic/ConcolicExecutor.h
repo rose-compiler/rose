@@ -19,21 +19,79 @@ namespace Concolic {
 /** Describes where a symbolic variable came from. */
 class InputVariables {
 public:
-    struct Variable {
+    class Variable {
+    public:
         /** From whence a variable came. */
         enum Whence {
             INVALID,                                    /**< Provenance record is invalid (default constructed). */
             PROGRAM_ARGUMENT_COUNT,                     /**< Number of program arguments. */
             PROGRAM_ARGUMENT,                           /**< Variable is (part of) a program argument. */
             ENVIRONMENT,                                /**< Variable is (part of) a program environment. */
+            SYSTEM_CALL_RETVAL                          /**< Variable is return value of system call. */
         };
 
-        Whence whence;                                  /**< Where did symbolic variable come from? */
-        size_t index1, index2;                          /**< Index for one- or two-dimensional arrays. */
+    private:
+        Whence whence_;
+        union {
+            struct {
+                size_t idx1, idx2;
+            } arrayOfStrings;
+        };
 
+    public:
         Variable()
-            : whence(INVALID), index1(INVALID_INDEX), index2(INVALID_INDEX) {}
+            : whence_(INVALID) {}
+
+        /** Create a variable for the program argument count. */
+        static Variable programArgc() {
+            Variable v;
+            v.whence_ = PROGRAM_ARGUMENT_COUNT;
+            return v;
+        }
+
+        /** Create a variable for a program argument. */
+        static Variable programArgument(size_t argIdx, size_t charIdx) {
+            Variable v;
+            v.whence_ = PROGRAM_ARGUMENT;
+            v.arrayOfStrings.idx1 = argIdx;
+            v.arrayOfStrings.idx2 = charIdx;
+            return v;
+        }
+
+        /** Create a variable for a program environment variable. */
+        static Variable environmentVariable(size_t envIdx, size_t charIdx) {
+            Variable v;
+            v.whence_ = ENVIRONMENT;
+            v.arrayOfStrings.idx1 = envIdx;
+            v.arrayOfStrings.idx2 = charIdx;
+            return v;
+        }
+
+        /** Index of string in array. */
+        size_t variableIndex() const {
+            switch (whence_) {
+                case PROGRAM_ARGUMENT:
+                case ENVIRONMENT:
+                    return arrayOfStrings.idx1;
+                default:
+                    ASSERT_not_reachable("variable index not available");
+            }
+        }
+
+        /** Index of character within string. */
+        size_t charIndex() const {
+            switch (whence_) {
+                case PROGRAM_ARGUMENT:
+                case ENVIRONMENT:
+                    return arrayOfStrings.idx2;
+                default:
+                    ASSERT_not_reachable("character index not available");
+            }
+        }
         
+        /** What kind of variable this is. */
+        Whence whence() const { return whence_; }
+
         void print(std::ostream&) const;                /**< Print the variable name. */
 
         friend std::ostream& operator<<(std::ostream &out, const Variable &x) {
@@ -49,7 +107,7 @@ private:
 public:
     /** Insert a record describing the number of program arguments. */
     void insertProgramArgumentCount(const SymbolicExpr::Ptr&);
-    
+
     /** Insert a record for a program argument.
      *
      *  The @p i and @p j are the indexes for the <code>char *argv[]</code> argument of a C or C++ program's "main" function. */
@@ -125,12 +183,13 @@ public:
               markingEnvpAsInput(false)                 // not input for now since the DB doesn't store them
             {}
     };
-    
+
 private:
     Settings settings_;                                 // emulation settings
     const Partitioner2::Partitioner &partitioner_;      // ROSE disassembly info about the specimen
     Debugger::Ptr process_;                             // subordinate process
     InputVariables &inputVariables_;                    // where did symbolic variables come from?
+    Sawyer::Optional<rose_addr_t> overrideNextIp_;      // next instruction to execute, used to skip over syscalls
 
 protected:
     /** Allocating constructor. */
@@ -171,7 +230,7 @@ public:
     const Settings& settings() const {
         return settings_;
     }
-    
+
     /** Property: Partitioner. */
     const Partitioner2::Partitioner& partitioner() const {
         return partitioner_;
@@ -181,7 +240,7 @@ public:
     Debugger::Ptr process() const {
         return process_;
     }
-    
+
     /** Number of bits in a word.
      *
      *  The definition of "word" is the natural width of the instruction pointer, stack pointer, most general-purpose
@@ -196,11 +255,34 @@ public:
      *  Shows the mapping from input variables to their symbolic values. */
     void printInputVariables(std::ostream&) const;
 
+    /** Property: Override for the next instruction to be executed.
+     *
+     *  When set, this will cause the concrete execution to execute the specified address instead of what it would normally
+     *  execute.  It will then clear the override.  This can be used for skipping over instructions such as system calls.
+     *
+     *  @{ */
+    Sawyer::Optional<rose_addr_t> overrideNextIp() const {
+        return overrideNextIp_;
+    }
+    void overrideNextIp(rose_addr_t va) {
+        overrideNextIp_ = va;
+    }
+    void clearOverrideNextIp() {
+        overrideNextIp_.reset();
+    }
+    /** @} */
+
+
 public:
     virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
     readRegister(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    readRegister(RegisterDescriptor reg) ROSE_OVERRIDE {
+        return readRegister(reg, undefined_(reg.nBits()));
+    }
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
     peekRegister(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
@@ -217,6 +299,12 @@ public:
 private:
     // Handles a Linux system call of the INT 0x80 variety.
     void systemCall();
+
+    InstructionSemantics2::BaseSemantics::SValuePtr systemCallNumber();
+    InstructionSemantics2::BaseSemantics::SValuePtr systemCallArgument(size_t idx);
+
+    void doExit(const InstructionSemantics2::BaseSemantics::SValuePtr&);
+    void doGetuid();
 
     // Mark locations of specimen command-line arguments.
     void markProgramArguments(const SmtSolver::Ptr&);
@@ -353,7 +441,8 @@ private:
     Partitioner2::Partitioner partition(const DatabasePtr&, const Specimen::Ptr&);
 
     // Create the process for the concrete execution.
-    Debugger::Ptr makeProcess(const DatabasePtr&, const TestCase::Ptr&, Sawyer::FileSystem::TemporaryDirectory&);
+    Debugger::Ptr makeProcess(const DatabasePtr&, const TestCase::Ptr&, Sawyer::FileSystem::TemporaryDirectory&,
+                              const Partitioner2::Partitioner&);
 
     // Run the execution
     void run(const DatabasePtr&, const TestCase::Ptr&, const Emulation::DispatcherPtr&);

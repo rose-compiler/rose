@@ -16,6 +16,8 @@ std::string unparseA64Mnemonic(SgAsmA64Instruction *insn) {
 
 std::string unparseA64Expression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels,
                                  const RegisterDictionary *registers) {
+    if (!registers)
+        registers = RegisterDictionary::dictionary_a64();
     auto unparser = Unparser::Arm::instance(Unparser::ArmSettings());
     std::ostringstream ss;
     Unparser::State state(Partitioner2::Partitioner(), registers, unparser->settings(), *unparser);
