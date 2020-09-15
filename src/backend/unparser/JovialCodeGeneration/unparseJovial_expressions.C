@@ -179,6 +179,7 @@ Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
         case V_SgJovialBitType:
         case V_SgModifierType:
         case V_SgTypeFixed:
+        case V_SgTypeString:
            curprint("(* ");
            unparseType(type, info);
            curprint(" *)");
