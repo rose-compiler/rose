@@ -53,8 +53,10 @@ void optionallyInitializePatternSearchSolver(CodeThornOptions& ctOpt,IOAnalyzer*
 
 #ifndef HAVE_SPOT
 void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* analyzer, TimingCollector& tc) {
-  cerr<<"Error: ltlthorn was compiled without SPOT. runLTLAnalysis not available."<<endl;
-  exit(1);
+  if(ltlOpt.activeOptionsRequireSPOTLibrary()) {
+    cerr<<"Error: ltlthorn was compiled without SPOT. runLTLAnalysis not available."<<endl;
+    exit(1);
+  }
 }
 #else
   void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* analyzer, TimingCollector& tc) {
