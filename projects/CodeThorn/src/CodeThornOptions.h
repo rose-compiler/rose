@@ -18,15 +18,15 @@ struct CodeThornOptions : public CodeThorn::Options {
   int maxTransitionsForcedTop3=-1;
   int maxTransitionsForcedTop4=-1;
   int maxTransitionsForcedTop5=-1;
-  int solver;
+  int solver=5;
 
   // pass on to ROSE
   std::vector<std::string> includeDirs;
   std::vector<std::string> preProcessorDefines;
-  bool edgNoWarningsFlag;
+  bool edgNoWarningsFlag=true;
   std::string roseAstReadFileName;
-  bool roseAstWrite;
-  bool roseAstMerge;
+  bool roseAstWrite=false;
+  bool roseAstMerge=false;
   
   // visualization
   struct Visualization {

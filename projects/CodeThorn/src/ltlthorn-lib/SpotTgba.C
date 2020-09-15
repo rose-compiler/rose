@@ -15,7 +15,7 @@ SpotTgba::SpotTgba(TransitionGraph& ctstg, const spot::ltl::atomic_prop_set& sap
   for(i=sap.begin(); i!=sap.end(); ++i) {
     propNum2DictNum[propName2Int((*i)->name())] =
                       dict.register_proposition(*i, this);
-    cout<<"DEBUG: SpotTgba Mapping: "<<(*i)->name()<<"="<<propName2Int((*i)->name())<<" <=> register_prop:"<<*i<<endl;
+    //cout<<"DEBUG: SpotTgba Mapping: "<<(*i)->name()<<"="<<propName2Int((*i)->name())<<" <=> register_prop:"<<*i<<endl;
   }
 }
 
