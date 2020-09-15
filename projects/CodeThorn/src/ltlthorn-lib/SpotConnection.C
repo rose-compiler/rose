@@ -1,12 +1,15 @@
+
+
 #include "sage3basic.h"
 #include "SpotConnection.h"
+
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #include "CodeThornCommandLineOptions.h"
 
 using namespace CodeThorn;
 using namespace std;
-
-#include "rose_config.h"
-#ifdef HAVE_SPOT
 
 SpotConnection::SpotConnection() {};
 
@@ -736,6 +739,5 @@ void SpotConnection::reportUndefinedFunction() {
   throw CodeThorn::Exception("Error: Called a function of class SpotConnection even though CodeThorn was compiled without SPOT.");
 }
 
-#endif
-
+#endif // HAVE_SPOT
 

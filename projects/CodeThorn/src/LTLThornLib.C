@@ -41,7 +41,23 @@ void initDiagnosticsLTL() {
   CounterexampleGenerator::initDiagnostics();
 }
 
+void optionallyInitializePatternSearchSolver(CodeThornOptions& ctOpt,IOAnalyzer* analyzer,TimingCollector& timingCollector) {
+    // pattern search: requires that exploration mode is set,
+    // otherwise no pattern search is performed
+    if(ctOpt.patSearch.explorationMode.size()>0) {
+      logger[INFO] << "Pattern search exploration mode was set. Choosing solver 10." << endl;
+      analyzer->setSolver(new Solver10());
+      analyzer->setStartPState(*analyzer->popWorkList()->pstate());
+    }
+}
+
+#ifndef HAVE_SPOT
 void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* analyzer, TimingCollector& tc) {
+  cerr<<"Error: ltlthorn was compiled without SPOT. runLTLAnalysis not available."<<endl;
+  exit(1);
+}
+#else
+  void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* analyzer, TimingCollector& tc) {
   long pstateSetSize=analyzer->getPStateSet()->size();
   long pstateSetBytes=analyzer->getPStateSet()->memorySize();
   long pstateSetMaxCollisions=analyzer->getPStateSet()->maxCollisions();
@@ -373,13 +389,6 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
   }
 }
 
-void optionallyInitializePatternSearchSolver(CodeThornOptions& ctOpt,IOAnalyzer* analyzer,TimingCollector& timingCollector) {
-    // pattern search: requires that exploration mode is set,
-    // otherwise no pattern search is performed
-    if(ctOpt.patSearch.explorationMode.size()>0) {
-      logger[INFO] << "Pattern search exploration mode was set. Choosing solver 10." << endl;
-      analyzer->setSolver(new Solver10());
-      analyzer->setStartPState(*analyzer->popWorkList()->pstate());
-    }
-}
+#endif // HAVE_SPOT
+  
 } // end of namespace

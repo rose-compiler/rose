@@ -1,5 +1,8 @@
 // Author: Marc Jasper, 2014, 2015.
 
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #include "CounterexampleAnalyzer.h"
 #include "CodeThornCommandLineOptions.h"
 
@@ -745,3 +748,4 @@ void CounterexampleAnalyzer::printStgSizeAndCeCount(TransitionGraph* model, int 
   }
 }
 
+#endif // HAVE_SPOT
