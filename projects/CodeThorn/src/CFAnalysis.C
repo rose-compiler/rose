@@ -1224,15 +1224,13 @@ Flow CFAnalysis::flow(SgNode* n) {
 
   switch (node->variantT()) {
   case V_SgFunctionDefinition: {
-    //~ Sg_File_Info& fi = SG_DEREF(node->get_file_info());
-    //~ std::cerr <<"[Trace] Building CFG for function: "<<SgNodeHelper::getFunctionName(node)<< " :" << fi.displayString() << endl;
-    std::cerr <<"[Trace] Building CFG for function: "<<SgNodeHelper::getFunctionName(node)<< " :" << endl;
-    
+    Sg_File_Info* fi = node->get_file_info();
+    SAWYER_MESG(logger[INFO])<<"Building CFG for function: "<<SgNodeHelper::getFunctionName(node)<< " :" << fi->displayString() << endl;
     // PP (04/09/20)
     // do nothing for function definitions that did not receive a label
     // e.g., templated functions
     Label entryLabel = labeler->functionEntryLabel(node);
-    if (Labeler::NO_LABEL == entryLabel)
+    if (!entryLabel.isValid())
       return edgeSet;
     
     SgBasicBlock* body=isSgFunctionDefinition(node)->get_body();

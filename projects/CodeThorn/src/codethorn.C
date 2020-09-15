@@ -75,9 +75,7 @@ using namespace Sawyer::Message;
 #include "ltlthorn-lib/Solver11.h"
 #include "ltlthorn-lib/Solver12.h"
 
-const std::string versionString="1.12.13";
-
-
+const std::string versionString="1.12.14";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -165,6 +163,7 @@ int main( int argc, char * argv[] ) {
     analyzer->configureOptions(ctOpt,ltlOpt,parProOpt);
     analyzer->setSolver(createSolver(ctOpt));
     analyzer->setOptionContextSensitiveAnalysis(ctOpt.contextSensitive);
+    optionallySetRersMapping(ctOpt,ltlOpt,analyzer);
     tc.stopTimer();
 
     SgProject* sageProject=runRoseFrontEnd(argc,argv,ctOpt,tc);

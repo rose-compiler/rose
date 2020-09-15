@@ -52,7 +52,8 @@ void TransitionGraphReducer::reduceStgToStatesSatisfying(function<bool(const ESt
       Edge* newEdge = new Edge(current->label(),EDGE_PATH,(*i)->label());
       reducedStg->add(Transition(current, *newEdge, *i));
     }
-    cout<<"\rReduction progress: WL:"<<wl<<" Visited: "<<visited.size();
+    // update in place (extra spaces required)
+    cout<<"\rReduction processing: WL:"<<wl<<" Visited: "<<visited.size()<<"    ";
   }
   cout<<endl;
   err=system("tput cnorm"); // turn on cursor

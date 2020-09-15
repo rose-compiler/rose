@@ -27,6 +27,14 @@ namespace CodeThorn {
   void turnOffRoseWarnings();
   void configureRose();
   void optionallyRunExprEvalTestAndExit(CodeThornOptions& ctOpt,int argc, char * argv[]);
+  void optionallyInitializePatternSearchSolver(CodeThornOptions& ctOpt,IOAnalyzer* analyzer,TimingCollector& timingCollector);
+  void optionallySetRersMapping(CodeThornOptions ctOpt,LTLOptions ltlOptions,IOAnalyzer* analyzer);
+
+  /* reads and parses LTL rers mapping file into the alphabet
+     sets. Returns false if reading fails. Exits with error message if
+     format is wrong. */
+  bool readAndParseLTLRersMappingFile(string ltlRersMappingFileName, LtlRersMapping& ltlRersMapping);
+
   void processCtOptGenerateAssertions(CodeThornOptions& ctOpt, Analyzer* analyzer, SgProject* root);
   IOAnalyzer* createAnalyzer(CodeThornOptions& ctOpt, LTLOptions& ltlOpt);
   void optionallyRunInternalChecks(CodeThornOptions& ctOpt, int argc, char * argv[]);

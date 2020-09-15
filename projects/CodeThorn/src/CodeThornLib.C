@@ -55,6 +55,7 @@
 #endif
 
 #include "CodeThornLib.h"
+#include "LTLOptions.h"
 #include "LTLThornLib.h"
 #include "CppStdUtilities.h"
 
@@ -111,6 +112,7 @@ void CodeThorn::initDiagnostics() {
   Rose::Diagnostics::initAndRegister(&CodeThorn::logger, "CodeThorn");
   // class specific loggers for CodeThorn library functions
   Analyzer::initDiagnostics();
+  ExprAnalyzer::initDiagnostics();
   RewriteSystem::initDiagnostics();
   Specialization::initDiagnostics();
   Normalization::initDiagnostics();
@@ -121,7 +123,8 @@ void CodeThorn::initDiagnostics() {
 
 Sawyer::Message::Facility CodeThorn::logger;
 
-void CodeThorn::turnOffRoseWarnings() {
+namespace CodeThorn {
+void turnOffRoseWarnings() {
   string turnOffRoseWarnings=string("Rose(none,>=error),Rose::EditDistance(none,>=error),Rose::FixupAstDeclarationScope(none,>=error),")
     +"Rose::FixupAstSymbolTablesToSupportAliasedSymbols(none,>=error),"
     +"Rose::EditDistance(none,>=error),"
@@ -141,7 +144,7 @@ void CodeThorn::turnOffRoseWarnings() {
   Rose::global_options.set_backend_warnings(false);
 }
 
-void CodeThorn::configureRose() {
+void configureRose() {
   CodeThorn::initDiagnostics();
 
   Rose::Diagnostics::mprefix->showProgramName(false);
@@ -152,7 +155,7 @@ void CodeThorn::configureRose() {
   signal(SIGSEGV, codethornBackTraceHandler);   // install handler for backtrace
 }
 
-void CodeThorn::exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
+void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
   cout << "------------------------------------------"<<endl;
   cout << "RUNNING CHECKS FOR EXPR ANALYZER:"<<endl;
   cout << "------------------------------------------"<<endl;
@@ -195,12 +198,102 @@ void CodeThorn::exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
   delete exprAnalyzer;
 }
 
-namespace CodeThorn {
 void optionallyRunExprEvalTestAndExit(CodeThornOptions& ctOpt,int argc, char * argv[]) {
   if(ctOpt.exprEvalTest) {
     exprEvalTest(argc,argv,ctOpt);
     exit(0);
   }
+}
+
+void optionallySetRersMapping(CodeThornOptions ctOpt,LTLOptions ltlOpt,IOAnalyzer* analyzer) {
+  // guard to check if LTL checking is activated
+  if(ltlOpt.ltlRersMappingFileName.size()==0 && ltlOpt.ltlInAlphabet.size()==0 && ltlOpt.ltlOutAlphabet.size()==0)
+    return;
+  
+  LtlRersMapping ltlRersMapping;
+  if (ltlOpt.ltlInAlphabet.size()>0) {
+    ltlRersMapping.addInputAsciiValueSetWithOffsetA(ltlOpt.ltlInAlphabet);
+  }
+  if (ltlOpt.ltlOutAlphabet.size()>0) {
+    ltlRersMapping.addOutputAsciiValueSetWithOffsetA(ltlOpt.ltlOutAlphabet);
+  }
+  if(ltlOpt.ltlRersMappingFileName.size()>0) {
+    // load and parse file into ltlInAlphabet and ltlOutAlphabet
+    // input/output alphabet
+    if(!readAndParseLTLRersMappingFile(ltlOpt.ltlRersMappingFileName,ltlRersMapping)) {
+      cerr<<"Error: could not open RERS mapping file "<<ltlOpt.ltlRersMappingFileName<<endl;
+      exit(1);
+    }
+  }
+  
+  {
+    std::set<int> ltlInAlphabet;// = analyzer->getInputVarValues();
+    std::set<int> ltlOutAlphabet;
+    ltlInAlphabet=ltlRersMapping.getInputValueSet();
+    ltlOutAlphabet=ltlRersMapping.getOutputValueSet();
+    if(ltlInAlphabet.size()==0) {
+      cerr<<"Error: no LTL input alphabet provided."<<endl;
+      exit(1);
+    }
+    if(ltlOutAlphabet.size()==0) {
+      cerr<<"Error: no LTL output alphabet provided."<<endl;
+      exit(1);
+    }
+    /* now also set the input values. This also checks the
+       inputalphabet setting does not conflict with input values
+       settings */
+    std::set<int> inputValues=analyzer->getInputVarValues();
+    if(inputValues.size()>0) {
+      if(inputValues.size()!=ltlInAlphabet.size()) {
+        cerr<<"Error: input alphabet with "<<ltlInAlphabet.size()<<" values specified in ltl-rers-mapping but "<<inputValues.size()<<" input values."<<endl;
+        exit(1);
+      } else {
+        // check that input alphabet matches input values
+        for(auto inputVal : inputValues) {
+          if(ltlInAlphabet.find(inputVal)==ltlInAlphabet.end()) {
+            // sets don't match
+            cerr<<"Error: input alphabet is different to specified input values (only input alphabet is necessary)."<<endl;
+            exit(1);
+          }
+        }
+        cout<<"INFO: RersMapping: input values match input alphabet. Option --input-values is superfluous."<<endl;
+      }
+    } else {
+      // set input values to input alphabet
+      for (auto val : ltlInAlphabet) {
+        analyzer->insertInputVarValue(val);
+      }
+      cout<<"INFO: RersMapping: setting input values to input alphabet."<<endl;
+    }
+  }
+  analyzer->setLtlRersMapping(ltlRersMapping);
+}
+
+bool readAndParseLTLRersMappingFile(string ltlRersMappingFileName, CodeThorn::LtlRersMapping& rersLtlMapping) {
+  CppStdUtilities::DataFileVector dataFileVector;
+  bool readStatus=CppStdUtilities::readDataFile(ltlRersMappingFileName,dataFileVector);
+  if(readStatus==false)
+    return readStatus;
+  int lineNr=1;
+  for(std::string line : dataFileVector) {
+    std::vector<std::string> lineEntries=CppStdUtilities::splitByRegex(line,",|\\t|\\s+");
+    if(lineEntries.size()!=2) {
+      cerr<<"Error: format error in rers mapping file. Not exactly two entries in line "<<lineNr<<endl;
+      exit(1);
+    }
+    string ioString=lineEntries[0];
+    int value=std::stoi(lineEntries[1]);
+    cout<<"INFO: mapping: line "<<lineNr<<": "<<ioString<<" <=> "<<value<<endl;
+    if(ioString.size()==2&&ioString[0]=='i') {
+      rersLtlMapping.addInput(ioString[1],value);
+    } else if(ioString.size()==2&&ioString[0]=='o') {
+      rersLtlMapping.addOutput(ioString[1],value);
+    } else {
+      cout<<"WARNING: unknown entry in rers mapping file line "<<lineNr<<": "<<ioString<<" (ignoring it)"<<endl;
+    }
+    lineNr++;
+  }
+  return true;
 }
 
 void processCtOptGenerateAssertions(CodeThornOptions& ctOpt, Analyzer* analyzer, SgProject* root) {
@@ -476,6 +569,14 @@ SgProject* runRoseFrontEnd(int argc, char * argv[], CodeThornOptions& ctOpt, Tim
     argvList.push_back("-rose:ast:read");
     argvList.push_back(ctOpt.roseAstReadFileName);
   }
+  if(ctOpt.roseAstWrite) {
+    // add ROSE option as required non-standard single dash long option
+    argvList.push_back("-rose:ast:write");
+  }
+  if(ctOpt.roseAstMerge) {
+    // add ROSE option as required non-standard single dash long option
+    argvList.push_back("-rose:ast:merge");
+  }
   SgProject* project=frontend(argvList);
   timingCollector.stopFrontEndTimer();
   return project;
@@ -520,7 +621,7 @@ void optionallyRunNormalization(CodeThornOptions& ctOpt,SgProject* sageProject, 
     normalization.normalizeAst(sageProject,2);
   }
   timingCollector.stopNormalizationTimer();
-  optionallyRunInliner(ctOpt,normalization, sageProject);
+  CodeThorn::optionallyRunInliner(ctOpt,normalization, sageProject);
 }
 
 void setAssertConditionVariablesInAnalyzer(SgNode* root,Analyzer* analyzer) {
@@ -627,8 +728,8 @@ void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,Analyzer* analyz
     }
   }
 }
-  // START_INIT 1
-void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,Analyzer* analyzer,SgNode* root, TimingCollector& tc) {
+
+  void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,Analyzer* analyzer,SgNode* root, TimingCollector& tc) {
   tc.startTimer();
   SAWYER_MESG(logger[TRACE])<< "INIT: initializing solver with start function "<<analyzer->getSolver()->getId()<<"."<<endl;
   string startFunctionName;
