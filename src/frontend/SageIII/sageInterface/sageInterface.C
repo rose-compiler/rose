@@ -3071,20 +3071,21 @@ SageInterface::getDefaultDestructor( SgClassDeclaration* classDeclaration )
                while ( i != classDefinition->get_members().end() )
                   {
                  // Check the parent pointer to make sure it is properly set
-                    ROSE_ASSERT( (*i)->get_parent() != NULL);
+                    SgNode* i_parent = (*i)->get_parent();
+                    ROSE_ASSERT(i_parent != NULL);
 
                  // DQ (11/1/2005): Note that a template instantiation can have a parent which is the
                  // variable which forced it's instantiation.  Since it does not really exist in the
                  // source code explicitly (it is compiler generated) this is as reasonable as anything else.
-                 // if ( (*i)->get_parent() != classDefinition && isSgVariableDeclaration((*i)->get_parent()) == NULL)
-                    if ( (*i)->get_parent() != classDefinition )
+                 // if ( i_parent != classDefinition && isSgVariableDeclaration(i_parent) == NULL)
+                    if ( i_parent != classDefinition )
                        {
-                         printf ("Error: (*i)->get_parent() = %p = %s \n",(*i)->get_parent(),(*i)->get_parent()->class_name().c_str());
+                         printf ("Error: (*i)->get_parent() = %p = %s \n",i_parent,i_parent->class_name().c_str());
                          printf ("(*i) = %p = %s = %s \n",*i,(*i)->class_name().c_str(),(*i)->unparseToString().c_str());
                          (*i)->get_file_info()->display("Called from SageInterface::getDefaultDestructor: debug");
                        }
-                    ROSE_ASSERT( (*i)->get_parent() == classDefinition);
-                 // ROSE_ASSERT( (*i)->get_parent() == classDefinition || isSgVariableDeclaration((*i)->get_parent()) != NULL);
+                    ROSE_ASSERT( i_parent == classDefinition);
+                 // ROSE_ASSERT( i_parent == classDefinition || isSgVariableDeclaration(i_parent) != NULL);
 
                     SgMemberFunctionDeclaration* memberFunction = isSgMemberFunctionDeclaration(*i);
                     if (memberFunction != NULL)
