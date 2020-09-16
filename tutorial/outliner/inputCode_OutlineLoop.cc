@@ -1,3 +1,4 @@
+#include <stdio.h>
 namespace N
 {
   class A

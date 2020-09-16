@@ -178,6 +178,8 @@ Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
 
         case V_SgJovialBitType:
         case V_SgModifierType:
+        case V_SgTypeFixed:
+        case V_SgTypeString:
            curprint("(* ");
            unparseType(type, info);
            curprint(" *)");
@@ -512,7 +514,7 @@ Unparse_Jovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info)
         // They come in pairs
            ROSE_ASSERT((sublist_size % 2) == 0);
 
-           for (int i=0; i < 1+sublist_size/2; i+=2)
+           for (int i=0; i < sublist_size; i+=2)
               {
               // Unparse the PresetIndexSpecifier
                  curprint("\n");
