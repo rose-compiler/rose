@@ -2,6 +2,8 @@
 #ifndef CE_ANALYZER_H
 #define CE_ANALYZER_H
 
+#ifdef HAVE_SPOT
+
 #include "sage3basic.h"
 
 //CodeThorn includes
@@ -67,9 +69,9 @@ namespace CodeThorn {
     CEAnalysisResult analyzeCounterexample(string counterexample, const EState* startState, bool returnSpuriousLabel, bool resetAnalyzerData);
     // CEGPRA: Iterative verification attempts using the cegar prefix mode for LTL. Iterates over all LTL properties, respects the limit for 
     // analyzed counterexamples for each individual property.
-    PropertyValueTable* cegarPrefixAnalysisForLtl(SpotConnection& spotConnection, set<int> ltlInAlphabet, set<int> ltlOutAlphabet);
+    PropertyValueTable* cegarPrefixAnalysisForLtl(SpotConnection& spotConnection, LtlRersMapping ltlRersMapping);
     // CEGPRA: Iterative verification attempts of a given ltl property. Prefix of the state space is explored using individual counterexample traces.
-    PropertyValueTable* cegarPrefixAnalysisForLtl(int property, SpotConnection& spotConnection, set<int> ltlInAlphabet, set<int> ltlOutAlphabet);
+    PropertyValueTable* cegarPrefixAnalysisForLtl(int property, SpotConnection& spotConnection, LtlRersMapping ltlRersMapping);
     void setMaxCounterexamples(int max) { _maxCounterexamples=max; };
     
   private: 
@@ -129,5 +131,7 @@ namespace CodeThorn {
   };
 
 } // end of namespace CodeThorn
+
+#endif // HAVE_SPOT
 
 #endif

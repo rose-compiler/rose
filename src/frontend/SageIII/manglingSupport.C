@@ -305,6 +305,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                          ROSE_ASSERT(tmp_scope != NULL);
                          printf ("In manglingSupport.C: mangleQualifiersToString(): tmp_scope = %p = %s \n",tmp_scope,tmp_scope->class_name().c_str());
 #endif
+                         ROSE_ASSERT(def != NULL);
                          mangled_name = def->get_mangled_name().getString();
 #if 0
                          printf ("DONE: In manglingSupport.C: mangleQualifiersToString(): Calling def->get_mangled_name(): def = %p = %s \n",def,def->class_name().c_str());
@@ -347,6 +348,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                case V_SgNamespaceDefinitionStatement:
                   {
                     const SgNamespaceDefinitionStatement* def = isSgNamespaceDefinitionStatement (scope);
+                    ROSE_ASSERT(def != NULL);
                     mangled_name = def->get_mangled_name().getString();
 #if 0
                     printf ("In manglingSupport.C: mangleQualifiersToString(): mangled name for scope = %p = %s is: %s \n",scope,scope->class_name().c_str(),mangled_name.c_str());
@@ -361,7 +363,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                   {
                  // 'scope' is part of scope for locally defined classes
                     const SgFunctionDefinition* def = isSgFunctionDefinition (scope);
-                    ROSE_ASSERT (def);
+                    ROSE_ASSERT(def != NULL);
                     mangled_name = def->get_mangled_name().getString();
                     break;
                   }
@@ -371,6 +373,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                case V_SgDoWhileStmt:
                case V_SgForStatement:
                case V_SgIfStmt:
+               case V_SgJovialForThenStatement:
                case V_SgSwitchStatement:
                case V_SgWhileStmt:
                case V_SgBasicBlock:
@@ -385,7 +388,43 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     mangled_name = joinMangledQualifiersToString (par_scope_name,stmt_name);
                     break;
                   }
+                  
+               case V_SgAdaPackageSpec:
+                  {
+                    const SgAdaPackageSpec*     spec   = isSgAdaPackageSpec(scope);
+                    const SgNode*               parent = spec->get_parent();
+                    ROSE_ASSERT(parent);
+                    
+                    const SgAdaPackageSpecDecl* dcl    = isSgAdaPackageSpecDecl(parent);
+                    // ROSE_ASSERT(dcl);
+                    
+                    // \todo \revise dcl may not exist for a special, hidden scope
+                    mangled_name = dcl ? dcl->get_name().getString() // or get_mangled_name ??
+                                       : spec->get_mangled_name().getString();
+                    break;
+                  }
+                  
+               case V_SgAdaTaskSpec:
+                  {
+                    const SgAdaTaskSpec*     spec   = isSgAdaTaskSpec(scope);
+                    const SgNode*            parent = spec->get_parent();
+                    ROSE_ASSERT(parent);
+                    
+                    // or get_mangled_name ??
+                    if (const SgAdaTaskSpecDecl* taskspec = isSgAdaTaskSpecDecl(parent))
+                      mangled_name = taskspec->get_name().getString();
+                    else if (const SgAdaTaskTypeDecl* tasktype = isSgAdaTaskTypeDecl(parent))
+                      mangled_name = tasktype->get_name().getString();
+                    else
+                      ROSE_ASSERT(false);
+                    
+                    break;
+                  }
 
+           
+           // PP (06/01/20) - not sure how to handle function parameter scope;
+           //                 for now, handle like SgGlobal
+               case V_SgFunctionParameterScope:
            // DQ (2/22/2007): I'm not sure this is best, but we can leave it for now.
            // I expect that global scope should contribute to the mangled name to avoid
            // confusion with name of declarations in un-name namespaces for example.
@@ -1515,40 +1554,32 @@ declarationHasTranslationUnitScope (const SgDeclarationStatement* decl)
      return false;
    }
 
-string
-mangleTranslationUnitQualifiers (const SgDeclarationStatement* decl)
-   {
-  // DQ (4/30/2012): I think there is a problem with this code.  Declarations can be the same even when they 
-  // appear in different files or in different locations in the same file (or translation unit) and the inclusion 
-  // of this information in the mangled name will prevent them from beeing seen as the same.  I am not sure
-  // why this code is required and so we need to discuss this point.  
-  // Additionally, when the file_id() is a negative number (e.g. for compiler generated code) then the name
-  // mangling also fails the test (for mangled names to be useable as identifiers) since "-" appears in the name.
+std::string mangleTranslationUnitQualifiers (const SgDeclarationStatement * decl)  {
+  // Adds file-id prefix to mangled name of *static* declarations to prevent collision between translation units
+  if (declarationHasTranslationUnitScope(decl) == true) {
+    // Uses global (or enclosing) scope as reference because forward declaration can be compiler generated
+    SgLocatedNode * lnode_ref = SageInterface::getGlobalScope(decl);
+    if (lnode_ref == NULL) {
+      lnode_ref = SageInterface::getEnclosingScope(const_cast<SgDeclarationStatement *>(decl));
+    }
+    ROSE_ASSERT(lnode_ref != NULL);
 
-     if (declarationHasTranslationUnitScope(decl) == true)
-        {
-       // TV (04/22/11): I think 'decl' will refer to the same file_id than is enclosing file.
-       //         And as in EDGrose file and global scope are linked after the building of the global scope...
-       // return "_file_id_" + StringUtility::numberToString(SageInterface::getEnclosingFileNode(const_cast<SgDeclarationStatement *>(decl))->get_file_info()->get_file_id()) + "_";
-       // return "_file_id_" + StringUtility::numberToString(decl->get_file_info()->get_file_id()) + "_";
+    // We must find an actual file-id as we want to specify the file where this declaration is static
+    int file_id = lnode_ref->get_file_info()->get_file_id();
+    switch (file_id) {
+      case Sg_File_Info::COPY_FILE_ID:                                 return "_COPY_FILE_ID_";
+      case Sg_File_Info::NULL_FILE_ID:                                 return "_NULL_FILE_ID_";
+      case Sg_File_Info::TRANSFORMATION_FILE_ID:                       return "_TRANSFORMATION_FILE_ID_";
+      case Sg_File_Info::COMPILER_GENERATED_FILE_ID:                   return "_COMPILER_GENERATED_FILE_ID_";
+      case Sg_File_Info::COMPILER_GENERATED_MARKED_FOR_OUTPUT_FILE_ID: return "_COMPILER_GENERATED_MARKED_FOR_OUTPUT_FILE_ID_";
+      case Sg_File_Info::BAD_FILE_ID:                                  return "_BAD_FILE_ID_";
+      default: {
+        ROSE_ASSERT(file_id >= 0);
+        return "_file_id_" + StringUtility::numberToString(file_id) + "_";
+      }
+    }
+  } else {
+    return "";
+  }
+}
 
-       // DQ (4/30/2012): Modified this code, but I would like to better understand why it is required.
-          string returnString = "";
-          int fileIdNumber = decl->get_file_info()->get_file_id();
-          if (fileIdNumber >= 0)
-             {
-               returnString = "_file_id_" + StringUtility::numberToString(fileIdNumber) + "_";
-             }
-            else
-             {
-            // Put "_minus" into the generated name.
-               returnString = "_file_id_minus_" + StringUtility::numberToString(abs(fileIdNumber)) + "_";
-             }
-
-          return returnString;
-        }
-       else
-        {
-          return "";
-        }
-   }

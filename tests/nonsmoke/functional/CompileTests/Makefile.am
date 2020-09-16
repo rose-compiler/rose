@@ -36,11 +36,21 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 if !USING_XTENSA_BACKEND_COMPILER
 # DQ (2/18/2017): We can't use the EDG 4.9 frontend with later versions of compiler because it can't parse a few of the header files from those compilers.
 # LLVM header files are actually a copy of the GNU header files (e.g. LLVM 3.5 uses GNU 4.9 headers).
-SUBDIRS += C_tests Cxx_tests C_subset_of_Cxx_tests C99_tests C11_tests Cxx11_tests Cxx14_tests UPC_tests MicrosoftWindows_C_tests MicrosoftWindows_Cxx_tests
+SUBDIRS += C_tests Cxx_tests C_subset_of_Cxx_tests C99_tests C11_tests Cxx03_tests Cxx11_tests Cxx14_tests UPC_tests MicrosoftWindows_C_tests MicrosoftWindows_Cxx_tests
 
 # DQ (1/1/2019): Only EDG 5.0 is has sufficent support for C++17 (I think).
 if ROSE_USE_EDG_VERSION_5_0
 SUBDIRS += Cxx17_tests
+if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
+if ROSE_USING_GCC_VERSION_LATER_6_1
+SUBDIRS += unparse_template_from_ast
+endif
+endif
+endif
+
+# DQ (7/20/2020): Only EDG 6.0 is has sufficent support for C++20 (I think).
+if ROSE_USE_EDG_VERSION_6_0
+SUBDIRS += Cxx20_tests
 if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
 if ROSE_USING_GCC_VERSION_LATER_6_1
 SUBDIRS += unparse_template_from_ast
@@ -117,7 +127,10 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 # Need to work work with Markus to understand the results better, skip these tests for now is using
 # Address Sanitizer.
 if !ROSE_USE_SANITIZER
+# DQ (7/2/2020): GNU 6.1 and later will fail for these tests.
+if !ROSE_USING_GCC_VERSION_LATER_6_1
    SUBDIRS += STL_tests
+endif
 endif
 
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can

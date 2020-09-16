@@ -1,0 +1,16 @@
+START
+
+REF PROC boo (:hoo) U;
+  BEGIN
+    ITEM hoo U;
+  END
+
+PROGRAM main ;
+BEGIN
+  ITEM anyhoo U ;
+  ITEM cry U ;
+
+  cry = boo(:anyhoo);
+END
+
+TERM

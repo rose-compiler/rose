@@ -19,7 +19,7 @@ using namespace CodeThorn;
 CodeThorn::RDPropertyStateFactory::RDPropertyStateFactory() {
 }
 
-CodeThorn::PropertyState* CodeThorn::RDPropertyStateFactory::create() {
+CodeThorn::RDLattice* CodeThorn::RDPropertyStateFactory::create() {
   RDLattice* element=new RDLattice();
   return element;
 }
@@ -35,6 +35,10 @@ CodeThorn::RDAnalysis::RDAnalysis() {
 CodeThorn::RDAnalysis::~RDAnalysis() {
   delete _transferFunctions;
   delete _transferFunctions->getInitialElementFactory();
+}
+
+void CodeThorn::RDAnalysis::initialize(SgProject* root) {
+  DFAnalysisBase::initialize(root, nullptr /* no existing abstraction layer */);
 }
 
 void CodeThorn::RDAnalysis::initializeExtremalValue(Lattice* element) {

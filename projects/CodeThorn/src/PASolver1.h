@@ -8,12 +8,13 @@
 #include "Lattice.h"
 #include "PropertyState.h"
 #include "DFTransferFunctions.h"
+#include "DFAbstractSolver.h"
 
 #include <vector>
 
 namespace CodeThorn {
 
-class PASolver1 {
+class PASolver1 : public DFAbstractSolver {
  public:
   PASolver1(WorkListSeq<Edge>& workList,
 	   std::vector<Lattice*>& analyzerDataPreInfo,
@@ -22,8 +23,17 @@ class PASolver1 {
 	   Flow& flow,
 	   DFTransferFunctions& transferFunctions
 	   );
-  virtual void runSolver();
-  void computeCombinedPreInfo(Label lab,Lattice& inInfo);
+  
+  void runSolver() ROSE_OVERRIDE;
+  void computeCombinedPreInfo(Label lab,Lattice& inInfo) ROSE_OVERRIDE;
+  
+  void setLabeler(Labeler& labeler) { l = &labeler; }
+  Labeler getLabeler() 
+  { 
+    ROSE_ASSERT(l);
+    return *l; 
+  }
+  
   void computePostInfo(Label lab,Lattice& inInfo);
 
  protected:
@@ -33,8 +43,9 @@ class PASolver1 {
   PropertyStateFactory& _initialElementFactory;
   Flow& _flow;
   DFTransferFunctions& _transferFunctions;
+  Labeler* l;
  public:
-  void setTrace(bool trace) { _trace=trace; }
+  void setTrace(bool trace) ROSE_OVERRIDE { _trace=trace; }
  private:
   bool _trace;
 };

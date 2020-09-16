@@ -71,7 +71,7 @@ SgAsmX86Instruction::registersForWidth(size_t nbits) {
 
 // see base class
 bool
-SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
+SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
 {
     if (insns.empty())
         return false;
@@ -92,7 +92,7 @@ SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& in
 
 // see base class
 bool
-SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
+SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
 {
     if (isFunctionCallFast(insns, target, return_va))
         return true;
@@ -238,10 +238,10 @@ SgAsmX86Instruction::isUnknown() const
     return x86_unknown_instruction == get_kind();
 }
 
-BinaryAnalysis::Disassembler::AddressSet
-SgAsmX86Instruction::getSuccessors(bool *complete) {
-    BinaryAnalysis::Disassembler::AddressSet retval;
-    *complete = true; /*assume true and prove otherwise*/
+AddressSet
+SgAsmX86Instruction::getSuccessors(bool &complete) {
+    AddressSet retval;
+    complete = true; /*assume true and prove otherwise*/
 
     switch (get_kind()) {
         case x86_call:
@@ -254,7 +254,7 @@ SgAsmX86Instruction::getSuccessors(bool *complete) {
             if (getBranchTarget(&va)) {
                 retval.insert(va);
             } else {
-                *complete = false;
+                complete = false;
             }
             break;
         }
@@ -286,7 +286,7 @@ SgAsmX86Instruction::getSuccessors(bool *complete) {
             if (getBranchTarget(&va)) {
                 retval.insert(va);
             } else {
-                *complete = false;
+                complete = false;
             }
             retval.insert(get_address() + get_size());
             break;
@@ -298,7 +298,7 @@ SgAsmX86Instruction::getSuccessors(bool *complete) {
         case x86_into:
         case x86_syscall: {
             retval.insert(get_address() + get_size());  // probable return point
-            *complete = false;
+            complete = false;
             break;
         }
             
@@ -309,7 +309,7 @@ SgAsmX86Instruction::getSuccessors(bool *complete) {
         case x86_ud2:
         case x86_retf: {
             /* Unconditional branch to run-time specified address */
-            *complete = false;
+            complete = false;
             break;
         }
 
@@ -320,7 +320,7 @@ SgAsmX86Instruction::getSuccessors(bool *complete) {
 
         case x86_unknown_instruction: {
             /* Instructions having unknown successors */
-            *complete = false;
+            complete = false;
             break;
         }
 
@@ -377,8 +377,8 @@ SgAsmX86Instruction::getBranchTarget(rose_addr_t *target) {
     }
 }
 
-BinaryAnalysis::Disassembler::AddressSet
-SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete,
+AddressSet
+SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool &complete,
                                    const MemoryMap::Ptr &initial_memory)
 {
     Stream debug(mlog[DEBUG]);
@@ -389,13 +389,13 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
               <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<"\n";
     }
 
-    BinaryAnalysis::Disassembler::AddressSet successors = SgAsmInstruction::getSuccessors(insns, complete);
+    AddressSet successors = SgAsmInstruction::getSuccessors(insns, complete/*out*/);
 
     /* If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then
      * we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
      * successors, a thorough analysis might be able to narrow it down to a single successor. We should not make special
      * assumptions about CALL and FARCALL instructions -- their only successor is the specified address operand. */
-    if (!*complete || successors.size()>1) {
+    if (!complete || successors.size()>1) {
         const RegisterDictionary *regdict;
         if (SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(this)) {
             regdict = RegisterDictionary::dictionary_for_isa(interp);
@@ -428,7 +428,7 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
             if (ip->is_number()) {
                 successors.clear();
                 successors.insert(ip->get_number());
-                *complete = true;
+                complete = true;
             }
         } catch(const BaseSemantics::Exception &e) {
             /* Abandon entire basic block if we hit an instruction that's not implemented. */
@@ -438,9 +438,9 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
 
     if (debug) {
         debug <<"  successors:";
-        BOOST_FOREACH (rose_addr_t va, successors)
+        BOOST_FOREACH (rose_addr_t va, successors.values())
             debug <<" " <<StringUtility::addrToString(va);
-        debug <<(*complete?"":"...") <<"\n";
+        debug <<(complete?"":"...") <<"\n";
     }
 
     return successors;

@@ -3,6 +3,7 @@ class A {
 public:
   int m() {
     this->x=this->x+1;
+    return this->x;
   }
 };
 

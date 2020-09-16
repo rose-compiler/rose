@@ -68,6 +68,9 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (BaseClassModifier      ,"BaseClassModifier"      , "BaseClassModifierTag" );
      NEW_TERMINAL_MACRO (DeclarationModifier    ,"DeclarationModifier"    , "DeclarationModifierTag" );
 
+  // Rasmussen (4/4/2020): Added SgStructureModifier for Jovial tables
+     NEW_TERMINAL_MACRO (StructureModifier      ,"StructureModifier"      , "StructureModifierTag" );
+
   // TV (05/03/2010): OpenCL Access Mode Support
      NEW_TERMINAL_MACRO (OpenclAccessModeModifier, "OpenclAccessModeModifier", "OPENCL_ACCESS_MODE" );
 
@@ -82,9 +85,8 @@ Grammar::setUpSupport ()
           ModifierNodes           | ConstVolatileModifier  | StorageModifier    |
           AccessModifier          | FunctionModifier       | UPC_AccessModifier |
           SpecialFunctionModifier | ElaboratedTypeModifier | LinkageModifier    |
-          BaseClassModifier       | TypeModifier           | DeclarationModifier|
-          OpenclAccessModeModifier, "Modifier", "ModifierTag", false);
-
+          BaseClassModifier       | StructureModifier      | TypeModifier       |
+          DeclarationModifier     | OpenclAccessModeModifier, "Modifier", "ModifierTag", false);
      
      NEW_TERMINAL_MACRO (AdaRangeConstraint, "AdaRangeConstraint", "AdaRangeConstraintTag");
           
@@ -399,6 +401,9 @@ Grammar::setUpSupport ()
      ElaboratedTypeModifier.setFunctionPrototype  ( "HEADER_ELABORATED_TYPE_MODIFIER" , "../Grammar/Support.code");
      LinkageModifier.setFunctionPrototype         ( "HEADER_LINKAGE_MODIFIER"         , "../Grammar/Support.code");
      BaseClassModifier.setFunctionPrototype       ( "HEADER_BASECLASS_MODIFIER"       , "../Grammar/Support.code");
+
+  // Rasmussen (4/4/2020): Added SgStructureModifier for Jovial tables
+     StructureModifier.setFunctionPrototype       ( "HEADER_STRUCTURE_MODIFIER"       , "../Grammar/Support.code");
      
      AdaTypeConstraint.setFunctionPrototype       ( "HEADER_ADA_TYPE_CONSTRAINT"      , "../Grammar/Support.code");
      AdaRangeConstraint.setFunctionPrototype      ( "HEADER_ADA_RANGE_CONSTRAINT"     , "../Grammar/Support.code");
@@ -591,6 +596,14 @@ Grammar::setUpSupport ()
   // defining declaration associated with the appropriate file (to be unparsed correctly).
      Unparse_Info.setDataPrototype("SgDeclarationStatement*", "declstatement_associated_with_type", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+     Unparse_Info.setDataPrototype("static bool","extern_C_with_braces","= false",
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/24/2020): debugging Cxx_tests/test2020_44.C need to communicate when to suppress extra parenthesis use around SgFunctionType arguments.
+     Unparse_Info.setDataPrototype("bool","context_for_added_parentheses","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
@@ -865,7 +878,7 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 #endif
   // DQ (11/8/2018): These are added include directories that will be used in the generation of the backend compiler 
-  // command line (after all other include directives have been output). This option supports the unparsing of header 
+  // command line (before all other include directives have been output). This option supports the unparsing of header 
   // files which requires source files to be positioned a locations relative to an application root file position, 
   // and header fils to be included using additional include paths. This is required to handled header files using 
   // "../" prefixes, and different include paths are required depending upon if they are transformed.
@@ -891,6 +904,10 @@ Grammar::setUpSupport ()
      SourceFile.setDataPrototype   ( "bool", "processedToIncludeCppDirectivesAndComments", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // TV: List of node that must be traversed by generateNameQualificationSupport before it is applied to this file
+     SourceFile.setDataPrototype ( "SgNodePtrList" , "extra_nodes_for_namequal_init", "" ,
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      UnknownFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -903,7 +920,7 @@ Grammar::setUpSupport ()
      IncludeFile.setDataPrototype ( "SgName", "filename", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (9/18/2018): Added source file which is initialized when unparsing headers.
+  // DQ (9/18/2018): Added source file which is initialized when unparsing headers (provides simple interface for unparer which take a SgSourceFile).
      IncludeFile.setDataPrototype ( "SgSourceFile*", "source_file", " = NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
@@ -994,6 +1011,10 @@ Grammar::setUpSupport ()
      IncludeFile.setDataPrototype   ( "bool", "isApplicationFile", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/26/2020): Allow us to mark the SgIncludeFile as being the root (associated with the input sourde file).
+     IncludeFile.setDataPrototype   ( "bool", "isRootSourceFile", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (9/18/2018): We can likely eliminate this IR node now that we store the include file tree directly
   // (though this one is computed from the EDG/ROSE translation instead of from the CPP include directives).
   // DQ (9/15/2018): Adding support for report on header file handling (for unparsing).
@@ -1048,6 +1069,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "Java_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (4/16/2020): Jovial_only had been left out of initial Jovial support.
+     File.setDataPrototype         ( "bool", "Jovial_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // X10 support
      File.setDataPrototype         ( "bool", "X10_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1075,11 +1100,6 @@ Grammar::setUpSupport ()
   // DQ (8/25/2017): Added more language support.
   // Ada support
      File.setDataPrototype         ( "bool", "Ada_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (8/25/2017): Added more language support.
-  // Jovial support
-     File.setDataPrototype         ( "bool", "Jovial_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/25/2017): Added more language support.
@@ -2139,6 +2159,10 @@ Grammar::setUpSupport ()
      Project.setDataPrototype ( "bool", "Java_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (4/16/2020): Jovial_only had been left out of initial Jovial support.
+     Project.setDataPrototype ( "bool", "Jovial_only", "= false",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      Project.setDataPrototype ( "bool", "X10_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -2294,6 +2318,24 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("std::list<std::string>", "astfiles_in", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (3/12/2020): Added additional list to support extra paths to support directories where modified header files
+  // are unparsed. This list is added to support extra directories added to support transformed header files.
+  // And additional extraIncludeDirectorySpecifierList is available on the SgSourceFile IR node to support 
+  // header file directories that are source file specific.
+     Project.setDataPrototype("SgStringList","extraIncludeDirectorySpecifierList", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/6/2020): Now that we can support only unparsing modified header files the tests of header file 
+  // unparsing (which don't modifie any headers) are not as useful as before.  So we need a flag to force
+  // setting all header files to be unparsed so that the testing will be more meaningful (and similar to
+  // before the support to only unparse the modified header files).
+  // Project.setDataPrototype("bool","unparseAllHeaderFiles", "= false",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/4/2020): Adding support for unparse headers feature specific diagnostics.
+  // This has been changed to b a static function.
+  // Project.setDataPrototype("int","unparseHeaderFilesDebug", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2303,7 +2345,7 @@ Grammar::setUpSupport ()
      BitAttribute.setDataPrototype ( "unsigned long int"  , "bitflag", "= 0",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (4/6/2004): Depricated ModifierNodes node and new separate TypeModifier and StorageModifier nodes
+  // DQ (4/6/2004): Deprecated ModifierNodes node and new separate TypeModifier and StorageModifier nodes
   // MK: I moved the following data member declarations from ../Grammar/Support.code to this position:
   // ModifierNodes.setDataPrototype("SgModifierTypePtrVector", "nodes", "= NULL",
      ModifierNodes.setDataPrototype("SgModifierTypePtrVector", "nodes", "",
@@ -2385,6 +2427,12 @@ Specifiers that can have only one value (implemented with a protected enum varia
      UPC_AccessModifier.setDataPrototype("long", "layout","= -1",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (4/4/2020): Added SgStructureModifier for Jovial tables
+     StructureModifier.setDataPrototype("SgStructureModifier::jovial_structure_modifier_enum", "modifier","= SgStructureModifier::e_default",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     StructureModifier.setDataPrototype("int", "bits_per_entry","= 0",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      DeclarationModifier.setDataPrototype("SgBitVector", "modifierVector", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DeclarationModifier.setDataPrototype("SgTypeModifier", "typeModifier", ".reset()",
@@ -2412,10 +2460,13 @@ Specifiers that can have only one value (implemented with a protected enum varia
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TypeModifier.setDataPrototype("SgUPC_AccessModifier", "upcModifier", ".reset()",
                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TypeModifier.setDataPrototype("SgStructureModifier", "structureModifier", ".reset()",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TypeModifier.setDataPrototype("SgConstVolatileModifier", "constVolatileModifier", ".reset()",
                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TypeModifier.setDataPrototype("SgElaboratedTypeModifier", "elaboratedTypeModifier", ".reset()",
                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (12/4/2007): GNU extension machine mode.
   // There are a lot of these and type codes can be used to specify them.
      TypeModifier.setDataPrototype("SgTypeModifier::gnu_extension_machine_mode_enum", "gnu_extension_machine_mode", "= SgTypeModifier::e_gnu_extension_machine_mode_unspecified",
@@ -2857,13 +2908,16 @@ Specifiers that can have only one value (implemented with a protected enum varia
      StorageModifier.setFunctionSource         ( "SOURCE_STORAGE_MODIFIER"         , "../Grammar/Support.code");
      AccessModifier.setFunctionSource          ( "SOURCE_ACCESS_MODIFIER"          , "../Grammar/Support.code");
      FunctionModifier.setFunctionSource        ( "SOURCE_FUNCTION_MODIFIER"        , "../Grammar/Support.code");
-     UPC_AccessModifier.setFunctionSource      ( "SOURCE_UPS_ACCESS_MODIFIER"      , "../Grammar/Support.code");
+     UPC_AccessModifier.setFunctionSource      ( "SOURCE_UPC_ACCESS_MODIFIER"      , "../Grammar/Support.code");
      SpecialFunctionModifier.setFunctionSource ( "SOURCE_SPECIAL_FUNCTION_MODIFIER", "../Grammar/Support.code");
      DeclarationModifier.setFunctionSource     ( "SOURCE_DECLARATION_MODIFIER"     , "../Grammar/Support.code");
      TypeModifier.setFunctionSource            ( "SOURCE_TYPE_MODIFIER"            , "../Grammar/Support.code");
      ElaboratedTypeModifier.setFunctionSource  ( "SOURCE_ELABORATED_TYPE_MODIFIER" , "../Grammar/Support.code");
      LinkageModifier.setFunctionSource         ( "SOURCE_LINKAGE_MODIFIER"         , "../Grammar/Support.code");
      BaseClassModifier.setFunctionSource       ( "SOURCE_BASECLASS_MODIFIER"       , "../Grammar/Support.code");
+
+  // Rasmussen (4/4/2020): Added SgStructureModifier for Jovial tables
+     StructureModifier.setFunctionSource       ( "SOURCE_STRUCTURE_MODIFIER"       , "../Grammar/Support.code");
 
   // Place declarations of friend output operators after the BaseClassModifier
   // Modifier.setPostdeclarationString   ("SOURCE_MODIFIER_POSTDECLARATION", "../Grammar/Support.code");

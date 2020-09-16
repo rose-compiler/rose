@@ -1,0 +1,17 @@
+START
+COMPOOL overlayexample;
+
+DEF TABLE t'1 (0:31) W 1;
+BEGIN
+  ITEM i'1 U 16 POS(0,0);
+  ITEM i'2 B 11 POS(5,0);
+END
+
+DEF TABLE t'2 W 3;
+BEGIN    
+  ITEM i'3 U 11 POS(5,0);
+END
+
+OVERLAY t'1 : W 10, t'2;
+
+TERM

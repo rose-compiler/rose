@@ -1419,7 +1419,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2014_108.C \
    test2014_109.C \
    test2014_10.C \
-   test2014_110.C \
    test2014_112.C \
    test2014_114.C \
    test2014_115.C \
@@ -1931,6 +1930,62 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2019_22.C \
    test2019_23.C \
    test2019_24.C \
+   test2020_01.C \
+   test2020_02.C \
+   test2020_03.C \
+   test2020_04.C \
+   test2020_05.C \
+   test2020_06.C \
+   test2020_07.C \
+   test2020_08.C \
+   test2020_09.C \
+   test2020_10.C \
+   test2020_11.C \
+   test2020_12.C \
+   test2020_13.C \
+   test2020_14.C \
+   test2020_15.C \
+   test2020_16.C \
+   test2020_17.C \
+   test2020_18.C \
+   test2020_19.C \
+   test2020_20.C \
+   test2020_21.C \
+   test2020_22.C \
+   test2020_23.C \
+   test2020_24.C \
+   test2020_25.C \
+   test2020_26.C \
+   test2020_27.C \
+   test2020_28.C \
+   test2020_29.C \
+   test2020_30.C \
+   test2020_31.C \
+   test2020_32.C \
+   test2020_33.C \
+   test2020_34.C \
+   test2020_37.C \
+   test2020_38.C \
+   test2020_39.C \
+   test2020_40.C \
+   test2020_41.C \
+   test2020_42.C \
+   test2020_43.C \
+   test2020_44.C \
+   test2020_45.C \
+   test2020_46.C \
+   test2020_47.C \
+   test2020_49.C \
+   test2020_50.C \
+   test2020_51.C \
+   test2020_52.C \
+   test2020_53.C \
+   test2020_54.C \
+   test2020_55.C \
+   test2020_56.C \
+   test2020_57.C \
+   test2020_58.C \
+   test2020_59.C \
    test_CplusplusMacro_Cpp.C \
    test_int_lexemes.C \
    test_int_lexemes_donot_pass.C \
@@ -1938,12 +1993,17 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test_wchars.C \
    X.C
 
+if !USING_CLANG_COMPILER
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2014_110.C
+endif
+
 TESTCODE_CURRENTLY_FAILING = \
    certSignalExample.C \
    c++trick.C \
    lexPhase2003_02.C \
    longFile.C \
-    math.C \
+   math.C \
    restrict_template_parameter.C \
    test2004_25.C \
    test2004_35.C \
@@ -2336,13 +2396,14 @@ TESTCODE_CURRENTLY_FAILING = \
    test2018_28.C \
    test2018_31.C \
    test2019_25.C \
+   test2020_35.C \
+   test2020_36.C \
    test_gnu.C
 
 if ROSE_USING_GCC_VERSION_LATER_4_4
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2017_31.C \
      test2017_32.C \
-     test2017_44.C \
      test2017_46.C \
      test2017_47.C \
      test2016_96.C \
@@ -2369,8 +2430,11 @@ else
 endif
 
 if ROSE_USING_GCC_VERSION_LATER_4_8
+if !USING_CLANG_COMPILER
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-     test2015_126.C \
+     test2015_126.C 
+endif
+  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2015_127.C \
      test2015_129.C 
 else
@@ -2599,17 +2663,25 @@ endif
 TEST_Objects_FoldedConstants = ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS:.C=.foldedConstants-o}
 TEST_Objects_UnfoldedConstants = ${ALL_TESTCODES:.C=.unfoldedConstants-o}
 
+if ROSE_USE_EDG_VERSION_5_0
+# EDG versions 6.0 and later do not require the -rose:unparse_edg_normalized_method_ROSE_1392 
+# option (it appears that template declarations mihgt no longer be normalized).
 method-defn-in-tpldecl-0.C.passed: $(srcdir)/method-defn-in-tpldecl-0.C $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 	@$(RTH_RUN) \
 	    CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) $(srcdir)/$(@:.C.passed=.C) -o method-defn-in-tpldecl-0 -rose:unparse_edg_normalized_method_ROSE_1392; test -e method-defn-in-tpldecl-0" \
 	    TITLE="testTranslator $(notdir $<) [$@]" \
 	    $(top_srcdir)/scripts/test_exit_status $@
+endif
 
+if ROSE_USE_EDG_VERSION_5_0
+# EDG versions 6.0 and later do not require the -rose:unparse_edg_normalized_method_ROSE_1392 
+# option (it appears that template declarations mihgt no longer be normalized).
 method-defn-in-tpldecl-1.C.passed: $(srcdir)/method-defn-in-tpldecl-1.C $(srcdir)/method-defn-in-tpldecl-1.h $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 	@$(RTH_RUN) \
 	    CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) $(srcdir)/$(@:.C.passed=.C) -o method-defn-in-tpldecl-1 -rose:unparse_edg_normalized_method_ROSE_1392; test -e method-defn-in-tpldecl-1" \
 	    TITLE="testTranslator $(notdir $<) [$@]" \
 	    $(top_srcdir)/scripts/test_exit_status $@
+endif
 
 # DQ (9/18/2011): This is testing the option to process the AST to use the constant folded values (contained in the AST).
 $(TEST_Objects_FoldedConstants): ../../testTranslatorFoldedConstants
@@ -2694,11 +2766,21 @@ TEST_TEMPLATE_TRANSLATOR = ../../testTemplates
 # This test translator will work for test2015_32.C - test2015_36.C
 # I will make this in the a better organized set of tests later.
 # DQ (10/12/2015): Note that tests test2015_37.C through test2015_54.C are these tests.
-testTemplateExample: $(TEST_TEMPLATE_TRANSLATOR)
+testTemplateExample: testTemplateExample_1 testTemplateExample_2 testTemplateExample_3 testTemplateExample_4 testTemplateExample_5
+
+testTemplateExample_1: $(TEST_TEMPLATE_TRANSLATOR) 
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_32.C
+
+testTemplateExample_2: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_33.C
+
+testTemplateExample_3: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_34.C
+
+testTemplateExample_4: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_35.C
+
+testTemplateExample_5: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_36.C
 
 
@@ -2826,8 +2908,11 @@ hpctoolkit:
 #	hpcviewer /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc-debug_mode_off/tests/nonsmoke/functional/CompileTests/Cxx_tests/hpctoolkit-lt-testTranslator-database-11205 &
 
 check-local:
-	@$(MAKE) $(PASSING_TEST_Source_passed)
-	@$(MAKE) test_pdf_generation
+#	@$(MAKE) $(PASSING_TEST_Source_passed)
+	@$(MAKE) test_pdf_generation $(PASSING_TEST_Source_passed) \
+          test_unparse_includes_option.passed test_unparse_includes_option_with_link.passed \
+          test_common_configure_test_with_link_part_1.passed test_common_configure_test_with_link_part_2.passed testTemplateExample
+#	@$(MAKE) test_pdf_generation
 #	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed

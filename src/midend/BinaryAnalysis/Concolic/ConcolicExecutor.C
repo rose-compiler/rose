@@ -11,6 +11,7 @@
 #include <TraceSemantics2.h>
 
 #ifdef __linux__
+#include <sys/mman.h>
 #include <sys/syscall.h>
 #endif
 
@@ -29,7 +30,7 @@ namespace Concolic {
 
 void
 InputVariables::Variable::print(std::ostream &out) const {
-    switch (whence) {
+    switch (whence_) {
         case INVALID:
             out <<"nothing";
             break;
@@ -37,10 +38,13 @@ InputVariables::Variable::print(std::ostream &out) const {
             out <<"argc";
             break;
         case PROGRAM_ARGUMENT:
-            out <<"argv[" <<index1 <<"][" <<index2 <<"]";
+            out <<"argv[" <<arrayOfStrings.idx1 <<"][" <<arrayOfStrings.idx2 <<"]";
             break;
         case ENVIRONMENT:
-            out <<"envp[" <<index1 <<"][" <<index2 <<"]";
+            out <<"envp[" <<arrayOfStrings.idx1 <<"][" <<arrayOfStrings.idx2 <<"]";
+            break;
+        case SYSTEM_CALL_RETVAL:
+            out <<"syscall";
             break;
     }
 }
@@ -49,31 +53,21 @@ void
 InputVariables::insertProgramArgumentCount(const SymbolicExpr::Ptr &symbolic) {
     ASSERT_not_null(symbolic);
     ASSERT_require(symbolic->isVariable2());
-    Variable input;
-    input.whence = Variable::PROGRAM_ARGUMENT_COUNT;
-    variables_.insert(*symbolic->variableId(), input);
+    variables_.insert(*symbolic->variableId(), Variable::programArgc());
 }
 
 void
 InputVariables::insertProgramArgument(size_t i, size_t j, const SymbolicExpr::Ptr &symbolic) {
     ASSERT_not_null(symbolic);
     ASSERT_require(symbolic->isVariable2());
-    Variable input;
-    input.whence = Variable::PROGRAM_ARGUMENT;
-    input.index1 = i;
-    input.index2 = j;
-    variables_.insert(*symbolic->variableId(), input);
+    variables_.insert(*symbolic->variableId(), Variable::programArgument(i, j));
 }
 
 void
 InputVariables::insertEnvironmentVariable(size_t i, size_t j, const SymbolicExpr::Ptr &symbolic) {
     ASSERT_not_null(symbolic);
     ASSERT_require(symbolic->isVariable2());
-    Variable input;
-    input.whence = Variable::ENVIRONMENT;
-    input.index1 = i;
-    input.index2 = j;
-    variables_.insert(*symbolic->variableId(), input);
+    variables_.insert(*symbolic->variableId(), Variable::environmentVariable(i, j));
 }
 
 InputVariables::Variable
@@ -115,7 +109,7 @@ RiscOperators::instance(const Settings &settings, const P2::Partitioner &partiti
     ops->writeRegister(path, ops->boolean_(true));
 
     // Mark program inputs
-    ops->markProgramArguments();
+    ops->markProgramArguments(solver);
 
     return ops;
 }
@@ -146,59 +140,127 @@ RiscOperators::interrupt(int majr, int minr) {
     }
 }
 
-void
-RiscOperators::systemCall() {
-    // Result of an "int 0x80" system call instruction
-    const RegisterDictionary *regdict = currentState()->registerState()->get_register_dictionary();
-#ifdef __linux__
-    if (32 == partitioner_.instructionProvider().instructionPointerRegister().nBits()) {
-        // 32-bit Linux
-        const RegisterDescriptor REG_AX = *regdict->lookup("rax");
-        IS::BaseSemantics::SValuePtr ax = peekRegister(REG_AX, undefined_(REG_AX.nBits()));
-        if (ax->is_number()) {
-            if (1 == ax->get_number() || 252 == ax->get_number()) {
-                const RegisterDescriptor REG_BX = *regdict->lookup("ebx");
-                SValuePtr arg1 = SValue::promote(peekRegister(REG_BX, undefined_(REG_BX.nBits())));
-                if (arg1->is_number()) {
-                    int exitValue = arg1->get_number();
-                    mlog[ERROR] <<"specimen exiting with " <<exitValue <<"\n"; // FIXME[Robb Matzke 2019-12-18]
-                    throw Exit(arg1);
-                } else {
-                    mlog[ERROR] <<"specimen exiting with unknown value\n"; // FIXME[Robb Matzke 2019-12-18]
-                    throw Exit(arg1);
-                }
-            } else {
-                mlog[ERROR] <<"unhandled system call number " <<ax->get_number() <<"\n";
+IS::BaseSemantics::SValuePtr
+RiscOperators::systemCallNumber() {
+    // FIXME[Robb Matzke 2020-08-28]: Assumes x86
+    if (32 == partitioner_.instructionProvider().wordSize()) {
+        const RegisterDescriptor AX = partitioner_.instructionProvider().registerDictionary()->findOrThrow("eax");
+        return readRegister(AX);
+    } else {
+        ASSERT_require(64 == partitioner_.instructionProvider().wordSize());
+        const RegisterDescriptor AX = partitioner_.instructionProvider().registerDictionary()->findOrThrow("rax");
+        return readRegister(AX);
+    }
+}
+
+IS::BaseSemantics::SValuePtr
+RiscOperators::systemCallArgument(size_t idx) {
+    // FIXME[Robb Matzke 2020-08-28]: assuming x86
+    if (partitioner_.instructionProvider().wordSize() == 32) {
+        ASSERT_require(idx < 6);
+        switch (idx) {
+            case 0: {
+                const RegisterDescriptor r = partitioner_.instructionProvider().registerDictionary()->findOrThrow("ebx");
+                return readRegister(r);
             }
-        } else {
-            mlog[ERROR] <<"unknown symbolic system call " <<*ax <<"\n";
+            case 1: {
+                const RegisterDescriptor r = partitioner_.instructionProvider().registerDictionary()->findOrThrow("ecx");
+                return readRegister(r);
+            }
+            case 2: {
+                const RegisterDescriptor r = partitioner_.instructionProvider().registerDictionary()->findOrThrow("edx");
+                return readRegister(r);
+            }
+            case 3: {
+                const RegisterDescriptor r = partitioner_.instructionProvider().registerDictionary()->findOrThrow("esi");
+                return readRegister(r);
+            }
+            case 4: {
+                const RegisterDescriptor r = partitioner_.instructionProvider().registerDictionary()->findOrThrow("edi");
+                return readRegister(r);
+            }
+            case 5: {
+                const RegisterDescriptor r = partitioner_.instructionProvider().registerDictionary()->findOrThrow("ebp");
+                return readRegister(r);
+            }
         }
     } else {
-        // 64-bit Linux
-        const RegisterDescriptor REG_AX = *regdict->lookup("rax");
-        IS::BaseSemantics::SValuePtr ax = peekRegister(REG_AX, undefined_(REG_AX.nBits()));
-        if (ax->is_number()) {
-            if (60 == ax->get_number() || 231 == ax->get_number()) {
-                const RegisterDescriptor REG_DI = *regdict->lookup("edi");
-                SValuePtr arg1 = SValue::promote(peekRegister(REG_DI, undefined_(REG_DI.nBits())));
-                if (arg1->is_number()) {
-                    int exitValue = arg1->get_number();
-                    mlog[ERROR] <<"specimen exiting with " <<exitValue <<"\n"; // FIXME[Robb Matzke 2019-12-18]
-                    throw Exit(arg1);
-                } else {
-                    mlog[ERROR] <<"specimen exiting with unknown value\n"; // FIXME[Robb Matzke 2019-12-18]
-                    throw Exit(arg1);
-                }
-            } else {
-                mlog[ERROR] <<"unhandled system call number " <<ax->get_number() <<"\n";
+        ASSERT_require(idx < 6);
+        switch (idx) {
+            case 0: {
+                const RegisterDescriptor r = partitioner_.instructionProvider().registerDictionary()->findOrThrow("rdi");
+                return readRegister(r);
             }
-        } else {
-            mlog[ERROR] <<"unknown symbolic system call " <<*ax <<"\n";
+            case 1: {
+                const RegisterDescriptor r = partitioner_.instructionProvider().registerDictionary()->findOrThrow("rsi");
+                return readRegister(r);
+            }
+            case 2: {
+                const RegisterDescriptor r = partitioner_.instructionProvider().registerDictionary()->findOrThrow("rdx");
+                return readRegister(r);
+            }
+            case 3: {
+                const RegisterDescriptor r = partitioner_.instructionProvider().registerDictionary()->findOrThrow("r10");
+                return readRegister(r);
+            }
+            case 4: {
+                const RegisterDescriptor r = partitioner_.instructionProvider().registerDictionary()->findOrThrow("r8");
+                return readRegister(r);
+            }
+            case 5: {
+                const RegisterDescriptor r = partitioner_.instructionProvider().registerDictionary()->findOrThrow("r9");
+                return readRegister(r);
+            }
         }
     }
-#else
-    mlog[ERROR] <<"unknown system call for architecture\n";
-#endif
+    ASSERT_not_reachable("invalid system call number");
+}
+
+void
+RiscOperators::doExit(const IS::BaseSemantics::SValuePtr &status) {
+    if (status->is_number()) {
+        int exitValue = status->get_number();
+        mlog[INFO] <<"specimen exiting with " <<exitValue <<"\n";
+        throw Exit(SValue::promote(status));
+    } else {
+        mlog[INFO] <<"specimen exiting with unknown value\n";
+        throw Exit(SValue::promote(status));
+    }
+}
+
+void
+RiscOperators::doGetuid() {
+    ASSERT_not_implemented("[Robb Matzke 2020-08-28]");
+}
+
+void
+RiscOperators::systemCall() {
+    ASSERT_always_require2(isSgAsmX86Instruction(currentInstruction()), "ISA not implemented yet");
+    IS::BaseSemantics::SValuePtr scn = systemCallNumber();
+
+    // A few system calls are handled directly.
+    if (scn->is_number()) {
+        if (32 == partitioner_.instructionProvider().wordSize()) {
+            switch (scn->get_number()) {
+                case 1:                                 // exit
+                case 252:                               // exit_group
+                    return doExit(systemCallArgument(0));
+                case 24:                                // getuid
+                    return doGetuid();
+            }
+        } else {
+            ASSERT_require(partitioner_.instructionProvider().wordSize() == 64);
+            switch (scn->get_number()) {
+                case 60:                                // exit
+                case 231:                               // exit_group
+                    return doExit(systemCallArgument(0));
+                case 102:                               // getuid
+                    return doGetuid();
+            }
+        }
+    }
+
+    // FIXME[Robb Matzke 2020-08-28]: all other system calls are just ignored for now
 }
 
 IS::BaseSemantics::SValuePtr
@@ -255,7 +317,9 @@ RiscOperators::peekMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SV
 }
 
 void
-RiscOperators::markProgramArguments() {
+RiscOperators::markProgramArguments(const SmtSolver::Ptr &solver) {
+    ASSERT_not_null(solver);
+
     // For Linux ELF x86 and amd64, the argc and argv values are on the stack, not in registers. Also note that there is
     // no return address on the stack (i.e., the stack pointer is pointing at argc, not a return address). This means all the
     // stack argument offsets are four (or eight) bytes less than usual.
@@ -279,7 +343,9 @@ RiscOperators::markProgramArguments() {
     SValueFormatter fmt;
     fmt.expr_formatter.show_comments = SymbolicExpr::Formatter::CMT_AFTER;
 
+    //---------------------------------------------------------------------------------------------------------------------------
     // argc
+    //---------------------------------------------------------------------------------------------------------------------------
     rose_addr_t argcVa = process_->readRegister(SP).toInteger();
     size_t argc = process_->readMemory(argcVa, wordSizeBytes, ByteOrder::ORDER_LSB).toInteger();
 
@@ -291,7 +357,16 @@ RiscOperators::markProgramArguments() {
     SAWYER_MESG(debug) <<"  argc @" <<StringUtility::addrToString(argcVa) <<" = " <<argc
                        <<"; symbolic = " <<(*symbolicArgc + fmt) <<"\n";
 
+    // The argc value cannot be less than 1 since it always points to at least the program name.
+#if 1 // [Robb Matzke 2020-07-17]: Breaks concolic demo 0
+    SymbolicExpr::Ptr argcConstraint = SymbolicExpr::makeSignedGt(symbolicArgc->get_expression(),
+                                                                  SymbolicExpr::makeInteger(SP.nBits(), 0));
+    solver->insert(argcConstraint);
+#endif
+
+    //---------------------------------------------------------------------------------------------------------------------------
     // argv
+    //---------------------------------------------------------------------------------------------------------------------------
     rose_addr_t argvVa = argcVa + wordSizeBytes;
     SAWYER_MESG(debug) <<"  argv @" <<StringUtility::addrToString(argvVa) <<" = [\n";
     for (size_t i = 0; i < argc; ++i) {
@@ -316,7 +391,9 @@ RiscOperators::markProgramArguments() {
     SAWYER_MESG(debug) <<"    " <<argc <<": @" <<StringUtility::addrToString(argvVa + argc * wordSizeBytes) <<" null\n"
                        <<"  ]\n";
 
+    //---------------------------------------------------------------------------------------------------------------------------
     // envp
+    //---------------------------------------------------------------------------------------------------------------------------
     rose_addr_t envpVa = argvVa + (argc+1) * wordSizeBytes;
     SAWYER_MESG(debug) <<"  envp @" <<StringUtility::addrToString(envpVa) <<" = [\n";
     size_t nEnvVars = 0;                                // number of environment variables, excluding null terminator
@@ -347,7 +424,9 @@ RiscOperators::markProgramArguments() {
     }
     SAWYER_MESG(debug) <<"  ]\n";
 
+    //---------------------------------------------------------------------------------------------------------------------------
     // auxv
+    //---------------------------------------------------------------------------------------------------------------------------
     // Not marking these as inputs because the user that's running the program doesn't have much influence.
     rose_addr_t auxvVa = envpVa + (nEnvVars + 1) * wordSizeBytes;
     SAWYER_MESG(debug) <<"  auxv @" <<StringUtility::addrToString(auxvVa) <<" = [\n";
@@ -390,16 +469,33 @@ Dispatcher::concreteInstructionPointer() const {
 }
 
 void
+Dispatcher::concreteSingleStep() {
+    emulationOperators()->process()->singleStep();
+}
+
+void
 Dispatcher::processInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
 
-    // Symbolic execution
-    Super::processInstruction(insn);
+    // We need to single step the concrete execution regardless of whether the symbolic execution throw an exception, and we
+    // need to make sure the symbolic execution happens before the concrete execution.
+    struct Resources {
+        Dispatcher *self;
+        SgAsmInstruction *insn;
+        Resources(Dispatcher *self, SgAsmInstruction *insn)
+            : self(self), insn(insn) {}
 
-    // Concrete execution
-    Debugger::Ptr process = emulationOperators()->process();
-    process->executionAddress(insn->get_address());
-    process->singleStep();
+        ~Resources() {
+            Debugger::Ptr process = self->emulationOperators()->process();
+            rose_addr_t ip = self->emulationOperators()->overrideNextIp().orElse(insn->get_address());
+            self->emulationOperators()->clearOverrideNextIp();
+            process->executionAddress(ip);
+            process->singleStep();
+        }
+    } r(this, insn);
+
+    // Symbolic execution (happens before the code above)
+    Super::processInstruction(insn);
 }
 
 bool
@@ -422,10 +518,20 @@ ConcolicExecutor::instance() {
 // class method
 std::vector<Sawyer::CommandLine::SwitchGroup>
 ConcolicExecutor::commandLineSwitches(Settings &settings /*in,out*/) {
-    std::vector<Sawyer::CommandLine::SwitchGroup> sgroups;
+    using namespace Sawyer::CommandLine;
+
+    std::vector<SwitchGroup> sgroups;
     sgroups.push_back(P2::Engine::loaderSwitches(settings.loader));
     sgroups.push_back(P2::Engine::disassemblerSwitches(settings.disassembler));
     sgroups.push_back(P2::Engine::partitionerSwitches(settings.partitioner));
+
+    SwitchGroup ce("Concolic executor switches");
+    Rose::CommandLine::insertBooleanSwitch(ce, "show-states", settings.traceState,
+                                           "Show the virtual machine state after each instruction is processed.");
+    Rose::CommandLine::insertBooleanSwitch(ce, "show-semantics", settings.traceSemantics,
+                                           "Show the semantic operations that are performed for each instruction.");
+    sgroups.push_back(ce);
+
     return sgroups;
 }
 
@@ -442,6 +548,7 @@ ConcolicExecutor::partition(const Database::Ptr &db, const Specimen::Ptr &specim
     engine.settings().disassembler = settings_.disassembler;
     engine.settings().partitioner = settings_.partitioner;
 
+    // Build the P2::Partitioner object for the specimen
     P2::Partitioner partitioner;
     if (!db->rbaExists(specimenId)) {
         // Extract the specimen into a temporary file in order to parse it
@@ -465,13 +572,13 @@ ConcolicExecutor::partition(const Database::Ptr &db, const Specimen::Ptr &specim
         db->extractRbaFile(rbaFile.name(), specimenId);
         partitioner = engine.loadPartitioner(rbaFile.name());
     }
-
+    
     return boost::move(partitioner);
 }
 
 Debugger::Ptr
 ConcolicExecutor::makeProcess(const Database::Ptr &db, const TestCase::Ptr &testCase,
-                              Sawyer::FileSystem::TemporaryDirectory &tempDir) {
+                              Sawyer::FileSystem::TemporaryDirectory &tempDir, const P2::Partitioner &partitioner) {
     ASSERT_not_null(db);
     ASSERT_not_null(testCase);
 
@@ -514,18 +621,21 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
 
     // Create the semantics layers. The symbolic semantics uses a Partitioner, and the concrete semantics uses a suborinate
     // process which is created from the specimen.
+    SmtSolver::Ptr solver = SmtSolver::instance("best");
     P2::Partitioner partitioner = partition(db, testCase->specimen());
-    Debugger::Ptr process = makeProcess(db, testCase, tempDir);
+    Debugger::Ptr process = makeProcess(db, testCase, tempDir, partitioner);
     Emulation::RiscOperatorsPtr ops =
         Emulation::RiscOperators::instance(settings_.emulationSettings, partitioner, process, inputVariables_,
-                                           Emulation::SValue::instance(), SmtSolver::Ptr());
+                                           Emulation::SValue::instance(), solver);
 
-#if 0 // [Robb Matzke 2019-12-11]
-    Emulation::DispatcherPtr cpu = Emulation::Dispatcher::instance(ops);
-#else // DEBUGGING
-    IS::BaseSemantics::RiscOperatorsPtr trace = IS::TraceSemantics::RiscOperators::instance(ops);
-    Emulation::DispatcherPtr cpu = Emulation::Dispatcher::instance(trace);
-#endif
+
+    Emulation::DispatcherPtr cpu;
+    if (settings_.traceSemantics) {
+        IS::BaseSemantics::RiscOperatorsPtr trace = IS::TraceSemantics::RiscOperators::instance(ops);
+        cpu = Emulation::Dispatcher::instance(trace);
+    } else {
+        cpu = Emulation::Dispatcher::instance(ops);
+    }
 
     run(db, testCase, cpu);
     testCase->concolicResult(1);
@@ -534,6 +644,75 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
     // FIXME[Robb Matzke 2020-01-16]
     std::vector<TestCase::Ptr> newCases;
     return newCases;
+}
+
+bool
+ConcolicExecutor::updateCallStack(const Emulation::DispatcherPtr &cpu, SgAsmInstruction *insn) {
+    ASSERT_not_null(cpu);
+    ASSERT_not_null(insn);                              // the instruction that was just executed
+
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    bool wasChanged = false;
+
+    Emulation::RiscOperatorsPtr ops = cpu->emulationOperators();
+    const P2::Partitioner &partitioner = ops->partitioner();
+    P2::BasicBlock::Ptr bb = partitioner.basicBlockContainingInstruction(insn->get_address());
+    if (!bb || bb->nInstructions() == 0) {
+        SAWYER_MESG(debug) <<"no basic block at " <<StringUtility::addrToString(insn->get_address()) <<"\n";
+        return wasChanged;                              // we're executing something that ROSE didn't disassemble
+    }
+
+    // Get the current stack pointer.
+    const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
+    if (SP.isEmpty())
+        return wasChanged;                              // no stack pointer for this architecture?!
+    SymbolicExpr::Ptr sp = Emulation::SValue::promote(ops->peekRegister(SP, ops->undefined_(SP.nBits())))->get_expression();
+    Sawyer::Optional<uint64_t> stackVa = sp->toUnsigned();
+    if (!stackVa) {
+        SAWYER_MESG(debug) <<"no concrete SP after function call at " <<StringUtility::addrToString(insn->get_address());
+        return wasChanged;                              // no concrete stack pointer. This should be unusual
+    }
+
+    // If the stack pointer is larger than the saved stack pointer for the most recent function on the stack (assuming
+    // stack-grows-down), then pop that function from the call stack under the assumption that we've returned from that
+    // function.
+    while (!functionCallStack_.empty() && functionCallStack_.back().stackVa < *stackVa) {
+        SAWYER_MESG(debug) <<"assume returned from " <<functionCallStack_.back().printableName <<"\n";
+        functionCallStack_.pop_back();
+        wasChanged = true;
+    }
+
+    // If the last instruction we just executed looks like a function call then push a new record onto our function call stack.
+    if (partitioner.basicBlockIsFunctionCall(bb) && insn->get_address() == bb->instructions().back()->get_address()) {
+        // Get a name for the function we just called, if possible.
+        const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
+        SymbolicExpr::Ptr ip = Emulation::SValue::promote(ops->peekRegister(IP, ops->undefined_(IP.nBits())))->get_expression();
+        Sawyer::Optional<uint64_t> calleeVa = ip->toUnsigned();
+        std::string calleeName;
+        if (calleeVa) {
+            if (P2::Function::Ptr callee = partitioner.functionExists(*calleeVa)) {
+                calleeName = callee->printableName();
+            } else {
+                calleeName = "function " + StringUtility::addrToString(*calleeVa);
+            }
+        } else {
+            SAWYER_MESG(debug) <<"no concrete IP after function call at " <<StringUtility::addrToString(insn->get_address());
+            return wasChanged;
+        }
+
+        // Push this function call onto the stack.
+        SAWYER_MESG(debug) <<"assume call to " <<calleeName <<" at " <<StringUtility::addrToString(insn->get_address()) <<"\n";
+        functionCallStack_.push_back(FunctionCall(calleeName, insn->get_address(), calleeVa.orElse(0), *stackVa));
+        wasChanged = true;
+    }
+
+    return wasChanged;
+}
+
+void
+ConcolicExecutor::printCallStack(std::ostream &out) {
+    for (const FunctionCall &call: functionCallStack_)
+        out <<"  call to " <<call.printableName <<" from " <<StringUtility::addrToString(call.sourceVa) <<"\n";
 }
 
 void
@@ -612,31 +791,65 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
 
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     Sawyer::Message::Stream trace(mlog[TRACE]);
+    Sawyer::Message::Stream where(mlog[WHERE]);
     Sawyer::Message::Stream error(mlog[ERROR]);
 
     Emulation::RiscOperatorsPtr ops = cpu->emulationOperators();
+    SmtSolver::Ptr solver = ops->solver();
     ops->printInputVariables(debug);
     const P2::Partitioner &partitioner = ops->partitioner();
-    SmtSolver::Ptr solver = SmtSolver::instance("best");
 
-    // Process instructions in execution order starting at startVa
+    // Process instructions in execution order
     rose_addr_t executionVa = cpu->concreteInstructionPointer();
     while (!cpu->isTerminated()) {
         SgAsmInstruction *insn = partitioner.instructionProvider()[executionVa];
-        ASSERT_not_null2(insn, StringUtility::addrToString(executionVa) + " is not a valid execution address");
-        SAWYER_MESG_OR(trace, debug) <<"executing " <<partitioner.unparse(insn) <<"\n";
+        if (insn) {
+            SAWYER_MESG_OR(trace, debug) <<"executing " <<partitioner.unparse(insn) <<"\n";
+        } else {
+            // FIXME[Robb Matzke 2020-07-13]: I'm not sure how this ends up happening yet. Perhaps one way is because we don't
+            // handle certain system calls like mmap, brk, etc. In any case, report an error and execute the instruction concretely.
+            SAWYER_MESG(error) <<"executing " <<StringUtility::addrToString(executionVa)
+                               <<": not mapped or not executable\n";
+            cpu->concreteSingleStep();
+            continue;
+        }
+
         try {
             cpu->processInstruction(insn);
+        } catch (const IS::BaseSemantics::Exception &e) {
+            if (error) {
+                error <<e.what() <<", occurred at:\n";
+                printCallStack(error);
+                error <<"  insn " <<partitioner.unparse(insn) <<"\n";
+                error <<"machine state at time of error:\n" <<(*ops->currentState()+"  ");
+            }
+// TEMPORARILY COMMENTED OUT FOR DEBUGGING [Robb Matzke 2020-07-13]. This exception is thrown when we get an address wrong,
+// like for "mov eax, gs:[16]", and the debugger is reporting that the memory cannot be read.  We should probably be using
+// debugger-specific exceptions for this kind of thing.
+//        } catch (std::runtime_error &e) {
+//            if (error) {
+//                error <<e.what() <<", occurred at:\n";
+//                printCallStack(error);
+//                error <<"  insn " <<partitioner.unparse(insn) <<"\n";
+//                error <<"machine state at time of error:\n" <<(*ops->currentState()+"  ");
+//            }
         } catch (const Emulation::Exit &e) {
             SAWYER_MESG_OR(trace, debug) <<"subordinate has exited with status " <<*e.status() <<"\n";
             break;
         }
+
         if (cpu->isTerminated()) {
             SAWYER_MESG_OR(trace, debug) <<"subordinate has terminated\n";
             break;
         }
-        SAWYER_MESG(debug) <<"state after instruction:\n" <<(*ops->currentState()+"  ");
+
+        if (settings_.traceState)
+            SAWYER_MESG(debug) <<"state after instruction:\n" <<(*ops->currentState()+"  ");
         executionVa = cpu->concreteInstructionPointer();
+        if (updateCallStack(cpu, insn) && where) {
+            where <<"function call stack:\n";
+            printCallStack(where);
+        }
         handleBranch(db, testCase, cpu, insn, solver);
     }
 }
@@ -663,7 +876,7 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
         SymbolicExpr::Ptr value = solver->evidenceForName(solverVar);
         ASSERT_not_null(value);
 
-        switch (inputVar.whence) {
+        switch (inputVar.whence()) {
             case InputVariables::Variable::INVALID:
                 error <<"solver variable \"" <<solverVar <<"\" doesn't correspond to any input variable\n";
                 hadError = true;
@@ -699,29 +912,29 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
                     error <<"solver variable \"" <<solverVar <<"\" corresponding to \"" <<inputVar <<"\": "
                           <<"value is not a one-byte integral type\n";
                     hadError = true;
-                } else if (adjustedArgc && inputVar.index1 >= *adjustedArgc) {
+                } else if (adjustedArgc && inputVar.variableIndex() >= *adjustedArgc) {
                     error <<"solver variable \"" <<solverVar <<"\" corresponding to \"" <<inputVar <<"\": "
                           <<"out of range due to prior adjustment of argc to " <<*adjustedArgc <<"\n";
                     hadError = true;
-                } else if (0 == inputVar.index1) {
+                } else if (0 == inputVar.variableIndex()) {
                     // we can't arbitrarily adjust argv[0] (the command name) because there's no way for us
                     // to be able to run test cases concretely at arbitrary locations in the filesystem.
                     error <<"solver variable \"" <<solverVar <<"\" corresponding to \"" <<inputVar <<"\": "
                           <<": adjusting argv[0] is not supported\n";
                     hadError = true;
                 } else {
-                    ASSERT_require(inputVar.index1 > 0);
+                    ASSERT_require(inputVar.variableIndex() > 0);
 
                     // Extend the size of the argv vector and/or the string affected
-                    if (inputVar.index1 >= args.size())
-                        args.resize(inputVar.index1 + 1);
-                    if (inputVar.index2 >= args[inputVar.index1].size())
-                        args[inputVar.index1].resize(inputVar.index2+1);
+                    if (inputVar.variableIndex() >= args.size())
+                        args.resize(inputVar.variableIndex() + 1);
+                    if (inputVar.charIndex() >= args[inputVar.variableIndex()].size())
+                        args[inputVar.variableIndex()].resize(inputVar.charIndex()+1);
 
                     // Modify one character of the argument
                     char ch = *value->toUnsigned();
-                    args[inputVar.index1][inputVar.index2] = ch;
-                    maxArgvAdjusted = std::max(maxArgvAdjusted.orElse(0), inputVar.index1);
+                    args[inputVar.variableIndex()][inputVar.charIndex()] = ch;
+                    maxArgvAdjusted = std::max(maxArgvAdjusted.orElse(0), inputVar.variableIndex());
                     SAWYER_MESG(debug) <<"adjusting \"" <<inputVar <<"\" to '" <<StringUtility::cEscape(ch) <<"'\n";
                 }
                 break;
@@ -730,6 +943,9 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
                 // would be similar to PROGRAM_ARGUMENT. Would also need to add checks for NUL characters like we do below for
                 // argv.
                 ASSERT_not_implemented("[Robb Matzke 2019-12-18]");
+
+            case InputVariables::Variable::SYSTEM_CALL_RETVAL:
+                ASSERT_not_implemented("[Robb Matzke 2020-08-28]");
         }
     }
 
@@ -785,7 +1001,7 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
         }
     }
 }
-                
+
 bool
 ConcolicExecutor::areSimilar(const TestCase::Ptr &a, const TestCase::Ptr &b) const {
     if (a->specimen() != b->specimen())

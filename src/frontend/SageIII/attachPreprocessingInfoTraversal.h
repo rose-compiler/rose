@@ -10,11 +10,11 @@
 // class DI : public SgInheritedAttribute {};
 // class DS : public SgSynthesizedAttribute {};
 
-// DQ (12/12/2008): This is the type use to hold all the CPP directives 
-// and comments for each of many files.
-typedef std::map<int, ROSEAttributesList*> AttributeMapType;
-typedef std::map<int, int> StartingIndexAttributeMapType;
-typedef std::map<int, SgLocatedNode*> previousLocatedNodeInFileType;
+// DQ (4/30/2020): We no long need this in the new simplified support for CPP directivces and comments and unparsing of header files.
+// DQ (12/12/2008): This is the type use to hold all the CPP directives and comments for each of many files.
+// typedef std::map<int, ROSEAttributesList*> AttributeMapType;
+// typedef std::map<int, int> StartingIndexAttributeMapType;
+// typedef std::map<int, SgLocatedNode*> previousLocatedNodeInFileType;
 
 // DQ (11/29/2008): I don't think these are required to be derived from a special class any more!
 // class AttachPreprocessingInfoTreeTraversalInheritedAttrribute  : public AstInheritedAttribute {};
@@ -26,8 +26,8 @@ class AttachPreprocessingInfoTreeTraversalInheritedAttrribute
   // However, for Fortran we also need to gather and insert the linemarker directives into the AST so that
   // we can support an analysis of the AST that will mark where code has been included from for the case of 
   // Fortran using CPP directives (e.g. #include directives).  To support this the mechanism for weaving
-  // the ROSEAttributesList has be be used twice (just for CPP Fortran code) and we need to use this
-  // weaving implementat with two different lists of directives.  But moving the ROSEAttributesList
+  // the ROSEAttributesList has to be used twice (just for CPP Fortran code) and we need to use this
+  // weaving implementation with two different lists of directives.  By moving the ROSEAttributesList
   // into the inherited attribute we can set it differently for the two times we require it to be done.
 
      public:
@@ -89,13 +89,19 @@ class AttachPreprocessingInfoTreeTrav
        //! accumulator attribute
        // SgLocatedNode *previousLocNodePtr;
 
+       // DQ (4/30/2020): We no longer need this in the new simplified support for CPP directivces and comments and unparsing of header files.
        // Store the location in the AST of the previous node associated with each file.
-          previousLocatedNodeInFileType previousLocatedNodeMap;
+       // previousLocatedNodeInFileType previousLocatedNodeMap;
+          SgLocatedNode* previousLocatedNode;
 
+       // DQ (4/30/2020): We no long need this in the new simplified support for CPP directivces and comments and unparsing of header files.
        // DQ (11/30/2008): This is now stored in the inherited attribute (so that it can be set external to the traversal).
        // List of all comments and CPP directives
        // ROSEAttributesList *currentListOfAttributes;
-          AttributeMapType attributeMapForAllFiles;
+       // AttributeMapType attributeMapForAllFiles;
+
+       // DQ (4/30/2020): Adding back the original simile level of support for a single ROSEAttributesList data member.
+          ROSEAttributesList *currentListOfAttributes;
 
        // DQ (12/12/2008): I don't think this is required since it is just the list size!
        // size of list?
@@ -109,7 +115,10 @@ class AttachPreprocessingInfoTreeTrav
        // int currentFileNameId;
          SgSourceFile* sourceFile;
 
-      // DQ (2/28/2019): We need to return the line that is associated with the source file where this can be a ode shared between multiple ASTs.
+      // DQ (6/23/2020): We only want to process located nodes that are associated with this file id.
+         int target_source_file_id;
+
+      // DQ (2/28/2019): We need to return the line that is associated with the source file where this can be a node shared between multiple ASTs.
          int source_file_id;
 
       //! AS(011306) Map of ROSEAttributesLists mapped to filename from Wave
@@ -124,14 +133,18 @@ class AttachPreprocessingInfoTreeTrav
       //! Map of filenames to list of attributes as found by WAVE.  
        //   std::map<std::string,ROSEAttributesList*>* mapOfAttributes; 
 
+       // DQ (4/30/2020): We no long need this in the new simplified support for CPP directivces and comments and unparsing of header files.
       //! AS(092107) Optimization variable to avoid n^2 complexity in 
       //! iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber()         
        // int start_index;
-          StartingIndexAttributeMapType startIndexMap;
+       // StartingIndexAttributeMapType startIndexMap;
 
-      // DQ (12/16/2008): Added support to collect CPP directives and comments from all 
-      // include files (except should specified using exclusion lists via the command line).
-         bool processAllIncludeFiles;
+       // DQ (4/30/2020): Adding back the original simile level of support for a single ROSEAttributesList data member.
+          int start_index;
+
+       // DQ (12/16/2008): Added support to collect CPP directives and comments from all 
+       // include files (except should specified using exclusion lists via the command line).
+          bool processAllIncludeFiles;
 
      public:
        // DQ (9/24/2007): Moved function definition to source file from header file.
@@ -142,10 +155,12 @@ class AttachPreprocessingInfoTreeTrav
 
        // Destructor
           ~AttachPreprocessingInfoTreeTrav();
-          
+
+       // DQ (6/2/2020): Change the API for this function.
        // DQ (9/24/2007): Moved function definition to source file from header file.
        // Constructor
-          AttachPreprocessingInfoTreeTrav( SgSourceFile* file, bool includeDirectivesAndCommentsFromAllFiles );
+       // AttachPreprocessingInfoTreeTrav( SgSourceFile* file, bool includeDirectivesAndCommentsFromAllFiles );
+          AttachPreprocessingInfoTreeTrav( SgSourceFile* file, ROSEAttributesList* listOfAttributes );
 #if 0
           AttachPreprocessingInfoTreeTrav();
 #endif
@@ -167,7 +182,8 @@ class AttachPreprocessingInfoTreeTrav
        // comments and CPP directives across all files.
           void display(const std::string & label) const;
 
-          AttributeMapType & get_attributeMapForAllFiles() { return attributeMapForAllFiles; }
+       // DQ (4/30/2020): We no long need this in the new simplified support for CPP directivces and comments and unparsing of header files.
+       // AttributeMapType & get_attributeMapForAllFiles() { return attributeMapForAllFiles; }
        
        // Access function for elements in the map of attribute lists.
           ROSEAttributesList* getListOfAttributes ( int currentFileNameId );
@@ -178,9 +194,12 @@ class AttachPreprocessingInfoTreeTrav
        // output for debugging.
        // void display_static_data( const std::string & label ) const;
 
+       // DQ (7/4/2020): Make this a static function to support Fortran handling.
        // DQ (11/30/2008): Refactored code to isolate this from the inherited attribute evaluation.
        // static ROSEAttributesList* buildCommentAndCppDirectiveList ( SgFile *currentFilePtr, std::map<std::string,ROSEAttributesList*>* mapOfAttributes, bool use_Wave );
-          ROSEAttributesList* buildCommentAndCppDirectiveList ( bool use_Wave, std::string currentFilename );
+       // ROSEAttributesList* buildCommentAndCppDirectiveList ( bool use_Wave, std::string currentFilename );
+       // static ROSEAttributesList* buildCommentAndCppDirectiveList ( bool use_Wave, std::string currentFilename );
+          static ROSEAttributesList* buildCommentAndCppDirectiveList ( bool use_Wave, SgSourceFile* sourceFile, std::string currentFilename );
    };
 
 #endif

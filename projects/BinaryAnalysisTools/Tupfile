@@ -14,7 +14,6 @@ run $(tool_compile_linkexe) --install -o rose-check-execution-addresses checkExe
 run $(tool_compile_linkexe) --install -o rose-magic-scanner magicScanner.C
 run $(tool_compile_linkexe) --install -o rose-simulate simulate.C
 run $(tool_compile_linkexe) --install -o rose-string-decoder stringDecoder.C
-run $(tool_compile_linkexe) --install -o rose-find-dead-code findDeadCode.C
 run $(tool_compile_linkexe) --install -o rose-symbolic-simplifier symbolicSimplifier.C
 run $(tool_compile_linkexe) --install -o rose-binary-to-source binaryToSource.C
 run $(tool_compile_linkexe) --install -o rose-trace trace.C
@@ -33,7 +32,14 @@ ifneq (@(WITH_DLIB),no)
     run $(tool_compile_linkexe) --install -o rose-find-similar-functions findSimilarFunctions.C
 endif
 
+# Experimental
+run $(tool_compile_linkexe) --install -o rose-pardis pardis.C
 
+########################################################################################################################
+# Debugging
+########################################################################################################################
+
+run $(tool_compile_linkexe) debug-arm-semantics.C
 
 ########################################################################################################################
 # Tests
@@ -65,6 +71,7 @@ run for iname in $(xml2json_INPUT); do \
         output=${basename}.json; \
         answer=./TestAnswers/${basename}.xml.ans; \
         $(test) rose-xml2json -i ${input} -i ${answer} -o "${basename#xml2json-}" -x ${output} --answer=${answer} --filter='jq .' \
+	    --disabled="`jq -V >/dev/null 2>&1 || echo 'jq not installed'`" \
 	    "./rose-xml2json ${input} ${output} && cat ${output}"; \
     done
 

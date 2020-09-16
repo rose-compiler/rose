@@ -576,9 +576,9 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
     }
 
     // The fpstatus_top register must have a concrete value if we'll use the x86 floating-point stack (e.g., st(0))
-    if (const RegisterDescriptor *REG_FPSTATUS_TOP = regdict->lookup("fpstatus_top")) {
-        BaseSemantics::SValuePtr st_top = ops->number_(REG_FPSTATUS_TOP->nBits(), 0);
-        ops->writeRegister(*REG_FPSTATUS_TOP, st_top);
+    if (const RegisterDescriptor REG_FPSTATUS_TOP = regdict->find("fpstatus_top")) {
+        BaseSemantics::SValuePtr st_top = ops->number_(REG_FPSTATUS_TOP.nBits(), 0);
+        ops->writeRegister(REG_FPSTATUS_TOP, st_top);
     }
 
     // Process each instruction regardless of the value of the instruction pointer
@@ -586,7 +586,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
         std::cout <<"Initial state:\n" <<(*ops+formatter) <<"\n";
     BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
         if (perInstructionOutput(settings))
-            std::cout <<insn->toString() <<"\n";
+            std::cout <<partitioner.unparse(insn) <<"\n";
         ++allInsns.insertMaybe(insn->get_mnemonic(), 0);
 
         // See the comments in $ROSE/binaries/samples/x86-64-adaptiveRegs.s for details

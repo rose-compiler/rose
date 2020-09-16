@@ -243,7 +243,7 @@ public:
     template<class CFG, class State>
     class PathAlwaysFeasible {
     public:
-        bool operator()(const CFG&, const typename CFG::Edge&, const State&) {
+        bool operator()(const CFG&, const typename CFG::Edge&, const State&, const State&) {
             return true;
         }
     };
@@ -255,31 +255,34 @@ public:
      *
      *  The template arguments are:
      *
-     *  @li @p CFG is the type for the control flow graph.  It must implement the Sawyer::Container::Graph API and have
-     *      vertex ID numbers of type @c size_t.  The data-flow will follow the edges of this graph, invoking a transfer
-     *      function (see below) at each vertex.  The vertices are usually basic blocks or instructions, although they can be
-     *      anything that the transfer function can understand.  For instance, its possible for a called function to be
-     *      represented by a special vertex that encapsulates the entire effect of the function, either encoded in the vertex
-     *      itself or as a special case in the transfer function.  Although a normal CFG can be used, one often passes either a
-     *      subgraph of the CFG or an entirely different kind of control flow graph. Subgraphs are useful for solving data-flow
-     *      for a single function, and different types are useful for passing additional/different information to the transfer
+     *  @li @p CFG is the type for the control flow graph.  It must implement the Sawyer::Container::Graph API and have vertex
+     *      ID numbers of type @c size_t.  The data-flow will follow the edges of this graph, invoking a transfer function (see
+     *      below) at each vertex.  The vertices are usually basic blocks or instructions, although they can be anything that
+     *      the transfer function can understand.  For instance, its possible for a called function to be represented by a
+     *      special vertex that encapsulates the entire effect of the function, either encoded in the vertex itself or as a
+     *      special case in the transfer function.  Although a normal CFG can be used, one often passes either a subgraph of
+     *      the CFG or an entirely different kind of control flow graph. Subgraphs are useful for solving data-flow for a
+     *      single function, and different types are useful for passing additional/different information to the transfer
      *      function.
      *
-     *  @li @p State is an object that stores (or points to) an analysis state. A state object is attached to each
-     *      vertex of the CFG to represent the data-flow state at that vertex.  The state is logically a map of abstract
-     *      locations (e.g., variables) and their current values.  For example, an instruction semantics @c State object can
-     *      serve as data-flow states.  If the @p State type is a pointer to a state, then since the engine doesn't implement
-     *      any particular ownership paradigm, the @p State type should be some kind of shared-ownership pointer.  See the
-     *      description of the MergeFunction below for more info about the values stored in state object.
+     *  @li @p State is an object that stores (or points to) an analysis state: the values that the data flow is manipulating.
+     *      A state object is attached to each vertex of the CFG to represent the data-flow state at that vertex.  For
+     *      instance, the state might be a map of abstract locations (e.g., variables) and their current values, such as an
+     *      instruction semantics @c State object.  If the @p State type is a pointer to a state, then since the engine doesn't
+     *      implement any particular ownership paradigm, the @p State type should be some kind of shared-ownership pointer so
+     *      that the objects are properly freed.  See the description of the MergeFunction below for more info about the values
+     *      stored in state object.
      *
-     *  @li @p TransferFunction is a functor that is invoked at each CFG vertex to create a new data state from a previous
-     *      data state.  The functor is called with three arguments: a const reference to the control flow graph, the CFG
+     *  @li @p TransferFunction is a functor that is invoked at each CFG vertex to create a new vertex output state from its
+     *      input state. The functor is called with three arguments: a const reference to the control flow graph, the CFG
      *      vertex ID for the vertex being processed, and the incoming state for that vertex.  The call should return a new
-     *      state. For instance, if the CFG vertices contain SgAsmInstruction nodes and the @p State is a pointer to an
-     *      instruction semantics state, then the transfer function would most likely perform these operations: create a new
+     *      outgoing state. For instance, if the CFG vertices contain SgAsmInstruction nodes and the @p State is a pointer to
+     *      an instruction semantics state, then the transfer function would most likely perform these operations: create a new
      *      state by cloning the incoming state, attach the new state to an instruction semantics dispatcher (virtual CPU),
      *      call the dispatcher's @c processInstruction, return the new state.  The transfer functor should also have a @p
-     *      printState method that returns an optional string containing one or more lines.
+     *      toString method that returns an optional string containing one or more lines, which is used for debugging (this
+     *      method often just delegates to a similar method in the state, but that's not always possible, which is why we
+     *      define it here).
      *
      *  @li @p MergeFunction is a functor that takes two @p State objects and merges the second state into the first
      *      state. Therefore, the first argument should be a reference. The MergeFunction returns true if the first state
@@ -288,10 +291,11 @@ public:
      *      lattice has a bottom element that is a descendent of all other vertices.  However, the data-flow engine is designed
      *      to also operate in cases where a fixed point cannot be reached.
      *
-     *  @li @p PathFeasibility is a predicate that returns true if the data-flow should traverse the specified CFG edge.
-     *      It's called with the following arguments: (1) the CFG, which it should accept as a const reference argument
-     *      for efficiency's sake, (2) the edge that should be tested by this predicate, (3) the outgoing state for the
-     *      source end of the edge.
+     *  @li @p PathFeasibility is a predicate that returns true if the data-flow should traverse the specified CFG edge.  It's
+     *      called with the following arguments: (1) the CFG, which it should accept as a const reference argument for
+     *      efficiency's sake; (2) the edge that should be tested by this predicate; (3) the incoming state for the edge, i.e.,
+     *      the outgoing state for the edge's source vertex; and (4) the outgoing state for the edge, i.e., the incoming state
+     *      for the edge's target vertex.
      *
      *  A common configuration for an engine is to use a control-flow graph whose vertices are basic blocks, whose @p State is
      *  a pointer to an @ref InstructionSemantics2::BaseSemantics::State "instruction semantics state", whose @p
@@ -327,7 +331,9 @@ public:
          *  copied. */
         Engine(const CFG &cfg, TransferFunction &xfer, MergeFunction merge = MergeFunction(),
                PathFeasibility isFeasible = PathFeasibility())
-            : cfg_(cfg), xfer_(xfer), merge_(merge), maxIterations_(-1), nIterations_(0), isFeasible_(isFeasible) {}
+            : cfg_(cfg), xfer_(xfer), merge_(merge), maxIterations_(-1), nIterations_(0), isFeasible_(isFeasible) {
+            reset();
+        }
 
         /** Data-flow control flow graph.
          *
@@ -365,7 +371,7 @@ public:
         
         /** Runs one iteration.
          *
-         *  Runs one iteration of data-flow analysis by consuming the first item on the work list.  Returns false if the
+         *  Runs one step of data-flow analysis by consuming the first item on the work list.  Returns false if the
          *  work list is empty (before of after the iteration). */
         bool runOneIteration() {
             using namespace Diagnostics;
@@ -389,13 +395,13 @@ public:
                 State state = incomingState_[cfgVertexId];
                 if (mlog[DEBUG]) {
                     mlog[DEBUG] <<"  incoming state for vertex #" <<cfgVertexId <<":\n"
-                                <<StringUtility::prefixLines(xfer_.printState(state), "    ") <<"\n";
+                                <<StringUtility::prefixLines(xfer_.toString(state), "    ") <<"\n";
                 }
 
                 state = outgoingState_[cfgVertexId] = xfer_(cfg_, cfgVertexId, state);
                 if (mlog[DEBUG]) {
                     mlog[DEBUG] <<"  outgoing state for vertex #" <<cfgVertexId <<":\n"
-                                <<StringUtility::prefixLines(xfer_.printState(state), "    ") <<"\n";
+                                <<StringUtility::prefixLines(xfer_.toString(state), "    ") <<"\n";
                 }
                 
                 // Outgoing state must be merged into the incoming states for the CFG successors.  Any such incoming state that
@@ -404,13 +410,13 @@ public:
                                          <<StringUtility::plural(vertex->nOutEdges(), "vertices", "vertex") <<"\n";
                 BOOST_FOREACH (const typename CFG::Edge &edge, vertex->outEdges()) {
                     size_t nextVertexId = edge.target()->id();
-                    if (!isFeasible_(cfg_, edge, state)) {
+                    if (!isFeasible_(cfg_, edge, state, incomingState_[nextVertexId])) {
                         SAWYER_MESG(mlog[DEBUG]) <<"    path to vertex #" <<nextVertexId <<" is not feasible, thus skipped\n";
                     } else if (merge_(incomingState_[nextVertexId], state)) {
                         if (mlog[DEBUG]) {
                             mlog[DEBUG] <<"    merged with vertex #" <<nextVertexId <<" (which changed as a result)\n";
                             mlog[DEBUG] <<"    merge state is: "
-                                        <<StringUtility::prefixLines(xfer_.printState(incomingState_[nextVertexId]),
+                                        <<StringUtility::prefixLines(xfer_.toString(incomingState_[nextVertexId]),
                                                                      "      ", false) <<"\n";
                         }
                         workList_.pushBack(nextVertexId);

@@ -43,21 +43,21 @@ void CodeThorn::RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
   * \author Markus Schordan
   * \date 2013.
  */
-CodeThorn::RDLattice::iterator CodeThorn::RDLattice::begin() {
+CodeThorn::RDLattice::iterator CodeThorn::RDLattice::begin() const {
   return rdSet.begin();
 }
 /*!
   * \author Markus Schordan
   * \date 2013.
  */
-CodeThorn::RDLattice::iterator CodeThorn::RDLattice::end() {
+CodeThorn::RDLattice::iterator CodeThorn::RDLattice::end() const {
   return rdSet.end();
 }
 /*!
   * \author Markus Schordan
   * \date 2013.
  */
-size_t CodeThorn::RDLattice::size() {
+size_t CodeThorn::RDLattice::size() const {
   return rdSet.size();
 }
 /*!
@@ -96,7 +96,7 @@ void CodeThorn::RDLattice::removeAllPairsWithVariableId(VariableId var) {
   * \author Markus Schordan
   * \date 2013.
  */
-bool CodeThorn::RDLattice::isBot() {
+bool CodeThorn::RDLattice::isBot() const {
   return _bot;
 }
 /*!
@@ -113,40 +113,42 @@ void CodeThorn::RDLattice::setBot() {
   * \date 2013.
  */
 void CodeThorn::RDLattice::combine(Lattice& b) {
-  RDLattice* other=dynamic_cast<RDLattice*>(&b);
-  ROSE_ASSERT(other);
   if(b.isBot()) {
     return;
   }
-  for(CodeThorn::RDLattice::iterator i=other->begin();i!=other->end();++i) {
-    rdSet.insert(*i);
-  }
+  
+  RDLattice& other=dynamic_cast<RDLattice&>(b);
+  //~ for(CodeThorn::RDLattice::iterator i=other.begin();i!=other.end();++i) {
+    //~ rdSet.insert(*i);
+  //~ }
+  
   _bot=false;
+  rdSet.insert(other.begin(), other.end());
 }
 
 /*!
   * \author Markus Schordan
   * \date 2013.
  */
-bool CodeThorn::RDLattice::approximatedBy(Lattice& b0) {
-  RDLattice& b=dynamic_cast<RDLattice&>(b0);
-  if(isBot()&&b.isBot())
-    return true;
+bool CodeThorn::RDLattice::approximatedBy(Lattice& b0) const {
   if(isBot()) {
     return true;
   } else {
-    if(b.isBot()) {
+    if(b0.isBot()) {
       return false;
     }
   }
-  assert(!isBot()&&!b.isBot());
-  if(size()>b.size())
+  assert(!isBot()&&!b0.isBot());
+  RDLattice& other=dynamic_cast<RDLattice&>(b0);
+  if(size()>other.size())
      return false;
-  for(CodeThorn::RDLattice::iterator i=begin();i!=end();++i) {
-    if(!b.exists(*i))
-      return false;
-  }
-  return true;
+     
+  return std::includes(other.begin(), other.end(), begin(), end());   
+  //~ for(CodeThorn::RDLattice::iterator i=begin();i!=end();++i) {
+    //~ if(!other.exists(*i))
+      //~ return false;
+  //~ }
+  //~ return true;
 }
 
 /*!

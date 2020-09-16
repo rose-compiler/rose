@@ -28,9 +28,11 @@ libPartitioner_la_SOURCES =			\
 	ModulesElf.C				\
 	ModulesLinux.C				\
 	ModulesM68k.C				\
+	ModulesMips.C				\
 	ModulesPe.C				\
 	ModulesPowerpc.C			\
 	ModulesX86.C				\
+	ParallelPartitioner.C			\
 	Partitioner.C				\
 	Reference.C				\
 	Semantics.C				\

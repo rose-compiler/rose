@@ -7,6 +7,7 @@
 #include "FunctionCallMapping.h"
 #include "CFAnalysis.h"
 #include "Flow.h"
+#include "VariableIdMappingExtended.h"
 
 class SgProject;
 class ClassHierarchyWrapper;
@@ -20,23 +21,27 @@ namespace CodeThorn {
     virtual void initialize(SgProject* root);
     SgProject* getRoot();
     Labeler* getLabeler();
-    VariableIdMapping* getVariableIdMapping();
+    VariableIdMappingExtended* getVariableIdMapping();
     FunctionIdMapping* getFunctionIdMapping();
     FunctionCallMapping* getFunctionCallMapping();
     FunctionCallMapping2* getFunctionCallMapping2();
     ClassHierarchyWrapper* getClassHierarchy();
-    void setModeArrayElementVariableId(bool val);
-    bool getModeArrayElementVariableId();
+    //    void setModeArrayElementVariableId(bool val);
+    //bool getModeArrayElementVariableId();
     void setNormalizationLevel(unsigned int level);
     unsigned int getNormalizationLevel();
     void setInliningOption(bool flag);
     bool getInliningOption();
     Flow* getFlow(bool backwardflow = false);
-    CFAnalysis* getCFAnalyzer();
+    CFAnalysis* getCFAnalyzer(); 
+    
+    // PP (08/25/20) added to support working with unfolded ICFG
+    void setForwardFlow(const Flow& fwdflow);
+    void setLabeler(Labeler* labeler);
+    void clearCFAnalyzer() { _cfanalyzer = nullptr; }
   private:
-    bool _modeArrayElementVariableId=false;
     Labeler* _labeler=nullptr;
-    VariableIdMapping* _variableIdMapping=nullptr;
+    VariableIdMappingExtended* _variableIdMapping=nullptr;
     FunctionIdMapping* _functionIdMapping=nullptr;
     FunctionCallMapping* _functionCallMapping=nullptr;
     FunctionCallMapping2* _functionCallMapping2=nullptr;

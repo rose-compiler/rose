@@ -14,7 +14,6 @@
 #include <map>
 #include "AstTerm.h"
 
-
 namespace CodeThorn
 {
 
@@ -27,13 +26,53 @@ namespace
     return logger[Sawyer::Message::WARN];
   }
   
-  auto logInfo() -> decltype(logger[Sawyer::Message::WARN])
+  auto logInfo() -> decltype(logger[Sawyer::Message::INFO])
   {
     return logger[Sawyer::Message::INFO];
   }
+  
+  struct Ternary
+  {
+    enum value { unknown, trueval, falseval };
+  };
+  
+  struct IsTemplate : sg::DispatchHandler<Ternary::value>
+  {
+    typedef sg::DispatchHandler<Ternary::value> base;
+    
+    IsTemplate()
+    : base(Ternary::unknown)
+    {}
+    
+    void nope() { res = Ternary::falseval; }
+    void yes()  { res = Ternary::trueval; }
+    
+    void handle(const SgNode&)                              { /* unknown */}
+                                                            
+    void handle(const SgGlobal&)                            { nope(); }
+    void handle(const SgFile&)                              { nope(); }
+    void handle(const SgProject&)                           { nope(); }
+    
+    void handle(const SgTemplateClassDeclaration&)          { yes(); }
+    void handle(const SgTemplateClassDefinition&)           { yes(); }
+    void handle(const SgTemplateFunctionDeclaration&)       { yes(); }
+    void handle(const SgTemplateFunctionDefinition&)        { yes(); }
+    void handle(const SgTemplateMemberFunctionDeclaration&) { yes(); }
+    void handle(const SgTemplateVariableDeclaration&)       { yes(); }
+    
+    // \note this is a using declaration, thus could be outside template
+    void handle(const SgTemplateTypedefDeclaration& n)        
+    { 
+      if (n.get_templateParameters().size())
+        yes();
+      else
+        nope();
+    } 
+  };  
 
+  // \note SgConstructorInitializer should not be handled through CallGraph..
   std::vector<SgFunctionDeclaration*>
-  callTargets(SgExpression* callexp, ClassHierarchyWrapper* classHierarchy)
+  callTargets(SgCallExpression* callexp, ClassHierarchyWrapper* classHierarchy)
   {
     std::vector<SgFunctionDeclaration*> targets;
   
@@ -41,22 +80,23 @@ namespace
     
     CallTargetSet::getPropertiesForExpression(callexp, classHierarchy, targets);
   
-    if (targets.size() == 0)    
-      logWarn() << typeid(*callexp).name() << " - " 
-                << sg::ancestor<SgStatement>(callexp)->unparseToString() 
-                << ": found = " << targets.size() 
-                << std::endl;
-    //~ ROSE_ASSERT(targets.size());
+    //~ if (targets.size() == 0)    
+      //~ logWarn() << typeid(*callexp).name() << " - " 
+                //~ << sg::ancestor<SgStatement>(callexp)->unparseToString() 
+                //~ << ": found = " << targets.size() 
+                //~ << std::endl;
     
+    // no result indicates an error, which is logged in the caller
+    //~ ROSE_ASSERT(targets.size());
     return std::move(targets);
   }
   
-  std::string typeRep(SgPointerDerefExp* funderef)
+  std::string typeRep(SgExpression& targetexp)
   {
-    ROSE_ASSERT(funderef);
-    
-    SgFunctionType* funty = isSgFunctionType( funderef->get_type()->findBaseType() );
-    ROSE_ASSERT( funty );
+    ROSE_ASSERT(targetexp.get_type());
+
+    SgFunctionType* funty = isSgFunctionType( targetexp.get_type()->findBaseType() );
+    ROSE_ASSERT(funty);
     
     return funty->get_mangled().getString();
   }
@@ -77,7 +117,31 @@ bool FunctionCallInfo::isFunctionPointerCall() {
 }
 #endif /* WITHOUT_OLD_FUNCTION_CALL_MAPPING_1 */
 
+void addEntry(FunctionCallTargetSet& targetset, SgFunctionDeclaration* dcl)
+{
+  ROSE_ASSERT(dcl);
+  
+  SgFunctionDeclaration* defdcl = isSgFunctionDeclaration(dcl->get_definingDeclaration());
+  
+  if (!defdcl)
+  {
+    logWarn() << "unable to find definition for " << dcl->get_name()
+              << (dcl->get_definition() ? "*" : "")
+              << std::endl;
+    return;
+  }
+  
+  SgFunctionDefinition* def = defdcl->get_definition();
+  ROSE_ASSERT(def);
+  
+  targetset.insert(FunctionCallTarget(def));
+}
 
+namespace
+{
+  inline
+  float percent(int part, int whole) { return (part*100.0)/whole; }
+}
 
 void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
 {
@@ -95,60 +159,86 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
     }
   }
 
+  int numCalls             = 0;
+  int unresolvedFunptrCall = 0; // could correctly remain unresolved
   for (Label lbl : *labeler)
   {
     if (!labeler->isFunctionCallLabel(lbl))
       continue;
+      
+    SgNode* theNode = labeler->getNode(lbl);
+    
+    //~ Goal: ROSE_ASSERT(!insideTemplatedCode(theNode)); // should not be reachable
 
-    SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(labeler->getNode(lbl));
+    // filtering for templated code is not strictly necessary
+    //   but it avoids misleading logging output 
+    //   and diluted resolution numbers.
+    if (insideTemplatedCode(theNode))
+    {
+      // \todo shall we mark the entry as templated?
+      continue;
+    }
 
-    if (SgPointerDerefExp* callNode = callinfo.functionPointer())
+    ++numCalls;
+    SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(theNode);
+
+    if (SgExpression* targetNode = callinfo.functionPointer())
     {
       // function pointer calls are handled separately in order to  
       //   use the ROSE AST instead of the memory pool.
-      std::string  key = typeRep(callNode);
+      std::string  key = typeRep(*targetNode);
       auto         aa = funDecls.lower_bound(key);
-      auto         zz = funDecls.end();
+      decltype(aa) zz = funDecls.end();
+      bool         added = false;
       map_entry_t& map_entry = mapping[lbl];  
       
       while (aa != zz && aa->first == key)
       {
-        if (SgFunctionDefinition* fdef = aa->second->get_definition())
-        {
-          map_entry.insert(FunctionCallTarget(fdef));
-        }
-        else
-        {
-          // \todo print warning that no definition was available
-        }
+        addEntry(map_entry, aa->second);
 
+        added = true; 
         ++aa;
       }
       
-      ROSE_ASSERT(map_entry.size() > 0);
+      if (added == 0)
+      {
+        mapping.erase(lbl);
+        ++unresolvedFunptrCall;
+        logWarn() << "unresolved pointer call (possibly no function with that type exists): " 
+                  << callinfo.callExpression()->unparseToString()
+                  << std::endl;
+      }
     }
     else if (SgCallExpression* callexpr = callinfo.callExpression())
     {
       // handles explicit function calls (incl. virtual functions)
+      std::vector<SgFunctionDeclaration*> tgts(callTargets(callexpr, classHierarchy));
+      map_entry_t&                        map_entry = mapping[lbl];
       
-      for (SgFunctionDeclaration* fdcl : callTargets(callexpr, classHierarchy))
+      for (SgFunctionDeclaration* fdcl : tgts)
       {
-        // \todo consider adding all defining or if not available first non defining declarations
-        if (SgFunctionDeclaration* defdcl = isSgFunctionDeclaration(fdcl->get_definingDeclaration()))
-        {
-          mapping[lbl].insert(FunctionCallTarget(defdcl->get_definition()));
-        }
+        addEntry(map_entry, fdcl);
+      }
+      
+      if (tgts.size() == 0)
+      {
+        mapping.erase(lbl);
+        logWarn() << "unable to resolve target for calling: " << callexpr->unparseToString() 
+                  << std::endl;
       }
     }
     else if (SgConstructorInitializer* ctorinit = callinfo.ctorInitializer())
     {
-      for (SgFunctionDeclaration* fdcl : callTargets(ctorinit, classHierarchy))
+      // handles constructor calls
+      if (SgFunctionDeclaration* ctor = ctorinit->get_declaration())
       {
-        // \todo consider adding all defining or if not available first non defining declarations
-        if (SgFunctionDeclaration* defdcl = isSgFunctionDeclaration(fdcl->get_definingDeclaration()))
-        {
-          mapping[lbl].insert(FunctionCallTarget(defdcl->get_definition()));
-        }
+        addEntry(mapping[lbl], ctor);
+      }
+      else
+      {
+        // print the parent, b/c ctorinit may produce an empty string
+        logWarn() << "unable to resolve target for initializing: " << ctorinit->get_parent()->unparseToString()
+                  << std::endl;
       }
     }
     else
@@ -156,8 +246,11 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
       // \todo handle implicit (ctor) calls
     }
   }
+  
+  const int resolved = unresolvedFunptrCall + mapping.size();
 
-  logInfo()<<"Resolved "<< mapping.size() <<" function calls."<<std::endl;
+  logInfo() << "Resolved " << mapping.size() << " (" << percent(resolved, numCalls) << "%) function calls."
+            << std::endl;
 }
 
 std::string FunctionCallMapping2::toString()
@@ -200,4 +293,12 @@ FunctionCallTargetSet FunctionCallMapping2::resolveFunctionCall(Label callLabel)
   return FunctionCallTargetSet();
 }
 
+bool insideTemplatedCode(const SgNode* n)
+{
+  Ternary::value res = sg::dispatch(IsTemplate(), n);
+  
+  if (res != Ternary::unknown) return res == Ternary::trueval;
+  
+  return insideTemplatedCode(n->get_parent()); 
+} 
 } // namespace CodeThorn

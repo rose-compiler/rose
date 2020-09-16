@@ -452,7 +452,7 @@ VariableFinder::functionFrameSize(const P2::Partitioner &partitioner, const P2::
         // If this PowerPC function starts with "stwu r1, u32 [r1 - N]" then the frame size is N.
         static RegisterDescriptor REG_R1;
         if (REG_R1.isEmpty())
-            REG_R1 = *partitioner.instructionProvider().registerDictionary()->lookup("r1");
+            REG_R1 = partitioner.instructionProvider().registerDictionary()->findOrThrow("r1");
         SgAsmDirectRegisterExpression *firstRegister = isSgAsmDirectRegisterExpression(firstInsn->operand(0));
         SgAsmMemoryReferenceExpression *secondArg = isSgAsmMemoryReferenceExpression(firstInsn->operand(1));
         SgAsmBinaryAdd *memAddr = secondArg ? isSgAsmBinaryAdd(secondArg->get_address()) : NULL;
@@ -476,10 +476,8 @@ VariableFinder::frameOrStackPointer(const P2::Partitioner &partitioner) {
     if (boost::dynamic_pointer_cast<S2::DispatcherPowerpc>(partitioner.instructionProvider().dispatcher())) {
         // Although r1 is the conventional stack pointer for PowerPC, most memory references are via r31 which is initialized
         // to the same value as r1.
-        const RegisterDescriptor *regptr = partitioner.instructionProvider().registerDictionary()->lookup("r31");
-        ASSERT_not_null(regptr);
-        ASSERT_forbid(regptr->isEmpty());
-        return *regptr;
+        const RegisterDescriptor regptr = partitioner.instructionProvider().registerDictionary()->findOrThrow("r31");
+        return regptr;
     } else {
         RegisterDescriptor reg = partitioner.instructionProvider().stackFrameRegister();
         if (reg.isEmpty())

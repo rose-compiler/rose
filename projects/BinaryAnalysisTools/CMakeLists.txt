@@ -32,10 +32,6 @@ if(enable-binary-analysis)
   target_link_libraries(rose-string-decoder ROSE_DLL ${Boost_LIBRARIES})
   install(TARGETS rose-string-decoder DESTINATION bin)
 
-  add_executable(rose-find-dead-code findDeadCode.C)
-  target_link_libraries(rose-find-dead-code ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS rose-find-dead-code DESTINATION bin)
-
   add_executable(rose-symbolic-simplifier symbolicSimplifier.C)
   target_link_libraries(rose-symbolic-simplifier ROSE_DLL ${Boost_LIBRARIES})
   install(TARGETS rose-symbolic-simplifier DESTINATION bin)

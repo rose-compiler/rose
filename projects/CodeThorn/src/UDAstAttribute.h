@@ -10,7 +10,7 @@
 #include <string>
 
 #include "RDAstAttribute.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 
 namespace CodeThorn {
 typedef std::pair<VariableId,CodeThorn::LabelSet> VariableIdLabelSetPair;

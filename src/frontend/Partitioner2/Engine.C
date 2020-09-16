@@ -7,22 +7,23 @@
 #include <BinaryLoader.h>
 #include <BinarySerialIo.h>
 #include <BinaryVxcoreParser.h>
-#include <CommandLine.h>
-#include <Diagnostics.h>
-#include <DisassemblerM68k.h>
-#include <DisassemblerPowerpc.h>
-#include <DisassemblerX86.h>
-#include <SRecord.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
+#include <CommandLine.h>
+#include <Diagnostics.h>
+#include <DisassemblerM68k.h>
+#include <DisassemblerMips.h>
+#include <DisassemblerPowerpc.h>
+#include <DisassemblerX86.h>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/ModulesLinux.h>
 #include <Partitioner2/ModulesM68k.h>
+#include <Partitioner2/ModulesMips.h>
 #include <Partitioner2/ModulesPe.h>
 #include <Partitioner2/ModulesPowerpc.h>
 #include <Partitioner2/ModulesX86.h>
@@ -34,6 +35,7 @@
 #include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/Stopwatch.h>
+#include <SRecord.h>
 
 #ifdef ROSE_HAVE_LIBYAML
 #include <yaml-cpp/yaml.h>
@@ -318,12 +320,12 @@ Engine::partitionerSwitches(PartitionerSettings &settings) {
            "no effect if the input is a ROSE Binary Analysis (RBA) file, since the partitioner steps in such an input "
            "have already been completed.");
 
-    sg.insert(Switch("start")
-              .argument("addresses", listParser(nonNegativeIntegerParser(settings.startingVas)))
+    sg.insert(Switch("function-at")
+              .argument("addresses", listParser(nonNegativeIntegerParser(settings.functionStartingVas)))
               .whichValue(SAVE_ALL)
               .explosiveLists(true)
               .doc("List of addresses where recursive disassembly should start in addition to addresses discovered by "
-                   "other methods. Each address listed by this switch will be considered the entry point of a function. "
+                   "other methods. A function entry point will be insterted at each address listed by this switch. "
                    "This switch may appear multiple times, each of which may have multiple comma-separated addresses."));
 
     sg.insert(Switch("use-semantics")
@@ -374,9 +376,29 @@ Engine::partitionerSwitches(PartitionerSettings &settings) {
 
     sg.insert(Switch("follow-ghost-edges")
               .intrinsicValue(true, settings.followingGhostEdges)
-              .doc("When discovering the instructions for a basic block, treat instructions individually rather than "
-                   "looking for opaque predicates.  The @s{no-follow-ghost-edges} switch turns this off.  The default "
-                   "is " + std::string(settings.followingGhostEdges?"true":"false") + "."));
+              .doc("A \"ghost edge\" is a control flow graph (CFG) edge that would be present if the CFG-building analysis "
+                   "looked only at individual instructions, but would be absent when the analysis looks at coarser units "
+                   "of code.  For instance, consider the following x86 assembly code:"
+
+                   "@numbered{mov eax, 0}"              // 1
+                   "@numbered{cmp eax, 0}"              // 2
+                   "@numbered{jne 5}"                   // 3
+                   "@numbered{nop}"                     // 4
+                   "@numbered{hlt}"                     // 5
+
+                   "If the analysis looks only at instruction 3, then it appears to have two CFG successors: instructions "
+                   "4 and 5. But if the analysis looks at the first three instructions collectively it will ascertain that "
+                   "instruction 3 has an opaque predicate, that the only valid CFG successor is instruction 4, and that the "
+                   "edge from 3 to 5 is a \"ghost\". In fact, if there are no other incoming edges to these instructions, "
+                   "then instructions 1 through 4 will form a basic block with the (unconditional) branch in the interior. "
+                   "The ability to look at larger units of code than single instructions is enabled with the @s{use-semantics} "
+                   "switch.\n\n"
+
+                   "This @s{follow-ghost-edges} switch causes the ghost edges to be added back into the CFG as real edges, which "
+                   "might force a basic block to end. For instance, in this example, turning on @s{follow-ghost-edges} will "
+                   "force the first basic block to end with the \"jne\" instruction. The @s{no-follow-ghost-edges} switch turns "
+                   "this feature off. By default, this feature is " +
+                   std::string(settings.followingGhostEdges?"enabled":"disabled") + "."));
     sg.insert(Switch("no-follow-ghost-edges")
               .key("follow-ghost-edges")
               .intrinsicValue(false, settings.followingGhostEdges)
@@ -427,10 +449,14 @@ Engine::partitionerSwitches(PartitionerSettings &settings) {
 
     sg.insert(Switch("find-dead-code")
               .intrinsicValue(true, settings.findingDeadCode)
-              .doc("Use ghost edges (non-followed control flow from branches with opaque predicates) to locate addresses "
-                   "for unreachable code, then recursively discover basic blocks at those addresses and add them to the "
-                   "same function.  The @s{no-find-dead-code} switch turns this off.  The default is " +
-                   std::string(settings.findingDeadCode?"true":"false") + "."));
+              .doc("If ghost edges are being discovered (see @s{follow-ghost-edges} for the definition of \"ghost "
+                   "edge\") and are not being inserted into the global control flow graph (controlled by "
+                   "@s{follow-ghost-edges}) then the target address of the ghost edge might not be used as a code "
+                   "address during the instruction discovery phase. This switch, @s{find-dead-code}, will cause the "
+                   "target addresses of ghost edges to be used to discover more instructions even though the ghost "
+                   "edges don't appear in the control flow graph. The @s{no-find-dead-code} switch turns this off. "
+                   "The default is that this feature is " +
+                   std::string(settings.findingDeadCode?"enabled":"disabled") + "."));
     sg.insert(Switch("no-find-dead-code")
               .key("find-dead-code")
               .intrinsicValue(false, settings.findingDeadCode)
@@ -1535,6 +1561,7 @@ Engine::createGenericPartitioner() {
         p.functionPrologueMatchers().push_back(Modules::MatchThunk::instance(functionMatcherThunks()));
     p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
     p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
+    p.functionPrologueMatchers().push_back(ModulesMips::MatchRetAddiu::instance());
     p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
     p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
     p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
@@ -1574,6 +1601,13 @@ Engine::createTunedPartitioner() {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
+        return boost::move(p);
+    }
+
+    if (dynamic_cast<DisassemblerMips*>(disassembler_)) {
+        checkCreatePartitionerPrerequisites();
+        Partitioner p = createBarePartitioner();
+        p.functionPrologueMatchers().push_back(ModulesMips::MatchRetAddiu::instance());
         return boost::move(p);
     }
 
@@ -1670,7 +1704,7 @@ Engine::runPartitionerInit(Partitioner &partitioner) {
     makeInterruptVectorFunctions(partitioner, settings_.partitioner.interruptVector);
 
     SAWYER_MESG(where) <<"marking user-defined functions\n";
-    makeUserFunctions(partitioner, settings_.partitioner.startingVas);
+    makeUserFunctions(partitioner, settings_.partitioner.functionStartingVas);
 }
 
 void
@@ -1834,7 +1868,7 @@ Engine::savePartitioner(const Partitioner &partitioner, const boost::filesystem:
 Partitioner
 Engine::loadPartitioner(const boost::filesystem::path &name, SerialIo::Format fmt) {
     Sawyer::Message::Stream info(mlog[INFO]);
-    info <<"reading RBA state file";
+    info <<"reading RBA state from " <<name;
     Sawyer::Stopwatch timer;
     SerialInput::Ptr archive = SerialInput::instance();
     archive->format(fmt);
@@ -2143,7 +2177,12 @@ Engine::makeCalledFunctions(Partitioner &partitioner) {
 
 std::vector<Function::Ptr>
 Engine::makeNextPrologueFunction(Partitioner &partitioner, rose_addr_t startVa) {
-    std::vector<Function::Ptr> functions = partitioner.nextFunctionPrologue(startVa);
+    return makeNextPrologueFunction(partitioner, startVa, startVa);
+}
+
+std::vector<Function::Ptr>
+Engine::makeNextPrologueFunction(Partitioner &partitioner, rose_addr_t startVa, rose_addr_t &lastSearchedVa) {
+    std::vector<Function::Ptr> functions = partitioner.nextFunctionPrologue(startVa, lastSearchedVa /*out*/);
     BOOST_FOREACH (const Function::Ptr &function, functions)
         partitioner.attachOrMergeFunction(function);
     return functions;
@@ -2321,16 +2360,20 @@ Engine::discoverFunctions(Partitioner &partitioner) {
 
         // No pending basic blocks, so look for a function prologue. This creates a pending basic block for the function's
         // entry block, so go back and look for more basic blocks again.
-        std::vector<Function::Ptr> newFunctions = makeNextPrologueFunction(partitioner, nextPrologueVa);
-        if (!newFunctions.empty()) {
-            nextPrologueVa = newFunctions[0]->address();   // avoid "+1" because it may overflow
-            continue;
+        if (nextPrologueVa < partitioner.memoryMap()->hull().greatest()) {
+            std::vector<Function::Ptr> newFunctions =
+                makeNextPrologueFunction(partitioner, nextPrologueVa, nextPrologueVa /*out*/);
+            if (nextPrologueVa < partitioner.memoryMap()->hull().greatest())
+                ++nextPrologueVa;
+            if (!newFunctions.empty())
+                continue;
         }
 
         // Scan inter-function code areas to find basic blocks that look reasonable and process them with instruction semantics
         // to find calls to functions that we don't know about yet.
         if (settings_.partitioner.findingInterFunctionCalls) {
-            newFunctions = makeFunctionFromInterFunctionCalls(partitioner, nextInterFunctionCallVa /*in,out*/);
+            std::vector<Function::Ptr> newFunctions =
+                makeFunctionFromInterFunctionCalls(partitioner, nextInterFunctionCallVa /*in,out*/);
             if (!newFunctions.empty())
                 continue;
         }

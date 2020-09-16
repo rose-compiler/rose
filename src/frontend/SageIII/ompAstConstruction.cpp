@@ -1502,8 +1502,9 @@ namespace OmpSupport
         }
     }
     ROSE_ASSERT(result != NULL);
-    //setOneSourcePositionForTransformation(result);
-    // copyStartFileInfo (att->getNode(), result); // No need here since its caller will set file info again
+    setOneSourcePositionForTransformation(result);
+    copyStartFileInfo (att->getNode(), result, att); 
+    copyEndFileInfo (att->getNode(), result, att); 
 //    body->get_startOfConstruct()->display();
 //    body->get_endOfConstruct()->display();
     //set the current parent
@@ -1537,6 +1538,9 @@ namespace OmpSupport
       result->get_variables().push_back(varref);
       varref->set_parent(result);
     }
+    setOneSourcePositionForTransformation(result);
+    copyStartFileInfo (att->getNode(), result, att); 
+    copyEndFileInfo (att->getNode(), result, att);
     return result;
   }
 
@@ -1549,6 +1553,9 @@ namespace OmpSupport
     setOneSourcePositionForTransformation(result);
 
     appendOmpClauses(isSgOmpDeclareSimdStatement(result), att);
+    setOneSourcePositionForTransformation(result);
+    copyStartFileInfo (att->getNode(), result, att); 
+    copyEndFileInfo (att->getNode(), result, att);
     return result;
   }
 
@@ -1572,6 +1579,9 @@ namespace OmpSupport
       varref->set_parent(result);
     }
     result->set_definingDeclaration(result);
+    setOneSourcePositionForTransformation(result);
+    copyStartFileInfo (att->getNode(), result, att); 
+    copyEndFileInfo (att->getNode(), result, att);
     return result;
   }
   //! Build nodes for combined OpenMP directives:
@@ -1643,7 +1653,7 @@ namespace OmpSupport
     copyStartFileInfo (att->getNode(), first_stmt, att);
     copyEndFileInfo (att->getNode(), first_stmt, att);
     second_stmt->set_parent(first_stmt);
-
+    ROSE_ASSERT (second_stmt->get_file_info()->get_line() == first_stmt->get_file_info()->get_line());
     // allocate clauses to them, let the 2nd one have higher priority 
     // if a clause can be allocated to either of them
     vector<omp_construct_enum> clause_vector = att->getClauses();
@@ -1840,7 +1850,9 @@ This is no perfect solution until we handle preprocessing information as structu
        // We now support OpenMP AST construction for both C/C++ and Fortran
        // But we allow Fortran End directives to exist after -rose:openmp:ast_only
        // Otherwise the code unparsed will be illegal Fortran code (No {} blocks in Fortran)
-       if (isFortranEndDirective(getOmpAttribute(decl)->getOmpDirectiveType()))
+       OmpAttribute* ompAttrib = getOmpAttribute(decl);
+       ROSE_ASSERT(ompAttrib != NULL);    
+       if (isFortranEndDirective(ompAttrib->getOmpDirectiveType()))
           continue; 
       ROSE_ASSERT (decl->get_scope() !=NULL);    
       ROSE_ASSERT (decl->get_parent() !=NULL);    
@@ -1880,11 +1892,17 @@ This is no perfect solution until we handle preprocessing information as structu
           case e_barrier:
             {
               omp_stmt = new SgOmpBarrierStatement();
+              setOneSourcePositionForTransformation(omp_stmt);
+              copyStartFileInfo (oa->getNode(), omp_stmt, oa); 
+              copyEndFileInfo (oa->getNode(), omp_stmt, oa);
               break;
             }
           case e_taskwait:
             {
               omp_stmt = new SgOmpTaskwaitStatement();
+              setOneSourcePositionForTransformation(omp_stmt);
+              copyStartFileInfo (oa->getNode(), omp_stmt, oa); 
+              copyEndFileInfo (oa->getNode(), omp_stmt, oa);
               break;
             }
             // with variable list
@@ -1941,10 +1959,6 @@ This is no perfect solution until we handle preprocessing information as structu
                break;
             }
         }
-        setOneSourcePositionForTransformation(omp_stmt);
-        copyStartFileInfo (oa->getNode(), omp_stmt, oa);
-        copyEndFileInfo (oa->getNode(), omp_stmt, oa);
-        //ROSE_ASSERT (omp_stmt->get_file_info()->isTransformation() != true);
         replaceOmpPragmaWithOmpStatement(decl, omp_stmt);
 
       } // end for (OmpAttribute)

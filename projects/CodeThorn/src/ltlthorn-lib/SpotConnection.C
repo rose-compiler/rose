@@ -1,12 +1,15 @@
+
+
 #include "sage3basic.h"
 #include "SpotConnection.h"
+
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #include "CodeThornCommandLineOptions.h"
 
 using namespace CodeThorn;
 using namespace std;
-
-#include "rose_config.h"
-#ifdef HAVE_SPOT
 
 SpotConnection::SpotConnection() {};
 
@@ -60,7 +63,7 @@ void SpotConnection::setModeLTLDriven(bool ltlDriven) {
   modeLTLDriven=ltlDriven;
 }
 void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg, 
-						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers) {
+						LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers) {
   if (stg.size() == 0 && !modeLTLDriven) {
     cout << "STATUS: the transition system used as a model is empty, LTL behavior could not be checked." << endl;
     return;
@@ -68,18 +71,15 @@ void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg,
   if (!stg.isPrecise() && !stg.isComplete()) {
     return;  //neither falsification nor verification works
   } 
-  //prepare the analysis
-  //determine largest input Value, then merge input and output alphabet
-  int maxInputVal = *( std::max_element(inVals.begin(), inVals.end()) );
-  std::set<int> ioValues = inVals;
-  ioValues.insert(outVals.begin(), outVals.end());
+
   //initializing the atomic propositions used based on I/O values
-  spot::ltl::atomic_prop_set* sap = getAtomicProps(ioValues, maxInputVal);
+  spot::ltl::atomic_prop_set* sap = getAtomicProps(ltlRersMapping);
+
   //instantiate a new dictionary for atomic propositions 
   // (will be used by the model tgba as well as by the ltl formula tgbas)
   spot::bdd_dict dict;
   //create a tgba from CodeThorn's STG model
-  SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, inVals, outVals);
+  SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, ltlRersMapping);
   LtlProperty ltlProperty; 
   ltlProperty.ltlString = ltlResults->getFormula(propertyNum);
   ltlProperty.propertyNumber = propertyNum;
@@ -158,7 +158,7 @@ void SpotConnection::checkAndUpdateResults(LtlProperty property, SpotTgba* ct_tg
 }
 
 void SpotConnection::checkLtlProperties(TransitionGraph& stg,
-						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers) {
+                                        LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers) {
   if (stg.size() == 0 && !modeLTLDriven) {
     cout << "STATUS: the transition system used as a model is empty, LTL behavior cannot be checked." << endl;
     return;
@@ -167,17 +167,14 @@ void SpotConnection::checkLtlProperties(TransitionGraph& stg,
     cout << "STATUS: neither falsification nor verification possible (STG is not precise and not complete)." << endl;
     return;  //neither falsification nor verification works
   } else {  //prepare the analysis
-    //determine largest input Value, then merge input and output alphabet
-    int maxInputVal = *( std::max_element(inVals.begin(), inVals.end()) );
-    std::set<int> ioValues = inVals;
-    ioValues.insert(outVals.begin(), outVals.end());
+
     //initializing the atomic propositions used based on I/O values
-    spot::ltl::atomic_prop_set* sap = getAtomicProps(ioValues, maxInputVal);
+    spot::ltl::atomic_prop_set* sap = getAtomicProps(ltlRersMapping);
     //instantiate a new dictionary for atomic propositions 
     // (will be used by the model tgba as well as by the ltl formula tgbas)
     spot::bdd_dict dict;
     //create a tgba from CodeThorn's STG model
-    SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, inVals, outVals);
+    SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, ltlRersMapping);
     std::string* pCounterExample; 
     ROSE_ASSERT(ltlResults);
     std::list<int>* yetToEvaluate = ltlResults->getPropertyNumbers(PROPERTY_VALUE_UNKNOWN);
@@ -385,13 +382,14 @@ spot::ltl::atomic_prop_set* SpotConnection::getAtomicProps(string ltlFormula) {
   return result;
 }
 
-spot::ltl::atomic_prop_set* SpotConnection::getAtomicProps(std::set<int> ioVals, int maxInputVal) {
+spot::ltl::atomic_prop_set* SpotConnection::getAtomicProps(LtlRersMapping ltlRersMapping) {
+  std::set<int> ioVals=ltlRersMapping.getInputOutputValueSet();
   std::string ltl_props = "";
   bool firstEntry = true;
   for (std::set<int>::iterator i = ioVals.begin(); i != ioVals.end(); ++i) {
     if (!firstEntry)
       ltl_props += " & ";
-    ltl_props += int2PropName(*i, maxInputVal);
+    ltl_props += ltlRersMapping.getIOString(*i); // e.g. iA
     firstEntry = false;
   }
   spot::ltl::parse_error_list pel;
@@ -429,10 +427,10 @@ std::list<std::string>* SpotConnection::loadFormulae(istream& input) {
       nextFormula = new LtlProperty();
     } else if (line.size()==0) {
       // empty line found (no spaces, only '\n')
-    } else if (line.size()>0 && line.at(0) == '#' && line.at(1)=='i') {
+    } else if (line.size()>=2 && line.at(0) == '#' && line.at(1)=='i') {
       // found inputs line (must match inputs array content)
       cout<<"LTL PARSER: detected inputs line: "<<line<<endl;
-    } else if (line.size()>0 && line.at(0) == '#' && line.at(1)=='o') {
+    } else if (line.size()>=2 && line.at(0) == '#' && line.at(1)=='o') {
       // found inputs line
       cout<<"LTL PARSER: detected outputs line: "<<line<<endl;
     } else {
@@ -636,21 +634,6 @@ std::string SpotConnection::formatIOChar(std::string prop, bool firstEntry, bool
   return result;
 }
 
-std::string SpotConnection::int2PropName(int ioVal, int maxInputVal)  {
-  std::string result;
-  if (ioVal >maxInputVal && ioVal <= 26) {
-    result = "o";  //an output variable follows (RERS mapping)
-  } else if (ioVal >= 1 && ioVal <= maxInputVal) {
-    result = "i";  //an input variable follows (RERS mapping)
-  } else {
-    cerr << "ERROR: input/output variable not recognized (not rers format)" << endl;
-    assert(0);
-  }
-  char atomicProp = (char) (ioVal + ((int) 'A') - 1);
-  result += boost::lexical_cast<string>(atomicProp);
-  return result;
-}
-
 std::string SpotConnection::spinSyntax(std::string ltlFormula) {
   spot::ltl::parse_error_list pel;
   const spot::ltl::formula* formula = spot::ltl::parse(ltlFormula, pel);
@@ -716,7 +699,7 @@ void SpotConnection::setModeLTLDriven(bool ltlDriven) {
   reportUndefinedFunction();
 }
 void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg, 
-						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers) {
+						LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers) {
   reportUndefinedFunction();
 }
 
@@ -727,7 +710,7 @@ PropertyValue SpotConnection::checkPropertyParPro(string ltlProperty, ParProTran
 }
 
 void SpotConnection::checkLtlProperties(TransitionGraph& stg,
-						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers) {
+						LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers) {
   reportUndefinedFunction();
 }
 
@@ -738,22 +721,6 @@ ParProSpotTgba* SpotConnection::toTgba(ParProTransitionGraph& stg) {
 
 void SpotConnection::checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<string> annotationsOfModeledTransitions) {
   reportUndefinedFunction();
-}
-
-// TODO: move to a more appropriate class (does not utilize SPOT, but handles the RERS input/output encoding)
-std::string SpotConnection::int2PropName(int ioVal, int maxInputVal)  {
-  std::string result;
-  if (ioVal >maxInputVal && ioVal <= 26) {
-    result = "o";  //an output variable follows (RERS mapping)
-  } else if (ioVal >= 1 && ioVal <= maxInputVal) {
-    result = "i";  //an input variable follows (RERS mapping)
-  } else {
-    cerr << "ERROR: input/output variable not recognized (not rers format)" << endl;
-    assert(0);
-  }
-  char atomicProp = (char) (ioVal + ((int) 'A') - 1);
-  result += boost::lexical_cast<string>(atomicProp);
-  return result;
 }
 
 std::string SpotConnection::spinSyntax(std::string ltlFormula) {
@@ -772,4 +739,5 @@ void SpotConnection::reportUndefinedFunction() {
   throw CodeThorn::Exception("Error: Called a function of class SpotConnection even though CodeThorn was compiled without SPOT.");
 }
 
-#endif
+#endif // HAVE_SPOT
+

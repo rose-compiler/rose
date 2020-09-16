@@ -1,28 +1,6 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_H
 #define ROSE_BinaryAnalysis_Concolic_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-
-// When should concolic testing be enabled (ROSE_ENABLE_CONCOLIC_TESTING)
-//
-//   1. If the user specifically asks for it by defining ROSE_ENABLE_CONCOLIC_TESTING then enable it even it it won't
-//      compile. This is mainly for testing; users shouldn't normally explicitly enable concolic testing.
-//
-//   2. Otherwise, concolic testing should be enabled if all the following are satisfied:
-//
-//      a. The compiler is C++11 or later.
-//
-//      b. Either or both of SQLite and PostgreSQL are available.
-//
-#if !defined(ROSE_ENABLE_CONCOLIC_TESTING) && \
-    __cplusplus >= 201103L && \
-    (defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)) && \
-    BOOST_VERSION >= 106400
-#define ROSE_ENABLE_CONCOLIC_TESTING
-#endif
-
-// The concolic testing headers and source files are empty unless concolic tsting is enabled.
-
+#include <featureTests.h>
 #ifdef  ROSE_ENABLE_CONCOLIC_TESTING
 
 // Which database implementation should be used
@@ -168,11 +146,12 @@ public:
     typedef std::vector<uint8_t> BinaryData;
 
 private:
-    mutable SAWYER_THREAD_TRAITS::Mutex mutex_;          // protects the following data members
-    std::string  name_;                                  // name of specimen (e.g., for debugging)
-    BinaryData   content_;                               // content of the binary executable file
-    mutable bool read_only_;                             // safe guards from writing content after it has been shared;
-    bool         empty_;                                 // indicates if this object is empty
+    mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects the following data members
+    std::string name_;                                  // name of specimen (e.g., for debugging)
+    std::string timestamp_;                             // time of creation
+    BinaryData content_;                                // content of the binary executable file
+    mutable bool read_only_;                            // safe guards from writing content after it has been shared;
+    bool empty_;                                        // indicates if this object is empty
 
 private:
     friend class boost::serialization::access;
@@ -238,12 +217,26 @@ public:
      *  non-null database is specified and this specimen exists in that database. */
     std::string printableName(const DatabasePtr &db = DatabasePtr());
 
+    /** Property: Database creation timestamp string.
+     *
+     *  Time stamp string describing when this object was created in the database, initialized the first time the object is
+     *  written to the database. If a value is assigned prior to writing to the database, then the assigned value is used
+     *  instead. The value is typically specified in ISO-8601 format (except a space is used to separate the date and time for
+     *  better readability, as in RFC 3339). This allows dates to be sorted chronologically as strings.
+     *
+     *  Thread safety: This method is thread safe.
+     *
+     * @{ */
+    std::string timestamp() const;
+    void timestamp(const std::string&);
+    /** @} */
+
     /** Property: Specimen content.
      *
      *  This property contains the bytes that compose a specimen. For instance, for an ELF executable, the content is the bytes
      *  that compose the executable file.  This property is read-only, initialized when the @ref Specimen is created.
      *
-     *  Thread safety: This method is thread safe. */
+     *  Thread safety: This method is not thread safe since it returns a reference. */
     const std::vector<uint8_t>& content() const;
 
     // FIXME[Robb Matzke 2019-08-12]: content is read-only, created by constructor. Therefore this member shouldn't be defined,
@@ -271,15 +264,18 @@ public:
 private:
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects the following data members
     std::string name_;                                  // name for debugging
+    std::string timestamp_;                             // time of creation
     std::string executor_;                              // name of execution environment
     Specimen::Ptr specimen_;                            // the thing to run
     std::vector<std::string> args_;                     // command line arguments
-    std::vector<EnvValue>    env_;                      // environment variables
+    std::vector<EnvValue> env_;                         // environment variables
     Sawyer::Optional<size_t> concolicResult_;           // non-empty if concolically tested
     Sawyer::Optional<double> concreteRank_;             // rank after testing
+    bool concreteIsInteresting_;                        // concrete results present and interesting?
 
 protected:
-    TestCase() {}
+    TestCase()
+        : concreteIsInteresting_(false) {}
 
 public:
     /** Allocating default constructor. */
@@ -308,6 +304,20 @@ public:
      *  and the test case name using C-style double-quoted string literal syntax if not empty.  The database ID is shown if a
      *  non-null database is specified and this test case exists in that database. */
     std::string printableName(const DatabasePtr &db = DatabasePtr());
+
+    /** Property: Database creation timestamp string.
+     *
+     *  Time stamp string describing when this object was created in the database, initialized the first time the object is
+     *  written to the database. If a value is assigned prior to writing to the database, then the assigned value is used
+     *  instead. The value is typically specified in ISO-8601 format (except a space is used to separate the date and time for
+     *  better readability, as in RFC 3339). This allows dates to be sorted chronologically as strings.
+     *
+     *  Thread safety: This method is thread safe.
+     *
+     * @{ */
+    std::string timestamp() const;
+    void timestamp(const std::string&);
+    /** @} */
 
     /** Property: Specimen.
      *
@@ -353,12 +363,28 @@ public:
 
     /** Property: Sorting rank resulting from concrete test.
      *
+     *  This property is also updated whenever concrete results are attached to this object.
+     *
      * @{ */
     Sawyer::Optional<double> concreteRank() const;
     void concreteRank(Sawyer::Optional<double> val);
     /** @} */
 
-    /** Predicate testing whether this test case has been run concretely. */
+    /** Property: Whether concrete results are interesting.
+     *
+     *  True if concrete results are present and interesting. False if not present or not interesting. Results are generally
+     *  not interesting if they're the same as some other test case.
+     *
+     *  This property is also updated whenever concrete results are attached to this object.
+     *
+     * @{ */
+    bool concreteIsInteresting() const;
+    void concreteIsInteresting(bool);
+    /** @} */
+
+    /** Predicate testing whether this test case has been run concretely.
+     *
+     *  Returns true if the test case has any results. */
     bool hasConcreteTest() const;
 
     /** Property: Name of execution environment.
@@ -416,17 +442,24 @@ public:
     class Result {
     private:
         double rank_;
+        bool isInteresting_;
 
     public:
-        explicit Result(double rank): rank_(rank) {
+        Result()
+            : rank_(0.0), isInteresting_(true) {}
+
+        explicit Result(double rank)
+            : rank_(rank), isInteresting_(true) {
             ASSERT_forbid(rose_isnan(rank));
         }
-
-        Result() {}  // required for serialization
 
         virtual ~Result() {}
 
         double rank() const { return rank_; }
+        void rank(double r) { rank_ = r; }
+
+        bool isInteresting() const { return isInteresting_; }
+        void isInteresting(bool b) { isInteresting_ = b; }
 
     private:
         friend class boost::serialization::access;
@@ -437,19 +470,24 @@ public:
         }
     };
 
+private:
+    DatabasePtr db_;
+
 protected:
     // Allocating constructors should be implemente by the non-abstract subclasses.
-    ConcreteExecutor() {}
+    explicit ConcreteExecutor(const DatabasePtr&);
 
 public:
+    /** Database provided to constructor. */
+    DatabasePtr database() const;
+
     /** Execute one test case synchronously.
      *
      *  Returns the results from running the test concretely. Results are user-defined. The return value is never a null
      *  pointer. */
-    virtual
-    Result*
-    execute(const TestCase::Ptr&) = 0;
+    virtual Result* execute(const TestCase::Ptr&) = 0;
 
+    // FIXME[Robb Matzke 2020-07-14]: This should be in a subclass
     /** \brief
      *  Sets an execution monitor for a test run. The execution monitor
      *  observes a test and computes a quality score that can be used to
@@ -477,6 +515,7 @@ public:
       execmon = executorName;
     }
 
+    // FIXME[Robb Matzke 2020-07-14]: This should be in a subclass
     boost::filesystem::path executionMonitor() const
     {
       return execmon;
@@ -484,7 +523,48 @@ public:
     /** @} */
 
 private:
+    // FIXME[Robb Matzke 2020-07-14]: This should be in a subclass
     boost::filesystem::path execmon; // the execution monitor
+};
+
+/** Concrete executor to trace a native ELF executable.
+ *
+ *  Ranks executables by the size of the set of addresses that were executed. */
+class LinuxTraceExecutor: public ConcreteExecutor {
+public:
+    /** Reference counting pointer to a @ref LinuxTraceExecutor. */
+    using Ptr = Sawyer::SharedPointer<LinuxTraceExecutor>;
+
+    /** Results of the execution. */
+    class Result: public ConcreteExecutor::Result {
+    public:
+        int exitStatus;                                 // as returned by wait
+        AddressSet executedVas;
+
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & boost::serialization::make_nvp("base", boost::serialization::base_object<ConcreteExecutor::Result>(*this));
+            s & BOOST_SERIALIZATION_NVP(executedVas);
+        }
+    };
+
+protected:
+    explicit LinuxTraceExecutor(const DatabasePtr&);
+
+public:
+    /** Allocating constructor. */
+    static Ptr instance(const DatabasePtr&);
+
+    /** Specimen exit status, as returned by wait. */
+    static int exitStatus(const ConcreteExecutor::Result*);
+
+    /** Executed virtual addresses. */
+    const AddressSet& executedVas(const ConcreteExecutor::Result*);
+
+    ConcreteExecutor::Result* execute(const TestCase::Ptr&) override;
 };
 
 /** Concrete executor for Linux ELF executables. */
@@ -558,14 +638,11 @@ protected:
     bool useAddressRandomization_;                      // enable/disable address space randomization in the OS
 
 protected:
-    LinuxExecutor()
-        : useAddressRandomization_(false) {}
+    explicit LinuxExecutor(const DatabasePtr&);
 
 public:
     /** Allocating constructor. */
-    static Ptr instance() {
-        return Ptr(new LinuxExecutor);
-    }
+    static Ptr instance(const DatabasePtr&);
 
     /** Property: Address space randomization.
      *
@@ -619,6 +696,7 @@ public:
 private:
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects the following data members
     std::string name_;                                  // unique and non-empty within a database
+    std::string timestamp_;                             // time of creation
 
 protected:
     TestSuite() {}
@@ -645,6 +723,20 @@ public:
      *  appropriate, and the test suite name using C-style double-quoted string literal syntax if not empty.  The database ID
      *  is shown if a non-null database is specified and this test suite exists in that database. */
     std::string printableName(const DatabasePtr &db = DatabasePtr());
+
+    /** Property: Database creation timestamp string.
+     *
+     *  Time stamp string describing when this object was created in the database, initialized the first time the object is
+     *  written to the database. If a value is assigned prior to writing to the database, then the assigned value is used
+     *  instead. The value is typically specified in ISO-8601 format (except a space is used to separate the date and time for
+     *  better readability, as in RFC 3339). This allows dates to be sorted chronologically as strings.
+     *
+     *  Thread safety: This method is thread safe.
+     *
+     * @{ */
+    std::string timestamp() const;
+    void timestamp(const std::string&);
+    /** @} */
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -701,6 +793,10 @@ public:
         return *this;
     }
 
+    explicit operator bool() const {                    // because it's not explicit in the super class due to C++03 support
+        return isEqual(Sawyer::Nothing()) ? false : true;
+    }
+
     /** external operator to define ordering. */
     template<class _Tag>
     friend
@@ -721,6 +817,29 @@ bool operator<(const ObjectId<Tag>& lhs, const ObjectId<Tag>& rhs)
 typedef ObjectId<TestSuite> TestSuiteId;                /**< Database ID for test suite objects. */
 typedef ObjectId<Specimen>  SpecimenId;                 /**< Database ID for specimen objects. */
 typedef ObjectId<TestCase>  TestCaseId;                 /**< Database ID for test case objects. */
+
+/** Object traits.
+ *
+ *  T is the object type, such as TestSuite. */
+template<class T>
+struct ObjectTraits {
+    using Id = void;
+};
+
+template<>
+struct ObjectTraits<TestSuite> {
+    using Id = TestSuiteId;
+};
+
+template<>
+struct ObjectTraits<Specimen> {
+    using Id = SpecimenId;
+};
+
+template<>
+struct ObjectTraits<TestCase> {
+    using Id = TestCaseId;
+};
 
 /** Database.
  *
@@ -875,8 +994,8 @@ public:
      *  This is a more self-documenting name for calling @ref id for the sole purpose of saving (creating or updating) an
      *  object's database representation. */
     template<class ObjectPointer>
-    void save(const ObjectPointer &obj) {
-        id(obj);
+    typename ObjectTraits<typename ObjectPointer::Pointee>::Id save(const ObjectPointer &obj) {
+        return id(obj);
     }
 
 #if ROSE_CONCOLIC_DB_VERSION == 1
@@ -944,6 +1063,31 @@ public:
      *  Thread safety: Not thread safe. */
     void eraseRba(SpecimenId);
 
+    //------------------------------------------------------------------------------------------------------------------------
+    // Cached concrete execution results. This is large data. Each test case has zero or one associated concrete results.
+    //------------------------------------------------------------------------------------------------------------------------
+
+    /** Check whether a test case has concrete results.
+     *
+     *  Returns true if the indicated test case has concrete results. Each test case can have zero or one set of concrete
+     *  results. */
+    bool concreteResultExists(TestCaseId);
+
+    /** Associate concrete results with a test case.
+     *
+     *  The specified concrete execution results are associated with the specified test case, replacing any previous concrete
+     *  results that might have been present for the test case. If the concrete results are null, then any existing concrete
+     *  results for this test case are removed.
+     *
+     *  The concrete results are copied by this function. The caller continues to own the pointer. */
+    void saveConcreteResult(const TestCase::Ptr&, const ConcreteExecutor::Result*);
+
+    /** Read concrete results from the database.
+     *
+     *  Reads concrete results from the database and returns a pointer to them. If the test case has no concrete results then a
+     *  null pointer is returned. */
+    std::unique_ptr<ConcreteExecutor::Result> readConcreteResult(TestCaseId);
+
     /** Associate TestCase w/ TestSuite.
      *
      *  Normally a test case is associated with a test suite when the test case is created in the database by virtue of the
@@ -966,6 +1110,8 @@ public:
     */
    std::vector<TestCaseId> needConcolicTesting(size_t n = UNLIMITED);
 
+#if 0 // [Robb Matzke 2020-07-15]
+    // Use saveConcreteResults instead, which allows concrete results to also be removed.
    /** Updates a test case and its results.
     *
     * @param testCase a pointer to a test case
@@ -974,6 +1120,7 @@ public:
     * Thread safety: thread safe
     */
    void insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result& details);
+#endif
 
    /** Tests if there are more test cases that require concrete testing.
     *
@@ -1124,8 +1271,9 @@ BOOST_CLASS_EXPORT_KEY2( Rose::BinaryAnalysis::Concolic::ConcreteExecutor::Resul
 BOOST_CLASS_EXPORT_KEY2( Rose::BinaryAnalysis::Concolic::LinuxExecutor::Result,
                          Rose::BinaryAnalysis::Concolic::tagLinuxExecutorResult
                        )
+
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Concolic::LinuxTraceExecutor::Result);
 #endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
-#endif
 #endif
 #endif

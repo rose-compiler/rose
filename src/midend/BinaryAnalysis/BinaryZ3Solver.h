@@ -156,6 +156,7 @@ public:
     virtual void parseEvidence() ROSE_OVERRIDE;
     virtual void pop() ROSE_OVERRIDE;
     virtual void selfTest() ROSE_OVERRIDE;
+    virtual void timeout(boost::chrono::duration<double>) ROSE_OVERRIDE;
 protected:
     virtual void outputBvxorFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;
     virtual void outputComparisonFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;

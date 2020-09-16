@@ -32,6 +32,8 @@
 #include <iostream>
 #include <sstream>
 
+#include <rosePublicConfig.h>
+
 // Serialize, then unserialize
 template<class T>
 static void
@@ -280,7 +282,10 @@ test04() {
 typedef Sawyer::Container::MappedBuffer<size_t, boost::uint8_t> T05;
 
 // Since the derived class is a template, we can't call BOOST_CLASS_EXPORT until we know the template arguments.
+// However, binary analysis support in librose also registers this same class, so we need to avoid an ODR violation here.
+#ifndef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 BOOST_CLASS_EXPORT(T05);
+#endif
 
 static void
 test05() {
@@ -308,7 +313,10 @@ test05() {
 typedef Sawyer::Container::NullBuffer<size_t, boost::uint8_t> T06;
 
 // Since the derived class is a template, we can't call BOOST_CLASS_EXPORT until we know the template arguments.
+// However, binary analysis support in librose also registers this same class, so we need to avoid an ODR violation here.
+#ifndef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 BOOST_CLASS_EXPORT(T06);
+#endif
 
 static void
 test06() {
@@ -355,7 +363,10 @@ test07() {
 typedef Sawyer::Container::AddressSegment<size_t, boost::uint8_t> T08;
 typedef Sawyer::Container::AllocatingBuffer<size_t, boost::uint8_t> T08_buffer;
 
+// Binary analysis support in librose also registers this same class, so we need to avoid an ODR violation here.
+#ifndef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 BOOST_CLASS_EXPORT(T08_buffer);
+#endif
 
 static void
 test08() {

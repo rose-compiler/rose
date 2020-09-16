@@ -3,9 +3,7 @@
 #define ROSE_AST_H
 
 /*************************************************************
- * Copyright: (C) 2012 Markus Schordan                       *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include <stack>
@@ -62,7 +60,7 @@ class RoseAst {
     iterator();
 
     /** Construct an iterator pointing to a particular AST node. */
-    iterator(SgNode* x);
+    iterator(SgNode* x,bool withNullValues, bool withTemplates);
 
     /** Test iterator equality.
      *
@@ -124,6 +122,9 @@ class RoseAst {
     iterator& withNullValues();
     /** @} */
 
+    iterator& withoutTemplates();
+    iterator& withTemplates();
+    
     /** Parent AST node relative to the iteration.
      *
      *  Returns the parent relative to the current iterator position, which might differ from the @c get_parent property of the
@@ -132,19 +133,19 @@ class RoseAst {
 
     /** Test whether iterator is pointing to root node of AST to be traversed.
      *
-     *  Returns true if and only if the current node of this iterator is also the root of the searched subtree. */
+     *  Returns true if and only if the current node of this iterator is also the root of the traversed subtree. */
     bool is_at_root() const;
 
     /**  Test whether iterator is at the first child of its parent.
      *
-     *   Returns true if the current node of this iterator is the first child of the parent node. This is useful when we want to
-     *   print the iterated AST as term (with braces), allowing us to query whether we need to print an opening brace. */
+     *   Returns true if the current node of this iterator is the first child of the parent node. 
+     */
     bool is_at_first_child() const;
 
     /** Test whether iterator as at the last child of its parent.
      *
-     *  Returns true if the current node of this iterator is the last child of the parent node. This is useful when we want to
-     *  print the iterated AST as term (with braces), allowing us to query whether we need to print a closing brace. */
+     *  Returns true if the current node of this iterator is the last child of the parent node. 
+     */
     bool is_at_last_child() const;
 
     // internal
@@ -158,11 +159,12 @@ class RoseAst {
 
     /** Depth of traversal. */
     int stack_size() const;
-
+    
   protected:
     SgNode* _startNode;
     bool _skipChildrenOnForward;
     bool _withNullValues;
+    bool _withTemplates;
 
   private:
     static const int ROOT_NODE_INDEX=-2;
@@ -190,13 +192,25 @@ class RoseAst {
   SgFunctionDefinition* findFunctionByName(std::string name);
   std::list<SgFunctionDeclaration*> findFunctionDeclarationsByName(std::string name);
 
-  // determines based on VariantT whether a ROSE-AST node is a subtype of another node type.
-  static bool isSubType(VariantT DerivedClassVariant, VariantT BaseClassVariant);
+/** determines whether a node is used to represent the root node of a template instantiation */
+  static bool isTemplateInstantiationNode(SgNode* node);
 
+/** determines whether a node is used to represent the root node of a template. */
+  static bool isTemplateNode(SgNode* node);
+
+/** determines based on VariantT whether a ROSE-AST node is a subtype of another node type.*/
+static bool isSubTypeOf(VariantT DerivedClassVariant, VariantT BaseClassVariant);
+/** deprecated, use isSubTypeOf instead */
+static bool isSubType(VariantT DerivedClassVariant, VariantT BaseClassVariant);
+ void setWithNullValues(bool flag);
+ void setWithTemplates(bool flag);
+ 
  protected:
   static SgNode* parent(SgNode* astNode);
  private:
   SgNode* _startNode;
+  bool _withNullValues;
+  bool _withTemplates;
 };
 
 #endif

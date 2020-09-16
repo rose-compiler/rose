@@ -131,7 +131,7 @@ commentEscape(const std::string &s) {
 }
 
 bool
-ExpressionLessp::operator()(const Ptr &a, const Ptr &b) {
+ExpressionLessp::operator()(const Ptr &a, const Ptr &b) const {
     if (a == NULL || b == NULL)
         return a == NULL && b != NULL;
     return a->hash() < b->hash();
@@ -1787,7 +1787,7 @@ OrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 XorSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
     Sawyer::Container::BitVector accumulator((*begin)->isLeafNode()->bits());
-    unsigned flags = 0;
+    unsigned flags = (*begin)->flags();
     for (++begin; begin!=end; ++begin) {
         accumulator.bitwiseXor((*begin)->isLeafNode()->bits());
         flags |= (*begin)->flags();
@@ -1838,40 +1838,24 @@ XorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
 Ptr
 SmulSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
-    // FIXME[Robb P. Matzke 2014-05-05]: Constant folding is not currently possible when the operands are wider than 64 bits
-    // because Sawyer::Container::BitVector does not provide a multiplication method.
-    size_t totalWidth = 0;
-    int64_t product = 1;
-    unsigned flags = 0;
-    for (/*void*/; begin!=end; ++begin) {
-        size_t nbits = (*begin)->nBits();
-        totalWidth += nbits;
-        if (totalWidth > 8*sizeof(product))
-            return Ptr();
-        LeafPtr leaf = (*begin)->isLeafNode();
-        product *= leaf->toSigned().get();
+    unsigned flags = (*begin)->flags();
+    Sawyer::Container::BitVector product = (*begin)->isLeafNode()->bits();
+    for (++begin; begin != end; ++begin) {
+        product = product.multiplySigned((*begin)->isLeafNode()->bits());
         flags |= (*begin)->flags();
     }
-    return makeIntegerConstant(totalWidth, product, "", flags);
+    return makeIntegerConstant(product, "", flags);
 }
 
 Ptr
 UmulSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
-    // FIXME[Robb P. Matzke 2014-05-05]: Constant folding is not currently possible when the operands are wider than 64 bits
-    // because Sawyer::Container::BitVector does not provide a multiplication method.
-    size_t totalWidth = 0;
-    uint64_t product = 1;
-    unsigned flags = 0;
-    for (/*void*/; begin!=end; ++begin) {
-        size_t nbits = (*begin)->nBits();
-        totalWidth += nbits;
-        if (totalWidth > 8*sizeof(product))
-            return Ptr();
-        LeafPtr leaf = (*begin)->isLeafNode();
-        product *= leaf->toUnsigned().get();
+    unsigned flags = (*begin)->flags();
+    Sawyer::Container::BitVector product = (*begin)->isLeafNode()->bits();
+    for (++begin; begin != end; ++begin) {
+        product = product.multiply((*begin)->isLeafNode()->bits());
         flags |= (*begin)->flags();
     }
-    return makeIntegerConstant(totalWidth, product, "", flags);
+    return makeIntegerConstant(product, "", flags);
 }
 
 Ptr
@@ -1992,6 +1976,17 @@ ConvertSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // (convert[X] Y[X]) => Y[X]
     if (inode->type() == inode->child(0)->type())
         return inode->child(0);
+
+    // Converting one integer type to another is the same as unsigned extending/truncating.
+    if (inode->type().typeClass() == Type::INTEGER && inode->child(0)->type().typeClass() == Type::INTEGER) {
+        if (inode->type().nBits() > inode->child(0)->type().nBits()) {
+            return makeExtend(makeIntegerConstant(16, inode->type().nBits()), inode->child(0),
+                              solver, inode->comment(), inode->flags());
+        } else {
+            return makeExtract(makeIntegerConstant(16, 0), makeIntegerConstant(16, inode->type().nBits()), inode->child(0),
+                               solver, inode->comment(), inode->flags());
+        }
+    }
 
     return Ptr();
 }

@@ -53,24 +53,24 @@ enum VertexType {
 
 /** Partitioner control flow edge types. */
 enum EdgeType {
-    E_NORMAL,                                           /**< Normal control flow edge, nothing special. */
-    E_FUNCTION_CALL,                                    /**< Edge is a function call. */
-    E_FUNCTION_RETURN,                                  /**< Edge is a function return. Such edges represent the actual
+    E_NORMAL            = 0x00000001,                   /**< Normal control flow edge, nothing special. */
+    E_FUNCTION_CALL     = 0x00000002,                   /**< Edge is a function call. */
+    E_FUNCTION_RETURN   = 0x00000004,                   /**< Edge is a function return. Such edges represent the actual
                                                          *   return-to-caller and usually originate from a return instruction
                                                          *   (e.g., x86 @c RET, m68k @c RTS, etc.). */
-    E_CALL_RETURN,                                      /**< Edge is a function return from the call site. Such edges are from
+    E_CALL_RETURN       = 0x00000008,                   /**< Edge is a function return from the call site. Such edges are from
                                                          *   a caller basic block to (probably) the fall-through address of the
                                                          *   call and don't actually exist directly in the specimen.  The
                                                          *   represent the fact that the called function eventually returns
                                                          *   even if the instructions for the called function are not available
                                                          *   to analyze. */
-    E_FUNCTION_XFER,                                    /**< Edge is a function call transfer. A function call transfer is
+    E_FUNCTION_XFER     = 0x00000010,                   /**< Edge is a function call transfer. A function call transfer is
                                                          *   similar to @ref E_FUNCTION_CALL except the entire call frame is
                                                          *   transferred to the target function and this function is no longer
                                                          *   considered part of the call stack; a return from the target
                                                          *   function will skip over this function. Function call transfers
                                                          *   most often occur as the edge leaving a thunk. */
-    E_USER_DEFINED,                                     /**< User defined edge.  These edges don't normally appear in the
+    E_USER_DEFINED      = 0x00000020,                   /**< User defined edge.  These edges don't normally appear in the
                                                          *   global control flow graph but might appear in other kinds of
                                                          *   graphs that are closely related to a CFG, such as a paths graph. */
 };
@@ -337,7 +337,7 @@ public:
  *  The runtime descriptions and command-line parser for these switches can be obtained from @ref partitionerSwitches. */
 struct PartitionerSettings {
     BasePartitionerSettings base;
-    std::vector<rose_addr_t> startingVas;           /**< Addresses at which to start recursive disassembly. These
+    std::vector<rose_addr_t> functionStartingVas;   /**< Addresses at which to start recursive disassembly. These
                                                      *   addresses are in addition to entry addresses, addresses from
                                                      *   symbols, addresses from configuration files, etc. */
     bool followingGhostEdges;                       /**< Should ghost edges be followed during disassembly?  A ghost edge
@@ -390,7 +390,7 @@ private:
     template<class S>
     void serialize(S &s, unsigned version) {
         s & BOOST_SERIALIZATION_NVP(base);
-        s & BOOST_SERIALIZATION_NVP(startingVas);
+        s & BOOST_SERIALIZATION_NVP(functionStartingVas);
         s & BOOST_SERIALIZATION_NVP(followingGhostEdges);
         s & BOOST_SERIALIZATION_NVP(discontiguousBlocks);
         s & BOOST_SERIALIZATION_NVP(maxBasicBlockSize);

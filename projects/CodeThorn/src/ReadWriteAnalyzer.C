@@ -1,5 +1,5 @@
 #include "ReadWriteAnalyzer.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "AstNodeInfo.h"
 #include "CollectionOperators.h"
 #include "CodeThornException.h"
@@ -27,8 +27,8 @@ void ReadWriteAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* r
   ROSE_ASSERT(root);
   std::string funtofind=functionToStartAt;
   RoseAst completeast(root);
-  startFunRoot=completeast.findFunctionByName(funtofind);
-  if(startFunRoot==0) {
+  _startFunRoot=completeast.findFunctionByName(funtofind);
+  if(_startFunRoot==0) {
     std::cout << "Function '"<<funtofind<<"' not found.\n";
     exit(1);
   } else {
@@ -49,12 +49,12 @@ void ReadWriteAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* r
   logger[TRACE]<< "INIT: Building CFGs."<<endl;
 
   if(oneFunctionOnly)
-    flow=cfanalyzer->flow(startFunRoot);
+    flow=cfanalyzer->flow(_startFunRoot);
   else
     flow=cfanalyzer->flow(root);
 
   logger[TRACE]<< "STATUS: Building CFGs finished."<<endl;
-  if(args.getBool("reduce-cfg")) {
+  if(_ctOpt.reduceCfg) {
     int cnt=cfanalyzer->optimizeFlow(flow);
     logger[TRACE]<< "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
   }
@@ -73,10 +73,10 @@ void ReadWriteAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* r
   // create and store initial PState
   PState initialPState;
   // TODO1: add formal paramters of solo-function
-  // SgFunctionDefinition* startFunRoot: node of function
+  // SgFunctionDefinition* _startFunRoot: node of function
   // estate=analyzeVariableDeclaration(SgVariableDeclaration*,estate,estate.label());
-  string functionName=SgNodeHelper::getFunctionName(startFunRoot);
-  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(startFunRoot);
+  string functionName=SgNodeHelper::getFunctionName(_startFunRoot);
+  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(_startFunRoot);
   VariableId argcVarId;
   VariableId argvVarId;
   size_t mainFunArgNr=0;
@@ -131,7 +131,7 @@ void ReadWriteAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* r
   /////////////////////////////////////////////////////////////////////
 
 
-  Label startLabel=cfanalyzer->getLabel(startFunRoot);
+  Label startLabel=cfanalyzer->getLabel(_startFunRoot);
   EState estate(startLabel,initialPStateStored,emptycsetstored);
 
   if(SgProject* project=isSgProject(root)) {
@@ -139,7 +139,7 @@ void ReadWriteAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* r
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
     logger[TRACE]<< globalVars.size()<<endl;
 
-    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,variableIdMapping);
+    VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,variableIdMapping);
 
     logger[TRACE]<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 

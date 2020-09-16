@@ -8,6 +8,7 @@
 #endif
 
 #include <BinarySymbolicExpr.h>
+#include <boost/chrono.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/serialization/access.hpp>
@@ -96,11 +97,14 @@ public:
         double prepareTime;                             /**< Time spent creating assertions before solving. */
         double solveTime;                               /**< Seconds spent in solver's solve function. */
         double evidenceTime;                            /**< Seconds to retrieve evidence of satisfiability. */
+        size_t nSatisfied;                              /**< Number of times the solver returned "satisified". */
+        size_t nUnsatisfied;                            /**< Number of times the solver returned "unsatisfied". */
+        size_t nUnknown;                                /**< Number of times the solver returned "unknown". */
         // Remember to add all data members to resetStatistics()
 
         Stats()
             : ncalls(0), input_size(0), output_size(0), memoizationHits(0), nSolversCreated(0), nSolversDestroyed(0),
-              prepareTime(0.0), solveTime(0.0), evidenceTime(0.0) {
+              prepareTime(0.0), solveTime(0.0), evidenceTime(0.0), nSatisfied(0), nUnsatisfied(0), nUnknown(0) {
         }
     };
 
@@ -341,6 +345,11 @@ public:
     virtual size_t memoizationNEntries() const {
         return memoization_.size();
     }
+
+    /** Set the timeout for the solver.
+     *
+     *  This sets the maximum time that the solver will try to find a solution before returning "unknown". */
+    virtual void timeout(boost::chrono::duration<double> seconds) = 0;
 
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

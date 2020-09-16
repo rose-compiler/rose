@@ -8,7 +8,7 @@ using namespace std;
 #include "Labeler.h"
 #include "VariableIdMapping.h"
 #include "IntervalTransferFunctions.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 
 CodeThorn::IntervalTransferFunctions::IntervalTransferFunctions():
   _cppExprEvaluator(0),
@@ -289,4 +289,11 @@ void CodeThorn::IntervalTransferFunctions::initializeExtremalValue(Lattice& elem
   pstate->setEmptyState();
   //iElement->... init to empty state, not being bottom
   cout<<"INFO: initialized extremal value."<<endl;
+}
+
+void CodeThorn::IntervalTransferFunctions::transfer(Edge edge, Lattice& element)
+{
+  DFTransferFunctions::transfer(edge, element);
+  
+  if (edge.isType(EDGE_BACKWARD)) dynamic_cast<IntervalPropertyState&>(element).setBackEdge(true);
 }

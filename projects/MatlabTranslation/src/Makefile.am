@@ -12,14 +12,16 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/backend/unparser/MatlabCodeGeneration/ \
               -I$(top_srcdir)/src/frontend/Experimental_Matlab_ROSE_Connection/ \
-              $(ROSE_INCLUDES) 
-m2cxx_LDADD = $(ROSE_LIBS) $(libdir)/libexperimentalRoseMatlab.la 
+              $(ROSE_INCLUDES)
+m2cxx_LDADD = $(ROSE_LIBS) $(libdir)/libexperimentalRoseMatlab.la
 
 bin_PROGRAMS = m2cxx
 
 m2cxx_SOURCES = \
   m2cxx.cc \
   utility/utils.cc \
+  utility/dotify.cc \
+  utility/FunctionReturnAttribute.cc \
   typeInference/BottomUpTypeAnalysis.cc \
   typeInference/FastNumericsRoseSupport.cc \
   typeInference/FunctionAnalyzer.cc \

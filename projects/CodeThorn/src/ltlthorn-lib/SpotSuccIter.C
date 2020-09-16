@@ -53,7 +53,7 @@ bdd SpotSuccIter::generateSpotTransition(const Transition& t) const {
   } 
 
   if(io.isNonIO()) {
-    cerr<<"ERROR: non-IO state in SpotSuccIter::generateSpotTransition"<<endl;
+    cerr<<"ERROR: non-IO state in SpotSuccIter::generateSpotTransition: IO:"<<t.target->io.toString()<<endl;
     exit(1);
   }
 
@@ -67,7 +67,6 @@ bdd SpotSuccIter::generateSpotTransition(const Transition& t) const {
   // check if there exists a single input or output value (remove for support of symbolic analysis)
   if(myTarget->io.isStdInIO()||myTarget->io.isStdOutIO()) {
     if(!myIOVal.isConstInt()) {
-      //assert(myIOVal.isConstInt());
       cerr<<"Error: IOVal is NOT const.\n"<<"EState: "<<myTarget->toString()<<endl;
       exit(1);
     }
@@ -76,7 +75,7 @@ bdd SpotSuccIter::generateSpotTransition(const Transition& t) const {
   //cout << "DEBUG: generateSpotTransition. target state's label: " << myTarget->label() << "   target state's InputOutput operator: " << myTarget->io.op << endl;
   int ioValAtTarget = myIOVal.getIntValue();
 
-#if 1
+#if 0
   //convert the single input/output value into set representations (for future symbolic analysis mode)
   std::set<int> possibleInputValues, possibleOutputValues;
   if(myTarget->io.isStdInIO()) {
@@ -87,13 +86,11 @@ bdd SpotSuccIter::generateSpotTransition(const Transition& t) const {
     cerr << "ERROR: cannot create a TGBA transition to a state that is neither input nor output."  << endl;
     exit(1);
   }
-#endif
-#if 1
   //combine input and output part of the transition condition
   transCond &= conjunctivePredicate(possibleInputValues, ltlInVars);
   transCond &= conjunctivePredicate(possibleOutputValues, ltlOutVars); 
-#endif
-#if 0  //old version working with one input or output value only
+#else
+  //old version working with one input or output value only
   //add the target state's I/O value as a non-negated proposition
   transCond &= bdd_ithvar(propNum2DictNum.at(ioValAtTarget));
   //all other I/O values do not appear at the target state, add them in negated form

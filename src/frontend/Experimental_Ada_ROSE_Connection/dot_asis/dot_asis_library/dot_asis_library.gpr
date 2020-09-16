@@ -4,7 +4,7 @@ library project DOT_ASIS_Library is
 
    for Library_Name use "dot_asis";
    for Library_Dir  use "./lib";
-   for Library_Kind use "static";
+   for Library_Kind use "dynamic";
    
    -- This is a "stand-alone library". See
    -- https://docs.adacore.com/gprbuild-docs/html/gprbuild_ug/gnat_project_manager.html#library-projects

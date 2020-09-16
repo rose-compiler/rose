@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #include <DepEDD.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 inline void CopyVec( DepRel *vec1, DepRel *vec2, unsigned num)
 {
@@ -18,8 +19,8 @@ DepEDD :: DepEDD(unsigned _nr, unsigned _nc, unsigned spare)
   nc = _nc;
   num = (nr+spare) * (nc+spare);
   if (num == 0)
-    vec = 0; 
-  else 
+    vec = 0;
+  else
     vec = new DepRel[num];
 }
 

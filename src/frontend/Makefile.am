@@ -21,6 +21,9 @@ endif
 # Added support for using flang/F18 for parsing for Fortran [Rasmussen 08/14/2019]
 # Don't build both of these
 if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
+if ROSE_BUILD_ATERM_SUPPORT_FALSE
+   SUBDIRS += Experimental_General_Language_Support
+endif
    SUBDIRS += Experimental_Flang_ROSE_Connection
 endif
 
@@ -93,9 +96,11 @@ nobase_pkginclude_HEADERS=			\
 	Partitioner2/ModulesElf.h		\
 	Partitioner2/ModulesLinux.h		\
 	Partitioner2/ModulesM68k.h		\
+	Partitioner2/ModulesMips.h		\
 	Partitioner2/ModulesPe.h		\
 	Partitioner2/ModulesPowerpc.h		\
 	Partitioner2/ModulesX86.h		\
+	Partitioner2/ParallelPartitioner.h	\
 	Partitioner2/Partitioner.h		\
 	Partitioner2/Reference.h		\
 	Partitioner2/Semantics.h		\

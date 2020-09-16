@@ -138,8 +138,8 @@ enum Operator {
     OP_FP_ISNEG,            /**< Floating-point negative class. Argument is the FP value to check. */
     OP_FP_ISPOS,            /**< Floating-point positive class. Argument is the FP value to check. */
 
-    OP_CONVERT,             /**< Convert from one type to another. Argument is the destination type. */
-    OP_REINTERPRET,         /**< Interpret the value as a different type without converting. Argument is the destination type. */
+    OP_CONVERT,             /**< Convert from one type to another. Argument is the source value. */
+    OP_REINTERPRET,         /**< Interpret the value as a different type without converting. Argument is the source value. */
 
     OP_NONE,                /**< No operation. Result of getOperator on a node that doesn't have an operator. */
 
@@ -263,14 +263,16 @@ private:
      *
      *  This is used mainly for default arguments. */
 public:
-    Type() {
+    Type()
+        : fields_(0) {
         typeClass(INVALID);
         nBits(0);
         secondaryWidth(0);
     }
 
 private:
-    Type(TypeClass tc, size_t w1, size_t w2) {
+    Type(TypeClass tc, size_t w1, size_t w2)
+        : fields_(0) {
         typeClass(tc);
         nBits(w1);
         secondaryWidth(w2);
@@ -907,7 +909,7 @@ struct ExprExprHashMapCompare {
 /** Compare two expressions for STL containers. */
 class ExpressionLessp {
 public:
-    bool operator()(const Ptr &a, const Ptr &b);
+    bool operator()(const Ptr &a, const Ptr &b) const;
 };
 
 /** Mapping from expression to expression. */

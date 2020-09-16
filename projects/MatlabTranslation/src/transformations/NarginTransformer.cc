@@ -152,7 +152,15 @@ namespace MatlabToCpp
   void extend_parmlist(SgFunctionDeclaration* decl)
   {
     SgInitializedName* nargin = sb::buildInitializedName("nargin", sb::buildIntType());
+    SgScopeStatement*  paramscope = decl->get_functionParameterScope();
 
+    if (!paramscope && decl->get_args().size())
+    {
+      paramscope = decl->get_args().at(0)->get_scope();
+    }
+
+    ROSE_ASSERT(paramscope);
+    nargin->set_scope(paramscope);
     decl->append_arg(nargin);
   }
 

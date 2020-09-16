@@ -1,0 +1,1018 @@
+L1    # abs d2, d1
+L2    0x22 0xb8 0xe0 0x5e
+L2    0x00000000: 22 b8 e0 5e               ?? abs      d2, d1                                   ; absolute value
+L3    
+L4    # adc w3, w2, w1
+L5    0x43 0x00 0x01 0x1a
+L5    0x00000000: 43 00 01 1a               ?? adc      w3, w2, w1                               ; add with carry
+L6    
+L7    # adc x3, x2, x1
+L8    0x43 0x00 0x01 0x9a
+L8    0x00000000: 43 00 01 9a               ?? adc      x3, x2, x1                               ; add with carry
+L9    
+L10   # adcs w3, w2, w1
+L11   0x43 0x00 0x01 0x3a
+L11   0x00000000: 43 00 01 3a               ?? adcs     w3, w2, w1                               ; add with carry
+L12   
+L13   # adcs x3, x2, x1
+L14   0x43 0x00 0x01 0xba
+L14   0x00000000: 43 00 01 ba               ?? adcs     x3, x2, x1                               ; add with carry
+L15   
+L16   # add w3, w2, w1, uxtb #2
+L17   0x43 0x08 0x21 0x0b
+L17   0x00000000: 43 08 21 0b               ?? add      w3, w2, uext(trunc(w1, 8), 32) << 2      ; add
+L18   
+L19   # add x3, x2, w1, uxtb #2
+L20   0x43 0x08 0x21 0x8b
+L20   0x00000000: 43 08 21 8b               ?? add      x3, x2, uext(trunc(w1, 8), 32) << 2      ; add
+L21   
+L22   # add x3, x2, x1, sxtx #2
+L23   0x43 0xe8 0x21 0x8b
+L23   0x00000000: 43 e8 21 8b               ?? add      x3, x2, x1 << 2                          ; add
+L24   
+L25   # add sp, x2, x1, sxtx #2
+L26   0x5f 0xe8 0x21 0x8b
+L26   0x00000000: 5f e8 21 8b               ?? add      sp, x2, x1 << 2                          ; add
+L27   
+L28   # add w2, w1, #0xfff
+L29   0x22 0xfc 0x3f 0x11
+L29   0x00000000: 22 fc 3f 11               ?? add      w2, w1, 0x0000000000000fff<4095>         ; add
+L30   
+L31   # add x2, x1, #0xfff
+L32   0x22 0xfc 0x3f 0x91
+L32   0x00000000: 22 fc 3f 91               ?? add      x2, x1, 0x0000000000000fff<4095>         ; add
+L33   
+L34   # add w2, w1, #0xfff, lsl #12
+L35   0x22 0xfc 0x7f 0x11
+L35   0x00000000: 22 fc 7f 11               ?? add      w2, w1, 0x0000000000000fff<4095> << 12   ; add
+L36   
+L37   # add w3, w2, w1, lsl #31
+L38   0x43 0x7c 0x01 0x0b
+L38   0x00000000: 43 7c 01 0b               ?? add      w3, w2, w1 << 0x1f<31>                   ; add
+L39   
+L40   # add x3, x2, x1, lsl #63
+L41   0x43 0xfc 0x01 0x8b
+L41   0x00000000: 43 fc 01 8b               ?? add      x3, x2, x1 << 0x3f<63>                   ; add
+L42   
+L43   # add d3, d2, d1
+L44   0x43 0x84 0xe1 0x5e
+L44   0x00000000: 43 84 e1 5e               ?? add      d3, d2, d1                               ; add
+L45   
+L46   # add v3.2d, v2.2d, v1.2d
+L47   0x43 0x84 0xe1 0x4e
+L47   0x00000000: 43 84 e1 4e               ?? add      v3.2d, v2.2d, v1.2d                      ; add
+L48   
+L49   # add v3.4s, v2.4s, v1.4s
+L50   0x43 0x84 0xa1 0x4e
+L50   0x00000000: 43 84 a1 4e               ?? add      v3.4s, v2.4s, v1.4s                      ; add
+L51   
+L52   # add v3.2d, v2.2d, v1.2d
+L53   0x43 0x84 0xe1 0x4e
+L53   0x00000000: 43 84 e1 4e               ?? add      v3.2d, v2.2d, v1.2d                      ; add
+L54   
+L55   # add v3.8b, v2.8b, v1.8b
+L56   0x43 0x84 0x21 0x0e
+L56   0x00000000: 43 84 21 0e               ?? add      v3.8b, v2.8b, v1.8b                      ; add
+L57   
+L58   # add v3.4h, v2.4h, v1.4h
+L59   0x43 0x84 0x61 0x0e
+L59   0x00000000: 43 84 61 0e               ?? add      v3.4h, v2.4h, v1.4h                      ; add
+L60   
+L61   # add v3.2s, v2.2s, v1.2s
+L62   0x43 0x84 0xa1 0x0e
+L62   0x00000000: 43 84 a1 0e               ?? add      v3.2s, v2.2s, v1.2s                      ; add
+L63   
+L64   # addg x2, x1, #16, #0
+L65   # only valid for ARMv8.5 and later
+L66   # 0x22 0x00 0x81 0x91
+L67   
+L68   # addhn v3.8b, v2.8h, v1.8h
+L69   0x43 0x40 0x21 0x0e
+L69   0x00000000: 43 40 21 0e               ?? addhn    v3.8b, v2.8h, v1.8h                      ; add returning high narrow to lower
+L70   
+L71   # addhn v3.4h, v2.4s, v1.4s
+L72   0x43 0x40 0x61 0x0e
+L72   0x00000000: 43 40 61 0e               ?? addhn    v3.4h, v2.4s, v1.4s                      ; add returning high narrow to lower
+L73   
+L74   # addhn v3.2s, v2.2d, v1.2d
+L75   0x43 0x40 0xa1 0x0e
+L75   0x00000000: 43 40 a1 0e               ?? addhn    v3.2s, v2.2d, v1.2d                      ; add returning high narrow to lower
+L76   
+L77   # addhn2 v3.16b, v2.8h, v1.8h
+L78   0x43 0x40 0x21 0x4e
+L78   0x00000000: 43 40 21 4e               ?? addhn2   v3.16b, v2.8h, v1.8h                     ; add returning high narrow to upper
+L79   
+L80   # addhn2 v3.8h, v2.4s, v1.4s
+L81   0x43 0x40 0x61 0x4e
+L81   0x00000000: 43 40 61 4e               ?? addhn2   v3.8h, v2.4s, v1.4s                      ; add returning high narrow to upper
+L82   
+L83   # addhn2 v3.4s, v2.2d, v1.2d
+L84   0x43 0x40 0xa1 0x4e
+L84   0x00000000: 43 40 a1 4e               ?? addhn2   v3.4s, v2.2d, v1.2d                      ; add returning high narrow to upper
+L85   
+L86   # addp d2, v1.2d
+L87   0x22 0xb8 0xf1 0x5e
+L87   0x00000000: 22 b8 f1 5e               ?? addp     d2, v1.2d                                ; add pair of elements
+L88   
+L89   # addp v3.8b, v2.8b, v1.8b
+L90   0x43 0xbc 0x21 0x0e
+L90   0x00000000: 43 bc 21 0e               ?? addp     v3.8b, v2.8b, v1.8b                      ; add pair of elements
+L91   
+L92   # addp v3.4h, v2.4h, v1.4h
+L93   0x43 0xbc 0x61 0x0e
+L93   0x00000000: 43 bc 61 0e               ?? addp     v3.4h, v2.4h, v1.4h                      ; add pair of elements
+L94   
+L95   # addp v3.2s, v2.2s, v1.2s
+L96   0x43 0xbc 0xa1 0x0e
+L96   0x00000000: 43 bc a1 0e               ?? addp     v3.2s, v2.2s, v1.2s                      ; add pair of elements
+L97   
+L98   # addp v3.16b, v2.16b, v1.16b
+L99   0x43 0xbc 0x21 0x4e
+L99   0x00000000: 43 bc 21 4e               ?? addp     v3.16b, v2.16b, v1.16b                   ; add pair of elements
+L100  
+L101  # addp v3.8h, v2.8h, v1.8h
+L102  0x43 0xbc 0x61 0x4e
+L102  0x00000000: 43 bc 61 4e               ?? addp     v3.8h, v2.8h, v1.8h                      ; add pair of elements
+L103  
+L104  # addp v3.4s, v2.4s, v1.4s
+L105  0x43 0xbc 0xa1 0x4e
+L105  0x00000000: 43 bc a1 4e               ?? addp     v3.4s, v2.4s, v1.4s                      ; add pair of elements
+L106  
+L107  # addp v3.2d, v2.2d, v1.2d
+L108  0x43 0xbc 0xe1 0x4e
+L108  0x00000000: 43 bc e1 4e               ?? addp     v3.2d, v2.2d, v1.2d                      ; add pair of elements
+L109  
+L110  # adds w3, w2, w1, uxtb #4
+L111  0x43 0x10 0x21 0x2b
+L111  0x00000000: 43 10 21 2b               ?? adds     w3, w2, uext(trunc(w1, 8), 32) << 4      ; add
+L112  
+L113  # adds x3, x2, w1, uxtb #4
+L114  0x43 0x10 0x21 0xab
+L114  0x00000000: 43 10 21 ab               ?? adds     x3, x2, uext(trunc(w1, 8), 32) << 4      ; add
+L115  
+L116  # adds w2, w1, #0xfff, lsl #12
+L117  0x22 0xfc 0x7f 0x31
+L117  0x00000000: 22 fc 7f 31               ?? adds     w2, w1, 0x0000000000000fff<4095> << 12   ; add
+L118  
+L119  # adds x2, x1, #0xfff, lsl #12
+L120  0x22 0xfc 0x7f 0xb1
+L120  0x00000000: 22 fc 7f b1               ?? adds     x2, x1, 0x0000000000000fff<4095> << 12   ; add
+L121  
+L122  # adds w3, w2, w1, asr #31
+L123  0x43 0x7c 0x81 0x2b
+L123  0x00000000: 43 7c 81 2b               ?? adds     w3, w2, asr(w1, 0x1f<31>)                ; add
+L124  
+L125  # adds x3, x2, x1, asr #63
+L126  0x43 0xfc 0x81 0xab
+L126  0x00000000: 43 fc 81 ab               ?? adds     x3, x2, asr(x1, 0x3f<63>)                ; add
+L127  
+L128  # addv b2, v1.8b
+L129  0x22 0xb8 0x31 0x0e
+L129  0x00000000: 22 b8 31 0e               ?? addv     b2, v1.8b                                ; add across vector
+L130  
+L131  # addv h2, v1.4h
+L132  0x22 0xb8 0x71 0x0e
+L132  0x00000000: 22 b8 71 0e               ?? addv     h2, v1.4h                                ; add across vector
+L133  
+L134  # addv b2, v1.16b
+L135  0x22 0xb8 0x31 0x4e
+L135  0x00000000: 22 b8 31 4e               ?? addv     b2, v1.16b                               ; add across vector
+L136  
+L137  # addv h2, v1.8h
+L138  0x22 0xb8 0x71 0x4e
+L138  0x00000000: 22 b8 71 4e               ?? addv     h2, v1.8h                                ; add across vector
+L139  
+L140  # addv s2, v1.4s
+L141  0x22 0xb8 0xb1 0x4e
+L141  0x00000000: 22 b8 b1 4e               ?? addv     s2, v1.4s                                ; add across vector
+L142  
+L143  # adr x1, #0xffffffffffffffff
+L144  0xe1 0xff 0xff 0x70
+L144  0x00000000: e1 ff ff 70               ?? adr      x1, 0xffffffffffffffff<18446744073709551615,-1> ; form pc-relative address
+L145  
+L146  # adrp x1, #0xfffffffffffff000
+L147  0xe1 0xff 0xff 0xf0
+L147  0x00000000: e1 ff ff f0               ?? adrp     x1, 0xfffffffffffff000<18446744073709547520,-4096> ; form pc-relative address to 4kB page
+L148  
+L149  # aesd v2.16b, v1.16b
+L150  0x22 0x58 0x28 0x4e
+L150  0x00000000: 22 58 28 4e               ?? aesd     v2.16b, v1.16b                           ; AES single round decryption
+L151  
+L152  # aese v2.16b, v1.16b
+L153  0x22 0x48 0x28 0x4e
+L153  0x00000000: 22 48 28 4e               ?? aese     v2.16b, v1.16b                           ; AES single round encryption
+L154  
+L155  # aesimc v2.16b, v1.16b
+L156  0x22 0x78 0x28 0x4e
+L156  0x00000000: 22 78 28 4e               ?? aesimc   v2.16b, v1.16b                           ; AES inverse mix columns
+L157  
+L158  # aesmc v2.16b, v1.16b
+L159  0x22 0x68 0x28 0x4e
+L159  0x00000000: 22 68 28 4e               ?? aesmc    v2.16b, v1.16b                           ; AES mix columns
+L160  
+L161  # and v3.8b, v2.8b, v1.8b
+L162  0x43 0x1c 0x21 0x0e
+L162  0x00000000: 43 1c 21 0e               ?? and      v3.8b, v2.8b, v1.8b                      ; bitwise AND
+L163  
+L164  # and v3.16b, v2.16b, v1.16b
+L165  0x43 0x1c 0x21 0x4e
+L165  0x00000000: 43 1c 21 4e               ?? and      v3.16b, v2.16b, v1.16b                   ; bitwise AND
+L166  
+L167  # and w2, w1, #1
+L168  0x22 0x00 0x00 0x12
+L168  0x00000000: 22 00 00 12               ?? and      w2, w1, 1                                ; bitwise AND
+L169  
+L170  # and x2, x1, #0x100000001
+L171  0x22 0x00 0x00 0x92
+L171  0x00000000: 22 00 00 92               ?? and      x2, x1, 0x0000000100000001               ; bitwise AND
+L172  
+L173  # and w3, w2, w1, asr #31
+L174  0x43 0x7c 0x81 0x0a
+L174  0x00000000: 43 7c 81 0a               ?? and      w3, w2, asr(w1, 0x1f<31>)                ; bitwise AND
+L175  
+L176  # and x3, x2, x1, asr #63
+L177  0x43 0xfc 0x81 0x8a
+L177  0x00000000: 43 fc 81 8a               ?? and      x3, x2, asr(x1, 0x3f<63>)                ; bitwise AND
+L178  
+L179  # ands w2, w1, #1
+L180  0x22 0x00 0x00 0x72
+L180  0x00000000: 22 00 00 72               ?? ands     w2, w1, 1                                ; bitwise AND
+L181  
+L182  # ands x2, x1, #0x100000001
+L183  0x22 0x00 0x00 0xf2
+L183  0x00000000: 22 00 00 f2               ?? ands     x2, x1, 0x0000000100000001               ; bitwise AND
+L184  
+L185  # ands w3, w2, w1, lsl #31
+L186  0x43 0x7c 0x01 0x6a
+L186  0x00000000: 43 7c 01 6a               ?? ands     w3, w2, w1 << 0x1f<31>                   ; bitwise AND
+L187  
+L188  # ands x3, x2, x1, lsl #63
+L189  0x43 0xfc 0x01 0xea
+L189  0x00000000: 43 fc 01 ea               ?? ands     x3, x2, x1 << 0x3f<63>                   ; bitwise AND
+L190  
+L191  # asr w3, w2, w1
+L192  0x43 0x28 0xc1 0x1a
+L192  0x00000000: 43 28 c1 1a               ?? asr      w3, w2, w1                               ; arithmetic shift right
+L193  
+L194  # asr x3, x2, x1
+L195  0x43 0x28 0xc1 0x9a
+L195  0x00000000: 43 28 c1 9a               ?? asr      x3, x2, x1                               ; arithmetic shift right
+L196  
+L197  # asr w2, w1, #0xf
+L198  0x22 0x7c 0x0f 0x13
+L198  0x00000000: 22 7c 0f 13               ?? asr      w2, w1, 15                               ; arithmetic shift right
+L199  
+L200  # asr x2, x1, #0x3f
+L201  0x22 0xfc 0x7f 0x93
+L201  0x00000000: 22 fc 7f 93               ?? asr      x2, x1, 0x000000000000003f<63>           ; arithmetic shift right
+L202  
+L203  # at s1e1r, x1
+L204  0x01 0x78 0x08 0xd5
+L204  0x00000000: 01 78 08 d5               ?? at       s1e1r, x1                                ; address translate
+L205  
+L206  # autda x2, x1
+L207  # only for ARMv8p3
+L208  # 0x22 0x18 0xc1 0xda
+L209  
+L210  # autdza x1
+L211  # only for ARMv8p3
+L212  #0xe2 0x3b 0xc1 0xda
+L213  
+L214  # autdb x2, sp
+L215  # only for ARMv8p3
+L216  #0xe2 0x1f 0xc1 0xda
+L217  
+L218  # autdzb x2
+L219  # only for ARMv8p3
+L220  #0xe2 0x3f 0xc1 0xda
+L221  
+L222  # autia...
+L223  # only for ARMv8p3
+L224  
+L225  # autia1716...
+L226  # only for ARMv8p3
+L227  
+L228  # autiasp...
+L229  # only for ARMv8p3
+L230  
+L231  # autiaz...
+L232  # only for ARMv8p3
+L233  
+L234  # autiza...
+L235  # only for ARMv8p3
+L236  
+L237  # autib...
+L238  # only for ARMv8p3
+L239  
+L240  # autib1716...
+L241  # only for ARMv8p3
+L242  
+L243  # autibsp...
+L244  # only for ARMv8p3
+L245  
+L246  # autibz...
+L247  # only for ARMv8p3
+L248  
+L249  # autizb...
+L250  # only for ARMv8p3
+L251  
+L252  # AXFlag
+L253  # internal version only
+L254  # 0x5f 0x40 0x00 0xd5
+L255  
+L256  # b.eq #0xfffffffffffffffc
+L257  0xe0 0xff 0xff 0x54
+L257  0x00000000: e0 ff ff 54               ?? b.eq     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L258  
+L259  # b.ne #0xfffffffffffffffc
+L260  0xe1 0xff 0xff 0x54
+L260  0x00000000: e1 ff ff 54               ?? b.ne     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L261  
+L262  # b.hs #0xfffffffffffffffc
+L263  0xe2 0xff 0xff 0x54
+L263  0x00000000: e2 ff ff 54               ?? b.hs     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L264  
+L265  # b.lo #0xfffffffffffffffc
+L266  0xe3 0xff 0xff 0x54
+L266  0x00000000: e3 ff ff 54               ?? b.lo     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L267  
+L268  # b.mi #0xfffffffffffffffc
+L269  0xe4 0xff 0xff 0x54
+L269  0x00000000: e4 ff ff 54               ?? b.mi     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L270  
+L271  # b.pl #0xfffffffffffffffc
+L272  0xe5 0xff 0xff 0x54
+L272  0x00000000: e5 ff ff 54               ?? b.pl     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L273  
+L274  # b.vs #0xfffffffffffffffc
+L275  0xe6 0xff 0xff 0x54
+L275  0x00000000: e6 ff ff 54               ?? b.vs     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L276  
+L277  # b.vc #0xfffffffffffffffc
+L278  0xe7 0xff 0xff 0x54
+L278  0x00000000: e7 ff ff 54               ?? b.vc     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L279  
+L280  # b.hi #0xfffffffffffffffc
+L281  0xe8 0xff 0xff 0x54
+L281  0x00000000: e8 ff ff 54               ?? b.hi     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L282  
+L283  # b.ls #0xfffffffffffffffc
+L284  0xe9 0xff 0xff 0x54
+L284  0x00000000: e9 ff ff 54               ?? b.ls     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L285  
+L286  # b.ge #0xfffffffffffffffc
+L287  0xea 0xff 0xff 0x54
+L287  0x00000000: ea ff ff 54               ?? b.ge     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L288  
+L289  # b.lt #0xfffffffffffffffc
+L290  0xeb 0xff 0xff 0x54
+L290  0x00000000: eb ff ff 54               ?? b.lt     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L291  
+L292  # b.gt #0xfffffffffffffffc
+L293  0xec 0xff 0xff 0x54
+L293  0x00000000: ec ff ff 54               ?? b.gt     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L294  
+L295  # b.le #0xfffffffffffffffc
+L296  0xed 0xff 0xff 0x54
+L296  0x00000000: ed ff ff 54               ?? b.le     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L297  
+L298  # b.al #0xfffffffffffffffc
+L299  0xee 0xff 0xff 0x54
+L299  0x00000000: ee ff ff 54               ?? b.al     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L300  
+L301  # b.nv #0xfffffffffffffffc
+L302  0xef 0xff 0xff 0x54
+L302  0x00000000: ef ff ff 54               ?? b.nv     0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L303  
+L304  # b #0xfffffffffffffffc
+L305  0xff 0xff 0xff 0x17
+L305  0x00000000: ff ff ff 17               ?? b        0xfffffffffffffffc<18446744073709551612,-4> ; branch
+L306  
+L307  # bcax...
+L308  # only for ARMv8.2-SHA
+L309  # 0x64 0x08 0x21 0xce
+L310  
+L311  # bfxil w2, w1, #0, #1
+L312  0x22 0x00 0x00 0x33
+L312  0x00000000: 22 00 00 33               ?? bfxil    w2, w1, 0, 1                             ; bifield extract and insert low
+L313  
+L314  # bic v0.4h, #0xff
+L315  0xe0 0x97 0x07 0x2f
+L315  0x00000000: e0 97 07 2f               ?? bic      v0.4h, 0x00000000000000ff<255>           ; bitwise bit clear
+L316  
+L317  # bic v3.16b, v2.16b, v1.16b
+L318  0x43 0x1c 0x61 0x4e
+L318  0x00000000: 43 1c 61 4e               ?? bic      v3.16b, v2.16b, v1.16b                   ; bitwise bit clear
+L319  
+L320  # bic w3, w2, w1, lsr #7
+L321  0x43 0x1c 0x61 0x0a
+L321  0x00000000: 43 1c 61 0a               ?? bic      w3, w2, w1 >> 7                          ; bitwise bit clear
+L322  
+L323  # bics w3, w2, w1, lsr #7
+L324  0x43 0x1c 0x61 0x6a
+L324  0x00000000: 43 1c 61 6a               ?? bics     w3, w2, w1 >> 7                          ; bitwise bit clear
+L325  
+L326  # blr x1
+L327  0x20 0x00 0x3f 0xd6
+L327  0x00000000: 20 00 3f d6               ?? blr      x1                                       ; branch with link to register
+L328  
+L329  # br x1
+L330  0x20 0x00 0x1f 0xd6
+L330  0x00000000: 20 00 1f d6               ?? br       x1                                       ; branch to register
+L331  
+L332  # brk #0xffff
+L333  0xe0 0xff 0x3f 0xd4
+L333  0x00000000: e0 ff 3f d4               ?? brk      0x0000ffff                               ; breakpoint
+L334  
+L335  # cbnz x1, #0xfffffffffffffffc
+L336  0xe1 0xff 0xff 0xb5
+L336  0x00000000: e1 ff ff b5               ?? cbnz     x1, 0xfffffffffffffffc<18446744073709551612,-4> ; compare and branch on nonzero
+L337  
+L338  #cbz x1, #0xfffffffffffffffc
+L339  0xe1 0xff 0xff 0xb4
+L339  0x00000000: e1 ff ff b4               ?? cbz      x1, 0xfffffffffffffffc<18446744073709551612,-4> ; compare and branch on zero
+L340  
+L341  # ccmp x2, #0x1f, #4, eq
+L342  0x44 0x08 0x5f 0xfa
+L342  0x00000000: 44 08 5f fa               ?? ccmp.eq  x2, 0x000000000000001f<31>, 4            ; conditional compare
+L343  
+L344  # ccmp w2, w1, #4, eq
+L345  0x44 0x00 0x41 0x7a
+L345  0x00000000: 44 00 41 7a               ?? ccmp.eq  w2, w1, 4                                ; conditional compare
+L346  
+L347  # ccmn w2, w1, #0xf, eq
+L348  0x4f 0x00 0x41 0x3a
+L348  0x00000000: 4f 00 41 3a               ?? ccmn.eq  w2, w1, 15                               ; conditional compare negative
+L349  
+L350  # clz x3, x2
+L351  0x43 0x10 0xc0 0xda
+L351  0x00000000: 43 10 c0 da               ?? clz      x3, x2                                   ; count leading zero bits
+L352  
+L353  # clz v3.2s, v2.2s
+L354  0x43 0x48 0xa0 0x2e
+L354  0x00000000: 43 48 a0 2e               ?? clz      v3.2s, v2.2s                             ; count leading zero bits
+L355  
+L356  # cmeq d3, d2, d1
+L357  0x43 0x8c 0xe1 0x7e
+L357  0x00000000: 43 8c e1 7e               ?? cmeq     d3, d2, d1                               ; compare bitwise equal
+L358  
+L359  # cmeq d3, d2, #0
+L360  0x43 0x98 0xe0 0x5e
+L360  0x00000000: 43 98 e0 5e               ?? cmeq     d3, d2, 0                                ; compare bitwise equal
+L361  
+L362  # cmeq v3.2d, v2.2d, v1.2d
+L363  0x43 0x8c 0xe1 0x6e
+L363  0x00000000: 43 8c e1 6e               ?? cmeq     v3.2d, v2.2d, v1.2d                      ; compare bitwise equal
+L364  
+L365  # cmn x2, w1, uxtb #1
+L366  0x5f 0x04 0x21 0xab
+L366  0x00000000: 5f 04 21 ab               ?? cmn      x2, uext(trunc(w1, 8), 32) << 1          ; compare negative
+L367  
+L368  # cmn x2, w1, uxtw #1
+L369  0x5f 0x44 0x21 0xab
+L369  0x00000000: 5f 44 21 ab               ?? cmn      x2, w1 << 1                              ; compare negative
+L370  
+L371  # cmn sp, w1, uxtw #1
+L372  0xff 0x47 0x21 0xab
+L372  0x00000000: ff 47 21 ab               ?? cmn      sp, w1 << 1                              ; compare negative
+L373  
+L374  # cmn x2, #0xfff
+L375  0x5f 0xfc 0x3f 0xb1
+L375  0x00000000: 5f fc 3f b1               ?? cmn      x2, 0x0000000000000fff<4095>             ; compare negative
+L376  
+L377  # cmn x2, #0xfff, lsl #12
+L378  0x5f 0xfc 0x7f 0xb1
+L378  0x00000000: 5f fc 7f b1               ?? cmn      x2, 0x0000000000000fff<4095> << 12       ; compare negative
+L379  
+L380  # cmn x2, x1, asr #63
+L381  0x5f 0xfc 0x81 0xab
+L381  0x00000000: 5f fc 81 ab               ?? cmn      x2, asr(x1, 0x3f<63>)                    ; compare negative
+L382  
+L383  # cmp x2, x1, uxtx #3
+L384  0x5f 0x6c 0x21 0xeb
+L384  0x00000000: 5f 6c 21 eb               ?? cmp      x2, x1 << 3                              ; compare
+L385  
+L386  # cmp wsp, #0xfc7, lsl #12
+L387  0xff 0x1f 0x7f 0x71
+L387  0x00000000: ff 1f 7f 71               ?? cmp      wsp, 0x0000000000000fc7<4039> << 12      ; compare
+L388  
+L389  # cmp w2, w1, lsr #31
+L390  0x5f 0x7c 0x41 0x6b
+L390  0x00000000: 5f 7c 41 6b               ?? cmp      w2, w1 >> 0x1f<31>                       ; compare
+L391  
+L392  # cmp w2, w1, asr #31
+L393  0x5f 0x7c 0x81 0x6b
+L393  0x00000000: 5f 7c 81 6b               ?? cmp      w2, asr(w1, 0x1f<31>)                    ; compare
+L394  
+L395  # csel x3, x2, x1, eq
+L396  0x43 0x00 0x81 0x9a
+L396  0x00000000: 43 00 81 9a               ?? csel.eq  x3, x2, x1                               ; conditional select
+L397  
+L398  # cset w1, ne
+L399  0xe1 0x07 0x9f 0x1a
+L399  0x00000000: e1 07 9f 1a               ?? cset.ne  w1                                       ; conditional set
+L400  
+L401  # csetm x1, ne
+L402  0xe1 0x03 0x9f 0xda
+L402  0x00000000: e1 03 9f da               ?? csetm.ne x1                                       ; conditional set mask
+L403  
+L404  # eon w3, w2, w1, lsr #31
+L405  0x43 0x7c 0x61 0x4a
+L405  0x00000000: 43 7c 61 4a               ?? eon      w3, w2, w1 >> 0x1f<31>                   ; bitwise exclusive OR NOT
+L406  
+L407  # eor v3.16b, v2.16b, v1.16b
+L408  0x43 0x1c 0x21 0x6e
+L408  0x00000000: 43 1c 21 6e               ?? eor      v3.16b, v2.16b, v1.16b                   ; bitwise exclusive OR
+L409  
+L410  # eor x3, x2, #0x1e
+L411  0x43 0x0c 0x7f 0xd2
+L411  0x00000000: 43 0c 7f d2               ?? eor      x3, x2, 0x000000000000001e<30>           ; bitwise exclusive OR
+L412  
+L413  # eor x3, x2, x1, lsl #63
+L414  0x43 0xfc 0x01 0xca
+L414  0x00000000: 43 fc 01 ca               ?? eor      x3, x2, x1 << 0x3f<63>                   ; bitwise exclusive OR
+L415  
+L416  # eor x3, x2, x1, lsr #63
+L417  0x43 0xfc 0x41 0xca
+L417  0x00000000: 43 fc 41 ca               ?? eor      x3, x2, x1 >> 0x3f<63>                   ; bitwise exclusive OR
+L418  
+L419  # eor x3, x2, x1, asr #63
+L420  0x43 0xfc 0x81 0xca
+L420  0x00000000: 43 fc 81 ca               ?? eor      x3, x2, asr(x1, 0x3f<63>)                ; bitwise exclusive OR
+L421  
+L422  # eor x3, x2, x1, ror #63
+L423  0x43 0xfc 0xc1 0xca
+L423  0x00000000: 43 fc c1 ca               ?? eor      x3, x2, ror(x1, 0x3f<63>)                ; bitwise exclusive OR
+L424  
+L425  # extr w3, w2, w1, #7
+L426  0x43 0x1c 0x81 0x13
+L426  0x00000000: 43 1c 81 13               ?? extr     w3, w2, w1, 7                            ; extract register
+L427  
+L428  # ldar w2, [x1]
+L429  0x22 0xfc 0xdf 0x88
+L429  0x00000000: 22 fc df 88               ?? ldar     w2, u32 [x1]                             ; load-acquire register
+L430  
+L431  # ldarb w2, [x1]
+L432  0x22 0xfc 0xdf 0x08
+L432  0x00000000: 22 fc df 08               ?? ldarb    w2, u8 [x1]                              ; load-acquire register byte
+L433  
+L434  # ldarh w2, [x1]
+L435  0x22 0xfc 0xdf 0x48
+L435  0x00000000: 22 fc df 48               ?? ldarh    w2, u16 [x1]                             ; load-acquire register halfword
+L436  
+L437  # ldaxr w2, [x1]
+L438  0x22 0xfc 0x5f 0x88
+L438  0x00000000: 22 fc 5f 88               ?? ldaxr    w2, u32 [x1]                             ; load-acquire exclusive register
+L439  
+L440  # ldaxrb w2, [x1]
+L441  0x22 0xfc 0x5f 0x08
+L441  0x00000000: 22 fc 5f 08               ?? ldaxrb   w2, u8 [x1]                              ; load-acquire exclusive register byte
+L442  
+L443  # ldaxrh w2, [x1]
+L444  0x22 0xfc 0x5f 0x48
+L444  0x00000000: 22 fc 5f 48               ?? ldaxrh   w2, u16 [x1]                             ; load-acquire exclusive register halfword
+L445  
+L446  # ldp q3, q1, [x2], #-0x10
+L447  0x43 0x84 0xff 0xac
+L447  0x00000000: 43 84 ff ac               ?? ldp      q3, q1, u256 [x2 then x2 += 0xfffffffffffffff0<18446744073709551600,-16>] ; load pair of registers
+L448  
+L449  # ldp s12, s11, [x3, #0x78]!
+L450  0x6c 0x2c 0xcf 0x2d
+L450  0x00000000: 6c 2c cf 2d               ?? ldp      s12, s11, u64 [x3 += 0x0000000000000078<120>] ; load pair of registers
+L451  
+L452  # ldpsw x3, x1, [x2], #0x3c
+L453  0x43 0x84 0xc7 0x68
+L453  0x00000000: 43 84 c7 68               ?? ldpsw    x3, x1, u64 [x2 then x2 += 0x000000000000003c<60>] ; load pair of registers with signed word
+L454  
+L455  # ldr x17, [x16, #3632]
+L456  0x11 0x1a 0x47 0xf9
+L456  0x00000000: 11 1a 47 f9               ?? ldr      x17, u64 [x16 + 0x0000000000000e30<3632>] ; load register
+L457  
+L458  # ldrb w2, [x1, #-1]!
+L459  0x22 0xfc 0x5f 0x38
+L459  0x00000000: 22 fc 5f 38               ?? ldrb     w2, u8 [x1 += 0xffffffffffffffff<18446744073709551615,-1>] ; load register byte
+L460  
+L461  # ldrb w3, [x2, w1, uxtw]
+L462  0x43 0x48 0x61 0x38
+L462  0x00000000: 43 48 61 38               ?? ldrb     w3, u8 [uext(trunc(x2 + w1, 32), 64)]    ; load register byte
+L463  
+L464  # ldrh w3, [x2, #0x1ffe]
+L465  0x43 0xfc 0x7f 0x79
+L465  0x00000000: 43 fc 7f 79               ?? ldrh     w3, u16 [x2 + 0x0000000000001ffe<8190>]  ; load register halfword
+L466  
+L467  # ldrh w3, [x2, x1, lsl #1]
+L468  0x43 0x78 0x61 0x78
+L468  0x00000000: 43 78 61 78               ?? ldrh     w3, u16 [x2 + x1 << 1]                   ; load register halfword
+L469  
+L470  # ldrsb x3, [x2, #0xfff]
+L471  0x43 0xfc 0xbf 0x39
+L471  0x00000000: 43 fc bf 39               ?? ldrsb    x3, u8 [x2 + 0x0000000000000fff<4095>]   ; load signed byte
+L472  
+L473  # ldrsb x3, [x2, x1, sxtx #0]
+L474  0x43 0xf8 0xa1 0x38
+L474  0x00000000: 43 f8 a1 38               ?? ldrsb    x3, u8 [x2 + x1]                         ; load signed byte
+L475  
+L476  # ldrsh w3, [x2], #0xffffffffffffffff
+L477  0x43 0xf4 0xdf 0x78
+L477  0x00000000: 43 f4 df 78               ?? ldrsh    w3, u16 [x2 then x2 += 0xffffffffffffffff<18446744073709551615,-1>] ; load signed halfword
+L478  
+L479  # ldrsh w3, [x2, x1, lsl #1]
+L480  0x43 0x78 0xe1 0x78
+L480  0x00000000: 43 78 e1 78               ?? ldrsh    w3, u16 [x2 + x1 << 1]                   ; load signed halfword
+L481  
+L482  # ldrsw x3, [x2], #0xffffffffffffffff
+L483  0x43 0xf4 0x9f 0xb8
+L483  0x00000000: 43 f4 9f b8               ?? ldrsw    x3, u32 [x2 then x2 += 0xffffffffffffffff<18446744073709551615,-1>] ; load register signed word
+L484  
+L485  # ldrsw x1, #0xfffffffffffffffc
+L486  # Note that the second argument should be 32-bit memory reference, not
+L487  # an immediate value.
+L488  0xe1 0xff 0xff 0x98
+L488  0x00000000: e1 ff ff 98               ?? ldrsw    x1, u32 [0xfffffffffffffffc<18446744073709551612,-4>] ; load register signed word
+L489  
+L490  # ldrsw x3, [x2, w1, uxtw #2]
+L491  0x43 0x58 0xa1 0xb8
+L491  0x00000000: 43 58 a1 b8               ?? ldrsw    x3, u32 [uext(trunc(x2 + w1, 32), 64) << 2] ; load register signed word
+L492  
+L493  # ldur w3, [x2, #-1]
+L494  0x43 0xf0 0x5f 0xb8
+L494  0x00000000: 43 f0 5f b8               ?? ldur     w3, u32 [x2 + 0xffffffffffffffff<18446744073709551615,-1>] ; load register
+L495  
+L496  # ldurb w3, [x2, #-1]
+L497  0x43 0xf0 0x5f 0x38
+L497  0x00000000: 43 f0 5f 38               ?? ldurb    w3, u8 [x2 + 0xffffffffffffffff<18446744073709551615,-1>] ; load register byte
+L498  
+L499  # ldurh w3, [x2, #-1]
+L500  0x43 0xf0 0x5f 0x78
+L500  0x00000000: 43 f0 5f 78               ?? ldurh    w3, u16 [x2 + 0xffffffffffffffff<18446744073709551615,-1>] ; load register halfword
+L501  
+L502  # ldursb w3, [x2, #-1]
+L503  0x43 0xf0 0xdf 0x38
+L503  0x00000000: 43 f0 df 38               ?? ldursb   w3, u8 [x2 + 0xffffffffffffffff<18446744073709551615,-1>] ; load register signed byte
+L504  
+L505  # ldursh w3, [x2, #-1]
+L506  0x43 0xf0 0xdf 0x78
+L506  0x00000000: 43 f0 df 78               ?? ldursh   w3, u16 [x2 + 0xffffffffffffffff<18446744073709551615,-1>] ; load register signed halfword
+L507  
+L508  # ldursw x3, [x2, #-1]
+L509  0x43 0xf0 0x9f 0xb8
+L509  0x00000000: 43 f0 9f b8               ?? ldursw   x3, u32 [x2 + 0xffffffffffffffff<18446744073709551615,-1>] ; load register signed word
+L510  
+L511  # ldxr w2, [x1]
+L512  0x22 0x7c 0x5f 0x88
+L512  0x00000000: 22 7c 5f 88               ?? ldxr     w2, u32 [x1]                             ; load exclusive register
+L513  
+L514  # ldxrb w2, [x1]
+L515  0x22 0x7c 0x5f 0x08
+L515  0x00000000: 22 7c 5f 08               ?? ldxrb    w2, u8 [x1]                              ; load exclusive register byte
+L516  
+L517  # ldxrh w2, [x1]
+L518  0x22 0x7c 0x5f 0x48
+L518  0x00000000: 22 7c 5f 48               ?? ldxrh    w2, u16 [x1]                             ; load exclusive register halfword
+L519  
+L520  # lsl w3, w2, w1
+L521  0x43 0x20 0xc1 0x1a
+L521  0x00000000: 43 20 c1 1a               ?? lsl      w3, w2, w1                               ; logical shift left
+L522  
+L523  # lsr x3, x2, x1
+L524  0x43 0x24 0xc1 0x9a
+L524  0x00000000: 43 24 c1 9a               ?? lsr      x3, x2, x1                               ; logical shift right
+L525  
+L526  # lsr w3, w2, #7
+L527  0x43 0x7c 0x07 0x53
+L527  0x00000000: 43 7c 07 53               ?? lsr      w3, w2, 7                                ; logical shift right
+L528  
+L529  # movi v1.2d, #0xffffffffffffff
+L530  0xe1 0xe7 0x03 0x6f
+L530  0x00000000: e1 e7 03 6f               ?? movi     v1.2d, 0x00ffffffffffffff                ; move immediate
+L531  
+L532  # movi v1.16b, #0x7f
+L533  0xe1 0xe7 0x03 0x4f
+L533  0x00000000: e1 e7 03 4f               ?? movi     v1.16b, 0x000000000000007f<127>          ; move immediate
+L534  
+L535  # movk x1, #0xffff, lsl #16
+L536  0xe1 0xff 0xbf 0xf2
+L536  0x00000000: e1 ff bf f2               ?? movk     x1, 0x0000ffff << 0x10<16>               ; move wide with keep
+L537  
+L538  # movk w1, #0xffff, lsl #16
+L539  0xe1 0xff 0xbf 0x72
+L539  0x00000000: e1 ff bf 72               ?? movk     w1, 0x0000ffff << 0x10<16>               ; move wide with keep
+L540  
+L541  # movk w1, #0xffff
+L542  0xe1 0xff 0x9f 0x72
+L542  0x00000000: e1 ff 9f 72               ?? movk     w1, 0x0000ffff                           ; move wide with keep
+L543  
+L544  # mrs x23, s3_0_c15_c12_5
+L545  0xb7 0xfc 0x38 0xd5
+L545  0x00000000: b7 fc 38 d5               ?? mrs      x23, s3_0_c15_c12_5                      ; move from system register
+L546  
+L547  # mrs x1, s2_0_c0_c0_0
+L548  # This seems to be disassembled incorrectly by Capstone. Capstone
+L549  # emits "mrs x1, s3_0_c0_c0_0"
+L550  0x01 0x00 0x30 0xd5
+L550  0x00000000: 01 00 30 d5               ?? mrs      x1, s2_0_c0_c0_0                         ; move from system register
+L551  
+L552  # mrs x1, s3_0_c0_c0_0
+L553  # This seems to be disassembled incorrectly by Capstone. Capstone
+L554  # emits "mrs x1, midr_el1"
+L555  0x01 0x00 0x38 0xd5
+L555  0x00000000: 01 00 38 d5               ?? mrs      x1, s3_0_c0_c0_0                         ; move from system register
+L556  
+L557  # msr s3_2_c3_c8_1, x21
+L558  0x35 0x38 0x1a 0xd5
+L558  0x00000000: 35 38 1a d5               ?? msr      s3_2_c3_c8_1, x21                        ; move to system register
+L559  
+L560  # msub w4, w3, w1, w2
+L561  0x64 0x88 0x01 0x1b
+L561  0x00000000: 64 88 01 1b               ?? msub     w4, w3, w1, w2                           ; multiply-subtract
+L562  
+L563  # mul w3, w2, w1
+L564  0x43 0x7c 0x01 0x1b
+L564  0x00000000: 43 7c 01 1b               ?? mul      w3, w2, w1                               ; multiply
+L565  
+L566  # mul v3.8b, v2.8b, v1.8b
+L567  0x43 0x9c 0x21 0x0e
+L567  0x00000000: 43 9c 21 0e               ?? mul      v3.8b, v2.8b, v1.8b                      ; multiply
+L568  
+L569  # mul v3.2s, v2.2s, v1.s[1]
+L570  0x43 0x80 0xa1 0x0f
+L570  0x00000000: 43 80 a1 0f               ?? mul      v3.2s, v2.2s, v1.s[1]                    ; multiply
+L571  
+L572  # mvn v3.8b, v2.8b
+L573  0x43 0x58 0x20 0x2e
+L573  0x00000000: 43 58 20 2e               ?? mvn      q3, q2                                   ; bitwise NOT
+L574  
+L575  # neg x3, x1, lsl #63
+L576  0xe3 0xff 0x01 0xcb
+L576  0x00000000: e3 ff 01 cb               ?? neg      x3, x1 << 0x3f<63>                       ; negate
+L577  
+L578  # neg v3.2d, v2.2d
+L579  0x43 0xb8 0xe0 0x6e
+L579  0x00000000: 43 b8 e0 6e               ?? neg      v3.2d, v2.2d                             ; negate
+L580  
+L581  # negs x3, x1
+L582  0xe3 0x03 0x01 0xeb
+L582  0x00000000: e3 03 01 eb               ?? negs     x3, x1                                   ; negate, setting flags
+L583  
+L584  # ngc x3, x1
+L585  0xe3 0x03 0x01 0xda
+L585  0x00000000: e3 03 01 da               ?? ngc      x3, x1                                   ; negate with carry
+L586  
+L587  # ngcs x3, x1
+L588  0xe3 0x03 0x01 0xfa
+L588  0x00000000: e3 03 01 fa               ?? ngcs     x3, x1                                   ; negate with carry, setting flags
+L589  
+L590  # nop
+L591  0x1f 0x20 0x03 0xd5
+L591  0x00000000: 1f 20 03 d5               ?? nop                                               ; no operation
+L592  
+L593  # orn v3.16b, v2.16b, v1.16b
+L594  0x43 0x1c 0xe1 0x4e
+L594  0x00000000: 43 1c e1 4e               ?? orn      v3.16b, v2.16b, v1.16b                   ; bitwise OR NOT
+L595  
+L596  # orn x3, x2, x1, ror #63
+L597  0x43 0xfc 0xe1 0xaa
+L597  0x00000000: 43 fc e1 aa               ?? orn      x3, x2, ror(x1, 0x3f<63>)                ; bitwise OR NOT
+L598  
+L599  # orr v3.8h, #0xff
+L600  0xe3 0x97 0x07 0x4f
+L600  0x00000000: e3 97 07 4f               ?? orr      v3.8h, 0x00000000000000ff<255>           ; bitwise OR
+L601  
+L602  # prfum plil2keep, [x13, #0xf4]
+L603  0xaa 0x41 0x8f 0xf8
+L603  0x00000000: aa 41 8f f8               ?? prfum    plil2keep, u8 [x13 + 0x00000000000000f4<244>] ; prefetch memory
+L604  
+L605  # rbit w2, w1
+L606  0x22 0x00 0xc0 0x5a
+L606  0x00000000: 22 00 c0 5a               ?? rbit     w2, w1                                   ; reverse bits
+L607  
+L608  # rbit v3.16b, v2.16b
+L609  0x43 0x58 0x60 0x6e
+L609  0x00000000: 43 58 60 6e               ?? rbit     v3.16b, v2.16b                           ; reverse bits
+L610  
+L611  # ret x1
+L612  0x20 0x00 0x5f 0xd6
+L612  0x00000000: 20 00 5f d6               ?? ret      x1                                       ; return from subroutine
+L613  
+L614  # ret
+L615  0xc0 0x03 0x5f 0xd6
+L615  0x00000000: c0 03 5f d6               ?? ret                                               ; return from subroutine
+L616  
+L617  # rev w2, w1
+L618  0x22 0x08 0xc0 0x5a
+L618  0x00000000: 22 08 c0 5a               ?? rev      w2, w1                                   ; reverse bytes
+L619  
+L620  # rev16 w2, w1
+L621  0x22 0x04 0xc0 0x5a
+L621  0x00000000: 22 04 c0 5a               ?? rev16    w2, w1                                   ; reverse bytes in 16-bit halfwords
+L622  
+L623  # rev16 v2.8b, v1.8b
+L624  0x22 0x18 0x20 0x0e
+L624  0x00000000: 22 18 20 0e               ?? rev16    v2.8b, v1.8b                             ; reverse bytes in 16-bit halfwords
+L625  
+L626  # ror w3, w1, #7
+L627  0x23 0x1c 0x81 0x13
+L627  0x00000000: 23 1c 81 13               ?? ror      w3, w1, 7                                ; rotate right
+L628  
+L629  # sbc w3, w2, w1
+L630  0x43 0x00 0x01 0x5a
+L630  0x00000000: 43 00 01 5a               ?? sbc      w3, w2, w1                               ; subtract with carry
+L631  
+L632  # sbcs w3, w2, w1
+L633  0x43 0x00 0x01 0x7a
+L633  0x00000000: 43 00 01 7a               ?? sbcs     w3, w2, w1                               ; subtract with carry
+L634  
+L635  # sbfiz w2, w1, #4, #4
+L636  0x22 0x0c 0x1c 0x13
+L636  0x00000000: 22 0c 1c 13               ?? sbfiz    w2, w1, 4, 4                             ; signed bitfield insert in zeros
+L637  
+L638  # sbfx w2, w1, #4, #4
+L639  0x22 0x1c 0x04 0x13
+L639  0x00000000: 22 1c 04 13               ?? sbfx     w2, w1, 4, 4                             ; signed bitfield extract
+L640  
+L641  # sdiv w3, w2, w1
+L642  0x43 0x0c 0xc1 0x1a
+L642  0x00000000: 43 0c c1 1a               ?? sdiv     w3, w2, w1                               ; signed divide
+L643  
+L644  # smulh x3, x2, x1
+L645  0x43 0x7c 0x41 0x9b
+L645  0x00000000: 43 7c 41 9b               ?? smulh    x3, x2, x1                               ; signed multiply high
+L646  
+L647  # stlr w2, [x1]
+L648  0x22 0xfc 0x98 0x88
+L648  0x00000000: 22 fc 98 88               ?? stlr     w2, u32 [x1]                             ; store-release register
+L649  
+L650  # stlrb w2, [x1]
+L651  0x22 0xfc 0x9f 0x08
+L651  0x00000000: 22 fc 9f 08               ?? stlrb    w2, u8 [x1]                              ; store-release register byte
+L652  
+L653  # stlrh w2, [x1]
+L654  0x22 0xfc 0x9f 0x48
+L654  0x00000000: 22 fc 9f 48               ?? stlrh    w2, u16 [x1]                             ; store-release register halfword
+L655  
+L656  # stp q3, q1, [x2, #-0x10]!
+L657  0x43 0x84 0xbf 0xad
+L657  0x00000000: 43 84 bf ad               ?? stp      q3, q1, u256 [x2 += 0xfffffffffffffff0<18446744073709551600,-16>] ; store pair of registers
+L658  
+L659  # stp x3, x1, [x2, #-8]
+L660  0x43 0x84 0x3f 0xa9
+L660  0x00000000: 43 84 3f a9               ?? stp      x3, x1, u128 [x2 + 0xfffffffffffffff8<18446744073709551608,-8>] ; store pair of registers
+L661  
+L662  # strb w3, [x2], #0xffffffffffffffff
+L663  0x43 0xf4 0x1f 0x38
+L663  0x00000000: 43 f4 1f 38               ?? strb     w3, u8 [x2 then x2 += 0xffffffffffffffff<18446744073709551615,-1>] ; store register byte
+L664  
+L665  #strb w3, [x2, x1, lsl #0]
+L666  0x43 0x78 0x21 0x38
+L666  0x00000000: 43 78 21 38               ?? strb     w3, u8 [x2 + x1]                         ; store register byte
+L667  
+L668  # strh w3, [x2, w1, uxtw #1]
+L669  0x43 0x58 0x21 0x78
+L669  0x00000000: 43 58 21 78               ?? strh     w3, u16 [uext(trunc(x2 + w1, 32), 64) << 1] ; store register halfword
+L670  
+L671  # strh w3, [x2, x1, sxtx #1]
+L672  0x43 0xf8 0x21 0x78
+L672  0x00000000: 43 f8 21 78               ?? strh     w3, u16 [x2 + x1 << 1]                   ; store register halfword
+L673  
+L674  # strh w3, [x2, x1, lsl #1]
+L675  0x43 0x78 0x21 0x78
+L675  0x00000000: 43 78 21 78               ?? strh     w3, u16 [x2 + x1 << 1]                   ; store register halfword
+L676  
+L677  # stur w2, [x1, #-1]
+L678  0x22 0xf0 0x1f 0xb8
+L678  0x00000000: 22 f0 1f b8               ?? stur     w2, u32 [x1 + 0xffffffffffffffff<18446744073709551615,-1>] ; store register
+L679  
+L680  # stur b2, [x1, #-1]
+L681  0x22 0xf0 0x1f 0x3c
+L681  0x00000000: 22 f0 1f 3c               ?? stur     b2, u8 [x1 + 0xffffffffffffffff<18446744073709551615,-1>] ; store register
+L682  
+L683  # sturb w2, [x1, #-1]
+L684  0x22 0xf0 0x1f 0x38
+L684  0x00000000: 22 f0 1f 38               ?? sturb    w2, u8 [x1 + 0xffffffffffffffff<18446744073709551615,-1>] ; store register byte
+L685  
+L686  # sturh w2, [x1, #-1]
+L687  0x22 0xf0 0x1f 0x78
+L687  0x00000000: 22 f0 1f 78               ?? sturh    w2, u16 [x1 + 0xffffffffffffffff<18446744073709551615,-1>] ; store register halfword
+L688  
+L689  # stxr w1, w3, [x2]
+L690  0x43 0x7c 0x01 0x88
+L690  0x00000000: 43 7c 01 88               ?? stxr     w1, w3, u32 [x2]                         ; store exclusive register
+L691  
+L692  # stxrb w1, w3, [x2]
+L693  0x43 0x7c 0x01 0x08
+L693  0x00000000: 43 7c 01 08               ?? stxrb    w1, w3, u8 [x2]                          ; store exclusive register byte
+L694  
+L695  # stxrh w1, w3, [x2]
+L696  0x43 0x7c 0x01 0x48
+L696  0x00000000: 43 7c 01 48               ?? stxrh    w1, w3, u16 [x2]                         ; store exclusive register halfword
+L697  
+L698  # sub w3, w2, w1, uxtw #3
+L699  0x43 0x4c 0x21 0x4b
+L699  0x00000000: 43 4c 21 4b               ?? sub      w3, w2, w1 << 3                          ; subtract
+L700  
+L701  # sub wsp, w2, w1, lsl #3
+L702  0x5f 0x4c 0x21 0x4b
+L702  0x00000000: 5f 4c 21 4b               ?? sub      wsp, w2, w1 << 3                         ; subtract
+L703  
+L704  # sub x3, x2, #0xfff, lsl #12
+L705  0x43 0xfc 0x7f 0xd1
+L705  0x00000000: 43 fc 7f d1               ?? sub      x3, x2, 0x0000000000000fff<4095> << 12   ; subtract
+L706  
+L707  # sub x3, x2, x1, lsr #63
+L708  0x43 0xfc 0x41 0xcb
+L708  0x00000000: 43 fc 41 cb               ?? sub      x3, x2, x1 >> 0x3f<63>                   ; subtract
+L709  
+L710  # sub d3, d2, d1
+L711  0x43 0x84 0xe1 0x7e
+L711  0x00000000: 43 84 e1 7e               ?? sub      d3, d2, d1                               ; subtract
+L712  
+L713  # sub v3.2d, v2.2d, v1.2d
+L714  0x43 0x84 0xe1 0x6e
+L714  0x00000000: 43 84 e1 6e               ?? sub      v3.2d, v2.2d, v1.2d                      ; subtract
+L715  
+L716  # subs x3, x2, w1, uxtb
+L717  0x43 0x00 0x21 0xeb
+L717  0x00000000: 43 00 21 eb               ?? subs     x3, x2, uext(trunc(w1, 8), 32)           ; subtract
+L718  
+L719  # subs x3, x2, #0xfff, lsl #12
+L720  0x43 0xfc 0x7f 0xf1
+L720  0x00000000: 43 fc 7f f1               ?? subs     x3, x2, 0x0000000000000fff<4095> << 12   ; subtract
+L721  
+L722  # sxtb x3, w2
+L723  0x43 0x1c 0x40 0x93
+L723  0x00000000: 43 1c 40 93               ?? sxtb     x3, w2                                   ; signed extend byte
+L724  
+L725  # sxth x3, w2
+L726  0x43 0x3c 0x40 0x93
+L726  0x00000000: 43 3c 40 93               ?? sxth     x3, w2                                   ; signed extend halfword
+L727  
+L728  # sxtw x3, w2
+L729  0x43 0x7c 0x40 0x93
+L729  0x00000000: 43 7c 40 93               ?? sxtw     x3, w2                                   ; sign extend word
+L730  
+L731  # sys #6, c10, c1, #1, x13
+L732  0x2d 0xa1 0x0e 0xd5
+L732  0x00000000: 2d a1 0e d5               ?? sys      6, c10, c1, 1, x13                       ; system instruction
+L733  
+L734  # tbnz w3, #0x1f, #0xfffffffffffffffc
+L735  0xe3 0xff 0xff 0x37
+L735  0x00000000: e3 ff ff 37               ?? tbnz     w3, 0x000000000000001f<31>, 0xfffffffffffffffc<18446744073709551612,-4> ; test bit and branch if nonzero
+L736  
+L737  # tbz w3, #0x1f, #0xfffffffffffffffc
+L738  0xe3 0xff 0xff 0x36
+L738  0x00000000: e3 ff ff 36               ?? tbz      w3, 0x000000000000001f<31>, 0xfffffffffffffffc<18446744073709551612,-4> ; test bit and branch if zero
+L739  
+L740  # tst w1, #7
+L741  0x3f 0x08 0x00 0x72
+L741  0x00000000: 3f 08 00 72               ?? tst      w1, 7                                    ; test bits
+L742  
+L743  # tst x2, x1, asr #63
+L744  0x5f 0xfc 0x81 0xea
+L744  0x00000000: 5f fc 81 ea               ?? tst      x2, asr(x1, 0x3f<63>)                    ; test bits
+L745  
+L746  # ubfiz w2, w1, #0x10, #4
+L747  0x22 0x0c 0x10 0x53
+L747  0x00000000: 22 0c 10 53               ?? ubfiz    w2, w1, 0x0000000000000010<16>, 4        ; unsigned bitfield insert in zeros
+L748  
+L749  # ubfx w2, w1, #0, #1
+L750  0x22 0x00 0x00 0x53
+L750  0x00000000: 22 00 00 53               ?? ubfx     w2, w1, 0, 1                             ; unsigned bitfield extract
+L751  
+L752  # ubfx w2, w1, #1, #4
+L753  0x22 0x10 0x01 0x53
+L753  0x00000000: 22 10 01 53               ?? ubfx     w2, w1, 1, 4                             ; unsigned bitfield extract
+L754  
+L755  # udiv x3, x2, x1
+L756  0x43 0x08 0xc1 0x9a
+L756  0x00000000: 43 08 c1 9a               ?? udiv     x3, x2, x1                               ; unsigned divide
+L757  
+L758  # umsubl x1, w2, w3, x4
+L759  0x41 0x90 0xa3 0x9b
+L759  0x00000000: 41 90 a3 9b               ?? umsubl   x1, w2, w3, x4                           ; unsigned multiply-subtract long
+L760  
+L761  # umull x3, w2, w1
+L762  0x43 0x7c 0xa1 0x9b
+L762  0x00000000: 43 7c a1 9b               ?? umull    x3, w2, w1                               ; unsigned multiply long
+L763  
+L764  # uxtb w2, w1
+L765  0x22 0x1c 0x00 0x53
+L765  0x00000000: 22 1c 00 53               ?? uxtb     w2, w1                                   ; unsigned extend byte
+L766  
+L767  # uxth w2, w1
+L768  0x22 0x3c 0x00 0x53
+L768  0x00000000: 22 3c 00 53               ?? uxth     w2, w1                                   ; unsigned extend halfword
+L769  
+L770  # Capstone disassembles this wrong: xtn v3.4h, v2.4s
+L771  # Like xtn2, xtn writes to a register that's the same size as the
+L772  # source register, just having twice as many elements. The correct
+L773  # disassembly should be: xtn v3.8h, v2.4s.
+L774  0x43 0x28 0x61 0x0e
+L774  0x00000000: 43 28 61 0e               ?? xtn      v3.8h, v2.4s                             ; extract narrow
+L775  
+L776  # xtn2 v3.8h, v2.4s
+L777  0x43 0x28 0x61 0x4e
+L777  0x00000000: 43 28 61 4e               ?? xtn2     v3.8h, v2.4s                             ; extract narrow
+L778  
+L779  # yield
+L780  0x3f 0x20 0x03 0xd5
+L780  0x00000000: 3f 20 03 d5               ?? yield                                             ; thread yield hint

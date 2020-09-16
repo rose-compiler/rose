@@ -30,7 +30,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2012_20.C \
    test2012_21.C \
    test2012_22.C \
-   test2012_25.C \
    test2012_27.C \
    test2012_28.C \
    test2012_29.C \
@@ -138,10 +137,10 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2016_07.C \
    test2016_10.C \
    test2016_11.C \
+   test2016_12.C \
    test2016_13.C \
    test2016_14.C \
    test2016_15.C \
-   test2016_16.C \
    test2016_17.C \
    test2016_18.C \
    test2016_19.C \
@@ -285,7 +284,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    rose-1522-0.C \
    rose-1763.C \
    rose-1863.C \
-   rose-1973.C \
    test2019_01.C \
    test2019_02.C \
    test2019_03.C \
@@ -312,15 +310,10 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_28.C \
    test2019_29.C \
    test2019_30.C \
-   test2019_31.C \
    test2019_32.C \
-   test2019_33.C \
    test2019_35.C \
    test2019_36.C \
-   test2019_39.C \
    test2019_40.C \
-   test2019_41.C \
-   test2019_42.C \
    test2019_45.C \
    test2019_46.C \
    test2019_47.C \
@@ -634,7 +627,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_460.C \
    test2019_461.C \
    test2019_462.C \
-   test2019_463.C \
    test2019_464.C \
    test2019_465.C \
    test2019_466.C \
@@ -733,7 +725,29 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2020_57.C \
    test2020_58.C \
    test2020_59.C \
-   test2020_66.C 
+   test2020_66.C \
+   test2020_67.C \
+   test2020_68.C \
+   test2020_69.C \
+   test2020_70.C \
+   test2020_74.C \
+   test2020_75.C \
+   test2020_76.C \
+   test2020_77.C \
+   test2020_78.C \
+   test2020_79.C \
+   test2020_81.C \
+   test2020_83.C \
+   test2020_84.C \
+   test2020_85.C \
+   test2020_86.C \
+   test2020_88.C \
+   test2020_89.C \
+   test2020_90.C \
+   test2020_92.C \
+   test2020_93.C \
+   test2020_94.C 
+
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -853,7 +867,13 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_51b.C \
    test2020_54.C \
    test2020_55.C \
-   test2020_56.C
+   test2020_56.C \
+   test2020_71.C \
+   test2020_72.C \
+   test2020_73.C \
+   test2020_80.C \
+   test2020_82.C \
+   test2020_91.C 
 
 # NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
 
@@ -955,7 +975,6 @@ else
      test2019_344.C \
      test2019_355.C \
      test2019_367.C \
-     test2019_94.C \
      test2019_95.C
 endif
 
@@ -964,8 +983,7 @@ if USING_INTEL_COMPILER
    test2018_100.C 
 else
 if ROSE_USING_GCC_VERSION_LATER_4_9
-  TESTCODES_REQUIRED_TO_PASS += \
-   test2018_100.C 
+#  TESTCODES_REQUIRED_TO_PASS += 
 else
   TESTCODE_CURRENTLY_FAILING += \
    test2018_100.C 
@@ -985,16 +1003,34 @@ if OS_MACOSX
      test2016_90.C 
 else
   TESTCODES_REQUIRED_TO_PASS += \
-     test2016_12.C \
-     test2016_20.C \
      test2016_23.C \
      test2016_24.C \
      test2016_33.C \
      test2016_34.C \
      test2016_35.C \
-     test2016_36.C \
-     test2016_90.C 
+     test2016_36.C 
 endif
+
+if ROSE_USING_GCC_VERSION_LATER_10_1
+# skip these codes when using GNU 10.1 (testing)
+else
+# DQ (7/23/2020): These are failing code for EDG 6.0 and GNU 10.1 (debugging this).
+TESTCODES_REQUIRED_TO_PASS += \
+   rose-1973.C \
+   test2012_25.C \
+   test2016_16.C \
+   test2016_20.C \
+   test2016_90.C \
+   test2018_100.C \
+   test2019_31.C \
+   test2019_33.C \
+   test2019_39.C \
+   test2019_41.C \
+   test2019_42.C \
+   test2019_94.C \
+   test2019_463.C 
+endif
+
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = \
@@ -1148,9 +1184,11 @@ else
 if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
 	@echo "USING_CLANG_COMPILER == true"
-	@echo "C++11 tests using EDG 4.9: Clang backend compiler using EDG 4.12 frontend."
+	@echo "C++11 tests not allowed with EDG 4.9: Clang backend compiler using EDG 4.12 or greater frontend."
+# DQ (3/22/2020): Builtins are now mostly supported, allowing tests so that we can debug Mac support during COVID-19 work at home.
 # DQ (2/21/2017): Too many failing files due to builtin functions that are missing.
 #	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Source_passed)
 else # NOT USING_CLANG_COMPILER
 	@echo "USING_CLANG_COMPILER == false"
 if USING_INTEL_COMPILER

@@ -5,6 +5,7 @@
 #include "SymbolicPlus.h"
 #include "SymbolicMultiply.h"
 #include "CPPAstInterface.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 #include <string.h>
 
 using namespace std;
@@ -21,7 +22,7 @@ template bool CloseDescriptor< SymbolicValDescriptor, '{', '}'>::read(istream&);
 
 #endif
 
-void SymbolicValDescriptor :: set_val( const SymbolicVal& v) 
+void SymbolicValDescriptor :: set_val( const SymbolicVal& v)
 {
   if (v.IsNIL() || FindVal(v, get_top()) )
     val = get_top();
@@ -32,7 +33,7 @@ void SymbolicValDescriptor :: set_val( const SymbolicVal& v)
 }
 
 void SymbolicValDescriptor::write(ostream& out) const
- { 
+ {
          string r= val.toString();
          if (r != "")
             out << r;
@@ -46,7 +47,7 @@ void SymbolicValDescriptor::Dump() const
      else if (val == get_bottom())
          cerr << "bottom";
      else {
-         string r= val.toString(); 
+         string r= val.toString();
          if (r != "")
             cerr << r;
      }
@@ -62,12 +63,12 @@ bool SymbolicValDescriptor:: is_bottom() const
   return val == get_bottom();
 }
 
-SymbolicConst SymbolicValDescriptor :: get_top() 
+SymbolicConst SymbolicValDescriptor :: get_top()
 {
   return SymbolicConst("", "top");
 }
 
-SymbolicConst SymbolicValDescriptor :: get_bottom() 
+SymbolicConst SymbolicValDescriptor :: get_bottom()
 {
   return SymbolicConst("", "bottom");
 }
@@ -100,8 +101,8 @@ bool SymbolicValDescriptor:: merge( const SymbolicValDescriptor& that)
      return false;
   else if (that.is_bottom() || is_top())
       val = that;
-  else if (val != that.val) 
-        val = get_bottom(); 
+  else if (val != that.val)
+        val = get_bottom();
   else
        return false;
   return true;
@@ -115,7 +116,7 @@ string SymbolicExtendVar :: get_varname( string name, int index)
 }
 
 AstNodePtr SymbolicExtendVar :: CodeGen( AstInterface& fa) const
-     {  
+     {
         string name;
         assert(first_arg().GetValType() == VAL_VAR && last_arg().GetValType() == VAL_CONST);
         SymbolicVar var( first_arg().toString() + "_" + last_arg().toString(), AST_NULL );
@@ -124,20 +125,20 @@ AstNodePtr SymbolicExtendVar :: CodeGen( AstInterface& fa) const
 
 AstNodePtr SymbolicFunctionPtrCall :: CodeGen(AstInterface& fa) const
 {
-  const_iterator i = args_begin(); 
+  const_iterator i = args_begin();
   AstNodePtr func = (*i).CodeGen(fa);
   AstInterface::AstNodeList l;
   for ( ++i ; i != args_end(); ++i) {
      SymbolicVal cur = *i;
-     AstNodePtr curast = cur.CodeGen(fa); 
+     AstNodePtr curast = cur.CodeGen(fa);
      l.push_back(curast.get_ptr());
   }
-  return fa.CreateFunctionCall(func,l.begin(), l.end()); 
+  return fa.CreateFunctionCall(func,l.begin(), l.end());
 }
 
 
 AstNodePtr SymbolicDotExp:: CodeGen( AstInterface& fa) const
-     {  
+     {
          assert(NumOfArgs() == 2);
          AstNodePtr obj = first_arg().CodeGen(fa);
          AstNodeType objtype;
@@ -148,7 +149,7 @@ AstNodePtr SymbolicDotExp:: CodeGen( AstInterface& fa) const
 
          string val = last_arg().toString(), valtype = last_arg().GetTypeName();
          CPPAstInterface fa2(fa);
-         AstNodePtr valast = (valtype == "field")? fa2.CreateFieldRef(objtypename, val) : fa2.CreateMethodRef(objtypename, val,true); 
+         AstNodePtr valast = (valtype == "field")? fa2.CreateFieldRef(objtypename, val) : fa2.CreateMethodRef(objtypename, val,true);
          return fa.CreateBinaryOP(AstInterface::BOP_DOT_ACCESS,obj, valast);
      }
 
@@ -163,7 +164,7 @@ SymbolicVal ReadSymbolicTerm( istream& in)
         result = ReadSymbolicExpr( 0, in);
         read_ch(in, ')');
         c = peek_ch(in);
-      } 
+      }
       else if (is_num(c)) {
          string val = read_num(in);
          if (strchr(val.c_str(), '.') != 0)
@@ -172,7 +173,7 @@ SymbolicVal ReadSymbolicTerm( istream& in)
             result = new SymbolicConst(val, "int");
          c = 0;
       }
-      else if (is_id(c)) {      
+      else if (is_id(c)) {
          string id = read_id(in);
          if (id == "Min" || id == "min") {
                read_ch(in, '(');
@@ -223,9 +224,9 @@ SymbolicVal ReadSymbolicTerm( istream& in)
            result = new SymbolicFunction( AstInterface::OP_NONE, op, args);
          }
          c = peek_ch(in);
-     }       
+     }
      else {
-          // "non recognizable value start " 
+          // "non recognizable value start "
           c = 0;
      }
      while (c == '.') {
@@ -255,7 +256,7 @@ SymbolicVal ReadSymbolicTerm( istream& in)
      else if (c == '[') {
        read_ch(in,c);
        SymbolicVal r2 = ReadSymbolicExpr( 0, in);
-       read_ch(in,']'); 
+       read_ch(in,']');
        result = new SymbolicFunction(AstInterface::OP_ARRAY_ACCESS, "[]", result, r2);
      }
 
@@ -270,7 +271,7 @@ SymbolicVal ReadSymbolicExpr( int level, istream& in)
      while (level1 > level) { // binary operator
         string op = read_operator(in);
         SymbolicVal r2 = ReadSymbolicExpr( level1, in);
-        if (op == "*") { 
+        if (op == "*") {
            result = result * r2;
          }
         else if (op == "+") {
@@ -279,13 +280,13 @@ SymbolicVal ReadSymbolicExpr( int level, istream& in)
         else if (op == "-") {
            result = result - r2;
         }
-        else if (op == "/") 
+        else if (op == "/")
            result = new SymbolicFunction( AstInterface::BOP_DIVIDE,op, result,r2);
         else {
            SymbolicFunction::Arguments args;
            args.push_back(result);
            args.push_back(r2);
-           if (op == "$") 
+           if (op == "$")
                result = result = new SymbolicExtendVar(args);
            else
                result = new SymbolicFunction( AstInterface::OP_NONE, op, result,r2);
@@ -299,7 +300,7 @@ SymbolicVal ReadSymbolicExpr( int level, istream& in)
 bool SymbolicValDescriptor::read( istream& in)
 {
      val = ReadSymbolicExpr( 0, in);
-     
+
      return !val.IsNIL();
 }
 
@@ -308,7 +309,7 @@ bool ExtendibleParamDescriptor :: read( istream& in)
   return BaseClass::read(in);
 }
 
-void ExtendibleParamDescriptor :: 
+void ExtendibleParamDescriptor ::
 replace_var( const string& varname, const SymbolicVal& _val)
 {
   get_ext_lb().replace_var(varname, _val);
@@ -357,7 +358,7 @@ replace_var( const string& varname, const SymbolicVal& repl)
 void SymbolicFunctionDeclaration::Dump() const
 { write(cerr); }
 
-void SymbolicFunctionDeclaration:: 
+void SymbolicFunctionDeclaration::
 replace_val(MapObject<SymbolicVal, SymbolicVal>& repl)
 {
   second.replace_val(repl);
@@ -371,12 +372,12 @@ class ReplaceExtendibleParam : public SymbolicVisitor
 
   SymbolicVal orig;
   vector<SymbolicVal> result;
-  
-  void Default() { 
-    result.push_back(orig); 
+
+  void Default() {
+    result.push_back(orig);
   }
 
-  void VisitExpr( const SymbolicExpr& exp) 
+  void VisitExpr( const SymbolicExpr& exp)
   {
     int cur = result.size();
     SymbolicExpr *r = exp.DistributeExpr(SYMOP_NIL, SymbolicVal());
@@ -403,9 +404,9 @@ class ReplaceExtendibleParam : public SymbolicVisitor
         if ( curext == extname) {
             for (int i = 0; i <= extub-extlb; ++i) {
               result.push_back(parList[parstart + i]);
-            } 
+            }
         }
-        else if (u.last_arg().GetValType() == VAL_CONST && 
+        else if (u.last_arg().GetValType() == VAL_CONST &&
                  u.last_arg().GetTypeName() == "int") {
             int index = atoi(curext.c_str());
             assert( index >= extlb && index <= extub);
@@ -434,7 +435,7 @@ class ReplaceExtendibleParam : public SymbolicVisitor
    }
    else {
         int cur = result.size();
-        for (SymbolicFunction::const_iterator i = u.args_begin(); 
+        for (SymbolicFunction::const_iterator i = u.args_begin();
               i != u.args_end(); ++i) {
           SymbolicVal tmp= *i;
           orig = tmp;
@@ -450,12 +451,12 @@ class ReplaceExtendibleParam : public SymbolicVisitor
     }
   }
  public:
-   ReplaceExtendibleParam( const string& bn, const string& en, int lb, int ub, 
+   ReplaceExtendibleParam( const string& bn, const string& en, int lb, int ub,
                            int start, const vector<SymbolicVal>& l)
      : basename(bn), extname(en), extlb(lb), extub(ub), parstart(start), parList(l)
     {}
    SymbolicVal visit ( const SymbolicVal& o )
-    { 
+    {
       orig = o;
       result.clear();
       orig.Visit(this);
@@ -486,7 +487,7 @@ void SymbolicFunctionDeclarationGroup::Dump() const
 { write(cerr); }
 
 //! store the function name in r ??  Store the result in 'r' ?
-bool SymbolicFunctionDeclaration:: 
+bool SymbolicFunctionDeclaration::
 get_val(const std::vector<SymbolicVal>& parList, SymbolicVal& r) const
 {
   vector< pair<SymbolicVar, SymbolicVal> > params;
@@ -513,7 +514,7 @@ get_val(const std::vector<SymbolicVal>& parList, SymbolicVal& r) const
       else {
         int lb = 0, ub = 0;
         if (!cur.get_extension(lb, ub) || ub-lb >= (int)parList.size() - j) {
-           cerr << "lb = " << lb << "; ub = " << ub << "; parList.size = " << parList.size() << "; j = " << j << endl; 
+           cerr << "lb = " << lb << "; ub = " << ub << "; parList.size = " << parList.size() << "; j = " << j << endl;
            assert(false);
         }
         ReplaceExtendibleParam op(basename, extname, lb, ub, j, parList);
@@ -529,7 +530,7 @@ get_val(const std::vector<SymbolicVal>& parList, SymbolicVal& r) const
   return true;
 }
 
-bool SymbolicFunctionDeclarationGroup :: 
+bool SymbolicFunctionDeclarationGroup ::
 get_val( const std::vector<SymbolicVal>& parList, SymbolicVal& r) const
 {
   for (const_iterator p = begin(); p != end(); ++p) {

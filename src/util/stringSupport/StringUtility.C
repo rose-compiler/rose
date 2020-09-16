@@ -194,6 +194,10 @@ cUnescape(const std::string &s) {
 //      and characters above 0177. The Bash shell has a special syntax for escaping these in a C-like manner.
 std::string
 bourneEscape(const std::string &s) {
+    // If the string is empty it needs to be quoted.
+    if (s.empty())
+        return "'" + s + "'";
+
     // The presence of non-printing characters trumps all others and requires C-style quoting
     BOOST_FOREACH (char ch, s) {
         if (!::isprint(ch))

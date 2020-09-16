@@ -128,49 +128,71 @@ namespace CodeThorn {
     }
 #endif
   }
-
-  void Normalization::normalizeAstPhaseByPhase(SgNode* root) {
-    if (options.normalizeCplusplus) {
-      normalizeCxx(root);
+  void Normalization::printNormalizationPhase() {
+    if(this->options.printPhaseInfo) {
+      cout<<"Normalization phase "<<normPhaseNr<<"/"<<normPhaseNrLast<<"["<<(normPhaseNr*100/normPhaseNrLast)<<"%]"<<" ... "<<endl;
     }
+    normPhaseNr++;
+  }
+  void Normalization::normalizeAstPhaseByPhase(SgNode* root) {
+    normPhaseNr=1;
+    normPhaseNrLast=12;
+    printNormalizationPhase();
+    if (options.normalizeCplusplus) {
+      normalizeCxx(*this, root);
+    }
+    printNormalizationPhase();
     if(options.normalizeSingleStatements) {
       normalizeSingleStatementsToBlocks(root);
     }
+    printNormalizationPhase();
     if(options.normalizeLabels) {
       normalizeLabelStmts(root);
     }
+    printNormalizationPhase();
     if(options.eliminateForStatements) {
       convertAllForStmtsToWhileStmts(root);
     }
 
     // uses options to select which breaks are transformed (can be none)
+    printNormalizationPhase();
     normalizeBreakAndContinueStmts(root);
 
+    printNormalizationPhase();
     if(options.eliminateWhileStatements) {
       // transforms while and do-while loops
       createLoweringSequence(root);
       applyLoweringSequence();
     }
+    printNormalizationPhase();
     if(options.hoistBranchInitStatements) {
       hoistBranchInitStatementsInAst(root);
     }
+    printNormalizationPhase();
     if(options.hoistConditionExpressions) {
       hoistConditionsInAst(root,options.restrictToFunCallExpressions);
     }
+    printNormalizationPhase();
     if(options.normalizeExpressions) {
       normalizeExpressionsInAst(root,options.restrictToFunCallExpressions);
     }
+    printNormalizationPhase();
     if(options.normalizeVariableDeclarations) {
       normalizeAllVariableDeclarations(root,false);
     }
+    printNormalizationPhase();
     if(options.normalizeVariableDeclarationsWithFunctionCalls) {
       bool normalizeOnlyVariablesWithFunctionCallsFlag=true;
       normalizeAllVariableDeclarations(root,normalizeOnlyVariablesWithFunctionCallsFlag);
     }
+    printNormalizationPhase();
     if(options.inlining) {
       InlinerBase* inliner=getInliner();
       ROSE_ASSERT(inliner);
       inliner->inlineFunctions(root);
+    }
+    if(this->options.printPhaseInfo) {
+      cout<<"Normalization done."<<endl;
     }
   }
 
@@ -402,24 +424,11 @@ namespace CodeThorn {
   }
 
   bool Normalization::isTemplateInstantiationNode(SgNode* node) {
-    return isSgTemplateInstantiationDecl(node)
-      || isSgTemplateInstantiationDefn(node)
-      || isSgTemplateInstantiationFunctionDecl(node)
-      || isSgTemplateInstantiationMemberFunctionDecl(node)
-      || isSgTemplateInstantiationTypedefDeclaration(node)
-      || isSgTemplateInstantiationDirectiveStatement(node)
-      ;
+    return RoseAst::isTemplateInstantiationNode(node);
   }
 
   bool Normalization::isTemplateNode(SgNode* node) {
-    return isSgTemplateClassDeclaration(node)
-      || isSgTemplateClassDefinition(node)
-      || isSgTemplateFunctionDeclaration(node)
-      || isSgTemplateFunctionDefinition(node)
-      || isSgTemplateMemberFunctionDeclaration(node)
-      || isSgTemplateTypedefDeclaration(node)
-      || isSgTemplateVariableDeclaration(node)
-      ;
+    return RoseAst::isTemplateNode(node);
   }
 
   /***************************************************************************
@@ -496,25 +505,25 @@ void hoistBranchInitStatement(GetInitStatement::matched_node n)
 
 void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
 {
-    GetInitStatement::container hoistingTransformationList;
+  GetInitStatement::container hoistingTransformationList;
 
-    RoseAst ast(node);
-    // build list of stmts to transform
-    for (auto i=ast.begin();i!=ast.end();++i) {
-      // TEMPLATESKIP this will skip all templates that are found (mostly in header files). This could also be integrated into the iterator itself.
-      if(isTemplateNode(*i)) {
-        i.skipChildrenOnForward();
-        continue;
-      }
-
-      sg::dispatch(GetInitStatement(hoistingTransformationList), *i);
+  RoseAst ast(node);
+  // build list of stmts to transform
+  for (auto i=ast.begin();i!=ast.end();++i) {
+    // TEMPLATESKIP this will skip all templates that are found (mostly in header files). This could also be integrated into the iterator itself.
+    if(isTemplateNode(*i)) {
+      i.skipChildrenOnForward();
+      continue;
     }
 
-    // transform stmts
-    for (auto match: hoistingTransformationList) {
-      hoistBranchInitStatement(match);
-    }
+    sg::dispatch(GetInitStatement(hoistingTransformationList), *i);
   }
+
+  // transform stmts
+  for (auto match: hoistingTransformationList) {
+    hoistBranchInitStatement(match);
+  }
+}
 
   /***************************************************************************
    * HOISTING OF CONDITION EXPRESSIONS (if, switch, do, do-while)
@@ -586,31 +595,6 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
         cerr<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(stmt)<<endl;
         cerr<<"Error: Normalization: Variable declaration in condition of if statement. Not supported yet."<<endl;
         exit(1);
-
-        // temporary "fix"
-
-        //if (!condExpr && isSgIfStmt(stmt)) {
-          // PP (03/02/20) handle variable declarations in conditions
-        //  SgVariableDeclaration* condVar = isSgVariableDeclaration(condNode);
-
-        //  if (!condVar)
-        //    std::cerr << typeid(*condNode).name() << "\n" << stmt->unparseToString() << std::endl;
-
-        //  ROSE_ASSERT(condVar);
-
-          // \todo do we also have to fix up the symbol scope?
-
-        //  SgVarRefExp*           condRef = SageBuilder::buildVarRefExp(condVar);
-        //  SgExprStatement*       refStmt = SageBuilder::buildExprStatement(condRef);
-
-        //  SageInterface::replaceStatement(condVar, refStmt, true /* movePreprocessingInfo */);
-        //  SageInterface::insertStatementBefore(stmt, condVar);
-        //  return;
-        //}
-
-        //if (!condExpr)
-        //  std::cerr << typeid(*condNode).name() << "\n" << stmt->unparseToString() << std::endl;
-
       } else {
         cerr<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(stmt)<<endl;
         cerr<<"Error: Normalization: Unknown language construct in condition of if statement. Not supported."<<endl;
@@ -947,7 +931,8 @@ add
     } else if(isSgAssignOp(expr)||isSgCompoundAssignOp(expr)) {
       // special case: normalize assignment with lhs/rhs-semantics
 
-      if(isSgExprStatement(expr->get_parent())) {
+      // 'true' keeps a=b=c;
+      if(true||isSgExprStatement(expr->get_parent())) {
         // special handling of assignment that is not inside an
         // expression normalize rhs of assignment
         mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
@@ -1100,12 +1085,15 @@ add
       Normalization::TmpVarNrType rhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
       Normalization::TmpVarNrType lhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList,insideExprToBeEliminated);
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,lhsResultTmpVarNr,rhsResultTmpVarNr,subExprTransformationList);
-    } else if (isNullThrow(expr)) {
+    } else if(options.normalizeCplusplus && isNullThrow(expr)) {
       mostRecentTmpVarNr=0; // PP correct?
     } else if(isSgUnaryOp(expr)) {
       // general case: unary operator
       Normalization::TmpVarNrType unaryResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)),subExprTransformationList,insideExprToBeEliminated);
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,unaryResultTmpVarNr,subExprTransformationList);
+    } else if(options.normalizeCplusplus && isSgNewExp(expr)) {
+      // \todo PP normalize new arguments?
+      mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,subExprTransformationList);
     } else {
       // leave node.
       // MS: 05/09/2019: register tmp var if parent is AndOp or OrOp
@@ -1469,12 +1457,34 @@ add
     SgType* expressionType = expression->get_type();
     SgType* variableType = expressionType;
 
-    //MS 10/24/2018: If the expression has array type, we need to use a pointer type for the temporary variable.
+    //MS 10/24/2018: If variable has referece type, use a value type for the temporary variable (otherwise reference would be duplicated into 2 memory locations)
+    if (SgReferenceType* referenceType=isSgReferenceType(expressionType))
+    {
+      if(SgReferenceType* strippedReferenceType = isSgReferenceType(referenceType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
+        SgType* strippedReferenceBaseType = strippedReferenceType->get_base_type();
+        variableType = strippedReferenceBaseType;
+      }
+    }
+
+    //MS 10/24/2018: If the expression has array type, use a pointer type for the temporary variable.
     if (SgArrayType* arrayType=isSgArrayType(expressionType))
     {
       if(SgArrayType* strippedArrayType = isSgArrayType(arrayType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
         SgType* strippedArrayBaseType = strippedArrayType->get_base_type();
         variableType = SageBuilder::buildPointerType(strippedArrayBaseType);
+      }
+    }
+
+    //MS 06/24/2020: If the expression is an assignment then ensure
+    //that tmp var is of reference type. In case of array use base
+    //type.
+    if (isSgAssignOp(expression))
+    {
+      if(SgType* strippedType = isSgType(expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
+        if(SgArrayType* arrayType = isSgArrayType(strippedType)) {
+          SgType* strippedType = arrayType->get_base_type();
+        }
+        variableType = SageBuilder::buildReferenceType(strippedType);
       }
     }
 

@@ -9,6 +9,7 @@
 
 // DQ (12/10/2016): Added assert.h to support fix for warning we want to make an error.
 #include <assert.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 using namespace std;
 
@@ -105,7 +106,7 @@ str_set Annotations::Pruned_procedures;
    * Use this value to keep an accumulated total for the adaptive modes. */
 
 double Annotations::Analysis_time = 0.0;
-  
+
   /** @brief Enabled properties */
 
 str_list Annotations::Enabled_properties;
@@ -113,7 +114,7 @@ str_list Annotations::Enabled_properties;
   /** @brief Disabled properties */
 
 str_list Annotations::Disabled_properties;
-  
+
   /** @brief Start of heap */
 
 unsigned long int Annotations::Start_brk = 0;
@@ -180,7 +181,7 @@ Annotations::Annotations(string & filename, str_list * cpp_flags)
 
   parserID consname("constants", 0);
   _constants = new enumPropertyAnn(&consname, Forward, true, (parserID *)0,
-			       (enumvalue_list *)0 );
+                               (enumvalue_list *)0 );
 
   add_enum_property(_constants);
 
@@ -190,7 +191,7 @@ Annotations::Annotations(string & filename, str_list * cpp_flags)
 
   parserID init_name("__init", 0);
   _init = new procedureAnn(&init_name, (parserid_list *)0,
-			   this, 0);
+                           this, 0);
 
   // -- Create a special "null" global variable. We'll set up the binding
   // in the analyzer.
@@ -228,8 +229,8 @@ Annotations::Annotations(string & filename, str_list * cpp_flags)
 
 
   annVariable * null_var = new annVariable(nullname, procname,
-					   is_new, is_global,
-					   is_external, is_formal, is_io);
+                                           is_new, is_global,
+                                           is_external, is_formal, is_io);
   null_var->set_global();
   _globals[nullname] = null_var;
   */
@@ -304,7 +305,7 @@ void Annotations::clear()
       (*p).second->clear();
     }
 }
-#endif  
+#endif
 
 // --- Procedure operations
 
@@ -317,7 +318,7 @@ void Annotations::add_procedure(procedureAnn * new_procedure)
   procedureAnn * old = lookup_procedure(new_procedure->name());
   if (old != 0)
     Error(new_procedure->line(), string("Procedure ") +
-	  new_procedure->name() + " is already defined");
+          new_procedure->name() + " is already defined");
 
   // Look up the function declaration
 
@@ -326,7 +327,7 @@ void Annotations::add_procedure(procedureAnn * new_procedure)
   if (decl) {
     if (decl->type()->typ() != Func)
       Warning(new_procedure->line(), string("Annotation ") +
-	      new_procedure->name() + " is not a function in the header -- annotation ignored.");
+              new_procedure->name() + " is not a function in the header -- annotation ignored.");
     else {
 
       // -- Check the number of arguments
@@ -334,24 +335,24 @@ void Annotations::add_procedure(procedureAnn * new_procedure)
       funcNode * func = (funcNode *) decl->type();
       if (func->args().size() != new_procedure->formal_params().size()) {
 
-	// -- Different number of args, filter out the weird "void" case.
+        // -- Different number of args, filter out the weird "void" case.
 
-	if ( ! (func->is_void_args() && (new_procedure->formal_params().size() == 0)))
-	  Warning(new_procedure->line(), string("In procedure ") +
-		  new_procedure->name() + ", number of arguments does not match header -- annotation ignored.");
-	else
-	  ok_to_add = true;
+        if ( ! (func->is_void_args() && (new_procedure->formal_params().size() == 0)))
+          Warning(new_procedure->line(), string("In procedure ") +
+                  new_procedure->name() + ", number of arguments does not match header -- annotation ignored.");
+        else
+          ok_to_add = true;
       }
       else {
-	funcNode * type_copy = (funcNode *) ref_clone_changer::clone(decl->type(), false);
-	new_procedure->proc()->decl()->type(type_copy);
-	ok_to_add = true;
+        funcNode * type_copy = (funcNode *) ref_clone_changer::clone(decl->type(), false);
+        new_procedure->proc()->decl()->type(type_copy);
+        ok_to_add = true;
       }
     }
   }
   else
     Warning(new_procedure->line(), string("Procedure ") +
-	    new_procedure->name() + " is not declared in the header -- annotation ignored.");
+            new_procedure->name() + " is not declared in the header -- annotation ignored.");
 #else
   ok_to_add = true;
 #endif
@@ -377,22 +378,22 @@ void Annotations::add_globals(structuretree_list * structures)
 {
   if (structures) {
     for (structuretree_list_p p = structures->begin();
-	 p != structures->end();
-	 ++p)
+         p != structures->end();
+         ++p)
       {
-	structureTreeAnn * top_node = *p;
+        structureTreeAnn * top_node = *p;
 
-	// -- Start with the first variable...
+        // -- Start with the first variable...
 
-	annVariable * top_var = add_one_global(top_node->name(), 
-					       top_node->is_io());
+        annVariable * top_var = add_one_global(top_node->name(),
+                                               top_node->is_io());
 
-	// -- Build the structure underneath it
+        // -- Build the structure underneath it
 
-	if (top_node->targets())
-	  _init->add_global_structures(this, top_var, top_node);
+        if (top_node->targets())
+          _init->add_global_structures(this, top_var, top_node);
 
-	delete top_node;
+        delete top_node;
       }
   }
 }
@@ -432,7 +433,7 @@ annVariable * Annotations::add_one_global(const string & varname, bool is_io)
 
     if (global->is_external()) {
       if (is_io)
-	global->set_io();
+        global->set_io();
     }
   }
 
@@ -440,8 +441,8 @@ annVariable * Annotations::add_one_global(const string & varname, bool is_io)
 }
 
 annVariable * Annotations::new_global(const string & varname,
-				      bool is_external,
-				      bool is_io)
+                                      bool is_external,
+                                      bool is_io)
 {
   bool is_new = false;
   bool is_global = true;
@@ -449,12 +450,12 @@ annVariable * Annotations::new_global(const string & varname,
   string procname("(global)");
 
   annVariable * g = new annVariable(varname,
-				    procname,
-				    is_new,
-				    is_global,
-				    is_external,
-				    is_formal,
-				    is_io);
+                                    procname,
+                                    is_new,
+                                    is_global,
+                                    is_external,
+                                    is_formal,
+                                    is_io);
 
   _globals[varname] = g;
 
@@ -529,7 +530,7 @@ void Annotations::add_enum_property(enumPropertyAnn * property)
   }
   else
     Error(property->line(), string(" property \"") + property->name() +
-	  "\" already defined.");
+          "\" already defined.");
 }
 
 // --- Lookup a property
@@ -574,7 +575,7 @@ void Annotations::add_set_property(setPropertyAnn * setProperty)
   }
   else
     Error(setProperty->line(), string(" set property \"") + setProperty->name() +
-	  "\" already defined.");
+          "\" already defined.");
 }
 
 // --- Lookup a setProperty
@@ -643,7 +644,7 @@ void Annotations::print(ostream & o) const
       annVariable * glob = p->second;
 
       if (p != _globals.begin())
-	o << ", ";
+        o << ", ";
 
       o << glob->name();
     }
@@ -727,8 +728,8 @@ FILE * Annotations::_open_input_file()
   if (CBZ::Preprocess && ! std_in) {
     string command = CBZ::cc_cmd + " -E " + CBZ::preproc_flags;
     for (str_list_p p = _cpp_flags->begin();
-	 p != _cpp_flags->end();
-	 ++p)
+         p != _cpp_flags->end();
+         ++p)
       command += " " + (*p);
 
     command += " " + _filename;
@@ -751,8 +752,8 @@ FILE * Annotations::_open_input_file()
       in_file = fopen(_filename.c_str(), "r");
 
       if (! in_file) {
-	cerr << "Unable to open input file " << _filename << endl;
-	exit(1);
+        cerr << "Unable to open input file " << _filename << endl;
+        exit(1);
       }
     }
     else

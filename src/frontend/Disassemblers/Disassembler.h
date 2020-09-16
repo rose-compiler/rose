@@ -1,7 +1,6 @@
 #ifndef ROSE_DISASSEMBLER_H
 #define ROSE_DISASSEMBLER_H
-
-#include <rosePublicConfig.h>
+#include <featureTests.h>
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "BinaryCallingConvention.h"
@@ -87,10 +86,6 @@ public:
         SgAsmInstruction *insn;         /**< Instruction associated with an assembly error. */
     };
 
-    /** An AddressSet contains virtual addresses (alternatively, relative virtual addresses) for such things as specifying
-     *  which virtual addresses should be disassembled. */
-    typedef std::set<rose_addr_t> AddressSet;
-
     /** The InstructionMap is a mapping from (absolute) virtual address to disassembled instruction. */
     typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
 
@@ -108,6 +103,7 @@ protected:
     ByteOrder::Endianness p_byteOrder;                  /**< Byte order of instructions in memory. */
     size_t p_wordSizeBytes;                             /**< Basic word size in bytes. */
     std::string p_name;                                 /**< Name by which this dissassembler is registered. */
+    size_t instructionAlignment_;                       /**< Positive alignment constraint for instruction addresses. */
 
     /** Prototypical dispatcher for creating real dispatchers */
     InstructionSemantics2::BaseSemantics::DispatcherPtr p_proto_dispatcher;
@@ -133,6 +129,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_byteOrder);
         s & BOOST_SERIALIZATION_NVP(p_wordSizeBytes);
         s & BOOST_SERIALIZATION_NVP(p_name);
+        if (version >= 2)
+            s & BOOST_SERIALIZATION_NVP(instructionAlignment_);
     }
 #endif
 
@@ -141,7 +139,7 @@ private:
     //                                  Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    Disassembler(): p_registers(NULL), p_byteOrder(ByteOrder::ORDER_LSB), p_wordSizeBytes(4) {}
+    Disassembler(): p_registers(NULL), p_byteOrder(ByteOrder::ORDER_LSB), p_wordSizeBytes(4), instructionAlignment_(1) {}
     virtual ~Disassembler() {}
 
 
@@ -185,7 +183,8 @@ public:
 
     /** List of names recognized by @ref lookup.
      *
-     *  Returns the list of names that the @ref lookup method recognizes. */
+     *  Returns the list of names that the @ref lookup method recognizes. These are the disassemblers that are actually
+     *  enabled in this configuration of ROSE. */
     static std::vector<std::string> isaNames();
 
     /** Finds a suitable disassembler. Looks through the list of registered disassembler instances (from most recently
@@ -232,6 +231,11 @@ public:
     void wordSizeBytes(size_t nbytes) { p_wordSizeBytes = nbytes; }
     /** @} */
 
+    /** Property: Instruction alignment requirement.
+     *
+     *  The alignment that's required for instruction addresses. The return value is a positive number of bytes. */
+    size_t instructionAlignment() const;
+    
     /** Properties: Register dictionary.
      *
      *  Specifies the registers available on this architecture.  Rather than using hard-coded class, number, and position
@@ -347,7 +351,7 @@ public:
      *  complete to true before returning.
      *
      *  Thread safety: Thread safe provided no other thread is modifying the specified instruction map. */
-    AddressSet get_block_successors(const InstructionMap&, bool *complete);
+    AddressSet get_block_successors(const InstructionMap&, bool &complete/*out*/);
 
 private:
     /** Initialize class (e.g., register built-in disassemblers). This class method is thread safe, using class_mutex. */
@@ -366,7 +370,7 @@ private:
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Disassembler, 1);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Disassembler, 2);
 
 #endif
 #endif

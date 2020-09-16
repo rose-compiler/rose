@@ -675,6 +675,17 @@ SgAdaLoopStmt::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
      SgStatement::fixupCopy_symbols(copy,help);
    }
 
+void
+SgAdaAcceptStmt::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgAdaLoopStmt::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+  // Also call the base class version of the fixupCopycopy() member function
+     SgStatement::fixupCopy_symbols(copy,help);
+   }
+
 
 void
 SgTypedefDeclaration::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
@@ -887,26 +898,27 @@ SgIfStmt::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
 
      this->get_conditional()->fixupCopy_symbols(ifStatement_copy->get_conditional(),help);
 
-     ROSE_ASSERT(this->get_true_body() != NULL);
-     ROSE_ASSERT(ifStatement_copy->get_true_body() != NULL);
-     if (isSgScopeStatement(ifStatement_copy->get_true_body())) 
-        {
-       // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->get_symbol_table() != NULL);
-       // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->get_symbol_table()->size()  == 0);
-          ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->symbol_table_size() == 0);
-        }
+     SgStatement* thsTruBody = this->get_true_body();
+     ROSE_ASSERT(thsTruBody != NULL);
+     SgStatement* ifStmtCopyTruBody = ifStatement_copy->get_true_body();
+     ROSE_ASSERT(ifStmtCopyTruBody != NULL);
+     if (isSgScopeStatement(ifStmtCopyTruBody) != NULL) {
+     // ROSE_ASSERT(isSgScopeStatement(ifStmtCopyTruBody)->get_symbol_table() != NULL);
+     // ROSE_ASSERT(isSgScopeStatement(ifStmtCopyTruBody)->get_symbol_table()->size()  == 0);
+        ROSE_ASSERT(isSgScopeStatement(ifStmtCopyTruBody)->symbol_table_size() == 0);
+     }
 
   // printf ("\nProcess the TRUE body of the SgIfStmt \n\n");
 
-     this->get_true_body()->fixupCopy_symbols(ifStatement_copy->get_true_body(),help);
+     thsTruBody->fixupCopy_symbols(ifStmtCopyTruBody,help);
 
      ROSE_ASSERT((this->get_false_body() != NULL) == (ifStatement_copy->get_false_body() != NULL));
-     if (isSgScopeStatement(ifStatement_copy->get_false_body())) 
-        {
-       // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->get_symbol_table() != NULL);
-       // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->get_symbol_table()->size()  == 0);
-          ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->symbol_table_size() == 0);
-        }
+     SgScopeStatement* scopeStmntCopyFalseBody = isSgScopeStatement(ifStatement_copy->get_false_body());
+     if (scopeStmntCopyFalseBody != NULL) {
+     // ROSE_ASSERT(scopeStmntCopyFalseBody->get_symbol_table() != NULL);
+     // ROSE_ASSERT(scopeStmntCopyFalseBody->get_symbol_table()->size()  == 0);
+        ROSE_ASSERT(scopeStmntCopyFalseBody->symbol_table_size() == 0);
+     }
 
   // printf ("\nProcess the FALSE body of the SgIfStmt \n\n");
 

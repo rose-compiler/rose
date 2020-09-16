@@ -991,6 +991,10 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
 #if 0
+     printf ("In unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = %" PRIuPTR " \n",funcdecl_stmt->get_args().size());
+     curprint( string("\n/* In unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = ") + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
+#endif
+#if 0
      printf ("In unparseFunctionParameterDeclaration(): TOP \n");
      printf ("   --- funcdecl_stmt                                 = %p = %s \n",funcdecl_stmt,funcdecl_stmt->get_name().str());
      printf ("   --- funcdecl_stmt->get_type_syntax_is_available() = %s \n",funcdecl_stmt->get_type_syntax_is_available() ? "true" : "false");
@@ -1312,6 +1316,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
             // If we are using Clang then we might require this, GNU accepts with or without..
                if (isSgEnumType(tmp_type) != NULL)
                   {
+#error "DEAD CODE!"
                     ninfo.set_SkipClassSpecifier();
                   }
 #endif
@@ -1463,7 +1468,9 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
              {
                unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
              }
-
+#if 0
+          curprint("\n/* unparseFunctionArgs(): in loop over args: funcdecl_stmt->get_args().size() = " + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
+#endif
        // DQ (1/17/2014): Adding support in C to output function prototypes without function parameters.
        // unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
        // if (outputFunctionParameters == true)
@@ -1480,6 +1487,9 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
 #if 0
                     printf ("In unparseFunctionArgs(): Output the syntax for function parameters: (*p_syntax)->get_name() = %s \n",(*p_syntax)->get_name().str());
 #endif
+#if 0
+                    curprint("\n/* unparseFunctionArgs(): calling unparseFunctionParameterDeclaration (with syntax) */ \n");
+#endif
                     unparseFunctionParameterDeclaration (funcdecl_stmt,*p_syntax,false,info);
 
 #if 0
@@ -1489,6 +1499,9 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
                   }
                  else
                   {
+#if 0
+                    curprint("\n/* unparseFunctionArgs(): calling unparseFunctionParameterDeclaration (without syntax) */ \n");
+#endif
                     unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
                   }
              }
@@ -1692,11 +1705,19 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
                printf ("DONE: Output the comments and CCP directives for the SgInitializedName function args = %p \n",*p);
 #endif
             // Output declarations for function parameters (using old-style K&R syntax)
-            // printf ("Output declarations for function parameters (using old-style K&R syntax) \n");
+#if 0
+               printf ("Output declarations for function parameters (using old-style K&R syntax) \n");
+               curprint(" /* Output declarations for function parameters (using old-style K&R syntax) */ ");
+#endif
                unparseFunctionParameterDeclaration(funcdecl_stmt,*p,true,ninfo2);
-
+#if 0
+               printf ("DONE: Output declarations for function parameters (using old-style K&R syntax) \n");
+               curprint(" /* DONE: Output declarations for function parameters (using old-style K&R syntax) */ ");
+#endif
                curprint( ";");
+
                unp->u_sage->curprint_newline();
+
                p++;
              }
         }
@@ -1828,6 +1849,9 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 
 #if 0
      printf ("In Unparse_ExprStmt::unparseLanguageSpecificStatement(): Selecting an unparse function for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+#if 0
+          curprint("/* In Unparse_ExprStmt::unparseLanguageSpecificStatement(): Selecting an unparse function */");
 #endif
 
      switch (stmt->variantT())
@@ -5102,7 +5126,23 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if (funcdecl_stmt->isExternBrace())
              {
-               curprint(" }");
+#if 0
+               printf ("Inside of unparseFuncDeclStmt(): Output extern closing brace \n");
+               curprint("/* Inside of unparseFuncDeclStmt(): Output extern closing brace */ \n");
+#endif
+#if 0
+            // DQ (8/16/2020): I think that this is redundant with the use of braces on the class containing such extern c declarations.
+            // These extern brace cases are handled via the CPP preprocessor support.
+            // curprint(" }");
+               if (info.get_extern_C_with_braces() == true)
+                  {
+                    curprint(" }");
+                  }
+
+            // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+            // ROSE_ASSERT(info.get_extern_C_with_braces() == true);
+               info.set_extern_C_with_braces(false);
+#endif
              }
         }
        else
@@ -5124,8 +5164,13 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              {
 #if 0
                printf ("Calling ninfo.set_CheckAccess() \n");
+               curprint("\n/* calling ninfo.set_CheckAccess() */ \n");
 #endif
                ninfo.set_CheckAccess();
+#if 0
+               printf ("DONE: Calling ninfo.set_CheckAccess() \n");
+               curprint("\n/* DONE: calling ninfo.set_CheckAccess() */ \n");
+#endif
              }
 
        // printf ("Comment out call to get_suppress_atomic(funcdecl_stmt) \n");
@@ -5152,6 +5197,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
 
 #if 0
+          printf("Calling printSpecifier() \n");
           curprint( "\n/* Calling printSpecifier() */ ");
 #endif
           unp->u_sage->printSpecifier(funcdecl_stmt, ninfo);
@@ -5177,9 +5223,17 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
           ninfo.unset_CheckAccess();
 
+#if 0
+          printf("Calling info.set_access_attribute() \n");
+          curprint( "\n/* info.set_access_attribute() */ ");
+#endif
        // DQ (11/10/2007): Modified from info.set_access_attribute(...) --> ninfo.set_access_attribute(...)
           info.set_access_attribute(ninfo.get_access_attribute());
 
+#if 0
+          printf("Calling funcdecl_stmt->get_orig_return_type() \n");
+          curprint( "\n/* funcdecl_stmt->get_orig_return_type() */ ");
+#endif
           SgType *rtype = funcdecl_stmt->get_orig_return_type();
           if (!rtype)
              {
@@ -5207,6 +5261,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // output the return type
 #define OUTPUT_FUNCTION_DECLARATION_DATA 0
+
 #if OUTPUT_FUNCTION_DECLARATION_DATA
           printf ("rtype = %p = %s \n",rtype,rtype->class_name().c_str());
           curprint ("\n/* output the return type */ \n");
@@ -5456,8 +5511,19 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   {
 #if 0
                     printf ("In Unparse_ExprStmt::unparseFuncDeclStmt(): output extern brace \n");
+                    curprint("/* Inside of Unparse_ExprStmt::unparseFuncDeclStmt(): Output extern closing brace */ \n");
 #endif
-                    curprint(" }");
+#if 0
+                 // curprint(" }");
+                    if (info.get_extern_C_with_braces() == true)
+                       {
+                         curprint(" }");
+                       }
+
+                 // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+                 // ROSE_ASSERT(info.get_extern_C_with_braces() == true);
+                    info.set_extern_C_with_braces(false);
+#endif
                   }
              }
             else
@@ -6365,9 +6431,21 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if (mfuncdecl_stmt->isExternBrace())
              {
+#if 1
+               printf ("Inside of unparseMFuncDeclStmt(): Output extern closing brace \n");
+               curprint("/* Inside of unparseMFuncDeclStmt(): Output extern closing brace */ \n");
+#endif
+#if 0
+            // DQ (8/16/2020): I think that this is redundant with the use of braces on the class containing such extern c declarations.
+            // These extern brace cases are handled via the CPP preprocessor support.
                unp->cur.format(mfuncdecl_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
                curprint ( string(" }"));
                unp->cur.format(mfuncdecl_stmt, info, FORMAT_AFTER_BASIC_BLOCK2);
+
+            // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+            // ROSE_ASSERT(info.get_extern_C_with_braces() == true);
+               info.set_extern_C_with_braces(false);
+#endif
              }
         }
        else 
@@ -6836,7 +6914,19 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint(";");
                if (mfuncdecl_stmt->isExternBrace())
                   {
+#if 0
+                    printf ("Inside of unparseMFuncDeclStmt(): Output extern closing brace \n");
+                    curprint("/* Inside of unparseMFuncDeclStmt(): Output extern closing brace */ \n");
+#endif
+#if 0
+                 // DQ (8/16/2020): I think that this is redundant with the use of braces on the class containing such extern c declarations.
+                 // These extern brace cases are handled via the CPP preprocessor support.
                     curprint(" }");
+
+                 // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+                 // ROSE_ASSERT(info.get_extern_C_with_braces() == true);
+                    info.set_extern_C_with_braces(false);
+#endif
                   }
              }
             else
@@ -7306,7 +7396,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // SgInitializedName *prev_decl_item = NULL;
 
   // DQ (11/28/2004): Is this even used in enum declarations! (I don't think so!)
-     ROSE_ASSERT(ninfo.inEnumDecl() == false);
+  // ROSE_ASSERT(ninfo.inEnumDecl() == false);
 
   // DQ (11/28/2004): Within an enum declaration there should not be a type associated with the variables???
      if (ninfo.inEnumDecl())
@@ -7636,7 +7726,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                        }
                   }
 
-#if DEBUG_VARIABLE_DECLARATION
+#if DEBUG_VARIABLE_DECLARATION || 0
                printf ("Calling unp->u_sage->printSpecifier2 \n");
                curprint ("\n/* Calling unp->u_sage->printSpecifier2() */ \n");
             // printDebugInfo("entering unp->u_sage->printSpecifier2", true);
@@ -7811,7 +7901,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // DQ (12/26/2019): Adding support for unparsing of defining declarations in types used across multiple translation units (multiple files).
             // See Cxx11_tests/test2019_518a.C and test2019_518b.C.
                SgDeclarationStatement* tmp_associatedDefiningDeclaration = vardecl_stmt->get_baseTypeDefiningDeclaration();
-               if (tmp_associatedDefiningDeclaration != NULL)
+            // TV (06/11/2020): Only set these fields for class declarations as it is the only handled case
+               if (isSgClassDeclaration(tmp_associatedDefiningDeclaration) != NULL)
                   {
                     ninfo_for_type.set_useAlternativeDefiningDeclaration();
 
@@ -8585,7 +8676,13 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint ( string(","));
              }
 
-          unparseAttachedPreprocessingInfo(decl_item, ninfo, PreprocessingInfo::after);    
+#if 0
+          curprint ("\n/* BEFORE: Calling unparseAttachedPreprocessingInfo (after) */ \n");
+#endif
+          unparseAttachedPreprocessingInfo(decl_item, ninfo, PreprocessingInfo::after);
+#if 0
+          curprint ("\n/* AFTER: Calling unparseAttachedPreprocessingInfo (after) */ \n");
+#endif
         }
 
 #if 0
@@ -8618,9 +8715,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // This breaks other test codes, but the grainularity of the specification of output of ";" and where the 
   // set_SkipSemiColon() function is called is now more precise.  So the other codes now pass.
   // DQ (7/12/2006): Bug fix reported by Peter Collingbourne
-  // if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.SkipSemiColon())
-  // if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.inConditional() && !ninfo.SkipSemiColon())
-     if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.SkipSemiColon())
+//   if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.SkipSemiColon())
+     if (!ninfo.SkipSemiColon())
         {
        // DQ (2/27/2013): Added support for missing attributes.
           unp->u_sage->printAttributes(vardecl_stmt,info);
@@ -8707,6 +8803,9 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
      printf ("Inside of Unparse_ExprStmt::unparseClassDeclStmt(): classdecl_stmt->get_from_template() = %s \n",
           classdecl_stmt->get_from_template() ? "true" : "false");
+#endif
+#if 0
+     curprint("/* Inside of Unparse_ExprStmt::unparseClassDeclStmt() */ \n");
 #endif
 #if 0
      if (classdecl_stmt->get_from_template() == true)
@@ -9008,7 +9107,19 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                if (classdecl_stmt->isExternBrace())
                   {
+#if 0
+                    printf ("Inside of unparseClassDeclStmt(): Output extern closing brace \n");
+                    curprint("/* Inside of unparseClassDeclStmt(): Output extern closing brace */ \n");
+#endif
+#if 0
+                 // DQ (8/16/2020): I think that this is redundant with the use of braces on the class containing such extern c declarations.
+                 // These extern brace cases are handled via the CPP preprocessor support.
                     curprint(" }");
+
+                 // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+                 // ROSE_ASSERT(info.get_extern_C_with_braces() == true);
+                    info.set_extern_C_with_braces(false);
+#endif
                   }
              }
         }
@@ -9688,6 +9799,10 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                if (enum_stmt->isExternBrace())
                   {
                     curprint(" }");
+
+                 // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+                 // ROSE_ASSERT(info.get_extern_C_with_braces() == true);
+                    info.set_extern_C_with_braces(false);
                   }
              }
 #endif
@@ -9713,7 +9828,19 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ( string(";"));
           if (enum_stmt->isExternBrace())
              {
+#if 0
+               printf ("Inside of unparseEnumDeclStmt(): Output extern closing brace \n");
+               curprint("/* Inside of unparseEnumDeclStmt(): Output extern closing brace */ \n");
+#endif
+#if 0
+            // DQ (8/16/2020): I think that this is redundant with the use of braces on the class containing such extern c declarations.
+            // These extern brace cases are handled via the CPP preprocessor support.
                curprint(" }");
+
+            // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+            // ROSE_ASSERT(info.get_extern_C_with_braces() == true);
+               info.set_extern_C_with_braces(false);
+#endif
              }
         }
 
@@ -11720,6 +11847,10 @@ Unparse_ExprStmt::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
   // DQ (1/21/2004): Use the string class to simplify the previous version of the code
      string templateString = template_stmt->get_string().str();
 
+#if 0
+     printf ("templateString = %s \n",templateString.c_str());
+#endif
+
   // DQ (4/29/2004): Added support for "export" keyword (not supported by g++ yet)
      if (template_stmt->get_declarationModifier().isExport())
           curprint ( string("export "));
@@ -12101,10 +12232,23 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
   // DQ (4/18/2018): Added denormalization of __ALIGNOF__ to __alignof__ name for operator.
   // Not clear if this is only a C++11 issue or a C++14 issue as well.
      string denormalizedAlignofTemplateString = replaceString (templateString," __ALIGNOF__"," __alignof__");
+
 #if 0
      printf ("denormalizedAlignofTemplateString = %s \n",denormalizedAlignofTemplateString.c_str());
 #endif
+
      templateString = denormalizedAlignofTemplateString;
+
+  // DQ (8/10/2020): Adding support to denormalize the C++ attributes.
+     string denormalizedAttributeTemplateString_tmp = replaceString (templateString,"[ [","[[");
+     string denormalizedAttributeTemplateString = replaceString (denormalizedAttributeTemplateString_tmp,"] ]","]]");
+
+#if 0
+     printf ("denormalizedAttributeTemplateString = %s \n",denormalizedAttributeTemplateString.c_str());
+#endif
+
+     templateString = denormalizedAttributeTemplateString;
+
  
      if (sourcefile != NULL && sourcefile->get_unparse_template_ast() == true)
         {
@@ -12283,7 +12427,6 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 #endif
        // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
           curprint(string("\n") + templateString);
-
         }
 
 #if 0

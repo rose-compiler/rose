@@ -173,6 +173,15 @@ static void calculateVariableRestorationSet(const ASTtools::VarSymSet_t& syms,
     if (readOnlyVars.find(i_name)==readOnlyVars.end() && isLiveOut)   // variables not in read-only set have to be restored
       restoreVars.insert(i_name);
   }
+
+  if (Outliner::enable_debug)
+  { 
+    cout<<"Executing calculateVariableRestorationSet()....."<<endl;
+    cout<<"Found "<<restoreVars.size()<<" symbols which must be restored in the end of the outlined function:";
+    for (std::set<SgInitializedName*> ::const_iterator iter=restoreVars.begin();iter!=restoreVars.end();iter++)
+      cout<<(*iter)->get_name().getString()<<" ";
+    cout<<endl;
+  }
 }
  
 //! A helper function to decide for the classic outlining, if a variable should be passed using its original type (a) or its pointer type (&a)
@@ -261,6 +270,13 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
           iter!=readOnlyVars.end(); iter++)
         cout<<" "<<(*iter)->get_name().getString()<<" ";
       cout<<endl;
+
+      cout<<"Outliner::Transform::generateFunction() -----Found "<<pdSyms.size()<<" varaibles to be replaced as pointer dereferencing variables..:";
+      for (ASTtools::VarSymSet_t::const_iterator iter = pdSyms.begin();
+          iter!=pdSyms.end(); iter++)
+        cout<<" "<<(*iter)->get_name().getString()<<" ";
+      cout<<endl;
+
       cout<<"Outliner::Transform::generateFunction() -----Found "<<liveOuts.size()<<" live out variables..:";
       for (std::set<SgInitializedName*>::const_iterator iter = liveOuts.begin();
           iter!=liveOuts.end(); iter++)
@@ -1015,7 +1031,21 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
    // DQ (3/20/2019): Need to eliminate possible undefined symbols in this file when it will be compiled into 
    // a dynamic shared library.  Any undefined symbols will cause an error when loading the library using dlopen().
    // convertFunctionDefinitionsToFunctionPrototypes(new_file);
-      SageInterface::convertFunctionDefinitionsToFunctionPrototypes(new_file);
+      //SageInterface::convertFunctionDefinitionsToFunctionPrototypes(new_file);
+      //Liao, 2020/8/11 We only convert non-static functions into prototypes. 
+      //Static function definitions should be preserved or undefined function during making of shared lib.
+      std::vector<SgFunctionDeclaration*> functionList = generateFunctionDefinitionsList(new_file);
+
+      std::vector<SgFunctionDeclaration*>::iterator i = functionList.begin();
+      while (i != functionList.end())
+      { 
+        SgFunctionDeclaration* functionDeclaration = *i;
+        ROSE_ASSERT(functionDeclaration != NULL);
+        // Transform into prototype.
+        if (!isStatic(functionDeclaration))
+          replaceDefiningFunctionDeclarationWithFunctionPrototype(functionDeclaration);
+        i++;
+      }
 #endif
 
 #if 0

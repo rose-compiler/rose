@@ -437,6 +437,14 @@ HEADER_JAVA_PARAMETER_TYPE_END
 
 HEADER_JOVIAL_TABLE_TYPE_START
           SgJovialTableType ( const SgJovialTableType & X );
+
+      //! Enum for Jovial structure specifiers
+          enum structure_specifier_enum
+             {
+               e_default = 0, /*!< jovial table structure is unspecified, indicates serial structure */
+               e_parallel,    /*!< jovial table has parallel structure */
+               e_tight        /*!< jovial table has serial structure that is tightly packed */
+             };
 HEADER_JOVIAL_TABLE_TYPE_END
 
 
@@ -1044,14 +1052,24 @@ HEADER_ADA_SUBTYPE_START
 
 HEADER_ADA_SUBTYPE_END
 
+HEADER_ADA_TASK_TYPE_START
+          //~ SgName get_name() const;
+HEADER_ADA_TASK_TYPE_END
+
+
 HEADER_ADA_FLOAT_TYPE_START
 
           SgName get_name() const;
 
 HEADER_ADA_FLOAT_TYPE_END
 
+// CR (4/4/2020): Added SgJovialBitType for Jovial. This type participates in logical
+//                       operations with literals TRUE and FALSE.
+HEADER_JOVIAL_BIT_TYPE_START
+          SgName get_name() const;
+HEADER_JOVIAL_BIT_TYPE_END
 
-// Rasmussen (2/19/2020): Added SgTypedFixed for Jovial. Don't really know what to do here.
+// CR (2/19/2020): Added SgTypedFixed for Jovial. Don't really know what to do here.
 HEADER_TYPE_FIXED_TYPE_START
       // SgName get_name() const;
 HEADER_TYPE_FIXED_TYPE_END
@@ -1086,7 +1104,7 @@ $CLASSNAME::get_mangled (void) const
      ROSE_ASSERT(this != NULL);
 
   // DQ (10/4/2010): Modified to provide Fortran support (type_kind is a data member used for Fortran only, it is always NULL for other languages)
-  // Rasmussen (3/6/2020): Now type_kind is also used for Jovial.
+  // CR (3/6/2020): Now type_kind is also used for Jovial.
      SgName name = "MANGLED_ID_STRING";
      if (get_type_kind() != NULL)
         {
@@ -1114,7 +1132,7 @@ $CLASSNAME::get_mangled (void) const
              }
         }
 
-  // Rasmussen (3/6/2020): This is a hack but I can't get SgTypeFixed::get_mangled() to work
+  // CR (3/6/2020): This is a hack but I can't get SgTypeFixed::get_mangled() to work
   // REMOVE_ME please!
      if (isSgTypeFixed(this))
         {
@@ -1359,7 +1377,7 @@ SgTypeString::get_mangled (void) const
 
 SOURCE_GET_MANGLED_STRING_TYPE_END
 
-// Rasmussen (3/6/2020): Added get_mangled for SgTypedFixed (primitive type in Jovial)
+// CR (3/6/2020): Added get_mangled for SgTypedFixed (primitive type in Jovial)
 SOURCE_GET_MANGLED_TYPE_FIXED_START
 
 SgName
@@ -2465,7 +2483,7 @@ SgType::getCurrentScope()
        // Fortran state stack from tests run earlier in the parent Fortran test directory.
        // WARNING, the following relies on short circuiting and emptyFortranStateStack() == false
        // must be checked before emptyFortranScopeStack() == false.
-       // Apparently Java is also examining the Fortran stack! [Rasmussen 2019-7-18].
+       // Apparently Java is also examining the Fortran stack! [CR 2019-7-18].
           if (SageInterface::is_Fortran_language() && emptyFortranStateStack() == false && emptyFortranScopeStack() == false)
              {
             // Fortran AST being generated
@@ -6690,6 +6708,19 @@ SgAdaAccessType::get_mangled(void) const {
      
 SOURCE_ADA_ACCESS_TYPE_END
 
+SOURCE_ADA_TASK_TYPE_START
+
+SgName
+SgAdaTaskType::get_mangled(void) const {
+    string name("t'");
+    
+    name.append(get_decl()->get_task_name());
+    return SgName(name);
+}
+     
+SOURCE_ADA_TASK_TYPE_END
+
+
 SOURCE_ADA_SUBTYPE_START
 
 SgName
@@ -6719,6 +6750,19 @@ SgAdaFloatType::get_mangled(void) const {
      
 SOURCE_ADA_FLOAT_TYPE_END
 
+SOURCE_JOVIAL_BIT_TYPE_START
+SgName
+SgJovialBitType::get_mangled(void) const {
+    string name("bt");
+    if (get_size())
+       {
+          name.append("_");
+          name.append(get_size()->unparseToString());
+       }
+    return SgName(name);
+}
+SOURCE_JOVIAL_BIT_TYPE_END
+
 
 SOURCE_TYPE_ELLIPSE_TYPE_START
 SgName
@@ -6727,7 +6771,7 @@ $CLASSNAME::get_mangled (void) const
      ROSE_ASSERT(this != NULL);
      return SgName ("_E_");
    }
- SOURCE_TYPE_ELLIPSE_TYPE_END
+SOURCE_TYPE_ELLIPSE_TYPE_END
 
 
 
@@ -7909,7 +7953,7 @@ SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETER_TYPE_END
 SOURCE_CREATE_TYPE_FOR_JOVIAL_TABLE_TYPE_START
 
 // SgClassType* SgClassType::createType(SgClassDeclaration * cd)
-// Rasmussen - why is optional_fortran_type_kind a parameter?
+// CR - why is optional_fortran_type_kind a parameter?
 SgJovialTableType*
 SgJovialTableType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
    {
@@ -8705,6 +8749,28 @@ SgAdaAccessType::createType (SgType* base_type, SgExpression* /*optional_fortran
 
 SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE_END
 
+SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE_START
+
+SgAdaTaskType*
+SgAdaTaskType::createType (SgDeclarationStatement* decl, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgAdaTaskType    proto(decl); // \pp not sure if stack allocation works
+  SgName           name = proto.get_mangled();
+  SgType*          ty   = get_globalTypeTable()->lookup_type(name);
+  
+  if (SgAdaTaskType* unified = isSgAdaTaskType(ty))
+    return unified;
+   
+  ROSE_ASSERT(ty == NULL); 
+  SgAdaTaskType* res = new SgAdaTaskType(decl);
+  
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+
+SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE_END
+
+
 SOURCE_CREATE_TYPE_FOR_ADA_SUBTYPE_START
 
 SgAdaSubtype*
@@ -8748,8 +8814,27 @@ SgAdaFloatType::createType (SgExpression* digits, SgAdaRangeConstraint* range, S
 
 SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE_END
 
+SOURCE_CREATE_TYPE_FOR_JOVIAL_BIT_TYPE_START
+SgJovialBitType*
+SgJovialBitType::createType (SgExpression* size, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgJovialBitType  proto(size);
+  SgName           name = proto.get_mangled();
+  SgType*          ty   = get_globalTypeTable()->lookup_type(name);
 
-// Rasmussen (2/19/2020): Added SgTypedFixed (primitive type in Jovial)
+  if (SgJovialBitType* unified = isSgJovialBitType(ty)) {
+     return unified;
+  }
+
+  ROSE_ASSERT(ty == NULL);
+  SgJovialBitType* res = new SgJovialBitType(size);
+
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+SOURCE_CREATE_TYPE_FOR_JOVIAL_BIT_TYPE_END
+
+// CR (2/19/2020): Added SgTypedFixed (primitive type in Jovial)
 SOURCE_CREATE_TYPE_FOR_TYPE_FIXED_START
 
 SgTypeFixed*

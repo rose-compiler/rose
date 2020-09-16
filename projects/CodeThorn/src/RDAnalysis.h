@@ -9,8 +9,7 @@
 #include "CFAnalysis.h"
 #include "RDLattice.h"
 #include "DFAnalysisBase.h"
-#include "WorkList.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "DFAstAttribute.h"
 #include "RDTransferFunctions.h"
 
@@ -19,7 +18,7 @@ namespace CodeThorn {
 class RDPropertyStateFactory : public PropertyStateFactory {
  public:
   RDPropertyStateFactory();
-  virtual PropertyState* create();
+  virtual RDLattice* create();
   virtual ~RDPropertyStateFactory();
 };
 
@@ -35,13 +34,7 @@ class RDAnalysis : public DFAnalysisBase {
   CodeThorn::LabelSet getPostRDs(Label lab, VariableId);
   virtual void initializeExtremalValue(Lattice* element);
 
-  void initialize(SgProject* root)
-  {
-    DFAnalysisBase::initialize( root,
-                                nullptr /* no existing abstraction layer */,
-                                true /* id mapping for array elements */
-                              );
-  }
+  void initialize(SgProject* root);
 
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice* elem);

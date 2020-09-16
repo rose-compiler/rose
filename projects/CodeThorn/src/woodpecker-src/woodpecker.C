@@ -12,7 +12,7 @@
 #include "AstAnnotator.h"
 #include "Miscellaneous.h"
 #include "CommandLineOptions.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "AbstractValue.h"
 #include "SgNodeHelper.h"
 #include "FIConstAnalysis.h"
@@ -27,8 +27,8 @@
 #include <string>
 
 #include "CodeThornException.h"
-#include "CodeThornException.h"
 #include "CommandLineOptions.h"
+#include "CodeThornLib.h"
 
 #include "limits.h"
 #include <cmath>
@@ -49,7 +49,8 @@ using namespace Sawyer::Message;
 //static  VariableIdSet variablesOfInterest;
 static bool detailedOutput=0;
 const char* csvAssertFileName=0;
-const char* csvConstResultFileName=0;
+string csvConstResultFileName;
+const char* csvConstResultFileName_c=0;
 bool global_option_multiconstanalysis=false;
 
 size_t numberOfFunctions(SgNode* node) {
@@ -66,9 +67,9 @@ size_t numberOfFunctions(SgNode* node) {
 
 void printCodeStatistics(SgNode* root) {
   SgProject* project=isSgProject(root);
-  VariableIdMapping variableIdMapping;
+  VariableIdMappingExtended variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(project);
-  VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
+  VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,&variableIdMapping);
   DeadCodeElimination dce;
   cout<<"----------------------------------------------------------------------"<<endl;
   cout<<"Statistics:"<<endl;
@@ -83,15 +84,16 @@ void printCodeStatistics(SgNode* root) {
 
 int main(int argc, char* argv[]) {
   ROSE_INITIALIZE;
+  CodeThorn::initDiagnostics();
+  cout<<"Woodpecker diagnostics initialized."<<endl;
+  CodeThorn::turnOffRoseWarnings();
   
-  CodeThorn::CommandLineOptions args;
-
- Rose::Diagnostics::mprefix->showProgramName(false);
+  Rose::Diagnostics::mprefix->showProgramName(false);
   Rose::Diagnostics::mprefix->showThreadId(false);
   Rose::Diagnostics::mprefix->showElapsedTime(false);
 
-  Sawyer::Message::Facility logger;
-  Rose::Diagnostics::initAndRegister(&logger, "Woodpecker");
+  //Sawyer::Message::Facility logger;
+  //Rose::Diagnostics::initAndRegister(&CodeThorn::logger, "Woodpecker");
 
   try {
     if(argc==1) {
@@ -144,25 +146,26 @@ int main(int argc, char* argv[]) {
   // this this not allow unregistered
   args.parse(argc,argv,desc);
 #endif
-  if (args.isDefined("help")) {
+  if (args.isUserProvided("help")) {
     cout << "woodpecker <filename> [OPTIONS]"<<endl;
     cout << desc << "\n";
     exit(0);
   }
-  if (args.isDefined("rose-help")) {
+  if (args.isUserProvided("rose-help")) {
     argv[1] = strdup("--help");
   }
 
-  if (args.isDefined("version")) {
+  if (args.isUserProvided("version")) {
     cout << "Woodpecker version 0.1\n";
     cout << "Written by Markus Schordan 2013\n";
     exit(0);
   }
-  if (args.isDefined("csv-assert")) {
+  if (args.isUserProvided("csv-assert")) {
     csvAssertFileName=args.getString("csv-assert").c_str();
   }
-  if (args.isDefined("csv-const-result")) {
-    csvConstResultFileName=args.getString("csv-const-result").c_str();
+  if (args.isUserProvided("csv-const-result")) {
+    csvConstResultFileName=args.getString("csv-const-result");
+    csvConstResultFileName_c=csvConstResultFileName.c_str();
   }
 
   if(args.getBool("verbose"))
@@ -214,11 +217,11 @@ int main(int argc, char* argv[]) {
 
   VariableIdMappingExtended variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(root);
-  variableIdMapping.computeTypeSizes();
-  
+  AbstractValue::setVariableIdMapping(&variableIdMapping); // leave it 0 to get default-behavior
+  //variableIdMapping.computeTypeSizes();
   logger[TRACE]<<"STATUS: variable id mapping generated."<<endl;
-  
-  if(args.isDefined("transform-thread-variable")) {
+
+  if(args.isUserProvided("transform-thread-variable")) {
     Threadification* threadTransformation=new Threadification(&variableIdMapping);
     threadTransformation->transform(root);
     root->unparse(0,0);
@@ -297,22 +300,22 @@ int main(int argc, char* argv[]) {
     cout <<"constant variables: "<<variablesOfInterest.size()<<endl;
   }
 
-  if(csvConstResultFileName) {
+  if(csvConstResultFileName_c!=nullptr) {
     FIConstAnalysis fiConstAnalysis(&variableIdMapping);
     fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
     fiConstAnalysis.runAnalysis(root, mainFunctionRoot);
-    VariableIdSet setOfUsedVarsInFunctions=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&variableIdMapping);
-    VariableIdSet setOfUsedVarsGlobalInit=AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(root,&variableIdMapping);
+    VariableIdSet setOfUsedVarsInFunctions=AstUtility::usedVariablesInsideFunctions(root,&variableIdMapping);
+    VariableIdSet setOfUsedVarsGlobalInit=AstUtility::usedVariablesInGlobalVariableInitializers(root,&variableIdMapping);
     VariableIdSet setOfAllUsedVars = setOfUsedVarsInFunctions;
     setOfAllUsedVars.insert(setOfUsedVarsGlobalInit.begin(), setOfUsedVarsGlobalInit.end());
     logger[INFO]<<"number of used vars inside functions: "<<setOfUsedVarsInFunctions.size()<<endl;
     logger[INFO]<<"number of used vars in global initializations: "<<setOfUsedVarsGlobalInit.size()<<endl;
     logger[INFO]<<"number of vars inside functions or in global inititializations: "<<setOfAllUsedVars.size()<<endl;
     fiConstAnalysis.filterVariables(setOfAllUsedVars);
-    fiConstAnalysis.writeCvsConstResult(variableIdMapping, string(csvConstResultFileName));
+    fiConstAnalysis.writeCvsConstResult(variableIdMapping, csvConstResultFileName_c);
   }
 
-  if(args.isDefined("generate-conversion-functions")) {
+  if(args.isUserProvided("generate-conversion-functions")) {
     ConversionFunctionsGenerator gen;
     gen.generateFile(root,"conversionFunctions.C");
     return 0;
@@ -341,7 +344,7 @@ int main(int argc, char* argv[]) {
     root->unparse(0,0);
   }
 
-  if(args.isDefined("stats")) {
+  if(args.isUserProvided("stats")) {
     printCodeStatistics(root);
   }
 

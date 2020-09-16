@@ -1386,11 +1386,14 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          SgInitializedNamePtrList::const_iterator result = std::find(initNameList.begin(), initNameList.end(), initializedName);
                          ROSE_ASSERT(result != initNameList.end());
                        }
-                      else
+                      else if (isSgTemplateDeclaration(parentParameterList->get_parent()))
                        {
                       // DQ (12/6/2011): Now that we have the template declarations in the AST, this could be a SgTemplateDeclaration.
-                         ROSE_ASSERT(isSgTemplateDeclaration(parentParameterList->get_parent()) != NULL);
                          printf ("WARNING: There are tests missing for the case of a parentParameterList->get_parent() that is a SgTemplateDeclaration \n");
+                       }
+                       else
+                       {
+                         ROSE_ASSERT(isSgAdaAcceptStmt(parentParameterList->get_parent()));
                        }
                   }
                  else
@@ -2750,12 +2753,36 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                        }
                   }
 
+#if 0
+            // DQ (8/14/2020): After redesiging how access modifiers are set, we want to allow the defining and non-defigning declarations to have different access specifications.
             // DQ (6/30/2014): I think this is not an error for SgTemplateInstantiationDecl.
             // ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
                if (isSgTemplateInstantiationDecl(definingDeclaration) == NULL && firstNondefiningDeclaration->get_parent() == definingDeclaration->get_parent())
-                 {
-                   ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
-                 }
+                  {
+                 // DQ (8/11/2020): Debugging new change to e_default = e_public was changed from e_default = 4.
+                    if (definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier)
+                       {
+#if 0
+                         printf ("Error: in AST consistancy tests: definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier \n");
+#endif
+#if 0
+                         printf (" --- definingDeclaration = %p = %s \n",definingDeclaration,definingDeclaration->class_name().c_str());
+                         printf (" --- definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
+                         definingDeclaration->get_declarationModifier().get_accessModifier().display("definingDeclaration: definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier");
+                         definingDeclaration->get_file_info()->display("definingDeclaration");
+                         printf (" --- firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+                         printf (" --- firstNondefiningDeclaration = %p = %s \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+                         firstNondefiningDeclaration->get_declarationModifier().get_accessModifier().display("firstNondefiningDeclaration: definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier");
+                         firstNondefiningDeclaration->get_file_info()->display("firstNondefiningDeclaration");
+                      // definingDeclaration_access_modifier.display("definingDeclaration: definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier");
+                      // firstNondefiningDeclaration_access_modifier.display("firstNondefiningDeclaration: definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier");
+#endif
+                       }
+
+                 // DQ (8/11/2020): Test by commenting this out.  It might not make since to enforce this.
+                 // ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
+                  }
+#endif
              }
         }
 
@@ -2871,6 +2898,9 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // non-defining declarations in generated internally).
                if (firstNondefiningDeclaration == NULL)
                   {
+                 // DQ (8/11/2020): Fixed compiler warning.
+                 // ROSE_ASSERT(declaration->variantT() != NULL);
+                    ROSE_ASSERT(declaration != NULL);
                     switch (declaration->variantT())
                        {
                       // These nodes should have a non-defining declaration even if only a defining 
@@ -3111,13 +3141,15 @@ TestAstSymbolTables::visit ( SgNode* node )
                                    declarationStatement,declarationStatement->class_name().c_str(),SageInterface::get_name(declarationStatement).c_str(),
                                    symbol,symbol->class_name().c_str(),SageInterface::get_name(scope).c_str(),
                                    scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
+#if 0
                               declarationStatement->get_startOfConstruct()->display("declarationStatement->get_symbol_from_symbol_table() == NULL: debug");
-
+#endif
+#if 0
                               printf ("******************** START **********************\n");
                               printf ("In AST Consistantcy tests: Output the symbol table for scope = %p = %s: \n",scope,scope->class_name().c_str());
                               SageInterface::outputLocalSymbolTables(scope);
                               printf ("******************** DONE ***********************\n");
-
+#endif
 #if 1
                            // DQ (2/28/2018): Added testing (Tristan indicates that this is a problem for Fortran, above).
                               ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() != NULL);
@@ -3424,6 +3456,27 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(aliasSymbol->get_alias() != NULL);
                          break;
                        }
+                       
+                    case V_SgAdaPackageSymbol:
+                       {
+                      // This is an alias for a symbol injected from another scope as part of a Fortran "use" statement
+                      // (or perhaps eventually a C++ using declaration or using directive).
+                         SgAdaPackageSymbol* sy = isSgAdaPackageSymbol(symbol);
+                         ROSE_ASSERT(sy != NULL);
+                         ROSE_ASSERT(sy->get_declaration() != NULL);
+                         break;
+                       }
+                       
+                    case V_SgAdaTaskSymbol:
+                       {
+                      // This is an alias for a symbol injected from another scope as part of a Fortran "use" statement
+                      // (or perhaps eventually a C++ using declaration or using directive).
+                         SgAdaTaskSymbol* sy = isSgAdaTaskSymbol(symbol);
+                         ROSE_ASSERT(sy != NULL);
+                         ROSE_ASSERT(sy->get_declaration() != NULL);
+                         break;
+                       }   
+
 
                     case V_SgNonrealSymbol:
                        {
@@ -4363,6 +4416,7 @@ TestLValues::visit ( SgNode* node )
                         case V_SgBoolValExp:     
                         case V_SgExponentiationOp: 
                         case V_SgConcatenationOp: 
+                        case V_SgReplicationOp:
                         case V_SgLshiftOp:      
                         case V_SgRshiftOp:       
                         case V_SgEqualityOp:    

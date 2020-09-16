@@ -32,7 +32,13 @@ usage() {
     echo "    --disabled=REASON | --enabled"
     echo "        Marks this test as being disabled. As far as the build system is"
     echo "        concerned, the test passes. However, it prints the disablement message"
-    echo "        to the tty in red text."
+    echo "        to the tty in red text. If the REASON string is empty then it means the"
+    echo "        same thing as --enabled."
+    echo
+    echo "    --disabled-by=COMMAND"
+    echo "        The COMMAND is run and if it produces any standard output then that"
+    echo "        output is used as the message for disabling the test. Otherwise the"
+    echo "        test is not disabled."
     echo
     echo "    --disabled-if CONDITION REASON"
     echo "        Marks this test as being disable if the condition (a perl expression)"
@@ -215,12 +221,29 @@ while [ "$#" -gt 0 ]; do
 	--disabled)
 	    [ "$#" -gt 1 ] || die "\"$1\" switch expects an argument"
 	    disabled_mesg="$2"
-	    disabled_cond=1
+	    if [ -n "$disabled_mesg" ]; then
+		disabled_cond=1
+	    else
+		disabled_cond=
+	    fi
 	    shift 2
 	    ;;
 	--disabled=*)
 	    disabled_mesg="${1#--disabled=}"
-	    disabled_cond=1
+	    if [ -n "$disabled_mesg" ]; then
+		disabled_cond=1
+	    else
+		disabled_cond=
+	    fi
+	    shift
+	    ;;
+        --disabled-by)
+	    [ "$#" -gt 1 ] || die "\"$1\" switch expects an argument"
+	    disabled_command="$2"
+	    shift 2
+	    ;;
+	--disabled-by=*)
+	    disabled_command="${1#--disabled-by=}"
 	    shift
 	    ;;
 	--disabled-if)
@@ -332,6 +355,11 @@ fi
 # Check for being disabled.
 if perl -I"$dir0" -Mversions -e "exit !($disabled_cond)"; then
     [ -n "$disabled_mesg" ] || disabled_mesg="unspecified reason"
+fi
+if [ "$disabled_mesg" = "" -a -n "$disabled_command" ]; then
+    disabled_mesg="$($disabled_command)"
+fi
+if [ -n "$disabled_mesg" ]; then
     echo -ne '\033[31;1m\t'
     echo -n "This test is disabled ($disabled_mesg)"
     echo -e '\033[0m'

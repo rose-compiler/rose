@@ -36,7 +36,7 @@ Unparse_MOD_SAGE::Unparse_MOD_SAGE(Unparser* unp):unp(unp) {
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isOperator(SgExpression* expr)
    {
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      if (isBinaryOperator(expr) || isUnaryOperator(expr))
           return true;
@@ -239,7 +239,7 @@ bool Unparse_MOD_SAGE::isBinaryBracketOperator(SgExpression* expr)
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryOperator(SgExpression* expr)
    {
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      bool isBinaryOperatorResult = false;
 
@@ -252,13 +252,13 @@ bool Unparse_MOD_SAGE::isBinaryOperator(SgExpression* expr)
      string func_name;
      if (func_ref != NULL)
         {
-          ROSE_ASSERT(func_ref->get_symbol() != NULL);
+          ASSERT_not_null(func_ref->get_symbol());
           func_name = func_ref->get_symbol()->get_name().str();
         }
        else
         {
-          ROSE_ASSERT(mfunc_ref != NULL);
-          ROSE_ASSERT(mfunc_ref->get_symbol() != NULL);
+          ASSERT_not_null(mfunc_ref);
+          ASSERT_not_null(mfunc_ref->get_symbol());
           func_name = mfunc_ref->get_symbol()->get_name().str();
         }
 
@@ -321,7 +321,7 @@ Unparse_MOD_SAGE::isUnaryIncrementOperator(SgExpression* expr)
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
   // If it is a non-member function this it will have a single argument
   // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -381,7 +381,7 @@ Unparse_MOD_SAGE::isUnaryDecrementOperator(SgExpression* expr)
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
   // If it is a non-member function this it will have a single argument
   // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -434,7 +434,7 @@ Unparse_MOD_SAGE::isUnaryDecrementOperator(SgExpression* expr)
 bool
 Unparse_MOD_SAGE::isUnaryLiteralOperator(SgExpression* expr)
    {
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -609,7 +609,7 @@ bool Unparse_MOD_SAGE::isUnaryPostfixOperator(SgExpression* expr)
    {
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
   // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -772,7 +772,7 @@ GetOperatorVariant(SgExpression* expr)
                SgExpression *mfunc = isSgBinaryOp(func)->get_rhs_operand();
 
             // DQ (9/28/2012): Added assertion.
-               ROSE_ASSERT(mfunc != NULL);
+               ASSERT_not_null(mfunc);
 
                if (mfunc->variantT() == V_SgPseudoDestructorRefExp)
                     return V_SgFunctionCallExp;
@@ -790,7 +790,7 @@ GetOperatorVariant(SgExpression* expr)
                     printf ("ERROR: mfunc = %p = %s mfunc->get_startOfConstruct() = %p mfunc->get_operatorPosition() = %p \n",mfunc,mfunc->class_name().c_str(),mfunc->get_startOfConstruct(),mfunc->get_operatorPosition());
                     mfunc->get_startOfConstruct()->display("Error in GetOperatorVariant() in modified_sage.C (unparser): debug");
                   }
-               ROSE_ASSERT(mfunc_ref != NULL);
+               ASSERT_not_null(mfunc_ref);
                name = mfunc_ref->get_symbol()->get_name();
 #else
             // DQ (11/27/2012): Added more general support for templates to include new IR nodes.
@@ -945,7 +945,7 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
 //  are removed (return true). Otherwise, return false.
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::RemovePareninExprList(SgExprListExp* expr_list) {
-  ROSE_ASSERT(expr_list != NULL);
+  ASSERT_not_null(expr_list);
   SgExpressionPtrList::iterator i = expr_list->get_expressions().begin();
 
   if (i != expr_list->get_expressions().end()) {
@@ -977,7 +977,7 @@ bool Unparse_MOD_SAGE::RemovePareninExprList(SgExprListExp* expr_list) {
 bool
 Unparse_MOD_SAGE::isOneElementList(SgConstructorInitializer* con_init)
    {
-     ROSE_ASSERT(con_init != NULL);
+     ASSERT_not_null(con_init);
      if (con_init->get_args())
         {
           SgExprListExp* expr_list = isSgExprListExp(con_init->get_args());
@@ -1382,23 +1382,33 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
         {
        // DQ (6/15/2019): This is horrible API for this function.
           SgInitializedName & initalizedName = SageInterface::getFirstVariable(*variableDeclaration);
-       // ROSE_ASSERT(initalizedName != NULL);
+       // ASSERT_not_null(initalizedName);
           printf (" --- initalizedName name = %s \n",initalizedName.get_name().str());
         }
 
      printf ("info.isPrivateAccess()   = %s \n",info.isPrivateAccess()   ? "true" : "false");
      printf ("info.isProtectedAccess() = %s \n",info.isProtectedAccess() ? "true" : "false");
      printf ("info.isPublicAccess()    = %s \n",info.isPublicAccess()    ? "true" : "false");
-  // printf ("info.isDefaultAccess()   = %s \n",info.isDefaultAccess()   ? "true" : "false");
+     printf ("info.isDefaultAccess()   = %s \n",info.isDefaultAccess()   ? "true" : "false");
+
+     if (decl_stmt == decl_stmt->get_definingDeclaration())
+        {
+          printf ("decl_stmt = %p is the DEFINING declaration \n",decl_stmt);
+        }
+       else
+        {
+          printf ("decl_stmt = %p is the NON-defining declaration \n",decl_stmt);
+        }
 
      printf ("decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()   = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()   ? "true" : "false");
      printf ("decl_stmt->get_declarationModifier().get_accessModifier().isProtected() = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
      printf ("decl_stmt->get_declarationModifier().get_accessModifier().isPublic()    = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isPublic()    ? "true" : "false");
+     printf ("decl_stmt->get_declarationModifier().get_accessModifier().isDefault()   = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isDefault()   ? "true" : "false");
 #endif
 
      if (info.CheckAccess())
         {
-          ROSE_ASSERT (decl_stmt != NULL);
+          ASSERT_not_null(decl_stmt);
           bool flag = false;
 
           if (info.isPrivateAccess())
@@ -1431,19 +1441,39 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
                       // Initially for the first data member of a class, the info values for isPrivateAccess,
                       // isProtectedAccess, and isPublicAccess, are not set.  In this case the flag is set
                       // to true (here).  This forces the first access keyword to be output.
-                         flag = true;
+                      // flag = true;
+
+                         if (info.isDefaultAccess())
+                            {
+                           // If the current declaration access setting if different from the one stored in
+                           // info then set flag to true, so that the access specified will be output.
+                              if (!decl_stmt->get_declarationModifier().get_accessModifier().isDefault())
+                                 {
+                                // DQ (8/12/2020): test this line that was previously commented out.
+                                   flag = true;
+                                 }
+                            }
+                           else
+                            {
+                           // Initially for the first data member of a class, the info values for isPrivateAccess,
+                           // isProtectedAccess, and isPublicAccess, are not set.  In this case the flag is set
+                           // to true (here).  This forces the first access keyword to be output.
+                              flag = true;
+                            }
                        }
                   }
              }
 
        // Unset the access so it can be reset from an error value below
           info.set_isUnsetAccess();
+
 #if 0
        // Note that a better implementation would take the "flag" out of the 3 nested conditionals below.
           printf ("flag = %s \n",flag ? "true" : "false");
           printf ("decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()   = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()   ? "true" : "false");
           printf ("decl_stmt->get_declarationModifier().get_accessModifier().isProtected() = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
           printf ("decl_stmt->get_declarationModifier().get_accessModifier().isPublic()    = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isPublic()    ? "true" : "false");
+          printf ("decl_stmt->get_declarationModifier().get_accessModifier().isDefault()   = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isDefault()   ? "true" : "false");
 #endif
           if (decl_stmt->get_declarationModifier().get_accessModifier().isPrivate())
              {
@@ -1467,6 +1497,7 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
                   }
                  else
                   {
+#if 0
                  /* default, always print Public */
                     ROSE_ASSERT (decl_stmt->get_declarationModifier().get_accessModifier().isPublic() == true);
                     info.set_isPublicAccess();
@@ -1475,29 +1506,60 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
                          curprint( "public: ");
                       // printf ("Output PUBLIC keyword! \n");
                        }
+#else
+                 // DQ (8/12/2020): Default and Public are no longer the same thing.
+                    if (decl_stmt->get_declarationModifier().get_accessModifier().isPublic() == true)
+                       {
+                         info.set_isPublicAccess();
+                         if (flag)
+                            {
+                              curprint( "public: ");
+                           // printf ("Output PUBLIC keyword! \n");
+                            }
+                       }
+                      else
+                       {
+                      // default case, nothing to be output.
+                         if (decl_stmt->get_declarationModifier().get_accessModifier().isDefault() == true)
+                            {
+                              info.set_isDefaultAccess();
+                              if (flag)
+                                 {
+                                   curprint(" /* default access mode */ ");
+                                 }
+                            }
+                       }
+
+#endif
                   }
              }
 #if 0
           printf ("Was this reset: info.isPrivateAccess()   = %s \n",info.isPrivateAccess()   ? "true" : "false");
           printf ("Was this reset: info.isProtectedAccess() = %s \n",info.isProtectedAccess() ? "true" : "false");
           printf ("Was this reset: info.isPublicAccess()    = %s \n",info.isPublicAccess()    ? "true" : "false");
+          printf ("Was this reset: info.isDefaultAccess()   = %s \n",info.isDefaultAccess()    ? "true" : "false");
 #endif
-       // If must have been set to one of the three values (but not left unset
+       // If must have been set to one of the three values (but not left unset)
           ROSE_ASSERT(info.isUnsetAccess() == false);
         }
    }
 
 
+// DQ (8/15/2020): Adding support for state so that we can avoid nested extern "C" specifications.
+// void Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_stmt )
 void
-Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_stmt )
+Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_stmt, SgUnparse_Info& info )
    {
-     ROSE_ASSERT(decl_stmt != NULL);
+     ASSERT_not_null(decl_stmt);
 
-#if 0
+#define DEBUG_EXTERN 0
+
+#if DEBUG_EXTERN
      printf ("Inside of outputExternLinkageSpecifier() decl_stmt = %p = %s decl_stmt->isExternBrace() = %s \n",decl_stmt,decl_stmt->class_name().c_str(),decl_stmt->isExternBrace() ? "true" : "false");
      printf ("   --- decl_stmt->isExternBrace()                                            = %s \n",decl_stmt->isExternBrace() ? "true" : "false");
      printf ("   --- decl_stmt->get_declarationModifier().get_storageModifier().isExtern() = %s \n",decl_stmt->get_declarationModifier().get_storageModifier().isExtern() ? "true" : "false");
      printf ("   --- decl_stmt->get_linkage().empty()                                      = %s \n",decl_stmt->get_linkage().empty() ? "true" : "false");
+     printf ("   --- info.get_extern_C_with_braces()                                       = %s \n",info.get_extern_C_with_braces() ? "true" : "false");
      curprint ("\n/* Inside of outputExternLinkageSpecifier() */ \n ");
 #endif
 
@@ -1505,13 +1567,66 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
   // if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage())
      if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage().empty() == false)
         {
-          curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
-          if (decl_stmt->isExternBrace())
+#if DEBUG_EXTERN
+           printf ("/* output extern keyword */ \n");
+#endif
+          if (info.get_extern_C_with_braces() == false)
              {
-               curprint( "{ ");
+            // curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
+               if (decl_stmt->isExternBrace() == true)
+                  {
+#if DEBUG_EXTERN
+                    printf ("/* output extern brace */ \n");
+#endif
+#if 0
+                 // DQ (8/16/2020): I think that this is redundant with the use of braces on the class containing such extern c declarations.
+                 // These extern brace cases are handled via the CPP preprocessor support.
+                    curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
+                    curprint( "{ ");
+
+                 // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+                    ROSE_ASSERT(info.get_extern_C_with_braces() == false);
+                    info.set_extern_C_with_braces(true);
+#endif
+                  }
+                 else
+                  {
+#if DEBUG_EXTERN
+                    printf ("/* info.get_extern_C_with_braces() == false: output extern keyword only */ \n");
+#endif
+                    curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
+                  }
+             }
+            else
+             {
+#if DEBUG_EXTERN
+               printf ("/* info.get_extern_C_with_braces() == true: output extern keyword only */ \n");
+#endif
+            // DQ (8/17/2020): This is required for test2020_37.C but not for test2020_28.C.
+            // curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
+            // curprint( "extern ");
+            // curprint( "extern /* testing */ ");
+
+            // DQ (8/18/2020): friend functions cannot use the extern storage specification.
+               if (decl_stmt->get_declarationModifier().isFriend() == true)
+                  {
+                   /* Suppress the extern keyword */
+                   // curprint( "/* Suppress the extern keyword */ ");
+                  }
+                 else
+                  {
+                 // curprint( "extern /* not a friend declaration */ ");
+                    curprint( "extern ");
+                  }
              }
         }
+
+#if DEBUG_EXTERN
+     printf ("Leaving outputExternLinkageSpecifier() decl_stmt = %p = %s decl_stmt->isExternBrace() = %s \n",decl_stmt,decl_stmt->class_name().c_str(),decl_stmt->isExternBrace() ? "true" : "false");
+     printf ("   --- info.get_extern_C_with_braces()                                       = %s \n",info.get_extern_C_with_braces() ? "true" : "false");
+#endif
    }
+
 
 void
 Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement* decl_stmt )
@@ -1607,7 +1722,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                            // then we don't want the "template<>" syntax on the member function instantiation, else if it was not output (e.g. when 
                            // testTranslator is run on test2015_35.C) then we require the "template<>" syntax.
                               SgTemplateInstantiationMemberFunctionDecl* nondefiningTemplateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(decl_stmt->get_firstNondefiningDeclaration());
-                              ROSE_ASSERT(nondefiningTemplateInstantiationMemberFunctionDecl != NULL);
+                              ASSERT_not_null(nondefiningTemplateInstantiationMemberFunctionDecl);
 #if DEBUG_TEMPLATE_SPECIALIZATION
                               printf("  nondefiningTemplateInstantiationMemberFunctionDecl->get_parent() = %p (%s)\n", nondefiningTemplateInstantiationMemberFunctionDecl->get_parent(), nondefiningTemplateInstantiationMemberFunctionDecl->get_parent() ? nondefiningTemplateInstantiationMemberFunctionDecl->get_parent()->class_name().c_str() : "");
 #endif
@@ -1616,7 +1731,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                               SgTemplateInstantiationDefn* nondefiningTemplateClassInstatiationDefn = isSgTemplateInstantiationDefn(nondefiningTemplateInstantiationMemberFunctionDecl->get_parent());
                               if (nondefiningTemplateClassInstatiationDefn != NULL) {
                                 SgTemplateInstantiationDecl* templateClassInstantiation = isSgTemplateInstantiationDecl(nondefiningTemplateClassInstatiationDefn->get_parent());
-                                ROSE_ASSERT(templateClassInstantiation != NULL);
+                                ASSERT_not_null(templateClassInstantiation);
 #if DEBUG_TEMPLATE_SPECIALIZATION
                                 printf ("templateClassInstantiation->get_file_info()->isCompilerGenerated()      = %s \n",templateClassInstantiation->get_file_info()->isCompilerGenerated() ? "true" : "false");
                                 printf ("templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() = %s \n",templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() ? "true" : "false");
@@ -1727,10 +1842,17 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
    {
   // DQ (8/29/2005): These specifiers have to be output in a different order for g++ 3.3.x and 3.4.x
 
+#if 0
+     printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): TOP \n");
+#endif
+
 #ifdef __GNUC__
    #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 3) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 4)
      outputTemplateSpecializationSpecifier(decl_stmt);
-     outputExternLinkageSpecifier(decl_stmt);
+
+  // DQ (8/15/2020): Adding support for state so that we can avoid nested extern "C" specifications.
+  // outputExternLinkageSpecifier(decl_stmt);
+     outputExternLinkageSpecifier(decl_stmt,info);
    #endif
 // #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 3) || ( (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 3) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 4) )
    #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 3) || ( (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 3) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 4) )
@@ -1743,10 +1865,14 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
   // if (isSgTemplateInstantiationFunctionDecl(decl_stmt) == NULL && isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) == NULL)
      if (isSgTemplateInstantiationFunctionDecl(decl_stmt) == NULL && isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) == NULL && isSgTemplateVariableDeclaration(decl_stmt) == NULL)
         {
-          outputExternLinkageSpecifier(decl_stmt);
+       // DQ (8/15/2020): Adding support for state so that we can avoid nested extern "C" specifications.
+       // outputExternLinkageSpecifier(decl_stmt);
+          outputExternLinkageSpecifier(decl_stmt,info);
         }
    #else
-     outputExternLinkageSpecifier(decl_stmt);
+  // DQ (8/15/2020): Adding support for state so that we can avoid nested extern "C" specifications.
+  // outputExternLinkageSpecifier(decl_stmt);
+     outputExternLinkageSpecifier(decl_stmt,info);
    #endif
 
      outputTemplateSpecializationSpecifier(decl_stmt);
@@ -1760,7 +1886,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 #endif
 
 #if 0
-     printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): TOP \n");
+     printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): after initial calls \n");
 #endif
 
      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);
@@ -1772,16 +1898,22 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
         {
 #if 1
        // This assertion fails in test2004_116.C
-       // ROSE_ASSERT(functionDeclaration != NULL);
+       // ASSERT_not_null(functionDeclaration);
           if (functionDeclaration == NULL)
              {
+#if 0
+               printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): functionDeclaration == NULL: output friend keyword \n");
+#endif
                curprint( "friend ");
              }
 #else
        // DQ (3/8/2012): We now handle a new design of templates as class derived from SgFunctionDeclaration, so this is a better implementation now.
-          ROSE_ASSERT(functionDeclaration != NULL);
-          ROSE_ASSERT(functionDeclaration->get_parent() != NULL);
-          ROSE_ASSERT(functionDeclaration->get_scope() != NULL);
+          ASSERT_not_null(functionDeclaration);
+          ASSERT_not_null(functionDeclaration->get_parent());
+          ASSERT_not_null(functionDeclaration->get_scope());
+
+#error "DEAD CODE!"
+
           if (functionDeclaration->get_parent() == functionDeclaration->get_scope())
              {
                curprint("friend ");
@@ -1821,7 +1953,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // printf ("isDeclarationOfTemplateSpecialization = %s \n",isDeclarationOfTemplateSpecialization == true ? "true" : "false");
           if ( (decl_stmt->get_declarationModifier().isFriend() == true) && (isDeclarationOfTemplateSpecialization == false) )
              {
-               ROSE_ASSERT(decl_stmt->get_parent() != NULL);
+               ASSERT_not_null(decl_stmt->get_parent());
 #if 0
                printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): decl_stmt->get_parent() = %p = %s \n",decl_stmt->get_parent(),decl_stmt->get_parent()->class_name().c_str());
 #endif
@@ -1829,6 +1961,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
             // curprint( "friend ");
                if (isSgClassDefinition(decl_stmt->get_parent()) != NULL)
                   {
+#if 0
+                    printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): functionDeclaration != NULL: output friend keyword \n");
+#endif
                     curprint( "friend ");
                   }
              }
@@ -1876,7 +2011,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
             // DQ (9/25/2013): Check if this is a C file using -std=c89, and if so then unparse "__inline__" instead of "inline".
             // curprint( "inline ");
                SgFile* file = TransformationSupport::getFile(functionDeclaration);
-               ROSE_ASSERT(file != NULL);
+               ASSERT_not_null(file);
                if (file->get_C89_only() == true && file->get_C89_gnu_only() == false)
                   {
                  // DQ (9/25/2013): This is what is required when using -std=c89 (the default for GNU gcc is -std=gnu89).
@@ -2024,6 +2159,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
      if (decl_stmt->get_declarationModifier().get_storageModifier().isStatic())
         {
+#if 0
+          printf ("In Unparse_MOD_SAGE::printSpecifier2(): Output the static keyword \n");
+#endif
           curprint("static ");
         }
 
@@ -2045,6 +2183,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // if (isSgTemplateVariableDeclaration(decl_stmt) == NULL)
           if ( (decl_stmt->get_declarationModifier().isFriend() == false) && (isSgTemplateVariableDeclaration(decl_stmt) == NULL) )
              {
+#if 0
+               printf ("In Unparse_MOD_SAGE::printSpecifier2(): Output the extern keyword \n");
+#endif
                curprint("extern ");
              }
         }
@@ -2259,6 +2400,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
           curprint(decl_stmt->get_declarationModifier().get_microsoft_uuid_string());
           curprint("\")) ");
         }
+#if 0
+     printf ("Leaving printSpecifier2() \n");
+#endif
    }
 
 
@@ -2373,7 +2517,7 @@ Unparse_MOD_SAGE::printAttributesForType(SgDeclarationStatement* decl_stmt, SgUn
    {
   // DQ (12/31/2013): Added support for missing attributes on types within declarations (in unparsed code).
 
-     ROSE_ASSERT(decl_stmt != NULL);
+     ASSERT_not_null(decl_stmt);
 
 #if 0
      printf ("In printAttributesForType(SgDeclarationStatement*): Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
@@ -2431,7 +2575,7 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
   // DQ (2/26/2013): Added support for missing attributes in unparsed code.
   // These are output after the function declaration (and before the body of the function or the closing ";").
 
-     ROSE_ASSERT(decl_stmt != NULL);
+     ASSERT_not_null(decl_stmt);
 
 #if 0
      printf ("In printAttributes(SgDeclarationStatement*): Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
@@ -2489,7 +2633,7 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // DQ (12/31/2013): Note that we need to look at the SgInitializedName in the variable declaration, since
        // we use the type modifier on the declaration to set the attributes for the type (not the variable).
           SgInitializedName* initializedName = SageInterface::getFirstInitializedName(variableDeclaration);
-          ROSE_ASSERT(initializedName != NULL);
+          ASSERT_not_null(initializedName);
           initializedName->isGnuAttributePacked();
           if (initializedName->isGnuAttributePacked() == true)
              {
@@ -2731,7 +2875,7 @@ Unparse_MOD_SAGE::printFunctionFormalArgumentSpecifier ( SgType* type, SgUnparse
 
   // DQ (2/4/2006): Removed (not used)
   // SgModifierNodes* modifiers = type->get_modifiers();
-  // ROSE_ASSERT (modifiers != NULL);
+  // ASSERT_not_null(modifiers);
    }
 #endif
 

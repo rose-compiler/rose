@@ -1,0 +1,17 @@
+START
+DEF PROC foo(arg1:arg2) S;
+BEGIN
+   ITEM arg1 S;
+   ITEM arg2 S;
+   ITEM temp S;
+   temp = arg1;
+   arg2 = arg1;
+END
+
+DEF PROC main;
+BEGIN
+   ITEM temp1 S;
+   ITEM temp2 S;
+   temp1 = foo(temp1:temp2);
+END
+TERM

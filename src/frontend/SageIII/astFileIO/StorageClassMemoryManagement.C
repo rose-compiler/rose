@@ -518,6 +518,7 @@ EasyStorage<Sawyer::Container::BitVector>::storeDataInEasyStorageClass(const Saw
         // there is still space in the actual block
         if (offset < Base::getSizeOfData() && Base::actual != NULL) {
             while ((unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize) {
+                assert(words != NULL);
                 assert(idx <= nWords);
                 *Base::actual++ = 0==idx ? excess : words[idx-1];
                 ++idx;
@@ -527,6 +528,7 @@ EasyStorage<Sawyer::Container::BitVector>::storeDataInEasyStorageClass(const Saw
         while (Base::blockSize < (unsigned long)offset) {
             Base::actual = Base::getNewMemoryBlock();
             while ((unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize) {
+                assert(words != NULL);
                 assert(idx <= nWords);
                 *Base::actual++ = 0==idx ? excess : words[idx-1];
                 ++idx;
@@ -537,6 +539,7 @@ EasyStorage<Sawyer::Container::BitVector>::storeDataInEasyStorageClass(const Saw
     }
     // put (the rest of) the data in a new memory block
     while (idx <= nWords) {
+        assert(words != NULL);
         assert(idx <= nWords);
         *Base::actual++ = 0==idx ? excess : words[idx-1];
         ++idx;
@@ -572,10 +575,13 @@ EasyStorage<Sawyer::Container::BitVector>::rebuildDataStoredInEasyStorageClass()
         }
         retval.resize(nBits);
 
-        // Now read the data and load it into the bit vector
+        // Now read the data and load it into the bit vector, note that since
+        // the size is known to be positive the pointer better not be nil.
         BVWord *dst = retval.data();
-        for (size_t i=1; i < (size_t)Base::getSizeOfData(); ++i)
+        assert(dst != NULL);
+        for (size_t i=1; i < (size_t)Base::getSizeOfData(); ++i) {
             *dst++ = *words++;
+        }
     }
     return retval;
 }

@@ -982,45 +982,45 @@ Sg_File_Info *createSgFileInfo(string filename, int line, int col) {
 //
 //
 void setJavaSourcePosition(SgLocatedNode*locatedNode, Token_t *token) {
-    ROSE_ASSERT(locatedNode);
-    ROSE_ASSERT(token);
-    JavaSourceCodePosition *posInfo = token -> getSourcecodePosition();
+    ROSE_ASSERT(locatedNode != NULL);
+    ROSE_ASSERT(token != NULL);
+    JavaSourceCodePosition* posInfo = token->getSourcecodePosition();
 
     // This function sets the source position if java position information has been provided
     // (posInfo != NULL), otherwise it is marked as not available.
     // These nodes WILL be unparsed in the code generation phase.
-    // if (posInfo -> getLineStart() == 0) {
-    if (posInfo -> getLineEnd() == 0) {
-        if (locatedNode -> get_startOfConstruct() == NULL){
-            locatedNode -> set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
+    // if (posInfo->getLineStart() == 0) {
+    if ((posInfo != NULL) && (posInfo->getLineEnd() == 0)) {
+        if (locatedNode->get_startOfConstruct() == NULL){
+            locatedNode->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
         }
-        if (locatedNode -> get_endOfConstruct() == NULL){
-            locatedNode -> set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
+        if (locatedNode->get_endOfConstruct() == NULL){
+            locatedNode->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
         }
         SageInterface::setSourcePosition(locatedNode); // setJavaSourcePositionUnavailableInFrontend(locatedNode);
         return;
     }
 
     // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
-    ROSE_ASSERT(locatedNode != NULL);
+    ROSE_ASSERT(locatedNode != NULL); // This seems redundant
 
     // Make sure we never try to reset the source position of the global scope (set elsewhere in ROSE).
     ROSE_ASSERT(isSgGlobal(locatedNode) == NULL);
 
     // Check the endOfConstruct first since it is most likely NULL (helpful in debugging)
-    if (locatedNode -> get_endOfConstruct() != NULL || locatedNode -> get_startOfConstruct() != NULL) {
+    if (locatedNode->get_endOfConstruct() != NULL || locatedNode->get_startOfConstruct() != NULL) {
         if (SgProject::get_verbose() > 1) {
-            printf ("In setSourcePosition(SgLocatedNode *locatedNode): Warning about existing file info data at locatedNode = %p = %s \n", locatedNode, locatedNode -> class_name().c_str());
+            printf ("In setSourcePosition(SgLocatedNode *locatedNode): Warning about existing file info data at locatedNode = %p = %s \n", locatedNode, locatedNode->class_name().c_str());
         }
 
-        if (locatedNode -> get_startOfConstruct() != NULL) {
-            delete locatedNode -> get_startOfConstruct();
-            locatedNode -> set_startOfConstruct(NULL);
+        if (locatedNode->get_startOfConstruct() != NULL) {
+            delete locatedNode->get_startOfConstruct();
+            locatedNode->set_startOfConstruct(NULL);
         }
 
-        if (locatedNode -> get_endOfConstruct() != NULL) {
-            delete locatedNode -> get_endOfConstruct();
-            locatedNode -> set_endOfConstruct(NULL);
+        if (locatedNode->get_endOfConstruct() != NULL) {
+            delete locatedNode->get_endOfConstruct();
+            locatedNode->set_endOfConstruct(NULL);
         }
     }
 
@@ -1028,9 +1028,9 @@ void setJavaSourcePosition(SgLocatedNode*locatedNode, Token_t *token) {
     // (Note that for expressions get_file_info() returns get_operatorPosition()).
     SgExpression *expression = isSgExpression(locatedNode);
     if (expression != NULL) {
-        if (expression -> get_operatorPosition() != NULL) {
-            delete expression -> get_operatorPosition();
-            expression -> set_operatorPosition(NULL);
+        if (expression->get_operatorPosition() != NULL) {
+            delete expression->get_operatorPosition();
+            expression->set_operatorPosition(NULL);
         }
     }
 
@@ -1040,48 +1040,48 @@ void setJavaSourcePosition(SgLocatedNode*locatedNode, Token_t *token) {
         //
         // If this file was not already tagged as an erroneous file, do so now.
         //
-        if (! ::currentSourceFile -> attributeExists("error")) {
-            ::currentSourceFile -> setAttribute("error", new AstRegExAttribute("JavaSourceCodePosition Translation error"));
+        if (! ::currentSourceFile->attributeExists("error")) {
+            ::currentSourceFile->setAttribute("error", new AstRegExAttribute("JavaSourceCodePosition Translation error"));
         }
-        printf("ERROR: JavaSourceCodePosition *posInfo == NULL triggering use of SageInterface::setSourcePosition() (locatedNode = %p = %s) \n", locatedNode, locatedNode -> class_name().c_str());
+        printf("ERROR: JavaSourceCodePosition *posInfo == NULL triggering use of SageInterface::setSourcePosition() (locatedNode = %p = %s) \n", locatedNode, locatedNode->class_name().c_str());
         // keep going !!!ROSE_ASSERT(false);
 
         SageInterface::setSourcePosition(locatedNode);
     } 
     else {
         // java position info is available
-        Sg_File_Info *start_fileInfo = createSgFileInfo(token -> getFileName(), posInfo -> getLineStart(), posInfo -> getColStart());
-        Sg_File_Info *end_fileInfo   = createSgFileInfo(token -> getFileName(), posInfo -> getLineEnd(), posInfo -> getColEnd());
+        Sg_File_Info *start_fileInfo = createSgFileInfo(token->getFileName(), posInfo->getLineStart(), posInfo->getColStart());
+        Sg_File_Info *end_fileInfo   = createSgFileInfo(token->getFileName(), posInfo->getLineEnd(), posInfo->getColEnd());
 
-        ROSE_ASSERT(start_fileInfo -> isTransformation() == false);
-        ROSE_ASSERT(end_fileInfo -> isTransformation() == false);
+        ROSE_ASSERT(start_fileInfo->isTransformation() == false);
+        ROSE_ASSERT(end_fileInfo->isTransformation() == false);
 
         // updating the sgnode
-        locatedNode -> set_startOfConstruct(start_fileInfo);
-        locatedNode -> set_endOfConstruct(end_fileInfo);
+        locatedNode->set_startOfConstruct(start_fileInfo);
+        locatedNode->set_endOfConstruct(end_fileInfo);
 
-        ROSE_ASSERT(start_fileInfo -> isTransformation() == false);
-        ROSE_ASSERT(end_fileInfo -> isTransformation() == false);
+        ROSE_ASSERT(start_fileInfo->isTransformation() == false);
+        ROSE_ASSERT(end_fileInfo->isTransformation() == false);
 
-        ROSE_ASSERT(locatedNode -> get_startOfConstruct() -> isTransformation() == false);
-        ROSE_ASSERT(locatedNode -> get_endOfConstruct() -> isTransformation() == false);
+        ROSE_ASSERT(locatedNode->get_startOfConstruct()->isTransformation() == false);
+        ROSE_ASSERT(locatedNode->get_endOfConstruct()->isTransformation() == false);
 
         // DQ (8/16/2011): Added support for setting the operator source code position 
         // (Note that for expressions get_file_info() returns get_operatorPosition()).
         // SgExpression *expression = isSgExpression(locatedNode);
         if (expression != NULL) {
-            Sg_File_Info *operator_fileInfo = createSgFileInfo(token -> getFileName(), posInfo -> getLineStart(), posInfo -> getColStart());
-            expression -> set_operatorPosition(operator_fileInfo);
+            Sg_File_Info *operator_fileInfo = createSgFileInfo(token->getFileName(), posInfo->getLineStart(), posInfo->getColStart());
+            expression->set_operatorPosition(operator_fileInfo);
 
-            ROSE_ASSERT(locatedNode -> get_file_info() -> isTransformation() == false);
+            ROSE_ASSERT(locatedNode->get_file_info()->isTransformation() == false);
         }
 
-        ROSE_ASSERT(locatedNode -> get_file_info() -> isTransformation() == false);
+        ROSE_ASSERT(locatedNode->get_file_info()->isTransformation() == false);
     }
 
-    ROSE_ASSERT(locatedNode -> get_file_info() -> isTransformation() == false);
-    ROSE_ASSERT(locatedNode -> get_startOfConstruct() -> isTransformation() == false);
-    ROSE_ASSERT(locatedNode -> get_endOfConstruct() -> isTransformation() == false);
+    ROSE_ASSERT(locatedNode->get_file_info()->isTransformation() == false);
+    ROSE_ASSERT(locatedNode->get_startOfConstruct()->isTransformation() == false);
+    ROSE_ASSERT(locatedNode->get_endOfConstruct()->isTransformation() == false);
 }
 
 //
@@ -1290,11 +1290,12 @@ SgJavaPackageDeclaration *findPackageDeclaration(SgName &package_name) {
     SgJavaPackageDeclaration *package_declaration = NULL;
     for (list<SgName>::iterator name = name_list.begin(); name != name_list.end(); name++) {
         SgClassSymbol *package_symbol = lookupClassSymbolInScope(scope, *name);
-        if (! package_symbol)
+        if (package_symbol == NULL)
             return NULL;
-        package_declaration = isSgJavaPackageDeclaration(package_symbol -> get_declaration() -> get_definingDeclaration());
-        ROSE_ASSERT(package_declaration -> get_scope() == scope);
-        scope = package_declaration -> get_definition();
+        package_declaration = isSgJavaPackageDeclaration(package_symbol->get_declaration()->get_definingDeclaration());
+        ROSE_ASSERT(package_declaration != NULL);
+        ROSE_ASSERT(package_declaration->get_scope() == scope);
+        scope = package_declaration->get_definition();
     }
     return package_declaration;
 }

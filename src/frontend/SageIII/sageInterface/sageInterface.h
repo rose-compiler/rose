@@ -136,9 +136,12 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
  /*! @name Symbol tables
    \brief  utility functions for symbol tables
  */
-   // Liao 1/22/2008, used for get symbols for generating variable reference nodes
-   // ! Find a variable symbol in current and ancestor scopes for a given name
-   ROSE_DLL_API SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope=NULL);
+
+// DQ (8/5/2020): the "using namespace" directive will not hide existing visability of symbols in resolving visability.
+// So we need to test if a symbol is visible exclusing matching alises due to using direectives before we can decide to
+// persue name space qualification. This is best demonstrated by Cxx_tests/test2020_18.C, test2020_19.C, test2020_20.C, 
+// and test2020_21.C.
+   ROSE_DLL_API SgSymbol *lookupSymbolInParentScopesIgnoringAliasSymbols (const SgName & name, SgScopeStatement *currentScope = NULL, SgTemplateParameterPtrList* templateParameterList = NULL, SgTemplateArgumentPtrList* templateArgumentList = NULL);
 
 // DQ (8/21/2013): Modified to make newest function parameters be default arguments.
 // DQ (8/16/2013): For now we want to remove the use of default parameters and add the support for template parameters and template arguments.
@@ -146,6 +149,10 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
 // SgSymbol *lookupSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope=NULL);
 // SgSymbol *lookupSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList);
    ROSE_DLL_API SgSymbol *lookupSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope = NULL, SgTemplateParameterPtrList* templateParameterList = NULL, SgTemplateArgumentPtrList* templateArgumentList = NULL);
+
+   // Liao 1/22/2008, used for get symbols for generating variable reference nodes
+   // ! Find a variable symbol in current and ancestor scopes for a given name
+   ROSE_DLL_API SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope=NULL);
 
    // DQ (11/24/2007): Functions moved from the Fortran support so that they could be called from within astPostProcessing.
    //!look up the first matched function symbol in parent scopes given only a function name, starting from top of ScopeStack if currentscope is not given or NULL
@@ -395,6 +402,9 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
    \brief Not sure the classifications right now
  */
 
+  //! Recursively print current and parent nodes. used within gdb to probe the context of a node.
+  void recursivePrintCurrentAndParent (SgNode* n) ;
+
    //! Save AST into a pdf file. Start from a node to find its enclosing file node. The entire file's AST will be saved into a pdf.
    void saveToPDF(SgNode* node, std::string filename);
    void saveToPDF(SgNode* node); // enable calling from gdb
@@ -591,6 +601,12 @@ bool isIndexOperator( SgExpression* exp );
 //! Used to support token unparsing (when the output the trailing token sequence).
 SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap);
 
+// DQ (8/12/2020): Check the access permissions of all defining and nodefining declarations.
+void checkAccessPermissions ( SgNode* );
+
+// DQ (8/14/2020): Check the symbol tables for specific scopes (debugging support).
+void checkSymbolTables ( SgNode* );
+
 //@}
 
 //------------------------------------------------------------------------
@@ -625,6 +641,10 @@ SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::ma
   ROSE_DLL_API bool is_mixed_Fortran_and_C_language ();
   ROSE_DLL_API bool is_mixed_Fortran_and_Cxx_language ();
   ROSE_DLL_API bool is_mixed_Fortran_and_C_and_Cxx_language ();
+
+  ROSE_DLL_API bool is_language_case_insensitive ();
+  ROSE_DLL_API bool language_may_contain_nondeclarations_in_scope ();
+
 //@}
 
 //------------------------------------------------------------------------
@@ -2192,11 +2212,11 @@ ROSE_DLL_API int splitVariableDeclaration (SgScopeStatement* scope, bool topLeve
 
 //! Replace an expression with a temporary variable and an assignment statement
 /*!
- Add a new temporary variable to contain the value of 'from'
- Change reference to 'from' to use this new variable
- Assumptions: 'from' is not within the test of a loop or 'if'
-              not currently traversing 'from' or the statement it is in
-
+ Add a new temporary variable to contain the value of 'from'.
+ Change reference to 'from' to use this new variable.
+ Assumptions: (1)'from' is not within the test of a loop or 'if';
+              (2)not currently traversing 'from' or the statement it is in.
+ Return value: the new temp variable declaration's assign initializer containing the from expression.              
  */
  ROSE_DLL_API SgAssignInitializer* splitExpression(SgExpression* from, std::string newName = "");
 
@@ -2732,6 +2752,11 @@ bool isTemplateInstantiationFromTemplateDeclarationSatisfyingFilter (SgFunctionD
 
 void detectCycleInType(SgType * type, const std::string & from);
 
+// DQ (7/14/2020): Debugging support.
+void checkForInitializers( SgNode* node );
+
 }// end of namespace
+
+
 
 #endif

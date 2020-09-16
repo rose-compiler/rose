@@ -116,6 +116,7 @@ install-tools: install-core tools
 	$(MAKE) install -C $(top_builddir)/projects/UpcTranslation
 	$(MAKE) install -C $(top_builddir)/projects/ArithmeticMeasureTool
 	$(MAKE) install -C $(top_builddir)/tests/nonsmoke/functional/roseTests/astInliningTests
+	$(MAKE) install -C $(top_builddir)/tests/nonsmoke/functional/roseTests/astOutliningTests
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) install -C $(top_builddir)/tutorial
 endif

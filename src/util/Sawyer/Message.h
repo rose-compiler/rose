@@ -362,8 +362,7 @@ SAWYER_EXPORT std::string stringifyImportance(Importance); /**< Convert an @ref 
 SAWYER_EXPORT std::string stringifyColor(AnsiColor);       /**< Convert an @ref AnsiColor enum to a string. */
 SAWYER_EXPORT double now();                                /**< Current system time in seconds. */
 SAWYER_EXPORT std::string escape(const std::string&);      /**< Convert a string to its C representation. */
-
-
+SAWYER_EXPORT bool isTerminal(int fd);                     /**< True if fd is a tty. */
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Colors

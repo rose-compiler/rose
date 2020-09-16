@@ -1,6 +1,7 @@
 void method1() {
-    #include "Inner.h"
-	v1_rename_me = 10;
+  // This fails to be handled properly because the header is used twice (leave for later).
+  // #include "Inner.h"
+  // v1_rename_me = 10;
 }
 
 void method2() {

@@ -26,7 +26,7 @@ int Solver5::getId() {
   * \date 2012.
  */
 void Solver5::run() {
-  _analyzer->_analysisTimer.start();
+  //_analyzer->_analysisTimer.start(); // is started in runSolver now
   if(_analyzer->svCompFunctionSemantics()) {
     _analyzer->reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {
@@ -45,9 +45,9 @@ void Solver5::run() {
   bool ioReductionActive = false;
   unsigned int ioReductionThreshold = 0;
   unsigned int estatesLastReduction = 0;
-  if(args.isDefined("io-reduction")) {
+  if(_analyzer->getLtlOptionsRef().ioReduction) {
     ioReductionActive = true;
-    ioReductionThreshold = args.getInt("io-reduction");
+    ioReductionThreshold = _analyzer->getLtlOptionsRef().ioReduction;
   }
 
   SAWYER_MESG(logger[TRACE])<<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
@@ -138,7 +138,6 @@ void Solver5::run() {
                   _analyzer->addToWorkList(newEStatePtr);
                   break;
                 case 1:
-                case 3:
                   {
                   // performing merge
 #pragma omp critical(SUMMARY_STATES_MAP)
@@ -167,7 +166,7 @@ void Solver5::run() {
                   _analyzer->addToWorkList(newEStatePtr);  
                   break;
                   case 2: 
-                    cout<<"Mode 2 (topifying) not available for this option yet."<<endl;
+                    cerr<<"Error: abstraction mode 2 not suppored in solver 5."<<endl;
                     exit(1);
                 }
                 default:
@@ -197,7 +196,7 @@ void Solver5::run() {
               } else if(_analyzer->isFailedAssertEState(&newEState)) {
                 // record failed assert
                 int assertCode;
-                if(args.getBool("rers-binary")) {
+                if(_analyzer->getOptionsRef().rers.rersBinary) {
                   assertCode=_analyzer->reachabilityAssertCode(newEStatePtr);
                 } else {
                   assertCode=_analyzer->reachabilityAssertCode(currentEStatePtr);
@@ -205,18 +204,13 @@ void Solver5::run() {
                 if(assertCode>=0) {
 #pragma omp critical
                   {
-                    if(args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
+                    if(_analyzer->getLtlOptionsRef().withCounterExamples || _analyzer->getLtlOptionsRef().withAssertCounterExamples) {
                       //if this particular assertion was never reached before, compute and update counterexample
                       if (_analyzer->reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
                         _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
                       }
                     }
                     _analyzer->reachabilityResults.reachable(assertCode);
-                  }
-                } else {
-                  // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
-                  if(!args.getBool("rersmode")) {
-                    // assert without label
                   }
                 }
               } // end of failed assert handling
@@ -232,7 +226,7 @@ void Solver5::run() {
   }
   if(_analyzer->isIncompleteSTGReady()) {
     _analyzer->printStatusMessage(true);
-    cout<< "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
+    _analyzer->printStatusMessage("STATUS: analysis finished (incomplete STG due to specified resource restriction).",true);
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),!isComplete);
     _analyzer->transitionGraph.setIsComplete(!isComplete);
   } else {
@@ -240,7 +234,7 @@ void Solver5::run() {
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),tmpcomplete);
     _analyzer->printStatusMessage(true);
     _analyzer->transitionGraph.setIsComplete(tmpcomplete);
-    cout<< "STATUS: analysis finished (worklist is empty)."<<endl;
+    _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
   }
   _analyzer->transitionGraph.setIsPrecise(_analyzer->isPrecise());
 }

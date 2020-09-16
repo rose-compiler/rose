@@ -56,6 +56,11 @@ namespace CppStdUtilities {
     }
   }
 
+  bool isPrefix(string prefix, string s) {
+    // fast and handles also case that s is shorter than prefix
+    return s.compare(0,prefix.size(),prefix)==0;
+  }
+
   bool isPostfix(std::string const &postfix, std::string const &s) {
     if (s.length() >= postfix.length()) {
       return (0 == s.compare (s.length() - postfix.length(), postfix.length(), postfix));
@@ -64,9 +69,12 @@ namespace CppStdUtilities {
     }
   }
 
-#if GCC_VERSION >= 40900
   std::vector<std::string> splitByComma(const string& input) {
     return splitByRegex(input,",");
+  }
+
+  std::vector<std::string> splitByTab(const string& input) {
+    return splitByRegex(input,"\\t");
   }
 
   std::vector<std::string> splitBySpaces(const string& input) {
@@ -79,5 +87,4 @@ namespace CppStdUtilities {
     std::sregex_token_iterator first{input.begin(), input.end(), re, -1},last;
     return {first, last};
   }
-#endif
 }
