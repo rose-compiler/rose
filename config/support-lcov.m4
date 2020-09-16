@@ -38,6 +38,7 @@ if test "x$enable_lcov" = "xyes"; then
     g++)
       CXXFLAGS+=" -g -fprofile-arcs -ftest-coverage"
       CFLAGS+=" -g -fprofile-arcs -ftest-coverage"
+      LDFLAGS+=" -lgcov --coverage"
       ;;
     clang)
     # For LLVM the support for lcov .
