@@ -14230,10 +14230,13 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
             // DQ (12/27/2018): I think that if this is a base class declaration then it is OK for the type's declaration to not match.
             // ROSE_ASSERT(nondefdecl->get_parent() != NULL);
-               if (nondefdecl->get_parent() != NULL)
-                  {
-                    printf ("nondefdecl->get_parent() = %p = %s \n",nondefdecl->get_parent(),nondefdecl->get_parent()->class_name().c_str());
-                  }
+               {
+                  SgNode* parent = nondefdecl->get_parent();
+                  if (parent != NULL)
+                     {
+                       printf ("nondefdecl->get_parent() = %p = %s \n",parent,parent->class_name().c_str());
+                     }
+               }
 
             // DQ (12/27/2018): Activate this debugging support.
 #if DEBUG_CLASS_DECLARATION
