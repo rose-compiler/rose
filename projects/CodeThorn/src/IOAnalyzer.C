@@ -71,9 +71,9 @@ void IOAnalyzer::addCounterexample(int assertCode, const EState* assertEState) {
   if(RersCounterexample* rersCe = dynamic_cast<RersCounterexample*>(trace)) {
     string ceString;
     if (_ltlOpt.counterExamplesWithOutput) {
-      ceString = rersCe->toRersIOString();
+      ceString = rersCe->toRersIOString(_ltlRersMapping); // MS 8/6/20: changed to use mapping
     } else {
-      ceString = rersCe->toRersIString();
+      ceString = rersCe->toRersIString(_ltlRersMapping); // MS 8/6/20: changed to use mapping
     }
     reachabilityResults.strictUpdateCounterexample(assertCode, ceString);    
     delete rersCe;
@@ -450,7 +450,7 @@ void CodeThorn::IOAnalyzer::configureOptions(CodeThornOptions ctOpt, LTLOptions 
   if (ctOpt.callStringLength >= 2) 
     setFiniteCallStringMaxLength(ctOpt.callStringLength);
 
-  configureOptionSets(ctOpt);
+  //configureOptionSets(ctOpt);
 
   optionStringLiteralsInState=ctOpt.inStateStringLiterals;
   setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);

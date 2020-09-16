@@ -112,7 +112,7 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
     // Disassemble the instruction with capstone
     r.nInsns = cs_disasm(capstone_, bytes, nRead, va, 1, &r.csi);
     if (0 == r.nInsns) {
-#if 1 // DEBGUGGING: show the disassembly string from capstone itself
+#if 0 // DEBGUGGING: show the disassembly string from capstone itself
         std::cerr <<"ROBB: capstone disassembly:"
                   <<" " <<StringUtility::addrToString(va) <<":"
                   <<" " <<StringUtility::toHex2(bytes[0], 8, false, false).substr(2)
@@ -136,7 +136,7 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
         ASSERT_not_implemented("ARM (32-bit) disassembler is not implemented");
     } else if (Architecture::ARCH_ARM64 == arch_) {
         const cs_arm64 &detail = r.csi->detail->arm64;
-#if 1 // DEBGUGGING: show the disassembly string from capstone itself
+#if 0 // DEBGUGGING: show the disassembly string from capstone itself
         std::cerr <<"ROBB: capstone disassembly:"
                   <<" " <<StringUtility::addrToString(va) <<":"
                   <<" " <<StringUtility::toHex2(bytes[0], 8, false, false).substr(2)

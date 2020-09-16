@@ -2,6 +2,8 @@
 #ifndef CE_ANALYZER_H
 #define CE_ANALYZER_H
 
+#ifdef HAVE_SPOT
+
 #include "sage3basic.h"
 
 //CodeThorn includes
@@ -129,5 +131,7 @@ namespace CodeThorn {
   };
 
 } // end of namespace CodeThorn
+
+#endif // HAVE_SPOT
 
 #endif

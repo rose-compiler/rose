@@ -17,10 +17,10 @@ namespace CodeThorn {
 
   public:
     IOAnalyzer();
-
+    
   protected:
     static Sawyer::Message::Facility logger;
-
+    
   public:
     static void initDiagnostics();
     void configureOptions(CodeThornOptions ctOpt, LTLOptions ltlOpt, ParProOptions parProOpt);
@@ -55,8 +55,6 @@ namespace CodeThorn {
 
     const EState* getEstateBeforeMissingInput() {return _estateBeforeMissingInput;}
     const EState* getLatestErrorEState() {return _latestErrorEState;}
-    std::set<int> getInputVarValues() { return _inputVarValues; }
-
   private:
     // adds a string representation of the input (/output) path from start state to assertEState to reachabilityResults.
     void addCounterexample(int assertCode, const EState* assertEState);

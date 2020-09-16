@@ -27,6 +27,13 @@ class PASolver1 : public DFAbstractSolver {
   void runSolver() ROSE_OVERRIDE;
   void computeCombinedPreInfo(Label lab,Lattice& inInfo) ROSE_OVERRIDE;
   
+  void setLabeler(Labeler& labeler) { l = &labeler; }
+  Labeler getLabeler() 
+  { 
+    ROSE_ASSERT(l);
+    return *l; 
+  }
+  
   void computePostInfo(Label lab,Lattice& inInfo);
 
  protected:
@@ -36,6 +43,7 @@ class PASolver1 : public DFAbstractSolver {
   PropertyStateFactory& _initialElementFactory;
   Flow& _flow;
   DFTransferFunctions& _transferFunctions;
+  Labeler* l;
  public:
   void setTrace(bool trace) ROSE_OVERRIDE { _trace=trace; }
  private:
