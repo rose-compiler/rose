@@ -87,6 +87,9 @@
 // DQ (5/7/2020): Added support to interleaving include directives into the code.
 #include "addIncludeDirectives.h"
 
+// DQ (8/25/2020): Added support to remove redundant include files used to initialize variable declarations.
+#include "fixupInitializers.h"
+
 /*! \brief Postprocessing that is not likely to be handled in the EDG/Sage III translation.
  */
 void postProcessingSupport (SgNode* node);

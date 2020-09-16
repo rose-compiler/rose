@@ -12,7 +12,7 @@
 #include "AstAnnotator.h"
 #include "Miscellaneous.h"
 #include "CommandLineOptions.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "AbstractValue.h"
 #include "SgNodeHelper.h"
 #include "FIConstAnalysis.h"
@@ -69,7 +69,7 @@ void printCodeStatistics(SgNode* root) {
   SgProject* project=isSgProject(root);
   VariableIdMappingExtended variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(project);
-  VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
+  VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,&variableIdMapping);
   DeadCodeElimination dce;
   cout<<"----------------------------------------------------------------------"<<endl;
   cout<<"Statistics:"<<endl;
@@ -86,6 +86,7 @@ int main(int argc, char* argv[]) {
   ROSE_INITIALIZE;
   CodeThorn::initDiagnostics();
   cout<<"Woodpecker diagnostics initialized."<<endl;
+  CodeThorn::turnOffRoseWarnings();
   
   Rose::Diagnostics::mprefix->showProgramName(false);
   Rose::Diagnostics::mprefix->showThreadId(false);
@@ -303,8 +304,8 @@ int main(int argc, char* argv[]) {
     FIConstAnalysis fiConstAnalysis(&variableIdMapping);
     fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
     fiConstAnalysis.runAnalysis(root, mainFunctionRoot);
-    VariableIdSet setOfUsedVarsInFunctions=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&variableIdMapping);
-    VariableIdSet setOfUsedVarsGlobalInit=AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(root,&variableIdMapping);
+    VariableIdSet setOfUsedVarsInFunctions=AstUtility::usedVariablesInsideFunctions(root,&variableIdMapping);
+    VariableIdSet setOfUsedVarsGlobalInit=AstUtility::usedVariablesInGlobalVariableInitializers(root,&variableIdMapping);
     VariableIdSet setOfAllUsedVars = setOfUsedVarsInFunctions;
     setOfAllUsedVars.insert(setOfUsedVarsGlobalInit.begin(), setOfUsedVarsGlobalInit.end());
     logger[INFO]<<"number of used vars inside functions: "<<setOfUsedVarsInFunctions.size()<<endl;

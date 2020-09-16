@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#if defined(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT) && __cplusplus >= 201103L
+
 static const char *purpose = "experimental parallel disassembly";
 static const char *description =
     "Simple tool to try some parallel disassembly ideas.";
@@ -52,12 +55,19 @@ initializeParallelPartitioner(PP::Partitioner &pp, P2::Partitioner &p) {
     info <<"; done\n";
 
     info <<"inserting function prologue patterns";
-    auto functions = p.nextFunctionPrologue(0);
-    for (auto function: functions) {
-        debug <<"insert staring point " <<StringUtility::addrToString(function->address())
-              <<" from function prologue matcher\n";
-        pp.makeInstruction(function->address());
-        pp.scheduleDecodeInstruction(function->address());
+    for (rose_addr_t searchVa = 0; true; ++searchVa) {
+        auto functions = p.nextFunctionPrologue(searchVa, searchVa /*out*/);
+        if (functions.empty())
+            break;
+        for (auto function: functions) {
+            debug <<"insert staring point " <<StringUtility::addrToString(function->address())
+                  <<" from function prologue matcher\n";
+            PP::InsnInfo::Ptr insn = pp.makeInstruction(function->address());
+            insn->functionReasons(function->reasons());
+            pp.scheduleDecodeInstruction(function->address());
+        }
+        if (searchVa == p.memoryMap()->hull().greatest())
+            break;
     }
     info <<"; done\n";
 }
@@ -258,7 +268,7 @@ asyncProgressReporting(Progress::Ptr &progress, Sawyer::ProgressBar<double> *bar
                                   bar->value(100.0 * rpt.completion);
                                   return true; // keep listening until task is finished
                               });
-    mlog[MARCH] <<"disassembly is finished at " <<(100 * progress->reportLatest().first.completion) <<" percent\n";
+    mlog[MARCH] <<"disassembly is finished at " <<(100 * progress->reportLatest().first.completion) <<" percent coverage\n";
 }
 
 int main(int argc, char *argv[]) {
@@ -276,16 +286,21 @@ int main(int argc, char *argv[]) {
 
     // Create the parallel partitioner
     PP::Settings ppSettings;
+    ppSettings.maxAnalysisBBlockSize = 20;
     ppSettings.successorAccuracy = PP::Accuracy::HIGH;
     ppSettings.functionCallDetectionAccuracy = PP::Accuracy::HIGH;
     ppSettings.minHoleSearch = 128;
     PP::Partitioner pp(memory, decoder, ppSettings);
 
-#if 1
+#if 1 // [Robb Matzke 2020-07-30]
     mlog[INFO] <<"searching for starting points (serial)\n";
     P2::Partitioner p = engine.createPartitioner();
     engine.runPartitionerInit(p);
     initializeParallelPartitioner(pp, p);
+#elif 1
+    mlog[INFO] <<"adding memory starting points\n";
+    initializeParallelPartitioner(pp);
+    P2::Partitioner p = engine.createPartitioner();
 #else
     mlog[INFO] <<"reading start points from standard input";
     initializeParallelPartitioner(pp, std::cin);
@@ -298,14 +313,16 @@ int main(int argc, char *argv[]) {
         std::cout <<StringUtility::addrToString(vertex.value()->address()) <<"\n";
 #endif
 
-    mlog[INFO] <<"starting parallel phase";
+    mlog[INFO] <<"parallel disassembly phase";
     Sawyer::ProgressBar<double> bar(100.0, mlog[MARCH], "disassembly");
     bar.suffix(" percent");
     boost::thread(asyncProgressReporting, pp.progress(), &bar).detach();
     timer.restart();
     runPartitioner(pp);
     mlog[INFO] <<"; took " <<timer <<" seconds\n";
+    //pp.dumpInsnCfg(std::cerr, p);
 
+#if 0 // [Robb Matzke 2020-07-30]
     std::map<rose_addr_t, AddressSet> functions = pp.assignFunctions();
     for (auto node: functions) {
         std::cout <<"Function " <<StringUtility::addrToString(node.first) <<"\n";
@@ -313,8 +330,7 @@ int main(int argc, char *argv[]) {
             std::cout <<"  " <<StringUtility::addrToString(va) <<"\n";
         }
     }
-
-    pp.dumpInsnCfg(std::cout, p);
+#endif
 
 #if 0
     mlog[INFO] <<"generating output\n";
@@ -328,7 +344,7 @@ int main(int argc, char *argv[]) {
     pp.transferResults(p);
     mlog[INFO] <<"; took " <<timer <<" seconds\n";
     mlog[INFO] <<"generating output\n";
-    printInsnsFromBoth(pp, p);
+    //printInsnsFromBoth(pp, p);
     engine.savePartitioner(p, "x.rba");
 
 #else
@@ -342,3 +358,14 @@ int main(int argc, char *argv[]) {
     printInsnsFromBoth(pp, p2);
 #endif
 }
+
+#else
+
+#include <iostream>
+
+int main(int argc, char *argv[]) {
+    std::cerr <<argv[0] <<": not supported in this ROSE configuration\n";
+    return 1;
+}
+
+#endif

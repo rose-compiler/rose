@@ -7,6 +7,7 @@
 #include <Progress.h>
 #include <queue>
 #include <Partitioner2/BasicTypes.h>
+#include <Partitioner2/Semantics.h>
 #include <Sawyer/Attribute.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/IntervalSetMap.h>
@@ -27,8 +28,9 @@ class Partitioner;
 
 /** Accuracy flag. */
 enum class Accuracy {
-    LOW,                                        /**< Fast but less accurate, generally looking at patterns. */
-    HIGH,                                       /**< Accurate but slow, generally looking at semantics. */
+    LOW,                                                /**< Fast but less accurate, generally looking at patterns. */
+    HIGH,                                               /**< Accurate but slow, generally looking at semantics. */
+    DEFAULT,                                            /**< Use the value from settings instead of this value. */
 };
 
 /** Reasons for being a function. */
@@ -40,6 +42,7 @@ struct Settings {
     Accuracy successorAccuracy = Accuracy::LOW; /**< How to determine CFG successors. */
     Accuracy functionCallDetectionAccuracy = Accuracy::LOW; /**< How to determine whether something is a function call. */
     size_t minHoleSearch = 8; /**< Do now search unused regions smaller than this many bytes. */
+    SemanticMemoryParadigm semanticMemoryParadigm = MAP_BASED_MEMORY; /**< Chronological or address hashes for indexing memory. */
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,36 +60,81 @@ void initDiagnostics();
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Implements a cache for a single datum. */
-template<class Value, class Key>
+template<class V, class K>
 class CachedItem {
+public:
+    using Value = V;
+    using Key = K;
+    using OptionalValue = Sawyer::Optional<Value>;
+
+private:
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_; // protects all following data members
     Sawyer::Optional<Key> key_;
-    Sawyer::Optional<Value> value_;
+    OptionalValue value_;
 
 public:
-    /** Set the cache to hold the specified key / value pair. */
+    /** Set the cache to hold the specified key / value pair.
+     *
+     *  Thread safety: This function is thread safe. */
     void set(const Key &key, const Value &value) {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
         key_ = key;
         value_ = value;
     }
 
-    /** Get the cached item if present. */
-    Sawyer::Optional<Value> get(const Key &key) const {
+    /** Set the cache only if it doesn't contain a value.
+     *
+     *  Returns true of the specified value was placed into the cache, or false if the cache already contained a value. When
+     *  keys are used, the value is considered to exist already only if it has the same key.
+     *
+     *  Thread safety: This function is thread safe. */
+    bool maybeSet(const Key &key, const Value &value) {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        if (key_ && *key_ == key) {
+            return false;
+        } else {
+            key_ = key;
+            value_ = value;
+            return true;
+        }
+    }
+
+    /** Get the cached item if present.
+     *
+     *  Thread safety: This function is thread safe. */
+    OptionalValue get(const Key &key) const {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
         if (key_ && *key_ == key)
             return value_;
         return {};
     }
 
-    /** Remove the item from the cache. */
+    /** Take the cached item if present.
+     *
+     *  Thread safety: This function is thread safe. */
+    OptionalValue take(const Key &key) {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        if (key_ && *key_ == key) {
+            auto retval = value_;
+            key_.reset();
+            value_.reset();
+            return retval;
+        }
+        return {};
+    }
+
+    /** Remove the item from the cache.
+     *
+     *  Thread safety: This function is thread safe. */
     void reset() {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
         key_.reset();
         value_.reset();
     }
 
-    /** Tests whether a value is cached. */
+    /** Tests whether a value is cached.
+     *
+     *  Thread safety: This function is thread safe. */
     bool exists(const Key &key) const {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
         return key_ && *key_ == key;
@@ -94,10 +142,16 @@ public:
 };
 
 // Same as above, but no keys
-template<class Value>
-class CachedItem<Value, void> {
+template<class V>
+class CachedItem<V, void> {
+public:
+    using Value = V;
+    using Key = void;
+    using OptionalValue = Sawyer::Optional<Value>;
+
+private:
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
-    Sawyer::Optional<Value> value_;
+    OptionalValue value_;
 
 public:
     void set(const Value &value) {
@@ -105,9 +159,26 @@ public:
         value_ = value;
     }
 
-    Sawyer::Optional<Value> get() const {
+    bool maybeSet(const Value &value) {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        if (value_) {
+            return false;
+        } else {
+            value_ = value;
+            return true;
+        }
+    }
+
+    OptionalValue get() const {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
         return value_;
+    }
+
+    OptionalValue take() const {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        auto retval = value_;
+        value_ = Sawyer::Nothing();
+        return retval;
     }
 
     void reset() {
@@ -121,6 +192,77 @@ public:
     }
 };
 
+/** Borrows a value from the cache and returns it later.
+ *
+ *  This takes a value from the cache and the destructor returns it. This prevents any other thread from using the same object
+ *  at the same time.  When returning, it will replace any value that some other thread has cached. */
+template<class Cache>
+class Borrowed {
+    Cache &cache_;
+    typename Cache::Key key_;
+    typename Cache::OptionalValue value_;
+    bool canceled_;
+
+public:
+    /** Borrow a cached item by taking it from the cache. */
+    Borrowed(Cache &cache, typename Cache::Key key)
+        : cache_(cache), key_(key), value_(cache_.take(key)), canceled_(false) {}
+
+    /** Arrange to return an already taken item back to the cache. */
+    Borrowed(Cache &cache, typename Cache::Key key, const typename Cache::Value &value)
+        : cache_(cache), key_(key), value_(value), canceled_(false) {}
+
+    ~Borrowed() {
+        rtn();
+    }
+
+    /** Cancel the borrow, so nothing is returned.
+     *
+     *  This does not affect the value that has been borrowed, which is still stored in this object. It only prevents the value
+     *  from being returned to the cache by this object's destructor.
+     *
+     *  Thread safety: This function is not thread safe, and doesn't need to be since borrows are always within a single thread. */
+    void cancel() {
+        canceled_ = true;
+    }
+
+    /** Return the item now instead of later.
+     *
+     *  Thread safety: This function is not thread safe, and doesn't need to be since borrows are always within a single thread. */
+    void rtn() {
+        if (!canceled_ && value_ && !cache_.maybeSet(key_, *value_)) {
+            //mlog[Diagnostics::WARN] <<"cache borrow contention detected: key=" <<StringUtility::addrToString(key_) <<"\n";
+        }
+        value_.reset();
+    }
+
+    /** Return any value that has been borrowed.
+     *
+     *  Returns nothing if no value exists or the value has already been returned.
+     *
+     *  Thread safety: This function is not thread safe, and doesn't need to be since borrows are always within a single thread. */
+    const typename Cache::OptionalValue& get() const {
+        return value_;
+    }
+};
+
+/** Borrows a value from the cache.
+ *
+ *  The value is returned when the return value from this function is destroyed. */
+template<class Cache>
+Borrowed<Cache> borrow(Cache &cache, typename Cache::Key key) {
+    return Borrowed<Cache>(cache, key);
+}
+
+/** Borrowed value from the cache.
+ *
+ *  The value, which is assume to be borrowed already from the specified cache, is returned when the return value from this
+ *  function is destroyed. */
+template<class Cache>
+Borrowed<Cache> borrow(Cache &cache, typename Cache::Key key, const typename Cache::Value &value) {
+    return Borrowed<Cache>(cache, key, value);
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Information stored at each vertex of the CFG.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -131,12 +273,18 @@ public:
     using Ptr = std::shared_ptr<InsnInfo>;      /**< Shared ownership pointer. */
     using List = std::vector<Ptr>;              /**< List of pointers to InsnInfo objects. */
 
-    /** Cached information. */
+    /** Cached information.
+     *
+     *  Special care needs to be taken when accessing cached pointers to objects that are either not thread safe or not
+     *  immutable. Instead of accessing the pointed-to object while its pointer remains in the cache, you should borrow the
+     *  pointer from the cache for the duration of your access. This is regardless of whether you're modifying the object or
+     *  only reading it. This prevents another thread from obtaining a pointer to the same object and accessing it at the same time.
+     *  You can use CachedItem::take or @ref borrow. */
     struct Cached: boost::noncopyable {
-        CachedItem<AddressSet, uint64_t> computedConcreteSuccessors; /**< Computed CFG successor addresses. */
         CachedItem<bool, uint64_t> isFunctionCall; /**< Is this a function call. */
+        CachedItem<Semantics::RiscOperatorsPtr, uint64_t> semantics;  /**< Symbolic semantics of basic block. */
     };
-    
+
 private:
     InstructionPtr ast_;                        // possibly evicted AST rooted at an SgAsmInstruction node.
     const rose_addr_t va_;                      // starting address accessible even for evicted instruction
@@ -310,7 +458,7 @@ class InsnInfoKey {
 public:
     /*implicit*/ InsnInfoKey(const InsnInfo::Ptr &insnInfo)
         : va_(insnInfo->address()) {}
-    /*impilcit*/ InsnInfoKey(rose_addr_t &va)
+    /*impilcit*/ InsnInfoKey(rose_addr_t va)
         : va_(va) {}
 
     // FIXME: we should be using an unordered_map for the index.
@@ -405,7 +553,20 @@ protected:
 
 public:
     DecodeInstruction(Partitioner &partitioner, rose_addr_t va)
-        : WorkItem(partitioner, WorkItem::Priority::DiscoverInstruction, va), insnVa(va) {}
+        : WorkItem(partitioner, WorkItem::Priority::DiscoverInstruction,
+#if 0
+                   // Process instructions in order of their address. This might be better for caching other data because once
+                   // we evict it we might never need it again. On the other hand, it seems to increase contention for things
+                   // like basic block semantics since it's more likely that two threads will be working near each other in the
+                   // specimen virtual memory.
+                   va
+#else
+                   // Process instructions in random order. This seems to reduce contention for things like basic block semantics and
+                   // improve performance by about 10% at this early stage of development.
+                   Sawyer::fastRandomIndex(UNLIMITED)
+#endif
+                   ), insnVa(va) {}
+
 
     std::string title() const override {
         return "decode insn " + StringUtility::addrToString(insnVa);
@@ -433,7 +594,7 @@ public:
     std::string title() const override {
         return "scan unused va within " + StringUtility::addrToString(where);
     }
-    
+
     void run() override;
 };
 
@@ -544,7 +705,13 @@ public:
     const Settings& settings() const { return settings_; }
     Settings& settings() { return settings_; }
     /** @} */
-    
+
+    /** Accuracy setting.
+     *
+     *  Returns @p a if not @ref Accuracy::DEFAULT, else returns @p b if not @ref Accuracy::DEFAULT, else returns @ref
+     *  Accuracy::LOW. */
+    static Accuracy choose(Accuracy a, Accuracy b);
+
     //--------------------------------------------------------------------------------------------------------------------
     // Status
     //--------------------------------------------------------------------------------------------------------------------
@@ -731,6 +898,38 @@ public:
      *  faster and supports limiting the block size. */
     InsnInfo::List basicBlockContaining(rose_addr_t) const;
 
+    /** Calculate the semantics for a basic block.
+     *
+     *  The instructions of the specified basic block are calculated and the final state is cached and returned (as part of a
+     *  RiscOperators object). If the semantics are already known then a pointer is returned without recalculating them. Since
+     *  the state is cached, you should not modify the state--make a copy instead.
+     *
+     *  If semantics have failed, then a non-null RISC operators object is returned, but it has a null current state.
+     *
+     *  Since semantic states are modified in place and are not thread safe, the returned operators must be borrowed from the
+     *  cache and returned when we're done. This means that if two threads try to borrow at the same time, one of them will
+     *  end up creating a new semantic state from scratch.
+     *
+     *  Thread safety: This function is thread safe, but the returned value should not be modified. */
+    Borrowed<CachedItem<Semantics::RiscOperatorsPtr, uint64_t>> basicBlockSemantics(const InsnInfo::List&);
+
+    /** Return the computed symbolic successors for an instruction.
+     *
+     *  The semantics for the specified instructions, or the basic block ending at the specified address, are computed and
+     *  returned. The returned values are obtained one of two ways, depending on the @c successorAccuracy settings.  If the
+     *  setting is @c LOW then we just look at the final instruction of the basic block. If @c HIGH, then we look at the
+     *  symbolic value of the instruction pointer from the basic block semantics, but we process this to return values that are
+     *  more usable. For instance, if the IP is an ITE symbolic expression whose operands are both integer constants, then both
+     *  constants are returned. Similar if the IP is a set of values. Any non-constant values are simply returned as a free
+     *  variable (the returned vector will have at most one variable).
+     *
+     *  Thread safety: This function is thread safe.
+     *
+     *  @{ */
+    std::vector<SymbolicExpr::Ptr> computeSuccessors(const InsnInfo::List&, Accuracy accuracy);
+    std::vector<SymbolicExpr::Ptr> computeSuccessors(rose_addr_t insnVa, Accuracy accuracy);
+    /** @} */
+
     /** Return the computed concrete successors for an instruction.
      *
      *  If instruction semantics are available, then the successors for the instruction at the specified addresss are
@@ -741,7 +940,7 @@ public:
      *  an entire basic block.
      *
      *  Thread safety: This function is thread safe. */
-    AddressSet computedConcreteSuccessors(rose_addr_t insnVa);
+    AddressSet computedConcreteSuccessors(rose_addr_t insnVa, Accuracy accuracy);
 
     /** Determine whether the instruction is a function call.
      *
@@ -750,7 +949,16 @@ public:
      * graph.
      *
      * Thread safety: This function is thread safe. */
-    bool isFunctionCall(rose_addr_t insnVa);
+    bool isFunctionCall(rose_addr_t insnVa, Accuracy accuracy);
+
+private:
+    // Reads the instruction pointer register from the sepcified state, which must be non-null and have a non-null current
+    // state, and splits it into a list of symbolic expressions. The most common return value is a single concrete address
+    // which occurs for almost all non-branching instructions (such as ADD, NOP, etc.). The second most common case is two
+    // concrete addresses from a conditional branch instruction. Another common case is that one of the successors will be a
+    // free variable to represent that we don't know the successors (as usually happens with x86 RET and other computed
+    // branches).
+    std::vector<SymbolicExpr::Ptr> splitSuccessors(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops);
 
     //--------------------------------------------------------------------------------------------------------------------
     // Functions to run things.
@@ -841,8 +1049,16 @@ public:
     /** Build results from CFG.
      *
      *  Clears and repopulates the specified partitioner object with information from this partitioner's global control flow
-     *  graph. */
+     *  graph.
+     *
+     *  Thread safety: This function is not thread safe. */
     void transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &out);
+
+    /** Figure out how to remap memory.
+     *
+     *  Based on how function calls line up with function entry points, try to figure out if there's a way we could rearrange
+     *  memory to get better matching.  Returns zero or a shift amount. */
+    rose_addr_t remap();
 };
 
 

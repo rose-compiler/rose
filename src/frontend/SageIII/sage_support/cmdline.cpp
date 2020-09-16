@@ -4635,7 +4635,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      ROSE_ASSERT (get_openacc_parse_only() == false); 
      ROSE_ASSERT (get_openacc_ast_only() == false);
      if ( CommandlineProcessing::isOption(argv,"-rose:","(OpenACC|openacc)",true) == true 
-         ||CommandlineProcessing::isOption(argv,"-","(openacc|fopenacc)",true) == true
+         ||CommandlineProcessing::isOption(argv,"-","(acc|openacc|fopenacc)",true) == true
          )
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -6759,6 +6759,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
        }
        case e_cxx20_standard: {
          inputCommandLine.push_back("--c++20");
+
+      // DQ (7/26/2020): This macro is required in GNU 10.x header files to gain access to the 
+      // coroutine support ("coroutine" header file returns an error with out it).
+         inputCommandLine.push_back("-D__cpp_impl_coroutine");
          break;
        }
        case e_upcxx_standard: {
@@ -7853,6 +7857,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
          } else {
            compilerNameString.push_back("-std=c++20");
          }
+
+#if defined(BACKEND_CXX_IS_GNU_COMPILER)
+      // DQ (7/26/2020): the GNU 10.2 C++20 "coroutine" header file requires GNU to be used with -fcoroutines
+      // using the macro "__cpp_impl_coroutine" to control internal access.
+         compilerNameString.push_back("-fcoroutines");
+#endif
          break;
        }
        case e_f77_standard:
@@ -8006,7 +8016,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // DQ (3/31/2004): New cleaned up source file handling
      Rose_STL_Container<string> argcArgvList = argv;
 
-#if DEBUG_COMPILER_COMMAND_LINE || 0
+#define DEBUG_INCLUDE_PATHS 0
+
+#if DEBUG_INCLUDE_PATHS
+     printf ("\n\n****************************************************************************** \n");
+     printf ("****************************************************************************** \n");
+     printf ("*************************** Processing extra paths *************************** \n");
+     printf ("****************************************************************************** \n");
+     printf ("****************************************************************************** \n\n\n");
+#endif
+
+#if DEBUG_COMPILER_COMMAND_LINE || DEBUG_INCLUDE_PATHS
      printf ("In buildCompilerCommandLineOptions: After initialization: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
 #endif
 
@@ -8033,8 +8053,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      ROSE_ASSERT(substringPosition == string::npos);
 #endif
 
-#define DEBUG_INCLUDE_PATHS 0
-
   // DQ (11/7/2018): I need to add some additional include directories to the generate backed compiler command line.
   // This is to support where #include "../file.h" are used and we need to specify the directory of the original source 
   // file (is we don't unparse the header file) or the directory where we are putting the generated source file, if we 
@@ -8046,6 +8064,11 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
   // DQ (11/8/2018): Adding extra include paths identified as being required in the unparsing of headers, either for the source file or for otehr included headers (nested headers).
      const SgSourceFile* sourceFile = isSgSourceFile(this);
+
+#if DEBUG_INCLUDE_PATHS
+     printf ("sourceFile = %p \n",sourceFile);
+     printf ("get_project()->get_extraIncludeDirectorySpecifierList().size() = %zu \n",get_project()->get_extraIncludeDirectorySpecifierList().size());
+#endif
 
   // DQ (12/12/2018): This step to insert extra include paths only applies to source files, not binary files (caught in Jenkins testing).
   // ROSE_ASSERT(sourceFile != NULL);
@@ -8125,6 +8148,14 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              {
                printf ("argcArgvList()[%zu] = %s \n",i,argcArgvList[i].c_str());
              }
+#endif
+
+#if DEBUG_INCLUDE_PATHS
+     printf ("\n****************************************************************************** \n");
+     printf ("****************************************************************************** \n");
+     printf ("*********************** DONE: Processing extra paths ************************* \n");
+     printf ("****************************************************************************** \n");
+     printf ("****************************************************************************** \n\n");
 #endif
 
        // DQ (3/16/2020): Need to change the locations in the argcArgvList where we insert the added 
@@ -8871,6 +8902,11 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
           std::string str = *iter;
           cout<<"\t"<<str<<endl;
         }
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
 
      return compilerNameString;

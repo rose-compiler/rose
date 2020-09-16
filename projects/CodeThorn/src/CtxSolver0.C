@@ -30,31 +30,39 @@ namespace
     return nos;
   }
   
+  template <class T>
   struct LazyToString
   {
     explicit
-    LazyToString(ct::Lattice* lat)
-    : l(lat)
+    LazyToString(T* tp)
+    : obj(tp)
     {}
     
     explicit
-    LazyToString(std::unique_ptr<ct::Lattice>& lat)
-    : LazyToString(lat.get())
+    LazyToString(std::unique_ptr<T>& tp)
+    : LazyToString(tp.get())
     {}
     
     explicit
-    LazyToString(ct::Lattice& lat)
-    : LazyToString(&lat)
+    LazyToString(T& tref)
+    : LazyToString(&tref)
     {}
     
-    std::string toString() { return l->toString(); }
+    std::string toString() { return obj->toString(); }
     
-    ct::Lattice* l;
+    T* obj;
   };
   
+  template <class T>
+  LazyToString<T> lazyToString(T* tp)
+  {
+    return LazyToString<T>(tp);
+  }
+  
+  template <class T>
   inline
   std::ostream& 
-  operator<<(std::ostream& os, LazyToString lat) { return os << lat.toString(); }
+  operator<<(std::ostream& os, LazyToString<T> lat) { return os << lat.toString(); }
   
   
   // auxiliary wrapper for printing Sg_File_Info objects 
@@ -117,11 +125,21 @@ namespace
 
 namespace // auxiliary local functions
 {
+  template <class Map, class Key>
+  typename Map::iterator
+  iteratorAt(Map& map, const Key& key)
+  {
+    typename Map::iterator pos = map.find(key); 
+    ROSE_ASSERT(pos != map.end() && pos->second);
+    
+    return pos;
+  }
+  
   namespace ct = CodeThorn;
   
   struct IsCalleeCaller
   {
-    bool operator()(const ct::FiniteCallString& retctx, const std::pair<const ct::FiniteCallString, ct::Lattice*>& callctx)
+    bool operator()(const ct::FiniteCallString& retctx, const std::pair<const ct::FiniteCallString, ct::Lattice*>& callctx) const
     {
       const bool res = callctx.first.callerOf(retctx, lbl);
       
@@ -189,11 +207,11 @@ CtxSolver0::computePostInfo(Label lab,Lattice& info)
   _transferFunctions.transfer(lab, info);
 }
 
-CtxLatticeRange<CtxSolver0::context_t>
-CtxSolver0::mappedCtxRange(Label lab, CtxLatticeRange<context_t>::iterator ctxpos)
+CtxLatticeRange<CtxSolver0::ContextString>
+CtxSolver0::mappedCtxRange(Label lab, CtxLatticeRange<ContextString>::iterator ctxpos)
 {
-  typedef CtxLatticeRange<context_t>::iterator Iterator;
-  typedef CtxLatticeRange<context_t>           ResultType;
+  typedef CtxLatticeRange<ContextString>::iterator Iterator;
+  typedef CtxLatticeRange<ContextString>           ResultType;
   
   ROSE_ASSERT(labeler().isFunctionCallReturnLabel(lab));
   
@@ -206,18 +224,17 @@ CtxSolver0::mappedCtxRange(Label lab, CtxLatticeRange<context_t>::iterator ctxpo
     return ResultType(ctxpos, std::next(ctxpos));
   }
   
-  Label                  callLab(lab.getId() - 1); // maybe from the labeler
-  
   // if the call context does not match the call label associated with the return
   //   return an empty range. Nothing needs to be propagated.
-  if (ctxpos->first.empty() || ctxpos->first.last() != callLab)
+  if (!ctxpos->first.isValidReturn(labeler(), lab))
     return ResultType(ctxpos, ctxpos);
   
   logDbg() << labeler().getNode(lab)->unparseToString() 
            << std::endl;
       
-  CtxLattice<context_t>& pre     = preInfoLattice(callLab);
-  context_t              retctx  = ctxpos->first;
+  Label                      callLab = labeler().getFunctionCallLabelFromReturnLabel(lab); 
+  CtxLattice<ContextString>& pre     = preInfoLattice(callLab);
+  ContextString              retctx  = ctxpos->first;
   
   //~ logDbg() << "retctx: " << retctx << " / " << lab << std::endl;
   //~ logDbg() << "pre: " << pre.toString() << std::endl;
@@ -239,36 +256,23 @@ CtxSolver0::mappedCtxRange(Label lab, CtxLatticeRange<context_t>::iterator ctxpo
 }
 
     
-CtxLattice<CtxSolver0::context_t>&
+CtxLattice<CtxSolver0::ContextString>&
 CtxSolver0::preInfoLattice(Label lab)
 {
-  return dynamic_cast<CtxLattice<context_t>&>(*_analyzerDataPreInfo[lab.getId()]);
+  return dynamic_cast<CtxLattice<ContextString>&>(*_analyzerDataPreInfo[lab.getId()]);
 }
     
     
 Lattice&
-CtxSolver0::preInfoLattice(Label lab, context_t ctx)
+CtxSolver0::preInfoLattice(Label lab, const ContextString& ctx)
 {
-  CtxLattice<context_t>&  all = preInfoLattice(lab);
+  CtxLattice<ContextString>&  all = preInfoLattice(lab);
   Lattice*&               sub = all[ctx];
   
   if (sub == NULL)
     sub = _initialElementFactory.componentFactory().create();
   
   return *sub; 
-}
-
-
-CtxLatticeRange<CtxSolver0::context_t>::iterator
-CtxSolver0::preInfoLatticeIterator(Label lab, context_t ctx)
-{
-  typedef CtxLatticeRange<context_t>::iterator Iterator;
-  
-  CtxLattice<context_t>& ctxlat = preInfoLattice(lab);
-  Iterator               pos = ctxlat.find(ctx); 
-  ROSE_ASSERT(pos != ctxlat.end() && pos->second);
-  
-  return pos;
 }
 
 
@@ -279,9 +283,9 @@ CtxSolver0::preprocessWorklist()
   
   for (Edge edge : _workList)
   {
-    CtxLattice<context_t>& lat = preInfoLattice(edge.source()); 
+    CtxLattice<ContextString>& lat = preInfoLattice(edge.source()); 
     
-    for (const CtxLattice<context_t>::value_type& el : lat)
+    for (const CtxLattice<ContextString>::value_type& el : lat)
       res.add(InternalWorklist::value_type(edge, el.first));
   }
    
@@ -289,27 +293,27 @@ CtxSolver0::preprocessWorklist()
 }
 
 void
-CtxSolver0::propagate(const context_t& tgtctx, Lattice& state, Label tgt, InternalWorklist& wkl)
+CtxSolver0::propagate(const ContextString& tgtctx, Lattice& state, Label tgt, InternalWorklist& wkl)
 {
-  typedef std::pair<Edge, context_t> WorkListElem;
+  typedef std::pair<Edge, ContextString> WorkListElem;
   
-  Lattice&   tgtstate = preInfoLattice(tgt, tgtctx);
-  const bool subsumed = state.approximatedBy(tgtstate);
+  Lattice&   tgtstate  = preInfoLattice(tgt, tgtctx);
+  const bool returnLbl = labeler().isFunctionCallReturnLabel(tgt);
+  const bool subsumed  = (!returnLbl) && state.approximatedBy(tgtstate);
   
   if (subsumed) 
   {
-    logDbg() << "mapping not necessary (already approximated) " 
+    logDbg() << "mapping not necessary (already approximated): " << tgt.getId()
              << std::endl;
-    
     return;
   }
   
-  logDbg() << "mapping transfer result to: " << tgt << " / " << tgtctx << ": " << LazyToString(tgtstate)
+  logDbg() << "mapping transfer result to: " << tgt << " / " << tgtctx << ": " << lazyToString(&tgtstate)
            << std::endl;
 
   tgtstate.combine(state);
 
-  logDbg() << "new df value : " << tgt << " / " << tgtctx << ": " << LazyToString(tgtstate)
+  logDbg() << "new df value : " << tgt << " / " << tgtctx << ": " << lazyToString(&tgtstate)
            << std::endl;
            
   const size_t oldsz = wkl.size();
@@ -323,14 +327,32 @@ CtxSolver0::propagate(const context_t& tgtctx, Lattice& state, Label tgt, Intern
            << std::endl;
 }
 
+void
+CtxSolver0::activateReturnNode(const ContextString& ctx, Label callLbl, InternalWorklist& wkl)
+{
+  typedef CtxLattice<ContextString>       context_lattice_t;
+  typedef std::pair<Edge, ContextString>  WorkListElem;
+
+  Label              retnLbl = labeler().getFunctionCallReturnLabelFromCallLabel(callLbl);
+  context_lattice_t& ctxlat = preInfoLattice(retnLbl);
+  
+  if (ctxlat.find(ctx) != ctxlat.end())
+  {
+    for (Edge e : _flow.outEdges(retnLbl)) 
+    {
+      wkl.add(WorkListElem(e, ctx));
+    }
+  }
+}
+
 
 // runs until worklist is empty
 void
 CtxSolver0::runSolver() 
 {
-  typedef CtxLattice<context_t>                context_lattice_t;
-  typedef std::pair<Edge, context_t>           WorkListElem;
-  typedef CtxLatticeRange<context_t>::iterator Iterator;
+  typedef CtxLattice<ContextString>                context_lattice_t;
+  typedef std::pair<Edge, ContextString>           WorkListElem;
+  typedef CtxLatticeRange<ContextString>::iterator Iterator;
   
   constexpr uint64_t REPORT_INTERVAL = (1 << 12);
   
@@ -348,25 +370,27 @@ CtxSolver0::runSolver()
   
   while (!worklist.isEmpty()) 
   {
-    WorkListElem el   = worklist.take();
-    Edge         edge = el.first;
-    context_t    ctx  = el.second;
-    Label        lab0 = edge.source();
-    Label        lab1 = edge.target();
+    WorkListElem             el   = worklist.take();
+    Edge                     edge = el.first;
+    const ContextString&     ctx  = el.second;
+    Label                    lab0 = edge.source();
+    Label                    lab1 = edge.target();
 
-    logDbg() << "computing edge " << lab0 << "->" << lab1 << std::endl;
-    
-    Iterator                 preIt = preInfoLatticeIterator(lab0, ctx);
+    logDbg() << "computing edge " << lab0 << "->" << lab1 << ": " << lazyToString(&edge) 
+             << std::endl;
+
+    context_lattice_t&       ctxlat = preInfoLattice(lab0);
+    const Iterator           preIt  = iteratorAt(ctxlat, ctx);
     std::unique_ptr<Lattice> info{cloneLattice(_initialElementFactory.componentFactory(), *preIt->second)};
     
     if (!info->isBot()) 
     {
-      logDbg() << "computing transfer function: " << lab0 << " / " << ctx << ": " << LazyToString(info)
+      logDbg() << "computing transfer function: " << lab0 << " / " << ctx << ": " << LazyToString<Lattice>(info)
                << std::endl;
       
       _transferFunctions.componentTransfer().transfer(edge, *info);
       
-      logDbg() << "transfer function result: " << lab0 << " / " << ctx << ": " << LazyToString(info)
+      logDbg() << "transfer function result: " << lab0 << " / " << ctx << ": " << LazyToString<Lattice>(info)
                << std::endl;
                
       // propagate the state to the respective context in lab1 
@@ -377,8 +401,14 @@ CtxSolver0::runSolver()
       {
         // update the context by appending the lbl (1:1 mapping)
         
-        ctx.callInvoke(labeler(), lab0);
-        propagate(ctx, *info, lab1, worklist);
+        // create a copy for modification
+        ContextString callctx(ctx);
+        
+        //~ callctx.callLosesPrecision(preIt); 
+        
+        callctx.callInvoke(labeler(), lab0);
+        propagate(callctx, *info, lab1, worklist);        
+        activateReturnNode(callctx, lab0, worklist);
       }
       else if (labeler().isFunctionCallReturnLabel(lab0))
       {

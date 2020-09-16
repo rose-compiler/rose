@@ -36,6 +36,14 @@ void checkZ3Options(CodeThornOptions& ctOpt) {
 #endif	
 }
 
+void checkNumThreads(CodeThornOptions& ctOpt) {
+  int numThreads=ctOpt.threads; // default is 1
+  if(numThreads<=0) {
+    cerr<<"Error: number of threads must be greater or equal 1."<<endl;
+    exit(1);
+  }
+}
+
 CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger, std::string version,
                                                 CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
 
@@ -65,6 +73,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("keep-error-states",  po::value< bool >(&ltlOpt.keepErrorStates)->default_value(false)->implicit_value(true), "Do not reduce error states for the LTL analysis.")      
     ("ltl-in-alphabet",po::value< string >(&ltlOpt.ltlInAlphabet),"Specify an input alphabet used by the LTL formulae. (e.g. \"{1,2,3}\")")
     ("ltl-out-alphabet",po::value< string >(&ltlOpt.ltlOutAlphabet),"Specify an output alphabet used by the LTL formulae. (e.g. \"{19,20,21,22,23,24,25,26}\")")
+    ("ltl-rers-mapping-file",po::value< string >(&ltlOpt.ltlRersMappingFileName),"File containing input/ouput alphabets and mapping (as provided in RERS)")
     ("ltl-driven", po::value< bool >(&ltlOpt.ltlDriven)->default_value(false)->implicit_value(true), "Select mode to verify LTLs driven by SPOT's access to the state transitions.")
     ("reset-analyzer", po::value< bool >(&ltlOpt.resetAnalyzer)->default_value(false)->implicit_value(true), "Reset the analyzer and therefore the state transition graph before checking the next property. Only affects ltl-driven mode.")
     ("no-input-input",  po::value< bool >(&ltlOpt.noInputInputTransitions)->default_value(false)->implicit_value(true), "(deprecated) remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [yes|=no]")
@@ -88,6 +97,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     (",D", po::value< vector<string> >(&ctOpt.preProcessorDefines),"Define constants for preprocessor.")
     ("edg:no_warnings", po::bool_switch(&ctOpt.edgNoWarningsFlag),"EDG frontend flag.")
     ("rose:ast:read", po::value<std::string>(&ctOpt.roseAstReadFileName),"read in binary AST from comma separated list (no spaces)")
+    ("rose:ast:write", po::value<bool>(&ctOpt.roseAstWrite),"write AST binary file.")
+    ("rose:ast:merge", po::value<bool>(&ctOpt.roseAstWrite),"merge ASTs of read files (is implict for rose:ast:read).")
     ;
 
   cegpraOptions.add_options()
@@ -185,7 +196,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("ignore-unknown-functions",po::value< bool >(&ctOpt.ignoreUnknownFunctions)->default_value(true)->implicit_value(true), "Ignore function pointers (functions are not called).")
     ("function-resolution-mode",po::value< int >(&ctOpt.functionResolutionMode)->default_value(4),"1:Translation unit only, 2:slow lookup, 3: -, 4: complete resolution (including function pointers)")
     ("context-sensitive",po::value< bool >(&ctOpt.contextSensitive)->default_value(true)->implicit_value(true),"Perform context sensitive analysis. Uses call strings with arbitrary length, recursion is not supported yet.")
-    ("abstraction-mode",po::value< int >(&ctOpt.abstractionMode)->default_value(0),"Select abstraction mode (0: equality merge (explicit model checking), 1: approximating merge (abstract model checking).")
+    ("abstraction-mode",po::value< int >(&ctOpt.abstractionMode)->default_value(0),"Select abstraction mode (0: equality merge (explicit model checking), 1: approximating merge (abstract model checking), 2: approximating merge (separate solver)")
     ("interpreter-mode",po::value< int >(&ctOpt.interpreterMode)->default_value(0),"Select interpretation mode. 0: default, 1: execute stdout functions.")
     ("interpreter-mode-file",po::value< string >(&ctOpt.interpreterModeOuputFileName)->default_value(""),"Select interpretation mode output file (otherwise stdout is used).")
     ("print-warnings",po::value< bool >(&ctOpt.printWarnings)->default_value(false)->implicit_value(true),"Print warnings on stdout during analysis (this can slow down the analysis significantly)")
@@ -194,6 +205,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("callstring-length",po::value< int >(&ctOpt.callStringLength)->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ("unit-test-expr-analyzer", po::value< bool >(&ctOpt.exprEvalTest)->default_value(false)->implicit_value(true), "Run expr eval test (with input program).")
     ("byte-mode", po::value< bool >(&ctOpt.byteMode)->default_value(false)->implicit_value(true),"switches from index-based addresses to byte-based addresses in state representation.")
+    ("test-selector",po::value< int >(&ctOpt.testSelector)->default_value(0)->implicit_value(0),"Option for selecting dev tests.")
+    ("intra",po::value< bool >(&ctOpt.intraProcedural)->default_value(false)->implicit_value(true),"Select intra-procedural analysis.")
+    ("precision",po::value< int >(&ctOpt.precisionLevel),"Option for selecting level of precision.")
     ;
 
   rersOptions.add_options()
@@ -233,7 +247,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("colors", po::value< bool >(&ctOpt.colors)->default_value(true)->implicit_value(true),"Use colors in output.")
     ("csv-stats",po::value< string >(&ctOpt.csvStatsFileName),"Output statistics into a CSV file <arg>.")
     ("display-diff",po::value< int >(&ctOpt.displayDiff)->default_value(-1),"Print statistics every <arg> computed estates.")
-    ("exploration-mode",po::value< string >(&ctOpt.explorationMode), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync)")
+    ("exploration-mode",po::value< string >(&ctOpt.explorationMode), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync|topologic-sort)")
     ("quiet", po::value< bool >(&ctOpt.quiet)->default_value(false)->implicit_value(true), "Produce no output on screen.")
     ("help,h", "Produce this help message.")
     ("help-all", "Show all help options.")
@@ -386,6 +400,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
       ROSE_ASSERT(i+1<argc);
       argv[i+1]= strdup("");
       continue;
+    } else if (currentArg == "--rose:ast:write"||currentArg == "--rose:ast:merge") {
+      argv[i] = strdup("");
+      continue;
     }
     if (currentArg[0] != '-' ){
       continue;  // not an option      
@@ -414,6 +431,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 
   checkSpotOptions(ltlOpt,parProOpt);
   checkZ3Options(ctOpt);
+  checkNumThreads(ctOpt);
 
   return args;
 }

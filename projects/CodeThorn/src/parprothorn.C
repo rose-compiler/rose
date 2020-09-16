@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "rose.h"
@@ -28,7 +26,7 @@
 #include "RewriteSystem.h"
 #include "ltlthorn-lib/SpotConnection.h"
 #include "ltlthorn-lib/CounterexampleAnalyzer.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "ArrayElementAccessData.h"
 #include "PragmaHandler.h"
 #include "Miscellaneous2.h"
@@ -88,102 +86,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.12.6";
-
-// handler for generating backtrace
-void handler(int sig) {
-  void *array[10];
-  size_t size;
-
-  size = backtrace (array, 10);
-  printf ("Obtained %zd stack frames.\n", size);
-
-  // print out all the frames to stderr
-  fprintf(stderr, "Error: signal %d:\n", sig);
-  backtrace_symbols_fd(array, size, STDERR_FILENO);
-  exit(1);
-}
-
-bool isExprRoot(SgNode* node) {
-  if(SgExpression* exp=isSgExpression(node)) {
-    return isSgStatement(exp->get_parent());
-  }
-  return false;
-}
-
-list<SgExpression*> exprRootList(SgNode *node) {
-  RoseAst ast(node);
-  list<SgExpression*> exprList;
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(isExprRoot(*i)) {
-      SgExpression* expr=isSgExpression(*i);
-      ROSE_ASSERT(expr);
-      exprList.push_back(expr);
-      i.skipChildrenOnForward();
-    }
-  }
-  return exprList;
-}
-
-static IOAnalyzer* global_analyzer=0;
-
-set<AbstractValue> determineSetOfCompoundIncVars(VariableIdMapping* vim, SgNode* root) {
-  ROSE_ASSERT(vim);
-  ROSE_ASSERT(root);
-  RoseAst ast(root) ;
-  set<AbstractValue> compoundIncVarsSet;
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgCompoundAssignOp* compoundAssignOp=isSgCompoundAssignOp(*i)) {
-      SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(compoundAssignOp));
-      if(lhsVar) {
-        compoundIncVarsSet.insert(vim->variableId(lhsVar));
-      }
-    }
-  }
-  return compoundIncVarsSet;
-}
-
-set<VariableId> determineSetOfConstAssignVars2(VariableIdMapping* vim, SgNode* root) {
-  ROSE_ASSERT(vim);
-  ROSE_ASSERT(root);
-  RoseAst ast(root) ;
-  set<VariableId> constAssignVars;
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
-      SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(assignOp));
-      SgIntVal* rhsIntVal=isSgIntVal(SgNodeHelper::getRhs(assignOp));
-      if(lhsVar && rhsIntVal) {
-        constAssignVars.insert(vim->variableId(lhsVar));
-      }
-    }
-  }
-  return constAssignVars;
-}
-
-AbstractValueSet determineVarsInAssertConditions(SgNode* node, VariableIdMapping* variableIdMapping) {
-  AbstractValueSet usedVarsInAssertConditions;
-  RoseAst ast(node);
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgIfStmt* ifstmt=isSgIfStmt(*i)) {
-      SgNode* cond=SgNodeHelper::getCond(ifstmt);
-      if(cond) {
-        int errorLabelCode=-1;
-        errorLabelCode=ReachabilityAnalysis::isConditionOfIfWithLabeledAssert(cond);
-        if(errorLabelCode>=0) {
-          //cout<<"Assertion cond: "<<cond->unparseToString()<<endl;
-          //cout<<"Stmt: "<<ifstmt->unparseToString()<<endl;
-          std::vector<SgVarRefExp*> vars=SgNodeHelper::determineVariablesInSubtree(cond);
-          //cout<<"Num of vars: "<<vars.size()<<endl;
-          for(std::vector<SgVarRefExp*>::iterator j=vars.begin();j!=vars.end();++j) {
-            VariableId varId=variableIdMapping->variableId(*j);
-            usedVarsInAssertConditions.insert(AbstractValue(varId));
-          }
-        }
-      }
-    }
-  }
-  return usedVarsInAssertConditions;
-}
+const std::string versionString="0.8.0";
 
 void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
                    CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
@@ -355,36 +258,6 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
   analyzer->setSolver(solver);
 }
 
-void configureRose() {
-  ROSE_INITIALIZE;
-  CodeThorn::initDiagnostics();
-  CodeThorn::initDiagnosticsLTL();
-
-  Rose::Diagnostics::mprefix->showProgramName(false);
-  Rose::Diagnostics::mprefix->showThreadId(false);
-  Rose::Diagnostics::mprefix->showElapsedTime(false);
-
-  string turnOffRoseWarnings=string("Rose(none,>=error),Rose::EditDistance(none,>=error),Rose::FixupAstDeclarationScope(none,>=error),")
-    +"Rose::FixupAstSymbolTablesToSupportAliasedSymbols(none,>=error),"
-    +"Rose::EditDistance(none,>=error),"
-    +"Rose::TestChildPointersInMemoryPool(none,>=error),Rose::UnparseLanguageIndependentConstructs(none,>=error),"
-    +"rose_ir_node(none,>=error)";
-  // result string must be checked
-  string result=Rose::Diagnostics::mfacilities.control(turnOffRoseWarnings); 
-  if(result!="") {
-    cerr<<result<<endl;
-    cerr<<"Error in logger initialization."<<endl;
-    exit(1);
-  }
-
-  // see class Options in src/roseSupport/utility_functions.h
-  Rose::global_options.set_frontend_notes(false);
-  Rose::global_options.set_frontend_warnings(false);
-  Rose::global_options.set_backend_warnings(false);
-
-  signal(SIGSEGV, handler);   // install handler for backtrace
-}
-
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
   // only included in hybrid RERS analyzers.
@@ -398,9 +271,16 @@ void configureRersSpecialization() {
 #endif
 }
 
+#ifndef HAVE_SPOT
+int main( int argc, char * argv[] ) {
+  cerr<<"Error: parprothorn was compiled without SPOT, but SPOT is required for parprothorn."<<endl;
+  exit(1);
+}
+#else
 int main( int argc, char * argv[] ) {
   try {
-    configureRose();
+    ROSE_INITIALIZE;
+    CodeThorn::configureRose();
     configureRersSpecialization();
 
     TimeMeasurement timer;
@@ -429,7 +309,6 @@ int main( int argc, char * argv[] ) {
     }
     analyzer->setOptions(ctOpt);
     analyzer->setLtlOptions(ltlOpt);
-    global_analyzer=analyzer;
 
     if(ctOpt.internalChecks) {
       mfacilities.shutdown();
@@ -446,18 +325,6 @@ int main( int argc, char * argv[] ) {
 
     analyzerSetup(analyzer, logger, ctOpt, ltlOpt, parProOpt);
 
-    switch(int mode=ctOpt.interpreterMode) {
-    case 0: analyzer->setInterpreterMode(IM_ABSTRACT); break;
-    case 1: analyzer->setInterpreterMode(IM_CONCRETE); break;
-    default:
-      cerr<<"Unknown interpreter mode "<<mode<<" provided on command line (supported: 0..1)."<<endl;
-      exit(1);
-    }
-    string outFileName=ctOpt.interpreterModeOuputFileName;
-    if(outFileName!="") {
-      analyzer->setInterpreterModeOutputFileName(outFileName);
-      CppStdUtilities::writeFile(outFileName,""); // touch file
-    }
     {
       switch(int argVal=ctOpt.functionResolutionMode) {
       case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
@@ -567,7 +434,7 @@ int main( int argc, char * argv[] ) {
 
     // Build the AST used by ROSE
     if(ctOpt.status) {
-      cout<< "STATUS: Parsing and creating AST started!"<<endl;
+      cout<< "STATUS: Parsing and creating AST started."<<endl;
     }
 
     SgProject* sageProject = 0;
@@ -710,7 +577,7 @@ int main( int argc, char * argv[] ) {
       {
         SAWYER_MESG(logger[TRACE]) <<"STATUS: testing constant expressions."<<endl;
         CppConstExprEvaluator* evaluator=new CppConstExprEvaluator();
-        list<SgExpression*> exprList=exprRootList(sageProject);
+        list<SgExpression*> exprList=AstUtility::exprRootList(sageProject);
         logger[INFO] <<"found "<<exprList.size()<<" expressions."<<endl;
         for(list<SgExpression*>::iterator i=exprList.begin();i!=exprList.end();++i) {
           EvalResult r=evaluator->traverse(*i);
@@ -785,14 +652,14 @@ int main( int argc, char * argv[] ) {
     }
 
     {
-      AbstractValueSet varsInAssertConditions=determineVarsInAssertConditions(root,analyzer->getVariableIdMapping());
+      AbstractValueSet varsInAssertConditions=AstUtility::determineVarsInAssertConditions(root,analyzer->getVariableIdMapping());
       SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
       analyzer->setAssertCondVarsSet(varsInAssertConditions);
     }
 
     if(ctOpt.eliminateCompoundStatements) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments started."<<endl;
-      set<AbstractValue> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer->getVariableIdMapping(),root);
+      set<AbstractValue> compoundIncVarsSet=AstUtility::determineSetOfCompoundIncVars(analyzer->getVariableIdMapping(),root);
       analyzer->setCompoundIncVarsSet(compoundIncVarsSet);
       SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
       rewriteSystem.resetStatistics();
@@ -930,64 +797,6 @@ int main( int argc, char * argv[] ) {
       }
 #endif	
 
-    if(ctOpt.ssa) {
-      SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
-      ssaGen->generateSSAForm();
-      exit(0);
-    }
-
-    for(auto analysisInfo : ctOpt.analysisList()) {
-      AnalysisSelector analysisSel=analysisInfo.first;
-      string analysisName=analysisInfo.second;
-      if(ctOpt.getAnalysisSelectionFlag(analysisSel)||ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
-        ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getViolatingLocations(analysisSel);
-        if(ctOpt.getAnalysisSelectionFlag(analysisSel)) {
-          cout<<"\nResults for "<<analysisName<<" analysis:"<<endl;
-          if(locations.numTotalLocations()>0) {
-            locations.writeResultToStream(cout,analyzer->getLabeler());
-          } else {
-            cout<<"No violations detected."<<endl;
-          }
-        }
-        if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
-          string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
-          if(!ctOpt.quiet)
-            cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
-          locations.writeResultFile(fileName,analyzer->getLabeler());
-        }
-      }
-    }
-
-    if(ctOpt.analyzedFunctionsCSVFileName.size()>0) {
-      string fileName=ctOpt.analyzedFunctionsCSVFileName;
-      if(!ctOpt.quiet)
-        cout<<"Writing list of analyzed functions to file "<<fileName<<endl;
-      string s=analyzer->analyzedFunctionsToString();
-      if(!CppStdUtilities::writeFile(fileName, s)) {
-        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
-      }
-    }
-
-    if(ctOpt.analyzedFilesCSVFileName.size()>0) {
-      string fileName=ctOpt.analyzedFilesCSVFileName;
-      if(!ctOpt.quiet)
-        cout<<"Writing list of analyzed files to file "<<fileName<<endl;
-      string s=analyzer->analyzedFilesToString();
-      if(!CppStdUtilities::writeFile(fileName, s)) {
-        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
-      }
-    }
-
-    if(ctOpt.externalFunctionsCSVFileName.size()>0) {
-      string fileName=ctOpt.externalFunctionsCSVFileName;
-      if(!ctOpt.quiet)
-        cout<<"Writing list of external functions to file "<<fileName<<endl;
-      string s=analyzer->externalFunctionsToString();
-      if(!CppStdUtilities::writeFile(fileName, s)) {
-        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
-      }
-    }
-
     long pstateSetSize=analyzer->getPStateSet()->size();
     long pstateSetBytes=analyzer->getPStateSet()->memorySize();
     long pstateSetMaxCollisions=analyzer->getPStateSet()->maxCollisions();
@@ -1103,22 +912,37 @@ int main( int argc, char * argv[] ) {
       }
 
       timer.start();
-      std::set<int> ltlInAlphabet = analyzer->getInputVarValues();
-      //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
+
+      LtlRersMapping ltlRersMapping;
       if (ltlOpt.ltlInAlphabet.size()>0) {
-        string setstring=ltlOpt.ltlInAlphabet;
-        ltlInAlphabet=Parse::integerSet(setstring);
-        SAWYER_MESG(logger[TRACE]) << "LTL input alphabet explicitly selected: "<< setstring << endl;
+        ltlRersMapping.addInputAsciiValueSetWithOffsetA(ltlOpt.ltlInAlphabet);
       }
-      //take ltl output alphabet if specifically described, otherwise take the old RERS specific 21...26 (a.k.a. oU...oZ)
-      std::set<int> ltlOutAlphabet = Parse::integerSet("{21,22,23,24,25,26}");
       if (ltlOpt.ltlOutAlphabet.size()>0) {
-        string setstring=ltlOpt.ltlOutAlphabet;
-        ltlOutAlphabet=Parse::integerSet(setstring);
-        SAWYER_MESG(logger[TRACE]) << "LTL output alphabet explicitly selected: "<< setstring << endl;
-      } else {
-        // TODO: fail, if no output alphabet is provided
+        ltlRersMapping.addOutputAsciiValueSetWithOffsetA(ltlOpt.ltlOutAlphabet);
       }
+      if(ltlOpt.ltlRersMappingFileName.size()>0) {
+        // load and parse file into ltlInAlphabet and ltlOutAlphabet
+        // input/output alphabet
+        if(!readAndParseLTLRersMappingFile(ltlOpt.ltlRersMappingFileName,ltlRersMapping)) {
+          cerr<<"Error: could not open RERS mapping file "<<ltlOpt.ltlRersMappingFileName<<endl;
+          exit(1);
+        }
+        // set input/output alphabets here as well
+      }
+   
+      std::set<int> ltlInAlphabet;// = analyzer->getInputVarValues();
+      std::set<int> ltlOutAlphabet;
+      ltlInAlphabet=ltlRersMapping.getInputValueSet();
+      ltlOutAlphabet=ltlRersMapping.getOutputValueSet();
+      if(ltlInAlphabet.size()==0) {
+        cerr<<"Error: no LTL input alphabet provided."<<endl;
+        exit(1);
+      }
+      if(ltlOutAlphabet.size()==0) {
+        cerr<<"Error: no LTL output alphabet provided."<<endl;
+        exit(1);
+      }
+
       PropertyValueTable* ltlResults=nullptr;
       SpotConnection spotConnection(ltl_filename);
       spotConnection.setModeLTLDriven(analyzer->getModeLTLDriven());
@@ -1131,9 +955,9 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE]) << "LTL: check properties."<<endl;
       if (ltlOpt.propertyNrToCheck!=-1) {
         int propertyNum = ltlOpt.propertyNrToCheck;
-        spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+        spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlRersMapping, withCounterexample, spuriousNoAnswers);
       } else {
-        spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+        spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlRersMapping, withCounterexample, spuriousNoAnswers);
       }
       spotLtlAnalysisTime=timer.getTimeDurationAndStop().milliSeconds();
       SAWYER_MESG(logger[TRACE]) << "LTL: get results from spot connection."<<endl;
@@ -1155,11 +979,11 @@ int main( int argc, char * argv[] ) {
           ceAnalyzer.setMaxCounterexamples(ltlOpt.cegpra.maxIterations);
         }
         if (ltlOpt.cegpra.checkAllProperties) {
-          ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlInAlphabet, ltlOutAlphabet);
+          ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlRersMapping);
         } else {  // cegpra for single LTL property
           //ROSE_ASSERT(ltlOpt.cegpra.ltlPropertyNr!=-1);
           int property = ltlOpt.cegpra.ltlPropertyNr;
-          ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);
+          ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlRersMapping);
         }
       }
 
@@ -1421,7 +1245,7 @@ int main( int argc, char * argv[] ) {
         write_file("transitiongraph1.dat", datFile1);
         cout << "generated transitiongraph1.dat."<<endl;
 
-        assert(analyzer->startFunRoot);
+        //assert(analyzer->startFunRoot);
         //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
         //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
         SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;
@@ -1551,3 +1375,4 @@ int main( int argc, char * argv[] ) {
   return 0;
 }
 
+#endif // HAVE_SPOT

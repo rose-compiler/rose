@@ -2,9 +2,7 @@
 #define ANALYZER_H
 
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include <iostream>
@@ -51,10 +49,15 @@
 #include "CallString.h"
 #include "CodeThornOptions.h"
 #include "LTLOptions.h"
+#include "ltlthorn-lib/ParProOptions.h"
+#include "ltlthorn-lib/LTLRersMapping.h"
+#include "DFAnalysisBase.h"
+#include "EStateTransferFunctions.h"
+#include "EStateWorkList.h"
+#include "EStatePriorityWorkList.h"
 
 namespace CodeThorn {
 
-  typedef std::list<const EState*> EStateWorkList;
   typedef std::pair<int, const EState*> FailedAssertion;
   typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
@@ -76,7 +79,8 @@ namespace CodeThorn {
    * \date 2012.
    */
 
-  class Analyzer {
+
+  class Analyzer : public DFAnalysisBase {
     friend class Solver;
     friend class Solver5;
     friend class Solver8;
@@ -94,10 +98,10 @@ namespace CodeThorn {
     void initAstNodeInfo(SgNode* node);
     virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initLabeledAssertNodes(SgProject* root);
-
-    void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
-    ExplorationMode getExplorationMode() { return _explorationMode; }
-
+    
+    void setExplorationMode(ExplorationMode em);
+    ExplorationMode getExplorationMode();
+    
     void setSolver(Solver* solver);
     Solver* getSolver();
 
@@ -116,8 +120,6 @@ namespace CodeThorn {
     void reduceStgToInOutAssertStates();
     void reduceStgToInOutAssertErrStates();
     void reduceStgToInOutAssertWorklistStates();
-
-    const EState* popWorkList();
 
     // initialize command line arguments provided by option "--cl-options" in PState
     void initializeCommandLineArgumentsInState(PState& initialPState);
@@ -155,13 +157,14 @@ namespace CodeThorn {
     ExprAnalyzer* getExprAnalyzer();
 
     // access  functions for computed information
-    VariableIdMappingExtended* getVariableIdMapping();
-    FunctionIdMapping* getFunctionIdMapping();
+    VariableIdMappingExtended* getVariableIdMapping() override;
+    FunctionIdMapping* getFunctionIdMapping() override;
     FunctionCallMapping* getFunctionCallMapping();
     FunctionCallMapping2* getFunctionCallMapping2();
     Label getFunctionEntryLabel(SgFunctionRefExp* funRefExp);
-    CTIOLabeler* getLabeler() const;
-    Flow* getFlow();
+    CTIOLabeler* getLabeler() const override;
+    Flow* getFlow(); // this is NOT overriding 'DFAnalysis::getFlow() const'
+    InterFlow* getInterFlow();
     CodeThorn::PStateSet* getPStateSet();
     EStateSet* getEStateSet();
     TransitionGraph* getTransitionGraph();
@@ -189,7 +192,11 @@ namespace CodeThorn {
     VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
     VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
 
-    void insertInputVarValue(int i) { _inputVarValues.insert(i); }
+    void insertInputVarValue(int i);
+    std::set<int> getInputVarValues();
+    void setLtlRersMapping(CodeThorn::LtlRersMapping m); // also sets inputvarvalues
+    CodeThorn::LtlRersMapping getLtlRersMapping();
+
     void addInputSequenceValue(int i) { _inputSequence.push_back(i); }
     void resetToEmptyInputSequence() { _inputSequence.clear(); }
     void resetInputSequenceIterator() { _inputSequenceIterator=_inputSequence.begin(); }
@@ -229,7 +236,9 @@ namespace CodeThorn {
         not supported yet) */
     void setOptionContextSensitiveAnalysis(bool flag);
     bool getOptionContextSensitiveAnalysis();
-
+  protected:
+    void configureOptionSets(CodeThornOptions& ctOpt);
+  public:
     enum GlobalTopifyMode {GTM_IO, GTM_IOCF, GTM_IOCFPTR, GTM_COMPOUNDASSIGN, GTM_FLAGS};
     void setGlobalTopifyMode(GlobalTopifyMode mode);
     void setExternalErrorFunctionName(std::string externalErrorFunctionName);
@@ -244,11 +253,15 @@ namespace CodeThorn {
        if set they are used to initialize the initial state with argv and argc domain abstractions
     */
     void setCommandLineOptions(vector<string> clOptions);
-
+    SgNode* getStartFunRoot();
+  protected:
+    void setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt);
+    void deleteWorkLists();
+    void setWorkLists(ExplorationMode explorationMode);
+    SgNode* _startFunRoot;
+  public:
     // TODO: move to flow analyzer (reports label,init,final sets)
     static std::string astNodeInfoAttributeAndNodeToString(SgNode* node);
-
-    SgNode* startFunRoot;
     PropertyValueTable reachabilityResults;
     boost::unordered_map <std::string,int*> mapGlobalVarAddress;
     boost::unordered_map <int*,std::string> mapAddressGlobalVar;
@@ -299,7 +312,7 @@ namespace CodeThorn {
     CodeThornOptions& getOptionsRef();
     void setLtlOptions(LTLOptions ltlOptions);
     LTLOptions& getLtlOptionsRef();
-  protected:
+    //protected:
     /* these functions are used for the internal timer for resource management
        this function is protected to ensure it is not used from outside. It is supposed to be used
        only for internal timing managing the max-time option resource.
@@ -313,11 +326,9 @@ namespace CodeThorn {
 
     std::string analyzerStateToString();
 
-    void addToWorkList(const EState* estate);
-    const EState* addToWorkListIfNew(EState estate);
-    const EState* takeFromWorkList();
-    bool isInWorkList(const EState* estate);
+    void addToWorkList(const EState* estate); 
     bool isEmptyWorkList();
+    const EState* popWorkList();
     const EState* topWorkList();
     void swapWorkLists();
 
@@ -352,23 +363,27 @@ namespace CodeThorn {
     bool isFeasiblePathContext(CallString& cs,Label lab);
 
     std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
+
+    // forwarding functions for EStateTransferFunctions (backward compatibility)
     std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallExternal(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallReturn(Edge edge, const EState* estate);
+    std::list<EState> transferFunctionEntry(Edge edge, const EState* estate);
     std::list<EState> transferFunctionExit(Edge edge, const EState* estate);
     std::list<EState> transferReturnStmt(Edge edge, const EState* estate);
     std::list<EState> transferCaseOptionStmt(SgCaseOptionStmt* stmt,Edge edge, const EState* estate);
     std::list<EState> transferDefaultOptionStmt(SgDefaultOptionStmt* stmt,Edge edge, const EState* estate);
     std::list<EState> transferVariableDeclaration(SgVariableDeclaration* decl,Edge edge, const EState* estate);
     std::list<EState> transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
+    std::list<EState> transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
     std::list<EState> transferIdentity(Edge edge, const EState* estate);
     std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
     std::list<EState> transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
     std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
-
+    
     // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
     typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
     typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
@@ -402,6 +417,7 @@ namespace CodeThorn {
     void incIterations();
 
     Flow flow;
+    InterFlow _interFlow;
     CFAnalysis* cfanalyzer;
     std::list<std::pair<SgLabelStatement*,SgNode*> > _assertNodes;
     GlobalTopifyMode _globalTopifyMode;
@@ -409,18 +425,18 @@ namespace CodeThorn {
     set<AbstractValue> _smallActivityVarsSet;
     set<AbstractValue> _assertCondVarsSet;
     set<int> _inputVarValues;
+    LtlRersMapping _ltlRersMapping; // only used for LTL verification
     std::list<int> _inputSequence;
     std::list<int>::iterator _inputSequenceIterator;
+    
     ExprAnalyzer exprAnalyzer;
     VariableIdMappingExtended* variableIdMapping;
     FunctionIdMapping functionIdMapping;
     FunctionCallMapping functionCallMapping;
     FunctionCallMapping2 functionCallMapping2;
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
-    EStateWorkList* estateWorkListCurrent;
-    EStateWorkList* estateWorkListNext;
-    EStateWorkList estateWorkListOne;
-    EStateWorkList estateWorkListTwo;
+    EStateWorkList* estateWorkListCurrent=0;
+    EStateWorkList* estateWorkListNext=0;
     EStateSet estateSet;
     PStateSet pstateSet;
     ConstraintSetMaintainer constraintSetMaintainer;
@@ -486,12 +502,13 @@ namespace CodeThorn {
     AnalyzedFunctionsContainerType analyzedFunctions;
     typedef std::unordered_set<SgFunctionCallExp*> ExternalFunctionsContainerType;
     ExternalFunctionsContainerType externalFunctions;
-    //xxx
+
   private:
     //std::unordered_map<int,const EState*> _summaryStateMap;
     std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;
-    const CodeThorn::PState* _initialPStateStored=0;
-    const CodeThorn::ConstraintSet* _emptycsetstored=0;
+    const CodeThorn::PState* _initialPStateStored=nullptr;
+    const CodeThorn::ConstraintSet* _emptycsetstored=nullptr;
+    CodeThorn::EStateTransferFunctions* _estateTransferFunctions=nullptr;
   }; // end of class Analyzer
 } // end of namespace CodeThorn
 

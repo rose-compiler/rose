@@ -9,7 +9,7 @@
 #include "CFAnalysis.h"
 #include "MemPropertyState.h"
 #include "DFAnalysisBase.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "DFAstAttribute.h"
 #include "MemTransferFunctions.h"
 

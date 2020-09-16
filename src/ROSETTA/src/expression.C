@@ -200,6 +200,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (Float80Val,             "Float80Val",             "FLOAT_80_VAL" );
      NEW_TERMINAL_MACRO (Float128Val,            "Float128Val",            "FLOAT_128_VAL" );
      NEW_TERMINAL_MACRO (AdaFloatVal,            "AdaFloatVal",            "ADA_FLOAT_VAL" );
+     NEW_TERMINAL_MACRO (JovialBitVal,           "JovialBitVal",           "JOVIAL_BIT_VAL" );
 
   // DQ (7/31/2014): Added support for C++11 nullptr constant value expression (using type nullptr_t).
      NEW_TERMINAL_MACRO (NullptrValExp,          "NullptrValExp",          "NULLPTR_VAL" );
@@ -262,6 +263,15 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (StringConversion,          "StringConversion",              "STR_CONV" );
      NEW_TERMINAL_MACRO (YieldExpression,           "YieldExpression",               "YIELD_EXP" );
 
+  // DQ (7/25/2020): Adding C++17 fold operator support.
+     NEW_TERMINAL_MACRO (FoldExpression,            "FoldExpression",            "FOLD_EXPR" );
+     NEW_TERMINAL_MACRO (ChooseExpression,          "ChooseExpression",          "CHOOSE_EXPR" );
+  // NEW_TERMINAL_MACRO (YieldExpression,           "YieldExpression",           "YIELD_EXPR" );
+     NEW_TERMINAL_MACRO (AwaitExpression,           "AwaitExpression",           "AWAIT_EXPR" );
+
+  // DQ (7/25/2020): Adding C++20 spaceship operator support.
+     NEW_TERMINAL_MACRO (SpaceshipOp,               "SpaceshipOp",               "SPACESHIP_OP" );
+
 #include "x10/exp_terminals.cpp"
 
 #if USE_FORTRAN_IR_NODES
@@ -303,7 +313,6 @@ Grammar::setUpExpressions ()
 
   // FMZ (2/6/2009): Added CoArray Reference Expression
      NEW_TERMINAL_MACRO (CAFCoExpression,    "CAFCoExpression",    "COARRAY_REF_EXPR" );
-
 #endif
 
 
@@ -329,7 +338,6 @@ Grammar::setUpExpressions ()
   // would simplify the handling of Aterms for new IR nodes extended from existing ROSE IR nodes.
   
 #endif
-
 
   // An expression with a designator, used for designated initialization in
   // SgAggregateInitializer
@@ -399,9 +407,9 @@ Grammar::setUpExpressions ()
           MultiplyOp     | DivideOp         | IntegerDivideOp     | ModOp            | AndOp                | OrOp           |
           BitXorOp       | BitAndOp         | BitOrOp             | BitEqvOp         | CommaOpExp           | LshiftOp       |
           RshiftOp       | PntrArrRefExp    | ScopeOp             | AssignOp         | ExponentiationOp     | JavaUnsignedRshiftOp |
-          ConcatenationOp| PointerAssignOp  | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         |
-          NonMembershipOp| IsOp             | IsNotOp             | DotDotExp        | ElementwiseOp        | PowerOp        |
-          LeftDivideOp   | RemOp            | ReplicationOp,
+          ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         | SpaceshipOp    |
+          NonMembershipOp | IsOp            | IsNotOp             | DotDotExp        | ElementwiseOp        | PowerOp        |
+          LeftDivideOp    | RemOp           | ReplicationOp,
           "BinaryOp","BINARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (NaryOp,
@@ -416,7 +424,7 @@ Grammar::setUpExpressions ()
           LongIntVal           | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        | 
           DoubleVal            | LongDoubleVal    | ComplexVal             | UpcThreads      | UpcMythread     |
           TemplateParameterVal | NullptrValExp    | Char16Val              | Char32Val       | Float80Val      | 
-          Float128Val          | VoidVal          | AdaFloatVal /* | LabelAddressVal */,
+          Float128Val          | VoidVal          | AdaFloatVal            | JovialBitVal /* | LabelAddressVal */,
           "ValueExp","ValueExpTag", false);
 
      NEW_NONTERMINAL_MACRO (ExprListExp,
@@ -456,7 +464,8 @@ Grammar::setUpExpressions ()
           RangeExp            | MagicColonExp           | //SK(08/20/2015): RangeExp and MagicColonExp for Matlab
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
           ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | AtExp | FinishExp | NoexceptOp | NonrealRefExp |
-          AdaTaskRefExp       | JovialTablePresetExp, "Expression", "ExpressionTag", false);
+          AdaTaskRefExp       | FoldExpression | AwaitExpression | ChooseExpression |
+          JovialTablePresetExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
   // ***********************************************************************
@@ -711,6 +720,10 @@ Grammar::setUpExpressions ()
      AddressOfOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                   "../Grammar/Expression.code" );
 
+  // DQ (7/25/2020): Adding C++20 support.
+     SpaceshipOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+
   // DQ (1/12/2020): Adding support for the originalExpressionTree.
      AddressOfOp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -826,6 +839,7 @@ Grammar::setUpExpressions ()
      Float80Val.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      Float128Val.setFunctionSource      ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      AdaFloatVal.setFunctionSource      ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     JovialBitVal.setFunctionSource     ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
      VoidVal.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
@@ -851,7 +865,7 @@ Grammar::setUpExpressions ()
      Initializer.setFunctionSource      ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      TupleExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ListExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-     DictionaryExp.setFunctionSource     ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     DictionaryExp.setFunctionSource    ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      KeyDatumPair.setFunctionSource     ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      Comprehension.setFunctionSource           ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      SetComprehension.setFunctionSource        ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -859,6 +873,12 @@ Grammar::setUpExpressions ()
      DictionaryComprehension.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      StringConversion.setFunctionSource        ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      YieldExpression.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
+  // DQ (7/25/2020): Adding support for C++17 and C++20.
+     FoldExpression.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     AwaitExpression.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     ChooseExpression.setFunctionSource        ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
 
      NullExpression.setFunctionSource   ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      VariantExpression.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -1074,6 +1094,9 @@ Grammar::setUpExpressions ()
 
   // DQ (9/2/2014): Adding support for C++11 lambda expresions.
      LambdaExp.editSubstitute ( "PRECEDENCE_VALUE", "16" );
+
+  // DQ (7/25/2020): Adding C++20 support (need to lookup the correct operator precedence, made it the same as AddOp for now).
+     SpaceshipOp.editSubstitute           ( "PRECEDENCE_VALUE", "12" );
 
 #if USE_FORTRAN_IR_NODES
   // DQ (3/19/2007): Support for Fortran IR nodes (not sure if these are correct values)
@@ -1743,6 +1766,9 @@ Grammar::setUpExpressions ()
      AdaFloatVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
                                  
+     JovialBitVal.setFunctionPrototype ( "HEADER_JOVIAL_BIT_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+     JovialBitVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (11/28/2011): Adding template declaration support in the AST (see test2011_164.C).
      TemplateParameterVal.setFunctionPrototype ( "HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION", "../Grammar/Expression.code" );
@@ -1888,6 +1914,9 @@ Grammar::setUpExpressions ()
 
      MinusOp.setFunctionPrototype ( "HEADER_MINUS_OPERATOR", "../Grammar/Expression.code" );
      UnaryAddOp.setFunctionPrototype ( "HEADER_UNARY_ADD_OPERATOR", "../Grammar/Expression.code" );
+
+  // DQ (7/25/2020): Adding C++20 support (need to lookup the correct operator precedence, made it the same as AddOp for now).
+     SpaceshipOp.setFunctionPrototype ( "HEADER_SPACESHIP_OPERATOR", "../Grammar/Expression.code" );
 
      SizeOfOp.setFunctionPrototype ( "HEADER_SIZEOF_OPERATOR", "../Grammar/Expression.code" );
      SizeOfOp.setDataPrototype ( "SgExpression*", "operand_expr", "= NULL",
@@ -2893,6 +2922,27 @@ Grammar::setUpExpressions ()
      YieldExpression.setDataPrototype            ( "SgExpression*", "value", "= NULL",
              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/25/2020): Adding C++17 language features (required for C++20 support).
+     FoldExpression.setFunctionPrototype        ( "HEADER_FOLD_EXPRESSION", "../Grammar/Expression.code" );
+     FoldExpression.setFunctionSource           ( "SOURCE_FOLD_EXPRESSION", "../Grammar/Expression.code" );
+     FoldExpression.setDataPrototype            ( "SgExpression*", "operands", "= NULL",
+             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     FoldExpression.setDataPrototype            ( "std::string", "operator_token", "= \"\"",
+             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     FoldExpression.setDataPrototype            ("bool","is_left_associative","= false",
+             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/25/2020): Adding C++17 language features (required for C++20 support).
+     AwaitExpression.setFunctionPrototype        ( "HEADER_AWAIT_EXPRESSION", "../Grammar/Expression.code" );
+     AwaitExpression.setFunctionSource           ( "SOURCE_AWAIT_EXPRESSION", "../Grammar/Expression.code" );
+     AwaitExpression.setDataPrototype            ( "SgExpression*", "value", "= NULL",
+             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/25/2020): Adding C++17 language features (required for C++20 support).
+     ChooseExpression.setFunctionPrototype        ( "HEADER_CHOOSE_EXPRESSION", "../Grammar/Expression.code" );
+     ChooseExpression.setFunctionSource           ( "SOURCE_CHOOSE_EXPRESSION", "../Grammar/Expression.code" );
+     ChooseExpression.setDataPrototype            ( "SgExpression*", "value", "= NULL",
+             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      // ***********************************************************************
      // ***********************************************************************
@@ -2960,6 +3010,7 @@ Grammar::setUpExpressions ()
      Float80Val.setFunctionSource ( "SOURCE_FLOAT_80_VALUE_EXPRESSION","../Grammar/Expression.code" );
      Float128Val.setFunctionSource ( "SOURCE_FLOAT_128_VALUE_EXPRESSION","../Grammar/Expression.code" );
      AdaFloatVal.setFunctionSource ( "SOURCE_ADA_FLOAT_VALUE_EXPRESSION","../Grammar/Expression.code" );
+     JovialBitVal.setFunctionSource ( "SOURCE_JOVIAL_BIT_VALUE_EXPRESSION","../Grammar/Expression.code" );
      AdaTaskRefExp.setFunctionSource ( "SOURCE_ADA_TASK_REF_EXPRESSION","../Grammar/Expression.code" );
 
      VoidVal.setFunctionSource ( "SOURCE_VOID_VALUE_EXPRESSION","../Grammar/Expression.code" );
@@ -3104,7 +3155,9 @@ Grammar::setUpExpressions ()
 
      RemOp.setFunctionSource            ( "SOURCE_REM_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      AbsOp.setFunctionSource            ( "SOURCE_ABS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     
+
+  // DQ (7/25/2020): Adding C++20 support (need to lookup the correct operator precedence, made it the same as AddOp for now).
+     SpaceshipOp.setFunctionSource ( "SOURCE_SPACESHIP_OPERATOR","../Grammar/Expression.code" );
 
      // ###################################
      // Functions assigned by function name
@@ -3245,6 +3298,7 @@ Grammar::setUpExpressions ()
      Float128Val.setFunctionSource            ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      ComplexVal.setFunctionSource             ( "SOURCE_GET_TYPE_COMPLEX","../Grammar/Expression.code" );
      AdaFloatVal.setFunctionSource            ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+     JovialBitVal.setFunctionSource           ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      
      VoidVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
 
@@ -3301,6 +3355,8 @@ Grammar::setUpExpressions ()
      
      // \todo set type according to Asis frontend
      AdaFloatVal.editSubstitute            ( "GENERIC_TYPE", "SgTypeFloat" );
+
+     JovialBitVal.editSubstitute           ( "GENERIC_TYPE", "SgJovialBitType" );
      
      ComplexVal.editSubstitute             ( "GENERIC_TYPE", "SgTypeComplex" );
 
@@ -3417,6 +3473,10 @@ Grammar::setUpExpressions ()
      StringConversion.setFunctionSource     ( "SOURCE_STRING_CONVERSION","../Grammar/Expression.code" );
      YieldExpression.setFunctionSource      ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
 
+  // DQ (7/25/2020): Adding support for C++20.
+     FoldExpression.setFunctionSource      ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+     AwaitExpression.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+     ChooseExpression.setFunctionSource    ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
 
      MatrixExp.setFunctionSource    ( "SOURCE_MATRIX_EXP", "../Grammar/Expression.code" );
      MagicColonExp.setFunctionSource ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );

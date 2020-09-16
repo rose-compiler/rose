@@ -1949,6 +1949,10 @@ FortranCodeGeneration_locatedNode::unparseCommonBlock(SgStatement* stmt, SgUnpar
      SgCommonBlock* commonBlock = isSgCommonBlock(stmt);
      ASSERT_not_null(commonBlock);
 
+     SgScopeStatement* parentScope = isSgScopeStatement(commonBlock->get_parent());
+     ASSERT_not_null(parentScope);
+//     SgBasicBlock* basicBlock = isSgBasicBlock(commonBlock->get_parent());
+
      curprint("COMMON ");
 
      SgCommonBlockObjectPtrList & blockList = commonBlock->get_block_list();
@@ -1958,7 +1962,71 @@ FortranCodeGeneration_locatedNode::unparseCommonBlock(SgStatement* stmt, SgUnpar
           curprint("/ ");
           curprint((*i)->get_block_name());
           curprint(" / ");
-          unparseExpression((*i)->get_variable_reference_list(),info);
+     // Pei-Hung (07/30/2020) if declaration stmt is not available, the type attribute has to be unparsed
+          SgExprListExp* expr_list = isSgExprListExp((*i)->get_variable_reference_list()); 
+          ASSERT_not_null(expr_list);
+          SgExpressionPtrList::iterator iexp = expr_list->get_expressions().begin();
+
+          if (iexp != expr_list->get_expressions().end())
+             {
+               while (true)
+                  {
+                    SgVarRefExp* varRef = isSgVarRefExp(*iexp);
+                    if(varRef != NULL)
+                    {
+                      SgVariableSymbol* varSym = isSgVariableSymbol(varRef->get_symbol());
+                      ASSERT_not_null(varSym);
+                      SgInitializedName* initName = isSgInitializedName(varSym->get_declaration());
+                      ASSERT_not_null(initName);
+                      SgVariableDeclaration* varDecl = isSgVariableDeclaration(initName->get_parent());
+                      ASSERT_not_null(varDecl);
+                      SgType* type = initName->get_typeptr();
+                      ASSERT_not_null(type);
+                      if(isSgBasicBlock(parentScope) != NULL)
+                      {
+                        SgBasicBlock* basicBlock = isSgBasicBlock(parentScope); 
+                        ASSERT_not_null(basicBlock);
+                        SgStatementPtrList& stmtList = basicBlock->get_statements();
+                        if(std::find(stmtList.begin(),stmtList.end(), varDecl) == stmtList.end())
+                        {
+                          unparseExpression(*iexp,info);
+                          // third argument has to be false to have the attribute unparsed to individual variable
+                          unparseEntityTypeAttr(type, info, false);
+                        }
+                        else
+                          unparseExpression(*iexp,info);
+                      } 
+                      else if(isSgGlobal(parentScope) != NULL)
+                      {
+                        SgGlobal* globalScope = isSgGlobal(parentScope); 
+                        ASSERT_not_null(globalScope);
+                        SgDeclarationStatementPtrList& stmtList = globalScope->get_declarations();
+                        if(std::find(stmtList.begin(),stmtList.end(), varDecl) == stmtList.end())
+                        {
+                          unparseExpression(*iexp,info);
+                          // third argument has to be false to have the attribute unparsed to individual variable
+                          unparseEntityTypeAttr(type, info, false);
+                        }
+                        else
+                          unparseExpression(*iexp,info);
+                      }
+                      else 
+                        unparseExpression(*iexp,info);
+                    }
+                    else
+                      unparseExpression(*iexp,info);
+                    iexp++;
+                    if (iexp != expr_list->get_expressions().end())
+                       {
+                         curprint ( ",");
+                       }
+                      else
+                       {
+                         break;
+                       }
+                  }
+             }
+
 
           i++;
 

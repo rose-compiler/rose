@@ -839,9 +839,11 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgLinkageModifier::linkage_modifier_enum" ) ||
                  ( varTypeString == "SgAsmOp::asm_operand_constraint_enum" ) ||
                  ( varTypeString == "SgAsmOp::asm_operand_modifier_enum" ) ||
+                 ( varTypeString == "SgImplicitStatement::implicit_spec_enum" ) ||
                  ( varTypeString == "SgInitializedName::asm_register_name_enum" ) ||
                  ( varTypeString == "SgInitializedName::excess_specifier_enum" ) ||
                  ( varTypeString == "SgJovialDirectiveStatement::directive_types" ) ||
+                 ( varTypeString == "SgJovialForThenStatement::loop_statement_type_enum" ) ||
                  ( varTypeString == "SgProcessControlStatement::control_enum" ) ||
                  ( varTypeString == "SgTypeComplex::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgTypeImaginary::floating_point_precision_enum" ) ||

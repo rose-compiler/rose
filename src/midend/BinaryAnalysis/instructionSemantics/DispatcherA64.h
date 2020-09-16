@@ -25,6 +25,7 @@ public:
      *  This register is cached so that there are not so amny calls to @ref Dispatcher::findRegister. Changing the register
      *  dictionary via @ref set_register_dictionary updates all entries of this cache. */
     RegisterDescriptor REG_PC, REG_SP, REG_LR;
+    RegisterDescriptor REG_CPSR_N, REG_CPSR_Z, REG_CPSR_C, REG_CPSR_V;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -103,6 +104,43 @@ public:
 
     // Operations more or less defined by the A64 reference manual. Replicates the specified value according to the vector type.
     BaseSemantics::SValuePtr advSimdExpandImm(SgAsmType*, const BaseSemantics::SValuePtr&);
+
+    struct NZCV {
+        BaseSemantics::SValuePtr n;
+        BaseSemantics::SValuePtr z;
+        BaseSemantics::SValuePtr c;
+        BaseSemantics::SValuePtr v;
+
+        NZCV() {}
+
+        NZCV(const BaseSemantics::SValuePtr &n, const BaseSemantics::SValuePtr &z,
+             const BaseSemantics::SValuePtr &c, const BaseSemantics::SValuePtr &v)
+            : n(n), z(z), c(c), v(v) {}
+    };
+
+    // Compute the NZCV bits based on the result of an addition and the carries returned by RiscOperators::addWithCarries.
+    NZCV computeNZCV(const BaseSemantics::SValuePtr &sum, const BaseSemantics::SValuePtr &carries);
+
+    // Set the NZCV bits based on the result of an addition and the carries returned by RiscOperators::addWithCarries.
+    void updateNZCV(const BaseSemantics::SValuePtr &sum, const BaseSemantics::SValuePtr &carries);
+
+    // Return true or false depending on whether the condition holds.
+    BaseSemantics::SValuePtr conditionHolds(A64InstructionCondition);
+
+    // From ARM documentation: "Decode AArch64 bitfield and logical immediate masks which use a similar encoding structure."
+    std::pair<uint64_t, uint64_t> decodeBitMasks(size_t m, bool immN, uint64_t imms, uint64_t immr, bool immediate);
+
+    // Handles the rather tricky BFM instruction, which is a general case of a few other instructions.
+    void bitfieldMove(BaseSemantics::RiscOperators *ops, SgAsmExpression *dst, SgAsmExpression *src, bool n,
+                      uint64_t immR, uint64_t immS);
+
+    // Handles the rather tricky UBFM instruction, which is a general case of a few other instructions.
+    void unsignedBitfieldMove(BaseSemantics::RiscOperators *ops, SgAsmExpression *dst, SgAsmExpression *src, bool n,
+                              uint64_t immR, uint64_t immS);
+
+    // Handles the rather tricky SBFM instruction, which is a general case of a few other instructions.
+    void signedBitfieldMove(BaseSemantics::RiscOperators *ops, SgAsmExpression *dst, SgAsmExpression *src, bool n,
+                            uint64_t immR, uint64_t immS);
 
 protected:
     int iproc_key(SgAsmInstruction*) const override;

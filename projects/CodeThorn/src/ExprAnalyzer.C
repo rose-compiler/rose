@@ -1,13 +1,11 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "sage3basic.h"
 #include "ExprAnalyzer.h"
 #include "CodeThornException.h"
-#include "Analyzer.h" // dependency on process-functions
+#include "Analyzer.h" // dependency on analyzer->transferAssignOp 
 #include "CppStdUtilities.h"
 #include "CodeThornCommandLineOptions.h"
 #include "CodeThornLib.h"
@@ -21,7 +19,6 @@ using namespace Sawyer::Message;
 Sawyer::Message::Facility ExprAnalyzer::logger;
 
 ExprAnalyzer::ExprAnalyzer() {
-  initDiagnostics();
   initViolatingLocations();
 }
 
@@ -335,6 +332,7 @@ AbstractValue ExprAnalyzer::evaluateExpressionWithEmptyState(SgExpression* expr)
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,EState estate, EvalMode mode) {
   ROSE_ASSERT(estate.pstate()); // ensure state exists
+
   // initialize with default values from argument(s)
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -354,7 +352,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
     exit(1);
   }
 #endif
+  if(SgStatementExpression* gnuExtensionStmtExpr=isSgStatementExpression(node)) {
+    //cout<<"WARNING: ignoring GNU extension StmtExpr."<<endl;
+    res.result=AbstractValue::createTop();
+    return listify(res);
+  }
 
+  
   if(SgConditionalExp* condExp=isSgConditionalExp(node)) {
     return evalConditionalExpr(condExp,estate,mode);
   }
@@ -966,8 +970,10 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         SAWYER_MESG(logger[WARN])<<"evalArrayReferenceOp:"<<pstate2.toString(_variableIdMapping)<<endl;
 
         if(mode==MODE_ADDRESS) {
-          SAWYER_MESG(logger[FATAL])<<"Internal error: ExprAnalyzer::evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
-          exit(1);
+          SAWYER_MESG(logger[WARN])<<"ExprAnalyzer::evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
+          res.result=CodeThorn::Top();
+          resultList.push_back(res);
+          return resultList;
         }
         // array variable NOT in state. Special space optimization case for constant array.
         if(_variableIdMapping->hasArrayType(arrayVarId) /* MS 5/20/2020: removed mode: && _analyzer->getOptionsRef().explicitArrays==false*/) {
@@ -1536,13 +1542,18 @@ std::list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionRefExp(SgFunctionR
   //cout<<"DEBUG: isForwardDecl:"<<SgNodeHelper::isForwardFunctionDeclaration(funDecl)<<endl;
   //cout<<"DEBUG: fundecl:"<<funDecl->unparseToString()<<endl;
   SgFunctionDefinition* funDef=funDecl->get_definition();
-  ROSE_ASSERT(funDef);
-  Label funLab=_analyzer->getLabeler()->functionEntryLabel(funDef);
+  if(funDef) {
+    Label funLab=_analyzer->getLabeler()->functionEntryLabel(funDef);
   
-  // label of corresponding entry label of function of node; if function is external, then label is an invalid label.
-  //cout<<"DEBUG: evalFunctionRefExp: label:"<<funLab.toString()<<endl;
-  res.init(estate,AbstractValue::createAddressOfFunction(funLab));
-  return listify(res);
+    // label of corresponding entry label of function of node; if function is external, then label is an invalid label.
+    //cout<<"DEBUG: evalFunctionRefExp: label:"<<funLab.toString()<<endl;
+    res.init(estate,AbstractValue::createAddressOfFunction(funLab));
+    return listify(res);
+  } else {
+    SAWYER_MESG(logger[WARN])<<"ExprAnalyzer::evalFunctionRefExp: funRefExp==0 (function pointer? - creating top)"<<endl;
+    res.init(estate,AbstractValue::createTop());
+    return listify(res);
+  }
 }
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode) {
   //  cout<<"DEBUG: evalRValueVarRefExp:"<<node->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
@@ -1551,13 +1562,16 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
     res.init(estate,AbstractValue::createTop());
     return listify(res);
   }  
-  SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<"MODE:"<<mode<<endl;
+  SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<"MODE:"<<mode<<" Symbol:"<<node->get_symbol()<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue::createBot());
 
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
-  ROSE_ASSERT(varId.isValid());
+  if(!varId.isValid()) {
+    SAWYER_MESG(logger[ERROR])<<"Invalid varId: "<<node->unparseToString()<<" Parent: "<<node->get_parent()->unparseToString()<<" Symbol:"<<node->get_symbol()<<endl;
+    ROSE_ASSERT(varId.isValid());
+  }
   // check if var is a struct member. if yes return struct-offset.
   //cout<<"DEBUG1: VarRefExp: "<<_variableIdMapping->variableName(varId)<<endl;
   if(isMemberVariable(varId)) {
@@ -1656,13 +1670,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       evalFunctionCallArguments(funCall,estate);
       estate.io.recordVerificationError();
       return listify(res);
-    } else if(funName=="printf" && (getInterpreterMode()==IM_CONCRETE)) {
+    } else if(funName=="printf" && (getInterpreterMode()==IM_ENABLED)) {
       // call fprint function in mode CONCRETE and generate output
       // (1) obtain arguments from estate
       // (2) marshall arguments
       // (3) perform function call (causing side effect on stdout (or written to provided file))
       return execFunctionCallPrintf(funCall,estate);
-    } else if(funName=="scanf" && (getInterpreterMode()==IM_CONCRETE)) {
+    } else if(funName=="scanf" && (getInterpreterMode()==IM_ENABLED)) {
       // call scanf function in mode CONCRETE and generate output
       // (1) obtain arguments from estate
       // (2) marshall arguments

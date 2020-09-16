@@ -82,10 +82,16 @@ Unparse_Jovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
    {
      ASSERT_not_null(type);
 
+  // Warning: This function may be called if there is an initializer because the type
+  // could be wrapped as an SgModifierType.  When the compool rcmp file is unparsed
+  // this won't be called which leads to confusion. Care must be taken if the default
+  // for the size value isn't appropriate for the type, in particular, SgJovialBitType.
+  //
      switch (type->variantT())
         {
-          case V_SgTypeFixed:   unparseTypeSize(isSgTypeFixed(type), info);    break;
-          case V_SgTypeString:  unparseTypeSize(isSgTypeString(type), info);   break;
+          case V_SgTypeFixed:     unparseTypeSize(isSgTypeFixed(type), info);     break;
+          case V_SgTypeString:    unparseTypeSize(isSgTypeString(type), info);    break;
+          case V_SgJovialBitType: unparseTypeSize(isSgJovialBitType(type), info); break;
           default:
              {
                 SgExpression* size = type->get_type_kind();
@@ -170,10 +176,16 @@ Unparse_Jovial::unparseJovialType(SgPointerType* pointer_type, SgUnparse_Info& i
      curprint(" ");
 
   // The type name is optional
-     SgNamedType* named_type = isSgNamedType(pointer_type->get_base_type());
-     if (named_type != NULL)
+     if (SgNamedType* named_type = isSgNamedType(pointer_type->get_base_type()))
         {
            curprint(named_type->get_name());
+        }
+     else if (SgTypeUnknown* unknown_type = isSgTypeUnknown(pointer_type->get_base_type()))
+        {
+           if (unknown_type->get_has_type_name())
+              {
+                 curprint(unknown_type->get_type_name());
+              }
         }
   }
 
@@ -201,19 +213,26 @@ Unparse_Jovial::unparseJovialType(SgModifierType* modifier_type, SgUnparse_Info&
   // type to be wrapped with an SgModifierType with isConst and isStatic set. This required the creation of
   // isJovialStatic to correctly unparse when the Jovial source actually has the STATIC keyword.
 
-  // SgModifierType is also used to mark R,T,Z (round, truncate, trancate towards zero).
      ROSE_ASSERT(modifier_type);
-
      SgType* base_type = modifier_type->get_base_type();
      ROSE_ASSERT(base_type);
 
-     unparseTypeDesc(base_type, info);
-
-     if      (modifier_type->get_typeModifier().isRound())               curprint(",R");
-     else if (modifier_type->get_typeModifier().isTruncate())            curprint(",T");
-     else if (modifier_type->get_typeModifier().isTruncateTowardsZero()) curprint(",Z");
-
-     unparseTypeSize(base_type, info);
+  // SgModifierType is also used to mark R,T,Z (round, truncate, trancate towards zero).
+  // If not used for (R,T,Z), unwrap and then unparse the base type (this should fix recurring problems).
+     if (modifier_type->get_typeModifier().isRound()     ||
+         modifier_type->get_typeModifier().isTruncate()  ||
+         modifier_type->get_typeModifier().isTruncateTowardsZero())
+     {
+        unparseTypeDesc(base_type, info);
+        if      (modifier_type->get_typeModifier().isRound())               curprint(",R");
+        else if (modifier_type->get_typeModifier().isTruncate())            curprint(",T");
+        else if (modifier_type->get_typeModifier().isTruncateTowardsZero()) curprint(",Z");
+        unparseTypeSize(base_type, info);
+     }
+     else
+     {
+        unparseType(base_type, info);
+     }
   }
 
 void

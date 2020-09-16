@@ -23,7 +23,9 @@
 #endif
 
 #include "unparseJovial_modfile.h"
-
+#ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+#   include "ModuleBuilder.h"
+#endif
 
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #   include <Partitioner2/Engine.h>
@@ -2269,6 +2271,11 @@ SgProject::parse()
      FortranModuleInfo::set_inputDirs(this );
 #endif
 
+#ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+     ModuleBuilderFactory::get_compool_builder().setCurrentProject(this);
+     ModuleBuilderFactory::get_compool_builder().setInputDirs(this);
+#endif
+
   // Simplify multi-file handling so that a single file is just the trivial
   // case and not a special separate case.
 #if 0
@@ -3362,6 +3369,7 @@ SgFile::callFrontEnd()
                     case V_SgSourceFile:
                        {
                          SgSourceFile* sourceFile = const_cast<SgSourceFile*>(isSgSourceFile(this));
+                         ROSE_ASSERT(sourceFile != NULL);
                          frontendErrorLevel = sourceFile->buildAST(localCopy_argv, inputCommandLine);
                          break;
                        }
@@ -3370,6 +3378,7 @@ SgFile::callFrontEnd()
                     case V_SgBinaryComposite:
                        {
                          SgBinaryComposite* binary = const_cast<SgBinaryComposite*>(isSgBinaryComposite(this));
+                         ROSE_ASSERT(binary != NULL);
                          frontendErrorLevel = binary->buildAST(localCopy_argv, inputCommandLine);
                          break;
                        }

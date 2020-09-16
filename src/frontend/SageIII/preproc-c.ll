@@ -735,7 +735,7 @@ lineprefix              ^{whitespace}*"#"{whitespace}*
 macrokeyword            "include"|"define"|"undef"|"line"|"error"|"warning"|"if"|"ifdef"|"ifndef"|"elif"|"else"|"endif"
 mlinkagespecification   ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C++\"")){whitespacenl}*"{"
 languagesyntax         "<" | ">" | "?" | ":"
-%s NORMAL CXX_COMMENT C_COMMENT STRING_LIT CHAR_LIT MACRO C_COMMENT_INMACRO
+%s NORMAL CXX_COMMENT C_COMMENT STRING_LIT CHAR_LIT MACRO C_COMMENT_INMACRO STRING_LIT_IN_MACRO
 %%
 
 %{
@@ -1254,7 +1254,7 @@ BEGIN NORMAL;
 
 
 
-                        /* Actions for string literals. */
+  /* Actions for string literals. */
 <STRING_LIT>\\\r\n              {/*eat escaped DOS line-term*/  add_token(yytext,preproc_line_num,preproc_column_num,0); preproc_line_num++; preproc_column_num=1; }
 <STRING_LIT>\\\n                {/*eat escaped linefeed*/       add_token(yytext,preproc_line_num,preproc_column_num,0); preproc_line_num++; preproc_column_num=1; }
 <STRING_LIT>\\.                 {/*eat escaped something*/      add_token(yytext,preproc_line_num,preproc_column_num,0); /*preproc_column_num+=strlen(yytext);*/ }
@@ -1382,15 +1382,15 @@ BEGIN NORMAL;
                     yyterminate();
                 }
 
-<MACRO>"\/*"    {
-                    //does this cover all cases?????????
+<MACRO>"\""    {
                     preproc_column_num+=2; 
                     macroString += yytext;
+                    BEGIN STRING_LIT_IN_MACRO;
+                }
 
-                    /*
-                                //Do we need to do something like this?
-                                commentString = yytext;
-                    */
+<MACRO>"\/*"    {
+                    preproc_column_num+=2; 
+                    macroString += yytext;
                     BEGIN C_COMMENT_INMACRO;
                 }
 
@@ -1399,15 +1399,31 @@ BEGIN NORMAL;
                     preproc_column_num++; 
                 }
 
+
+  /* MS 08/31/2020: added special case of string literal inside macro; note GNU allows single double quotes in macros, but EDG rejects it */
+  /* Actions for string literals. */
+<STRING_LIT_IN_MACRO>\\\r\n              {/*eat escaped DOS line-term*/  preproc_line_num++; preproc_column_num=1; macroString += yytext;}
+<STRING_LIT_IN_MACRO>\\\n                {/*eat escaped linefeed*/       preproc_line_num++; preproc_column_num=1; macroString += yytext;}
+<STRING_LIT_IN_MACRO>\\.                 {/*eat escaped something*/       /*preproc_column_num+=strlen(yytext);*/macroString += yytext; }
+<STRING_LIT_IN_MACRO>\r\n                {/*eat DOS line-term*/          preproc_line_num++; preproc_column_num=1; macroString += yytext;}
+<STRING_LIT_IN_MACRO>[^\"\r\n\\]         {/*eat non-special characters*/ preproc_column_num+=strlen(yytext);macroString += yytext; }
+<STRING_LIT_IN_MACRO>\n                  {/*eat linefeed*/               preproc_line_num++; preproc_column_num=1; macroString += yytext;}
+<STRING_LIT_IN_MACRO>"\""                {
+   /* end of string literal */
+     macroString += yytext;
+     preproc_column_num+=strlen(yytext); 
+   /* go back into macro state */
+     BEGIN MACRO; 
+   }
+
+
 <C_COMMENT_INMACRO>"*/"   { 
-                                //??????????????????????????????????????????????????????????????
-                                //This code copies the comment into the macrobuffer.
-                                //Should we not copy it to comment buffer also?????
+                                //This code copies the comment only into the macrobuffer, but not into comment buffer
                                 macroString += yytext;
 
                                 /*
                                 commentString += yytext;
-                                //should we do something like this??
+                                //to add the comment as separate element use this:
                                 preprocessorList.addElement(PreprocessingInfo::C_StyleComment,commentString.c_str(),globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
                                 */
                                 preproc_column_num+=strlen(yytext); 
@@ -1415,18 +1431,10 @@ BEGIN NORMAL;
                             }
 <C_COMMENT_INMACRO>\n       { 
                                 macroString += yytext;
-
-                                //Do we need to do something like this?
-                                //commentString += yytext;
-
                                 preproc_line_num++; preproc_column_num=1; 
                             }
 <C_COMMENT_INMACRO>.        { 
                                 macroString += yytext;
-
-                                //Do we need to do something like this?
-                                //commentString += yytext;
-
                                 preproc_column_num++; 
                             }
 %%
@@ -1541,9 +1549,11 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
                     printf ("In getPreprocessorDirectives(): DONE: calling yylex() \n");
 #endif
 
+#if 0
+                 // DQ (8/17/2020): Debugging code.
                  // Writes all gathered information to stdout
-                 // preprocessorList.display("TEST Collection of Comments and CPP Directives");
-
+                    preprocessorList.display("TEST Collection of Comments and CPP Directives");
+#endif
                  // bugfix (9/29/2001)
                  // The semantics required here is to move the elements accumulated into the
                  // preprocessorList into the preprocessorInfoList and delete them from the

@@ -792,10 +792,10 @@ createUnaryOperator ( SgExpression* exp, string name, bool is_user_defined_opera
 
        // The name in the symbol table uses the form:
           name = "operator(" + name + ")";
-
+#if 0
           printf ("name = %s \n",name.c_str());
           printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
-
+#endif
        // currentScope->print_symboltable ("In createBinaryOperator()");
 
           SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(name,currentScope);
@@ -3109,6 +3109,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
                if (initializedName->get_initializer() != NULL)
                   {
                     SgExpression* initializer = initializedName->get_initializer();
+                    ROSE_ASSERT(initializer != NULL);
                     printf ("--- initializedName->get_initializer() = %p = %s = %s \n",initializer,initializer->class_name().c_str(),SageInterface::get_name(initializer).c_str());
                   }
              }
@@ -4351,6 +4352,7 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
 
                break;
 
+          case AttrSpec_CONTIGUOUS:   variableDeclaration->get_declarationModifier().get_storageModifier().setContiguous();    break;
           case AttrSpec_POINTER:
           case AttrSpec_COPOINTER:
           case ComponentAttrSpec_pointer:
@@ -4362,7 +4364,6 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
           case AttrSpec_NON_OVERRIDABLE:
           case AttrSpec_DEFERRED:
             // printf ("Error: Are these F08 attribute specs? astAttributeSpec = %d \n",astAttributeSpec);
-          case AttrSpec_CONTIGUOUS:
                break;
 
           case ComponentAttrSpec_access_spec:
@@ -4852,10 +4853,15 @@ generateFunctionCall( Token_t* nameToken )
 
      ROSE_ASSERT(currentScope != NULL);
 
+#if 0
+     printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+
      trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,currentScope,variableSymbol,functionSymbol,classSymbol);
 
   // DQ (12/29/2010): Can we assert this if we just build a SgFunctionRefExp? (fails in case of test2007_158.f90).
   // ROSE_ASSERT(functionSymbol != NULL);
+
 #if 0
      if (functionSymbol == NULL)
         {
@@ -4872,9 +4878,35 @@ generateFunctionCall( Token_t* nameToken )
 
           SgSymbolTable* symbolTable = isSgSymbolTable(variableSymbol->get_parent());
           ROSE_ASSERT(symbolTable != NULL);
-
+#if 0
+          printf ("Calling symbolTable->remove(variableSymbol) for variableSymbol = %p name = %s \n",variableSymbol,variableName.str());
+#endif
+#if 0
+          symbolTable->print("symbolTable->remove(variableSymbol)");
+#endif
           symbolTable->remove(variableSymbol);
-
+#if 0
+       // if (symbolTable->exists(variableSymbol) == true)
+          if (symbolTable->exists(variableName) == true)
+             {
+               if (symbolTable->exists(variableSymbol) == true)
+                  {
+#if 0
+                    printf ("Found the variableSymbol in symbolTable = %p \n",symbolTable);
+#endif
+                    symbolTable->remove(variableSymbol);
+                  }
+                 else
+                  {
+#if 0
+                    printf ("variableSymbol NOT found in symbolTable = %p \n",symbolTable);
+#endif
+                  }
+             }
+#endif
+#if 0
+          printf ("DONE: Calling symbolTable->remove(variableSymbol) for variableSymbol = %p \n",variableSymbol);
+#endif
           SgInitializedName* initializedName = variableSymbol->get_declaration();
           ROSE_ASSERT(initializedName != NULL);
 
@@ -4884,6 +4916,8 @@ generateFunctionCall( Token_t* nameToken )
           SgVariableDefinition* variableDefinition = isSgVariableDefinition(initializedName->get_declptr());
           ROSE_ASSERT(variableDefinition != NULL);
 
+#if 1
+       // DQ (8/16/2020): Original code.
           delete variableDefinition;
           variableDefinition = NULL;
 
@@ -4895,6 +4929,12 @@ generateFunctionCall( Token_t* nameToken )
 
           delete variableSymbol;
           variableSymbol = NULL;
+#else
+          variableDefinition  = NULL;
+          variableDeclaration = NULL;
+          initializedName     = NULL;
+          variableSymbol      = NULL;
+#endif
         }
        else
         {
@@ -5414,8 +5454,15 @@ isPubliclyAccessible( SgSymbol* symbol )
        // printf ("In isPubliclyAccessible(): declaration = %p = %s symbol = %s \n",declaration,declaration->class_name().c_str(),symbol->get_name().str());
 
        // Publically accessible is either declared explicitly as public, or not defined as anything (default in Fortran is public).
+#if 1
+       // DQ (8/16/2020): We changed the definition of isDefault to not be equivalent to isPublic (required for C++ handling).
+          if (declaration->get_declarationModifier().get_accessModifier().isPublic() == true ||
+              declaration->get_declarationModifier().get_accessModifier().isDefault() == true ||
+              declaration->get_declarationModifier().get_accessModifier().isUndefined() == true)
+#else
           if (declaration->get_declarationModifier().get_accessModifier().isPublic() == true ||
               declaration->get_declarationModifier().get_accessModifier().isUndefined() == true)
+#endif
              {
                returnValue = true;
              }
@@ -5436,8 +5483,15 @@ isPubliclyAccessible( SgSymbol* symbol )
                     printf ("In isPubliclyAccessible(): declaration = %p = %s symbol = %s \n",declaration,declaration->class_name().c_str(),symbol->get_name().str());
                     declaration->get_declarationModifier().display("In isPubliclyAccessible()");
 #endif
+#if 1
+                 // DQ (8/16/2020): We changed the definition of isDefault to not be equivalent to isPublic (required for C++ handling).
+                    if (declaration->get_declarationModifier().get_accessModifier().isPublic() == true ||
+                        declaration->get_declarationModifier().get_accessModifier().isDefault() == true ||
+                        declaration->get_declarationModifier().get_accessModifier().isUndefined() == true)
+#else
                     if (declaration->get_declarationModifier().get_accessModifier().isPublic() == true ||
                         declaration->get_declarationModifier().get_accessModifier().isUndefined() == true)
+#endif
                        {
                          returnValue = true;
                        }
@@ -5647,11 +5701,10 @@ isARoseModuleFile( string filename )
    {
      bool result = false;
 
-     string targetSuffix = MOD_FILE_SUFFIX;
+     string targetSuffix = FortranModuleInfo::module_file_suffix();
      size_t filenameLength = filename.size();
 
-  // if ( (filenameLength > 5) && (filename.substr(filenameLength - 5) == ".rmod") )
-     if ( (filenameLength > targetSuffix.size()) && (filename.substr(filenameLength - 5) == MOD_FILE_SUFFIX) )
+     if ( (filenameLength > targetSuffix.size()) && (filename.substr(filenameLength - 5) == FortranModuleInfo::module_file_suffix()) )
           result = true;
 #if 0
      printf ("################ filename = %s result = %s \n",filename.c_str(),(result == true) ? "true" : "false");

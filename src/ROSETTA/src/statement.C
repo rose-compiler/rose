@@ -69,6 +69,10 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (BasicBlock,                "BasicBlock",                "BASIC_BLOCK_STMT");
      NEW_TERMINAL_MACRO (Global,                    "Global",                    "GLOBAL_STMT" );
      NEW_TERMINAL_MACRO (IfStmt,                    "IfStmt",                    "IF_STMT" );
+
+  // DQ (7/25/2020): Adding C++17 constexpr_if statement.
+  // NEW_TERMINAL_MACRO (IfConstexprStatement,      "IfConstexprStatement",      "IF_CONSTEXPR_STATEMENT" );
+
   // NEW_TERMINAL_MACRO (FunctionDefinition,        "FunctionDefinition",        "FUNC_DEFN_STMT" );
      NEW_TERMINAL_MACRO (WhileStmt,                 "WhileStmt",                 "WHILE_STMT" );
      NEW_TERMINAL_MACRO (DoWhileStmt,               "DoWhileStmt",               "DO_WHILE_STMT" );
@@ -435,10 +439,11 @@ Grammar::setUpStatements ()
   // other variables or expressions.  They are only l-values if and only if the rhs is a l-value (I think).
   // CR (10/22/2018): Added JovialForThenStatement
      NEW_NONTERMINAL_MACRO (ScopeStatement,
-          Global                       | BasicBlock           | IfStmt                    | ForStatement       | FunctionDefinition |
-          ClassDefinition              | WhileStmt            | DoWhileStmt               | SwitchStatement    | CatchOptionStmt    |
-          NamespaceDefinitionStatement | BlockDataStatement   | AssociateStatement        | FortranDo          | ForAllStatement    |
-          UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement      | JavaLabelStatement | MatlabForStatement |
+          Global                       | BasicBlock           | IfStmt                    | /* IfConstexprStatement   | */ 
+          ForStatement                 | FunctionDefinition   |
+          ClassDefinition              | WhileStmt            | DoWhileStmt               | SwitchStatement        | CatchOptionStmt    |
+          NamespaceDefinitionStatement | BlockDataStatement   | AssociateStatement        | FortranDo              | ForAllStatement    |
+          UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement      | JavaLabelStatement     | MatlabForStatement |
           FunctionParameterScope       | DeclarationScope     | RangeBasedForStatement    | JovialForThenStatement | AdaAcceptStmt  |
           AdaPackageSpec               | AdaPackageBody       | AdaTaskSpec               | AdaTaskBody                  
      /* | TemplateInstantiationDefn */ ,
@@ -532,6 +537,8 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaTaskSpecDecl,       "AdaTaskSpecDecl", "ADA_TASK_SPEC_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaTaskTypeDecl,       "AdaTaskTypeDecl", "ADA_TASK_TYPE_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaTaskBodyDecl,       "AdaTaskBodyDecl", "ADA_TASK_BODY_DECL_STMT" );
+  // PP (07/14/20): Adding Ada renaming declarations 
+     NEW_TERMINAL_MACRO (AdaRenamingDecl,       "AdaRenamingDecl", "ADA_RENAMING_DECL_STMT" );
 
      NEW_NONTERMINAL_MACRO (DeclarationStatement,
           FunctionParameterList                   | VariableDeclaration       | VariableDefinition           |
@@ -549,9 +556,8 @@ Grammar::setUpStatements ()
           StaticAssertionDeclaration              | OmpDeclareSimdStatement   | MicrosoftAttributeDeclaration|
           JovialCompoolStatement                  | JovialDirectiveStatement  | JovialDefineDeclaration      |
           JovialOverlayDeclaration                | NonrealDecl               | EmptyDeclaration             |
-          AdaPackageBodyDecl           |
-          AdaPackageSpecDecl                      | AdaTaskSpecDecl           | AdaTaskBodyDecl              | 
-          AdaTaskTypeDecl
+          AdaPackageBodyDecl                      | AdaPackageSpecDecl        | AdaRenamingDecl              | 
+          AdaTaskSpecDecl                         | AdaTaskBodyDecl           | AdaTaskTypeDecl           
           /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
@@ -657,6 +663,7 @@ Grammar::setUpStatements ()
   // DQ (5/8/2007): Added hidden declaration list. If a symbol is in this list then it requires name qualification ("typically "::" keyword).
      ScopeStatement.setDataPrototype    ( "std::set<SgSymbol*>","hidden_declaration_list","",
                                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
 
      FunctionTypeTable.setFunctionPrototype( "HEADER_FUNCTION_TYPE_TABLE", "../Grammar/Statement.code" );
      FunctionTypeTable.setDataPrototype    ( "SgSymbolTable*","function_type_table","= NULL",
@@ -826,6 +833,15 @@ Grammar::setUpStatements ()
                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      IfStmt.setDataPrototype ( "SgStatement*", "false_body",  "= NULL",
                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/26/2020): C++17 specific feature support for "if constexpr() {} else {}".
+     IfStmt.setDataPrototype ( "bool", "is_if_constexpr_statement", "= false",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     IfStmt.setDataPrototype ( "bool", "if_constexpr_value_known", "= false",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     IfStmt.setDataPrototype ( "bool", "if_constexpr_value", "= false",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // IfStmt.setAutomaticGenerationOfDestructor(false);
 
@@ -854,6 +870,18 @@ Grammar::setUpStatements ()
   // DQ (12/7/2010): Fortran specific, has associated else keyword before if (is an else-if statement).
      IfStmt.setDataPrototype     ( "bool", "is_else_if_statement", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 0
+  // DQ (7/25/2020): Adding support for C++17 constexpr if statement, but might be better 
+  // to add a constexpr data member flag to the regular SgIfStmt.
+     IfConstexprStatement.setFunctionPrototype ( "HEADER_IF_CONST_EXPR_STATEMENT", "../Grammar/Statement.code" );
+     IfConstexprStatement.setDataPrototype ( "SgStatement*",  "conditional", "= NULL",
+                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     IfConstexprStatement.setDataPrototype ( "SgStatement*", "true_body",   "= NULL",
+                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     IfConstexprStatement.setDataPrototype ( "SgStatement*", "false_body",  "= NULL",
+                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
 
      ForStatement.setFunctionPrototype ( "HEADER_FOR_STATEMENT", "../Grammar/Statement.code" );
      ForStatement.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
@@ -3016,7 +3044,12 @@ Grammar::setUpStatements ()
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaTaskBodyDecl.setDataPrototype ( "SgAdaTaskBody*", "definition", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);                  
-                                     
+     AdaRenamingDecl.setFunctionPrototype  ( "HEADER_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaRenamingDecl.setDataPrototype ( "SgName", "name", "= \"\"",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaRenamingDecl.setDataPrototype ( "SgDeclarationStatement*", "renamed", "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);                  
+                              
 
 #if USE_FORTRAN_IR_NODES
      ProgramHeaderStatement.setFunctionPrototype ( "HEADER_PROGRAM_HEADER_STATEMENT", "../Grammar/Statement.code" );
@@ -3283,12 +3316,15 @@ Grammar::setUpStatements ()
      JovialForThenStatement.setFunctionPrototype ( "HEADER_JOVIAL_FOR_THEN_STATEMENT", "../Grammar/Statement.code" );
      JovialForThenStatement.setDataPrototype     ( "SgExpression*", "initialization", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     JovialForThenStatement.setDataPrototype     ( "SgExpression*", "then_expression", "= NULL",
-                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      JovialForThenStatement.setDataPrototype     ( "SgExpression*", "while_expression", "= NULL",
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JovialForThenStatement.setDataPrototype     ( "SgExpression*", "by_or_then_expression", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      JovialForThenStatement.setDataPrototype     ( "SgBasicBlock*", "loop_body", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JovialForThenStatement.setDataPrototype     ( "SgJovialForThenStatement::loop_statement_type_enum",
+                                         "loop_statement_type", "= SgJovialForThenStatement::e_unknown",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
 
   // CR (11/12/2018): Added to support Jovial COMPOOL modules
      JovialCompoolStatement.setFunctionPrototype ( "HEADER_JOVIAL_COMPOOL_STATEMENT", "../Grammar/Statement.code" );
@@ -3602,11 +3638,14 @@ Grammar::setUpStatements ()
      BlockDataStatement.setDataPrototype    ( "SgBasicBlock*", "body", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // Also need to add a list of declarations (use SgInitializedNameList, I think)
-     ImplicitStatement.setDataPrototype    ( "bool", "implicit_none", "= false",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // CR (8/3/2020): Added implicit_type enum for F2018 syntax (implicit_none becomes redundant)
+     ImplicitStatement.setDataPrototype("bool", "implicit_none", "= false",
+                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     ImplicitStatement.setDataPrototype("SgImplicitStatement::implicit_spec_enum",
+                                        "implicit_spec", "= SgImplicitStatement::e_unknown_implicit_spec",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ImplicitStatement.setDataPrototype("SgInitializedNamePtrList", "variables", "",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      StatementFunctionStatement.setDataPrototype    ( "SgFunctionDeclaration*", "function", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -4129,6 +4168,7 @@ Grammar::setUpStatements ()
      AdaTaskSpecDecl.setFunctionSource   ( "SOURCE_ADA_TASK_SPEC_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaTaskTypeDecl.setFunctionSource   ( "SOURCE_ADA_TASK_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaTaskBodyDecl.setFunctionSource   ( "SOURCE_ADA_TASK_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaRenamingDecl.setFunctionSource   ( "SOURCE_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
     
   // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit 
   // token-based unparsing to work with greater precision. For example, used to add an include directive with 

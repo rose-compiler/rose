@@ -135,7 +135,7 @@ protected:
 
         StatePtr operator()(size_t cfgVertex, const StatePtr &in);
 
-        std::string printState(const StatePtr &in);
+        std::string toString(const StatePtr &in);
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -4,7 +4,7 @@ using namespace std;
 
 #include "CollectionOperators.h"
 #include "RDTransferFunctions.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 
 using namespace CodeThorn;
 
@@ -89,7 +89,7 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Latt
 
   // (for programs with pointers)
   ROSE_ASSERT(_pointerAnalysisInterface);
-  //VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
+  //VariableIdSet defVarIds=AstUtility::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
 }
 
 /*!

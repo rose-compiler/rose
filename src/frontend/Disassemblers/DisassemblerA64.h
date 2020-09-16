@@ -77,6 +77,10 @@ public:
 private:
     void init();
 
+    // Returns the opcode as a 32-bit value.
+    uint32_t opcode(const cs_insn&);
+    uint32_t opcode(SgAsmInstruction*);
+
     // Make a ROSE instruction operand from a Capstone operand
     SgAsmExpression* makeOperand(const cs_insn&, const cs_arm64_op&);
 
@@ -91,7 +95,7 @@ private:
 
     // Extend an expression. Given an expression of some integer type, and given a destination type and an ARM extender function, generate a new expression (if necessary)
     // that represents the ARM extender function. This may consist of an truncation and/or a signed or unsigned extend operation.
-    SgAsmExpression* extendOperand(SgAsmExpression*, arm64_extender, SgAsmType*, arm64_shifter, unsigned shiftAmount) const;
+    SgAsmExpression* extendOperand(SgAsmExpression*, const cs_insn&, arm64_extender, SgAsmType*, arm64_shifter, unsigned shiftAmount) const;
 
     // Return a type for register.
     SgAsmType* registerType(RegisterDescriptor, arm64_vas);

@@ -43,6 +43,7 @@
 // Derived classes needed for serialization
 #include <BinaryYicesSolver.h>
 #include <BinaryZ3Solver.h>
+#include <DispatcherA64.h>
 #include <DispatcherM68k.h>
 #include <DispatcherPowerpc.h>
 #include <DispatcherX86.h>
@@ -391,6 +392,9 @@ private:
     void serializeCommon(S &s, const unsigned version) {
         s.template register_type<InstructionSemantics2::SymbolicSemantics::SValue>();
         s.template register_type<InstructionSemantics2::SymbolicSemantics::RiscOperators>();
+#ifdef ROSE_ENABLE_ASM_A64
+        s.template register_type<InstructionSemantics2::DispatcherA64>();
+#endif
         s.template register_type<InstructionSemantics2::DispatcherX86>();
         s.template register_type<InstructionSemantics2::DispatcherM68k>();
         s.template register_type<InstructionSemantics2::DispatcherPowerpc>();

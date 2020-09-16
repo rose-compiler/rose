@@ -1,5 +1,7 @@
 #include <algorithm>
 
+#include "sage3basic.h"
+
 #include "CtxCallStrings.h"
 
 #include "CtxAnalysis.h"
@@ -93,7 +95,7 @@ namespace
   {
     ROSE_ASSERT(Labeler::NO_LABEL != invlbl && Labeler::NO_LABEL != retlbl);
 
-    return labeler.getNode(invlbl) == labeler.getNode(retlbl);
+    return labeler.areCallAndReturnLabels(invlbl, retlbl);
   }
 
   struct InfiniteReturnHandler
@@ -190,6 +192,8 @@ namespace
     ROSE_ASSERT(overlap+1 == callee.size());
     return std::equal(std::next(caller.begin(), ofs), caller.end(), callee.begin()); 
   }
+  
+
 
 #if OBSOLETE_CODE
   struct IsCallerCallee
@@ -303,6 +307,12 @@ bool InfiniteCallString::callerOf(const InfiniteCallString& target, Label callsi
          );
 }
 
+bool InfiniteCallString::mergedAfterCall(const InfiniteCallString&) const
+{
+  // infinite call strings 
+  return false;
+}
+
 bool InfiniteCallString::operator==(const InfiniteCallString& that) const
 {
   const context_string& self = *this;
@@ -323,7 +333,7 @@ void allCallInvoke( const CtxLattice<InfiniteCallString>& src,
                     CtxAnalysis<InfiniteCallString>& /* not used */,
                     Labeler& labeler,
                     Label lbl
-               )
+                  )
 {
   defaultCallInvoke(src, tgt, labeler, lbl);
 }
@@ -433,6 +443,15 @@ bool FiniteCallString::callerOf(const FiniteCallString& target, Label callsite) 
   ROSE_ASSERT(target.size());
   
   constexpr bool fixedLen = FiniteCallString::FIXED_LEN_REP;
+  
+#if 0  
+  const bool a = (!target.empty());
+  const bool b = a && (target.last() == callsite);
+  const bool c = b && callerCalleeLengths(fixedLen, size(), target.size(), getFiniteCallStringMaxLength());
+  const bool d = c && callerCalleePrefix(*this, target);
+  
+  std::cerr << "<<>> " << a << b << c << d << std::endl;
+#endif
 
   // target is invoked from this, if
   // (1) the target's last label is callsite
@@ -446,11 +465,19 @@ bool FiniteCallString::callerOf(const FiniteCallString& target, Label callsite) 
          );
 }
 
+bool FiniteCallString::mergedAfterCall(const FiniteCallString& other) const
+{
+  if (!FiniteCallString::FIXED_LEN_REP && (size() != other.size()))
+    return false;
+    
+  return std::equal(std::next(begin()), end(), std::next(other.begin()));
+}
 
 bool FiniteCallString::operator==(const FiniteCallString& that) const
 {
   return rep == that.rep;
 }
+
 
 void allCallInvoke( const CtxLattice<FiniteCallString>& src,
                     CtxLattice<FiniteCallString>& tgt,

@@ -1,5 +1,4 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
  *************************************************************/
 
@@ -97,7 +96,7 @@ bool VariableIdMapping::hasCharType(VariableId varId) {
 
 bool VariableIdMapping::hasIntegerType(VariableId varId) {
   SgType* type=getType(varId);
-  return SageInterface::isStrictIntegerType(type);
+  return SageInterface::isStrictIntegerType(type)||isSgTypeSigned128bitInteger(type);
 }
 
 bool VariableIdMapping::hasEnumType(VariableId varId) {

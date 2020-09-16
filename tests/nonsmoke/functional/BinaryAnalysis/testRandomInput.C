@@ -94,6 +94,14 @@ main(int argc, char *argv[]) {
     MemoryMap::Ptr map = createInput(settings);
 
     // Obtain a disassembler
+    try {
+        if (!Disassembler::lookup(settings.isa))
+            throw Disassembler::Exception("not found");
+    } catch (const Disassembler::Exception&) {
+        std::cerr <<"disassembler " <<settings.isa <<" is not supported in this configuration of ROSE\n";
+        std::cerr <<"test is being skipped\n";
+        return 0; // lack of a disassembler is not a test failure
+    }
     P2::Engine engine;
     engine.settings().disassembler.isaName = settings.isa;
     P2::Partitioner partitioner = engine.createPartitioner();

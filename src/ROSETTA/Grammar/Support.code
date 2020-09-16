@@ -736,8 +736,15 @@ HEADER_ACCESS_MODIFIER_START
                e_private   = 1,        /*!< private access (local to class members) */
                e_protected = 2,        /*!< protected access (local to class members and membrs of derived classes) */
                e_public    = 3,        /*!< public access (access within enclosing namespace) */
+#if 0
+            // DQ (8/11/2020): Original code.
                e_default   = e_public, /*!< default value (public access) */  /*NO_STRINGIFY*/
                e_undefined = 4,        /*!< fortran default value */
+#else
+            // DQ (8/11/2020): new code for bug Cxx_tests/test2020_28.C.
+               e_default   = 4,        /*!< default value (public access) */  /*NO_STRINGIFY*/
+               e_undefined = 5,        /*!< fortran default value */
+#endif
                e_last_modifier         /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -7160,7 +7167,9 @@ HEADER_UNPARSE_INFO_START
                a_unset_access     = 1, /*!< default value */
                a_private_access   = 2, /*!< private access value */
                a_protected_access = 3, /*!< protected access value */
-               a_public_access    = 4  /*!< public access value */
+               a_public_access    = 4,  /*!< public access value */
+            // DQ (8/12/2020): added a new value to support when this is not set explicitly (see Cxx_tests/test2020_28.C).
+               a_default_access   = 5  /*!< public access value */
              };
 
      private:
@@ -7181,6 +7190,10 @@ HEADER_UNPARSE_INFO_START
           void set_isProtectedAccess();
           bool isPublicAccess() const;
           void set_isPublicAccess();
+
+       // DQ (8/12/2020): Adding a default value for when it is not set explicitly.
+          bool isDefaultAccess() const;
+          void set_isDefaultAccess();
 
           bool isPointerToSomething() const;
           void set_isPointerToSomething();
@@ -7527,6 +7540,11 @@ HEADER_UNPARSE_INFO_START
        // driscoll6 (6/6/2011) Mutators for p_nestingLevel
           void inc_nestingLevel();
           void dec_nestingLevel();
+
+       // DQ (8/16/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+       // We need to build the access functions directly because of the static data member.
+          static bool get_extern_C_with_braces();
+          static void set_extern_C_with_braces( bool extern_C_with_braces );
 
 HEADER_UNPARSE_INFO_END
 
@@ -8861,6 +8879,9 @@ SgSymbolTable::remove( const SgSymbol* symbol )
           assert(false);
         }
 #endif
+
+#if 1
+  // DQ (8/15/2020): Original code before the chagne below.
      assert(elementToDelete != get_table()->end());
 
   // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase(elementToDelete->second);"
@@ -8871,6 +8892,37 @@ SgSymbolTable::remove( const SgSymbol* symbol )
      p_symbolSet.erase(elementToDelete->second);
 
      get_table()->erase(elementToDelete);
+#else
+  // DQ (8/15/2020): The internal support for using directives in C++ has been modified to correctly filter 
+  // the addition of symbols which could lead to ambiguity.  Craig and I think that the rules no implemented
+  // may be inconsistant with the use of the lower level infrastructire for Fortran.  And we are sorting 
+  // this out.  For now it is not an error to remove a symbol that is not present in the symbol table.
+  // assert(elementToDelete != get_table()->end());
+     if (elementToDelete != get_table()->end())
+        {
+       // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase(elementToDelete->second);"
+       // get_table()->erase(elementToDelete);
+
+       // DQ (3/10/2007): Remove the symbol from the symbol set used to test for if the symbol exists
+       // p_symbolSet.erase(symbol);
+          p_symbolSet.erase(elementToDelete->second);
+
+          get_table()->erase(elementToDelete);
+        }
+       else
+        {
+       // assert(exists(symbol) == true);
+          if (exists(symbol) == true)
+             {
+            // Nothing to do, this should have been found above.
+             }
+            else
+             {
+               printf ("The symbol to remove was not in the symbol table for this scope: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+             }
+        }
+
+#endif
    }
 
 
@@ -11573,20 +11625,20 @@ SgSymbolTable::print() // Liao 5/5/2011. Added this to support calling this from
 void
 SgSymbolTable::print( std::string label, VariantT nodeType )
    {
-     mprintf ("Printing out the data within the symbol table (p_table = %p,label = %s size = %d): \n",p_table,label.c_str(),size());
+     printf ("Printing out the data within the symbol table (p_table = %p,label = %s size = %d): \n",p_table,label.c_str(),size());
 
-     mprintf ("Internal static data: p_no_name: %s p_name = %s \n",(p_no_name == true) ? "true" : "false",p_name.str());
+     printf ("Internal static data: p_no_name: %s p_name = %s \n",(p_no_name == true) ? "true" : "false",p_name.str());
 
   // These are just static data used internally for some of the symbol lookup functions (symbol tables are not given names).
-  // mprintf ("SymbolTable has a name: %s \n",(p_no_name == true) ? "NO: it has no name" : "YES: it does have a name");
+  // printf ("SymbolTable has a name: %s \n",(p_no_name == true) ? "NO: it has no name" : "YES: it does have a name");
   // if (p_no_name == false)
-  //      mprintf ("SymbolTable name = %s \n",p_name.str());
+  //      printf ("SymbolTable name = %s \n",p_name.str());
 
   // DQ (2/16/2006): This is a SgScopeStatement except for the SgSymbolTable used in the global function type symbol table
   // SgScopeStatement* parentNode = isSgScopeStatement(get_parent());
      SgNode* parentNode = get_parent();
      assert(parentNode != NULL);
-     mprintf ("Symbol table has parent = %p = %s \n",parentNode,parentNode->class_name().c_str());
+     printf ("Symbol table has parent = %p = %s \n",parentNode,parentNode->class_name().c_str());
 
   // DQ (6/23/2005): It is not a problem for the global function table to not have a name!
   //   else
@@ -11607,7 +11659,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
             // cout << "[" << idx << "] " << (*i).first.str();
                assert ( isSgSymbol( (*i).second ) != NULL );
 
-            // mprintf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) sage_class_name() = %s \n",
+            // printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) sage_class_name() = %s \n",
             //      idx,(*i).first.str(),(*i).second->sage_class_name());
 
                SgSymbol* symbol = isSgSymbol((*i).second);
@@ -11623,19 +11675,19 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                   {
                     nameOfType = namedType->get_name();
                  // char* nameString = namedType->get_name().str();
-                 // mprintf ("Type is: (named type) = %s \n",nameString);
+                 // printf ("Type is: (named type) = %s \n",nameString);
                   }
                  else
                   {
                  // DQ (5/7/2004): modified to allow for get_type() to return NULL
                     if (type != NULL)
                        {
-                      // mprintf ("Type is: type->sage_class_name() = %s \n",type->sage_class_name());
+                      // printf ("Type is: type->sage_class_name() = %s \n",type->sage_class_name());
                          nameOfType = type->sage_class_name();
                        }
                       else
                        {
-                      // mprintf ("Type is: No type found in symbol (likely a possible error!) \n");
+                      // printf ("Type is: No type found in symbol (likely a possible error!) \n");
                          switch(symbol->variantT())
                             {
                               case V_SgNamespaceSymbol:
@@ -11675,14 +11727,14 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                          SgAliasSymbol* aliasSymbol = isSgAliasSymbol((*i).second);
                          if (aliasSymbol != NULL)
                             {
-                               ROSE_ASSERT(aliasSymbol->get_alias() != NULL);
-                              mprintf ("Symbol %4d: name = %s SgSymbol = %p = %s (alias to %s) type = %p = %s = %s get_symbol_basis() = %p = %s = %s \n",
-                                      idx,(*i).first.str(),(*i).second,(*i).second->class_name().c_str(),aliasSymbol->get_alias()->class_name().c_str(),type,(type != NULL) ? type->class_name().c_str() : "NULL" ,
+                              ROSE_ASSERT(aliasSymbol->get_alias() != NULL);
+                              printf ("Symbol %4d: name = %s SgSymbol = %p = %s (alias to %s) type = %p = %s = %s get_symbol_basis() = %p = %s = %s \n",
+                                   idx,(*i).first.str(),(*i).second,(*i).second->class_name().c_str(),aliasSymbol->get_alias()->class_name().c_str(),type,(type != NULL) ? type->class_name().c_str() : "NULL" ,
                                    nameOfType.str(),symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str());
                             }
                            else
                             {
-                              mprintf ("Symbol %4d: name = %s SgSymbol = %p = %s type = %p = %s = %s get_symbol_basis() = %p = %s = %s \n",
+                              printf ("Symbol %4d: name = %s SgSymbol = %p = %s type = %p = %s = %s get_symbol_basis() = %p = %s = %s \n",
                                    idx,(*i).first.str(),(*i).second,(*i).second->class_name().c_str(),type,(type != NULL) ? type->class_name().c_str() : "NULL" ,
                                    nameOfType.str(),symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str());
                             }
@@ -11692,7 +11744,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                   {
                     if (outputSymbolInfo == true)
                        {
-                         mprintf ("Warning Symbol %4d: name = %s SgSymbol = %p = %s type = %p = %s = %s get_symbol_basis() = NULL \n",
+                         printf ("Warning Symbol %4d: name = %s SgSymbol = %p = %s type = %p = %s = %s get_symbol_basis() = NULL \n",
                               idx,(*i).first.str(),(*i).second,(*i).second->class_name().c_str(),type,(type != NULL) ? type->class_name().c_str() : "NULL" ,
                               nameOfType.str());
                        }
@@ -11759,7 +11811,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                          SgFunctionTypeSymbol* symbol = isSgFunctionTypeSymbol(symbolFromTable);
                          assert(symbol != NULL);
                          mangledName = symbol->get_name();
-                         mprintf ("A SgFunctionTypeSymbol also has a pointer to a SgType = %p \n",symbol->get_type());
+                         printf ("A SgFunctionTypeSymbol also has a pointer to a SgType = %p \n",symbol->get_type());
                          break;
                        }
 
@@ -11794,19 +11846,19 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
 #if 0
                          SgNamespaceDeclarationStatement* namespaceDeclaration = symbol->get_declaration();
                          mangledName = namespaceDeclaration->get_mangled_name();
-                         mprintf ("A SgNamespaceSymbol also has a name = %s \n",symbol->get_name().str());
+                         printf ("A SgNamespaceSymbol also has a name = %s \n",symbol->get_name().str());
 #else
                          if (symbol->get_isAlias() == true)
                             {
                               SgNamespaceAliasDeclarationStatement* namespaceAliasDeclarationStatement = symbol->get_aliasDeclaration();
                               mangledName = namespaceAliasDeclarationStatement->get_mangled_name();
-                              mprintf ("A SgNamespaceSymbol has an ALIAS with name = %s \n",symbol->get_name().str());
+                              printf ("A SgNamespaceSymbol has an ALIAS with name = %s \n",symbol->get_name().str());
                             }
                            else
                             {
                               SgNamespaceDeclarationStatement* namespaceDeclaration = symbol->get_declaration();
                               mangledName = namespaceDeclaration->get_mangled_name();
-                              mprintf ("A SgNamespaceSymbol also has a name = %s \n",symbol->get_name().str());
+                              printf ("A SgNamespaceSymbol also has a name = %s \n",symbol->get_name().str());
                             }
 #endif
                          break;
@@ -11852,7 +11904,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                     default:
                        {
                          mangledName = "unknown mangled name";
-                         mprintf ("Error: SgSymbol not handled (%s) \n",symbolFromTable->class_name().c_str());
+                         printf ("Error: SgSymbol not handled (%s) \n",symbolFromTable->class_name().c_str());
 
                       // DQ (6/8/2007): Make this case fail so we can detect this error.
                          assert(false);
@@ -11862,7 +11914,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
 
                if (outputSymbolInfo == true)
                   {
-                    mprintf ("   Symbol's associated mangled name = %s \n",mangledName.str());
+                    printf ("   Symbol's associated mangled name = %s \n",mangledName.str());
 
                  // This is useful for the output of the function types when the global function type symbol table is output.
                  // handle case of function symbol (unparse the funtion type)
@@ -11873,7 +11925,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                       // f->get_type()->unparse(); cout << endl;
                          std::cout << "     function: " << f->get_type()->unparseToString() << endl;
 #else
-                      // mprintf ("ERROR: unparse function for symbol type not implemented in SAGE3! \n");
+                      // printf ("ERROR: unparse function for symbol type not implemented in SAGE3! \n");
                       // ROSE_ABORT();
 #endif
                        }
@@ -11889,7 +11941,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
        else
         {
        // DQ (6/27/2005): I think this is an error (we should always have a valid symbol table)
-          mprintf ("Pointer to symbol table is NULL \n");
+          printf ("Pointer to symbol table is NULL \n");
           assert(false);
         }
    }
@@ -11969,7 +12021,7 @@ SgSymbolTable::display_aliasSymbolCausalNodeSet()
      SgNodeSet::iterator i = p_aliasSymbolCausalNodeSet.begin();
      while (i != p_aliasSymbolCausalNodeSet.end())
         {
-          mprintf ("SgSymbolTable::p_aliasSymbolCausalNodeSet: *i = %p = %s \n",*i,(*i)->class_name().c_str());
+          printf ("SgSymbolTable::p_aliasSymbolCausalNodeSet: *i = %p = %s \n",*i,(*i)->class_name().c_str());
 
           i++;
         }
@@ -19639,7 +19691,25 @@ SgUnparse_Info::set_forceDefaultConstructorToTriggerError( bool forceDefaultCons
      p_forceDefaultConstructorToTriggerError = forceDefaultConstructorToTriggerError;
    }
  
+/*! \brief Extern C support when using braces.
 
+     When using braced extern C we need to avoid nesting of these structures in the generated code.
+ */
+// DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+bool SgUnparse_Info::p_extern_C_with_braces = false;
+
+bool
+SgUnparse_Info::get_extern_C_with_braces()
+   {
+     return p_extern_C_with_braces;
+   }
+ 
+void
+SgUnparse_Info::set_extern_C_with_braces( bool extern_C_with_braces)
+   {
+     p_extern_C_with_braces = extern_C_with_braces;
+   }
+ 
 
 // Default constructor defined here because the automatically generated constructor
 // would not be generated with the error checking that I require to debug the use of
@@ -19769,6 +19839,11 @@ SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
 
      p_user_defined_literal = X.p_user_defined_literal;
 
+  // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+  // p_extern_C_with_braces = X.p_extern_C_with_braces;
+
+  // DQ (8/24/2020): debugging Cxx_tests/test2020_44.C need to communicate when to suppress extra parenthesis use around SgFunctionType arguments.
+     p_context_for_added_parentheses = X.p_context_for_added_parentheses;
      return *this;
    }
 
@@ -19895,6 +19970,12 @@ SgUnparse_Info::post_construction_initialization()
   // DQ (12/26/2019): When supporting multiple files, the defining declaration in a named type must refer to the 
   // defining declaration associated with the appropriate file (to be unparsed correctly).
      p_declstatement_associated_with_type = NULL;
+
+  // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+  // p_extern_C_with_braces = false;
+
+  // DQ (8/24/2020): debugging Cxx_tests/test2020_44.C need to communicate when to suppress extra parenthesis use around SgFunctionType arguments.
+     p_context_for_added_parentheses = false;
    }
 
 bool
@@ -19928,6 +20009,17 @@ SgUnparse_Info::isPublicAccess() const
 void
 SgUnparse_Info::set_isPublicAccess()
    { p_access_attribute = a_public_access; }  
+
+// DQ (8/12/2020): Adding a default value for when it is not set explicitly.
+bool
+SgUnparse_Info::isDefaultAccess() const
+   { return p_access_attribute == a_default_access; }
+
+void
+SgUnparse_Info::set_isDefaultAccess()
+   { p_access_attribute = a_default_access; }  
+
+
 
 bool
 SgUnparse_Info::isPointerToSomething() const
@@ -20882,6 +20974,12 @@ SgUnparse_Info::display ( const std::string & label ) const
   // DQ (4/28/2017): Added information required for use of generated names in the output of types for template 
   // arguments as used in symbol table lookup.
      printf ("p_use_generated_name_for_template_arguments = %s \n",p_use_generated_name_for_template_arguments ? "true" : "false");
+
+  // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+     printf ("p_extern_C_with_braces                 = %s \n",p_extern_C_with_braces ? "true" : "false");
+
+  // DQ (8/24/2020): debugging Cxx_tests/test2020_44.C need to communicate when to suppress extra parenthesis use around SgFunctionType arguments.
+     printf ("p_context_for_added_parentheses        = %s \n",p_context_for_added_parentheses ? "true" : "false");
    }
 
 string
@@ -20927,6 +21025,9 @@ SgUnparse_Info::displayString ( const std::string & label ) const
 
   // DQ (2/3/2019): Adding support to know when we are in a typedef.
      STRINGIFY_INFO_MEMBER_DATA_OUTPUT_MACRO(inTypedefDecl)
+
+  // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
+  // STRINGIFY_INFO_MEMBER_DATA_OUTPUT_MACRO(extern_C_with_braces)
 
      switch (p_access_attribute)
         {

@@ -264,14 +264,22 @@ public:
 /** Finds edges that can be part of some path.
  *
  *  Returns a Boolean vector indicating whether an edge is significant.  An edge is significant if it appears on some path that
- *  originates from some vertex in @p beginVertices and reaches some vertex in @p endVertices but is not a member of @p
- *  avoidEdges and is not incident to any vertex in @p avoidVertices. An edge is not significant if it is a function call or
- *  function return and @ref avoidCallsAndReturns is true. */
+ *  originates from some vertex in @p beginVertices and reaches some vertex in @p endVertices (if @p endVertices is supplied)
+ *  but is not a member of @p avoidEdges and is not incident to any vertex in @p avoidVertices. An edge is not significant if
+ *  it is a function call or function return and @ref avoidCallsAndReturns is true.
+ *
+ *  @{ */
+std::vector<bool>
+findPathEdges(const ControlFlowGraph &graph,
+              const CfgConstVertexSet &beginVertices,
+              const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
+              const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet(), bool avoidCallsAndReturns = false);
 std::vector<bool>
 findPathEdges(const ControlFlowGraph &graph,
               const CfgConstVertexSet &beginVertices, const CfgConstVertexSet &endVertices,
               const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
               const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet(), bool avoidCallsAndReturns = false);
+/** @} */
 
 /** Find edges that are reachable.
  *
@@ -308,11 +316,11 @@ eraseUnreachablePaths(ControlFlowGraph &graph /*in,out*/, CfgConstVertexSet &beg
 
 /** Compute all paths.
  *
- *  Computes all paths from any @p beginVertices to any @p endVertices that does not go through any @p avoidVertices or @p
+ *  Computes all paths from any @p beginVertices to any @p endVertices if that does not go through any @p avoidVertices or @p
  *  avoidEdges. The paths are returned as a paths graph (CFG) so that cycles can be represented. A paths graph can represent an
  *  exponential number of paths. The paths graph is formed by taking the global CFG and removing all @p avoidVertices and @p
  *  avoidEdges, any edge that cannot appear on a path from the @p beginVertex to any @p endVertices, and any vertex that has
- *  degree zero provided it is not the beginVertex.
+ *  degree zero provided it is not one of the @p beginVertices.
  *
  *  If @p avoidCallsAndReturns is true then E_FUNCTION_CALL and E_FUNCTION_RETURN edges are not followed.  Note that the normal
  *  partitioner CFG will have E_CALL_RETURN edges that essentially short circuit a call to a function that might return, and
@@ -328,25 +336,62 @@ findPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /*out*/, CfgVe
           const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet(),
           bool avoidCallsAndReturns = false);
 
+/** Compute all paths.
+ *
+ *  Compute all paths that originate from any @p beginVertices and do not go through any @p avoidVertices or @p avoidEdges.
+ *  The paths are returned as a paths graph (CFG) so that cycles can be represented. A paths graph can represent an exponential
+ *  number of paths. The paths graph is formed by taking the global CFG and removing all @p avoidVertices and @p avoidEdges,
+ *  and any vertex that has degree zero provided it is not one of the @p beginVertices.
+ *
+ *  If @p avoidCallsAndReturns is true then E_FUNCTION_CALL and E_FUNCTION_RETURN edges are not followed.  Note that the normal
+ *  partitioner CFG will have E_CALL_RETURN edges that essentially short circuit a call to a function that might return, and
+ *  that E_FUNCTION_RETURN edges normally point to the indeterminate vertex rather than concrete return targets.
+ *
+ *  If the returned graph, @p paths, is empty then no paths were found.  If the returned graph has a vertex but no edges then
+ *  the vertex serves as both the begin and end of the path (i.e., a single path of unit length).  The @p vmap is updated to
+ *  indicate the mapping from @p srcCfg vertices in the corresponding vertices in the returned graph. */
+void
+findPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /*out*/, CfgVertexMap &vmap /*out*/,
+          const CfgConstVertexSet &beginVertices,
+          const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
+          const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet(),
+          bool avoidCallsAndReturns = false);
+
 /** Compute all paths within one function.
  *
- *  This is a convenience method for @ref findPaths in a mode that avoids function call and return edges. */
+ *  This is a convenience method for @ref findPaths in a mode that avoids function call and return edges.
+ *
+ * @{ */
+void
+findFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /*out*/, CfgVertexMap &vmap /*out*/,
+                  const CfgConstVertexSet &beginVertices,
+                  const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
+                  const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet());
 void
 findFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /*out*/, CfgVertexMap &vmap /*out*/,
                   const CfgConstVertexSet &beginVertices, const CfgConstVertexSet &endVertices,
                   const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
                   const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet());
+/** @} */
 
 /** Compute all paths across function calls and returns.
  *
  *  This is a convenience method for @ref findPaths in a mode that follows function call and return edges. Note that in the
  *  normal partitioner CFG function return edges point to the indeterminate vertex rather than back to the place the function
- *  was called.  In order to get call-sensitive paths you'll have to do something else. */
+ *  was called.  In order to get call-sensitive paths you'll have to do something else.
+ *
+ * @{ */
+void
+findInterFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /*out*/, CfgVertexMap &vmap /*out*/,
+                       const CfgConstVertexSet &beginVertices,
+                       const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
+                       const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet());
 void
 findInterFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /*out*/, CfgVertexMap &vmap /*out*/,
                        const CfgConstVertexSet &beginVertices, const CfgConstVertexSet &endVertices,
                        const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
                        const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet());
+/** @} */
 
 /** Inline a function at the specified call site.
  *

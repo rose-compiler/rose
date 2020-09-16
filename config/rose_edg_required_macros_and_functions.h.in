@@ -106,7 +106,14 @@
 // to turn off 64-bit support.
 // #define __i386__
 // #undef __x86_64__
+
+// DQ (9/4/2020): This is required for WINE support (need to rethink how to support MS Windows header files and WINE).
+// DQ (9/2/2020): Heather reported this as a bug when using MS headers.
 #undef _MSC_VER
+// Heather reports additional macros that may be required are: 
+// _MX64 = 100 
+// _MAMD = 100
+// DQ (9/2/2020): She is sending us more details about this.
 
 // DQ (4/23/2017): This is required to avoid calling wine-2.0.1/include/winscard.h which calls wtypes.h (which does not exist).
 // Also prevents call to headef file "unknown.h"
@@ -161,6 +168,10 @@ typedef long long int __int128_t;
   #define FE_UNDERFLOW    16
   #define FE_INEXACT      32
   #define _FENV_PUBAPI   /* do not change this line! */
+
+/* DQ (9/2/2020): Added to support ROSE-2511 (Cxx11_tests/test2020_79.C) */
+  #define FE_ALL_EXCEPT (FE_INEXACT | FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID)
+
   extern int  _FENV_PUBAPI feclearexcept (int __excepts) ;
   extern int  _FENV_PUBAPI fegetexceptflag (fexcept_t *__flagp, int __excepts) ;
   extern int  _FENV_PUBAPI fesetexceptflag (const fexcept_t *__flagp, int __excepts) ;
@@ -845,6 +856,21 @@ struct __rose_is_same_as<T,T> {
 
 #define __is_same_as(T,U) __rose_is_same_as<T,U>::value
 #endif
+
+
+/* DQ (7/26/2020): Adding GNU 10 C++20 specific builtin functions (part of what 
+is needed to compile C++20 specific headers, the rest are some modified headers). */
+#if __GNUC__ >= 10 && __cplusplus
+bool __builtin_coro_done(void* _M_fr_ptr);
+void __builtin_coro_resume(void* _M_fr_ptr);
+void __builtin_coro_destroy(void* _M_fr_ptr);
+// std::compare_three_way()(__a.address(), __b.address());
+void* __builtin_coro_promise(void* _M_fr_ptr, unsigned long, bool);
+ROSE_CONSTEXPR bool __atomic_always_lock_free(unsigned long, unsigned long);
+// extern unsigned long ATOMIC_CHAR8_T_LOCK_FREE;
+const unsigned long __GCC_ATOMIC_CHAR8_T_LOCK_FREE = 2;
+#endif
+
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #if 0
@@ -1605,8 +1631,39 @@ __m128d _mm_mul_pd (__m128d __A, __m128d __B);
 double _mm_cvtsd_f64 (__m128d __A);
 __m128d _mm_hadd_pd (__m128d __X, __m128d __Y);
 __m128d _mm_add_pd (__m128d __A, __m128d __B);
+__m128 _mm_hadd_ps (__m128 a, __m128 b);
 void _mm_storeu_pd (double *__P, __m128d __A);
 
+__m128i _mm_cvtepi8_epi32(__m128i a);
+__m128i _mm_cvtepi8_epi64 (__m128i a);
+__m128i _mm_cvtepi8_epi16(__m128i a);
+__m128i _mm_cvtepi32_epi64(__m128i a);
+__m128i _mm_cvtepi16_epi32(__m128i a);
+__m128i _mm_cvtepi16_epi64(__m128i a);
+__m128i _mm_cvtepu8_epi32(__m128i a);
+__m128i _mm_cvtepu8_epi64(__m128i a);
+__m128i _mm_cvtepu8_epi16(__m128i a);
+__m128i _mm_cvtepu32_epi64(__m128i a);
+__m128i _mm_cvtepu16_epi32(__m128i a);
+__m128i _mm_cvtepu16_epi64(__m128i a);
+__m128  _mm_hadd_ps(__m128 a, __m128 b);
+__m128i _mm_cmpeq_epi64 (__m128i a, __m128i b);
+__m128  _mm_blendv_ps(__m128 v1, __m128 v2, __m128 v3);
+__m128d _mm_blendv_pd(__m128d v1, __m128d v2, __m128d v3);
+__m128i _mm_blendv_epi8 (__m128i a, __m128i b, __m128i mask);
+__m128i _mm_blend_epi16 (__m128i a, __m128i b, const int imm8);
+__m128i _mm_max_epi32 (__m128i a, __m128i b);
+__m128i _mm_max_epi8 (__m128i a, __m128i b);
+__m128i _mm_max_epu16 (__m128i a, __m128i b);
+__m128i _mm_max_epu32 (__m128i a, __m128i b);
+__m128i _mm_min_epi32 (__m128i a, __m128i b);
+__m128i _mm_min_epi8 (__m128i a, __m128i b);
+__m128i _mm_min_epu16 (__m128i a, __m128i b);
+__m128i _mm_min_epu32 (__m128i a, __m128i b);
+__m128i _mm_mul_epi32 (__m128i a, __m128i b);
+__m128i _mm_mullo_epi32 (__m128i a, __m128i b);
+__m128i _mm_packus_epi32 (__m128i a, __m128i b);
+__m128i _mm_shuffle_epi8 (__m128i a, __m128i b);
 
 
    #define _MM3DNOW_H_INCLUDED
@@ -3682,9 +3739,12 @@ __m128i __builtin_ia32_pmulhw128 (__v8hi, __v8hi);
 __m128i __builtin_ia32_pmullw128 (__v8hi, __v8hi);
 __m64 __builtin_ia32_pmuludq (__v2si, __v2si);
 __m128i __builtin_ia32_pmuludq128 (__v4si, __v4si);
+__v2di  __builtin_ia32_pslldqi128 (__v2di, int);
+__v8hi __builtin_ia32_pshuflw (__v8hi, int);
 __m128i __builtin_ia32_psllwi128 (__v8hi, int);
 __m128i __builtin_ia32_pslldi128 (__v4si, int);
 __m128i __builtin_ia32_psllqi128 (__v2di, int);
+__v2di  __builtin_ia32_psrldqi128 (__v2di, int);
 __m128i __builtin_ia32_psrawi128 (__v8hi, int);
 __m128i __builtin_ia32_psradi128 (__v4si, int);
 __m128i __builtin_ia32_psrlwi128 (__v8hi, int);

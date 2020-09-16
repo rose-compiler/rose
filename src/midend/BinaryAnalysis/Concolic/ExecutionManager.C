@@ -31,7 +31,7 @@ ExecutionManager::insertConcreteResults( const TestCase::Ptr &testCase,
                                        ) 
 {
   testCase->concreteRank(details.rank());
-  database_->insertConcreteResults(testCase, details);
+  database_->saveConcreteResult(testCase, &details);
 }
 
 std::vector<Database::TestCaseId>

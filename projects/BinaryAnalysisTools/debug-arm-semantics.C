@@ -11,6 +11,8 @@ using namespace Rose::BinaryAnalysis;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
 
+static const rose_addr_t startingVa = 0;
+
 static MemoryMap::Ptr
 parseBytes(int argc, char *argv[]) {
     std::vector<uint8_t> bytes;
@@ -21,10 +23,10 @@ parseBytes(int argc, char *argv[]) {
     std::reverse(bytes.begin(), bytes.end());
 
     auto map = MemoryMap::instance();
-    map->insert(AddressInterval::baseSize(0, bytes.size()),
+    map->insert(AddressInterval::baseSize(startingVa, bytes.size()),
                 MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(bytes.size()),
                                    0, MemoryMap::READ_EXECUTE, "data"));
-    map->at(0).write(bytes);
+    map->at(startingVa).write(bytes);
     return map;
 }
 
@@ -35,7 +37,10 @@ main(int argc, char *argv[]) {
     engine.settings().disassembler.isaName = "a64";
     engine.memoryMap(memory);
     P2::Partitioner p = engine.createTunedPartitioner();
-    auto ops = S2::TraceSemantics::RiscOperators::instance(p.newOperators());
+    auto symOps = S2::SymbolicSemantics::RiscOperators::promote(p.newOperators());
+    symOps->trimThreshold(UNLIMITED);
+    std::cout <<"expr size limit = " <<symOps->trimThreshold() <<"\n";
+    auto ops = S2::TraceSemantics::RiscOperators::instance(symOps);
     S2::BaseSemantics::Dispatcher::Ptr cpu = p.newDispatcher(ops);
 
     size_t va = memory->hull().least();

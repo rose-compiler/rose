@@ -9,7 +9,6 @@
 //~ #include <deque>
 //~ #include <list>
 
-//~ #include <rose.h>
 #include <sage3basic.h>
 #include <Labeler.h>
 
@@ -39,6 +38,10 @@ concept CallContext
   
   /// updates the call context according to the function call invocation at @ref lab
   void callInvoke(const Labeler&, Label lab);
+  
+  /// compares the postfix of two call strings. 
+  ///   if true, a call would require merging lattices 
+  bool mergedAfterCall(const InfiniteCallString& cand) const;
 
   /// defines a strict weak ordering on call contexts.
   friend
@@ -114,6 +117,9 @@ struct InfiniteCallString : private std::vector<Label>
     bool callerOf(const InfiniteCallString& target, Label callsite) const;
     void callInvoke(const Labeler&, Label lbl);
     void callReturn(Labeler& labeler, Label lbl);
+
+    /// Always false for infinite call strings.
+    bool mergedAfterCall(const InfiniteCallString& cand) const;
 
     friend
     std::ostream&
@@ -516,8 +522,8 @@ struct FiniteCallString
     //~ typedef std::deque<Label>                         sequence;
     //~ typedef std::list<Label>                          sequence;
     
-    //~ typedef ContextSequence< sequence >               context_string;
-    typedef ContextSequenceCOW< sequence >            context_string; // COW wrapper makes things slightly slower...
+    typedef ContextSequence< sequence >               context_string;
+    //~ typedef ContextSequenceCOW< sequence >            context_string; // COW wrapper makes things slightly slower...
     
     // string comparison reverses "normal" sort to place NO_LABEL first.
     //   (required by callsite merging in FiniteReturnHandler)
@@ -562,6 +568,9 @@ struct FiniteCallString
     /// \post
     ///   size() == pre.size()-1
     void callReturn(Labeler& labeler, Label lbl);
+    
+    /// compares the last n-1 elements with the same elements in @cand
+    bool mergedAfterCall(const FiniteCallString& cand) const;
 
     friend
     std::ostream&

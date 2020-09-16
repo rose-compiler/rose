@@ -14,6 +14,6 @@ int __gthread_once()
   if ((__gthread_active_p())) 
     return 0;
    else 
-// crashes here!!
     return - 1;
+// crashes here!!
 }

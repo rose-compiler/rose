@@ -102,6 +102,14 @@ namespace
       type(lst.back());
     }
     
+    void handle(SgArrayType& n)
+    {
+      prn(" array");
+      // \todo add range
+      prn(" of");
+      type(n.get_base_type());
+    }
+    
     void handle(SgAdaTaskType& n) 
     { 
       // \todo fix in AST and override get_name and get_declaration in AdaTaskType

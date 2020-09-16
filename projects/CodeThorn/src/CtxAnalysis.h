@@ -14,15 +14,17 @@ namespace CodeThorn
 
 struct CtxStats
 {
-  size_t min        = size_t(-1);
-  size_t max        = 0;
-  size_t numNonbot  = 0;
-  size_t numBot     = 0;
+  size_t             min        = size_t(-1);
+  size_t             max        = 0;
+  size_t             numNonbot  = 0;
+  size_t             numBot     = 0;
 
-  Label    maxLbl   = Label();
-  Lattice* maxLat   = nullptr; 
+  Label              maxLbl   = Label();
+  Lattice*           maxLat   = nullptr; 
   
-  double avg        = 0;
+  std::vector<Label> bots;
+  
+  double             avg        = 0;
 };
 
 
@@ -36,53 +38,45 @@ struct CtxAnalysis : DFAnalysisBase
     typedef CtxLattice<context_t> context_lattice_t;
     
     CtxAnalysis(PropertyStateFactory& compFactory, DFTransferFunctions& compTransfer)
-    : base(), ctxFactory(compFactory), ctxTransfer(compTransfer, *this)
+    : base(), ctxFactory(compFactory), ctxTransfer(compTransfer, *this), botLattice(compFactory)
     {
       _transferFunctions = &ctxTransfer;
       _transferFunctions->setInitialElementFactory(&ctxFactory);
     }
 
     CtxAnalysis(PropertyStateFactory& compFactory, DFTransferFunctions& compTransfer, const context_lattice_t& init)
-    : base(), ctxFactory(compFactory), ctxTransfer(compTransfer, *this, init)
+    : base(), ctxFactory(compFactory), ctxTransfer(compTransfer, *this, init), botLattice(compFactory)
     {
       _transferFunctions = &ctxTransfer;
       _transferFunctions->setInitialElementFactory(&ctxFactory);
     }
 
-    const CtxLattice<CallContext>&
+    const context_lattice_t&
     getCtxLattice(Label lbl)
     {
-      return dynamic_cast<context_lattice_t&>(SG_DEREF(getPreInfo(lbl)));
+      ROSE_ASSERT(botLattice.size() == 0 && botLattice.isBot());
+      
+      const Lattice* lat = getPreInfo(lbl);
+      const Lattice* res = lat;
+      
+      if (!res)
+      { 
+        res = &botLattice;
+        std::cerr << "sub bot lattice " << res << std::endl;
+      }
+      
+      ROSE_ASSERT(lat != nullptr || res->isBot());
+      return dynamic_cast<const context_lattice_t&>(*res);
     }
 
     /// retrieves the lattice from the call site
     const CtxLattice<CallContext>&
-    getCallSiteLattice(const SgStatement& stmt)
-    {
-      SgStatement& call    = const_cast<SgStatement&>(stmt);
-      Labeler&     labeler = *getLabeler();
-
-      //~ std::cerr << call.unparseToString() << std::endl;
-      return getCtxLattice( labeler.functionCallLabel(&call) );
-    }
-
-    /// retrieves the lattice from the call site
-    const CtxLattice<CallContext>&
-    getCallSiteLattice(const SgCallExpression& exp)
-    {
-      return getCallSiteLattice(sg::ancestor<SgStatement>(exp));
-    }
-
-    /// retrieves the lattice from the call site
-    const CtxLattice<CallContext>&
-    getCallSiteLattice(Label lblret)
+    getCallSiteLattice(Label lblretn)
     {
       Labeler& labeler = *getLabeler();
-      ROSE_ASSERT(labeler.isFunctionCallReturnLabel(lblret) && (lblret.getId() > 0));
+      ROSE_ASSERT(labeler.isFunctionCallReturnLabel(lblretn));
       
-      Label    lblcall(lblret.getId()-1);
-      
-      return getCtxLattice(lblcall);
+      return getCtxLattice(labeler.getFunctionCallLabelFromReturnLabel(lblretn));
     }
 
     CtxPropertyStateFactory<context_t>& factory()  { return ctxFactory;  }
@@ -99,6 +93,12 @@ struct CtxAnalysis : DFAnalysisBase
                                 SG_DEREF(getLabeler())
                               );
     }
+    
+    void setProgramAbstractionLayer(ProgramAbstractionLayer& pal)
+    {
+      _programAbstractionLayer = &pal;
+      _programAbstractionLayerOwner = false;
+    }
 
     // debugging support
     
@@ -109,7 +109,7 @@ struct CtxAnalysis : DFAnalysisBase
     }
     */
     
-    CtxStats latticeStats() ;
+    CtxStats latticeStats();
     
     
     SgNode& getNode(Label lbl) const
@@ -131,31 +131,39 @@ struct CtxAnalysis : DFAnalysisBase
   private:
     CtxPropertyStateFactory<context_t> ctxFactory;
     CtxTransfer<context_t>             ctxTransfer;
+    const CtxLattice<CallContext>      botLattice;
 };
 
 template <class CallContext>
 CtxStats
 CtxAnalysis<CallContext>::latticeStats() 
 {
-  Labeler& labeler = *getLabeler();
+  ProgramAbstractionLayer& pal = SG_DEREF(getProgramAbstractionLayer());
+  Labeler& labeler             = SG_DEREF(pal.getLabeler());
   CtxStats res;
   
   for (Label lbl : labeler)
   {
-    Lattice& el = SG_DEREF(getPreInfo(lbl));
+    Lattice* el = getPreInfo(lbl);
     
-    if (!el.isBot())
+    //~ std::cerr << el << std::endl;
+    //~ if (el) std::cerr << &typeid(*el) << std::endl;
+    
+    if (el && !el->isBot())
     {
-      context_lattice_t& lat = dynamic_cast<context_lattice_t&>(el);
+      context_lattice_t& lat = dynamic_cast<context_lattice_t&>(*el);
       const size_t       sz = lat.size();
       
-      if (sz < res.min) res.min = sz; 
+      if (sz < res.min) 
+      {
+        res.min = sz;
+      } 
       
       if (sz > res.max) 
       {
         res.max    = sz;
         res.maxLbl = lbl;
-        res.maxLat = &el;
+        res.maxLat = el;
       } 
       
       res.avg += sz;
@@ -163,6 +171,7 @@ CtxAnalysis<CallContext>::latticeStats()
     }
     else
     {
+      res.bots.push_back(lbl);
       ++res.numBot;
     }
   }

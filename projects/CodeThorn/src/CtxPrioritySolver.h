@@ -1,6 +1,8 @@
 #ifndef CTXPRIORITYSOLVER_H
 #define CTXPRIORITYSOLVER_H 1
 
+#include <vector>
+
 #include "Labeler.h"
 #include "WorkListSeq.h"
 #include "Flow.h"
@@ -11,13 +13,12 @@
 #include "CtxCallStrings.h"
 #include "PropertyState.h"
 #include "DFTransferFunctions.h"
-#include "CtxSolver0.h"
+//~ #include "CtxSolver0.h"
 
-#include <vector>
 
 namespace CodeThorn {
   
-/// A context-aware solver  
+/// A context and priority aware solver  
 // \note derived from PASolver1
 struct CtxPrioritySolver : DFAbstractSolver
 {
@@ -51,7 +52,7 @@ struct CtxPrioritySolver : DFAbstractSolver
     
     void 
     computePostInfo(Label lab, Lattice& inInfo);
-
+    
     /// returns a range of contexts on which ctxpos can be mapped
     /// \details
     ///    this is only interesting at function returns when the context is
@@ -63,20 +64,28 @@ struct CtxPrioritySolver : DFAbstractSolver
     Lattice&
     preInfoLattice(Label lab, const ContextString& ctx);
 
-    /// retrieves the preInfoLattice at @ref 
+    /// retrieves the preInfoLattice at @ref lab
     CtxLattice<ContextString>&
     preInfoLattice(Label lab);
-    
-    /// retrieves an iterator for context at label @ref lab and context @ref ctx 
-    CtxLatticeRange<ContextString>::iterator
-    preInfoLatticeIterator(Label lab, const ContextString& ctx);
-    
+        
     /// propagates updated state @ref lat at context @ref ctx to @ref tgt, 
     /// and adds all of @ref tgt out-edges to the worklist @ref wkl
     /// \tparam W the worklist type
     template <class W>
     void
     propagate(const ContextString& ctx, Lattice& lat, Label tgt, W& wkl);
+    
+    /// activates a @ref callLbl's return node
+    /// \details
+    ///    this is necessary b/c when the call context becomes imprecise the call return node
+    ///    might receive states while the call label has not been traversed. The context
+    ///    mapping will return an empty set and no state will be propagated.
+    ///    When, eventually, the traversal of the call node does not yield to new state's
+    ///    in the callee, the return node will not be traversed again.
+    template <class W>
+    void
+    activateReturnNode(const ContextString& tgtctx, Label callLbl, W& wkl);
+
     
     /// accesses the labeler
     Labeler&
@@ -98,6 +107,64 @@ struct CtxPrioritySolver : DFAbstractSolver
     TransferFunction& _transferFunctions;
     Labeler&          _labeler;
 };
+
+/// A priority-aware solver  
+// \note derived from PASolver1
+struct SeqPrioritySolver : DFAbstractSolver
+{
+    // define your call context
+    typedef WorkListSeq<Edge>     InitialWorklist;
+    typedef std::vector<Lattice*> LatticeContainer;
+  
+    SeqPrioritySolver( InitialWorklist& initWorklist,
+	                     LatticeContainer& analyzerDataPreInfo,
+	                     LatticeContainer& analyzerDataPostInfo,
+	                     PropertyStateFactory& initialElementFactory,
+	                     Flow& flow,
+	                     DFTransferFunctions& transferFunctions,
+                       Labeler& thelabeler
+	                   );
+	     
+    void runSolver() ROSE_OVERRIDE;
+    void computeCombinedPreInfo(Label lab, Lattice& inInfo) ROSE_OVERRIDE;
+    
+    void setTrace(bool) ROSE_OVERRIDE { /* supported in name only */ }
+
+  private:
+    
+    typedef PropertyStateFactory StateFactory;
+    typedef DFTransferFunctions  TransferFunction;
+    
+    //
+    // private functions
+    
+    void 
+    computePostInfo(Label lab, Lattice& inInfo);
+    
+    /// retrieves the preInfoLattice at @ref lab
+    Lattice&
+    preInfoLattice(Label lab);
+
+    
+    /// propagates updated state @ref lat at context @ref ctx to @ref tgt, 
+    /// and adds all of @ref tgt out-edges to the worklist @ref wkl
+    /// \tparam W the worklist type
+    template <class W>
+    void
+    propagate(Lattice& lat, Label tgt, W& wkl);
+          
+    //
+    // data members
+    
+    InitialWorklist&  _workList;
+    LatticeContainer& _analyzerDataPreInfo;
+    LatticeContainer& _analyzerDataPostInfo;
+    StateFactory&     _initialElementFactory;
+    Flow&             _flow;
+    TransferFunction& _transferFunctions;
+    Labeler&          _labeler;
+};
+
 
 }
 

@@ -4,6 +4,7 @@
 #include <PathFinder/semantics.h>
 
 #include <AsmUnparser_compat.h>
+#include <BinarySourceLocations.h>
 #include <BinarySymbolicExprParser.h>
 #include <BinaryYicesSolver.h>
 #include <boost/thread/condition_variable.hpp>
@@ -12,7 +13,6 @@
 #include <boost/thread/thread.hpp>
 #include <CommandLine.h>
 #include <Diagnostics.h>
-#include <DwarfLineMapper.h>
 #include <Partitioner2/CfgPath.h>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/GraphViz.h>
@@ -32,7 +32,7 @@ using namespace Rose::BinaryAnalysis::InstructionSemantics2; // BaseSemantics, S
 using namespace PathFinder;
 namespace P2 = Partitioner2;
 
-DwarfLineMapper srcMapper;
+SourceLocations srcMapper;
 
 enum FollowCalls { SINGLE_FUNCTION, FOLLOW_CALLS };
 
@@ -2019,7 +2019,7 @@ int main(int argc, char *argv[]) {
 
     // Initialize info about how addresses map to source lines if that info is available
     if (SgProject *project = SageInterface::getProject())
-        srcMapper = DwarfLineMapper(project);
+        srcMapper.insertFromDebug(project);
 
     // Calculate average number of function calls per function
     if (1) {

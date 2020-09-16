@@ -527,7 +527,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2018_05.c \
      test2018_06.c \
      test2018_07.c \
-     test2018_08.c \
      test2018_09.c \
      test2018_10.c \
      test2018_11.c \
@@ -578,7 +577,28 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2019_12.c \
      test2019_13.c \
      test2019_14.c \
-     test2019_15.c
+     test2019_15.c \
+     test2020_12.c \
+     test2020_13.c \
+     test2020_14.c \
+     test2020_15.c \
+     test2020_16.c \
+     test2020_17.c \
+     test2020_18.c \
+     test2020_19.c \
+     test2020_21.c \
+     test2020_22.c \
+     test2020_24.c \
+     test2020_28.c \
+     test2020_29.c \
+     test2020_30.c \
+     test2020_31.c \
+     test2020_32.c \
+     test2020_33.c \
+     test2020_34.c \
+     test2020_35.c \
+     test2020_36.c \
+     test2020_37.c 
 
 
 TESTCODE_CURRENTLY_FAILING = \
@@ -596,7 +616,12 @@ TESTCODE_CURRENTLY_FAILING = \
      test2018_34.c \
      test2018_38.c \
      test2018_39.c \
-     test2018_40.c
+     test2018_40.c \
+     test2020_20.c \
+     test2020_23.c \
+     test2020_25.c \
+     test2020_26.c \
+     test2020_27.c 
 
 # DQ (1/16/2017): Clang C support appears to be missign the typeof operator (C11 mode).
 if !USING_CLANG_COMPILER
@@ -668,6 +693,7 @@ TESTCODES_REQUIRED_TO_PASS += \
      test2015_147.c \
      test2015_148.c \
      test2015_149.c \
+     test2018_08.c \
      test2004_21.c \
      test2006_65.c
 
@@ -1195,7 +1221,8 @@ EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
         test2015_156.h \
         test2015_157.h \
         test2015_159.h \
-        test2020_03.h
+        test2020_03.h \
+        test2020_26.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests

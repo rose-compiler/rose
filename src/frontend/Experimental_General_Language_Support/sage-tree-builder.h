@@ -25,6 +25,7 @@ class SgFunctionParameterList;
 class SgFunctionParameterScope;
 class SgGlobal;
 class SgIfStmt;
+class SgImplicitStatement;
 class SgInitializedName;
 class SgLocatedNode;
 class SgNamespaceDeclarationStatement;
@@ -106,7 +107,7 @@ public:
                                  const boost::optional<std::string> &,
                                  const boost::optional<std::string> &);
 
-   void Enter(SgFunctionParameterList* &, SgBasicBlock* &);
+   void Enter(SgFunctionParameterList* &, SgBasicBlock* &, const std::string &, SgType*);
    void Leave(SgFunctionParameterList*, SgBasicBlock*, const std::list<LanguageTranslation::FormalParameter> &);
 
    void Enter(SgFunctionDeclaration* &, const std::string &, SgType*, SgFunctionParameterList*,
@@ -122,8 +123,10 @@ public:
    void Enter(SgVariableDeclaration* &, const std::string &, SgType*, SgExpression*);
    void Leave(SgVariableDeclaration*);
 
-   void Enter(SgEnumDeclaration* &, const std::string &, std::list<SgInitializedName*> &);
+   void Enter(SgEnumDeclaration* &, const std::string &);
    void Leave(SgEnumDeclaration*);
+
+   void Enter(SgEnumVal* &, const std::string &, SgEnumDeclaration*, int);
 
    void Enter(SgTypedefDeclaration* &, const std::string &, SgType*);
    void Leave(SgTypedefDeclaration*);
@@ -148,6 +151,9 @@ public:
    void Enter(SgSwitchStatement* &, SgExpression*, const SourcePositionPair &);
    void Leave(SgSwitchStatement*);
 
+   void Enter(SgReturnStmt* &, const boost::optional<SgExpression*> &);
+   void Leave(SgReturnStmt*);
+
    void Enter(SgCaseOptionStmt* &, SgExprListExp*);
    void Leave(SgCaseOptionStmt*);
 
@@ -157,11 +163,22 @@ public:
    void Enter(SgWhileStmt* &, SgExpression*);
    void Leave(SgWhileStmt*, bool has_end_do_stmt=false);
 
+   void Enter(SgImplicitStatement* &implicit_stmt, bool none_external = false, bool none_type = false);
+#ifdef CPP_ELEVEN
+   void Enter(SgImplicitStatement* &, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &);
+#else
+   void Enter(SgImplicitStatement* &);
+#endif
+   void Leave(SgImplicitStatement*);
+
    SgEnumVal* ReplaceEnumVal(SgEnumType*, const std::string &);
 
 // Expressions
 //
    void Enter(SgFunctionCallExp* &, const std::string &name, SgExprListExp* params);
+   void Enter(SgReplicationOp* &, const std::string &name, SgExpression* value);
+   void Enter(SgCastExp* &, const std::string &name, SgExpression* cast_operand);
+   void Enter(SgVarRefExp* &, const std::string &name, bool compiler_generate=false);
 
 // Jovial specific nodes
 //
@@ -171,7 +188,9 @@ public:
    void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, bool is_compool=false);
    void Leave(SgJovialDirectiveStatement*);
 
-   void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*);
+   void Enter(SgJovialForThenStatement* &, const std::string &);
+   void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*,
+                                           SgJovialForThenStatement::loop_statement_type_enum);
    void Leave(SgJovialForThenStatement*);
 
    void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);
