@@ -7065,29 +7065,36 @@ ATbool ATermToSageJovialTraversal::traverse_SizeFunction(ATerm term, SgFunctionC
 #endif
 
    ATerm t_formula;
-   SgExpression* formula;
+   SgExpression* size_argument;
+   std::string func_name;
 
    func_call = nullptr;
 
    if (ATmatch(term, "SizeFunction(BITSIZE(),<term>)", &t_formula)) {
-      cerr << "WARNING UNIMPLEMENTED: SizeFunction - BITSIZE \n";
-      if (traverse_Formula(t_formula, formula)) {
-         // MATCHED Formula
-      } else return ATfalse;
+      func_name = "BITSIZE";
    }
    else if (ATmatch(term, "SizeFunction(BYTESIZE(),<term>)", &t_formula)) {
-      cerr << "WARNING UNIMPLEMENTED: SizeFunction - BYTESIZE \n";
-      if (traverse_Formula(t_formula, formula)) {
-         // MATCHED Formula
-      } else return ATfalse;
+      func_name = "BYTESIZE";
    }
    else if (ATmatch(term, "SizeFunction(WORDSIZE(),<term>)", &t_formula)) {
-      cerr << "WARNING UNIMPLEMENTED: SizeFunction - WORDSIZE \n";
-      if (traverse_Formula(t_formula, formula)) {
-         // MATCHED Formula
-      } else return ATfalse;
+      func_name = "WORDSIZE";
    }
    else return ATfalse;
+
+   // get the function argument
+   if (traverse_Formula(t_formula, size_argument)) {
+     // MATCHED Formula
+   } else return ATfalse;
+
+   // build the parameter list
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   params->append_expression(size_argument);
+
+   SgType* return_type = SageBuilder::buildUnsignedIntType();
+
+   func_call = SageBuilder::buildFunctionCallExp(func_name, return_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
+   setSourcePosition(func_call, term);
 
    return ATtrue;
 }
