@@ -128,7 +128,11 @@ namespace VirtualCFG {
           s << "false";
           break;
         case eckCaseLabel:
-          s << caseLabel()->unparseToString();
+          {
+            SgExpression* cseLbl = caseLabel();
+            ROSE_ASSERT(cseLbl != NULL);
+            s << cseLbl->unparseToString();
+          }
           break;
         case eckDefault:
           s << "default";
@@ -251,13 +255,17 @@ namespace VirtualCFG {
         variablesInScope.push_back(isSgInitializedName(succs[i]));
       } else if (isSgVariableDeclaration(succs[i])) {
         SgVariableDeclaration* vd = isSgVariableDeclaration(succs[i]);
+        ROSE_ASSERT(vd != NULL);
         const SgInitializedNamePtrList& vars = vd->get_variables();
         variablesInScope.insert(variablesInScope.end(), vars.rbegin(), vars.rend());
       } else if (isSgForInitStatement(succs[i])) {
-        vector<SgInitializedName*> initVars = findVariablesDirectlyInScope(isSgForInitStatement(succs[i]));
+        SgForInitStatement* forInitStmt = isSgForInitStatement(succs[i]);
+        ROSE_ASSERT(forInitStmt != NULL);
+        vector<SgInitializedName*> initVars = findVariablesDirectlyInScope(forInitStmt);
         variablesInScope.insert(variablesInScope.end(), initVars.begin(), initVars.end());
       } else if (isSgFunctionParameterList(succs[i])) {
         SgFunctionParameterList* pl = isSgFunctionParameterList(succs[i]);
+        ROSE_ASSERT(pl != NULL);
         const SgInitializedNamePtrList& params = pl->get_args();
         variablesInScope.insert(variablesInScope.end(), params.begin(), params.end());
       }
@@ -654,6 +662,7 @@ EdgeConditionKind CFGEdge::condition() const
     // Find positions of ancestors of "from" and "to" in children of "lca"
     unsigned int positionOfChild1, positionOfChild2;
     {
+      ROSE_ASSERT(lca != NULL);
       vector<SgNode*> children = lca->get_traversalSuccessorContainer();
       positionOfChild1 = src == lca ? (srcEnd ? children.size() : 0) :
                          find(children.begin(), children.end(),
@@ -758,13 +767,15 @@ EdgeConditionKind CFGEdge::condition() const
  // unsigned int srcIndex = src.getIndex();
     SgNode* tgtNode = tgt.getNode();
     unsigned int tgtIndex = tgt.getIndex();
-    if (isSgExpression(srcNode) && isSgExpression(tgtNode)) {
+    if ((isSgExpression(srcNode) != NULL) && (isSgExpression(tgtNode) != NULL)) {
       return vector<SgInitializedName*>(); // Common case, since these cannot be arbitrary jumps
     }
     vector<SgInitializedName*> scopesLeaving;
-    if (srcNode->get_parent() == tgtNode && isSgScopeStatement(srcNode)) {
-      scopesLeaving = findVariablesDirectlyInScope(isSgScopeStatement(srcNode));
-    } else if (srcNode->get_parent() == tgtNode || tgtNode->get_parent() == srcNode) {
+    SgScopeStatement* scope  = isSgScopeStatement(srcNode);
+    SgNode*           parent = srcNode->get_parent();
+    if ((parent == tgtNode) && (scope != NULL)) {
+      scopesLeaving = findVariablesDirectlyInScope(scope);
+    } else if (parent == tgtNode || tgtNode->get_parent() == srcNode) {
       scopesLeaving = vector<SgInitializedName*>(); // We assume that these are consecutive program points
     } else {
       scopesLeaving = genericWindUnwind(srcNode, false, tgtNode, false, getEntriesNull, getEntriesForScope<true>, getEntriesNull, getEntriesNull);

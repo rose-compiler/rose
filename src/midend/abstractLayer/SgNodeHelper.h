@@ -2,7 +2,6 @@
 #define SgNodeHelper_H
 
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
  *************************************************************/
 
@@ -52,7 +51,7 @@ class SgOmpClauseBodyStatement;
 namespace SgNodeHelper {
   
   /// defines if extended normalized call matching (functions+ctors) is enabled
-  extern const bool WITH_EXTENDED_NORMALIZED_CALL;
+  extern bool WITH_EXTENDED_NORMALIZED_CALL;
 
 /*! \brief Functions for simplifying access to SgNode information
 
@@ -66,7 +65,8 @@ namespace SgNodeHelper {
 
 
  */
-
+  typedef std::pair<int,int> LineColPair;
+  
   //! returns the initializer expression of a variable declaration. If no initializer exists it returns 0.
   SgExpression* getInitializerExpressionOfVariableDeclaration(SgVariableDeclaration* decl);
 
@@ -82,6 +82,9 @@ namespace SgNodeHelper {
   //! returns filename+line+column information of AST fragment in format "filename:line:column". Used for generating readable output
   std::string sourceFilenameLineColumnToString(SgNode* node);
 
+  //! returns a std::pair of line and column number. If no file info exists at this node it returns  (-1,-1).
+  SgNodeHelper::LineColPair lineColumnPair(SgNode* node);
+
   //! returns filename as stored in AST node. Used for generating readable output.
   std::string sourceFilenameToString(SgNode* node);
 
@@ -92,6 +95,10 @@ namespace SgNodeHelper {
 
   //! returns line, column, and unparsed node in one string.
   std::string lineColumnNodeToString(SgNode* node);
+
+  //! returns filename, line, column, and unparsed node in one string.
+  //! Abbreviates unparsed source if too long
+  std::string sourceLocationAndNodeToString(SgNode* node);
 
   //! determines all VarRefExp in the subtree of 'node'. The order in the vector corresponds to the traversal order on the AST.
   std::vector<SgVarRefExp*> determineVariablesInSubtree(SgNode* node);
@@ -457,17 +464,23 @@ namespace SgNodeHelper {
   */
   std::string getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl);
 
-  // replace in string 'str' each string 'from' with string 'to'.
+  //! replace in string 'str' each string 'from' with string 'to'.
   void replaceString(std::string& str, const std::string& from, const std::string& to);
 
-  // checks whether prefix 'prefix' is a prefix in string 's'.
+  //! checks whether prefix 'prefix' is a prefix in string 's'.
   bool isPrefix(const std::string& prefix, const std::string& s);
 
-  // checks whether 'elem' is the last child (in traversal order) of node 'parent'.
+  //! checks whether 'elem' is the last child (in traversal order) of node 'parent'.
   bool isLastChildOf(SgNode* elem, SgNode* parent);
 
+  /*! Returns for a given class/struct/union a list with the variable declarations of the member variables.
+    Note this is a filtered list returned by the SgType::returnDataMemberPointers function which also returns
+    pointers to methods
+   */
+  std::list<SgVariableDeclaration*> memberVariableDeclarationsList(SgClassType* sgType);
+  
 #if __cplusplus > 199711L
-  // Checks if an OpenMP construct is marked with a nowait clause
+  //! Checks if an OpenMP construct is marked with a nowait clause
   bool hasOmpNoWait(SgOmpClauseBodyStatement *ompNode);
 
   typedef std::vector<SgOmpSectionStatement *> OmpSectionList;
@@ -525,27 +538,46 @@ namespace SgNodeHelper {
   bool nodeCanBeChanged(SgLocatedNode * lnode);
 #endif
 
+
+  /// Result structure of extended C++ function call matching @ref matchExtendedNormalizedCall
+  /// \details
+  ///   extended matches function, constructor (on stack and w/new), and destructor calls.
   struct ExtendedCallInfo
   {
+      /// no-match constructor
       ExtendedCallInfo()
       : rep(NULL)
       {}   
     
+      /// node @ref callnode contanins some function call
       ExtendedCallInfo(SgLocatedNode& callnode)
       : rep(&callnode)
       {}   
-    
+   
+      /// the call or a parent node (e.g., new expression) 
       SgLocatedNode*            representativeNode() const;
-      SgCallExpression*         callExpression()     const;              
+
+      /// returns the call expression if this represents a "normal" call
+      /// or nullptr otherwise.
+      SgFunctionCallExp*        callExpression()     const;     
+
+      /// returns the constructor initialization node
+      /// of nullptr.
       SgConstructorInitializer* ctorInitializer()    const;              
-      SgPointerDerefExp*        functionPointer()    const; 
-      
+
+      /// returns the function pointer expression representing the target
+      ///  (if this is a function pointer call)
+      //  or the nullptr otherise.
+      SgExpression*             functionPointer()    const; 
+     
+      /// true iff this structure represents a match 
       operator bool() const { return rep != NULL; }
       
     private:
       SgLocatedNode* rep;
   };
-  
+ 
+  /// matches C and C++ function calls (also ctor and dtor) 
   ExtendedCallInfo
   matchExtendedNormalizedCall(SgNode*);
 } // end of namespace SgNodeHelper

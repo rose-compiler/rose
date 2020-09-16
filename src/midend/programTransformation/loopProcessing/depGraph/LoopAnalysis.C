@@ -5,11 +5,12 @@
 #include <DepInfo.h>
 #include <TransDepGraph.h>
 #include <DepGraph.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
-template <class Node> 
+template <class Node>
 LoopAlignInfo TransLoopFusible<Node>::
-operator() ( TransDepGraphCreate<Node> *graph, 
-             const LoopAnalInfo<Node> &l1, 
+operator() ( TransDepGraphCreate<Node> *graph,
+             const LoopAnalInfo<Node> &l1,
              const LoopAnalInfo<Node> &l2)
 {
   int mina = 1, maxa = -1;
@@ -20,21 +21,21 @@ operator() ( TransDepGraphCreate<Node> *graph,
   if (td12 != 0) {
     DepRel r12 = td12->GetInfo().GetDepRel( l1.index, l2.index);
     DepDirType dir = r12.GetDirType();
-    if (dir == DEPDIR_LE || dir == DEPDIR_EQ) 
+    if (dir == DEPDIR_LE || dir == DEPDIR_EQ)
       maxa = mina = td12->GetInfo().GetDepRel(l1.index, l2.index).GetMaxAlign();
   }
   if (mina <= maxa && td21 != 0) {
     DepRel r21 = td21->GetInfo().GetDepRel( l2.index,l1.index);
     DepDirType dir = r21.GetDirType();
-    if (dir == DEPDIR_LE || dir == DEPDIR_EQ) 
+    if (dir == DEPDIR_LE || dir == DEPDIR_EQ)
       maxa = - td21->GetInfo().GetDepRel(l2.index, l1.index).GetMaxAlign();
     else
       maxa = mina-1;
   }
   return LoopAlignInfo(mina,maxa);
-} 
+}
 
-template <class Node> 
+template <class Node>
 bool TransLoopSlicable<Node>::
 operator() ( TransDepGraphCreate<Node> *graph, const LoopAnalInfo<Node> &l)
 {
@@ -47,13 +48,13 @@ operator() ( TransDepGraphCreate<Node> *graph, const LoopAnalInfo<Node> &l)
   DepRel r = td->GetInfo().GetDepRel( l.index, l.index );
   DepDirType dir = r.GetDirType();
   int a1 = r.GetMinAlign(), a2 = r.GetMaxAlign();
-  if ( (dir == DEPDIR_LE && a2 <= 0) || (dir == DEPDIR_GE && a1 >= 0) 
+  if ( (dir == DEPDIR_LE && a2 <= 0) || (dir == DEPDIR_GE && a1 >= 0)
        || (dir == DEPDIR_EQ && a2 <= 0))
       result = true;
   return result;
 }
 
-template <class Edge,class GraphCreate> 
+template <class Edge,class GraphCreate>
 bool PerfectLoopSlicable<Edge,GraphCreate>::
 operator()(GraphCreate *g, int level)
 {
@@ -61,7 +62,7 @@ operator()(GraphCreate *g, int level)
   for ( GraphEdgeIterator<GraphCreate> edgeIter(g);
        !edgeIter.ReachEnd(); ++edgeIter) {
      for (DepInfoConstIterator depIter = edgeIter.Current()->get_depIterator();
-          !depIter.ReachEnd(); depIter++) { 
+          !depIter.ReachEnd(); depIter++) {
        DepInfo d = depIter.Current();
        DepRel r = d.Entry( level, level);
        DepDirType dir = r.GetDirType();
@@ -97,7 +98,7 @@ operator() ( TransDepGraphCreate<Node> *graph, const LoopAnalInfo<Node> &l)
   return result;
 }
 
-template <class Edge,class GraphCreate> 
+template <class Edge,class GraphCreate>
 bool PerfectLoopReversible<Edge,GraphCreate>::
 operator() ( GraphCreate* g, int level)
 {
@@ -109,7 +110,7 @@ operator() ( GraphCreate* g, int level)
        DepRel r = d.Entry( level, level);
        DepDirType dir = r.GetDirType();
        int a1 = r.GetMinAlign(), a2 = r.GetMaxAlign();
-       if ( (dir == DEPDIR_EQ && a1 == 0 && a2 == 0) || 
+       if ( (dir == DEPDIR_EQ && a1 == 0 && a2 == 0) ||
             ( dir == DEPDIR_GE && a1 >= 0) )
           continue;
        return false;
@@ -119,7 +120,7 @@ operator() ( GraphCreate* g, int level)
 }
 
 template <class Node> bool TransLoopDistributable<Node>::
-operator () ( TransDepGraphCreate<Node> *graph, const LoopAnalInfo<Node> &l1, 
+operator () ( TransDepGraphCreate<Node> *graph, const LoopAnalInfo<Node> &l1,
                    const LoopAnalInfo<Node> &l2)
 {
   bool result = false;;

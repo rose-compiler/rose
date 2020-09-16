@@ -213,7 +213,8 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
     clang::CompilerInvocation * invocation = new clang::CompilerInvocation();
     std::shared_ptr<clang::CompilerInvocation> invocation_shptr(std::move(invocation));
-    clang::CompilerInvocation::CreateFromArgs(*invocation, args, &(args[cnt]), compiler_instance->getDiagnostics());
+    llvm::ArrayRef<const char *> argsArrayRef(args, &(args[cnt]));
+    clang::CompilerInvocation::CreateFromArgs(*invocation, argsArrayRef, compiler_instance->getDiagnostics());
     compiler_instance->setInvocation(invocation_shptr);
 
     clang::LangOptions & lang_opts = compiler_instance->getLangOpts();
@@ -251,7 +252,8 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     compiler_instance->createFileManager();
     compiler_instance->createSourceManager(compiler_instance->getFileManager());
 
-    const clang::FileEntry * input_file_entry = compiler_instance->getFileManager().getFile(input_file);
+    llvm::ErrorOr<const clang::FileEntry *> ret  = compiler_instance->getFileManager().getFile(input_file);
+    const clang::FileEntry * input_file_entry = ret.get(); 
     clang::FileID mainFileID = compiler_instance->getSourceManager().createFileID(input_file_entry, clang::SourceLocation(), compiler_instance->getSourceManager().getFileCharacteristic(clang::SourceLocation()));
 
     compiler_instance->getSourceManager().setMainFileID(mainFileID);

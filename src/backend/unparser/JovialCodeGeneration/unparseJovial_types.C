@@ -24,7 +24,7 @@ void replaceString (std::string& str, const std::string& from, const std::string
 void
 Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
    {
-     ROSE_ASSERT(type != NULL);
+     ASSERT_not_null(type);
 
      switch (type->variantT())
         {
@@ -41,11 +41,13 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgTypeString:      unparseJovialType(isSgTypeString(type), info);       break;
 
           case V_SgModifierType:     unparseJovialType(isSgModifierType(type), info);    break;
+          case V_SgJovialBitType:    unparseJovialType(isSgJovialBitType(type), info);   break;
           case V_SgJovialTableType:  unparseJovialType(isSgJovialTableType(type), info); break;
           case V_SgArrayType:        unparseJovialType(isSgArrayType(type), info);       break;
           case V_SgEnumType:         unparseJovialType(isSgEnumType(type), info);        break;
           case V_SgFunctionType:     unparseJovialType(isSgFunctionType(type), info);    break;
           case V_SgPointerType:      unparseJovialType(isSgPointerType(type), info);     break;
+          case V_SgTypedefType:      unparseJovialType(isSgTypedefType(type), info);     break;
 
           default:
                cout << "Unparse_Jovial::unparseType for type " << type->class_name() << " is unimplemented." << endl;
@@ -57,7 +59,7 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseTypeDesc(SgType* type, SgUnparse_Info& info)
    {
-     ROSE_ASSERT(type != NULL);
+     ASSERT_not_null(type);
 
      switch (type->variantT())
         {
@@ -65,10 +67,10 @@ Unparse_Jovial::unparseTypeDesc(SgType* type, SgUnparse_Info& info)
           case V_SgTypeUnsignedInt: curprint("U");       break;
           case V_SgTypeFloat:       curprint("F");       break;
           case V_SgTypeFixed:       curprint("A");       break;
-          case V_SgTypeBool:        curprint("B");       break;
           case V_SgTypeChar:        curprint("C");       break;
           case V_SgTypeString:      curprint("C");       break;
           case V_SgPointerType:     curprint("P");       break;
+          case V_SgJovialBitType:   curprint("B");       break;
           default:
              std::cerr << "Unparse_Jovial::unparseTypeDesc for type " << type->class_name() << " case default reached \n";
              ROSE_ASSERT(false);
@@ -78,12 +80,18 @@ Unparse_Jovial::unparseTypeDesc(SgType* type, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
    {
-     ROSE_ASSERT(type != NULL);
+     ASSERT_not_null(type);
 
+  // Warning: This function may be called if there is an initializer because the type
+  // could be wrapped as an SgModifierType.  When the compool rcmp file is unparsed
+  // this won't be called which leads to confusion. Care must be taken if the default
+  // for the size value isn't appropriate for the type, in particular, SgJovialBitType.
+  //
      switch (type->variantT())
         {
-          case V_SgTypeFixed:   unparseTypeSize(isSgTypeFixed(type), info);    break;
-          case V_SgTypeString:  unparseTypeSize(isSgTypeString(type), info);   break;
+          case V_SgTypeFixed:     unparseTypeSize(isSgTypeFixed(type), info);     break;
+          case V_SgTypeString:    unparseTypeSize(isSgTypeString(type), info);    break;
+          case V_SgJovialBitType: unparseTypeSize(isSgJovialBitType(type), info); break;
           default:
              {
                 SgExpression* size = type->get_type_kind();
@@ -99,12 +107,12 @@ Unparse_Jovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseTypeSize(SgTypeFixed* fixed_type, SgUnparse_Info& info)
    {
-      ROSE_ASSERT(fixed_type != NULL);
+      ASSERT_not_null(fixed_type);
 
       SgExpression* scale    = fixed_type->get_scale();
       SgExpression* fraction = fixed_type->get_fraction();
 
-      ROSE_ASSERT(scale != NULL);
+      ASSERT_not_null(scale);
 
       curprint(" ");
       unparseExpression(scale, info);
@@ -118,7 +126,7 @@ Unparse_Jovial::unparseTypeSize(SgTypeFixed* fixed_type, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseTypeSize(SgTypeString* string_type, SgUnparse_Info& info)
    {
-      ROSE_ASSERT(string_type != NULL);
+      ASSERT_not_null(string_type);
 
       SgExpression* size = string_type->get_lengthExpression();
       if (size != NULL)
@@ -128,11 +136,23 @@ Unparse_Jovial::unparseTypeSize(SgTypeString* string_type, SgUnparse_Info& info)
          }
    }
 
+void
+Unparse_Jovial::unparseTypeSize(SgJovialBitType* bit_type, SgUnparse_Info& info)
+   {
+      ASSERT_not_null(bit_type);
+
+      SgExpression* size = bit_type->get_size();
+      if (size != NULL)
+         {
+            curprint(" ");
+            unparseExpression(size,info);
+         }
+   }
 
 template <class T> void
 Unparse_Jovial::unparseJovialType(T* type, SgUnparse_Info& info)
    {
-      ROSE_ASSERT(type != NULL);
+      ASSERT_not_null(type);
       unparseTypeDesc(type, info);
       unparseTypeSize(type, info);
    }
@@ -140,7 +160,7 @@ Unparse_Jovial::unparseJovialType(T* type, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseJovialType(SgArrayType* array_type, SgUnparse_Info& info)
   {
-     ROSE_ASSERT(array_type != NULL);
+     ASSERT_not_null(array_type);
      curprint("(");
      UnparseLanguageIndependentConstructs::unparseExprList(array_type->get_dim_info(), info);
      curprint(") ");
@@ -151,22 +171,28 @@ Unparse_Jovial::unparseJovialType(SgArrayType* array_type, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseJovialType(SgPointerType* pointer_type, SgUnparse_Info& info)
   {
-     ROSE_ASSERT(pointer_type != NULL);
+     ASSERT_not_null(pointer_type);
      unparseTypeDesc(pointer_type, info);
      curprint(" ");
 
-     SgNamedType* named_type = isSgNamedType(pointer_type->get_base_type());
-     if (named_type != NULL)
+  // The type name is optional
+     if (SgNamedType* named_type = isSgNamedType(pointer_type->get_base_type()))
         {
            curprint(named_type->get_name());
         }
-     else  std::cerr << "WARNING UNIMPLEMENTED: unparseJovialType - named_type is NULL\n";
+     else if (SgTypeUnknown* unknown_type = isSgTypeUnknown(pointer_type->get_base_type()))
+        {
+           if (unknown_type->get_has_type_name())
+              {
+                 curprint(unknown_type->get_type_name());
+              }
+        }
   }
 
 void
 Unparse_Jovial::unparseJovialType(SgEnumType* enum_type, SgUnparse_Info& info)
   {
-     ROSE_ASSERT(enum_type != NULL);
+     ASSERT_not_null(enum_type);
   // TODO - for now only unparse the name
      curprint(enum_type->get_name());
   }
@@ -187,25 +213,32 @@ Unparse_Jovial::unparseJovialType(SgModifierType* modifier_type, SgUnparse_Info&
   // type to be wrapped with an SgModifierType with isConst and isStatic set. This required the creation of
   // isJovialStatic to correctly unparse when the Jovial source actually has the STATIC keyword.
 
-  // SgModifierType is also used to mark R,T,Z (round, truncate, trancate towards zero).
      ROSE_ASSERT(modifier_type);
-
      SgType* base_type = modifier_type->get_base_type();
      ROSE_ASSERT(base_type);
 
-     unparseTypeDesc(base_type, info);
-
-     if      (modifier_type->get_typeModifier().isRound())               curprint(",R");
-     else if (modifier_type->get_typeModifier().isTruncate())            curprint(",T");
-     else if (modifier_type->get_typeModifier().isTruncateTowardsZero()) curprint(",Z");
-
-     unparseTypeSize(base_type, info);
+  // SgModifierType is also used to mark R,T,Z (round, truncate, trancate towards zero).
+  // If not used for (R,T,Z), unwrap and then unparse the base type (this should fix recurring problems).
+     if (modifier_type->get_typeModifier().isRound()     ||
+         modifier_type->get_typeModifier().isTruncate()  ||
+         modifier_type->get_typeModifier().isTruncateTowardsZero())
+     {
+        unparseTypeDesc(base_type, info);
+        if      (modifier_type->get_typeModifier().isRound())               curprint(",R");
+        else if (modifier_type->get_typeModifier().isTruncate())            curprint(",T");
+        else if (modifier_type->get_typeModifier().isTruncateTowardsZero()) curprint(",Z");
+        unparseTypeSize(base_type, info);
+     }
+     else
+     {
+        unparseType(base_type, info);
+     }
   }
 
 void
 Unparse_Jovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info& info)
   {
-     ROSE_ASSERT(table_type != NULL);
+     ASSERT_not_null(table_type);
 
      SgType* base_type = table_type->get_base_type();
      std::string type_name = table_type->get_name();
@@ -228,4 +261,11 @@ Unparse_Jovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info&
         // Unparse base type directly if present and not in a variable declaration context
            unparseType(base_type, info);
         }
+  }
+
+void
+Unparse_Jovial::unparseJovialType(SgTypedefType* type_def, SgUnparse_Info& info)
+  {
+     ROSE_ASSERT(type_def);
+     curprint(type_def->get_name());
   }

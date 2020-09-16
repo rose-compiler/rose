@@ -3,12 +3,13 @@
 #include <sstream>
 #include <stdio.h>
 #include "CommandOptions.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 bool SymbolicTerm::CombineWith( const SymbolicTerm &that)
          { if (v == that.v) {
                if (time2 == that.time2)
                    time1 += that.time1;
-               else 
+               else
                    assert(false); // QY: a case not yet handled
                return true;
            }
@@ -34,7 +35,7 @@ class SymbolicTermMerge : public LatticeElemMerge<SymbolicTerm>
 
 
 SymbolicVal SymbolicExpr::GetUnknownOpds() const
-     { 
+     {
        SymbolicExpr* r = DistributeExpr( SYMOP_NIL, SymbolicVal());
        for (OpdIterator p = GetOpdIterator(); !p.ReachEnd(); ++p) {
            if (! p.Current().IsConst())
@@ -64,7 +65,7 @@ SymbolicTerm& SymbolicExpr :: FirstOpd() const
 SymbolicExpr::OpdIterator SymbolicExpr::GetOpdIterator() const
    { if (ConstPtr() == 0)
         return OpdIterator();
-     return ConstRef().GetOpdIterator(); 
+     return ConstRef().GetOpdIterator();
    }
 
 void SymbolicExpr:: AddOpd( const SymbolicTerm& v, OPApplicator *op)
@@ -81,11 +82,11 @@ void SymbolicExpr:: AddOpd( const SymbolicVal& v, OPApplicator* op)
 
 
 bool SymbolicExpr:: operator == (const SymbolicExpr& that) const
-    { if (GetOpType() == that.GetOpType() && 
+    { if (GetOpType() == that.GetOpType() &&
           NumOfOpds() == that.NumOfOpds()) {
-          OpdIterator iter1 = GetOpdIterator(); 
+          OpdIterator iter1 = GetOpdIterator();
           for( ; !iter1.ReachEnd(); iter1.Advance()) {
-            OpdIterator iter2 = that.GetOpdIterator(); 
+            OpdIterator iter2 = that.GetOpdIterator();
             for ( ;  !iter2.ReachEnd(); iter2.Advance()) {
                 if (iter1.Current() == iter2.Current())
                    break;
@@ -107,9 +108,9 @@ std::string SymbolicTerm :: toString() const
   if (v.IsNIL()) {
     out << time1;
     if (time2 != 1)
-        out << "/" << time2;    
+        out << "/" << time2;
    }
-   else { 
+   else {
      out << v.toString();
      if (time1 != 1 || time2 != 1) {
        out << "(";
@@ -127,8 +128,8 @@ std::string SymbolicExpr :: toString() const
 {
   std::string r = "(";
   bool begin = true;
-  for (OpdIterator iter = GetOpdIterator(); 
-       !iter.ReachEnd(); iter.Advance())  
+  for (OpdIterator iter = GetOpdIterator();
+       !iter.ReachEnd(); iter.Advance())
   {
     if (!begin) { r = r + GetOPName(); }
     else begin = false;
@@ -136,8 +137,8 @@ std::string SymbolicExpr :: toString() const
   }
 /*QY: prefix output
   std::string r = GetOPName() + "(";
-  for (OpdIterator iter = GetOpdIterator(); 
-       !iter.ReachEnd(); iter.Advance())  
+  for (OpdIterator iter = GetOpdIterator();
+       !iter.ReachEnd(); iter.Advance())
     r = r + iter.Current().toString();
 */
   r = r + ")";
@@ -147,7 +148,7 @@ std::string SymbolicExpr :: toString() const
 void SymbolicOperands :: AddOpd( const SymbolicTerm& v, OPApplicator *op)
 {   if (op != 0) {
         SymbolicTermMerge merge(*op);
-        opds.AddElem( v, &merge); 
+        opds.AddElem( v, &merge);
     }
     else
        opds.AddElem(v);
@@ -165,7 +166,7 @@ SymbolicVal GetExprVal( SymbolicExpr *r)
          switch (r->GetOpType()) {
          case SYMOP_PLUS: return 0;
          case SYMOP_MULTIPLY: return 1;
-         default: 
+         default:
               std::cerr << "non-recognized expression type: " << r->toString() << std::endl;
               assert(false);
          }
@@ -179,7 +180,7 @@ class OPHelpVisitor : public SymbolicVisitor
   OPApplicator& op;
   SymbolicVal result, that;
 
-  void DefaultOP( const SymbolicVal& v1, const SymbolicVal &v2) 
+  void DefaultOP( const SymbolicVal& v1, const SymbolicVal &v2)
      { SymbolicExpr *r = op.CreateExpr();
             r->AddOpd(v1,&op); r->AddOpd(v2, &op);
             result = GetExprVal(r); }
@@ -191,7 +192,7 @@ class OPHelpVisitor : public SymbolicVisitor
              Default();
           else if (t1 < t2) {
             SymbolicExpr* r = v.DistributeExpr(t1, that);
-            if (r == 0) 
+            if (r == 0)
                Default();
             else {
               for (SymbolicExpr::OpdIterator iter = v.GetOpdIterator();
@@ -207,7 +208,7 @@ class OPHelpVisitor : public SymbolicVisitor
           }
        }
  public:
-  OPHelpVisitor(OPApplicator& _op, const SymbolicVal& _that) 
+  OPHelpVisitor(OPApplicator& _op, const SymbolicVal& _that)
     :  op(_op), that(_that) {}
    OPHelpVisitor(OPApplicator& _op) : op(_op) {}
 
@@ -222,7 +223,7 @@ class IntVisitor : public OPHelpVisitor
   SymbolicVal v2;
 
   void Default() { DefaultOP(SymbolicConst(valu,vald), v2); }
-  virtual void VisitConst( const SymbolicConst &v) 
+  virtual void VisitConst( const SymbolicConst &v)
                {
                    int valu1, vald1;
                    if (v.GetIntVal(valu1, vald1)) {
@@ -230,7 +231,7 @@ class IntVisitor : public OPHelpVisitor
                       op.MergeConstInt(valu, vald, valu1, vald1, r1, r2);
                       result = SymbolicConst(r1, r2);
                    }
-                   else 
+                   else
                       Default();
                }
   virtual void VisitExpr( const SymbolicExpr& v)
@@ -244,8 +245,8 @@ class IntVisitor : public OPHelpVisitor
              OPHelpVisitor::VisitExpr(v);
        }
 
- public: 
-  IntVisitor( const SymbolicVal& v1, int _valu, int _vald, OPApplicator &_op) 
+ public:
+  IntVisitor( const SymbolicVal& v1, int _valu, int _vald, OPApplicator &_op)
     : OPHelpVisitor( _op, v1), valu(_valu), vald(_vald) {}
   SymbolicVal ApplyOP( const SymbolicVal& v)
     { v2 = v; return OPHelpVisitor::ApplyOP(v); }
@@ -261,9 +262,9 @@ class TermVisitor : public OPHelpVisitor
   void VisitConst( const SymbolicConst &v)
           {
               int valu, vald;
-              if (v.GetIntVal(valu,vald)) 
-                 result = IntVisitor( v2, valu,vald,op).ApplyOP(that); 
-              else 
+              if (v.GetIntVal(valu,vald))
+                 result = IntVisitor( v2, valu,vald,op).ApplyOP(that);
+              else
                  Default();
           }
   void VisitExpr( const SymbolicExpr& v)
@@ -278,12 +279,12 @@ class TermVisitor : public OPHelpVisitor
    }
 
  public:
-  TermVisitor( const SymbolicVal &_v1, OPApplicator& _op) 
+  TermVisitor( const SymbolicVal &_v1, OPApplicator& _op)
     : OPHelpVisitor(_op, _v1) {}
 
  SymbolicVal ApplyOP( const SymbolicVal& v)
     { v2 = v; return OPHelpVisitor::ApplyOP(v); }
-}; 
+};
 
 class CombineVisitor : public OPHelpVisitor
 {
@@ -292,22 +293,22 @@ class CombineVisitor : public OPHelpVisitor
 
   virtual void Default()
    { SymbolicExpr* r = exp.CloneExpr();
-     r->AddOpd( exp.Val2Term(v2), &op ); 
+     r->AddOpd( exp.Val2Term(v2), &op );
      result = GetExprVal(r); }
   virtual void VisitConst( const SymbolicConst &v)
-   { 
+   {
        int valu, vald;
        if (v.GetIntVal(valu, vald)) {
           SymbolicExpr* r = exp.CloneExpr();
           r->AddOpd( SymbolicTerm(valu, vald), &op);
-          result = GetExprVal(r); 
+          result = GetExprVal(r);
        }
        else
           Default();
- 
+
    }
   virtual void VisitExpr( const SymbolicExpr& v)
-   {  
+   {
       if (v.GetOpType() == op.GetOpType()) {
          SymbolicExpr* r = exp.CloneExpr();
          for (SymbolicExpr::OpdIterator iter = v.GetOpdIterator();
@@ -317,7 +318,7 @@ class CombineVisitor : public OPHelpVisitor
       }
       else
         OPHelpVisitor::VisitExpr(v);
-   }  
+   }
  public:
   CombineVisitor( const SymbolicVal &_v1, const SymbolicExpr &_exp,
                   OPApplicator& _op)
@@ -333,18 +334,18 @@ class DistributeVisitor : private OPHelpVisitor
 
   void Default()
    { result = TermVisitor(v2,op).ApplyOP(that); }
-  void VisitConst( const SymbolicConst &v) 
-      { 
+  void VisitConst( const SymbolicConst &v)
+      {
           int valu, vald;
           if (v.GetIntVal(valu, vald))
-             result = IntVisitor(v2, valu, vald, op).ApplyOP(that); 
+             result = IntVisitor(v2, valu, vald, op).ApplyOP(that);
           else
              Default();
       }
   void VisitExpr( const  SymbolicExpr& v)
       { if (v.GetOpType() == exp.GetOpType())  {
            SymbolicExpr* r = exp.DistributeExpr(op.GetOpType(), v2);
-           if (r == 0) 
+           if (r == 0)
               DefaultOP(that,v2);
            else {
              for (SymbolicExpr::OpdIterator iter1 = exp.GetOpdIterator();
@@ -363,14 +364,14 @@ class DistributeVisitor : private OPHelpVisitor
               Default();
           else if (v.GetOpType() == op.GetOpType())
               result = CombineVisitor(v2,v,op).ApplyOP(that);
-          else 
+          else
              result = DistributeVisitor(v2, v, op).ApplyOP(that);
         }
-        else 
+        else
            OPHelpVisitor::VisitExpr(v);
       }
  public:
-  DistributeVisitor( const SymbolicVal& v, const SymbolicExpr& _exp, 
+  DistributeVisitor( const SymbolicVal& v, const SymbolicExpr& _exp,
                      OPApplicator& _op) : OPHelpVisitor(_op, v), exp(_exp) {}
   SymbolicVal ApplyOP( const SymbolicVal &_v2)
    { v2 = _v2; return OPHelpVisitor::ApplyOP(_v2); }
@@ -383,11 +384,11 @@ class OPVisitor  : public SymbolicVisitor
    void Default()
    { result = TermVisitor(v1,op).ApplyOP(v2); }
   void VisitConst( const SymbolicConst &v)
-      { 
+      {
           int valu, vald;
           if (v.GetIntVal(valu, vald)) {
             IntVisitor intOp(v1,valu, vald,op);
-            result = intOp.ApplyOP(v2); 
+            result = intOp.ApplyOP(v2);
           }
           else
              Default();
@@ -396,7 +397,7 @@ class OPVisitor  : public SymbolicVisitor
   void VisitExpr( const  SymbolicExpr& v)
       { if (op.GetOpType() == v.GetOpType())
            result = CombineVisitor(v1, v,op).ApplyOP(v2);
-        else if (op.GetOpType() < v.GetOpType()) 
+        else if (op.GetOpType() < v.GetOpType())
            result = DistributeVisitor(v1,v,op).ApplyOP(v2);
         else
            Default();

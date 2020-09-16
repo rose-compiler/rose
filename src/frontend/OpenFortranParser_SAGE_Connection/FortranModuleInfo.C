@@ -45,7 +45,7 @@ FortranModuleInfo::find_file_from_inputDirs(string basename ) {
        dir = inputDirs[i];
        name = dir+"/"+ basename;
 
-       string tmp = name+MOD_FILE_SUFFIX;
+       string tmp = name + module_file_suffix();
        if (boost::filesystem::exists(tmp.c_str())) {
              return name;
        }
@@ -260,7 +260,7 @@ FortranModuleInfo::createSgSourceFile(string modName)
   // modName = StringUtility::convertToLowerCase(modName);
 
   // current directory
-     string rmodFileName = modName + MOD_FILE_SUFFIX;
+     string rmodFileName = modName + module_file_suffix();
 
 #if 0
      printf ("In FortranModuleInfo::createSgSourceFile(): Searching for file rmodFileName = %s \n",rmodFileName.c_str());
@@ -322,32 +322,6 @@ FortranModuleInfo::createSgSourceFile(string modName)
 
      return newFile;
    }
-
-
-#if 0
-// DQ (10/1/2010): This support is now better implemented directly in the FortranModuleInfo::getModule() function.
-void
-FortranModuleInfo::addMapping(string modName,SgModuleStatement* modNode)
-   {
-     printf ("In FortranModuleInfo::addMapping() modName = %s modNode = %p \n",modName.c_str(),modNode);
-     ROSE_ASSERT(modNode != NULL);
-
-     if ( moduleNameAstMap[modName] == NULL ) 
-        {
-          moduleNameAstMap[modName] = modNode;
-        }
-       else
-        {
-          cerr << "Warning: The map entry for " << modName << " is not empty. " << endl;
-        }
-
-// #ifdef USE_STMT_DEBUG
-     printf ("In FortranModuleInfo::addMapping(%s,%p): display the moduleNameAstMap \n",modName.c_str(),modNode);
-     dumpMap();
-     printf ("DONE: In FortranModuleInfo::addMapping(%s,%p): display the moduleNameAstMap \n\n",modName.c_str(),modNode);
-// #endif
-  }
-#endif
 
 
 void

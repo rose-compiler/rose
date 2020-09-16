@@ -17,6 +17,8 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
+#include <sstream>
 
 namespace Rose {
 
@@ -196,11 +198,10 @@ static SgFile* parseJavaFile(const std::string &fileName)
     // Read in the file as a string.  Easiest way is to use the MemoryMap facilities.
     std::string sourceCode;
     {
-        using namespace BinaryAnalysis;
-        MemoryMap::Buffer::Ptr buffer = MemoryMap::MappedBuffer::instance(fileName);
-        char *charBuf = new char[buffer->size()];
-        buffer->read((uint8_t*)charBuf, 0, buffer->size());
-        sourceCode = std::string(charBuf, buffer->size());
+        std::ostringstream ss;
+        std::ifstream file(fileName.c_str());
+        ss <<file.rdbuf();
+        sourceCode = ss.str();
     }
 
     // Get the package name etc. from the file contents.  We must know these before we can parse the file.
@@ -300,6 +301,14 @@ SnippetFile::parse(const std::string &fileName)
     }
     SgSourceFile *snippetAst = isSgSourceFile(file);
     assert(snippetAst!=NULL);
+
+  // DQ (7/2/2020): Added assertion (fails for snippet tests).
+     if (snippetAst->get_preprocessorDirectivesAndCommentsList() == NULL)
+       {
+         snippetAst->set_preprocessorDirectivesAndCommentsList(new ROSEAttributesListContainer());
+       }
+     ROSE_ASSERT(snippetAst->get_preprocessorDirectivesAndCommentsList() != NULL);
+
     attachPreprocessingInfo(snippetAst);
     resetConstantFoldedValues(file);
     snippetAst->set_skip_unparse(true);
@@ -318,6 +327,7 @@ SnippetFile::findSnippetFunctions()
                     SgFunctionDeclaration *fdecl = fdef->get_declaration();
                     SgFunctionType *ftype = fdecl ? fdecl->get_type() : NULL;
                     SgType *rettype = ftype ? ftype->get_return_type() : NULL;
+                    ROSE_ASSERT(fdecl != NULL);
                     if (rettype==SageBuilder::buildVoidType() && // snippets must return void
                         !boost::contains(fdecl->get_qualified_name().getString(), "<")) // and not have funky names
                         functions[fdef->get_declaration()->get_qualified_name()].push_back(fdef);

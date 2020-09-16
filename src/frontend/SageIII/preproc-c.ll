@@ -242,185 +242,6 @@ struct file_pos_info curr_beginning;
 //#ifdef ROSE_TOKEN_IDENTIFIERS_H
 //#define ROSE_TOKEN_IDENTIFIERS_H
 
-#if 0
-// These are now moved to general_token_defs.h.
-
-namespace ROSE_token_ids
-   {
-   // whitespace token IDs
-      enum whitespace
-         {
-           T_NOTKNOWN,
-        // The following are non UNIX whitespace
-         };
-
-#if 0
-    //I brazenly copied from the interface of WAVE for these enums
-    enum ROSE_C_CXX_keywords
-    {
-        ROSE_ASM /* WAVE equivalent is T_ASM */
-        ROSE_AUTO /* WAVE equivalent is T_AUTO */
-        ROSE_BOOL /* WAVE equivalent is T_BOOL */
-        ROSE_BREAK /* WAVE equivalent is T_BREAK */
-        ROSE_CASE /* WAVE equivalent is T_CASE */
-        ROSE_CATCH /* WAVE equivalent is T_CATCH */
-        ROSE_CHAR /* WAVE equivalent is T_CHAR */
-        ROSE_CLASS /* WAVE equivalent is T_CLASS */
-        ROSE_CONST /* WAVE equivalent is T_CONST */
-        ROSE_CONSTCAST /* WAVE equivalent is T_CONSTCAST */
-        ROSE_CONTINUE /* WAVE equivalent is T_CONTINUE */
-        ROSE_DEFAULT /* WAVE equivalent is T_DEFAULT */
-        ROSE_DEFINED /* WAVE equivalent is T_DEFINED */
-        ROSE_DELETE /* WAVE equivalent is T_DELETE */
-        ROSE_DO /* WAVE equivalent is T_DO */
-        ROSE_DOUBLE /* WAVE equivalent is T_DOUBLE */
-        ROSE_DYNAMICCAST /* WAVE equivalent is T_DYNAMICCAST */
-        ROSE_ELSE /* WAVE equivalent is T_ELSE */
-        ROSE_ENUM /* WAVE equivalent is T_ENUM */
-        ROSE_EXPLICIT /* WAVE equivalent is T_EXPLICIT */
-        ROSE_EXPORT /* WAVE equivalent is T_EXPORT */
-        ROSE_EXTERN /* WAVE equivalent is T_EXTERN */
-        ROSE_FLOAT /* WAVE equivalent is T_FLOAT */
-        ROSE_FOR /* WAVE equivalent is T_FOR */
-        ROSE_FRIEND /* WAVE equivalent is T_FRIEND */
-        ROSE_GOTO /* WAVE equivalent is T_GOTO */
-        ROSE_IF /* WAVE equivalent is T_IF */
-        ROSE_INLINE /* WAVE equivalent is T_INLINE */
-        ROSE_INT /* WAVE equivalent is T_INT */
-        ROSE_LONG /* WAVE equivalent is T_LONG */
-        ROSE_MUTABLE /* WAVE equivalent is T_MUTABLE */
-        ROSE_NAMESPACE /* WAVE equivalent is T_NAMESPACE */
-        ROSE_NEW /* WAVE equivalent is T_NEW */
-        ROSE_OPERATOR /* WAVE equivalent is T_OPERATOR */
-        ROSE_PRIVATE /* WAVE equivalent is T_PRIVATE */
-        ROSE_PROTECTED /* WAVE equivalent is T_PROTECTED */
-        ROSE_PUBLIC /* WAVE equivalent is T_PUBLIC */
-        ROSE_REGISTER /* WAVE equivalent is T_REGISTER */
-        ROSE_REINTERPRETCAST /* WAVE equivalent is T_REINTERPRETCAST */
-        ROSE_RETURN /* WAVE equivalent is T_RETURN */
-        ROSE_SHORT /* WAVE equivalent is T_SHORT */
-        ROSE_SIGNED /* WAVE equivalent is T_SIGNED */
-        ROSE_SIZEOF /* WAVE equivalent is T_SIZEOF */
-        ROSE_STATIC /* WAVE equivalent is T_STATIC */
-        ROSE_STATICCAST /* WAVE equivalent is T_STATICCAST */
-        ROSE_STRUCT /* WAVE equivalent is T_STRUCT */
-        ROSE_SWITCH /* WAVE equivalent is T_SWITCH */
-        ROSE_TEMPLATE /* WAVE equivalent is T_TEMPLATE */
-        ROSE_THIS /* WAVE equivalent is T_THIS */
-        ROSE_THROW /* WAVE equivalent is T_THROW */
-        ROSE_TRY /* WAVE equivalent is T_TRY */
-        ROSE_TYPEDEF /* WAVE equivalent is T_TYPEDEF */
-        ROSE_TYPEID /* WAVE equivalent is T_TYPEID */
-        ROSE_TYPENAME /* WAVE equivalent is T_TYPENAME */
-        ROSE_UNION /* WAVE equivalent is T_UNION */
-        ROSE_UNSIGNED /* WAVE equivalent is T_UNSIGNED */
-        ROSE_USING /* WAVE equivalent is T_USING */
-        ROSE_VIRTUAL /* WAVE equivalent is T_VIRTUAL */
-        ROSE_VOID /* WAVE equivalent is T_VOID */
-        ROSE_VOLATILE /* WAVE equivalent is T_VOLATILE */
-        ROSE_WCHART /* WAVE equivalent is T_WCHART */
-        ROSE_WHILE /* WAVE equivalent is T_WHILE */
-    };
-#endif
-
-    enum ROSE_C_CXX_keywords 
-    {
-        C_CXX_ASM = 0 + 500,
-        C_CXX_AUTO = 1 + 500,
-        C_CXX_BOOL = 2 + 500,
-        C_CXX_BREAK = 3 + 500,
-        C_CXX_CASE = 4 + 500,
-        C_CXX_CATCH = 5 + 500,
-        C_CXX_CHAR = 6 + 500,
-        C_CXX_CLASS = 7 + 500,
-        C_CXX_CONST = 8 + 500,
-        C_CXX_CONSTCAST = 9 + 500,
-        C_CXX_CONTINUE = 10 + 500,
-        C_CXX_DEFAULT = 11 + 500,
-        C_CXX_DEFINED = 12 + 500,
-        C_CXX_DELETE = 13 + 500,
-        C_CXX_DO = 14 + 500,
-        C_CXX_DOUBLE = 15 + 500,
-        C_CXX_DYNAMICCAST = 16 + 500,
-        C_CXX_ELSE = 17 + 500,
-        C_CXX_ENUM = 18 + 500,
-        C_CXX_EXPLICIT = 19 + 500,
-        C_CXX_EXPORT = 20 + 500,
-        C_CXX_EXTERN = 21 + 500,
-        C_CXX_FALSE = 22 + 500,
-        C_CXX_FLOAT = 23 + 500,
-        C_CXX_FOR = 24 + 500,
-        C_CXX_FRIEND = 25 + 500,
-        C_CXX_GOTO = 26 + 500,
-        C_CXX_IF = 27 + 500,
-        C_CXX_INLINE = 28 + 500,
-        C_CXX_INT = 29 + 500,
-        C_CXX_LONG = 30 + 500,
-        C_CXX_MUTABLE = 31 + 500,
-        C_CXX_NAMESPACE = 32 + 500,
-        C_CXX_NEW = 33 + 500,
-        C_CXX_OPERATOR = 34 + 500,
-        C_CXX_PRIVATE = 35 + 500,
-        C_CXX_PROTECTED = 36 + 500,
-        C_CXX_PUBLIC = 37 + 500,
-        C_CXX_REGISTER = 38 + 500,
-        C_CXX_REINTERPRETCAST = 39 + 500,
-        C_CXX_RETURN = 40 + 500,
-        C_CXX_SHORT = 41 + 500,
-        C_CXX_SIGNED = 42 + 500,
-        C_CXX_SIZEOF = 43 + 500,
-        C_CXX_STATIC = 44 + 500,
-        C_CXX_STATICCAST = 45 + 500,
-        C_CXX_STRUCT = 46 + 500,
-        C_CXX_SWITCH = 47 + 500,
-        C_CXX_TEMPLATE = 48 + 500,
-        C_CXX_THIS = 49 + 500,
-        C_CXX_THROW = 50 + 500,
-        C_CXX_TRY = 51 + 500,
-        C_CXX_TRUE = 52 + 500,
-        C_CXX_TYPEDEF = 53 + 500,
-        C_CXX_TYPEID = 54 + 500,
-        C_CXX_TYPENAME = 55 + 500,
-        C_CXX_UNION = 56 + 500,
-        C_CXX_UNSIGNED = 57 + 500,
-        C_CXX_USING = 58 + 500,
-        C_CXX_VIRTUAL = 59 + 500,
-        C_CXX_VOID = 60 + 500,
-        C_CXX_VOLATILE = 61 + 500,
-        C_CXX_WCHART = 62 + 500,
-        C_CXX_WHILE = 63 + 500
-   };
-
-      //the following are alternate tokens.
-      //Refer to page 12 of C++ STD
-
-enum ROSE_C_CXX_alternate_tok
-    {
-        C_CXX_LEFT_CURLY_ALT, // The <% which is the same as {
-        C_CXX_RIGHT_CURLY_ALT, //The %> which is the same as }
-        C_CXX_LEFT_SQUARE_ALT, //The <: which is the same as [
-        C_CXX_RIGHT_SQUARE_ALT,//The :> which is the same as ]
-        C_CXX_HASH_ALT, // The #
-        C_CXX_HASH_HASH_ALT, // The 
-        C_CXX_and_ALT, // The #
-    };
-
-enum ROSE_C_CXX_Additional_Info
-   {
-     C_CXX_COMMENTS           = 0 + 100000,
-     C_CXX_STRING_LITERALS    = 1 + 100000,
-     C_CXX_IDENTIFIER         = 2 + 100000,
-     C_CXX_PREPROCESSING_INFO = 3 + 100000,
-     C_CXX_UNIDENTIFIED_TOKEN = 4 + 100000,
-  // DQ (10/12/2013): Added C_CXX_SYNTAX
-     C_CXX_SYNTAX             = 5 + 100000,
-     C_CXX_WHITESPACE         = 6 + 100000,
-     C_CXX_ERROR              = 7 + 100000
-   };
-
-};
-#endif
-
 using namespace ROSE_token_ids;
 
 token_element ROSE_C_CXX_keyword_map[] = 
@@ -599,7 +420,7 @@ void add_token (std::string str, int preproc_line_num, int & preproc_column_num,
      int is_keyword = identify_if_C_CXX_keyword(str);
 
 #if DEBUG_LEX_PASS
-     printf("%s is either a %s token \n",str.c_str(),(is_keyword != -1) ? "keyword" : "identifier");
+     //printf("%s is either a %s token \n",str.c_str(),(is_keyword != -1) ? "keyword" : "identifier");
 #endif
 
 #if 0
@@ -914,7 +735,7 @@ lineprefix              ^{whitespace}*"#"{whitespace}*
 macrokeyword            "include"|"define"|"undef"|"line"|"error"|"warning"|"if"|"ifdef"|"ifndef"|"elif"|"else"|"endif"
 mlinkagespecification   ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C++\"")){whitespacenl}*"{"
 languagesyntax         "<" | ">" | "?" | ":"
-%s NORMAL CXX_COMMENT C_COMMENT STRING_LIT CHAR_LIT MACRO C_COMMENT_INMACRO
+%s NORMAL CXX_COMMENT C_COMMENT STRING_LIT CHAR_LIT MACRO C_COMMENT_INMACRO STRING_LIT_IN_MACRO
 %%
 
 %{
@@ -1254,8 +1075,9 @@ BEGIN NORMAL;
   // preproc_column_num++; 
    }
 
-<NORMAL>[0-9]*  {
-  // DQ (9/29/2013): This does not accound for 0L to be a single literal (or octal or hexadecimal)
+<NORMAL>(0x|0b)?((([0-9]+['])+[0-9]+)|[0-9]+) {
+  // MS (7/14/2020): C++14 support for "'" in numbers, also added binary/hex prefix (octal is implicit)
+  // DQ (9/29/2013): This does not accound for 0L to be a single literal
 #if DEBUG_LEX_PASS
      printf("%s is a numeric literal token \n", yytext);
 #endif
@@ -1286,6 +1108,9 @@ BEGIN NORMAL;
 
 <NORMAL>[a-zA-Z_][a-zA-Z0-9_]* {
 #if 1
+#if DEBUG_LEX_PASS
+    printf("%s matched identifier regex \n",yytext);
+#endif
      add_token(yytext,preproc_line_num,preproc_column_num,0);
 #else
      token_element *p_tok_elem = new token_element;
@@ -1399,7 +1224,10 @@ BEGIN NORMAL;
 
 <NORMAL>"'"                     {
    /*preproc_line_num+=num_of_newlines(yytext);*/ 
-     add_token(yytext,preproc_line_num,preproc_column_num,0);
+#if DEBUG_LEX_PASS
+    printf("char literal BEGIN.");    
+#endif
+    add_token(yytext,preproc_line_num,preproc_column_num,0);
   // preproc_column_num+=strlen(yytext); 
      BEGIN CHAR_LIT;
    }
@@ -1418,12 +1246,15 @@ BEGIN NORMAL;
    /*end of character literal*/   
      add_token(yytext,preproc_line_num,preproc_column_num,0);
   // preproc_column_num+=strlen(yytext); 
+#if DEBUG_LEX_PASS
+    printf("char literal END.");    
+#endif
      BEGIN NORMAL;
    }
 
 
 
-                        /* Actions for string literals. */
+  /* Actions for string literals. */
 <STRING_LIT>\\\r\n              {/*eat escaped DOS line-term*/  add_token(yytext,preproc_line_num,preproc_column_num,0); preproc_line_num++; preproc_column_num=1; }
 <STRING_LIT>\\\n                {/*eat escaped linefeed*/       add_token(yytext,preproc_line_num,preproc_column_num,0); preproc_line_num++; preproc_column_num=1; }
 <STRING_LIT>\\.                 {/*eat escaped something*/      add_token(yytext,preproc_line_num,preproc_column_num,0); /*preproc_column_num+=strlen(yytext);*/ }
@@ -1551,15 +1382,15 @@ BEGIN NORMAL;
                     yyterminate();
                 }
 
-<MACRO>"\/*"    {
-                    //does this cover all cases?????????
+<MACRO>"\""    {
                     preproc_column_num+=2; 
                     macroString += yytext;
+                    BEGIN STRING_LIT_IN_MACRO;
+                }
 
-                    /*
-                                //Do we need to do something like this?
-                                commentString = yytext;
-                    */
+<MACRO>"\/*"    {
+                    preproc_column_num+=2; 
+                    macroString += yytext;
                     BEGIN C_COMMENT_INMACRO;
                 }
 
@@ -1568,15 +1399,31 @@ BEGIN NORMAL;
                     preproc_column_num++; 
                 }
 
+
+  /* MS 08/31/2020: added special case of string literal inside macro; note GNU allows single double quotes in macros, but EDG rejects it */
+  /* Actions for string literals. */
+<STRING_LIT_IN_MACRO>\\\r\n              {/*eat escaped DOS line-term*/  preproc_line_num++; preproc_column_num=1; macroString += yytext;}
+<STRING_LIT_IN_MACRO>\\\n                {/*eat escaped linefeed*/       preproc_line_num++; preproc_column_num=1; macroString += yytext;}
+<STRING_LIT_IN_MACRO>\\.                 {/*eat escaped something*/       /*preproc_column_num+=strlen(yytext);*/macroString += yytext; }
+<STRING_LIT_IN_MACRO>\r\n                {/*eat DOS line-term*/          preproc_line_num++; preproc_column_num=1; macroString += yytext;}
+<STRING_LIT_IN_MACRO>[^\"\r\n\\]         {/*eat non-special characters*/ preproc_column_num+=strlen(yytext);macroString += yytext; }
+<STRING_LIT_IN_MACRO>\n                  {/*eat linefeed*/               preproc_line_num++; preproc_column_num=1; macroString += yytext;}
+<STRING_LIT_IN_MACRO>"\""                {
+   /* end of string literal */
+     macroString += yytext;
+     preproc_column_num+=strlen(yytext); 
+   /* go back into macro state */
+     BEGIN MACRO; 
+   }
+
+
 <C_COMMENT_INMACRO>"*/"   { 
-                                //??????????????????????????????????????????????????????????????
-                                //This code copies the comment into the macrobuffer.
-                                //Should we not copy it to comment buffer also?????
+                                //This code copies the comment only into the macrobuffer, but not into comment buffer
                                 macroString += yytext;
 
                                 /*
                                 commentString += yytext;
-                                //should we do something like this??
+                                //to add the comment as separate element use this:
                                 preprocessorList.addElement(PreprocessingInfo::C_StyleComment,commentString.c_str(),globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
                                 */
                                 preproc_column_num+=strlen(yytext); 
@@ -1584,18 +1431,10 @@ BEGIN NORMAL;
                             }
 <C_COMMENT_INMACRO>\n       { 
                                 macroString += yytext;
-
-                                //Do we need to do something like this?
-                                //commentString += yytext;
-
                                 preproc_line_num++; preproc_column_num=1; 
                             }
 <C_COMMENT_INMACRO>.        { 
                                 macroString += yytext;
-
-                                //Do we need to do something like this?
-                                //commentString += yytext;
-
                                 preproc_column_num++; 
                             }
 %%
@@ -1635,6 +1474,23 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
 #if 0
   // DQ (8/18/2019): Debugging the performance overhead of the header file unparsing support.
      printf ("&&&&&&&&&&&&&&&&&&& Inside of lex file: getPreprocessorDirectives(): fileName = %s \n",fileName.c_str());
+#endif
+
+#if 0
+     printf ("Saving list of processed files to insure that files are not processed more than once! \n");
+#endif
+#if 0
+     static std::set<std::string> file_set;
+     if (file_set.find(fileName) == file_set.end())
+        {
+          file_set.insert(fileName);
+        }
+       else
+        {
+       // DQ (5/22/2020): We need to allow this in the narrow case of a source file that is being copied.
+          printf ("WARNING: fileName has been processed previously (allowed for source files being copied): %s \n",fileName.c_str());
+       // ROSE_ASSERT(false);
+        }
 #endif
 
 #if 0
@@ -1693,9 +1549,11 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
                     printf ("In getPreprocessorDirectives(): DONE: calling yylex() \n");
 #endif
 
+#if 0
+                 // DQ (8/17/2020): Debugging code.
                  // Writes all gathered information to stdout
-                 // preprocessorList.display("TEST Collection of Comments and CPP Directives");
-
+                    preprocessorList.display("TEST Collection of Comments and CPP Directives");
+#endif
                  // bugfix (9/29/2001)
                  // The semantics required here is to move the elements accumulated into the
                  // preprocessorList into the preprocessorInfoList and delete them from the
@@ -1726,16 +1584,22 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
      ROSE_ASSERT(preprocessorInfoList->getFileName() != "");
 
 #if DEBUG_LEX_PASS || 0
-     printf ("In getPreprocessorDirectives(fileName = %s): preprocessorInfoList->size() = %d \n",fileName.c_str(),(int)preprocessorInfoList->size());
+     printf ("Leaving getPreprocessorDirectives(fileName = %s): preprocessorInfoList->size() = %d \n",fileName.c_str(),(int)preprocessorInfoList->size());
      printf (" --- preprocessorInfoList->getFileName() = %s \n",preprocessorInfoList->getFileName().c_str());
+     printf (" --- preprocessorInfoList->getList().size() = %zu \n",preprocessorInfoList->getList().size());
 #endif
 
   // DQ (9/29/2013): Added assertion (debugging token handling in ROSE).
      ROSE_ASSERT(preprocessorInfoList->get_rawTokenStream() != NULL);
 
 #if DEBUG_LEX_PASS || 0
-     printf ("In getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream() = %p \n",preprocessorInfoList->get_rawTokenStream());
-     printf ("In getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream()->size() = %" PRIuPTR " \n",preprocessorInfoList->get_rawTokenStream()->size());
+     printf ("Leaving getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream() = %p \n",preprocessorInfoList->get_rawTokenStream());
+     printf ("Leaving getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream()->size() = %" PRIuPTR " \n",preprocessorInfoList->get_rawTokenStream()->size());
+#endif
+
+#if 0
+     printf ("Exiting in getPreprocessorDirectives() \n");
+     ROSE_ASSERT(false);
 #endif
 
      return preprocessorInfoList;
