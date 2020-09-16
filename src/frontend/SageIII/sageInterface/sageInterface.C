@@ -10196,6 +10196,8 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
 
 void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp/*=false*/)
 {
+  SgExpression* parentExp;
+
   ROSE_ASSERT(oldExp);
   ROSE_ASSERT(newExp);
   if (oldExp==newExp) return;
@@ -10253,30 +10255,35 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
            isSgUnaryOp(parent)->set_operand_i(newExp);
       else
         ROSE_ASSERT(false);
-  }  else//SgConditionalExp
-  if (isSgConditionalExp(parent)!=NULL){
-     SgConditionalExp *expparent= isSgConditionalExp(parent);//get explicity type parent
-     if (oldExp==expparent->get_conditional_exp()) expparent->set_conditional_exp(newExp);
-     else if (oldExp==expparent->get_true_exp()) expparent->set_true_exp(newExp);
-     else if (oldExp==expparent->get_false_exp()) expparent->set_false_exp(newExp);
+  }
+  else if (isSgConditionalExp(parent) != NULL) {
+     SgConditionalExp* expparent = isSgConditionalExp(parent); //get explicity type parent
+     if (oldExp==expparent->get_conditional_exp())
+        expparent->set_conditional_exp(newExp);
+     else if (oldExp==expparent->get_true_exp())
+        expparent->set_true_exp(newExp);
+     else if (oldExp==expparent->get_false_exp())
+        expparent->set_false_exp(newExp);
      else
-       ROSE_ASSERT(false);
-  } else if (isSgExprListExp(parent)!=NULL) {
-    SgExpressionPtrList & explist = isSgExprListExp(parent)->get_expressions();
-    for (Rose_STL_Container<SgExpression*>::iterator i=explist.begin();i!=explist.end();i++)
+        ROSE_ASSERT(false);
+  }
+  else if (isSgExprListExp(parent) != NULL) {
+    SgExpressionPtrList& explist = isSgExprListExp(parent)->get_expressions();
+    for (Rose_STL_Container<SgExpression*>::iterator i=explist.begin();i!=explist.end();i++) {
       if (isSgExpression(*i)==oldExp) {
         SgExprListExp* parentExpListExp = isSgExprListExp(parent);
         parentExpListExp->replace_expression(oldExp,newExp);
        // break; //replace the first occurrence only??
       }
+    }
   }
   else if (isSgValueExp(parent)) {
       // For compiler generated code, this could happen.
       // We can just ignore this function call since it will not appear in the final AST.
       return;
   }
-  else if (isSgExpression(parent)) {
-    int worked = isSgExpression(parent)->replace_expression(oldExp, newExp);
+  else if ((parentExp=isSgExpression(parent)) != NULL) {
+    int worked = parentExp->replace_expression(oldExp, newExp);
     // ROSE_DEPRECATED_FUNCTION
     ROSE_ASSERT (worked);
   }
