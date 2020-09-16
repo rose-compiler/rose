@@ -43,8 +43,8 @@ void StressStrainHeat(const real8 *deltz,real8 *deltzh,real8 *deltrh,const real8
   real8 avgMod;
   int nz;
   int i;
-/* Quiet the compiler - unused argument */
   deltaTime = deltaTime;
+/* Quiet the compiler - unused argument */
   for (i = 0; i <= length - 1; i += 1) {
     nz = zoneset[i];
     shearr = 0.5 * shearRatio[i];

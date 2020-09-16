@@ -26,10 +26,10 @@ class VectorXY
 
 class Hydro 
 {
-// velocity BC values
   public: class VectorXY *bcVelocity;
-// left boundary nodes
+// velocity BC values
   int *bc3Nodes;
+// left boundary nodes
   int numBC3Nodes;
   void applyVelocityBC(class VectorXY *u);
 }
