@@ -360,7 +360,7 @@ RiscOperators::markProgramArguments(const SmtSolver::Ptr &solver) {
     // The argc value cannot be less than 1 since it always points to at least the program name.
 #if 1 // [Robb Matzke 2020-07-17]: Breaks concolic demo 0
     SymbolicExpr::Ptr argcConstraint = SymbolicExpr::makeSignedGt(symbolicArgc->get_expression(),
-                                                                  SymbolicExpr::makeInteger(SP.nBits(), 0));
+                                                                  SymbolicExpr::makeIntegerConstant(SP.nBits(), 0));
     solver->insert(argcConstraint);
 #endif
 
