@@ -1940,93 +1940,15 @@ SgProject::parse(const vector<string>& argv)
 
      int errorCode = 0;
 
-  // DQ (7/7/2005): Added support for AST Merge Mechanism
-     if (p_astMerge == true)
-        {
-       // If astMerge is specified, then the command file is accessed to execute all
-       // the commands from each of the associated working directories.  Each new AST
-       // in merged with the previous AST.
-
-          if (p_astMergeCommandFile != "")
-             {
-            // If using astMerge mechanism we have to save the command line and
-            // working directories to a separate file.  This permits a makefile to
-            // call a ROSE translator repeatedly and the command line for each
-            // file be saved.
-#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-               errorCode = AstMergeSupport(this);
-#endif
-             }
-            else
-             {
-            // DQ (5/26/2007): This case could make sense, if there were more than
-            // one file on the command line (or if we wanted to force a single file
-            // to share as much as possible in a merge with itself, there is a
-            // typical 20% reduction in memory useage for this case since the
-            // types are then better shared than is possible during initial construction
-            // of the AST).
-#if 0
-            // error case
-               printf ("astMerge requires specification of a command file \n");
-               ROSE_ASSERT(false);
-               errorCode = -1;
-#endif
-#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-               errorCode = AstMergeSupport(this);
-#endif
-             }
-        }
-       else
-        {
-       // DQ (7/7/2005): Specification of the AST merge command filename triggers accumulation
-       // of working directories and commandlines into the specified file (no other processing
-       // is done, the AST (beyond the SgProject) is not built).
-          if (p_astMergeCommandFile != "")
-             {
-            // If using astMerge mechanism we have to save the command line and
-            // working directories to a separate file.
-
-            // DQ (5/26/2007): This might be a problem where object files are required to be built
-            // and so we might have to call the backend compiler as a way of forcing the correct
-            // object files to be built so that, for example, libraries can be constructed when
-            // operating across multiple directories.
-
-#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-               errorCode = buildAstMergeCommandFile(this);
-#endif
-             }
-            else
-             {
             // Normal case without AST Merge: Compiling ...
             // printf ("In SgProject::parse(const vector<string>& argv): get_sourceFileNameList().size() = %" PRIuPTR " \n",get_sourceFileNameList().size());
                if (get_sourceFileNameList().size() > 0)
                   {
-                 // This is a compile line
-                 // printf ("Calling parse() from SgProject::parse(const vector<string>& argv) \n");
-
-
-                  /*
-                   * FMZ (5/19/2008)
-                   *   "jserver_init()"   does nothing. The Java VM will be loaded at the first time
-                   *                      it needed (i.e for parsing the 1st fortran file).
-                   *   "jserver_finish()" will dostroy the Java VM if it is running.
-                   */
-
-                    if (SgProject::get_verbose() > 1)
-                       {
-                         printf ("Calling Open Fortran Parser: jserver_init() \n");
-                       }
 
 // DQ (10/20/2010): Note that Java support can be enabled just because Java internal support was found on the
 // current platform.  But we only want to inialize the JVM server if we require Fortran or Java language support.
 // So use the explicit macros defined in rose_config header file for this level of control.
 #if (defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT))
-// Rasmussen (2/17/2019): jserver_init() should not be called. Apparently it interferes with
-// the functionality of the JNI functions if called in JNI version 1.8.
-//#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-//
-//                  Rose::Frontend::Fortran::Ofp::jserver_init();
-//#endif
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
                     Rose::Frontend::Java::Ecj::jserver_init();
 #endif
@@ -2038,11 +1960,6 @@ SgProject::parse(const vector<string>& argv)
 
                  // FMZ deleteComm jserver_finish();
                   }
-
-            // DQ (5/26/2007): This is meaningless, so remove it!
-            // errorCode = errorCode;
-             }
-        }
 
 #if 1
   // DQ (8/22/2009): We test the parent of SgFunctionTypeTable in the AST post processing,

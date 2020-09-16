@@ -131,47 +131,6 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
      std::string get_name () {return name;};
   };
 
-// DQ (3/2/2009): Added support for collectiong an merging the referenced symbols in the outlined
-// function into the list used to edit the outlined code subtree to fixup references (from symbols
-// in the original file to the symbols in the newer separate file).
-// typedef rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> ReplacementMapType;
-// void supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap );
-
-// CH (4/9/2010): Use boost::hash instead
-//#ifdef _MSC_VER
-#if 0
-inline size_t hash_value(SgNode* t) {return (size_t)t;}
-#endif
-
-#if 0
-// DQ (8/3/2015): We expect that this is not used and is generating a warnings so we 
-// can best fix it by removing it.
-struct hash_nodeptr
-   {
-// CH (4/9/2010): Use boost::hash instead
-//#ifndef _MSC_VER
-#if 0
-           //rose_hash::hash<char*> hasher;
-#endif
-     public:
-          size_t operator()(SgNode* node) const
-             {
-// CH (4/9/2010): Use boost::hash instead
-//#ifdef _MSC_VER
- #if 0
-                                  return (size_t) hash_value(node);
- #else
-                                  return (size_t) node;
- #endif
-                   }
-    };
-
-#ifndef SWIG
-// DQ (3/10/2013): This appears to be a problem for the SWIG interface (undefined reference at link-time).
-  void supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap );
-#endif
-#endif
-
  //------------------------------------------------------------------------
  //@{
  /*! @name Symbol tables
@@ -1705,6 +1664,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   // ROSE_DLL_API std::list<SgClassType*> getClassTypeChainForDataMemberReference(SgVarRefExp* varRefExp);
   ROSE_DLL_API std::list<SgClassType*> getClassTypeChainForMemberReference(SgExpression* refExp);
 
+  ROSE_DLL_API std::set<SgNode*> getFrontendSpecificNodes();
 
   // DQ (2/17/2019): Display the shared nodes in the AST for debugging.
   ROSE_DLL_API void outputSharedNodes( SgNode* node );
