@@ -20859,6 +20859,7 @@ LivenessAnalysis * SageInterface::call_liveness_analysis(SgProject* project, boo
   for (i= vars.begin(); i!=vars.end();++i)
   {
     SgFunctionDefinition* func = isSgFunctionDefinition(*i);
+    ROSE_ASSERT(func != NULL);
     if (debug)
     {
       std::string name = func->class_name();
