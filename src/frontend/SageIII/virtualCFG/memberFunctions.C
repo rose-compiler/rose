@@ -171,6 +171,8 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
   // Only handles next-statement control flow
   SgNode* parent = n->get_parent();
 
+  ROSE_ASSERT(parent != NULL);
+
 #if DEBUG_CALLGRAPH
   printf ("In getNodeJustAfterInContainer(): n = %p = %s parent = %p = %s \n",n,n->class_name().c_str(),parent,parent->class_name().c_str());
 #endif
@@ -226,15 +228,17 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
           printf ("In getNodeJustAfterInContainer(): found parent as SgLabelStatement: parentLabelStatement = %p = %s \n",parentLabelStatement,parentLabelStatement->class_name().c_str());
 #endif
           parent = parentLabelStatement->get_parent();
+          ROSE_ASSERT(parent != NULL);
           unsigned int idx;
 #if 0
           idx = parent->cfgFindNextChildIndex(parentLabelStatement);
 #else
           // MS (12/9/2019 ) - handling sequences of labels
           while(isSgLabelStatement(parent)) {
-            parentLabelStatement=isSgLabelStatement(parent);
-            parent=parent->get_parent();
+            parentLabelStatement = isSgLabelStatement(parent);
+            parent = parent->get_parent();
           }
+          ROSE_ASSERT(parent != NULL);
           idx = parent->cfgFindNextChildIndex(parentLabelStatement);
 #endif
 
@@ -271,10 +275,6 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
 #endif
              }
         }
-
-
-// DQ (10/12/2012): Added assertion.
-  ROSE_ASSERT(parent != NULL);
 
   unsigned int idx = parent->cfgFindNextChildIndex(n);
   if ( idx > parent->cfgIndexForEnd() ) {
