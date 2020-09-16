@@ -1419,6 +1419,20 @@ HEADER_FORALL_STATEMENT_END
 
 
 HEADER_JOVIAL_FOR_THEN_STATEMENT_START
+  //! This class represents the various versions of Jovial loop statements.
+  //
+     public:
+          enum loop_statement_type_enum
+             {
+               e_unknown,
+               e_for_only_stmt,        /* no WHILE, THEN, or BY expressions */
+               e_for_while_stmt,       /* WHILE no optional BY or THEN expression */
+               e_for_while_by_stmt,    /* WHILE then optional BY (increment expression), C style */
+               e_for_while_then_stmt,  /* WHILE then optional THEN */
+               e_for_then_while_stmt,  /* THEN (increment expression) then optional WHILE */
+               e_for_by_while_stmt     /* BY (increment expression) then optional WHILE */
+             };
+
 /*#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
           virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
@@ -3473,6 +3487,11 @@ HEADER_ADA_TASK_BODY_STATEMENT_START
 SgName get_mangled_name() const ROSE_OVERRIDE;
 HEADER_ADA_TASK_BODY_STATEMENT_END
 
+HEADER_ADA_RENAMING_DECL_STATEMENT_START
+SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE; 
+SgName get_mangled_name() const ROSE_OVERRIDE; 
+HEADER_ADA_RENAMING_DECL_STATEMENT_END
+
 
 HEADER_PROGRAM_HEADER_STATEMENT_START
   /* HEADER_LIST_DECLARATIONS */
@@ -3873,6 +3892,18 @@ HEADER_BLOCK_DATA_STATEMENT_START
 HEADER_BLOCK_DATA_STATEMENT_END
 
 HEADER_IMPLICIT_STATEMENT_START
+
+    /*! Specifiers for the implicit-none-spec-list */
+          enum implicit_spec_enum
+            {
+               e_unknown_implicit_spec = 0,
+               e_has_implicit_spec_list,  /*!< In future this could replace set/get_implicit_none()  */
+               e_none,                    /*!< IMPLICIT NONE */
+               e_none_external,           /*!< IMPLICIT NONE (EXTERNAL) */
+               e_none_type,               /*!< IMPLICIT NONE (TYPE) */
+               e_none_external_and_type   /*!< IMPLICIT NONE (EXTERNAL, TYPE) : order not specified */
+            };
+
      SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -12934,6 +12965,24 @@ SgVariableDeclaration::initializeData(Sg_File_Info *info, SgInitializedName* c_i
   // DQ(10/10/2007): Added initialization of another data member.
      p_requiresGlobalNameQualificationOnType = false;
 
+#if 0
+  // DQ (9/11/2020): These data members are not set (p_builtFromUseOnly was identified using valgrind).
+  // Unclear if this should go into the post_construction_initialization() function (better).
+  // p_gnu_extension_section                 = "";
+  // p_gnu_extension_alias                   = "";
+     p_gnu_extension_initialization_priority = 0;
+     p_gnu_extension_visability              = SgDeclarationStatement::e_gnu_attribute_visability_unspecified;
+     p_gnu_extension_declaration_attribute   = SgVariableDeclaration::e_gnu_attribute_unspecified;
+     p_name_qualification_length             = 0;
+     p_type_elaboration_required             = false;
+     p_global_qualification_required         = false;
+     p_isAssociatedWithDeclarationList       = false;
+     p_isFirstDeclarationOfDeclarationList   = true;
+     p_is_thread_local                       = false;
+     p_is_constexpr                          = false;
+     p_builtFromUseOnly                      = false;
+#endif
+
 #if PRINT_DEVELOPER_WARNINGS
      printf ("Inside of SgVariableDeclaration::initializeData for constructor taking all parameters c_item = %p = %s \n",c_item,c_item->get_name().str());
 #endif
@@ -13020,6 +13069,28 @@ SgVariableDeclaration::post_construction_initialization()
      p_constant_or_type_argument_for_Alignas_keyword = false;
 #endif
      p_is_constexpr                                  = false;
+
+#if 1
+  // DQ (9/11/2020): I think this is a better place to do a centralized initialization.
+  // DQ (9/11/2020): These data members are not set (p_builtFromUseOnly was identified using valgrind).
+  // Unclear if this should go into the post_construction_initialization() function (better).
+  // We don't need to initialize strings, which have a default constructor.
+  // p_gnu_extension_section                 = "";
+  // p_gnu_extension_alias                   = "";
+     p_gnu_extension_initialization_priority = 0;
+     p_gnu_extension_visability              = SgDeclarationStatement::e_gnu_attribute_visability_unspecified;
+     p_gnu_extension_declaration_attribute   = SgVariableDeclaration::e_gnu_attribute_unspecified;
+     p_name_qualification_length             = 0;
+     p_type_elaboration_required             = false;
+     p_global_qualification_required         = false;
+
+  // DQ (9/11/2020): These are initialized above.
+  // p_isAssociatedWithDeclarationList       = false;
+  // p_isFirstDeclarationOfDeclarationList   = true;
+  // p_is_thread_local                       = false;
+  // p_is_constexpr                          = false;
+     p_builtFromUseOnly                      = false;
+#endif
    }
 
 
@@ -17657,11 +17728,12 @@ SgTemplateTypedefDeclaration::post_construction_initialization()
         }
 #endif
 
+  // Liao 2020/8/6: This is not always true: AST copy of SgTemplateTypedefDeclaration will pass the original type.      
   // DQ (2/27/2018): This should be null, since we just changed the semantics to defer the construction of the type (now consistant with other IR nodes).
   // DQ (2/25/2018): This should be non-null, but we might hae to make sure it is not overwritten.
   // ROSE_ASSERT(p_type != NULL);
   // p_type = NULL;
-     ROSE_ASSERT(p_type == NULL);
+  // ROSE_ASSERT(p_type == NULL);
 
 #if 0
   // DQ (2/25/2018): Added debugging support.
@@ -17678,7 +17750,7 @@ SgTemplateTypedefDeclaration::post_construction_initialization()
 
   // DQ (2/25/2018): This should be non-null, since we just built the new type.
   // ROSE_ASSERT(p_type != NULL);
-     ROSE_ASSERT(p_type == NULL);
+  // ROSE_ASSERT(p_type == NULL);
 
      ROSE_ASSERT (get_base_type() != NULL);
      ROSE_ASSERT (get_base_type()->get_typedefs() != NULL);
@@ -20186,6 +20258,30 @@ SgAdaTaskBodyDecl::get_mangled_name() const
   return name;
 }
 SOURCE_ADA_TASK_BODY_DECL_STATEMENT_END
+
+SOURCE_ADA_RENAMING_DECL_STATEMENT_START
+void SgAdaRenamingDecl::post_construction_initialization() {}
+
+SgSymbol* 
+SgAdaRenamingDecl::get_symbol_from_symbol_table() const 
+{
+  SgScopeStatement* scope = get_scope();
+  
+  ROSE_ASSERT(scope);
+  return scope->find_symbol_from_declaration(this); 
+}
+
+SgName 
+SgAdaRenamingDecl::get_mangled_name() const
+{
+  std::string name = "ada$ren$";
+  
+  name.append(get_name());
+  return name;
+}
+SOURCE_ADA_RENAMING_DECL_STATEMENT_END
+
+
 
 SOURCE_ADA_TASK_SPEC_STATEMENT_START
 void SgAdaTaskSpec::post_construction_initialization() {}

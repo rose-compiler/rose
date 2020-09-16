@@ -215,6 +215,18 @@ void Grammar::setUpBinaryInstructions() {
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
+#ifdef DOCUMENTATION
+        /** Property: Whether this instruction updates N, Z, C, and/or V status flags.
+         *
+         * @{ */
+        bool get_updatesFlags() const;
+        void set_updatesFlags(bool);
+        /** @} */
+#else
+        AsmA64Instruction.setDataPrototype("bool", "updatesFlags", "= false",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
         DECLARE_OTHERS(AsmA64Instruction);
 #if defined(SgAsmA64Instruction_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -236,6 +248,14 @@ void Grammar::setUpBinaryInstructions() {
         virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
+        virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target,
+                                        rose_addr_t *return_va) $ROSE_OVERRIDE;
+        virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target,
+                                        rose_addr_t *return_va) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
+        virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
+
 #endif // SgAsmA64Instruction_OTHERS
 #ifdef DOCUMENTATION
     };

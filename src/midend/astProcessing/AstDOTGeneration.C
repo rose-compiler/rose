@@ -570,6 +570,14 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
              }
         }
 
+  // DQ (9/4/2020): Added support for output of the kind of cast in the SgCastExp IR nodes.
+     SgCastExp* castExpression = isSgCastExp(node);
+     if (castExpression != NULL)
+        {
+          string name = SgCastExp::cast_type_to_string(castExpression->cast_type()).c_str();;
+          nodelabel += string("\\n cast kind = ") + name;
+        }
+
 #if 0
   // DQ (4/27/2014): This causes the snippet test code: testJava5a.passed, to fail.
   // DQ (4/24/2014): Added support for output of the type name for expression IR nodes.
@@ -585,7 +593,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 #endif
 
 #if 1
-  // DQ (4/6/2018): Adding support to output lvvalue information.
+  // DQ (4/6/2018): Adding support to output lvalue information.
      SgExpression* expression = isSgExpression(node);
      if (expression != NULL)
         {

@@ -675,6 +675,11 @@ CHOOSE_BACKEND_COMPILER
 
 # *****************************************************************
 
+# echo "DQ (7/26/2020): Exiting after CHOOSE_BACKEND_COMPILER"
+# exit 1
+
+# *****************************************************************
+
 # Calling available macro from Autoconf (test by optionally pushing C language onto the internal autoconf language stack).
 # This function must be called from this support-rose file (error in ./build if called from the GET COMPILER SPECIFIC DEFINES macro.
 # AC_LANG_PUSH(C)
@@ -759,6 +764,10 @@ fi
 # echo "Exiting after test for GNU compiler and setting the version info for EDG (GCC_VERSION and GCC_MINOR_VERSION)."
 # exit 1
 
+# DQ (7/27/2020): debugging info
+# echo "After computing GNU version: GCC_VERSION       = $GCC_VERSION"
+# echo "After computing GNU version: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
+
 # *****************************************************************
 
 # DQ (2/7/2017): These macros test for C++11 and C++14 features and
@@ -809,31 +818,51 @@ ROSE_SUPPORT_FATAL_WARNINGS
 )
 
 
-
 AC_DEFUN([ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES],
 [
 # Begin macro ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES.
 
 AC_MSG_NOTICE([in ROSE SUPPORT ROSE BUILD INCLUDE FILES: Using back-end C++ compiler = "$BACKEND_CXX_COMPILER" compiler vendor name = "$ax_cv_cxx_compiler_vendor" for processing of unparsed source files from ROSE preprocessors])
 
+# DQ (7/26/2020): Spelling it correctly so that we can force the directory of header files to be rebuilt.
 # Note that this directory name is not spelled correctly, is this a typo?
 # JJW (12/10/2008): We don't preprocess the header files for the new interface
+# rm -rf ./include-stagin
+# echo "Changes spelling of include-stagin to force the directory of header files to be rebuilt."
 rm -rf ./include-stagin
+
+# DQ (7/27/2020): debugging info
+# echo "Before processing include files: GCC_VERSION       = $GCC_VERSION"
+# echo "Before processing include files: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
 
 if test x$enable_clang_frontend = xyes; then
   INSTALL_CLANG_SPECIFIC_HEADERS
 else
+
+# DQ (7/26/2020): Process this macro only to better support testing.
+# GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+
   # DQ (11/1/2011): I think that we need these for more complex header file
   # requirements than we have seen in testing C code to date.  Previously
   # in testing C codes with the EDG 4.x we didn't need as many header files.
-  GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
-  GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+    GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
+    GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
 fi
 
 # End macro ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES.
+
+# *****************************************************************
+# echo "DQ (7/26/2020): Exiting after ROSE SUPPORT ROSE BUILD INCLUDE FILES (Skipped C header files!)"
+# exit 1
+# *****************************************************************
 ]
 )
 
+# *****************************************************************
+# The exit here does not appear to force an exit.
+# echo "DQ (7/26/2020): Exiting after ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES"
+# exit 1
+# *****************************************************************
 
 #-----------------------------------------------------------------------------
 
@@ -1951,6 +1980,11 @@ src/frontend/CxxFrontend/EDG/EDG_6.0/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_6.0/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_6.0/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_6.0/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.1/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.1/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.1/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.1/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.1/lib/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
 
@@ -2317,6 +2351,7 @@ tests/nonsmoke/functional/CompileTests/C99_tests/Makefile
 tests/nonsmoke/functional/CompileTests/C11_tests/Makefile
 tests/nonsmoke/functional/CompileTests/CudaTests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx_tests/Makefile
+tests/nonsmoke/functional/CompileTests/Cxx03_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx11_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx14_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx17_tests/Makefile

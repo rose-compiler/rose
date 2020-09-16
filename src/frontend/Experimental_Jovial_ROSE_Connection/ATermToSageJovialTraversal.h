@@ -86,13 +86,13 @@ ATbool traverse_CharacterLiteral         (ATerm term, std::string &str_literal);
 
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
 ATbool    match_StatusItemDescription (ATerm term);
-ATbool traverse_StatusItemDescription (ATerm term, std::list<SgInitializedName*> &status_list, Sawyer::Optional<SgExpression*> &status_size);
-ATbool traverse_StatusConstant        (ATerm term, SgInitializedName* &init_name, SgType* &enum_type, SgExpression* init_expr);
+ATbool traverse_StatusItemDescription (ATerm term, SgEnumDeclaration* enum_decl, Sawyer::Optional<SgExpression*> &status_size);
+ATbool traverse_StatusConstant        (ATerm term, SgEnumDeclaration* enum_decl, int value);
 ATbool traverse_StatusConstant        (ATerm term, SgExpression* &expr);
-ATbool traverse_DefaultSublist        (ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type);
-ATbool traverse_OptDefaultSublist     (ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type);
-ATbool traverse_StatusList            (ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type);
-ATbool traverse_SpecifiedSublist      (ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type);
+ATbool traverse_DefaultSublist        (ATerm term, SgEnumDeclaration* enum_decl);
+ATbool traverse_OptDefaultSublist     (ATerm term, SgEnumDeclaration* enum_decl);
+ATbool traverse_StatusList            (ATerm term, SgEnumDeclaration* enum_decl);
+ATbool traverse_SpecifiedSublist      (ATerm term, SgEnumDeclaration* enum_decl);
 
 // 2.1.1.7 POINTER TYPE DESCRIPTIONS
 ATbool traverse_PointerItemDescription (ATerm term, SgType* & type);
@@ -235,6 +235,7 @@ ATbool traverse_AssignmentStatement(ATerm term);
 // 4.2 LOOP STATEMENTS
 ATbool traverse_WhileStatement  (ATerm term);
 ATbool traverse_ForStatement    (ATerm term);
+ATbool traverse_ForClause       (ATerm term, std::string &control_var_name);
 ATbool traverse_ForClause       (ATerm term, SgExpression* &var_ref, SgExpression* &init,
                                              SgExpression* &phrase1, SgExpression* &phrase2,
                                              int &phrase1_enum, int &phrase2_enum);

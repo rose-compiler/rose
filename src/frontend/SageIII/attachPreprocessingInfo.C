@@ -754,7 +754,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
   // into the source file.
   // printf ("sageFilePtr->get_collectAllCommentsAndDirectives() = %s \n",sageFilePtr->get_collectAllCommentsAndDirectives() ? "true" : "false");
 
-     bool processAllFiles = sageFilePtr->get_collectAllCommentsAndDirectives();
+  // bool processAllFiles = sageFilePtr->get_collectAllCommentsAndDirectives();
 
   // To support initial testing we will call one phase immediately after the other.  Late we will call the second phase, header 
   // file processing, from within the unparser when we know what header files are intended to be unparsed.
@@ -798,6 +798,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      printf ("In attachPreprocessingInfo(): sageFilePtr->get_header_file_unparsing_optimization_header_file() = %s \n",sageFilePtr->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
 #endif
 
+#if 0
      if (header_file_unparsing_optimization_source_file == true)
         {
 #if 0
@@ -805,6 +806,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 #endif
           processAllFiles = false;
         }
+#endif
 
 #if 0
      printf ("In attachPreprocessingInfo(): processAllFiles = %s \n",processAllFiles ? "true" : "false");
@@ -875,6 +877,21 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 #if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
+#endif
+
+
+#if 1
+  // DQ (8/26/2020): This code must be placed here (after the comments and CPP directives have not been added to the AST).
+     if (SgProject::get_verbose() > 1)
+        {
+          printf ("Calling fixupInitializersUsingIncludeFiles() \n");
+        }
+
+     SgProject* project = SageInterface::getProject(sageFilePtr);
+     ROSE_ASSERT(project != NULL);
+
+  // DQ (8/26/2020): Remove the redundent include files for initializers.
+     fixupInitializersUsingIncludeFiles(project);
 #endif
 
 #if 0

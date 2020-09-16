@@ -249,6 +249,18 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseUnaryAddOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseSizeOfOp                (SgExpression* expr, SgUnparse_Info& info);  
 
+       // DQ (7/26/2020): Adding support for C++20 spaceship operator.
+          virtual void unparseSpaceshipOp             (SgExpression* expr, SgUnparse_Info& info);
+
+       // DQ (7/26/2020): Adding support for C++20 await expression.
+          virtual void unparseAwaitExpression         (SgExpression* expr, SgUnparse_Info& info);
+
+       // DQ (7/26/2020): Adding support for C++20 choose expression.
+          virtual void unparseChooseExpression        (SgExpression* expr, SgUnparse_Info& info);
+
+       // DQ (7/26/2020): Adding support for C++20 expression folding expression.
+          virtual void unparseFoldExpression          (SgExpression* expr, SgUnparse_Info& info);
+
        // DQ (6/20/2013): Added support for C/C++ alignment extension __alignof__ operator.
           virtual void unparseAlignOfOp               (SgExpression* expr, SgUnparse_Info& info);  
 
@@ -547,8 +559,10 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_leading_whitespace_start, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_subsequence_start);
 #endif
 
+       // DQ (8/25/2020): Changed this to a static function so that it could be called from UnparseLanguageIndependentConstructs::unparseExprList().
        // DQ (1/30/2019): We need to call this from unparseOneElemConInit() in unparseCxxStatements.C.
-          bool isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, SgUnparse_Info& info );
+       // bool isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, SgUnparse_Info& info );
+          static bool isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, SgUnparse_Info& info );
 
        // DQ (1/8/2020): Refactors the output of base classes so that it can be supported in the unparseClassDefnStmt() and unparseClassType() functions.
           void unparseClassInheritanceList ( SgClassDefinition* classdefn_stmt, SgUnparse_Info& ninfo );
