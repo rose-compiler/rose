@@ -835,9 +835,10 @@ unsigned int SgRangeBasedForStatement::cfgFindChildIndex(SgNode* n)
                                       {
                                         cerr << "Error: SgForStatement::cfgFindChildIndex(): cannot find a matching child for SgNode n:";
                                         cerr << n->class_name() << endl;
-                                        if (isSgLocatedNode(n))
+                                        SgLocatedNode* located = isSgLocatedNode(n);
+                                        if (located != NULL)
                                            {
-                                             isSgLocatedNode(n)->get_file_info()->display();
+                                             located->get_file_info()->display();
                                            }
                                         ROSE_ASSERT (!"Bad child in range based for statement");
                                       }
