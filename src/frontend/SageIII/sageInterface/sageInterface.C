@@ -21831,15 +21831,14 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
     SgScopeStatement* scope = isSgScopeStatement(parent);    //Winnie, the scope that include target_loop
 
-    SgStatement* insert_target;
     while(scope == NULL)
     {
        parent = isSgStatement(parent->get_parent());
        scope = isSgScopeStatement(parent);
     }
 
-    insert_target = findLastDeclarationStatement(scope);
-    if(insert_target != NULL)
+    SgStatement* insert_target = findLastDeclarationStatement(scope);
+    if (insert_target != NULL)
         insert_target = getNextStatement(insert_target);
     else
         insert_target = getFirstStatement(scope);
@@ -21925,6 +21924,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
    //Winnie, init statement of the loop header, copy the lower bound, we are dealing with a range, the lower bound should always be "0"
     //Winnie, declare a brand new var as the new index
       string ivar_name = "__collapsed_index"+ generateUniqueVariableName (global_scope,"");
+      ROSE_ASSERT(insert_target != NULL);
       SgVariableDeclaration* new_index_decl = buildVariableDeclaration(ivar_name, buildIntType(), NULL, insert_target->get_scope());
       SgVariableSymbol * collapsed_index_symbol = getFirstVarSym (new_index_decl);
       insertStatementBefore(insert_target, new_index_decl);
@@ -21935,7 +21935,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
 
      SgBasicBlock* body = isSgBasicBlock(deepCopy(temp_target_loop->get_loop_body())); // normalized loop has a BB body
-     ROSE_ASSERT(body);
+     ROSE_ASSERT(body != NULL);
      SgExpression* new_exp = NULL;
      SgExpression* remain_exp_temp = buildVarRefExp(ivar_name, scope);
      std::vector<SgStatement*> new_stmt_list;
