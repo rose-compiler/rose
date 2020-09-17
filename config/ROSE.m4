@@ -63,7 +63,13 @@ if test "x$with_CXX_DEBUG" = "xyes"; then
   AC_MSG_NOTICE([using default options for maximal debug (true case)])
   case $CXX in
     g++)
-      CXX_DEBUG="-g"
+    # DQ (9/16/2020): Adding -fno-var-tracking-asignment -fno-misleading-indentation -wfatal-errors
+    # CXX_DEBUG="-g"
+    # CXX_DEBUG="-g -fno-var-tracking-asignment -fno-misleading-indentation"
+    # CXX_DEBUG="-g -fno-misleading-indentation"
+    # CXX_DEBUG="-g -Wno-misleading-indentation"
+    # CXX_DEBUG="-g -fno-var-tracking-assignments"
+      CXX_DEBUG="-g -fno-var-tracking-assignments -Wno-misleading-indentation"
       ;;
     icpc)
       CXX_DEBUG="-g"
