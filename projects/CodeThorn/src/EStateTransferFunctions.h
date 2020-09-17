@@ -49,9 +49,9 @@ namespace CodeThorn {
 #endif
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
-
   protected:
     CodeThorn::Analyzer* _analyzer;
+    std::string _rersHybridOutputFunctionName="calculate_output"; // only used if rersmode is active
   };
 }
 

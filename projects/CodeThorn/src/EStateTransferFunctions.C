@@ -76,7 +76,7 @@ void EStateTransferFunctions::initDiagnostics() {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
         ROSE_ASSERT(funCall);
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName=="calculate_outputFP") {
+        if(funName==_rersHybridOutputFunctionName) {
           // RERS global vars binary handling
           PState _pstate=*estate->pstate();
           RERS_Problem::rersGlobalVarsCallInitFP(getAnalyzer(),_pstate, omp_get_thread_num());
@@ -164,7 +164,7 @@ void EStateTransferFunctions::initDiagnostics() {
     if(_analyzer->getOptionsRef().rers.rersBinary) {
       // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
       string funName=SgNodeHelper::getFunctionName(funCall);
-      if(funName=="calculate_outputFP") {
+      if(funName==_rersHybridOutputFunctionName) {
         // logger[DEBUG]<< "rers-binary mode: skipped static-analysis call."<<endl;
         return elistify();
       }
@@ -363,7 +363,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge,
     if(_analyzer->getOptionsRef().rers.rersBinary) {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName=="calculate_outputFP") {
+        if(funName==_rersHybridOutputFunctionName) {
           EState newEState=currentEState;
           newEState.setLabel(edge.target());
           newEState.callString=cs;
@@ -400,7 +400,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge,
     if(_analyzer->getOptionsRef().rers.rersBinary) {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName=="calculate_outputFP") {
+        if(funName==_rersHybridOutputFunctionName) {
           EState newEState=currentEState;
           newEState.setLabel(edge.target());
           newEState.callString=cs;

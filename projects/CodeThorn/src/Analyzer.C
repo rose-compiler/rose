@@ -1006,7 +1006,7 @@ void CodeThorn::Analyzer::setElementSize(VariableId variableId, SgType* elementT
   unsigned int typeSize=getVariableIdMapping()->getTypeSize(elementType);
   if(getVariableIdMapping()->getElementSize(variableId)!=0
      && getVariableIdMapping()->getElementSize(variableId)!=typeSize) {
-    logger[WARN]<<"Element type size mismatch: "
+    SAWYER_MESG(logger[WARN])<<"Element type size mismatch: "
                 <<"Analyzer::setElementSize: variableId name: "<<variableIdMapping->variableName(variableId)
                 <<"typesize(from VID):"<<getVariableIdMapping()->getElementSize(variableId)
                 <<" typeSize(fromtype): "<<typeSize<<" of "<<elementType->unparseToString()
@@ -1466,7 +1466,7 @@ EState CodeThorn::Analyzer::createVerificationErrorEState(EState estate, Label t
 
 void CodeThorn::Analyzer::initLabeledAssertNodes(SgProject* root) {
   _assertNodes=listOfLabeledAssertNodes(root);
-  cout<<"DEBUG: number of labeled assert nodes: "<<_assertNodes.size()<<endl;
+  SAWYER_MESG(logger[INFO])<<"DEBUG: number of labeled assert nodes: "<<_assertNodes.size()<<endl;
 }
 
 list<pair<SgLabelStatement*,SgNode*> > CodeThorn::Analyzer::listOfLabeledAssertNodes(SgProject* root) {
@@ -2003,7 +2003,7 @@ void CodeThorn::Analyzer::initAstNodeInfo(SgNode* node) {
 void CodeThorn::Analyzer::generateAstNodeInfo(SgNode* node) {
   ROSE_ASSERT(node);
   if(!cfanalyzer) {
-    logger[ERROR]<< "CodeThorn::Analyzer:: no cfanalyzer available."<<endl;
+    SAWYER_MESG(logger[ERROR])<< "CodeThorn::Analyzer:: no cfanalyzer available."<<endl;
     exit(1);
   }
   RoseAst ast(node);
@@ -2041,9 +2041,9 @@ bool CodeThorn::Analyzer::checkTransitionGraph() {
 bool CodeThorn::Analyzer::checkEStateSet() {
   for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
     if(estateSet.estateId(*i)==NO_ESTATE || (*i)->label()==Label()) {
-      logger[ERROR]<< "estateSet inconsistent. "<<endl;
-      logger[ERROR]<< "  label   :"<<(*i)->label()<<endl;
-      logger[ERROR]<< "   estateId: "<<estateSet.estateId(*i)<<endl;
+      SAWYER_MESG(logger[ERROR])<< "estateSet inconsistent. "<<endl;
+      SAWYER_MESG(logger[ERROR])<< "  label   :"<<(*i)->label()<<endl;
+      SAWYER_MESG(logger[ERROR])<< "   estateId: "<<estateSet.estateId(*i)<<endl;
       return false;
     }
   }
@@ -2054,9 +2054,9 @@ bool CodeThorn::Analyzer::checkEStateSet() {
 bool CodeThorn::Analyzer::isConsistentEStatePtrSet(set<const EState*> estatePtrSet)  {
   for(set<const EState*>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
     if(estateSet.estateId(*i)==NO_ESTATE || (*i)->label()==Label()) {
-      logger[ERROR]<< "estatePtrSet inconsistent. "<<endl;
-      logger[ERROR]<< "  label   :"<<(*i)->label()<<endl;
-      logger[ERROR]<< "   estateId: "<<estateSet.estateId(*i)<<endl;
+      SAWYER_MESG(logger[ERROR])<< "estatePtrSet inconsistent. "<<endl;
+      SAWYER_MESG(logger[ERROR])<< "  label   :"<<(*i)->label()<<endl;
+      SAWYER_MESG(logger[ERROR])<< "   estateId: "<<estateSet.estateId(*i)<<endl;
       return false;
     }
   }
@@ -2385,7 +2385,7 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
       EState estate=(*i).estate;
       if(variableIdMapping->hasClassType(lhsVar)) {
         // assignments to struct variables are not supported yet (this test does not detect s1.s2 (where s2 is a struct, see below)).
-        logger[WARN]<<"assignment of structs (copy constructor) is not supported yet. Target update ignored! (unsound)"<<endl;
+        SAWYER_MESG(logger[WARN])<<"assignment of structs (copy constructor) is not supported yet. Target update ignored! (unsound)"<<endl;
       } else if(variableIdMapping->hasCharType(lhsVar)) {
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else if(variableIdMapping->hasIntegerType(lhsVar)) {
@@ -2488,9 +2488,9 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
           //TODO: getExprAnalyzer()->writeToMemoryLocation(label,&pstate2,arrayElementId,(*i).value()); // *i is assignment-rhs evaluation result
           memoryUpdateList.push_back(make_pair(estate,make_pair(arrayElementAddr,(*i).result)));
         } else {
-          logger[ERROR] <<"array-access uses expr for denoting the array. Normalization missing."<<endl;
-          logger[ERROR] <<"expr: "<<lhs->unparseToString()<<endl;
-          logger[ERROR] <<"arraySkip: "<<getSkipArrayAccesses()<<endl;
+          SAWYER_MESG(logger[ERROR]) <<"array-access uses expr for denoting the array. Normalization missing."<<endl;
+          SAWYER_MESG(logger[ERROR]) <<"expr: "<<lhs->unparseToString()<<endl;
+          SAWYER_MESG(logger[ERROR]) <<"arraySkip: "<<getSkipArrayAccesses()<<endl;
           exit(1);
         }
       }
@@ -2537,11 +2537,11 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
     } else {
       //cout<<"DEBUG: else (no var, no ptr) ... "<<endl;
       if(getSkipArrayAccesses()&&isSgPointerDerefExp(lhs)) {
-        logger[WARN]<<"skipping pointer dereference: "<<lhs->unparseToString()<<endl;
+        SAWYER_MESG(logger[WARN])<<"skipping pointer dereference: "<<lhs->unparseToString()<<endl;
       } else {
-        logger[ERROR] << "transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
-        logger[ERROR] << "expr: "<< lhs->unparseToString()<<endl;
-        logger[ERROR] << "type: "<<lhs->class_name()<<endl;
+        SAWYER_MESG(logger[ERROR]) << "transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
+        SAWYER_MESG(logger[ERROR]) << "expr: "<< lhs->unparseToString()<<endl;
+        SAWYER_MESG(logger[ERROR]) << "type: "<<lhs->class_name()<<endl;
         //cerr << "performing no update of state!"<<endl;
         exit(1);
       }
@@ -2697,7 +2697,7 @@ list<EState> CodeThorn::Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyz
         ConstraintSet s2=evalResult.exprConstraints;
         newCSet=s1+s2;
       } else {
-        logger[ERROR]<<"Expected true/false edge. Found edge:"<<edge.toString()<<endl;
+        SAWYER_MESG(logger[ERROR])<<"Expected true/false edge. Found edge:"<<edge.toString()<<endl;
         exit(1);
       }
 #endif
