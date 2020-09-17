@@ -1466,6 +1466,7 @@ EState CodeThorn::Analyzer::createVerificationErrorEState(EState estate, Label t
 
 void CodeThorn::Analyzer::initLabeledAssertNodes(SgProject* root) {
   _assertNodes=listOfLabeledAssertNodes(root);
+  cout<<"DEBUG: number of labeled assert nodes: "<<_assertNodes.size()<<endl;
 }
 
 list<pair<SgLabelStatement*,SgNode*> > CodeThorn::Analyzer::listOfLabeledAssertNodes(SgProject* root) {
