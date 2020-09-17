@@ -355,6 +355,15 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+       // CR (9/16/2020): Added support for Jovial bit value.
+          case V_SgJovialBitVal:
+             {
+               const SgJovialBitVal* expr = isSgJovialBitVal(this);
+               ROSE_ASSERT(expr);
+               s = expr->get_valueString();
+               break;
+             }
+
        // DQ (2/12/2019): Adding support for SgWcharVal.
           case V_SgWcharVal:
              {
