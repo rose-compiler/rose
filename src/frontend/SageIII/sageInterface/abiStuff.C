@@ -123,11 +123,12 @@ StructLayoutInfo NonpackedTypeLayoutGenerator::layoutType(SgType* t) const {
 
         numElements = multiply->get_lhs_operand();
       }  
-      if (!isSgValueExp(numElements)) {
+      SgValueExp* valuexpr = isSgValueExp(numElements);
+      if (valuexpr == NULL) {
         cerr << "Error: trying to compute static size of an array with non-constant size" << endl;
         abort();
       }
-      layout.size *= SageInterface::getIntegerConstantValue(isSgValueExp(numElements));
+      layout.size *= SageInterface::getIntegerConstantValue(valuexpr);
       return layout;
     }
     case V_SgTypeComplex: {
