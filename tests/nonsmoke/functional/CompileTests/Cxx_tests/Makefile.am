@@ -913,7 +913,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2012_126.C \
    test2012_127.C \
    test2012_128.C \
-   test2012_129.C \
    test2012_12.C \
    test2012_130.C \
    test2012_131.C \
@@ -1407,7 +1406,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2014_02.C \
    test2014_03.C \
    test2014_04.C \
-   test2014_05.C \
    test2014_06.C \
    test2014_07.C \
    test2014_08.C \
@@ -1621,8 +1619,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2015_112.C \
    test2015_113.C \
    test2015_114.C \
-   test2015_115.C \
-   test2015_116.C \
    test2015_117.C \
    test2015_118.C \
    test2015_119.C \
@@ -1648,7 +1644,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2015_145.C \
    test2015_146.C \
    test2015_147.C \
-   test2015_148.C \
    test2015_149.C \
    test2015_150.C \
    test2015_151.C \
@@ -1705,10 +1700,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2016_12.C \
    test2016_13.C \
    test2016_14.C \
-   test2016_15.C \
-   test2016_16.C \
-   test2016_17.C \
-   test2016_18.C \
    test2016_19.C \
    test2016_21.C \
    test2016_25.C \
@@ -1761,7 +1752,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2016_86.C \
    test2016_87.C \
    test2016_88.C \
-   test2016_89.C \
    test2016_91.C \
    test2016_93.C \
    test2017_01.C \
@@ -1805,7 +1795,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2017_45.C \
    test2017_48.C \
    test2017_49.C \
-   test2017_50.C \
    test2017_51.C \
    test2017_52.C \
    test2017_53.C \
@@ -1931,7 +1920,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2019_23.C \
    test2019_24.C \
    test2020_01.C \
-   test2020_02.C \
    test2020_03.C \
    test2020_04.C \
    test2020_05.C \
@@ -2577,6 +2565,51 @@ else
      test2013_164.C \
      test2013_212.C 
 endif
+
+
+# DQ (9/17/2020): This is a new organization of the files that are passing only specific compilers.
+if USING_INTEL_COMPILER
+# INTEL compiler
+#      EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+
+else
+if USING_CLANG_COMPILER
+# CLANG compiler
+#      TESTCODE_CURRENTLY_FAILING += 
+
+#      EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+else
+if OS_MACOSX
+#      EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+else
+#  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+
+# GNU compiler
+if ROSE_USING_GCC_VERSION_LATER_10_1
+      # skip these codes when using GNU 10.1 (testing)
+else
+      # DQ (7/23/2020): These are failing code for EDG 6.0 and GNU 10.1 (debugging this).
+#     EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+endif
+ # The test codes fail CLANG 10.0
+      EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2012_129.C \
+   test2014_05.C \
+   test2015_115.C \
+   test2015_116.C \
+   test2015_148.C \
+   test2016_15.C \
+   test2016_16.C \
+   test2016_17.C \
+   test2016_18.C \
+   test2016_89.C \
+   test2017_50.C \
+   test2020_02.C 
+endif
+endif
+endif
+
+
 
 # Switch between full and short list of test codes
 if ROSE_USE_LONG_MAKE_CHECK_RULE

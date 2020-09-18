@@ -4189,12 +4189,16 @@ SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFi
           ROSE_ASSERT(false);
 #endif
 
+#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
        // DQ (5/20/2020): Collect the Comments and CPP directives so that can be inserted into 
        // the AST as part of building the source file fro this include file.
           ROSEAttributesList* returnListOfAttributes = NULL;
-#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
+
        // DQ (7/4/2020): This function should not be called for binaries (only for C/C++ code).
           returnListOfAttributes = getPreprocessorDirectives(filename);
+
+       // DQ (9/17/2020): Added a use of the variable to prevent compiler warning.
+          ROSE_ASSERT(returnListOfAttributes != NULL);
 #endif
 
 #if 1
@@ -5534,6 +5538,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 // DQ (10/11/2007): I think this is redundant with the Unparser::unparseProject() member function
 // But it is allowed to call it directly from the user's translator if compilation using the backend 
 // is not required!  So we have to allow it to be here.
+
 void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
    {
      ASSERT_not_null(project);
@@ -5798,6 +5803,9 @@ void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormat
 
 
 // DQ (1/19/2010): Added support for refactored handling directories of files.
+
+/* Disable address sanitizer for this function */
+// __attribute__((no_sanitize("address")))
 void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
    {
      ASSERT_not_null(fileList);
@@ -5816,10 +5824,53 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
      ROSE_ASSERT(false);
 #endif
 
+  // DQ (9/17/2020): Testing using address sanitizer.
+     ROSE_ASSERT(fileList != NULL);
+     ROSE_ASSERT(fileList->get_listOfFiles().size() >= 0);
+
+#if 0
+  // DQ (9/17/2020): Testing  for error reported by address sanitizer.
+     printf ("fileList          = %p \n",fileList);
+     printf ("unparseFormatHelp = %p \n",unparseFormatHelp);
+     printf ("unparseDelegate   = %p \n",unparseDelegate);
+
+     void* status_of_function_stack_offset = &status_of_function;
+     printf ("status_of_function_stack_offset = %p \n",status_of_function_stack_offset);
+
+     void* fileList_stack_offset = &fileList;
+     printf ("fileList_stack_offset = %p \n",fileList_stack_offset);
+
+     void* unparseFormatHelp_stack_offset = &unparseFormatHelp;
+     printf ("unparseFormatHelp_stack_offset = %p \n",unparseFormatHelp_stack_offset);
+
+     void* unparseDelegate_stack_offset = &unparseDelegate;
+     printf ("unparseDelegate_stack_offset = %p \n",unparseDelegate_stack_offset);
+#endif
+
+  // for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
+  // size_t i;
+  // for (i=0; i < fileList->get_listOfFiles().size(); ++i)
+  // for (i=0; i < fileList->get_listOfFiles().size(); i++)
      for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
         {
           SgFile* file = fileList->get_listOfFiles()[i];
-
+#if 0
+       // DQ (9/17/2020): Testing  for error reported by address sanitizer.
+          printf ("file = %p \n",file);
+#endif
+#if 0
+       // DQ (9/17/2020): This appears to be required to avoid address sanitizer reporting an error.
+       // void* file_stack_offset = &file;
+       // printf ("file_stack_offset = %p \n",file_stack_offset);
+#endif
+#if 0
+          printf ("file (address) = %p \n",&file);
+       // printf ("file (address) = %p \n",file);
+#endif
+#if 0
+          void* i_stack_offset = &i;
+          printf ("i_stack_offset = %p \n",i_stack_offset);
+#endif
        // #if 0
        // DQ (4/9/2020): Added header file unparsing feature specific debug level.
           if (SgProject::get_unparseHeaderFilesDebug() >= 3)
@@ -5834,9 +5885,7 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
 
           if (SgProject::get_verbose() > 1)
              {
-               printf("Unparsing file = %p = %s \n",
-                      file,
-                      file->class_name().c_str());
+               printf("Unparsing file = %p = %s \n",file,file->class_name().c_str());
              }
 
 #ifndef _MSC_VER

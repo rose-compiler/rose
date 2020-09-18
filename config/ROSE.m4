@@ -71,7 +71,8 @@ if test "x$with_CXX_DEBUG" = "xyes"; then
     # CXX_DEBUG="-g -Wno-misleading-indentation"
     # CXX_DEBUG="-g -fno-var-tracking-assignments"
     # CXX_DEBUG="-g -fno-var-tracking-assignments -Wno-misleading-indentation"
-      CXX_DEBUG="-g"
+    # CXX_DEBUG="-g"
+      CXX_DEBUG="-g -fno-var-tracking-assignments -Wno-misleading-indentation"
       ;;
     icpc)
       CXX_DEBUG="-g"
