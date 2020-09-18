@@ -23532,6 +23532,74 @@ void SageInterface::recursivePrintCurrentAndParent (SgNode* n)
   recursivePrintCurrentAndParent (n->get_parent());
 } 
 
+// print essential information from any AST node
+// hasRemaining if this node has a sibling node to be visited next.
+static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out)
+{ 
+  // there may be NULL children!!
+  //if (!node) return;
+
+  out<<prefix;
+  out<< (hasRemaining?"├──": "└──");
+  if (!node)
+  {
+    out<<" NULL "<<endl;
+    return;
+  }
+
+  // print address
+  out<<"@"<<node<<" "<< node->class_name()<<" ";
+  //file info
+  if (SgLocatedNode* lnode= isSgLocatedNode(node))
+  {
+    out<< Rose::StringUtility::stripPathFromFileName ( lnode->get_file_info()->get_filename() )<<" "<<lnode->get_file_info()->get_line()<<":"<<lnode->get_file_info()->get_col();
+  }
+  
+  if (SgFunctionDeclaration* f = isSgFunctionDeclaration(node) )
+    out<<" "<< f->get_qualified_name();
+
+  if (SgInitializedName * v = isSgInitializedName(node) )
+    out<<" "<< v->get_qualified_name();
+
+  out<<endl;
+
+  std::vector<SgNode* > children = node->get_traversalSuccessorContainer();
+  for (int i =0; i< children.size(); i++)
+  {
+    bool n_hasRemaining=false;
+    if (i+1<children.size())
+      n_hasRemaining=true;
+
+    string suffix= hasRemaining? "│   " : "    ";
+    string n_prefix = prefix+suffix;
+    serialize (children[i], n_prefix, n_hasRemaining, out);
+  }
+}
+
+void SageInterface::printAST(SgNode* node)
+{
+  ostringstream oss;
+  string prefix;
+  serialize(node, prefix, false, oss);
+  cout<<oss.str();
+}
+
+void printAST2TextFile (SgNode* node, const std::string& filename)
+{
+  printAST2TextFile (node, filename.c_str());
+}
+
+void SageInterface::printAST2TextFile(SgNode* node, const char* filename)
+{
+  ostringstream oss;
+  string prefix;
+  serialize(node, prefix, false, oss);
+  ofstream textfile;
+  textfile.open(filename, ios::out | ios::app);
+  textfile<<oss.str();
+  textfile.close();
+}
+
 void SageInterface:: saveToPDF(SgNode* node)
 {
   saveToPDF(node, string("temp.pdf") );
