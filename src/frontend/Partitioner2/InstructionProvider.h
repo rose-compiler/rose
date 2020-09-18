@@ -185,6 +185,9 @@ public:
     /** Default memory byte order. */
     ByteOrder::Endianness defaultByteOrder() const { return disassembler_->byteOrder(); }
 
+    /** Word size in bits. */
+    size_t wordSize() const { return 8 * disassembler_->wordSizeBytes(); }
+
     /** Alignment requirement for instructions. */
     size_t instructionAlignment() const { return disassembler_->instructionAlignment(); }
 

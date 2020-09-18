@@ -7,6 +7,8 @@
 #include <cassert>
 #include <algorithm>
 
+#include "LTLRersMapping.h"
+
 #include "rose_config.h"
 #ifdef HAVE_SPOT
 
@@ -15,7 +17,6 @@
 #include "SpotTgba.h"
 #include "ParProSpotTgba.h"
 #include "PropertyValueTable.h"
-#include "LTLRersMapping.h"
 
 //SPOT includes
 #include "ltlparse/public.hh"
@@ -170,10 +171,10 @@ namespace CodeThorn {
       void init(std::string ltl_formulae_file);
       void init(std::list<std::string> ltl_formulae);
       void checkLtlProperties(TransitionGraph& stg,
-					std::set<int> inVals, std::set<int> outVals, bool withCounterExample, bool spuriousNoAnswers);
+					CodeThorn::LtlRersMapping ltlRersMapping, bool withCounterExample, bool spuriousNoAnswers);
       void checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<std::string> annotationsOfModeledTransitions);
       void checkSingleProperty(int propertyNum, TransitionGraph& stg,
-						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers);
+						CodeThorn::LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers);
       PropertyValue checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, set<std::string> annotationsOfModeledTransitions);
       ParProSpotTgba* toTgba(ParProTransitionGraph& stg);
       PropertyValueTable* getLtlResults();

@@ -1192,6 +1192,25 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
            curprint(")");
         }
 
+  // WordsPerEntry (for anonymous table declarations)
+     SgJovialTableStatement* table_decl = NULL; // C++11 nullptr
+     if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
+        {
+           table_decl = dynamic_cast<SgJovialTableStatement*>(var_decl->get_baseTypeDefiningDeclaration());
+           ASSERT_not_null(table_decl);
+           if (table_decl->get_has_table_entry_size())
+             {
+               // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
+               if (table_decl->get_table_entry_size() != NULL)
+                 {
+                   curprint("W ");
+                   unparseExpression(table_decl->get_table_entry_size(), info);
+                 }
+               else curprint("V");
+             }
+        }
+
+  // Initialization
      if (init != NULL)
         {
            curprint(" = ");
@@ -1203,23 +1222,7 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
   // Unparse anonymous type declaration body if present
      if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
-           SgDeclarationStatement* def_decl = var_decl->get_baseTypeDefiningDeclaration();
-           ASSERT_not_null(def_decl);
-
-           SgJovialTableStatement* table_decl = dynamic_cast<SgJovialTableStatement*>(def_decl);
            ASSERT_not_null(table_decl);
-
-        // WordsPerEntry for anonymous table declarations
-           if (table_decl->get_has_table_entry_size())
-              {
-                 // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
-                 if (table_decl->get_table_entry_size() != NULL)
-                    {
-                       curprint("W ");
-                       unparseExpression(table_decl->get_table_entry_size(), info);
-                    }
-                 else curprint("V");
-              }
 
            SgClassDefinition* table_def = table_decl->get_definition();
            ASSERT_not_null(table_def);

@@ -19,7 +19,6 @@ using namespace Sawyer::Message;
 Sawyer::Message::Facility ExprAnalyzer::logger;
 
 ExprAnalyzer::ExprAnalyzer() {
-  initDiagnostics();
   initViolatingLocations();
 }
 
@@ -971,8 +970,10 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         SAWYER_MESG(logger[WARN])<<"evalArrayReferenceOp:"<<pstate2.toString(_variableIdMapping)<<endl;
 
         if(mode==MODE_ADDRESS) {
-          SAWYER_MESG(logger[FATAL])<<"Internal error: ExprAnalyzer::evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
-          exit(1);
+          SAWYER_MESG(logger[WARN])<<"ExprAnalyzer::evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
+          res.result=CodeThorn::Top();
+          resultList.push_back(res);
+          return resultList;
         }
         // array variable NOT in state. Special space optimization case for constant array.
         if(_variableIdMapping->hasArrayType(arrayVarId) /* MS 5/20/2020: removed mode: && _analyzer->getOptionsRef().explicitArrays==false*/) {

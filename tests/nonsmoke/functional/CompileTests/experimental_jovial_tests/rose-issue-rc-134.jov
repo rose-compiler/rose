@@ -1,0 +1,9 @@
+START
+DEF ITEM bitval B 16 = 4B'2107';
+
+PROGRAM main ;
+BEGIN
+  bitval = B'0000111122223333';
+END
+
+TERM

@@ -30,8 +30,8 @@ class VectorXY
 class Hydro 
 {
   public: Hydro(int c);
-// velocity BC values
   class VectorXY *bcVelocity;
+// velocity BC values
   int cycle;
 }
 ;

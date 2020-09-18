@@ -49,8 +49,6 @@ CODETHORN_SOLO_HEADER_FILES=\
   CtxAttribute.h \
   CtxLattice.h \
   CtxPropertyStateFactory.h \
-  CtxReachabilityFactory.h \
-  CtxReachabilityTransfer.h \
   CtxTransfer.h \
   DataDependenceVisualizer.h \
   EqualityMaintainer.h \
@@ -88,9 +86,9 @@ CODETHORN_HEADER_FILES=\
   CTIOLabeler.h \
   CtxCallStrings.h \
   CtxPrioritySolver.h \
-  CtxReachabilityAnalysis.h \
   CtxReachabilityLattice.h \
   CtxSolver0.h \
+  CtxUnfoldedAnalysis.h \
   DataDependenceVisualizer.h \
   DataRaceDetection.h \
   defUseQuery.h \
@@ -148,6 +146,7 @@ CODETHORN_HEADER_FILES=\
   CodeThornOptions.h \
   LTLOptions.h \
   ltlthorn-lib/ParProOptions.h \
+  ltlthorn-lib/LTLRersMapping.h \
   PASolver1.h \
   PointerAnalysisInterface.h \
   PragmaHandler.h \
@@ -214,9 +213,9 @@ CODETHORN_SOURCE_FILES=\
   CTIOLabeler.C \
   CtxCallStrings.C \
   CtxPrioritySolver.C \
-  CtxReachabilityAnalysis.C \
   CtxReachabilityLattice.C \
   CtxSolver0.C \
+  CtxUnfoldedAnalysis.C \
   DataDependenceVisualizer.C \
   defUseQuery.C \
   DataRaceDetection.C \
@@ -256,6 +255,7 @@ CODETHORN_SOURCE_FILES=\
   CodeThornOptions.C \
   LTLOptions.C \
   ltlthorn-lib/ParProOptions.C \
+  ltlthorn-lib/LTLRersMapping.C \
   LVAnalysis.C \
   LVAstAttribute.C \
   LVAstAttributeInterface.C \
@@ -341,7 +341,6 @@ LTLTHORN_HEADER_FILES=\
   z3-prover-connection/PhiStatement.h \
   ltlthorn-lib/CounterexampleAnalyzer.h \
   ltlthorn-lib/LtsminConnection.h \
-  ltlthorn-lib/LTLRersMapping.h \
   ltlthorn-lib/ParProAutomataGenerator.h \
   ltlthorn-lib/ParProAutomata.h \
   ltlthorn-lib/ParProAnalyzer.h \
@@ -370,7 +369,6 @@ LTLTHORN_SOURCE_FILES=\
   z3-prover-connection/PhiStatement.C \
   ltlthorn-lib/CounterexampleAnalyzer.C \
   ltlthorn-lib/LtsminConnection.C \
-  ltlthorn-lib/LTLRersMapping.C \
   ltlthorn-lib/ParProAutomataGenerator.C \
   ltlthorn-lib/ParProAutomata.C \
   ltlthorn-lib/ParProAnalyzer.C \
@@ -722,8 +720,8 @@ CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain unit-test check-norm
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
-#CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven
-CHECK_WITH_SPOT_ONLY_PASSING=check-svcomp-witness check-ltl check-ltl-driven-reset-analyzer
+#CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven check-svcomp-witness
+CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer
 
 CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_ONLY_PASSING)
 

@@ -94,6 +94,16 @@ struct CtxSolver0 : DFAbstractSolver
     void
     propagate(const ContextString&, Lattice& lat, Label tgt, InternalWorklist& wkl);
     
+    /// activates a @ref callLbl's return node
+    /// \details
+    ///    this is necessary b/c when the call context becomes imprecise the call return node
+    ///    might receive states while the call label has not been traversed. The context
+    ///    mapping will return an empty set and no state will be propagated.
+    ///    When, eventually, the traversal of the call node does not yield to new state's
+    ///    in the callee, the return node will not be traversed again.
+    void
+    activateReturnNode(const ContextString& tgtctx, Label callLbl, InternalWorklist& wkl);
+    
     /// accesses the labeler
     Labeler&
     labeler() { return _labeler; }

@@ -8016,7 +8016,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // DQ (3/31/2004): New cleaned up source file handling
      Rose_STL_Container<string> argcArgvList = argv;
 
-#if DEBUG_COMPILER_COMMAND_LINE || 0
+#define DEBUG_INCLUDE_PATHS 0
+
+#if DEBUG_INCLUDE_PATHS
+     printf ("\n\n****************************************************************************** \n");
+     printf ("****************************************************************************** \n");
+     printf ("*************************** Processing extra paths *************************** \n");
+     printf ("****************************************************************************** \n");
+     printf ("****************************************************************************** \n\n\n");
+#endif
+
+#if DEBUG_COMPILER_COMMAND_LINE || DEBUG_INCLUDE_PATHS
      printf ("In buildCompilerCommandLineOptions: After initialization: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
 #endif
 
@@ -8043,8 +8053,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      ROSE_ASSERT(substringPosition == string::npos);
 #endif
 
-#define DEBUG_INCLUDE_PATHS 0
-
   // DQ (11/7/2018): I need to add some additional include directories to the generate backed compiler command line.
   // This is to support where #include "../file.h" are used and we need to specify the directory of the original source 
   // file (is we don't unparse the header file) or the directory where we are putting the generated source file, if we 
@@ -8056,6 +8064,11 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
   // DQ (11/8/2018): Adding extra include paths identified as being required in the unparsing of headers, either for the source file or for otehr included headers (nested headers).
      const SgSourceFile* sourceFile = isSgSourceFile(this);
+
+#if DEBUG_INCLUDE_PATHS
+     printf ("sourceFile = %p \n",sourceFile);
+     printf ("get_project()->get_extraIncludeDirectorySpecifierList().size() = %zu \n",get_project()->get_extraIncludeDirectorySpecifierList().size());
+#endif
 
   // DQ (12/12/2018): This step to insert extra include paths only applies to source files, not binary files (caught in Jenkins testing).
   // ROSE_ASSERT(sourceFile != NULL);
@@ -8135,6 +8148,14 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              {
                printf ("argcArgvList()[%zu] = %s \n",i,argcArgvList[i].c_str());
              }
+#endif
+
+#if DEBUG_INCLUDE_PATHS
+     printf ("\n****************************************************************************** \n");
+     printf ("****************************************************************************** \n");
+     printf ("*********************** DONE: Processing extra paths ************************* \n");
+     printf ("****************************************************************************** \n");
+     printf ("****************************************************************************** \n\n");
 #endif
 
        // DQ (3/16/2020): Need to change the locations in the argcArgvList where we insert the added 
@@ -8881,6 +8902,11 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
           std::string str = *iter;
           cout<<"\t"<<str<<endl;
         }
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
 
      return compilerNameString;

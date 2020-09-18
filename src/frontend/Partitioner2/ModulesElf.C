@@ -65,10 +65,17 @@ PltEntryMatcher::matchNop(const Partitioner &partitioner, rose_addr_t va) {
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchPush(const Partitioner &partitioner, rose_addr_t va) {
+PltEntryMatcher::matchPush(const Partitioner &partitioner, rose_addr_t va, rose_addr_t &n /*out*/) {
+    n = 0;
+
+    // match "push C" where C is a constant
     if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.discoverInstruction(va))) {
-        if (insn->get_kind() == x86_push)
-            return insn;
+        if (insn->get_kind() == x86_push && insn->nOperands() == 1) {
+            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(insn->operand(0))) {
+                n = ival->get_absoluteValue();
+                return insn;
+            }
+        }
     }
     return NULL;
 }
@@ -119,38 +126,116 @@ PltEntryMatcher::matchIndirectJump(const Partitioner &partitioner, rose_addr_t v
     return NULL;
 }
 
+SgAsmInstruction*
+PltEntryMatcher::matchA64Adrp(const Partitioner &partitioner, rose_addr_t va, rose_addr_t &value /*out*/) {
+    value = 0;
+#ifdef ROSE_ENABLE_ASM_A64
+    // match "adrp X, I" where I is an integer that will be returned through the "value" argument
+    if (SgAsmA64Instruction *insn = isSgAsmA64Instruction(partitioner.discoverInstruction(va))) {
+        if (insn->get_kind() == A64InstructionKind::ARM64_INS_ADRP) {
+            SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(insn->operand(1));
+            ASSERT_not_null(ival);
+            value = ival->get_absoluteValue();
+            return insn;
+        }
+    }
+#endif
+    return NULL;
+}
+
+SgAsmInstruction*
+PltEntryMatcher::matchA64Ldr(const Partitioner &partitioner, rose_addr_t va, rose_addr_t &indirectVa /*in,out*/,
+                             rose_addr_t &indirectNBytes /*out*/) {
+    indirectNBytes = 0;
+#ifdef ROSE_ENABLE_ASM_A64
+    // match "ldr R1, [ R2 + C ]" where R1 and R2 are registers and C is a constant. The initial value of R2 is
+    // provided as "indirectVa", which will be incremented by C upon return.
+    if (SgAsmA64Instruction *insn = isSgAsmA64Instruction(partitioner.discoverInstruction(va))) {
+        if (insn->get_kind() != A64InstructionKind::ARM64_INS_LDR || insn->nOperands() != 2)
+            return NULL;
+        SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn->operand(1));
+        if (!mre)
+            return NULL;
+
+        if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(mre->get_address())) {
+            SgAsmIntegerValueExpression *ival = NULL;
+            if (isSgAsmDirectRegisterExpression(add->get_lhs())) {
+                ival = isSgAsmIntegerValueExpression(add->get_rhs());
+            } else if (isSgAsmDirectRegisterExpression(add->get_rhs())) {
+                ival = isSgAsmIntegerValueExpression(add->get_lhs());
+            } else {
+                return NULL;
+            }
+            indirectVa += ival->get_absoluteValue();
+        } else if (isSgAsmDirectRegisterExpression(mre->get_address())) {
+            // use indirectVa as is
+        } else {
+            return NULL;
+        }
+
+        indirectNBytes = mre->get_type()->get_nBytes();
+        return insn;
+    }
+#endif
+    return NULL;
+}
+
+SgAsmInstruction*
+PltEntryMatcher::matchA64Add(const Partitioner &partitioner, rose_addr_t va) {
+#ifdef ROSE_ENABLE_ASM_A64
+    if (SgAsmA64Instruction *insn = isSgAsmA64Instruction(partitioner.discoverInstruction(va))) {
+        if (insn->get_kind() == A64InstructionKind::ARM64_INS_ADD)
+            return insn;
+    }
+#endif
+    return NULL;
+}
+
+SgAsmInstruction*
+PltEntryMatcher::matchA64Br(const Partitioner &partitioner, rose_addr_t va) {
+#ifdef ROSE_ENABLE_ASM_A64
+    if (SgAsmA64Instruction *insn = isSgAsmA64Instruction(partitioner.discoverInstruction(va))) {
+        if (insn->get_kind() == A64InstructionKind::ARM64_INS_BR)
+            return insn;
+    }
+#endif
+    return NULL;
+}
+
 bool
 PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
     nBytesMatched_ = 0;
     gotEntryVa_ = 0;
     gotEntry_ = 0;
     gotEntryNBytes_ = 0;
+    functionNumber_ = 0;
 
     SgAsmInstruction *insn = partitioner.discoverInstruction(anchor);
-    SgAsmX86Instruction *insnX86 = isSgAsmX86Instruction(insn);
 
     // Look for the PLT entry.
-    if (insnX86) {
+    if (SgAsmX86Instruction *insnX86 = isSgAsmX86Instruction(insn)) {
+        bool found = false;
         rose_addr_t indirectVa=0;
         size_t indirectSize=0;
 
-        if (0 == gotEntryNBytes_) {
-            // i386 entries look like this, and are each 16 bytes:
+        if (!found) {
+            // i386 entries that look like this, and are each 16 bytes:
             //    jmp dword [CONST]; where CONST is a GOT entry address
             //    push N;  where N is a small integer, unique for each dynamically linked function
             //    jmp X;   where X is the address of the first PLT entry
             SgAsmInstruction *ijmp = matchIndirectJump(partitioner, anchor, indirectVa /*out*/, indirectSize /*out*/);
-            SgAsmInstruction *push = ijmp ? matchPush(partitioner, ijmp->get_address() + ijmp->get_size()) : NULL;
+            SgAsmInstruction *push = ijmp ? matchPush(partitioner, ijmp->get_address() + ijmp->get_size(), functionNumber_) : NULL;
             SgAsmInstruction *djmp = push ? matchDirectJump(partitioner, push->get_address() + push->get_size()) : NULL;
             if (djmp) {
                 gotEntryNBytes_ = indirectSize;
                 gotEntryVa_ = indirectVa;
                 nBytesMatched_ = djmp->get_address() + djmp->get_size() - anchor;
+                found = true;
             }
         }
 
-        if (0 == gotEntryNBytes_) {
-            // Amd64 entries look like this, and are each 16 bytes:
+        if (!found) {
+            // Amd64 entries that look like this, and are each 16 bytes:
             //    nop;     4 bytes
             //    jmp qword [rip + CONST]; address of a GOT entry
             //    nop;     5 bytes
@@ -162,8 +247,49 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
                 gotEntryNBytes_ = indirectSize;
                 gotEntryVa_ = indirectVa;
                 nBytesMatched_ = nop2->get_address() + nop2->get_size() - anchor;
+                found = true;
             }
         }
+
+        if (!found) {
+            // Amd64 entries that look like this, and are each 16 bytes:
+            //    nop      ; 4 bytes
+            //    push N   ; where N is a small integer, unique for each dynamically linked function
+            //    jmp X    ; where X is the address of the first PLT entry
+            //    nop      ; 5 bytes
+            SgAsmInstruction *nop1 = matchNop(partitioner, anchor);
+            SgAsmInstruction *push = nop1 ? matchPush(partitioner, nop1->get_address() + nop1->get_size(), functionNumber_) : NULL;
+            SgAsmInstruction *djmp = push ? matchDirectJump(partitioner, push->get_address() + push->get_size()) : NULL;
+            if (djmp) {
+                gotEntryNBytes_ = 0;                    // not present in PLT entry
+                gotEntryVa_ = 0;                        // not present in PLT entry
+                nBytesMatched_ = djmp->get_address() + djmp->get_size() - anchor;
+                found = true;
+            }
+        }
+
+#ifdef ROSE_ENABLE_ASM_A64
+    } else if (SgAsmA64Instruction *insnA64 = isSgAsmA64Instruction(insn)) {
+        if (0 == gotEntryNBytes_) {
+            // A64 entries look like this:
+            //     adrp     x16, 0x00011000
+            //     ldr      x17, u64 [x16 + 0x0000000000000ef8<3832>]
+            //     add      x16, x16, 0x0000000000000ef8<3832>
+            //     br       x17
+            rose_addr_t indirectVa = 0;
+            size_t indirectNBytes = 0;
+            SgAsmInstruction *adrp = matchA64Adrp(partitioner, anchor, indirectVa /*out*/);
+            SgAsmInstruction *ldr = adrp ? matchA64Ldr(partitioner, adrp->get_address() + adrp->get_size(),
+                                                       indirectVa /*in,out*/, indirectNBytes /*out*/) : NULL;
+            SgAsmInstruction *add = ldr ? matchA64Add(partitioner, ldr->get_address() + ldr->get_size()) : NULL;
+            SgAsmInstruction *br = add ? matchA64Br(partitioner, add->get_address() + add->get_size()) : NULL;
+            if (br) {
+                gotEntryNBytes_ = indirectNBytes;
+                gotEntryVa_ = indirectVa;
+                nBytesMatched_ = br->get_address() + br->get_size() - anchor;
+            }
+        }
+#endif
 
     } else {
         // FIXME[Robb P. Matzke 2014-08-23]: Architecture is not supported yet

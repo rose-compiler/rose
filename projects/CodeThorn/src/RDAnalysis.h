@@ -18,7 +18,7 @@ namespace CodeThorn {
 class RDPropertyStateFactory : public PropertyStateFactory {
  public:
   RDPropertyStateFactory();
-  virtual PropertyState* create();
+  virtual RDLattice* create();
   virtual ~RDPropertyStateFactory();
 };
 

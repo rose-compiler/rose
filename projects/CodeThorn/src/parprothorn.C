@@ -271,6 +271,12 @@ void configureRersSpecialization() {
 #endif
 }
 
+#ifndef HAVE_SPOT
+int main( int argc, char * argv[] ) {
+  cerr<<"Error: parprothorn was compiled without SPOT, but SPOT is required for parprothorn."<<endl;
+  exit(1);
+}
+#else
 int main( int argc, char * argv[] ) {
   try {
     ROSE_INITIALIZE;
@@ -1369,3 +1375,4 @@ int main( int argc, char * argv[] ) {
   return 0;
 }
 
+#endif // HAVE_SPOT

@@ -76,6 +76,22 @@ CodeThorn::Analyzer::Analyzer():
   _estateTransferFunctions->setAnalyzer(this);
 }
 
+void CodeThorn::Analyzer::insertInputVarValue(int i) {
+  _inputVarValues.insert(i);
+}
+
+std::set<int> CodeThorn::Analyzer::getInputVarValues() {
+  return _inputVarValues;
+}
+
+// also sets inputvarvalues
+void CodeThorn::Analyzer::setLtlRersMapping(CodeThorn::LtlRersMapping m) {
+  _ltlRersMapping=m;
+}
+CodeThorn::LtlRersMapping CodeThorn::Analyzer::getLtlRersMapping() {
+  return _ltlRersMapping;
+}
+
 void CodeThorn::Analyzer::deleteWorkLists() {
   if(estateWorkListCurrent) {
     delete estateWorkListCurrent;
@@ -2137,7 +2153,7 @@ void CodeThorn::Analyzer::swapStgWithBackup() {
   * \date 2019.
  */
 
-//#define FAST_GRAPH_REDUCE
+#define FAST_GRAPH_REDUCE
 void CodeThorn::Analyzer::reduceStg(function<bool(const EState*)> predicate) {
 #ifdef FAST_GRAPH_REDUCE
   // MS 3/17/2019: new faster implementation
