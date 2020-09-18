@@ -63,6 +63,14 @@ if test "x$with_CXX_DEBUG" = "xyes"; then
   AC_MSG_NOTICE([using default options for maximal debug (true case)])
   case $CXX in
     g++)
+    # DQ (9/17/2020): We can't use these option until we use more modern compilers than 4.8.5 in Jenkins.
+    # DQ (9/16/2020): Adding -fno-var-tracking-asignment -fno-misleading-indentation -wfatal-errors
+    # CXX_DEBUG="-g"
+    # CXX_DEBUG="-g -fno-var-tracking-asignment -fno-misleading-indentation"
+    # CXX_DEBUG="-g -fno-misleading-indentation"
+    # CXX_DEBUG="-g -Wno-misleading-indentation"
+    # CXX_DEBUG="-g -fno-var-tracking-assignments"
+    # CXX_DEBUG="-g -fno-var-tracking-assignments -Wno-misleading-indentation"
       CXX_DEBUG="-g"
       ;;
     icpc)

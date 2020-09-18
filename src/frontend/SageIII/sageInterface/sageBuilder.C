@@ -1527,6 +1527,10 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
         {
           SgInitializedName* initializedName = variableSymbol->get_declaration();
           ROSE_ASSERT(initializedName != NULL);
+
+       // DQ (9/11/2020): check if this is null and a possible cause of isSgVariableDeclaration() returning an uninitialized value (caught by valgrind).
+       // ROSE_ASSERT(initializedName->get_parent() != NULL);
+
           SgVariableDeclaration* associatedVariableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
 
 #if DEBUG_BUILD_VARIABLE_DECLARATION
@@ -1566,6 +1570,32 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
           if (associatedVariableDeclaration != NULL)
              {
                printf ("associatedVariableDeclaration->get_builtFromUseOnly() = %s \n",associatedVariableDeclaration->get_builtFromUseOnly() ? "true" : "false");
+             }
+#endif
+
+#if 0
+       // DQ (9/11/2020): Added to test valgrind.
+          if (associatedVariableDeclaration != NULL)
+             {
+               printf ("associatedVariableDeclaration test: true branch: associatedVariableDeclaration->get_builtFromUseOnly() = %s \n",
+                    associatedVariableDeclaration->get_builtFromUseOnly() ? "true" : "false");
+            // ROSE_ASSERT(associatedVariableDeclaration->get_builtFromUseOnly() == true);
+             }
+            else
+             {
+               printf ("associatedVariableDeclaration test: false branch \n");
+             }
+
+       // DQ (9/11/2020): Added to test valgrind.
+          if ((associatedVariableDeclaration != NULL) && 
+              (associatedVariableDeclaration->get_builtFromUseOnly() == true))
+             {
+               printf ("test get_builtFromUseOnly(): true branch \n");
+               ROSE_ASSERT(associatedVariableDeclaration->get_builtFromUseOnly() == true);
+             }
+            else
+             {
+               printf ("test get_builtFromUseOnly(): false branch \n");
              }
 #endif
 
@@ -2886,7 +2916,15 @@ SageBuilder::buildFunctionParameterTypeList(SgFunctionParameterList* paralist)
      for(i = args.begin(); i != args.end(); i++)
           (typePtrList->get_arguments()).push_back( (*i)->get_type() );
 
+#if 0
+     printf ("In SageBuilder::buildFunctionParameterTypeList(SgFunctionParameterList*): calling setSourcePositionAtRootAndAllChildren() \n");
+#endif
+
      setSourcePositionAtRootAndAllChildren(typePtrList);
+
+#if 0
+     printf ("DONE: In SageBuilder::buildFunctionParameterTypeList(SgFunctionParameterList*): calling setSourcePositionAtRootAndAllChildren() \n");
+#endif
 
      return typePtrList;
    }
@@ -8628,10 +8666,10 @@ SgFunctionCallExp*
 SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym,
                                   SgExprListExp* parameters/*=NULL*/)
    {
-     ROSE_ASSERT (sym);
+     ROSE_ASSERT (sym != NULL);
      if (parameters == NULL)
           parameters = buildExprListExp();
-     ROSE_ASSERT (parameters);
+     ROSE_ASSERT (parameters != NULL);
 
   // DQ (8/21/2011): We want to preserve the support for member functions to be built as SgMemberFunctionRefExp.
   // This is important for the Java support and the C++ support else we will be lowering all mmember function calls
@@ -8672,11 +8710,16 @@ SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym,
 SgFunctionCallExp*
 SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters /*=NULL*/)
    {
-     SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
+     ROSE_ASSERT(f != NULL);
+     SgFunctionCallExp* func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
      ROSE_ASSERT(func_call_expr != NULL);
 
-     if (f) f->set_parent(func_call_expr);
-     if (parameters) parameters->set_parent(func_call_expr);
+     if (f != NULL) {
+        f->set_parent(func_call_expr);
+     }
+     if (parameters != NULL) {
+        parameters->set_parent(func_call_expr);
+     }
      setOneSourcePositionNull(func_call_expr);
 
      return func_call_expr;
@@ -14187,10 +14230,13 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
             // DQ (12/27/2018): I think that if this is a base class declaration then it is OK for the type's declaration to not match.
             // ROSE_ASSERT(nondefdecl->get_parent() != NULL);
-               if (nondefdecl->get_parent() != NULL)
-                  {
-                    printf ("nondefdecl->get_parent() = %p = %s \n",nondefdecl->get_parent(),nondefdecl->get_parent()->class_name().c_str());
-                  }
+               {
+                  SgNode* parent = nondefdecl->get_parent();
+                  if (parent != NULL)
+                     {
+                       printf ("nondefdecl->get_parent() = %p = %s \n",parent,parent->class_name().c_str());
+                     }
+               }
 
             // DQ (12/27/2018): Activate this debugging support.
 #if DEBUG_CLASS_DECLARATION

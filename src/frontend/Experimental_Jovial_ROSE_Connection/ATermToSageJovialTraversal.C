@@ -1425,8 +1425,6 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    printf("\n... traverse_[Constant]TableDeclaration: %s\n", ATwriteToString(term));
 #endif
 
-// TODO: stuff TODO, yes?
-
    ATerm t_name, t_alloc, t_dim_list, t_table_desc;
    char* name;
 
@@ -1435,6 +1433,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 
 // Begin SageTreeBuilder
    SgJovialTableStatement* table_decl = nullptr;
+   SgJovialTableType* table_type = nullptr;
    SgType* base_type = nullptr;
    SgType* type = nullptr;
    SgExprListExp* attr_list = nullptr;
@@ -1483,16 +1482,16 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 //    The type name is the name of the base type (this declaration inherits from the base/parent class)
 //
    if (traverse_TableDescriptionName(t_table_desc, table_type_name, type, preset)) {
-      SgJovialTableType* table_type = isSgJovialTableType(type);
-      if (table_type == nullptr) {
-         cerr << "WARNING UNIMPLEMENTED: TableDeclaration - TableDescriptionName returns NULL type for name " << table_type_name << "\n";
-         // TODO_COMPOOL
-         ROSE_ASSERT(table_type);
+      table_type = isSgJovialTableType(type);
+      if (table_type) {
+         type = SageBuilder::buildJovialTableType(table_type_name, table_type->get_base_type(), dim_info, SageBuilder::topScopeStack());
+         is_type_inherited = true;
       }
-      type = SageBuilder::buildJovialTableType(table_type_name, table_type->get_base_type(), dim_info, SageBuilder::topScopeStack());
-      ROSE_ASSERT(type);
-
-      is_type_inherited = true;
+      else {
+         // This is essentially a TableDescriptionType
+         table_type = SageBuilder::buildJovialTableType(table_type_name, type, dim_info, SageBuilder::topScopeStack());
+         type = table_type;
+      }
    }
 
 // 2. Otherwise look for a base type (this is not inheritance, rather it is similar to the base type of an array type).
@@ -1504,8 +1503,8 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    // This must be anonymous as there is no explicit name for the type.
       SgName name(anon_type_name);
 
-      type = SageBuilder::buildJovialTableType(name, base_type, dim_info, SageBuilder::topScopeStack());
-      ROSE_ASSERT(type);
+      table_type = SageBuilder::buildJovialTableType(name, base_type, dim_info, SageBuilder::topScopeStack());
+      type = table_type;
    }
 
 // 3. Finally check for a table description body. This will need to create a table declaration
@@ -1515,7 +1514,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    else if (traverse_TableDescriptionBody(t_table_desc, anon_type_name, table_decl, preset, table_spec)) {
       ROSE_ASSERT(table_decl);
 
-      SgJovialTableType* table_type = isSgJovialTableType(table_decl->get_type());
+      table_type = isSgJovialTableType(table_decl->get_type());
       ROSE_ASSERT(table_type);
 
       if (dim_info) {
@@ -1526,11 +1525,11 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    }
    else return ATfalse;
 
-   SgJovialTableType* table_type = isSgJovialTableType(type);
+   ROSE_ASSERT(type);
    ROSE_ASSERT(table_type);
 
 // Set the structure specifier if present
-   StructureSpecifier& struct_spec = table_spec.struct_spec;
+   const StructureSpecifier& struct_spec = table_spec.struct_spec;
    if (struct_spec.is_parallel) {
       table_type->set_structure_specifier(SgJovialTableType::e_parallel);
    }
@@ -1591,22 +1590,6 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    SgClassDefinition* def = def_decl->get_definition();
    ROSE_ASSERT(def);
    ROSE_ASSERT(def->isCaseInsensitive());
-
-#if 0
-   //   def_decl->get_scope()->setCaseInsensitive(true);
-   //   var_decl->get_scope()->setCaseInsensitive(true);
-   cout << ".x. def scope sensitivity is " << def->isCaseInsensitive() << endl;
-   def->setCaseInsensitive(true);
-   cout << ".x. def scope sensitivity is " << def->isCaseInsensitive() << endl;
-
-   cout << ".x. type is " << type << ": " << type->class_name() << endl;
-   cout << ".x. decl is " << decl << ": " << decl->class_name() << endl;
-   cout << ".x. def_decl is " << def_decl << ": " << def_decl->class_name() << endl;
-   cout << ".x. def is " << def << ": " << def->class_name() << endl;
-   cout << ".x. def_decl scope is " << def_decl->get_scope() << ": " << def_decl->get_scope()->isCaseInsensitive() << endl;
-   cout << ".x. var_decl scope is " << var_decl->get_scope() << ": " << var_decl->get_scope()->isCaseInsensitive() << endl;
-   cout << ".x. def scope sensitivity is " << def->isCaseInsensitive() << endl;
-#endif
 
    sage_tree_builder.Leave(var_decl);
 
@@ -1720,21 +1703,6 @@ traverse_TableDescriptionBody(ATerm term, std::string &type_name, SgJovialTableS
       } else return ATfalse;
    }
    else return ATfalse;
-
-#if 0
-   SgJovialTableType* table_type = isSgJovialTableType(table_decl->get_type());
-   SgDeclarationModifier& decl_mod = table_decl->get_declarationModifier();
-   SgTypeModifier& type_modifier = table_decl->get_declarationModifier().get_typeModifier();
-
-   ROSE_ASSERT(table_type);
-   std::cout << ".x. table_type is " << table_type << ": " << table_type->class_name() << std::endl;
-   std::cout << ".x. table_decl is " << table_decl << ": " << table_decl->class_name() << std::endl;
-   std::cout << ".x. type_modifier - isAllocatable " << type_modifier.isAllocatable() << std::endl;
-
-   std::cout << "TABLE DESCRIPTION table_desc: " << table_desc << " : " << table_desc->class_name() << endl;
-   std::cout << "TABLE DESCRIPTION scope: " << table_desc->get_scope() << endl;
-   std::cout << "TABLE DESCRIPTION scope decl list: " << table_desc->get_scope()->get_declaration_list() << endl;
-#endif
 
    ROSE_ASSERT(table_decl);
 
@@ -7097,29 +7065,36 @@ ATbool ATermToSageJovialTraversal::traverse_SizeFunction(ATerm term, SgFunctionC
 #endif
 
    ATerm t_formula;
-   SgExpression* formula;
+   SgExpression* size_argument;
+   std::string func_name;
 
    func_call = nullptr;
 
    if (ATmatch(term, "SizeFunction(BITSIZE(),<term>)", &t_formula)) {
-      cerr << "WARNING UNIMPLEMENTED: SizeFunction - BITSIZE \n";
-      if (traverse_Formula(t_formula, formula)) {
-         // MATCHED Formula
-      } else return ATfalse;
+      func_name = "BITSIZE";
    }
    else if (ATmatch(term, "SizeFunction(BYTESIZE(),<term>)", &t_formula)) {
-      cerr << "WARNING UNIMPLEMENTED: SizeFunction - BYTESIZE \n";
-      if (traverse_Formula(t_formula, formula)) {
-         // MATCHED Formula
-      } else return ATfalse;
+      func_name = "BYTESIZE";
    }
    else if (ATmatch(term, "SizeFunction(WORDSIZE(),<term>)", &t_formula)) {
-      cerr << "WARNING UNIMPLEMENTED: SizeFunction - WORDSIZE \n";
-      if (traverse_Formula(t_formula, formula)) {
-         // MATCHED Formula
-      } else return ATfalse;
+      func_name = "WORDSIZE";
    }
    else return ATfalse;
+
+   // get the function argument
+   if (traverse_Formula(t_formula, size_argument)) {
+     // MATCHED Formula
+   } else return ATfalse;
+
+   // build the parameter list
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   params->append_expression(size_argument);
+
+   SgType* return_type = SageBuilder::buildUnsignedIntType();
+
+   func_call = SageBuilder::buildFunctionCallExp(func_name, return_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
+   setSourcePosition(func_call, term);
 
    return ATtrue;
 }
