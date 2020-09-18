@@ -83,10 +83,6 @@ void NameQualificationTraversal::initDiagnostics()
         }
    }
 
-// DQ (7/23/2011): This function is only used locally.
-// void generateNameQualificationSupportWithScope( SgNode* node, const NameQualificationTraversal & parentTraversal, SgScopeStatement* currentScope )
-// void NameQualificationTraversal::generateNestedTraversalWithExplicitScope( SgNode* node, SgScopeStatement* input_currentScope )
-// void NameQualificationTraversal::generateNestedTraversalWithExplicitScope( SgNode* node, SgScopeStatement* input_currentScope, SgStatement* input_currentStatement )
 void
 NameQualificationTraversal::generateNestedTraversalWithExplicitScope( SgNode* node, SgScopeStatement* input_currentScope, SgStatement* input_currentStatement, SgNode* input_referenceNode )
    {
@@ -1024,9 +1020,6 @@ NameQualificationTraversal::processNameQualificationArrayType(SgArrayType* array
           mfprintf(mlog [ WARN ] ) ("~~~~~ Handling case of SgArrayType: index        = %p = %s \n",index,index->class_name().c_str());
 #endif
        // DQ (7/23/2011): This will not work since the current scope is not know and can't be determined from the type (which is shared).
-       // mfprintf(mlog [ WARN ] ) ("Support name qualification on the array index expression if required (recursive call) \n");
-       // generateNameQualificationSupport(index,referencedNameSet);
-       // generateNameQualificationSupportWithScope(index,this,currentScope);
           ASSERT_not_null(currentScope);
           generateNestedTraversalWithExplicitScope(index,currentScope);
 #if 0
@@ -4816,7 +4809,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
             // Check if this is a variable in which case it might require name qualification.  If we we have to traverse this expression recursively.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
             // We need to traverse this expression and evaluate if any name qualification is required on its pieces (e.g. referenced variables)
-               mfprintf(mlog [ WARN ] ) ("Recursive call to generateNameQualificationSupport() with expression = %p = %s \n",expression,expression->class_name().c_str());
+               mfprintf(mlog [ WARN ] ) ("Call to generateNestedTraversalWithExplicitScope() with expression = %p = %s \n",expression,expression->class_name().c_str());
 #endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
@@ -4827,7 +4820,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                generateNestedTraversalWithExplicitScope(expression,currentScope);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
-                    mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): DONE: Recursive call to generateNameQualificationSupport() with expression = %p = %s \n",expression,expression->class_name().c_str());
+                    mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): DONE: Call to generateNestedTraversalWithExplicitScope() with expression = %p = %s \n",expression,expression->class_name().c_str());
 #endif
 
 #if 0
@@ -8532,7 +8525,6 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Make a recursive call from this context (processing decltype taking SgExpression) \n");
 #endif
-                      // DQ (6/30/2013): Added to support using generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
                          SgStatement* currentStatement = TransformationSupport::getStatement(n);
 #if 0
                          mfprintf(mlog [ WARN ] ) ("SgInitializedName: decltype: currentStatement = %p = %s \n",currentStatement,currentStatement != NULL ? currentStatement->class_name().c_str() : "null");
@@ -8557,8 +8549,6 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
                               mfprintf(mlog [ WARN ] ) ("SgInitializedName: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 #endif
-                           // DQ (6/30/2013): For the recursive call use generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
-                           // generateNameQualificationSupport(originalExpressionTree,referencedNameSet);
                               generateNestedTraversalWithExplicitScope(baseExpression,currentScope);
                             }
 #if 0
@@ -9543,7 +9533,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   {
                  // No qualification is required but we do want to count this as a reference to the class.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    mfprintf(mlog [ WARN ] ) ("No qualification should be used for this type (class) AND insert it into the referencedNameSet \n");
+                    mfprintf(mlog [ WARN ] ) ("No qualification should be used for this type (class = %p = %s) AND insert it into the referencedNameSet \n", declaration, declaration ? declaration->class_name().c_str() : "");
 #endif
                     referencedNameSet.insert(declaration);
                   }
@@ -13179,9 +13169,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) ("@@@@@@@@@@@@@ Recursive call to the originalExpressionTree = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str());
 #endif
-            // DQ (6/30/2013): Added to support using generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
                SgStatement* currentStatement = TransformationSupport::getStatement(n);
-#if 1
             // DQ (9/14/2015): Added debugging code.
             // DQ (9/14/2015): This can be an expression in a type, in which case we don't have an associated scope.
                if (currentStatement == NULL)
@@ -13198,19 +13186,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     SgScopeStatement* currentScope = currentStatement->get_scope();
                     ASSERT_not_null(currentScope);
 
-                 // DQ (6/30/2013): For the recursive call use generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
-                 // generateNameQualificationSupport(originalExpressionTree,referencedNameSet);
                     generateNestedTraversalWithExplicitScope(originalExpressionTree,currentScope);
                   }
-#else
-               ASSERT_not_null(currentStatement);
-               SgScopeStatement* currentScope = currentStatement->get_scope();
-               ASSERT_not_null(currentScope);
-
-            // DQ (6/30/2013): For the recursive call use generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
-            // generateNameQualificationSupport(originalExpressionTree,referencedNameSet);
-               generateNestedTraversalWithExplicitScope(originalExpressionTree,currentScope);
-#endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) ("@@@@@@@@@@@@@ DONE: Recursive call to the originalExpressionTree = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str());
@@ -13599,8 +13576,6 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        // if (acceptableDeclarationScope == true && firstNondefiningDeclaration != NULL && referencedNameSet.find(firstNondefiningDeclaration) == referencedNameSet.end())
           if (acceptableDeclarationScope == true && referencedNameSet.find(declarationForReferencedNameSet) == referencedNameSet.end())
              {
-            // mfprintf(mlog [ WARN ] ) ("Adding firstNondefiningDeclaration = %p = %s to set of visited declarations \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
-            // referencedNameSet.insert(firstNondefiningDeclaration);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) ("Adding declarationForReferencedNameSet = %p = %s to set of visited declarations \n",declarationForReferencedNameSet,declarationForReferencedNameSet->class_name().c_str());
 #endif

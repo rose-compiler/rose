@@ -2653,6 +2653,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("Processing case: V_SgBasicBlock \n");
 #endif
+                            ROSE_ASSERT (locatedNode != NULL);
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
                          // The following should always work since each statement is a located node
@@ -2702,6 +2703,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("Processing case: V_SgAggregateInitializer \n");
 #endif
+                            ROSE_ASSERT (locatedNode != NULL);
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
                             SgAggregateInitializer* target = dynamic_cast<SgAggregateInitializer*>(n);
@@ -2739,6 +2741,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("Processing case: V_SgClassDeclaration \n");
 #endif
+                            ROSE_ASSERT (locatedNode != NULL);
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
                          // The following should always work since each statement is a located node
@@ -2778,6 +2781,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("Processing case: V_SgTypedefDeclaration \n");
 #endif
+                            ROSE_ASSERT(locatedNode != NULL);
                             ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
 
                             SgTypedefDeclaration *typedefDeclaration = isSgTypedefDeclaration(n);
@@ -2815,6 +2819,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("Processing case: V_SgVariableDeclaration \n");
 #endif
+                            ROSE_ASSERT (locatedNode != NULL);
                             ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
 
                             SgVariableDeclaration *variableDeclaration = isSgVariableDeclaration(n);
@@ -2855,7 +2860,12 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                          printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): Added new support for preprocessing info to be added after the SgInitializedName. \n");
 #endif
+<<<<<<< HEAD
                          ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
+=======
+                            ROSE_ASSERT (locatedNode != NULL);
+                            ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
+>>>>>>> origin/master
 
                          SgInitializedName *initializedName = isSgInitializedName(n);
                          ROSE_ASSERT(initializedName != NULL);
@@ -2910,6 +2920,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("Processing case: V_SgClassDefinition \n");
 #endif
+                            ROSE_ASSERT (locatedNode != NULL);
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
                          // DQ (3/19/2005): This is a more robust process (although it introduces a new location for a comment/directive)
@@ -2936,6 +2947,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("Processing case: V_SgEnumDeclaration \n");
 #endif
+                            ROSE_ASSERT (locatedNode != NULL);
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
                          // The following should always work since each statement is a located node
@@ -2975,6 +2987,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("Processing case: V_SgNamespaceDeclarationStatement \n");
 #endif
+                            ROSE_ASSERT (locatedNode != NULL);
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
                          // The following should always work since each statement is a located node
@@ -3008,6 +3021,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     // DQ (5/3/2004): Added support for namespaces
                     case V_SgNamespaceDefinitionStatement:
                        {
+                         ROSE_ASSERT (locatedNode != NULL);
                          ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
                       // The following should always work since each statement is a located node
@@ -3046,11 +3060,11 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     //                but OK to attach comments to them (just not inside them!).
                     case V_SgTemplateInstantiationMemberFunctionDecl:
                        {
+                         ROSE_ASSERT (locatedNode != NULL);
                          ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
                       // printf ("Found a SgTemplateInstantiationMemberFunctionDecl but only record it as a previousLocNodePtr \n");
 
                       // DQ (6/9/2020): This appear to be NULL in some cases I am debugging currently.
-                         ROSE_ASSERT(locatedNode != NULL);
 #if 0
                          printf ("In case V_SgTemplateInstantiationMemberFunctionDecl: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
 #endif
@@ -3098,6 +3112,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     case V_SgMemberFunctionDeclaration:
                     case V_SgTemplateInstantiationFunctionDecl:
                        {
+                         ROSE_ASSERT (locatedNode != NULL);
                          ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
 #if 0
@@ -3209,7 +3224,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                printOutComments(locatedNode);
              }
 #endif
-        } // end if (locatedNode) || (fileNode != NULL)
+        } // end if ((locatedNode != NULL) || (fileNode != NULL))
 
 #if 0
      printf ("Leaving AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): n = %p = %s \n",n,n->class_name().c_str());

@@ -235,6 +235,7 @@ ATbool traverse_AssignmentStatement(ATerm term);
 // 4.2 LOOP STATEMENTS
 ATbool traverse_WhileStatement  (ATerm term);
 ATbool traverse_ForStatement    (ATerm term);
+ATbool traverse_ForClause       (ATerm term, std::string &control_var_name);
 ATbool traverse_ForClause       (ATerm term, SgExpression* &var_ref, SgExpression* &init,
                                              SgExpression* &phrase1, SgExpression* &phrase2,
                                              int &phrase1_enum, int &phrase2_enum);

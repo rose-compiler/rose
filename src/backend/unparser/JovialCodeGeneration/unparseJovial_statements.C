@@ -547,8 +547,8 @@ Unparse_Jovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info
      SgJovialForThenStatement* for_stmt = isSgJovialForThenStatement(stmt);
      ASSERT_not_null(for_stmt);
      ASSERT_not_null(for_stmt->get_initialization());
-     ASSERT_not_null(for_stmt->get_then_expression());
      ASSERT_not_null(for_stmt->get_while_expression());
+     ASSERT_not_null(for_stmt->get_by_or_then_expression());
      ASSERT_not_null(for_stmt->get_loop_body());
 
      curprint_indented("FOR ", info);
@@ -563,22 +563,112 @@ Unparse_Jovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info
      curprint(":");
      unparseExpression(init_expr->get_rhs_operand_i(), info);
 
-  // then increment
-     curprint(" THEN ");
-     unparseExpression(for_stmt->get_then_expression(), info);
-
-  // while condition
-     if ( ! isSgNullExpression(for_stmt->get_while_expression()) )
+     switch (for_stmt->get_loop_statement_type())
         {
-           curprint(" WHILE ");
-           unparseExpression(for_stmt->get_while_expression(), info);
+        case SgJovialForThenStatement::e_for_while_stmt:
+           {
+              if (!isSgNullExpression(for_stmt->get_while_expression()))
+                 {
+                    curprint(" WHILE ");
+                    unparseExpression(for_stmt->get_while_expression(), info);
+                 }
+              break;
+           }
+        case SgJovialForThenStatement::e_for_while_then_stmt:
+           {
+              if (!isSgNullExpression(for_stmt->get_while_expression()))
+                 {
+                    curprint(" WHILE ");
+                    unparseExpression(for_stmt->get_while_expression(), info);
+                 }
+              if (!isSgNullExpression(for_stmt->get_by_or_then_expression()))
+                 {
+                    curprint(" THEN ");
+                    unparseExpression(for_stmt->get_by_or_then_expression(), info);
+                 }
+              break;
+           }
+        case SgJovialForThenStatement::e_for_while_by_stmt:
+           {
+              if (!isSgNullExpression(for_stmt->get_while_expression()))
+                 {
+                    curprint(" WHILE ");
+                    unparseExpression(for_stmt->get_while_expression(), info);
+                 }
+              if (!isSgNullExpression(for_stmt->get_by_or_then_expression()))
+                 {
+                    curprint(" BY ");
+                    unparseExpression(for_stmt->get_by_or_then_expression(), info);
+                 }
+              break;
+           }
+        case SgJovialForThenStatement::e_for_then_while_stmt:
+           {
+              if (!isSgNullExpression(for_stmt->get_by_or_then_expression()))
+                 {
+                    curprint(" THEN ");
+                    unparseExpression(for_stmt->get_by_or_then_expression(), info);
+                 }
+              if (!isSgNullExpression(for_stmt->get_while_expression()))
+                 {
+                    curprint(" WHILE ");
+                    unparseExpression(for_stmt->get_while_expression(), info);
+                 }
+              break;
+           }
+        case SgJovialForThenStatement::e_for_by_while_stmt:
+           {
+              if (!isSgNullExpression(for_stmt->get_by_or_then_expression()))
+                 {
+                    curprint(" BY ");
+                    unparseExpression(for_stmt->get_by_or_then_expression(), info);
+                 }
+              if (!isSgNullExpression(for_stmt->get_while_expression()))
+                 {
+                    curprint(" WHILE ");
+                    unparseExpression(for_stmt->get_while_expression(), info);
+                 }
+              break;
+           }
+        case SgJovialForThenStatement::e_for_only_stmt:
+           {
+              break;
+           }
+        default:
+           {
+              cout << "Warning: In Jovial unparser, SgJovialForThenStatement::loop_statement_type not handled is "
+                   << for_stmt->get_loop_statement_type() << endl;
+           }
         }
 
      curprint(";");
      unp->cur.insert_newline(1);
 
-  // for body
-     unparseStatement(for_stmt->get_loop_body(), info);
+  // Don't unparse control letters (variable declarations are compiler generated)
+     SgBasicBlock* loop_body = isSgBasicBlock(for_stmt->get_loop_body());
+     ROSE_ASSERT(loop_body);
+
+  // Loop body
+  //
+  // Due to wierd construction (basic block containing a basic block) the basic block for the loop
+  // may be the last statement. The other statement (if present) will be the compiler generated control
+  // variable declaration. However a SimpleStatement for the loop body won't have the extra basic block.
+     if (loop_body->get_statements().size() == 1) {
+        loop_body = isSgBasicBlock(for_stmt->get_loop_body()->get_statements()[0]);
+     }
+     else if (loop_body->get_statements().size() == 2) {
+     // Degenerate case of a null loop body (see rose-issue-rc-42b.jov), don't unparse variable declaration
+        SgVariableDeclaration* var_decl = isSgVariableDeclaration(for_stmt->get_loop_body()->get_statements()[0]);
+        if (var_decl) SageInterface::removeStatement(var_decl);
+        loop_body = isSgBasicBlock(for_stmt->get_loop_body()->get_statements()[1]);
+     }
+
+     if (!loop_body) {
+        loop_body = isSgBasicBlock(for_stmt->get_loop_body());
+     }
+     ROSE_ASSERT(loop_body);
+
+     unparseStatement(loop_body, info);
      unp->cur.insert_newline(1);
    }
 
@@ -938,6 +1028,15 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
      unp->cur.insert_newline(1);
 
+  // Unparse table body
+     unparseTableBody(table_def, info);
+   }
+
+void
+Unparse_Jovial::unparseTableBody(SgClassDefinition* table_def, SgUnparse_Info& info)
+   {
+     ASSERT_not_null(table_def);
+
   // Unparse body if present
      if (table_def->get_members().size() > 0)
         {
@@ -959,7 +1058,7 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     {
                        // do nothing for a null declaration (may want to unparse ";\n")
                     }
-                 else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
+                 else cerr << "WARNING UNIMPLEMENTED: Unparse of unknown table member type \n";
               }
            info.dec_nestingLevel();
 
@@ -989,13 +1088,6 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgInitializer* init = initializedName->get_initializer();
      ASSERT_not_null(type);
 
-  // Type could be an SgModifierType, if so, save trouble and unwrap here
-     if (SgModifierType* modifier_type = isSgModifierType(type))
-        {
-           type = modifier_type->get_base_type();
-           ASSERT_not_null(type);
-        }
-
      info.set_inVarDecl();
 
   // pretty printing
@@ -1005,6 +1097,13 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgClassDeclaration* type_decl = isSgClassDeclaration(type->getAssociatedDeclaration());
      if (type_decl) {
         is_block = (type_decl->get_class_type() == SgClassDeclaration::e_jovial_block);
+
+     // Type could be an SgModifierType, for tables and blocks, save trouble and unwrap here
+        if (SgModifierType* modifier_type = isSgModifierType(type))
+           {
+              type = modifier_type->get_base_type();
+              ASSERT_not_null(type);
+           }
      }
 
      bool type_has_base_type = false;
@@ -1093,6 +1192,25 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
            curprint(")");
         }
 
+  // WordsPerEntry (for anonymous table declarations)
+     SgJovialTableStatement* table_decl = NULL; // C++11 nullptr
+     if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
+        {
+           table_decl = dynamic_cast<SgJovialTableStatement*>(var_decl->get_baseTypeDefiningDeclaration());
+           ASSERT_not_null(table_decl);
+           if (table_decl->get_has_table_entry_size())
+             {
+               // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
+               if (table_decl->get_table_entry_size() != NULL)
+                 {
+                   curprint("W ");
+                   unparseExpression(table_decl->get_table_entry_size(), info);
+                 }
+               else curprint("V");
+             }
+        }
+
+  // Initialization
      if (init != NULL)
         {
            curprint(" = ");
@@ -1104,52 +1222,15 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
   // Unparse anonymous type declaration body if present
      if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
-           SgDeclarationStatement* def_decl = var_decl->get_baseTypeDefiningDeclaration();
-           ASSERT_not_null(def_decl);
-
-           SgJovialTableStatement* table_decl = dynamic_cast<SgJovialTableStatement*>(def_decl);
            ASSERT_not_null(table_decl);
-
-        // WordsPerEntry for anonymous table declarations
-           if (table_decl->get_has_table_entry_size())
-              {
-                 // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
-                 if (table_decl->get_table_entry_size() != NULL)
-                    {
-                       curprint("W ");
-                       unparseExpression(table_decl->get_table_entry_size(), info);
-                    }
-                 else curprint("V");
-              }
 
            SgClassDefinition* table_def = table_decl->get_definition();
            ASSERT_not_null(table_def);
 
-           if (table_def->get_members().size() > 0)
-              {
-                 curprint(";\n");
+           curprint(";\n");
 
-                 info.inc_nestingLevel();
-                 curprint_indented("BEGIN\n", info);
-
-                 info.inc_nestingLevel();
-                 foreach(SgDeclarationStatement* item_decl, table_def->get_members())
-                    {
-                       if (isSgVariableDeclaration(item_decl))
-                          {
-                             unparseVarDeclStmt(item_decl, info);
-                          }
-                       else if (isSgEmptyDeclaration(item_decl))
-                          {
-                             // do nothing for a null declaration (may want to unparse ";\n")
-                          }
-                       else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
-                    }
-                 info.dec_nestingLevel();
-
-                 curprint_indented("END\n", info);
-                 info.dec_nestingLevel();
-              }
+        // Unparse table body
+           unparseTableBody(table_def, info);
         }
      else
         {

@@ -106,7 +106,6 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
 	echo "    C++ link switches            	   ${JAVA_JVM_LINK:-none}"
 	echo "    runtime command                  ${JAVA:-none}"
 	echo "    compiler command                 ${JAVAC:-none}"
-	echo "    header generator                 ${JAVAH:-none}"
 	echo "    archive tool                     ${JAR:-none}"
     fi
 

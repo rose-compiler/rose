@@ -45,7 +45,7 @@ FortranModuleInfo::find_file_from_inputDirs(string basename ) {
        dir = inputDirs[i];
        name = dir+"/"+ basename;
 
-       string tmp = name+MOD_FILE_SUFFIX;
+       string tmp = name + module_file_suffix();
        if (boost::filesystem::exists(tmp.c_str())) {
              return name;
        }
@@ -260,7 +260,7 @@ FortranModuleInfo::createSgSourceFile(string modName)
   // modName = StringUtility::convertToLowerCase(modName);
 
   // current directory
-     string rmodFileName = modName + MOD_FILE_SUFFIX;
+     string rmodFileName = modName + module_file_suffix();
 
 #if 0
      printf ("In FortranModuleInfo::createSgSourceFile(): Searching for file rmodFileName = %s \n",rmodFileName.c_str());

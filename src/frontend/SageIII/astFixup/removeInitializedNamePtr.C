@@ -108,11 +108,12 @@ RemoveInitializedNamePtr::evaluateInheritedAttribute (
                  // DQ (9/13/2011): Reported as possible NULL value in static analysis of ROSE code.
                     if (mfdnode->get_definition()->get_parent() != NULL) {
                        if (mfdnode->get_definition()->get_parent() != node) { /* cut off in class */
-                          ROSE_ASSERT(mfdnode->get_parent() != NULL);
-                          if ( ! (mfdnode->get_parent()->variantT() == V_SgGlobal)) { /* but do not cut off at nodes ref.to by SgGlobal */
-                             printf ("mfdnode->get_parent() = %p = %s \n",mfdnode->get_parent(),mfdnode->get_parent()->sage_class_name());
+                          SgNode* parentNode = mfdnode->get_parent();
+                          ROSE_ASSERT(parentNode != NULL);
+                          if ( ! (parentNode->variantT() == V_SgGlobal)) { /* but do not cut off at nodes ref.to by SgGlobal */
+                             printf ("mfdnode->get_parent() = %p = %s \n",parentNode,parentNode->sage_class_name());
                              ROSE_ASSERT(mfdnode->get_definition()->get_parent() == node);
-                             ROSE_ASSERT(mfdnode->get_parent()->variantT() != V_SgGlobal);
+                             ROSE_ASSERT(parentNode->variantT() != V_SgGlobal);
 
                           // DQ (12/5/2003): This case is now an error and should no longer be required.  The
                           // fix was made in the EDG/SAGE interface code so to test that fix we make it an error here.
