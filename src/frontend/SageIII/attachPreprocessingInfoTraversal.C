@@ -2860,7 +2860,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                          printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): Added new support for preprocessing info to be added after the SgInitializedName. \n");
 #endif
-                         ROSE_ASSERT (locatedNode != NULL);
+                         ROSE_ASSERT(locatedNode != NULL);
                          ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
 
                          SgInitializedName *initializedName = isSgInitializedName(n);
