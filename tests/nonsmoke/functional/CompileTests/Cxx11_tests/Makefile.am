@@ -17,7 +17,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2012_04.C \
    test2012_05.C \
    test2012_06.C \
-   test2012_07.C \
    test2012_09.C \
    test2012_11.C \
    test2012_12.C \
@@ -112,7 +111,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2014_85.C \
    test2014_86.C \
    test2014_87.C \
-   test2014_88.C \
    test2014_89.C \
    test2014_90.C \
    test2015_01.C \
@@ -217,7 +215,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2018_51.C \
    test2018_52.C \
    test2018_53.C \
-   test2018_54.C \
    test2018_55.C \
    test2018_56.C \
    test2018_57.C \
@@ -378,7 +375,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_118.C \
    test2019_119.C \
    test2019_120.C \
-   test2019_121.C \
    test2019_123.C \
    test2019_124.C \
    test2019_125.C \
@@ -536,7 +532,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_362.C \
    test2019_363.C \
    test2019_364.C \
-   test2019_365.C \
    test2019_368.C \
    test2019_369.C \
    test2019_370.C \
@@ -637,7 +632,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_471.C \
    test2019_472.C \
    test2019_473.C \
-   test2019_474.C \
    test2019_475.C \
    test2019_476.C \
    test2019_477.C \
@@ -645,13 +639,11 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_479.C \
    test2019_480.C \
    test2019_481.C \
-   test2019_482.C \
    test2019_483.C \
    test2019_484.C \
    test2019_485.C \
    test2019_486.C \
    test2019_487.C \
-   test2019_488.C \
    test2019_489.C \
    test2019_490.C \
    test2019_491.C \
@@ -684,14 +676,10 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2020_11.C \
    test2020_12.C \
    test2020_13.C \
-   test2020_14.C \
    test2020_15.C \
    test2020_16.C \
    test2020_17.C \
    test2020_18.C \
-   test2020_19.C \
-   test2020_20.C \
-   test2020_21.C \
    test2020_22.C \
    test2020_23.C \
    test2020_24.C \
@@ -728,8 +716,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2020_66.C \
    test2020_67.C \
    test2020_68.C \
-   test2020_69.C \
-   test2020_70.C \
    test2020_74.C \
    test2020_75.C \
    test2020_76.C \
@@ -926,7 +912,8 @@ else
 endif
 
 if USING_INTEL_COMPILER
-   TESTCODE_CURRENTLY_FAILING += \
+# INTEL compiler
+#   TESTCODE_CURRENTLY_FAILING += \
      rose-1380.C \
      rose-1774.C \
      test2012_14.C \
@@ -951,31 +938,91 @@ if USING_INTEL_COMPILER
      test2019_367.C \
      test2019_94.C \
      test2019_95.C
+
+      TESTCODES_REQUIRED_TO_PASS += \
+        test2012_07.C \
+   test2014_88.C 
 else
-   TESTCODES_REQUIRED_TO_PASS += \
-     rose-1380.C \
-     rose-1774.C \
-     test2012_14.C \
-     test2012_26.C \
-     test2018_105.C \
-     test2018_117.C \
-     test2018_118.C \
-     test2018_127.C \
-     test2018_136.C \
-     test2018_93.C \
-     test2018_96.C \
-     test2019_04.C \
-     test2019_110.C \
-     test2019_111.C \
-     test2019_112.C \
-     test2019_218.C \
-     test2019_219.C \
-     test2019_230.C \
-     test2019_231.C \
-     test2019_344.C \
-     test2019_355.C \
-     test2019_367.C \
-     test2019_95.C
+if USING_CLANG_COMPILER
+# CLANG compiler
+      TESTCODE_CURRENTLY_FAILING += \
+        rose-1380.C \
+        test2012_07.C 
+
+#      TESTCODES_REQUIRED_TO_PASS += 
+else
+if OS_MACOSX
+#      TESTCODES_REQUIRED_TO_PASS += 
+else
+  TESTCODES_REQUIRED_TO_PASS += \
+     test2016_23.C \
+     test2016_24.C \
+     test2016_33.C \
+     test2016_34.C \
+     test2016_35.C \
+     test2016_36.C 
+
+# GNU compiler
+if ROSE_USING_GCC_VERSION_LATER_10_1
+      # skip these codes when using GNU 10.1 (testing)
+else
+      # DQ (7/23/2020): These are failing code for EDG 6.0 and GNU 10.1 (debugging this).
+      TESTCODES_REQUIRED_TO_PASS += \
+         rose-1973.C \
+   test2012_07.C \
+         test2012_25.C \
+         test2016_16.C \
+         test2016_20.C \
+         test2016_90.C \
+         test2018_100.C \
+         test2019_31.C \
+         test2019_33.C \
+         test2019_39.C \
+         test2019_41.C \
+         test2019_42.C \
+         test2019_94.C \
+         test2019_463.C 
+endif
+
+      TESTCODES_REQUIRED_TO_PASS += \
+        rose-1380.C \
+        rose-1774.C \
+        test2012_14.C \
+        test2012_26.C \
+   test2014_88.C \
+   test2018_54.C \
+        test2018_105.C \
+        test2018_117.C \
+        test2018_118.C \
+        test2018_127.C \
+        test2018_136.C \
+        test2018_93.C \
+        test2018_96.C \
+        test2019_04.C \
+   test2019_121.C \
+        test2019_110.C \
+        test2019_111.C \
+        test2019_112.C \
+        test2019_218.C \
+        test2019_219.C \
+        test2019_230.C \
+        test2019_231.C \
+        test2019_344.C \
+        test2019_355.C \
+   test2019_365.C \
+        test2019_367.C \
+   test2019_474.C \
+   test2019_482.C \
+   test2019_488.C \
+        test2019_95.C \
+   test2020_14.C \
+   test2020_19.C \
+   test2020_20.C \
+   test2020_21.C \
+   test2020_69.C \
+   test2020_70.C 
+endif
+endif
 endif
 
 if USING_INTEL_COMPILER
@@ -991,7 +1038,7 @@ endif
 endif
 
 if OS_MACOSX
-  TESTCODE_CURRENTLY_FAILING += \
+#  TESTCODE_CURRENTLY_FAILING += \
      test2016_12.C \
      test2016_20.C \
      test2016_23.C \
@@ -1002,34 +1049,15 @@ if OS_MACOSX
      test2016_36.C \
      test2016_90.C 
 else
-  TESTCODES_REQUIRED_TO_PASS += \
-     test2016_23.C \
-     test2016_24.C \
-     test2016_33.C \
-     test2016_34.C \
-     test2016_35.C \
-     test2016_36.C 
+#  TESTCODES_REQUIRED_TO_PASS += \
+#     test2016_23.C \
+#     test2016_24.C \
+#     test2016_33.C \
+#     test2016_34.C \
+#     test2016_35.C \
+#     test2016_36.C 
 endif
 
-if ROSE_USING_GCC_VERSION_LATER_10_1
-# skip these codes when using GNU 10.1 (testing)
-else
-# DQ (7/23/2020): These are failing code for EDG 6.0 and GNU 10.1 (debugging this).
-TESTCODES_REQUIRED_TO_PASS += \
-   rose-1973.C \
-   test2012_25.C \
-   test2016_16.C \
-   test2016_20.C \
-   test2016_90.C \
-   test2018_100.C \
-   test2019_31.C \
-   test2019_33.C \
-   test2019_39.C \
-   test2019_41.C \
-   test2019_42.C \
-   test2019_94.C \
-   test2019_463.C 
-endif
 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
