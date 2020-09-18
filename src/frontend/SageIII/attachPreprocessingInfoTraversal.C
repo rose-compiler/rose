@@ -221,6 +221,7 @@ AttachPreprocessingInfoTreeTraversalInheritedAttrribute::AttachPreprocessingInfo
    {
      isPartOfTemplateDeclaration              = X.isPartOfTemplateDeclaration;
      isPartOfTemplateInstantiationDeclaration = X.isPartOfTemplateInstantiationDeclaration;
+     isPartOfFunctionParameterList            = X.isPartOfFunctionParameterList;
    }
 
 
@@ -1364,6 +1365,17 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #endif
         }
 
+  // Pei-Hung(9/17/2020): Check if the AST node is SgFunctionParameterList for Fortran input
+     if(sourceFile->get_Fortran_only() == true)
+       { 
+         SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(n);
+         if(functionParameterList != NULL)
+           {
+              inheritedAttribute.isPartOfFunctionParameterList = true;
+           }
+       }
+
+
   // DQ (8/6/2012): Allow those associated with the declaration and not inside of the template declaration.
   // if (inheritedAttribute.isPartOfTemplateDeclaration == true && templateDeclaration == NULL)
      if ( (inheritedAttribute.isPartOfTemplateDeclaration              == true && templateDeclaration              == NULL) || 
@@ -1559,8 +1571,10 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
              }
         }
 #endif
+     // Pei-Hung (9/17/2020): comment and preprocess information will not be attached to SgInitializedName that is
+     // part of the SgFunctionParameterList 
 
-     if (statement != NULL || i_name != NULL || a_initor != NULL)
+     if (statement != NULL || (i_name != NULL && inheritedAttribute.isPartOfFunctionParameterList == false) || a_initor != NULL)
         {
           SgLocatedNode* currentLocNodePtr = NULL;
           int line = 0;
@@ -2101,7 +2115,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
           printf ("##### currentFileNameId = %d target_source_file_id = %d \n",currentFileNameId,target_source_file_id);
 #endif
        // DQ (6/25/2020): If this is not a node associated with the collect comments and CPP directives for the associated file then ignore this IR node.
-          if (currentFileNameId != target_source_file_id)
+          if (currentFileNameId != target_source_file_id && (sourceFile->get_Fortran_only() == false))
              {
 #if 0
                printf ("This IR node does not match the file where the comments and CPP dirtectives were collected: \n");
@@ -3188,14 +3202,17 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                 printf ("previousLocatedNode->get_file_info()->get_file_id() = %d \n",previousLocatedNode->get_file_info()->get_file_id());
 #endif
-                if (previousLocatedNode->get_file_info()->get_physical_file_id() != target_source_file_id)
-                   {
-                     printf ("Error: previousLocatedNode->get_file_info()->get_file_id() != target_source_file_id \n");
-                     previousLocatedNode->get_file_info()->display("Error: previousLocatedNode->get_file_info()->get_file_id() != target_source_file_id");
-                     printf (" --- previousLocatedNode->get_file_info()->get_file_id() = %d \n",previousLocatedNode->get_file_info()->get_file_id());
-                     printf (" --- target_source_file_id                               = %d \n",target_source_file_id);
-                   }
-                ROSE_ASSERT(previousLocatedNode->get_file_info()->get_physical_file_id() == target_source_file_id);
+                if(sourceFile->get_Fortran_only() == false)
+                {
+                  if (previousLocatedNode->get_file_info()->get_physical_file_id() != target_source_file_id)
+                     {
+                       printf ("Error: previousLocatedNode->get_file_info()->get_file_id() != target_source_file_id \n");
+                       previousLocatedNode->get_file_info()->display("Error: previousLocatedNode->get_file_info()->get_file_id() != target_source_file_id");
+                       printf (" --- previousLocatedNode->get_file_info()->get_file_id() = %d \n",previousLocatedNode->get_file_info()->get_file_id());
+                       printf (" --- target_source_file_id                               = %d \n",target_source_file_id);
+                     }
+                  ROSE_ASSERT(previousLocatedNode->get_file_info()->get_physical_file_id() == target_source_file_id);
+                }
 
 #if 0
             // DQ (6/9/2020): This appear to be NULL in some cases I am debugging currently.
