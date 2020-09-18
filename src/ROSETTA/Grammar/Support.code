@@ -16371,21 +16371,6 @@ SgFile::initialization()
   // (this is part of the internal testing of the new (experimental) Fortran support).
      p_experimental_fortran_frontend_OFP_test = false;
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-#if 0
-  // To be consistent with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
-  // functions so that we can support the more common (previous) interface where there was only a single
-  // SgAsmFile pointers called "binaryFile".
-     BinaryComposite.setDataPrototype("SgAsmGenericFileList*", "genericFileList", "= NULL",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     BinaryComposite.setDataPrototype("SgAsmInterpretationList*","interpretations","= NULL",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
-     p_genericFileList = NULL;
-     p_interpretations = NULL;
-#endif
-
-
   // This will cause only the binary file format to be read and skipps instruction disassembly
      p_read_executable_file_format_only = false;
 
