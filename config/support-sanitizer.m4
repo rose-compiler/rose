@@ -37,8 +37,12 @@ if test "x$enable_sanitizer" = "xyes"; then
   case $CXX in
     g++)
     # For GNU the support for sanitizer captured using a single options (I think).
-      CXXFLAGS+=" -fsanitize=address"
-      CFLAGS+=" -fsanitize=address"
+    # DQ (9/16/2020): Using -fsanitize-recover=address instead of -fsanitize=address
+    # then we can use the environment variable ASAN_OPTIONS=halt_on_error=0:detect_leaks=0 
+    # CXXFLAGS+=" -fsanitize=address"
+    # CFLAGS+=" -fsanitize=address"
+      CXXFLAGS+=" -fsanitize=address -fsanitize-recover=address"
+      CFLAGS+=" -fsanitize=address -fsanitize-recover=address"
       ;;
     clang)
     # For LLVM the support for sanitizer is the best (but add this later).
