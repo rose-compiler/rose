@@ -1868,7 +1868,7 @@ Engine::savePartitioner(const Partitioner &partitioner, const boost::filesystem:
 Partitioner
 Engine::loadPartitioner(const boost::filesystem::path &name, SerialIo::Format fmt) {
     Sawyer::Message::Stream info(mlog[INFO]);
-    info <<"reading RBA state file";
+    info <<"reading RBA state from " <<name;
     Sawyer::Stopwatch timer;
     SerialInput::Ptr archive = SerialInput::instance();
     archive->format(fmt);

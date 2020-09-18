@@ -1,0 +1,12 @@
+START
+DEF PROC main;
+BEGIN
+   ITEM ii U;
+   ITEM TEMP U;
+   FOR i : 0 BY 1 WHILE i < 21;
+   BEGIN
+      ii = i;
+      TEMP = ii;
+   END
+END
+TERM

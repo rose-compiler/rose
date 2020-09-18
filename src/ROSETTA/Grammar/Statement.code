@@ -1419,6 +1419,20 @@ HEADER_FORALL_STATEMENT_END
 
 
 HEADER_JOVIAL_FOR_THEN_STATEMENT_START
+  //! This class represents the various versions of Jovial loop statements.
+  //
+     public:
+          enum loop_statement_type_enum
+             {
+               e_unknown,
+               e_for_only_stmt,        /* no WHILE, THEN, or BY expressions */
+               e_for_while_stmt,       /* WHILE no optional BY or THEN expression */
+               e_for_while_by_stmt,    /* WHILE then optional BY (increment expression), C style */
+               e_for_while_then_stmt,  /* WHILE then optional THEN */
+               e_for_then_while_stmt,  /* THEN (increment expression) then optional WHILE */
+               e_for_by_while_stmt     /* BY (increment expression) then optional WHILE */
+             };
+
 /*#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
           virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
@@ -3878,6 +3892,18 @@ HEADER_BLOCK_DATA_STATEMENT_START
 HEADER_BLOCK_DATA_STATEMENT_END
 
 HEADER_IMPLICIT_STATEMENT_START
+
+    /*! Specifiers for the implicit-none-spec-list */
+          enum implicit_spec_enum
+            {
+               e_unknown_implicit_spec = 0,
+               e_has_implicit_spec_list,  /*!< In future this could replace set/get_implicit_none()  */
+               e_none,                    /*!< IMPLICIT NONE */
+               e_none_external,           /*!< IMPLICIT NONE (EXTERNAL) */
+               e_none_type,               /*!< IMPLICIT NONE (TYPE) */
+               e_none_external_and_type   /*!< IMPLICIT NONE (EXTERNAL, TYPE) : order not specified */
+            };
+
      SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT

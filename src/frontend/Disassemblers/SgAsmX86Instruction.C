@@ -71,7 +71,7 @@ SgAsmX86Instruction::registersForWidth(size_t nbits) {
 
 // see base class
 bool
-SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
+SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
 {
     if (insns.empty())
         return false;
@@ -92,7 +92,7 @@ SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& in
 
 // see base class
 bool
-SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
+SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
 {
     if (isFunctionCallFast(insns, target, return_va))
         return true;

@@ -52,6 +52,7 @@ DisassemblerArm::init() {
             p_proto_dispatcher = InstructionSemantics2::DispatcherA64::instance();
             break;
     }
+    instructionAlignment_ = 4;
     if (name.empty())
         throw Exception("invalid ARM architecture");
     if (modes_.isSet(Mode::MODE_THUMB))
@@ -99,8 +100,8 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
     } r;
 
     // Read the encoded instruction bytes into a temporary buffer to be used by capstone
-    if (va & 0x3)
-        throw Exception("instruction pointer not word aligned", va);
+    if (va % instructionAlignment_ != 0)
+        throw Exception("instruction pointer not aligned", va);
     if (ARCH_ARM == arch_ && va > 0xfffffffc)
         throw Exception("instruction pointer out of range", va);
     uint8_t bytes[4];                                   // largest possible instruction is 4 bytes
@@ -111,7 +112,7 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
     // Disassemble the instruction with capstone
     r.nInsns = cs_disasm(capstone_, bytes, nRead, va, 1, &r.csi);
     if (0 == r.nInsns) {
-#if 1 // DEBGUGGING: show the disassembly string from capstone itself
+#if 0 // DEBGUGGING: show the disassembly string from capstone itself
         std::cerr <<"ROBB: capstone disassembly:"
                   <<" " <<StringUtility::addrToString(va) <<":"
                   <<" " <<StringUtility::toHex2(bytes[0], 8, false, false).substr(2)
@@ -135,7 +136,7 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
         ASSERT_not_implemented("ARM (32-bit) disassembler is not implemented");
     } else if (Architecture::ARCH_ARM64 == arch_) {
         const cs_arm64 &detail = r.csi->detail->arm64;
-#if 1 // DEBGUGGING: show the disassembly string from capstone itself
+#if 0 // DEBGUGGING: show the disassembly string from capstone itself
         std::cerr <<"ROBB: capstone disassembly:"
                   <<" " <<StringUtility::addrToString(va) <<":"
                   <<" " <<StringUtility::toHex2(bytes[0], 8, false, false).substr(2)
@@ -198,6 +199,18 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
                 memref->set_type(SageBuilderAsm::buildTypeU32());
                 insn->get_operandList()->get_operands()[1] = memref;
             }
+        } else if (insn->get_kind() == A64InstructionKind::ARM64_INS_XTN) {
+            // The XTN instruction is disassembled incorrectly: the type of the destination argument is wrong.  XTN reads the
+            // elements of the source vector, truncates each to half its width, packs the half-sizes together, and writes them
+            // to the low half of the destination register while clearing the upper half of the destination.  I.e., it writes
+            // as many bits as it reads. However, the destination type is only half as wide as the source type. In contrast,
+            // the XTN2 instruction which is the same except it writes the result to the upper half of the destination while
+            // clearing the lower half, has the correct type.
+            ASSERT_require(insn->nOperands() == 2);
+            ASSERT_require(insn->operand(0)->get_nBits() * 2 == insn->operand(1)->get_nBits());
+            SgAsmVectorType *dstType = isSgAsmVectorType(insn->operand(0)->get_type());
+            ASSERT_not_null(dstType);
+            insn->operand(0)->set_type(SageBuilderAsm::buildTypeVector(2 * dstType->get_nElmts(), dstType->get_elmtType()));
         }
 
     } else {

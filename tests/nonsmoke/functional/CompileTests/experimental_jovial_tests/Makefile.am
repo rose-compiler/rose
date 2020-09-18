@@ -24,14 +24,21 @@ JOVIAL_TESTCODES = \
  1_2_3_main-program-module_c.jov        \
  1_2_3_main-program-module_d.jov        \
  2_1_1_4_bit_type.jov                   \
- 2_1_6_block_preset_list.jov            \
  2_1_1_7_pointer_type.jov               \
  2_1_2_simple_table_var.jov             \
  2_1_2_compound_table_var.jov           \
+ 2_1_2_1_table_dimension_list_a.jov     \
+ 2_1_2_1_table_dimension_list_b.jov     \
  2_1_2_2_structure_spec.jov             \
  2_1_2_3_packing_spec.jov               \
  2_1_3_constant_table_var.jov           \
+ 2_1_6_block_preset_list.jov            \
  2_4_define_j.jov                       \
+ 3_2_function_result.jov                \
+ 4_2_loop_stmt_b.jov                    \
+ 4_2_loop_stmt_b1.jov                   \
+ 4_2_loop_stmt_d.jov                    \
+ 4_2_loop_stmt_d1.jov                   \
  4_2_loop_stmt_while_a.jov              \
  4_2_loop_stmt_while_b.jov              \
  4_3_if_stmt_a.jov                      \
@@ -54,13 +61,30 @@ JOVIAL_TESTCODES = \
  6_3_5_shift_function.jov               \
  6_3_6_abs_function.jov                 \
  6_3_10_nwdsen_function.jov             \
+ 9_0_directives.jov                     \
  rose-issue-1507.jov                    \
  rose-issue-1516.jov                    \
+ rose-issue-2100.jov                    \
  rose-issue-2143_j.jov                  \
  rose-issue-2775.jov                    \
  rose-issue-2776.jov                    \
  rose-issue-rc-2.jov                    \
- rose-issue-rc-19.jov
+ rose-issue-rc-19.jov                   \
+ rose-issue-rc-41a.jov                  \
+ rose-issue-rc-41b.jov                  \
+ rose-issue-rc-42a.jov                  \
+ rose-issue-rc-42b.jov                  \
+ rose-issue-rc-42c.jov                  \
+ rose-issue-rc-69.jov                   \
+ rose-issue-rc-84.jov                   \
+ rose-issue-rc-85.jov                   \
+ rose-issue-rc-86.jov                   \
+ rose-issue-rc-88.jov                   \
+ rose-issue-rc-91.jov                   \
+ rose-issue-rc-94.jov                   \
+ rose-issue-rc-96.jov                   \
+ rose-issue-rc-122-lcopy.jov            \
+ rose-issue-rc-134.jov
 
 # status_enumval.jov                     \
 # 1_2_3_program-body_a.jov               \
@@ -71,10 +95,6 @@ JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \
  tables_and_pointers.jov                \
  2_1_1_5_char_item_desc.jov             \
- 2_1_2_1_table_dimension_list_a.jov     \
- 2_1_2_1_table_dimension_list_b.jov     \
- 4_2_loop_stmt_b1.jov                   \
- 4_2_loop_stmt_d1.jov                   \
  4_3_if_else_stmt.jov                   \
  4_6_return_stmt_a.jov                  \
  4_7_goto_stmt_a.jov                    \
@@ -83,10 +103,10 @@ JOVIAL_PARSER_TESTCODES = \
  5_1_1_integer-term.jov                 \
  5_2_1_relational_expressions_a.jov     \
  6_3_2_next_function_pointer.jov        \
- 6_3_2_next_function_status.jov         \
- 9_0_directives.jov
+ 6_3_2_next_function_status.jov
 
 COMPOOL_TESTCODES = \
+ define_dollar.cpl                      \
  simple_compool.cpl                     \
  status_type.cpl                        \
  2_4_define.cpl                         \
@@ -107,21 +127,42 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-6.cpl                    \
  rose-issue-rc-7.cpl                    \
  rose-issue-rc-9.cpl                    \
+ rose-issue-rc-11.cpl                   \
  rose-issue-rc-12.cpl                   \
  rose-issue-rc-14.cpl                   \
+ rose-issue-rc-15.cpl                   \
  rose-issue-rc-16.cpl                   \
- rose-issue-rc-49.cpl
+ rose-issue-rc-49.cpl                   \
+ rose-issue-rc-50.cpl                   \
+ rose-issue-rc-51.cpl                   \
+ rose-issue-rc-52.cpl                   \
+ rose-issue-rc-53.cpl                   \
+ rose-issue-rc-55.cpl                   \
+ rose-issue-rc-55a.cpl                  \
+ rose-issue-rc-56.cpl                   \
+ rose-issue-rc-79a.cpl                  \
+ rose-issue-rc-87.cpl                   \
+ rose-issue-rc-92a.cpl                  \
+ rose-issue-rc-93.cpl                   \
+ rose-issue-rc-95.cpl                   \
+ rose-issue-rc-118.cpl                  \
+ rose-issue-rc-119a.cpl                 \
+ rose-issue-rc-120.cpl                  \
+ rose-issue-rc-121.cpl                  \
+ rose-issue-rc-128.cpl                  \
+ rose-issue-rc-129.cpl
 
 COMPOOL_DIRECTIVE_TESTCODES = \
- 9_1_compool_directive.cpl
-
+ 9_1_compool_directive.cpl              \
+ rose-issue-rc-79b.cpl                  \
+ rose-issue-rc-92b.cpl                  \
+ rose-issue-rc-119b.cpl
 
 # proc_refs.cpl                          
 
 
 COMPOOL_PARSER_TESTCODES = \
  constant_item_presets.cpl              \
- define_dollar.cpl                      \
  item_and_status_type_J.cpl             \
  simple_def_ambiguity_J.cpl             \
  size_function_J.cpl                    \
@@ -165,7 +206,6 @@ JOVIAL_TESTCODES_PASS_TRAVERSE = \
  rose-issue-2144.cpl
 
 JOVIAL_TESTCODES_WORKING_ON = \
- rose-issue-2100.jov                    \
  rose-issue-2101.jov                    \
  rose-issue-2102.jov                    \
  rose-issue-2104.jov                    \
@@ -188,9 +228,7 @@ JOVIAL_TESTCODES_WORKING_ON = \
  1_2_3_program-body_h.jov               \
  4_1_assignment_stmt_a.jov              \
  4_1_assignment_stmt_b.jov              \
- 4_2_loop_stmt_b.jov                    \
  4_2_loop_stmt_c.jov                    \
- 4_2_loop_stmt_d.jov                    \
  4_6_return_stmt_b.jov                  \
  4_10_abort_stmt_c.jov                  \
  5_1_1_integer-factor.jov               \

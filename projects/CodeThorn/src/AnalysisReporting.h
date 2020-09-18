@@ -13,6 +13,7 @@ namespace CodeThorn {
     static void generateNullPointerAnalysisStats(CodeThorn::Analyzer* analyzer);
     static void generateAnalysisStatsRawData(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer);
     static void generateAnalyzedFunctionsAndFilesReports(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer);
+    static void generateVerificationCallGraph(CodeThorn::Analyzer* analyzer, string analysisName, ProgramLocationsReport& report);
   };
 }
 #endif

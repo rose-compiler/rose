@@ -16,7 +16,6 @@
 #include "shared-src/ProgramStats.h"
 
 #include "Labeler.h"
-#include "WorkList.h"
 #include "CFAnalysis.h"
 #include "RDLattice.h"
 #include "DFAnalysisBase.h"
@@ -30,7 +29,7 @@
 #include "DataDependenceVisualizer.h"
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "AbstractValue.h"
 #include "SgNodeHelper.h"
 #include "DFAstAttributeConversion.h"
@@ -41,7 +40,7 @@
 #include "addressTakenAnalysis.h"
 #include "defUseQuery.h"
 #include "TimeMeasurement.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "AliasAnalysis.h"
 
 #include "AstTerm.h"
@@ -71,7 +70,7 @@
 using namespace std;
 using namespace CodeThorn;
 using namespace DFAstAttributeConversion;
-using namespace AnalysisAbstractionLayer;
+using namespace AstUtility;
 
 #include "PropertyValueTable.h"
 

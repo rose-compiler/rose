@@ -36,6 +36,22 @@ std::vector<Function::Ptr> findPltFunctions(const Partitioner&, SgAsmInterpretat
 size_t findPltFunctions(const Partitioner&, SgAsmElfFileHeader*, std::vector<Function::Ptr>&);
 /** @} */
 
+/** Find the dynamic linking PLT GOT section. */
+SgAsmGenericSection* findPltGot(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader);
+
+/** Information about the procedure lookup table. */
+struct PltInfo {
+    SgAsmGenericSection *section;
+    size_t firstOffset;                                 /**< Byte offset w.r.t. section for first valid entry. */
+    size_t entrySize;                                   /**< Size of each entry in bytes. */
+
+    PltInfo()
+        : section(NULL), firstOffset(0), entrySize(0) {}
+};
+
+/** Find information about the PLT. */
+PltInfo findPlt(const Partitioner&, SgAsmElfFileHeader*);
+
 /** Get a list of all ELF sections by name.
  *
  *  Returns an empty list if the interpretation is null or it doesn't have any sections that match the specified name. */
@@ -98,11 +114,13 @@ extractStaticArchive(const boost::filesystem::path &directory, const boost::file
 /** Matches an ELF PLT entry.  The address through which the PLT entry branches is remembered. This address is typically an
  *  RVA which is added to the initial base address. */
 struct PltEntryMatcher: public InstructionMatcher {
+    // These data members are generally optional, and filled in as they're matched.
     rose_addr_t baseVa_;                                // base address for computing memAddress_
     rose_addr_t gotEntryVa_;                            // address through which an indirect branch branches
     size_t gotEntryNBytes_;                             // size of the global offset table entry in bytes
     rose_addr_t gotEntry_;                              // address read from the GOT if the address is mapped (or zero)
     size_t nBytesMatched_;                              // number of bytes matched for PLT entry
+    rose_addr_t functionNumber_;                        // function number argument for the dynamic linker (usually a push)
 
 public:
     PltEntryMatcher(rose_addr_t base)
@@ -124,6 +142,18 @@ public:
 
     // [Robb Matzke 2018-04-06]: deprecated: use gotEntryVa
     rose_addr_t memAddress() const { return gotEntryVa_; }
+
+private:
+    SgAsmInstruction* matchNop(const Partitioner&, rose_addr_t va);
+    SgAsmInstruction* matchPush(const Partitioner&, rose_addr_t var, rose_addr_t &n /*out*/);
+    SgAsmInstruction* matchDirectJump(const Partitioner&, rose_addr_t va);
+    SgAsmInstruction* matchIndirectJump(const Partitioner&, rose_addr_t va,
+                                        rose_addr_t &indirectVa /*out*/, size_t &indirectNBytes /*out*/);
+    SgAsmInstruction* matchA64Adrp(const Partitioner&, rose_addr_t va, rose_addr_t &value /*out*/);
+    SgAsmInstruction* matchA64Ldr(const Partitioner&, rose_addr_t va, rose_addr_t &indirectVa /*in,out*/,
+                                  rose_addr_t &indirectNBytes /*out*/);
+    SgAsmInstruction* matchA64Add(const Partitioner&, rose_addr_t va);
+    SgAsmInstruction* matchA64Br(const Partitioner&, rose_addr_t va);
 };
 
 /** Build may-return white and black lists. */

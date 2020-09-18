@@ -808,7 +808,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
          }
          else if(hasLambdaFuncArg)
          {
-           SgLambdaExp* lambdaExp = isSgLambdaExp(classdecl->get_parent());
+           //SgLambdaExp* lambdaExp = isSgLambdaExp(classdecl->get_parent());
            //SgClassDeclaration* defingingclassdecl  = isSgClassDeclaration(classdecl->get_definingDeclaration());
            //SgMemberFunctionDeclaration* lambdaFunc = isSgMemberFunctionDeclaration(lambdaExp->get_lambda_function());
            SgAssignInitializer* assignInitializer = new SgAssignInitializer(SgNULL_FILE, actualArg, formalArg->get_type());

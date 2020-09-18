@@ -3241,9 +3241,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
   // ROSE_ASSERT(struct_name->get_declaration() != NULL);
 
 #if 0
-     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
-     printf ("In buildMemberFunctionType() return_type = %p typeList = %p struct_name = %p = %s = %s mfunc_specifier = %u \n",
-          return_type,typeList,struct_name,struct_name->class_name().c_str(),struct_name->get_declaration()->get_name().str(),mfunc_specifier);
+     printf("struct_name = %p ( %s )\n", struct_name, struct_name->class_name().c_str());
 #endif
 
   // SgDeclarationStatement* declaration = struct_name->get_declaration();
@@ -6989,6 +6987,14 @@ SgUnsignedLongLongIntVal* SageBuilder::buildUnsignedLongLongIntVal_nfi(unsigned 
   return result;
 }
 
+SgJovialBitVal* SageBuilder::buildJovialBitVal_nfi(const string& str)
+{
+  SgJovialBitVal* result = new SgJovialBitVal(str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgTemplateType* SageBuilder::buildTemplateType(SgName name/* ="" */)
 {
   SgTemplateType* result = new SgTemplateType (name);
@@ -8660,10 +8666,10 @@ SgFunctionCallExp*
 SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym,
                                   SgExprListExp* parameters/*=NULL*/)
    {
-     ROSE_ASSERT (sym);
+     ROSE_ASSERT (sym != NULL);
      if (parameters == NULL)
           parameters = buildExprListExp();
-     ROSE_ASSERT (parameters);
+     ROSE_ASSERT (parameters != NULL);
 
   // DQ (8/21/2011): We want to preserve the support for member functions to be built as SgMemberFunctionRefExp.
   // This is important for the Java support and the C++ support else we will be lowering all mmember function calls
@@ -8704,11 +8710,16 @@ SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym,
 SgFunctionCallExp*
 SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters /*=NULL*/)
    {
-     SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
+     ROSE_ASSERT(f != NULL);
+     SgFunctionCallExp* func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
      ROSE_ASSERT(func_call_expr != NULL);
 
-     if (f) f->set_parent(func_call_expr);
-     if (parameters) parameters->set_parent(func_call_expr);
+     if (f != NULL) {
+        f->set_parent(func_call_expr);
+     }
+     if (parameters != NULL) {
+        parameters->set_parent(func_call_expr);
+     }
      setOneSourcePositionNull(func_call_expr);
 
      return func_call_expr;
@@ -11191,7 +11202,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
 }
 
 // Rasmussen (2/20/2020): Added builder for Jovial fixed type
-SgTypeFixed* SageBuilder::buildFixedType(SgExpression* fraction, SgExpression* scale)
+SgTypeFixed* SageBuilder::buildFixedType(SgExpression* scale, SgExpression* fraction)
 {
   SgTypeFixed * result = SgTypeFixed::createType(scale, fraction);
   ROSE_ASSERT(result);
@@ -12603,6 +12614,41 @@ SageBuilder::buildJovialDefineDeclaration_nfi(const SgName& name, const std::str
      define_decl->set_parent(scope);
 
      return define_decl;
+  }
+
+// Build a Jovial loop statement. Two variants are FOR and WHILE.
+SgJovialForThenStatement*
+SageBuilder::buildJovialForThenStatement_nfi(SgExpression* init_expr,
+                                             SgExpression* while_expr, SgExpression* by_or_then_expr)
+  {
+     SgJovialForThenStatement* for_stmt;
+     ROSE_ASSERT(init_expr);
+
+  // Both the increment and the test expression can be a nullptr, create a SgNullExpression if necessary.
+  //
+     if (while_expr == NULL) {
+        while_expr = buildNullExpression_nfi();
+     }
+     if (by_or_then_expr == NULL) {
+        by_or_then_expr = buildNullExpression_nfi();
+     }
+
+     SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
+
+     for_stmt = new SgJovialForThenStatement(init_expr, while_expr, by_or_then_expr, body);
+     ROSE_ASSERT(for_stmt);
+     setOneSourcePositionNull(for_stmt);
+
+     if (topScopeStack()) {
+        for_stmt->set_parent(topScopeStack());
+     }
+     body->set_parent(for_stmt);
+
+     if (SageInterface::is_language_case_insensitive()) {
+        for_stmt->setCaseInsensitive(true);
+     }
+
+     return for_stmt;
   }
 
 // This should take a SgClassDeclaration::class_types kind parameter!
@@ -14184,10 +14230,13 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
             // DQ (12/27/2018): I think that if this is a base class declaration then it is OK for the type's declaration to not match.
             // ROSE_ASSERT(nondefdecl->get_parent() != NULL);
-               if (nondefdecl->get_parent() != NULL)
-                  {
-                    printf ("nondefdecl->get_parent() = %p = %s \n",nondefdecl->get_parent(),nondefdecl->get_parent()->class_name().c_str());
-                  }
+               {
+                  SgNode* parent = nondefdecl->get_parent();
+                  if (parent != NULL)
+                     {
+                       printf ("nondefdecl->get_parent() = %p = %s \n",parent,parent->class_name().c_str());
+                     }
+               }
 
             // DQ (12/27/2018): Activate this debugging support.
 #if DEBUG_CLASS_DECLARATION
@@ -17077,7 +17126,7 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
         }
      ROSE_ASSERT (sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
 
-#if 1
+#if 0
   // DQ (5/22/2020): If this is processing a previously processed file, then this 
   // will cause comments and CPP directives to be collected twice. This happens
   // in the case where we build a copy of the source file to support construction 
@@ -17090,7 +17139,7 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
      ROSE_ASSERT(filePreprocInfo != NULL);
 #endif
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project): calling attachPreprocessingInfo() \n");
 #endif
 
@@ -20597,10 +20646,11 @@ SgSourceFile *SageBuilder::buildJavaSourceFile(SgProject *project, string direct
     //
     // Create a package statement and add it to the source file
     //
-    ROSE_ASSERT(package_definition->get_declaration() != NULL);
-    SgJavaPackageStatement *package_statement = SageBuilder::buildJavaPackageStatement(package_definition -> get_declaration() -> get_qualified_name().getString());
-    package_statement -> set_parent(package_definition);
-    sourcefile -> set_package(package_statement);
+    SgClassDeclaration* pkgDefDecl = package_definition->get_declaration();
+    ROSE_ASSERT(pkgDefDecl != NULL);
+    SgJavaPackageStatement *package_statement = SageBuilder::buildJavaPackageStatement(pkgDefDecl->get_qualified_name().getString());
+    package_statement->set_parent(package_definition);
+    sourcefile->set_package(package_statement);
 
     //
     // Initialize an import-list for the sourcefile

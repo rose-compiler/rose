@@ -1850,8 +1850,9 @@ This is no perfect solution until we handle preprocessing information as structu
        // We now support OpenMP AST construction for both C/C++ and Fortran
        // But we allow Fortran End directives to exist after -rose:openmp:ast_only
        // Otherwise the code unparsed will be illegal Fortran code (No {} blocks in Fortran)
-       ROSE_ASSERT(getOmpAttribute(decl) != NULL);    
-       if (isFortranEndDirective(getOmpAttribute(decl)->getOmpDirectiveType()))
+       OmpAttribute* ompAttrib = getOmpAttribute(decl);
+       ROSE_ASSERT(ompAttrib != NULL);    
+       if (isFortranEndDirective(ompAttrib->getOmpDirectiveType()))
           continue; 
       ROSE_ASSERT (decl->get_scope() !=NULL);    
       ROSE_ASSERT (decl->get_parent() !=NULL);    

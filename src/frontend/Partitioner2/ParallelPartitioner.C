@@ -231,9 +231,9 @@ DecodeInstruction::run() {
 #endif
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////    
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // NextUnusedRegion
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////    
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
 NextUnusedRegion::run() {
@@ -251,9 +251,9 @@ NextUnusedRegion::run() {
     }
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////    
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Scheduler
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////    
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool
 WorkItemSorter::operator()(const std::shared_ptr<WorkItem> &a, const std::shared_ptr<WorkItem> &b) const {
@@ -382,7 +382,7 @@ Partitioner::unusedExecutableVas(AddressInterval where) const {
             if (unused.isEmpty())
                 return retval;
         }
-        
+
         // Fill the bucket of executable addresses
         if ((executable & where).isEmpty()) {
             executable = memoryMap()->atOrAfter(unused.least()).require(MemoryMap::EXECUTABLE).available() & where;
@@ -580,7 +580,7 @@ Partitioner::basicBlockSemantics(const InsnInfo::List &insns) {
             ops->currentState(Semantics::StatePtr());
         }
     }
-    
+
     return borrow(insns.back()->cached().semantics, InsnInfo::hash(insns), ops);
 }
 
@@ -615,7 +615,7 @@ Partitioner::splitSuccessors(const BaseSemantics::RiscOperatorsPtr &ops) {
     }
     return retval;
 }
-    
+
 std::vector<SymbolicExpr::Ptr>
 Partitioner::computeSuccessors(const InsnInfo::List &insns, Accuracy accuracy) {
     accuracy = choose(accuracy, settings_.successorAccuracy);
@@ -643,7 +643,7 @@ Partitioner::computeSuccessors(const InsnInfo::List &insns, Accuracy accuracy) {
     ASSERT_forbid(retval.empty());
     return retval;
 }
-        
+
 
 
 std::vector<SymbolicExpr::Ptr>
@@ -942,7 +942,7 @@ Partitioner::remap() {
     std::sort(deltas.begin(), deltas.end());
     if (!deltas.empty()) {
         if (debug) {
-            Diagnostics::mfprintf(debug)("remap deltas (%6.2%% accuracy):", 100.0 * bma.bestDeltaRatio());
+            Diagnostics::mfprintf(debug)("remap deltas (%6.2f%% accuracy):", 100.0 * bma.bestDeltaRatio());
             for (rose_addr_t va: deltas)
                 debug <<" " <<StringUtility::addrToString(va, bma.nBits());
             debug <<"\n";
@@ -984,8 +984,7 @@ Partitioner::transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &ou
         BaseSemantics::RiscOperatorsPtr ops = borrowedOps.get().orElse(nullptr);
         ASSERT_not_null(ops);
         const RegisterDescriptor IP = instructionCache().decoder()->instructionPointerRegister();
-        rose_addr_t lastInsnVa = insns.back()->address();
-        auto vertex = insnCfg_.findVertexKey(lastInsnVa);
+        auto vertex = insnCfg_.findVertexKey(insns.back()->address());
         ASSERT_require(vertex != insnCfg_.vertices().end());
         for (auto edge: vertex->outEdges()) {
             rose_addr_t targetVa = edge.target()->value()->address();
@@ -1008,7 +1007,7 @@ Partitioner::transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &ou
             if (!complete)
                 bblock->insertSuccessor(ops->undefined_(IP.nBits()), E_NORMAL);
         }
-        
+
         out.detachBasicBlock(bblock);
         out.attachBasicBlock(bblock);
     }
@@ -1035,29 +1034,38 @@ Partitioner::transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &ou
 // Function assignment ("Fa") assigns each instruction to a specific function.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Dataflow state stored at each CFG vertex. The state consists of all the function entry points that can reach this vertex
+// via CFG edges, and the length of the shortest such path.
 struct FaState {
-    std::set<rose_addr_t> owningFunctions;
-    bool isEntryPoint;
+    using Map = std::map<rose_addr_t /*funcEntryVa*/, size_t /*minPathLength*/>;
+    Map reachableFrom;                                  // which function entry point can reach this vertex, and shortest path
+    bool isEntryPoint;                                  // is this vertex a function entry point
 
     FaState()
         : isEntryPoint(false) {}
 
+    // Mark a function entry point
     explicit FaState(rose_addr_t va)
-        : owningFunctions{va}, isEntryPoint(true) {}
+        : isEntryPoint(true) {
+        reachableFrom[va] = 0;
+    }
 
     std::string toString() const {
         std::ostringstream ss;
         if (isEntryPoint)
             ss <<"entry-point";
-        for (auto owner = owningFunctions.begin(); owner != owningFunctions.end(); ++owner)
-            ss <<(ss.str().empty() ? "" : ", ") <<addrToString(*owner);
+        for (auto &node: reachableFrom)
+            ss <<(ss.str().empty() ? "" : ", ") <<addrToString(node.first) <<"+" <<node.second;
         return ss.str();
     }
 };
 
 struct FaTransfer {
     FaState operator()(const InsnCfg&, size_t vertexId, const FaState &state) const {
-        return state;
+        FaState next = state;
+        for (auto &node: next.reachableFrom)
+            ++node.second;
+        return next;
     }
 
     std::string toString(const FaState &state) const {
@@ -1067,9 +1075,18 @@ struct FaTransfer {
 
 struct FaMerge {
     bool operator()(FaState &a, const FaState &b) const {
-        size_t oldSize = a.owningFunctions.size();
-        a.owningFunctions.insert(b.owningFunctions.begin(), b.owningFunctions.end());
-        return oldSize != a.owningFunctions.size();
+        bool changed = false;
+        for (auto &bNode: b.reachableFrom) {
+            auto result = a.reachableFrom.insert(bNode);
+            if (result.second) {
+                changed = true;
+            } else if (bNode.second < result.first->second) {
+                result.first->second = bNode.second;
+                changed = true;
+            }
+        }
+        ASSERT_forbid(a.reachableFrom.empty());
+        return changed;
     }
 };
 
@@ -1128,7 +1145,7 @@ Partitioner::assignFunctions() {
     if (mlog[ERROR] || debug) {
         size_t nUnassigned = 0;
         for (size_t i = 0; i < insnCfg_.nVertices(); ++i) {
-            if (dfEngine.getInitialState(i).owningFunctions.empty() && dfEngine.getInitialState(i).isEntryPoint) {
+            if (dfEngine.getInitialState(i).reachableFrom.empty() && dfEngine.getInitialState(i).isEntryPoint) {
                 ++nUnassigned;
                 //debug <<"CFG vertex " <<addrToString(insnCfg_.findVertex(i)->value()->address()) <<" is not in any function\n";
             }
@@ -1152,7 +1169,7 @@ Partitioner::assignFunctions() {
                 <<boost::format("possible specimen mapping error: %6.2f%% of functions are at invalid memory\n")
                 %(100*emptyRate);
 #if 0 // [Robb Matzke 2020-07-31]
-            SAWYER_MESG_OR(mlog[WARN], debug) <<"looking for a better address at which to map the specimen...\n");
+            SAWYER_MESG_OR(mlog[WARN], debug) <<"looking for a better address at which to map the specimen...\n";
             if (rose_addr_t shift = remap()) {
                 size_t nBits = instructionCache().decoder()->instructionPointerRegister().nBits();
                 mlog[WARN] <<"results may improve if you shift the specimen by "
@@ -1164,11 +1181,17 @@ Partitioner::assignFunctions() {
         }
     }
 
-    // FIXME[Robb Matzke 2020-07-08]: Should it be possible for an instruction to belong to more than one function? For now,
-    // lets assume yes.
+    // Assign each vertex to the function with the closest entry point, if any.
     std::map<rose_addr_t /*funcVa*/, AddressSet /*insnVas*/> retval;
     for (size_t i = 0; i < insnCfg_.nVertices(); ++i) {
-        for (rose_addr_t funcVa: dfEngine.getInitialState(i).owningFunctions) {
+        const FaState &state = dfEngine.getInitialState(i);
+        if (!state.reachableFrom.empty()) {
+            std::vector<std::pair<rose_addr_t, size_t> > funcs(state.reachableFrom.begin(), state.reachableFrom.end());
+            std::nth_element(funcs.begin(), funcs.begin(), funcs.end(),
+                             [](std::pair<rose_addr_t, size_t> &a, std::pair<rose_addr_t, size_t> &b) {
+                                 return a.second < b.second;
+                             });
+            rose_addr_t funcVa = funcs[0].first;
             rose_addr_t insnVa = insnCfg_.findVertex(i)->value()->address();
             retval[funcVa].insert(insnVa);
         }

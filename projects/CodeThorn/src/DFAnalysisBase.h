@@ -48,12 +48,12 @@ class DFAnalysisBase {
   void determineExtremalLabels(SgNode* startFunRoot=0,bool onlySingleStartLabel=true);
   void run();
 
-  vector<Lattice*>& getResultAccess();
+  //~ const vector<Lattice*>& getResultAccess() const { return _analyzerDataPreInfo; }
 #if 0
   void attachResultsToAst(string);
 #endif
   virtual Labeler* getLabeler() const;
-  virtual CFAnalysis* getCFAnalyzer();
+  virtual CFAnalysis* getCFAnalyzer(); 
   virtual VariableIdMappingExtended* getVariableIdMapping();
   virtual FunctionIdMapping* getFunctionIdMapping();
   virtual Flow* getFlow() const;
@@ -74,6 +74,9 @@ class DFAnalysisBase {
  protected:
   enum AnalysisType {FORWARD_ANALYSIS, BACKWARD_ANALYSIS};
   virtual void solve();
+  virtual void initializeAnalyzerDataInfo();
+  
+  bool _programAbstractionLayerOwner=true;
   ProgramAbstractionLayer* _programAbstractionLayer=nullptr;
   LabelSet _extremalLabels;
   // following members are initialized by function initialize()
@@ -101,14 +104,13 @@ class DFAnalysisBase {
   DFTransferFunctions* _transferFunctions=nullptr;
  protected:
   DFAbstractSolver* _solver=nullptr;
+  Lattice* _globalVariablesState=nullptr;
   AnalysisType _analysisType=DFAnalysisBase::FORWARD_ANALYSIS;
   bool _no_topological_sort=false;
  private:
   PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
   PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;
-  Lattice* _globalVariablesState=nullptr;
   bool _skipSelectedFunctionCalls=false;
-  bool _programAbstractionLayerOwner=true;
 };
 
 } // end of namespace

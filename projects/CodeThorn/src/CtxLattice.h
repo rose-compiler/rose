@@ -313,7 +313,7 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*, typename Ca
       ROSE_ASSERT(!EXTENSIVE_ASSERTION_CHECKING || other.approximatedBy(*this));
     }
 
-    PropertyStateFactory& componentFactory()
+    PropertyStateFactory& componentFactory() const
     {
       return compPropertyFactory;
     }
@@ -330,6 +330,17 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*, typename Ca
     bool callLosesPrecision(const_iterator pos) const
     {
       return equalPostfixB(pos, std::prev(pos)) || equalPostfixE(pos, std::next(pos));
+    }
+    
+    Lattice* combineAll() const 
+    {
+      Lattice* res = componentFactory().create();
+      
+      for (const value_type& elem : *this)
+        res->combine(const_cast<Lattice&>(SG_DEREF(elem.second)));
+      
+      ROSE_ASSERT(!isBot() || isBot());
+      return res;
     }
 
   private:

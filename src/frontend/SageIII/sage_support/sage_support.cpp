@@ -23,7 +23,9 @@
 #endif
 
 #include "unparseJovial_modfile.h"
-
+#ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+#   include "ModuleBuilder.h"
+#endif
 
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #   include <Partitioner2/Engine.h>
@@ -350,6 +352,15 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgNullptrValExp:
              {
                s = "_nullptr_";
+               break;
+             }
+
+       // CR (9/16/2020): Added support for Jovial bit value.
+          case V_SgJovialBitVal:
+             {
+               const SgJovialBitVal* expr = isSgJovialBitVal(this);
+               ROSE_ASSERT(expr);
+               s = expr->get_valueString();
                break;
              }
 
@@ -2267,6 +2278,11 @@ SgProject::parse()
   // FMZ (5/29/2008)
      FortranModuleInfo::setCurrentProject(this);
      FortranModuleInfo::set_inputDirs(this );
+#endif
+
+#ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+     ModuleBuilderFactory::get_compool_builder().setCurrentProject(this);
+     ModuleBuilderFactory::get_compool_builder().setInputDirs(this);
 #endif
 
   // Simplify multi-file handling so that a single file is just the trivial

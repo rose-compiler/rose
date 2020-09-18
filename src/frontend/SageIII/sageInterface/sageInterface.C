@@ -3071,20 +3071,21 @@ SageInterface::getDefaultDestructor( SgClassDeclaration* classDeclaration )
                while ( i != classDefinition->get_members().end() )
                   {
                  // Check the parent pointer to make sure it is properly set
-                    ROSE_ASSERT( (*i)->get_parent() != NULL);
+                    SgNode* i_parent = (*i)->get_parent();
+                    ROSE_ASSERT(i_parent != NULL);
 
                  // DQ (11/1/2005): Note that a template instantiation can have a parent which is the
                  // variable which forced it's instantiation.  Since it does not really exist in the
                  // source code explicitly (it is compiler generated) this is as reasonable as anything else.
-                 // if ( (*i)->get_parent() != classDefinition && isSgVariableDeclaration((*i)->get_parent()) == NULL)
-                    if ( (*i)->get_parent() != classDefinition )
+                 // if ( i_parent != classDefinition && isSgVariableDeclaration(i_parent) == NULL)
+                    if ( i_parent != classDefinition )
                        {
-                         printf ("Error: (*i)->get_parent() = %p = %s \n",(*i)->get_parent(),(*i)->get_parent()->class_name().c_str());
+                         printf ("Error: (*i)->get_parent() = %p = %s \n",i_parent,i_parent->class_name().c_str());
                          printf ("(*i) = %p = %s = %s \n",*i,(*i)->class_name().c_str(),(*i)->unparseToString().c_str());
                          (*i)->get_file_info()->display("Called from SageInterface::getDefaultDestructor: debug");
                        }
-                    ROSE_ASSERT( (*i)->get_parent() == classDefinition);
-                 // ROSE_ASSERT( (*i)->get_parent() == classDefinition || isSgVariableDeclaration((*i)->get_parent()) != NULL);
+                    ROSE_ASSERT( i_parent == classDefinition);
+                 // ROSE_ASSERT( i_parent == classDefinition || isSgVariableDeclaration(i_parent) != NULL);
 
                     SgMemberFunctionDeclaration* memberFunction = isSgMemberFunctionDeclaration(*i);
                     if (memberFunction != NULL)
@@ -3748,6 +3749,7 @@ supportForLabelStatements ( SgScopeStatement* scope, SgSymbolTable* symbolTable 
         {
           SgLabelStatement* labelStatement = isSgLabelStatement(labelList[i]);
 
+          ROSE_ASSERT(labelStatement != NULL);
           ROSE_ASSERT(labelStatement->get_scope() == scope);
 
           SgSymbol* symbol = new SgLabelSymbol(labelStatement);
@@ -5790,7 +5792,13 @@ SageInterface::functionCallExpressionPreceedsDeclarationWhichAssociatesScope ( S
                                       {
                                      // This might be a function declaration (non-defining) used in a type or buried deeply in some sort of declaration!
                                         printf ("Strange case of parentScopeOfDeclaration == NULL in SageInterface::functionCallExpressionPreceedsDeclarationWhichAssociatesScope() \n");
-                                        printf ("declaration->get_parent() = %s \n",declaration->get_parent()->class_name().c_str());
+                                        SgNode* parent = declaration->get_parent();
+                                        if (parent != NULL) {
+                                           printf ("declaration->get_parent() = %s \n",parent->class_name().c_str());
+                                        }
+                                        else {
+                                           printf ("declaration->get_parent() = NULL \n");
+                                        }
                                         declaration->get_file_info()->display("case of parentScopeOfDeclaration == NULL");
                                         ROSE_ASSERT(false);
                                       }
@@ -8078,8 +8086,9 @@ static void findContinueStmtsHelper(SgStatement* code, const std::string& fortra
   }
   vector<SgNode*> children = code->get_traversalSuccessorContainer();
   for (unsigned int i = 0; i < children.size(); ++i) {
-    if (isSgStatement(children[i])) {
-      findContinueStmtsHelper(isSgStatement(children[i]), fortranLabel, inOutermostBody, continueStmts);
+    SgStatement* stmnt = isSgStatement(children[i]);
+    if (stmnt != NULL) {
+      findContinueStmtsHelper(stmnt, fortranLabel, inOutermostBody, continueStmts);
     }
   }
 }
@@ -10187,6 +10196,8 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
 
 void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp/*=false*/)
 {
+  SgExpression* parentExp;
+
   ROSE_ASSERT(oldExp);
   ROSE_ASSERT(newExp);
   if (oldExp==newExp) return;
@@ -10244,31 +10255,35 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
            isSgUnaryOp(parent)->set_operand_i(newExp);
       else
         ROSE_ASSERT(false);
-  }  else//SgConditionalExp
-  if (isSgConditionalExp(parent)!=NULL){
-     SgConditionalExp *expparent= isSgConditionalExp(parent);//get explicity type parent
-     if (oldExp==expparent->get_conditional_exp()) expparent->set_conditional_exp(newExp);
-     else if (oldExp==expparent->get_true_exp()) expparent->set_true_exp(newExp);
-     else if (oldExp==expparent->get_false_exp()) expparent->set_false_exp(newExp);
+  }
+  else if (isSgConditionalExp(parent) != NULL) {
+     SgConditionalExp* expparent = isSgConditionalExp(parent); //get explicity type parent
+     if (oldExp==expparent->get_conditional_exp())
+        expparent->set_conditional_exp(newExp);
+     else if (oldExp==expparent->get_true_exp())
+        expparent->set_true_exp(newExp);
+     else if (oldExp==expparent->get_false_exp())
+        expparent->set_false_exp(newExp);
      else
-       ROSE_ASSERT(false);
-  } else if (isSgExprListExp(parent)!=NULL)
-  {
-    SgExpressionPtrList & explist = isSgExprListExp(parent)->get_expressions();
-    for (Rose_STL_Container<SgExpression*>::iterator i=explist.begin();i!=explist.end();i++)
+        ROSE_ASSERT(false);
+  }
+  else if (isSgExprListExp(parent) != NULL) {
+    SgExpressionPtrList& explist = isSgExprListExp(parent)->get_expressions();
+    for (Rose_STL_Container<SgExpression*>::iterator i=explist.begin();i!=explist.end();i++) {
       if (isSgExpression(*i)==oldExp) {
-        isSgExprListExp(parent)->replace_expression(oldExp,newExp);
+        SgExprListExp* parentExpListExp = isSgExprListExp(parent);
+        parentExpListExp->replace_expression(oldExp,newExp);
        // break; //replace the first occurrence only??
       }
+    }
   }
-  else if (isSgValueExp(parent))
-  {
+  else if (isSgValueExp(parent)) {
       // For compiler generated code, this could happen.
       // We can just ignore this function call since it will not appear in the final AST.
       return;
   }
-  else if (isSgExpression(parent)) {
-    int worked = isSgExpression(parent)->replace_expression(oldExp, newExp);
+  else if ((parentExp=isSgExpression(parent)) != NULL) {
+    int worked = parentExp->replace_expression(oldExp, newExp);
     // ROSE_DEPRECATED_FUNCTION
     ROSE_ASSERT (worked);
   }
@@ -10410,11 +10425,15 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
 void SageInterface::removeAllOriginalExpressionTrees(SgNode* top) {
   struct Visitor: public AstSimpleProcessing {
     virtual void visit(SgNode* n) {
-      if (isSgValueExp(n) != NULL) {
-        isSgValueExp(n)->set_originalExpressionTree(NULL);
+      SgValueExp* valueExp = isSgValueExp(n);
+      if (valueExp != NULL) {
+        valueExp->set_originalExpressionTree(NULL);
       }
-      else if (isSgCastExp(n) != NULL) {
-        isSgCastExp(n)->set_originalExpressionTree(NULL);
+      else {
+        SgCastExp* cast_exp = isSgCastExp(n);
+        if (cast_exp != NULL) {
+          cast_exp->set_originalExpressionTree(NULL);
+        }
       }
     }
   };
@@ -12426,6 +12445,7 @@ ROSE_DLL_API int SageInterface::splitVariableDeclaration (SgScopeStatement* scop
     SgVariableDeclaration *decl= isSgVariableDeclaration(*i);
     if (topLevelOnly)
     {
+      ROSE_ASSERT(decl != NULL);
       if (decl->get_scope() == scope)
       {
         splitVariableDeclaration (decl);
@@ -13648,12 +13668,13 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                                    p->set_body(newparent);
                                    newparent->set_parent(parent);
                                    insertStatement(targetStmt, newStmt,insertBefore);
-                                }
+                                 }
                                else
                                  {
                                 // It appears that all of the recursive calls are untimately calling this location.
-                                   ROSE_ASSERT(isSgStatement(parent) != NULL);
-                                   isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
+                                   SgStatement* stmnt = isSgStatement(parent);
+                                   ROSE_ASSERT(stmnt != NULL);
+                                   stmnt->insert_statement(targetStmt,newStmt,insertBefore);
                                  }
                             }
                        }
@@ -19574,24 +19595,27 @@ SageInterface::deleteAST ( SgNode* n )
                                 /remove SgFunctionSymbol
                                 /////////////////////////////////////////////////*/
 
-                                if ((isSgFunctionDeclaration(node) != NULL) && (isSgMemberFunctionDeclaration(node) == NULL)){
-                                        if(isSgFunctionDeclaration(node)->get_scope()!=NULL){
-                                             if(isSgFunctionDeclaration(node)->get_scope()->get_symbol_table()!=NULL)
-                                                {
-                                                        SgSymbol* symbol = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
-                                                        ClassicVisitor visitor((SgFunctionSymbol *)symbol);
-                                                        traverseMemoryPoolVisitorPattern(visitor);
-                                                        if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete
-                                                                ((SgFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
-                                                                delete symbol;
-                                                                //printf("A SgFunctionSymbol was deleted\n");
-                                                        }
-                                                        ClassicVisitor visitor1((SgFunctionDeclaration *)node);
-                                                        traverseMemoryPoolVisitorPattern(visitor1);
-                                                }
-                                        }
+                                {
+                                   SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(node); 
+                                   if (funcDecl != NULL){
+                                      if (isSgMemberFunctionDeclaration(node) == NULL) {
+                                         if (funcDecl->get_scope() != NULL) {
+                                            if (funcDecl->get_scope()->get_symbol_table() != NULL) {
+                                               SgSymbol* symbol = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
+                                               ClassicVisitor visitor((SgFunctionSymbol *)symbol);
+                                               traverseMemoryPoolVisitorPattern(visitor);
+                                               if (visitor.get_num_Function_pointers()==1) { //only one reference to this FunctionSymbol => safe to delete
+                                                  ((SgFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                  delete symbol;
+                                                //printf("A SgFunctionSymbol was deleted\n");
+                                               }
+                                               ClassicVisitor visitor1((SgFunctionDeclaration *)node);
+                                               traverseMemoryPoolVisitorPattern(visitor1);
+                                            }
+                                         }
+                                      }
+                                   }
                                 }
-
 
                                 if(isSgFunctionRefExp(node) !=NULL)
                                 {
@@ -20294,15 +20318,17 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
   {
     name = isSgInitializedName(current);
   }
-  else if (isSgPntrArrRefExp(current))
+  else if (isSgPntrArrRefExp(current) != NULL)
   {
     bool suc=false;
-    suc= SageInterface::isArrayReference(isSgExpression(current),&nameExp);
+    SgExpression* exp = isSgExpression(current);
+    ROSE_ASSERT(exp != NULL);
+    suc = SageInterface::isArrayReference(exp,&nameExp);
     ROSE_ASSERT(suc == true);
      // has to resolve this recursively
     return convertRefToInitializedName(nameExp, coarseGrain);
   }
-  else if (isSgVarRefExp(current))
+  else if (isSgVarRefExp(current) != NULL)
   {
     if (coarseGrain)
     {
@@ -20840,6 +20866,7 @@ LivenessAnalysis * SageInterface::call_liveness_analysis(SgProject* project, boo
   for (i= vars.begin(); i!=vars.end();++i)
   {
     SgFunctionDefinition* func = isSgFunctionDefinition(*i);
+    ROSE_ASSERT(func != NULL);
     if (debug)
     {
       std::string name = func->class_name();
@@ -21107,6 +21134,7 @@ static  bool isIfReduction(SgVarRefExp* ref1, SgVarRefExp* ref2, OmpSupport::omp
         if (SgBasicBlock* block = isSgBasicBlock (body))
         {
           // stmt2 must be the only child of the if true body
+          ROSE_ASSERT(stmt2 != NULL);
           if ( ((block->get_statements()).size() == 1) && stmt2->get_scope() == block )
             matchBody = true;
         }
@@ -21810,15 +21838,14 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
     SgScopeStatement* scope = isSgScopeStatement(parent);    //Winnie, the scope that include target_loop
 
-    SgStatement* insert_target;
     while(scope == NULL)
     {
        parent = isSgStatement(parent->get_parent());
        scope = isSgScopeStatement(parent);
     }
 
-    insert_target = findLastDeclarationStatement(scope);
-    if(insert_target != NULL)
+    SgStatement* insert_target = findLastDeclarationStatement(scope);
+    if (insert_target != NULL)
         insert_target = getNextStatement(insert_target);
     else
         insert_target = getFirstStatement(scope);
@@ -21904,6 +21931,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
    //Winnie, init statement of the loop header, copy the lower bound, we are dealing with a range, the lower bound should always be "0"
     //Winnie, declare a brand new var as the new index
       string ivar_name = "__collapsed_index"+ generateUniqueVariableName (global_scope,"");
+      ROSE_ASSERT(insert_target != NULL);
       SgVariableDeclaration* new_index_decl = buildVariableDeclaration(ivar_name, buildIntType(), NULL, insert_target->get_scope());
       SgVariableSymbol * collapsed_index_symbol = getFirstVarSym (new_index_decl);
       insertStatementBefore(insert_target, new_index_decl);
@@ -21914,7 +21942,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
 
      SgBasicBlock* body = isSgBasicBlock(deepCopy(temp_target_loop->get_loop_body())); // normalized loop has a BB body
-     ROSE_ASSERT(body);
+     ROSE_ASSERT(body != NULL);
      SgExpression* new_exp = NULL;
      SgExpression* remain_exp_temp = buildVarRefExp(ivar_name, scope);
      std::vector<SgStatement*> new_stmt_list;
@@ -22662,7 +22690,8 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
 
 #if 1
   //make sure the symbol is moved also since prependStatement() (in fact fixVariableDeclaration()) does not handle this detail.
-  SgVariableSymbol * sym = SageInterface::getFirstVarSym(decl);
+  SgVariableSymbol* sym = SageInterface::getFirstVarSym(decl);
+  ROSE_ASSERT(sym != NULL);
   SgScopeStatement* orig_scope = sym->get_scope();
   if (orig_scope != target_scope)
   {
@@ -22737,14 +22766,16 @@ class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterf
  }
 
  struct SageInterface::const_int_expr_t evaluateSynthesizedAttribute(SgNode *node, SynthesizedAttributesList synList) {
-   if (isSgExpression(node)) {
-     if (isSgValueExp(node)) {
-       return this->getValueExpressionValue(isSgValueExp(node));
+   if (isSgExpression(node) != NULL) {
+     SgValueExp* valueExp = isSgValueExp(node);
+     if (valueExp != NULL) {
+       return this->getValueExpressionValue(valueExp);
      }
 
-     if (isSgVarRefExp(node)) {
+     SgVarRefExp* varRefExp = isSgVarRefExp(node);
+     if (varRefExp != NULL) {
       //      std::cout << "Hit variable reference expression!" << std::endl;
-       return evaluateVariableReference(isSgVarRefExp(node));
+       return evaluateVariableReference(varRefExp);
      }
      // Early break out for assign initializer // other possibility?
      if (isSgAssignInitializer(node)) {
@@ -23576,6 +23607,74 @@ void SageInterface::recursivePrintCurrentAndParent (SgNode* n)
   // track back to its parent
   recursivePrintCurrentAndParent (n->get_parent());
 } 
+
+// print essential information from any AST node
+// hasRemaining if this node has a sibling node to be visited next.
+static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out)
+{ 
+  // there may be NULL children!!
+  //if (!node) return;
+
+  out<<prefix;
+  out<< (hasRemaining?"├──": "└──");
+  if (!node)
+  {
+    out<<" NULL "<<endl;
+    return;
+  }
+
+  // print address
+  out<<"@"<<node<<" "<< node->class_name()<<" ";
+  //file info
+  if (SgLocatedNode* lnode= isSgLocatedNode(node))
+  {
+    out<< Rose::StringUtility::stripPathFromFileName ( lnode->get_file_info()->get_filename() )<<" "<<lnode->get_file_info()->get_line()<<":"<<lnode->get_file_info()->get_col();
+  }
+  
+  if (SgFunctionDeclaration* f = isSgFunctionDeclaration(node) )
+    out<<" "<< f->get_qualified_name();
+
+  if (SgInitializedName * v = isSgInitializedName(node) )
+    out<<" "<< v->get_qualified_name();
+
+  out<<endl;
+
+  std::vector<SgNode* > children = node->get_traversalSuccessorContainer();
+  for (int i =0; i< children.size(); i++)
+  {
+    bool n_hasRemaining=false;
+    if (i+1<children.size())
+      n_hasRemaining=true;
+
+    string suffix= hasRemaining? "│   " : "    ";
+    string n_prefix = prefix+suffix;
+    serialize (children[i], n_prefix, n_hasRemaining, out);
+  }
+}
+
+void SageInterface::printAST(SgNode* node)
+{
+  ostringstream oss;
+  string prefix;
+  serialize(node, prefix, false, oss);
+  cout<<oss.str();
+}
+
+void printAST2TextFile (SgNode* node, const std::string& filename)
+{
+  printAST2TextFile (node, filename.c_str());
+}
+
+void SageInterface::printAST2TextFile(SgNode* node, const char* filename)
+{
+  ostringstream oss;
+  string prefix;
+  serialize(node, prefix, false, oss);
+  ofstream textfile;
+  textfile.open(filename, ios::out | ios::app);
+  textfile<<oss.str();
+  textfile.close();
+}
 
 void SageInterface:: saveToPDF(SgNode* node)
 {
