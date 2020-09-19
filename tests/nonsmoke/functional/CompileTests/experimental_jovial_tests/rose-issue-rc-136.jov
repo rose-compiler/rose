@@ -1,0 +1,13 @@
+START
+DEF TABLE TABLE'1 (0:0);
+  BEGIN
+    ITEM ITEM'1 U;
+  END
+DEF PROC PROC'1;
+  BEGIN
+% This is an odd way to use the replication operator, but ok with SEA compiler %
+    IF (ITEM'1(0) = 0);
+      BEGIN
+      END
+  END
+TERM
