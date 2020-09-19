@@ -4,7 +4,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # are enabled in ROSE (including binary analysis).
 SUBDIRS =
 
-if USING_GNU_COMPILER
+# DQ (9/18/2020): Comment out as a test so that we can use clang and Intel compilers.
+# if USING_GNU_COMPILER
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 
@@ -41,7 +42,7 @@ endif # !USING_GCC_3_4_4_BACKEND_COMPILER
 
 endif # ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 
-endif # USING_GNU_COMPILER
+# endif # USING_GNU_COMPILER
 
 if !ROSE_USE_INSURE
 # DQ (4/23/2011): At least one of the files (process_cmdline.o) in this directory does not seem 

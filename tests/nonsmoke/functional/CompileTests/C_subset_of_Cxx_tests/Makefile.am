@@ -84,7 +84,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2005_92.C \
    test2005_95.C \
    test2005_100.C \
-   test2005_111.C \
    test2005_116.C \
    test2005_125.C \
    test2005_157.C \
@@ -193,6 +192,41 @@ TESTCODE_CURRENTLY_FAILING = \
    test2006_165.C \
    test2006_44.C \
    test_CplusplusMacro_Cpp.C
+
+
+
+# DQ (9/17/2020): This is a new organization of the files that are passing only specific compilers.
+if USING_INTEL_COMPILER
+# INTEL compiler
+#      EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+
+else
+if USING_CLANG_COMPILER
+# CLANG compiler
+#      TESTCODE_CURRENTLY_FAILING += 
+
+#      EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+else
+if OS_MACOSX
+#      EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+else
+#  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+
+# GNU compiler
+if ROSE_USING_GCC_VERSION_LATER_10_1
+      # skip these codes when using GNU 10.1 (testing)
+else
+      # DQ (7/23/2020): These are failing code for EDG 6.0 and GNU 10.1 (debugging this).
+#     EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+endif
+    # The test codes fail CLANG 10.0
+      EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+      test2005_111.C 
+endif
+endif
+endif
+
+
 
 if ROSE_USE_LONG_MAKE_CHECK_RULE
   TESTCODES_REQUIRED_TO_PASS = \

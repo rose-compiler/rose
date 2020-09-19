@@ -2575,9 +2575,24 @@ if USING_INTEL_COMPILER
 else
 if USING_CLANG_COMPILER
 # CLANG compiler
-#      TESTCODE_CURRENTLY_FAILING += 
 
-#      EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2012_129.C \
+   test2014_05.C \
+   test2020_02.C
+
+ # These are all just mising builtins
+   TESTCODE_CURRENTLY_FAILING += \
+   test2015_115.C \
+   test2015_116.C \
+   test2015_148.C \
+   test2016_15.C \
+   test2016_16.C \
+   test2016_17.C \
+   test2016_18.C \
+   test2016_89.C \
+   test2017_50.C 
+
 else
 if OS_MACOSX
 #      EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 

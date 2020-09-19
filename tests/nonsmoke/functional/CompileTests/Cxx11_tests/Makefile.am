@@ -732,11 +732,74 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2020_90.C \
    test2020_92.C \
    test2020_93.C \
-   test2020_94.C 
+   test2020_94.C \
+   test2020_96.C \
+   test2020_97.C \
+   test2020_98.C \
+   test2020_99.C 
 
+# DQ (9/18/2020): After retesting these older files, they now pass (at least with Clang 10.0).
+TESTCODES_REQUIRED_TO_PASS += \
+   test2012_10.C \
+   test2019_122.C \
+   test2019_199.C \
+   test2019_201.C \
+   test2019_204.C \
+   test2019_236.C \
+   test2019_237.C \
+   test2019_238.C \
+   test2019_239.C \
+   test2019_240.C \
+   test2019_241.C \
+   test2019_242.C \
+   test2019_246.C \
+   test2019_249.C \
+   test2019_250.C \
+   test2019_251.C \
+   test2019_252.C \
+   test2019_253.C \
+   test2019_254.C \
+   test2019_255.C \
+   test2019_256.C \
+   test2019_258.C \
+   test2019_267.C \
+   test2019_268.C \
+   test2019_269.C \
+   test2019_270.C \
+   test2019_271.C \
+   test2019_275.C \
+   test2019_281.C \
+   test2019_282.C \
+   test2019_283.C \
+   test2019_284.C \
+   test2019_289.C \
+   test2019_290.C \
+   test2019_293.C \
+   test2019_294.C \
+   test2019_295.C \
+   test2019_298.C \
+   test2019_299.C \
+   test2019_300.C \
+   test2019_302.C \
+   test2019_303.C \
+   test2019_304.C \
+   test2019_305.C \
+   test2019_307.C \
+   test2019_308.C \
+   test2019_309.C \
+   test2019_310.C \
+   test2019_312.C \
+   test2019_348.C \
+   test2019_411.C \
+   test2019_438.C \
+   test2019_505.C \
+   test2019_516.C \
+   test2019_523.C \
+   test2020_51a.C \
+   test2020_51b.C \
+   test2020_72.C 
 
 TESTCODE_CURRENTLY_FAILING = \
-   test2012_10.C \
    test2012_24.C \
    test2016_41.C \
    test2017_17.C \
@@ -746,37 +809,14 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_38.C \
    test2019_103.C \
    test2019_104.C \
-   test2019_122.C \
    test2019_132.C \
    test2019_148.C \
    test2019_149.C \
-   test2019_199.C \
-   test2019_201.C \
    test2019_203.C \
-   test2019_204.C \
-   test2019_236.C \
-   test2019_237.C \
-   test2019_238.C \
-   test2019_239.C \
-   test2019_240.C \
-   test2019_241.C \
-   test2019_242.C \
    test2019_243.C \
    test2019_244.C \
    test2019_245.C \
-   test2019_246.C \
-   test2019_247.C \
-   test2019_248.C \
-   test2019_249.C \
-   test2019_250.C \
-   test2019_251.C \
-   test2019_252.C \
-   test2019_253.C \
-   test2019_254.C \
-   test2019_255.C \
-   test2019_256.C \
    test2019_257.C \
-   test2019_258.C \
    test2019_259.C \
    test2019_260.C \
    test2019_261.C \
@@ -785,81 +825,38 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_264.C \
    test2019_265.C \
    test2019_266.C \
-   test2019_267.C \
-   test2019_268.C \
-   test2019_269.C \
-   test2019_270.C \
-   test2019_271.C \
-   test2019_272.C \
-   test2019_273.C \
-   test2019_274.C \
-   test2019_275.C \
    test2019_276.C \
    test2019_277.C \
    test2019_278.C \
    test2019_279.C \
    test2019_280.C \
-   test2019_281.C \
-   test2019_282.C \
-   test2019_283.C \
-   test2019_284.C \
    test2019_285.C \
    test2019_286.C \
    test2019_287.C \
    test2019_288.C \
-   test2019_289.C \
-   test2019_290.C \
-   test2019_291.C \
-   test2019_292.C \
-   test2019_293.C \
-   test2019_294.C \
-   test2019_295.C \
    test2019_296.C \
    test2019_297.C \
-   test2019_298.C \
-   test2019_299.C \
-   test2019_300.C \
    test2019_301.C \
-   test2019_302.C \
-   test2019_303.C \
-   test2019_304.C \
-   test2019_305.C \
    test2019_306.C \
-   test2019_307.C \
-   test2019_308.C \
-   test2019_309.C \
-   test2019_310.C \
    test2019_311.C \
-   test2019_312.C \
    test2019_313.C \
    test2019_345.C \
    test2019_346.C \
-   test2019_348.C \
    test2019_366.C \
    test2019_382.C \
    test2019_388.C \
-   test2019_411.C \
-   test2019_438.C \
    test2019_453.C \
    test2019_492.C \
    test2019_504.C \
-   test2019_505.C \
    test2019_506.C \
    test2019_511.C \
-   test2019_516.C \
-   test2019_523.C \
    test2020_40.C \
-   test2020_51a.C \
-   test2020_51b.C \
-   test2020_54.C \
-   test2020_55.C \
-   test2020_56.C \
    test2020_71.C \
-   test2020_72.C \
    test2020_73.C \
    test2020_80.C \
    test2020_82.C \
-   test2020_91.C 
+   test2020_91.C \
+   test2020_95.C 
 
 # NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
 
@@ -949,7 +946,20 @@ if USING_CLANG_COMPILER
         rose-1380.C \
         test2012_07.C 
 
-#      TESTCODES_REQUIRED_TO_PASS += 
+    # DQ (9/19/2020) These are not handled by GNU (using both EDG 5.0 or EDG 6.0), but work with Clang.
+    # Basically, EDG handles the code, but the generated code is only handled by Clang and not GNU.
+      TESTCODES_REQUIRED_TO_PASS += \
+   test2019_247.C \
+   test2019_248.C \
+   test2019_272.C \
+   test2019_273.C \
+   test2019_274.C \
+   test2019_291.C \
+   test2019_292.C \
+   test2020_54.C \
+   test2020_55.C \
+   test2020_56.C 
+
 else
 if OS_MACOSX
 #      TESTCODES_REQUIRED_TO_PASS += 
@@ -965,8 +975,12 @@ else
 # GNU compiler
 if ROSE_USING_GCC_VERSION_LATER_10_1
       # skip these codes when using GNU 10.1 (testing)
+      TESTCODE_CURRENTLY_FAILING += \
+         test2020_69.C \
+         test2020_70.C 
 else
       # DQ (7/23/2020): These are failing code for EDG 6.0 and GNU 10.1 (debugging this).
+      # DQ (9/19/2020): test2020_69.C and test2020_70.C fail for GNU 10 only (pass for EDG 6 using GNU 6.1)
       TESTCODES_REQUIRED_TO_PASS += \
          rose-1973.C \
    test2012_07.C \
@@ -981,7 +995,10 @@ else
          test2019_41.C \
          test2019_42.C \
          test2019_94.C \
-         test2019_463.C 
+         test2019_463.C \
+   test2020_69.C \
+   test2020_70.C 
+
 endif
 
       TESTCODES_REQUIRED_TO_PASS += \
@@ -1018,9 +1035,7 @@ endif
    test2020_14.C \
    test2020_19.C \
    test2020_20.C \
-   test2020_21.C \
-   test2020_69.C \
-   test2020_70.C 
+   test2020_21.C 
 endif
 endif
 endif
