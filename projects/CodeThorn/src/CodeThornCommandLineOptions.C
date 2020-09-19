@@ -274,7 +274,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("log-level",po::value< string >(&ctOpt.logLevel)->default_value("none,>=error"),"Set the log level (\"x,>=y\" with x,y in: (none|info|warn|trace|error|fatal|debug)).")
     ("max-transitions",po::value< int >(&ctOpt.maxTransitions)->default_value(-1),"Passes (possibly) incomplete STG to verifier after <arg> transitions have been computed.")
     ("max-iterations",po::value< int >(&ctOpt.maxIterations)->default_value(-1),"Passes (possibly) incomplete STG to verifier after <arg> loop iterations have been explored. Currently requires --exploration-mode=loop-aware[-sync].")
-    ("max-memory",po::value< long int >(&ctOpt.maxMemory)->default_value(-1),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached.")
+    ("max-memory",po::value< long int >(&ctOpt.maxMemory)->default_value(-1),"Stop computing the STG after a total physical memory consumption of approximately <arg> bytes has been reached.")
     ("max-time",po::value< long int >(&ctOpt.maxTime)->default_value(-1),"Stop computing the STG after an analysis time of approximately <arg> seconds has been reached.")
     ("max-transitions-forced-top",po::value< int >(&ctOpt.maxTransitionsForcedTop)->default_value(-1),"Performs approximation after <arg> transitions.")
     ("max-iterations-forced-top",po::value< int >(&ctOpt.maxIterationsForcedTop)->default_value(-1),"Performs approximation after <arg> loop iterations. Currently requires --exploration-mode=loop-aware[-sync].")

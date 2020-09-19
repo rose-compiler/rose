@@ -196,19 +196,6 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
     analyzer->setGlobalTopifyMode(Analyzer::GTM_FLAGS);
   }
 
-  if (ctOpt.maxMemory!=1) {
-    analyzer->setMaxBytes(ctOpt.maxMemory);
-  }
-  if (ctOpt.maxTime!=1) {
-    analyzer->setMaxSeconds(ctOpt.maxTime);
-  }
-  if (ctOpt.maxMemoryForcedTop!=-1) {
-    analyzer->setMaxBytesForcedTop(ctOpt.maxMemoryForcedTop);
-  }
-  if (ctOpt.maxTimeForcedTop!=-1) {
-    analyzer->setMaxSecondsForcedTop(ctOpt.maxTimeForcedTop);
-  }
-
   if(ctOpt.displayDiff!=-1) {
     analyzer->setDisplayDiff(ctOpt.displayDiff);
   }
