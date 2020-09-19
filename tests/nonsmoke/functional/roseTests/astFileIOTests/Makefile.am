@@ -8,9 +8,20 @@ SPACE := $(EMPTY) $(EMPTY)
 
 #------------------------------------------------------------------------------------------------------------------------
 
+# DQ (9/19/2020): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
+# this, this implementation needs review).  It might be better to prepend the information to the 
+# CC and CXX variables. I think that the purify support uses this approach.
+if ROSE_USE_SANITIZER
+VALGRIND = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)
+else
+VALGRIND =
+endif
+
+#------------------------------------------------------------------------------------------------------------------------
+
 ROSE_COMPILER = $(top_builddir)/src/rose-compiler
 ROSE_NO_BACKEND_FLAGS = -rose:skip_unparse -rose:skipfinalCompileStep
-	
+
 $(top_builddir)/src/rose-compiler:
 	$(MAKE) -C $(top_builddir)/src rose-compiler
 
