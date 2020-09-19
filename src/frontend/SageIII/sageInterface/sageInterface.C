@@ -13654,7 +13654,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                        {
                          if (SgUpcForAllStatement* p = isSgUpcForAllStatement(parent))
                             {
-                              const bool stmt_present = (p->get_loop_body() == targetStmt || p->get_test() == targetStmt);
+                              //const bool stmt_present = (p->get_loop_body() == targetStmt || p->get_test() == targetStmt);
 
                           // \pp \todo what if !stmt_present
                            // ROSE_ASSERT(stmt_present != NULL);
@@ -23640,7 +23640,7 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   out<<endl;
 
   std::vector<SgNode* > children = node->get_traversalSuccessorContainer();
-  for (int i =0; i< children.size(); i++)
+  for (size_t i =0; i< children.size(); i++)
   {
     bool n_hasRemaining=false;
     if (i+1<children.size())
@@ -23660,7 +23660,7 @@ void SageInterface::printAST(SgNode* node)
   cout<<oss.str();
 }
 
-void printAST2TextFile (SgNode* node, const std::string& filename)
+void printAST2TextFile (SgNode* node, std::string filename)
 {
   printAST2TextFile (node, filename.c_str());
 }
