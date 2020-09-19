@@ -2044,6 +2044,22 @@ ATbool ATermToSageJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATerm t
    sage_tree_builder.Enter(var_decl, std::string(name), item_type, preset);
    setSourcePosition(var_decl, term);
 
+// Jovial table members are visible in parent scope
+// TODO - this needs to be put in SageTreeBuilder (and also called from SpecifiedTableItemDeclaration
+   SgVariableSymbol*
+   var_sym = SageInterface::lookupVariableSymbolInParentScopes(SgName(name), SageBuilder::topScopeStack());
+   ROSE_ASSERT(var_sym);
+   SgAliasSymbol* alias_sym = new SgAliasSymbol(var_sym);
+   ROSE_ASSERT(alias_sym);
+
+   SgClassDefinition* class_def = isSgClassDefinition(SageBuilder::topScopeStack());
+   ROSE_ASSERT(class_def);
+   SgJovialTableStatement* table_decl = isSgJovialTableStatement(class_def->get_declaration());
+   ROSE_ASSERT(table_decl);
+   SgScopeStatement* parent_scope = table_decl->get_scope();
+   ROSE_ASSERT(parent_scope);
+   parent_scope->insert_symbol(SgName(name), alias_sym);
+
    sage_tree_builder.Leave(var_decl);
 
    return ATtrue;
@@ -6712,7 +6728,7 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 
    ATerm t_name, t_param_list;
    std::string name;
-   SgExprListExp* param_list = nullptr;
+   SgExprListExp* expr_list = nullptr;
 
    expr = nullptr;
 
@@ -6721,9 +6737,11 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
          // MATCHED FunctionName
       } else return ATfalse;
 
-      param_list = SageBuilder::buildExprListExp_nfi();
+   // The grammar (UserDefinedFunctionCall) treats this as a parameter list
+   // but in general (because of ambiguities) it is just a general expression list
+      expr_list = SageBuilder::buildExprListExp_nfi();
 
-      if (traverse_ActualParameterList(t_param_list, param_list)) {
+      if (traverse_ActualParameterList(t_param_list, expr_list)) {
          // MATCHED ActualParameterList
       } else return ATfalse;
    }
@@ -6746,7 +6764,7 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 //
    if (isSgFunctionSymbol(symbol)) {
       SgFunctionCallExp* func_call = nullptr;
-      sage_tree_builder.Enter(func_call, name, param_list);
+      sage_tree_builder.Enter(func_call, name, expr_list);
       sage_tree_builder.Leave(func_call);
       expr = func_call;
    }
@@ -6756,8 +6774,8 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
    else if (isSgTypedefSymbol(symbol)) {
       SgCastExp* cast_expr = nullptr;
 
-      ROSE_ASSERT(param_list->get_expressions().size() == 1);
-      SgExpression* cast_operand = param_list->get_expressions()[0];
+      ROSE_ASSERT(expr_list->get_expressions().size() == 1);
+      SgExpression* cast_operand = expr_list->get_expressions()[0];
       ROSE_ASSERT(cast_operand);
 
       sage_tree_builder.Enter(cast_expr, name, cast_operand);
@@ -6768,8 +6786,8 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 // Look for table variable or table initialization replication operator
 //
    else if (isSgVariableSymbol(symbol)) {
-      if (param_list->get_expressions().size() == 0) {
-         // not sure if param_list is correct, probably because this should be an array refererence I think
+      if (expr_list->get_expressions().size() == 0) {
+         // Not sure how list size==0 is possible for a variable ref in Jovial?
          SgVarRefExp* var_ref = nullptr;
          cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall - table reference " << name << endl;
 
@@ -6777,9 +6795,12 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
          sage_tree_builder.Leave(var_ref);
          expr = var_ref;
       }
-      else if (param_list->get_expressions().size() == 1) {
+
+   // TODO - check the type of the symbol, especially if it a table then the following is wrong
+   // An table/array ref is not a replication operator!
+      else if (expr_list->get_expressions().size() == 1) {
          SgReplicationOp* rep_op = nullptr;
-         SgExpression* value = param_list->get_expressions()[0];
+         SgExpression* value = expr_list->get_expressions()[0];
          ROSE_ASSERT(value);
 
          sage_tree_builder.Enter(rep_op, name, value);
@@ -6787,8 +6808,8 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
          expr = rep_op;
       }
       else {
-         // don't think this should happen
-         cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall - unknown cause " << name << endl;
+         // TODO - don't think this should happen (but what about table_ref(1,2,3)
+         cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall - table reference " << name << endl;
          ROSE_ASSERT(false);
       }
    }
