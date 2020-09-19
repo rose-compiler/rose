@@ -778,7 +778,6 @@ TESTCODES_REQUIRED_TO_PASS += \
    test2019_294.C \
    test2019_295.C \
    test2019_298.C \
-   test2019_299.C \
    test2019_300.C \
    test2019_302.C \
    test2019_303.C \
@@ -901,11 +900,13 @@ if USING_INTEL_COMPILER
      test2016_31.C \
      test2019_162.C
 else
+ # DQ (9/19/2020): Added test2019_299.C since it fails with the Intel compiler used within Jenkins (but passes Intel v17 on my REL7 machine).
    TESTCODES_REQUIRED_TO_PASS += \
      test2016_26.C \
      test2016_27.C \
      test2016_31.C \
-     test2019_162.C
+     test2019_162.C \
+   test2019_299.C 
 endif
 
 if USING_INTEL_COMPILER

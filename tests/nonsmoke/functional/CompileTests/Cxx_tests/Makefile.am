@@ -1806,7 +1806,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2017_60.C \
    test2017_61.C \
    test2017_62.C \
-   test2017_63.C \
    test2017_64.C \
    test2017_65.C \
    test2017_66.C \
@@ -1985,6 +1984,13 @@ if !USING_CLANG_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_110.C
 endif
+
+if !USING_INTEL_COMPILER
+# DQ (9/19/2020): this test fails with the Intel v17 compiler (something regarding boost).
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2017_63.C 
+endif
+
 
 TESTCODE_CURRENTLY_FAILING = \
    certSignalExample.C \

@@ -32,8 +32,17 @@ if !USING_GCC_3_4_4_BACKEND_COMPILER
 if !USING_XTENSA_BACKEND_COMPILER
 #  SUBDIRS += astInterfaceTests astInliningTests ompLoweringTests astFileIOTests programAnalysisTests astOutliningTests loopProcessingTests fileLocation_tests
 if !ROSE_USE_INSURE
-   SUBDIRS += astInterfaceTests astInliningTests ompLoweringTests
-   SUBDIRS += programAnalysisTests astOutliningTests loopProcessingTests fileLocation_tests
+   SUBDIRS += astInterfaceTests astInliningTests 
+if !USING_CLANG_COMPILER
+ # DQ (9/19/2020): Clang does not work with most of the test codes in this directory.
+   SUBDIRS += ompLoweringTests
+endif
+   SUBDIRS += programAnalysisTests
+if !USING_CLANG_COMPILER
+ # DQ (9/19/2020): Clang does not work with most of the test codes in this directory.
+   SUBDIRS += astOutliningTests
+endif
+   SUBDIRS += loopProcessingTests fileLocation_tests
    SUBDIRS += astFileIOTests
 endif
 
