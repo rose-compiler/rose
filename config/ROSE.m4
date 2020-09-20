@@ -57,16 +57,16 @@ AC_MSG_NOTICE([after initialization: with_CXX_DEBUG = "$with_CXX_DEBUG"])
 # echo "Setting with_CXX_DEBUG to withval = $withval"
 # with_CXX_DEBUG=$withval
 
-echo "OS_VENDOR_APPLE = $OS_VENDOR_APPLE"
-echo "OS_vendor = $OS_vendor"
+# echo "OS_VENDOR_APPLE = $OS_VENDOR_APPLE"
+# echo "OS_vendor = $OS_vendor"
 
-if "x$OS_VENDOR_APPLE" == "xapple"; then
-    echo "Automake conditional OS_VENDOR_APPLE: DEFINED"
+if "x$OS_vendor" == "xapple"; then
+    echo "This IS a Mac OSX machine (even though we call the g++ compiler (which is really clang), CXX resolves to clang): Cxx = $CXX"
 else
-    echo "Automake conditional OS_VENDOR_APPLE: NOT defined"
+    echo "This is NOT a Mac OSX machine"
 fi
 
-echo "FRONTEND_CXX_VERSION_MAJOR = $FRONTEND_CXX_VERSION_MAJOR"
+# echo "FRONTEND_CXX_VERSION_MAJOR = $FRONTEND_CXX_VERSION_MAJOR"
 
 # if test $FRONTEND_CXX_COMPILER_VENDOR == "gnu" && test $FRONTEND_CXX_VERSION_MAJOR -ge 5; then
 # if test "x$FRONTEND_CXX_COMPILER_VENDOR" = "xgnu" && test $FRONTEND_CXX_VERSION_MAJOR -ge 5; then
@@ -155,10 +155,10 @@ fi
 AC_SUBST(CXX_DEBUG)
 if test -n "$CXX_DEBUG"; then CXXFLAGS="$CXXFLAGS $CXX_DEBUG"; fi
 
-echo "Am I set: CXX_DEBUG= $CXX_DEBUG"
+# echo "Am I set: CXX_DEBUG= $CXX_DEBUG"
 echo "CXXFLAGS currently set to $CXXFLAGS"
 
-exit 1
+# exit 1
 
 dnl *********************************************************************
 dnl * Set the C++ compiler optimization flags in CXXOPT
