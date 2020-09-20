@@ -405,6 +405,8 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     dnl --- Characteristics of the frontend compiler ---
     dnl ------------------------------------------------
 
+echo "START: Setup characteristics of the frontend compiler"
+
     ROSE_CONFIGURE_SECTION([Checking frontend compiler])
     GET_CXX_VERSION_INFO([$CXX], [$FRONTEND_CXX_COMPILER_VENDOR])
     GET_CXX_VERSION_MACROS
@@ -591,5 +593,8 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     AC_SUBST(BACKEND_COMPILER_VERSION_MAJOR_NUMBER)
     AC_SUBST(BACKEND_COMPILER_VERSION_MINOR_NUMBER)
     AC_SUBST(BACKEND_COMPILER_VERSION_PATCHLEVEL_NUMBER)
+
+echo "END: Setup characteristics of the frontend compiler"
+echo " --- FRONTEND_CXX_VERSION_MAJOR = $FRONTEND_CXX_VERSION_MAJOR"
 
 ])
