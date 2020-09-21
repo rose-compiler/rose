@@ -482,6 +482,8 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
       appendExpression(exp_list_exp, wrapper_exp);
     }
+    else
+      appendExpression(exp_list_exp, buildIntVal(0)); // NULL pointer as parameter
     func_call = buildFunctionCallStmt(buildPointerDerefExp(buildVarRefExp(func_name_str+"p",p_scope)), exp_list_exp);   
   }
   else  // regular function call for other cases

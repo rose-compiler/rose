@@ -1,6 +1,9 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 noinst_PROGRAMS =
 TEST_TARGETS =
+C_CXX_RESULTS = 
+FORTRAN_RESULTS = 
+
 EXTRA_DIST =
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
@@ -27,7 +30,8 @@ injectOutlinePragmas_CPPFLAGS = $(ROSE_INCLUDES)
 injectOutlinePragmas_LDFLAGS = $(ROSE_RPATHS)
 injectOutlinePragmas_LDADD = $(ROSE_LIBS)
 
-TEST_TARGETS += injectOutlinePragmas.passed
+C_CXX_RESULTS += injectOutlinePragmas.passed
+
 injectOutlinePragmas.passed: injectOutlinePragmas
 	@$(RTH_RUN) DISABLED="not tested by the original makefile" CMD=false $(TEST_EXIT_STATUS) $@
 
@@ -41,7 +45,7 @@ outlineRandom_LDFLAGS = $(ROSE_RPATHS)
 outlineRandom_LDADD = $(ROSE_LIBS)
 EXTRA_DIST += RandomStmtSelector.hh
 
-TEST_TARGETS += outlineRandom.passed
+C_CXX_RESULTS += outlineRandom.passed
 outlineRandom.passed: outlineRandom
 	@$(RTH_RUN) DISABLED="not tested by the original makefile" CMD=false $(TEST_EXIT_STATUS) $@
 
@@ -196,7 +200,6 @@ EXTRA_DIST += $(TESTCODE_CURRENTLY_FAILING)
 
 # Print the names of the currently failing tests to remind someone to look at them
 failing_test_targets = $(addprefix failing_, $(addsuffix .passed, $(TESTCODE_CURRENTLY_FAILING)))
-TEST_TARGETS += $(failing_test_targets)
 $(failing_test_targets): failing_%.passed: %
 	@$(RTH_RUN) \
 		TITLE="$(notdir $<)" \
@@ -246,9 +249,8 @@ OUTLINE_FLAGS= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining using the classic scheme, using tests within the current folder
 
-FORTRAN_RESULTS = 
 classic_test_targets = $(addprefix classic_, $(addsuffix .passed, $(C_TESTS_REQUIRED_TO_PASS)))
-TEST_TARGETS += $(classic_test_targets)
+C_CXX_RESULTS += $(classic_test_targets)
 check_classic:$(classic_test_targets)
 
 $(classic_test_targets): classic_%.passed: % outline
@@ -260,7 +262,7 @@ $(classic_test_targets): classic_%.passed: % outline
 
 # Using tests  from OpenMP test folder, turning on the select_omp_loop option
 omp_c_classic_test_targets = $(addprefix classic_, $(addsuffix .passed, $(OpenMP_C_TEST_REQUIRED_TO_PASS)))
-TEST_TARGETS += $(omp_c_classic_test_targets)
+C_CXX_RESULTS += $(omp_c_classic_test_targets)
 
 $(omp_c_classic_test_targets): classic_%.passed: $(OpenMP_TEST_DIR)/% outline
 	@$(RTH_RUN) \
@@ -274,8 +276,7 @@ $(omp_c_classic_test_targets): classic_%.passed: $(OpenMP_TEST_DIR)/% outline
 # Test outlining in the same file, using tests within the current folder
 
 inplace_test_targets = $(addprefix inplace_, $(addsuffix .passed, $(C_TESTS_REQUIRED_TO_PASS)))
-TEST_TARGETS += $(inplace_test_targets)
-
+C_CXX_RESULTS += $(inplace_test_targets)
 $(inplace_test_targets): inplace_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outline in-place $(notdir $<) [$@]" \
@@ -287,8 +288,7 @@ $(inplace_test_targets): inplace_%.passed: % outline
 # Test outlining to a separate file
 
 tofile_test_targets  = $(addprefix tofile_,  $(addsuffix .passed, $(C_AND_CXX_TESTS_REQUIRED_TO_PASS)))
-TEST_TARGETS += $(tofile_test_targets)
-
+C_CXX_RESULTS += $(tofile_test_targets)
 $(tofile_test_targets): tofile_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outline new-file $(notdir $<) [$@]" \
@@ -304,8 +304,7 @@ test_newfile: $(tofile_test_targets)
 # Test outlining to a separate file using dlopen
 
 dlopen_test_targets  = $(addprefix dlopen_,  $(addsuffix .passed, $(C_TESTS_REQUIRED_TO_PASS)))
-TEST_TARGETS += $(dlopen_test_targets)
-
+C_CXX_RESULTS +=  $(dlopen_test_targets)
 dlopen_test_flags =				\
 	-rose:outline:use_dlopen		\
 	-I$(abs_top_srcdir)/projects/autoTuning	\
@@ -321,7 +320,7 @@ $(dlopen_test_targets): dlopen_%.passed: % outline
 # test the new option  -rose:outline:copy_orig_file , which copies input file into a lib source file and append all outlined functions to the single lib source file. This eliminates the need to copy dependent headers and prototypes into the lib source file. 
 dlopen2_test_targets  = $(addprefix dlopen2_,  $(addsuffix .passed, $(C_TESTS_REQUIRED_TO_PASS)))
 dlopen2_test_targets  += $(addprefix dlopen2_,  $(addsuffix .passed, $(CXX_TESTS_REQUIRED_TO_PASS)))
-TEST_TARGETS += $(dlopen2_test_targets)
+C_CXX_RESULTS += $(dlopen2_test_targets)  
 dlopen2_test_flags =				\
 	-rose:outline:use_dlopen		\
 	-rose:outline:copy_orig_file		\
@@ -339,7 +338,7 @@ $(dlopen2_test_targets): dlopen2_%.passed: % outline
 # Similar to dlopen3, additionally
 # combined with -rose:unparseHeaderFiles -rose:unparseHeaderFilesRootFolder
 dlopen3_test_targets = $(addprefix dlopen3_,  $(addsuffix .passed, $(CXX2_TESTS_REQUIRED_TO_PASS)))
-TEST_TARGETS += $(dlopen3_test_targets)
+C_CXX_RESULTS += $(dlopen3_test_targets)  
 dlopen3_test_flags =				\
 	-rose:outline:use_dlopen		\
 	-rose:outline:copy_orig_file		\
@@ -363,7 +362,8 @@ test_dlopen3: $(dlopen3_test_targets)
 dlopen4_test_targets = $(addprefix dlopen4_,  $(CXX4_TESTS_REQUIRED_TO_RUN))
 dlopen4_test_lib_targets = $(addprefix rose_, $(addsuffix .cpp, $(addsuffix _lib, $(basename $(CXX4_TESTS_REQUIRED_TO_RUN)))))
 dlopen4_test_lib_so_targets = $(addprefix rose_, $(addsuffix .so, $(addsuffix _lib, $(basename $(CXX4_TESTS_REQUIRED_TO_RUN)))))
-TEST_TARGETS += $(dlopen4_test_targets)
+C_CXX_RESULTS += $(dlopen4_test_targets)
+
 dlopen4_test_flags = -fpermissive	\
 	-rose:outline:select_omp_loop           \
 	-rose:outline:use_dlopen		\
@@ -402,14 +402,13 @@ check_PROGRAM = $(PASSING_CXX_TEST_Executables)
 TESTS =  $(check_PROGRAM)
 #test111:
 #	rm -rf ${dlopen4_test_lib_targets}
-TEST_TARGETS += $(dlopen4_test_lib_targets) $(CXX4_TESTS_OBJECT_REQUIRED_TO_RUN) $(dlopen4_test_targets) $(dlopen4_test_lib_so_targets) $(PASSING_CXX_TEST_Executables)
+C_CXX_RESULTS += $(dlopen4_test_lib_targets) $(CXX4_TESTS_OBJECT_REQUIRED_TO_RUN) $(dlopen4_test_targets) $(dlopen4_test_lib_so_targets) $(PASSING_CXX_TEST_Executables)
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining with default $(OUTLINE_FLAGS) switches
 
 #default_test_targets = $(addprefix default_, $(addsuffix .passed, $(CXX_TESTS_REQUIRED_TO_PASS)))
 default_test_targets = $(addprefix default_, $(addsuffix .passed, $(C_AND_CXX_TESTS_REQUIRED_TO_PASS)))
-TEST_TARGETS += $(default_test_targets)
-
+C_CXX_RESULTS += $(default_test_targets)
 $(default_test_targets): default_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outline default $(notdir $<) [$@]" \
@@ -426,7 +425,6 @@ noswitch_test_args = -rose:verbose 0 -ffixed-line-length-none
 noswitch_test_targets = $(addprefix noswitch_, $(addsuffix .passed, $(FORTRAN_TESTS_REQUIRED_TO_PASS)))
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-TEST_TARGETS += $(noswitch_test_targets)
 FORTRAN_RESULTS += $(noswitch_test_targets)
 endif
 
@@ -445,7 +443,7 @@ $(noswitch_test_targets): noswitch_%.passed: % outline
 # This is to test the external C++ programs only
 seq7a_test_flags = -rose:outline:seq 7 $(OUTLINE_FLAGS) $(TEST_INCLUDES)
 seq7a_test_targets = $(addprefix seq7a_, $(addsuffix .passed, $(EXTERNAL_CXX_TESTS_REQUIRED_TO_PASS)))
-TEST_TARGETS += $(seq7a_test_targets)
+C_CXX_RESULTS += $(seq7a_test_targets)
 
 $(seq7a_test_targets): seq7a_%.passed: $(TEST_DIR)/% outlineSelection
 	@$(RTH_RUN) \
@@ -460,8 +458,8 @@ $(seq7a_test_targets): seq7a_%.passed: $(TEST_DIR)/% outlineSelection
 seq7b_test_flags = -rose:verbose 0 -rose:outline:seq 7 -ffixed-line-length-none
 seq7b_test_targets = $(addprefix seq7b_, $(addsuffix .passed, $(FORTRAN_TESTS_REQUIRED_TO_PASS)))
 
+
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-TEST_TARGETS += $(seq7b_test_targets)
 FORTRAN_RESULTS += $(seq7b_test_targets)
 endif
 
@@ -481,7 +479,8 @@ complexStruct_flags = \
 	-rose:outline:exclude_headers \
 	-rose:outline:abstract_handle 'ForStatement<numbering,1>'
 
-TEST_TARGETS += complexStruct.passed
+C_CXX_RESULTS += complexStruct.passed
+
 complexStruct.passed: complexStruct.c outline
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
@@ -503,12 +502,15 @@ test_class_ODR_violation: $(srcdir)/test_class_ODR_violation_main.C $(srcdir)/te
 #########################################################################################################################
 #					AUTOMAKE BOILERPLATE
 #########################################################################################################################
+TEST_TARGETS += $(FORTRAN_RESULTS)  $(C_CXX_RESULTS)
+
 # a shortcut to test Fortran only
 test-fortran: $(FORTRAN_RESULTS)
+test-c-cxx:$(C_CXX_RESULTS)  
 
-check-local: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS) 
 
 clean-local:
-	rm -f $(TEST_TARGETS)
+	rm -f $(TEST_TARGETS) 
 	rm -f $(TEST_TARGETS:.passed=.failed)
 	rm -rf unparseHeaderRoot_test_20_2019
