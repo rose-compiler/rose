@@ -95,7 +95,7 @@ CXX_TESTS_REQUIRED_TO_PASS =		\
 # Add a few tool_G's regression tests
 # 	test_26_v2_2020.cpp  this is not ready, not sure what happened for preprocessing
 CXX2_TESTS_REQUIRED_TO_PASS =                \
- 	print.cpp \						 
+ 	print.cpp \
 	test_42_2020.cpp \
 	test_20_2019.cpp \
 	test_26_v1_2020.cpp \
@@ -249,6 +249,7 @@ OUTLINE_FLAGS= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper
 FORTRAN_RESULTS = 
 classic_test_targets = $(addprefix classic_, $(addsuffix .passed, $(C_TESTS_REQUIRED_TO_PASS)))
 TEST_TARGETS += $(classic_test_targets)
+check_classic:$(classic_test_targets)
 
 $(classic_test_targets): classic_%.passed: % outline
 	@$(RTH_RUN) \
