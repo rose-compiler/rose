@@ -363,7 +363,7 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
   // insert (func, glob_scope, s); //Outliner::insert() 
-     DeferedTransformation headerFileTransformation = insert (func, glob_scope, s); //Outliner::insert() 
+     DeferredTransformation headerFileTransformation = insert (func, glob_scope, s); //Outliner::insert() 
 
   // Liao 2/4/2020   
   // Some comments and #include directives may be attached after the global scope for an otherwise empty input file.
