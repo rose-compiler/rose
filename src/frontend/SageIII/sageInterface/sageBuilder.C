@@ -4566,7 +4566,9 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
   SgFunctionParameterList* paralist = deepCopy<SgFunctionParameterList>(funcdecl->get_parameterList());
 
  // make sure the function has consistent function type based on its return type and parameter list
- ROSE_ASSERT (funcType == buildFunctionType(funcdecl->get_type()->get_return_type(), buildFunctionParameterTypeList(funcdecl->get_parameterList())));
+ SgFunctionType * ref_funcType= findFunctionType (return_type, funcType->get_argument_list());
+// ROSE_ASSERT (funcType == buildFunctionType(funcdecl->get_type()->get_return_type(), buildFunctionParameterTypeList(funcdecl->get_parameterList())));
+  ROSE_ASSERT(funcType== ref_funcType);
 #if 0
   // DQ (2/19/2009): Fixed to handle extern "C" state in input "funcdecl"
   // return buildNondefiningFunctionDeclaration(name,return_type,paralist,scope);
