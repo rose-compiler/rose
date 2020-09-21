@@ -267,6 +267,7 @@ createParam (const SgInitializedName* i_name,  // the variable to be passed into
       ROSE_ASSERT (new_param_type);
       new_param_name+= "p__";
     }
+#if 0    
     else
     {
       // Fortran:
@@ -280,7 +281,7 @@ createParam (const SgInitializedName* i_name,  // the variable to be passed into
       //new_param_name= "s_"+new_param_name; //s_ means shared variables
       new_param_name= new_param_name; //s_ means shared variables
     }
-
+#endif
   }
 
   // Fortran parameters are passed by reference by default,
@@ -646,33 +647,6 @@ createUnpackDecl (SgInitializedName* param, // the function parameter
     return decl;
 }
 
-//! Returns 'true' if the given type is 'const'.
-static
-bool
-isReadOnlyType (const SgType* type)
-{
-  ROSE_ASSERT (type);
-
-  const SgModifierType* mod = 0;
-  switch (type->variantT ())
-    {
-    case V_SgModifierType:
-      mod = isSgModifierType (type);
-      break;
-    case V_SgReferenceType:
-      mod = isSgModifierType (isSgReferenceType (type)->get_base_type ());
-      break;
-    case V_SgPointerType:
-      mod = isSgModifierType (isSgPointerType (type)->get_base_type ());
-      break;
-    default:
-      mod = 0;
-      break;
-    }
-  return mod
-    && mod->get_typeModifier ().get_constVolatileModifier ().isConst ();
-}
-
 /*!
  *  \brief Creates an assignment to "pack" a local variable back into
  *  an outlined-function parameter that has been passed as a pointer
@@ -743,7 +717,7 @@ createPackExpr (SgInitializedName* local_unpack_def)
        // Also const char* a;  it will be wrongfuly recognized to be constant pointer.
   // We expect that the value transferring back to the original parameter is only 
   // needed for variable clone options and when the variable is being written && liveOut. 
-  if (isReadOnlyType(local_unpack_def->get_type ()))  
+  if (isConstType(local_unpack_def->get_type ()))  
   {
       if (Outliner::enable_debug)
       {
@@ -753,7 +727,7 @@ createPackExpr (SgInitializedName* local_unpack_def)
   }
 #endif  
   if (local_unpack_def)
-//      && !isReadOnlyType (local_unpack_def->get_type ()))
+//      && !isConstType(local_unpack_def->get_type ()))
     {
       SgName local_var_name (local_unpack_def->get_name ());
 
