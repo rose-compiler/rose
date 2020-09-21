@@ -571,7 +571,7 @@ insertFriendDecl (const SgFunctionDeclaration* func,
 
         // DQ (8/7/2019): Instead, save the information to use later to support the transformation, *i and friend_proto.
         // cls_def->get_members().insert(i, friend_proto);
-           bool inFront = true;
+        //   bool inFront = true;
         // SgStatement::insert_statement(*i,friend_proto,inFront);
         // cls_def->get_members().insert(i, friend_proto);
 
@@ -1248,9 +1248,9 @@ Outliner::insert (SgFunctionDeclaration* func,
      SgSourceFile* enclosingSourceFile = getEnclosingSourceFile(scope,false);
      ROSE_ASSERT(enclosingSourceFile != NULL);
 
-     SgGlobal* enclosingSourceFileGlobalScope = enclosingSourceFile->get_globalScope();
 
 #if 0
+     SgGlobal* enclosingSourceFileGlobalScope = enclosingSourceFile->get_globalScope();
      printf ("scope                          = %p = %s \n",scope,scope->class_name().c_str());
      printf ("enclosingSourceFileGlobalScope = %p = %s \n",enclosingSourceFileGlobalScope,enclosingSourceFileGlobalScope->class_name().c_str());
 #endif
