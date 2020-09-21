@@ -1065,6 +1065,31 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
 //  handlePrivateVariables(pSyms, body, private_remap);
 //  This is done before calling the outliner now, by transOmpVariables()
 
+  // Liao, 2020/9/21
+   // We now decide for a function with 0 variables to pass, we still has a dummy void** parameter
+   // This is necessary to have compatible runtime library 's function prototype for the outlined function
+   // The runtime expects (void*) (void**) function pointers.
+   if (!Outliner::enable_classic && Outliner::useParameterWrapper) 
+   {
+     SgName var1_name = "__out_argv";
+     // This is needed to support the pass-by-value semantics across different thread local stacks
+     // In this situation, pointer dereferencing cannot be used to get the value 
+     // of an inactive parent thread's local variables
+     SgType* ptype= NULL; 
+     if (Outliner::useStructureWrapper)
+     {
+       // To have strict type matching in C++ model
+       // between the outlined function and the function pointer passed to the gomp runtime lib
+       // we use void* for the parameter type
+        ptype = buildPointerType (buildVoidType());
+     }
+     else // use array of pointers, regardless of the pass-by-value vs. pass-by-reference difference
+       ptype= buildPointerType(buildPointerType(buildVoidType()));
+
+     parameter1 = buildInitializedName(var1_name,ptype);
+     appendArg(params,parameter1);
+   }
+
   // --------------------------------------------------
   // for each parameters passed to the outlined function
   // They include parameters for 
@@ -1096,7 +1121,8 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
     if (!Outliner::enable_classic && Outliner::useParameterWrapper) // Liao 3/26/2013. enable_classic overrules useParameterWrapper
  //   if (Outliner::useParameterWrapper)
     {
-      if (i==syms.rbegin())
+#if 0  // moved outside of the loop    
+      if (i==syms.rbegin()) // do this for the first parameter
       {
         SgName var1_name = "__out_argv";
         // This is needed to support the pass-by-value semantics across different thread local stacks
@@ -1121,6 +1147,7 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
         parameter1 = buildInitializedName(var1_name,ptype);
         appendArg(params,parameter1);
       }
+#endif       
       p_init_name = parameter1; // set the source parameter to the wrapper
     }
     else // case 3: use a parameter for each variable, the default case and the classic case
