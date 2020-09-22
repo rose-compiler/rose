@@ -2044,6 +2044,9 @@ ATbool ATermToSageJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATerm t
    sage_tree_builder.Enter(var_decl, std::string(name), item_type, preset);
    setSourcePosition(var_decl, term);
 
+// Jovial table members are visible in parent scope so create an alias to the symbol
+   sage_tree_builder.injectAliasSymbol(std::string(name));
+
    sage_tree_builder.Leave(var_decl);
 
    return ATtrue;
@@ -2289,6 +2292,9 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATerm 
 
 // The bitfield is used to contain both the start_bit and start_word as an expression list
    setLocationSpecifier(var_decl, loc_spec);
+
+// Jovial table members are visible in parent scope so create an alias to the symbol
+   sage_tree_builder.injectAliasSymbol(std::string(name));
 
 // End SageTreeBuilder
    sage_tree_builder.Leave(var_decl);
@@ -5282,8 +5288,7 @@ ATbool ATermToSageJovialTraversal::traverse_CaseIndex(ATerm term, SgExpression* 
       } else return ATfalse;
 
    // Perhaps SgRangeExp should be used instead for the stride and then won't need to insert literal "1"
-      SgExpression* stride = new SgIntVal(1,"1");
-      SageInterface::setSourcePosition(stride);
+      SgExpression* stride = SageBuilder::buildIntVal_nfi(std::string("1"));
 
       case_index = SageBuilder::buildSubscriptExpression_nfi(lower_bound, upper_bound, stride);
    }
@@ -6414,6 +6419,8 @@ ATbool ATermToSageJovialTraversal::traverse_VariableList(ATerm term, std::vector
    ATerm t_labels;
    SgExpression* var;
 
+// The variables in the list are lvalues in an assignment statement
+//
    if (ATmatch(term, "VariableList(<term>)" , &t_labels)) {
       ATermList tail = (ATermList) ATmake("<term>", t_labels);
       while (! ATisEmpty(tail)) {
@@ -6424,7 +6431,15 @@ ATbool ATermToSageJovialTraversal::traverse_VariableList(ATerm term, std::vector
             vars.push_back(var);
          } else return ATfalse;
       }
-   } else return ATfalse;
+
+   // Because of ambiguities in the grammar the lvalue member must be set here, it can't be
+   // set in traverse_ByteFunctionVariable or traverse_BitFunctionVariable (perhaps in BitFunctionVariable)
+      SgFunctionCallExp* func_call = isSgFunctionCallExp(var);
+      if (func_call) {
+        func_call->set_lvalue(true);
+      }
+   }
+   else return ATfalse;
 
    return ATtrue;
 }
@@ -6576,78 +6591,139 @@ ATbool ATermToSageJovialTraversal::traverse_Dereference(ATerm term, SgExpression
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_BitFunctionVariable(ATerm term, SgExpression* &var)
+ATbool ATermToSageJovialTraversal::traverse_BitFunctionVariable(ATerm term, SgExpression* &func_call)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BitFunctionVariable: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_bitvar, t_var, t_fbit, t_nbit, t_fbit_num, t_nbit_num;
-   SgExpression * fbit, * nbit;
+   ATerm t_bitvar, t_var, t_fbit, t_nbit, t_first_bit, t_length;
 
-   //  'BIT' '(' BitVariable ',' Fbit ',' Nbit ')' -> BitFunctionVariable   {cons("BitFunctionVariable"), prefer}
-   //  'BIT' '(' BitFormula ','  Fbit ',' Nbit ')' -> BitFunctionVariable   {cons("BitFunctionVariable")}
+   SgExpression* variable = nullptr;
+   SgExpression* first_bit = nullptr;
+   SgExpression* length = nullptr;
 
+   func_call = nullptr;
+
+   // Grammar (this may be an lvalue call expression! or an rvalue depending on ambiguous context)
+   //  'BIT' '(' BitVariable ',' Fbit ',' Nbit ')' -> BitFunctionVariable {cons("BitFunctionVariable"), prefer}
+   //  'BIT' '(' BitFormula ','  Fbit ',' Nbit ')' -> BitFunctionVariable {cons("BitFunctionVariable")}
+   //
    if (ATmatch(term, "BitFunctionVariable(<term>,<term>,<term>)", &t_bitvar, &t_fbit, &t_nbit)) {
-      cerr << "WARNING UNIMPLEMENTED: BitFunctionVariable\n";
-
       if (ATmatch(t_bitvar, "BitVariable(<term>)", &t_var)) {
-         if (traverse_Variable(t_var, var)) {
+         if (traverse_Variable(t_var, variable)) {
             // MATCHED BitVariable -> Variable
          } else return ATfalse;
-      } else if (traverse_BitFormula(t_bitvar, var)) {
+      } else if (traverse_BitFormula(t_bitvar, variable)) {
             // MATCHED BitFormula
       } else return ATfalse;
 
-      if (ATmatch(t_fbit, "Fbit(<term>)", &t_fbit_num)) {
-         if (traverse_NumericFormula(t_fbit_num, fbit)) {
+      if (ATmatch(t_fbit, "Fbit(<term>)", &t_first_bit)) {
+         if (traverse_NumericFormula(t_first_bit, first_bit)) {
             // MATCHED NumericFormula
          } else return ATfalse;
       } else return ATfalse;
 
-      if (ATmatch(t_nbit, "Nbit(<term>)", &t_nbit_num)) {
-         if (traverse_NumericFormula(t_nbit_num, nbit)) {
+      if (ATmatch(t_nbit, "Nbit(<term>)", &t_length)) {
+         if (traverse_NumericFormula(t_length, length)) {
             // MATCHED NumericFormula
          } else return ATfalse;
       } else return ATfalse;
    }
-
    else return ATfalse;
+
+// TODO - distinguish if this is a variable or a formula (can we fix the cons names in the grammar?)
+   SgVarRefExp* var_ref = isSgVarRefExp(variable);
+   ROSE_ASSERT(var_ref);
+   ROSE_ASSERT(first_bit);
+   ROSE_ASSERT(length);
+
+   // build the parameter list
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   params->append_expression(variable);
+   params->append_expression(first_bit);
+   params->append_expression(length);
+
+   // get the variable type
+   SgVariableSymbol* var_symbol = var_ref->get_symbol();
+   ROSE_ASSERT(var_symbol);
+
+   SgType* return_type = var_symbol->get_type();
+   ROSE_ASSERT(return_type);
+
+   func_call = SageBuilder::buildFunctionCallExp("BIT", return_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
+   setSourcePosition(func_call, term);
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_ByteFunctionVariable(ATerm term, SgExpression* &var)
+ATbool ATermToSageJovialTraversal::traverse_ByteFunctionVariable(ATerm term, SgExpression* &func_call)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ByteFunctionVariable: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_var, t_fbit, t_nbit, t_fbit_num, t_nbit_num;
-   SgExpression *fbit, *nbit;
+   ATerm t_variable, t_fbyte, t_nbyte;
 
-   //  'BYTE' '(' Variable ',' Fbit ',' Nbit ')' -> ByteFunctionVariable   {cons("ByteFunctionVariable")}
+   SgExpression* variable = nullptr;
+   SgExpression* first_byte = nullptr;
+   SgExpression* length = nullptr;
+   SgType* return_type = nullptr;
 
-   if (ATmatch(term, "ByteFunctionVariable(<term>,<term>,<term>)", &t_var, &t_fbit, &t_nbit)) {
-      cerr << "WARNING UNIMPLEMENTED: ByteFunctionVariable\n";
-      if (traverse_Variable(t_var, var)) {
+   func_call = nullptr;
+
+   // Grammar (this may be an lvalue call expression! or an rvalue depending on ambiguous context)
+   //  'BYTE' '(' CharacterFormula/Variable ',' FirstByte ',' Length ')' -> ByteFunctionVariable
+   //
+   if (ATmatch(term, "ByteFunctionVariable(<term>,<term>,<term>)", &t_variable, &t_fbyte, &t_nbyte)) {
+      if (traverse_Variable(t_variable, variable)) {
          // MATCHED Variable
       } else return ATfalse;
 
-      if (ATmatch(t_fbit, "Fbit(<term>)", &t_fbit_num)) {
-         if (traverse_NumericFormula(t_fbit_num, fbit)) {
+      if (traverse_NumericFormula(t_fbyte, first_byte)) {
             // MATCHED NumericFormula
-         } else return ATfalse;
       } else return ATfalse;
 
-      if (ATmatch(t_nbit, "Nbit(<term>)", &t_nbit_num)) {
-         if (traverse_NumericFormula(t_nbit_num, nbit)) {
-            // MATCHED NumericFormula
-         } else return ATfalse;
+      if (traverse_NumericFormula(t_nbyte, length)) {
+        // MATCHED NumericFormula
       } else return ATfalse;
    }
-
    else return ATfalse;
+
+   ROSE_ASSERT(variable);
+   ROSE_ASSERT(first_byte);
+   ROSE_ASSERT(length);
+
+   // build the parameter list
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   params->append_expression(variable);
+   params->append_expression(first_byte);
+   params->append_expression(length);
+
+   // Create the return type.
+   SgVarRefExp* var_ref = isSgVarRefExp(variable);
+
+   if (var_ref) {
+      SgVariableSymbol* var_symbol = var_ref->get_symbol();
+      ROSE_ASSERT(var_symbol);
+      return_type = var_symbol->get_type();
+   }
+   else {
+      // TODO - this may not be correct as character size is that of the CharacterFormula argument
+      // not a variable so have to create a type which can't be shared
+      SgIntVal* length_val = isSgIntVal(length);
+      // This is an assumption (hack) for now.
+      ROSE_ASSERT(length_val);
+      SgExpression* new_length = SageBuilder::buildIntVal(length_val->get_value());
+
+      return_type = SageBuilder::buildStringType(new_length);
+   }
+   ROSE_ASSERT(return_type);
+
+   func_call = SageBuilder::buildFunctionCallExp("BYTE", return_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
+   setSourcePosition(func_call, term);
 
    return ATtrue;
 }
@@ -6712,7 +6788,7 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 
    ATerm t_name, t_param_list;
    std::string name;
-   SgExprListExp* param_list = nullptr;
+   SgExprListExp* expr_list = nullptr;
 
    expr = nullptr;
 
@@ -6721,9 +6797,11 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
          // MATCHED FunctionName
       } else return ATfalse;
 
-      param_list = SageBuilder::buildExprListExp_nfi();
+   // The grammar (UserDefinedFunctionCall) treats this as a parameter list
+   // but in general (because of ambiguities) it is just a general expression list
+      expr_list = SageBuilder::buildExprListExp_nfi();
 
-      if (traverse_ActualParameterList(t_param_list, param_list)) {
+      if (traverse_ActualParameterList(t_param_list, expr_list)) {
          // MATCHED ActualParameterList
       } else return ATfalse;
    }
@@ -6746,7 +6824,7 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 //
    if (isSgFunctionSymbol(symbol)) {
       SgFunctionCallExp* func_call = nullptr;
-      sage_tree_builder.Enter(func_call, name, param_list);
+      sage_tree_builder.Enter(func_call, name, expr_list);
       sage_tree_builder.Leave(func_call);
       expr = func_call;
    }
@@ -6756,8 +6834,8 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
    else if (isSgTypedefSymbol(symbol)) {
       SgCastExp* cast_expr = nullptr;
 
-      ROSE_ASSERT(param_list->get_expressions().size() == 1);
-      SgExpression* cast_operand = param_list->get_expressions()[0];
+      ROSE_ASSERT(expr_list->get_expressions().size() == 1);
+      SgExpression* cast_operand = expr_list->get_expressions()[0];
       ROSE_ASSERT(cast_operand);
 
       sage_tree_builder.Enter(cast_expr, name, cast_operand);
@@ -6768,8 +6846,8 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 // Look for table variable or table initialization replication operator
 //
    else if (isSgVariableSymbol(symbol)) {
-      if (param_list->get_expressions().size() == 0) {
-         // not sure if param_list is correct, probably because this should be an array refererence I think
+      if (expr_list->get_expressions().size() == 0) {
+         // Not sure how list size==0 is possible for a variable ref in Jovial?
          SgVarRefExp* var_ref = nullptr;
          cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall - table reference " << name << endl;
 
@@ -6777,9 +6855,12 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
          sage_tree_builder.Leave(var_ref);
          expr = var_ref;
       }
-      else if (param_list->get_expressions().size() == 1) {
+
+   // TODO - check the type of the symbol, especially if it a table then the following is wrong
+   // An table/array ref is not a replication operator!
+      else if (expr_list->get_expressions().size() == 1) {
          SgReplicationOp* rep_op = nullptr;
-         SgExpression* value = param_list->get_expressions()[0];
+         SgExpression* value = expr_list->get_expressions()[0];
          ROSE_ASSERT(value);
 
          sage_tree_builder.Enter(rep_op, name, value);
@@ -6787,8 +6868,8 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
          expr = rep_op;
       }
       else {
-         // don't think this should happen
-         cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall - unknown cause " << name << endl;
+         // TODO - don't think this should happen (but what about table_ref(1,2,3)
+         cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall - table reference " << name << endl;
          ROSE_ASSERT(false);
       }
    }
@@ -6945,24 +7026,43 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionC
 #endif
 
    ATerm t_formula, t_fbyte, t_nbyte;
-   SgExpression * formula, * fbyte, * nbyte;
+   SgExpression * character_formula, * first_byte, * length;
 
    func_call = nullptr;
 
    if (ATmatch(term, "ByteFunction(<term>, <term>,<term>)", &t_formula, &t_fbyte, &t_nbyte)) {
+      // TODO - is this really called (perhaps can't be reached because of ambiguous modifications)
       cerr << "WARNING UNIMPLEMENTED: ByteFunction\n";
-      if (traverse_CharacterFormula(t_formula, formula)) {
+      if (traverse_CharacterFormula(t_formula, character_formula)) {
          // MATCHED CharacterFormula
       } else return ATfalse;
 
-      if (traverse_NumericFormula(t_fbyte, fbyte)) {
+      if (traverse_NumericFormula(t_fbyte, first_byte)) {
          // MATCHED NumericFormula
       } else return ATfalse;
 
-      if (traverse_NumericFormula(t_nbyte, nbyte)) {
+      if (traverse_NumericFormula(t_nbyte, length)) {
          // MATCHED NumericFormula
       } else return ATfalse;
    } else return ATfalse;
+
+   // build the parameter list
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   params->append_expression(character_formula);
+   params->append_expression(first_byte);
+   params->append_expression(length);
+
+   // Create the return type. The length expression for the return_type can't be shared.
+   SgIntVal* length_val = isSgIntVal(length);
+   // This is an assumption (hack) for now.
+   ROSE_ASSERT(length_val);
+   SgExpression* new_length = SageBuilder::buildIntVal(length_val->get_value());
+
+   SgType* return_type = SageBuilder::buildStringType(new_length);
+
+   func_call = SageBuilder::buildFunctionCallExp("BYTE", return_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
+   setSourcePosition(func_call, term);
 
    return ATtrue;
 }
@@ -7065,29 +7165,36 @@ ATbool ATermToSageJovialTraversal::traverse_SizeFunction(ATerm term, SgFunctionC
 #endif
 
    ATerm t_formula;
-   SgExpression* formula;
+   SgExpression* size_argument;
+   std::string func_name;
 
    func_call = nullptr;
 
    if (ATmatch(term, "SizeFunction(BITSIZE(),<term>)", &t_formula)) {
-      cerr << "WARNING UNIMPLEMENTED: SizeFunction - BITSIZE \n";
-      if (traverse_Formula(t_formula, formula)) {
-         // MATCHED Formula
-      } else return ATfalse;
+      func_name = "BITSIZE";
    }
    else if (ATmatch(term, "SizeFunction(BYTESIZE(),<term>)", &t_formula)) {
-      cerr << "WARNING UNIMPLEMENTED: SizeFunction - BYTESIZE \n";
-      if (traverse_Formula(t_formula, formula)) {
-         // MATCHED Formula
-      } else return ATfalse;
+      func_name = "BYTESIZE";
    }
    else if (ATmatch(term, "SizeFunction(WORDSIZE(),<term>)", &t_formula)) {
-      cerr << "WARNING UNIMPLEMENTED: SizeFunction - WORDSIZE \n";
-      if (traverse_Formula(t_formula, formula)) {
-         // MATCHED Formula
-      } else return ATfalse;
+      func_name = "WORDSIZE";
    }
    else return ATfalse;
+
+   // get the function argument
+   if (traverse_Formula(t_formula, size_argument)) {
+     // MATCHED Formula
+   } else return ATfalse;
+
+   // build the parameter list
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   params->append_expression(size_argument);
+
+   SgType* return_type = SageBuilder::buildUnsignedIntType();
+
+   func_call = SageBuilder::buildFunctionCallExp(func_name, return_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
+   setSourcePosition(func_call, term);
 
    return ATtrue;
 }
