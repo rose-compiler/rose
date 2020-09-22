@@ -1220,6 +1220,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
      bool typeElaborationIsRequired = false;
   // bool globalQualifierIsRequired = false;
 
+#define DEBUG_FUNCTION_RESOLUTION 0
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      mfprintf(mlog [ WARN ] ) ("\n\n########################################################################## \n");
      mfprintf(mlog [ WARN ] ) ("########################################################################## \n");
@@ -1761,7 +1763,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
        // SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name,currentScope);
           SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name,currentScope,templateParameterList,templateArgumentList);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_FUNCTION_RESOLUTION
           mfprintf(mlog [ WARN ] ) ("Initial lookup: symbol = %p = %s \n",symbol,(symbol != NULL) ? symbol->class_name().c_str() : "NULL");
 #endif
 
@@ -1780,7 +1782,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
           if (symbol != NULL)
              {
             // mfprintf(mlog [ WARN ] ) ("Lookup symbol based on name only: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_FUNCTION_RESOLUTION
                mfprintf(mlog [ WARN ] ) ("Lookup symbol based on name only (via parents starting at currentScope = %p = %s: name = %s symbol = %p = %s) \n",
                     currentScope,currentScope->class_name().c_str(),name.str(),symbol,symbol->class_name().c_str());
                if (isSgFunctionSymbol(symbol) != NULL)
@@ -1823,7 +1825,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                   }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_FUNCTION_RESOLUTION
             // We have to check the kind of declaration against the kind of symbol found. A local variable (for example) 
             // could hide the same name used for the declaration.  This if we find symbol inconsistant with the declaration 
             // then we need some form of qualification (sometimes just type elaboration).
@@ -2081,7 +2083,6 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                     case V_SgMemberFunctionDeclaration:
                     case V_SgFunctionDeclaration:
                        {
-#define DEBUG_FUNCTION_RESOLUTION 0
                          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(declaration);
                          ASSERT_not_null(functionDeclaration);
 #if DEBUG_FUNCTION_RESOLUTION
@@ -2137,7 +2138,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                               forceMoreNameQualification = true;
 #else
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 1
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_FUNCTION_RESOLUTION
                               printf ("In NameQualificationTraversal::nameQualificationDepth(): Skip setting forceMoreNameQualification = true: forceMoreNameQualification = %s \n",
                                    forceMoreNameQualification ? "true" : "false");
                               printf ("In NameQualificationTraversal::nameQualificationDepth(): Skip setting forceMoreNameQualification = true: declaration = %p = %s name = %s \n",
@@ -2233,10 +2234,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                 // Here we add the lookup of same named functions in the scopes defined by the types associated 
                                 // with function parameters.
 
-#define DEBUG_FUNCTION_AMBIGUITY 0
+#define DEBUG_FUNCTION_AMBIGUITY (0 || DEBUG_FUNCTION_RESOLUTION)
 
 #if DEBUG_FUNCTION_AMBIGUITY
-                                   printf ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& \n");
                                    printf ("\n\nWe found the correct function, but now we need to check for any other possible matches that would drive more name qualification \n");
 
                                    printf ("Before loop over function parameter types: foundAnOverloadedFunctionWithSameName = %s \n",foundAnOverloadedFunctionWithSameName ? "true" : "false");
@@ -2247,15 +2247,53 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                    SgDeclarationStatement* declaration = functionSymbol->get_declaration();
                                    ROSE_ASSERT(declaration != NULL);
                                    bool isFriendFunction = (declaration->get_declarationModifier().isFriend() == true);
+
+                                // Compute a scope outside of the scope where the function is recognized.
+                                   SgScopeStatement* alternate_scope = declaration->get_scope();
+                                   if (isSgGlobal(alternate_scope) == NULL)
+                                      {
+                                        alternate_scope = alternate_scope->get_scope();
+                                      }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_FUNCTION_RESOLUTION
+                                   printf ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& \n");
+                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): check if we need function parameter resolution: forceMoreNameQualification = %s \n",
+                                        forceMoreNameQualification ? "true" : "false");
+                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): check if we need function parameter resolution: name = %s \n",name.str());
+                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): check if we need function parameter resolution: declaration = %p = %s name = %s \n",
+                                        declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
+                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): check if we need function parameter resolution: currentScope = %p = %s name = %s \n",currentScope,
+                                        currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): check if we need function parameter resolution: alternate_scope = %p = %s name = %s \n",alternate_scope,
+                                        alternate_scope->class_name().c_str(),SageInterface::get_name(alternate_scope).c_str());
+                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): check if we need function parameter resolution: positionStatement = %p = %s name = %s \n",positionStatement,
+                                        positionStatement->class_name().c_str(),SageInterface::get_name(positionStatement).c_str());
+                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): check if we need function parameter resolution: functionType = %p = %s name = %s \n",functionType,
+                                        functionType->class_name().c_str(),SageInterface::get_name(functionType).c_str());
+#endif
+                                   SgSymbol* alternate_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,functionType,alternate_scope);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_FUNCTION_RESOLUTION
+                                   printf ("alternate_symbol = %p = %s name = %s \n",alternate_symbol,alternate_symbol->class_name().c_str(),alternate_symbol->get_name().str());
+#endif
+
+
 #if DEBUG_FUNCTION_AMBIGUITY
                                    printf (" --- declaration = %p = %s name = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
                                    printf (" --- isFriendFunction = %s \n",isFriendFunction ? "true" : "false");
 #endif
+                                   bool symbols_match = ((alternate_symbol != NULL) && (functionSymbol == alternate_symbol));
+#if DEBUG_FUNCTION_AMBIGUITY
+                                   printf (" --- symbols_match = %s \n",symbols_match ? "true" : "false");
+#endif
 #if 1
+                                // DQ (9/22/2020): Cxx11_tests/test2020_95.C demonstrated that we needed more than just 
+                                // this code below to handle Cxx11_tests/test2020_101.C.
                                 // DQ (8/31/2020): friend functions are not processed using this parameter based lookup.
                                 // Specifically, less name qualification is allowed for GNU versions after 7.x and in 
                                 // particular version 10.2. Also an error for clang version 10.x.
-                                   if (isFriendFunction == false)
+                                // if (isFriendFunction == false)
+                                   if (isFriendFunction == false && symbols_match == false)
                                       {
                                      // Use the scopes of the function parameters to look for where there could be an ambiguity.
                                         SgFunctionParameterTypeList* functionParameterTypeList = functionType->get_argument_list(); 
