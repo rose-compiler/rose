@@ -1069,26 +1069,42 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
    // We now decide for a function with 0 variables to pass, we still has a dummy void** parameter
    // This is necessary to have compatible runtime library 's function prototype for the outlined function
    // The runtime expects (void*) (void**) function pointers.
-   if (!Outliner::enable_classic && Outliner::useParameterWrapper) 
-   {
-     SgName var1_name = "__out_argv";
-     // This is needed to support the pass-by-value semantics across different thread local stacks
-     // In this situation, pointer dereferencing cannot be used to get the value 
-     // of an inactive parent thread's local variables
-     SgType* ptype= NULL; 
-     if (Outliner::useStructureWrapper)
-     {
-       // To have strict type matching in C++ model
-       // between the outlined function and the function pointer passed to the gomp runtime lib
-       // we use void* for the parameter type
-        ptype = buildPointerType (buildVoidType());
-     }
-     else // use array of pointers, regardless of the pass-by-value vs. pass-by-reference difference
-       ptype= buildPointerType(buildPointerType(buildVoidType()));
+   // enable_classic overrules useParameterWrapper
+  SgBasicBlock* func_body = func->get_definition()->get_body();
+  if (!Outliner::enable_classic && Outliner::useParameterWrapper) 
+  {
+    SgName var1_name = "__out_argv";
+    // This is needed to support the pass-by-value semantics across different thread local stacks
+    // In this situation, pointer dereferencing cannot be used to get the value 
+    // of an inactive parent thread's local variables
+    SgType* ptype= NULL; 
 
-     parameter1 = buildInitializedName(var1_name,ptype);
-     appendArg(params,parameter1);
-   }
+    // A dummy integer parameter for Fortran outlined function
+    if (SageInterface::is_Fortran_language() )
+    { 
+      var1_name = "out_argv";
+      ptype = buildIntType();
+      SgVariableDeclaration *var_decl = buildVariableDeclaration(var1_name,ptype, NULL, func_body);
+      prependStatement(var_decl, func_body);
+
+    }
+    else
+    {
+      if (Outliner::useStructureWrapper) // OpenMP code triggers this branch
+      {
+        // To have strict type matching in C++ model
+        // between the outlined function and the function pointer passed to the gomp runtime lib
+        // we use void* for the parameter type
+        ptype = buildPointerType (buildVoidType());
+      }
+      else // use array of pointers, regardless of the pass-by-value vs. pass-by-reference difference
+      {     // this is to be compatible with dlopen() runtime's function pointer type
+        ptype= buildPointerType(buildPointerType(buildVoidType()));
+      }
+    }
+    parameter1 = buildInitializedName(var1_name,ptype);
+    appendArg(params,parameter1);
+  }
 
   // --------------------------------------------------
   // for each parameters passed to the outlined function
@@ -1258,13 +1274,14 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
     counter ++;
   } //end for
 
-  SgBasicBlock* func_body = func->get_definition()->get_body();
 
-#if 1
+#if 0
   //TODO: move this outside of outliner since it is OpenMP-specific. omp_lowering.cpp generateOutlinedTask()
   // A caveat is the moving this also means we have to patch up prototype later
+  //
   //For OpenMP lowering, we have to have a void * parameter even if there is no need to pass any parameters 
   //in order to match the gomp runtime lib 's function prototype for function pointers
+  // 
   SgFile* cur_file = getEnclosingFileNode(func);
   ROSE_ASSERT (cur_file != NULL);
   //if (cur_file->get_openmp_lowering () && ! SageInterface::is_Fortran_language())
