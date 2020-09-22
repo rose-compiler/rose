@@ -801,13 +801,11 @@ TESTCODES_REQUIRED_TO_PASS += \
      test2016_33.C \
      test2016_34.C \
      test2016_90.C \
-     test2018_100.C \
      test2019_31.C \
      test2019_33.C \
      test2019_94.C \
      test2012_14.C \
      test2012_26.C \
-     test2018_100.C \
      test2019_04.C \
      test2019_95.C \
      test2019_121.C \
@@ -823,6 +821,15 @@ TESTCODES_REQUIRED_TO_PASS += \
      test2019_367.C \
      test2019_482.C \
      rose-1774.C 
+
+# DQ (9/22/2020): This file fails because the #include <ext/aligned_buffer.h> can not be 
+# resolved by the Intel v17.0.4 compiler as it is installed on Jenkins. The issues seem 
+# to be that the Jenkins installation of Intel v17 is using the GNU headers and the version
+# of GNU headers is 4.8.5 (which is too old).  Installing GNU 6.1 and maybe a later version 
+# of boost than 1.57 (I'm using Boost 1.60) should fix the problem.  Nathan is fixing this
+# issue and so this file can be added back in later after Jenkins's use of GNU by Intel v17 
+# is updated.
+# test2018_100.C
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_24.C \
