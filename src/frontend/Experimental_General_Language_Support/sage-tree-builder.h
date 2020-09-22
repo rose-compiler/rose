@@ -219,6 +219,9 @@ public:
         return (std::find(lst.begin(), lst.end(), item) != lst.end());
      }
 
+// Symbols (Jovial specific, should this go in SageInterface?)
+   void injectAliasSymbol(const std::string &name);
+
 };
 
 // Temporary wrappers for SageInterface functions (needed until ROSE builds with C++17)

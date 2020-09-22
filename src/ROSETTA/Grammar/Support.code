@@ -16277,15 +16277,99 @@ SgFile::initialization()
      p_sourceFileUsesFortran95FileExtension   = false;
      p_sourceFileUsesFortran2003FileExtension = false;
 
+#if 0
+  // DQ (1/25/2016): Added initial support in command line handling for Fortran 2008 files.
+     File.setDataPrototype         ( "bool", "sourceFileUsesFortran2008FileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     File.setDataPrototype         ( "bool", "sourceFileUsesCoArrayFortranFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesPHPFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesPythonFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesJavaFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesBinaryFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileTypeIsUnknown", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesX10FileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (28/8/2017): Adding language support.
+     File.setDataPrototype         ( "bool", "sourceFileUsesCsharpFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesAdaFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesJovialFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesCobolFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+  // DQ (9/17/2020): Adding missing data member initialization.
+     p_sourceFileUsesFortran2008FileExtension = false;
+
   // DQ (1/23/2009): Added support for Co-Array Fortran (file extensions)
      p_sourceFileUsesCoArrayFortranFileExtension = false;     
 
      p_sourceFileUsesPHPFileExtension = false;
 
+  // DQ (9/17/2020): Adding missing data member initialization.
+     p_sourceFileUsesPythonFileExtension = false;
+
   // DQ (10/11/2010): Adding Java support.
      p_sourceFileUsesJavaFileExtension = false;
 
      p_sourceFileUsesBinaryFileExtension = false;
+
+  // DQ (9/26/2011): This was not initialized previosuly so I have added it.
+     p_sourceFileTypeIsUnknown = false;
+
+  // DQ (9/17/2020): Adding missing data member initialization.
+     p_sourceFileUsesX10FileExtension    = false;
+     p_sourceFileUsesCsharpFileExtension = false;
+     p_sourceFileUsesAdaFileExtension    = false;
+     p_sourceFileUsesJovialFileExtension = false;
+     p_sourceFileUsesCobolFileExtension  = false;
+
+#if 0
+     File.setDataPrototype         ( "int", "detect_dangling_pointers", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/7/2013): Added support for use of experimental fortran front-end.
+     File.setDataPrototype("bool", "experimental_fortran_frontend", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (8/30/2010): Added experimental support for using the Flang parser for Fortran
+     File.setDataPrototype("bool", "experimental_flang_frontend", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
+     File.setDataPrototype("bool", "experimental_cuda_fortran_frontend", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
+  // (this is part of the internal testing of the new (experimental) Fortran support).
+     File.setDataPrototype("bool", "experimental_fortran_frontend_OFP_test", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+  // DQ (9/26/2011): New support for option to specify debugging support in ROSE to 
+  // detect dangling pointers to IR nodes as part of the AST Consistancy tests. At 
+  // some point this will default to always being on as an AST consistancy test.
+     p_detect_dangling_pointers = 0;
+
+  // DQ (9/17/2020): Adding missing data member initialization.
+     p_experimental_flang_frontend = false;
+
+  // DQ (6/7/2013): Added support for using experimental fortran frontend.
+  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
+     p_experimental_fortran_frontend = false;
+     p_experimental_cuda_fortran_frontend = false;
+
+  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
+  // (this is part of the internal testing of the new (experimental) Fortran support).
+     p_experimental_fortran_frontend_OFP_test = false;
 
   // This will cause only the binary file format to be read and skipps instruction disassembly
      p_read_executable_file_format_only = false;
@@ -16298,13 +16382,13 @@ SgFile::initialization()
 
      p_visualize_dwarf_only      = false;
 
+     p_read_instructions_only    = false;
+
   // DQ (5/23/2015): This has been modified to be a static data member (for details see comments in ROSETTA/src/support.C).
   // I am not clear if static variables should be set in this function (but it appears that other static variables are
   // set there and if not here then where should they be set, unless we build a static initialization phase for code
   // generated by ROSETTA (which does not presently exist).
      p_skip_unparse_asm_commands = false;
-
-     p_read_instructions_only    = false;
 
   // DQ (11/20/2010): Support for token handling.
      p_unparse_tokens = false;
@@ -16315,26 +16399,9 @@ SgFile::initialization()
   // DQ (11/12/2014): Addded to support test modes for token unparsing.
      p_unparse_using_leading_and_trailing_token_mappings = false;
 
-  // DQ (9/26/2011): This was not initialized previosuly so I have added it.
-     p_sourceFileTypeIsUnknown = false;
-
-  // DQ (9/26/2011): New support for option to specify debugging support in ROSE to 
-  // detect dangling pointers to IR nodes as part of the AST Consistancy tests. At 
-  // some point this will default to always being on as an AST consistancy test.
-     p_detect_dangling_pointers = 0;
-
   // DQ (2/17/2013): This permits skipping the AST consistancy test if the AstTests::runAllTests() 
   // function is called as part of the user's translator.
      p_skipAstConsistancyTests = false;
-
-  // DQ (6/7/2013): Added support for using experimental fortran frontend.
-  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
-     p_experimental_fortran_frontend = false;
-     p_experimental_cuda_fortran_frontend = false;
-
-  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
-  // (this is part of the internal testing of the new (experimental) Fortran support).
-     p_experimental_fortran_frontend_OFP_test = false;
 
   // DQ (4/17/2015): Adding multifile handling support for commandline generation.
      p_multifile_support = false;
@@ -16365,6 +16432,10 @@ SgFile::initialization()
      p_header_file_unparsing_optimization             = false;
      p_header_file_unparsing_optimization_source_file = false;
      p_header_file_unparsing_optimization_header_file = false;
+
+  // DQ (9/17/2020): Added these missing variable initializations.
+     p_standard     = e_default_standard;
+     p_gnu_standard = false;
    }
 
 #if 0

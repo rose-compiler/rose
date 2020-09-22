@@ -12441,6 +12441,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                            SgTemplateClassDefinition * tpldef = isSgTemplateClassDefinition(parent);
                            SgTemplateParameter* tplParam = isSgTemplateParameter(parent);
                            SgTemplateInstantiationDefn * templateInstantiationDefn = isSgTemplateInstantiationDefn(parent);
+                           SgEnumDeclaration * enumDecl = isSgEnumDeclaration(parent);
 
                            int amountOfNameQualificationRequired = nameQualificationDepth(initializedName,explictlySpecifiedCurrentScope,currentStatement);
                            if (functionParameterList != NULL) {
@@ -12473,6 +12474,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                  isSgNonrealDecl(tpldecl)
                              );
                              setNameQualification(varRefExp,tpldecl,amountOfNameQualificationRequired);
+                           } else if (enumDecl != NULL) {
+                             setNameQualification(varRefExp, enumDecl, amountOfNameQualificationRequired);
+//                             setNameQualification(varRefExp, isSgScopeStatement(enumDecl->get_parent()), amountOfNameQualificationRequired);
                            } else {
                           // mfprintf(mlog [ WARN ] )("ERROR: Unexpected parent for SgInitializedName: parent = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
                              printf("ERROR: Unexpected parent for SgInitializedName: parent = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");

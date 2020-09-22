@@ -1,4 +1,3 @@
-
 dnl
 dnl ROSE_FLAG_CXX set the C++ compiler flags.
 dnl This macro modifies CXXFLAGS.  Secondarily,
@@ -58,11 +57,56 @@ AC_MSG_NOTICE([after initialization: with_CXX_DEBUG = "$with_CXX_DEBUG"])
 # echo "Setting with_CXX_DEBUG to withval = $withval"
 # with_CXX_DEBUG=$withval
 
+# echo "OS_VENDOR_APPLE = $OS_VENDOR_APPLE"
+# echo "OS_vendor = $OS_vendor"
+
+if "x$OS_vendor" == "xapple"; then
+    echo "This IS a Mac OSX machine (even though we call the g++ compiler (which is really clang), CXX resolves to clang): Cxx = $CXX"
+else
+    echo "This is NOT a Mac OSX machine"
+fi
+
+# echo "FRONTEND_CXX_VERSION_MAJOR = $FRONTEND_CXX_VERSION_MAJOR"
+
+# if test $FRONTEND_CXX_COMPILER_VENDOR == "gnu" && test $FRONTEND_CXX_VERSION_MAJOR -ge 5; then
+# if test "x$FRONTEND_CXX_COMPILER_VENDOR" = "xgnu" && test $FRONTEND_CXX_VERSION_MAJOR -ge 5; then
+if test "x$FRONTEND_CXX_COMPILER_VENDOR" = "xgnu" ; then
+   AC_MSG_NOTICE([using additional GNU compiler options: -fno-var-tracking-assignments -Wno-misleading-indentation])
+else
+   AC_MSG_NOTICE([skip using additional GNU compiler options: -fno-var-tracking-assignments -Wno-misleading-indentation])
+fi
+
 if test "x$with_CXX_DEBUG" = "xyes"; then
 # CXX_DEBUG was activated but not specified, so set it.
   AC_MSG_NOTICE([using default options for maximal debug (true case)])
   case $CXX in
     g++)
+    # DQ (9/18/2020): The reason we can't use these options is because the MacOSX compiler is clang,
+    # but it calls itself g++, and we need to figure out how to tell with the g++ is acutally clang 
+    # so that we can suppress these options in just that case.
+    # DQ (9/17/2020): We can't use these option until we use more modern compilers than 4.8.5 in Jenkins.
+    # DQ (9/16/2020): Adding -fno-var-tracking-asignment -fno-misleading-indentation -wfatal-errors
+    # CXX_DEBUG="-g"
+    # CXX_DEBUG="-g -fno-var-tracking-asignment -fno-misleading-indentation"
+    # CXX_DEBUG="-g -fno-misleading-indentation"
+    # CXX_DEBUG="-g -Wno-misleading-indentation"
+    # CXX_DEBUG="-g -fno-var-tracking-assignments"
+    # CXX_DEBUG="-g -fno-var-tracking-assignments -Wno-misleading-indentation"
+    # CXX_DEBUG="-g -fno-var-tracking-assignments -Wno-misleading-indentation"
+    # CXX_DEBUG="-g"
+    # DQ (9/20/20): We need to make sure that where the Clang compiler on MacOSX pretends to be 
+    # the GNU compiler that we don't use some GNU options that are an error when used with Clang.
+    # if test $FRONTEND_CXX_COMPILER_VENDOR == "gnu" && test $FRONTEND_CXX_VERSION_MAJOR -ge 5; then
+    # if test $FRONTEND_CXX_COMPILER_VENDOR == "gnu" ; then
+      if test "x$FRONTEND_CXX_COMPILER_VENDOR" == "xgnu" && test $FRONTEND_CXX_VERSION_MAJOR -ge 5; then
+         AC_MSG_NOTICE([using additional GNU compiler options: -fno-var-tracking-assignments -Wno-misleading-indentation])
+         CXX_DEBUG="-g -fno-var-tracking-assignments -Wno-misleading-indentation"
+      else
+         AC_MSG_NOTICE([skip using additional GNU compiler options (likely clang trying to look like g++ on MaxOSX): -fno-var-tracking-assignments -Wno-misleading-indentation])
+         CXX_DEBUG="-g"
+      fi
+      ;;
+    clang++)
       CXX_DEBUG="-g"
       ;;
     icpc)
@@ -84,6 +128,9 @@ elif test "x$with_CXX_DEBUG" = "xno"; then
   AC_MSG_NOTICE([using at least some default (minimal) options for debug flags (currently the same as above) (false case)])
   case $CXX in
     g++)
+      CXX_DEBUG=""
+      ;;
+    clang++)
       CXX_DEBUG=""
       ;;
     icpc)
@@ -109,8 +156,9 @@ AC_SUBST(CXX_DEBUG)
 if test -n "$CXX_DEBUG"; then CXXFLAGS="$CXXFLAGS $CXX_DEBUG"; fi
 
 # echo "Am I set: CXX_DEBUG= $CXX_DEBUG"
-# echo "CXXFLAGS currently set to $CXXFLAGS"
+echo "CXXFLAGS currently set to $CXXFLAGS"
 
+# exit 1
 
 dnl *********************************************************************
 dnl * Set the C++ compiler optimization flags in CXXOPT
@@ -350,6 +398,9 @@ if test "x$with_C_DEBUG" = "xyes"; then
     gcc)
       C_DEBUG="-g"
       ;;
+    clang)
+      C_DEBUG="-g"
+      ;;
     icc)
       C_DEBUG="-g"
       ;;
@@ -369,6 +420,9 @@ elif test "x$with_C_DEBUG" = "xno"; then
   AC_MSG_NOTICE([using at least some default (minimal) options for debug flags (currently the same as above) (false case)])
   case $CC in
     gcc)
+      C_DEBUG=""
+      ;;
+    clang)
       C_DEBUG=""
       ;;
     icc)

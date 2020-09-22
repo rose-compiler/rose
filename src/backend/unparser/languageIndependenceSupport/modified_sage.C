@@ -2152,9 +2152,14 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
      ROSE_ASSERT(decl_stmt->get_declarationModifier().get_storageModifier().get_modifier() >= 0);
 
 #if 0
-     printf ("In printSpecifier2(): decl_stmt = %p decl_stmt->get_declarationModifier().get_storageModifier().isStatic()  = %s \n",decl_stmt,decl_stmt->get_declarationModifier().get_storageModifier().isStatic() ? "true" : "false");
-     printf ("In printSpecifier2(): decl_stmt = %p decl_stmt->get_declarationModifier().get_storageModifier().isExtern()  = %s \n",decl_stmt,decl_stmt->get_declarationModifier().get_storageModifier().isExtern() ? "true" : "false");
-     printf ("In printSpecifier2(): decl_stmt = %p decl_stmt->get_declarationModifier().get_storageModifier().isDefault() = %s \n",decl_stmt,decl_stmt->get_declarationModifier().get_storageModifier().isDefault() ? "true" : "false");
+     printf ("In printSpecifier2(): decl_stmt = %p decl_stmt->get_declarationModifier().get_storageModifier().isStatic()  = %s \n",
+          decl_stmt,decl_stmt->get_declarationModifier().get_storageModifier().isStatic() ? "true" : "false");
+     printf ("In printSpecifier2(): decl_stmt = %p decl_stmt->get_declarationModifier().get_storageModifier().isExtern()  = %s \n",
+          decl_stmt,decl_stmt->get_declarationModifier().get_storageModifier().isExtern() ? "true" : "false");
+     printf ("In printSpecifier2(): decl_stmt = %p decl_stmt->get_declarationModifier().get_storageModifier().isDefault() = %s \n",
+          decl_stmt,decl_stmt->get_declarationModifier().get_storageModifier().isDefault() ? "true" : "false");
+     printf ("In printSpecifier2(): decl_stmt = %p decl_stmt->get_declarationModifier().isFriend() = %s \n",
+          decl_stmt,decl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
 #endif
 
      if (decl_stmt->get_declarationModifier().get_storageModifier().isStatic())
@@ -2186,7 +2191,62 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 #if 0
                printf ("In Unparse_MOD_SAGE::printSpecifier2(): Output the extern keyword \n");
 #endif
-               curprint("extern ");
+            // DQ (9/18/2020): If this is a static variable then Clang does not allow the output of the extern keyword.
+            // Check if there is a previous declaration associated with this declaration (e.g. in a namespace as an 
+            // extern declaration, or in a class as a static variable declaration.
+            // curprint( "extern /* Unparse_MOD_SAGE::printSpecifier2() */ ");
+            // curprint("extern ");
+               bool supress_extern_keyword = false;
+#if 1
+               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl_stmt);
+               if (variableDeclaration != NULL)
+                  {
+                    SgInitializedName* initializedName = SageInterface::getFirstInitializedName(variableDeclaration);
+                    ROSE_ASSERT(initializedName != NULL);
+                    SgType* initializedName_type = initializedName->get_type();
+#if 0
+                    printf ("initializedName       = %p name = %s \n",initializedName,initializedName->get_name().str());
+                    printf ("initializedName_type  = %p = %s \n",initializedName_type,initializedName_type->class_name().c_str());
+#endif
+                 // Clang does not allow the use of extern on classes when the there is static declaration in the class 
+                 // (see Cxx11_tests/test2020_96.C for an example, also test2020_97.C and test2020_98.C).
+                 // SgClassType* classType = isSgClassType(initializedName_type);
+                 // if (classType == NULL)
+                    SgNamedType* namedType = isSgNamedType(initializedName_type);
+                    if (namedType == NULL)
+                       {
+                         SgInitializedName* previous_initializedName = initializedName->get_prev_decl_item();
+                         if (previous_initializedName != NULL)
+                            {
+#if 0
+                              printf ("Found previous_initializedName = %p name = %s \n",previous_initializedName,previous_initializedName->get_name().str());
+#endif
+                           // supress_extern_keyword = true;
+
+                           // Check if the parent variable declaration is for a static variable declaration and if so then suppress the output of the extern keyword.
+                              SgVariableDeclaration* previous_variableDeclaration = isSgVariableDeclaration(previous_initializedName->get_parent());
+                              if (variableDeclaration != NULL)
+                                 {
+#if 0
+                                   printf ("Found previous_variableDeclaration->get_declarationModifier().get_storageModifier().isStatic() = %s \n",
+                                        previous_variableDeclaration->get_declarationModifier().get_storageModifier().isStatic() ? "true" : "false");
+#endif
+                                   if (previous_variableDeclaration->get_declarationModifier().get_storageModifier().isStatic() == true)
+                                      {
+                                        supress_extern_keyword = true;
+                                      }
+                                 }
+                            }
+                       }
+                  }
+#endif
+
+               if (supress_extern_keyword == false)
+                  {
+                 // curprint( "extern /* Unparse_MOD_SAGE::printSpecifier2() */ ");
+                    curprint("extern ");
+                  }
+
              }
         }
 

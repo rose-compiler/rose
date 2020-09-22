@@ -2852,73 +2852,64 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                  // DQ (10/25/2012): Added new case.  I expect this might be important for test2012_78.c
                     case V_SgInitializedName:
-                          {
+                       {
 #if 0
-                            printf ("Processing case: V_SgInitializedName \n");
+                         printf ("Processing case: V_SgInitializedName \n");
 #endif
 // #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
 #if 0
-                            printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): Added new support for preprocessing info to be added after the SgInitializedName. \n");
+                         printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): Added new support for preprocessing info to be added after the SgInitializedName. \n");
 #endif
-                            ROSE_ASSERT (locatedNode != NULL);
-                            ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
+                         ROSE_ASSERT(locatedNode != NULL);
+                         ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
 
-                            SgInitializedName *initializedName = isSgInitializedName(n);
-                            ROSE_ASSERT(initializedName != NULL);
+                         SgInitializedName *initializedName = isSgInitializedName(n);
+                         ROSE_ASSERT(initializedName != NULL);
 #if 0
-                            printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): initializedName = %p name = %s \n",initializedName,initializedName->get_name().str());
+                         printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): initializedName = %p name = %s \n",initializedName,initializedName->get_name().str());
 #endif
 #if 0
-                            printf ("In case V_SgInitializedName: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+                         printf ("In case V_SgInitializedName: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
 #endif
-// <<<<<<< HEAD
-                         // DQ (6/9/2020): This appears to be NULL in some cases I am debugging currently.
-                            ROSE_ASSERT(previousLocNodePtr != NULL);
+                      // DQ (6/9/2020): This appears to be NULL in some cases I am debugging currently.
+                         ROSE_ASSERT(previousLocNodePtr != NULL);
 #if 0
-                            printf ("case V_SgInitializedName: Before calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): previousLocNodePtr = %p \n",previousLocNodePtr);
-                            if (previousLocNodePtr != NULL)
-                               {
-                                 printf (" --- previousLocNodePtr = %p = %s \n",previousLocNodePtr,previousLocNodePtr->class_name().c_str());
-                               }
+                         printf ("case V_SgInitializedName: Before calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): previousLocNodePtr = %p \n",previousLocNodePtr);
+                         if (previousLocNodePtr != NULL)
+                            {
+                              printf (" --- previousLocNodePtr = %p = %s \n",previousLocNodePtr,previousLocNodePtr->class_name().c_str());
+                            }
 #endif
-// =======
-                            // Liao 6/10/2020, Fortran subroutine will have a SgInitializedName generated in AST to represent the subroutine name.
-                            // It is compiler-generated and has no appearance in the original source code. 
-                            // We should not attach comments to it.
-                            if (SageInterface::is_Fortran_language ())
+                      // Liao 6/10/2020, Fortran subroutine will have a SgInitializedName generated in AST to represent the subroutine name.
+                      // It is compiler-generated and has no appearance in the original source code. 
+                      // We should not attach comments to it.
+                         if (SageInterface::is_Fortran_language ())
                             {
                               if (isSgProcedureHeaderStatement(initializedName->get_parent()))
-                              {
-                            //    cout<<"Found Fortran subroutine init name, skipping attaching comments to it..."<< initializedName <<endl;
-                              }
+                                 {
+                                // cout<<"Found Fortran subroutine init name, skipping attaching comments to it..."<< initializedName <<endl;
+                                 }
                             }
-                            else
+                           else
                             {
+                              bool reset_start_index = false;
+                              iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber 
+                                   ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index, currentListOfAttributes );
 
-// >>>>>>> origin/master
-                            bool reset_start_index = false;
-                            iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
-                              ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index, currentListOfAttributes );
-
-#if 1
-                         // DQ (6/24/2020): Set this only in the evaluateInheritedAttribute() function.
+                           // DQ (6/24/2020): Set this only in the evaluateInheritedAttribute() function.
 #if 0
-                         // DQ (5/1/2020): Removed the previousLocatedNodeMap.
-                            previousLocatedNodeMap[currentFileNameId] = initializedName;
-// <<<<<<< HEAD
+                           // DQ (5/1/2020): Removed the previousLocatedNodeMap.
+                              previousLocatedNodeMap[currentFileNameId] = initializedName;
 #else
-                            previousLocatedNode = initializedName;
-#endif
+                              previousLocatedNode = initializedName;
 #endif
 #if 0
-                            printf ("Processing case: END OF CASE V_SgInitializedName \n");
+                              printf ("Processing case: END OF CASE V_SgInitializedName \n");
 #endif
 
-// =======
                             }
-// >>>>>>> origin/master
-                            break;
-                          }
+                         break;
+                       }
 
                     case V_SgClassDefinition:
                           {
@@ -3117,6 +3108,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     case V_SgMemberFunctionDeclaration:
                     case V_SgTemplateInstantiationFunctionDecl:
                        {
+                         ROSE_ASSERT (locatedNode != NULL);
                          ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
 #if 0
@@ -3228,7 +3220,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                printOutComments(locatedNode);
              }
 #endif
-        } // end if (locatedNode) || (fileNode != NULL)
+        } // end if ((locatedNode != NULL) || (fileNode != NULL))
 
 #if 0
      printf ("Leaving AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): n = %p = %s \n",n,n->class_name().c_str());

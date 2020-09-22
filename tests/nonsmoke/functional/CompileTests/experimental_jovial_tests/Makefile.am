@@ -83,7 +83,11 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-91.jov                   \
  rose-issue-rc-94.jov                   \
  rose-issue-rc-96.jov                   \
- rose-issue-rc-122-lcopy.jov
+ rose-issue-rc-122-lcopy.jov            \
+ rose-issue-rc-134.jov                  \
+ rose-issue-rc-136.jov                  \
+ rose-issue-rc-138.jov                  \
+ rose-issue-rc-139.jov
 
 # status_enumval.jov                     \
 # 1_2_3_program-body_a.jov               \
@@ -147,7 +151,9 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-118.cpl                  \
  rose-issue-rc-119a.cpl                 \
  rose-issue-rc-120.cpl                  \
- rose-issue-rc-121.cpl
+ rose-issue-rc-121.cpl                  \
+ rose-issue-rc-128.cpl                  \
+ rose-issue-rc-129.cpl
 
 COMPOOL_DIRECTIVE_TESTCODES = \
  9_1_compool_directive.cpl              \
