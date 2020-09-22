@@ -5961,11 +5961,24 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
       if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
          ATermList tail = (ATermList) ATmake("<term>", t_amb);
          ATerm head = ATgetFirst(tail);
-         // chose first amb path, now traverse it
 
+         tail = ATgetNext(tail);
+         ATerm next = ATgetFirst(tail);
+
+         // try first amb path
          if (traverse_RelationalExpression(head, expr)) {
             // MATCHED RelationalExpression
-         } else return ATfalse;
+         }
+         // try second amb path
+         else if (ATmatch(next, "BitVariable(<term>)", &t_operand)) {
+            // I think this is the correct grammar construction, BitVariable(BitVariable(...))
+            if (traverse_BitPrimary(t_operand, expr)) {
+               // MATCHED BitVariable (masquerading as a BitPrimary)
+            }
+            else return ATfalse;
+         }
+         else return ATfalse;
+
       } else if (traverse_LogicalOperand(t_operand, expr)) {
          // MATCHED LogicalOperand
       } else return ATfalse;
@@ -6131,10 +6144,14 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
       setSourcePosition(cast_expr, term);
       expr = cast_expr;
    }
+   else if (ATmatch(term, "BitVariable(<term>)", &t_formula)) {
+      if (traverse_Variable(t_formula, expr)) {
+         // MATCHED BitVariable
+      } else return ATfalse;
+   }
    else return ATfalse;
 
-   // TODO: create else if for following (is this still the case)
-   // BitVariable            -> BitPrimary {cons("BitVariable")} (not currently working in tests)
+   // TODO: create else if for following (is this still the case, testing should inform)
    // NamedBitConstant       -> BitPrimary {cons("NamedBitConstant")} (rejected in grammar)
    // BitFunctionCall        -> BitPrimary (no cons)
 
@@ -6494,7 +6511,12 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
    ROSE_ASSERT(array_ref);
    setSourcePosition(array_ref, term);
 
-   var = array_ref;
+   if (var) {
+     cerr << "WARNING UNIMPLEMENTED: TableItem - has pointer dereference with subscripts size " << subscript.size() << std::endl;
+   }
+   else {
+     var = array_ref;
+   }
 
    return ATtrue;
 }
