@@ -17138,6 +17138,18 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
     return ((stmt->get_declarationModifier()).get_storageModifier()).setExtern();
   }
 
+  // Check if an SgInitializedName is "mutable' (has storage modifier set)
+  bool SageInterface::isMutable(SgInitializedName* name)
+  {
+    ROSE_ASSERT(name);
+    return name->get_storageModifier().isMutable();
+  }
+
+  // True if a parameter name is a Jovial output parameter
+  bool SageInterface::isJovialOutParam(SgInitializedName* name)
+  {
+    return isMutable(name);
+  }
 
   unsigned long long SageInterface::getIntegerConstantValue(SgValueExp* expr) {
     switch (expr->variantT()) {
@@ -20090,7 +20102,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
      std::vector <SgInitializedName*> initname_vec;
 
      SgSymbolTable* s_table = sourceBlock->get_symbol_table();
-//     cout<<"debug SageInterface::moveStatementsBetweenBlocks() number of stmts = "<< srcStmts.size() <<endl;
+
      for (SgStatementPtrList::iterator i = srcStmts.begin(); i != srcStmts.end(); i++)
         {
           // append statement to the target block
@@ -20112,14 +20124,16 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                       if (func->get_firstNondefiningDeclaration() == func)
                         func->set_scope(targetBlock);
                     }
+                    else if (SgJovialTableStatement* table = isSgJovialTableStatement(*i))
+                    {
+                      // CR 9/21/2020: Uncovered by issue RC-135 and scope moved in switch below
+                    }
                     else
                     {
-                      //(*i)->set_scope(targetBlock);
                       printf ("Warning: test failing (*i)->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks() \n");
                       cerr<<"  "<<(*i)->class_name()<<endl;
                     }
                   }
-               //ROSE_ASSERT((*i)->get_scope() == targetBlock);
              }
 
           SgDeclarationStatement* declaration = isSgDeclarationStatement(*i);
@@ -20182,8 +20196,36 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                        {
                          SgFunctionDeclaration * funcDecl = isSgFunctionDeclaration(declaration);
                          ROSE_ASSERT (funcDecl);
+                         break;
                        }
-                     break;
+                     case V_SgJovialTableStatement:
+                       {
+                      // CR 9/21/2020: Needed for issue RC-135
+                         SgJovialTableStatement* table = isSgJovialTableStatement(declaration);
+                         ROSE_ASSERT (table);
+
+                         SgDeclarationStatement* def_decl = table->get_definingDeclaration();
+                         SgDeclarationStatement* nondef_decl = table->get_firstNondefiningDeclaration();
+
+                         // CR 9/21/2020: To remove this issue make sure dot graph looks ok and Dereference
+                         // is unparsed correctly.
+                         std::cerr << "WARNING UNIMPLEMENTED: move JovialTableStatement between blocks \n";
+
+#if 0
+                         //ANYONE_MAY_PLEASE_DELETE_THIS
+                         std::cout << "--> targetBlock        " << targetBlock << "\n";
+                         std::cout << "-->        decl        " << table << ": scope" << table->get_scope() << "\n";
+                         std::cout << "--> nondef_decl parent " << nondef_decl->get_parent() << "\n";
+                         std::cout << "--> nondef_decl scope  " << nondef_decl->get_scope() << "\n";
+                         std::cout << "-->    def_decl scope  " <<    def_decl->get_scope() << "\n";
+#endif
+
+                         nondef_decl->set_parent(targetBlock);
+                         nondef_decl->set_scope(targetBlock);
+
+                         def_decl->set_scope(targetBlock);
+                         break;
+                       }
                      case V_SgAttributeSpecificationStatement:
                      case V_SgEmptyDeclaration:
                      case V_SgFortranIncludeLine:
@@ -22688,7 +22730,6 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
       }
   }
 
-#if 1
   //make sure the symbol is moved also since prependStatement() (in fact fixVariableDeclaration()) does not handle this detail.
   SgVariableSymbol* sym = SageInterface::getFirstVarSym(decl);
   ROSE_ASSERT(sym != NULL);
@@ -22706,7 +22747,6 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
   // This is difficult since C++ variables have namespaces
   // Details are in SageInterface::fixVariableDeclaration()
   ROSE_ASSERT (target_scope->symbol_exists(sym));
-#endif
 }
 
 class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterface::const_int_expr_t> {
@@ -23662,6 +23702,8 @@ void SageInterface::printAST(SgNode* node)
 
 void printAST2TextFile (SgNode* node, std::string filename)
 {
+  // CR (9/21/2020): This leads to infinite recursion (clang warning message) and should be removed from API)
+  ROSE_ASSERT(false);
   printAST2TextFile (node, filename.c_str());
 }
 

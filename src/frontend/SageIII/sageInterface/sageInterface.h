@@ -561,6 +561,12 @@ ROSE_DLL_API bool isExtern(SgDeclarationStatement* stmt);
 //! Set a declaration as extern
 ROSE_DLL_API void setExtern(SgDeclarationStatement* stmt);
 
+//! True if an SgInitializedName is "mutable' (has storage modifier set)
+bool ROSE_DLL_API isMutable(SgInitializedName* name);
+
+//! True if a parameter name is a Jovial output parameter
+bool ROSE_DLL_API isJovialOutParam(SgInitializedName* name);
+
 //! Interface for creating a statement whose computation writes its answer into
 //! a given variable.
 class StatementGenerator {
