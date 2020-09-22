@@ -796,7 +796,40 @@ TESTCODES_REQUIRED_TO_PASS += \
    test2019_523.C \
    test2020_51a.C \
    test2020_51b.C \
-   test2020_72.C 
+   test2020_72.C \
+     test2016_24.C \
+     test2016_33.C \
+     test2016_34.C \
+     test2016_90.C \
+     test2019_31.C \
+     test2019_33.C \
+     test2019_94.C \
+     test2012_14.C \
+     test2012_26.C \
+     test2019_04.C \
+     test2019_95.C \
+     test2019_121.C \
+     test2019_110.C \
+     test2019_111.C \
+     test2019_112.C \
+     test2019_218.C \
+     test2019_219.C \
+     test2019_230.C \
+     test2019_231.C \
+     test2019_355.C \
+     test2019_365.C \
+     test2019_367.C \
+     test2019_482.C \
+     rose-1774.C 
+
+# DQ (9/22/2020): This file fails because the #include <ext/aligned_buffer.h> can not be 
+# resolved by the Intel v17.0.4 compiler as it is installed on Jenkins. The issues seem 
+# to be that the Jenkins installation of Intel v17 is using the GNU headers and the version
+# of GNU headers is 4.8.5 (which is too old).  Installing GNU 6.1 and maybe a later version 
+# of boost than 1.57 (I'm using Boost 1.60) should fix the problem.  Nathan is fixing this
+# issue and so this file can be added back in later after Jenkins's use of GNU by Intel v17 
+# is updated.
+# test2018_100.C
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_24.C \
@@ -967,9 +1000,6 @@ if OS_MACOSX
 else
   TESTCODES_REQUIRED_TO_PASS += \
      test2016_23.C \
-     test2016_24.C \
-     test2016_33.C \
-     test2016_34.C \
      test2016_35.C \
      test2016_36.C 
 
@@ -988,14 +1018,9 @@ else
          test2012_25.C \
          test2016_16.C \
          test2016_20.C \
-         test2016_90.C \
-         test2018_100.C \
-         test2019_31.C \
-         test2019_33.C \
          test2019_39.C \
          test2019_41.C \
          test2019_42.C \
-         test2019_94.C \
          test2019_463.C \
    test2020_69.C \
    test2020_70.C 
@@ -1004,35 +1029,18 @@ endif
 
       TESTCODES_REQUIRED_TO_PASS += \
         rose-1380.C \
-        rose-1774.C \
-        test2012_14.C \
-        test2012_26.C \
    test2014_88.C \
    test2018_54.C \
+        test2018_93.C \
+        test2018_96.C \
         test2018_105.C \
         test2018_117.C \
         test2018_118.C \
         test2018_127.C \
         test2018_136.C \
-        test2018_93.C \
-        test2018_96.C \
-        test2019_04.C \
-   test2019_121.C \
-        test2019_110.C \
-        test2019_111.C \
-        test2019_112.C \
-        test2019_218.C \
-        test2019_219.C \
-        test2019_230.C \
-        test2019_231.C \
         test2019_344.C \
-        test2019_355.C \
-   test2019_365.C \
-        test2019_367.C \
    test2019_474.C \
-   test2019_482.C \
    test2019_488.C \
-        test2019_95.C \
    test2020_14.C \
    test2020_19.C \
    test2020_20.C \
@@ -1041,17 +1049,40 @@ endif
 endif
 endif
 
-if USING_INTEL_COMPILER
-  TESTCODE_CURRENTLY_FAILING += \
-   test2018_100.C 
-else
-if ROSE_USING_GCC_VERSION_LATER_4_9
+# DQ (9/21/2020) Notes:
+# test2014_88.C  Passing for GNU 6.1 and Intel v17, but fails only in CLANG (v10) and appears to be missing a builtin function or the builtin function is not correctly declared.
+# test2018_54.C  Passing for GNU 6.1 and Intel v17, but fails only in CLANG (v10)
+# test2018_105.C Passing for GNU 6.1 and Clang 10, but fails only in Intel v17
+# test2018_117.C Passing for GNU 6.1 and Clang 10, but fails only in Intel v17
+# test2018_118.C Passing for GNU 6.1 and Clang 10, but fails only in Intel v17
+# test2018_127.C Passing for GNU 6.1 and Intel v17, but fails only in CLANG (v10): error: reference to scoped enumeration must use 'enum' not 'enum class'
+# test2018_136.C Passing for GNU 6.1, but fails for Clang 10 and Intel v17: missing builtin functions.
+# test2018_93.C  Passing for GNU 6.1 and Intel v17, but fails only in CLANG (v10): error: reference to scoped enumeration must use 'enum' not 'enum class'
+# test2018_96.C  Passing for GNU 6.1 and Intel v17, but fails only in CLANG (v10): error: reference to scoped enumeration must use 'enum' not 'enum class'
+# test2019_344.C Passing for GNU 6.1 and Intel v17, but fails only in CLANG (v10): error: reference to scoped enumeration must use 'enum' not 'enum class'
+# test2019_474.C Passing for GNU 6.1 and Intel v17, but fails only in CLANG (v10): error: reference to scoped enumeration must use 'enum' not 'enum class'
+# test2019_488.C Passing for GNU 6.1 and Intel v17, but fails only in CLANG (v10): error: expected class name
+# test2020_14.C  Passing for GNU 6.1 and Intel v17, but fails only in CLANG (v10): error: reference to scoped enumeration must use 'enum' not 'enum class'
+# test2020_19.C  Passing for GNU 6.1 and Intel v17, but fails only in CLANG (v10): error: reference to scoped enumeration must use 'enum' not 'enum class'
+# test2020_20.C  Passing for GNU 6.1 and Intel v17, but fails only in CLANG (v10): error: reference to scoped enumeration must use 'enum' not 'enum class'
+# test2020_21.C  Passing for GNU 6.1 and Intel v17, but fails only in CLANG (v10): error: reference to scoped enumeration must use 'enum' not 'enum class'
+
+
+
+
+
+# DQ (9/21/2020): This code passes for GNU v6.1, Intel v17, and Clang v10.0 (so we can eliminate this compexity).
+# if USING_INTEL_COMPILER
+#  TESTCODE_CURRENTLY_FAILING += \
+#   test2018_100.C 
+# else
+# if ROSE_USING_GCC_VERSION_LATER_4_9
 #  TESTCODES_REQUIRED_TO_PASS += 
-else
-  TESTCODE_CURRENTLY_FAILING += \
-   test2018_100.C 
-endif
-endif
+# else
+#   TESTCODE_CURRENTLY_FAILING += \
+#   test2018_100.C 
+# endif
+# endif
 
 if OS_MACOSX
 #  TESTCODE_CURRENTLY_FAILING += \
