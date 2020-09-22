@@ -127,6 +127,42 @@ PltEntryMatcher::matchIndirectJump(const Partitioner &partitioner, rose_addr_t v
 }
 
 SgAsmInstruction*
+PltEntryMatcher::matchIndirectJumpEbx(const Partitioner &partitioner, rose_addr_t va,
+                                      rose_addr_t &indirectOffset /*out*/, size_t &indirectNBytes /*out*/) {
+    indirectOffset = 0;
+    indirectNBytes = 0;
+
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.discoverInstruction(va));
+    if (!insn || !x86InstructionIsUnconditionalBranch(insn) || insn->nOperands() != 1)
+        return NULL;
+
+    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn->operand(0));
+    SgAsmBinaryAdd *add = mre ? isSgAsmBinaryAdd(mre->get_address()) : NULL;
+    if (!add)
+        return NULL;
+
+    SgAsmDirectRegisterExpression *dre = NULL;
+    SgAsmIntegerValueExpression *ival = NULL;
+    if (isSgAsmDirectRegisterExpression(add->get_lhs()) && isSgAsmIntegerValueExpression(add->get_rhs())) {
+        dre = isSgAsmDirectRegisterExpression(add->get_lhs());
+        ival = isSgAsmIntegerValueExpression(add->get_rhs());
+    } else if (isSgAsmIntegerValueExpression(add->get_lhs()) && isSgAsmDirectRegisterExpression(add->get_rhs())) {
+        dre = isSgAsmDirectRegisterExpression(add->get_rhs());
+        ival = isSgAsmIntegerValueExpression(add->get_lhs());
+    }
+    if (!ival || !dre)
+        return NULL;
+
+    const RegisterDescriptor EBX = partitioner.instructionProvider().registerDictionary()->find("ebx");
+    if (dre->get_descriptor() != EBX)
+        return NULL;
+
+    indirectOffset = ival->get_absoluteValue();
+    indirectNBytes = mre->get_type()->get_nBytes();
+    return insn;
+}
+
+SgAsmInstruction*
 PltEntryMatcher::matchA64Adrp(const Partitioner &partitioner, rose_addr_t va, rose_addr_t &value /*out*/) {
     value = 0;
 #ifdef ROSE_ENABLE_ASM_A64
@@ -219,10 +255,10 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
         size_t indirectSize=0;
 
         if (!found) {
-            // i386 entries that look like this, and are each 16 bytes:
-            //    jmp dword [CONST]; where CONST is a GOT entry address
-            //    push N;  where N is a small integer, unique for each dynamically linked function
-            //    jmp X;   where X is the address of the first PLT entry
+            // i386 entries that look like this:
+            //    jmp dword [CONST]     ; where CONST is a GOT entry address
+            //    push N                ; where N is a small integer, unique for each dynamically linked function
+            //    jmp X                 ; where X is the address of the first PLT entry
             SgAsmInstruction *ijmp = matchIndirectJump(partitioner, anchor, indirectVa /*out*/, indirectSize /*out*/);
             SgAsmInstruction *push = ijmp ? matchPush(partitioner, ijmp->get_address() + ijmp->get_size(), functionNumber_) : NULL;
             SgAsmInstruction *djmp = push ? matchDirectJump(partitioner, push->get_address() + push->get_size()) : NULL;
@@ -235,7 +271,24 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
         }
 
         if (!found) {
-            // Amd64 entries that look like this, and are each 16 bytes:
+            // i386 that look like this:
+            //    jmp dword [ ebx + CONST ]; where CONST is the offset into the GOT
+            //    push N                ; where N is a small integer, unique for each dynamically linked function
+            //    jmp X                 ; where X is the address of the first PLT entry
+            rose_addr_t offset = 0;
+            SgAsmInstruction *ijmp = matchIndirectJumpEbx(partitioner, anchor, offset /*out*/, indirectSize /*out*/);
+            SgAsmInstruction *push = ijmp ? matchPush(partitioner, ijmp->get_address() + ijmp->get_size(), functionNumber_) : NULL;
+            SgAsmInstruction *djmp = push ? matchDirectJump(partitioner, push->get_address() + push->get_size()) : NULL;
+            if (djmp) {
+                gotEntryNBytes_ = indirectSize;
+                gotEntryVa_ = gotVa_ + offset;
+                nBytesMatched_ = djmp->get_address() + djmp->get_size() - anchor;
+                found = true;
+            }
+        }
+
+        if (!found) {
+            // Amd64 entries that look like this:
             //    nop;     4 bytes
             //    jmp qword [rip + CONST]; address of a GOT entry
             //    nop;     5 bytes
@@ -252,7 +305,7 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
         }
 
         if (!found) {
-            // Amd64 entries that look like this, and are each 16 bytes:
+            // Amd64 entries that look like this:
             //    nop      ; 4 bytes
             //    push N   ; where N is a small integer, unique for each dynamically linked function
             //    jmp X    ; where X is the address of the first PLT entry
@@ -326,34 +379,8 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
     return nBytesMatched_ > 0;
 }
 
-SgAsmGenericSection*
-findPltGot(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader) {
-    if (!elfHeader)
-        return NULL;
-
-    // Get the section pointed to by the DT_PLTGOT entry of the .dynamic section.
-    if (SgAsmElfDynamicSection *dynamic = isSgAsmElfDynamicSection(elfHeader->get_section_by_name(".dynamic"))) {
-        if (SgAsmElfDynamicEntryList *dentriesNode = dynamic->get_entries()) {
-            BOOST_FOREACH (SgAsmElfDynamicEntry *dentry, dentriesNode->get_entries()) {
-                if (dentry->get_d_tag() == SgAsmElfDynamicEntry::DT_PLTGOT) {
-                    rose_rva_t rva = dentry->get_d_val();
-                    return rva.get_section();
-                }
-            }
-        }
-    }
-
-    // If that failed, just try some common names.
-    if (SgAsmGenericSection *pltgot = elfHeader->get_section_by_name(".got.plt"))
-        return pltgot;
-    if (SgAsmGenericSection *pltgot = elfHeader->get_section_by_name(".plt.got"))
-        return pltgot;
-
-    return NULL;
-}
-
 PltInfo
-findPlt(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader) {
+findPlt(const Partitioner &partitioner, SgAsmGenericSection *got, SgAsmElfFileHeader *elfHeader) {
     if (elfHeader) {
         // The procedure lookup table can be in a variety of places.
         //   1. Sometimes the table is in .plt.sec, starting at the beginning of that section.
@@ -385,7 +412,7 @@ findPlt(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader) {
                                                                                section->get_mapped_size())
                                          <<"\n";
                 for (size_t offset = 0; offset < section->get_size(); ++offset) {
-                    PltEntryMatcher matcher(elfHeader->get_base_va());
+                    PltEntryMatcher matcher(got ? got->get_mapped_actual_va() : 0);
                     if (matcher.match(partitioner, section->get_mapped_actual_va() + offset)) {
                         SAWYER_MESG(mlog[DEBUG]) <<"  matched PLT " <<matcher.nBytesMatched() <<" byte entry"
                                                  <<" at offset " <<offset <<"\n";
@@ -417,11 +444,11 @@ findPlt(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader) {
 }
 
 size_t
-findPltFunctions(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader, std::vector<Function::Ptr> &functions) {
+findPltFunctions(Partitioner &partitioner, SgAsmElfFileHeader *elfHeader, std::vector<Function::Ptr> &functions) {
     // Find important sections
-    PltInfo plt = findPlt(partitioner, elfHeader);
-    SgAsmGenericSection *gotplt = findPltGot(partitioner, elfHeader);
-    if (!plt.section || !plt.section->is_mapped() || !gotplt || !gotplt->is_mapped() || 0 == plt.entrySize)
+    SgAsmGenericSection *got = partitioner.elfGot(elfHeader);
+    PltInfo plt = findPlt(partitioner, got, elfHeader);
+    if (!plt.section || !plt.section->is_mapped() || !got || !got->is_mapped() || 0 == plt.entrySize)
         return 0;
 
     // Find all relocation sections
@@ -440,23 +467,23 @@ findPltFunctions(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader, 
     for (rose_addr_t pltOffset = plt.firstOffset;
          pltOffset + plt.entrySize <= plt.section->get_mapped_size();
          pltOffset += plt.entrySize) {
-        PltEntryMatcher matcher(elfHeader->get_base_va());
+        PltEntryMatcher matcher(got->get_mapped_actual_va());
         rose_addr_t pltEntryVa = plt.section->get_mapped_actual_va() + pltOffset;
         if (!matcher.match(partitioner, pltEntryVa))
             continue;
-        rose_addr_t gotpltVa = matcher.memAddress();    // address that was read by indirect branch
-        if (gotpltVa <  elfHeader->get_base_va() + gotplt->get_mapped_preferred_rva() ||
-            gotpltVa >= elfHeader->get_base_va() + gotplt->get_mapped_preferred_rva() + gotplt->get_mapped_size()) {
+        rose_addr_t gotVa = matcher.memAddress();    // address that was read by indirect branch
+        if (gotVa <  elfHeader->get_base_va() + got->get_mapped_preferred_rva() ||
+            gotVa >= elfHeader->get_base_va() + got->get_mapped_preferred_rva() + got->get_mapped_size()) {
             continue;                                   // jump is not indirect through the .got.plt section
         }
 
-        // Find the relocation entry whose offset is the gotpltVa and use that entry's symbol for the function name
+        // Find the relocation entry whose offset is the gotVa and use that entry's symbol for the function name
         std::string name;
         BOOST_FOREACH (SgAsmElfRelocSection *relocSection, relocSections) {
             SgAsmElfSymbolSection *symbolSection = isSgAsmElfSymbolSection(relocSection->get_linked_section());
             if (SgAsmElfSymbolList *symbols = symbolSection ? symbolSection->get_symbols() : NULL) {
                 BOOST_FOREACH (SgAsmElfRelocEntry *rel, relocSection->get_entries()->get_entries()) {
-                    if (rel->get_r_offset()==gotpltVa) {
+                    if (rel->get_r_offset()==gotVa) {
                         unsigned long symbolIdx = rel->get_sym();
                         if (symbolIdx < symbols->get_symbols().size()) {
                             SgAsmElfSymbol *symbol = symbols->get_symbols()[symbolIdx];
@@ -494,7 +521,7 @@ isImport(const Partitioner &partitioner, const Function::Ptr &function) {
         return false;
     if (0 == (function->reasons() & SgAsmFunction::FUNC_IMPORT))
         return false;
-    PltEntryMatcher matcher(0);
+    PltEntryMatcher matcher(partitioner.elfGotVa().orElse(0));
     return matcher.match(partitioner, function->address());
 }
 
@@ -505,7 +532,7 @@ isLinkedImport(const Partitioner &partitioner, const Function::Ptr &function) {
         return false;
     if (0 == (function->reasons() & SgAsmFunction::FUNC_IMPORT))
         return false;
-    PltEntryMatcher matcher(0);
+    PltEntryMatcher matcher(partitioner.elfGotVa().orElse(0));
     if (!matcher.match(partitioner, function->address()))
         return false;
     if (matcher.gotEntryVa() == 0)
@@ -526,7 +553,7 @@ isUnlinkedImport(const Partitioner &partitioner, const Function::Ptr &function) 
         return false;
     if (0 == (function->reasons() & SgAsmFunction::FUNC_IMPORT))
         return false;
-    PltEntryMatcher matcher(0);
+    PltEntryMatcher matcher(partitioner.elfGotVa().orElse(0));
     if (!matcher.match(partitioner, function->address()))
         return false;
     if (matcher.gotEntryVa() == 0)
@@ -712,14 +739,14 @@ extractStaticArchive(const boost::filesystem::path &directory, const boost::file
 }
 
 std::vector<Function::Ptr>
-findPltFunctions(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader) {
+findPltFunctions(Partitioner &partitioner, SgAsmElfFileHeader *elfHeader) {
     std::vector<Function::Ptr> functions;
     findPltFunctions(partitioner, elfHeader, functions);
     return functions;
 }
 
 std::vector<Function::Ptr>
-findPltFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
+findPltFunctions(Partitioner &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> functions;
     if (interp!=NULL) {
         BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
