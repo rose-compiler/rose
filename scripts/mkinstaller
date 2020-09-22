@@ -22,21 +22,21 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
-$mkinstaller_ver_build = "3";
-$mkinstaller_ver_patch = "3";
-$mkinstaller_ver_name  = "2.6.3.3";
-$mkinstaller_ver_time  = "17Jul2020,20:42:41z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.3.3 - 17Jul2020,20:42:41z";
+$mkinstaller_ver_build = "4";
+$mkinstaller_ver_patch = "";
+$mkinstaller_ver_name  = "2.6.4";
+$mkinstaller_ver_time  = "20Sep2020,22:41:34z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.4 - 20Sep2020,22:41:34z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
 $perl_library_ver_major = "2";
 $perl_library_ver_minor = "0";
 $perl_library_ver_build = "0";
-$perl_library_ver_patch = "1";
-$perl_library_ver_name  = "2.0.0.1";
-$perl_library_ver_time  = " 5Jul2020,04:28:10z";
-$perl_library_ver_id    = "@(#)perl_library 2.0.0.1 -  5Jul2020,04:28:10z";
+$perl_library_ver_patch = "3";
+$perl_library_ver_name  = "2.0.0.3";
+$perl_library_ver_time  = "23Jul2020,00:28:00z";
+$perl_library_ver_id    = "@(#)perl_library 2.0.0.3 - 23Jul2020,00:28:00z";
 
 #{------------------------------------------------------------------------------
 #
