@@ -199,7 +199,8 @@ operator () ( LoopTreeNode *n, SelectLoopTreeNode stmts, Location config)
             std::cerr << "distributing loop before " << n->toString() << "\n";
         n1 = Distribute( n, stmts, -1, ob, &loc);
         if (n1 != n && n1 != 0) 
-           n1->Link( n, LoopTreeNode::AsPrevSibling); break;
+           n1->Link( n, LoopTreeNode::AsPrevSibling); 
+        break;
         }
      case AFTER:
         {
@@ -207,7 +208,8 @@ operator () ( LoopTreeNode *n, SelectLoopTreeNode stmts, Location config)
             std::cerr << "distributing loop after " << n->toString() << "\n";
         n1 = Distribute( n, stmts, 1, ob, &loc);
         if (n1 != n && n1 != 0) 
-            n1->Link( n, LoopTreeNode::AsNextSibling); break;
+            n1->Link( n, LoopTreeNode::AsNextSibling); 
+        break;
         }
      default: assert(0);
      }
