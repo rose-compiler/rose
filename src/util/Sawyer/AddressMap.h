@@ -26,6 +26,7 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/nvp.hpp>
+#include <type_traits>
 
 namespace Sawyer {
 namespace Container {
@@ -98,7 +99,9 @@ public:
         : map_(map), never_(false), maxSize_(size_t(-1)), singleSegment_(false), requiredAccess_(0), prohibitedAccess_(0) {}
 
     // Implicitly construct constraints for a const AddressMap from a non-const address map.
-    operator AddressMapConstraints<const AddressMap>() const {
+    // The dummy U parameter is to postpone type deduction to the point where this function gets instantiated.
+    template<typename U = AddressMap, typename = typename std::enable_if<!std::is_const<U>::value, int>::type>
+    operator AddressMapConstraints<const U>() const {
         AddressMapConstraints<const AddressMap> cc(map_);
         if (neverMatches())
             cc = cc.none();
