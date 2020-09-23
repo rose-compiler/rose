@@ -566,8 +566,8 @@ Outliner::DeferedTransformation::DeferedTransformation (const DeferedTransformat
    : class_definition(X.class_definition),
      target_class_member(X.target_class_member),
      new_function_prototype(X.new_function_prototype),
-     targetFriends(X.targetFriends),
-     targetClasses(X.targetClasses)
+     targetClasses(X.targetClasses),
+     targetFriends(X.targetFriends)
    {
    }
 

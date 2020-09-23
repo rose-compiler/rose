@@ -1912,10 +1912,10 @@ context-free syntax
 
 %%'BYTE'
 %%  '(' CharacterVariable ','
-%%          Fbit ',' Nbit ')' -> ByteFunctionVariable  {cons("ByteFunctionVariable")}
+%%        Fbyte ',' Nbyte ')' -> ByteFunctionVariable  {cons("ByteFunctionVariable")}
 
   'BYTE' '(' Variable ','
-            Fbit ',' Nbit ')' -> ByteFunctionVariable  {cons("ByteFunctionVariable")}
+          Fbyte ',' Nbyte ')' -> ByteFunctionVariable  {cons("ByteFunctionVariable")}
 
   RepConversion
     '(' NamedVariable ')'     -> RepFunctionVariable   {cons("RepFunctionVariable")}
