@@ -7,6 +7,7 @@
 #include "CodeThornLib.h"
 #include "CtxSolver0.h"
 #include "CtxPrioritySolver.h"
+// #include "HTMPrioritySolver.h"
 #include "PASolver1.h"
 #include "SgNodeHelper.h"
 #include "DFAnalysisBase.h"
@@ -69,6 +70,7 @@ struct CtxUnfoldTransfer : DFTransferFunctions
 {
   void transfer(Edge e, Lattice& element) ROSE_OVERRIDE
   {
+#if 0
     Labeler& labeler = SG_DEREF(getLabeler());
     Label    src     = e.source();
     Label    tgt     = e.target();
@@ -79,12 +81,11 @@ struct CtxUnfoldTransfer : DFTransferFunctions
     else if (labeler.isFunctionCallLabel(src))
       mark = "call";
     
-    logWarn() << "Reaching edge"
+    logTrace() << "Reaching edge"
               << "\n  from: " << labeler.getNode(src)->unparseToString() << "/" << src << "* " << mark 
               << "\n    to: " << labeler.getNode(tgt)->unparseToString() << "/" << tgt << "*"
               << std::endl;
-
-    
+#endif
     dynamic_cast<CtxReachabilityLattice&>(element).setReachable();
   }
   
@@ -210,10 +211,10 @@ void expandEdges( CtxLabeler<ContextString>& ctxlabeler, Flow& ctxflow, Edge e,
   ROSE_ASSERT(eq(ctxlabeler.baseLabeler().getProperty(e.source()), ctxlabeler.getProperty(ctxsrc)));
   ROSE_ASSERT(eq(ctxlabeler.baseLabeler().getProperty(e.target()), ctxlabeler.getProperty(ctxtgt)));
   
-  logWarn() << "Insert CF edge"
-            << "\n  from: " << ctxlabeler.getNode(ctxsrc)->unparseToString() << "/" << ctxsrc << "(" << e.source() << ")"
-            << "\n    to: " << ctxlabeler.getNode(ctxtgt)->unparseToString() << "/" << ctxtgt << "(" << e.target() << ")"
-            << std::endl;
+  //~ logWarn() << "Insert CF edge"
+             //~ << "\n  from: " << ctxlabeler.getNode(ctxsrc)->unparseToString() << "/" << ctxsrc << "(" << e.source() << ")"
+             //~ << "\n    to: " << ctxlabeler.getNode(ctxtgt)->unparseToString() << "/" << ctxtgt << "(" << e.target() << ")"
+             //~ << std::endl;
   
   ctxflow.insert(Edge(ctxsrc, e.types(), ctxtgt));
 }
@@ -234,10 +235,10 @@ void expandCallEdges( CtxLabeler<ContextString>& ctxlabeler, Flow& ctxflow, Edge
   ROSE_ASSERT(eq(ctxlabeler.baseLabeler().getProperty(e.source()), ctxlabeler.getProperty(ctxsrc)));
   ROSE_ASSERT(eq(ctxlabeler.baseLabeler().getProperty(e.target()), ctxlabeler.getProperty(ctxtgt)));
 
-  logWarn() << "Insert CF call edge"
-            << "\n  from: " << ctxlabeler.getNode(ctxsrc)->unparseToString() << "/" << ctxsrc << "(" << e.source() << " @" << mapping.first.second << ")"
-            << "\n    to: " << ctxlabeler.getNode(ctxtgt)->unparseToString() << "/" << ctxtgt << "(" << e.target() << " @" << ctx << ")"
-            << std::endl;
+  //~ logWarn() << "Insert CF call edge"
+             //~ << "\n  from: " << ctxlabeler.getNode(ctxsrc)->unparseToString() << "/" << ctxsrc << "(" << e.source() << " @" << mapping.first.second << ")"
+             //~ << "\n    to: " << ctxlabeler.getNode(ctxtgt)->unparseToString() << "/" << ctxtgt << "(" << e.target() << " @" << ctx << ")"
+             //~ << std::endl;
   
   ctxflow.insert(Edge(ctxsrc, e.types(), ctxtgt));
 }
@@ -298,7 +299,12 @@ CtxUnfoldAnalysis::unfold()
     const CtxLattice<context_t>& ctxlat = getCtxLattice(lbl);
     
     if (!ctxlat.isBot())
+    {
+      //~ logWarn() << "!bot: " << lbl << " " << ctxlat.size() << std::endl;
       ctxlabeler.expandLabels(lbl, ctxlat);
+  }
+    //~ else
+      //~ logWarn() << " bot: " << lbl << " " << ctxlat.size() << std::endl;
   }
   
   logInfo() << "Generated " << ctxlabeler.numberOfLabels() 
@@ -415,22 +421,7 @@ foldResults( std::vector<Lattice*> results,
   
     ROSE_ASSERT(foldedLattice == nullptr);
     
-    //~ RDLattice&       testUnfolded = dynamic_cast<RDLattice&>(SG_DEREF(unfoldedLattice));
-    //~ const size_t     szUnfolded   =  testUnfolded.size();
-    //~ const size_t     botUnfolded  =  testUnfolded.isBot();
-    
     foldedLattice = labelTranslation.renameLatticeLabels(std::unique_ptr<Lattice>{ unfoldedLattice }, dict);
-    
-    //~ RDLattice& testFolded   = dynamic_cast<RDLattice&>(SG_DEREF(foldedLattice));
-    
-    //~ if (numFolded == 903)
-    //~ {    
-      //~ logError() << "*** folding at " << numFolded << " / " << mapping.first.second 
-                 //~ << "\n  sizes = " << szUnfolded << " <> " << testFolded.size()
-                 //~ << "\n  bots = " << botUnfolded << " <> " << testFolded.isBot()
-                 //~ << "\n" << testFolded.toString()
-                 //~ << std::endl;
-    //~ }
   }
   
   return res;
@@ -483,6 +474,19 @@ namespace // anonymous
             
       void initializeSolver() ROSE_OVERRIDE
       {
+#if 1
+        typedef SeqPrioritySolver SolverType;
+        //~ typedef HtmPrioritySolver SolverType;
+
+        SolverType* theSolver = new SolverType( _workList,
+                                                _analyzerDataPreInfo,
+                                                _analyzerDataPostInfo,
+                                                SG_DEREF(getInitialElementFactory()),
+                                                SG_DEREF(getFlow()),
+                                                SG_DEREF(_transferFunctions),
+                                                SG_DEREF(getLabeler())
+                                              );
+#else
         PASolver1* theSolver = new PASolver1( _workList,
                                               _analyzerDataPreInfo,
                                               _analyzerDataPostInfo,
@@ -492,6 +496,7 @@ namespace // anonymous
                                             );
         theSolver->setTrace(false);
         theSolver->setLabeler(SG_DEREF(getLabeler()));
+#endif
         
         _solver = theSolver;
       }
@@ -592,8 +597,6 @@ template <class ContextString>
 void 
 CtxLabeler<ContextString>::expandLabels(Label orig, const CtxLattice<ContextString>& lat)
 {
-  //~ logError() << "expand" << orig << " " << lat.size() << std::endl;
-  
   for (const std::pair<ContextString, Lattice*>& el : lat)
     copyProperty(orig, el.first);
 }
@@ -607,6 +610,9 @@ CtxLabeler<ContextString>::copyProperty(Label orig, const ContextString& ctx)
   
   RelabelKey   key{orig, ctx};
   const size_t num = startlbl + allLabels.size();
+
+  //~ logWarn() << "cp " << orig << " " << ctx << " -> " << num
+            //~ << std::endl;
   
   registerLabel(original.getProperty(orig));
   auto         res = remapping.insert(RelabelValue(key, Label(num)));
@@ -643,8 +649,22 @@ CtxLabeler<ContextString>::getFunctionCallReturnLabelFromCallLabel(Label call)
   
   Iterator callIter = allLabels.at(call.getId() - startlbl);      
   Label    origCall = callIter->first.first;
+  ContextString retctx   = callIter->first.second;
+
+  retctx.callInvoke(original, origCall);
+
   Label    origRetn = original.getFunctionCallReturnLabelFromCallLabel(origCall);
-  Iterator retnIter = remapping.find(std::make_pair(origRetn, callIter->first.second));
+  Iterator retnIter = remapping.find(std::make_pair(origRetn, retctx));
+
+  // \todo if a function call does not return the remapping does not contain an entry
+
+  //~ if (retnIter == remapping.end())
+  //~ {
+    //~ logError() << origCall << " > " << origRetn
+               //~ << " # " << call
+               //~ << callIter->first.second
+               //~ << std::endl;
+  //~ }
   
   ROSE_ASSERT(retnIter != remapping.end());
   ROSE_ASSERT(retnIter->second >= startlbl);
@@ -681,7 +701,7 @@ CtxLabeler<ContextString>::returnLabelRange(Label origRetnLabel, const ContextSt
   
   if (!retnctx.isValidReturn(original, origRetnLabel))
   {
-    //~ logError() << "Invalid Return" << std::endl;
+    //~ logTrace() << "Invalid Return" << std::endl;
     return ResultType(remapping.end(), remapping.end());
   }
   
@@ -703,8 +723,8 @@ CtxLabeler<ContextString>::returnLabelRange(Label origRetnLabel, const ContextSt
   //~ else
     //~ logWarn() << "  lb = zz" << std::endl;
 
-  //~ ConstIterator ub = std::upper_bound(lb, zz, retctx, IsCalleeCaller{origCallLabel});
   ConstIterator ub = std::find_if(lb, zz, IsNotCalleeCaller{origCallLabel, retnctx});
+  //~ alternatively: ConstIterator ub = std::upper_bound(lb, zz, retctx, IsCalleeCaller{origCallLabel});
     
   //~ if (ub != zz)
     //~ logWarn() << "  ub = " << ub->first.first << " ~ " << ub->first.second << std::endl;
