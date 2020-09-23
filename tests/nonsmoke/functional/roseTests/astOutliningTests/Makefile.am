@@ -395,7 +395,7 @@ AUTO_TUNING_PATH = $(top_builddir)/projects/autoTuning
 $(AUTO_TUNING_PATH)/libautoTuning.a:
 	make -C $(AUTO_TUNING_PATH)
 
-MY_FINAL_LINK = $(AUTO_TUNING_PATH)/libautoTuning.a -Wl,--export-dynamic -g -ldl -lm
+MY_FINAL_LINK = $(AUTO_TUNING_PATH)/libautoTuning.a -Wl,--export-dynamic -g -ldl -lm  $(LDFLAGS)
 PASSING_CXX_TEST_Executables = ${CXX4_TESTS_OBJECT_REQUIRED_TO_RUN:.o=.out}
 $(PASSING_CXX_TEST_Executables): %.out: %.o $(AUTO_TUNING_PATH)/libautoTuning.a rose_%_lib.so
 	$(LIBTOOL) --mode=link $(CXX) $< $(MY_FINAL_LINK) -o $@
