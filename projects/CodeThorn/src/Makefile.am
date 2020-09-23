@@ -147,8 +147,8 @@ CODETHORN_HEADER_FILES=\
   Options.h \
   CodeThornOptions.h \
   LTLOptions.h \
-  ltlthorn-lib/ParProOptions.h \
-  ltlthorn-lib/LTLRersMapping.h \
+  ParProOptions.h \
+  LTLRersMapping.h \
   PASolver1.h \
   PointerAnalysisInterface.h \
   PragmaHandler.h \
@@ -256,8 +256,8 @@ CODETHORN_SOURCE_FILES=\
   LoopInfo.C \
   CodeThornOptions.C \
   LTLOptions.C \
-  ltlthorn-lib/ParProOptions.C \
-  ltlthorn-lib/LTLRersMapping.C \
+  ParProOptions.C \
+  LTLRersMapping.C \
   LVAnalysis.C \
   LVAstAttribute.C \
   LVAstAttributeInterface.C \

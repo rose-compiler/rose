@@ -1,5 +1,5 @@
 
-#include "ltlthorn-lib/ParProOptions.h"
+#include "ParProOptions.h"
 
 bool ParProOptions::activeOptionsRequireSPOTLibrary() {
   return mineNumVerifiable>0

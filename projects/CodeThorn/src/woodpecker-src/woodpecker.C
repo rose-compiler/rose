@@ -160,8 +160,8 @@ int main(int argc, char* argv[]) {
     cout << "Written by Markus Schordan 2013\n";
     exit(0);
   }
-  string csvAssertFileNameString=args.getString("csv-assert");
   if (args.isUserProvided("csv-assert")) {
+    string csvAssertFileNameString=args.getString("csv-assert");
     csvAssertFileName=csvAssertFileNameString.c_str();
   }
   if (args.isUserProvided("csv-const-result")) {
