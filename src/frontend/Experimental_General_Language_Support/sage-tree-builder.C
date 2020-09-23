@@ -1267,10 +1267,33 @@ importModule(const std::string &module_name)
    compool_builder.setLoadingModuleState(false);
 }
 
+// Jovial TableItem members have visibility outside of their declarative class. This function creates
+// an alias to the table item variable and inserts it in the parent scope of the table.
+void SageTreeBuilder::
+injectAliasSymbol(const std::string &name)
+{
+   SgVariableSymbol*
+   var_sym = SageInterface::lookupVariableSymbolInParentScopes(SgName(name), SageBuilder::topScopeStack());
+   ROSE_ASSERT(var_sym);
+   SgAliasSymbol* alias_sym = new SgAliasSymbol(var_sym);
+   ROSE_ASSERT(alias_sym);
+
+   SgClassDefinition* class_def = isSgClassDefinition(SageBuilder::topScopeStack());
+   ROSE_ASSERT(class_def);
+   SgJovialTableStatement* table_decl = isSgJovialTableStatement(class_def->get_declaration());
+   ROSE_ASSERT(table_decl);
+   SgScopeStatement* parent_scope = table_decl->get_scope();
+   ROSE_ASSERT(parent_scope);
+   parent_scope->insert_symbol(SgName(name), alias_sym);
+}
+
+
 // Temporary wrappers for SageInterface functions (needed until ROSE builds with C++17)
 //
 namespace SageBuilderCpp17 {
 
+// Types
+//
 SgType* buildBoolType()
 {
    return SageBuilder::buildBoolType();

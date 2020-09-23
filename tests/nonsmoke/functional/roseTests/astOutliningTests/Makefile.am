@@ -94,8 +94,8 @@ CXX_TESTS_REQUIRED_TO_PASS =		\
 
 # Add a few tool_G's regression tests
 # 	test_26_v2_2020.cpp  this is not ready, not sure what happened for preprocessing
-CXX2_TESTS_REQUIRED_TO_PASS =                \
- 	print.cpp \						 
+CXX2_TESTS_REQUIRED_TO_PASS = \
+	print.cpp \
 	test_42_2020.cpp \
 	test_20_2019.cpp \
 	test_26_v1_2020.cpp \
@@ -108,7 +108,7 @@ CXX4_TESTS_REQUIRED_TO_RUN=	\
 	ft_cfftz_omp.cpp
 
 CXX4_TESTS_OBJECT_REQUIRED_TO_RUN=${CXX4_TESTS_REQUIRED_TO_RUN:.cpp=.o}	
-	
+
 # DQ (11/14/2017): This is failing and I need to learn the depth of what is the problem for the outlining tests.
 # I think I need to work with Liao on this when he is back from vacation.
 #	moreTest2.cpp				
@@ -334,6 +334,8 @@ $(dlopen2_test_targets): dlopen2_%.passed: % outline
 		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen2_test_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
+if !USING_INTEL_COMPILER
+ # DQ (9/19/2020): Clang does not work with most of the test codes in this directory.
 # Liao, 2020//25
 # Similar to dlopen3, additionally
 # combined with -rose:unparseHeaderFiles -rose:unparseHeaderFilesRootFolder
@@ -351,6 +353,7 @@ $(dlopen3_test_targets): dlopen3_%.passed: % outline
 		USE_SUBDIR=yes \
 		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen3_test_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
+endif
 
 # shortcut to test the dlopen feature
 test_dlopen3: $(dlopen3_test_targets)
@@ -375,7 +378,7 @@ $(dlopen4_test_targets): dlopen4_%: % outline
 
 $(CXX4_TESTS_OBJECT_REQUIRED_TO_RUN): %.o: dlopen4_%.cpp
 $(dlopen4_test_lib_targets): rose_%_lib.cpp: dlopen4_%.cpp
-				
+
 # shortcut to test the dlopen feature
 test_dlopen: $(dlopen_test_targets) $(dlopen2_test_targets) $(dlopen3_test_targets) $(dlopen4_test_targets)
 test_dlopen4: $(dlopen4_test_targets)

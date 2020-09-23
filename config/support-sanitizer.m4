@@ -46,7 +46,9 @@ if test "x$enable_sanitizer" = "xyes"; then
       ;;
     clang)
     # For LLVM the support for sanitizer is the best (but add this later).
-      AC_MSG_NOTICE([Clang compilers do support sanitizer tools (but support in ROSE not implemented)])
+    # AC_MSG_NOTICE([Clang compilers do support sanitizer tools (but support in ROSE not implemented)])
+      CXXFLAGS+=" -fsanitize=address -fsanitize-recover=address"
+      CFLAGS+=" -fsanitize=address -fsanitize-recover=address"
       ;;
     icpc)
     # For Intel turn on 64bit migration/portability warnings

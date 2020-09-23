@@ -1,3 +1,5 @@
+// RC-127
+
 namespace Namespace_And_Class_Name_1 
    {
      class Namespace_And_Class_Name_1 
@@ -21,6 +23,8 @@ using namespace Namespace_And_Class_Name_1;
 
 void Class_1::proc_1() 
    {
+  // Original code:                              proc_2(ENUM_VALUE_1);
+  // Generated code: Namespace_And_Class_Name_1::proc_2(ENUM_VALUE_1);
      proc_2(ENUM_VALUE_1);
    }
 
