@@ -1973,6 +1973,9 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_57.C \
    test2020_58.C \
    test2020_59.C \
+   test2020_60.C \
+   test2020_61.C \
+   test2020_62.C \
    test_CplusplusMacro_Cpp.C \
    test_int_lexemes.C \
    test_int_lexemes_donot_pass.C \
@@ -2798,13 +2801,17 @@ test_common_configure_test_with_link_part_1.passed: $(TEST_TRANSLATOR)
 
 # DQ (9/22/2013): Added autoconf style link test.
 test_common_configure_test_with_link_part_2.passed: $(TEST_TRANSLATOR)
-	@cp $(srcdir)/conftest_2.C conftest.C
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_2" $(top_srcdir)/scripts/test_exit_status $@
+# DQ (9/22/2020): Need to use a different filename so that these tests can run in parallel.
+#	@cp $(srcdir)/conftest_2.C conftest.C
+	@cp $(srcdir)/conftest_2.C conftest_2.C
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) conftest_2.C -o conftest_configure_test_part_2" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/22/2013): Added autoconf style link test.
 test_common_configure_test_with_link_part_3.passed: $(TEST_TRANSLATOR)
-	@cp $(srcdir)/conftest_3.C conftest.C
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_3" $(top_srcdir)/scripts/test_exit_status $@
+# DQ (9/22/2020): Need to use a different filename so that these tests can run in parallel.
+#	@cp $(srcdir)/conftest_3.C conftest.C
+	@cp $(srcdir)/conftest_3.C conftest_3.C
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) conftest_3.C -o conftest_configure_test_part_3" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (12/28/2015): Added test for new option to not normalize variable declarations.
 test_suppress_variable_declaration_normalization.passed: $(TEST_TRANSLATOR)
@@ -2867,7 +2874,7 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
      test2006_187b.h test2007_08.h test2007_41.h  test2007_42.h test2007_47.h test2007_48.h test2007_97.h \
      test2007_101.h test2007_136.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
      test2008_11.h test2014_66.h test2014_112.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h test2012_268.h \
-     test2013_235.C test2013_236.C conftest.C conftest_2.C test2006_112.C test2010_25.C test2003_24.C \
+     test2013_235.C test2013_236.C conftest.C conftest_2.C conftest_3.C test2006_112.C test2010_25.C test2003_24.C \
      test2004_82.C test2014_130.h test2015_08.h test2015_29.h test2015_85.h \
      method-defn-in-tpldecl-1.h sgnodee.hpp test2006_136.h test2007_113.h test2007_114.h test2007_40.h test2012_178.h
 
@@ -2987,6 +2994,8 @@ clean-local:
 	rm -f *.int.c
 	rm -f test2013_260_unparse_headers conftest_configure_test*
 	rm -f conftest.C
+	rm -f conftest_2.C
+	rm -f conftest_3.C
 	rm -f *.passed *.failed *.err
 	rm -f method-defn-in-tpldecl-0 method-defn-in-tpldecl-1
 

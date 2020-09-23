@@ -1,3 +1,26 @@
+// It is currently an issue that these codes are mutually exclusive to the new argument-based function lookup.
+
+// RC-72:
+
+namespace conduit 
+   {
+     struct Node {};
+     void about(Node&);
+     namespace relay 
+        {
+          void about(conduit::Node&);
+          void about() 
+             {
+               Node n;
+            // Original code: relay::about(n);
+            // Unparsed code: about(n);
+               relay::about(n);
+             }
+        }
+   }
+
+
+
 // RC-127
 
 namespace Namespace_And_Class_Name_1 

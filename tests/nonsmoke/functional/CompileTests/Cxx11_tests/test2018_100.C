@@ -2,11 +2,22 @@
 
 #include <ext/alloc_traits.h>
 
+// DQ (9/22/2020): This file fails with Intel v17 because the #include <ext/aligned_buffer.h> can 
+// not be resolved by the Intel v17.0.4 compiler as it is installed on Jenkins. The issues seem 
+// to be that the Jenkins installation of Intel v17 is using the GNU headers and the version
+// of GNU headers is 4.8.5 (which is too old).  Installing GNU 6.1 and maybe a later version 
+// of boost than 1.57 (I'm using Boost 1.60) should fix the problem.  Nathan is fixing this
+// issue and so this file can be added back in later after Jenkins's use of GNU by Intel v17 
+// is updated.
+// This file is: test2018_100.C
+// This is the header file that is not found if the GNU version where Intel v17 is installed 
+// is too old. This file compiles fine on my REL7 desktop machine because GNU 6.1 is the GNU
+// compiler available in when the Intel v17 compiler is installed.
 #include <ext/aligned_buffer.h>
 
 #include <bits/hashtable_policy.h>
 
- 
+
 
 namespace std
 {
