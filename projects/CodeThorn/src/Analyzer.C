@@ -131,7 +131,7 @@ void CodeThorn::Analyzer::setWorkLists(ExplorationMode explorationMode) {
     ROSE_ASSERT(map.size()>0);
     estateWorkListCurrent = new EStatePriorityWorkList(map);
     estateWorkListNext = new EStatePriorityWorkList(map); // currently not used in loop aware mode
-    cout<<"STATUS: using topologic worklist."<<endl;
+    SAWYER_MESG(logger[INFO])<<"STATUS: using topologic worklist."<<endl;
     break;
   }
   }
@@ -1690,7 +1690,9 @@ void CodeThorn::Analyzer::initializeStringLiteralsInState(PState& initialPState)
 }
 
 void CodeThorn::Analyzer::initializeVariableIdMapping(SgProject* project) {
+  SAWYER_MESG(logger[INFO])<<"initializeVariableIdMapping:start"<<endl;
   variableIdMapping->computeVariableSymbolMapping(project);
+  SAWYER_MESG(logger[INFO])<<"initializeVariableIdMapping:done"<<endl;
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   AbstractValue::setVariableIdMapping(getVariableIdMapping());
   functionIdMapping.computeFunctionSymbolMapping(project);
@@ -2406,6 +2408,9 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
       } else if(variableIdMapping->hasReferenceType(lhsVar)) {
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else {
+        // other types (e.g. function pointer type)
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+#if 0
         SAWYER_MESG(logger[ERROR])<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(nextNodeToAnalyze2)<<endl;
         SAWYER_MESG(logger[ERROR])<<"Unsupported type on LHS side of assignment: "
                                   <<"type lhs: '"<<variableIdMapping->getType(lhsVar)->unparseToString()<<"'"
@@ -2414,6 +2419,7 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
                                   <<", Expr:"<<nextNodeToAnalyze2->unparseToString()
                                   <<endl;
         exit(1);
+#endif
       }
     } else if(isSgDotExp(lhs)) {
       SAWYER_MESG(logger[TRACE])<<"detected dot operator on lhs "<<lhs->unparseToString()<<"."<<endl;
