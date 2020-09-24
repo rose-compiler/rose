@@ -644,8 +644,31 @@ Unparse_Jovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info
      curprint(";");
      unp->cur.insert_newline(1);
 
-  // for body
-     unparseStatement(for_stmt->get_loop_body(), info);
+  // Don't unparse control letters (variable declarations are compiler generated)
+     SgBasicBlock* loop_body = isSgBasicBlock(for_stmt->get_loop_body());
+     ROSE_ASSERT(loop_body);
+
+  // Loop body
+  //
+  // Due to wierd construction (basic block containing a basic block) the basic block for the loop
+  // may be the last statement. The other statement (if present) will be the compiler generated control
+  // variable declaration. However a SimpleStatement for the loop body won't have the extra basic block.
+     if (loop_body->get_statements().size() == 1) {
+        loop_body = isSgBasicBlock(for_stmt->get_loop_body()->get_statements()[0]);
+     }
+     else if (loop_body->get_statements().size() == 2) {
+     // Degenerate case of a null loop body (see rose-issue-rc-42b.jov), don't unparse variable declaration
+        SgVariableDeclaration* var_decl = isSgVariableDeclaration(for_stmt->get_loop_body()->get_statements()[0]);
+        if (var_decl) SageInterface::removeStatement(var_decl);
+        loop_body = isSgBasicBlock(for_stmt->get_loop_body()->get_statements()[1]);
+     }
+
+     if (!loop_body) {
+        loop_body = isSgBasicBlock(for_stmt->get_loop_body());
+     }
+     ROSE_ASSERT(loop_body);
+
+     unparseStatement(loop_body, info);
      unp->cur.insert_newline(1);
    }
 
@@ -1169,6 +1192,25 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
            curprint(")");
         }
 
+  // WordsPerEntry (for anonymous table declarations)
+     SgJovialTableStatement* table_decl = NULL; // C++11 nullptr
+     if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
+        {
+           table_decl = dynamic_cast<SgJovialTableStatement*>(var_decl->get_baseTypeDefiningDeclaration());
+           ASSERT_not_null(table_decl);
+           if (table_decl->get_has_table_entry_size())
+             {
+               // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
+               if (table_decl->get_table_entry_size() != NULL)
+                 {
+                   curprint("W ");
+                   unparseExpression(table_decl->get_table_entry_size(), info);
+                 }
+               else curprint("V");
+             }
+        }
+
+  // Initialization
      if (init != NULL)
         {
            curprint(" = ");
@@ -1180,23 +1222,7 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
   // Unparse anonymous type declaration body if present
      if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
-           SgDeclarationStatement* def_decl = var_decl->get_baseTypeDefiningDeclaration();
-           ASSERT_not_null(def_decl);
-
-           SgJovialTableStatement* table_decl = dynamic_cast<SgJovialTableStatement*>(def_decl);
            ASSERT_not_null(table_decl);
-
-        // WordsPerEntry for anonymous table declarations
-           if (table_decl->get_has_table_entry_size())
-              {
-                 // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
-                 if (table_decl->get_table_entry_size() != NULL)
-                    {
-                       curprint("W ");
-                       unparseExpression(table_decl->get_table_entry_size(), info);
-                    }
-                 else curprint("V");
-              }
 
            SgClassDefinition* table_def = table_decl->get_definition();
            ASSERT_not_null(table_def);

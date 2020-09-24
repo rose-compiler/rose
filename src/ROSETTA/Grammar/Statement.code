@@ -12965,6 +12965,24 @@ SgVariableDeclaration::initializeData(Sg_File_Info *info, SgInitializedName* c_i
   // DQ(10/10/2007): Added initialization of another data member.
      p_requiresGlobalNameQualificationOnType = false;
 
+#if 0
+  // DQ (9/11/2020): These data members are not set (p_builtFromUseOnly was identified using valgrind).
+  // Unclear if this should go into the post_construction_initialization() function (better).
+  // p_gnu_extension_section                 = "";
+  // p_gnu_extension_alias                   = "";
+     p_gnu_extension_initialization_priority = 0;
+     p_gnu_extension_visability              = SgDeclarationStatement::e_gnu_attribute_visability_unspecified;
+     p_gnu_extension_declaration_attribute   = SgVariableDeclaration::e_gnu_attribute_unspecified;
+     p_name_qualification_length             = 0;
+     p_type_elaboration_required             = false;
+     p_global_qualification_required         = false;
+     p_isAssociatedWithDeclarationList       = false;
+     p_isFirstDeclarationOfDeclarationList   = true;
+     p_is_thread_local                       = false;
+     p_is_constexpr                          = false;
+     p_builtFromUseOnly                      = false;
+#endif
+
 #if PRINT_DEVELOPER_WARNINGS
      printf ("Inside of SgVariableDeclaration::initializeData for constructor taking all parameters c_item = %p = %s \n",c_item,c_item->get_name().str());
 #endif
@@ -13051,6 +13069,28 @@ SgVariableDeclaration::post_construction_initialization()
      p_constant_or_type_argument_for_Alignas_keyword = false;
 #endif
      p_is_constexpr                                  = false;
+
+#if 1
+  // DQ (9/11/2020): I think this is a better place to do a centralized initialization.
+  // DQ (9/11/2020): These data members are not set (p_builtFromUseOnly was identified using valgrind).
+  // Unclear if this should go into the post_construction_initialization() function (better).
+  // We don't need to initialize strings, which have a default constructor.
+  // p_gnu_extension_section                 = "";
+  // p_gnu_extension_alias                   = "";
+     p_gnu_extension_initialization_priority = 0;
+     p_gnu_extension_visability              = SgDeclarationStatement::e_gnu_attribute_visability_unspecified;
+     p_gnu_extension_declaration_attribute   = SgVariableDeclaration::e_gnu_attribute_unspecified;
+     p_name_qualification_length             = 0;
+     p_type_elaboration_required             = false;
+     p_global_qualification_required         = false;
+
+  // DQ (9/11/2020): These are initialized above.
+  // p_isAssociatedWithDeclarationList       = false;
+  // p_isFirstDeclarationOfDeclarationList   = true;
+  // p_is_thread_local                       = false;
+  // p_is_constexpr                          = false;
+     p_builtFromUseOnly                      = false;
+#endif
    }
 
 

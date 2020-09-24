@@ -44,6 +44,20 @@ bat_dis_LDFLAGS = $(ROSE_RPATHS)
 bat_dis_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-dis.passed
 
+bin_PROGRAMS += bat-insnfreq
+bat_insnfreq_SOURCES = bat-insnfreq.C
+bat_insnfreq_CPPFLAGS = $(ROSE_INCLUDES)
+bat_insnfreq_LDFLAGS = $(ROSE_RPATHS)
+bat_insnfreq_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-insnfreq.passed
+
+bin_PROGRAMS += bat-insnfreq-cmp
+bat_insnfreq_cmp_SOURCES = bat-insnfreq-cmp.C
+bat_insnfreq_cmp_CPPFLAGS = $(ROSE_INCLUDES)
+bat_insnfreq_cmp_LDFLAGS = $(ROSE_RPATHS)
+bat_insnfreq_cmp_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-insnfreq-cmp.passed
+
 bin_PROGRAMS += bat-entropy
 bat_entropy_SOURCES = bat-entropy.C
 bat_entropy_CPPFLAGS = $(ROSE_INCLUDES)

@@ -4,7 +4,12 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # are enabled in ROSE (including binary analysis).
 SUBDIRS =
 
-if USING_GNU_COMPILER
+# DQ (9/22/2020): Exclude the Intel compiler for now since it's testing is assigned 
+# to a slow machine on Jenkins and it causes the tests to take 5.75 hours. We have 
+# newer and faster machines coming soon.
+# DQ (9/18/2020): Comment out as a test so that we can use clang and Intel compilers.
+# if USING_GNU_COMPILER
+if !USING_INTEL_COMPILER
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 
@@ -31,8 +36,17 @@ if !USING_GCC_3_4_4_BACKEND_COMPILER
 if !USING_XTENSA_BACKEND_COMPILER
 #  SUBDIRS += astInterfaceTests astInliningTests ompLoweringTests astFileIOTests programAnalysisTests astOutliningTests loopProcessingTests fileLocation_tests
 if !ROSE_USE_INSURE
-   SUBDIRS += astInterfaceTests astInliningTests ompLoweringTests
-   SUBDIRS += programAnalysisTests astOutliningTests loopProcessingTests fileLocation_tests
+   SUBDIRS += astInterfaceTests astInliningTests 
+if !USING_CLANG_COMPILER
+ # DQ (9/19/2020): Clang does not work with most of the test codes in this directory.
+   SUBDIRS += ompLoweringTests
+endif
+   SUBDIRS += programAnalysisTests
+if !USING_CLANG_COMPILER
+ # DQ (9/19/2020): Clang does not work with most of the test codes in this directory.
+   SUBDIRS += astOutliningTests
+endif
+   SUBDIRS += loopProcessingTests fileLocation_tests
    SUBDIRS += astFileIOTests
 endif
 
@@ -41,7 +55,8 @@ endif # !USING_GCC_3_4_4_BACKEND_COMPILER
 
 endif # ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 
-endif # USING_GNU_COMPILER
+# endif # USING_GNU_COMPILER
+endif # !USING_INTEL_COMPILER
 
 if !ROSE_USE_INSURE
 # DQ (4/23/2011): At least one of the files (process_cmdline.o) in this directory does not seem 

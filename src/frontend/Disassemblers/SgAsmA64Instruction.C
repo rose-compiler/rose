@@ -45,6 +45,65 @@ static bool modifies_ip(SgAsmA64Instruction *insn) {
     }
 }
 
+// see base class
+bool
+SgAsmA64Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) {
+    if (insns.empty())
+        return false;
+    SgAsmA64Instruction *last = isSgAsmA64Instruction(insns.back());
+    if (!last)
+        return false;
+
+    // Quick method based only on the kind of instruction
+    using Kind = ::Rose::BinaryAnalysis::A64InstructionKind;
+    switch (last->get_kind()) {
+        case Kind::ARM64_INS_BL:
+        case Kind::ARM64_INS_BLR:
+        //case Kind::ARM64_INS_BLRAA: -- not in capstone
+        //case Kind::ARM64_INS_BLRAAZ: -- not in capstone
+        //case Kind::ARM64_INS_BLRAB: -- not in capstone
+        //case Kind::ARM64_INS_BLRABZ: -- not in capstone
+            last->getBranchTarget(target);
+            if (return_va)
+                *return_va = last->get_address() + last->get_size();
+            return true;
+        default:
+            return false;
+    }
+}
+
+// see base class
+bool
+SgAsmA64Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) {
+    return isFunctionCallFast(insns, target, return_va);
+}
+
+// see base class
+bool
+SgAsmA64Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
+    if (insns.empty())
+        return false;
+    SgAsmA64Instruction *last_insn = isSgAsmA64Instruction(insns.back());
+    if (!last_insn)
+        return false;
+
+    using Kind = ::Rose::BinaryAnalysis::A64InstructionKind;
+    switch (last_insn->get_kind()) {
+        case Kind::ARM64_INS_RET:
+        //case Kind::ARM64_INS_RETAA: -- not present in capstone
+        //case Kind::ARM64_INS_RETAB: -- not present in capstone
+            return true;
+        default:
+            return false;
+    }
+}
+
+// see base class
+bool
+SgAsmA64Instruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) {
+    return isFunctionReturnFast(insns);
+}
+
 AddressSet
 SgAsmA64Instruction::getSuccessors(bool &complete) {
     using Kind = ::Rose::BinaryAnalysis::A64InstructionKind;
@@ -113,6 +172,62 @@ SgAsmA64Instruction::getSuccessors(bool &complete) {
             break;
     }
     return retval;
+}
+
+bool
+SgAsmA64Instruction::getBranchTarget(rose_addr_t *target) {
+    using Kind = ::Rose::BinaryAnalysis::A64InstructionKind;
+    const std::vector<SgAsmExpression*> &exprs = get_operandList()->get_operands();
+    switch (get_kind()) {
+        case Kind::ARM64_INS_B:
+        case Kind::ARM64_INS_BL:
+        case Kind::ARM64_INS_BLR:
+        case Kind::ARM64_INS_BR:
+            // First argument is the branch target
+            ASSERT_require(exprs.size() == 1);
+            if (auto ival = isSgAsmIntegerValueExpression(exprs[0])) {
+                if (target)
+                    *target = ival->get_absoluteValue();
+                return true;
+            }
+            break;
+
+        case Kind::ARM64_INS_BRK:
+        case Kind::ARM64_INS_ERET:
+        case Kind::ARM64_INS_HVC:
+        case Kind::ARM64_INS_RET:
+        case Kind::ARM64_INS_SMC:
+        case Kind::ARM64_INS_SVC:
+            // branch instruction, but target is not known
+            break;
+
+        case Kind::ARM64_INS_CBNZ:
+        case Kind::ARM64_INS_CBZ:
+            ASSERT_require(exprs.size() == 2);
+            if (auto ival = isSgAsmIntegerValueExpression(exprs[1])) {
+                if (target)
+                    *target = ival->get_absoluteValue();
+                return true;
+            }
+            break;
+
+        case Kind::ARM64_INS_HLT:
+            // not considered a branching instruction (no successors)
+            break;
+
+        case Kind::ARM64_INS_TBNZ:
+        case Kind::ARM64_INS_TBZ:
+            ASSERT_require(exprs.size() == 3);
+            if (auto ival = isSgAsmIntegerValueExpression(exprs[1])) {
+                if (target)
+                    *target = ival->get_absoluteValue();
+                return true;
+            }
+            break;
+        default:
+            break;
+    }
+    return false;
 }
 
 // Does instruction terminate basic block? See base class for full documentation.

@@ -114,11 +114,13 @@ extractStaticArchive(const boost::filesystem::path &directory, const boost::file
 /** Matches an ELF PLT entry.  The address through which the PLT entry branches is remembered. This address is typically an
  *  RVA which is added to the initial base address. */
 struct PltEntryMatcher: public InstructionMatcher {
+    // These data members are generally optional, and filled in as they're matched.
     rose_addr_t baseVa_;                                // base address for computing memAddress_
     rose_addr_t gotEntryVa_;                            // address through which an indirect branch branches
     size_t gotEntryNBytes_;                             // size of the global offset table entry in bytes
     rose_addr_t gotEntry_;                              // address read from the GOT if the address is mapped (or zero)
     size_t nBytesMatched_;                              // number of bytes matched for PLT entry
+    rose_addr_t functionNumber_;                        // function number argument for the dynamic linker (usually a push)
 
 public:
     PltEntryMatcher(rose_addr_t base)
@@ -143,10 +145,15 @@ public:
 
 private:
     SgAsmInstruction* matchNop(const Partitioner&, rose_addr_t va);
-    SgAsmInstruction* matchPush(const Partitioner&, rose_addr_t va);
+    SgAsmInstruction* matchPush(const Partitioner&, rose_addr_t var, rose_addr_t &n /*out*/);
     SgAsmInstruction* matchDirectJump(const Partitioner&, rose_addr_t va);
     SgAsmInstruction* matchIndirectJump(const Partitioner&, rose_addr_t va,
                                         rose_addr_t &indirectVa /*out*/, size_t &indirectNBytes /*out*/);
+    SgAsmInstruction* matchA64Adrp(const Partitioner&, rose_addr_t va, rose_addr_t &value /*out*/);
+    SgAsmInstruction* matchA64Ldr(const Partitioner&, rose_addr_t va, rose_addr_t &indirectVa /*in,out*/,
+                                  rose_addr_t &indirectNBytes /*out*/);
+    SgAsmInstruction* matchA64Add(const Partitioner&, rose_addr_t va);
+    SgAsmInstruction* matchA64Br(const Partitioner&, rose_addr_t va);
 };
 
 /** Build may-return white and black lists. */

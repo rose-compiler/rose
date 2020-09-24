@@ -139,6 +139,8 @@ namespace CodeThorn {
     normPhaseNrLast=12;
     printNormalizationPhase();
     if (options.normalizeCplusplus) {
+      // \todo reconsider when to run C++ normalization
+      // expects basic blocks and lifted declaration statement
       normalizeCxx(*this, root);
     }
     printNormalizationPhase();

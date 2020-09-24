@@ -540,7 +540,14 @@ Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
   for (VariableInitialzationMap::value_type& init : varinit) {
     ROSE_ASSERT(init.second);
 
-    transfer(getLabeler()->getLabel(init.second), *elem);
+    Label lbl = getLabeler()->getLabel(init.second);
+    
+    if (lbl == Label())
+    {
+      std::cerr << "no label: " << init.second->unparseToString() << std::endl;
+    }
+
+    transfer(lbl, *elem);
   }
 
   //~ std::cout << "INIT: initial state (after " << varinit.size() << ") vars: ";

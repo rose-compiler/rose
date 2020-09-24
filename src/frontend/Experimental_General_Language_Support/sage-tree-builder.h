@@ -107,7 +107,7 @@ public:
                                  const boost::optional<std::string> &,
                                  const boost::optional<std::string> &);
 
-   void Enter(SgFunctionParameterList* &, SgBasicBlock* &);
+   void Enter(SgFunctionParameterList* &, SgBasicBlock* &, const std::string &, SgType*);
    void Leave(SgFunctionParameterList*, SgBasicBlock*, const std::list<LanguageTranslation::FormalParameter> &);
 
    void Enter(SgFunctionDeclaration* &, const std::string &, SgType*, SgFunctionParameterList*,
@@ -178,7 +178,7 @@ public:
    void Enter(SgFunctionCallExp* &, const std::string &name, SgExprListExp* params);
    void Enter(SgReplicationOp* &, const std::string &name, SgExpression* value);
    void Enter(SgCastExp* &, const std::string &name, SgExpression* cast_operand);
-   void Enter(SgVarRefExp* &, const std::string &name);
+   void Enter(SgVarRefExp* &, const std::string &name, bool compiler_generate=false);
 
 // Jovial specific nodes
 //
@@ -188,6 +188,7 @@ public:
    void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, bool is_compool=false);
    void Leave(SgJovialDirectiveStatement*);
 
+   void Enter(SgJovialForThenStatement* &, const std::string &);
    void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*,
                                            SgJovialForThenStatement::loop_statement_type_enum);
    void Leave(SgJovialForThenStatement*);
@@ -217,6 +218,9 @@ public:
      {
         return (std::find(lst.begin(), lst.end(), item) != lst.end());
      }
+
+// Symbols (Jovial specific, should this go in SageInterface?)
+   void injectAliasSymbol(const std::string &name);
 
 };
 

@@ -235,6 +235,7 @@ ATbool traverse_AssignmentStatement(ATerm term);
 // 4.2 LOOP STATEMENTS
 ATbool traverse_WhileStatement  (ATerm term);
 ATbool traverse_ForStatement    (ATerm term);
+ATbool traverse_ForClause       (ATerm term, std::string &control_var_name);
 ATbool traverse_ForClause       (ATerm term, SgExpression* &var_ref, SgExpression* &init,
                                              SgExpression* &phrase1, SgExpression* &phrase2,
                                              int &phrase1_enum, int &phrase2_enum);
@@ -321,8 +322,8 @@ ATbool traverse_Subscript        (ATerm term, std::vector<SgExpression*> & index
 ATbool traverse_Index            (ATerm term, SgExpression* &expr);
 ATbool traverse_TableDereference (ATerm term, SgExpression* &expr);
 ATbool traverse_Dereference      (ATerm term, SgExpression* &expr);
-ATbool traverse_BitFunctionVariable  (ATerm term, SgExpression* &var);
-ATbool traverse_ByteFunctionVariable (ATerm term, SgExpression* &var);
+ATbool traverse_BitFunctionVariable  (ATerm term, SgExpression* &func_call);
+ATbool traverse_ByteFunctionVariable (ATerm term, SgExpression* &func_call);
 
 // 6.2 NAMED CONSTANTS
 ATbool traverse_NamedConstant        (ATerm term, SgExpression* &var);

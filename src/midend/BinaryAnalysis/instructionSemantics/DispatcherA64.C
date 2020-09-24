@@ -693,6 +693,12 @@ struct IP_extr: P {
     }
 };
 
+struct IP_hint: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+    }
+};
+
 struct IP_ins: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -761,6 +767,17 @@ struct IP_ldp: P {
         SValuePtr second = ops->extract(pair, regSize, pair->get_width());
         d->write(args[0], first);
         d->write(args[1], second);
+    }
+};
+
+struct IP_ldpsw: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        SValuePtr data = d->read(args[2]);
+        SValuePtr val1 = ops->signExtend(ops->extract(data, 0, 32), 64);
+        SValuePtr val2 = ops->signExtend(ops->extract(data, 32, 64), 64);
+        d->write(args[0], val1);
+        d->write(args[1], val2);
     }
 };
 
@@ -1154,6 +1171,25 @@ struct IP_orr: P {
     }
 };
 
+struct IP_rbit: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr value = d->read(args[1]);
+        SValuePtr result;
+        if (auto vectorType = isSgAsmVectorType(args[1]->get_type())) {
+            size_t elmtNBits = vectorType->get_elmtType()->get_nBits();
+            for (size_t i = 0; i < vectorType->get_nElmts(); ++i) {
+                SValuePtr elmt = ops->extract(value, i*elmtNBits, (i+1)*elmtNBits);
+                SValuePtr elmtResult = ops->reverseElmts(elmt, 1);
+                result = result ? ops->concatHiLo(elmtResult, result) : elmtResult;
+            }
+        } else {
+            result = ops->reverseElmts(value, 1);
+        }
+        d->write(args[0], result);
+    }
+};
+
 struct IP_ret: P {
     void p(D d, Ops ops, I insn, A args) {
         SValuePtr targetVa;
@@ -1300,6 +1336,56 @@ struct IP_smull: P {
         d->write(args[0], product);
     }
 };
+
+struct IP_stlr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr value = d->read(args[0]);
+        d->write(args[1], value);
+    }
+};
+
+struct IP_stlrb: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr value = ops->extract(d->read(args[0]), 0, 8);
+        d->write(args[1], value);
+    }
+};
+
+struct IP_stlrh: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr value = ops->extract(d->read(args[0]), 0, 16);
+        d->write(args[1], value);
+    }
+};
+
+#if 0 // [Robb Matzke 2020-09-03]: not present in Capstone
+struct IP_stlur: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr value = d->read(args[0]);
+        d->write(args[1], value);
+    }
+};
+
+struct IP_stlurb: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr value = ops->extract(d->read(args[0]), 0, 8);
+        d->write(args[1], value);
+    }
+};
+
+struct IP_stlurh: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr value = ops->extract(d->read(args[0]), 0, 16);
+        d->write(args[1], value);
+    }
+};
+#endif
 
 struct IP_stlxr: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -1608,6 +1694,18 @@ struct IP_umov: P {
     }
 };
 
+struct IP_umsubl: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 4);
+        SValuePtr factor1 = d->read(args[1]);
+        SValuePtr factor2 = d->read(args[2]);
+        SValuePtr product = ops->unsignedMultiply(factor1, factor2);
+        SValuePtr minuend = d->read(args[3]);
+        SValuePtr result = ops->subtract(minuend, product);
+        d->write(args[0], result);
+    }
+};
+
 struct IP_umulh: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
@@ -1626,6 +1724,26 @@ struct IP_umull: P {
         SValuePtr b = d->read(args[2]);
         SValuePtr product = ops->unsignedMultiply(a, b);
         d->write(args[0], product);
+    }
+};
+
+struct IP_uxtb: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr a = d->read(args[1]);
+        SValuePtr byte = ops->extract(a, 0, 8);
+        SValuePtr result = ops->unsignedExtend(byte, args[0]->get_nBits());
+        d->write(args[0], result);
+    }
+};
+
+struct IP_uxth: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        SValuePtr a = d->read(args[1]);
+        SValuePtr word = ops->extract(a, 0, 16);
+        SValuePtr result = ops->unsignedExtend(word, args[0]->get_nBits());
+        d->write(args[0], result);
     }
 };
 
@@ -1660,6 +1778,12 @@ struct IP_xtn2: P {
         }
         result = ops->concatHiLo(result, ops->number_(vectorType->get_nBits()/2, 0));
         d->write(args[0], result);
+    }
+};
+
+struct IP_yield: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 0);
     }
 };
 
@@ -1714,6 +1838,7 @@ DispatcherA64::initializeInsnDispatchTable() {
     iproc_set(ARM64_INS_EON,    new A64::IP_eon);
     iproc_set(ARM64_INS_EOR,    new A64::IP_eor);
     iproc_set(ARM64_INS_EXTR,   new A64::IP_extr);
+    iproc_set(ARM64_INS_HINT,   new A64::IP_hint);
     iproc_set(ARM64_INS_INS,    new A64::IP_ins);
     iproc_set(ARM64_INS_LDAR,   new A64::IP_ldar);
     iproc_set(ARM64_INS_LDARB,  new A64::IP_ldarb);
@@ -1722,6 +1847,7 @@ DispatcherA64::initializeInsnDispatchTable() {
     iproc_set(ARM64_INS_LDAXRB, new A64::IP_ldaxrb);
     iproc_set(ARM64_INS_LDAXRH, new A64::IP_ldaxrh);
     iproc_set(ARM64_INS_LDP,    new A64::IP_ldp);
+    iproc_set(ARM64_INS_LDPSW,  new A64::IP_ldpsw);
     iproc_set(ARM64_INS_LDR,    new A64::IP_ldr);
     iproc_set(ARM64_INS_LDRB,   new A64::IP_ldrb);
     iproc_set(ARM64_INS_LDRH,   new A64::IP_ldrh);
@@ -1756,6 +1882,7 @@ DispatcherA64::initializeInsnDispatchTable() {
     iproc_set(ARM64_INS_NOT,    new A64::IP_not);
     iproc_set(ARM64_INS_ORN,    new A64::IP_orn);
     iproc_set(ARM64_INS_ORR,    new A64::IP_orr);
+    iproc_set(ARM64_INS_RBIT,   new A64::IP_rbit);
     iproc_set(ARM64_INS_RET,    new A64::IP_ret);
     iproc_set(ARM64_INS_REV,    new A64::IP_rev);
     iproc_set(ARM64_INS_REV16,  new A64::IP_rev16);
@@ -1769,6 +1896,14 @@ DispatcherA64::initializeInsnDispatchTable() {
     iproc_set(ARM64_INS_SMADDL, new A64::IP_smaddl);
     iproc_set(ARM64_INS_SMULH,  new A64::IP_smulh);
     iproc_set(ARM64_INS_SMULL,  new A64::IP_smull);
+    iproc_set(ARM64_INS_STLR,   new A64::IP_stlr);
+    iproc_set(ARM64_INS_STLRB,  new A64::IP_stlrb);
+    iproc_set(ARM64_INS_STLRH,  new A64::IP_stlrh);
+#if 0 // [Robb Matzke 2020-09-03]: not present in capstone
+    iproc_set(ARM64_INS_STLUR,  new A64::IP_stlur);
+    iproc_set(ARM64_INS_STLURB, new A64::IP_stlurb);
+    iproc_set(ARM64_INS_STLURH, new A64::IP_stlurh);
+#endif
     iproc_set(ARM64_INS_STLXR,  new A64::IP_stlxr);
     iproc_set(ARM64_INS_STLXRB, new A64::IP_stlxrb);
     iproc_set(ARM64_INS_STLXRH, new A64::IP_stlxrh);
@@ -1796,10 +1931,14 @@ DispatcherA64::initializeInsnDispatchTable() {
     iproc_set(ARM64_INS_UDIV,   new A64::IP_udiv);
     iproc_set(ARM64_INS_UMADDL, new A64::IP_umaddl);
     iproc_set(ARM64_INS_UMOV,   new A64::IP_umov);
+    iproc_set(ARM64_INS_UMSUBL, new A64::IP_umsubl);
     iproc_set(ARM64_INS_UMULH,  new A64::IP_umulh);
     iproc_set(ARM64_INS_UMULL,  new A64::IP_umull);
+    iproc_set(ARM64_INS_UXTB,   new A64::IP_uxtb);
+    iproc_set(ARM64_INS_UXTH,   new A64::IP_uxth);
     iproc_set(ARM64_INS_XTN,    new A64::IP_xtn);
     iproc_set(ARM64_INS_XTN2,   new A64::IP_xtn2);
+    iproc_set(ARM64_INS_YIELD,  new A64::IP_yield);
 }
 
 void

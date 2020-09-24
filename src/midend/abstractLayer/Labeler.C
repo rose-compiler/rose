@@ -682,7 +682,7 @@ bool Labeler::areCallAndReturnLabels(Label call, Label ret)
          );
 }
   
-Label Labeler::getCallForReturnLabel(Label ret) 
+Label Labeler::getFunctionCallLabelFromReturnLabel(Label ret) 
 {
   ROSE_ASSERT(isFunctionCallReturnLabel(ret));
   

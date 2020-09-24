@@ -51,7 +51,8 @@ Flow* DFAnalysisBase::getFlow() const {
 }
 
 Lattice* DFAnalysisBase::getPreInfo(Label lab) {
-  return _analyzerDataPreInfo[lab.getId()];
+  return _analyzerDataPreInfo.at(lab.getId());
+  //~ return _analyzerDataPreInfo[lab.getId()];
 }
 
 Lattice* DFAnalysisBase::getPostInfo(Label lab) {
@@ -140,6 +141,23 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
 }
 
 void
+DFAnalysisBase::initializeAnalyzerDataInfo() {
+  Labeler*              labeler = getLabeler();
+  PropertyStateFactory* factory = getInitialElementFactory();
+  ROSE_ASSERT(factory && labeler);  
+  const size_t          numLabels = labeler->numberOfLabels(); 
+
+  _analyzerDataPreInfo.reserve(numLabels);
+  _analyzerDataPostInfo.reserve(numLabels);
+  for(size_t l=0;l<numLabels;++l) {
+    Lattice* le1=factory->create();
+    _analyzerDataPreInfo.push_back(le1);
+    Lattice* le2=factory->create();
+    _analyzerDataPostInfo.push_back(le2);
+  }
+}
+
+void
 DFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
   cout << "INIT: establishing program abstraction layer." << endl;
   if(programAbstractionLayer) {
@@ -160,15 +178,8 @@ DFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbst
   cout << "INIT: Requesting CFG."<<endl;
   _flow = _programAbstractionLayer->getFlow(isBackwardAnalysis());
 
-  ROSE_ASSERT(getInitialElementFactory());
-  for(long l=0;l<getLabeler()->numberOfLabels();++l) {
-    Lattice* le1=getInitialElementFactory()->create();
-    _analyzerDataPreInfo.push_back(le1);
-    Lattice* le2=getInitialElementFactory()->create();
-    _analyzerDataPostInfo.push_back(le2);
-  }
+  initializeAnalyzerDataInfo();
   cout << "STATUS: initialized monotone data flow analyzer for "<<_analyzerDataPreInfo.size()<< " labels."<<endl;
-
   cout << "INIT: initialized pre/post property states."<<endl;
   initializeSolver();
   cout << "STATUS: initialized solver."<<endl;
@@ -196,15 +207,14 @@ CodeThorn::PointerAnalysisInterface* DFAnalysisBase::getPointerAnalysis() {
 void
 DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot,bool onlySingleStartLabel) {
   if(startFunRoot) {
-    CFAnalysis* cfanalyzer = getCFAnalyzer();
-
+    Labeler* labeler = getLabeler();
+    
     if(isForwardAnalysis()) {
-      Label startLabel=cfanalyzer->getLabel(startFunRoot);
+      Label startLabel=labeler->getLabel(startFunRoot);
       _extremalLabels.insert(startLabel);
     } else if(isBackwardAnalysis()) {
       if(isSgFunctionDefinition(startFunRoot)) {
-        Label startLabel=cfanalyzer->getLabel(startFunRoot);
-        Label endLabel=cfanalyzer->correspondingFunctionExitLabel(startLabel);
+        Label endLabel=labeler->functionExitLabel(startFunRoot);
         _extremalLabels.insert(endLabel);
       } else {
         cerr<<"Error: backward analysis only supported for start at function exit label."<<endl;

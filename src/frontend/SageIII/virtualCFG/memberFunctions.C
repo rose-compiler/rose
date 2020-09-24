@@ -88,6 +88,7 @@ void makeEdge(NodeT from, NodeT to, vector<EdgeT>& result) {
 
 static void addIncomingFortranGotos(SgStatement* stmt, unsigned int index, vector<CFGEdge>& result) {
   bool hasLabel = false;
+  ROSE_ASSERT(stmt != NULL);
   if (index == 0 && stmt->get_numeric_label()) hasLabel = true;
   if (index == stmt->cfgIndexForEnd() && stmt->has_end_numeric_label()) hasLabel = true;
   if (index == 0 &&
@@ -170,6 +171,8 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
   // Only handles next-statement control flow
   SgNode* parent = n->get_parent();
 
+  ROSE_ASSERT(parent != NULL);
+
 #if DEBUG_CALLGRAPH
   printf ("In getNodeJustAfterInContainer(): n = %p = %s parent = %p = %s \n",n,n->class_name().c_str(),parent,parent->class_name().c_str());
 #endif
@@ -225,15 +228,17 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
           printf ("In getNodeJustAfterInContainer(): found parent as SgLabelStatement: parentLabelStatement = %p = %s \n",parentLabelStatement,parentLabelStatement->class_name().c_str());
 #endif
           parent = parentLabelStatement->get_parent();
+          ROSE_ASSERT(parent != NULL);
           unsigned int idx;
 #if 0
           idx = parent->cfgFindNextChildIndex(parentLabelStatement);
 #else
           // MS (12/9/2019 ) - handling sequences of labels
           while(isSgLabelStatement(parent)) {
-            parentLabelStatement=isSgLabelStatement(parent);
-            parent=parent->get_parent();
+            parentLabelStatement = isSgLabelStatement(parent);
+            parent = parent->get_parent();
           }
+          ROSE_ASSERT(parent != NULL);
           idx = parent->cfgFindNextChildIndex(parentLabelStatement);
 #endif
 
@@ -270,10 +275,6 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
 #endif
              }
         }
-
-
-// DQ (10/12/2012): Added assertion.
-  ROSE_ASSERT(parent != NULL);
 
   unsigned int idx = parent->cfgFindNextChildIndex(n);
   if ( idx > parent->cfgIndexForEnd() ) {
@@ -834,9 +835,10 @@ unsigned int SgRangeBasedForStatement::cfgFindChildIndex(SgNode* n)
                                       {
                                         cerr << "Error: SgForStatement::cfgFindChildIndex(): cannot find a matching child for SgNode n:";
                                         cerr << n->class_name() << endl;
-                                        if (isSgLocatedNode(n))
+                                        SgLocatedNode* located = isSgLocatedNode(n);
+                                        if (located != NULL)
                                            {
-                                             isSgLocatedNode(n)->get_file_info()->display();
+                                             located->get_file_info()->display();
                                            }
                                         ROSE_ASSERT (!"Bad child in range based for statement");
                                       }
@@ -6438,6 +6440,7 @@ std::vector<CFGEdge> SgJavaLabelStatement::cfgInEdges(unsigned int idx)
         // Do we need to get all continue statements that can jump here ?
         // YES
         SgFunctionDefinition* thisFunction = SageInterface::getEnclosingProcedure(this);
+        ROSE_ASSERT(thisFunction != NULL);
         std::vector<SgContinueStmt*> contVec = SageInterface::findContinueStmts(thisFunction, this->get_label().getString());
         for (unsigned int i = 0; i < contVec.size(); ++i) {
             makeEdge(CFGNode(contVec[i], 0), CFGNode(this, idx), result);
@@ -6449,6 +6452,7 @@ std::vector<CFGEdge> SgJavaLabelStatement::cfgInEdges(unsigned int idx)
         // Do we need to get all break statements that can jump here ?
         // YES
         SgFunctionDefinition* thisFunction = SageInterface::getEnclosingProcedure(this);
+        ROSE_ASSERT(thisFunction != NULL);
         std::vector<SgBreakStmt*> brkVec = SageInterface::findBreakStmts(thisFunction, this->get_label().getString());
         for (unsigned int i = 0; i < brkVec.size(); ++i) {
             makeEdge(CFGNode(brkVec[i], 0), CFGNode(this, idx), result);

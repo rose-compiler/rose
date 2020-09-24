@@ -477,6 +477,7 @@ SgIsOp
 SgIsNotOp
 SgIorAssignOp
 SgJovialBitType
+SgJovialBitVal
 SgJovialTableType
 SgJovialCompoolStatement
 SgJovialForThenStatement

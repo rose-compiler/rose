@@ -1,4 +1,4 @@
-// This is similar to test2011_76.C bu with TEMPLATE_CASE == 0
+// This is similar to test2011_76.C but with TEMPLATE_CASE == 0
 template <class T>
 class PtrSetWrap
    {

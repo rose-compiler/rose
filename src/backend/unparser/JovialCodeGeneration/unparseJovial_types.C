@@ -213,19 +213,26 @@ Unparse_Jovial::unparseJovialType(SgModifierType* modifier_type, SgUnparse_Info&
   // type to be wrapped with an SgModifierType with isConst and isStatic set. This required the creation of
   // isJovialStatic to correctly unparse when the Jovial source actually has the STATIC keyword.
 
-  // SgModifierType is also used to mark R,T,Z (round, truncate, trancate towards zero).
      ROSE_ASSERT(modifier_type);
-
      SgType* base_type = modifier_type->get_base_type();
      ROSE_ASSERT(base_type);
 
-     unparseTypeDesc(base_type, info);
-
-     if      (modifier_type->get_typeModifier().isRound())               curprint(",R");
-     else if (modifier_type->get_typeModifier().isTruncate())            curprint(",T");
-     else if (modifier_type->get_typeModifier().isTruncateTowardsZero()) curprint(",Z");
-
-     unparseTypeSize(base_type, info);
+  // SgModifierType is also used to mark R,T,Z (round, truncate, trancate towards zero).
+  // If not used for (R,T,Z), unwrap and then unparse the base type (this should fix recurring problems).
+     if (modifier_type->get_typeModifier().isRound()     ||
+         modifier_type->get_typeModifier().isTruncate()  ||
+         modifier_type->get_typeModifier().isTruncateTowardsZero())
+     {
+        unparseTypeDesc(base_type, info);
+        if      (modifier_type->get_typeModifier().isRound())               curprint(",R");
+        else if (modifier_type->get_typeModifier().isTruncate())            curprint(",T");
+        else if (modifier_type->get_typeModifier().isTruncateTowardsZero()) curprint(",Z");
+        unparseTypeSize(base_type, info);
+     }
+     else
+     {
+        unparseType(base_type, info);
+     }
   }
 
 void
