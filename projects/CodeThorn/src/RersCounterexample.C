@@ -71,11 +71,33 @@ string RersCounterexample::toRersIOString(LtlRersMapping& ltlRersMapping, bool w
       }
       const PState* pstate = (*i)->pstate();
       int inOutVal = pstate->readFromMemoryLocation((*i)->io.var).getIntValue();
+
+      // for ASCII mapping only
+      char ioChar='x';
+      if((*i)->io.isStdInIO())
+        ioChar='i';
+      else if((*i)->io.isStdOutIO())
+        ioChar='o';
+      else {
+        cerr<<"Error: RersCounterExample: non-io state. Not supported."<<endl;
+        exit(1);
+      }
+      
       if ((*i)->io.isStdInIO()) {
-        result << ltlRersMapping.getIOString(inOutVal); // MS 8/6/20: changed to use mapping
+        if(ltlRersMapping.isActive()) {
+          result << ltlRersMapping.getIOString(inOutVal); // MS 8/6/20: changed to use mapping
+        } else {
+          // otherwise use ASCII mapping 1->'A' ... 26->'Z'
+          result << ioChar<<char('A'+inOutVal-1);
+        }
         firstSymbol = false;
       } else if (withOutput && (*i)->io.isStdOutIO()) {
-        result << ltlRersMapping.getIOString(inOutVal); // MS 8/6/20: changed to use mapping
+        if(ltlRersMapping.isActive()) {
+          result << ltlRersMapping.getIOString(inOutVal); // MS 8/6/20: changed to use mapping
+        } else {
+          // otherwise use ASCII mapping 1->'A' ... 26->'Z'
+          result << ioChar<<char('A'+inOutVal-1);
+        }
         firstSymbol = false;
       } 
     }

@@ -30,6 +30,8 @@ namespace CodeThorn {
     bool isInput(int value) const;
     bool isOutput(char c) const;
     bool isOutput(int value) const;
+    // is true if at least one input or output mapping has been added
+    bool isActive() const;
   private:
     std::map<char,int> _inputMappingCharInt;
     std::map<int,char> _inputMappingIntChar;
