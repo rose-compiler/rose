@@ -8,9 +8,12 @@
 #include "RoseAst.h"
 #include <set>
 #include <vector>
+#include "Diagnostics.h"
+#include "SgNodeHelper.h"
 
 using namespace std;
 using namespace CodeThorn;
+using namespace Rose::Diagnostics;
 
 int exprToInt(SgExpression* exp) {
   if(SgUnsignedLongVal* valExp = isSgUnsignedLongVal(exp))
@@ -404,6 +407,8 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
           // Remember that this symbol was already registered:
           symbolSet.insert(sym);
         }
+      } else {
+        Rose::Diagnostics::mlog[WARN]<<"No symbol available for SgInitializedName at "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<endl;
       }
     }
   }
