@@ -117,24 +117,31 @@ void CodeThorn::Analyzer::setWorkLists(ExplorationMode explorationMode) {
     break;
   case EXPL_TOPOLOGIC_SORT: {
     ROSE_ASSERT(getLabeler());
-    ROSE_ASSERT(getFlow()->getStartLabelSet().size()>0);
-    TopologicalSort topSort(*getLabeler(),*getFlow());
-    std::list<Label> labelList=topSort.topologicallySortedLabelList();
+    if(getFlow()->getStartLabelSet().size()>0) {
+      TopologicalSort topSort(*getLabeler(),*getFlow());
+      std::list<Label> labelList=topSort.topologicallySortedLabelList();
 #if 0
-    cout<<"Topologic Sort:";
-    for(auto label : labelList) {
-      cout<<label.toString()<<" ";
-    }
-    cout<<endl;
+      cout<<"Topologic Sort:";
+      for(auto label : labelList) {
+        cout<<label.toString()<<" ";
+      }
+      cout<<endl;
 #endif
-    TopologicalSort::LabelToPriorityMap map=topSort.labelToPriorityMap();
-    ROSE_ASSERT(map.size()>0);
-    estateWorkListCurrent = new EStatePriorityWorkList(map);
-    estateWorkListNext = new EStatePriorityWorkList(map); // currently not used in loop aware mode
-    SAWYER_MESG(logger[INFO])<<"STATUS: using topologic worklist."<<endl;
-    break;
+      TopologicalSort::LabelToPriorityMap map=topSort.labelToPriorityMap();
+      ROSE_ASSERT(map.size()>0);
+      estateWorkListCurrent = new EStatePriorityWorkList(map);
+      estateWorkListNext = new EStatePriorityWorkList(map); // currently only used in loop aware mode
+      SAWYER_MESG(logger[INFO])<<"STATUS: using topologic worklist."<<endl;
+      break;
+    } else {
+      // for empty flow initialize with empty workslists
+      TopologicalSort::LabelToPriorityMap map;
+      estateWorkListCurrent = new EStatePriorityWorkList(map);
+      estateWorkListNext = new EStatePriorityWorkList(map); // currently only used in loop aware mode
+      SAWYER_MESG(logger[INFO])<<"STATUS: using empty topologic worklist (because of empty control flow graph)."<<endl;
+    }
   }
-  }
+  } // end switch
 }
 
 void CodeThorn::Analyzer::setExplorationMode(ExplorationMode em) {
@@ -154,10 +161,12 @@ CodeThorn::Analyzer::~Analyzer() {
   }
   if(variableIdMapping)
     delete variableIdMapping;
-
-  delete getFunctionCallMapping2()->getClassHierarchy();
-  delete getFunctionCallMapping()->getClassHierarchy();
-  delete _estateTransferFunctions;
+  if(getFunctionCallMapping())
+    delete getFunctionCallMapping()->getClassHierarchy();
+  if(getFunctionCallMapping2())
+    delete getFunctionCallMapping2()->getClassHierarchy();
+  if(_estateTransferFunctions)
+    delete _estateTransferFunctions;
   deleteWorkLists();
 }
 
@@ -1807,6 +1816,7 @@ SgNode* CodeThorn::Analyzer::getStartFunRoot() {
 
 // change: pass in a set of labels (
 void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
+  SAWYER_MESG(logger[INFO])<<"Initializing solver started."<<endl;
   startAnalysisTimer();
   ROSE_ASSERT(root);
   resetInputSequenceIterator();
@@ -1826,14 +1836,14 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     _startFunRoot=completeast.findFunctionByName(functionToStartAt);
   }
     
-  SAWYER_MESG(logger[TRACE])<< "INIT: Initializing AST node info."<<endl;
+  SAWYER_MESG(logger[TRACE])<< "Initializing AST node info."<<endl;
   initAstNodeInfo(root);
 
-  SAWYER_MESG(logger[TRACE])<< "INIT: Creating Labeler."<<endl;
+  SAWYER_MESG(logger[TRACE])<< "Creating Labeler."<<endl;
   Labeler* labeler= new CTIOLabeler(root,getVariableIdMapping());
   //SAWYER_MESG(logger[TRACE])<< "INIT: Initializing VariableIdMapping."<<endl;
   //exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
-  SAWYER_MESG(logger[TRACE])<< "INIT: Creating CFAnalysis."<<endl;
+  SAWYER_MESG(logger[TRACE])<< "Creating CFAnalysis."<<endl;
   cfanalyzer=new CFAnalysis(labeler,true);
   
   getFunctionCallMapping2()->setLabeler(labeler);
@@ -1865,7 +1875,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   CallString::setMaxLength(_ctOpt.callStringLength);
   
   // logger[DEBUG]<< "mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
-  SAWYER_MESG(logger[INFO])<< "INIT: Building CFGs."<<endl;
+  SAWYER_MESG(logger[INFO])<< "Building CFGs."<<endl;
 
   flow=cfanalyzer->flow(root); // START_INIT 3
   if(_ctOpt.getInterProceduralFlag()) {
@@ -1875,6 +1885,10 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     flow.addStartLabel(slab2);
   } else {
     LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(flow);
+    if(entryLabels.size()==0) {
+      cout<<"Exit: No functions in program, nothing to analyze."<<endl;
+      exit(0);
+    }
     flow.setStartLabelSet(entryLabels);
   }
 
@@ -1884,24 +1898,24 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     cfanalyzer->forkJoinConsistencyChecks(flow);
   }
 
-  SAWYER_MESG(logger[INFO])<< "STATUS: Building CFGs finished."<<endl;
+  SAWYER_MESG(logger[INFO])<< "Building CFGs finished."<<endl;
   if(_ctOpt.reduceCfg) {
     int cnt=cfanalyzer->optimizeFlow(flow);
-    SAWYER_MESG(logger[TRACE])<< "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
+    SAWYER_MESG(logger[TRACE])<< "CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
   }
-  SAWYER_MESG(logger[TRACE])<< "INIT: Intra-Flow OK. (size: " << flow.size() << " edges)"<<endl;
+  SAWYER_MESG(logger[TRACE])<< "Intra-Flow OK. (size: " << flow.size() << " edges)"<<endl;
   if(oneFunctionOnly) {
-    SAWYER_MESG(logger[TRACE])<<"INFO: analyzing one function only."<<endl;
+    SAWYER_MESG(logger[TRACE])<<"Analyzing one function only."<<endl;
   }
   _interFlow=cfanalyzer->interFlow(flow);
-  SAWYER_MESG(logger[TRACE])<< "INIT: Inter-Flow OK. (size: " << _interFlow.size()*2 << " edges)"<<endl;
+  SAWYER_MESG(logger[TRACE])<< "Inter-Flow OK. (size: " << _interFlow.size()*2 << " edges)"<<endl;
   cfanalyzer->intraInterFlow(flow,_interFlow);
-  SAWYER_MESG(logger[INFO])<< "INIT: ICFG OK. (size: " << flow.size() << " edges)"<<endl;
+  SAWYER_MESG(logger[INFO])<< "ICFG OK. (size: " << flow.size() << " edges)"<<endl;
 
 #if 0
   if(_ctOpt.reduceCfg) {
     int cnt=cfanalyzer->inlineTrivialFunctions(flow);
-    cout << "INIT: CFG reduction OK. (inlined "<<cnt<<" functions; eliminated "<<cnt*4<<" nodes)"<<endl;
+    cout << "CFG reduction OK. (inlined "<<cnt<<" functions; eliminated "<<cnt*4<<" nodes)"<<endl;
   }
 #endif
 
@@ -1924,6 +1938,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
 
   Label slab=flow.getStartLabel();
+  ROSE_ASSERT(slab.isValid());
   transitionGraph.setStartLabel(slab);
   transitionGraph.setAnalyzer(this);
 
@@ -1976,10 +1991,10 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     for(auto slab : startLabels) {
       // initialize intra-procedural analysis with all function entry points
       estate.setLabel(slab);
-      const EState* initialEState=processNew(estate); // START_INIT 6
+      const EState* initialEState=processNew(estate);
       ROSE_ASSERT(initialEState);
       variableValueMonitor.init(initialEState);
-      addToWorkList(initialEState); // START_INIT 7: ADD TO WORKLIST HERE!!!
+      addToWorkList(initialEState);
       SAWYER_MESG(logger[INFO]) << "INIT: start state intra-procedural (extremal value): "<<initialEState->toString(variableIdMapping)<<endl;
     }
   }
@@ -1992,8 +2007,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     RERS_Problem::rersGlobalVarsArrayInitFP(_numberOfThreadsToUse);
     RERS_Problem::createGlobalVarAddressMapsFP(this);
   }
-
-  SAWYER_MESG(logger[TRACE])<< "INIT: finished."<<endl;
+  SAWYER_MESG(logger[INFO])<<"Initializing solver finished."<<endl;
 }
 
 void CodeThorn::Analyzer::initAstNodeInfo(SgNode* node) {
