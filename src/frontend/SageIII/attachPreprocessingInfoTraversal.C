@@ -1472,6 +1472,16 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
        // DQ (6/29/2020): We should not be adding comments and/or CPP directives to IR nodes that don't have a source position.
           ROSE_ASSERT(currentFileNameId >= 0);
 
+      // Pei-Hung (09/23/2020) For Fortran code,  target_source_file_id should be same as currentFileNameId when preprocessing is required
+         if (SageInterface::is_Fortran_language() == true)
+         {  
+           target_source_file_id = (currentFilePtr->get_requires_C_preprocessor() == true) ? 
+                                 // Sg_File_Info::getIDFromFilename(sourceFile->get_file_info()->get_filenameString()) : 
+                                    Sg_File_Info::getIDFromFilename(currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+                                    currentFileInfo->get_physical_file_id(source_file_id);
+         }
+
+
 #if 0
           if (currentFileNameId < 0)
              {
