@@ -13241,12 +13241,14 @@ SgVariableDeclaration::get_definition(SgInitializedName *ditem)
           if (defn_item->get_definition() != NULL)
                printf ("In SgVariableDeclaration::get_definition(): defn_item->get_definition() = %s \n",defn_item->get_definition()->class_name().c_str());
 #endif
-       // DQ (9/9/2007): I think we can assert this for any SgInitializedName found in a SgVariableDeclaration, 
-       // else perhaps we should have this function return a SgDeclarationStatement instead of a SgVariableDefinition.
-          ROSE_ASSERT(defn_item->get_definition() == NULL || isSgVariableDefinition(defn_item->get_definition()) );
+          // DQ (9/9/2007): I think we can assert this for any SgInitializedName found in a SgVariableDeclaration, 
+          // else perhaps we should have this function return a SgDeclarationStatement instead of a SgVariableDefinition.
+          /* MS (9/22/2020): removed ROSE_ASSERT(defn_item->get_definition() == NULL || isSgVariableDefinition(defn_item->get_definition()) );
+             because the SageBuilder:::buildVariableDeclaration calls 'new SgVariableDeclaration(name, type, varInit);'
+             which initializes SgInitializedName::p_declptr with a SgVariableDeclaration pointer and then this assertion is not correct */
 
+          // can be 0 when SageBuilder:::buildVariableDeclaration is used
           defn_stmt = isSgVariableDefinition(defn_item->get_definition());
-       // assert(defn_stmt);
         }
 
      return defn_stmt;
@@ -13257,7 +13259,12 @@ SgVariableDeclaration::get_definition(SgInitializedName *ditem)
 SgExpression*
 SgVariableDeclaration::get_bitfield()
    {
-     assert(get_definition() != 0);
+
+     /* MS (9/22/2020): in case a bitfield is not present, get_definition
+        returns 0. Since this function is also used to determine
+        whether a bitfield is present, returning 0 is necessary.  */
+     if(get_definition()==0)
+       return 0;
      return get_definition()->get_bitfield();
    }
 
