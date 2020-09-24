@@ -2,7 +2,7 @@
 #define RERS_COUNTEREXAMPLE_H
 
 #include "ExecutionTrace.h"
-#include "ltlthorn-lib/LTLRersMapping.h"
+#include "LTLRersMapping.h"
 
 namespace CodeThorn {
 

@@ -4,7 +4,7 @@
 #include <set>
 #include "CodeThornOptions.h"
 #include "LTLOptions.h"
-#include "ltlthorn-lib/LTLRersMapping.h"
+#include "LTLRersMapping.h"
 
 namespace CodeThorn {
 

@@ -2,7 +2,7 @@
 #define IO_ANALYZER_H
 
 #include "Analyzer.h"
-#include "ltlthorn-lib/ParProOptions.h"
+#include "ParProOptions.h"
 
 namespace CodeThorn {
   /*! 
