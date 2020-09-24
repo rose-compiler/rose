@@ -381,6 +381,7 @@ namespace CodeThorn {
     std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
     std::list<EState> transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
     std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
+    std::list<EState> transferAsmStmt(Edge edge, const EState* estate);
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
     

@@ -1622,6 +1622,8 @@ list<EState> CodeThorn::Analyzer::transferEdgeEState(Edge edge, const EState* es
   } else if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
     // "return x;": add $return=eval() [but not for "return f();"]
     return transferReturnStmt(edge,estate);
+  } else if(isSgAsmStmt(nextNodeToAnalyze1)) {
+    return transferAsmStmt(edge,estate);
   } else if(getLabeler()->isFunctionEntryLabel(edge.source())) {
     return transferFunctionEntry(edge,estate);
   } else if(getLabeler()->isFunctionExitLabel(edge.source())) {
@@ -2583,6 +2585,11 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
 std::list<EState> CodeThorn::Analyzer::transferReturnStmt(Edge edge, const EState* estate) {
   ROSE_ASSERT(_estateTransferFunctions);
   return _estateTransferFunctions->transferReturnStmt(edge,estate);
+}
+
+std::list<EState> CodeThorn::Analyzer::transferAsmStmt(Edge edge, const EState* estate) {
+  ROSE_ASSERT(_estateTransferFunctions);
+  return _estateTransferFunctions->transferAsmStmt(edge,estate);
 }
 
 std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, const EState* estate) {
