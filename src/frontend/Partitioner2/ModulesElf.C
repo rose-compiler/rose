@@ -271,6 +271,25 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
         }
 
         if (!found) {
+            // i386 compiled with -fPIC, occuring in the ".plt.sec" section. There's also a .plt section that gets called after
+            // lookup up the address in the GOT.
+            //    nop                   ; 4 bytes
+            //    jmp [ ebx + CONST ]   ; where CONST is the offset into the GOT
+            //    nop                   ; 6 bytes
+            rose_addr_t offset = 0;
+            SgAsmInstruction *nop1 = matchNop(partitioner, anchor);
+            SgAsmInstruction *ijmp = nop1 ? matchIndirectJumpEbx(partitioner, nop1->get_address() + nop1->get_size(),
+                                                                offset /*out*/, indirectSize /*out*/) : NULL;
+            SgAsmInstruction *nop2 = ijmp ? matchNop(partitioner, ijmp->get_address() + ijmp->get_size()) : NULL;
+            if (nop2) {
+                gotEntryNBytes_ = indirectSize;
+                gotEntryVa_ = gotVa_ + offset;
+                nBytesMatched_ = nop2->get_address() + nop2->get_size() - anchor;
+                found = true;
+            }
+        }
+
+        if (!found) {
             // i386 that look like this:
             //    jmp dword [ ebx + CONST ]; where CONST is the offset into the GOT
             //    push N                ; where N is a small integer, unique for each dynamically linked function
@@ -305,7 +324,7 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
         }
 
         if (!found) {
-            // Amd64 entries that look like this:
+            // i386 and amd64 entries that look like this when compiled with -fPIC
             //    nop      ; 4 bytes
             //    push N   ; where N is a small integer, unique for each dynamically linked function
             //    jmp X    ; where X is the address of the first PLT entry
@@ -313,10 +332,11 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
             SgAsmInstruction *nop1 = matchNop(partitioner, anchor);
             SgAsmInstruction *push = nop1 ? matchPush(partitioner, nop1->get_address() + nop1->get_size(), functionNumber_) : NULL;
             SgAsmInstruction *djmp = push ? matchDirectJump(partitioner, push->get_address() + push->get_size()) : NULL;
-            if (djmp) {
+            SgAsmInstruction *nop2 = djmp ? matchNop(partitioner, djmp->get_address() + djmp->get_size()) : NULL;
+            if (nop2) {
                 gotEntryNBytes_ = 0;                    // not present in PLT entry
                 gotEntryVa_ = 0;                        // not present in PLT entry
-                nBytesMatched_ = djmp->get_address() + djmp->get_size() - anchor;
+                nBytesMatched_ = nop2->get_address() + nop2->get_size() - anchor;
                 found = true;
             }
         }
@@ -383,20 +403,22 @@ PltInfo
 findPlt(const Partitioner &partitioner, SgAsmGenericSection *got, SgAsmElfFileHeader *elfHeader) {
     if (elfHeader) {
         // The procedure lookup table can be in a variety of places.
-        //   1. Sometimes the table is in .plt.sec, starting at the beginning of that section.
-        //   1. Sometimes the table is in .plt but the first few entries are garbage
-        //   3. Sometimes the table is in .plt.got, starting at the beginning of that section.
         bool foundSection = false;
         for (size_t i = 0; i < 3; ++i) {
             SgAsmGenericSection *section = NULL;
             switch (i) {
                 case 0:
+                    // A .plt.sec is either a subregion of .plt (it excludes the leading bogus entries) or it's a completely separate table. When it's a
+                    // separate table, we want to parse it instead of .plt because the .plt.sec is what has the offsets into the .got, which in turn is what
+                    // the relocation symbols refer to.  This is used, for instance, when compiling with -fPIC on i386.
                     section = elfHeader->get_section_by_name(".plt.sec");
                     break;
                 case 1:
+                    // The normal .plt is used when there is no .plt.sec.
                     section = elfHeader->get_section_by_name(".plt");
                     break;
                 case 2:
+                    // Not sure what this is.
                     section = elfHeader->get_section_by_name(".plt.got");
                     break;
             }
