@@ -8684,6 +8684,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgDeleteExp:              // return 0;
           case V_SgStringVal:              // return 0;
           case V_SgCharVal:                // return 0;
+          case V_SgJovialBitVal:           // return 0;
           case V_SgUnsignedLongLongIntVal: // return 0;
           case V_SgUnsignedLongVal:        // return 0;
           case V_SgComplexVal:             // return 0;

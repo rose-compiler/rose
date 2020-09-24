@@ -96,14 +96,14 @@ appendSingleWrapperArgument(const ASTtools::VarSymSet_t& syms,  std::string arg_
       SageInterface::appendExpression(e_list,SageBuilder::buildVarRefExp(arg_name ,scope));
     }
   }
-  else if (Outliner::useStructureWrapper && (syms.size() ==0))
+  else if ((Outliner::useStructureWrapper|| Outliner::useParameterWrapper) && (syms.size() ==0))
   {
     // TODO: move this outside of outliner since it is OpenMP-specific
     //For OpenMP lowering, we have to have a void * parameter even if there is no need to pass any parameters 
     //in order to match the gomp runtime lib 's function prototype for function pointers
     SgFile* cur_file = SageInterface::getEnclosingFileNode(scope);
     ROSE_ASSERT (cur_file != NULL);
-    if (cur_file->get_openmp_lowering ())
+    //if (cur_file->get_openmp_lowering ())
     {
       SageInterface::appendExpression(e_list, SageBuilder::buildIntVal(0));
     }
