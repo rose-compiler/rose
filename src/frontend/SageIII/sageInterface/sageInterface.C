@@ -17151,6 +17151,30 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
     return isMutable(name);
   }
 
+  // Get a vector of Jovial input parameters from the function parameter list
+  // TODO: Look into making this work for Fortran
+  std::vector<SgInitializedName*> SageInterface::getInParameters(const SgInitializedNamePtrList &params)
+  {
+    std::vector<SgInitializedName*> in_params;
+    for (SgInitializedName* name : params)
+      {
+        if (!isJovialOutParam(name)) in_params.push_back(name);
+      }
+    return in_params;
+  }
+
+  // Get a list of Jovial output parameters from the function parameter list
+  // TODO: Look into making this work for Fortran
+  std::vector<SgInitializedName*> SageInterface::getOutParameters(const SgInitializedNamePtrList &params)
+  {
+    std::vector<SgInitializedName*> out_params;
+    for (SgInitializedName* name : params)
+      {
+        if (isJovialOutParam(name)) out_params.push_back(name);
+      }
+    return out_params;
+  }
+
   unsigned long long SageInterface::getIntegerConstantValue(SgValueExp* expr) {
     switch (expr->variantT()) {
       case V_SgCharVal: return (long long)(isSgCharVal(expr)->get_value());
@@ -23702,7 +23726,7 @@ void SageInterface::printAST(SgNode* node)
 
 void printAST2TextFile (SgNode* node, std::string filename)
 {
-  // CR (9/21/2020): This leads to infinite recursion (clang warning message) and should be removed from API)
+  // CR 9/21/2020: This leads to infinite recursion (clang warning message) and should be removed from API)
   ROSE_ASSERT(false);
   printAST2TextFile (node, filename.c_str());
 }
