@@ -664,6 +664,12 @@ Grammar::setUpStatements ()
      ScopeStatement.setDataPrototype    ( "std::set<SgSymbol*>","hidden_declaration_list","",
                                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // DQ (9/23/2020): Add a pointer to hold a SgPragma that can be attached to a log of scope IR nodes.
+  // e.g. Cxx11_tests/test2020_102.C through test2020_107.C
+  // ScopeStatement.setDataPrototype    ( "SgPragma*","pragma","= NULL",
+  //                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+     ScopeStatement.setDataPrototype    ( "SgPragma*","pragma","= NULL",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
 
      FunctionTypeTable.setFunctionPrototype( "HEADER_FUNCTION_TYPE_TABLE", "../Grammar/Statement.code" );
      FunctionTypeTable.setDataPrototype    ( "SgSymbolTable*","function_type_table","= NULL",
