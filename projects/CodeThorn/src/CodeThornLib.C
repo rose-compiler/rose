@@ -731,7 +731,7 @@ void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,Analyzer* analyz
 
   void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,Analyzer* analyzer,SgNode* root, TimingCollector& tc) {
   tc.startTimer();
-  SAWYER_MESG(logger[TRACE])<< "INIT: initializing solver with start function "<<analyzer->getSolver()->getId()<<"."<<endl;
+  SAWYER_MESG(logger[INFO])<< "Iinitializing solver "<<analyzer->getSolver()->getId()<<" started"<<endl;
   string startFunctionName;
   if(ctOpt.startFunctionName.size()>0) {
     startFunctionName = ctOpt.startFunctionName;
@@ -739,6 +739,7 @@ void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,Analyzer* analyz
     startFunctionName = "main";
   }
   analyzer->initializeSolver(startFunctionName,root,false);
+  SAWYER_MESG(logger[INFO])<< "Initializing solver "<<analyzer->getSolver()->getId()<<" finished"<<endl;
   tc.initRunTime=tc.timer.getTimeDurationAndStop().milliSeconds();
 }
 

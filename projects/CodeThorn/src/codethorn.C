@@ -183,6 +183,11 @@ int main( int argc, char * argv[] ) {
     optionallyEliminateCompoundStatements(ctOpt, analyzer, root);
     optionallyEliminateRersArraysAndExit(ctOpt,sageProject,analyzer);
     initializeSolverWithStartFunction(ctOpt,analyzer,root,tc);
+    if(analyzer->getFlow()->getStartLabelSet().size()==0) {
+      // exit early
+      if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
+      exit(0);
+    }
     analyzer->initLabeledAssertNodes(sageProject);
     optionallyPrintFunctionIdMapping(ctOpt,analyzer);
     optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);
