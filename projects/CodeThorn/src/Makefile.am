@@ -168,6 +168,7 @@ CODETHORN_HEADER_FILES=\
   ReachabilityAnalysis.h \
   ReadWriteAnalyzer.h \
   ReadWriteHistory.h \
+  RersSpecialization.h \
   RERS_empty_specialization.h \
   RersCounterexample.h \
   RewriteStatistics.h \
