@@ -567,6 +567,12 @@ bool ROSE_DLL_API isMutable(SgInitializedName* name);
 //! True if a parameter name is a Jovial output parameter
 bool ROSE_DLL_API isJovialOutParam(SgInitializedName* name);
 
+//! Get a vector of Jovial input parameters from the function parameter list (may work for Fortran in the future)
+std::vector<SgInitializedName*> getInParameters(const SgInitializedNamePtrList &params);
+
+//! Get a vector of Jovial output parameters from the function parameter list (may work for Fortran in the future)
+std::vector<SgInitializedName*> getOutParameters(const SgInitializedNamePtrList &params);
+
 //! Interface for creating a statement whose computation writes its answer into
 //! a given variable.
 class StatementGenerator {
