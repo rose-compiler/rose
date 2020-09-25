@@ -369,6 +369,8 @@ bool VariableIdMapping::isAnonymousBitfield(SgInitializedName* initName) {
  * \date 2012.
  */
 void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
+  int numWarningsCount=0;
+  int maxWarningsCount=3; // 0 turns off warnings
   set<SgSymbol*> symbolSet;
   list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
   for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
@@ -408,7 +410,13 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
           symbolSet.insert(sym);
         }
       } else {
-        Rose::Diagnostics::mlog[WARN]<<"No symbol available for SgInitializedName at "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<endl;
+        numWarningsCount++;
+        if(numWarningsCount<maxWarningsCount) {
+          Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName at "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<endl;
+        } else if(numWarningsCount==maxWarningsCount) {
+          Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName at "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<endl;
+          Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName: maximum warning count of "<<maxWarningsCount<<" reached."<<endl;
+        }
       }
     }
   }
