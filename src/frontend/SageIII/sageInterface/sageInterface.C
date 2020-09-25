@@ -17156,7 +17156,7 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
   std::vector<SgInitializedName*> SageInterface::getInParameters(const SgInitializedNamePtrList &params)
   {
     std::vector<SgInitializedName*> in_params;
-    for (SgInitializedName* name : params)
+    BOOST_FOREACH (SgInitializedName* name, params)
       {
         if (!isJovialOutParam(name)) in_params.push_back(name);
       }
@@ -17168,7 +17168,7 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
   std::vector<SgInitializedName*> SageInterface::getOutParameters(const SgInitializedNamePtrList &params)
   {
     std::vector<SgInitializedName*> out_params;
-    for (SgInitializedName* name : params)
+    BOOST_FOREACH (SgInitializedName* name, params)
       {
         if (isJovialOutParam(name)) out_params.push_back(name);
       }
@@ -19547,9 +19547,9 @@ SageInterface::deleteAST ( SgNode* n )
                         void visit (SgNode* node)
                         {
                         //These nodes are manually deleted because they cannot be visited by the traversal
-                                /*////////////////////////////////////////////////
-                                /remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
-                                /////////////////////////////////////////////////*/
+                                ////////////////////////////////////////////////
+                                //remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
+                                ////////////////////////////////////////////////
 #if 0
                                 printf ("In DeleteAST::visit(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
