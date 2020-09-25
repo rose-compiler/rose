@@ -739,7 +739,16 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2020_98.C \
    test2020_99.C \
    test2020_100.C \
-   test2020_101.C 
+   test2020_101.C \
+   test2020_102.C \
+   test2020_103.C \
+   test2020_104.C \
+   test2020_105.C \
+   test2020_106.C \
+   test2020_107.C \
+   test2020_108.C \
+   test2020_109.C \
+   test2020_110.C 
 
 # DQ (9/18/2020): After retesting these older files, they now pass (at least with Clang 10.0).
 TESTCODES_REQUIRED_TO_PASS += \
