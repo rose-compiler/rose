@@ -286,8 +286,9 @@ Label Flow::getStartLabel() {
   if(_startLabelSet.size()==1) {
     return *_startLabelSet.begin();
   } else if(_startLabelSet.size()==0) {
-    cerr<<"Flow::getStartLabel: start label requested, but no start label available.";
-    exit(1);
+    //cerr<<"Flow::getStartLabel: start label requested, but no start label available."<<endl;
+    Label lab;
+    return lab; // intentionally returns invalid label
   } else {
     //cout<<"WARNING: start label requested, but more than one start label available. Choosing randomly one of the registered start labels."<<endl;
     return *_startLabelSet.begin();

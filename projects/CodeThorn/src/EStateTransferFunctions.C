@@ -467,6 +467,11 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge,
   }
 }
 
+  std::list<EState> EStateTransferFunctions::transferAsmStmt(Edge edge, const EState* estate) {
+    // ignore AsmStmt
+    return transferIdentity(edge,estate);
+  }
+  
   std::list<EState> EStateTransferFunctions::transferFunctionEntry(Edge edge, const EState* estate) {
     Label lab=estate->label();
     SgNode* node=_analyzer->getLabeler()->getNode(lab);
