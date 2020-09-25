@@ -337,7 +337,11 @@ int Labeler::numberOfAssociatedLabels(SgNode* node) {
     return 1;
 
   case V_SgReturnStmt:
-      return 1;
+    return 1;
+
+  case V_SgAsmStmt:
+    return 1;
+
 #if OBSOLETE_CODE      
   case V_SgCtorInitializerList:
       return countLabels(isSgCtorInitializerList(node));
