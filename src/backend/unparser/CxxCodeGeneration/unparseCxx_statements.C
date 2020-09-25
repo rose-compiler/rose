@@ -3992,6 +3992,9 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                     curprint ("/* syntax from AST */ ) ");
                  else
                     curprint (") ");
+
+            // DQ (9/24/2020): Adding support to unparse attached pragmas.
+               unparsePragmaAttribute(if_stmt);
              }
             else
              {
@@ -4587,6 +4590,9 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
           if ( increment_expr != NULL )
                unparseExpression(increment_expr, info);
           curprint(") ");
+
+       // DQ (9/24/2020): Adding support to unparse attached pragmas.
+          unparsePragmaAttribute(for_stmt);
         }
 #endif
        else
@@ -10113,6 +10119,31 @@ void Unparse_ExprStmt::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 
 void
+Unparse_ExprStmt::unparsePragmaAttribute(SgScopeStatement* scope_stmt)
+   {
+     ROSE_ASSERT(scope_stmt != NULL);
+#if 0
+     printf ("In unparsePragmaAttribute(): %p \n",scope_stmt->get_pragma());
+#endif
+#if 1
+     if (scope_stmt->get_pragma() != NULL)
+        {
+          SgPragma* pragma = scope_stmt->get_pragma();
+          string text_string = pragma->get_pragma();
+#if 0
+          printf ("Found a SgPragma: text_string = %s \n",text_string.c_str());
+#endif
+          curprint("\n#pragma " + text_string + "\n");
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+   }
+
+
+void
 Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
@@ -10166,6 +10197,26 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (saved_unparsedPartiallyUsingTokenStream == false)
         {
           curprint(")");
+#if 1
+          unparsePragmaAttribute(while_stmt);
+#else
+#if 1
+          printf ("while_stmt->get_pragma() = %p \n",while_stmt->get_pragma());
+#endif
+          if (while_stmt->get_pragma() != NULL)
+             {
+               SgPragma* pragma = while_stmt->get_pragma();
+               string text_string = pragma->get_pragma();
+#if 1
+               printf ("Found a SgPragma: text_string = %s \n",text_string.c_str());
+#endif
+               curprint("\n#pragma " + text_string + "\n");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#endif
 
           if (while_stmt->get_body())
              {
@@ -10260,6 +10311,9 @@ Unparse_ExprStmt::unparseDoWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      curprint(")");
 
+  // DQ (9/24/2020): Adding support to unparse attached pragmas.
+     unparsePragmaAttribute(dowhile_stmt);
+
      if (!info.SkipSemiColon()) 
         {
           curprint(";");
@@ -10301,6 +10355,9 @@ Unparse_ExprStmt::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (saved_unparsedPartiallyUsingTokenStream == false)
         {
           curprint (")");
+
+       // DQ (9/23/2020): Adding support to unparse attached pragmas.
+          unparsePragmaAttribute(switch_stmt);
         }
        else
         {

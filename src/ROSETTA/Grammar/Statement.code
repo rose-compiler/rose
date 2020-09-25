@@ -5061,6 +5061,9 @@ SgScopeStatement::SgScopeStatement ( Sg_File_Info* file_info )
   // DQ (7/23/2010): Build the local type table.
      p_type_table = new SgTypeTable();
      p_type_table->set_parent(this);
+
+  // DQ (9/23/2020): Add a pointer to hold a SgPragma that can be attached to a log of scope IR nodes.
+     p_pragma = NULL;
    }
 
 void
