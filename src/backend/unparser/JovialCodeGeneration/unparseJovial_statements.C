@@ -247,14 +247,14 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      curprint("(");
 
      bool print_comma = false;
-     for (SgInitializedName* param : in_params) {
+     foreach (SgInitializedName* param, in_params) {
         if (print_comma) curprint(",");
         curprint(param->get_name());
         print_comma = true;
      }
 
      print_comma = false;
-     for (SgInitializedName* param : out_params) {
+     foreach (SgInitializedName* param,  out_params) {
         if (print_comma) curprint(",");
         else             curprint(":");
         curprint(param->get_name());
