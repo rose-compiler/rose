@@ -208,8 +208,8 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgUnparse_Info ninfo(info);
 
-     SgBasicBlock* func_body = nullptr;
-     SgScopeStatement* param_scope = nullptr;
+     SgBasicBlock* func_body = NULL;
+     SgScopeStatement* param_scope = NULL;
 
      SgProcedureHeaderStatement* func = isSgProcedureHeaderStatement(stmt);
      ASSERT_not_null(func);
