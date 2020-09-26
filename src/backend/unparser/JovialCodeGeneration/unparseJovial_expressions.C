@@ -45,6 +45,7 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
           case V_SgAssignOp:            unparseAssignOp   (expr, info);          break;
 
           case V_SgAddOp:               unparseBinaryOperator(expr, "+", info);  break;
+          case V_SgAtOp:                unparseBinaryOperator(expr, "@", info);  break;
           case V_SgSubtractOp:          unparseBinaryOperator(expr, "-", info);  break;
           case V_SgMultiplyOp:          unparseBinaryOperator(expr, "*", info);  break;
           case V_SgDivideOp:            unparseBinaryOperator(expr, "/", info);  break;

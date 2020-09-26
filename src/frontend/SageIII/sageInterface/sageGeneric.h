@@ -238,6 +238,7 @@ namespace sg
     GEN_VISIT(SgAssignedGotoStatement)
     GEN_VISIT(SgAssociateStatement)
     GEN_VISIT(SgAsteriskShapeExp)
+    GEN_VISIT(SgAtOp)
     GEN_VISIT(SgAttribute)
     GEN_VISIT(SgAttributeSpecificationStatement)
     GEN_VISIT(SgAutoType)
