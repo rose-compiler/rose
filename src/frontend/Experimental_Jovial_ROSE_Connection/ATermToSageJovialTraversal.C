@@ -7,6 +7,7 @@
 
 #define PRINT_ATERM_TRAVERSAL 0
 #define PRINT_SOURCE_POSITION 0
+#define PRINT_WARNINGS 0
 
 using namespace ATermSupport;
 using namespace Jovial_ROSE_Translation;
@@ -178,29 +179,9 @@ ATbool ATermToSageJovialTraversal::traverse_NullDeclaration(ATerm term)
 #endif
 
    if (ATmatch(term, "NullDeclaration()")) {
-
-#if 0
-   // If this is a function parameter scope do not append the null declaration to it. It's
-   // primarily in the grammar for decoration if there are no function formal parameters
-   // and will fail when tried to insert in the parameter scope because it SgFunctionParameterScope
-   // only contains declarations.
-
-   // Conclusion: only append the null declaration (SgNullStatement) if scope is NOT SgFunctionParameterScope
-
-   // Conclusion2: changing to SgEmptyDeclaration may fix this (and seemed to work anyway with other changes?)
-   // Need to check function parameter lists
-   //
-      if (isSgBasicBlock(SageBuilder::topScopeStack()) != sage_tree_builder.get_context().actual_function_param_scope) {
-         ROSE_ASSERT(false);
-         SgNullStatement* null_decl = SageBuilder::buildNullStatement();
-         setSourcePosition(null_decl, term);
-         SageInterface::appendStatement(null_decl, SageBuilder::topScopeStack());
-      }
-#else
       SgEmptyDeclaration* null_decl = SageBuilder::buildEmptyDeclaration();
       setSourcePosition(null_decl, term);
       SageInterface::appendStatement(null_decl, SageBuilder::topScopeStack());
-#endif
    }
    else return ATfalse;
 
@@ -3222,7 +3203,7 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
 
          // TODO: like-option (apparently not needed at the moment)
             cerr << "WARNING UNIMPLEMENTED: LikeOption \n";
-            ROSE_ASSERT(false);
+            //ROSE_ASSERT(false);
          } else return ATfalse;
       }
       else return ATfalse;
@@ -3342,45 +3323,16 @@ ATbool ATermToSageJovialTraversal::traverse_StatementNameDeclaration(ATerm term,
    if (ATmatch(term, "StatementNameDeclaration(<term>)", &t_name)) {
       cerr << "WARNING UNIMPLEMENTED: StatementNameDeclaration\n";
 
-#if 0
-      SgUntypedInitializedNameList* name_list = NULL;
-      name_list = new SgUntypedInitializedNameList();
-      ROSE_ASSERT(name_list);
-      setSourcePosition(name_list, t_name);
-#endif
-
       ATermList tail = (ATermList) ATmake("<term>", t_name);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
          if (traverse_Name(head, name)) {
             // MATCHED Name
-
-#if 0
-            // type?
-            SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_unknown);
-
-            SgUntypedInitializedName* iname = new SgUntypedInitializedName(type, name);
-            ROSE_ASSERT(iname);
-            setSourcePosition(iname, head);
-
-            // where to push it?
-            name_list->get_name_list().push_back(iname);
-#endif
          } else return ATfalse;
       }
-   } else return ATfalse;
-
-#if 0
-   int stmt_enum = LanguageTranslation::e_unknown;
-   std::string label_string = "";
-
-   SgUntypedInitializedNameListDeclaration* name_list_decl = new SgUntypedInitializedNameListDeclaration(label_string, stmt_enum, name_list);
-   ROSE_ASSERT(name_list_decl);
-   setSourcePosition(name_list_decl, term); // correct source position?
-
-   decl_list->get_decl_list().push_back(name_list_decl);
-#endif
+   }
+   else return ATfalse;
 
    return ATtrue;
 }
@@ -3698,7 +3650,6 @@ ATbool ATermToSageJovialTraversal::traverse_RefSpecificationChoice(ATerm term)
       // MATCHED ProcedureDeclaration (is a SubroutineDeclaration in grammar)
    } else return ATfalse;
 
-
    return ATtrue;
 }
 
@@ -3887,7 +3838,8 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDeclaration(ATerm term, Lan
 
    SgFunctionDeclaration* function_decl = nullptr;
    SgFunctionParameterList* param_list = nullptr;
-   SgBasicBlock* param_scope = nullptr;
+   SgScopeStatement* param_scope = nullptr;
+   bool is_defining_decl = true;
 
    if (ATmatch(term, "ProcedureDeclaration(<term>,<term>)", &t_proc_heading, &t_decl)) {
 
@@ -3895,8 +3847,10 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDeclaration(ATerm term, Lan
          // MATCHED ProcedureHeading
       } else return ATfalse;
 
+      is_defining_decl = ! sage_tree_builder.list_contains(modifiers, e_function_modifier_reference);
+
    // Enter SageTreeBuilder for SgFunctionParameterList
-      sage_tree_builder.Enter(param_list, param_scope, name, nullptr);
+      sage_tree_builder.Enter(param_list, param_scope, name, nullptr, is_defining_decl);
 
    // These declarations will stored in the function parameter scope
       if (traverse_Declaration(t_decl)) {
@@ -3909,7 +3863,7 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDeclaration(ATerm term, Lan
    else return ATfalse;
 
 // Enter SageTreeBuilder for SgFunctionDeclaration
-   sage_tree_builder.Enter(function_decl, name, /*return_type*/nullptr, param_list, modifiers);
+   sage_tree_builder.Enter(function_decl, name, /*return_type*/nullptr, param_list, modifiers, is_defining_decl);
 
 // Leave SageTreeBuilder for SgFunctionDeclaration
    sage_tree_builder.Leave(function_decl, param_scope);
@@ -3930,7 +3884,8 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term, Lang
 
    SgFunctionDeclaration* function_decl = nullptr;
    SgFunctionParameterList* param_list = nullptr;
-   SgBasicBlock* param_scope = nullptr;
+   SgScopeStatement* param_scope = nullptr;
+   bool is_defining_decl = true;
 
    if (ATmatch(term, "ProcedureDefinition(<term>,<term>)", &t_proc_heading, &t_proc_body)) {
 
@@ -3939,7 +3894,7 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term, Lang
       } else return ATfalse;
 
    // Enter SageTreeBuilder for SgFunctionParameterList
-      sage_tree_builder.Enter(param_list, param_scope, name, nullptr);
+      sage_tree_builder.Enter(param_list, param_scope, name, nullptr, is_defining_decl);
 
    // These declarations will stored in the function parameter scope
       if (traverse_SubroutineBody(t_proc_body)) {
@@ -3948,12 +3903,11 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term, Lang
 
    // Leave SageTreeBuilder for SgFunctionParameterList
       sage_tree_builder.Leave(param_list, param_scope, param_name_list);
-
    }
    else return ATfalse;
 
 // Enter SageTreeBuilder for SgFunctionDeclaration
-   sage_tree_builder.Enter(function_decl, name, /*return_type*/nullptr, param_list, modifiers);
+   sage_tree_builder.Enter(function_decl, name, /*return_type*/nullptr, param_list, modifiers, is_defining_decl);
 
 // Leave SageTreeBuilder for SgFunctionDeclaration
    sage_tree_builder.Leave(function_decl, param_scope);
@@ -4054,7 +4008,8 @@ ATbool ATermToSageJovialTraversal::traverse_SubroutineBody(ATerm term)
 // 3.2 FUNCTIONS
 //----------------------------------------------------------------------------------------
 
-ATbool ATermToSageJovialTraversal::traverse_FunctionDeclaration(ATerm term, LanguageTranslation::FunctionModifierList &modifiers)
+ATbool ATermToSageJovialTraversal::
+traverse_FunctionDeclaration(ATerm term, LanguageTranslation::FunctionModifierList &modifiers)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_FunctionDeclaration: %s\n", ATwriteToString(term));
@@ -4068,7 +4023,8 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDeclaration(ATerm term, Lang
 
    SgFunctionDeclaration* function_decl = nullptr;
    SgFunctionParameterList* param_list = nullptr;
-   SgBasicBlock* param_scope = nullptr;
+   SgScopeStatement* param_scope = nullptr;
+   bool is_defining_decl = true;
 
    if (ATmatch(term, "FunctionDeclaration(<term>,<term>,<term>)", &t_func_heading, &t_dirs, &t_decl)) {
 
@@ -4076,8 +4032,10 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDeclaration(ATerm term, Lang
          // MATCHED FunctionHeading
       } else return ATfalse;
 
+      is_defining_decl = ! sage_tree_builder.list_contains(modifiers, e_function_modifier_reference);
+
    // Enter SageTreeBuilder for SgFunctionParameterList
-      sage_tree_builder.Enter(param_list, param_scope, name, return_type);
+      sage_tree_builder.Enter(param_list, param_scope, name, return_type, is_defining_decl);
 
       if (traverse_DirectiveList(t_dirs)) {
          // MATCHED DirectiveList (grammar is ReducibleDirective*)
@@ -4093,7 +4051,7 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDeclaration(ATerm term, Lang
    else return ATfalse;
 
 // Enter SageTreeBuilder for SgFunctionDeclaration
-   sage_tree_builder.Enter(function_decl, name, return_type, param_list, modifiers);
+   sage_tree_builder.Enter(function_decl, name, return_type, param_list, modifiers, is_defining_decl);
 
 // Leave SageTreeBuilder for SgFunctionDeclaration
    sage_tree_builder.Leave(function_decl, param_scope);
@@ -4115,7 +4073,8 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
 
    SgFunctionDeclaration* function_decl = nullptr;
    SgFunctionParameterList* param_list = nullptr;
-   SgBasicBlock* param_scope = nullptr;
+   SgScopeStatement* param_scope = nullptr;
+   bool is_defining_decl = true;
 
    if (ATmatch(term, "FunctionDefinition(<term>,<term>,<term>)", &t_func_heading, &t_dirs, &t_proc_body)) {
 
@@ -4124,7 +4083,7 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
       } else return ATfalse;
 
    // Enter SageTreeBuilder for SgFunctionParameterList
-      sage_tree_builder.Enter(param_list, param_scope, name, return_type);
+      sage_tree_builder.Enter(param_list, param_scope, name, return_type, is_defining_decl);
 
       if (traverse_DirectiveList(t_dirs)) {
          // MATCHED ReducibleDirective*
@@ -4140,7 +4099,7 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
    else return ATfalse;
 
 // Enter SageTreeBuilder for SgFunctionDeclaration
-   sage_tree_builder.Enter(function_decl, name, return_type, param_list, modifiers);
+   sage_tree_builder.Enter(function_decl, name, return_type, param_list, modifiers, is_defining_decl);
 
 // Leave SageTreeBuilder for SgFunctionDeclaration
    sage_tree_builder.Leave(function_decl, param_scope);
@@ -4184,7 +4143,7 @@ traverse_FunctionHeading(ATerm term, std::string &name, SgType* &type, std::list
          // MATCHED StatusItemDescription: must be handled differently than other ItemTypeDescriptions
          // because they require different arguments
          cerr << "WARNING UNIMPLEMENTED: FunctionHeading - StatusItemDescription\n";
-         ROSE_ASSERT(false);
+         //ROSE_ASSERT(false);
       }
       else return ATfalse;
    }
@@ -5172,7 +5131,7 @@ ATbool ATermToSageJovialTraversal::traverse_CaseAlternative(ATerm term)
 
    if (!case_index_group) {
       cerr << "WARNING UNIMPLEMENTED: CaseAlternative - probably StatusConstant\n";
-      ROSE_ASSERT(case_index_group);
+      //ROSE_ASSERT(case_index_group);
    }
 
    ROSE_ASSERT(case_option_stmt);
@@ -5343,7 +5302,7 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureCallStatement(ATerm term)
          if (traverse_Name(t_abort_name, abort_stmt_name)) {
             // MATCHED AbortStatementName
             cerr << "WARNING UNIMPLEMENTED: ProcedureCallStatement AbortPhrase not handled \n";
-            ROSE_ASSERT(false);
+            //ROSE_ASSERT(false);
          } else return ATfalse;
       } else return ATfalse;
    }
@@ -5716,7 +5675,7 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
       if (traverse_Variable(t_num_var, expr)) {
          if (!expr) {
             cerr << "WARNING UNIMPLEMENTED: NumericPrimary - NumericVariable\n";
-            ROSE_ASSERT(false);
+            //ROSE_ASSERT(false);
          }
       } else return ATfalse;
    }
@@ -6512,7 +6471,9 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
    setSourcePosition(array_ref, term);
 
    if (var) {
+#if PRINT_WARNINGS
      cerr << "WARNING UNIMPLEMENTED: TableItem - has pointer dereference with subscripts size " << subscript.size() << std::endl;
+#endif
    }
    else {
      var = array_ref;
@@ -6764,7 +6725,7 @@ ATbool ATermToSageJovialTraversal::traverse_NamedConstant(ATerm term, SgExpressi
    if (ATmatch(term, "ControlLetter(<str>)" , &letter)) {
       // MATCHED ControlLetter
       cerr << "WARNING UNIMPLEMENTED: NamedConstant - ControlLetter " << letter << endl;
-      ROSE_ASSERT(false);
+      //ROSE_ASSERT(false);
    } else return ATfalse;
 
       //  ConstantItemName            -> NamedConstant         {prefer}  %% ambiguous with ConstantTableName
@@ -6892,7 +6853,7 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
       else {
          // TODO - don't think this should happen (but what about table_ref(1,2,3)
          cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall - table reference " << name << endl;
-         ROSE_ASSERT(false);
+         //ROSE_ASSERT(false);
       }
    }
 
@@ -7018,7 +6979,7 @@ ATbool ATermToSageJovialTraversal::traverse_NextFunction(ATerm term, SgFunctionC
          // here is if it uses a StatusConstant as the argument and
          // StatusConstant doesn't seem to be applicable.
          cerr << "WARNING UNIMPLEMENTED: NextFunction with a status constant\n";
-         ROSE_ASSERT(false);
+         //ROSE_ASSERT(false);
       } else return ATfalse;
 
       if (traverse_NumericFormula(t_increment, increment)) {

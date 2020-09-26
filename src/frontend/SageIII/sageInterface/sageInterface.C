@@ -20233,8 +20233,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
 
                          // CR 9/21/2020: To remove this issue make sure dot graph looks ok and Dereference
                          // is unparsed correctly.
-                         std::cerr << "WARNING UNIMPLEMENTED: move JovialTableStatement between blocks \n";
-
+                         std::cerr << "WARNING UNIMPLEMENTED: (Charles R. should ignore this one) move JovialTableStatement between blocks \n";
 #if 0
                          //ANYONE_MAY_PLEASE_DELETE_THIS
                          std::cout << "--> targetBlock        " << targetBlock << "\n";

@@ -1551,6 +1551,13 @@ HEADER_FUNCTION_PARAMETER_SCOPE_START
 // PP (06/01/20)
 SgName get_mangled_name() const $ROSE_OVERRIDE;
 
+HEADER_LIST_DECLARATIONS
+
+// CR (09/24/2020): Finishing implementation of SgFunctionParameterScope for Jovial
+  protected:
+    virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+    virtual bool insert_child(SgStatement*, SgStatement*, bool inFront = true, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
 HEADER_FUNCTION_PARAMETER_SCOPE_END
 
 
@@ -4440,7 +4447,7 @@ SgStatement::insert_child(SgStatement* target, SgStatement* newstmt, bool inFron
    {
      printf ("$CLASSNAME::insert_child(): ERROR: virtual function called in base class by mistake in %s (exiting at ...) \n",this->class_name().c_str());
 
-  // DQ (6/15/2019): Output more information when this error occures.
+  // DQ (6/15/2019): Output more information when this error occurs.
      ROSE_ASSERT(target != NULL);
      printf (" --- target = %p = %s \n",target,target->class_name().c_str());
      SgNode* target_parent = target->get_parent();
@@ -6340,7 +6347,7 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgTemplateInstantiationDefn:
           case V_SgNamespaceDefinitionStatement:
           case V_SgGlobal:
-          // case V_SgFunctionParameterScope: // PP (06/01/20) added for Ada support
+          case V_SgFunctionParameterScope: // CR (09/24/2020): finishing implementation for Jovial
           case V_SgModuleStatement:
           case V_SgDeclarationScope:
       // PP (05/11/20) - Ada support
@@ -6643,6 +6650,14 @@ SgScopeStatement::getDeclarationList ()
                break;
              }
 
+          case V_SgFunctionParameterScope:
+             {
+               SgFunctionParameterScope* paramScope = isSgFunctionParameterScope(currentScope);
+               ROSE_ASSERT (paramScope != NULL);
+               currentStatementList = &(paramScope->get_declarations());
+               break;
+             }
+
           case V_SgNamespaceDefinitionStatement:
              {
                SgNamespaceDefinitionStatement* namespaceScope = isSgNamespaceDefinitionStatement(currentScope);
@@ -6706,7 +6721,6 @@ SgScopeStatement::getDeclarationList () const
              {
                const SgGlobal* globalScope = isSgGlobal(currentScope);
                ROSE_ASSERT (globalScope != NULL);
-            // currentStatementList = &(globalScope->get_declarations());
                return globalScope->get_declarations();
                break;
              }
@@ -6727,6 +6741,14 @@ SgScopeStatement::getDeclarationList () const
                break;
              }   
 
+          case V_SgFunctionParameterScope:
+             {
+               const SgFunctionParameterScope* paramScope = isSgFunctionParameterScope(currentScope);
+               ROSE_ASSERT (paramScope != NULL);
+               return paramScope->get_declarations();
+               break;
+             }
+
           case V_SgNamespaceDefinitionStatement:
              {
                const SgNamespaceDefinitionStatement* namespaceScope = isSgNamespaceDefinitionStatement(currentScope);
@@ -6735,7 +6757,7 @@ SgScopeStatement::getDeclarationList () const
                return namespaceScope->get_declarations();
                break;
              }
-#if 1
+
           case V_SgNonrealDecl:
           case V_SgDeclarationScope:
              {
@@ -6743,7 +6765,7 @@ SgScopeStatement::getDeclarationList () const
                ROSE_ASSERT(!"ROSE-1378");
                break;
              }
-#endif
+
           default:
                printf ("ERROR: default reached in switch (getDeclarationList() const) currentScope = %s \n",currentScope->sage_class_name());
                printf ("Note: this function is not defined for all IR nodes derived from SgScopeStatement (use SgScopeStatement::containsOnlyDeclarations() to check)\n");
@@ -11210,14 +11232,40 @@ SgFunctionParameterScope::post_construction_initialization()
   // Nothing to do here, but we need this function to be defined.
    }
    
+// CR (09/24/2020): Finishing implementation of SgParameterScope for Jovial
 SgName
 SgFunctionParameterScope::get_mangled_name(void) const
    {
      // PP (06/01/20) - just return some name 
      // (or should the name be composed form the parent declaration?)
-     return "__function_parameter_scope__";
+     return SgName("__function_parameter_scope__");
    }
-   
+
+void
+SgFunctionParameterScope::append_declaration(SgDeclarationStatement * what)
+   {
+     get_declarations().push_back(what);
+     what->set_parent(this);
+   }
+
+void
+SgFunctionParameterScope::prepend_declaration(SgDeclarationStatement * what)
+   {
+     get_declarations().insert(get_declarations().begin(), what);
+     what->set_parent(this);
+   }
+
+bool
+SgFunctionParameterScope::insert_child(SgStatement* target, SgStatement* newstmt, bool inFront, bool extractBasicBlock)
+   {
+     return StatementListInsertChild( this, get_declarations(), target, newstmt, inFront, extractBasicBlock, false);
+   }
+
+bool
+SgFunctionParameterScope::replace_child(SgStatement *target ,SgStatement * newstmt, bool extractBasicBlock)
+   {
+     return StatementListInsertChild( this, get_declarations(), target, newstmt, true, extractBasicBlock, true);
+   }
 
 SOURCE_FUNCTION_PARAMETER_SCOPE_END
 
