@@ -6286,15 +6286,15 @@ SageBuilder::buildNondefiningProcedureHeaderStatement(const SgName & name, SgTyp
     ROSE_ASSERT(return_type);
     ROSE_ASSERT(param_list);
 
-    if (scope == nullptr)
+    if (scope == NULL)
       {
         scope = SageBuilder::topScopeStack();
       }
 
-    SgProcedureHeaderStatement* nondef_decl = nullptr;
+    SgProcedureHeaderStatement* nondef_decl = NULL;
 
     SgFunctionType* func_type = buildFunctionType(return_type, param_list);
-    SgFunctionSymbol* func_symbol = scope->find_symbol_by_type_of_function<SgProcedureHeaderStatement>(name,func_type,nullptr,nullptr);
+    SgFunctionSymbol* func_symbol = scope->find_symbol_by_type_of_function<SgProcedureHeaderStatement>(name,func_type,NULL,NULL);
     if (func_symbol)
       {
         nondef_decl = isSgProcedureHeaderStatement(func_symbol->get_declaration());
@@ -6302,8 +6302,8 @@ SageBuilder::buildNondefiningProcedureHeaderStatement(const SgName & name, SgTyp
     else
       {
         nondef_decl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>
-                            ( name, return_type, param_list, /*isMemberFunction*/false, scope, /*decoratorList*/nullptr,
-                              /*functionConstVolatileFlags*/0, nullptr, nullptr, SgStorageModifier::e_default );
+                            ( name, return_type, param_list, /*isMemberFunction*/false, scope, /*decoratorList*/NULL,
+                              /*functionConstVolatileFlags*/0, NULL, NULL, SgStorageModifier::e_default );
       }
 
     ROSE_ASSERT(isSgProcedureHeaderStatement(nondef_decl));
