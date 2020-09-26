@@ -8450,6 +8450,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgIntegerDivideOp:
           case V_SgDivideOp:         // return 13;
           case V_SgModOp:            // return 13;
+          case V_SgReplicationOp:    // return 13;
                                      precedence_value = 13; break;
 
           case V_SgDotStarOp:        // return 14;
@@ -8477,7 +8478,8 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgLambdaExp:        // return 15;
 
        // CR (7/31/2020): Replication operator used in Jovial (and potentially Fortran) initialization
-          case V_SgReplicationOp:    precedence_value = 15; break;
+          case V_SgAtOp:             // return 15;
+                                     precedence_value = 15; break;
 
           case V_SgFunctionCallExp:
              {
