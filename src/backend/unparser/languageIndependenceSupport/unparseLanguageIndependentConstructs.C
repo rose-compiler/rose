@@ -8854,11 +8854,6 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
      curprint(string("\n/* In getAssociativity(): variant = ") + Cxx_GrammarTerminalNames[variant].name + " */ \n");
 #endif
 
-#if 0
-     printf ("Exiting as a test in getAssociativity() \n");
-     ROSE_ASSERT(false);
-#endif
-
      switch (variant)
         {
        // DQ (7/23/2013): Added cast operator.
@@ -8999,6 +8994,7 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
           case V_SgBitComplementOp:
           case V_SgPointerDerefExp:
           case V_SgAddressOfOp:
+          case V_SgAtOp:
           case V_SgSizeOfOp:
              {
               return e_assoc_left;

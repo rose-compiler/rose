@@ -6433,6 +6433,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
    SgVarRefExp* var_ref = nullptr;
    SgPntrArrRefExp* array_ref = nullptr;
    SgExprListExp* array_subscripts = nullptr;
+   SgExpression* deref_var = nullptr;
 
    var = nullptr;
 
@@ -6446,37 +6447,39 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
 
    // May have a subscript(s)
       if (traverse_Subscript(t_subscript, subscript)) {
-         array_subscripts = SageBuilder::buildExprListExp_nfi();
-         setSourcePosition(array_subscripts, t_subscript);
+         if (subscript.size() > 0) {
+            array_subscripts = SageBuilder::buildExprListExp_nfi();
+            setSourcePosition(array_subscripts, t_subscript);
 
-         for (int i=0; i< subscript.size(); i++) {
-            array_subscripts->get_expressions().push_back(subscript[i]);
+            for (int i=0; i< subscript.size(); i++) {
+               array_subscripts->get_expressions().push_back(subscript[i]);
+            }
          }
       }
       else {
          cerr << "WARNING UNIMPLEMENTED: TableItem - has a subscript with size (probably 0?) " << subscript.size() << std::endl;
       }
 
-      if (traverse_TableDereference(t_tblderef, var)) {
+      if (traverse_TableDereference(t_tblderef, deref_var, /*build_ptr_ref*/false)) {
          // MATCHED TableDereference
       } else return ATfalse;
-
-   } else return ATfalse;
+   }
+   else return ATfalse;
 
    ROSE_ASSERT(var_ref);
-   ROSE_ASSERT(array_subscripts);
 
-   array_ref = SageBuilder::buildPntrArrRefExp(var_ref, array_subscripts);
-   ROSE_ASSERT(array_ref);
-   setSourcePosition(array_ref, term);
-
-   if (var) {
-#if PRINT_WARNINGS
-     cerr << "WARNING UNIMPLEMENTED: TableItem - has pointer dereference with subscripts size " << subscript.size() << std::endl;
-#endif
+   if (array_subscripts) {
+      array_ref = SageBuilder::buildPntrArrRefExp(var_ref, array_subscripts);
+      ROSE_ASSERT(array_ref);
+      setSourcePosition(array_ref, term);
+      var = array_ref;
    }
    else {
-     var = array_ref;
+      var = var_ref;
+   }
+
+   if (deref_var) {
+      var = SageBuilder::buildAtOp_nfi(var, deref_var);
    }
 
    return ATtrue;
@@ -6524,7 +6527,7 @@ ATbool ATermToSageJovialTraversal::traverse_Index(ATerm term, SgExpression* &for
 }
 
 
-ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpression* &formula)
+ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpression* &formula, bool build_ptr_ref)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_TableDereference: %s\n", ATwriteToString(term));
@@ -6532,14 +6535,14 @@ ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpre
 
    if (ATmatch(term, "no-table-dereference")) {
       // MATCHED no-table-dereference
-   } else if (traverse_Dereference(term, formula)) {
+   } else if (traverse_Dereference(term, formula, build_ptr_ref)) {
       // MATCHED Dereference
    } else return ATfalse;
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_Dereference(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_Dereference(ATerm term, SgExpression* &expr, bool build_ptr_ref)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Dereference: %s\n", ATwriteToString(term));
@@ -6548,28 +6551,28 @@ ATbool ATermToSageJovialTraversal::traverse_Dereference(ATerm term, SgExpression
    ATerm t_deref;
    char* name;
    SgExpression* formula = nullptr;
-   SgPointerDerefExp* deref = nullptr;
 
    expr = nullptr;
 
    if (ATmatch(term, "Dereference(<term>)", &t_deref)) {
       if (ATmatch(t_deref, "<str>", &name)) {
          // MATCHED PointerItemName
-         SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
-
-         deref = SageBuilder::buildPointerDerefExp(var_ref);
+         formula = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+         setSourcePosition(formula, term);
       } else if (traverse_GeneralFormula(t_deref, formula)) {
          // MATCHED PointerFormula through GeneralFormula
-         ROSE_ASSERT(formula);
-         deref = SageBuilder::buildPointerDerefExp(formula);
       } else return ATfalse;
    }
    else return ATfalse;
 
-   ROSE_ASSERT(deref);
-   setSourcePosition(deref, term);
+   ROSE_ASSERT(formula);
 
-   expr = deref;
+   if (build_ptr_ref) {
+     expr = SageBuilder::buildPointerDerefExp(formula);
+   }
+   else {
+     expr = formula;
+   }
 
    return ATtrue;
 }

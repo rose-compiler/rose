@@ -20230,22 +20230,8 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
 
                          SgDeclarationStatement* def_decl = table->get_definingDeclaration();
                          SgDeclarationStatement* nondef_decl = table->get_firstNondefiningDeclaration();
-
-                         // CR 9/21/2020: To remove this issue make sure dot graph looks ok and Dereference
-                         // is unparsed correctly.
-                         std::cerr << "WARNING UNIMPLEMENTED: (Charles R. should ignore this one) move JovialTableStatement between blocks \n";
-#if 0
-                         //ANYONE_MAY_PLEASE_DELETE_THIS
-                         std::cout << "--> targetBlock        " << targetBlock << "\n";
-                         std::cout << "-->        decl        " << table << ": scope" << table->get_scope() << "\n";
-                         std::cout << "--> nondef_decl parent " << nondef_decl->get_parent() << "\n";
-                         std::cout << "--> nondef_decl scope  " << nondef_decl->get_scope() << "\n";
-                         std::cout << "-->    def_decl scope  " <<    def_decl->get_scope() << "\n";
-#endif
-
                          nondef_decl->set_parent(targetBlock);
                          nondef_decl->set_scope(targetBlock);
-
                          def_decl->set_scope(targetBlock);
                          break;
                        }
@@ -20295,7 +20281,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
   // DQ (9/23/2011): Reset with a valid symbol table.
      sourceBlock->set_symbol_table(new SgSymbolTable());
      sourceBlock->get_symbol_table()->set_parent(sourceBlock);
-#if 1
+
      ROSE_ASSERT (targetBlock->get_symbol_table() == s_table);
      for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
      {
@@ -20311,7 +20297,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
        SgSymbol* symbol = iname->get_symbol_from_symbol_table();
        ROSE_ASSERT (symbol != NULL);
      }
-#endif
+
      // Liao 2/4/2009
      // Finally , move preprocessing information attached inside the source block to the target block
      // Outliner uses this function to move a code block to the outlined function.
