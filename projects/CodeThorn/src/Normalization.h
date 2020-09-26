@@ -323,6 +323,11 @@ namespace CodeThorn {
     // counter for generating new variable names
     Normalization::TmpVarNrType getTmpVarNr();
     void incTmpVarNr();
+    // used for initialization
+    Normalization::TmpVarNrType getInvalidTmpVarNr();
+    bool isInvalidTmpVarNr(Normalization::TmpVarNrType);
+    bool isValidTmpVarNr(Normalization::TmpVarNrType);
+
     // true for tmpVarNrs that have been registered. 0 should never be registered.
     bool isValidRegisteredTmpVarNr(Normalization::TmpVarNrType tmpVarNr);
     // a tmpVarNr is valid if : tmpVarNr > 0 and tmpVarNrExists(nr)

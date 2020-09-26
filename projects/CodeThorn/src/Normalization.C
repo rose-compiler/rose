@@ -735,10 +735,10 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
           // i) generate tmp-var initializer with expr as lhs
           SgScopeStatement* scope=stmt->get_scope();
           bool shareExpression=false;
-          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: stmt:"<<stmt->unparseToString()<<endl;
-          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr:"<<expr->unparseToString()<<endl;
-          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: scope:"<<AstTerm::astTermWithNullValuesToString(scope)<<endl;
-          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: scope:"<<scope->unparseToString()<<endl;
+          //SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: stmt:"<<stmt->unparseToString()<<endl;
+          //SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr:"<<expr->unparseToString()<<endl;
+          //SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: scope:"<<AstTerm::astTermWithNullValuesToString(scope)<<endl;
+          //SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: scope:"<<scope->unparseToString()<<endl;
           auto tmpVarDeclaration=buildVariableDeclarationWithInitializerForExpression(expr,scope,shareExpression);
           addToTmpVarMapping((*j).tmpVarNr,tmpVarDeclaration);
 
@@ -769,12 +769,13 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
         case Normalization::GEN_TMP_VAR_DECL: {
           SAWYER_MESG(logger[TRACE])<<"GENERATING TMP VAR DECL:"<<endl;
           SgScopeStatement* scope=stmt->get_scope();
-          SAWYER_MESG(logger[TRACE])<<"GENERATING TMP VAR DECL:scope:"<<scope->unparseToString()<<endl;
+          //SAWYER_MESG(logger[TRACE])<<"GENERATING TMP VAR DECL:scope:"<<scope->unparseToString()<<endl;
           SgVariableDeclaration* tmpVarDeclaration=generateVarDecl((*j).tmpVarDeclType,scope);
           ROSE_ASSERT(tmpVarDeclaration);
           tmpVarDeclaration->set_parent(stmt->get_parent());
           SAWYER_MESG(logger[TRACE])<<"GENERATING TMP VAR DECL:tmpVarDeclaration:"<<tmpVarDeclaration->unparseToString()<<endl;
           // using declVarNr instead of tmpVarNr for control-flow operator transformations
+          SAWYER_MESG(logger[TRACE])<<"add:"<<(*j).tmpVarNr<<endl;
           addToTmpVarMapping((*j).tmpVarNr,tmpVarDeclaration);
           insertNormalizedSubExpressionFragment(tmpVarDeclaration,stmt);
           SAWYER_MESG(logger[TRACE])<<"GENERATING TMP VAR DECL:after insertion: stmt:"<<stmt->unparseToString()<<endl;
@@ -849,6 +850,7 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
         }
         case Normalization::GEN_TMP_VAR_ASSIGN: {
           SAWYER_MESG(logger[TRACE])<<"GENERATING TMP VAR ASSIGNMENT:"<<endl;
+          SAWYER_MESG(logger[TRACE])<<"TMP VAR:"<<(*j).lhsTmpVarNr<<":"<<(*j).rhsTmpVarNr<<endl;
           SgExprStatement* tmpVarAssignment=generateTmpVarAssignment((*j).lhsTmpVarNr,(*j).rhsTmpVarNr);
           insertNormalizedSubExpressionFragment(tmpVarAssignment,stmt);
           break;
@@ -896,19 +898,6 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
     exprTransformationList.push_back(subExprTransformationList);
   }
 
-#if 0
-  Normalization::TmpVarNrType Normalization::skipSubExpressionOperator(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList,bool insideExprToBeEliminated) {
-add
-      ROSE_ASSERT(addressOfOp);
-      if(isSgUnaryOp(addressOfOp)) {
-        mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(addressOfOp)),subExprTransformationList,insideExprToBeEliminated);
-      } else if(isSgBinaryOp(addressOfOp)) {
-        registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(addressOfOp)),subExprTransformationList,insideExprToBeEliminated);
-        mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(addressOfOp)),subExprTransformationList,insideExprToBeEliminated);
-      }
-  }
-#endif
-
   static
   bool isNullThrow(SgExpression* expr)
   {
@@ -922,7 +911,7 @@ add
     ROSE_ASSERT(stmt);
     ROSE_ASSERT(expr);
     SAWYER_MESG(logger[TRACE])<<"registerSubExpressionTempVars:insideExpToBeElim:"<<insideExprToBeEliminated<<" @"<<SgNodeHelper::sourceLineColumnToString(expr)<<expr->class_name()<<":"<<AstTerm::astTermWithNullValuesToString(expr)<<endl;
-    Normalization::TmpVarNrType mostRecentTmpVarNr=-1;
+    Normalization::TmpVarNrType mostRecentTmpVarNr=getInvalidTmpVarNr();
     /*if(SgCastExp* castExp=isSgCastExp(expr)) {
       registerSubExpressionTempVars(stmt,castExp->get_operand(),subExprTransformationList);
       } else*/
@@ -941,6 +930,9 @@ add
       } else if(isSgBinaryOp(addressOfOperand)) {
         registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(addressOfOperand)),subExprTransformationList,insideExprToBeEliminated);
         mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(addressOfOperand)),subExprTransformationList,insideExprToBeEliminated);
+      } else {
+        // no subexpression operator (e.g.: &x)
+        mostRecentTmpVarNr=0; // ensures that the expression itself is used and no temp var is assigned for this subexpression
       }
     } else if(isSgAssignOp(expr)||isSgCompoundAssignOp(expr)) {
       // special case: normalize assignment with lhs/rhs-semantics
@@ -1053,8 +1045,12 @@ add
       registerCondOpIfElseStmt(stmt,cond,condResultTempVarNr,thenBlock,elseBlock,subExprTransformationList);
       // use two blocks to ensure variables don't get mixed up
       {
+        SgExpression* condOpTrueExp=isSgExpression(conditionalExp->get_true_exp());
+        ROSE_ASSERT(condOpTrueExp);
+        SAWYER_MESG(logger[TRACE])<<"condOpTrueExp source :"<<condOpTrueExp->unparseToString()<<endl;
+        SAWYER_MESG(logger[TRACE])<<"condOpTrueExp astterm:"<<AstTerm::astTermWithNullValuesToString(condOpTrueExp)<<endl;
         Normalization::TmpVarNrType tbResultTempVarNr
-          =registerSubExpressionTempVars(thenBlock,isSgExpression(conditionalExp->get_true_exp()),subExprTransformationList,true);
+          =registerSubExpressionTempVars(thenBlock,condOpTrueExp,subExprTransformationList,true);
         SAWYER_MESG(logger[TRACE])<<"declVarNr: "<<declVarNr<<", "<<"tbResultTempVarNr: "<<tbResultTempVarNr<<endl;
         if(!isVoidType) {
           if(tbResultTempVarNr==0) {
@@ -1179,9 +1175,19 @@ add
   Normalization::TmpVarNrType Normalization::getTmpVarNr() {
     return tmpVarNrCounter;
   }
+  Normalization::TmpVarNrType Normalization::getInvalidTmpVarNr() {
+    return std::numeric_limits<Normalization::TmpVarNrType>::max();
+  }
+  bool Normalization::isInvalidTmpVarNr(Normalization::TmpVarNrType varNr) {
+    return varNr==getInvalidTmpVarNr();
+  }
+  bool Normalization::isValidTmpVarNr(Normalization::TmpVarNrType varNr) {
+    return !isInvalidTmpVarNr(varNr);
+  }
 
   void Normalization::incTmpVarNr() {
     (void)(tmpVarNrCounter++);
+    ROSE_ASSERT(isValidTmpVarNr(tmpVarNrCounter)); // only ensures that it doen't hit the max count of invalid varnr (=2^32-1)
   }
 
   bool Normalization::tmpVarNrDeclExists(Normalization::TmpVarNrType tmpVarNr) {
@@ -1189,9 +1195,6 @@ add
   }
 
   bool Normalization::isValidGeneratedTmpVarDeclNr(Normalization::TmpVarNrType tmpVarNr) {
-    if(tmpVarNr<1) {
-      SAWYER_MESG(logger[TRACE])<<"isValidGeneratedTmpVarDeclNr: tmpVarnr:"<<tmpVarNr<<endl;
-    }
     if(!tmpVarNrDeclExists(tmpVarNr)) {
       SAWYER_MESG(logger[TRACE])<<"isValidGeneratedTmpVarDeclNr: tmpVarnr:"<<tmpVarNr<<" does not exist!"<<endl;
     }
@@ -1199,7 +1202,7 @@ add
   }
 
   bool Normalization::isValidRegisteredTmpVarNr(Normalization::TmpVarNrType tmpVarNr) {
-    return tmpVarNr>0;
+    return tmpVarNr>0 && !isInvalidTmpVarNr(tmpVarNr);
   }
 
   void Normalization::registerStmtRemoval(SgStatement* stmt, SubExprTransformationList& subExprTransformationList) {
