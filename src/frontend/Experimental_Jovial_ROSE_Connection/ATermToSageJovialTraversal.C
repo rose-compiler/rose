@@ -707,6 +707,10 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
 // Begin language specific constructs
    setDeclarationModifier(var_decl, def_or_ref);
 
+// Jovial block and table members are visible in parent scope so create an alias
+// to the symbol if needed.
+   sage_tree_builder.injectAliasSymbol(std::string(name));
+
 // End SageTreeBuilder
    sage_tree_builder.Leave(var_decl);
 
@@ -2373,8 +2377,12 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int 
    sage_tree_builder.Enter(var_decl, std::string(name), declared_type, preset);
    setSourcePosition(var_decl, term);
 
-// This is a ConstanItemDeclaration
+// This is a ConstantItemDeclaration
    var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
+
+// Jovial block and table members are visible in parent scope so create an alias
+// to the symbol if needed.
+   sage_tree_builder.injectAliasSymbol(std::string(name));
 
 // End SageTreeBuilder
    sage_tree_builder.Leave(var_decl);
