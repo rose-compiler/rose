@@ -1,8 +1,25 @@
 START
+DEF PROC PROC'1();
+  BEGIN
+DEF ITEM ITEM'1 B;
+
+% Original statement causing warning: ** LOGICAL OPERAND SHOULD BE PARENTHESIZED   %
+%  IF (ITEM'1 AND  ITEM'1 OR ITEM'1 ); %
+
+% The following line has been corrected to explicitly provide operator precedence. %
+   IF (ITEM'1 AND (ITEM'1 OR ITEM'1));
+      BEGIN
+      END
+  END
+
+TERM
+
+
+
+START
 DEF PROC PROC'1
   BEGIN
 DEF ITEM ITEM'1 B;
-% The following line has been corrected to explicitly provide operator precedence. %
     IF ((ITEM'1 AND ITEM'1) OR ITEM'1);
       BEGIN
       END
