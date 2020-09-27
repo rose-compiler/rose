@@ -241,16 +241,12 @@ bool CodeThorn::operator!=(const InterEdge& e1, const InterEdge& e2) {
 }
 
 bool CodeThorn::operator==(const Edge& e1, const Edge& e2) {
-  assert(&e1);
-  assert(&e2);
   return e1.source()==e2.source() && e1.typesCode()==e2.typesCode() && e1.target()==e2.target() && e1.getAnnotation() == e2.getAnnotation();
 }
 bool CodeThorn::operator!=(const Edge& e1, const Edge& e2) {
   return !(e1==e2);
 }
 bool CodeThorn::operator<(const Edge& e1, const Edge& e2) {
-  assert(&e1);
-  assert(&e2);
   if(e1.source()!=e2.source())
     return e1.source()<e2.source();
   if(e1.target()!=e2.target())
