@@ -863,6 +863,7 @@ list<EState> EStateTransferFunctions::transferIdentity(Edge edge, const EState* 
 
 
 std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estate) {
+  logger[TRACE] << "transferAssignOp:"<<nextNodeToAnalyze2->unparseToString()<<endl;
   auto pList=_analyzer->evalAssignOp(nextNodeToAnalyze2, edge, estate);
   std::list<EState> estateList;
   for (auto p : pList) {
@@ -879,6 +880,7 @@ std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* nextNode
     CallString cs=estate.callString;
     estateList.push_back(createEState(edge.target(),cs,newPState,cset));
   }
+  logger[TRACE] << "transferAssignOp: finished"<<endl;
   return estateList;
 }
 

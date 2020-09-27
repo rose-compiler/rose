@@ -1056,8 +1056,8 @@ int CodeThorn::Analyzer::computeNumberOfElements(SgVariableDeclaration* decl) {
 // the PState object).
 PState CodeThorn::Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pstate, /* for evaluation only  */ EState currentEState) {
   //cout<<"DEBUG: AST:"<<AstTerm::astTermWithNullValuesToString(aggregateInitializer)<<endl;
-  // logger[DEBUG] <<"array-initializer found:"<<aggregateInitializer->unparseToString()<<endl;
   ROSE_ASSERT(aggregateInitializer);
+  SAWYER_MESG(logger[TRACE])<<"analyzeSgAggregateInitializer::array-initializer:"<<aggregateInitializer->unparseToString()<<endl;
   Label label=currentEState.label();
   PState newPState=pstate;
   int elemIndex=0;
@@ -1119,7 +1119,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
     3) if no size is provided, determine it from the initializer list (and add this information to the variableIdMapping - or update the variableIdMapping).
    */
 
-  //cout<<"DEBUG: declaration:"<<decl->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(decl)<<endl;
+  SAWYER_MESG(logger[TRACE])<<"analyzeVariableDeclaration:"<<decl->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(decl)<<endl;
   CallString cs=currentEState.callString;
   Label label=currentEState.label();
 
@@ -2494,6 +2494,7 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
             SAWYER_MESG(logger[ERROR]) <<"lhs array access: unknown type of array or pointer."<<endl;
             exit(1);
           }
+
           list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(indexExp,currentEState);
           ROSE_ASSERT(res.size()==1); // this should always hold for normalized ASTs
           AbstractValue indexValue=(*(res.begin())).value();
@@ -2509,11 +2510,28 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
           // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)
           //TODO: getExprAnalyzer()->writeToMemoryLocation(label,&pstate2,arrayElementId,(*i).value()); // *i is assignment-rhs evaluation result
           memoryUpdateList.push_back(make_pair(estate,make_pair(arrayElementAddr,(*i).result)));
+        } else if(SgAddressOfOp* addressOfOp=isSgAddressOfOp(lhs)) {
+          // address of op, need to compute an l-value and use as address
+          
         } else {
-          SAWYER_MESG(logger[ERROR]) <<"array-access uses expr for denoting the array. Normalization missing."<<endl;
-          SAWYER_MESG(logger[ERROR]) <<"expr: "<<lhs->unparseToString()<<endl;
-          SAWYER_MESG(logger[ERROR]) <<"arraySkip: "<<getSkipArrayAccesses()<<endl;
-          exit(1);
+          list<SingleEvalResultConstInt> arrExpRes=exprAnalyzer.evaluateExpression(arrExp,currentEState);
+          ROSE_ASSERT(arrExpRes.size()==1); // this should always hold for normalized ASTs
+          AbstractValue arrPtrValue=(*(arrExpRes.begin())).value();
+          list<SingleEvalResultConstInt> indexExpRes=exprAnalyzer.evaluateExpression(indexExp,currentEState);
+          ROSE_ASSERT(indexExpRes.size()==1); // this should always hold for normalized ASTs
+          AbstractValue indexValue=(*(indexExpRes.begin())).value();
+          AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrPtrValue,indexValue);
+          AbstractValue arrayElementAddr=arrayPtrPlusIndexValue;
+          if(arrayElementAddr.isBot()) {
+            return memoryUpdateList; // inaccessible memory location, return empty estate list
+          }
+          memoryUpdateList.push_back(make_pair(estate,make_pair(arrayElementAddr,(*i).result)));
+          //above evaluation covers all cases now
+          //SAWYER_MESG(logger[ERROR]) <<"array-access uses expr for denoting the array. Normalization missing."<<endl;
+          //SAWYER_MESG(logger[ERROR]) <<"lhs AST: "<<AstTerm::astTermWithNullValuesToString(lhs)<<endl;
+          //SAWYER_MESG(logger[ERROR]) <<"expr: "<<lhs->unparseToString()<<endl;
+          //SAWYER_MESG(logger[ERROR]) <<"arraySkip: "<<getSkipArrayAccesses()<<endl;
+          //exit(1);
         }
       }
     } else if(SgPointerDerefExp* lhsDerefExp=isSgPointerDerefExp(lhs)) {
