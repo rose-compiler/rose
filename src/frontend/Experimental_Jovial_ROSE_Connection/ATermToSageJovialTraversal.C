@@ -6439,7 +6439,6 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
    std::vector<SgExpression*> subscript;
 
    SgVarRefExp* var_ref = nullptr;
-   SgPntrArrRefExp* array_ref = nullptr;
    SgExprListExp* array_subscripts = nullptr;
    SgExpression* deref_var = nullptr;
 
@@ -6477,10 +6476,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
    ROSE_ASSERT(var_ref);
 
    if (array_subscripts) {
-      array_ref = SageBuilder::buildPntrArrRefExp(var_ref, array_subscripts);
-      ROSE_ASSERT(array_ref);
-      setSourcePosition(array_ref, term);
-      var = array_ref;
+      var = SageBuilder::buildPntrArrRefExp_nfi(var_ref, array_subscripts);
    }
    else {
       var = var_ref;
@@ -6489,6 +6485,8 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
    if (deref_var) {
       var = SageBuilder::buildAtOp_nfi(var, deref_var);
    }
+
+   setSourcePosition(var, term);
 
    return ATtrue;
 }
@@ -6806,7 +6804,7 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
    //  2. type conversion
    //  3. variable
    //     a. Table initialization replication operator
-   //     b. Table reference TODO (haven't implemented or tested this)
+   //     b. Table reference
 
 // The symbol is used to disambiguate the design of the grammar.
 // For Jovial the symbol should be present, unfortuately this is not true for Fortran
@@ -6840,31 +6838,56 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 // Look for table variable or table initialization replication operator
 //
    else if (isSgVariableSymbol(symbol)) {
-      if (expr_list->get_expressions().size() == 0) {
-         // Not sure how list size==0 is possible for a variable ref in Jovial?
-         SgVarRefExp* var_ref = nullptr;
-         cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall - table reference " << name << endl;
+      if (expr_list->get_expressions().size() == 1) {
+      // An table/array ref is not a replication operator but I don't know how to
+      // disambiguate so assume it is a replication operator. It is not even clear
+      // that a replication operator can't have expression size other than 1.
+#if PRINT_WARNINGS
+         cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall - variable reference ambiguous "
+              << "replication operator for " << name << endl;
+#endif
 
+      // Try looking at parent of the declaration for subscripts
+         SgInitializedName* init_name = nullptr;
+         SgVariableDeclaration* var_decl = nullptr;
+         SgClassDefinition* var_def = nullptr;
+         SgJovialTableStatement* table_decl = nullptr;
+         SgJovialTableType* table_type = nullptr;
+         SgExprListExp* dim_info = nullptr;
+
+         SgVariableSymbol* var_sym = isSgVariableSymbol(symbol);
+         if (var_sym) init_name = isSgInitializedName(var_sym->get_declaration());
+         if (init_name) var_decl = isSgVariableDeclaration(init_name->get_parent());
+         if (var_decl) var_def = isSgClassDefinition(var_decl->get_parent());
+         if (var_def) table_decl = isSgJovialTableStatement(var_def->get_parent());
+         if (table_decl) table_type = isSgJovialTableType(table_decl->get_type());
+         if (table_type) dim_info = table_type->get_dim_info();
+         if (dim_info && (dim_info->get_expressions().size() == expr_list->get_expressions().size())) {
+            // Back tracked this long chain of dependencies down to find that there a table declaration
+            // with a dimension the same size as the expr_list (from parser a function parameter list).
+            // Therefore let's just assume that this is an array reference (handled as leftover below).
+
+            expr = nullptr; // and handle below
+         }
+         else {
+            // hopefully is a replication operator
+            // TODO - check to see if type of value can help with disambiguation
+            SgReplicationOp* rep_op = nullptr;
+            SgExpression* value = expr_list->get_expressions()[0];
+            ROSE_ASSERT(value);
+
+            sage_tree_builder.Enter(rep_op, name, value);
+            sage_tree_builder.Leave(rep_op);
+            expr = rep_op;
+         }
+      }
+
+   // catch leftovers for a variable symbol
+      if (expr == nullptr) {
+         SgVarRefExp* var_ref = nullptr;
          sage_tree_builder.Enter(var_ref, name);
          sage_tree_builder.Leave(var_ref);
-         expr = var_ref;
-      }
-
-   // TODO - check the type of the symbol, especially if it a table then the following is wrong
-   // An table/array ref is not a replication operator!
-      else if (expr_list->get_expressions().size() == 1) {
-         SgReplicationOp* rep_op = nullptr;
-         SgExpression* value = expr_list->get_expressions()[0];
-         ROSE_ASSERT(value);
-
-         sage_tree_builder.Enter(rep_op, name, value);
-         sage_tree_builder.Leave(rep_op);
-         expr = rep_op;
-      }
-      else {
-         // TODO - don't think this should happen (but what about table_ref(1,2,3)
-         cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall - table reference " << name << endl;
-         //ROSE_ASSERT(false);
+         expr = SageBuilder::buildPntrArrRefExp_nfi(var_ref, expr_list);
       }
    }
 
