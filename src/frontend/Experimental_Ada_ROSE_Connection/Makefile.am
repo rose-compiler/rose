@@ -7,13 +7,20 @@ noinst_LTLIBRARIES = libexperimentalRoseAda.la
 # DQ (8/23/2017): I'm not clear if we need makefile conditionals, since the directory is already conditionally processed in the parent directory.
 
 if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
-  libexperimentalRoseAda_la_SOURCES = ada_support.C Ada_to_ROSE_translation.C Ada_to_ROSE.C # dotify.C
+  libexperimentalRoseAda_la_SOURCES = \
+    ada_support.C \
+    Ada_to_ROSE_translation.C \
+    Ada_to_ROSE.C \
+    AdaMaker.C
 else
 # Compile using a function that represents the API of the Ada support.
   libexperimentalRoseAda_la_SOURCES = dummy_ada_main.C
 endif
 
-pkginclude_HEADERS = ada_support.h Ada_to_ROSE_translation.h
+pkginclude_HEADERS = \
+  ada_support.h \
+  Ada_to_ROSE_translation.h \
+  AdaMaker.h
 
 # DQ (9/5/2017): We don't need this here, and linking is represented in ROSE/src directory's Makefile.am.
 # Temporary location, but these libraries need to be built into ROSE's build tree, and later installed into ROSE's install tree.
