@@ -11,16 +11,22 @@ if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
     ada_support.C \
     Ada_to_ROSE_translation.C \
     Ada_to_ROSE.C \
-    AdaMaker.C
+    AdaExpression.C \
+    AdaMaker.C \
+    AdaStatement.C
 else
 # Compile using a function that represents the API of the Ada support.
   libexperimentalRoseAda_la_SOURCES = dummy_ada_main.C
 endif
 
 pkginclude_HEADERS = \
-  ada_support.h \
-  Ada_to_ROSE_translation.h \
-  AdaMaker.h
+    ada_support.h \
+    Ada_to_ROSE_translation.h \
+    Ada_to_ROSE.h \
+    AdaExpression.h \
+    AdaMaker.h \
+    AdaUtil.h \
+    AdaStatement.h
 
 # DQ (9/5/2017): We don't need this here, and linking is represented in ROSE/src directory's Makefile.am.
 # Temporary location, but these libraries need to be built into ROSE's build tree, and later installed into ROSE's install tree.
