@@ -1690,5 +1690,12 @@ namespace sg
   {
     return traverseChildren(gv, sg::deref(n));
   }
+  
+  template <class SageParent, class SageChild>
+  void linkParentChild(SageParent& parent, SageChild& child, void (SageParent::*setter)(SageChild*))
+  {
+    (parent.*setter)(&child);
+    child.set_parent(&parent);
+  }
 }
 #endif /* _SAGEGENERIC_H */
