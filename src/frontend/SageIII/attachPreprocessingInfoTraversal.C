@@ -221,6 +221,7 @@ AttachPreprocessingInfoTreeTraversalInheritedAttrribute::AttachPreprocessingInfo
    {
      isPartOfTemplateDeclaration              = X.isPartOfTemplateDeclaration;
      isPartOfTemplateInstantiationDeclaration = X.isPartOfTemplateInstantiationDeclaration;
+     isPartOfFunctionParameterList            = X.isPartOfFunctionParameterList;
    }
 
 
@@ -427,24 +428,50 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #endif
                ROSE_ASSERT(currentPreprocessingInfoPtr != NULL);
                int currentPreprocessingInfoLineNumber = currentPreprocessingInfoPtr->getLineNumber();
-#if 0
-               printf ("currentPreprocessingInfoLineNumber = %d lineNumber = %d \n",currentPreprocessingInfoLineNumber,lineNumber);
-#endif
+
+               int currentPreprocessingInfoColumnNumber = currentPreprocessingInfoPtr->getColumnNumber();
+
+            // DQ (8/17/2020): Added note detail
+               int line        = locatedNode->get_startOfConstruct()->get_physical_line(source_file_id);
+               int col         = locatedNode->get_startOfConstruct()->get_col();
+               int ending_line = locatedNode->get_endOfConstruct()->get_physical_line(source_file_id);
+               int ending_col  = locatedNode->get_endOfConstruct()->get_col();
 
 #if DEBUG_IterateOverList
+               printf ("currentPreprocessingInfoLineNumber   = %d lineNumber = %d \n",currentPreprocessingInfoLineNumber,lineNumber);
+               printf ("currentPreprocessingInfoColumnNumber = %d lineNumber = %d \n",currentPreprocessingInfoColumnNumber,lineNumber);
+               printf ("starting line = %d ending_line = %d starting col = %d ending_col = %d \n",line,ending_line,col,ending_col);
+               printf ("location = %s \n",PreprocessingInfo::relativePositionName(location).c_str());
+#endif
+
             // DQ (12/23/2008): So far this is the most reliable way to break out of the loop.
                ROSE_ASSERT(currentPreprocessingInfoPtr != NULL);
+
+#if 0
+#if 0
+            // DQ (8/17/2020): Original code.
                if ( (currentPreprocessingInfoLineNumber > lineNumber) && (location == PreprocessingInfo::before) )
+#else
+            // DQ (8/17/2020): Account for the column numbers.
+               if ( ( (currentPreprocessingInfoLineNumber > lineNumber) || 
+                      ( (currentPreprocessingInfoLineNumber == lineNumber) && (currentPreprocessingInfoColumnNumber < ending_col) ) ) &&
+                    ( (location == PreprocessingInfo::before) || (location == PreprocessingInfo::inside) ) )
+#endif
                   {
                  // DQ (12/23/2008): I think that under this constraint we could exit this loop!
-                    printf ("BOTTOM OF LOOP: BREAK: Warning: Why are we searching this list of PreprocessingInfo beyond the line number of the current statement (using break) \n");
-
+#if DEBUG_IterateOverList
+                    printf ("BREAK OUT OF LOOP: BREAK: Warning: Why are we searching this list of PreprocessingInfo beyond the line number of the current statement (using break) \n");
+#endif
+                 // DQ (8/17/2020): This line was previously commented out except when DEBUG_IterateOverList was defined to be greater then zero.
                  // DQ (12/23/2008): I don't like the design which forces an exit from the loop here, but this is the most robust implementation so far.
                     break;
                   }
 #endif
             // bool attachCommentOrDirective = (currentPreprocessingInfoPtr != NULL) && (currentPreprocessingInfoPtr->getLineNumber() <= lineNumber);
-               bool attachCommentOrDirective = (currentPreprocessingInfoLineNumber <= lineNumber);
+            // bool attachCommentOrDirective = (currentPreprocessingInfoLineNumber <= lineNumber);
+                  bool attachCommentOrDirective = 
+                       (currentPreprocessingInfoLineNumber < lineNumber) || 
+                       ( (currentPreprocessingInfoLineNumber == lineNumber) && (currentPreprocessingInfoColumnNumber < ending_col) );
 
             // DQ (1/7/2019): Supress comments and CPP directives onto member functions of the generated labda function class.
                SgLambdaExp* lambdaExpression = isSgLambdaExp(locatedNode->get_parent());
@@ -455,8 +482,9 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #endif
                     attachCommentOrDirective = false;
                   }
+
 #if DEBUG_IterateOverList
-               printf ("attachCommentOrDirective = %s currentPreprocessingInfoLineNumber = %d lineNumber = %d \n",attachCommentOrDirective ? "true" : "false",currentPreprocessingInfoLineNumber,lineNumber);
+               printf ("@@@@@@@@@@@@@@@@@@ attachCommentOrDirective = %s currentPreprocessingInfoLineNumber = %d lineNumber = %d \n",attachCommentOrDirective ? "true" : "false",currentPreprocessingInfoLineNumber,lineNumber);
 #endif
                if ( attachCommentOrDirective == true )
                   {
@@ -558,7 +586,9 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                  // object should be unparsed (before or after) relative to the current locatedNode
                     currentPreprocessingInfoPtr->setRelativePosition(location);
 #if DEBUG_IterateOverList
-                    printf ("Attaching CPP directives %s to IR nodes as attributes. \n",PreprocessingInfo::directiveTypeName(currentPreprocessingInfoPtr->getTypeOfDirective()).c_str());
+                    printf ("Attaching CPP directives %s to IR nodes as attributes (location = %s) \n",
+                            PreprocessingInfo::directiveTypeName(currentPreprocessingInfoPtr->getTypeOfDirective()).c_str(),
+                            PreprocessingInfo::relativePositionName(currentPreprocessingInfoPtr->getRelativePosition()).c_str());
 #endif
 #if 1
                  // This uses the old code to attach comments and CPP directives to the AST as attributes.
@@ -785,6 +815,12 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
   // are woven into the AST.
 #if 0
      printf ("Inside of AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(use_Wave = %s) file = %s \n",use_Wave ? "true" : "false",fileNameForDirectivesAndComments.c_str());
+#endif
+
+#if 0
+  // DQ (8/17/2020): I think this function is no longer used.
+     printf ("This function: buildCommentAndCppDirectiveList() is no longer used! \n");
+     ROSE_ASSERT(false);
 #endif
 
   // DQ (4/29/2020): Introduce test for recursive call.
@@ -1256,7 +1292,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
      ROSE_ASSERT(sourceFile != NULL);
 
 #if 0
-     printf ("TOP of AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
+     printf ("TOP of AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s name = %s \n",n,n->class_name().c_str(),SageInterface::get_name(n).c_str());
      printf (" --- previousLocatedNode = %p = %s \n",previousLocatedNode,(previousLocatedNode != NULL) ? previousLocatedNode->class_name().c_str() : "null");
 #endif
 #if 0
@@ -1328,6 +1364,17 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
              }
 #endif
         }
+
+  // Pei-Hung(9/17/2020): Check if the AST node is SgFunctionParameterList for Fortran input
+     if(sourceFile->get_Fortran_only() == true)
+       { 
+         SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(n);
+         if(functionParameterList != NULL)
+           {
+              inheritedAttribute.isPartOfFunctionParameterList = true;
+           }
+       }
+
 
   // DQ (8/6/2012): Allow those associated with the declaration and not inside of the template declaration.
   // if (inheritedAttribute.isPartOfTemplateDeclaration == true && templateDeclaration == NULL)
@@ -1424,6 +1471,16 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 
        // DQ (6/29/2020): We should not be adding comments and/or CPP directives to IR nodes that don't have a source position.
           ROSE_ASSERT(currentFileNameId >= 0);
+
+      // Pei-Hung (09/23/2020) For Fortran code,  target_source_file_id should be same as currentFileNameId when preprocessing is required
+         if (SageInterface::is_Fortran_language() == true)
+         {  
+           target_source_file_id = (currentFilePtr->get_requires_C_preprocessor() == true) ? 
+                                 // Sg_File_Info::getIDFromFilename(sourceFile->get_file_info()->get_filenameString()) : 
+                                    Sg_File_Info::getIDFromFilename(currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+                                    currentFileInfo->get_physical_file_id(source_file_id);
+         }
+
 
 #if 0
           if (currentFileNameId < 0)
@@ -1524,14 +1581,16 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
              }
         }
 #endif
+     // Pei-Hung (9/17/2020): comment and preprocess information will not be attached to SgInitializedName that is
+     // part of the SgFunctionParameterList 
 
-     if (statement != NULL || i_name != NULL || a_initor != NULL)
+     if (statement != NULL || (i_name != NULL && inheritedAttribute.isPartOfFunctionParameterList == false) || a_initor != NULL)
         {
           SgLocatedNode* currentLocNodePtr = NULL;
           int line = 0;
 
        // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-       // int col  = 0;
+          int col  = 0;
 
        // The following should always work since each statement is a located node
        // currentLocNodePtr = dynamic_cast<SgLocatedNode*>(n);
@@ -1670,10 +1729,13 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                                             Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
                                             currentFileInfo->get_physical_file_id(source_file_id);
                   }
-#endif
-#if 0
+
                printf ("evaluateInheritedAttribute: isCompilerGenerated = %s isTransformation = %s fileIdForOriginOfCurrentLocatedNode = %d \n",
                     isCompilerGenerated ? "true" : "false",isTransformation ? "true" : "false",fileIdForOriginOfCurrentLocatedNode);
+#endif
+#if 0
+               printf ("evaluateInheritedAttribute: isCompilerGenerated = %s isTransformation = %s \n",
+                    isCompilerGenerated ? "true" : "false",isTransformation ? "true" : "false");
 #endif
                int currentLocNode_physical_file_id = currentLocNodePtr->get_file_info()->get_physical_file_id();
                string currentLocNode_physical_filename_from_id = Sg_File_Info::getFilenameFromID(currentLocNode_physical_file_id);
@@ -1743,7 +1805,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                  // int currentLocNode_physical_file_id = currentLocNodePtr->get_file_info()->get_physical_file_id();
                  // string currentLocNode_physical_filename_from_id = Sg_File_Info::getFilenameFromID(currentLocNode_physical_file_id);
 #if 0
-                    printf ("currentLocNode_physical_file_id = %d \n",currentLocNode_physical_file_id);
+                    printf ("currentLocNode_physical_file_id          = %d \n",currentLocNode_physical_file_id);
                     printf ("currentLocNode_physical_filename_from_id = %s \n",currentLocNode_physical_filename_from_id.c_str());
 #endif
 #if 0
@@ -1787,7 +1849,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                     line = currentLocNodePtr->get_file_info()->get_physical_line(source_file_id);
 
                  // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-                 // col  = currentLocNodePtr->get_file_info()->get_col();
+                    col  = currentLocNodePtr->get_file_info()->get_col();
 #if 0
                     printf ("Insert any comment before %p = %s = %s (compilerGenerate=%s) at line = %d col = %d \n",
                           currentLocNodePtr,currentLocNodePtr->class_name().c_str(),SageInterface::get_name(currentLocNodePtr).c_str(),
@@ -1822,8 +1884,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                  // Iterate over the list of comments and directives and add them to the AST
                     bool reset_start_index = false;
                     iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(
-                          currentLocNodePtr,line,PreprocessingInfo::before, reset_start_index, 
-                          currentListOfAttributes );
+                          currentLocNodePtr,line,PreprocessingInfo::before, reset_start_index, currentListOfAttributes );
 #if 0
                     printf ("Before calling setupPointerToPreviousNode() in AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
                     printf (" --- previousLocatedNode = %p = %s \n",previousLocatedNode,(previousLocatedNode != NULL) ? previousLocatedNode->class_name().c_str() : "null");
@@ -1912,7 +1973,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
      AttachPreprocessingInfoTreeTraversalSynthesizedAttribute returnSynthesizeAttribute;
 
 #if 0
-     printf ("\nTOP of AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
+     printf ("\nTOP of AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): n = %p = %s name = %s \n",n,n->class_name().c_str(),SageInterface::get_name(n).c_str());
      printf (" --- previousLocatedNode = %p = %s \n",previousLocatedNode,(previousLocatedNode != NULL) ? previousLocatedNode->class_name().c_str() : "null");
 #endif
 #if 0
@@ -2064,7 +2125,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
           printf ("##### currentFileNameId = %d target_source_file_id = %d \n",currentFileNameId,target_source_file_id);
 #endif
        // DQ (6/25/2020): If this is not a node associated with the collect comments and CPP directives for the associated file then ignore this IR node.
-          if (currentFileNameId != target_source_file_id)
+          if (currentFileNameId != target_source_file_id )
              {
 #if 0
                printf ("This IR node does not match the file where the comments and CPP dirtectives were collected: \n");
@@ -2335,6 +2396,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #else
                             SgLocatedNode* targetNode = previousLocatedNode;
 #endif
+                            ROSE_ASSERT(targetNode != NULL);
                          // printf ("In SgFile: previousLocNodePtr = %s \n",previousLocNodePtr->sage_class_name());
                          // printf ("In SgSourceFile: initial value of targetNode = %p = %s \n",targetNode,targetNode->class_name().c_str());
 
@@ -2349,6 +2411,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                     }
                                }
 
+                            ROSE_ASSERT(targetNode->get_file_info() != NULL);
                          // This case appears for test2008_08.f90: the SgProgramHeaderStatement is not present in the source code
                          // so we can't attach a comment to it.
                          // if (targetNode->get_file_info()->get_file_id() < 0)
@@ -2369,7 +2432,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                               // DQ (9/25/2013): FIXME: I don't like this design using a break statement at this specific location (in the middle of the case implementation) in this case.
                                  break;
-                                 
+
                               // return returnSynthesizeAttribute;
                                }
 
@@ -2486,7 +2549,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                  printf ("Target it->first = %p = %s \n",it->first,it->first->class_name().c_str());
                                  it->first->get_file_info()->display("it->first: debug");
 #endif
-#if 1
+#if 0
                                  printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): case V_SgSourceFile: Calling SageInterface::insertStatementBefore(): it->second = %p = %s \n",it->second,it->second->class_name().c_str());
 #endif
                                  SageInterface::insertStatementBefore(it->second, it->first, false);
@@ -2614,6 +2677,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("Processing case: V_SgBasicBlock \n");
 #endif
+                            ROSE_ASSERT (locatedNode != NULL);
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
                          // The following should always work since each statement is a located node
@@ -2663,6 +2727,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("Processing case: V_SgAggregateInitializer \n");
 #endif
+                            ROSE_ASSERT (locatedNode != NULL);
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
                             SgAggregateInitializer* target = dynamic_cast<SgAggregateInitializer*>(n);
@@ -2700,6 +2765,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("Processing case: V_SgClassDeclaration \n");
 #endif
+                            ROSE_ASSERT (locatedNode != NULL);
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
                          // The following should always work since each statement is a located node
@@ -2739,6 +2805,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("Processing case: V_SgTypedefDeclaration \n");
 #endif
+                            ROSE_ASSERT(locatedNode != NULL);
                             ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
 
                             SgTypedefDeclaration *typedefDeclaration = isSgTypedefDeclaration(n);
@@ -2776,6 +2843,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("Processing case: V_SgVariableDeclaration \n");
 #endif
+                            ROSE_ASSERT (locatedNode != NULL);
                             ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
 
                             SgVariableDeclaration *variableDeclaration = isSgVariableDeclaration(n);
@@ -2808,78 +2876,71 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                  // DQ (10/25/2012): Added new case.  I expect this might be important for test2012_78.c
                     case V_SgInitializedName:
-                          {
+                       {
 #if 0
-                            printf ("Processing case: V_SgInitializedName \n");
+                         printf ("Processing case: V_SgInitializedName \n");
 #endif
 // #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
 #if 0
-                            printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): Added new support for preprocessing info to be added after the SgInitializedName. \n");
+                         printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): Added new support for preprocessing info to be added after the SgInitializedName. \n");
 #endif
-                            ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
+                         ROSE_ASSERT(locatedNode != NULL);
+                         ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
 
-                            SgInitializedName *initializedName = isSgInitializedName(n);
-                            ROSE_ASSERT(initializedName != NULL);
+                         SgInitializedName *initializedName = isSgInitializedName(n);
+                         ROSE_ASSERT(initializedName != NULL);
 #if 0
-                            printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): initializedName = %p name = %s \n",initializedName,initializedName->get_name().str());
+                         printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): initializedName = %p name = %s \n",initializedName,initializedName->get_name().str());
 #endif
 #if 0
-                            printf ("In case V_SgInitializedName: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+                         printf ("In case V_SgInitializedName: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
 #endif
-// <<<<<<< HEAD
-                         // DQ (6/9/2020): This appears to be NULL in some cases I am debugging currently.
-                            ROSE_ASSERT(previousLocNodePtr != NULL);
+                      // DQ (6/9/2020): This appears to be NULL in some cases I am debugging currently.
+                         ROSE_ASSERT(previousLocNodePtr != NULL);
 #if 0
-                            printf ("case V_SgInitializedName: Before calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): previousLocNodePtr = %p \n",previousLocNodePtr);
-                            if (previousLocNodePtr != NULL)
-                               {
-                                 printf (" --- previousLocNodePtr = %p = %s \n",previousLocNodePtr,previousLocNodePtr->class_name().c_str());
-                               }
+                         printf ("case V_SgInitializedName: Before calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): previousLocNodePtr = %p \n",previousLocNodePtr);
+                         if (previousLocNodePtr != NULL)
+                            {
+                              printf (" --- previousLocNodePtr = %p = %s \n",previousLocNodePtr,previousLocNodePtr->class_name().c_str());
+                            }
 #endif
-// =======
-                            // Liao 6/10/2020, Fortran subroutine will have a SgInitializedName generated in AST to represent the subroutine name.
-                            // It is compiler-generated and has no appearance in the original source code. 
-                            // We should not attach comments to it.
-                            if (SageInterface::is_Fortran_language ())
+                      // Liao 6/10/2020, Fortran subroutine will have a SgInitializedName generated in AST to represent the subroutine name.
+                      // It is compiler-generated and has no appearance in the original source code. 
+                      // We should not attach comments to it.
+                         if (SageInterface::is_Fortran_language ())
                             {
                               if (isSgProcedureHeaderStatement(initializedName->get_parent()))
-                              {
-                            //    cout<<"Found Fortran subroutine init name, skipping attaching comments to it..."<< initializedName <<endl;
-                              }
+                                 {
+                                // cout<<"Found Fortran subroutine init name, skipping attaching comments to it..."<< initializedName <<endl;
+                                 }
                             }
-                            else
+                           else
                             {
+                              bool reset_start_index = false;
+                              iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber 
+                                   ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index, currentListOfAttributes );
 
-// >>>>>>> origin/master
-                            bool reset_start_index = false;
-                            iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
-                              ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index, currentListOfAttributes );
-
-#if 1
-                         // DQ (6/24/2020): Set this only in the evaluateInheritedAttribute() function.
+                           // DQ (6/24/2020): Set this only in the evaluateInheritedAttribute() function.
 #if 0
-                         // DQ (5/1/2020): Removed the previousLocatedNodeMap.
-                            previousLocatedNodeMap[currentFileNameId] = initializedName;
-// <<<<<<< HEAD
+                           // DQ (5/1/2020): Removed the previousLocatedNodeMap.
+                              previousLocatedNodeMap[currentFileNameId] = initializedName;
 #else
-                            previousLocatedNode = initializedName;
-#endif
+                              previousLocatedNode = initializedName;
 #endif
 #if 0
-                            printf ("Processing case: END OF CASE V_SgInitializedName \n");
+                              printf ("Processing case: END OF CASE V_SgInitializedName \n");
 #endif
 
-// =======
                             }
-// >>>>>>> origin/master
-                            break;
-                          }
+                         break;
+                       }
 
                     case V_SgClassDefinition:
                           {
 #if 0
                             printf ("Processing case: V_SgClassDefinition \n");
 #endif
+                            ROSE_ASSERT (locatedNode != NULL);
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
                          // DQ (3/19/2005): This is a more robust process (although it introduces a new location for a comment/directive)
@@ -2906,12 +2967,15 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("Processing case: V_SgEnumDeclaration \n");
 #endif
+                            ROSE_ASSERT (locatedNode != NULL);
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
                          // The following should always work since each statement is a located node
                             SgEnumDeclaration* enumDeclaration = dynamic_cast<SgEnumDeclaration*>(n);
                             ROSE_ASSERT(enumDeclaration != NULL);
-
+#if 0
+                            printf ("In case V_SgEnumDefinition: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+#endif
                          // DQ (3/18/2005): This is a more robust process (although it introduces a new location for a comment/directive)
                          // iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                          //    ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after );
@@ -2943,6 +3007,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("Processing case: V_SgNamespaceDeclarationStatement \n");
 #endif
+                            ROSE_ASSERT (locatedNode != NULL);
                             ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
                          // The following should always work since each statement is a located node
@@ -2953,7 +3018,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                          // DQ (6/9/2020): This appear to be NULL in some cases I am debugging currently.
                             ROSE_ASSERT(previousLocNodePtr != NULL);
-
+#if 0
+                            printf ("In case V_SgNamespaceDeclarationStatement: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+#endif
                             bool reset_start_index = false;
                             iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                               ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index,currentListOfAttributes );
@@ -2974,6 +3041,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     // DQ (5/3/2004): Added support for namespaces
                     case V_SgNamespaceDefinitionStatement:
                        {
+                         ROSE_ASSERT (locatedNode != NULL);
                          ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
                       // The following should always work since each statement is a located node
@@ -2988,6 +3056,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                       // DQ (6/9/2020): This appear to be NULL in some cases I am debugging currently.
                          ROSE_ASSERT(previousLocNodePtr != NULL);
 
+#if 0
+                         printf ("In case V_SgNamespaceDefinitionStatement: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+#endif
                          bool reset_start_index = false;
                          iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                               ( locatedNode, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index,currentListOfAttributes );
@@ -3009,12 +3080,14 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     //                but OK to attach comments to them (just not inside them!).
                     case V_SgTemplateInstantiationMemberFunctionDecl:
                        {
+                         ROSE_ASSERT (locatedNode != NULL);
                          ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
                       // printf ("Found a SgTemplateInstantiationMemberFunctionDecl but only record it as a previousLocNodePtr \n");
 
                       // DQ (6/9/2020): This appear to be NULL in some cases I am debugging currently.
-                         ROSE_ASSERT(locatedNode != NULL);
-
+#if 0
+                         printf ("In case V_SgTemplateInstantiationMemberFunctionDecl: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+#endif
                       // DQ (3/11/2012): Added recursive call to insert comments.
                          bool reset_start_index = false;
                          iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
@@ -3052,13 +3125,14 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     case V_SgTemplateInstantiationDirectiveStatement:
                  // case V_SgFunctionParameterList:
                     case V_SgFunctionDeclaration:   // Liao 11/8/2010, this is necessary since SgInitializedName might be a previous located node.
-                                  //  we don't want to attach anything after an ending initialized name,
-                                  //  So we give a chance to the init name's ancestor a chance. 
+                                 // we don't want to attach anything after an ending initialized name,
+                                 // So we give a chance to the init name's ancestor a chance. 
                                  // For preprocessing info appearing after a last init name, we attach it inside the ancestor.
 
                     case V_SgMemberFunctionDeclaration:
                     case V_SgTemplateInstantiationFunctionDecl:
                        {
+                         ROSE_ASSERT (locatedNode != NULL);
                          ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
 #if 0
@@ -3118,7 +3192,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                            else
                             {
                               ROSE_ASSERT(previousLocatedNode != NULL);
-#if 1
+#if 0
                               printf ("Skip setting the previousLocatedNode = %p = %s \n",previousLocatedNode,previousLocatedNode->class_name().c_str());
 #endif
                             }
@@ -3170,7 +3244,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                printOutComments(locatedNode);
              }
 #endif
-        } // end if (locatedNode) || (fileNode != NULL)
+        } // end if ((locatedNode != NULL) || (fileNode != NULL))
 
 #if 0
      printf ("Leaving AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): n = %p = %s \n",n,n->class_name().c_str());

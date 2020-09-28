@@ -136,9 +136,12 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
  /*! @name Symbol tables
    \brief  utility functions for symbol tables
  */
-   // Liao 1/22/2008, used for get symbols for generating variable reference nodes
-   // ! Find a variable symbol in current and ancestor scopes for a given name
-   ROSE_DLL_API SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope=NULL);
+
+// DQ (8/5/2020): the "using namespace" directive will not hide existing visability of symbols in resolving visability.
+// So we need to test if a symbol is visible exclusing matching alises due to using direectives before we can decide to
+// persue name space qualification. This is best demonstrated by Cxx_tests/test2020_18.C, test2020_19.C, test2020_20.C, 
+// and test2020_21.C.
+   ROSE_DLL_API SgSymbol *lookupSymbolInParentScopesIgnoringAliasSymbols (const SgName & name, SgScopeStatement *currentScope = NULL, SgTemplateParameterPtrList* templateParameterList = NULL, SgTemplateArgumentPtrList* templateArgumentList = NULL);
 
 // DQ (8/21/2013): Modified to make newest function parameters be default arguments.
 // DQ (8/16/2013): For now we want to remove the use of default parameters and add the support for template parameters and template arguments.
@@ -146,6 +149,10 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
 // SgSymbol *lookupSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope=NULL);
 // SgSymbol *lookupSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList);
    ROSE_DLL_API SgSymbol *lookupSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope = NULL, SgTemplateParameterPtrList* templateParameterList = NULL, SgTemplateArgumentPtrList* templateArgumentList = NULL);
+
+   // Liao 1/22/2008, used for get symbols for generating variable reference nodes
+   // ! Find a variable symbol in current and ancestor scopes for a given name
+   ROSE_DLL_API SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope=NULL);
 
    // DQ (11/24/2007): Functions moved from the Fortran support so that they could be called from within astPostProcessing.
    //!look up the first matched function symbol in parent scopes given only a function name, starting from top of ScopeStack if currentscope is not given or NULL
@@ -402,6 +409,13 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
    void saveToPDF(SgNode* node, std::string filename);
    void saveToPDF(SgNode* node); // enable calling from gdb
 
+   //! Pretty print AST horizontally, output to std output
+   void printAST (SgNode* node); 
+
+   //! Pretty print AST horizontally, output to a specified text file.
+   void printAST2TextFile (SgNode* node, const char* filename); 
+   void printAST2TextFile (SgNode* node, std::string filename); 
+
  // DQ (2/12/2012): Added some diagnostic support.
 //! Diagnostic function for tracing back through the parent list to understand at runtime where in the AST a failure happened.
    void whereAmI(SgNode* node);
@@ -547,6 +561,18 @@ ROSE_DLL_API bool isExtern(SgDeclarationStatement* stmt);
 //! Set a declaration as extern
 ROSE_DLL_API void setExtern(SgDeclarationStatement* stmt);
 
+//! True if an SgInitializedName is "mutable' (has storage modifier set)
+bool ROSE_DLL_API isMutable(SgInitializedName* name);
+
+//! True if a parameter name is a Jovial output parameter
+bool ROSE_DLL_API isJovialOutParam(SgInitializedName* name);
+
+//! Get a vector of Jovial input parameters from the function parameter list (may work for Fortran in the future)
+std::vector<SgInitializedName*> getInParameters(const SgInitializedNamePtrList &params);
+
+//! Get a vector of Jovial output parameters from the function parameter list (may work for Fortran in the future)
+std::vector<SgInitializedName*> getOutParameters(const SgInitializedNamePtrList &params);
+
 //! Interface for creating a statement whose computation writes its answer into
 //! a given variable.
 class StatementGenerator {
@@ -593,6 +619,12 @@ bool isIndexOperator( SgExpression* exp );
 // DQ (1/10/2014): Adding more general support for token based unparsing.
 //! Used to support token unparsing (when the output the trailing token sequence).
 SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap);
+
+// DQ (8/12/2020): Check the access permissions of all defining and nodefining declarations.
+void checkAccessPermissions ( SgNode* );
+
+// DQ (8/14/2020): Check the symbol tables for specific scopes (debugging support).
+void checkSymbolTables ( SgNode* );
 
 //@}
 
@@ -1019,6 +1051,8 @@ ROSE_DLL_API bool templateArgumentListEquivalence(const SgTemplateArgumentPtrLis
 //! Test for equivalence of types independent of access permissions (private or protected modes for members of classes).
 ROSE_DLL_API bool isEquivalentType (const SgType* lhs, const SgType* rhs);
 
+//! Find the function type matching a function signature plus a given return type
+ROSE_DLL_API SgFunctionType* findFunctionType (SgType* return_type, SgFunctionParameterTypeList* typeList);
 
 //! Test if two types are equivalent SgFunctionType nodes. This is necessary for template function types
 //! They may differ in one SgTemplateType pointer but identical otherwise. 

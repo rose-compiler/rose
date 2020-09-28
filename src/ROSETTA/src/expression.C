@@ -167,6 +167,8 @@ Grammar::setUpExpressions ()
   
   // CR (07/26/2020): Jovial replication operator for initialization expressions, also seen in Fortran
      NEW_TERMINAL_MACRO (ReplicationOp,          "ReplicationOp",          "REPLICATION_OP" );
+  // CR (9/23/2020): Jovial binary "@" operator is used to dereference pointers "member @ object".
+     NEW_TERMINAL_MACRO (AtOp,                   "AtOp",                   "AT_OP" );
 
   // PP (06/08/2020): Added support for Ada remainder (different from mod) and abs operators 
      NEW_TERMINAL_MACRO (RemOp,                  "RemOp",                  "REM_OP" );
@@ -200,6 +202,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (Float80Val,             "Float80Val",             "FLOAT_80_VAL" );
      NEW_TERMINAL_MACRO (Float128Val,            "Float128Val",            "FLOAT_128_VAL" );
      NEW_TERMINAL_MACRO (AdaFloatVal,            "AdaFloatVal",            "ADA_FLOAT_VAL" );
+     NEW_TERMINAL_MACRO (JovialBitVal,           "JovialBitVal",           "JOVIAL_BIT_VAL" );
 
   // DQ (7/31/2014): Added support for C++11 nullptr constant value expression (using type nullptr_t).
      NEW_TERMINAL_MACRO (NullptrValExp,          "NullptrValExp",          "NULLPTR_VAL" );
@@ -408,7 +411,7 @@ Grammar::setUpExpressions ()
           RshiftOp       | PntrArrRefExp    | ScopeOp             | AssignOp         | ExponentiationOp     | JavaUnsignedRshiftOp |
           ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         | SpaceshipOp    |
           NonMembershipOp | IsOp            | IsNotOp             | DotDotExp        | ElementwiseOp        | PowerOp        |
-          LeftDivideOp    | RemOp           | ReplicationOp,
+          LeftDivideOp    | RemOp           | ReplicationOp       | AtOp,
           "BinaryOp","BINARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (NaryOp,
@@ -423,7 +426,7 @@ Grammar::setUpExpressions ()
           LongIntVal           | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        | 
           DoubleVal            | LongDoubleVal    | ComplexVal             | UpcThreads      | UpcMythread     |
           TemplateParameterVal | NullptrValExp    | Char16Val              | Char32Val       | Float80Val      | 
-          Float128Val          | VoidVal          | AdaFloatVal /* | LabelAddressVal */,
+          Float128Val          | VoidVal          | AdaFloatVal            | JovialBitVal /* | LabelAddressVal */,
           "ValueExp","ValueExpTag", false);
 
      NEW_NONTERMINAL_MACRO (ExprListExp,
@@ -792,6 +795,8 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
      AbsOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
+     AtOp.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
+                                  "../Grammar/Expression.code" );
 
      MembershipOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
@@ -838,6 +843,7 @@ Grammar::setUpExpressions ()
      Float80Val.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      Float128Val.setFunctionSource      ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      AdaFloatVal.setFunctionSource      ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     JovialBitVal.setFunctionSource     ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
      VoidVal.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
@@ -1072,6 +1078,7 @@ Grammar::setUpExpressions ()
      ReplicationOp.editSubstitute   ( "PRECEDENCE_VALUE", "13" );
      RemOp.editSubstitute           ( "PRECEDENCE_VALUE", "13" );
      AbsOp.editSubstitute           ( "PRECEDENCE_VALUE", "15" );
+     AtOp.editSubstitute            ( "PRECEDENCE_VALUE", "15" );
 
   // DQ (2/5/2004): Adding support for varargs in AST
      VarArgStartOp.editSubstitute   ( "PRECEDENCE_VALUE", "16" );
@@ -1764,6 +1771,9 @@ Grammar::setUpExpressions ()
      AdaFloatVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
                                  
+     JovialBitVal.setFunctionPrototype ( "HEADER_JOVIAL_BIT_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+     JovialBitVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (11/28/2011): Adding template declaration support in the AST (see test2011_164.C).
      TemplateParameterVal.setFunctionPrototype ( "HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION", "../Grammar/Expression.code" );
@@ -2381,6 +2391,7 @@ Grammar::setUpExpressions ()
 
      RemOp.setFunctionPrototype ( "HEADER_REM_OPERATOR", "../Grammar/Expression.code" );
      AbsOp.setFunctionPrototype ( "HEADER_ABS_OPERATOR", "../Grammar/Expression.code" );
+     AtOp.setFunctionPrototype  ( "HEADER_AT_OPERATOR",  "../Grammar/Expression.code" );
 
 
   // DQ (9/4/2013): Adding support for compound literals.  These are not the same as initializers and define
@@ -3005,6 +3016,7 @@ Grammar::setUpExpressions ()
      Float80Val.setFunctionSource ( "SOURCE_FLOAT_80_VALUE_EXPRESSION","../Grammar/Expression.code" );
      Float128Val.setFunctionSource ( "SOURCE_FLOAT_128_VALUE_EXPRESSION","../Grammar/Expression.code" );
      AdaFloatVal.setFunctionSource ( "SOURCE_ADA_FLOAT_VALUE_EXPRESSION","../Grammar/Expression.code" );
+     JovialBitVal.setFunctionSource ( "SOURCE_JOVIAL_BIT_VALUE_EXPRESSION","../Grammar/Expression.code" );
      AdaTaskRefExp.setFunctionSource ( "SOURCE_ADA_TASK_REF_EXPRESSION","../Grammar/Expression.code" );
 
      VoidVal.setFunctionSource ( "SOURCE_VOID_VALUE_EXPRESSION","../Grammar/Expression.code" );
@@ -3149,6 +3161,7 @@ Grammar::setUpExpressions ()
 
      RemOp.setFunctionSource            ( "SOURCE_REM_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      AbsOp.setFunctionSource            ( "SOURCE_ABS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     AtOp.setFunctionSource             ( "SOURCE_AT_OPERATOR_EXPRESSION", "../Grammar/Expression.code" );
 
   // DQ (7/25/2020): Adding C++20 support (need to lookup the correct operator precedence, made it the same as AddOp for now).
      SpaceshipOp.setFunctionSource ( "SOURCE_SPACESHIP_OPERATOR","../Grammar/Expression.code" );
@@ -3292,6 +3305,7 @@ Grammar::setUpExpressions ()
      Float128Val.setFunctionSource            ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      ComplexVal.setFunctionSource             ( "SOURCE_GET_TYPE_COMPLEX","../Grammar/Expression.code" );
      AdaFloatVal.setFunctionSource            ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+     JovialBitVal.setFunctionSource           ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      
      VoidVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
 
@@ -3348,6 +3362,8 @@ Grammar::setUpExpressions ()
      
      // \todo set type according to Asis frontend
      AdaFloatVal.editSubstitute            ( "GENERIC_TYPE", "SgTypeFloat" );
+
+     JovialBitVal.editSubstitute           ( "GENERIC_TYPE", "SgJovialBitType" );
      
      ComplexVal.editSubstitute             ( "GENERIC_TYPE", "SgTypeComplex" );
 

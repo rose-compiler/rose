@@ -565,10 +565,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupp
     // Temporarily pop this type definition off the stack to that we can process its super class and interfaces.
     // We will push it back when we are done processing this type header.
     //
-    ROSE_ASSERT(! astJavaScopeStack.empty());
+    ROSE_ASSERT( ! astJavaScopeStack.empty());
     SgClassDefinition *class_definition = isSgClassDefinition(astJavaScopeStack.pop());
 
     if (SgProject::get_verbose() > 0) {
+        ROSE_ASSERT(class_definition != NULL);
         cout << "Type " << class_definition -> get_qualified_name()
              << " has "
              << (has_super_class ? "a super class" : "no super class")
@@ -646,8 +647,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupp
         list<SgTemplateParameter *> parameter_list;
         for (int i = 0; i < number_of_type_parameters; i++) { // Reverse the content of the stack.
             SgClassDeclaration *parameter_decl = isSgClassDeclaration(astJavaComponentStack.pop());
-            ROSE_ASSERT(parameter_decl);
-            SgTemplateParameter *parameter = new SgTemplateParameter(parameter_decl -> get_type(), NULL);
+            ROSE_ASSERT(parameter_decl != NULL);
+            SgTemplateParameter *parameter = new SgTemplateParameter(parameter_decl->get_type(), NULL);
             parameter_list.push_front(parameter);
         }
 
@@ -659,14 +660,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupp
         }
 
         SgTemplateParameterList *template_parameter_list = new SgTemplateParameterList();
-        template_parameter_list -> set_args(final_list);
-        class_definition -> get_declaration() -> setAttribute("type_parameters", new AstSgNodeAttribute(template_parameter_list));
+        template_parameter_list->set_args(final_list);
+        SgClassDeclaration* class_declaration = class_definition->get_declaration();
+        ROSE_ASSERT(class_declaration != NULL);
+        class_declaration->setAttribute("type_parameters", new AstSgNodeAttribute(template_parameter_list));
     }
 
     AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("extensions");
     for (list<SgNode *>::iterator extension = extension_list.begin(); extension != extension_list.end(); extension++) {
         SgType *type = isSgType(*extension);
-        ROSE_ASSERT(type);
+        ROSE_ASSERT(type != NULL);
         attribute -> addNode(type);
 // getTypeName(type); // TODO: this is here temporarily to check whether or not this file needs to be fully qualified in this file.
     }
@@ -754,14 +757,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportEnd(JNIEnv *env, 
     // TODO:  Review this because of the package issue and the inability to build a global AST.
     //
     ROSE_ASSERT(outerScope != NULL);
-    if (isSgClassDefinition(outerScope) && isSgJavaPackageDeclaration(isSgClassDefinition(outerScope) -> get_declaration())) { // a type in a package?
-        isSgClassDefinition(outerScope) -> append_member(class_declaration);
+    if ((isSgClassDefinition(outerScope) != NULL) && (isSgJavaPackageDeclaration(isSgClassDefinition(outerScope)->get_declaration()) != NULL)) { // a type in a package?
+        isSgClassDefinition(outerScope)->append_member(class_declaration);
     }
-    else if (isSgClassDefinition(outerScope) && (! isSgJavaPackageDeclaration(isSgClassDefinition(outerScope) -> get_declaration()))) { // an inner type?
+    else if ((isSgClassDefinition(outerScope) != NULL) && (isSgJavaPackageDeclaration(isSgClassDefinition(outerScope)->get_declaration()) == NULL)) { // an inner type?
         ; // Ignore an inner type here as it will be proceessed later when the class member declarations are visited.
           // See Java_JavaParser_cactionBuildInnerTypeSupport(...).
     }
-    else if (isSgBasicBlock(outerScope)) { // a local type declaration?
+    else if (isSgBasicBlock(outerScope) != NULL) { // a local type declaration?
         astJavaComponentStack.push(class_declaration);
     }
     else { // What is this?
@@ -2724,9 +2727,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd(JNIEnv *
         AstSgNodeListAttribute *annotations_attribute = new AstSgNodeListAttribute();
         for (int i = num_annotations - 1; i >= 0; i--) {
             SgExpression *annotation = astJavaComponentStack.popExpression();
-            annotation -> set_parent(constructor_declaration);
+            annotation->set_parent(constructor_declaration);
             annotations_attribute -> setNode(annotation, i);
         }
+        ROSE_ASSERT(constructor_declaration != NULL);
         constructor_declaration -> setAttribute("annotations", annotations_attribute);
     }
 
@@ -6514,7 +6518,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatement(JNIEnv *env, jclass, 
 JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatementEnd(JNIEnv *env, jclass, jint num_resources, jint num_catch_blocks, jboolean has_finally_block, jobject jToken) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionTryStatement() \n");
-     
+
     SgBasicBlock *finally_body = (SgBasicBlock *) (has_finally_block ? astJavaComponentStack.popStatement() : NULL);
     ROSE_ASSERT(finally_body == NULL || isSgBasicBlock(finally_body));
 

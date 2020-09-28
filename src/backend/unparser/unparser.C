@@ -342,12 +342,6 @@ Unparser::computeNameQualification(SgSourceFile* file)
   // if (isCxxFile == true)
      if (isCxxFile == true)
         {
-       // DQ (5/22/2007): Moved from SgProject::parse() function to here so that propagateHiddenListData() could be called afterward.
-       // DQ (5/8/2007): Now build the hidden lists for types and declarations (Robert Preissl's work)
-#if 0
-       // DQ (6/25/2011): This will be the default (the old system for name qualification so that initial transition windows will provide backward compatability).
-          Hidden_List_Computation::buildHiddenTypeAndDeclarationLists(file);
-#else
        // DQ (5/15/2011): Test clearing the mangled name map.
        // printf ("Calling SgNode::clearGlobalMangledNameMap() \n");
 
@@ -363,20 +357,19 @@ Unparser::computeNameQualification(SgSourceFile* file)
 #if 0
           printf ("In Unparser::computeNameQualification(): generateNameQualificationSupport(): part 1: modifiedLocatedNodesSet_1.size() = %zu \n",modifiedLocatedNodesSet_1.size());
 #endif
-#if 1
           if (SgProject::get_verbose() > 0)
              {
                printf ("Calling name qualification support. \n");
              }
-#endif
-          generateNameQualificationSupport(file,referencedNameSet);
-#if 1
+          SgNodePtrList & nodes_for_namequal_init = file->get_extra_nodes_for_namequal_init();
+          for (SgNodePtrList::iterator it = nodes_for_namequal_init.begin(); it != nodes_for_namequal_init.end(); ++it) {
+            generateNameQualificationSupport(*it, referencedNameSet);
+          }
+          generateNameQualificationSupport(file, referencedNameSet);
           if (SgProject::get_verbose() > 0)
              {
                printf ("DONE: Calling name qualification support. \n");
              }
-#endif
-#endif
 
        // DQ (6/5/2007): We actually need this now since the hidden lists are not pushed to lower scopes where they are required.
        // DQ (5/22/2007): Added support for passing hidden list information about types, declarations and elaborated types to child scopes.
@@ -586,107 +579,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // DQ (8/23/2018): This should be a non-empty list if we are using the token stream.
   // ROSE_ASSERT (file->get_token_list().empty() == false);
      printf ("In Unparser::unparseFile(): MIDDLE: file = %p file->get_token_list().empty() = %s \n",file,file->get_token_list().empty() ? "true" : "false");
-#endif
-
-#if 1
-  // DQ (8/7/2018): Moved this function to the unparseProject function (I think we can do this).
-  // DQ (8/7/2018): Refactored code for name qualification (so that we can call it once before all files 
-  // are unparsed (where we unparse multiple files because fo the use of header file unparsing)).
-  // computeNameQualification(file);
-#else
-
-#error "DEAD CODE!"
-
-  // DQ (11/10/2007): Moved computation of hidden list from astPostProcessing.C to unparseFile so that 
-  // it will be called AFTER any transformations and immediately before code generation where it is 
-  // really required.  This part of a fix for Liao's outliner, but should be useful for numerous 
-  // transformations.  This also make simple analysis much cheaper since the hidel list computation is
-  // expensive (in this implementation).
-  // DQ (8/6/2007): Only compute the hidden lists if working with C++ code!
-  // if (isCxxFile == true)
-     if (isCxxFile == true)
-        {
-       // DQ (5/22/2007): Moved from SgProject::parse() function to here so that propagateHiddenListData() could be called afterward.
-       // DQ (5/8/2007): Now build the hidden lists for types and declarations (Robert Preissl's work)
-
-#error "DEAD CODE!"
-
-#if 0
-       // DQ (6/25/2011): This will be the default (the old system for name qualification so that initial transition windows will provide backward compatability).
-          Hidden_List_Computation::buildHiddenTypeAndDeclarationLists(file);
-#else
-       // DQ (5/15/2011): Test clearing the mangled name map.
-       // printf ("Calling SgNode::clearGlobalMangledNameMap() \n");
-
-       // DQ (6/25/2011): Test if this is required...it works, I think we don't need to clear the global managled name table...
-       // SgNode::clearGlobalMangledNameMap();
-
-       // Build the local set to use to record when declaration that might required qualified references have been seen.
-          std::set<SgNode*> referencedNameSet;
-
-#error "DEAD CODE!"
-
-       // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
-          std::set<SgLocatedNode*> modifiedLocatedNodesSet_1 = SageInterface::collectModifiedLocatedNodes(file);
-          size_t numberOfModifiedNodesBeforeNameQualification = modifiedLocatedNodesSet_1.size();
-#if 0
-          printf ("In Unparser::unparseFile(): generateNameQualificationSupport(): part 1: modifiedLocatedNodesSet_1.size() = %zu \n",modifiedLocatedNodesSet_1.size());
-#endif
-#if 0
-          if (SgProject::get_verbose() > 0)
-             {
-               printf ("Calling name qualification support. \n");
-             }
-#endif
-
-#error "DEAD CODE!"
-
-          generateNameQualificationSupport(file,referencedNameSet);
-#if 0
-          if (SgProject::get_verbose() > 0)
-             {
-               printf ("DONE: Calling name qualification support. \n");
-             }
-#endif
-
-#error "DEAD CODE!"
-
-#endif
-
-#error "DEAD CODE!"
-
-       // DQ (6/5/2007): We actually need this now since the hidden lists are not pushed to lower scopes where they are required.
-       // DQ (5/22/2007): Added support for passing hidden list information about types, declarations and elaborated types to child scopes.
-          propagateHiddenListData(file);
-
-       // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
-          std::set<SgLocatedNode*> modifiedLocatedNodesSet_2 = SageInterface::collectModifiedLocatedNodes(file);
-          size_t numberOfModifiedNodesAfterNameQualification = modifiedLocatedNodesSet_2.size();
-#if 0
-          printf ("In Unparser::unparseFile(): generateNameQualificationSupport(): part 2: modifiedLocatedNodesSet_2.size() = %zu \n",modifiedLocatedNodesSet_2.size());
-#endif
-
-#error "DEAD CODE!"
-
-#if 0
-          printf ("In Unparser::unparseFile(): file->get_unparse_tokens() = %s \n",file->get_unparse_tokens() ? "true" : "false");
-#endif
-
-#error "DEAD CODE!"
-
-       // DQ (6/11/2015): Introduce error checking on the AST if we are using the token-based unparsing.
-          if ( (file->get_unparse_tokens() == true) && (numberOfModifiedNodesAfterNameQualification != numberOfModifiedNodesBeforeNameQualification) )
-             {
-               printf ("In Unparser::unparseFile(): numberOfModifiedNodesBeforeNameQualification = %zu numberOfModifiedNodesAfterNameQualification = %zu \n",
-                    numberOfModifiedNodesBeforeNameQualification,numberOfModifiedNodesAfterNameQualification);
-               printf ("ERROR: namequalification step has introduced modified IR nodes in the AST (a problem for the token-based unparsing) \n");
-               ROSE_ASSERT(false);
-             }
-
-        }
-
-#error "DEAD CODE!"
-
 #endif
 
 #if 0
@@ -4189,12 +4081,16 @@ SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFi
           ROSE_ASSERT(false);
 #endif
 
+#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
        // DQ (5/20/2020): Collect the Comments and CPP directives so that can be inserted into 
        // the AST as part of building the source file fro this include file.
           ROSEAttributesList* returnListOfAttributes = NULL;
-#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
+
        // DQ (7/4/2020): This function should not be called for binaries (only for C/C++ code).
           returnListOfAttributes = getPreprocessorDirectives(filename);
+
+       // DQ (9/17/2020): Added a use of the variable to prevent compiler warning.
+          ROSE_ASSERT(returnListOfAttributes != NULL);
 #endif
 
 #if 1
@@ -5534,6 +5430,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 // DQ (10/11/2007): I think this is redundant with the Unparser::unparseProject() member function
 // But it is allowed to call it directly from the user's translator if compilation using the backend 
 // is not required!  So we have to allow it to be here.
+
 void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
    {
      ASSERT_not_null(project);
@@ -5798,6 +5695,9 @@ void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormat
 
 
 // DQ (1/19/2010): Added support for refactored handling directories of files.
+
+/* Disable address sanitizer for this function */
+// __attribute__((no_sanitize("address")))
 void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
    {
      ASSERT_not_null(fileList);
@@ -5816,10 +5716,53 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
      ROSE_ASSERT(false);
 #endif
 
+  // DQ (9/17/2020): Testing using address sanitizer.
+     ROSE_ASSERT(fileList != NULL);
+     ROSE_ASSERT(fileList->get_listOfFiles().size() >= 0);
+
+#if 0
+  // DQ (9/17/2020): Testing  for error reported by address sanitizer.
+     printf ("fileList          = %p \n",fileList);
+     printf ("unparseFormatHelp = %p \n",unparseFormatHelp);
+     printf ("unparseDelegate   = %p \n",unparseDelegate);
+
+     void* status_of_function_stack_offset = &status_of_function;
+     printf ("status_of_function_stack_offset = %p \n",status_of_function_stack_offset);
+
+     void* fileList_stack_offset = &fileList;
+     printf ("fileList_stack_offset = %p \n",fileList_stack_offset);
+
+     void* unparseFormatHelp_stack_offset = &unparseFormatHelp;
+     printf ("unparseFormatHelp_stack_offset = %p \n",unparseFormatHelp_stack_offset);
+
+     void* unparseDelegate_stack_offset = &unparseDelegate;
+     printf ("unparseDelegate_stack_offset = %p \n",unparseDelegate_stack_offset);
+#endif
+
+  // for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
+  // size_t i;
+  // for (i=0; i < fileList->get_listOfFiles().size(); ++i)
+  // for (i=0; i < fileList->get_listOfFiles().size(); i++)
      for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
         {
           SgFile* file = fileList->get_listOfFiles()[i];
-
+#if 0
+       // DQ (9/17/2020): Testing  for error reported by address sanitizer.
+          printf ("file = %p \n",file);
+#endif
+#if 0
+       // DQ (9/17/2020): This appears to be required to avoid address sanitizer reporting an error.
+       // void* file_stack_offset = &file;
+       // printf ("file_stack_offset = %p \n",file_stack_offset);
+#endif
+#if 0
+          printf ("file (address) = %p \n",&file);
+       // printf ("file (address) = %p \n",file);
+#endif
+#if 0
+          void* i_stack_offset = &i;
+          printf ("i_stack_offset = %p \n",i_stack_offset);
+#endif
        // #if 0
        // DQ (4/9/2020): Added header file unparsing feature specific debug level.
           if (SgProject::get_unparseHeaderFilesDebug() >= 3)
@@ -5834,9 +5777,7 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
 
           if (SgProject::get_verbose() > 1)
              {
-               printf("Unparsing file = %p = %s \n",
-                      file,
-                      file->class_name().c_str());
+               printf("Unparsing file = %p = %s \n",file,file->class_name().c_str());
              }
 
 #ifndef _MSC_VER

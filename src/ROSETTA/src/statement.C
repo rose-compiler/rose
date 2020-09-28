@@ -664,6 +664,12 @@ Grammar::setUpStatements ()
      ScopeStatement.setDataPrototype    ( "std::set<SgSymbol*>","hidden_declaration_list","",
                                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // DQ (9/23/2020): Add a pointer to hold a SgPragma that can be attached to a log of scope IR nodes.
+  // e.g. Cxx11_tests/test2020_102.C through test2020_107.C
+  // ScopeStatement.setDataPrototype    ( "SgPragma*","pragma","= NULL",
+  //                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+     ScopeStatement.setDataPrototype    ( "SgPragma*","pragma","= NULL",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
 
      FunctionTypeTable.setFunctionPrototype( "HEADER_FUNCTION_TYPE_TABLE", "../Grammar/Statement.code" );
      FunctionTypeTable.setDataPrototype    ( "SgSymbolTable*","function_type_table","= NULL",
@@ -984,7 +990,16 @@ Grammar::setUpStatements ()
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
-     FunctionParameterScope.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_SCOPE", "../Grammar/Statement.code" );
+// CR (09/24/2020): Finishing implementation of SgFunctionParameterScope for Jovial
+     FunctionParameterScope.setFunctionPrototype( "HEADER_FUNCTION_PARAMETER_SCOPE", "../Grammar/Statement.code" );
+     FunctionParameterScope.editSubstitute      ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+     FunctionParameterScope.editSubstitute      ( "LIST_DATA_TYPE", "SgDeclarationStatementPtrList" );
+     FunctionParameterScope.editSubstitute      ( "LIST_NAME", "declarations" );
+     FunctionParameterScope.editSubstitute      ( "LIST_FUNCTION_RETURN_TYPE", "void" );
+     FunctionParameterScope.editSubstitute      ( "LIST_FUNCTION_NAME", "declaration" );
+     FunctionParameterScope.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "SgDeclarationStatement*" );
+     FunctionParameterScope.setDataPrototype    ( "SgDeclarationStatementPtrList", "declarations", "",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (7/17/2017): Added to support concept of scope in nondefining declarations (required for more sophisticated level of template useage).
      DeclarationScope.setFunctionPrototype ( "HEADER_DECLARATION_SCOPE", "../Grammar/Statement.code" );
@@ -3316,12 +3331,15 @@ Grammar::setUpStatements ()
      JovialForThenStatement.setFunctionPrototype ( "HEADER_JOVIAL_FOR_THEN_STATEMENT", "../Grammar/Statement.code" );
      JovialForThenStatement.setDataPrototype     ( "SgExpression*", "initialization", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     JovialForThenStatement.setDataPrototype     ( "SgExpression*", "then_expression", "= NULL",
-                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      JovialForThenStatement.setDataPrototype     ( "SgExpression*", "while_expression", "= NULL",
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JovialForThenStatement.setDataPrototype     ( "SgExpression*", "by_or_then_expression", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      JovialForThenStatement.setDataPrototype     ( "SgBasicBlock*", "loop_body", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JovialForThenStatement.setDataPrototype     ( "SgJovialForThenStatement::loop_statement_type_enum",
+                                         "loop_statement_type", "= SgJovialForThenStatement::e_unknown",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
 
   // CR (11/12/2018): Added to support Jovial COMPOOL modules
      JovialCompoolStatement.setFunctionPrototype ( "HEADER_JOVIAL_COMPOOL_STATEMENT", "../Grammar/Statement.code" );
@@ -3635,11 +3653,14 @@ Grammar::setUpStatements ()
      BlockDataStatement.setDataPrototype    ( "SgBasicBlock*", "body", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // Also need to add a list of declarations (use SgInitializedNameList, I think)
-     ImplicitStatement.setDataPrototype    ( "bool", "implicit_none", "= false",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // CR (8/3/2020): Added implicit_type enum for F2018 syntax (implicit_none becomes redundant)
+     ImplicitStatement.setDataPrototype("bool", "implicit_none", "= false",
+                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     ImplicitStatement.setDataPrototype("SgImplicitStatement::implicit_spec_enum",
+                                        "implicit_spec", "= SgImplicitStatement::e_unknown_implicit_spec",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ImplicitStatement.setDataPrototype("SgInitializedNamePtrList", "variables", "",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      StatementFunctionStatement.setDataPrototype    ( "SgFunctionDeclaration*", "function", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

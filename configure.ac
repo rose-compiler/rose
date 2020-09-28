@@ -1,10 +1,10 @@
 dnl DQ (1/11/2010): Consider handing configure options as specified at:
 dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 
-dnl The version number in the AC_INIT([ROSE], [0.10.12.8])
-dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.10.12.8])
+dnl The version number in the AC_INIT([ROSE], [0.11.2.19])
+dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.11.2.19])
 dnl shell variable.
-AC_INIT([ROSE], [0.10.12.8])
+AC_INIT([ROSE], [0.11.2.19])
 AC_PREREQ([2.59])
 
 # This one should perhaps be named ROSE_VERSION_STR instead of ROSE_SCM_VERSION_ID since it is not the SCM system's version
@@ -169,6 +169,6 @@ ${T_BM}
 ${T_NM}
 Now type 'make core -jN' and then 'make install-core -jN' to only build essential libraries and tools (Recommended).
 Type 'make -jN' and 'make install -jN' to build and install everything (takes a very long time).
-N is the number of concurrent processes you wan to use for your build. 
+N is the number of concurrent processes you want to use for your build.
 Thank you for using ROSE.
 X

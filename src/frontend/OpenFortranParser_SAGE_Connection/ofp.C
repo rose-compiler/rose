@@ -27,7 +27,7 @@ jvm_ofp_processing(int argc, char **argv)
     if (args == NULL) jserver_handleException();
 
     jserver_callMethod(jofp_get_frontEnd_class(), jofp_get_frontEnd_main_method(), args);
-    int retval = jserver_callBooleanMethod(jofp_get_frontEnd_class(), jofp_get_frontEnd_getError_method());
+    int retval = jserver_callStaticBooleanMethod(jofp_get_frontEnd_class(), jofp_get_frontEnd_getError_method());
 
     return retval;
 }
