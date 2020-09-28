@@ -9,8 +9,7 @@
 #include "CFAnalysis.h"
 #include "RDLattice.h"
 #include "DFAnalysisBase.h"
-#include "WorkList.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "DFAstAttribute.h"
 #include "RDTransferFunctions.h"
 
@@ -19,7 +18,7 @@ namespace CodeThorn {
 class RDPropertyStateFactory : public PropertyStateFactory {
  public:
   RDPropertyStateFactory();
-  virtual PropertyState* create();
+  virtual RDLattice* create();
   virtual ~RDPropertyStateFactory();
 };
 

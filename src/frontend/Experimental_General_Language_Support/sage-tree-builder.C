@@ -8,6 +8,8 @@
 #include <boost/optional/optional_io.hpp>
 #include <iostream>
 
+#define PRINT_WARNINGS 0
+
 namespace Rose {
 namespace builder {
 
@@ -42,7 +44,7 @@ SgGlobal* initialize_global_scope(SgSourceFile* file)
  // by "1" the start and end will not be the same value.
     globalScope->get_endOfConstruct()->set_line(1);
 
-ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());//TEMPORARY
+    ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());//TEMPORARY
     ROSE_ASSERT(SageBuilder::emptyScopeStack() == true);
     SageBuilder::pushScopeStack(globalScope);
 
@@ -223,34 +225,54 @@ setFortranEndProgramStmt(SgProgramHeaderStatement* program_decl,
 }
 
 void SageTreeBuilder::
-Enter(SgFunctionParameterList* &param_list, SgBasicBlock* &param_scope)
+Enter(SgFunctionParameterList* &param_list, SgScopeStatement* &param_scope,
+      const std::string &function_name, SgType* function_type, bool is_defining_decl)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionParameterList*) \n";
 
    param_list = SageBuilder::buildFunctionParameterList_nfi();
+   param_scope = nullptr;
 
-// The newly created SgBasicBloc (stored in param_scope) will be used to temporarily store declarations
-// needed to build the types of the initialized names in the parameter list. These declarations are
-// transferred to the function definition scope during later processing.
+// If this is a defining declaration (has a function body) then an SgBasicBlock must be created
+// to temporarily store declarations needed to build the types of the initialized names in the
+// parameter list. These declarations are transferred to the function definition scope during
+// later processing: Leave(SgFunctionDeclaration*).
 //
-   param_scope = new SgBasicBlock();
-   ROSE_ASSERT(param_scope != nullptr);
-   ROSE_ASSERT(param_scope->get_parent() == nullptr); // make sure this node is unattached in the AST
+   if (is_defining_decl) {
+     param_scope = new SgBasicBlock();
+   }
+   else {
+     param_scope = new SgFunctionParameterScope();
+   }
+
+   ROSE_ASSERT(param_scope);
    SageInterface::setSourcePosition(param_scope);
 
-   // if unattached then symbol lookups may fail
+// The parameter scope must be attached so that symbol lookups can happen
+   ROSE_ASSERT(param_scope->get_parent() == nullptr);
    param_scope->set_parent(SageBuilder::topScopeStack());
 
    if (SageInterface::is_language_case_insensitive()) {
-      param_scope->setCaseInsensitive(true);
+     param_scope->setCaseInsensitive(true);
    }
 
-   ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());//TEMPORARY
+// Build the initialized name and symbol for the function result. It is needed because in
+// Fortran and Jovial the function name is used as a variable to set the return result value.
+// The initialized name will need to be transferred to the function definition scope later.
+//
+   if (function_type) {
+     SgInitializedName* result_name = SageBuilder::buildInitializedName(function_name, function_type, /*initializer*/nullptr);
+     SageInterface::setSourcePosition(result_name);
+     result_name->set_scope(param_scope);
+     SgVariableSymbol* result_symbol = new SgVariableSymbol(result_name);
+     param_scope->insert_symbol(result_name->get_name(), result_symbol);
+   }
+
    SageBuilder::pushScopeStack(param_scope);
 }
 
 void SageTreeBuilder::
-Leave(SgFunctionParameterList* param_list, SgBasicBlock* param_scope, const std::list<FormalParameter> &param_name_list)
+Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const std::list<FormalParameter> &param_name_list)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionParameterList*) \n";
 
@@ -260,40 +282,32 @@ Leave(SgFunctionParameterList* param_list, SgBasicBlock* param_scope, const std:
 // Sanity check
    ROSE_ASSERT(param_scope == SageBuilder::topScopeStack());
 
-#if 0
-   std::cout << "--- param_name_list size is " << param_name_list.size() << std::endl;
-   std::cout << "--- param      list size is " << param_scope->get_statements().size() << std::endl;
-#endif
-
 // Populate the function parameter list from declarations in the parameter block
    BOOST_FOREACH(const FormalParameter &param, param_name_list)
-      {
-         SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(param.name, param_scope);
+     {
+       SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(param.name, param_scope);
 
-         if (symbol == nullptr) {
-            std::cerr << "WARNING UNIMPLEMENTED: SageTreeBuilder::Enter(SgFunctionDeclaration*) - symbol lookup failed for name "
-                      << param.name << "\n";
-            ROSE_ASSERT(symbol);
-         }
-
-      // Create a new initialized name for the parameter list
-         SgInitializedName* init_name = symbol->get_declaration();
-         SgType* type = init_name->get_type();
-         SgInitializedName* new_init_name = SageBuilder::buildInitializedName (param.name, type, /*initializer*/nullptr);
-         param_list->append_arg(new_init_name);
-
-         if (param.output)
-            {
-               init_name    ->get_storageModifier().setMutable();
-               new_init_name->get_storageModifier().setMutable();
-            }
-#if 0
-         std::cout << "--> FormalParameter is " << param.name << std::endl;
-         std::cout << "--> symbol is " << symbol << ": " << symbol->class_name() << std::endl;
-         std::cout << "--> declared variable name is " << new_init_name->get_name() << std::endl;
-         std::cout << "--> is output variable is " << param.output << std::endl;
+       if (symbol == nullptr) {
+#ifdef PRINT_WARNINGS
+         std::cerr << "WARNING UNIMPLEMENTED: SageTreeBuilder::Enter(SgFunctionDeclaration*) - symbol lookup failed for name "
+                   << param.name << "\n";
+         ROSE_ASSERT(symbol);
 #endif
-      }
+       }
+
+    // Create a new initialized name for the parameter list
+       SgInitializedName* init_name = symbol->get_declaration();
+       SgType* type = init_name->get_type();
+       SgInitializedName* new_init_name = SageBuilder::buildInitializedName (param.name, type, /*initializer*/nullptr);
+       SageInterface::setSourcePosition(new_init_name);
+
+       param_list->append_arg(new_init_name);
+
+       if (param.output) {
+         init_name    ->get_storageModifier().setMutable();
+         new_init_name->get_storageModifier().setMutable();
+       }
+     }
 
    SageBuilder::popScopeStack(); // remove parameter scope from the stack
 }
@@ -336,7 +350,7 @@ Leave(SgFunctionDefinition* function_def)
 
 void SageTreeBuilder::
 Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* return_type, SgFunctionParameterList* param_list,
-                                             const LanguageTranslation::FunctionModifierList &modifiers)
+                                             const LanguageTranslation::FunctionModifierList &modifiers, bool is_defining_decl)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionDeclaration* &, ...) \n";
 
@@ -359,74 +373,93 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* re
          subprogram_kind = SgProcedureHeaderStatement::e_function_subprogram_kind;
       }
 
-#if 0
-   std::cout << "\nHACK ATTACK............ building function declaration for " << name << std::endl;
-   std::cout << "--- parameter list size is " << param_list->get_args().size() << std::endl;
-   std::cout << "--- SubroutineAttribute is " << attr << std::endl;
-#endif
+   if (is_defining_decl)
+      {
+         function_decl = SageBuilder::buildProcedureHeaderStatement(SgName(name), return_type,
+                                                                    param_list, subprogram_kind, scope);
+         ROSE_ASSERT(function_decl);
 
-   SgName sg_name(name);
+         function_def = function_decl->get_definition();
+         function_body = function_def->get_body();
+         ROSE_ASSERT(function_def);
+         ROSE_ASSERT(function_body);
 
-   SgProcedureHeaderStatement*
-   proc_header = SageBuilder::buildProcedureHeaderStatement(sg_name, return_type, param_list, subprogram_kind, scope);
-
-   function_decl = proc_header;
+         SageBuilder::pushScopeStack(function_def);
+         SageBuilder::pushScopeStack(function_body);
+      }
+   else
+      {
+         function_decl = SageBuilder::buildNondefiningProcedureHeaderStatement(SgName(name), return_type, param_list, scope);
+      }
    ROSE_ASSERT(function_decl);
-
-   function_def = function_decl->get_definition();
-   function_body = function_def->get_body();
-
-   ROSE_ASSERT(function_def);
-   ROSE_ASSERT(function_body);
+   SageInterface::setSourcePosition(function_decl);
 
    if (list_contains(modifiers, e_function_modifier_definition))  function_decl->get_declarationModifier().setJovialDef();
    if (list_contains(modifiers, e_function_modifier_reference ))  function_decl->get_declarationModifier().setJovialRef();
 
    if (list_contains(modifiers, e_function_modifier_recursive))   function_decl->get_functionModifier().setRecursive();
    if (list_contains(modifiers, e_function_modifier_reentrant))   function_decl->get_functionModifier().setReentrant();
+
    if (list_contains(modifiers, e_function_modifier_pure     ))   function_decl->get_functionModifier().setPure();
    if (list_contains(modifiers, e_function_modifier_elemental))   function_decl->get_functionModifier().setElemental();
-
-#if 0
-   std::cout << "---   : function_decl "  << function_decl << ": " << function_decl->class_name() << std::endl;
-   std::cout << "---   : function_def  "  << function_def << std::endl;
-   std::cout << "---   : function_def  "  << function_decl->get_definition() << std::endl;
-   std::cout << "---   : function_body " << function_body << std::endl;
-   ROSE_ASSERT(function_body->isCaseInsensitive());
-   ROSE_ASSERT(function_def ->isCaseInsensitive());
-#endif
-#if 0
-   setSourcePosition(function_decl, sources.get<0>(), sources.get<2>());
-   setSourcePosition(function_def,  sources.get<1>(), sources.get<2>());
-   setSourcePosition(function_body, sources.get<1>(), sources.get<2>());
-   SageInterface::setSourcePosition(function_decl->get_parameterList());
-#endif
-
-   SageBuilder::pushScopeStack(function_def);
-   SageBuilder::pushScopeStack(function_body);
 }
 
 void SageTreeBuilder::
-Leave(SgFunctionDeclaration* function_decl, SgBasicBlock* param_scope)
+Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
 
-   SgBasicBlock* function_body = isSgBasicBlock(SageBuilder::topScopeStack());
-   ROSE_ASSERT(function_body);
+   bool is_defining_decl = (isSgFunctionParameterScope(param_scope) == nullptr);
 
-// Move all of the statements temporarily stored in the parameter scope
-// into the scope for the function body.
-//
-   if (param_scope) {
-      SageInterface::moveStatementsBetweenBlocks (param_scope, function_body);
-   }
-// The param_scope (SgBasicBlock) is still connected, so try to set its parent
-// to nullptr and delete it.
-   param_scope->set_parent(nullptr);
-   delete param_scope;
+// If this is a defining declaration then the function body has to be moved from the
+// temporary parameter scope (param_scope is a SgBasicBlock*)
+   if (is_defining_decl)
+     {
+       SgBasicBlock* function_body = isSgBasicBlock(SageBuilder::topScopeStack());
+       ROSE_ASSERT(function_body);
 
-   SageBuilder::popScopeStack();  // function body
-   SageBuilder::popScopeStack();  // function definition
+    // Save the result symbol before moving statements from parameter scope
+    //
+       SgName function_name = function_decl->get_name();
+       SgVariableSymbol* result_symbol = param_scope->lookup_variable_symbol(function_name);
+
+    // Move all of the statements temporarily stored in param_scope
+    // into the scope of the function body.
+    //
+       if (isSgBasicBlock(param_scope)) {
+         SageInterface::moveStatementsBetweenBlocks (isSgBasicBlock(param_scope), function_body);
+       }
+
+    // Connect the result SgInitializedName initially created in param_scope
+    // into the scope of the function body.
+    //
+       if (result_symbol) {
+         SgInitializedName* result_name = isSgInitializedName(result_symbol->get_declaration());
+         ROSE_ASSERT(result_name);
+
+         SgProcedureHeaderStatement* proc_decl = isSgProcedureHeaderStatement(function_decl);
+         ROSE_ASSERT(proc_decl);
+
+         proc_decl->set_result_name(result_name);
+         result_name->set_parent(function_decl);
+         result_name->set_scope(function_body);
+         ROSE_ASSERT(function_body->lookup_symbol(function_name));
+       }
+
+    // The param_scope (SgBasicBlock) is still connected, so try to set its parent
+    // to nullptr and delete it.
+       param_scope->set_parent(nullptr);
+       delete param_scope;
+
+       SageBuilder::popScopeStack();  // function body
+       SageBuilder::popScopeStack();  // function definition
+     } // is_def_decl
+   else
+     {
+       ROSE_ASSERT(isSgFunctionParameterScope(param_scope));
+       ROSE_ASSERT(function_decl->get_functionParameterScope() == nullptr);
+       function_decl->set_functionParameterScope(isSgFunctionParameterScope(param_scope));
+     }
 
    SageInterface::appendStatement(function_decl, SageBuilder::topScopeStack());
 }
@@ -474,19 +507,26 @@ Enter(SgNamespaceDeclarationStatement* &namespace_decl, const std::string &name,
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgNamespaceDeclarationStatement* &, ...) \n";
 
-   namespace_decl = SageBuilder::buildNamespaceDeclaration_nfi(name, true, SageBuilder::topScopeStack());
-   SageInterface::setSourcePosition(namespace_decl);
+// Only build a namespace if currently not loading a compool module
+   if (ModuleBuilderFactory::get_compool_builder().getLoadingModuleState() == false) {
 
-   SgNamespaceDefinitionStatement* namespace_defn = namespace_decl->get_definition();
-   ROSE_ASSERT(namespace_defn);
-   ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());
+      namespace_decl = SageBuilder::buildNamespaceDeclaration_nfi(name, true, SageBuilder::topScopeStack());
+      SageInterface::setSourcePosition(namespace_decl);
 
-// TEMPORARY: fix in SageBuilder
-   namespace_defn->setCaseInsensitive(true);
-   ROSE_ASSERT(namespace_defn->isCaseInsensitive());
+      SgNamespaceDefinitionStatement* namespace_defn = namespace_decl->get_definition();
+      ROSE_ASSERT(namespace_defn);
+      ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());
 
-   SageInterface::appendStatement(namespace_decl, SageBuilder::topScopeStack());
-   SageBuilder::pushScopeStack(namespace_defn);
+   // TEMPORARY: fix in SageBuilder
+      namespace_defn->setCaseInsensitive(true);
+      ROSE_ASSERT(namespace_defn->isCaseInsensitive());
+
+      SageInterface::appendStatement(namespace_decl, SageBuilder::topScopeStack());
+      SageBuilder::pushScopeStack(namespace_defn);
+   }
+   else {
+      namespace_decl = nullptr;
+   }
 }
 
 void SageTreeBuilder::
@@ -494,7 +534,12 @@ Leave(SgNamespaceDeclarationStatement* namespace_decl)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgNamespaceDeclarationStatement*, ...) \n";
 
-   SageBuilder::popScopeStack();  // namespace definition
+// Make sure that a compool module is not being loaded because, if so, there won't
+// be a namespace on the stack.
+//
+   if (ModuleBuilderFactory::get_compool_builder().getLoadingModuleState() == false) {
+      SageBuilder::popScopeStack();  // namespace definition
+   }
 }
 
 void SageTreeBuilder::
@@ -531,7 +576,16 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
       delete old_val;
    }
 
-   SgAssignOp* assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(vars[0], rhs);
+   SgAssignOp* assign_op = nullptr;
+   SgExpression* new_rhs = rhs;
+
+// Jovial may have more than one variable in an assignment statement
+   for (int i = vars.size()-1; i >= 0; i--) {
+      assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(vars[i], new_rhs);
+      new_rhs = assign_op;
+   }
+   ROSE_ASSERT(assign_op);
+
    assign_stmt = SageBuilder::buildExprStatement_nfi(assign_op);
 }
 
@@ -558,6 +612,53 @@ Enter(SgFunctionCallExp* &func_call, const std::string &name, SgExprListExp* par
 
    func_call = SageBuilder::buildFunctionCallExp(func_symbol, params);
    SageInterface::setSourcePosition(func_call);
+}
+
+void SageTreeBuilder::
+Enter(SgReplicationOp* &rep_op, const std::string &name, SgExpression* value)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgReplicationOp* &, ...) \n";
+
+   SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   ROSE_ASSERT(symbol);
+
+   SgVarRefExp* count = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+   rep_op = SageBuilder::buildReplicationOp_nfi(count, value);
+}
+
+void SageTreeBuilder::
+Enter(SgCastExp* &cast_expr, const std::string &name, SgExpression* cast_operand)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgCastExp* &, ...) \n";
+
+   SgTypedefSymbol* typedef_symbol = SageInterface::lookupTypedefSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   ROSE_ASSERT(typedef_symbol);
+
+   SgType* conv_type = typedef_symbol->get_type();
+   cast_expr = SageBuilder::buildCastExp_nfi(cast_operand, conv_type, SgCastExp::e_default);
+}
+
+void SageTreeBuilder::
+Enter(SgVarRefExp* &var_ref, const std::string &name, bool compiler_generate)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgVarRefExp* &, ...) \n";
+
+   SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   if (!var_sym && compiler_generate) {
+      SgVariableDeclaration* var_decl;
+
+      //TODO: check for single letter for name (Jovial control letter) and type is not really known
+      SgType* type = SageBuilder::buildIntType();
+
+      // Build variable declaration for the control letter
+      Enter(var_decl, name, type, nullptr);
+      Leave(var_decl);
+
+      var_sym = SageInterface::lookupVariableSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   }
+   ROSE_ASSERT(var_sym);
+
+   var_ref = SageBuilder::buildVarRefExp_nfi(var_sym);
 }
 
 void SageTreeBuilder::
@@ -594,22 +695,8 @@ Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgProcessControlStatement* &, ...) \n";
 
-   SgExpression* code = nullptr;
-   SgExpression* quiet = nullptr;
-
-   if (opt_code) {
-      code = *opt_code;
-   }
-   else {
-      code = SageBuilder::buildNullExpression_nfi();
-   }
-
-   if (opt_quiet) {
-      quiet = *opt_quiet;
-   }
-   else {
-      quiet = SageBuilder::buildNullExpression_nfi();
-   }
+   SgExpression* code =  (opt_code)  ? *opt_code  : SageBuilder::buildNullExpression_nfi();
+   SgExpression* quiet = (opt_quiet) ? *opt_quiet : SageBuilder::buildNullExpression_nfi();
 
    ROSE_ASSERT(code);
    control_stmt = new SgProcessControlStatement(code);
@@ -671,6 +758,26 @@ Leave(SgSwitchStatement* switch_stmt)
    ROSE_ASSERT(switch_stmt);
 
    SageBuilder::popScopeStack();  // switch statement body
+}
+
+void SageTreeBuilder::
+Enter(SgReturnStmt* &return_stmt, const boost::optional<SgExpression*> &opt_expr)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgReturnStmt* &, ...) \n";
+
+   SgExpression* return_expr = (opt_expr) ? *opt_expr : SageBuilder::buildNullExpression_nfi();
+   ROSE_ASSERT(return_expr);
+
+   return_stmt = SageBuilder::buildReturnStmt_nfi(return_expr);
+}
+
+void SageTreeBuilder::
+Leave(SgReturnStmt* return_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgReturnStmt*, ...) \n";
+   ROSE_ASSERT(return_stmt);
+
+   SageInterface::appendStatement(return_stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
@@ -773,6 +880,75 @@ Leave(SgWhileStmt* while_stmt, bool has_end_do_stmt)
    SageInterface::appendStatement(while_stmt, SageBuilder::topScopeStack());
 }
 
+void SageTreeBuilder::
+Enter(SgImplicitStatement* &implicit_stmt, bool none_external, bool none_type)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgImplicitStatement* &, bool none_external, bool none_type)\n";
+   // Implicit None
+
+   implicit_stmt = new SgImplicitStatement(true /* implicit none*/);
+   ROSE_ASSERT(implicit_stmt);
+   SageInterface::setSourcePosition(implicit_stmt);
+
+   if (none_external && none_type) {
+      implicit_stmt->set_implicit_spec(SgImplicitStatement::e_none_external_and_type);
+   }
+   else if (none_external) {
+      implicit_stmt->set_implicit_spec(SgImplicitStatement::e_none_external);
+   }
+   else if (none_type) {
+      implicit_stmt->set_implicit_spec(SgImplicitStatement::e_none_type);
+   }
+}
+
+#ifdef CPP_ELEVEN
+void SageTreeBuilder::
+Enter(SgImplicitStatement* &implicit_stmt, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &implicit_spec_list)
+#else
+void SageTreeBuilder::Enter(SgImplicitStatement* &implicit_stmt)
+#endif
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgImplicitStatement* &, implicit_spec_list)\n";
+   // Implicit with Implicit-Spec
+
+   // Step through the list of Implicit Specs
+#ifdef CPP_ELEVEN
+   for (std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>> implicit_spec : implicit_spec_list) {
+      SgType* type;
+      std::list<std::tuple<char, boost::optional<char>>> letter_spec_list;
+      std::tie(type, letter_spec_list) = implicit_spec;
+
+      std::cout << "The type is " << type->class_name() << " and the letters are ";
+
+      // Traverse the list of letter specs
+      for (std::tuple<char, boost::optional<char>> letter_spec : letter_spec_list) {
+         char first;
+         boost::optional<char> second;
+         std::tie(first, second) = letter_spec;
+
+         std::cout << first;
+
+         if (second) {
+            std::cout << " - " << second;
+         }
+         std::cout << "\n";
+      }
+   }
+#else
+   implicit_stmt = nullptr;
+#endif
+
+}
+
+void SageTreeBuilder::
+Leave(SgImplicitStatement* implicit_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgImplicitStatement*, ...) \n";
+   ROSE_ASSERT(implicit_stmt);
+
+   SageInterface::appendStatement(implicit_stmt, SageBuilder::topScopeStack());
+}
+
 SgEnumVal* SageTreeBuilder::
 ReplaceEnumVal(SgEnumType* enum_type, const std::string &name)
 {
@@ -842,6 +1018,7 @@ Enter(SgJovialDirectiveStatement* &directive, const std::string &directive_strin
         // Can't use SgJovialDirectiveStatement::e_compool enum as function parameter to SageTreeBuilder
         // because API can't see Sage nodes until C++17, so set it correctly as it is known here.
         directive->set_directive_type(SgJovialDirectiveStatement::e_compool);
+
         importModule(directive_string);
      }
 }
@@ -871,24 +1048,57 @@ Leave(SgJovialDirectiveStatement* directive)
 }
 
 void SageTreeBuilder::
-Enter(SgJovialForThenStatement* &for_stmt, SgExpression* init_expr, SgExpression* incr_expr,
-         SgExpression* test_expr)
+Enter(SgJovialForThenStatement* &for_stmt, const std::string &init_var_name)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialForThenStatement* &, ...) \n";
 
-   ROSE_ASSERT(init_expr);
-   ROSE_ASSERT(incr_expr);
-   ROSE_ASSERT(test_expr);
-
    SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
+   SgScopeStatement* scope = SageBuilder::topScopeStack();
 
-   for_stmt = new SgJovialForThenStatement(init_expr, incr_expr, test_expr, body);
+   for_stmt = new SgJovialForThenStatement(nullptr, nullptr, nullptr, body);
    ROSE_ASSERT(for_stmt);
-   SageInterface::setSourcePosition(for_stmt);
+   SageInterface::setOneSourcePositionNull(for_stmt);
+
+   for_stmt->set_parent(scope);
+   body->set_parent(for_stmt);
 
    if (SageInterface::is_language_case_insensitive()) {
       for_stmt->setCaseInsensitive(true);
    }
+
+// Push stack for loop initialization variable (possible) declaration
+   SageBuilder::pushScopeStack(for_stmt);
+
+   SgVarRefExp* init_var;
+   Enter(init_var, init_var_name, true);
+   Leave(init_var);
+
+   SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(init_var_name, for_stmt);
+   ROSE_ASSERT(var_sym);
+
+// Append now (before Leave is called) so that symbol lookup will work
+   SageInterface::appendStatement(for_stmt, scope);
+   SageBuilder::pushScopeStack(body);
+}
+
+void SageTreeBuilder::
+Enter(SgJovialForThenStatement* &for_stmt, SgExpression* init_expr, SgExpression* while_expr,
+      SgExpression* by_or_then_expr, SgJovialForThenStatement::loop_statement_type_enum loop_type)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialForThenStatement* &, ...) \n";
+
+// The increment and test expressions can be nullptr (at least from the grammar)
+   ROSE_ASSERT(init_expr);
+
+   for_stmt = SageBuilder::buildJovialForThenStatement_nfi(init_expr, while_expr, by_or_then_expr);
+
+   SgBasicBlock* body = for_stmt->get_loop_body();
+   ROSE_ASSERT(body);
+
+   for_stmt->set_loop_statement_type(loop_type);
+
+// Append now (before Leave is called) so that symbol lookup will work
+   SageInterface::appendStatement(for_stmt, SageBuilder::topScopeStack());
 
    SageBuilder::pushScopeStack(body);
 }
@@ -898,8 +1108,17 @@ Leave(SgJovialForThenStatement* for_stmt)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialForThenStatement*, ...) \n";
 
+   ROSE_ASSERT(for_stmt);
+
+   if (for_stmt->get_while_expression() == NULL) {
+      for_stmt->set_while_expression(SageBuilder::buildNullExpression_nfi());
+   }
+   if (for_stmt->get_by_or_then_expression() == NULL) {
+      for_stmt->set_by_or_then_expression(SageBuilder::buildNullExpression_nfi());
+   }
+
    SageBuilder::popScopeStack();  // for body
-   SageInterface::appendStatement(for_stmt, SageBuilder::topScopeStack());
+   SageBuilder::popScopeStack();  // for statement
 }
 
 void SageTreeBuilder::
@@ -907,16 +1126,24 @@ Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const So
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialCompoolStatement* &, ...) \n";
 
-   compool_decl = new SgJovialCompoolStatement(name);
-   SageInterface::setSourcePosition(compool_decl);
+// Make sure that a compool module is not being loaded because, if so, there won't
+// be a namespace on the stack.
+//
+   if (ModuleBuilderFactory::get_compool_builder().getLoadingModuleState() == false) {
+      compool_decl = new SgJovialCompoolStatement(name);
+      SageInterface::setSourcePosition(compool_decl);
 
-   compool_decl->set_definingDeclaration(compool_decl);
-   compool_decl->set_firstNondefiningDeclaration(compool_decl);
+      compool_decl->set_definingDeclaration(compool_decl);
+      compool_decl->set_firstNondefiningDeclaration(compool_decl);
 
-// TODO?
-// SageBuilder::pushScopeStack(compool_defn);
+   // TODO?
+   // SageBuilder::pushScopeStack(compool_defn);
 
-   SageInterface::appendStatement(compool_decl, SageBuilder::topScopeStack());
+      SageInterface::appendStatement(compool_decl, SageBuilder::topScopeStack());
+   }
+   else {
+      compool_decl = nullptr;
+   }
 }
 
 void SageTreeBuilder::
@@ -1161,13 +1388,54 @@ importModule(const std::string &module_name)
 {
    mlog[TRACE] << "SageTreeBuilder::importModule " << module_name << std::endl;
 
-   ModuleBuilderFactory::get_compool_builder().getModule(module_name);
+   // Compool declarations must be loaded into global scope. A compool directive may only follow a
+   // START so we should expect to be in global scope here. The compool directive should be appended
+   // to the AST after the directives are loaded allowing the unparser to ignore declarations preceding
+   // compool directives. Only declarations from the current compool directive are loaded, specifically,
+   // not compool directives within the current directive. Finally the namespace for the compool being
+   // loaded should not be created (allowing declarations to be placed in global scope). This all means
+   // that a flag (or other means) must be used to signal that a compool is being parsed as a compool
+   // directive.
+
+   ROSE_ASSERT(isSgGlobal(SageBuilder::topScopeStack()));
+
+   ModuleBuilder & compool_builder = ModuleBuilderFactory::get_compool_builder();
+
+   compool_builder.setLoadingModuleState(true);
+   compool_builder.getModule(module_name);
+   compool_builder.setLoadingModuleState(false);
 }
+
+// Jovial TableItem and Block data members have visibility outside of their declarative class.
+// Both tables and blocks are SgJovialTableStatements deriving from SgClassDeclaration.  So if the
+// current scope is SgClassDefinition, this function creates an alias to the data item variable
+// and inserts it in the parent scope of the table or block declaration.
+void SageTreeBuilder::
+injectAliasSymbol(const std::string &name)
+{
+   SgClassDefinition* class_def = isSgClassDefinition(SageBuilder::topScopeStack());
+   if (class_def) {
+      SgVariableSymbol*
+        var_sym = SageInterface::lookupVariableSymbolInParentScopes(SgName(name), SageBuilder::topScopeStack());
+      ROSE_ASSERT(var_sym);
+      SgAliasSymbol* alias_sym = new SgAliasSymbol(var_sym);
+      ROSE_ASSERT(alias_sym);
+
+      SgJovialTableStatement* table_decl = isSgJovialTableStatement(class_def->get_declaration());
+      ROSE_ASSERT(table_decl);
+      SgScopeStatement* parent_scope = table_decl->get_scope();
+      ROSE_ASSERT(parent_scope);
+      parent_scope->insert_symbol(SgName(name), alias_sym);
+   }
+}
+
 
 // Temporary wrappers for SageInterface functions (needed until ROSE builds with C++17)
 //
 namespace SageBuilderCpp17 {
 
+// Types
+//
 SgType* buildBoolType()
 {
    return SageBuilder::buildBoolType();

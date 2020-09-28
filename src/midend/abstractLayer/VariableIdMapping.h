@@ -2,7 +2,6 @@
 #define VARIABLEIDMAPPING_H
 
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
  *************************************************************/
 

@@ -17,7 +17,7 @@ int  ReachabilityAnalysis::isIfWithLabeledAssert(SgNode* node) {
         RoseAst::iterator next=i;
         next++;
         if(SgNodeHelper::Pattern::matchAssertExpr(*next)) {
-          //          cout<<"ASSERT FOUND with Label found:"<<endl;
+          //cout<<"DEBUG: ASSERT with Label found:"<<endl;
           SgLabelStatement* labStmt=isSgLabelStatement(*i);
           assert(labStmt);
           string name=SgNodeHelper::getLabelName(labStmt);
@@ -27,6 +27,7 @@ int  ReachabilityAnalysis::isIfWithLabeledAssert(SgNode* node) {
           std::istringstream ss(name);
           int num;
           ss>>num;
+          //cout<<"DEBUG: label nr: "<<num<<endl;
           return num;
         }
       }
@@ -52,12 +53,14 @@ PropertyValueTable ReachabilityAnalysis::fiReachabilityAnalysis(Labeler& labeler
   PropertyValueTable reachabilityResults(100); // TODO: determine number of error labels
   LabelSet trueConditionLabelSet=fiConstAnalysis.getTrueConditions();
   LabelSet falseConditionLabelSet=fiConstAnalysis.getFalseConditions();
+  /*
   for(LabelSet::iterator i=trueConditionLabelSet.begin();i!=trueConditionLabelSet.end();++i) {
     SgNode* cond=labeler.getNode(*i);
     int assertCode=isConditionOfIfWithLabeledAssert(cond);
     if(assertCode>=0)
       reachabilityResults.reachable(assertCode);
   }
+  */
   for(LabelSet::iterator i=falseConditionLabelSet.begin();i!=falseConditionLabelSet.end();++i) {
     SgNode* cond=labeler.getNode(*i);
     int assertCode=isConditionOfIfWithLabeledAssert(cond);

@@ -2,6 +2,10 @@
 #include "CodeThornOptions.h"
 #include "CodeThornException.h"
 
+bool CodeThornOptions::getInterProceduralFlag() {
+  return !intraProcedural;
+}
+
 bool CodeThornOptions::activeOptionsRequireZ3Library() {
   return z3BasedReachabilityAnalysis;
 }

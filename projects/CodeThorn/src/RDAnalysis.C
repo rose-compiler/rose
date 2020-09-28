@@ -19,7 +19,7 @@ using namespace CodeThorn;
 CodeThorn::RDPropertyStateFactory::RDPropertyStateFactory() {
 }
 
-CodeThorn::PropertyState* CodeThorn::RDPropertyStateFactory::create() {
+CodeThorn::RDLattice* CodeThorn::RDPropertyStateFactory::create() {
   RDLattice* element=new RDLattice();
   return element;
 }

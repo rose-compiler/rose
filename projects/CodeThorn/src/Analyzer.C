@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "sage3basic.h"
@@ -11,7 +9,7 @@
 #include "CodeThornCommandLineOptions.h"
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "SvcompWitness.h"
 #include "CodeThornException.h"
 
@@ -25,6 +23,7 @@
 #include "RersSpecialization.h"
 #include "RERS_empty_specialization.h"
 #include "CodeThornLib.h"
+#include "TopologicalSort.h"
 
 using namespace std;
 using namespace Sawyer::Message;
@@ -32,7 +31,7 @@ using namespace Sawyer::Message;
 Sawyer::Message::Facility CodeThorn::Analyzer::logger;
 
 CodeThorn::Analyzer::Analyzer():
-  startFunRoot(0),
+  _startFunRoot(0),
   cfanalyzer(0),
   _globalTopifyMode(GTM_IO),
   _stgReducer(&estateSet, &transitionGraph),
@@ -67,8 +66,6 @@ CodeThorn::Analyzer::Analyzer():
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
   }
-  estateWorkListCurrent = &estateWorkListOne;
-  estateWorkListNext = &estateWorkListTwo;
   estateSet.max_load_factor(0.7);
   pstateSet.max_load_factor(0.7);
   constraintSetMaintainer.max_load_factor(0.7);
@@ -77,6 +74,82 @@ CodeThorn::Analyzer::Analyzer():
   ROSE_ASSERT(_estateTransferFunctions==nullptr);
   _estateTransferFunctions=new EStateTransferFunctions();
   _estateTransferFunctions->setAnalyzer(this);
+}
+
+void CodeThorn::Analyzer::insertInputVarValue(int i) {
+  _inputVarValues.insert(i);
+}
+
+std::set<int> CodeThorn::Analyzer::getInputVarValues() {
+  return _inputVarValues;
+}
+
+// also sets inputvarvalues
+void CodeThorn::Analyzer::setLtlRersMapping(CodeThorn::LtlRersMapping m) {
+  _ltlRersMapping=m;
+}
+CodeThorn::LtlRersMapping CodeThorn::Analyzer::getLtlRersMapping() {
+  return _ltlRersMapping;
+}
+
+void CodeThorn::Analyzer::deleteWorkLists() {
+  if(estateWorkListCurrent) {
+    delete estateWorkListCurrent;
+  }
+  if(estateWorkListNext) {
+    delete estateWorkListNext;
+  }
+}
+
+void CodeThorn::Analyzer::setWorkLists(ExplorationMode explorationMode) {
+  deleteWorkLists();
+  switch(_explorationMode) {
+  case EXPL_UNDEFINED:
+    cerr<<"Error: undefined exploration mode in constructing of Analyzer."<<endl;
+    exit(1);
+  case EXPL_DEPTH_FIRST:
+  case EXPL_BREADTH_FIRST:
+  case EXPL_LOOP_AWARE:
+  case EXPL_LOOP_AWARE_SYNC:
+  case EXPL_RANDOM_MODE1:
+    estateWorkListCurrent=new EStateWorkList();
+    estateWorkListNext=new EStateWorkList();
+    break;
+  case EXPL_TOPOLOGIC_SORT: {
+    ROSE_ASSERT(getLabeler());
+    if(getFlow()->getStartLabelSet().size()>0) {
+      TopologicalSort topSort(*getLabeler(),*getFlow());
+      std::list<Label> labelList=topSort.topologicallySortedLabelList();
+#if 0
+      cout<<"Topologic Sort:";
+      for(auto label : labelList) {
+        cout<<label.toString()<<" ";
+      }
+      cout<<endl;
+#endif
+      TopologicalSort::LabelToPriorityMap map=topSort.labelToPriorityMap();
+      ROSE_ASSERT(map.size()>0);
+      estateWorkListCurrent = new EStatePriorityWorkList(map);
+      estateWorkListNext = new EStatePriorityWorkList(map); // currently only used in loop aware mode
+      SAWYER_MESG(logger[INFO])<<"STATUS: using topologic worklist."<<endl;
+      break;
+    } else {
+      // for empty flow initialize with empty workslists
+      TopologicalSort::LabelToPriorityMap map;
+      estateWorkListCurrent = new EStatePriorityWorkList(map);
+      estateWorkListNext = new EStatePriorityWorkList(map); // currently only used in loop aware mode
+      SAWYER_MESG(logger[INFO])<<"STATUS: using empty topologic worklist (because of empty control flow graph)."<<endl;
+    }
+  }
+  } // end switch
+}
+
+void CodeThorn::Analyzer::setExplorationMode(ExplorationMode em) {
+  _explorationMode=em;
+}
+
+ExplorationMode CodeThorn::Analyzer::getExplorationMode() {
+  return _explorationMode;
 }
 
 CodeThorn::Analyzer::~Analyzer() {
@@ -88,10 +161,13 @@ CodeThorn::Analyzer::~Analyzer() {
   }
   if(variableIdMapping)
     delete variableIdMapping;
-
-  delete getFunctionCallMapping2()->getClassHierarchy();
-  delete getFunctionCallMapping()->getClassHierarchy();
-  delete _estateTransferFunctions;
+  if(getFunctionCallMapping())
+    delete getFunctionCallMapping()->getClassHierarchy();
+  if(getFunctionCallMapping2())
+    delete getFunctionCallMapping2()->getClassHierarchy();
+  if(_estateTransferFunctions)
+    delete _estateTransferFunctions;
+  deleteWorkLists();
 }
 
 CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const CodeThorn::EState* currentEStatePtr) {
@@ -144,7 +220,7 @@ CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const Co
     localWorkList.push_back(currentEStatePtr);
     while(!localWorkList.empty()) {
       // logger[DEBUG]<<"local work list size: "<<localWorkList.size()<<endl;
-      const EState* currentEStatePtr=*localWorkList.begin();
+      const EState* currentEStatePtr=localWorkList.front();
       localWorkList.pop_front();
       if(isFailedAssertEState(currentEStatePtr)) {
         // ensure we do not compute any successors of a failed assert state
@@ -557,7 +633,7 @@ CodeThorn::Analyzer::VariableDeclarationList CodeThorn::Analyzer::computeUsedGlo
     CodeThorn::Analyzer::VariableDeclarationList usedGlobalVariableDeclarationList;
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
 #ifdef DO_NOT_FILTER_VARS
-    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,getVariableIdMapping());
+    VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
 #endif
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
@@ -650,13 +726,6 @@ string CodeThorn::Analyzer::analyzerStateToString() {
   return ss.str();
 }
 
-bool CodeThorn::Analyzer::isInWorkList(const EState* estate) {
-  for(EStateWorkList::iterator i=estateWorkListCurrent->begin();i!=estateWorkListCurrent->end();++i) {
-    if(*i==estate) return true;
-  }
-  return false;
-}
-
 void CodeThorn::Analyzer::incIterations() {
   if(isPrecise()) {
 #pragma omp atomic
@@ -682,6 +751,9 @@ void CodeThorn::Analyzer::addToWorkList(const EState* estate) {
       exit(1);
     }
     switch(_explorationMode) {
+    case EXPL_UNDEFINED:
+      cerr<<"Error: undefined state exploration mode. Bailing out."<<endl;
+      exit(1);
     case EXPL_DEPTH_FIRST: estateWorkListCurrent->push_front(estate);break;
     case EXPL_BREADTH_FIRST: estateWorkListCurrent->push_back(estate);break;
     case EXPL_RANDOM_MODE1: {
@@ -713,6 +785,11 @@ void CodeThorn::Analyzer::addToWorkList(const EState* estate) {
       }
       break;
     }
+    case EXPL_TOPOLOGIC_SORT:
+      // must be estatePriorityWorkList
+      ROSE_ASSERT(dynamic_cast<EStatePriorityWorkList*>(estateWorkListCurrent));
+      estateWorkListCurrent->push_front(estate);
+      break;
     default:
       SAWYER_MESG(logger[ERROR])<<"unknown exploration mode."<<endl;
       exit(1);
@@ -897,7 +974,7 @@ const EState* CodeThorn::Analyzer::topWorkList() {
 #pragma omp critical(ESTATEWL)
   {
     if(!estateWorkListCurrent->empty())
-      estate=*estateWorkListCurrent->begin();
+      estate=estateWorkListCurrent->front();
   }
   return estate;
 }
@@ -906,7 +983,7 @@ const EState* CodeThorn::Analyzer::popWorkList() {
 #pragma omp critical(ESTATEWL)
   {
     if(!estateWorkListCurrent->empty())
-      estate=*estateWorkListCurrent->begin();
+      estate=estateWorkListCurrent->front();
     if(estate) {
       estateWorkListCurrent->pop_front();
       if(getExplorationMode()==EXPL_LOOP_AWARE && isLoopCondLabel(estate->label())) {
@@ -923,19 +1000,6 @@ const EState* CodeThorn::Analyzer::popWorkList() {
   return estate;
 }
 
-// not used anywhere
-const EState* CodeThorn::Analyzer::takeFromWorkList() {
-  const EState* co=0;
-#pragma omp critical(ESTATEWL)
-  {
-    if(estateWorkListCurrent->size()>0) {
-      co=*estateWorkListCurrent->begin();
-      estateWorkListCurrent->pop_front();
-    }
-  }
-  return co;
-}
-
 // this function has to be protected by a critical section
 // currently called once inside a critical section
 void CodeThorn::Analyzer::swapWorkLists() {
@@ -946,27 +1010,12 @@ void CodeThorn::Analyzer::swapWorkLists() {
 }
 
 
-const EState* CodeThorn::Analyzer::addToWorkListIfNew(EState estate) {
-  EStateSet::ProcessingResult res=process(estate);
-  if(res.first==true) {
-    const EState* newEStatePtr=res.second;
-    ROSE_ASSERT(newEStatePtr);
-    addToWorkList(newEStatePtr);
-    return newEStatePtr;
-  } else {
-    // logger[DEBUG] << "EState already exists. Not added:"<<estate.toString()<<endl;
-    const EState* existingEStatePtr=res.second;
-    ROSE_ASSERT(existingEStatePtr);
-    return existingEStatePtr;
-  }
-}
-
 // set the size of an element determined by this type
 void CodeThorn::Analyzer::setElementSize(VariableId variableId, SgType* elementType) {
   unsigned int typeSize=getVariableIdMapping()->getTypeSize(elementType);
   if(getVariableIdMapping()->getElementSize(variableId)!=0
      && getVariableIdMapping()->getElementSize(variableId)!=typeSize) {
-    logger[WARN]<<"Element type size mismatch: "
+    SAWYER_MESG(logger[WARN])<<"Element type size mismatch: "
                 <<"Analyzer::setElementSize: variableId name: "<<variableIdMapping->variableName(variableId)
                 <<"typesize(from VID):"<<getVariableIdMapping()->getElementSize(variableId)
                 <<" typeSize(fromtype): "<<typeSize<<" of "<<elementType->unparseToString()
@@ -1007,8 +1056,8 @@ int CodeThorn::Analyzer::computeNumberOfElements(SgVariableDeclaration* decl) {
 // the PState object).
 PState CodeThorn::Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pstate, /* for evaluation only  */ EState currentEState) {
   //cout<<"DEBUG: AST:"<<AstTerm::astTermWithNullValuesToString(aggregateInitializer)<<endl;
-  // logger[DEBUG] <<"array-initializer found:"<<aggregateInitializer->unparseToString()<<endl;
   ROSE_ASSERT(aggregateInitializer);
+  SAWYER_MESG(logger[TRACE])<<"analyzeSgAggregateInitializer::array-initializer:"<<aggregateInitializer->unparseToString()<<endl;
   Label label=currentEState.label();
   PState newPState=pstate;
   int elemIndex=0;
@@ -1070,7 +1119,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
     3) if no size is provided, determine it from the initializer list (and add this information to the variableIdMapping - or update the variableIdMapping).
    */
 
-  //cout<<"DEBUG: declaration:"<<decl->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(decl)<<endl;
+  SAWYER_MESG(logger[TRACE])<<"analyzeVariableDeclaration:"<<decl->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(decl)<<endl;
   CallString cs=currentEState.callString;
   Label label=currentEState.label();
 
@@ -1426,6 +1475,7 @@ EState CodeThorn::Analyzer::createVerificationErrorEState(EState estate, Label t
 
 void CodeThorn::Analyzer::initLabeledAssertNodes(SgProject* root) {
   _assertNodes=listOfLabeledAssertNodes(root);
+  SAWYER_MESG(logger[INFO])<<"DEBUG: number of labeled assert nodes: "<<_assertNodes.size()<<endl;
 }
 
 list<pair<SgLabelStatement*,SgNode*> > CodeThorn::Analyzer::listOfLabeledAssertNodes(SgProject* root) {
@@ -1581,6 +1631,10 @@ list<EState> CodeThorn::Analyzer::transferEdgeEState(Edge edge, const EState* es
   } else if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
     // "return x;": add $return=eval() [but not for "return f();"]
     return transferReturnStmt(edge,estate);
+  } else if(isSgAsmStmt(nextNodeToAnalyze1)) {
+    return transferAsmStmt(edge,estate);
+  } else if(getLabeler()->isFunctionEntryLabel(edge.source())) {
+    return transferFunctionEntry(edge,estate);
   } else if(getLabeler()->isFunctionExitLabel(edge.source())) {
     return transferFunctionExit(edge,estate);
   } else if(getLabeler()->isFunctionCallReturnLabel(edge.source())) {
@@ -1593,6 +1647,9 @@ list<EState> CodeThorn::Analyzer::transferEdgeEState(Edge edge, const EState* es
     return transferVariableDeclaration(decl,edge,estate);
   } else if(isSgExprStatement(nextNodeToAnalyze1) || SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
     return transferExprStmt(nextNodeToAnalyze1, edge, estate);
+  } else if(isSgStatementExpression(nextNodeToAnalyze1)) {
+    // GNU extension
+    return transferGnuExtensionStmtExpr(nextNodeToAnalyze1, edge, estate);
   } else if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
     // TODO: this case should be handled as part of transferExprStmt (or ExpressionRoot)
     //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
@@ -1644,7 +1701,9 @@ void CodeThorn::Analyzer::initializeStringLiteralsInState(PState& initialPState)
 }
 
 void CodeThorn::Analyzer::initializeVariableIdMapping(SgProject* project) {
+  SAWYER_MESG(logger[INFO])<<"initializeVariableIdMapping:start"<<endl;
   variableIdMapping->computeVariableSymbolMapping(project);
+  SAWYER_MESG(logger[INFO])<<"initializeVariableIdMapping:done"<<endl;
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   AbstractValue::setVariableIdMapping(getVariableIdMapping());
   functionIdMapping.computeFunctionSymbolMapping(project);
@@ -1655,8 +1714,12 @@ void CodeThorn::Analyzer::initializeCommandLineArgumentsInState(PState& initialP
   // TODO1: add formal paramters of solo-function
   // SgFunctionDefinition* startFunRoot: node of function
   // estate=analyzeVariableDeclaration(SgVariableDeclaration*,estate,estate.label());
-  string functionName=SgNodeHelper::getFunctionName(startFunRoot);
-  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(startFunRoot);
+  string functionName=SgNodeHelper::getFunctionName(_startFunRoot);
+  if(_startFunRoot==0) {
+    // no main function, therefore nothing to initialize
+    return;
+  }
+  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(_startFunRoot);
   VariableId argcVarId;
   VariableId argvVarId;
   size_t mainFunArgNr=0;
@@ -1747,48 +1810,57 @@ void CodeThorn::Analyzer::stopAnalysisTimer() {
   SAWYER_MESG(logger[INFO])<<"INFO: solver timer stopped."<<endl;
 }
 
+SgNode* CodeThorn::Analyzer::getStartFunRoot() {
+  return _startFunRoot;
+}
+
+// change: pass in a set of labels (
 void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
+  SAWYER_MESG(logger[INFO])<<"Initializing solver started."<<endl;
   startAnalysisTimer();
   ROSE_ASSERT(root);
   resetInputSequenceIterator();
-  std::string funtofind=functionToStartAt;
   RoseAst completeast(root);
-  startFunRoot=completeast.findFunctionByName(funtofind);
-  if(startFunRoot==0) {
-    SAWYER_MESG(logger[ERROR]) << "Function '"<<funtofind<<"' not found.\n";
-    exit(1);
+
+  // START_INIT 2
+  if(_ctOpt.getInterProceduralFlag()) {
+    _startFunRoot=completeast.findFunctionByName(functionToStartAt);
+    if(_startFunRoot==0) {
+      SAWYER_MESG(logger[ERROR]) << "Function '"<<functionToStartAt<<"' not found.\n";
+      exit(1);
+    } else {
+      SAWYER_MESG(logger[INFO])<< "starting at function '"<<functionToStartAt<<"'."<<endl;
+    }
   } else {
-    SAWYER_MESG(logger[TRACE])<< "INFO: starting at function '"<<funtofind<<"'."<<endl;
+    // temporary to remain compatible
+    _startFunRoot=completeast.findFunctionByName(functionToStartAt);
   }
-  SAWYER_MESG(logger[TRACE])<< "INIT: Initializing AST node info."<<endl;
+    
+  SAWYER_MESG(logger[TRACE])<< "Initializing AST node info."<<endl;
   initAstNodeInfo(root);
 
-  SAWYER_MESG(logger[TRACE])<< "INIT: Creating Labeler."<<endl;
+  SAWYER_MESG(logger[TRACE])<< "Creating Labeler."<<endl;
   Labeler* labeler= new CTIOLabeler(root,getVariableIdMapping());
   //SAWYER_MESG(logger[TRACE])<< "INIT: Initializing VariableIdMapping."<<endl;
   //exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
-  SAWYER_MESG(logger[TRACE])<< "INIT: Creating CFAnalysis."<<endl;
+  SAWYER_MESG(logger[TRACE])<< "Creating CFAnalysis."<<endl;
   cfanalyzer=new CFAnalysis(labeler,true);
   
   getFunctionCallMapping2()->setLabeler(labeler);
 
-  if (SgProject* prj = isSgProject(root))
-  {
+  if (SgProject* prj = isSgProject(root)) {
     ClassHierarchyWrapper* chw = new ClassHierarchyWrapper(prj);
-    
-    if (SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL)
-    { 
+    if (SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL) { 
       getFunctionCallMapping2()->setClassHierarchy(chw);
       getFunctionCallMapping2()->computeFunctionCallMapping(prj);
     }
-    
     getFunctionCallMapping()->setClassHierarchy(new ClassHierarchyWrapper(*chw));
-  }
-  else
-    SAWYER_MESG(logger[WARN])<< "WARN: Need an SgProject object for building the class hierarchy\n"
+  } else {
+    SAWYER_MESG(logger[WARN])<< "WARN: Need a SgProject object for building the class hierarchy\n"
                              << "      virtual function call analysis not available!"
                              << std::endl;
-
+  }
+  
   //FunctionIdMapping* funIdMapping=new FunctionIdMapping();
   //ROSE_ASSERT(isSgProject(root));
   //funIdMapping->computeFunctionSymbolMapping(isSgProject(root));
@@ -1796,18 +1868,29 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   cfanalyzer->setFunctionIdMapping(getFunctionIdMapping());
   cfanalyzer->setFunctionCallMapping(getFunctionCallMapping());
   cfanalyzer->setFunctionCallMapping2(getFunctionCallMapping2());
-
+  cfanalyzer->setInterProcedural(_ctOpt.getInterProceduralFlag());
   getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
   getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
 
-
+  CallString::setMaxLength(_ctOpt.callStringLength);
+  
   // logger[DEBUG]<< "mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
-  SAWYER_MESG(logger[TRACE])<< "INIT: Building CFGs."<<endl;
+  SAWYER_MESG(logger[INFO])<< "Building CFGs."<<endl;
 
-  if(oneFunctionOnly)
-    flow=cfanalyzer->flow(startFunRoot);
-  else
-    flow=cfanalyzer->flow(root);
+  flow=cfanalyzer->flow(root); // START_INIT 3
+  if(_ctOpt.getInterProceduralFlag()) {
+    Label slab2=getLabeler()->getLabel(_startFunRoot);
+    ROSE_ASSERT(slab2.isValid());
+    ROSE_ASSERT(getLabeler()->isFunctionEntryLabel(slab2));
+    flow.addStartLabel(slab2);
+  } else {
+    LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(flow);
+    if(entryLabels.size()==0) {
+      cout<<"Exit: No functions in program, nothing to analyze."<<endl;
+      exit(0);
+    }
+    flow.setStartLabelSet(entryLabels);
+  }
 
   // Runs consistency checks on the fork / join and workshare / barrier nodes in the parallel CFG
   // If the --omp-ast flag is not selected by the user, the parallel nodes are not inserted into the CFG
@@ -1815,24 +1898,24 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     cfanalyzer->forkJoinConsistencyChecks(flow);
   }
 
-  SAWYER_MESG(logger[TRACE])<< "STATUS: Building CFGs finished."<<endl;
+  SAWYER_MESG(logger[INFO])<< "Building CFGs finished."<<endl;
   if(_ctOpt.reduceCfg) {
     int cnt=cfanalyzer->optimizeFlow(flow);
-    SAWYER_MESG(logger[TRACE])<< "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
+    SAWYER_MESG(logger[TRACE])<< "CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
   }
-  SAWYER_MESG(logger[TRACE])<< "INIT: Intra-Flow OK. (size: " << flow.size() << " edges)"<<endl;
+  SAWYER_MESG(logger[TRACE])<< "Intra-Flow OK. (size: " << flow.size() << " edges)"<<endl;
   if(oneFunctionOnly) {
-    SAWYER_MESG(logger[TRACE])<<"INFO: analyzing one function only."<<endl;
+    SAWYER_MESG(logger[TRACE])<<"Analyzing one function only."<<endl;
   }
-  InterFlow interFlow=cfanalyzer->interFlow(flow);
-  SAWYER_MESG(logger[TRACE])<< "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
-  cfanalyzer->intraInterFlow(flow,interFlow);
-  SAWYER_MESG(logger[TRACE])<< "INIT: ICFG OK. (size: " << flow.size() << " edges)"<<endl;
+  _interFlow=cfanalyzer->interFlow(flow);
+  SAWYER_MESG(logger[TRACE])<< "Inter-Flow OK. (size: " << _interFlow.size()*2 << " edges)"<<endl;
+  cfanalyzer->intraInterFlow(flow,_interFlow);
+  SAWYER_MESG(logger[INFO])<< "ICFG OK. (size: " << flow.size() << " edges)"<<endl;
 
 #if 0
   if(_ctOpt.reduceCfg) {
     int cnt=cfanalyzer->inlineTrivialFunctions(flow);
-    cout << "INIT: CFG reduction OK. (inlined "<<cnt<<" functions; eliminated "<<cnt*4<<" nodes)"<<endl;
+    cout << "CFG reduction OK. (inlined "<<cnt<<" functions; eliminated "<<cnt*4<<" nodes)"<<endl;
   }
 #endif
 
@@ -1845,6 +1928,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
       cout<<"STATUS: created "<<getVariableIdMapping()->numberOfRegisteredStringLiterals()<<" string literals in initial state."<<endl;
     }
   }
+  // START_INIT 5
   const PState* initialPStateStored=processNew(initialPState);
   ROSE_ASSERT(initialPStateStored);
   //SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
@@ -1852,12 +1936,13 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   ROSE_ASSERT(cfanalyzer);
   ConstraintSet cset;
   const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
-  Label startLabel=cfanalyzer->getLabel(startFunRoot);
-  transitionGraph.setStartLabel(startLabel);
+
+  Label slab=flow.getStartLabel();
+  ROSE_ASSERT(slab.isValid());
+  transitionGraph.setStartLabel(slab);
   transitionGraph.setAnalyzer(this);
 
-  EState estate(startLabel,initialPStateStored,emptycsetstored);
-
+  EState estate(slab,initialPStateStored,emptycsetstored);
   if(SgProject* project=isSgProject(root)) {
     SAWYER_MESG(logger[TRACE])<< "STATUS: Number of global variables: ";
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
@@ -1868,10 +1953,11 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     // this will not filter any variables
     VariableIdSet setOfUsedVars;
 #else
-    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,variableIdMapping);
+    VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,variableIdMapping);
 #endif
     SAWYER_MESG(logger[TRACE])<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 
+    // START_INIT 6
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
       VariableId globalVarId=variableIdMapping->variableId(*i);
@@ -1890,13 +1976,28 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     SAWYER_MESG(logger[TRACE])<< "INIT: no global scope.";
   }
 
+  setWorkLists(_explorationMode);
+  
   estate.io.recordNone(); // ensure that extremal value is different to bot
-  const EState* initialEState=processNew(estate);
-  ROSE_ASSERT(initialEState);
-  variableValueMonitor.init(initialEState);
-  addToWorkList(initialEState);
-  SAWYER_MESG(logger[TRACE]) << "INIT: start state (extremal value): "<<initialEState->toString(variableIdMapping)<<endl;
-
+  if(_ctOpt.getInterProceduralFlag()) {
+    const EState* initialEState=processNew(estate); // START_INIT 6
+    ROSE_ASSERT(initialEState);
+    variableValueMonitor.init(initialEState);
+    addToWorkList(initialEState); // START_INIT 7: ADD TO WORKLIST HERE!!!
+    SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(variableIdMapping)<<endl;
+  } else {
+    LabelSet startLabels=flow.getStartLabelSet();
+    cout<<"STATUS: intra-procedural analysis with "<<startLabels.size()<<" start functions."<<endl;
+    for(auto slab : startLabels) {
+      // initialize intra-procedural analysis with all function entry points
+      estate.setLabel(slab);
+      const EState* initialEState=processNew(estate);
+      ROSE_ASSERT(initialEState);
+      variableValueMonitor.init(initialEState);
+      addToWorkList(initialEState);
+      SAWYER_MESG(logger[INFO]) << "INIT: start state intra-procedural (extremal value): "<<initialEState->toString(variableIdMapping)<<endl;
+    }
+  }
   // initialize summary states map for abstract model checking mode
   initializeSummaryStates(initialPStateStored,emptycsetstored);
 
@@ -1906,8 +2007,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     RERS_Problem::rersGlobalVarsArrayInitFP(_numberOfThreadsToUse);
     RERS_Problem::createGlobalVarAddressMapsFP(this);
   }
-
-  SAWYER_MESG(logger[TRACE])<< "INIT: finished."<<endl;
+  SAWYER_MESG(logger[INFO])<<"Initializing solver finished."<<endl;
 }
 
 void CodeThorn::Analyzer::initAstNodeInfo(SgNode* node) {
@@ -1921,7 +2021,7 @@ void CodeThorn::Analyzer::initAstNodeInfo(SgNode* node) {
 void CodeThorn::Analyzer::generateAstNodeInfo(SgNode* node) {
   ROSE_ASSERT(node);
   if(!cfanalyzer) {
-    logger[ERROR]<< "CodeThorn::Analyzer:: no cfanalyzer available."<<endl;
+    SAWYER_MESG(logger[ERROR])<< "CodeThorn::Analyzer:: no cfanalyzer available."<<endl;
     exit(1);
   }
   RoseAst ast(node);
@@ -1959,9 +2059,9 @@ bool CodeThorn::Analyzer::checkTransitionGraph() {
 bool CodeThorn::Analyzer::checkEStateSet() {
   for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
     if(estateSet.estateId(*i)==NO_ESTATE || (*i)->label()==Label()) {
-      logger[ERROR]<< "estateSet inconsistent. "<<endl;
-      logger[ERROR]<< "  label   :"<<(*i)->label()<<endl;
-      logger[ERROR]<< "   estateId: "<<estateSet.estateId(*i)<<endl;
+      SAWYER_MESG(logger[ERROR])<< "estateSet inconsistent. "<<endl;
+      SAWYER_MESG(logger[ERROR])<< "  label   :"<<(*i)->label()<<endl;
+      SAWYER_MESG(logger[ERROR])<< "   estateId: "<<estateSet.estateId(*i)<<endl;
       return false;
     }
   }
@@ -1972,9 +2072,9 @@ bool CodeThorn::Analyzer::checkEStateSet() {
 bool CodeThorn::Analyzer::isConsistentEStatePtrSet(set<const EState*> estatePtrSet)  {
   for(set<const EState*>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
     if(estateSet.estateId(*i)==NO_ESTATE || (*i)->label()==Label()) {
-      logger[ERROR]<< "estatePtrSet inconsistent. "<<endl;
-      logger[ERROR]<< "  label   :"<<(*i)->label()<<endl;
-      logger[ERROR]<< "   estateId: "<<estateSet.estateId(*i)<<endl;
+      SAWYER_MESG(logger[ERROR])<< "estatePtrSet inconsistent. "<<endl;
+      SAWYER_MESG(logger[ERROR])<< "  label   :"<<(*i)->label()<<endl;
+      SAWYER_MESG(logger[ERROR])<< "   estateId: "<<estateSet.estateId(*i)<<endl;
       return false;
     }
   }
@@ -2227,11 +2327,12 @@ CodeThorn::FunctionIdMapping* CodeThorn::Analyzer::getFunctionIdMapping() { retu
 CodeThorn::FunctionCallMapping* CodeThorn::Analyzer::getFunctionCallMapping() { return &functionCallMapping; }
 CodeThorn::FunctionCallMapping2* CodeThorn::Analyzer::getFunctionCallMapping2() { return &functionCallMapping2; }
 CodeThorn::Flow* CodeThorn::Analyzer::getFlow() { return &flow; }
+CodeThorn::InterFlow* CodeThorn::Analyzer::getInterFlow() { return &_interFlow; }
 CodeThorn::EStateSet* CodeThorn::Analyzer::getEStateSet() { return &estateSet; }
 CodeThorn::PStateSet* CodeThorn::Analyzer::getPStateSet() { return &pstateSet; }
 TransitionGraph* CodeThorn::Analyzer::getTransitionGraph() { return &transitionGraph; }
 ConstraintSetMaintainer* CodeThorn::Analyzer::getConstraintSetMaintainer() { return &constraintSetMaintainer; }
-std::list<FailedAssertion> CodeThorn::Analyzer::getFirstAssertionOccurences(){return _firstAssertionOccurences;}
+std::list<CodeThorn::FailedAssertion> CodeThorn::Analyzer::getFirstAssertionOccurences(){return _firstAssertionOccurences;}
 
 void CodeThorn::Analyzer::setCommandLineOptions(vector<string> clOptions) {
   _commandLineOptions=clOptions;
@@ -2291,12 +2392,10 @@ CodeThorn::Analyzer::MemoryUpdateList
 CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estatePtr) {
   MemoryUpdateList memoryUpdateList;
   CallString cs=estatePtr->callString;
-  //cout<<"DEBUG: AssignOp: "<<nextNodeToAnalyze2->unparseToString()<<endl;
   EState currentEState=*estatePtr;
   SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
   SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
   list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(rhs,currentEState, CodeThorn::ExprAnalyzer::MODE_VALUE);
-  //list<EState> estateList;
   for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
     VariableId lhsVar;
     bool isLhsVar=exprAnalyzer.checkIfVariableAndDetermineVarId(lhs,lhsVar);
@@ -2304,7 +2403,7 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
       EState estate=(*i).estate;
       if(variableIdMapping->hasClassType(lhsVar)) {
         // assignments to struct variables are not supported yet (this test does not detect s1.s2 (where s2 is a struct, see below)).
-        logger[WARN]<<"assignment of structs (copy constructor) is not supported yet. Target update ignored! (unsound)"<<endl;
+        SAWYER_MESG(logger[WARN])<<"assignment of structs (copy constructor) is not supported yet. Target update ignored! (unsound)"<<endl;
       } else if(variableIdMapping->hasCharType(lhsVar)) {
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else if(variableIdMapping->hasIntegerType(lhsVar)) {
@@ -2318,9 +2417,16 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
       } else if(variableIdMapping->hasPointerType(lhsVar)) {
         // assume here that only arrays (pointers to arrays) are assigned
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+      } else if(SgTypeString* lhsTypeTypeString=isSgTypeString(variableIdMapping->getType(lhsVar))) {
+        // assume here that only arrays (pointers to arrays) are assigned
+        SAWYER_MESG(logger[WARN])<<"DEBUG: LHS assignment: typestring band aid"<<endl;
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else if(variableIdMapping->hasReferenceType(lhsVar)) {
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else {
+        // other types (e.g. function pointer type)
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+#if 0
         SAWYER_MESG(logger[ERROR])<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(nextNodeToAnalyze2)<<endl;
         SAWYER_MESG(logger[ERROR])<<"Unsupported type on LHS side of assignment: "
                                   <<"type lhs: '"<<variableIdMapping->getType(lhsVar)->unparseToString()<<"'"
@@ -2329,6 +2435,7 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
                                   <<", Expr:"<<nextNodeToAnalyze2->unparseToString()
                                   <<endl;
         exit(1);
+#endif
       }
     } else if(isSgDotExp(lhs)) {
       SAWYER_MESG(logger[TRACE])<<"detected dot operator on lhs "<<lhs->unparseToString()<<"."<<endl;
@@ -2387,6 +2494,7 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
             SAWYER_MESG(logger[ERROR]) <<"lhs array access: unknown type of array or pointer."<<endl;
             exit(1);
           }
+
           list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(indexExp,currentEState);
           ROSE_ASSERT(res.size()==1); // this should always hold for normalized ASTs
           AbstractValue indexValue=(*(res.begin())).value();
@@ -2402,11 +2510,28 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
           // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)
           //TODO: getExprAnalyzer()->writeToMemoryLocation(label,&pstate2,arrayElementId,(*i).value()); // *i is assignment-rhs evaluation result
           memoryUpdateList.push_back(make_pair(estate,make_pair(arrayElementAddr,(*i).result)));
+        } else if(SgAddressOfOp* addressOfOp=isSgAddressOfOp(lhs)) {
+          // address of op, need to compute an l-value and use as address
+          
         } else {
-          logger[ERROR] <<"array-access uses expr for denoting the array. Normalization missing."<<endl;
-          logger[ERROR] <<"expr: "<<lhs->unparseToString()<<endl;
-          logger[ERROR] <<"arraySkip: "<<getSkipArrayAccesses()<<endl;
-          exit(1);
+          list<SingleEvalResultConstInt> arrExpRes=exprAnalyzer.evaluateExpression(arrExp,currentEState);
+          ROSE_ASSERT(arrExpRes.size()==1); // this should always hold for normalized ASTs
+          AbstractValue arrPtrValue=(*(arrExpRes.begin())).value();
+          list<SingleEvalResultConstInt> indexExpRes=exprAnalyzer.evaluateExpression(indexExp,currentEState);
+          ROSE_ASSERT(indexExpRes.size()==1); // this should always hold for normalized ASTs
+          AbstractValue indexValue=(*(indexExpRes.begin())).value();
+          AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrPtrValue,indexValue);
+          AbstractValue arrayElementAddr=arrayPtrPlusIndexValue;
+          if(arrayElementAddr.isBot()) {
+            return memoryUpdateList; // inaccessible memory location, return empty estate list
+          }
+          memoryUpdateList.push_back(make_pair(estate,make_pair(arrayElementAddr,(*i).result)));
+          //above evaluation covers all cases now
+          //SAWYER_MESG(logger[ERROR]) <<"array-access uses expr for denoting the array. Normalization missing."<<endl;
+          //SAWYER_MESG(logger[ERROR]) <<"lhs AST: "<<AstTerm::astTermWithNullValuesToString(lhs)<<endl;
+          //SAWYER_MESG(logger[ERROR]) <<"expr: "<<lhs->unparseToString()<<endl;
+          //SAWYER_MESG(logger[ERROR]) <<"arraySkip: "<<getSkipArrayAccesses()<<endl;
+          //exit(1);
         }
       }
     } else if(SgPointerDerefExp* lhsDerefExp=isSgPointerDerefExp(lhs)) {
@@ -2452,11 +2577,11 @@ CodeThorn::Analyzer::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, con
     } else {
       //cout<<"DEBUG: else (no var, no ptr) ... "<<endl;
       if(getSkipArrayAccesses()&&isSgPointerDerefExp(lhs)) {
-        logger[WARN]<<"skipping pointer dereference: "<<lhs->unparseToString()<<endl;
+        SAWYER_MESG(logger[WARN])<<"skipping pointer dereference: "<<lhs->unparseToString()<<endl;
       } else {
-        logger[ERROR] << "transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
-        logger[ERROR] << "expr: "<< lhs->unparseToString()<<endl;
-        logger[ERROR] << "type: "<<lhs->class_name()<<endl;
+        SAWYER_MESG(logger[ERROR]) << "transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
+        SAWYER_MESG(logger[ERROR]) << "expr: "<< lhs->unparseToString()<<endl;
+        SAWYER_MESG(logger[ERROR]) << "type: "<<lhs->class_name()<<endl;
         //cerr << "performing no update of state!"<<endl;
         exit(1);
       }
@@ -2494,9 +2619,18 @@ std::list<EState> CodeThorn::Analyzer::transferReturnStmt(Edge edge, const EStat
   return _estateTransferFunctions->transferReturnStmt(edge,estate);
 }
 
+std::list<EState> CodeThorn::Analyzer::transferAsmStmt(Edge edge, const EState* estate) {
+  ROSE_ASSERT(_estateTransferFunctions);
+  return _estateTransferFunctions->transferAsmStmt(edge,estate);
+}
+
 std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, const EState* estate) {
   ROSE_ASSERT(_estateTransferFunctions);
   return _estateTransferFunctions->transferFunctionCallReturn(edge,estate);
+}
+std::list<EState> CodeThorn::Analyzer::transferFunctionEntry(Edge edge, const EState* estate) {
+  ROSE_ASSERT(_estateTransferFunctions);
+  return _estateTransferFunctions->transferFunctionEntry(edge,estate);
 }
 std::list<EState> CodeThorn::Analyzer::transferFunctionExit(Edge edge, const EState* estate) {
   ROSE_ASSERT(_estateTransferFunctions);
@@ -2528,6 +2662,11 @@ std::list<EState> CodeThorn::Analyzer::transferExprStmt(SgNode* nextNodeToAnalyz
   return _estateTransferFunctions->transferExprStmt(nextNodeToAnalyze1,edge,estate);
 }
 
+std::list<EState> CodeThorn::Analyzer::transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate) {
+  ROSE_ASSERT(_estateTransferFunctions);
+  return _estateTransferFunctions->transferGnuExtensionStmtExpr(nextNodeToAnalyze1,edge,estate);
+}
+
 list<EState> CodeThorn::Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate) {
   ROSE_ASSERT(_estateTransferFunctions);
   return _estateTransferFunctions->transferIncDecOp(nextNodeToAnalyze2,edge,estate);
@@ -2556,7 +2695,7 @@ list<EState> CodeThorn::Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyz
   list<SingleEvalResultConstInt> evalResultListF=exprAnalyzer.evaluateExpression(nextNodeToAnalyze2,currentEState,false);
   list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(nextNodeToAnalyze2,currentEState,true);
   //  if(evalResultListF.size()!=evalResultList.size()) {
-    cout<<"DEBUG: different evalresultList sizes (false vs true):"<<evalResultList.size()<<":"<<evalResultListF.size()<<endl;
+  //cout<<"DEBUG: different evalresultList sizes (false vs true):"<<evalResultList.size()<<":"<<evalResultListF.size()<<endl;
     for(list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
         i!=evalResultList.end();
         ++i) {
@@ -2603,7 +2742,7 @@ list<EState> CodeThorn::Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyz
         ConstraintSet s2=evalResult.exprConstraints;
         newCSet=s1+s2;
       } else {
-        logger[ERROR]<<"Expected true/false edge. Found edge:"<<edge.toString()<<endl;
+        SAWYER_MESG(logger[ERROR])<<"Expected true/false edge. Found edge:"<<edge.toString()<<endl;
         exit(1);
       }
 #endif
@@ -2626,3 +2765,81 @@ list<EState> CodeThorn::Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyz
   return newEStateList;
 }
 
+void CodeThorn::Analyzer::configureOptionSets(CodeThornOptions& ctOpt) {
+  string optionName="options-set";  // only used for error reporting
+  int optionValue=ctOpt.optionsSet; // only used for error reporting
+  switch(optionValue) {
+  case 0:
+    // fall-through for default
+    break;
+  case 1:
+    ctOpt.arraysNotInState=false;
+    ctOpt.inStateStringLiterals=true;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=true;
+    ctOpt.stdFunctions=true;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=1;
+    AbstractValue::strictChecking=false;
+    break;
+  case 2:
+    ctOpt.arraysNotInState=false;
+    ctOpt.inStateStringLiterals=true;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=false;
+    ctOpt.stdFunctions=true;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=1;
+    AbstractValue::strictChecking=false;
+    break;
+  case 3:
+    ctOpt.arraysNotInState=false;
+    ctOpt.inStateStringLiterals=false;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=false;
+    ctOpt.stdFunctions=false;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=1;
+    AbstractValue::strictChecking=false;
+    break;
+  case 4:
+    ctOpt.arraysNotInState=false;
+    ctOpt.inStateStringLiterals=false;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=false;
+    ctOpt.stdFunctions=false;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=1;
+    AbstractValue::strictChecking=true;
+    break;
+  case 11:
+    ctOpt.arraysNotInState=false;
+    ctOpt.inStateStringLiterals=true;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=false;
+    ctOpt.stdFunctions=false;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=0;
+    break;
+  default:
+    cerr<<"Error: unsupported "<<optionName<<" value: "<<optionValue<<endl;
+    exit(1);
+  }
+}
+
+void CodeThorn::Analyzer::setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt) {
+  switch(int argVal=ctOpt.functionResolutionMode) {
+  case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
+  case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
+  case 3: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_ID_MAPPING;break;
+  case 4: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;break;
+  default: 
+    cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
+    exit(1);
+  }
+}

@@ -2,6 +2,7 @@
 #define IO_ANALYZER_H
 
 #include "Analyzer.h"
+#include "ParProOptions.h"
 
 namespace CodeThorn {
   /*! 
@@ -16,13 +17,15 @@ namespace CodeThorn {
 
   public:
     IOAnalyzer();
-
+    
   protected:
     static Sawyer::Message::Facility logger;
-
+    
   public:
     static void initDiagnostics();
-
+    void configureOptions(CodeThornOptions ctOpt, LTLOptions ltlOpt, ParProOptions parProOpt);
+    void setup(Analyzer* analyzer, Sawyer::Message::Facility logger,
+               CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt);
     // overwritten or extended analyzer functions
     virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void resetAnalysis();
@@ -52,8 +55,6 @@ namespace CodeThorn {
 
     const EState* getEstateBeforeMissingInput() {return _estateBeforeMissingInput;}
     const EState* getLatestErrorEState() {return _latestErrorEState;}
-    std::set<int> getInputVarValues() { return _inputVarValues; }
-
   private:
     // adds a string representation of the input (/output) path from start state to assertEState to reachabilityResults.
     void addCounterexample(int assertCode, const EState* assertEState);

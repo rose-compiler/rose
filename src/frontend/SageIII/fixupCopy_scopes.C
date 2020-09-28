@@ -1971,37 +1971,41 @@ SgIfStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
         }
 #endif
 
-     ROSE_ASSERT(this->get_true_body() != NULL);
-     ROSE_ASSERT(ifStatement_copy->get_true_body() != NULL);
-     if (isSgScopeStatement(ifStatement_copy->get_true_body()) != NULL) 
+     SgStatement* thsTruBody = this->get_true_body();
+     ROSE_ASSERT(thsTruBody != NULL);
+     SgStatement* ifStmtCopyTruBody = ifStatement_copy->get_true_body();
+     ROSE_ASSERT(ifStmtCopyTruBody != NULL);
+     SgScopeStatement* scopeIfStmtCopyTruBody = isSgScopeStatement(ifStmtCopyTruBody);
+     if (scopeIfStmtCopyTruBody != NULL) 
         {
        // DQ (5/21/2013): Restrict direct access to the symbol table.
-       // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->get_symbol_table() != NULL);
-       // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->get_symbol_table()->size()  == 0);
-          if (isSgScopeStatement(ifStatement_copy->get_true_body())->symbol_table_size() != 0)
+       // ROSE_ASSERT(scopeIfStmtCopyTruBody->get_symbol_table() != NULL);
+       // ROSE_ASSERT(scopeIfStmtCopyTruBody->get_symbol_table()->size()  == 0);
+          if (scopeIfStmtCopyTruBody->symbol_table_size() != 0)
              {
-               printf ("Warning: (fails for g++ 4.2): isSgScopeStatement(ifStatement_copy->get_true_body())->symbol_table_size() = %zu \n",isSgScopeStatement(ifStatement_copy->get_true_body())->symbol_table_size());
-            // ifStatement_copy->get_true_body()->get_file_info()->display("ifStatement_copy->get_true_body(): debug");
+               printf ("Warning: (fails for g++ 4.2): scopeIfStmtCopyTruBody->symbol_table_size() = %zu \n",scopeIfStmtCopyTruBody->symbol_table_size());
+            // ifStmtCopyTruBody->get_file_info()->display("ifStatement_copy->get_true_body(): debug");
              }
        // DQ (3/3/12): This fails for the g++ version 4.2.4 compiler (newer versions of g++ pass fine).
-       // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->symbol_table_size() == 0);
+       // ROSE_ASSERT(scopeIfStmtCopyTruBody->symbol_table_size() == 0);
         }
 
   // printf ("\nProcess the TRUE body of the SgIfStmt \n\n");
 
-     this->get_true_body()->fixupCopy_scopes(ifStatement_copy->get_true_body(),help);
+     thsTruBody->fixupCopy_scopes(ifStmtCopyTruBody,help);
 
      ROSE_ASSERT((this->get_false_body() != NULL) == (ifStatement_copy->get_false_body() != NULL));
      if (isSgScopeStatement(ifStatement_copy->get_false_body()) != NULL) {
      // DQ (5/21/2013): Restrict direct access to the symbol table.
      // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->get_symbol_table()->size() == 0);
      // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->get_symbol_table() != NULL);
-        if (isSgScopeStatement(ifStatement_copy->get_false_body())->symbol_table_size() != 0) {
-           printf ("Warning: (fails for g++ 4.2): isSgScopeStatement(ifStatement_copy->get_false_body())->symbol_table_size() = %zu \n",isSgScopeStatement(ifStatement_copy->get_false_body())->symbol_table_size());
+        SgScopeStatement* scopeStmnt = isSgScopeStatement(ifStatement_copy->get_false_body());
+        if (scopeStmnt->symbol_table_size() != 0) {
+           printf ("Warning: (fails for g++ 4.2): isSgScopeStatement(ifStatement_copy->get_false_body())->symbol_table_size() = %zu \n",scopeStmnt->symbol_table_size());
         // ifStatement_copy->get_true_body()->get_file_info()->display("ifStatement_copy->get_false_body(): debug");
         }
      // DQ (3/3/12): This fails for the g++ version 4.2.4 compiler (newer versions of g++ pass fine).
-     // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->symbol_table_size() == 0);
+     // ROSE_ASSERT(scopeStmnt->symbol_table_size() == 0);
      }
 
   // printf ("\nProcess the FALSE body of the SgIfStmt \n\n");

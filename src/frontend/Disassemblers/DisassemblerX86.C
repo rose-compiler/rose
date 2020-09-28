@@ -1,17 +1,17 @@
 #include <rosePublicConfig.h>
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-#include "sage3basic.h"
-#include "DisassemblerX86.h"
+#include <sage3basic.h>
+#include <DisassemblerX86.h>
 
-#include "Assembler.h"
-#include "AssemblerX86.h"
-#include "AsmUnparser_compat.h"
-#include "Disassembler.h"
-#include "SageBuilderAsm.h"
-#include "integerOps.h"
-#include "stringify.h"
-#include "DispatcherX86.h"
-#include "BinaryUnparserX86.h"
+#include <Assembler.h>
+#include <AssemblerX86.h>
+#include <AsmUnparser_compat.h>
+#include <Disassembler.h>
+#include <SageBuilderAsm.h>
+#include <integerOps.h>
+#include <stringify.h>
+#include <DispatcherX86.h>
+#include <BinaryUnparserX86.h>
 
 #include <sstream>
 
@@ -123,6 +123,44 @@ DisassemblerX86::init(size_t wordsize)
     byteOrder(ByteOrder::ORDER_LSB);
 }
 
+void
+DisassemblerX86::commentIpRelative(SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+
+    struct Visitor: AstSimpleProcessing {
+        SgAsmInstruction *insn;
+        size_t nBits;
+
+        Visitor(SgAsmInstruction *insn, size_t nBits)
+            : insn(insn), nBits(nBits) {}
+
+        void visit(SgNode *node) ROSE_OVERRIDE {
+            if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(node)) {
+                SgAsmDirectRegisterExpression *reg = NULL;
+                SgAsmIntegerValueExpression *ival = NULL;
+                if ((reg = isSgAsmDirectRegisterExpression(add->get_lhs()))) {
+                    ival = isSgAsmIntegerValueExpression(add->get_rhs());
+                } else if ((reg = isSgAsmDirectRegisterExpression(add->get_rhs()))) {
+                    ival = isSgAsmIntegerValueExpression(add->get_lhs());
+                }
+
+                if (reg && ival && reg->get_descriptor().majorNumber() == x86_regclass_ip &&
+                    reg->get_descriptor().minorNumber() == 0 && reg->get_descriptor().offset() == 0 &&
+                    reg->get_descriptor().nBits() == nBits) {
+                    rose_addr_t fallThroughVa = insn->get_address() + insn->get_size();
+                    rose_addr_t offset = ival->get_absoluteValue();
+                    rose_addr_t va = (fallThroughVa + offset) & BitOps::lowMask<rose_addr_t>(nBits);
+                    std::string vaStr = "absolute=" + StringUtility::addrToString(va, nBits);
+                    std::string comment = add->get_comment();
+                    comment = comment.empty() ? vaStr : vaStr + "," + comment;
+                    add->set_comment(comment);
+                }
+            }
+        }
+    } v(insn, 8*wordSizeBytes());
+    v.traverse(insn, preorder);
+}
+
 SgAsmInstruction *
 DisassemblerX86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors)
 {
@@ -135,6 +173,8 @@ DisassemblerX86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
      *
      * In theory, by adding all appropriate prefix bytes you can obtain an instruction that is up to 16 bytes long. However,
      * the x86 CPU will generate an exception if the instruction length exceeds 15 bytes, and so will the getByte method. */
+    if (start_va % instructionAlignment_ != 0)
+        throw Exception("instruction pointer not aligned", start_va);
     unsigned char temp[16];
     size_t tempsz = map->at(start_va).limit(sizeof temp).require(MemoryMap::EXECUTABLE).read(temp).size();
 
@@ -155,6 +195,7 @@ DisassemblerX86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
         *successors |= insn->getSuccessors(complete/*out*/);
     }
 
+    commentIpRelative(insn);
     return insn;
 }
 

@@ -1922,7 +1922,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // DQ (9/9/2016): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES && 0
   // DQ (10/30/2013): Debugging support for file info data for each IR node (added comment only)
      printf ("Unparse statement (%p): %s name = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
 
@@ -4136,7 +4136,9 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
           printOutComments(stmt);
         }
 #endif
-
+#if 0
+     curprint ("/* In Unparse_ExprStmt::unparseAttachedPreprocessingInfo() */ \n");
+#endif
 #if 0
      printOutComments(stmt);
 #endif
@@ -4397,10 +4399,39 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                          case PreprocessingInfo::ClinkageSpecificationEnd:
                               if ( !info.SkipComments() )
                                  {
+#if 0
+                                   curprint ( string("/* case PreprocessingInfo::ClinkageSpecification (Start/End)") + (*i)->getString() + " */ \n");
+#endif
                                    if (unp->opt.get_unparse_includes_opt() == true)
                                         curprint (  string("// ") + (*i)->getString());
                                      else
                                         curprint ( (*i)->getString());
+#if 0
+                                   curprint ( string("/* DONE: case PreprocessingInfo::ClinkageSpecification (Start/End)") + (*i)->getString() + " */ \n");
+#endif
+
+                                   if ( (*i)->getTypeOfDirective() == PreprocessingInfo::ClinkageSpecificationStart)
+                                      {
+#if 0
+                                        printf ("calling info.set_extern_C_with_braces(true) \n");
+#endif
+#if 0
+                                        curprint ( string("/* calling info.set_extern_C_with_braces(true): case PreprocessingInfo::ClinkageSpecificationStart") + (*i)->getString() + " */ \n");
+#endif
+                                        info.set_extern_C_with_braces(true);
+                                      }
+                                     else
+                                      {
+                                        ROSE_ASSERT( (*i)->getTypeOfDirective() == PreprocessingInfo::ClinkageSpecificationEnd );
+#if 0
+                                        printf ("calling info.set_extern_C_with_braces(false) \n");
+#endif
+#if 0
+                                        curprint ( string("/* calling info.set_extern_C_with_braces(true): case PreprocessingInfo::ClinkageSpecificationEnd") + (*i)->getString() + " */ \n");
+#endif
+                                        info.set_extern_C_with_braces(false);
+                                      }
+
                                  }
                               break;
 
@@ -4561,9 +4592,9 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
         }
 
 #if 0
-     printf ("In unparseAttachedPreprocessingInfo(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+     printf ("Leaving unparseAttachedPreprocessingInfo(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
   // curprint ("\n /* Inside of unparseAttachedPreprocessingInfo() */ \n");
-     curprint (string("/* Inside of unparseAttachedPreprocessingInfo() stmt = ") + stmt->class_name() + " */ \n");
+     curprint (string("/* Leaving unparseAttachedPreprocessingInfo() stmt = ") + stmt->class_name() + " */ \n");
 #endif
    }
 
@@ -6843,6 +6874,7 @@ UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnpa
      ASSERT_not_null(expr_list);
 
 #if 0
+     printf ("In unparseExprList(): expr = %p = %s \n",expr,expr->class_name().c_str());
      curprint("/* output SgExprListExp */");
 #endif
 
@@ -6869,8 +6901,70 @@ UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnpa
                        }
                   }
 #endif
+#if 0
+            // DQ (8/24/2020): debugging Cxx_tests/test2020_44.C need to communicate when to suppress extra parenthesis use around SgFunctionType arguments.
+               printf ("In unparseExprList(): *i = %p = %s type = %s \n",*i,(*i)->class_name().c_str(),(*i)->get_type()->class_name().c_str());
+#endif
+            // DQ (8/24/2020): Added new data member to SgUnparse_Info.
+               bool context_for_added_parentheses = newinfo.get_context_for_added_parentheses();
+#if 0
+               printf ("In unparseExprList(): context_for_added_parentheses = %s \n",context_for_added_parentheses ? "true" : "false");
+#endif
+            // DQ (8/24/2020): Function types need an extra parenthesis, set Cxx_tests/test2020_44.C).
+               bool needParen = (isSgFunctionType((*i)->get_type()) != NULL);
+
+               needParen = needParen && (context_for_added_parentheses == false);
+
+            // DQ (8/25/2020): Chck if this argument is using the C++11 "{}" initializer, and if so skip the output of the extra parentheses.
+               SgExpression* argument_expr = *i;
+#if 0
+               printf ("In unparseExprList(): argument_expr = %p = %s \n",argument_expr,argument_expr->class_name().c_str());
+#endif
+               SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(argument_expr);
+               if (constructorInitializer != NULL)
+                  {
+                 // bool this_constructor_initializer_is_using_Cxx11_initializer_list = Unparse_ExprStmt::isAssociatedWithCxx11_initializationList(constructorInitializer,info);
+                    bool this_constructor_initializer_is_using_Cxx11_initializer_list = Unparse_ExprStmt::isAssociatedWithCxx11_initializationList(constructorInitializer,newinfo);
+#if 0
+                    printf ("Computed for argument: this_constructor_initializer_is_using_Cxx11_initializer_list = %s \n",this_constructor_initializer_is_using_Cxx11_initializer_list ? "true" : "false");
+#endif
+                    if (this_constructor_initializer_is_using_Cxx11_initializer_list == true)
+                       {
+#if 0
+                         printf ("In unparseExprList(): reset this_constructor_initializer_is_using_Cxx11_initializer_list == true \n");
+#endif
+                         needParen = false;
+                       }
+#if 0
+                    printf ("In unparseExprList(): constructorInitializer->get_is_braced_initialized() = %s \n",constructorInitializer->get_is_braced_initialized() ? "true" : "false");
+#endif
+                    if (constructorInitializer->get_is_braced_initialized() == true)
+                       {
+#if 0
+                         printf ("In unparseExprList(): reset needParen == false \n");
+#endif
+                         needParen = false;
+                       }
+
+                  }
+
+
+               if (needParen == true)
+                  {
+#if 0
+                    printf ("Output the extra parentheses \n");
+#endif
+                 // curprint("(");
+                    curprint("/* extra parentheses */ (");
+                  }
 
                unparseExpression(*i, newinfo);
+
+               if (needParen == true)
+                  {
+                    curprint(")");
+                  }
+
                i++;
                if (i != expr_list->get_expressions().end())
                   {
@@ -6882,6 +6976,11 @@ UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnpa
                   }
              }
         }
+
+#if 0
+     printf ("Leaving unparseExprList(): expr = %p = %s \n",expr,expr->class_name().c_str());
+     curprint("/* Leaving output SgExprListExp */");
+#endif
    }
 
 
@@ -8351,6 +8450,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgIntegerDivideOp:
           case V_SgDivideOp:         // return 13;
           case V_SgModOp:            // return 13;
+          case V_SgReplicationOp:    // return 13;
                                      precedence_value = 13; break;
 
           case V_SgDotStarOp:        // return 14;
@@ -8378,7 +8478,8 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgLambdaExp:        // return 15;
 
        // CR (7/31/2020): Replication operator used in Jovial (and potentially Fortran) initialization
-          case V_SgReplicationOp:    precedence_value = 15; break;
+          case V_SgAtOp:             // return 15;
+                                     precedence_value = 15; break;
 
           case V_SgFunctionCallExp:
              {
@@ -8585,6 +8686,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgDeleteExp:              // return 0;
           case V_SgStringVal:              // return 0;
           case V_SgCharVal:                // return 0;
+          case V_SgJovialBitVal:           // return 0;
           case V_SgUnsignedLongLongIntVal: // return 0;
           case V_SgUnsignedLongVal:        // return 0;
           case V_SgComplexVal:             // return 0;
@@ -8697,6 +8799,10 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgAwaitExpression:  precedence_value = 0; break;
           case V_SgChooseExpression: precedence_value = 0; break;
 
+       // DQ (8/23/2020): Working on Cxx_tests/test2020_44.C (niehter setting appear to make a difference here).
+       // case V_SgConstructorInitializer: precedence_value = 0; break;
+       // case V_SgConstructorInitializer: precedence_value = 16; break;
+
           default:
              {
             // We want this to be a printed warning (so we can catch these missing cases), but it is not worthy of calling an error since the default works fine.
@@ -8746,11 +8852,6 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
 #if 0
      printf ("In getAssociativity(): variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
      curprint(string("\n/* In getAssociativity(): variant = ") + Cxx_GrammarTerminalNames[variant].name + " */ \n");
-#endif
-
-#if 0
-     printf ("Exiting as a test in getAssociativity() \n");
-     ROSE_ASSERT(false);
 #endif
 
      switch (variant)
@@ -8893,6 +8994,7 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
           case V_SgBitComplementOp:
           case V_SgPointerDerefExp:
           case V_SgAddressOfOp:
+          case V_SgAtOp:
           case V_SgSizeOfOp:
              {
               return e_assoc_left;

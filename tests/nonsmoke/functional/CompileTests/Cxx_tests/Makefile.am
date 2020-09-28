@@ -913,7 +913,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2012_126.C \
    test2012_127.C \
    test2012_128.C \
-   test2012_129.C \
    test2012_12.C \
    test2012_130.C \
    test2012_131.C \
@@ -1407,7 +1406,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2014_02.C \
    test2014_03.C \
    test2014_04.C \
-   test2014_05.C \
    test2014_06.C \
    test2014_07.C \
    test2014_08.C \
@@ -1419,7 +1417,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2014_108.C \
    test2014_109.C \
    test2014_10.C \
-   test2014_110.C \
    test2014_112.C \
    test2014_114.C \
    test2014_115.C \
@@ -1622,8 +1619,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2015_112.C \
    test2015_113.C \
    test2015_114.C \
-   test2015_115.C \
-   test2015_116.C \
    test2015_117.C \
    test2015_118.C \
    test2015_119.C \
@@ -1649,7 +1644,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2015_145.C \
    test2015_146.C \
    test2015_147.C \
-   test2015_148.C \
    test2015_149.C \
    test2015_150.C \
    test2015_151.C \
@@ -1706,10 +1700,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2016_12.C \
    test2016_13.C \
    test2016_14.C \
-   test2016_15.C \
-   test2016_16.C \
-   test2016_17.C \
-   test2016_18.C \
    test2016_19.C \
    test2016_21.C \
    test2016_25.C \
@@ -1762,7 +1752,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2016_86.C \
    test2016_87.C \
    test2016_88.C \
-   test2016_89.C \
    test2016_91.C \
    test2016_93.C \
    test2017_01.C \
@@ -1806,7 +1795,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2017_45.C \
    test2017_48.C \
    test2017_49.C \
-   test2017_50.C \
    test2017_51.C \
    test2017_52.C \
    test2017_53.C \
@@ -1818,7 +1806,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2017_60.C \
    test2017_61.C \
    test2017_62.C \
-   test2017_63.C \
    test2017_64.C \
    test2017_65.C \
    test2017_66.C \
@@ -1932,7 +1919,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2019_23.C \
    test2019_24.C \
    test2020_01.C \
-   test2020_02.C \
    test2020_03.C \
    test2020_04.C \
    test2020_05.C \
@@ -1948,6 +1934,48 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_15.C \
    test2020_16.C \
    test2020_17.C \
+   test2020_18.C \
+   test2020_19.C \
+   test2020_20.C \
+   test2020_21.C \
+   test2020_22.C \
+   test2020_23.C \
+   test2020_24.C \
+   test2020_25.C \
+   test2020_26.C \
+   test2020_27.C \
+   test2020_28.C \
+   test2020_29.C \
+   test2020_30.C \
+   test2020_31.C \
+   test2020_32.C \
+   test2020_33.C \
+   test2020_34.C \
+   test2020_37.C \
+   test2020_38.C \
+   test2020_39.C \
+   test2020_40.C \
+   test2020_41.C \
+   test2020_42.C \
+   test2020_43.C \
+   test2020_44.C \
+   test2020_45.C \
+   test2020_46.C \
+   test2020_47.C \
+   test2020_49.C \
+   test2020_50.C \
+   test2020_51.C \
+   test2020_52.C \
+   test2020_53.C \
+   test2020_54.C \
+   test2020_55.C \
+   test2020_56.C \
+   test2020_57.C \
+   test2020_58.C \
+   test2020_59.C \
+   test2020_60.C \
+   test2020_61.C \
+   test2020_62.C \
    test_CplusplusMacro_Cpp.C \
    test_int_lexemes.C \
    test_int_lexemes_donot_pass.C \
@@ -1955,12 +1983,24 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test_wchars.C \
    X.C
 
+if !USING_CLANG_COMPILER
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2014_110.C
+endif
+
+if !USING_INTEL_COMPILER
+# DQ (9/19/2020): this test fails with the Intel v17 compiler (something regarding boost).
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2017_63.C 
+endif
+
+
 TESTCODE_CURRENTLY_FAILING = \
    certSignalExample.C \
    c++trick.C \
    lexPhase2003_02.C \
    longFile.C \
-    math.C \
+   math.C \
    restrict_template_parameter.C \
    test2004_25.C \
    test2004_35.C \
@@ -2353,13 +2393,14 @@ TESTCODE_CURRENTLY_FAILING = \
    test2018_28.C \
    test2018_31.C \
    test2019_25.C \
+   test2020_35.C \
+   test2020_36.C \
    test_gnu.C
 
 if ROSE_USING_GCC_VERSION_LATER_4_4
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2017_31.C \
      test2017_32.C \
-     test2017_44.C \
      test2017_46.C \
      test2017_47.C \
      test2016_96.C \
@@ -2386,8 +2427,11 @@ else
 endif
 
 if ROSE_USING_GCC_VERSION_LATER_4_8
+if !USING_CLANG_COMPILER
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-     test2015_126.C \
+     test2015_126.C 
+endif
+  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2015_127.C \
      test2015_129.C 
 else
@@ -2530,6 +2574,66 @@ else
      test2013_164.C \
      test2013_212.C 
 endif
+
+
+# DQ (9/17/2020): This is a new organization of the files that are passing only specific compilers.
+if USING_INTEL_COMPILER
+# INTEL compiler
+#      EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+
+else
+if USING_CLANG_COMPILER
+# CLANG compiler
+
+   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2012_129.C \
+   test2014_05.C \
+   test2020_02.C
+
+ # These are all just mising builtins
+   TESTCODE_CURRENTLY_FAILING += \
+   test2015_115.C \
+   test2015_116.C \
+   test2015_148.C \
+   test2016_15.C \
+   test2016_16.C \
+   test2016_17.C \
+   test2016_18.C \
+   test2016_89.C \
+   test2017_50.C 
+
+else
+if OS_MACOSX
+#      EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+else
+#  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+
+# GNU compiler
+if ROSE_USING_GCC_VERSION_LATER_10_1
+      # skip these codes when using GNU 10.1 (testing)
+else
+      # DQ (7/23/2020): These are failing code for EDG 6.0 and GNU 10.1 (debugging this).
+#     EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+endif
+ # The test codes fail CLANG 10.0
+      EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2012_129.C \
+   test2014_05.C \
+   test2015_115.C \
+   test2015_116.C \
+   test2015_148.C \
+   test2016_15.C \
+   test2016_16.C \
+   test2016_17.C \
+   test2016_18.C \
+   test2016_89.C \
+   test2017_50.C \
+   test2020_02.C 
+endif
+endif
+endif
+
+
 
 # Switch between full and short list of test codes
 if ROSE_USE_LONG_MAKE_CHECK_RULE
@@ -2697,13 +2801,17 @@ test_common_configure_test_with_link_part_1.passed: $(TEST_TRANSLATOR)
 
 # DQ (9/22/2013): Added autoconf style link test.
 test_common_configure_test_with_link_part_2.passed: $(TEST_TRANSLATOR)
-	@cp $(srcdir)/conftest_2.C conftest.C
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_2" $(top_srcdir)/scripts/test_exit_status $@
+# DQ (9/22/2020): Need to use a different filename so that these tests can run in parallel.
+#	@cp $(srcdir)/conftest_2.C conftest.C
+	@cp $(srcdir)/conftest_2.C conftest_2.C
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) conftest_2.C -o conftest_configure_test_part_2" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/22/2013): Added autoconf style link test.
 test_common_configure_test_with_link_part_3.passed: $(TEST_TRANSLATOR)
-	@cp $(srcdir)/conftest_3.C conftest.C
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_3" $(top_srcdir)/scripts/test_exit_status $@
+# DQ (9/22/2020): Need to use a different filename so that these tests can run in parallel.
+#	@cp $(srcdir)/conftest_3.C conftest.C
+	@cp $(srcdir)/conftest_3.C conftest_3.C
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) conftest_3.C -o conftest_configure_test_part_3" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (12/28/2015): Added test for new option to not normalize variable declarations.
 test_suppress_variable_declaration_normalization.passed: $(TEST_TRANSLATOR)
@@ -2719,11 +2827,21 @@ TEST_TEMPLATE_TRANSLATOR = ../../testTemplates
 # This test translator will work for test2015_32.C - test2015_36.C
 # I will make this in the a better organized set of tests later.
 # DQ (10/12/2015): Note that tests test2015_37.C through test2015_54.C are these tests.
-testTemplateExample: $(TEST_TEMPLATE_TRANSLATOR)
+testTemplateExample: testTemplateExample_1 testTemplateExample_2 testTemplateExample_3 testTemplateExample_4 testTemplateExample_5
+
+testTemplateExample_1: $(TEST_TEMPLATE_TRANSLATOR) 
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_32.C
+
+testTemplateExample_2: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_33.C
+
+testTemplateExample_3: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_34.C
+
+testTemplateExample_4: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_35.C
+
+testTemplateExample_5: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_36.C
 
 
@@ -2756,7 +2874,7 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
      test2006_187b.h test2007_08.h test2007_41.h  test2007_42.h test2007_47.h test2007_48.h test2007_97.h \
      test2007_101.h test2007_136.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
      test2008_11.h test2014_66.h test2014_112.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h test2012_268.h \
-     test2013_235.C test2013_236.C conftest.C conftest_2.C test2006_112.C test2010_25.C test2003_24.C \
+     test2013_235.C test2013_236.C conftest.C conftest_2.C conftest_3.C test2006_112.C test2010_25.C test2003_24.C \
      test2004_82.C test2014_130.h test2015_08.h test2015_29.h test2015_85.h \
      method-defn-in-tpldecl-1.h sgnodee.hpp test2006_136.h test2007_113.h test2007_114.h test2007_40.h test2012_178.h
 
@@ -2851,8 +2969,11 @@ hpctoolkit:
 #	hpcviewer /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc-debug_mode_off/tests/nonsmoke/functional/CompileTests/Cxx_tests/hpctoolkit-lt-testTranslator-database-11205 &
 
 check-local:
-	@$(MAKE) $(PASSING_TEST_Source_passed)
-	@$(MAKE) test_pdf_generation
+#	@$(MAKE) $(PASSING_TEST_Source_passed)
+	@$(MAKE) test_pdf_generation $(PASSING_TEST_Source_passed) \
+          test_unparse_includes_option.passed test_unparse_includes_option_with_link.passed \
+          test_common_configure_test_with_link_part_1.passed test_common_configure_test_with_link_part_2.passed testTemplateExample
+#	@$(MAKE) test_pdf_generation
 #	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed
@@ -2873,6 +2994,8 @@ clean-local:
 	rm -f *.int.c
 	rm -f test2013_260_unparse_headers conftest_configure_test*
 	rm -f conftest.C
+	rm -f conftest_2.C
+	rm -f conftest_3.C
 	rm -f *.passed *.failed *.err
 	rm -f method-defn-in-tpldecl-0 method-defn-in-tpldecl-1
 

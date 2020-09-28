@@ -1,0 +1,13 @@
+START
+DEF TABLE TABLE'1 (10,20);
+  BEGIN
+    ITEM ITEM'1 U;
+  END
+DEF PROC PROC'1;
+  BEGIN
+% This is not a replication operator, must check dot graph to make sure it is an array reference %
+    IF (ITEM'1(1,2) = 0);
+      BEGIN
+      END
+  END
+TERM

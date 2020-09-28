@@ -282,6 +282,7 @@ SgAssignStatement
 SgAssignedGotoStatement
 SgAssociateStatement
 SgAsteriskShapeExp
+SgAtOp
 SgAttribute
 SgAttributeSpecificationStatement
 SgAutoType
@@ -477,6 +478,7 @@ SgIsOp
 SgIsNotOp
 SgIorAssignOp
 SgJovialBitType
+SgJovialBitVal
 SgJovialTableType
 SgJovialCompoolStatement
 SgJovialForThenStatement

@@ -12,7 +12,7 @@
 #include "AstAnnotator.h"
 #include "Miscellaneous.h"
 #include "CommandLineOptions.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "AbstractValue.h"
 #include "SgNodeHelper.h"
 #include "FIConstAnalysis.h"
@@ -69,7 +69,7 @@ void printCodeStatistics(SgNode* root) {
   SgProject* project=isSgProject(root);
   VariableIdMappingExtended variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(project);
-  VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
+  VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,&variableIdMapping);
   DeadCodeElimination dce;
   cout<<"----------------------------------------------------------------------"<<endl;
   cout<<"Statistics:"<<endl;
@@ -161,7 +161,8 @@ int main(int argc, char* argv[]) {
     exit(0);
   }
   if (args.isUserProvided("csv-assert")) {
-    csvAssertFileName=args.getString("csv-assert").c_str();
+    string csvAssertFileNameString=args.getString("csv-assert");
+    csvAssertFileName=csvAssertFileNameString.c_str();
   }
   if (args.isUserProvided("csv-const-result")) {
     csvConstResultFileName=args.getString("csv-const-result");
@@ -287,7 +288,7 @@ int main(int argc, char* argv[]) {
   }
 
   if(args.getBool("fi-const-analysis")) {
-    logger[TRACE] <<"STATUS: performing flow-insensitive const analysis."<<endl;
+    logger[INFO] <<"STATUS: performing flow-insensitive const analysis."<<endl;
     FIConstAnalysis fiConstAnalysis(&variableIdMapping);
     VarConstSetMap varConstSetMap;
     VariableIdSet variablesOfInterest;
@@ -304,8 +305,8 @@ int main(int argc, char* argv[]) {
     FIConstAnalysis fiConstAnalysis(&variableIdMapping);
     fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
     fiConstAnalysis.runAnalysis(root, mainFunctionRoot);
-    VariableIdSet setOfUsedVarsInFunctions=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&variableIdMapping);
-    VariableIdSet setOfUsedVarsGlobalInit=AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(root,&variableIdMapping);
+    VariableIdSet setOfUsedVarsInFunctions=AstUtility::usedVariablesInsideFunctions(root,&variableIdMapping);
+    VariableIdSet setOfUsedVarsGlobalInit=AstUtility::usedVariablesInGlobalVariableInitializers(root,&variableIdMapping);
     VariableIdSet setOfAllUsedVars = setOfUsedVarsInFunctions;
     setOfAllUsedVars.insert(setOfUsedVarsGlobalInit.begin(), setOfUsedVarsGlobalInit.end());
     logger[INFO]<<"number of used vars inside functions: "<<setOfUsedVarsInFunctions.size()<<endl;
@@ -331,11 +332,12 @@ int main(int argc, char* argv[]) {
     logger[INFO]<<"Number of true-conditions     : "<<fiConstAnalysis.getTrueConditions().size()<<endl;
     logger[INFO]<<"Number of false-conditions    : "<<fiConstAnalysis.getFalseConditions().size()<<endl;
     logger[INFO]<<"Number of non-const-conditions: "<<fiConstAnalysis.getNonConstConditions().size()<<endl;
-    logger[TRACE]<<"STATUS: performing flow-insensensitive reachability analysis."<<endl;
+    logger[INFO]<<"STATUS: performing flow-insensensitive reachability analysis."<<endl;
     ReachabilityAnalysis ra;
     PropertyValueTable reachabilityResults=ra.fiReachabilityAnalysis(labeler, fiConstAnalysis);
-    logger[TRACE]<<"STATUS: generating file "<<csvAssertFileName<<endl;
-    reachabilityResults.writeFile(csvAssertFileName,true);
+    logger[INFO]<<"STATUS: generating file "<<csvAssertFileName<<endl;
+    bool onlyYesNo=false;
+    reachabilityResults.writeFile(csvAssertFileName,onlyYesNo);
   }
   logger[INFO]<< "Remaining functions in program: "<<numberOfFunctions(root)<<endl;
 

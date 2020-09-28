@@ -512,7 +512,7 @@ Outliner::Result::Result (SgFunctionDeclaration* decl,
 #else
   // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
 Outliner::Result::Result (SgFunctionDeclaration* decl,
-                          SgStatement* call, SgFile* file/*=NULL*/, DeferedTransformation input_deferedTransformation)
+                          SgStatement* call, SgFile* file/*=NULL*/, DeferredTransformation input_deferedTransformation)
   : decl_ (decl), call_ (call), file_(file),target_class_member(NULL),new_function_prototype(NULL),deferedTransformation(input_deferedTransformation)
 {
 }
@@ -545,14 +545,14 @@ Outliner::Result::isValid (void) const
  *  Container to store the support for defering the transformations to later (on header files that we will want to unparse).
  */
 
-Outliner::DeferedTransformation::DeferedTransformation()
+Outliner::DeferredTransformation::DeferredTransformation()
    : class_definition(NULL),
      target_class_member(NULL),
      new_function_prototype(NULL)
    {
    }
 
-Outliner::DeferedTransformation::DeferedTransformation(
+Outliner::DeferredTransformation::DeferredTransformation(
    SgClassDefinition* input_class_definition, 
    SgDeclarationStatement* input_target_class_member, 
    SgDeclarationStatement* input_new_function_prototype)
@@ -562,26 +562,27 @@ Outliner::DeferedTransformation::DeferedTransformation(
    {
    }
 
-Outliner::DeferedTransformation::DeferedTransformation (const DeferedTransformation& X)
+Outliner::DeferredTransformation::DeferredTransformation (const DeferredTransformation& X)
    : class_definition(X.class_definition),
      target_class_member(X.target_class_member),
      new_function_prototype(X.new_function_prototype),
-     targetFriends(X.targetFriends),
-     targetClasses(X.targetClasses)
+     targetClasses(X.targetClasses),
+     targetFriends(X.targetFriends)
    {
    }
 
-Outliner::DeferedTransformation & Outliner::DeferedTransformation::operator= (const DeferedTransformation& X)
+Outliner::DeferredTransformation & Outliner::DeferredTransformation::operator= (const DeferredTransformation& X)
    {
 #if 0
-     printf ("Inside of Outliner::DeferedTransformation::operator= (const DeferedTransformation& X) \n");
+     printf ("Inside of Outliner::DeferredTransformation::operator= (const DeferredTransformation& X) \n");
 #endif
 
      targetFriends = X.targetFriends;
      targetClasses = X.targetClasses;
+     return *this;
    }
 
 
-Outliner::DeferedTransformation::~DeferedTransformation (void) {}; //! Shallow; does not delete fields.
+Outliner::DeferredTransformation::~DeferredTransformation (void) {}; //! Shallow; does not delete fields.
 
 // eof

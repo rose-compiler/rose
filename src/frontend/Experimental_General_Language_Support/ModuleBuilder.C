@@ -26,7 +26,6 @@ SgProject* ModuleBuilder<T>::getCurrentProject()
 SgProject* ModuleBuilder::getCurrentProject() 
 #endif
   {
-  // return currentProject;
      return SageInterface::getProject();
   }
 
@@ -47,7 +46,7 @@ std::string ModuleBuilder::find_file_from_inputDirs(const std::string & basename
          dir = inputDirs[i];
          name = dir+"/"+ basename;
 
-         std::string tmp = name + MOD_FILE_SUFFIX;
+         std::string tmp = name + getModuleFileSuffix();
          if (boost::filesystem::exists(tmp)) {
             return name;
          }
@@ -60,9 +59,9 @@ std::string ModuleBuilder::find_file_from_inputDirs(const std::string & basename
 
 #if TEMPLATES
 template <typename T>
-void ModuleBuilder<T>::set_inputDirs(SgProject* project) {
+void ModuleBuilder<T>::setInputDirs(SgProject* project) {
 #else
-void ModuleBuilder::set_inputDirs(SgProject* project) {
+void ModuleBuilder::setInputDirs(SgProject* project) {
 #endif
 
    std::vector<std::string> args = project->get_originalCommandLineArgumentList();
@@ -129,20 +128,22 @@ SgJovialCompoolStatement* ModuleBuilder::getModule(const std::string &module_nam
 #endif
 
   // No need to read the module file if module declaration was stored in the map
-     if (module_stmt != NULL)
+     if (module_stmt)
         {
            return module_stmt;
         }
 
-     std::string nameWithPath = find_file_from_inputDirs(module_name);
+     std::string lc_module_name = StringUtility::convertToLowerCase(module_name);
+     std::string nameWithPath = find_file_from_inputDirs(lc_module_name);
 
+  // This will run the parser on the new module file and load the declarations into global scope
      SgSourceFile* newModuleFile = createSgSourceFile(nameWithPath);
 
-     if (newModuleFile == NULL )
+     if (newModuleFile == nullptr)
         {
-           mlog[ERROR] << "ModuleBuilder::getModule: No file found for the module: "<< module_name << std::endl;
+           mlog[ERROR] << "ModuleBuilder::getModule: No file found for the module file: "<< lc_module_name << std::endl;
            ROSE_ASSERT(false);
-           return NULL;
+           return nullptr;
         }
      else
         {
@@ -151,6 +152,9 @@ SgJovialCompoolStatement* ModuleBuilder::getModule(const std::string &module_nam
         // WARNING: For Fortran: Rose_STL_Container<SgNode*> moduleDeclarationList = NodeQuery::querySubTree (newModuleFile,V_ SgModuleStatement);
            Rose_STL_Container<SgNode*> moduleDeclarationList = NodeQuery::querySubTree (newModuleFile,V_SgJovialCompoolStatement);
 
+//TODO: May have to have a module file after all but for Jovial probably not
+// For Jovial try to make it like an include into global scope
+#if 0
         // There should only be a single module defined in the associated *.rmod file.
            ROSE_ASSERT(moduleDeclarationList.size() == 1);
 
@@ -159,6 +163,7 @@ SgJovialCompoolStatement* ModuleBuilder::getModule(const std::string &module_nam
 
         // Store the extracted module into the module name map (this is the only location where the map is modified)
            moduleNameMap.insert(ModuleMapType::value_type(module_name, module_stmt));
+#endif
 
            return module_stmt;
         }
@@ -176,7 +181,7 @@ SgSourceFile* ModuleBuilder::createSgSourceFile(const std::string &module_name)
      std::vector<std::string> argv;
 
   // current directory
-     std::string module_filename = boost::algorithm::to_lower_copy(module_name) + MOD_FILE_SUFFIX;
+     std::string module_filename = boost::algorithm::to_lower_copy(module_name) + getModuleFileSuffix();
 
      if (boost::filesystem::exists(module_filename) == false)
         {

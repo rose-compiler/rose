@@ -140,7 +140,13 @@ struct NameBasedSharing : public ROSE_VisitTraversal {
       if (isSgInitializedName(reference_node) && isSgFunctionParameterList(reference_node->get_parent())) {
         SgInitializedName * iname = (SgInitializedName *)reference_node;
         while (it_node != nodes.end() && !isSgFunctionDefinition(iname->get_scope())) {
+#if DEBUG_NameBasedSharing
+          std::cout << "#      iname = " << std::hex << iname << " ( " << iname->class_name() << " )" << std::endl;
+          std::cout << "#      iname->get_scope() = " << std::hex << iname->get_scope() << " ( " << iname->get_scope()->class_name() << " )" << std::endl;
+#endif
           reference_node = *(it_node++);
+          iname = isSgInitializedName(reference_node);
+          ROSE_ASSERT(iname != NULL);
         }
       }
 

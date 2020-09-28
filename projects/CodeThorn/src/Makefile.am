@@ -50,6 +50,7 @@ CODETHORN_SOLO_HEADER_FILES=\
   CtxLattice.h \
   CtxPropertyStateFactory.h \
   CtxTransfer.h \
+  DataDependenceVisualizer.h \
   EqualityMaintainer.h \
   Evaluator.h \
   ExecutionTrace.h \
@@ -57,15 +58,14 @@ CODETHORN_SOLO_HEADER_FILES=\
   HSetMaintainer.h \
   ReadWriteData.h \
   SetAlgo.h \
-  WorkListSeq.h \
-  WorkList.h
+  WorkListSeq.h
 
 # codethorn library header files (each with a corresponding source file)
 CODETHORN_HEADER_FILES=\
   AbstractValue.h \
   addressTakenAnalysis.h \
   AliasAnalysis.h \
-  AnalysisAbstractionLayer.h \
+  AstUtility.h \
   AnalysisAstAnnotator.h \
   AnalysisReporting.h \
   Analyzer.h \
@@ -75,6 +75,7 @@ CODETHORN_HEADER_FILES=\
   BoolLattice.h \
   CallString.h \
   CFAnalysis.h \
+  CodeThornLib.h \
   CommandLineOptions.h \
   ConstraintRepresentation.h \
   ContNodeAttribute.h \
@@ -84,8 +85,10 @@ CODETHORN_HEADER_FILES=\
   CppStdUtilities.h \
   CTIOLabeler.h \
   CtxCallStrings.h \
-  CtxSolver0.h \
   CtxPrioritySolver.h \
+  CtxReachabilityLattice.h \
+  CtxSolver0.h \
+  CtxUnfoldedAnalysis.h \
   DataDependenceVisualizer.h \
   DataRaceDetection.h \
   defUseQuery.h \
@@ -95,8 +98,12 @@ CODETHORN_HEADER_FILES=\
   DotGraphCfgFrontend.h \
   EquivalenceChecking.h \
   EState.h \
-  ExprAnalyzer.h \
+  EStateAnalysis.h \
+  EStateFactory.h \
   EStateTransferFunctions.h \
+  EStateWorkList.h \
+  EStatePriorityWorkList.h \
+  ExprAnalyzer.h \
   FIConstAnalysis.h \
   Flow.h \
   FunctionCallMapping.h \
@@ -138,7 +145,8 @@ CODETHORN_HEADER_FILES=\
   Options.h \
   CodeThornOptions.h \
   LTLOptions.h \
-  ltlthorn-lib/ParProOptions.h \
+  ParProOptions.h \
+  LTLRersMapping.h \
   PASolver1.h \
   PointerAnalysisInterface.h \
   PragmaHandler.h \
@@ -158,6 +166,7 @@ CODETHORN_HEADER_FILES=\
   ReachabilityAnalysis.h \
   ReadWriteAnalyzer.h \
   ReadWriteHistory.h \
+  RersSpecialization.h \
   RERS_empty_specialization.h \
   RersCounterexample.h \
   RewriteStatistics.h \
@@ -169,6 +178,7 @@ CODETHORN_HEADER_FILES=\
   Specialization.h \
   SvcompWitness.h \
   TimeMeasurement.h \
+  TopologicalSort.h \
   TransitionGraph.h \
   TransitionGraphReducer.h \
   TypeSizeMapping.h \
@@ -183,7 +193,7 @@ CODETHORN_SOURCE_FILES=\
   AbstractValue.C \
   addressTakenAnalysis.C \
   AliasAnalysis.C \
-  AnalysisAbstractionLayer.C \
+  AstUtility.C \
   AnalysisAstAnnotator.C \
   AnalysisReporting.C \
   Analyzer.C \
@@ -193,6 +203,7 @@ CODETHORN_SOURCE_FILES=\
   BoolLattice.C \
   CallString.C \
   CFAnalysis.C \
+  CodeThornLib.C \
   CommandLineOptions.C \
   ConstraintRepresentation.C \
   ContNodeAttribute.C \
@@ -202,8 +213,10 @@ CODETHORN_SOURCE_FILES=\
   CppStdUtilities.C \
   CTIOLabeler.C \
   CtxCallStrings.C \
-  CtxSolver0.C \
   CtxPrioritySolver.C \
+  CtxReachabilityLattice.C \
+  CtxSolver0.C \
+  CtxUnfoldedAnalysis.C \
   DataDependenceVisualizer.C \
   defUseQuery.C \
   DataRaceDetection.C \
@@ -212,8 +225,12 @@ CODETHORN_SOURCE_FILES=\
   DotGraphCfgFrontend.C \
   EquivalenceChecking.C \
   EState.C \
-  ExprAnalyzer.C \
+  EStateAnalysis.C \
+  EStateFactory.C \
   EStateTransferFunctions.C \
+  EStateWorkList.C \
+  EStatePriorityWorkList.C \
+  ExprAnalyzer.C \
   FIConstAnalysis.C \
   Flow.C \
   FunctionCallMapping.C \
@@ -238,7 +255,8 @@ CODETHORN_SOURCE_FILES=\
   LoopInfo.C \
   CodeThornOptions.C \
   LTLOptions.C \
-  ltlthorn-lib/ParProOptions.C \
+  ParProOptions.C \
+  LTLRersMapping.C \
   LVAnalysis.C \
   LVAstAttribute.C \
   LVAstAttributeInterface.C \
@@ -285,6 +303,7 @@ CODETHORN_SOURCE_FILES=\
   Specialization.C \
   SvcompWitness.C \
   TimeMeasurement.C \
+  TopologicalSort.C \
   TransitionGraph.C \
   TransitionGraphReducer.C \
   TypeSizeMapping.C \
@@ -302,13 +321,11 @@ libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3
 codethornincludedir = $(pkgincludedir)/codethorn
 codethorninclude_HEADERS=\
   $(CODETHORN_SOLO_HEADER_FILES) \
-  $(CODETHORN_HEADER_FILES) \
-  CodeThornLib.h
+  $(CODETHORN_HEADER_FILES) 
 
 # codethorn (core) library sources
 libcodethorn_la_SOURCES=\
-  $(CODETHORN_SOURCE_FILES) \
-  CodeThornLib.C
+  $(CODETHORN_SOURCE_FILES)
 
 ################################################################
 # LIBRARY: LTLTHORN/ (for linear temporal logic verification)
@@ -704,8 +721,8 @@ CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain unit-test check-norm
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
-#CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven
-CHECK_WITH_SPOT_ONLY_PASSING=check-svcomp-witness check-ltl check-ltl-driven-reset-analyzer
+#CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven check-svcomp-witness
+CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer check-reachability
 
 CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_ONLY_PASSING)
 
@@ -850,6 +867,9 @@ check-ltl-driven-reset-analyzer:
 
 check-svcomp-witness:
 	./codethorn $(srcdir)/tests/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c --svcomp-mode --input-values="{1,2,3,4,5,6}" --witness-file=toBeImplemented.witness --with-counterexamples
+
+check-reachability:
+	./codethorn $(srcdir)/tests/rers/Problem1911_opt.c --input-values="{1,2,3,4,5,6,7,8,9,10}" --status --threads=6 --with-counterexamples
 
 check-equivalence:
 	@rm -f tmp.nsdump

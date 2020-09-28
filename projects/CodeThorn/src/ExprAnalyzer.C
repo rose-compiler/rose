@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "sage3basic.h"
@@ -21,7 +19,6 @@ using namespace Sawyer::Message;
 Sawyer::Message::Facility ExprAnalyzer::logger;
 
 ExprAnalyzer::ExprAnalyzer() {
-  initDiagnostics();
   initViolatingLocations();
 }
 
@@ -203,7 +200,7 @@ AbstractValue ExprAnalyzer::abstractValueFromSgValueExp(SgValueExp* valueExp, Ev
     else if(val==1)
       return AbstractValue(true);
     else {
-      logger[ERROR]<<"Error: unknown bool value (not 0 or 1): SgBoolExp::get_value()=="<<val<<endl;
+      SAWYER_MESG(logger[ERROR])<<"Error: unknown bool value (not 0 or 1): SgBoolExp::get_value()=="<<val<<endl;
       exit(1);
     }
   }
@@ -317,14 +314,14 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateShortCircuitOperators(SgNod
 }
 
 AbstractValue ExprAnalyzer::evaluateExpressionWithEmptyState(SgExpression* expr) {
-  logger[TRACE]<<"evaluateExpressionWithEmptyState(1):"<<expr->unparseToString()<<endl;
+  SAWYER_MESG(logger[TRACE])<<"evaluateExpressionWithEmptyState(1):"<<expr->unparseToString()<<endl;
   ROSE_ASSERT(AbstractValue::getVariableIdMapping());
   EState emptyEState;
   PState emptyPState;
   emptyEState.setPState(&emptyPState);
   ExprAnalyzer::EvalMode evalMode=ExprAnalyzer::MODE_EMPTY_STATE;
   list<SingleEvalResultConstInt> resList=evaluateExpression(expr,emptyEState,evalMode);
-  logger[TRACE]<<"evaluateExpressionWithEmptyState(2):"<<expr->unparseToString()<<endl;
+  SAWYER_MESG(logger[TRACE])<<"evaluateExpressionWithEmptyState(2):"<<expr->unparseToString()<<endl;
   if(resList.size()!=1) {
     return AbstractValue::createTop();
   } else {
@@ -335,6 +332,9 @@ AbstractValue ExprAnalyzer::evaluateExpressionWithEmptyState(SgExpression* expr)
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,EState estate, EvalMode mode) {
   ROSE_ASSERT(estate.pstate()); // ensure state exists
+  SAWYER_MESG(logger[TRACE])<<"evaluateExpression:"<<"eval mode:"<<mode<<" at: "<<node->class_name()<<": "<<node->unparseToString()<<endl;
+
+  
   // initialize with default values from argument(s)
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -354,7 +354,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
     exit(1);
   }
 #endif
+  if(SgStatementExpression* gnuExtensionStmtExpr=isSgStatementExpression(node)) {
+    //cout<<"WARNING: ignoring GNU extension StmtExpr."<<endl;
+    res.result=AbstractValue::createTop();
+    return listify(res);
+  }
 
+  
   if(SgConditionalExp* condExp=isSgConditionalExp(node)) {
     return evalConditionalExpr(condExp,estate,mode);
   }
@@ -463,7 +469,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgMinusOp,evalUnaryMinusOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgPointerDerefExp,evalDereferenceOp);
       default:
-        logger[ERROR]<<"evaluateExpression::unknown unary operation @"<<node->sage_class_name()<<endl;
+        SAWYER_MESG(logger[ERROR])<<"evaluateExpression::unknown unary operation @"<<node->sage_class_name()<<endl;
         exit(1);
       } // end switch
     }
@@ -534,8 +540,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
       printLoggerWarning(estate);
       return listify(res);
   }
+  case V_SgAggregateInitializer: {
+      res.result=AbstractValue::createTop();
+      SAWYER_MESG(logger[WARN])<<"AggregateInitializer in expression (only handled at stmt level, returning top)"<<endl;
+      return listify(res);
+  }
   default:
-    throw CodeThorn::Exception("Error: evaluateExpression::unknown node in expression: "+string(node->sage_class_name())+" at "+SgNodeHelper::sourceFilenameToString(node)+" in file "+SgNodeHelper::sourceFilenameToString(node));
+    throw CodeThorn::Exception("Error: evaluateExpression::unknown node in expression: "+string(node->sage_class_name())+" at "+SgNodeHelper::sourceFilenameToString(node)+" in file "+SgNodeHelper::sourceFilenameToString(node)+string(":")+node->unparseToString());
   } // end of switch
   throw CodeThorn::Exception("Error: evaluateExpression failed.");
 }
@@ -563,7 +574,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConditionalExpr(SgConditionalEx
     }
   }
   if(condResultList.size()>1) {
-    logger[ERROR]<<"evaluating condition of conditional operator gives more than one result. Normalization required."<<endl;
+    SAWYER_MESG(logger[ERROR])<<"evaluating condition of conditional operator gives more than one result. Normalization required."<<endl;
     exit(1);
   }
   SingleEvalResultConstInt singleResult=*condResultList.begin();
@@ -852,6 +863,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
                                  SingleEvalResultConstInt indexExprResult,
                                  EState estate, EvalMode mode) {
   SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp: "<<node->unparseToString()<<endl;
+  SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp: AST:"<<AstTerm::astTermWithNullValuesToString(node)<<endl;
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -912,6 +924,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         }
       } else {
         cerr<<"Error: unknown type of array or pointer."<<endl;
+        cerr<<node->unparseToString()<<endl;
         exit(1);
       }
       AbstractValue indexExprResultValue=indexExprResult.value();
@@ -966,8 +979,10 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         SAWYER_MESG(logger[WARN])<<"evalArrayReferenceOp:"<<pstate2.toString(_variableIdMapping)<<endl;
 
         if(mode==MODE_ADDRESS) {
-          SAWYER_MESG(logger[FATAL])<<"Internal error: ExprAnalyzer::evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
-          exit(1);
+          SAWYER_MESG(logger[WARN])<<"ExprAnalyzer::evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
+          res.result=CodeThorn::Top();
+          resultList.push_back(res);
+          return resultList;
         }
         // array variable NOT in state. Special space optimization case for constant array.
         if(_variableIdMapping->hasArrayType(arrayVarId) /* MS 5/20/2020: removed mode: && _analyzer->getOptionsRef().explicitArrays==false*/) {
@@ -1049,33 +1064,29 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalUnaryMinusOp(SgMinusOp* node,
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
                                                               EState estate, EvalMode mode) {
-  logger[TRACE]<<"evalSizeofOp(started):"<<node->unparseToString()<<endl;
+  SAWYER_MESG(logger[TRACE])<<"evalSizeofOp(started):"<<node->unparseToString()<<endl;
   SgType* operandType=node->get_operand_type();
   CodeThorn::TypeSize typeSize=0; // remains zero if no size can be determined
   AbstractValue sizeValue=AbstractValue::createTop();
 
   if(operandType) {
-    logger[TRACE]<<"evalSizeofOp(2):"<<node->unparseToString()<<endl;
     typeSize=_variableIdMapping->getTypeSize(operandType);
-    logger[TRACE]<<"evalSizeofOp(3):"<<node->unparseToString()<<endl;
   } else if(SgExpression* exp=node->get_operand_expr()) {
-    logger[TRACE]<<"evalSizeofOp(4):"<<node->unparseToString()<<endl;
     if(SgVarRefExp* varRefExp=isSgVarRefExp(exp)) {
       typeSize=_variableIdMapping->getTypeSize(_variableIdMapping->variableId(varRefExp));
     } else if(SgType* expType=exp->get_type()) {
       typeSize=_variableIdMapping->getTypeSize(expType);
     } else {
-      logger[WARN] <<"sizeof: could not determine any type of sizeof argument and unsupported argument expression: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl<<AstTerm::astTermWithNullValuesToDot(exp)<<endl;
+      SAWYER_MESG(logger[WARN])<<"sizeof: could not determine any type of sizeof argument and unsupported argument expression: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl<<AstTerm::astTermWithNullValuesToDot(exp)<<endl;
     }
-    logger[TRACE]<<"evalSizeofOp(5):"<<node->unparseToString()<<endl;
   } else {
-    logger[WARN] <<"sizeof: could not determine any type of sizeof argument and no expression found either: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl;
+    SAWYER_MESG(logger[WARN]) <<"sizeof: could not determine any type of sizeof argument and no expression found either: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl;
   }
   logger[TRACE]<<"evalSizeofOp(6):"<<node->unparseToString()<<endl;
 
   // determines sizeValue based on typesize
     if(typeSize==0) {
-      logger[WARN]<<"sizeof: could not determine size (= zero) of argument, assuming top "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
+      SAWYER_MESG(logger[WARN])<<"sizeof: could not determine size (= zero) of argument, assuming top "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
       sizeValue=AbstractValue::createTop();
     } else {
       SAWYER_MESG(logger[TRACE])<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizeof("<<typeSize<<")"<<endl;
@@ -1084,7 +1095,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
     }
     SingleEvalResultConstInt res;
     res.init(estate,sizeValue);
-    logger[TRACE]<<"evalSizeofOp(finished):"<<node->unparseToString()<<endl;
+    SAWYER_MESG(logger[TRACE])<<"evalSizeofOp(finished):"<<node->unparseToString()<<endl;
     return listify(res);
 }
 
@@ -1099,7 +1110,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalCastOp(SgCastExp* node,
     if(SgPointerType* ptrType=isSgPointerType(targetType)) {
       SgType* elementType=ptrType->get_base_type();
       long int elementTypeSize=_variableIdMapping->getTypeSize(elementType);
-      logger[DEBUG]<<"casting pointer to element type size: "<<elementTypeSize<<":"<<elementType->unparseToString()<<endl;
+      SAWYER_MESG(logger[DEBUG])<<"casting pointer to element type size: "<<elementTypeSize<<":"<<elementType->unparseToString()<<endl;
       if(AbstractValue::byteMode) {
         operandResult.result.setElementTypeSize(elementTypeSize);
       }
@@ -1227,7 +1238,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node
   SingleEvalResultConstInt res;
   res.estate=estate;
   AbstractValue operand=operandResult.result;
-  SAWYER_MESG(logger[INFO])<<"AddressOfOp: "<<node->unparseToString()<<" - operand: "<<operand.toString(_variableIdMapping)<<endl;
+  SAWYER_MESG(logger[TRACE])<<"AddressOfOp: "<<node->unparseToString()<<" - operand: "<<operand.toString(_variableIdMapping)<<endl;
   if(operand.isTop()||operand.isBot()) {
     res.result=operand;
   } else {
@@ -1495,7 +1506,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
     } else {
       Label lab=estate.label();
       res.result=CodeThorn::Top();
-      logger[WARN] << "at label "<<lab<<": "<<(_analyzer->getLabeler()->getNode(lab)->unparseToString())<<": variable not in PState (LValue VarRefExp) (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
+      SAWYER_MESG(logger[WARN]) << "at label "<<lab<<": "<<(_analyzer->getLabeler()->getNode(lab)->unparseToString())<<": variable not in PState (LValue VarRefExp) (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
       //cerr << "WARNING: estate: "<<estate.toString(_variableIdMapping)<<endl;
       return listify(res);
     }
@@ -1536,34 +1547,41 @@ std::list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionRefExp(SgFunctionR
   //cout<<"DEBUG: isForwardDecl:"<<SgNodeHelper::isForwardFunctionDeclaration(funDecl)<<endl;
   //cout<<"DEBUG: fundecl:"<<funDecl->unparseToString()<<endl;
   SgFunctionDefinition* funDef=funDecl->get_definition();
-  ROSE_ASSERT(funDef);
-  Label funLab=_analyzer->getLabeler()->functionEntryLabel(funDef);
+  if(funDef) {
+    Label funLab=_analyzer->getLabeler()->functionEntryLabel(funDef);
   
-  // label of corresponding entry label of function of node; if function is external, then label is an invalid label.
-  //cout<<"DEBUG: evalFunctionRefExp: label:"<<funLab.toString()<<endl;
-  res.init(estate,AbstractValue::createAddressOfFunction(funLab));
-  return listify(res);
+    // label of corresponding entry label of function of node; if function is external, then label is an invalid label.
+    //cout<<"DEBUG: evalFunctionRefExp: label:"<<funLab.toString()<<endl;
+    res.init(estate,AbstractValue::createAddressOfFunction(funLab));
+    return listify(res);
+  } else {
+    SAWYER_MESG(logger[WARN])<<"ExprAnalyzer::evalFunctionRefExp: funRefExp==0 (function pointer? - creating top)"<<endl;
+    res.init(estate,AbstractValue::createTop());
+    return listify(res);
+  }
 }
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode) {
-  //  cout<<"DEBUG: evalRValueVarRefExp:"<<node->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
   if(mode==ExprAnalyzer::MODE_EMPTY_STATE) {
     SingleEvalResultConstInt res;
     res.init(estate,AbstractValue::createTop());
     return listify(res);
   }  
-  SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<"MODE:"<<mode<<endl;
+  SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<" MODE:"<<mode<<" Symbol:"<<node->get_symbol()<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue::createBot());
 
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
-  ROSE_ASSERT(varId.isValid());
+  if(!varId.isValid()) {
+    SAWYER_MESG(logger[ERROR])<<"Invalid varId: "<<node->unparseToString()<<" Parent: "<<node->get_parent()->unparseToString()<<" Symbol:"<<node->get_symbol()<<endl;
+    ROSE_ASSERT(varId.isValid());
+  }
   // check if var is a struct member. if yes return struct-offset.
-  //cout<<"DEBUG1: VarRefExp: "<<_variableIdMapping->variableName(varId)<<endl;
+  //SAWYER_MESG(logger[TRACE])<<"VarRefExp name: "<<_variableIdMapping->variableName(varId)<<endl;
   if(isMemberVariable(varId)) {
     int offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
     ROSE_ASSERT(_variableIdMapping);
-    SAWYER_MESG(logger[TRACE])<<"DEBUG: evalRValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
+    SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
     res.result=AbstractValue(offset); // TODO BYTEMODE ?
     //cout<<"DEBUG1 STRUCT MEMBER: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
     return listify(res);
@@ -1579,7 +1597,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
     } else {
       if(_variableIdMapping->hasReferenceType(varId)) {
         res.result=readFromReferenceMemoryLocation(estate.label(),pstate,varId);
-        logger[INFO]<<"reading from memory reference location: value: "<<res.result.toString()<<endl;
       } else {
         res.result=readFromMemoryLocation(estate.label(),pstate,varId);
       }
@@ -1604,6 +1621,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
     }
   }
   // unreachable
+  ROSE_ASSERT(false);
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, EState estate, EvalMode mode) {
@@ -1656,13 +1674,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       evalFunctionCallArguments(funCall,estate);
       estate.io.recordVerificationError();
       return listify(res);
-    } else if(funName=="printf" && (getInterpreterMode()==IM_CONCRETE)) {
+    } else if(funName=="printf" && (getInterpreterMode()==IM_ENABLED)) {
       // call fprint function in mode CONCRETE and generate output
       // (1) obtain arguments from estate
       // (2) marshall arguments
       // (3) perform function call (causing side effect on stdout (or written to provided file))
       return execFunctionCallPrintf(funCall,estate);
-    } else if(funName=="scanf" && (getInterpreterMode()==IM_CONCRETE)) {
+    } else if(funName=="scanf" && (getInterpreterMode()==IM_ENABLED)) {
       // call scanf function in mode CONCRETE and generate output
       // (1) obtain arguments from estate
       // (2) marshall arguments
@@ -2126,16 +2144,18 @@ AbstractValue ExprAnalyzer::readFromMemoryLocation(Label lab, const PState* psta
 
 void ExprAnalyzer::writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
   // inspect everything here
+  SAWYER_MESG(logger[TRACE])<<"ExprAnalyzer::writeToMemoryLocation:"<<memLoc.toString()<<endl;
   if(memLoc.isTop()) {
-    logger[WARN]<<"writing to arbitrary memloc: "<<lab.toString()<<":"<<memLoc.toString(_variableIdMapping)<<":="<<newValue.toString(_variableIdMapping)<<endl;
+    SAWYER_MESG(logger[WARN])<<"writing to arbitrary memloc: "<<lab.toString()<<":"<<memLoc.toString(_variableIdMapping)<<":="<<newValue.toString(_variableIdMapping)<<endl;
     recordPotentialOutOfBoundsAccessLocation(lab);
   } else if(!pstate->memLocExists(memLoc)) {
     if(!newValue.isUndefined()) {
       recordPotentialOutOfBoundsAccessLocation(lab);
-      logger[WARN]<<"writing defined value to memloc not in state: "<<lab.toString()<<":"<<memLoc.toString(_variableIdMapping)<<":="<<newValue.toString(_variableIdMapping)<<endl;
+      SAWYER_MESG(logger[WARN])<<"writing defined value to memloc not in state: "<<lab.toString()<<":"<<memLoc.toString(_variableIdMapping)<<":="<<newValue.toString(_variableIdMapping)<<endl;
     }
   }
   pstate->writeToMemoryLocation(memLoc,newValue);
+  SAWYER_MESG(logger[TRACE])<<"ExprAnalyzer::writeToMemoryLocation:done"<<endl;
 }
 
 AbstractValue ExprAnalyzer::readFromReferenceMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc) {

@@ -23,7 +23,9 @@
 #endif
 
 #include "unparseJovial_modfile.h"
-
+#ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+#   include "ModuleBuilder.h"
+#endif
 
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #   include <Partitioner2/Engine.h>
@@ -350,6 +352,15 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgNullptrValExp:
              {
                s = "_nullptr_";
+               break;
+             }
+
+       // CR (9/16/2020): Added support for Jovial bit value.
+          case V_SgJovialBitVal:
+             {
+               const SgJovialBitVal* expr = isSgJovialBitVal(this);
+               ROSE_ASSERT(expr);
+               s = expr->get_valueString();
                break;
              }
 
@@ -2267,6 +2278,11 @@ SgProject::parse()
   // FMZ (5/29/2008)
      FortranModuleInfo::setCurrentProject(this);
      FortranModuleInfo::set_inputDirs(this );
+#endif
+
+#ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+     ModuleBuilderFactory::get_compool_builder().setCurrentProject(this);
+     ModuleBuilderFactory::get_compool_builder().setInputDirs(this);
 #endif
 
   // Simplify multi-file handling so that a single file is just the trivial
@@ -4273,6 +4289,12 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                ROSE_ASSERT(get_requires_C_preprocessor() == true);
                fortran_C_preprocessor_commandLine.push_back("-D"+macroSpecifierList[i]);
              }
+      // Pei-Hung (09/22/2020): Added openacc support for the preprocessing command line.
+      // This is a tentative work and needs to be enhanced later.
+           if(get_openacc())
+           {
+             fortran_C_preprocessor_commandLine.push_back("-D_OPENACC="+ StringUtility::numberToString(3));
+           }
 
        // DQ (5/19/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
           const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();

@@ -37,7 +37,10 @@ main(int argc, char *argv[]) {
     engine.settings().disassembler.isaName = "a64";
     engine.memoryMap(memory);
     P2::Partitioner p = engine.createTunedPartitioner();
-    auto ops = S2::TraceSemantics::RiscOperators::instance(p.newOperators());
+    auto symOps = S2::SymbolicSemantics::RiscOperators::promote(p.newOperators());
+    symOps->trimThreshold(UNLIMITED);
+    std::cout <<"expr size limit = " <<symOps->trimThreshold() <<"\n";
+    auto ops = S2::TraceSemantics::RiscOperators::instance(symOps);
     S2::BaseSemantics::Dispatcher::Ptr cpu = p.newDispatcher(ops);
 
     size_t va = memory->hull().least();

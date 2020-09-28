@@ -458,7 +458,7 @@ class InsnInfoKey {
 public:
     /*implicit*/ InsnInfoKey(const InsnInfo::Ptr &insnInfo)
         : va_(insnInfo->address()) {}
-    /*impilcit*/ InsnInfoKey(rose_addr_t &va)
+    /*impilcit*/ InsnInfoKey(rose_addr_t va)
         : va_(va) {}
 
     // FIXME: we should be using an unordered_map for the index.

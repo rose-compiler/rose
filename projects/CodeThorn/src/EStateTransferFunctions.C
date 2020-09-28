@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "EStateTransferFunctions.h"
 #include "Analyzer.h"
+#include "AstUtility.h"
 
 using namespace std;
 using namespace Sawyer::Message;
@@ -9,26 +10,6 @@ Sawyer::Message::Facility CodeThorn::EStateTransferFunctions::logger;
 
 namespace CodeThorn {
 
-  // utility function
-  SgNode* findExprNodeInAstUpwards(VariantT variant,SgNode* node) {
-    while(node!=nullptr&&isSgExpression(node)&&(node->variantT()!=variant)) {
-      node=node->get_parent();
-    }
-    if(node)
-      // if the search did not find the node and continued to the stmt level
-      // this check ensures that a nullptr is returned
-      return isSgExpression(node);
-    else
-      return nullptr;
-  }
-  CTIOLabeler* EStateTransferFunctions::getLabeler() {
-    ROSE_ASSERT(_analyzer);
-    return _analyzer->getLabeler();
-  }
-  VariableIdMappingExtended* EStateTransferFunctions::getVariableIdMapping() {
-    ROSE_ASSERT(_analyzer);
-    return _analyzer->getVariableIdMapping();
-  }
   EStateTransferFunctions::EStateTransferFunctions () {
     initDiagnostics();
   }
@@ -40,6 +21,14 @@ void EStateTransferFunctions::initDiagnostics() {
     Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
   }
 }
+  CTIOLabeler* EStateTransferFunctions::getLabeler() {
+    ROSE_ASSERT(_analyzer);
+    return _analyzer->getLabeler();
+  }
+  VariableIdMappingExtended* EStateTransferFunctions::getVariableIdMapping() {
+    ROSE_ASSERT(_analyzer);
+    return _analyzer->getVariableIdMapping();
+  }
   bool EStateTransferFunctions::getOptionOutputWarnings() {
     return _analyzer->getOptionOutputWarnings();
   }
@@ -87,7 +76,7 @@ void EStateTransferFunctions::initDiagnostics() {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
         ROSE_ASSERT(funCall);
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName=="calculate_outputFP") {
+        if(funName==_rersHybridOutputFunctionName) {
           // RERS global vars binary handling
           PState _pstate=*estate->pstate();
           RERS_Problem::rersGlobalVarsCallInitFP(getAnalyzer(),_pstate, omp_get_thread_num());
@@ -175,7 +164,7 @@ void EStateTransferFunctions::initDiagnostics() {
     if(_analyzer->getOptionsRef().rers.rersBinary) {
       // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
       string funName=SgNodeHelper::getFunctionName(funCall);
-      if(funName=="calculate_outputFP") {
+      if(funName==_rersHybridOutputFunctionName) {
         // logger[DEBUG]<< "rers-binary mode: skipped static-analysis call."<<endl;
         return elistify();
       }
@@ -211,9 +200,8 @@ void EStateTransferFunctions::initDiagnostics() {
             //cout<<"Resolved function pointer"<<endl;
           }
         } else {
-          // abort
-          cerr<<"Error: function pointer is top or bot. Not supported: "<<funCall->unparseToString()<<":"<<funcPtrVal.toString(getVariableIdMapping())<<endl;
-          exit(1);
+          //cerr<<"INFO: function pointer is top or bot. Not supported: "<<funCall->unparseToString()<<":"<<funcPtrVal.toString(getVariableIdMapping())<<endl;
+          // continue but pass the information now to *all* outgoing static edges (maximum imprecision)
         }
       }
     }
@@ -375,7 +363,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge,
     if(_analyzer->getOptionsRef().rers.rersBinary) {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName=="calculate_outputFP") {
+        if(funName==_rersHybridOutputFunctionName) {
           EState newEState=currentEState;
           newEState.setLabel(edge.target());
           newEState.callString=cs;
@@ -412,7 +400,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge,
     if(_analyzer->getOptionsRef().rers.rersBinary) {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName=="calculate_outputFP") {
+        if(funName==_rersHybridOutputFunctionName) {
           EState newEState=currentEState;
           newEState.setLabel(edge.target());
           newEState.callString=cs;
@@ -479,8 +467,30 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge,
   }
 }
 
-std::list<EState> EStateTransferFunctions::transferFunctionExit(Edge edge, const EState* estate) {
-  EState currentEState=*estate;
+  std::list<EState> EStateTransferFunctions::transferAsmStmt(Edge edge, const EState* estate) {
+    // ignore AsmStmt
+    return transferIdentity(edge,estate);
+  }
+  
+  std::list<EState> EStateTransferFunctions::transferFunctionEntry(Edge edge, const EState* estate) {
+    Label lab=estate->label();
+    SgNode* node=_analyzer->getLabeler()->getNode(lab);
+    SgFunctionDefinition* funDef=isSgFunctionDefinition(node);
+    if(funDef) {
+      string functionName=SgNodeHelper::getFunctionName(node);
+      //cout<<"DEBUG: Analyzing function "<<functionName<<endl;
+      SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+      SAWYER_MESG(logger[TRACE])<<"Function:"<<functionName<<" Parameters: ";
+      for(auto fParam : formalParameters) {
+        SAWYER_MESG(logger[TRACE])<<fParam->unparseToString()<<" sym:"<<fParam->search_for_symbol_from_symbol_table()<<endl;
+      }
+      SAWYER_MESG(logger[TRACE])<<endl;
+    }
+    return transferIdentity(edge,estate);
+  }
+  
+  std::list<EState> EStateTransferFunctions::transferFunctionExit(Edge edge, const EState* estate) {
+    EState currentEState=*estate;
   if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.source()))) {
     // 1) determine all local variables (including formal parameters) of function
     // 2) delete all local variables from state
@@ -625,7 +635,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
     }
   }
 
-  if(_analyzer->getInterpreterMode()!=IM_CONCRETE) {
+  if(_analyzer->getInterpreterMode()!=IM_ENABLED) {
     int constvalue=0;
     if(_analyzer->getLabeler()->isStdOutVarLabel(lab,&varId)) {
       newio.recordVariable(InputOutput::STDOUT_VAR,varId);
@@ -658,7 +668,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
         // transferFunctions where the external function call is handled as an expression
         if(isFunctionCallWithAssignmentFlag) {
           // here only the specific format x=f(...) can exist
-          SgAssignOp* assignOp=isSgAssignOp(findExprNodeInAstUpwards(V_SgAssignOp,funCall));
+          SgAssignOp* assignOp=isSgAssignOp(AstUtility::findExprNodeInAstUpwards(V_SgAssignOp,funCall));
           ROSE_ASSERT(assignOp);
           return transferAssignOp(assignOp,edge,estate);
         } else {
@@ -678,7 +688,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
     }
     if(isFunctionCallWithAssignmentFlag) {
       // here only the specific format x=f(...) can exist
-      SgAssignOp* assignOp=isSgAssignOp(findExprNodeInAstUpwards(V_SgAssignOp,funCall));
+      SgAssignOp* assignOp=isSgAssignOp(AstUtility::findExprNodeInAstUpwards(V_SgAssignOp,funCall));
       ROSE_ASSERT(assignOp);
       return transferAssignOp(assignOp,edge,estate);
     } else {
@@ -807,6 +817,11 @@ std::list<EState> EStateTransferFunctions::transferVariableDeclaration(SgVariabl
   return elistify(_analyzer->analyzeVariableDeclaration(decl,*estate, edge.target()));
 }
 
+  std::list<EState> EStateTransferFunctions::transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate) {
+    //cout<<"WARNING: ignoring GNU extension StmtExpr (EStateTransferFunctions::transferGnuExtensionStmtExpr)"<<endl;
+    return elistify(*estate);
+  }
+
 std::list<EState> EStateTransferFunctions::transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate) {
   SgNode* nextNodeToAnalyze2=0;
   if(isSgExprStatement(nextNodeToAnalyze1))
@@ -848,6 +863,7 @@ list<EState> EStateTransferFunctions::transferIdentity(Edge edge, const EState* 
 
 
 std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estate) {
+  logger[TRACE] << "transferAssignOp:"<<nextNodeToAnalyze2->unparseToString()<<endl;
   auto pList=_analyzer->evalAssignOp(nextNodeToAnalyze2, edge, estate);
   std::list<EState> estateList;
   for (auto p : pList) {
@@ -864,6 +880,7 @@ std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* nextNode
     CallString cs=estate.callString;
     estateList.push_back(createEState(edge.target(),cs,newPState,cset));
   }
+  logger[TRACE] << "transferAssignOp: finished"<<endl;
   return estateList;
 }
 

@@ -8,7 +8,7 @@
 using namespace std;
 
 CodeThorn::ProgramAbstractionLayer::ProgramAbstractionLayer()
-  :_modeArrayElementVariableId(true),_labeler(0),_variableIdMapping(0) {
+  :_labeler(0),_variableIdMapping(0) {
 }
 
 CodeThorn::ProgramAbstractionLayer::~ProgramAbstractionLayer() {
@@ -21,12 +21,11 @@ SgProject* CodeThorn::ProgramAbstractionLayer::getRoot() {
 
 void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
   _root=root;
-  cout << "INIT: Normalizing " << getNormalizationLevel() << endl;
-  CodeThorn::Normalization lowering;
-  lowering.setInliningOption(getInliningOption());
-  lowering.normalizeAst(root,getNormalizationLevel());
+  cout << "INIT: Normalization level " << getNormalizationLevel() << endl;
+  CodeThorn::Normalization normalization;
+  normalization.setInliningOption(getInliningOption());
+  normalization.normalizeAst(root,getNormalizationLevel());
   _variableIdMapping=new VariableIdMappingExtended();
-  //getVariableIdMapping()->setModeVariableIdForEachArrayElement(getModeArrayElementVariableId());
   getVariableIdMapping()->computeVariableSymbolMapping(root);
   _labeler=new Labeler(root);
   
@@ -73,6 +72,20 @@ void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
 
   _bwFlow = _fwFlow.reverseFlow();
 }
+
+
+void CodeThorn::ProgramAbstractionLayer::setForwardFlow(const Flow& fwdflow)
+{
+  _fwFlow = fwdflow;
+  _bwFlow = _fwFlow.reverseFlow();
+}
+
+void CodeThorn::ProgramAbstractionLayer::setLabeler(Labeler* labeler)
+{
+  ROSE_ASSERT(labeler != NULL);
+  _labeler = labeler;
+}
+
 
 CodeThorn::Flow* CodeThorn::ProgramAbstractionLayer::getFlow(bool backwardflow)
 {

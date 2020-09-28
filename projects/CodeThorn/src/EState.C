@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "sage3basic.h"
@@ -391,13 +389,23 @@ bool EState::approximatedBy(PropertyState& other) const {
 }
 // required for PropertyState
 bool EState::isBot() const {
-  // dummy implementation - TODO
-  return false;
+  // io field is used to indicate bottom element
+  return io.isBot();
 }
 // required for PropertyState
 void EState::combine(PropertyState& other0) {
   // see Amalyzer::combine for original implementation
   EState& other=dynamic_cast<EState&>(other0);
+
+  // special cases if one of the two arguments is bot. An EState bot
+  // element is not a valid state and only remains if the associated
+  // code cannot be executed (i.e. is dead code)
+  if(other.isBot()) {
+    return;
+  } else if(this->isBot()) {
+    *this=other;
+  }
+
   ROSE_ASSERT(label()==other.label());
   ROSE_ASSERT(constraints()==other.constraints()); // pointer equality
   if(callString!=other.callString) {

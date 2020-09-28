@@ -1,8 +1,6 @@
 // -*- mode: C++; coding: utf-8; -*-
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "sage3basic.h"
@@ -780,6 +778,9 @@ std::string AbstractValue::getFloatValueString() const {
 CodeThorn::VariableId AbstractValue::getVariableId() const { 
   if(valueType!=PTR && valueType!=REF) {
     cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
+    cerr << "AbstractValue: value:"<<toString()<<endl;
+    int *x=0;
+    *x=1;
     throw CodeThorn::Exception("Error: AbstractValue::getVariableId operation failed.");
   }
   else 
@@ -1051,7 +1052,11 @@ AbstractValue AbstractValue::createBot() {
 }
 
 bool AbstractValue::isReferenceVariableAddress() {
-  if(isPtr()||isNullPtr()||isRef()) {
+  // TODO: remove this test, once null pointers are no longer represented as zero integers, it will then be covered by one of the other two predicates
+  if(isNullPtr()) {
+    return true;
+  }
+  if(isPtr()||isRef()) {
     return getVariableIdMapping()->hasReferenceType(getVariableId());
   }
   return false;

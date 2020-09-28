@@ -111,7 +111,7 @@ std::list<SgScopeStatement*> SageBuilder::ScopeStack(0);
 
 // DQ (11/30/2010): Added support for building Fortran case insensitive symbol table handling.
 // Support for construction of case sensitive/insensitive symbol table handling in scopes.
-// Rasmussen (3/22/2020): Setting this variable to properly reflect language properties
+// CR (3/22/2020): Setting this variable to properly reflect language properties
 // was removed in 2017. I would like to remove it from SageBuilder.
 bool SageBuilder::symbol_table_case_insensitive_semantics = false;
 
@@ -1527,6 +1527,10 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
         {
           SgInitializedName* initializedName = variableSymbol->get_declaration();
           ROSE_ASSERT(initializedName != NULL);
+
+       // DQ (9/11/2020): check if this is null and a possible cause of isSgVariableDeclaration() returning an uninitialized value (caught by valgrind).
+       // ROSE_ASSERT(initializedName->get_parent() != NULL);
+
           SgVariableDeclaration* associatedVariableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
 
 #if DEBUG_BUILD_VARIABLE_DECLARATION
@@ -1566,6 +1570,32 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
           if (associatedVariableDeclaration != NULL)
              {
                printf ("associatedVariableDeclaration->get_builtFromUseOnly() = %s \n",associatedVariableDeclaration->get_builtFromUseOnly() ? "true" : "false");
+             }
+#endif
+
+#if 0
+       // DQ (9/11/2020): Added to test valgrind.
+          if (associatedVariableDeclaration != NULL)
+             {
+               printf ("associatedVariableDeclaration test: true branch: associatedVariableDeclaration->get_builtFromUseOnly() = %s \n",
+                    associatedVariableDeclaration->get_builtFromUseOnly() ? "true" : "false");
+            // ROSE_ASSERT(associatedVariableDeclaration->get_builtFromUseOnly() == true);
+             }
+            else
+             {
+               printf ("associatedVariableDeclaration test: false branch \n");
+             }
+
+       // DQ (9/11/2020): Added to test valgrind.
+          if ((associatedVariableDeclaration != NULL) && 
+              (associatedVariableDeclaration->get_builtFromUseOnly() == true))
+             {
+               printf ("test get_builtFromUseOnly(): true branch \n");
+               ROSE_ASSERT(associatedVariableDeclaration->get_builtFromUseOnly() == true);
+             }
+            else
+             {
+               printf ("test get_builtFromUseOnly(): false branch \n");
              }
 #endif
 
@@ -2886,7 +2916,15 @@ SageBuilder::buildFunctionParameterTypeList(SgFunctionParameterList* paralist)
      for(i = args.begin(); i != args.end(); i++)
           (typePtrList->get_arguments()).push_back( (*i)->get_type() );
 
+#if 0
+     printf ("In SageBuilder::buildFunctionParameterTypeList(SgFunctionParameterList*): calling setSourcePositionAtRootAndAllChildren() \n");
+#endif
+
      setSourcePositionAtRootAndAllChildren(typePtrList);
+
+#if 0
+     printf ("DONE: In SageBuilder::buildFunctionParameterTypeList(SgFunctionParameterList*): calling setSourcePositionAtRootAndAllChildren() \n");
+#endif
 
      return typePtrList;
    }
@@ -3203,15 +3241,18 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
   // ROSE_ASSERT(struct_name->get_declaration() != NULL);
 
 #if 0
-     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
-     printf ("In buildMemberFunctionType() return_type = %p typeList = %p struct_name = %p = %s = %s mfunc_specifier = %u \n",
-          return_type,typeList,struct_name,struct_name->class_name().c_str(),struct_name->get_declaration()->get_name().str(),mfunc_specifier);
+     printf("struct_name = %p ( %s )\n", struct_name, struct_name->class_name().c_str());
 #endif
 
   // SgDeclarationStatement* declaration = struct_name->get_declaration();
-     SgClassDefinition* classDefinition = isSgClassDefinition(struct_name);
-     SgDeclarationScope* decl_scope = isSgDeclarationScope(struct_name);
+     SgClassDefinition*  classDefinition = isSgClassDefinition(struct_name);
+     SgDeclarationScope* decl_scope      = isSgDeclarationScope(struct_name);
 
+     if (classDefinition == NULL && decl_scope == NULL)
+        {
+          printf ("Error: (classDefinition == NULL && decl_scope == NULL): struct_name = %p = %s name = %s \n",
+                  struct_name,struct_name->class_name().c_str(),SageInterface::get_name(struct_name).c_str());
+        }
      ROSE_ASSERT(classDefinition != NULL || decl_scope != NULL);
 
      SgDeclarationStatement* declaration = NULL;
@@ -4525,7 +4566,9 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
   SgFunctionParameterList* paralist = deepCopy<SgFunctionParameterList>(funcdecl->get_parameterList());
 
  // make sure the function has consistent function type based on its return type and parameter list
- ROSE_ASSERT (funcType == buildFunctionType(funcdecl->get_type()->get_return_type(), buildFunctionParameterTypeList(funcdecl->get_parameterList())));
+ SgFunctionType * ref_funcType= findFunctionType (return_type, funcType->get_argument_list());
+// ROSE_ASSERT (funcType == buildFunctionType(funcdecl->get_type()->get_return_type(), buildFunctionParameterTypeList(funcdecl->get_parameterList())));
+  ROSE_ASSERT(funcType== ref_funcType);
 #if 0
   // DQ (2/19/2009): Fixed to handle extern "C" state in input "funcdecl"
   // return buildNondefiningFunctionDeclaration(name,return_type,paralist,scope);
@@ -4833,7 +4876,7 @@ SgTemplateMemberFunctionDeclaration*
 SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateParameterPtrList* templateParameterList)
    {
 #if 0
-  printf("In SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration(name = %s):\n", name.str());
+     printf("In SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration(name = %s):\n", name.str());
 #endif
 
   // This function only builds template member function declarations.
@@ -4963,8 +5006,8 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
        SageInterface::setSourcePosition(nonreal_decl_scope);
        nonreal_decl_scope->get_startOfConstruct()->setCompilerGenerated();
        nonreal_decl_scope->get_endOfConstruct()->setCompilerGenerated();
-#if 1
-       printf("In SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration(name = %s): nrscope = %p (new)\n", name.str(), nonreal_decl_scope);
+#if 0
+       printf("Leaving SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration(name = %s): nrscope = %p (new)\n", name.str(), nonreal_decl_scope);
 #endif
      }
 #endif
@@ -5207,7 +5250,7 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemb
   SgFunctionDefinition * func_def = new SgFunctionDefinition(func,func_body);
   ROSE_ASSERT(func_def);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
   // if (symbol_table_case_insensitive_semantics == true)
   if (SageInterface::is_language_case_insensitive())
      {
@@ -5472,7 +5515,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
   // DQ (12/3/2011): Added more checking.
      ROSE_ASSERT(paralist != NULL);
 
-// Rasmussen (3/28/2020): Changed to call a function to support multiple languages
+// CR (3/28/2020): Changed to call a function to support multiple languages
      if (SageInterface::language_may_contain_nondeclarations_in_scope() == false)
         {
            ROSE_ASSERT(scope->containsOnlyDeclarations());
@@ -5837,7 +5880,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
 #endif
      ROSE_ASSERT(func_def);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
   // if (symbol_table_case_insensitive_semantics == true)
    if (SageInterface::is_language_case_insensitive())
         {
@@ -6232,10 +6275,43 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
      assert(nondefiningDeclaration->get_firstNondefiningDeclaration() != NULL);
      assert(nondefiningDeclaration->get_firstNondefiningDeclaration() == nondefiningDeclaration);
 
-  // return buildDefiningFunctionDeclaration (name,return_type,parameter_list,scope,NULL,false,NULL,NULL);
      return buildDefiningFunctionDeclaration (name,return_type,parameter_list,scope,NULL,false,nondefiningDeclaration,NULL);
    }
 
+// Build a nondefining SgProcedureHeaderStatement, handle function type, symbol etc transparently [CR 9/24/2020]
+SgProcedureHeaderStatement*
+SageBuilder::buildNondefiningProcedureHeaderStatement(const SgName & name, SgType* return_type,
+                                                      SgFunctionParameterList* param_list, SgScopeStatement* scope)
+  {
+    ROSE_ASSERT(return_type);
+    ROSE_ASSERT(param_list);
+
+    if (scope == NULL)
+      {
+        scope = SageBuilder::topScopeStack();
+      }
+
+    SgProcedureHeaderStatement* nondef_decl = NULL;
+
+    SgFunctionType* func_type = buildFunctionType(return_type, param_list);
+    SgFunctionSymbol* func_symbol = scope->find_symbol_by_type_of_function<SgProcedureHeaderStatement>(name,func_type,NULL,NULL);
+    if (func_symbol)
+      {
+        nondef_decl = isSgProcedureHeaderStatement(func_symbol->get_declaration());
+      }
+    else
+      {
+        nondef_decl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>
+                            ( name, return_type, param_list, /*isMemberFunction*/false, scope, /*decoratorList*/NULL,
+                              /*functionConstVolatileFlags*/0, NULL, NULL, SgStorageModifier::e_default );
+      }
+
+    ROSE_ASSERT(isSgProcedureHeaderStatement(nondef_decl));
+    ROSE_ASSERT(nondef_decl->get_firstNondefiningDeclaration());
+    ROSE_ASSERT(nondef_decl->get_firstNondefiningDeclaration() == nondef_decl);
+
+    return nondef_decl;
+  }
 
 // DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
 // We need to decide if the SageBuilder API should include these sorts of functions.
@@ -6266,7 +6342,7 @@ SageBuilder::buildProcedureHeaderStatement(const SgName& name, SgType* return_ty
         }
        else
         {
-       // Rasmussen (3/25/2020): Replaced call to builder function with templated version.
+       // CR (3/25/2020): Replaced call to builder function with templated version.
           nondefiningDeclaration = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>
                                                  ( name, return_type, parameter_list, /*isMemberFunction*/false, scope,
                                                    /*decoratorList*/NULL, /*functionConstVolatileFlags*/0, NULL, NULL, SgStorageModifier::e_default);
@@ -6277,7 +6353,6 @@ SageBuilder::buildProcedureHeaderStatement(const SgName& name, SgType* return_ty
      assert(nondefiningDeclaration->get_firstNondefiningDeclaration() != NULL);
      assert(nondefiningDeclaration->get_firstNondefiningDeclaration() == nondefiningDeclaration);
 
-  // Rasmussen (3/25/2020): Added following variable to allow assertion to check for pointer status.
      SgProcedureHeaderStatement* proc_header_stmt = isSgProcedureHeaderStatement(nondefiningDeclaration);
      ROSE_ASSERT(proc_header_stmt);
 
@@ -6598,7 +6673,7 @@ SgFloatVal* SageBuilder::buildFloatVal_nfi(float value, const string& str)
 
 SgFloatVal* SageBuilder::buildFloatVal_nfi(const string& str)
 {
-  // C++11 please [Rasmussen 2020.02.25]
+  // C++11 please [CR 2020.02.25]
   // return buildFloatVal_nfi(std::stof(str), str);
      return buildFloatVal_nfi(atof(str.c_str()), str);
 }
@@ -6637,7 +6712,7 @@ SgIntVal* SageBuilder::buildIntVal_nfi(int value, const string& str)
 
 SgIntVal* SageBuilder::buildIntVal_nfi(const string& str)
    {
-  // C++11 please [Rasmussen 2020.02.25]
+  // C++11 please [CR 2020.02.25]
   // return buildIntVal_nfi(std::stoi(str), str);
      return buildIntVal_nfi(atoi(str.c_str()), str);
    }
@@ -6941,6 +7016,14 @@ SgUnsignedLongLongIntVal* SageBuilder::buildUnsignedLongLongIntValHex(unsigned l
 SgUnsignedLongLongIntVal* SageBuilder::buildUnsignedLongLongIntVal_nfi(unsigned long long v, const string& str)
 {
   SgUnsignedLongLongIntVal* result = new SgUnsignedLongLongIntVal(v,str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgJovialBitVal* SageBuilder::buildJovialBitVal_nfi(const string& str)
+{
+  SgJovialBitVal* result = new SgJovialBitVal(str);
   ROSE_ASSERT(result);
   setOneSourcePositionNull(result);
   return result;
@@ -7404,6 +7487,7 @@ BUILD_BINARY_DEF(AndOp)
 BUILD_BINARY_DEF(ArrowExp)
 BUILD_BINARY_DEF(ArrowStarOp)
 BUILD_BINARY_DEF(AssignOp)
+BUILD_BINARY_DEF(AtOp)
 BUILD_BINARY_DEF(BitAndOp)
 BUILD_BINARY_DEF(BitOrOp)
 BUILD_BINARY_DEF(BitXorOp)
@@ -8617,10 +8701,10 @@ SgFunctionCallExp*
 SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym,
                                   SgExprListExp* parameters/*=NULL*/)
    {
-     ROSE_ASSERT (sym);
+     ROSE_ASSERT (sym != NULL);
      if (parameters == NULL)
           parameters = buildExprListExp();
-     ROSE_ASSERT (parameters);
+     ROSE_ASSERT (parameters != NULL);
 
   // DQ (8/21/2011): We want to preserve the support for member functions to be built as SgMemberFunctionRefExp.
   // This is important for the Java support and the C++ support else we will be lowering all mmember function calls
@@ -8661,11 +8745,16 @@ SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym,
 SgFunctionCallExp*
 SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters /*=NULL*/)
    {
-     SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
+     ROSE_ASSERT(f != NULL);
+     SgFunctionCallExp* func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
      ROSE_ASSERT(func_call_expr != NULL);
 
-     if (f) f->set_parent(func_call_expr);
-     if (parameters) parameters->set_parent(func_call_expr);
+     if (f != NULL) {
+        f->set_parent(func_call_expr);
+     }
+     if (parameters != NULL) {
+        parameters->set_parent(func_call_expr);
+     }
      setOneSourcePositionNull(func_call_expr);
 
      return func_call_expr;
@@ -8923,7 +9012,7 @@ SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgStatement * true
   SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
   ROSE_ASSERT(ifstmt);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
   // if (symbol_table_case_insensitive_semantics == true)
   if (SageInterface::is_language_case_insensitive())
        ifstmt->setCaseInsensitive(true);
@@ -8956,7 +9045,7 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
      SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
      ROSE_ASSERT(ifstmt);
 #if 0
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
   // if (symbol_table_case_insensitive_semantics == true)
      if (SageInterface::is_language_case_insensitive())
           ifstmt->setCaseInsensitive(true);
@@ -8973,7 +9062,7 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
 #endif
    }
 
-// Rasmussen (9/3/2018): Added build function for a Fortran do construct
+// CR (9/3/2018): Added build function for a Fortran do construct
 SgFortranDo * SageBuilder::buildFortranDo(SgExpression* initialization, SgExpression* bound, SgExpression* increment, SgBasicBlock* loop_body)
   {
      ROSE_ASSERT(initialization);
@@ -8994,7 +9083,7 @@ SgFortranDo * SageBuilder::buildFortranDo(SgExpression* initialization, SgExpres
      SgFortranDo * result = new SgFortranDo(initialization, bound, increment, loop_body);
      ROSE_ASSERT(result);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
   // if (symbol_table_case_insensitive_semantics == true)
      if (SageInterface::is_language_case_insensitive())
         result->setCaseInsensitive(true);
@@ -9077,7 +9166,7 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
      SgForStatement * result = new SgForStatement(test,increment, loop_body);
      ROSE_ASSERT(result);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
   // if (symbol_table_case_insensitive_semantics == true)
      if (SageInterface::is_language_case_insensitive())
           result->setCaseInsensitive(true);
@@ -9157,7 +9246,7 @@ SageBuilder::buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement * t
      SgForStatement * result = new SgForStatement(test, increment, loop_body);
      ROSE_ASSERT(result);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
   // if (symbol_table_case_insensitive_semantics == true)
      if (SageInterface::is_language_case_insensitive())
           result->setCaseInsensitive(true);
@@ -9292,7 +9381,7 @@ SageBuilder::buildForStatement_nfi(SgForStatement* result, SgForInitStatement * 
      result->set_increment(increment);
      result->set_loop_body(loop_body);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
   // if (symbol_table_case_insensitive_semantics == true)
      if (SageInterface::is_language_case_insensitive())
           result->setCaseInsensitive(true);
@@ -9417,7 +9506,7 @@ SgUpcForAllStatement * SageBuilder::buildUpcForAllStatement_nfi(SgForInitStateme
   SgUpcForAllStatement * result = new SgUpcForAllStatement(init_stmt, test, increment, affinity, loop_body);
   ROSE_ASSERT(result);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
   // if (symbol_table_case_insensitive_semantics == true)
   if (SageInterface::is_language_case_insensitive())
        result->setCaseInsensitive(true);
@@ -9495,7 +9584,7 @@ SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement 
   SgWhileStmt * result = new SgWhileStmt(condition,body);
   ROSE_ASSERT(result);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
   // if (symbol_table_case_insensitive_semantics == true)
   if (SageInterface::is_language_case_insensitive())
        result->setCaseInsensitive(true);
@@ -9961,7 +10050,7 @@ SgBasicBlock * SageBuilder::buildBasicBlock(SgStatement * stmt1, SgStatement* st
   SgBasicBlock* result = new SgBasicBlock();
   ROSE_ASSERT(result);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
   // if (symbol_table_case_insensitive_semantics == true)
   if (SageInterface::is_language_case_insensitive())
        result->setCaseInsensitive(true);
@@ -9986,7 +10075,7 @@ SgBasicBlock * SageBuilder::buildBasicBlock_nfi()
      SgBasicBlock* result = new SgBasicBlock();
      ROSE_ASSERT(result);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
   // if (symbol_table_case_insensitive_semantics == true)
      if (SageInterface::is_language_case_insensitive())
         {
@@ -10087,7 +10176,7 @@ SageBuilder::buildGotoStatement_nfi(SgExpression*  label_expression)
 SgReturnStmt* SageBuilder::buildReturnStmt(SgExpression* expression /* = NULL */)
 {
   // Liao 2/6/2013. We no longer allow NULL express pointer. Use SgNullExpression instead.
-  // Rasmussen (4/27/18): The expression argument to the builder function is optional
+  // CR (4/27/18): The expression argument to the builder function is optional
   // (NULL is allowed).  What is not allowed is constructing an SgReturnStmt with a NULL
   // expression argument.
   if (expression == NULL)
@@ -10154,7 +10243,7 @@ SgSwitchStatement* SageBuilder::buildSwitchStatement(SgStatement *item_selector,
   SgSwitchStatement* result = new SgSwitchStatement(item_selector,body);
   ROSE_ASSERT(result);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
   // if (symbol_table_case_insensitive_semantics == true)
   if (SageInterface::is_language_case_insensitive())
        result->setCaseInsensitive(true);
@@ -10827,7 +10916,7 @@ SgModifierType* SageBuilder::buildModifierType(SgType * base_type /*= NULL*/)
    }
 #endif
 
-// Rasmussen (2/20/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
+// CR (2/20/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
 SgTypeBool * SageBuilder::buildBoolType(SgExpression* kind_expr) {
   SgTypeBool * result = SgTypeBool::createType(kind_expr);
   ROSE_ASSERT(result);
@@ -10916,7 +11005,7 @@ SgTypeUnsignedLong * SageBuilder::buildUnsignedLongType()
   return result;
 }
 
-// Rasmussen (2/20/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
+// CR (2/20/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
 SgTypeUnsignedInt * SageBuilder::buildUnsignedIntType(SgExpression* kind_expr)
 {
   SgTypeUnsignedInt * result = SgTypeUnsignedInt::createType(kind_expr);
@@ -11096,7 +11185,7 @@ SgTypeString * SageBuilder::buildStringType( SgExpression* stringLengthExpressio
      return result;
    }
 
-// Rasmussen (2/20/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
+// CR (2/20/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
 SgTypeInt * SageBuilder::buildIntType(SgExpression* kind_expr)
 {
   SgTypeInt * result;
@@ -11124,7 +11213,7 @@ SgTypeDouble * SageBuilder::buildDoubleType()
   return result;
 }
 
-// Rasmussen (3/6/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
+// CR (3/6/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
 SgTypeFloat * SageBuilder::buildFloatType(SgExpression* kind_expr)
 {
   SgTypeFloat * result;
@@ -11147,8 +11236,8 @@ SgTypeFloat * SageBuilder::buildFloatType()
   return result;
 }
 
-// Rasmussen (2/20/2020): Added builder for Jovial fixed type
-SgTypeFixed* SageBuilder::buildFixedType(SgExpression* fraction, SgExpression* scale)
+// CR (2/20/2020): Added builder for Jovial fixed type
+SgTypeFixed* SageBuilder::buildFixedType(SgExpression* scale, SgExpression* fraction)
 {
   SgTypeFixed * result = SgTypeFixed::createType(scale, fraction);
   ROSE_ASSERT(result);
@@ -11159,7 +11248,7 @@ SgTypeFixed* SageBuilder::buildFixedType(SgExpression* fraction, SgExpression* s
   return result;
 }
 
-// Rasmussen (5/5/2020): Added builder for Jovial bit type
+// CR (5/5/2020): Added builder for Jovial bit type
 SgJovialBitType* SageBuilder::buildJovialBitType(SgExpression* size)
 {
    SgJovialBitType * result = SgJovialBitType::createType(size, NULL);
@@ -12020,7 +12109,7 @@ SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NULL*/, bool buildTem
 
      ROSE_ASSERT(result);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
   // if (symbol_table_case_insensitive_semantics == true)
      if (SageInterface::is_language_case_insensitive())
         {
@@ -12053,7 +12142,7 @@ SageBuilder::buildClassDefinition_nfi(SgClassDeclaration *d/*= NULL*/, bool buil
 
      ROSE_ASSERT(result);
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // CR (3/22/2020): Fixed setting case insensitivity
   // if (symbol_table_case_insensitive_semantics == true)
      if (SageInterface::is_language_case_insensitive())
           result->setCaseInsensitive(true);
@@ -12562,6 +12651,41 @@ SageBuilder::buildJovialDefineDeclaration_nfi(const SgName& name, const std::str
      return define_decl;
   }
 
+// Build a Jovial loop statement. Two variants are FOR and WHILE.
+SgJovialForThenStatement*
+SageBuilder::buildJovialForThenStatement_nfi(SgExpression* init_expr,
+                                             SgExpression* while_expr, SgExpression* by_or_then_expr)
+  {
+     SgJovialForThenStatement* for_stmt;
+     ROSE_ASSERT(init_expr);
+
+  // Both the increment and the test expression can be a nullptr, create a SgNullExpression if necessary.
+  //
+     if (while_expr == NULL) {
+        while_expr = buildNullExpression_nfi();
+     }
+     if (by_or_then_expr == NULL) {
+        by_or_then_expr = buildNullExpression_nfi();
+     }
+
+     SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
+
+     for_stmt = new SgJovialForThenStatement(init_expr, while_expr, by_or_then_expr, body);
+     ROSE_ASSERT(for_stmt);
+     setOneSourcePositionNull(for_stmt);
+
+     if (topScopeStack()) {
+        for_stmt->set_parent(topScopeStack());
+     }
+     body->set_parent(for_stmt);
+
+     if (SageInterface::is_language_case_insensitive()) {
+        for_stmt->setCaseInsensitive(true);
+     }
+
+     return for_stmt;
+  }
+
 // This should take a SgClassDeclaration::class_types kind parameter!
 SgClassDeclaration * SageBuilder::buildStructDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
    {
@@ -12715,7 +12839,7 @@ SageBuilder::buildClassDeclarationStatement_nfi(const SgName & name, SgClassDecl
 
            if (mysymbol == NULL)
               {
-              // Note: this is an input parameter (could/should go away?) [Rasmussen]
+              // Note: this is an input parameter (could/should go away?) [CR]
                  if (nonDefiningDecl != NULL)
                     {
                     // DQ (3/4/2018): I think this is the correct API to use (internal use only).
@@ -14141,10 +14265,13 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
             // DQ (12/27/2018): I think that if this is a base class declaration then it is OK for the type's declaration to not match.
             // ROSE_ASSERT(nondefdecl->get_parent() != NULL);
-               if (nondefdecl->get_parent() != NULL)
-                  {
-                    printf ("nondefdecl->get_parent() = %p = %s \n",nondefdecl->get_parent(),nondefdecl->get_parent()->class_name().c_str());
-                  }
+               {
+                  SgNode* parent = nondefdecl->get_parent();
+                  if (parent != NULL)
+                     {
+                       printf ("nondefdecl->get_parent() = %p = %s \n",parent,parent->class_name().c_str());
+                     }
+               }
 
             // DQ (12/27/2018): Activate this debugging support.
 #if DEBUG_CLASS_DECLARATION
@@ -14765,7 +14892,7 @@ SageBuilder::buildTemplateClassDefinition(SgTemplateClassDeclaration *d /*= NULL
 
     ROSE_ASSERT(result);
 
- // Rasmussen (3/22/2020): Fixed setting case insensitivity
+ // CR (3/22/2020): Fixed setting case insensitivity
  // if (symbol_table_case_insensitive_semantics == true)
     if (SageInterface::is_language_case_insensitive())
          result->setCaseInsensitive(true);
@@ -14781,7 +14908,7 @@ SgTemplateClassDeclaration*
 SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList )
    {
 #if 0
-  printf("In SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(XXX_name = %p):\n", XXX_name.str());
+     printf("In SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(XXX_name = %p):\n", XXX_name.str());
 #endif
 
      if (scope == NULL)
@@ -17034,7 +17161,7 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
         }
      ROSE_ASSERT (sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
 
-#if 1
+#if 0
   // DQ (5/22/2020): If this is processing a previously processed file, then this 
   // will cause comments and CPP directives to be collected twice. This happens
   // in the case where we build a copy of the source file to support construction 
@@ -17047,7 +17174,7 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
      ROSE_ASSERT(filePreprocInfo != NULL);
 #endif
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project): calling attachPreprocessingInfo() \n");
 #endif
 
@@ -20554,9 +20681,11 @@ SgSourceFile *SageBuilder::buildJavaSourceFile(SgProject *project, string direct
     //
     // Create a package statement and add it to the source file
     //
-    SgJavaPackageStatement *package_statement = SageBuilder::buildJavaPackageStatement(package_definition -> get_declaration() -> get_qualified_name().getString());
-    package_statement -> set_parent(package_definition);
-    sourcefile -> set_package(package_statement);
+    SgClassDeclaration* pkgDefDecl = package_definition->get_declaration();
+    ROSE_ASSERT(pkgDefDecl != NULL);
+    SgJavaPackageStatement *package_statement = SageBuilder::buildJavaPackageStatement(pkgDefDecl->get_qualified_name().getString());
+    package_statement->set_parent(package_definition);
+    sourcefile->set_package(package_statement);
 
     //
     // Initialize an import-list for the sourcefile

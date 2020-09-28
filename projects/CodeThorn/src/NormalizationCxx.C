@@ -21,6 +21,9 @@ namespace CodeThorn
   
 namespace 
 {
+  constexpr bool ERROR_TOLERANT = true;
+  constexpr bool EXTEND_DTOR_NORMALIZATION = false;
+  
   // auxiliary wrapper for printing Sg_File_Info objects 
   struct SrcLoc
   {
@@ -38,8 +41,7 @@ namespace
               << "@" << el.info->get_line() << ":" << el.info->get_col();
   } 
   
-#if 0  
-  //
+  // \brief handlers to skip template processing
   struct ExcludeTemplates
   {
     void handle(SgTemplateClassDeclaration&)          {}
@@ -50,7 +52,6 @@ namespace
     void handle(SgTemplateTypedefDeclaration&)        {}
     void handle(SgTemplateVariableDeclaration&)       {}
   };
-#endif
     
   //
   // constants
@@ -69,6 +70,12 @@ namespace
   auto logWarn() -> decltype(Normalization::logger[Sawyer::Message::WARN])
   {
     return Normalization::logger[Sawyer::Message::WARN];  
+  }
+  
+  inline
+  auto logError() -> decltype(Normalization::logger[Sawyer::Message::ERROR])
+  {
+    return Normalization::logger[Sawyer::Message::ERROR];  
   }
   
   inline
@@ -249,6 +256,14 @@ namespace
   };
   
   template <class Fn>
+  std::ostream& operator<<(std::ostream& os, const Memoizer<Fn>& memo)
+  {
+    return os << memo.hits() 
+              << " <hits -- size> " 
+              << memo.size();
+  }
+  
+  template <class Fn>
   inline
   Memoizer<Fn> memoizer(Fn fn)
   {
@@ -345,7 +360,26 @@ namespace
   {
     return n.get_specialFunctionModifier().isDestructor()? &n : nullptr;
   }
-
+  
+  SgMemberFunctionDeclaration* 
+  isDtor(SgNode& n)
+  {
+    SgMemberFunctionDeclaration* dcl = isSgMemberFunctionDeclaration(&n);
+    
+    return dcl ? isDtor(*dcl) : dcl;
+  }
+  
+  /*
+  SgMemberFunctionDeclaration* 
+  isDtorBlock(SgBasicBlock& n)
+  {
+    SgNode& parent      = SG_DEREF(n.get_parent());
+    SgNode& grandparent = SG_DEREF(parent.get_parent());
+    
+    return isDtor(grandparent);
+  }
+  */
+  
   
   struct TriviallyDestructibleDecl : sg::DispatchHandler<std::pair<bool, SgMemberFunctionDeclaration*> >
   {
@@ -507,6 +541,17 @@ namespace
     return (pos != lst.end()) ? (*pos)->get_initializer() : var.get_initializer();
   }
   
+  struct ConstructorInitializerListError : std::logic_error
+  {
+    using base = std::logic_error;
+    
+    ConstructorInitializerListError(const std::string& what, SgInitializedName* ini)
+    : base(what), initname(ini)
+    {}
+    
+    SgInitializedName* initname;
+  };
+  
   struct SameClassDef
   {
     explicit
@@ -516,8 +561,12 @@ namespace
     
     bool operator()(SgInitializedName* cand)
     {
-      ROSE_ASSERT(cand && cand->get_initializer());
+      if (ERROR_TOLERANT && !(cand && cand->get_initializer()))
+      {
+        throw ConstructorInitializerListError("unusual constructor list element", cand);
+      }
       
+      ROSE_ASSERT(cand && cand->get_initializer());
       SgConstructorInitializer* ctorini = isSgConstructorInitializer(cand->get_initializer());
       
       // if it is not a base class initialization, it must be member variable initialization
@@ -610,7 +659,7 @@ namespace
     return true;
   }
   
-  bool parametersHaveDefaultValues(SgMemberFunctionDeclaration*, SgInitializedNamePtrList& parms, size_t from)
+  bool parametersHaveDefaultValues(SgMemberFunctionDeclaration* fn, SgInitializedNamePtrList& parms, size_t from)
   {
     const size_t eoparams = parms.size();
     
@@ -619,7 +668,13 @@ namespace
       SgInitializedName& parm = SG_DEREF(parms.at(i));
       
       if (!parm.get_initializer())
+      {
+        logError() << "Did not find parameter default value in declaration of " << fn->get_name() 
+                   << ". Incomplete checking for sibling declarations."
+                   << std::endl; 
+        
         return false;
+      }
     }
     
     // \todo check for other declarations visible at the call site
@@ -1016,7 +1071,7 @@ namespace
       SgMemberFunctionDeclaration& dtordcl  = obtainGeneratableDtor(clsdef, args);
       SgMemberFunctionSymbol*      mfunsym  = SG_ASSERT_TYPE(SgMemberFunctionSymbol, dtordcl.search_for_symbol_from_symbol_table());
       SgMemberFunctionRefExp&      mfunref  = SG_DEREF( sb::buildMemberFunctionRefExp( mfunsym,
-                                                                                       false /* \todo virtual call */,
+                                                                                       false /* a destructed variable has full type -> no virtual call */,
                                                                                        false /* need qualifier */
                                                                                      ));
       SgDotExp&                    callee   = SG_DEREF( sb::buildDotExp(&elem, &mfunref) );
@@ -1035,8 +1090,8 @@ namespace
   
   struct VarDtorInserter
   {
-      VarDtorInserter(SgBasicBlock& where, SgInitializedName& what)
-      : blk(where), var(what)
+      VarDtorInserter(SgBasicBlock& where, SgStatement& pos, SgInitializedName& what)
+      : blk(where), stmt(pos), var(what)
       {}
       
       void execute() 
@@ -1050,11 +1105,16 @@ namespace
         //~ logInfo() << "destructing " << var.get_name()
                   //~ << " // " << SrcLoc(var)
                   //~ << std::endl;        
-        blk.prepend_statement(dtorcall);
+                  
+        if (&stmt == &blk) 
+          si::prependStatement(dtorcall, &blk);
+        else
+          si::insertStatementBefore(&stmt, dtorcall);
       }
       
     private:
       SgBasicBlock&      blk;
+      SgStatement&       stmt;
       SgInitializedName& var;
   };
   
@@ -1092,9 +1152,9 @@ namespace
         // \todo cannot yet handle SgTemplateInstantiationMemberFunctionDecl
         if (isSgTemplateInstantiationMemberFunctionDecl(&ctor))
         {
-          logWarn() << "Definition for SgTemplateInstantiationMemberFunctionDecl not generated: "
-                    << ctor.get_name()
-                    << std::endl;
+          logError() << "Definition for SgTemplateInstantiationMemberFunctionDecl not generated: "
+                     << ctor.get_name()
+                     << std::endl;
           return;
         }
         
@@ -1132,6 +1192,69 @@ namespace
     
     private:
       SgClassDefinition& cls;
+  };
+  
+  
+  void recordScopedDestructors(SgScopeStatement& n, SgBasicBlock& blk, SgStatement& pos, std::vector<AnyTransform>& transf)
+  {
+    std::vector<SgStatement*> stmts = n.generateStatementList();
+    
+    for (SgStatement* stmt : adapt::reverse(stmts))
+    {
+      SgVariableDeclaration* vardcl = isSgVariableDeclaration(stmt);
+      
+      if (!vardcl) continue;
+      
+      for (SgInitializedName* var : vardcl->get_variables())
+      {
+        ROSE_ASSERT(var);
+        
+        SgType* varty = var->get_type();
+        
+        if (!TriviallyDestructible::check(varty)) 
+        {
+          //~ logInfo() << "nontrivial: " << var->get_name() << " " << varty->get_mangled() 
+                    //~ << std::endl;            
+          transf.emplace_back(VarDtorInserter(blk, pos, *var));
+        }
+      }
+    }
+  }
+  
+  struct ScopeDestructorGenerator
+  {
+      explicit
+      ScopeDestructorGenerator(SgStatement& stmt, SgBasicBlock& block, SgScopeStatement& outerLimit)
+      : pos(&stmt), blk(&block), limit(&outerLimit)
+      {}
+      
+      void execute()
+      {
+        logInfo() << "create block dtor: "  
+                  << " // " << SrcLoc(*blk)
+                  << std::endl;
+                  
+        std::vector<AnyTransform> transf;
+        
+        for (SgScopeStatement* curr = blk; curr != limit; curr = si::getEnclosingScope(curr))
+        {
+          ROSE_ASSERT(curr);
+          
+          recordScopedDestructors(*curr, *blk, *pos, transf);
+        }
+        
+        for (AnyTransform& tf : transf)
+        {
+          tf.execute();
+        }
+      }
+      
+    private:
+      ScopeDestructorGenerator() = delete;
+    
+      SgStatement* const      pos;
+      SgBasicBlock* const     blk;
+      SgScopeStatement* const limit;
   };
   
   bool isVirtualBase(SgBaseClass& base)
@@ -1199,21 +1322,34 @@ namespace
                        return std::move(res);
                      } 
                    );
+                   
+  auto getAllVirtualBases = 
+           memoizer( [](const SgClassDefinition* cls) -> SgBaseClassPtrList
+                     {
+                       SgBaseClassPtrList res;
+                     
+                       for (SgBaseClass* cand : cls->get_inheritances())
+                       {
+                         ROSE_ASSERT(cand);
+                                       
+                         if (isVirtualBase(*cand))
+                           res.push_back(cand);
+                       }
+                                                   
+                       return std::move(res);
+                     }
+                   );
   
   void clearMemoized()
   {
-    logInfo() << getDirectNonVirtualBases.hits() 
-              << " <hits -- size> " 
-              << getDirectNonVirtualBases.size()
-              << " getDirectNonVirtualBases - cache\n" 
-              << getMemberVars.hits() 
-              << " <hits -- size> " 
-              << getMemberVars.size() 
-              << " getMemberVars - cache\n" 
+    logInfo() << getDirectNonVirtualBases << " getDirectNonVirtualBases - cache\n" 
+              << getAllVirtualBases       << " getAllVirtualBases - cache\n" 
+              << getMemberVars            << " getMemberVars - cache\n" 
               << std::endl;
     
-    getMemberVars.clear();
     getDirectNonVirtualBases.clear();
+    getAllVirtualBases.clear();
+    getMemberVars.clear();
   }
 
   // end memoized functors
@@ -1229,7 +1365,8 @@ namespace
     SgCtorInitializerList& lst = SG_DEREF( fun.get_CtorInitializerList() );
 
     // explicitly construct all member variables;
-    //   execute the transformations in reverse order
+    //   execute the transformations in reverse order 
+    //   (the last transformation appears first in code)
     for (SgInitializedName* var : adapt::reverse(getMemberVars(&cls)))
     {
       SgInitializer* ini = getMemberInitializer(*var, lst);
@@ -1239,11 +1376,37 @@ namespace
     
     // explicitly construct all direct non-virtual bases;
     //   execute the transformations in reverse order
+    //   (the last transformation appears first in code)
     for (SgBaseClass* base : adapt::reverse(getDirectNonVirtualBases(&cls)))
     {
-      SgInitializer* ini = getBaseInitializer(*base, lst);
-      
-      cont.emplace_back(BaseCtorInserter(blk, *base, ini));
+      try
+      {
+        SgInitializer* ini = getBaseInitializer(*base, lst);
+        
+        cont.emplace_back(BaseCtorInserter(blk, *base, ini));
+      }
+      catch (const ConstructorInitializerListError& err)
+      {
+        logError() << "Constructor Initializer List Error in: " << fun.get_name() << std::endl;
+        
+        if (err.initname == nullptr) 
+          logError() << "An SgInitializedName element is NULL" << std::endl;
+        else if (err.initname->get_initializer() == nullptr)
+          logError() << "An SgInitializedName element " << err.initname->get_name() << " has a NULL initializer: "
+                     << err.initname->unparseToString() 
+                     << std::endl;
+        else 
+          logError() << "Unknown condition" << std::endl;
+        
+        logError() << "Skipping generation of one base class initializer!" << std::endl;
+      }
+    }
+    
+    // log errors for unhandled virtual base classes
+    if (getAllVirtualBases(&cls).size())
+    {
+      logError() << "virtual base class normalization in constructor NOT YET IMPLEMENTED: " << fun.get_name() 
+                 << std::endl;
     } 
       
     // the initializer list is emptied.
@@ -1259,6 +1422,8 @@ namespace
     SgBasicBlock&      blk = getCtorBody(fun);
     SgClassDefinition& cls = getClassDef(fun);
     
+    recordScopedDestructors(blk, blk, blk, cont);
+    
     // explicitly destruct all member variables of class type;
     //   execute the transformations in reverse order
     for (SgInitializedName* var : adapt::reverse(getMemberVars(&cls)))
@@ -1270,7 +1435,7 @@ namespace
         //~ logInfo() << "nontrivial: " << var->get_name() << " " << varty->get_mangled() 
                   //~ << std::endl;
         
-        cont.emplace_back(VarDtorInserter(blk, *var));
+        cont.emplace_back(VarDtorInserter(blk, blk, *var));
       }
     } 
     
@@ -1282,16 +1447,58 @@ namespace
     }
   }
   
-  struct CxxTransformer // : ExcludeTemplates
+  SgScopeStatement&
+  destructionLimit(SgFunctionDefinition& n)
   {
-      typedef transformation_container container;
+    SgScopeStatement* limit = si::getEnclosingScope(&n);
+    ROSE_ASSERT(limit);
+    
+    // if n is a destructor include also the class' scope to destruct
+    //   its data members.
+    if (isDtor(n)) 
+    {
+      limit = si::getEnclosingScope(&n);
+      ROSE_ASSERT(limit);
+  }
+  
+    return *limit;
+  }
+  
+  SgScopeStatement& 
+  destructionLimit(SgScopeStatement& n)
+  {
+    SgFunctionDefinition* fundef = isSgFunctionDefinition(&n);
+
+    // if n is a function definition, compute limit for function destruction, 
+    //   otherwise return existing limit. 
+    return fundef ? destructionLimit(*fundef) : n;
+  }
+  
+  struct CxxTransformer : ExcludeTemplates
+  {
+      typedef transformation_container    container;
+      typedef std::unordered_set<SgNode*> nodes;
       
-      explicit
-      CxxTransformer(container& transformations)
-      : cont(transformations)
+      CxxTransformer(container& transf, nodes& visited)
+      : cont(&transf), knownNodes(&visited)
       {}
       
-      void handle(SgNode&) {}
+      CxxTransformer(CxxTransformer&&)                 = default;
+      CxxTransformer& operator=(CxxTransformer&&)      = default;
+      CxxTransformer(const CxxTransformer&)            = default;
+      CxxTransformer& operator=(const CxxTransformer&) = default;
+
+
+      void descend(SgNode& n);
+      void loop(SgScopeStatement& n);
+      SgScopeStatement& enclosingScope(SgScopeStatement*);
+      
+      void handle(SgNode& n) 
+      {
+        descend(n);
+      }
+      
+      using ExcludeTemplates::handle;
       
       void handle(SgConstructorInitializer& n)
       {
@@ -1308,25 +1515,27 @@ namespace
                     << (cls ? std::string(cls->get_name()) : std::string("null")) 
                     << "/ " << ctor 
                     << std::endl;
-          return;
         }
-          
-        cont.emplace_back(ConstructorGenerator(*ctor));
+        else
+        {
+          cont->emplace_back(ConstructorGenerator(*ctor));
+        }
+        
+        descend(n);
       }
       
       void handle(SgMemberFunctionDeclaration& n)
       {
         if (n.get_specialFunctionModifier().isConstructor())
         {
-          normalizeCtorDef(n, cont);
-          return;
+          normalizeCtorDef(n, *cont);
+        }
+        else if (isDtor(n))
+        {
+          normalizeDtorDef(n, *cont);
         }
         
-        if (isDtor(n))
-        {
-          normalizeDtorDef(n, cont);
-          return;
-        }
+        descend(n);
       }
       
       void handle(SgClassDefinition& n)
@@ -1347,36 +1556,132 @@ namespace
                       << std::endl;
           }
           
-          cont.emplace_back(DestructorGenerator(n));
-          return;
+          cont->emplace_back(DestructorGenerator(n));
         }
+        
+        descend(n);
       }
+      
+      void handle(SgWhileStmt& n)   { loop(n); }
+      void handle(SgDoWhileStmt& n) { loop(n); }
+      void handle(SgForStatement& n) { loop(n); }
+      
+      void handle(SgSwitchStatement& n)
+      { 
+        breakScope = &n;
+        
+        descend(n); 
+      }
+      
+      void handle(SgFunctionDefinition& n)
+      {
+        functionScope = &n;
+        
+        descend(n);
+      }
+      
+      void handle(SgBreakStmt& n)
+      {
+        descend(n);
+        
+        if (EXTEND_DTOR_NORMALIZATION)
+          cont->emplace_back(ScopeDestructorGenerator(n, SG_DEREF(currBlk), enclosingScope(breakScope)));
+      }
+      
+      void handle(SgContinueStmt& n)
+      {
+        descend(n);
+        
+        if (EXTEND_DTOR_NORMALIZATION)
+          cont->emplace_back(ScopeDestructorGenerator(n, SG_DEREF(currBlk), enclosingScope(continueScope)));
+      }
+      
+      void handle(SgReturnStmt& n)
+      {
+        ROSE_ASSERT(functionScope);
+        
+        descend(n);
+        
+        if (EXTEND_DTOR_NORMALIZATION)
+          cont->emplace_back(ScopeDestructorGenerator(n, SG_DEREF(currBlk), destructionLimit(*functionScope)));
+      }
+      
+      void handle(SgBasicBlock& n)
+      {
+        currBlk = &n;
+        
+        // descend first, to make sure that any destructors defined
+        //   in this scope are ready when needed for scope destruction
+        descend(n);
+        
+        if (EXTEND_DTOR_NORMALIZATION)
+          cont->emplace_back(ScopeDestructorGenerator(n, SG_DEREF(currBlk), destructionLimit(enclosingScope(&n)))); 
+      }
+
+      container& transformations() { return *cont; }
     
     private:
-      container& cont;
+      CxxTransformer()                    = delete;
+    
+      container*            cont          = nullptr;
+      nodes*                knownNodes    = nullptr;
+      
+      SgBasicBlock*         currBlk       = nullptr;
+      SgScopeStatement*     breakScope    = nullptr;
+      SgScopeStatement*     continueScope = nullptr;
+      SgFunctionDefinition* functionScope = nullptr;
   };
-  
+
   template <class SetT, class ElemT>
   inline
   bool alreadyProcessed(SetT& s, const ElemT& e)
   {
     return !s.insert(e).second;
   }
+  
+  void CxxTransformer::descend(SgNode& n)
+  {
+    if (alreadyProcessed(*knownNodes, &n))
+      return;
+      
+    *this = sg::traverseChildren(std::move(*this), n);
+  }
+  
+  SgScopeStatement& 
+  CxxTransformer::enclosingScope(SgScopeStatement* n)
+  {
+    ROSE_ASSERT(n);
+      
+    return SG_DEREF(si::getEnclosingScope(n));
+  }
+  
+  void CxxTransformer::loop(SgScopeStatement& n)
+  {
+    continueScope = breakScope = &n;
+      
+    descend(n);
+    }
+    
+  CxxTransformer::container
+  computeNormalizations(SgNode* root)
+  {
+    CxxTransformer::container transformations;
+    CxxTransformer::nodes     nodes;
+  
+    sg::dispatch(CxxTransformer(transformations, nodes), root); 
+  
+    return std::move(transformations);
+  }      
 } // anonymous namespace
 
   // externally visible function
   void normalizeCxx(Normalization& norm, SgNode* root)
-  {
-    typedef std::set<SgNode*> NodeSet;
-    //~ typedef std::unordered_set<SgNode*> NodeSet;
-        
+  {        
     logInfo() << "Starting C++ normalization." << std::endl;
-        
-    CxxTransformer::container transformations;
-    NodeSet                   knownNodes;
+    logTrace() << "Not normalizing templates.." << std::endl;
+/*
     RoseAst                   ast(root);
     
-    logTrace() << "Not normalizing templates.." << std::endl;
     //~ ast.setWithTemplates(false);
     for (auto i=ast.begin(); i!=ast.end(); ++i)
     { 
@@ -1388,12 +1693,13 @@ namespace
       } 
       
       // never seen and not a template    
-      sg::dispatch(CxxTransformer(transformations), *i);
     }
+*/    
+    CxxTransformer::container transf = computeNormalizations(root); 
     
-    logInfo() << "Found " << transformations.size() << " terrific top-level transformations..." << std::endl;
+    logInfo() << "Found " << transf.size() << " terrific top-level transformations..." << std::endl;
     
-    for (AnyTransform& tf : transformations) 
+    for (AnyTransform& tf : transf) 
       tf.execute();
 
     clearMemoized();
@@ -1403,12 +1709,7 @@ namespace
   // for secondary transformations
   void normalizeCxx(SgNode* root)
   {
-    CxxTransformer::container transformations;
-    
-    for (SgNode* n : RoseAst(root))
-      sg::dispatch(CxxTransformer(transformations), n);
-    
-    for (AnyTransform& tf : transformations) 
+    for (AnyTransform& tf : computeNormalizations(root)) 
       tf.execute();
   }
 

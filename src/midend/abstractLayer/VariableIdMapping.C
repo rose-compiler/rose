@@ -1,5 +1,4 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
  *************************************************************/
 
@@ -9,9 +8,12 @@
 #include "RoseAst.h"
 #include <set>
 #include <vector>
+#include "Diagnostics.h"
+#include "SgNodeHelper.h"
 
 using namespace std;
 using namespace CodeThorn;
+using namespace Rose::Diagnostics;
 
 int exprToInt(SgExpression* exp) {
   if(SgUnsignedLongVal* valExp = isSgUnsignedLongVal(exp))
@@ -97,7 +99,7 @@ bool VariableIdMapping::hasCharType(VariableId varId) {
 
 bool VariableIdMapping::hasIntegerType(VariableId varId) {
   SgType* type=getType(varId);
-  return SageInterface::isStrictIntegerType(type);
+  return SageInterface::isStrictIntegerType(type)||isSgTypeSigned128bitInteger(type);
 }
 
 bool VariableIdMapping::hasEnumType(VariableId varId) {
@@ -367,6 +369,8 @@ bool VariableIdMapping::isAnonymousBitfield(SgInitializedName* initName) {
  * \date 2012.
  */
 void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
+  int numWarningsCount=0;
+  int maxWarningsCount=3; // 0 turns off warnings
   set<SgSymbol*> symbolSet;
   list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
   for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
@@ -404,6 +408,14 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
           registerNewSymbol(sym);
           // Remember that this symbol was already registered:
           symbolSet.insert(sym);
+        }
+      } else {
+        numWarningsCount++;
+        if(numWarningsCount<maxWarningsCount) {
+          Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName at "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<endl;
+        } else if(numWarningsCount==maxWarningsCount) {
+          Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName at "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<endl;
+          Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName: maximum warning count of "<<maxWarningsCount<<" reached."<<endl;
         }
       }
     }

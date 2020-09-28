@@ -42,23 +42,23 @@ RersCounterexample RersCounterexample::onlyIOStates() const {
  * \author Marc Jasper
  * \date 2017.
  */
-string RersCounterexample::toRersIString() const {
-  return toRersIOString(false);
+string RersCounterexample::toRersIString(LtlRersMapping& ltlRersMapping) const {
+  return toRersIOString(ltlRersMapping, false);
 }
 
 /*! 
  * \author Marc Jasper
  * \date 2017.
  */
-string RersCounterexample::toRersIOString() const {
-  return toRersIOString(true);
+string RersCounterexample::toRersIOString(LtlRersMapping& ltlRersMapping) const {
+  return toRersIOString(ltlRersMapping, true);
 }
 
 /*! 
  * \author Marc Jasper
  * \date 2014, 2017.
  */
-string RersCounterexample::toRersIOString(bool withOutput) const {
+string RersCounterexample::toRersIOString(LtlRersMapping& ltlRersMapping, bool withOutput) const {
   stringstream result; 
   result << "[";
   RersCounterexample::const_iterator begin = this->begin();
@@ -67,27 +67,41 @@ string RersCounterexample::toRersIOString(bool withOutput) const {
   for (RersCounterexample::const_iterator i = begin; i != end; i++ ) {
     if ( (*i)->io.isStdInIO() || (withOutput && (*i)->io.isStdOutIO()) ) {
       if (!firstSymbol) {
-	result << ";";
+        result << ";";
       }
       const PState* pstate = (*i)->pstate();
       int inOutVal = pstate->readFromMemoryLocation((*i)->io.var).getIntValue();
+
+      // for ASCII mapping only
+      char ioChar='x';
+      if((*i)->io.isStdInIO())
+        ioChar='i';
+      else if((*i)->io.isStdOutIO())
+        ioChar='o';
+      else {
+        cerr<<"Error: RersCounterExample: non-io state. Not supported."<<endl;
+        exit(1);
+      }
+      
       if ((*i)->io.isStdInIO()) {
-	result << "i" << toRersChar(inOutVal);
-	firstSymbol = false;
+        if(ltlRersMapping.isActive()) {
+          result << ltlRersMapping.getIOString(inOutVal); // MS 8/6/20: changed to use mapping
+        } else {
+          // otherwise use ASCII mapping 1->'A' ... 26->'Z'
+          result << ioChar<<char('A'+inOutVal-1);
+        }
+        firstSymbol = false;
       } else if (withOutput && (*i)->io.isStdOutIO()) {
-	result << "o" << toRersChar(inOutVal);
-	firstSymbol = false;
+        if(ltlRersMapping.isActive()) {
+          result << ltlRersMapping.getIOString(inOutVal); // MS 8/6/20: changed to use mapping
+        } else {
+          // otherwise use ASCII mapping 1->'A' ... 26->'Z'
+          result << ioChar<<char('A'+inOutVal-1);
+        }
+        firstSymbol = false;
       } 
     }
   }
   result << "]";
   return result.str();
-}
-
-/*! 
- * \author Marc Jasper
- * \date 2017.
- */
-char RersCounterexample::toRersChar(int value) const {
-  return (char) (value + ((int) 'A') - 1);
 }

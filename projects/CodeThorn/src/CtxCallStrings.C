@@ -1,5 +1,7 @@
 #include <algorithm>
 
+#include "sage3basic.h"
+
 #include "CtxCallStrings.h"
 
 #include "CtxAnalysis.h"
@@ -93,7 +95,7 @@ namespace
   {
     ROSE_ASSERT(Labeler::NO_LABEL != invlbl && Labeler::NO_LABEL != retlbl);
 
-    return labeler.getNode(invlbl) == labeler.getNode(retlbl);
+    return labeler.areCallAndReturnLabels(invlbl, retlbl);
   }
 
   struct InfiniteReturnHandler
@@ -441,6 +443,15 @@ bool FiniteCallString::callerOf(const FiniteCallString& target, Label callsite) 
   ROSE_ASSERT(target.size());
   
   constexpr bool fixedLen = FiniteCallString::FIXED_LEN_REP;
+  
+#if 0  
+  const bool a = (!target.empty());
+  const bool b = a && (target.last() == callsite);
+  const bool c = b && callerCalleeLengths(fixedLen, size(), target.size(), getFiniteCallStringMaxLength());
+  const bool d = c && callerCalleePrefix(*this, target);
+  
+  std::cerr << "<<>> " << a << b << c << d << std::endl;
+#endif
 
   // target is invoked from this, if
   // (1) the target's last label is callsite
