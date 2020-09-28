@@ -8,6 +8,8 @@
 #include <boost/optional/optional_io.hpp>
 #include <iostream>
 
+#define PRINT_WARNINGS 0
+
 namespace Rose {
 namespace builder {
 
@@ -286,9 +288,11 @@ Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const 
        SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(param.name, param_scope);
 
        if (symbol == nullptr) {
+#ifdef PRINT_WARNINGS
          std::cerr << "WARNING UNIMPLEMENTED: SageTreeBuilder::Enter(SgFunctionDeclaration*) - symbol lookup failed for name "
                    << param.name << "\n";
          ROSE_ASSERT(symbol);
+#endif
        }
 
     // Create a new initialized name for the parameter list
