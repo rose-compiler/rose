@@ -1424,6 +1424,7 @@ mangleExpression (const SgExpression* expr)
         }
         case V_SgConstructorInitializer: {
           const SgConstructorInitializer* e = isSgConstructorInitializer (expr);
+          ROSE_ASSERT(e != NULL);
 
           mangled_name << "_bConstructorInitializer_";
 
