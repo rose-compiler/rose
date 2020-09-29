@@ -8362,6 +8362,7 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
      while (isSgCastExp(temp_lhs) != NULL)
         {
           cast = isSgCastExp(temp_lhs);
+          ROSE_ASSERT(cast != NULL);
           temp_lhs = cast->get_operand();
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
