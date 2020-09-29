@@ -1,0 +1,16 @@
+START
+DEF BLOCK BLOCK'1;
+  BEGIN
+    CONSTANT TABLE TABLE'1 (0:0) = 
+      POS(0):
+        1.0;
+      BEGIN
+        ITEM ITEM'2 F;
+      END
+  END
+DEF PROC PROC'1 ();
+  BEGIN
+    ITEM ITEM'1 F;
+    ITEM'1 = ITEM'2(0);
+  END
+TERM

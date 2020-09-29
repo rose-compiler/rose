@@ -1160,6 +1160,9 @@ Enter(SgJovialTableStatement* &table_decl,
 #endif
 
    ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());
+
+// Append before push (may need to be a mantra)
+   SageInterface::appendStatement(table_decl, SageBuilder::topScopeStack());
    SageBuilder::pushScopeStack(table_def);
 }
 
@@ -1169,7 +1172,6 @@ Leave(SgJovialTableStatement* table_type_stmt)
    mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialTableStatement*) \n";
 
    SageBuilder::popScopeStack();  // class definition
-   SageInterface::appendStatement(table_type_stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
@@ -1301,7 +1303,7 @@ importModule(const std::string &module_name)
 // Jovial TableItem and Block data members have visibility outside of their declarative class.
 // Both tables and blocks are SgJovialTableStatements deriving from SgClassDeclaration.  So if the
 // current scope is SgClassDefinition, this function creates an alias to the data item variable
-// and inserts it in the parent scope of the table or block declaration.
+// and inserts it in global scope.
 void SageTreeBuilder::
 injectAliasSymbol(const std::string &name)
 {
@@ -1315,9 +1317,9 @@ injectAliasSymbol(const std::string &name)
 
       SgJovialTableStatement* table_decl = isSgJovialTableStatement(class_def->get_declaration());
       ROSE_ASSERT(table_decl);
-      SgScopeStatement* parent_scope = table_decl->get_scope();
-      ROSE_ASSERT(parent_scope);
-      parent_scope->insert_symbol(SgName(name), alias_sym);
+      SgGlobal* global_scope = SageInterface::getGlobalScope(table_decl);
+      ROSE_ASSERT(global_scope);
+      global_scope->insert_symbol(SgName(name), alias_sym);
    }
 }
 
