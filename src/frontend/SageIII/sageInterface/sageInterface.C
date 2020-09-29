@@ -7371,14 +7371,16 @@ bool SageInterface::isMain(const SgNode* n)
             either = true;
          }
          else {
-            ROSE_ASSERT(isSgStatement(n) != NULL);
-            if (isSgGlobal(isSgStatement(n)->get_scope())) {
+            const SgStatement* stmnt = isSgStatement(n);
+            ROSE_ASSERT(stmnt != NULL);
+            if (isSgGlobal(stmnt->get_scope())) {
                either = true;
             }
          }
          if (either) {
-            ROSE_ASSERT(isSgFunctionDeclaration(n) != NULL);
-            if (isSgFunctionDeclaration(n)->get_name() == "main") {
+            const SgFunctionDeclaration* funcDefn = isSgFunctionDeclaration(n);
+            ROSE_ASSERT(funcDefn != NULL);
+            if (funcDefn->get_name() == "main") {
                result = true;
             }
          }
