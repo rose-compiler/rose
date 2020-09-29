@@ -132,14 +132,14 @@ namespace Outliner
     SgDeclarationStatement* new_function_prototype;
 
  // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
-    DeferredTransformation deferedTransformation;
+    DeferredTransformation deferredTransformation;
 
  // DQ (12/5/2019): Added ROSE_DLL_API prefix for Windows support (too all of these functions).
     ROSE_DLL_API Result (void); //! Sets all fields to 0
 
   // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
  // Result (SgFunctionDeclaration *, SgStatement *, SgFile* file=NULL);
-    ROSE_DLL_API Result (SgFunctionDeclaration *, SgStatement *, SgFile* file, DeferredTransformation deferedTransformation);
+    ROSE_DLL_API Result (SgFunctionDeclaration *, SgStatement *, SgFile* file, DeferredTransformation deferredTransformation);
 
     ROSE_DLL_API Result (const Result&); //! Copy constructor.
     ROSE_DLL_API ~Result (void) {}; //! Shallow; does not delete fields.
