@@ -709,6 +709,8 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
        // PC (10/11/13):  Added case of SgJavaPackageDeclaration
        // DQ (8/11/2013): Added cases for SgFunctionDeclaration and SgMemberFunctionDeclaration
        // I forget why we needed this case...
+          case V_SgProcedureHeaderStatement:
+          case V_SgJovialTableStatement:
           case V_SgJavaPackageDeclaration:
           case V_SgFunctionDeclaration:
           case V_SgMemberFunctionDeclaration:
@@ -851,6 +853,8 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
        // PC (10/11/13):  Added case of SgJavaPackageDeclaration
        // DQ (8/12/2013): This function has to be supported when called using any kind of declaration (at least SgFunctionDeclaration and SgClassDeclaration).
        // DQ (9/16/2012): I think it should be an error to call this function for a SgClassDeclaration.
+          case V_SgProcedureHeaderStatement:
+          case V_SgJovialTableStatement:
           case V_SgJavaPackageDeclaration:
           case V_SgFunctionDeclaration:
           case V_SgMemberFunctionDeclaration:
