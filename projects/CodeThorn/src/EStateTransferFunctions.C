@@ -478,7 +478,8 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge,
     SgFunctionDefinition* funDef=isSgFunctionDefinition(node);
     if(funDef) {
       string functionName=SgNodeHelper::getFunctionName(node);
-      //cout<<"DEBUG: Analyzing function "<<functionName<<endl;
+      string fileName=SgNodeHelper::sourceFilenameToString(node);
+      SAWYER_MESG(logger[INFO])<<"Analyzing Function:"<<fileName<<" : "<<functionName<<endl;
       SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
       SAWYER_MESG(logger[TRACE])<<"Function:"<<functionName<<" Parameters: ";
       for(auto fParam : formalParameters) {
