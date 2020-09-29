@@ -1417,7 +1417,10 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
 
           case V_SgJovialDirectiveStatement:
-               name = isSgJovialDirectiveStatement(declaration)->class_name();
+               {
+                  const SgJovialDirectiveStatement* stmnt = isSgJovialDirectiveStatement(declaration);
+                  name = stmnt->class_name();
+               }
                break;
 
           case V_SgEnumDeclaration:
