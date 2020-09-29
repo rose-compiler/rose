@@ -1413,7 +1413,10 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
        // CR (8/2/2019): Added SgJovialDefineDeclaration and SgJovialDirectiveStatement
        // I'm not sure class_name() is correct. Probably get_name() should be fixed.
           case V_SgJovialDefineDeclaration:
-               name = isSgJovialDefineDeclaration(declaration)->class_name();
+               {
+                  const SgJovialDefineDeclaration* dfnDcl = isSgJovialDefineDeclaration(declaration);
+                  name = dfnDcl->class_name();
+               }
                break;
 
           case V_SgJovialDirectiveStatement:
