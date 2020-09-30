@@ -222,17 +222,18 @@ void Build(const parser::SubroutineSubprogram &x, T* scope)
 #endif
 
    SgFunctionParameterList* param_list{nullptr};
-   SgBasicBlock* param_scope{nullptr};
+   SgScopeStatement* param_scope{nullptr};
    SgFunctionDeclaration* function_decl{nullptr};
    LanguageTranslation::FunctionModifierList function_modifiers;
    std::list<std::string> dummy_arg_name_list;
    std::string name;
+   bool is_defining_decl = true;
 
    // Traverse SubroutineStmt to get dummy argument list and name
    Build(std::get<0>(x.t).statement, dummy_arg_name_list, name, function_modifiers);
 
    // Enter SageTreeBuilder for SgFunctionParameterList
-   builder.Enter(param_list, param_scope);
+   builder.Enter(param_list, param_scope, name, nullptr /* function_type */, is_defining_decl);
 
    // Traverse SpecificationPart and ExecutionPart
    Build(std::get<parser::SpecificationPart>(x.t), param_scope);
@@ -242,7 +243,7 @@ void Build(const parser::SubroutineSubprogram &x, T* scope)
    builder.Leave(param_list, param_scope, dummy_arg_name_list);
 
    // Begin SageTreeBuilder for SgFunctionDeclaration
-   builder.Enter(function_decl, name, nullptr /* return_type */, param_list, function_modifiers);
+   builder.Enter(function_decl, name, nullptr /* return_type */, param_list, function_modifiers, is_defining_decl);
 
    // EndSubroutineStmt - std::optional<Name> v;
    bool have_end_stmt = false;
