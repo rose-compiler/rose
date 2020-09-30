@@ -2321,25 +2321,25 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
     // Liao 11/5/2010, move out of SgSupport
        if (isSgInitializedName(node) != NULL) 
     // case V_SgInitializedName:
-          {
-            SgInitializedName* initializedName = isSgInitializedName(node);
-            string additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=darkturquoise,fontname=\"7x13bold\",fontcolor=black,style=filled";
-            string labelWithSourceCode = string("\\n  ") + initializedName->get_name().getString() +
-                                  string("\\n  ") + StringUtility::numberToString(initializedName) + "  ";
+       {
+         SgInitializedName* initializedName = isSgInitializedName(node);
+         string additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=darkturquoise,fontname=\"7x13bold\",fontcolor=black,style=filled";
+         string labelWithSourceCode = string("\\n  ") + initializedName->get_name().getString() +
+           string("\\n  ") + StringUtility::numberToString(initializedName) + "  ";
 #if 1
          // DQ (1/24/2016): Adding support for __device__ keyword to be used for CUDA in function calls.
          // This implements an idea suggested by Jeff Keasler.
-            labelWithSourceCode += string("\\n  ") + "using_device_keyword = " + (initializedName->get_using_device_keyword() ? "true" : "false") + "  ";
+         labelWithSourceCode += string("\\n  ") + "using_device_keyword = " + (initializedName->get_using_device_keyword() ? "true" : "false") + "  ";
 #endif
          // printf ("########## initializedName->get_name() = %s \n",initializedName->get_name().str());
- //           break;
- 
-          AST_NODE_ID id = TransformationTracking::getId(node) ;
-          if (id != 0)
-            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
-            NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
-            addNode(graphNode);
-          }
+         //           break;
+
+         AST_NODE_ID id = TransformationTracking::getId(node) ;
+         if (id != 0)
+           labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
+         NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
+         addNode(graphNode);
+       }
 
 
 #if 1

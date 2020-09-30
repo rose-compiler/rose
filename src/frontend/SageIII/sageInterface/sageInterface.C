@@ -7887,7 +7887,7 @@ SageInterface::getScope( const SgNode* astNode )
        }
 
    // return scopeStatement;
-       return const_cast<SgScopeStatement*>(scopeStatement);
+     return const_cast<SgScopeStatement*>(scopeStatement);
    }
 
 
