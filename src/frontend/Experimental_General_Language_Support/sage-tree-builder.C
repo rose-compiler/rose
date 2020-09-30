@@ -313,7 +313,7 @@ Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const 
 }
 
 void SageTreeBuilder::
-Leave(SgFunctionParameterList* param_list, SgBasicBlock* param_scope, const std::list<std::string> &dummy_arg_name_list)
+Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const std::list<std::string> &dummy_arg_name_list)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionParameterList* for Fortran) \n";
 
@@ -465,7 +465,7 @@ Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope)
 }
 
 void SageTreeBuilder::
-Leave(SgFunctionDeclaration* function_decl, SgBasicBlock* param_scope, bool have_end_stmt)
+Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope, bool have_end_stmt)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
 

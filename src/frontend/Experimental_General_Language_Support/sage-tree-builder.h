@@ -10,6 +10,7 @@
 //
 class SgBasicBlock;
 class SgCaseOptionStmt;
+class SgCastExp;
 class SgCommonBlock;
 class SgCommonBlockObject;
 class SgDefaultOptionStmt;
@@ -34,12 +35,15 @@ class SgNamespaceDeclarationStatement;
 class SgPrintStatement;
 class SgProcessControlStatement;
 class SgProgramHeaderStatement;
+class SgReplicationOp;
+class SgReturnStmt;
 class SgScopeStatement;
 class SgSourceFile;
 class SgSwitchStatement;
 class SgType;
 class SgTypedefDeclaration;
 class SgVariableDeclaration;
+class SgVarRefExp;
 class SgWhileStmt;
 
 // Jovial specific classes
@@ -112,11 +116,12 @@ public:
 
    void Enter(SgFunctionParameterList* &, SgScopeStatement* &, const std::string &, SgType*, bool);
    void Leave(SgFunctionParameterList*, SgScopeStatement*, const std::list<LanguageTranslation::FormalParameter> &);
+   void Leave(SgFunctionParameterList*, SgScopeStatement*, const std::list<std::string> &);
 
    void Enter(SgFunctionDeclaration* &, const std::string &, SgType*, SgFunctionParameterList*,
                                         const LanguageTranslation::FunctionModifierList &, bool);
    void Leave(SgFunctionDeclaration*, SgScopeStatement*);
-   void Leave(SgFunctionDeclaration*, SgBasicBlock*, bool end_stmt_name);
+   void Leave(SgFunctionDeclaration*, SgScopeStatement*, bool end_stmt_name);
 
    void Enter(SgFunctionDefinition* &);
    void Leave(SgFunctionDefinition*);
@@ -200,6 +205,7 @@ public:
    void Enter(SgJovialForThenStatement* &, const std::string &);
    void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*,
                                            SgJovialForThenStatement::loop_statement_type_enum);
+
    void Leave(SgJovialForThenStatement*);
 
    void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);
