@@ -13,7 +13,7 @@
 #include "sageBuilder.h"
 #include "sageGeneric.h"
 
-#include "AdaUtil.h"
+#include "Ada_to_ROSE.h"
 
 namespace Ada_ROSE_Translation
 {
