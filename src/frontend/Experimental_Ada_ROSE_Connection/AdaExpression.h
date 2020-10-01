@@ -3,6 +3,10 @@
 #ifndef _ADA_EXPRESSION
 #define _ADA_EXPRESSION 1
 
+/// Contains functions and classes for converting Ada expressions
+///   from Asis to ROSE.
+
+
 #include "Ada_to_ROSE.h"
 #include "a_nodes.h"
 
