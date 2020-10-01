@@ -20247,6 +20247,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                      case V_SgAttributeSpecificationStatement:
                      case V_SgEmptyDeclaration:
                      case V_SgFortranIncludeLine:
+                     case V_SgJovialDefineDeclaration:
                      case V_SgJovialDirectiveStatement:
                      case V_SgPragmaDeclaration:
                        break;
