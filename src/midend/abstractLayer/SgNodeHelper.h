@@ -67,6 +67,12 @@ namespace SgNodeHelper {
  */
   typedef std::pair<int,int> LineColPair;
   
+  //! returns true if the declaration has an assign initializer (e.g. char[2]="";)
+  bool hasAssignInitializer(SgVariableDeclaration* decl);
+
+  //! returns true if the declaration has an initializer list (e.g. char[2]={'a',0};
+  bool isAggregateDeclarationWithInitializerList(SgVariableDeclaration* decl);
+
   //! returns the initializer expression of a variable declaration. If no initializer exists it returns 0.
   SgExpression* getInitializerExpressionOfVariableDeclaration(SgVariableDeclaration* decl);
 
