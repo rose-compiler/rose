@@ -25,7 +25,7 @@ BENCH_FAIL=0
 
 function DomainTests {
     testNumbers=`echo {001..028}`
-    testNumbers2=`echo {030..033}`
+    testNumbers2=`echo {030..035}`
     testNumbers+=" $testNumbers2"
     echo "Scheduled tests: $testNumbers"
     echo "Skipping 029"
