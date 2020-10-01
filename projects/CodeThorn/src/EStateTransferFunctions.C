@@ -71,7 +71,6 @@ void EStateTransferFunctions::initDiagnostics() {
     PState currentPState=*currentEState.pstate();
     ConstraintSet cset=*currentEState.constraints();
     if(_analyzer->getOptionsRef().rers.rersBinary) {
-      // logger[DEBUG]<<"ESTATE: "<<estate->toString(&variableIdMapping)<<endl;
       SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source());
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
         ROSE_ASSERT(funCall);
@@ -587,7 +586,6 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
       newio.recordVariable(InputOutput::STDIN_VAR,varId);
       EState newEState=createEState(edge.target(),cs,newPState,newCSet,newio);
       resList.push_back(newEState);
-      // logger[DEBUG]<< "created "<<_inputVarValues.size()<<" input states."<<endl;
       return resList;
     } else {
       if(_analyzer->_inputVarValues.size()>0) {
@@ -616,7 +614,6 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
           EState newEState=createEState(edge.target(),estate->callString,newPState,newCSet,newio);
           resList.push_back(newEState);
         }
-        // logger[DEBUG]<< "created "<<_inputVarValues.size()<<" input states."<<endl;
         return resList;
       } else {
         // without specified input values (default mode: analysis performed for all possible input values)
@@ -725,7 +722,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
   return elistify(newEState);
 }
 
-  std::list<EState> EStateTransferFunctions::transferDefaultOptionStmt(SgDefaultOptionStmt* defaultStmt,Edge edge, const EState* estate) {
+std::list<EState> EStateTransferFunctions::transferDefaultOptionStmt(SgDefaultOptionStmt* defaultStmt,Edge edge, const EState* estate) {
   SAWYER_MESG(logger[TRACE])<<"DEBUG: DEFAULTSTMT: "<<defaultStmt->unparseToString()<<endl;
 
   Label targetLabel=edge.target();
@@ -745,15 +742,29 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
   // value of switch expression
   AbstractValue switchCondVal=_analyzer->singleValevaluateExpression(condExpr,currentEState);
 
+  // if there is at least one case that is definitely reachable, then
+  // the default (label) is non-reachable (fall-through still
+  // applies), otherwise default is may-reachable
+  bool defaultReachable=true;
+
   // create filter for all case labels (TODO: precompute this set)
-  set<SgCaseOptionStmt*> caseStmtSet=SgNodeHelper::switchRelevantCaseStmtNodes(switchStmt);
+  set<SgCaseOptionStmt*> caseStmtSet=SgNodeHelper::switchRelevantCaseStmtNodes(blockStmt); // argument must be the blockStmt of swithStmt
+  SAWYER_MESG(logger[TRACE])<<"castStmtSet.size(): "<<caseStmtSet.size()<<endl;
   for(set<SgCaseOptionStmt*>::iterator i=caseStmtSet.begin();i!=caseStmtSet.end();++i) {
+    SAWYER_MESG(logger[TRACE])<<"switch-stmt (@default): analyzing case "<<(*i)->unparseToString()<<endl;
     SgCaseOptionStmt* caseStmt=*i;
     SgExpression* caseExpr=caseStmt->get_key();
     SgExpression* caseExprOptionalRangeEnd=caseStmt->get_key_range_end();
     if(caseExprOptionalRangeEnd) {
-      SAWYER_MESG(logger[ERROR])<<"Error: GNU extension range in case statement not supported."<<endl;
-      exit(1);
+      AbstractValue caseValRangeBegin=_analyzer->singleValevaluateExpression(caseExpr,currentEState);
+      AbstractValue caseValRangeEnd=_analyzer->singleValevaluateExpression(caseExprOptionalRangeEnd,currentEState);
+      AbstractValue comparisonValBegin=caseValRangeBegin.operatorLessOrEq(switchCondVal);
+      AbstractValue comparisonValEnd=caseValRangeEnd.operatorMoreOrEq(switchCondVal);
+      if(comparisonValBegin.isTrue()&&comparisonValEnd.isTrue()) {
+        SAWYER_MESG(logger[TRACE])<<"switch-default: non-reachable=false."<<endl;
+        defaultReachable=false;
+        break;
+      }
     }
     // value of constant case value
     AbstractValue caseVal=_analyzer->singleValevaluateExpression(caseExpr,currentEState);
@@ -761,20 +772,29 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
     SAWYER_MESG(logger[TRACE])<<"switch-default filter cmp: "<<switchCondVal.toString(getVariableIdMapping())<<"=?="<<caseVal.toString(getVariableIdMapping())<<endl;
     // check that not any case label may be equal to the switch-expr value (exact for concrete values)
     AbstractValue comparisonVal=caseVal.operatorEq(switchCondVal);
-    if(comparisonVal.isTop()||comparisonVal.isTrue()) {
+    // top is *not* considered here, because only a definitive case makes default non-reachable
+    if(comparisonVal.isTrue()) {
       // determined that at least one case may be reachable
       SAWYER_MESG(logger[TRACE])<<"switch-default: continuing."<<endl;
-      return elistify(createEState(targetLabel,cs,newPState,cset));
+      //return elistify(createEState(targetLabel,cs,newPState,cset));
+      SAWYER_MESG(logger[TRACE])<<"switch-default: non-reachable=false."<<endl;
+      defaultReachable=false;
+      break;
     }
   }
-  // detected infeasable path (default is not reachable)
-  SAWYER_MESG(logger[TRACE])<<"switch-default: infeasable path."<<endl;
-  list<EState> emptyList;
-  return emptyList;
+  if(defaultReachable) {
+    SAWYER_MESG(logger[TRACE])<<"switch-default: reachable."<<endl;
+    return elistify(createEState(targetLabel,cs,newPState,cset));
+  } else {
+    // detected infeasable path (default is not reachable)
+    SAWYER_MESG(logger[TRACE])<<"switch-default: infeasable path."<<endl;
+    list<EState> emptyList;
+    return emptyList;
+  }
 }
 
 std::list<EState> EStateTransferFunctions::transferCaseOptionStmt(SgCaseOptionStmt* caseStmt,Edge edge, const EState* estate) {
-  SAWYER_MESG(logger[TRACE])<<"DEBUG: CASESTMT: "<<caseStmt->unparseToString()<<endl;
+  SAWYER_MESG(logger[TRACE])<<"CASESTMT: "<<caseStmt->unparseToString()<<endl;
   Label targetLabel=edge.target();
   CallString cs=estate->callString;
   PState newPState=*estate->pstate();
@@ -795,8 +815,19 @@ std::list<EState> EStateTransferFunctions::transferCaseOptionStmt(SgCaseOptionSt
   SgExpression* caseExpr=caseStmt->get_key();
   SgExpression* caseExprOptionalRangeEnd=caseStmt->get_key_range_end();
   if(caseExprOptionalRangeEnd) {
-    SAWYER_MESG(logger[ERROR])<<"Error: GNU extension range in case statement not supported."<<endl;
-    exit(1);
+    AbstractValue caseValRangeBegin=_analyzer->singleValevaluateExpression(caseExpr,currentEState);
+    AbstractValue caseValRangeEnd=_analyzer->singleValevaluateExpression(caseExprOptionalRangeEnd,currentEState);
+    AbstractValue comparisonValBegin=caseValRangeBegin.operatorLessOrEq(switchCondVal);
+    AbstractValue comparisonValEnd=caseValRangeEnd.operatorMoreOrEq(switchCondVal);
+    if(comparisonValBegin.isTop()||comparisonValEnd.isTop()||(comparisonValBegin.isTrue()&&comparisonValEnd.isTrue())) {
+      SAWYER_MESG(logger[TRACE])<<"switch-case GNU Range: continuing."<<endl;
+      return elistify(createEState(targetLabel,cs,newPState,cset));
+    } else {
+      SAWYER_MESG(logger[TRACE])<<"switch-case GNU Range: infeasable path."<<endl;
+      // infeasable path
+      list<EState> emptyList;
+      return emptyList;
+    }
   }
   // value of constant case value
   AbstractValue caseVal=_analyzer->singleValevaluateExpression(caseExpr,currentEState);
@@ -807,7 +838,7 @@ std::list<EState> EStateTransferFunctions::transferCaseOptionStmt(SgCaseOptionSt
     SAWYER_MESG(logger[TRACE])<<"switch-case: continuing."<<endl;
     return elistify(createEState(targetLabel,cs,newPState,cset));
   } else {
-    // detected infeasable path
+    // infeasable path
     SAWYER_MESG(logger[TRACE])<<"switch-case: infeasable path."<<endl;
     list<EState> emptyList;
     return emptyList;
