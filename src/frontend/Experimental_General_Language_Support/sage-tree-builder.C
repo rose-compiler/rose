@@ -575,10 +575,28 @@ Enter(SgFunctionCallExp* &func_call, const std::string &name, SgExprListExp* par
    mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionCallExp* &, ...) \n";
 
    SgFunctionSymbol* func_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name, SageBuilder::topScopeStack());
+
    if (func_symbol == nullptr) {
-    // Function calls are ambiguous with arrays in Fortran and type casts (at least) in Jovial
-       func_call = nullptr;
-       return;
+      // Function calls are ambiguous with arrays in Fortran and type casts (at least) in Jovial.
+      // But if there are no parameters we know this can't be an array
+      if (params->get_expressions().size() == 0) {
+        // Build a nondefining declaration, assuming a void return type (without further knowledge)
+        SgFunctionDeclaration* function_decl = nullptr;
+        SgType* return_type = SageBuilder::buildVoidType();
+        SgGlobal* global_scope = SageInterface::getGlobalScope(SageBuilder::topScopeStack());
+        SgFunctionParameterList* param_list = SageBuilder::buildFunctionParameterList_nfi();
+        function_decl  = SageBuilder::buildNondefiningProcedureHeaderStatement(SgName(name), return_type,
+                                                                               param_list, global_scope);
+        SageInterface::setSourcePosition(function_decl);
+
+        func_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name, SageBuilder::topScopeStack());
+        ROSE_ASSERT(func_symbol);
+      }
+      else {
+        // Must assume it is an array at this point (what could go wrong?)
+        func_call = nullptr;
+        return;
+      }
    }
 
    func_call = SageBuilder::buildFunctionCallExp(func_symbol, params);
