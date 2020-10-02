@@ -6,9 +6,15 @@
 #include "sageBuilder.h"
 
 #include "AdaExpression.h"
+
+#include "Ada_to_ROSE.h"
 #include "AdaMaker.h"
-#include "AdaUtil.h"
 #include "AdaStatement.h"
+
+// turn on all GCC warnings after include files have been processed
+#pragma GCC diagnostic warning "-Wall"
+#pragma GCC diagnostic warning "-Wextra"
+
 
 namespace sb = SageBuilder;
 
@@ -31,7 +37,7 @@ namespace
     ROSE_ASSERT(assoc.Association_Kind == A_Parameter_Association);
 
     SgExpression&       arg        = getExprID(assoc.Actual_Parameter, ctx);
-    Element_Struct*     formalParm = retrieveAsOpt<Element_Struct>(asisIdMap(), assoc.Formal_Parameter);
+    Element_Struct*     formalParm = retrieveAsOpt<Element_Struct>(elemMap(), assoc.Formal_Parameter);
 
     if (!formalParm) return arg;
 
@@ -56,7 +62,7 @@ namespace
 
     ArgListCreator computeArguments()
     {
-      return traverseIDs(range, asisIdMap(), ArgListCreator{ctx});
+      return traverseIDs(range, elemMap(), ArgListCreator{ctx});
     }
 
     void mkCall(SgExpression& n)
@@ -200,7 +206,7 @@ namespace
   {
     ROSE_ASSERT(expr.Expression_Kind == An_Enumeration_Literal);
 
-    Element_Struct* typedcl = retrieveAsOpt<Element_Struct>(asisIdMap(), expr.Corresponding_Expression_Type_Definition);
+    Element_Struct* typedcl = retrieveAsOpt<Element_Struct>(elemMap(), expr.Corresponding_Expression_Type_Definition);
 
     ROSE_ASSERT (!typedcl);
 
@@ -429,7 +435,7 @@ getExpr(Element_Struct& elem, AstContext ctx)
     default:
       logWarn() << "unhandled expression: " << expr.Expression_Kind << std::endl;
       res = sb::buildIntVal();
-      ROSE_ASSERT(!PRODUCTION_CODE);
+      ROSE_ASSERT(!FAIL_ON_ERROR);
   }
 
   attachSourceLocation(SG_DEREF(res), elem);
@@ -441,7 +447,7 @@ getExpr(Element_Struct& elem, AstContext ctx)
 SgExpression&
 getExprID(Element_ID el, AstContext ctx)
 {
-  return getExpr(retrieveAs<Element_Struct>(asisIdMap(), el), ctx);
+  return getExpr(retrieveAs<Element_Struct>(elemMap(), el), ctx);
 }
 
 SgExpression&
@@ -487,7 +493,7 @@ namespace
       default:
         logWarn() << "Unhandled range: " << range.Discrete_Range_Kind << std::endl;
         res = &mkRangeExp();
-        ROSE_ASSERT(!PRODUCTION_CODE);
+        ROSE_ASSERT(!FAIL_ON_ERROR);
     }
 
     return SG_DEREF(res);
@@ -513,7 +519,7 @@ namespace
       default:
         logWarn() << "Unhandled definition: " << def.Definition_Kind << std::endl;
         res = sb::buildNullExpression();
-        ROSE_ASSERT(!PRODUCTION_CODE);
+        ROSE_ASSERT(!FAIL_ON_ERROR);
     }
 
     return SG_DEREF(res);

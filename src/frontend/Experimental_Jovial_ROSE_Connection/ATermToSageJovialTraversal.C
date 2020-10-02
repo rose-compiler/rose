@@ -6041,6 +6041,14 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
    } else if (ATmatch(term, "BitFormulaNOT(<term>)", &t_operand)) {
       if (traverse_LogicalOperand(t_operand, expr)) {
          // MATCHED LogicalOperand
+      }
+      else if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+         // BitFormulaNOT is sometimes ambiguous, try the first path
+         ATermList tail = (ATermList) ATmake("<term>", t_amb);
+         ATerm head = ATgetFirst(tail);
+         if (traverse_TableItem(head, expr)) {
+            // MATCHED RelationalExpression
+         }
       } else return ATfalse;
 
       ROSE_ASSERT(expr);
@@ -6052,7 +6060,8 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
       if (traverse_Variable(t_operand, expr)) {
          // MATCHED Variable
       } else return ATfalse;
-   } else return ATfalse;
+   }
+   else return ATfalse;
 
    ROSE_ASSERT(expr);
 
@@ -6932,7 +6941,7 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
       // that a replication operator can't have expression size other than 1.
 #if PRINT_WARNINGS
          cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall - variable reference ambiguous "
-              << "replication operator for " << name << endl;
+              << "with replication operator for " << name << endl;
 #endif
 
       // Try looking at parent of the declaration for subscripts
