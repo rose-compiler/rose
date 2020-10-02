@@ -1413,11 +1413,17 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
        // CR (8/2/2019): Added SgJovialDefineDeclaration and SgJovialDirectiveStatement
        // I'm not sure class_name() is correct. Probably get_name() should be fixed.
           case V_SgJovialDefineDeclaration:
-               name = isSgJovialDefineDeclaration(declaration)->class_name();
+               {
+                  const SgJovialDefineDeclaration* dfnDcl = isSgJovialDefineDeclaration(declaration);
+                  name = dfnDcl->class_name();
+               }
                break;
 
           case V_SgJovialDirectiveStatement:
-               name = isSgJovialDirectiveStatement(declaration)->class_name();
+               {
+                  const SgJovialDirectiveStatement* stmnt = isSgJovialDirectiveStatement(declaration);
+                  name = stmnt->class_name();
+               }
                break;
 
           case V_SgEnumDeclaration:
@@ -7365,14 +7371,16 @@ bool SageInterface::isMain(const SgNode* n)
             either = true;
          }
          else {
-            ROSE_ASSERT(isSgStatement(n) != NULL);
-            if (isSgGlobal(isSgStatement(n)->get_scope())) {
+            const SgStatement* stmnt = isSgStatement(n);
+            ROSE_ASSERT(stmnt != NULL);
+            if (isSgGlobal(stmnt->get_scope())) {
                either = true;
             }
          }
          if (either) {
-            ROSE_ASSERT(isSgFunctionDeclaration(n) != NULL);
-            if (isSgFunctionDeclaration(n)->get_name() == "main") {
+            const SgFunctionDeclaration* funcDefn = isSgFunctionDeclaration(n);
+            ROSE_ASSERT(funcDefn != NULL);
+            if (funcDefn->get_name() == "main") {
                result = true;
             }
          }
@@ -7879,7 +7887,7 @@ SageInterface::getScope( const SgNode* astNode )
        }
 
    // return scopeStatement;
-       return const_cast<SgScopeStatement*>(scopeStatement);
+     return const_cast<SgScopeStatement*>(scopeStatement);
    }
 
 
@@ -8362,6 +8370,7 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
      while (isSgCastExp(temp_lhs) != NULL)
         {
           cast = isSgCastExp(temp_lhs);
+          ROSE_ASSERT(cast != NULL);
           temp_lhs = cast->get_operand();
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
@@ -20238,6 +20247,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                      case V_SgAttributeSpecificationStatement:
                      case V_SgEmptyDeclaration:
                      case V_SgFortranIncludeLine:
+                     case V_SgJovialDefineDeclaration:
                      case V_SgJovialDirectiveStatement:
                      case V_SgPragmaDeclaration:
                        break;
