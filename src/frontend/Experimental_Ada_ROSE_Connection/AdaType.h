@@ -17,7 +17,9 @@ void initializeAdaTypes(SgGlobal& global);
 /// represents a (partially) converted type
 struct TypeData
 {
-  SgNode* n;
+  SgNode* n; // The partialy converted ROSE representation
+  
+  // additional declaration modifiers
   bool    hasAbstract;
   bool    hasLimited;
   bool    hasTagged;
