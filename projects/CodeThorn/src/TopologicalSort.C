@@ -10,9 +10,12 @@ namespace CodeThorn {
 
   void TopologicalSort::createTopologicallySortedLabelList() {
     if(revPostOrderList.size()==0) {
-      LabelSet slabs=flow.getStartLabelSet();
-      for(auto slab : slabs) {
-        semanticRevPostOrderTraversal(slab);
+      // determine nodes with no predecessors (this is sufficient to find all entry nodes including disconnected subgraphs)
+      for(auto iter=flow.nodes_begin();iter!=flow.nodes_end();++iter) {
+        Label lab=*iter;
+        if(labeler.isFunctionEntryLabel(lab) && flow.pred(lab).size()==0) {
+          semanticRevPostOrderTraversal(lab);
+        }
       }
     }
   }
