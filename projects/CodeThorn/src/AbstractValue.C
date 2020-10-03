@@ -647,7 +647,7 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
       //    }
   }
   case FUN_PTR: {
-    return label.toString();
+    return "fptr:"+label.toString();
   }
   default:
     if(strictChecking) {
@@ -675,6 +675,9 @@ string AbstractValue::toString() const {
     stringstream ss;
     ss<<"("<<variableId.toString()<<","<<getIntValue()<<")";
     return ss.str();
+  }
+  case FUN_PTR: {
+    return "fptr:"+label.toString();
   }
   default:
     if(strictChecking) {

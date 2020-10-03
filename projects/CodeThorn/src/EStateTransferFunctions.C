@@ -684,6 +684,57 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
         }
       }
     }
+    if(funName==getAnalyzer()->_ctOpt.forkFunction1) {
+      SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+      SAWYER_MESG(logger[TRACE])<<getAnalyzer()->_ctOpt.forkFunction1<<" #args:"<<actualParameters.size()<<endl;
+      // get 5th argument
+      SgExpressionPtrList::iterator pIter=actualParameters.begin();
+      for(int j=1;j<5;j++) {
+        ++pIter;
+      }        
+      SgExpression* actualParameterExpr=*pIter;
+      // general case: the actual argument is an arbitrary expression (including a single variable)
+      list<SingleEvalResultConstInt> evalResultList=getExprAnalyzer()->evaluateExpression(actualParameterExpr,currentEState);
+      if(evalResultList.size()==0) {
+        SAWYER_MESG(logger[FATAL])<<"Internal error: no state computed for argument evaluation at: "<<SgNodeHelper::sourceLineColumnToString(getLabeler()->getNode(edge.source()))<<endl;
+        SAWYER_MESG(logger[FATAL])<<"Argument expression: "<<actualParameterExpr->unparseToString()<<endl;
+        SAWYER_MESG(logger[FATAL])<<"EState: "<<currentEState.toString(getVariableIdMapping())<<endl;
+        exit(1);
+      }
+      list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
+      SingleEvalResultConstInt evalResult=*resultListIter;
+      if(evalResultList.size()>1) {
+        SAWYER_MESG(logger[ERROR]) <<"multi-state generating operators in function call parameters not supported."<<endl;
+        exit(1);
+      }
+      AbstractValue arg5Value=evalResult.value();
+      // this result value has to be a function pointer value, create a state (representing the fork), and continue with current state
+      ROSE_ASSERT(arg5Value.isFunctionPtr());
+      // TODO: create state with this function label as start state
+      EState forkedEState=*estate;
+      // set target label in new state to function pointer label
+      forkedEState.setLabel(arg5Value.getLabel());
+      
+      // allow both formats x=f(...) and f(...)
+      SgAssignOp* assignOp=isSgAssignOp(AstUtility::findExprNodeInAstUpwards(V_SgAssignOp,funCall));
+      if(assignOp) {
+        list<EState> estateList1=transferAssignOp(assignOp,edge,estate); // use current estate, do not mix with forked state
+        ROSE_ASSERT(estateList1.size()==1);
+        EState estate1=*estateList1.begin();
+        estate1.setLabel(edge.target());
+        list<EState> estateList2;
+        estateList2.push_back(estate1);
+        estateList2.push_back(forkedEState);
+        return estateList2;
+      } else {
+        list<EState> estateList;
+        EState estate1=*estate;
+        estate1.setLabel(edge.target());
+        estateList.push_back(estate1);
+        estateList.push_back(forkedEState);
+        return estateList;
+      }
+    }
     if(isFunctionCallWithAssignmentFlag) {
       // here only the specific format x=f(...) can exist
       SgAssignOp* assignOp=isSgAssignOp(AstUtility::findExprNodeInAstUpwards(V_SgAssignOp,funCall));
