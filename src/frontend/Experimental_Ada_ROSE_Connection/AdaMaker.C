@@ -1,9 +1,9 @@
 
+#include "sage3basic.h"
+
 #include "AdaMaker.h"
 
-#include "sageInterface.h"
-
-#include "AdaUtil.h"
+#include "Ada_to_ROSE.h"
 
 // turn on all GCC warnings after include files have been processed
 #pragma GCC diagnostic warning "-Wall"
