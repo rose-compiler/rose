@@ -509,25 +509,25 @@ void Build(const parser::FunctionReference &x, SgExpression* &expr)
    std::cout << "Rose::builder::Build(FunctionReference)\n";
 #endif
 
-   Build(x.v, expr); // Call
+   std::list<SgExpression*> arg_list;
+   std::string func_name;
+
+   Build(x.v, arg_list, func_name); // Call
 }
 
-void Build(const parser::Call &x, SgExpression* &expr)
+void Build(const parser::Call &x, std::list<SgExpression*> &arg_list, std::string &name)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Call)\n";
 #endif
 
-   const parser::CharBlock source = x.source;
+   SgExpression* expr{nullptr};
 
-   SgExpression* proc_name{nullptr};
-   SgExpression* arg_list{nullptr};
-
-   Build(std::get<0>(x.t), proc_name);   // ProcedureDesignator
-   Build(std::get<1>(x.t), arg_list);    // std::list<ActualArgSpec>
+   Build(std::get<0>(x.t), expr, name);   // ProcedureDesignator
+   Build(std::get<1>(x.t), arg_list);     // std::list<ActualArgSpec>
 }
 
-void Build(const parser::ProcedureDesignator &x, SgExpression* &expr)
+void Build(const parser::ProcedureDesignator &x, SgExpression* &expr, std::string &name)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ProcedureDesignator)\n";
@@ -535,12 +535,8 @@ void Build(const parser::ProcedureDesignator &x, SgExpression* &expr)
 
    std::visit(
       common::visitors{
-         [&] (const parser::Name &y)
-         {
-            std::string name = y.ToString();
-            std::cout << "The ProcedureDesignator name is " << name << "\n";
-         },
-         [&] (const auto &y) { Build(y, expr); }   // ProcComponentRef
+         [&] (const parser::Name             &y) { name = y.ToString(); },
+         [&] (const parser::ProcComponentRef &y) { Build(y, expr);      }
       },
       x.u);
 }
@@ -1472,6 +1468,20 @@ void Build(const parser::CallStmt&x, T* scope)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CallStmt)\n";
 #endif
+
+   std::list<SgExpression*> arg_list;
+   std::string name;
+
+   // Get argument list and build rose node from it
+   Build(x.v, arg_list, name);  // Call
+   SgExprListExp* param_list = SageBuilderCpp17::buildExprListExp_nfi(arg_list);
+
+   // Begin SageTreeBuilder
+   SgExprStatement* call_stmt{nullptr};
+   builder.Enter(call_stmt, name, param_list, "" /* abort_phrase */);
+
+   // Finish SageTreeBuilder
+   builder.Leave(call_stmt);
 }
 
 template<typename T>

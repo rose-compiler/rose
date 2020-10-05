@@ -1639,6 +1639,11 @@ SgExpression* buildNullExpression_nfi()
    return SageBuilder::buildNullExpression_nfi();
 }
 
+SgExpression* buildFunctionCallExp(const std::string &name, SgType *return_type, SgExprListExp *parameters)
+{
+   return SageBuilder::buildFunctionCallExp(name, return_type, parameters);
+}
+
 SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &list)
 {
    SgExprListExp* expr_list = SageBuilder::buildExprListExp_nfi();

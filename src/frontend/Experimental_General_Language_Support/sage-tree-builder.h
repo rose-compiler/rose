@@ -289,6 +289,7 @@ namespace SageBuilderCpp17 {
    SgExpression*  buildAggregateInitializer_nfi(SgExprListExp* initializers, SgType* type = nullptr);
    SgExpression*  buildAsteriskShapeExp_nfi();
    SgExpression*  buildNullExpression_nfi();
+   SgExpression*  buildFunctionCallExp(const std::string &, SgType*, SgExprListExp* parameters = nullptr);
    SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &);
 
 // Other

@@ -54,8 +54,8 @@ void Build(const Fortran::parser::            Designator &x, SgExpression* &expr
 void Build(const Fortran::parser::               DataRef &x, SgExpression* &expr);
 void Build(const Fortran::parser::             Substring &x, SgExpression* &expr);
 void Build(const Fortran::parser::     FunctionReference &x, SgExpression* &expr);
-void Build(const Fortran::parser::                  Call &x, SgExpression* &expr);
-void Build(const Fortran::parser::   ProcedureDesignator &x, SgExpression* &expr);
+void Build(const Fortran::parser::                  Call &x, std::list<SgExpression*> &arg_list, std::string &name);
+void Build(const Fortran::parser::   ProcedureDesignator &x, SgExpression* &expr, std::string &name);
 void Build(const Fortran::parser::      ProcComponentRef &x, SgExpression* &expr);
 void Build(const Fortran::parser::         ActualArgSpec &x, SgExpression* &expr);
 void Build(const Fortran::parser::             ActualArg &x, SgExpression* &expr);
