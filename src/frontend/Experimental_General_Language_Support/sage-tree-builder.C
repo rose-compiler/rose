@@ -620,10 +620,17 @@ Enter(SgCastExp* &cast_expr, const std::string &name, SgExpression* cast_operand
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgCastExp* &, ...) \n";
 
-   SgTypedefSymbol* typedef_symbol = SageInterface::lookupTypedefSymbolInParentScopes(name, SageBuilder::topScopeStack());
-   ROSE_ASSERT(typedef_symbol);
+   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
 
-   SgType* conv_type = typedef_symbol->get_type();
+   // Jovial specific comment:
+   //   If the symbol is an Enum it is a StatusConversion
+   if (isSgTypedefSymbol(symbol) == nullptr  && isSgEnumSymbol(symbol) == nullptr) {
+      std::cerr << "WARNING UNIMPLEMENTED: SageTreeBuilder::Enter(SgCastExp* ...) for name "
+                << name << std::endl;
+      ROSE_ASSERT(false);
+   }
+
+   SgType* conv_type = symbol->get_type();
    cast_expr = SageBuilder::buildCastExp_nfi(cast_operand, conv_type, SgCastExp::e_default);
 }
 
