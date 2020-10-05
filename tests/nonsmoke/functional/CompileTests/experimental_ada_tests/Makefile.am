@@ -3,6 +3,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # DQ (8/23/2017): Use command line option to alternatively test the experimental fortran frontend.
 # ROSE_FLAGS = -rose:verbose 0 -rose:experimental_csharp_frontend -I$(srcdir)
 ROSE_FLAGS    ?= -rose:skipfinalCompileStep
+
+# testTranslator runs the AST consistency checks
+
 # ROSE_COMPILER ?= $(top_builddir)/src/rose-compiler
 ROSE_COMPILER ?= ../../testTranslator
 
@@ -32,8 +35,11 @@ PASSING_TESTS :=                       \
   exception_declaration.ads            \
   gototest.ads                         \
   nested_package.ads                   \
+  named.ads                            \
+  opaque.ads                           \
   ordinary_type_declaration.ads        \
   package_with_body.ads                \
+  parent-child.ads                     \
   selected_component.ads               \
   simple_expression_range.ads          \
   tagged_definition.ads                \
@@ -47,8 +53,10 @@ PASSING_TESTS :=                       \
 # pass asis, frontend, backend, but representation is incomplete
 PASSING_INCOMPLETE_TESTS :=            \
   component_declaration.ads            \
-  subtypes.ads                         \ 
+  mpiuse.ads                           \
   real_typedecl.ads                    \
+  sender.ads                           \
+  subtypes.ads                         \ 
   EndOfList 
 
 # fail in backend
@@ -99,6 +107,11 @@ NOT_HANDLED := \
   while_loop_statement.adb             \
   EndOfList
 
+NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
+  parent.ads                           \
+  comm.ads                             \
+  mpi.ads                              \
+  EndOfList
 
 #
 # define test suite
