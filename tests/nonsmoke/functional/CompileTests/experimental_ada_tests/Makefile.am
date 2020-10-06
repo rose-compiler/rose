@@ -108,6 +108,7 @@ NOT_HANDLED := \
   case_function.adb                    \
   iterateRange.adb                     \
   while_loop_statement.adb             \
+  increment.adb	                       \
   EndOfList
 
 NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
