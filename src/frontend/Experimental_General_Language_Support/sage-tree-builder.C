@@ -465,15 +465,33 @@ Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope)
 }
 
 void SageTreeBuilder::
-Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope, bool have_end_stmt)
+Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope, bool have_end_stmt, std::string result_name /* = "" */)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
+
+   // If result is named, get initialized name for it now before declarations are moved out of param_scope
+   SgInitializedName* init_name;
+   if (!result_name.empty()) {
+      SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(result_name, param_scope);
+      ROSE_ASSERT(symbol);
+      init_name = symbol->get_declaration();
+      ROSE_ASSERT(init_name);
+   }
+
+   // Call more generic leave for function_decl, will move declarations and set result name as name of function
+   Leave(function_decl, param_scope);
+
+   // Reset result name if needed
+   if (init_name) {
+      SgProcedureHeaderStatement* proc_header_stmt = isSgProcedureHeaderStatement(function_decl);
+      ROSE_ASSERT(proc_header_stmt);
+
+      proc_header_stmt->set_result_name(init_name);
+   }
 
    if (have_end_stmt) {
       function_decl->set_named_in_end_statement(have_end_stmt);
    }
-
-   Leave(function_decl, param_scope);
 }
 
 void SageTreeBuilder::
@@ -1497,6 +1515,14 @@ SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_sha
    return SageBuilder::buildArrayType(base_type, dim_info);
 }
 
+SgType* getFunctionReturnType(std::string result_name, SgScopeStatement* scope)
+{
+   SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(result_name, scope);
+   ROSE_ASSERT(symbol);
+
+   return symbol->get_type();
+}
+
 // Operators
 //
 SgExpression* buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs)
@@ -1639,9 +1665,9 @@ SgExpression* buildNullExpression_nfi()
    return SageBuilder::buildNullExpression_nfi();
 }
 
-SgExpression* buildFunctionCallExp(const std::string &name, SgType *return_type, SgExprListExp *parameters)
+SgExpression* buildFunctionCallExp(SgFunctionCallExp* func_call)
 {
-   return SageBuilder::buildFunctionCallExp(name, return_type, parameters);
+   return func_call;
 }
 
 SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &list)

@@ -121,7 +121,7 @@ public:
    void Enter(SgFunctionDeclaration* &, const std::string &, SgType*, SgFunctionParameterList*,
                                         const LanguageTranslation::FunctionModifierList &, bool);
    void Leave(SgFunctionDeclaration*, SgScopeStatement*);
-   void Leave(SgFunctionDeclaration*, SgScopeStatement*, bool end_stmt_name);
+   void Leave(SgFunctionDeclaration*, SgScopeStatement*, bool, std::string result_name = "");
 
    void Enter(SgFunctionDefinition* &);
    void Leave(SgFunctionDefinition*);
@@ -260,6 +260,7 @@ namespace SageBuilderCpp17 {
    SgType* buildFloatType(SgExpression* kind_expr);
    SgType* buildStringType(SgExpression* stringLengthExpression);
    SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_shape_list);
+   SgType* getFunctionReturnType(std::string result_name, SgScopeStatement* scope);
 
 // Operators
    SgExpression*  buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs);
@@ -289,7 +290,7 @@ namespace SageBuilderCpp17 {
    SgExpression*  buildAggregateInitializer_nfi(SgExprListExp* initializers, SgType* type = nullptr);
    SgExpression*  buildAsteriskShapeExp_nfi();
    SgExpression*  buildNullExpression_nfi();
-   SgExpression*  buildFunctionCallExp(const std::string &, SgType*, SgExprListExp* parameters = nullptr);
+   SgExpression*  buildFunctionCallExp(SgFunctionCallExp*);
    SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &);
 
 // Other

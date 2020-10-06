@@ -212,6 +212,48 @@ void Build(const parser::FunctionSubprogram &x, T* scope)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(FunctionSubprogram)\n";
 #endif
+
+   SgFunctionParameterList* param_list{nullptr};
+   SgScopeStatement* param_scope{nullptr};
+   SgFunctionDeclaration* function_decl{nullptr};
+   LanguageTranslation::FunctionModifierList function_modifiers;
+   std::list<std::string> dummy_arg_name_list;
+   std::string name, result_name;
+   bool is_defining_decl = true;
+
+   // Traverse FunctionStmt to get dummy argument list, name of function, and name of result
+   Build(std::get<0>(x.t).statement, dummy_arg_name_list, name, result_name, function_modifiers);
+
+   // Enter SageTreeBuilder for SgFunctionParameterList
+   builder.Enter(param_list, param_scope, name, nullptr /* return_type */, is_defining_decl);
+
+   // Traverse SpecificationPart and ExecutionPart
+   Build(std::get<parser::SpecificationPart>(x.t), param_scope);
+   Build(std::get<parser::    ExecutionPart>(x.t), param_scope);
+
+   // Leave SageTreeBuilder for SgFunctionParameterList
+   builder.Leave(param_list, param_scope, dummy_arg_name_list);
+
+   SgType* return_type = SageBuilderCpp17::getFunctionReturnType(result_name, param_scope);
+
+   // Begin SageTreeBuilder for SgFunctionDeclaration
+   builder.Enter(function_decl, name, return_type, param_list, function_modifiers, is_defining_decl);
+
+   // EndFunctionStmt - std::optional<Name> v;
+   bool have_end_stmt = false;
+   if (auto & opt = std::get<4>(x.t).statement.v) {
+      have_end_stmt = true;
+   }
+
+   // Leave SageTreeBuilder for SgFunctionDeclaration
+   builder.Leave(function_decl, param_scope, have_end_stmt, result_name);
+
+#if 0
+   // TODO: implement optional InternalSubprogramPart
+   // std::optional<InternalSubprogramPart>
+   if (auto & opt = std::get<3>(x.t)) {
+   }
+#endif
 }
 
 template<typename T>
@@ -390,6 +432,21 @@ void Build(const parser::AssignmentStmt &x, T* scope)
    builder.Leave(assign_stmt);
 }
 
+void Build(const parser::FunctionStmt &x, std::list<std::string> &dummy_arg_name_list, std::string &name, std::string &result_name, LanguageTranslation::FunctionModifierList &function_modifiers)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(FunctionStmt)\n";
+#endif
+
+   Build(std::get<0>(x.t), function_modifiers);    // std::list<PrefixSpec>
+   Build(std::get<1>(x.t), name);                  // Name
+   Build(std::get<2>(x.t), dummy_arg_name_list);   // std::list<Name>
+
+   if (auto & opt = std::get<3>(x.t)) {            // std::optional<Suffix>
+      Build(opt.value(), result_name);
+   }
+}
+
 void Build(const parser::SubroutineStmt &x, std::list<std::string> &dummy_arg_name_list, std::string &name, LanguageTranslation::FunctionModifierList &function_modifiers)
 {
 #if PRINT_FLANG_TRAVERSAL
@@ -455,6 +512,20 @@ void Build(const parser::DummyArg &x, std::string &name)
       x.u);
 }
 
+void Build(const parser::Suffix &x, std::string &result_name)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(Suffix)\n";
+#endif
+
+   if (x.resultName) {  // std::optional<Name>
+      Build(x.resultName.value(), result_name);
+   }
+
+   // TODO:
+   //  std::optional<LanguageBindingSpec> binding;
+}
+
 void Build(const parser::Variable &x, SgExpression* &expr)
 {
 #if PRINT_FLANG_TRAVERSAL
@@ -513,6 +584,16 @@ void Build(const parser::FunctionReference &x, SgExpression* &expr)
    std::string func_name;
 
    Build(x.v, arg_list, func_name); // Call
+
+   SgExprListExp* param_list = SageBuilderCpp17::buildExprListExp_nfi(arg_list);
+
+   // Begin SageTreeBuilder
+   SgFunctionCallExp* func_call;
+   builder.Enter(func_call, func_name, param_list);
+
+   // Use wrapper function because can't use inheritance of pointers until Rose accepts Cpp17
+   expr = SageBuilderCpp17::buildFunctionCallExp(func_call);
+
 }
 
 void Build(const parser::Call &x, std::list<SgExpression*> &arg_list, std::string &name)
