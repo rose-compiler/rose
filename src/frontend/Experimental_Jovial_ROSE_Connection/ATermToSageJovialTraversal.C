@@ -6899,6 +6899,8 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
    // Several different options due to ambiguous grammar:
    //  1. function call
    //  2. type conversion
+   //     a. General conversion (isSgTypedefSymbol)
+   //     b. StatusConversion   (isSgEnuSymbol)
    //  3. variable
    //     a. Table initialization replication operator
    //     b. Table reference
@@ -6921,6 +6923,20 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 // Look for type conversion
 //
    else if (isSgTypedefSymbol(symbol)) {
+      SgCastExp* cast_expr = nullptr;
+
+      ROSE_ASSERT(expr_list->get_expressions().size() == 1);
+      SgExpression* cast_operand = expr_list->get_expressions()[0];
+      ROSE_ASSERT(cast_operand);
+
+      sage_tree_builder.Enter(cast_expr, name, cast_operand);
+      sage_tree_builder.Leave(cast_expr);
+      expr = cast_expr;
+   }
+
+// Look for StatusConversion
+//
+   else if (isSgEnumSymbol(symbol)) {
       SgCastExp* cast_expr = nullptr;
 
       ROSE_ASSERT(expr_list->get_expressions().size() == 1);
