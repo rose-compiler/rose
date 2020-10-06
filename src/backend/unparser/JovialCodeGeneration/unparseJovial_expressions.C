@@ -190,6 +190,11 @@ Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
            unparseJovialType(isSgTypedefType(type), info);
            curprint(" *)");
            break;
+        case V_SgEnumType:
+           curprint("(* ");
+           unparseJovialType(isSgEnumType(type), info);
+           curprint(" *)");
+           break;
         default:
            std::cout << "error: unparseCastExp() is unimplemented for " << type->class_name() << std::endl;
            ROSE_ASSERT(false);
