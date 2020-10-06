@@ -97,6 +97,7 @@ NOT_HANDLED := \
   case_function.adb                    \
   iterateRange.adb                     \
   while_loop_statement.adb             \
+  increment.adb	                       \
   EndOfList
 
 
