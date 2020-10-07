@@ -257,6 +257,20 @@ RiscOperators::systemCallReturnValue() {
     }
 }
 
+IS::BaseSemantics::SValuePtr
+RiscOperators::systemCallReturnValue(const IS::BaseSemantics::SValuePtr &retval) {
+    // FIXME[Robb Matzke 2020-10-07]: Assumes x86
+    if (32 == partitioner_.instructionProvider().wordSize()) {
+        const RegisterDescriptor AX = partitioner_.instructionProvider().registerDictionary()->findOrThrow("eax");
+        writeRegister(AX, retval);
+    } else {
+        ASSERT_require(64 == partitioner_.instructionProvider().wordSize());
+        const RegisterDescriptor AX = partitioner_.instructionProvider().registerDictionary()->findOrThrow("rax");
+        writeRegister(AX, retval);
+    }
+    return retval;
+}
+
 void
 RiscOperators::doExit(const IS::BaseSemantics::SValuePtr &status) {
     // This is called during the symbolic phase. The concrete system call hasn't happened yet.
@@ -276,7 +290,7 @@ RiscOperators::doGetuid() {
     // This is called during the symbolic phase. The concrete system call hasn't happened yet, so we can't get a return value.
     // However, if the return value is intended to be an input, we can do that now.
     systemCalls().back().arguments.resize(0);
-    systemCalls().back().returnValue = undefined_(partitioner_.instructionProvider().wordSize());
+    systemCalls().back().returnValue = systemCallReturnValue(undefined_(partitioner_.instructionProvider().wordSize()));
     inputVariables_.insertSystemCallReturn(systemCalls().size() - 1, SValue::promote(systemCalls().back().returnValue)->get_expression());
 }
 
@@ -582,10 +596,17 @@ ConcolicExecutor::commandLineSwitches(Settings &settings /*in,out*/) {
     sgroups.push_back(P2::Engine::partitionerSwitches(settings.partitioner));
 
     SwitchGroup ce("Concolic executor switches");
-    Rose::CommandLine::insertBooleanSwitch(ce, "show-states", settings.traceState,
-                                           "Show the virtual machine state after each instruction is processed.");
+
     Rose::CommandLine::insertBooleanSwitch(ce, "show-semantics", settings.traceSemantics,
                                            "Show the semantic operations that are performed for each instruction.");
+
+    ce.insert(Switch("show-state")
+              .argument("address", P2::addressIntervalParser(settings.showingStates), "all")
+              .doc("Addresses of instructions after which to show instruction states. This is intended for debugging, and the "
+                   "state will only be shown if the Rose::BinaryAnalysis::FeasiblePath(debug) diagnostic stream is enabled. "
+                   "This switch may occur multiple times to specify multiple addresses or address ranges. " +
+                   P2::AddressIntervalParser::docString() + " The default, if no argument is specified, is all addresses."));
+
     sgroups.push_back(ce);
 
     return sgroups;
@@ -675,6 +696,10 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
     ASSERT_not_null(testCase);
     Sawyer::FileSystem::TemporaryDirectory tempDir;     // working files for this execution
 
+    // Mark the test case as having NOT been run concolically, and clear any data saved as part of a previous concolic run.
+    testCase->concolicResult(0);
+    db->clearSystemCalls(db->id(testCase, Update::NO));
+
     // Create the semantics layers. The symbolic semantics uses a Partitioner, and the concrete semantics uses a suborinate
     // process which is created from the specimen.
     SmtSolver::Ptr solver = SmtSolver::instance("best");
@@ -683,7 +708,6 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
     Emulation::RiscOperatorsPtr ops =
         Emulation::RiscOperators::instance(settings_.emulationSettings, partitioner, process, inputVariables_,
                                            Emulation::SValue::instance(), solver);
-
 
     Emulation::DispatcherPtr cpu;
     if (settings_.traceSemantics) {
@@ -913,7 +937,7 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
             updateSystemCallSideEffects(ops, ops->systemCalls().back());
         }
 
-        if (settings_.traceState)
+        if (settings_.showingStates.exists(executionVa))
             SAWYER_MESG(debug) <<"state after instruction:\n" <<(*ops->currentState()+"  ");
         executionVa = cpu->concreteInstructionPointer();
         if (updateCallStack(cpu, insn) && where) {
@@ -935,6 +959,7 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
     SAWYER_MESG(debug) <<"generating new test case...\n";
 
     std::vector<std::string> args = oldTestCase->args();   // like argv, but excluding argv[argc]
+    std::vector<SystemCall> syscalls = oldTestCase->syscalls();
     args.insert(args.begin(), oldTestCase->specimen()->name());
     Sawyer::Optional<size_t> maxArgvAdjusted;           // max index of any adjusted argument
     Sawyer::Optional<size_t> adjustedArgc;                 // whether we have a new argc value from the solver

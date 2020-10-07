@@ -953,6 +953,25 @@ public:
      *  suite, otherwise all test cases are returned. */
     std::vector<TestCaseId> testCases();
 
+    /** Number of system call records for test case.
+     *
+     *  Returns the number of system call records for the specified test case. These records are created when the test case is
+     *  concolically executed. */
+    size_t nSystemCalls(TestCaseId);
+
+    /** Erase all system call records for specified test case. */
+    void clearSystemCalls(TestCaseId);
+
+    /** Insert a new system call into the database.
+     *
+     *  Returns the system call sequence number for the specified test case. */
+    size_t appendSystemCall(TestCaseId, size_t callNumber, size_t functionId, rose_addr_t call_site, int retval);
+
+    /** Concrete return value for a system call.
+     *
+     *  The @p functionId and @p callSite are used only to double check that we're talking about the right system call. */
+    int systemCallRetval(TestCaseId, size_t callNumber, size_t functionId, rose_addr_t callSite);
+
     //------------------------------------------------------------------------------------------------------------------------
     // Overloaded methods for all objects.
     //------------------------------------------------------------------------------------------------------------------------

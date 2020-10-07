@@ -325,6 +325,7 @@ public:
     InstructionSemantics2::BaseSemantics::SValuePtr systemCallFunctionNumber();
     InstructionSemantics2::BaseSemantics::SValuePtr systemCallArgument(size_t idx);
     InstructionSemantics2::BaseSemantics::SValuePtr systemCallReturnValue();
+    InstructionSemantics2::BaseSemantics::SValuePtr systemCallReturnValue(const InstructionSemantics2::BaseSemantics::SValuePtr&);
     /** @} */
 
 public:
@@ -430,10 +431,10 @@ public:
         Emulation::RiscOperators::Settings emulationSettings;
 
         bool traceSemantics;                            /** Whether to debug semantic steps by using a semantic tracer. */
-        bool traceState;                                /** Whether to output machine state after each instruction. */
+        AddressIntervalSet showingStates;               /** Instructions after which to show the semantic state. */
 
         Settings()
-            : traceSemantics(false), traceState(false) {}
+            : traceSemantics(false) {}
     };
 
     /** Information about a called function. */

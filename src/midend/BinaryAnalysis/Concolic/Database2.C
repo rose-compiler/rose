@@ -83,6 +83,15 @@ initSchema(Sawyer::Database::Connection db) {
            " test_suite integer not null,"
            " constraint fk_specimen foreign key (specimen) references specimens (id),"
            " constraint fk_test_suite foreign key (test_suite) references test_suites (id))");
+
+    db.run("drop table if exists system_calls");
+    db.run("create table system_calls ("
+           " test_case integer not null,"               // test case for which this system call occurs
+           " call_number integer not null,"             // sequence number of instruction call within test case
+           " function_number integer not null,"         // system call function identification number
+           " call_site integer,"                        // address at which the system call occurs
+           " retval integer,"                           // system call concrete return value
+           " constraint fk_test_case foreign key (test_case) references test_cases(id))");
 }
 
 static void
@@ -431,6 +440,55 @@ Database::testCases() {
     for (auto row: stmt)
         retval.push_back(TestCaseId(row.get<size_t>(0)));
     return retval;
+}
+
+size_t
+Database::nSystemCalls(TestCaseId id) {
+    ASSERT_require(id);
+    Sawyer::Database::Statement stmt = connection_.stmt("select count(*) from system_calls where test_case = ?tcid").bind("tcid", *id);
+    return *stmt.get<size_t>();
+}
+
+void
+Database::clearSystemCalls(TestCaseId id) {
+    ASSERT_require(id);
+    connection_.stmt("delete from system_calls where test_case = ?tcid").bind("tcid", *id).run();
+}
+
+size_t
+Database::appendSystemCall(TestCaseId id, size_t callNumber, size_t functionId, rose_addr_t call_site, int retval) {
+    ASSERT_require(id);
+    connection_.stmt("insert into system_calls"
+                     " (test_case, call_number, function_number, call_site, retval)"
+                     " values (?tcid, ?callNumber, ?functionNumber, ?callSite, ?retval)")
+        .bind("tcid", *id)
+        .bind("callNumber", callNumber)
+        .bind("functionNumber", functionId)
+        .bind("callSite", call_site)
+        .bind("retval", retval)
+        .run();
+    return callNumber;
+}
+
+int
+Database::systemCallRetval(TestCaseId id, size_t callNumber, size_t functionId, rose_addr_t callSite) {
+    ASSERT_require(id);
+    auto retval = connection_.stmt("select retval from system_calls"
+                                   " where test_case = ?tcid"
+                                   " and call_sequence = ?callNumber"
+                                   " and function_number = ?functionId"
+                                   " and call_site = ?callSite")
+                  .bind("tcid", *id)
+                  .bind("callNumber", callNumber)
+                  .bind("functionId", functionId)
+                  .bind("callSite", callSite)
+                  .get<int>();
+    ASSERT_require2(retval,
+                    "no such system call for tc=" + boost::lexical_cast<std::string>(*id) +
+                    ", call number " + boost::lexical_cast<std::string>(callNumber) +
+                    ", function " + boost::lexical_cast<std::string>(functionId) +
+                    ", call site " + StringUtility::addrToString(callSite));
+    return *retval;
 }
 
 TestSuite::Ptr
