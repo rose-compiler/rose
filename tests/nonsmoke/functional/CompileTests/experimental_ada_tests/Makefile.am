@@ -5,6 +5,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 ROSE_FLAGS    ?= -rose:skipfinalCompileStep
 
 # testTranslator runs the AST consistency checks
+../../testTranslator:
+	cd ../..; $(MAKE) testTranslator
+
 
 # ROSE_COMPILER ?= $(top_builddir)/src/rose-compiler
 ROSE_COMPILER ?= ../../testTranslator
@@ -105,6 +108,7 @@ NOT_HANDLED := \
   case_function.adb                    \
   iterateRange.adb                     \
   while_loop_statement.adb             \
+  increment.adb	                       \
   EndOfList
 
 NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
@@ -148,10 +152,10 @@ print:
 $(top_builddir)/src/rose-compiler:
 	$(MAKE) -C $(top_builddir)/src rose-compiler
 	
-%.ads:$(abs_srcdir)/tests/%.ads
+%.ads:$(abs_srcdir)/tests/%.ads $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
 	
-%.adb:$(abs_srcdir)/tests/%.adb
+%.adb:$(abs_srcdir)/tests/%.adb $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
 
 .PHONY: clean-local
