@@ -990,7 +990,16 @@ Grammar::setUpStatements ()
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
-     FunctionParameterScope.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_SCOPE", "../Grammar/Statement.code" );
+// CR (09/24/2020): Finishing implementation of SgFunctionParameterScope for Jovial
+     FunctionParameterScope.setFunctionPrototype( "HEADER_FUNCTION_PARAMETER_SCOPE", "../Grammar/Statement.code" );
+     FunctionParameterScope.editSubstitute      ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+     FunctionParameterScope.editSubstitute      ( "LIST_DATA_TYPE", "SgDeclarationStatementPtrList" );
+     FunctionParameterScope.editSubstitute      ( "LIST_NAME", "declarations" );
+     FunctionParameterScope.editSubstitute      ( "LIST_FUNCTION_RETURN_TYPE", "void" );
+     FunctionParameterScope.editSubstitute      ( "LIST_FUNCTION_NAME", "declaration" );
+     FunctionParameterScope.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "SgDeclarationStatement*" );
+     FunctionParameterScope.setDataPrototype    ( "SgDeclarationStatementPtrList", "declarations", "",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (7/17/2017): Added to support concept of scope in nondefining declarations (required for more sophisticated level of template useage).
      DeclarationScope.setFunctionPrototype ( "HEADER_DECLARATION_SCOPE", "../Grammar/Statement.code" );

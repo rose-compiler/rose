@@ -8467,6 +8467,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgIntegerDivideOp:
           case V_SgDivideOp:         // return 13;
           case V_SgModOp:            // return 13;
+          case V_SgReplicationOp:    // return 13;
                                      precedence_value = 13; break;
 
           case V_SgDotStarOp:        // return 14;
@@ -8494,7 +8495,8 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgLambdaExp:        // return 15;
 
        // CR (7/31/2020): Replication operator used in Jovial (and potentially Fortran) initialization
-          case V_SgReplicationOp:    precedence_value = 15; break;
+          case V_SgAtOp:             // return 15;
+                                     precedence_value = 15; break;
 
           case V_SgFunctionCallExp:
              {
@@ -8869,11 +8871,6 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
      curprint(string("\n/* In getAssociativity(): variant = ") + Cxx_GrammarTerminalNames[variant].name + " */ \n");
 #endif
 
-#if 0
-     printf ("Exiting as a test in getAssociativity() \n");
-     ROSE_ASSERT(false);
-#endif
-
      switch (variant)
         {
        // DQ (7/23/2013): Added cast operator.
@@ -9014,6 +9011,7 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
           case V_SgBitComplementOp:
           case V_SgPointerDerefExp:
           case V_SgAddressOfOp:
+          case V_SgAtOp:
           case V_SgSizeOfOp:
              {
               return e_assoc_left;

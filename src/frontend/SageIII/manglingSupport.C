@@ -1321,10 +1321,11 @@ mangleExpression (const SgExpression* expr)
 
         case V_SgCastExp: {
           const SgCastExp * cast = isSgCastExp(expr);
-          SgType * cast_type = cast->get_type();
-          ROSE_ASSERT(cast_type != NULL);
+          ROSE_ASSERT(cast != NULL);
           SgExpression * op = cast->get_operand_i();
           ROSE_ASSERT(op != NULL);
+          SgType * cast_type = cast->get_type();
+          ROSE_ASSERT(cast_type != NULL);
           mangled_name << "_bCastExp_" << mangleExpression(op) << "_totype_" << cast_type->get_mangled().str() << "_eCastExp_";
           break;
         }
@@ -1423,6 +1424,7 @@ mangleExpression (const SgExpression* expr)
         }
         case V_SgConstructorInitializer: {
           const SgConstructorInitializer* e = isSgConstructorInitializer (expr);
+          ROSE_ASSERT(e != NULL);
 
           mangled_name << "_bConstructorInitializer_";
 

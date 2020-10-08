@@ -17,6 +17,7 @@ extern "C" int omp_wrap() { return 1; }
 
 extern int omp_lex();
 
+#include <assert.h>
 #include <stdio.h>
 #include <string>
 #include <string.h>
@@ -63,7 +64,11 @@ digit           [0-9]
 id              [a-zA-Z_][a-zA-Z0-9_]*
 
 %%
-{digit}{digit}* { omp_lval.itype = atoi(strdup(yytext)); return (ICONSTANT); }
+{digit}{digit}* { char* theDup = strdup(yytext);
+                  assert(theDup != NULL);
+                  omp_lval.itype = atoi(theDup);
+                  return (ICONSTANT);
+                }
 omp             { return cond_return ( OMP); }
 parallel        { return cond_return ( PARALLEL); }
 task            { return cond_return ( TASK ); }

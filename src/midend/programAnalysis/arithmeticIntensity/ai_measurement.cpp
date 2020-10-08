@@ -221,8 +221,9 @@ namespace ArithmeticIntensityMeasurement
     else
       ss<< "NULL node"<<endl;
    // if non-zero, send out error code   
+
 //    if (error_code!=0)
-      ss<<"Error Code:"<<error_code<<endl;
+    ss<<"Error Code:"<<error_code<<endl;
 
     ss<<"\tFP_plus:"<< plus_count<<endl;
     ss<<"\tFP_minus:"<< minus_count<<endl;

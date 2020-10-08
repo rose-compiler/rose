@@ -238,6 +238,7 @@ namespace sg
     GEN_VISIT(SgAssignedGotoStatement)
     GEN_VISIT(SgAssociateStatement)
     GEN_VISIT(SgAsteriskShapeExp)
+    GEN_VISIT(SgAtOp)
     GEN_VISIT(SgAttribute)
     GEN_VISIT(SgAttributeSpecificationStatement)
     GEN_VISIT(SgAutoType)
@@ -1689,6 +1690,13 @@ namespace sg
   GVisitor traverseChildren(GVisitor gv, SgNode* n)
   {
     return traverseChildren(gv, sg::deref(n));
+  }
+  
+  template <class SageParent, class SageChild>
+  void linkParentChild(SageParent& parent, SageChild& child, void (SageParent::*setter)(SageChild*))
+  {
+    (parent.*setter)(&child);
+    child.set_parent(&parent);
   }
 }
 #endif /* _SAGEGENERIC_H */

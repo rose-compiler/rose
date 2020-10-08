@@ -167,6 +167,8 @@ Grammar::setUpExpressions ()
   
   // CR (07/26/2020): Jovial replication operator for initialization expressions, also seen in Fortran
      NEW_TERMINAL_MACRO (ReplicationOp,          "ReplicationOp",          "REPLICATION_OP" );
+  // CR (9/23/2020): Jovial binary "@" operator is used to dereference pointers "member @ object".
+     NEW_TERMINAL_MACRO (AtOp,                   "AtOp",                   "AT_OP" );
 
   // PP (06/08/2020): Added support for Ada remainder (different from mod) and abs operators 
      NEW_TERMINAL_MACRO (RemOp,                  "RemOp",                  "REM_OP" );
@@ -409,7 +411,7 @@ Grammar::setUpExpressions ()
           RshiftOp       | PntrArrRefExp    | ScopeOp             | AssignOp         | ExponentiationOp     | JavaUnsignedRshiftOp |
           ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         | SpaceshipOp    |
           NonMembershipOp | IsOp            | IsNotOp             | DotDotExp        | ElementwiseOp        | PowerOp        |
-          LeftDivideOp    | RemOp           | ReplicationOp,
+          LeftDivideOp    | RemOp           | ReplicationOp       | AtOp,
           "BinaryOp","BINARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (NaryOp,
@@ -793,6 +795,8 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
      AbsOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
+     AtOp.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
+                                  "../Grammar/Expression.code" );
 
      MembershipOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
@@ -1074,6 +1078,7 @@ Grammar::setUpExpressions ()
      ReplicationOp.editSubstitute   ( "PRECEDENCE_VALUE", "13" );
      RemOp.editSubstitute           ( "PRECEDENCE_VALUE", "13" );
      AbsOp.editSubstitute           ( "PRECEDENCE_VALUE", "15" );
+     AtOp.editSubstitute            ( "PRECEDENCE_VALUE", "15" );
 
   // DQ (2/5/2004): Adding support for varargs in AST
      VarArgStartOp.editSubstitute   ( "PRECEDENCE_VALUE", "16" );
@@ -2386,6 +2391,7 @@ Grammar::setUpExpressions ()
 
      RemOp.setFunctionPrototype ( "HEADER_REM_OPERATOR", "../Grammar/Expression.code" );
      AbsOp.setFunctionPrototype ( "HEADER_ABS_OPERATOR", "../Grammar/Expression.code" );
+     AtOp.setFunctionPrototype  ( "HEADER_AT_OPERATOR",  "../Grammar/Expression.code" );
 
 
   // DQ (9/4/2013): Adding support for compound literals.  These are not the same as initializers and define
@@ -3155,6 +3161,7 @@ Grammar::setUpExpressions ()
 
      RemOp.setFunctionSource            ( "SOURCE_REM_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      AbsOp.setFunctionSource            ( "SOURCE_ABS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     AtOp.setFunctionSource             ( "SOURCE_AT_OPERATOR_EXPRESSION", "../Grammar/Expression.code" );
 
   // DQ (7/25/2020): Adding C++20 support (need to lookup the correct operator precedence, made it the same as AddOp for now).
      SpaceshipOp.setFunctionSource ( "SOURCE_SPACESHIP_OPERATOR","../Grammar/Expression.code" );

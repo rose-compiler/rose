@@ -627,6 +627,7 @@ BUILD_BINARY_PROTO(AndOp)
 BUILD_BINARY_PROTO(ArrowExp)
 BUILD_BINARY_PROTO(ArrowStarOp)
 BUILD_BINARY_PROTO(AssignOp)
+BUILD_BINARY_PROTO(AtOp)
 BUILD_BINARY_PROTO(BitAndOp)
 BUILD_BINARY_PROTO(BitOrOp)
 BUILD_BINARY_PROTO(BitXorOp)
@@ -1142,6 +1143,12 @@ ROSE_DLL_API SgProcedureHeaderStatement* buildProcedureHeaderStatement(const SgN
 //! Build a Fortran subroutine or procedure
 ROSE_DLL_API SgProcedureHeaderStatement*
 buildProcedureHeaderStatement(const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgProcedureHeaderStatement::subprogram_kind_enum, SgScopeStatement* scope, SgProcedureHeaderStatement* first_nondefining_declaration );
+
+// CR (9/24/2020)
+//! Build a nondefining SgProcedureHeaderStatement, handle function type, symbol etc transparently
+ROSE_DLL_API SgProcedureHeaderStatement*
+buildNondefiningProcedureHeaderStatement(const SgName & name, SgType* return_type,
+                                         SgFunctionParameterList* param_list, SgScopeStatement* scope=NULL);
 
 //! Build a regular function call statement
 ROSE_DLL_API SgExprStatement*
@@ -1729,7 +1736,7 @@ T* buildUnaryExpression_nfi(SgExpression* operand) {
 
 //---------------------binary expressions-----------------------
 
-//! Template function to build a binary expression of type T, taking care of parent pointers, file info, lvalue, etc. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildReplicationOp,buildScopeOp(),buildSubtractOp()buildXorAssignOp()
+//! Template function to build a binary expression of type T, taking care of parent pointers, file info, lvalue, etc. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(),buildAtOp, buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildReplicationOp,buildScopeOp(),buildSubtractOp()buildXorAssignOp()
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.
  * Doxygen is not smart enough to handle macro expansion.
  */
@@ -1750,7 +1757,7 @@ T* buildUnaryExpression_nfi(SgExpression* operand) {
    return result;
  }
 
-//! Template function to build a binary expression of type T, taking care of parent pointers, but without file-info. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildReplicationOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
+//! Template function to build a binary expression of type T, taking care of parent pointers, but without file-info. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(),buildAtOp, buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildReplicationOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.
  * Doxygen is not smart enough to handle macro expansion.
  */
