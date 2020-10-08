@@ -249,7 +249,7 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
     SgAsmInstruction *insn = partitioner.discoverInstruction(anchor);
 
     // Look for the PLT entry.
-    if (SgAsmX86Instruction *insnX86 = isSgAsmX86Instruction(insn)) {
+    if (isSgAsmX86Instruction(insn)) {
         bool found = false;
         rose_addr_t indirectVa=0;
         size_t indirectSize=0;
@@ -342,7 +342,7 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
         }
 
 #ifdef ROSE_ENABLE_ASM_A64
-    } else if (SgAsmA64Instruction *insnA64 = isSgAsmA64Instruction(insn)) {
+    } else if (isSgAsmA64Instruction(insn)) {
         if (0 == gotEntryNBytes_) {
             // A64 entries look like this:
             //     adrp     x16, 0x00011000
