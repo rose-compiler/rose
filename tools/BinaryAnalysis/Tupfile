@@ -32,8 +32,8 @@ run $(test) bat-cfg          ./bat-cfg --self-test
 run $(test) bat-container    ./bat-container --self-test
 run $(test) bat-dis          ./bat-dis --self-test
 run $(test) bat-entropy      ./bat-entropy --self-test
-run $(test) bat-insnfreq     ./bat-insnfreq --self-test
-#run $(test) bat-insnfreq-cmp ./bat-insnfreq-cmp --self-test
+run $(test) bat-insnfreq     ./bat-insnfreq --self-test --no-error-if-disabled
+run $(test) bat-insnfreq-cmp ./bat-insnfreq-cmp --self-test --no-error-if-disabled
 run $(test) bat-linear       ./bat-linear --self-test
 run $(test) bat-lsb          ./bat-lsb --self-test
 run $(test) bat-lsf          ./bat-lsf --self-test

@@ -42,6 +42,12 @@ parseCommandLine(int argc, char *argv[]) {
                    .doc("Initialize the histogram with data from the specified file. This can be used to accumulate "
                         "instruction frequencies across multiple specimens."));
 
+    // Ignored when this tool is enabled. Causes zero exit status if tool is disabled.
+    bool noErrorIfDisabled = false;
+    generic.insert(Switch("no-error-if-disabled")
+                   .intrinsicValue(true, noErrorIfDisabled)
+                   .hidden(true));
+
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
     parser.with(generic);
@@ -100,10 +106,17 @@ main(int argc, char *argv[]) {
 #else
 
 #include <iostream>
+#include <cstring>
 
 int main(int argc, char *argv[]) {
+    int exitStatus = 1;
+    for (int i = 1; i < argc; ++i) {
+        if (!strcmp(argv[i], "--no-error-if-disabled"))
+            exitStatus = 0;
+    }
+
     std::cerr <<argv[0] <<": this tool is disabled (your C++ compiler is too old)\n";
-    return 1;
+    return exitStatus;
 }
 
 #endif

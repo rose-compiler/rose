@@ -1234,13 +1234,13 @@ FeasiblePath::cfgToPaths(const P2::CfgConstVertexSet &vertexSet) const {
 P2::CfgConstEdgeSet
 FeasiblePath::cfgToPaths(const P2::CfgConstEdgeSet &cfgEdgeSet) const {
     P2::CfgConstEdgeSet retval;
-    for (const P2::ControlFlowGraph::ConstEdgeIterator &cfgEdge: cfgEdgeSet.values()) {
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgEdge, cfgEdgeSet.values()) {
         // We don't have a mapping directly from CFG to Paths for edges, so we use the vertex mapping instead.
         Sawyer::Optional<P2::ControlFlowGraph::ConstVertexIterator> pathSrcVertex = vmap_.forward().find(cfgEdge->source());
         Sawyer::Optional<P2::ControlFlowGraph::ConstVertexIterator> pathTgtVertex = vmap_.forward().find(cfgEdge->target());
         if (pathSrcVertex && pathTgtVertex) {
-            auto pathEdges = pathSrcVertex.get()->outEdges();
-            for (auto pathEdge = pathEdges.begin(); pathEdge != pathEdges.end(); ++pathEdge) {
+            boost::iterator_range<P2::ControlFlowGraph::ConstEdgeIterator> pathEdges = pathSrcVertex.get()->outEdges();
+            for (P2::ControlFlowGraph::ConstEdgeIterator pathEdge = pathEdges.begin(); pathEdge != pathEdges.end(); ++pathEdge) {
                 if (pathEdge->target() == *pathTgtVertex && pathEdge->value().type() == cfgEdge->value().type())
                     retval.insert(pathEdge);
             }
