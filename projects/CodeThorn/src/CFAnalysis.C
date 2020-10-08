@@ -397,7 +397,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     return labeler->getLabel(node);
 
   if(!labeler->numberOfAssociatedLabels(node)) {
-    throw std::logic_error("Error: icfg construction: not label relevant node ");
+    throw std::logic_error("Error: icfg construction: not label relevant node: "+node->class_name());
   }
   ROSE_ASSERT(labeler->numberOfAssociatedLabels(node));
   switch (node->variantT()) {
@@ -449,6 +449,9 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     return labeler->getLabel(node);
   }
   case V_SgGotoStatement: {
+    return labeler->getLabel(node);
+  }
+  case V_SgAsmStmt: {
     return labeler->getLabel(node);
   }
   case V_SgSwitchStatement: {
@@ -749,6 +752,10 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     // special case
   case V_SgTypedefDeclaration:
     return finalSet;
+
+  case V_SgAsmStmt: {
+    return finalSet;
+  }
 
   default:
     cerr << "Error: Unknown node in CFAnalysis::finalLabels: "<<node->sage_class_name()<<endl; exit(1);
@@ -1225,7 +1232,7 @@ Flow CFAnalysis::flow(SgNode* n) {
   switch (node->variantT()) {
   case V_SgFunctionDefinition: {
     Sg_File_Info* fi = node->get_file_info();
-    SAWYER_MESG(logger[INFO])<<"Building CFG for function: "<<SgNodeHelper::getFunctionName(node)<< " :" << fi->displayString() << endl;
+    SAWYER_MESG(logger[INFO])<<"Building CFG for function: "<<SgNodeHelper::getFunctionName(node)<< endl;
     // PP (04/09/20)
     // do nothing for function definitions that did not receive a label
     // e.g., templated functions
@@ -1416,6 +1423,11 @@ Flow CFAnalysis::flow(SgNode* n) {
   case V_SgTypedefDeclaration:
     return edgeSet;
 
+  case V_SgAsmStmt: {
+    // content of asm stmt is ignored
+    return edgeSet;
+  }
+
   case V_SgContinueStmt: {
     SgNode* loopStmt=correspondingLoopConstruct(node);
     if(isSgWhileStmt(loopStmt)) {
@@ -1471,7 +1483,7 @@ Flow CFAnalysis::flow(SgNode* n) {
     edgeSet.insert(Edge(initialLabel(node),EDGE_FORWARD,targetLabel));
     return edgeSet;
   }
-
+ 
   case V_SgCaseOptionStmt:
   case V_SgDefaultOptionStmt: {
     Label caseStmtLab=labeler->getLabel(node);
@@ -1560,16 +1572,16 @@ Flow CFAnalysis::flow(SgNode* n) {
     return edgeSet;
   }
   
-  case V_SgTryStmt: // PP
-    {
-      SgNode* childStmt=node->get_traversalSuccessorByIndex(0);
-      Edge    edge1=Edge(labeler->getLabel(node),EDGE_FORWARD,initialLabel(childStmt));
-      edgeSet.insert(edge1);
-      Flow    childFlow=flow(childStmt);
-      edgeSet+=childFlow;
+  case V_SgTryStmt: {
+    // PP
+    SgNode* childStmt=node->get_traversalSuccessorByIndex(0);
+    Edge    edge1=Edge(labeler->getLabel(node),EDGE_FORWARD,initialLabel(childStmt));
+    edgeSet.insert(edge1);
+    Flow    childFlow=flow(childStmt);
+    edgeSet+=childFlow;
       
-      return edgeSet;    
-    }
+    return edgeSet;    
+  }
   
   case V_SgForStatement: {
     SgStatementPtrList& stmtPtrList=SgNodeHelper::getForInitList(node);

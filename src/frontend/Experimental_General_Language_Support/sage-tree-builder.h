@@ -107,12 +107,12 @@ public:
                                  const boost::optional<std::string> &,
                                  const boost::optional<std::string> &);
 
-   void Enter(SgFunctionParameterList* &, SgBasicBlock* &, const std::string &, SgType*);
-   void Leave(SgFunctionParameterList*, SgBasicBlock*, const std::list<LanguageTranslation::FormalParameter> &);
+   void Enter(SgFunctionParameterList* &, SgScopeStatement* &, const std::string &, SgType*, bool);
+   void Leave(SgFunctionParameterList*, SgScopeStatement*, const std::list<LanguageTranslation::FormalParameter> &);
 
    void Enter(SgFunctionDeclaration* &, const std::string &, SgType*, SgFunctionParameterList*,
-                                        const LanguageTranslation::FunctionModifierList &);
-   void Leave(SgFunctionDeclaration*, SgBasicBlock*);
+                                        const LanguageTranslation::FunctionModifierList &, bool);
+   void Leave(SgFunctionDeclaration*, SgScopeStatement*);
 
    void Enter(SgFunctionDefinition* &);
    void Leave(SgFunctionDefinition*);
@@ -218,6 +218,9 @@ public:
      {
         return (std::find(lst.begin(), lst.end(), item) != lst.end());
      }
+
+// Symbols (Jovial specific, should this go in SageInterface?)
+   void injectAliasSymbol(const std::string &name);
 
 };
 

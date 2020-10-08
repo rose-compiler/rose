@@ -414,7 +414,7 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
 
    //! Pretty print AST horizontally, output to a specified text file.
    void printAST2TextFile (SgNode* node, const char* filename); 
-   void printAST2TextFile (SgNode* node, const std::string& filename); 
+   void printAST2TextFile (SgNode* node, std::string filename); 
 
  // DQ (2/12/2012): Added some diagnostic support.
 //! Diagnostic function for tracing back through the parent list to understand at runtime where in the AST a failure happened.
@@ -560,6 +560,18 @@ ROSE_DLL_API bool isExtern(SgDeclarationStatement* stmt);
 
 //! Set a declaration as extern
 ROSE_DLL_API void setExtern(SgDeclarationStatement* stmt);
+
+//! True if an SgInitializedName is "mutable' (has storage modifier set)
+bool ROSE_DLL_API isMutable(SgInitializedName* name);
+
+//! True if a parameter name is a Jovial output parameter
+bool ROSE_DLL_API isJovialOutParam(SgInitializedName* name);
+
+//! Get a vector of Jovial input parameters from the function parameter list (may work for Fortran in the future)
+std::vector<SgInitializedName*> getInParameters(const SgInitializedNamePtrList &params);
+
+//! Get a vector of Jovial output parameters from the function parameter list (may work for Fortran in the future)
+std::vector<SgInitializedName*> getOutParameters(const SgInitializedNamePtrList &params);
 
 //! Interface for creating a statement whose computation writes its answer into
 //! a given variable.
@@ -1039,6 +1051,8 @@ ROSE_DLL_API bool templateArgumentListEquivalence(const SgTemplateArgumentPtrLis
 //! Test for equivalence of types independent of access permissions (private or protected modes for members of classes).
 ROSE_DLL_API bool isEquivalentType (const SgType* lhs, const SgType* rhs);
 
+//! Find the function type matching a function signature plus a given return type
+ROSE_DLL_API SgFunctionType* findFunctionType (SgType* return_type, SgFunctionParameterTypeList* typeList);
 
 //! Test if two types are equivalent SgFunctionType nodes. This is necessary for template function types
 //! They may differ in one SgTemplateType pointer but identical otherwise. 

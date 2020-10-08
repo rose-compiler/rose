@@ -1413,11 +1413,17 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
        // CR (8/2/2019): Added SgJovialDefineDeclaration and SgJovialDirectiveStatement
        // I'm not sure class_name() is correct. Probably get_name() should be fixed.
           case V_SgJovialDefineDeclaration:
-               name = isSgJovialDefineDeclaration(declaration)->class_name();
+               {
+                  const SgJovialDefineDeclaration* dfnDcl = isSgJovialDefineDeclaration(declaration);
+                  name = dfnDcl->class_name();
+               }
                break;
 
           case V_SgJovialDirectiveStatement:
-               name = isSgJovialDirectiveStatement(declaration)->class_name();
+               {
+                  const SgJovialDirectiveStatement* stmnt = isSgJovialDirectiveStatement(declaration);
+                  name = stmnt->class_name();
+               }
                break;
 
           case V_SgEnumDeclaration:
@@ -7365,14 +7371,16 @@ bool SageInterface::isMain(const SgNode* n)
             either = true;
          }
          else {
-            ROSE_ASSERT(isSgStatement(n) != NULL);
-            if (isSgGlobal(isSgStatement(n)->get_scope())) {
+            const SgStatement* stmnt = isSgStatement(n);
+            ROSE_ASSERT(stmnt != NULL);
+            if (isSgGlobal(stmnt->get_scope())) {
                either = true;
             }
          }
          if (either) {
-            ROSE_ASSERT(isSgFunctionDeclaration(n) != NULL);
-            if (isSgFunctionDeclaration(n)->get_name() == "main") {
+            const SgFunctionDeclaration* funcDefn = isSgFunctionDeclaration(n);
+            ROSE_ASSERT(funcDefn != NULL);
+            if (funcDefn->get_name() == "main") {
                result = true;
             }
          }
@@ -7879,7 +7887,7 @@ SageInterface::getScope( const SgNode* astNode )
        }
 
    // return scopeStatement;
-       return const_cast<SgScopeStatement*>(scopeStatement);
+     return const_cast<SgScopeStatement*>(scopeStatement);
    }
 
 
@@ -8362,6 +8370,7 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
      while (isSgCastExp(temp_lhs) != NULL)
         {
           cast = isSgCastExp(temp_lhs);
+          ROSE_ASSERT(cast != NULL);
           temp_lhs = cast->get_operand();
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
@@ -13654,7 +13663,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                        {
                          if (SgUpcForAllStatement* p = isSgUpcForAllStatement(parent))
                             {
-                              const bool stmt_present = (p->get_loop_body() == targetStmt || p->get_test() == targetStmt);
+                              //const bool stmt_present = (p->get_loop_body() == targetStmt || p->get_test() == targetStmt);
 
                           // \pp \todo what if !stmt_present
                            // ROSE_ASSERT(stmt_present != NULL);
@@ -17138,6 +17147,42 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
     return ((stmt->get_declarationModifier()).get_storageModifier()).setExtern();
   }
 
+  // Check if an SgInitializedName is "mutable' (has storage modifier set)
+  bool SageInterface::isMutable(SgInitializedName* name)
+  {
+    ROSE_ASSERT(name);
+    return name->get_storageModifier().isMutable();
+  }
+
+  // True if a parameter name is a Jovial output parameter
+  bool SageInterface::isJovialOutParam(SgInitializedName* name)
+  {
+    return isMutable(name);
+  }
+
+  // Get a vector of Jovial input parameters from the function parameter list
+  // TODO: Look into making this work for Fortran
+  std::vector<SgInitializedName*> SageInterface::getInParameters(const SgInitializedNamePtrList &params)
+  {
+    std::vector<SgInitializedName*> in_params;
+    BOOST_FOREACH (SgInitializedName* name, params)
+      {
+        if (!isJovialOutParam(name)) in_params.push_back(name);
+      }
+    return in_params;
+  }
+
+  // Get a list of Jovial output parameters from the function parameter list
+  // TODO: Look into making this work for Fortran
+  std::vector<SgInitializedName*> SageInterface::getOutParameters(const SgInitializedNamePtrList &params)
+  {
+    std::vector<SgInitializedName*> out_params;
+    BOOST_FOREACH (SgInitializedName* name, params)
+      {
+        if (isJovialOutParam(name)) out_params.push_back(name);
+      }
+    return out_params;
+  }
 
   unsigned long long SageInterface::getIntegerConstantValue(SgValueExp* expr) {
     switch (expr->variantT()) {
@@ -19511,9 +19556,9 @@ SageInterface::deleteAST ( SgNode* n )
                         void visit (SgNode* node)
                         {
                         //These nodes are manually deleted because they cannot be visited by the traversal
-                                /*////////////////////////////////////////////////
-                                /remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
-                                /////////////////////////////////////////////////*/
+                                ////////////////////////////////////////////////
+                                //remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
+                                ////////////////////////////////////////////////
 #if 0
                                 printf ("In DeleteAST::visit(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
@@ -20090,7 +20135,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
      std::vector <SgInitializedName*> initname_vec;
 
      SgSymbolTable* s_table = sourceBlock->get_symbol_table();
-//     cout<<"debug SageInterface::moveStatementsBetweenBlocks() number of stmts = "<< srcStmts.size() <<endl;
+
      for (SgStatementPtrList::iterator i = srcStmts.begin(); i != srcStmts.end(); i++)
         {
           // append statement to the target block
@@ -20112,14 +20157,16 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                       if (func->get_firstNondefiningDeclaration() == func)
                         func->set_scope(targetBlock);
                     }
+                    else if (SgJovialTableStatement* table = isSgJovialTableStatement(*i))
+                    {
+                      // CR 9/21/2020: Uncovered by issue RC-135 and scope moved in switch below
+                    }
                     else
                     {
-                      //(*i)->set_scope(targetBlock);
                       printf ("Warning: test failing (*i)->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks() \n");
                       cerr<<"  "<<(*i)->class_name()<<endl;
                     }
                   }
-               //ROSE_ASSERT((*i)->get_scope() == targetBlock);
              }
 
           SgDeclarationStatement* declaration = isSgDeclarationStatement(*i);
@@ -20182,11 +20229,25 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                        {
                          SgFunctionDeclaration * funcDecl = isSgFunctionDeclaration(declaration);
                          ROSE_ASSERT (funcDecl);
+                         break;
                        }
-                     break;
+                     case V_SgJovialTableStatement:
+                       {
+                      // CR 9/21/2020: Needed for issue RC-135
+                         SgJovialTableStatement* table = isSgJovialTableStatement(declaration);
+                         ROSE_ASSERT (table);
+
+                         SgDeclarationStatement* def_decl = table->get_definingDeclaration();
+                         SgDeclarationStatement* nondef_decl = table->get_firstNondefiningDeclaration();
+                         nondef_decl->set_parent(targetBlock);
+                         nondef_decl->set_scope(targetBlock);
+                         def_decl->set_scope(targetBlock);
+                         break;
+                       }
                      case V_SgAttributeSpecificationStatement:
                      case V_SgEmptyDeclaration:
                      case V_SgFortranIncludeLine:
+                     case V_SgJovialDefineDeclaration:
                      case V_SgJovialDirectiveStatement:
                      case V_SgPragmaDeclaration:
                        break;
@@ -20230,7 +20291,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
   // DQ (9/23/2011): Reset with a valid symbol table.
      sourceBlock->set_symbol_table(new SgSymbolTable());
      sourceBlock->get_symbol_table()->set_parent(sourceBlock);
-#if 1
+
      ROSE_ASSERT (targetBlock->get_symbol_table() == s_table);
      for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
      {
@@ -20246,7 +20307,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
        SgSymbol* symbol = iname->get_symbol_from_symbol_table();
        ROSE_ASSERT (symbol != NULL);
      }
-#endif
+
      // Liao 2/4/2009
      // Finally , move preprocessing information attached inside the source block to the target block
      // Outliner uses this function to move a code block to the outlined function.
@@ -22688,7 +22749,6 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
       }
   }
 
-#if 1
   //make sure the symbol is moved also since prependStatement() (in fact fixVariableDeclaration()) does not handle this detail.
   SgVariableSymbol* sym = SageInterface::getFirstVarSym(decl);
   ROSE_ASSERT(sym != NULL);
@@ -22706,7 +22766,6 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
   // This is difficult since C++ variables have namespaces
   // Details are in SageInterface::fixVariableDeclaration()
   ROSE_ASSERT (target_scope->symbol_exists(sym));
-#endif
 }
 
 class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterface::const_int_expr_t> {
@@ -23640,7 +23699,7 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   out<<endl;
 
   std::vector<SgNode* > children = node->get_traversalSuccessorContainer();
-  for (int i =0; i< children.size(); i++)
+  for (size_t i =0; i< children.size(); i++)
   {
     bool n_hasRemaining=false;
     if (i+1<children.size())
@@ -23660,8 +23719,10 @@ void SageInterface::printAST(SgNode* node)
   cout<<oss.str();
 }
 
-void printAST2TextFile (SgNode* node, const std::string& filename)
+void printAST2TextFile (SgNode* node, std::string filename)
 {
+  // CR 9/21/2020: This leads to infinite recursion (clang warning message) and should be removed from API)
+  ROSE_ASSERT(false);
   printAST2TextFile (node, filename.c_str());
 }
 
@@ -23715,6 +23776,22 @@ bool SageInterface::insideSystemHeader (SgLocatedNode* node)
       rtval = true;
   }
   return rtval;
+}
+
+//! Find the function type matching a function signature plus a given return type
+SgFunctionType* SageInterface::findFunctionType (SgType* return_type, SgFunctionParameterTypeList* typeList)
+{
+  ROSE_ASSERT(return_type != NULL);
+  ROSE_ASSERT(typeList != NULL);
+  SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
+  ROSE_ASSERT(fTable);
+
+  // This function make clever use of a static member function which can't be built
+  // for the case of a SgMemberFunctionType (or at least not without more work).
+  SgName typeName = SgFunctionType::get_mangled(return_type, typeList);
+  SgFunctionType* funcType = isSgFunctionType(fTable->lookup_function_type(typeName));
+
+  return funcType;
 }
 
 //! Test if two types are equivalent SgFunctionType nodes. This is necessary for template function types

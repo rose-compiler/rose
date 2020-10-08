@@ -71,12 +71,11 @@ void EStateTransferFunctions::initDiagnostics() {
     PState currentPState=*currentEState.pstate();
     ConstraintSet cset=*currentEState.constraints();
     if(_analyzer->getOptionsRef().rers.rersBinary) {
-      // logger[DEBUG]<<"ESTATE: "<<estate->toString(&variableIdMapping)<<endl;
       SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source());
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
         ROSE_ASSERT(funCall);
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName=="calculate_outputFP") {
+        if(funName==_rersHybridOutputFunctionName) {
           // RERS global vars binary handling
           PState _pstate=*estate->pstate();
           RERS_Problem::rersGlobalVarsCallInitFP(getAnalyzer(),_pstate, omp_get_thread_num());
@@ -164,7 +163,7 @@ void EStateTransferFunctions::initDiagnostics() {
     if(_analyzer->getOptionsRef().rers.rersBinary) {
       // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
       string funName=SgNodeHelper::getFunctionName(funCall);
-      if(funName=="calculate_outputFP") {
+      if(funName==_rersHybridOutputFunctionName) {
         // logger[DEBUG]<< "rers-binary mode: skipped static-analysis call."<<endl;
         return elistify();
       }
@@ -363,7 +362,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge,
     if(_analyzer->getOptionsRef().rers.rersBinary) {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName=="calculate_outputFP") {
+        if(funName==_rersHybridOutputFunctionName) {
           EState newEState=currentEState;
           newEState.setLabel(edge.target());
           newEState.callString=cs;
@@ -400,7 +399,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge,
     if(_analyzer->getOptionsRef().rers.rersBinary) {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName=="calculate_outputFP") {
+        if(funName==_rersHybridOutputFunctionName) {
           EState newEState=currentEState;
           newEState.setLabel(edge.target());
           newEState.callString=cs;
@@ -467,13 +466,19 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge,
   }
 }
 
+  std::list<EState> EStateTransferFunctions::transferAsmStmt(Edge edge, const EState* estate) {
+    // ignore AsmStmt
+    return transferIdentity(edge,estate);
+  }
+  
   std::list<EState> EStateTransferFunctions::transferFunctionEntry(Edge edge, const EState* estate) {
     Label lab=estate->label();
     SgNode* node=_analyzer->getLabeler()->getNode(lab);
     SgFunctionDefinition* funDef=isSgFunctionDefinition(node);
     if(funDef) {
       string functionName=SgNodeHelper::getFunctionName(node);
-      //cout<<"DEBUG: Analyzing function "<<functionName<<endl;
+      string fileName=SgNodeHelper::sourceFilenameToString(node);
+      SAWYER_MESG(logger[INFO])<<"Analyzing Function:"<<fileName<<" : "<<functionName<<endl;
       SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
       SAWYER_MESG(logger[TRACE])<<"Function:"<<functionName<<" Parameters: ";
       for(auto fParam : formalParameters) {
@@ -581,7 +586,6 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
       newio.recordVariable(InputOutput::STDIN_VAR,varId);
       EState newEState=createEState(edge.target(),cs,newPState,newCSet,newio);
       resList.push_back(newEState);
-      // logger[DEBUG]<< "created "<<_inputVarValues.size()<<" input states."<<endl;
       return resList;
     } else {
       if(_analyzer->_inputVarValues.size()>0) {
@@ -610,7 +614,6 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
           EState newEState=createEState(edge.target(),estate->callString,newPState,newCSet,newio);
           resList.push_back(newEState);
         }
-        // logger[DEBUG]<< "created "<<_inputVarValues.size()<<" input states."<<endl;
         return resList;
       } else {
         // without specified input values (default mode: analysis performed for all possible input values)
@@ -681,6 +684,57 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
         }
       }
     }
+    if(funName==getAnalyzer()->_ctOpt.forkFunction1) {
+      SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+      SAWYER_MESG(logger[TRACE])<<getAnalyzer()->_ctOpt.forkFunction1<<" #args:"<<actualParameters.size()<<endl;
+      // get 5th argument
+      SgExpressionPtrList::iterator pIter=actualParameters.begin();
+      for(int j=1;j<5;j++) {
+        ++pIter;
+      }        
+      SgExpression* actualParameterExpr=*pIter;
+      // general case: the actual argument is an arbitrary expression (including a single variable)
+      list<SingleEvalResultConstInt> evalResultList=getExprAnalyzer()->evaluateExpression(actualParameterExpr,currentEState);
+      if(evalResultList.size()==0) {
+        SAWYER_MESG(logger[FATAL])<<"Internal error: no state computed for argument evaluation at: "<<SgNodeHelper::sourceLineColumnToString(getLabeler()->getNode(edge.source()))<<endl;
+        SAWYER_MESG(logger[FATAL])<<"Argument expression: "<<actualParameterExpr->unparseToString()<<endl;
+        SAWYER_MESG(logger[FATAL])<<"EState: "<<currentEState.toString(getVariableIdMapping())<<endl;
+        exit(1);
+      }
+      list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
+      SingleEvalResultConstInt evalResult=*resultListIter;
+      if(evalResultList.size()>1) {
+        SAWYER_MESG(logger[ERROR]) <<"multi-state generating operators in function call parameters not supported."<<endl;
+        exit(1);
+      }
+      AbstractValue arg5Value=evalResult.value();
+      // this result value has to be a function pointer value, create a state (representing the fork), and continue with current state
+      ROSE_ASSERT(arg5Value.isFunctionPtr());
+      // TODO: create state with this function label as start state
+      EState forkedEState=*estate;
+      // set target label in new state to function pointer label
+      forkedEState.setLabel(arg5Value.getLabel());
+      
+      // allow both formats x=f(...) and f(...)
+      SgAssignOp* assignOp=isSgAssignOp(AstUtility::findExprNodeInAstUpwards(V_SgAssignOp,funCall));
+      if(assignOp) {
+        list<EState> estateList1=transferAssignOp(assignOp,edge,estate); // use current estate, do not mix with forked state
+        ROSE_ASSERT(estateList1.size()==1);
+        EState estate1=*estateList1.begin();
+        estate1.setLabel(edge.target());
+        list<EState> estateList2;
+        estateList2.push_back(estate1);
+        estateList2.push_back(forkedEState);
+        return estateList2;
+      } else {
+        list<EState> estateList;
+        EState estate1=*estate;
+        estate1.setLabel(edge.target());
+        estateList.push_back(estate1);
+        estateList.push_back(forkedEState);
+        return estateList;
+      }
+    }
     if(isFunctionCallWithAssignmentFlag) {
       // here only the specific format x=f(...) can exist
       SgAssignOp* assignOp=isSgAssignOp(AstUtility::findExprNodeInAstUpwards(V_SgAssignOp,funCall));
@@ -719,7 +773,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
   return elistify(newEState);
 }
 
-  std::list<EState> EStateTransferFunctions::transferDefaultOptionStmt(SgDefaultOptionStmt* defaultStmt,Edge edge, const EState* estate) {
+std::list<EState> EStateTransferFunctions::transferDefaultOptionStmt(SgDefaultOptionStmt* defaultStmt,Edge edge, const EState* estate) {
   SAWYER_MESG(logger[TRACE])<<"DEBUG: DEFAULTSTMT: "<<defaultStmt->unparseToString()<<endl;
 
   Label targetLabel=edge.target();
@@ -739,15 +793,29 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
   // value of switch expression
   AbstractValue switchCondVal=_analyzer->singleValevaluateExpression(condExpr,currentEState);
 
+  // if there is at least one case that is definitely reachable, then
+  // the default (label) is non-reachable (fall-through still
+  // applies), otherwise default is may-reachable
+  bool defaultReachable=true;
+
   // create filter for all case labels (TODO: precompute this set)
-  set<SgCaseOptionStmt*> caseStmtSet=SgNodeHelper::switchRelevantCaseStmtNodes(switchStmt);
+  set<SgCaseOptionStmt*> caseStmtSet=SgNodeHelper::switchRelevantCaseStmtNodes(blockStmt); // argument must be the blockStmt of swithStmt
+  SAWYER_MESG(logger[TRACE])<<"castStmtSet.size(): "<<caseStmtSet.size()<<endl;
   for(set<SgCaseOptionStmt*>::iterator i=caseStmtSet.begin();i!=caseStmtSet.end();++i) {
+    SAWYER_MESG(logger[TRACE])<<"switch-stmt (@default): analyzing case "<<(*i)->unparseToString()<<endl;
     SgCaseOptionStmt* caseStmt=*i;
     SgExpression* caseExpr=caseStmt->get_key();
     SgExpression* caseExprOptionalRangeEnd=caseStmt->get_key_range_end();
     if(caseExprOptionalRangeEnd) {
-      SAWYER_MESG(logger[ERROR])<<"Error: GNU extension range in case statement not supported."<<endl;
-      exit(1);
+      AbstractValue caseValRangeBegin=_analyzer->singleValevaluateExpression(caseExpr,currentEState);
+      AbstractValue caseValRangeEnd=_analyzer->singleValevaluateExpression(caseExprOptionalRangeEnd,currentEState);
+      AbstractValue comparisonValBegin=caseValRangeBegin.operatorLessOrEq(switchCondVal);
+      AbstractValue comparisonValEnd=caseValRangeEnd.operatorMoreOrEq(switchCondVal);
+      if(comparisonValBegin.isTrue()&&comparisonValEnd.isTrue()) {
+        SAWYER_MESG(logger[TRACE])<<"switch-default: non-reachable=false."<<endl;
+        defaultReachable=false;
+        break;
+      }
     }
     // value of constant case value
     AbstractValue caseVal=_analyzer->singleValevaluateExpression(caseExpr,currentEState);
@@ -755,20 +823,29 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
     SAWYER_MESG(logger[TRACE])<<"switch-default filter cmp: "<<switchCondVal.toString(getVariableIdMapping())<<"=?="<<caseVal.toString(getVariableIdMapping())<<endl;
     // check that not any case label may be equal to the switch-expr value (exact for concrete values)
     AbstractValue comparisonVal=caseVal.operatorEq(switchCondVal);
-    if(comparisonVal.isTop()||comparisonVal.isTrue()) {
+    // top is *not* considered here, because only a definitive case makes default non-reachable
+    if(comparisonVal.isTrue()) {
       // determined that at least one case may be reachable
       SAWYER_MESG(logger[TRACE])<<"switch-default: continuing."<<endl;
-      return elistify(createEState(targetLabel,cs,newPState,cset));
+      //return elistify(createEState(targetLabel,cs,newPState,cset));
+      SAWYER_MESG(logger[TRACE])<<"switch-default: non-reachable=false."<<endl;
+      defaultReachable=false;
+      break;
     }
   }
-  // detected infeasable path (default is not reachable)
-  SAWYER_MESG(logger[TRACE])<<"switch-default: infeasable path."<<endl;
-  list<EState> emptyList;
-  return emptyList;
+  if(defaultReachable) {
+    SAWYER_MESG(logger[TRACE])<<"switch-default: reachable."<<endl;
+    return elistify(createEState(targetLabel,cs,newPState,cset));
+  } else {
+    // detected infeasable path (default is not reachable)
+    SAWYER_MESG(logger[TRACE])<<"switch-default: infeasable path."<<endl;
+    list<EState> emptyList;
+    return emptyList;
+  }
 }
 
 std::list<EState> EStateTransferFunctions::transferCaseOptionStmt(SgCaseOptionStmt* caseStmt,Edge edge, const EState* estate) {
-  SAWYER_MESG(logger[TRACE])<<"DEBUG: CASESTMT: "<<caseStmt->unparseToString()<<endl;
+  SAWYER_MESG(logger[TRACE])<<"CASESTMT: "<<caseStmt->unparseToString()<<endl;
   Label targetLabel=edge.target();
   CallString cs=estate->callString;
   PState newPState=*estate->pstate();
@@ -789,8 +866,19 @@ std::list<EState> EStateTransferFunctions::transferCaseOptionStmt(SgCaseOptionSt
   SgExpression* caseExpr=caseStmt->get_key();
   SgExpression* caseExprOptionalRangeEnd=caseStmt->get_key_range_end();
   if(caseExprOptionalRangeEnd) {
-    SAWYER_MESG(logger[ERROR])<<"Error: GNU extension range in case statement not supported."<<endl;
-    exit(1);
+    AbstractValue caseValRangeBegin=_analyzer->singleValevaluateExpression(caseExpr,currentEState);
+    AbstractValue caseValRangeEnd=_analyzer->singleValevaluateExpression(caseExprOptionalRangeEnd,currentEState);
+    AbstractValue comparisonValBegin=caseValRangeBegin.operatorLessOrEq(switchCondVal);
+    AbstractValue comparisonValEnd=caseValRangeEnd.operatorMoreOrEq(switchCondVal);
+    if(comparisonValBegin.isTop()||comparisonValEnd.isTop()||(comparisonValBegin.isTrue()&&comparisonValEnd.isTrue())) {
+      SAWYER_MESG(logger[TRACE])<<"switch-case GNU Range: continuing."<<endl;
+      return elistify(createEState(targetLabel,cs,newPState,cset));
+    } else {
+      SAWYER_MESG(logger[TRACE])<<"switch-case GNU Range: infeasable path."<<endl;
+      // infeasable path
+      list<EState> emptyList;
+      return emptyList;
+    }
   }
   // value of constant case value
   AbstractValue caseVal=_analyzer->singleValevaluateExpression(caseExpr,currentEState);
@@ -801,7 +889,7 @@ std::list<EState> EStateTransferFunctions::transferCaseOptionStmt(SgCaseOptionSt
     SAWYER_MESG(logger[TRACE])<<"switch-case: continuing."<<endl;
     return elistify(createEState(targetLabel,cs,newPState,cset));
   } else {
-    // detected infeasable path
+    // infeasable path
     SAWYER_MESG(logger[TRACE])<<"switch-case: infeasable path."<<endl;
     list<EState> emptyList;
     return emptyList;
@@ -858,6 +946,7 @@ list<EState> EStateTransferFunctions::transferIdentity(Edge edge, const EState* 
 
 
 std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estate) {
+  logger[TRACE] << "transferAssignOp:"<<nextNodeToAnalyze2->unparseToString()<<endl;
   auto pList=_analyzer->evalAssignOp(nextNodeToAnalyze2, edge, estate);
   std::list<EState> estateList;
   for (auto p : pList) {
@@ -874,6 +963,7 @@ std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* nextNode
     CallString cs=estate.callString;
     estateList.push_back(createEState(edge.target(),cs,newPState,cset));
   }
+  logger[TRACE] << "transferAssignOp: finished"<<endl;
   return estateList;
 }
 

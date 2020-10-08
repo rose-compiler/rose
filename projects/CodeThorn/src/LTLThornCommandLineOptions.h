@@ -8,7 +8,7 @@
 // to be move into other tool
 #include "LTLOptions.h"
 // to be move into other tool
-#include "ltlthorn-lib/ParProOptions.h"
+#include "ParProOptions.h"
 
 CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger, std::string version,
                                                 CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt);

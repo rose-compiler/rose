@@ -13,10 +13,10 @@ namespace CodeThorn {
   public:
     void recordDefinitiveLocation(CodeThorn::Label lab);
     void recordPotentialLocation(CodeThorn::Label lab);
-    bool isNonRecordedLocation(Label lab);
+    bool isRecordedLocation(Label lab);
     size_t numDefinitiveLocations();
     size_t numPotentialLocations();
-    size_t numTotalLocations();
+    size_t numTotalRecordedLocations();
 
     // provide set of all locations
     void setAllLocationsOfInterest(LabelSet loc);

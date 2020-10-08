@@ -241,16 +241,12 @@ bool CodeThorn::operator!=(const InterEdge& e1, const InterEdge& e2) {
 }
 
 bool CodeThorn::operator==(const Edge& e1, const Edge& e2) {
-  assert(&e1);
-  assert(&e2);
   return e1.source()==e2.source() && e1.typesCode()==e2.typesCode() && e1.target()==e2.target() && e1.getAnnotation() == e2.getAnnotation();
 }
 bool CodeThorn::operator!=(const Edge& e1, const Edge& e2) {
   return !(e1==e2);
 }
 bool CodeThorn::operator<(const Edge& e1, const Edge& e2) {
-  assert(&e1);
-  assert(&e2);
   if(e1.source()!=e2.source())
     return e1.source()<e2.source();
   if(e1.target()!=e2.target())
@@ -286,8 +282,9 @@ Label Flow::getStartLabel() {
   if(_startLabelSet.size()==1) {
     return *_startLabelSet.begin();
   } else if(_startLabelSet.size()==0) {
-    cerr<<"Flow::getStartLabel: start label requested, but no start label available.";
-    exit(1);
+    //cerr<<"Flow::getStartLabel: start label requested, but no start label available."<<endl;
+    Label lab;
+    return lab; // intentionally returns invalid label
   } else {
     //cout<<"WARNING: start label requested, but more than one start label available. Choosing randomly one of the registered start labels."<<endl;
     return *_startLabelSet.begin();

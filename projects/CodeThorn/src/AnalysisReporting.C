@@ -13,6 +13,19 @@ using namespace CodeThorn;
 
 namespace CodeThorn {
 
+  enum VerificationResult { INCONSISTENT, UNVERIFIED, VERIFIED, FALSIFIED };
+
+  LabelSet AnalysisReporting::functionLabels(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer) {
+    LabelSet allFunctionLabels;
+    Flow& flow=*analyzer->getFlow();
+    LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
+    for(auto entryLabel : functionEntryLabels) {
+      LabelSet funLabSet=analyzer->getCFAnalyzer()->functionLabelSet(entryLabel,flow);
+      allFunctionLabels+=funLabSet;
+    }
+    return allFunctionLabels;
+  }
+  
   void AnalysisReporting::generateVerificationReports(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer, bool reportDetectedErrorLines) {
     for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
@@ -23,6 +36,7 @@ namespace CodeThorn {
         cout<<"Analysis results for "<<analysisName<<" analysis:"<<endl;
         cout<<"-----------------------------------------------"<<endl;
         ProgramLocationsReport report=analyzer->getExprAnalyzer()->getProgramLocationsReport(analysisSel);
+#if 0
         LabelSet labelsOfInterest1=analyzer->getCFAnalyzer()->labelsOfInterestSet();
         // filter labels for dead code
         LabelSet labelsOfInterest2;
@@ -32,11 +46,15 @@ namespace CodeThorn {
             if(!SageInterface::insideSystemHeader(locNode))
               labelsOfInterest2.insert(lab);
         }
+#else
+        LabelSet labelsOfInterest2=AnalysisReporting::functionLabels(ctOpt, analyzer);
+#endif
         report.setAllLocationsOfInterest(labelsOfInterest2);
         report.writeLocationsVerificationReport(cout,analyzer->getLabeler());
         cout<<"-----------------------------------------------"<<endl;
         // generate verification call graph
-        AnalysisReporting::generateVerificationCallGraph(analyzer,analysisName,report);
+        AnalysisReporting::generateVerificationCallGraphDotFile(ctOpt,analyzer,analysisName,report);
+        AnalysisReporting::generateVerificationFunctionsCsvFile(ctOpt,analyzer,analysisName,report);
         //report->writeFunctionsVerificationReport(cout,analyzer->getLabeler());
         cout<<"-----------------------------------------------"<<endl;
         if(reportDetectedErrorLines) {
@@ -132,8 +150,7 @@ namespace CodeThorn {
       }
     }
   }
-
-  void AnalysisReporting::generateVerificationCallGraph(CodeThorn::Analyzer* analyzer, string analysisName, ProgramLocationsReport& report) {
+  void AnalysisReporting::generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer, string analysisName, ProgramLocationsReport& report) {
     string fileName1=analysisName+"-cg1.dot";
     string fileName2=analysisName+"-cg2.dot";
     //cout<<"Generating verification call graph for "<<analysisName<<" analysis."<<endl;
@@ -145,7 +162,6 @@ namespace CodeThorn {
     //cout<<"Unverified:"<<unverified.toString()<<endl;
     Flow& flow=*analyzer->getFlow();
     LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
-    enum VerificationResult { INCONSISTENT, UNVERIFIED, VERIFIED, FALSIFIED };
     std::map<Label,VerificationResult> fMap;
     for(auto entryLabel : functionEntryLabels) {
       // todo: function is
@@ -198,7 +214,7 @@ namespace CodeThorn {
       }
       std::string functionName=SgNodeHelper::getFunctionName(analyzer->getLabeler()->getNode(entryLabel));
       std::string dotFunctionName="label=\""+entryLabel.toString()+":"+functionName+"\"";
-      if(nodeColor!="gray")
+      //if(nodeColor!="gray")
         cgNodes<<entryLabel.toString()<<" [style=filled, fillcolor="<<nodeColor<<","<<dotFunctionName<<"]"<<endl;
     }
 
@@ -217,15 +233,6 @@ namespace CodeThorn {
         cgNodes2<<entryLabel.toString()<<" [style=filled, fillcolor="<<nodeColor<<","<<dotFunctionName<<"]"<<endl;
     }
 
-    // print stats
-    int numProvenFunctions=numVerifiedFunctions+numFalsifiedFunctions;
-    int numTotalFunctions=numProvenFunctions+numUnverifiedFunctions;
-    cout<<"Proven     functions: "<<numProvenFunctions<<" [ "<<numProvenFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
-    cout<<" Verified  functions: "<<numVerifiedFunctions<<" [ "<<numVerifiedFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
-    cout<<" Falsified functions: "<<numFalsifiedFunctions<<" [ "<<numFalsifiedFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
-    cout<<"Unproven   functions: "<<numUnverifiedFunctions<<" [ "<<numUnverifiedFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
-    cout<<"Total      functions: "<<numTotalFunctions<<endl;
-    
     std::string dotFileString1=cgBegin+cgNodes2.str()+cgEdges+cgEnd;
     if(!CppStdUtilities::writeFile(fileName1, dotFileString1)) {
       cerr<<"Error: could not generate callgraph dot file "<<fileName1<<endl;
@@ -244,4 +251,77 @@ namespace CodeThorn {
 
   }
 
+  void AnalysisReporting::generateVerificationFunctionsCsvFile(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer, string analysisName, ProgramLocationsReport& report) {
+    string fileName1=analysisName+"-functions.csv";
+    LabelSet verified=report.verifiedLocations();
+    LabelSet falsified=report.falsifiedLocations();
+    LabelSet unverified=report.unverifiedLocations();
+    
+    Flow& flow=*analyzer->getFlow();
+    enum VerificationResult { INCONSISTENT, UNVERIFIED, VERIFIED, FALSIFIED };
+    std::map<Label,VerificationResult> fMap;
+    LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
+    for(auto entryLabel : functionEntryLabels) {
+      LabelSet funLabSet=analyzer->getCFAnalyzer()->functionLabelSet(entryLabel,flow);
+      VerificationResult funVer=INCONSISTENT;
+      size_t count=0;
+      for(auto lab : funLabSet) {
+        if(falsified.isElement(lab)) {
+          funVer=FALSIFIED;
+          break;
+        }
+        if(unverified.isElement(lab)) {
+          funVer=UNVERIFIED;
+        }
+        if(verified.isElement(lab)) {
+          count++;
+        }
+      }
+      if(funLabSet.size()==count) {
+        funVer=VERIFIED;
+      }
+      fMap[entryLabel]=funVer;
+    }
+    InterFlow::LabelToFunctionMap map=analyzer->getCFAnalyzer()->labelToFunctionMap(flow);
+    stringstream cgNodes;
+    string nodeColor;
+    int numFalsifiedFunctions=0;
+    int numUnverifiedFunctions=0;
+    int numVerifiedFunctions=0;
+    int numInconsistentFunctions=0;
+    for (auto entryLabel : functionEntryLabels ) {
+      switch(fMap[entryLabel]) {
+      case FALSIFIED: nodeColor="violated";numFalsifiedFunctions++;break;
+      case UNVERIFIED: nodeColor="unverified";numUnverifiedFunctions++;break;
+      case VERIFIED: nodeColor="verified";numVerifiedFunctions++;break;
+      case INCONSISTENT: nodeColor="inconsistent";numInconsistentFunctions++;break;
+      }
+      SgNode* node=analyzer->getLabeler()->getNode(entryLabel);
+      string fileName=SgNodeHelper::sourceFilenameToString(node);
+      std::string functionName=SgNodeHelper::getFunctionName(node);
+      //      if(nodeColor!="inconsistent")
+        cgNodes<<fileName<<","<<functionName<<","<<nodeColor<<endl;
+    }
+
+    // print stats
+    int numProvenFunctions=numVerifiedFunctions+numFalsifiedFunctions;
+    int numTotalFunctions=numProvenFunctions+numUnverifiedFunctions+numInconsistentFunctions;
+    cout<<"Proven       functions: "<<numProvenFunctions<<" [ "<<numProvenFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
+    cout<<" Verified    functions: "<<numVerifiedFunctions<<" [ "<<numVerifiedFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
+    cout<<" Violated    functions: "<<numFalsifiedFunctions<<" [ "<<numFalsifiedFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
+    cout<<"Unproven     functions: "<<numUnverifiedFunctions<<" [ "<<numUnverifiedFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
+    if(numInconsistentFunctions>0)
+      cout<<"Inconsistent functions: "<<numInconsistentFunctions<<" [ "<<numInconsistentFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
+    cout<<"Total        functions: "<<numTotalFunctions<<endl;
+    
+    std::string dotFileString1=cgNodes.str();
+    if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString, fileName1, dotFileString1)) {
+      cerr<<"Error: could not generate function verification file "<<fileName1<<endl;
+      exit(1);
+    } else {
+      cout<<"Generated function verification file "<<fileName1<<endl;
+    }
+
+  }
+  
 } // end of namespace CodeThorn

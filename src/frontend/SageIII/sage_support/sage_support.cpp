@@ -4289,6 +4289,12 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                ROSE_ASSERT(get_requires_C_preprocessor() == true);
                fortran_C_preprocessor_commandLine.push_back("-D"+macroSpecifierList[i]);
              }
+      // Pei-Hung (09/22/2020): Added openacc support for the preprocessing command line.
+      // This is a tentative work and needs to be enhanced later.
+           if(get_openacc())
+           {
+             fortran_C_preprocessor_commandLine.push_back("-D_OPENACC="+ StringUtility::numberToString(3));
+           }
 
        // DQ (5/19/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
           const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();

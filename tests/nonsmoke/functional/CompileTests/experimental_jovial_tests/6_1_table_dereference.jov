@@ -1,0 +1,26 @@
+START
+DEF PROC TestTableTypes;
+  BEGIN
+  TYPE table'type'0D TABLE;
+    BEGIN
+      ITEM height B;
+      ITEM width  B;
+    END
+  TYPE table'type'2D TABLE (3,33);
+    BEGIN
+      ITEM height B;
+      ITEM width  B;
+    END
+
+  ITEM pTable0D table'type'0D;
+ % WARNING: unparses with dimension info, not sure that is correct %
+  ITEM pTable2D table'type'2D;
+  ITEM local1 B;
+  ITEM local2 B;
+
+  local1 = pTable0D @ height;
+  local2 = pTable2D(3,33) @ width AND local1;
+
+  END
+
+TERM

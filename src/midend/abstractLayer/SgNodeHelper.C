@@ -1788,6 +1788,16 @@ bool SgNodeHelper::isArrayDeclaration(SgVariableDeclaration* decl) {
   return isSgArrayType(type);
 }
 
+bool SgNodeHelper::hasAssignInitializer(SgVariableDeclaration* decl) {
+  SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
+  ROSE_ASSERT(initName0);
+  if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+    SgInitializer* arrayInitializer=initName->get_initializer();
+    return isSgAssignInitializer(arrayInitializer);
+  }
+  return false;
+}
+
 bool SgNodeHelper::isAggregateDeclaration(SgVariableDeclaration* decl) {
   SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
   ROSE_ASSERT(initName0);
@@ -1798,7 +1808,18 @@ bool SgNodeHelper::isAggregateDeclaration(SgVariableDeclaration* decl) {
   return false;
 }
 
+bool SgNodeHelper::isAggregateDeclarationWithInitializerList(SgVariableDeclaration* decl) {
+  SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
+  ROSE_ASSERT(initName0);
+  if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+    // array initializer
+    return initName->get_initializer()!=0;
+  }
+  return false;
+}
+
 SgExpressionPtrList& SgNodeHelper::getInitializerListOfAggregateDeclaration(SgVariableDeclaration* decl) {
+  ROSE_ASSERT(SgNodeHelper::isAggregateDeclarationWithInitializerList(decl));
   SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
   ROSE_ASSERT(initName0);
   if(SgInitializedName* initName=isSgInitializedName(initName0)) {
@@ -1808,8 +1829,12 @@ SgExpressionPtrList& SgNodeHelper::getInitializerListOfAggregateDeclaration(SgVa
       SgExprListExp* rhsOfArrayInit=arrayInit->get_initializers();
       SgExpressionPtrList& exprPtrList=rhsOfArrayInit->get_expressions();
       return exprPtrList;
+    } else {
+      cout<<"DEBUG:initializer->class_name:"<<initializer->class_name()<<endl;
     }
   }
+  int* xp=0;
+  *xp=1;
   throw CodeThorn::Exception("SgNodeHelper::getInitializerListOfAggregateDeclaration: getInitializerListOfArrayVariable failed.");
 }
 

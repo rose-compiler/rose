@@ -282,6 +282,7 @@ SgAssignStatement
 SgAssignedGotoStatement
 SgAssociateStatement
 SgAsteriskShapeExp
+SgAtOp
 SgAttribute
 SgAttributeSpecificationStatement
 SgAutoType

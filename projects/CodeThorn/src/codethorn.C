@@ -75,7 +75,7 @@ using namespace Sawyer::Message;
 #include "ltlthorn-lib/Solver11.h"
 #include "ltlthorn-lib/Solver12.h"
 
-const std::string versionString="1.12.14";
+const std::string versionString="1.12.16";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -183,6 +183,11 @@ int main( int argc, char * argv[] ) {
     optionallyEliminateCompoundStatements(ctOpt, analyzer, root);
     optionallyEliminateRersArraysAndExit(ctOpt,sageProject,analyzer);
     initializeSolverWithStartFunction(ctOpt,analyzer,root,tc);
+    if(analyzer->getFlow()->getStartLabelSet().size()==0) {
+      // exit early
+      if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
+      exit(0);
+    }
     analyzer->initLabeledAssertNodes(sageProject);
     optionallyPrintFunctionIdMapping(ctOpt,analyzer);
     optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);

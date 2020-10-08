@@ -221,6 +221,7 @@ AttachPreprocessingInfoTreeTraversalInheritedAttrribute::AttachPreprocessingInfo
    {
      isPartOfTemplateDeclaration              = X.isPartOfTemplateDeclaration;
      isPartOfTemplateInstantiationDeclaration = X.isPartOfTemplateInstantiationDeclaration;
+     isPartOfFunctionParameterList            = X.isPartOfFunctionParameterList;
    }
 
 
@@ -1364,6 +1365,17 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #endif
         }
 
+  // Pei-Hung(9/17/2020): Check if the AST node is SgFunctionParameterList for Fortran input
+     if(sourceFile->get_Fortran_only() == true)
+       { 
+         SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(n);
+         if(functionParameterList != NULL)
+           {
+              inheritedAttribute.isPartOfFunctionParameterList = true;
+           }
+       }
+
+
   // DQ (8/6/2012): Allow those associated with the declaration and not inside of the template declaration.
   // if (inheritedAttribute.isPartOfTemplateDeclaration == true && templateDeclaration == NULL)
      if ( (inheritedAttribute.isPartOfTemplateDeclaration              == true && templateDeclaration              == NULL) || 
@@ -1459,6 +1471,16 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 
        // DQ (6/29/2020): We should not be adding comments and/or CPP directives to IR nodes that don't have a source position.
           ROSE_ASSERT(currentFileNameId >= 0);
+
+      // Pei-Hung (09/23/2020) For Fortran code,  target_source_file_id should be same as currentFileNameId when preprocessing is required
+         if (SageInterface::is_Fortran_language() == true)
+         {  
+           target_source_file_id = (currentFilePtr->get_requires_C_preprocessor() == true) ? 
+                                 // Sg_File_Info::getIDFromFilename(sourceFile->get_file_info()->get_filenameString()) : 
+                                    Sg_File_Info::getIDFromFilename(currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+                                    currentFileInfo->get_physical_file_id(source_file_id);
+         }
+
 
 #if 0
           if (currentFileNameId < 0)
@@ -1559,8 +1581,10 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
              }
         }
 #endif
+     // Pei-Hung (9/17/2020): comment and preprocess information will not be attached to SgInitializedName that is
+     // part of the SgFunctionParameterList 
 
-     if (statement != NULL || i_name != NULL || a_initor != NULL)
+     if (statement != NULL || (i_name != NULL && inheritedAttribute.isPartOfFunctionParameterList == false) || a_initor != NULL)
         {
           SgLocatedNode* currentLocNodePtr = NULL;
           int line = 0;
@@ -2101,7 +2125,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
           printf ("##### currentFileNameId = %d target_source_file_id = %d \n",currentFileNameId,target_source_file_id);
 #endif
        // DQ (6/25/2020): If this is not a node associated with the collect comments and CPP directives for the associated file then ignore this IR node.
-          if (currentFileNameId != target_source_file_id)
+          if (currentFileNameId != target_source_file_id )
              {
 #if 0
                printf ("This IR node does not match the file where the comments and CPP dirtectives were collected: \n");
@@ -2387,17 +2411,19 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                     }
                                }
 
-                            ROSE_ASSERT(targetNode->get_file_info() != NULL);
+                            ROSE_ASSERT(targetNode != NULL);
+                            Sg_File_Info* nodeFileInfo = targetNode->get_file_info();
+                            ROSE_ASSERT(nodeFileInfo != NULL);
                          // This case appears for test2008_08.f90: the SgProgramHeaderStatement is not present in the source code
                          // so we can't attach a comment to it.
-                         // if (targetNode->get_file_info()->get_file_id() < 0)
-                            if (targetNode->get_file_info()->get_physical_file_id(source_file_id) < 0)
+                         // if (nodeFileInfo->get_file_id() < 0)
+                            if (nodeFileInfo->get_physical_file_id(source_file_id) < 0)
                                {
 #if 0
-                                 printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_file_id()          = %d \n",targetNode->get_file_info()->get_file_id());
+                                 printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_file_id()          = %d \n",nodeFileInfo->get_file_id());
 #endif
 #if 0
-                                 printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_physical_file_id() = %d \n",targetNode->get_file_info()->get_physical_file_id(source_file_id));
+                                 printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_physical_file_id() = %d \n",nodeFileInfo->get_physical_file_id(source_file_id));
                                  printf ("In SgFile: targetNode = %s \n",targetNode->class_name().c_str());
                                  printf ("currentFileName for currentFileNameId = %d = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
                                  printf ("sourceFile = %s \n",sourceFile->get_sourceFileNameWithPath().c_str());

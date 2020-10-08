@@ -16,6 +16,11 @@ namespace CppStdUtilities {
   // Returns true if reading the file was successful, otherwise false.
   bool readDataFile(std::string fileName, DataFileVector& dfv);
 
+  // append or write the string 'data' to file with name 'filename'. It opens and closes the file.
+  // if the file can be written the function returns true, otherwise false.
+  // supported modes: "append", "generate". Returns false for any other mode string.
+  bool writeFile(std::string mode, std::string filename, std::string data);
+
   // write the string 'data' to file with name 'filename'. It opens and closes the file.
   // if the file can be written the function returns true, otherwise false.
   bool writeFile(std::string filename, std::string data);

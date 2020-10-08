@@ -3,8 +3,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # DQ (8/23/2017): Use command line option to alternatively test the experimental fortran frontend.
 # ROSE_FLAGS = -rose:verbose 0 -rose:experimental_csharp_frontend -I$(srcdir)
 ROSE_FLAGS    ?= -rose:skipfinalCompileStep
-ROSE_COMPILER ?= $(top_builddir)/src/rose-compiler
 
+# testTranslator runs the AST consistency checks
+../../testTranslator:
+	cd ../..; $(MAKE) testTranslator
+
+
+# ROSE_COMPILER ?= $(top_builddir)/src/rose-compiler
+ROSE_COMPILER ?= ../../testTranslator
 
 #VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
@@ -22,97 +28,101 @@ ROSE_COMPILER ?= $(top_builddir)/src/rose-compiler
 # endif
 
 
-# TESTCODES_REQUIRED_TO_PASS = minimal.adb empty_package.ads ordinary_type_declaration.ads task_type_declaration.ads variable_declaration.ads \
-#   constant_declaration.ads component_declaration.ads procedure_declaration.ads function_declaration.ads parameter_declaration.ads \
-#   all_modes.ads procedure_declaration.adb function_declaration.adb package_with_body.adb task_with_body.adb entry_declaration.ads \
-#   exception_declaration.ads choice_parameter_specification.adb tagged_definition.ads derived_record.ads simple_expression_range.ads \
-#   function_call.adb operator.adb selected_component.ads type_conversion.adb if_statement.adb accept_statement.adb entry_call.adb \
-#   loop_statement.adb procedure_call.adb raise_statement.adb
-
-# TESTCODES_REQUIRED_TO_PASS = empty_package.ads
-
-ORIGINAL_FILE_LIST := minimal.adb empty_package.ads ordinary_type_declaration.ads task_type_declaration.ads variable_declaration.ads \
-   constant_declaration.ads component_declaration.ads procedure_declaration.ads function_declaration.ads parameter_declaration.ads \
-   all_modes.ads procedure_declaration.adb function_declaration.adb package_with_body.adb task_with_body.adb entry_declaration.ads \
-   exception_declaration.ads choice_parameter_specification.adb tagged_definition.ads derived_record.ads simple_expression_range.ads \
-   function_call.adb operator.adb selected_component.ads type_conversion.adb if_statement.adb accept_statement.adb entry_call.adb \
-   loop_statement.adb procedure_call.adb raise_statement.adb
-
 PASSING_TESTS :=                       \
   pkgrename.ads                        \
-  accept_statement.adb                 \
-  all_modes.ads                        \
-  case_function.adb                    \
-  case_function.ads                    \
-  choice_parameter_specification.adb   \
-  component_declaration.ads            \
+  variable_declaration.ads             \
   constant_declaration.ads             \
-  constants.ads                        \
   derived_record.ads                   \
   empty_package.ads                    \
-  entry_call.adb                       \
   entry_declaration.ads                \
   exception_declaration.ads            \
-  fib.adb                              \
-  for_loop.adb                         \
-  function_call.adb                    \
-  function_declaration.adb             \
-  function_declaration.ads             \
-  gototest.adb                         \
   gototest.ads                         \
-  hello_world.adb                      \
-  if_statement.adb                     \
-  iterateRange.adb                     \
-  loop_exit.adb                        \
-  loop_statement.adb                   \
-  minimal.adb                          \
   nested_package.ads                   \
-  operator.adb                         \
+  named.ads                            \
+  opaque.ads                           \
   ordinary_type_declaration.ads        \
-  package_with_body.adb                \
   package_with_body.ads                \
-  parameter_declaration.ads            \
-  procedure_call.adb                   \
-  procedure_declaration.adb            \
-  procedure_declaration.ads            \
-  raise_statement.adb                  \
-  real_typedecl.ads                    \
-  recursive_call.adb                   \
+  parent-child.ads                     \
   selected_component.ads               \
-  short_circuit.adb                    \
   simple_expression_range.ads          \
-  some_modes.ads                       \
-  subtypes.ads                         \
   tagged_definition.ads                \
   task_type_declaration.ads            \
-  task_with_body.adb                   \
   task_with_body.ads                   \
-  test.adb                             \
-  test.ads                             \
-  test_unit.adb                        \
   test_unit.ads                        \
-  type_conversion.adb                  \
-  unit_1.adb                           \
-  unit_2.adb                           \
+  test.ads                             \
   unit_2.ads                           \
+  EndOfList
+
+# pass asis, frontend, backend, but representation is incomplete
+PASSING_INCOMPLETE_TESTS :=            \
+  component_declaration.ads            \
+  mpiuse.ads                           \
+  real_typedecl.ads                    \
+  sender.ads                           \
+  subtypes.ads                         \ 
+  EndOfList 
+
+# fail in backend
+PASSING_FRONTEND :=                    \ 
+  EndOfList
+
+# fail in frontend
+PASSING_ASIS := \
+  EndOfList
+
+NOT_HANDLED := \
+  unit_2.adb                           \
+  entry_call.adb                       \
+  hello_world.adb                      \
+  test_unit.adb                        \
+  test.adb                             \
+  function_call.adb                    \
+  function_declaration.adb             \
   unit_3.ads                           \
-  variable_declaration.ads             \
-  while_loop_statement.adb             
-  
-# PASSING_TESTS   
+  accept_statement.adb                 \
+  procedure_call.adb                   \
+  task_with_body.adb                   \
+  some_modes.ads                       \
+  recursive_call.adb                   \
+  short_circuit.adb                    \
+  raise_statement.adb                  \
+  type_conversion.adb                  \
+  procedure_declaration.ads            \
+  procedure_declaration.adb            \
+  package_with_body.adb                \
+  parameter_declaration.ads            \
+  unit_1.adb                           \
+  loop_statement.adb                   \
+  loop_exit.adb                        \
+  minimal.adb                          \
+  operator.adb                         \
+  if_statement.adb                     \
+  gototest.adb                         \
+  all_modes.ads                        \
+  case_function.ads                    \
+  constants.ads                        \
+  choice_parameter_specification.adb   \
+  fib.adb                              \
+  for_loop.adb                         \
+  function_declaration.ads             \
+  case_function.adb                    \
+  iterateRange.adb                     \
+  while_loop_statement.adb             \
+  increment.adb	                       \
+  EndOfList
 
-INCOMPLETE_FRONTEND := 
-
-# INCOMPLETE_FRONTEND
-
-INCOMPLETE_ASIS := 
-
-# INCOMPLETE_ASIS
+NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
+  parent.ads                           \
+  comm.ads                             \
+  mpi.ads                              \
+  EndOfList
 
 #
 # define test suite
-TEST_TARGETS := $(PASSING_TESTS)
-ALL_TEST_TARGETS := $(PASSING_TESTS) $(INCOMPLETE_FRONTEND) $(INCOMPLETE_ASIS)
+TEST_TARGETS := $(PASSING_TESTS) $(PASSING_INCOMPLETE_TESTS)
+ALL_TEST_TARGETS := $(PASSING_TESTS) $(PASSING_INCOMPLETE_TESTS) $(PASSING_FRONTEND) $(PASSING_ASIS) $(NOT_HANDLED)
+
+TESTCODES_REQUIRED_TO_PASS := $(TEST_TARGETS)
 
 #
 # targets
@@ -122,6 +132,15 @@ all: $(ALL_TEST_TARGETS)
 
 .PHONY: passing
 passing: $(TEST_TARGETS)
+
+.PHONY: passing-frontend
+passing-frontend: $(PASSING_FRONTEND)
+
+.PHONY: passing-asis
+passing-asis: $(PASSING_ASIS)
+
+.PHONY: EndOfList
+EndOfList:
 
 .PHONY: print
 print:
@@ -133,10 +152,10 @@ print:
 $(top_builddir)/src/rose-compiler:
 	$(MAKE) -C $(top_builddir)/src rose-compiler
 	
-%.ads:$(abs_srcdir)/tests/%.ads
+%.ads:$(abs_srcdir)/tests/%.ads $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
 	
-%.adb:$(abs_srcdir)/tests/%.adb
+%.adb:$(abs_srcdir)/tests/%.adb $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
 
 .PHONY: clean-local

@@ -107,4 +107,7 @@ namespace CodeThorn {
   bool LtlRersMapping::isOutput(int value) const {
     return _outputMappingIntChar.find(value)!=_inputMappingIntChar.end();
   }
+  bool LtlRersMapping::isActive() const {
+    return _inputMappingCharInt.size()>0||_outputMappingCharInt.size()>0;
+  }
 } // end of namespace

@@ -402,14 +402,15 @@ void IOAnalyzer::setup(Analyzer* analyzer, Sawyer::Message::Facility logger,
     analyzer->setGlobalTopifyMode(Analyzer::GTM_FLAGS);
   }
 
+  int gigaByteMultiply=1; //1024*1024*1024;
   if (ctOpt.maxMemory!=1) {
-    analyzer->setMaxBytes(ctOpt.maxMemory);
+    analyzer->setMaxBytes(ctOpt.maxMemory*gigaByteMultiply);
   }
   if (ctOpt.maxTime!=1) {
     analyzer->setMaxSeconds(ctOpt.maxTime);
   }
   if (ctOpt.maxMemoryForcedTop!=-1) {
-    analyzer->setMaxBytesForcedTop(ctOpt.maxMemoryForcedTop);
+    analyzer->setMaxBytesForcedTop(ctOpt.maxMemoryForcedTop*gigaByteMultiply);
   }
   if (ctOpt.maxTimeForcedTop!=-1) {
     analyzer->setMaxSecondsForcedTop(ctOpt.maxTimeForcedTop);
