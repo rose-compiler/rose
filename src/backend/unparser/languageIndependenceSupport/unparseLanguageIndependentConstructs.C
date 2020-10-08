@@ -2199,10 +2199,15 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      AstUnparseAttribute* unparseAttribute = dynamic_cast<AstUnparseAttribute*>(stmt->getAttribute(AstUnparseAttribute::markerName));
      if (unparseAttribute != NULL)
         {
+          string code = unparseAttribute->toString(AstUnparseAttribute::e_before);
+#if 0
+       // DQ (9/27/2020): Debugging use of SgTextAttribute node.
+          printf ("Found an AstUnparseAttribute: code = %s \n",code.c_str());
+          curprint (" /* In unparseStatement(): Found an AstUnparseAttribute */ \n");
+#endif
        // Note that in most cases unparseLanguageSpecificStatement() will be called, some formatting 
        // via "unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);" may be done.  This can cause extra 
        // CRs to be inserted (which only looks bad).  Not clear now to best clean this up.
-          string code = unparseAttribute->toString(AstUnparseAttribute::e_before);
           curprint (code);
         }
 
@@ -2514,7 +2519,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                                       }
                                      else
                                       {
-#if 1
+#if 0
                                         printf ("In unparseStatement(): Unparse the leading whitespace from the AST because it's comments and/or CPP directives have been modified \n");
 #endif
                                         bool unparseExtraNewLine = (stmt->getAttachedPreprocessingInfo() != NULL);
@@ -2524,6 +2529,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                                              curprint ("\n ");
                                            }
                                         unparseAttachedPreprocessingInfo(stmt,info,PreprocessingInfo::before);
+#if 0
+                                        curprint ("Test 1: This is where added test via AstUnparseAttribute using e_before_but_after_cpp_directives_and_comments \n ");
+#endif
                                       }
 #if 0
                                    curprint(string("\n/* In unparseStatement(): (suppress global scope?): stmt = ") + (stmt->class_name()) + " */");
@@ -2776,6 +2784,15 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #endif
                  // DQ (11/30/2013): Move from above to where we can better support the token unparsing.
                     unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
+#if 0
+                    curprint ("/* Test 2: This is where added test via AstUnparseAttribute using e_before_but_after_cpp_directives_and_comments */ \n");
+#endif
+                 // DQ (10/4/2020): Part of new support for unparsing arbitrary strings into the unparsed code.
+                    if (unparseAttribute != NULL)
+                       {
+                         string code = unparseAttribute->toString(AstUnparseAttribute::e_before_but_after_cpp_directives_and_comments);
+                         curprint (code);
+                       }
 #if 0
                     printf("In UnparseLanguageIndependentConstructs::unparseStatement(): DONE calling unparseAttachedPreprocessingInfo test 4: before \n");
 #endif

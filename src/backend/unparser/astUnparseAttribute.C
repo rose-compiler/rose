@@ -43,7 +43,9 @@ AstUnparseAttribute::toString( RelativePositionType inputlocation )
      for (StringPositionPairListType::iterator i = stringList.begin(); i != stringList.end(); i++)
         {
           if (i->second == inputlocation)
+             {
                s += i->first;
+             }
         }
 
      return s;
@@ -59,7 +61,9 @@ AstUnparseAttribute::replacementStringExists()
      for (StringPositionPairListType::iterator i = stringList.begin(); i != stringList.end(); i++)
         {
           if (i->second == e_replace)
+             {
                result = true;
+             }
         }
 
      return result;
