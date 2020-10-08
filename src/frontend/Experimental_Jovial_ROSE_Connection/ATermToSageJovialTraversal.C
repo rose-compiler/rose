@@ -6011,6 +6011,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
    expr = nullptr;
 
    if (ATmatch(term, "BitFormula(<term>,<term>)", &t_operand, &t_continuation)) {
+#if 0 // This one should be caught ok
 #if CHECK_AMB
       if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
         cerr << "WARNING AMBIGUITY: BitFormula-operand \n";
@@ -6020,6 +6021,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
         cerr << "WARNING AMBIGUITY: BitFormula-continuation \n";
         printf("... traverse_BitFormula: %s\n", ATwriteToString(term));
       }
+#endif
 #endif
       if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
          ATermList tail = (ATermList) ATmake("<term>", t_amb);
@@ -6130,57 +6132,70 @@ ATbool ATermToSageJovialTraversal::traverse_LogicalContinuation(ATerm term, SgEx
 
    ROSE_ASSERT(expr);
 
+// The LogicalContinuation may produce an ambiguous ATerm representation. The
+// code below tries to match the ambiguity and chooses (uses) the first path
+// for the LogicalOperand if ambiguity found (testing may show the second path
+// needs to be checked as well).
+//
    if (ATmatch(term, "AndContinuation(<term>)", &t_operand)) {
-#if CHECK_AMB
       if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+        // MATCHED an ambiguity, choose the first one
+        ATermList tail = (ATermList) ATmake("<term>", t_amb);
+        t_operand = ATgetFirst(tail);
+#if CHECK_AMB
         cerr << "WARNING AMBIGUITY: AndContinuation \n";
         printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(term));
-        expr = SB::buildNullExpression_nfi();
-        return ATtrue;
-      }
+        printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(t_operand));
 #endif
+      }
       if (traverse_LogicalOperand(t_operand, rhs)) {
          ROSE_ASSERT(rhs);
          expr = SageBuilder::buildBitAndOp_nfi(expr, rhs);
       } else return ATfalse;
 
    } else if (ATmatch(term, "OrContinuation(<term>)", &t_operand)) {
-#if CHECK_AMB
       if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+        // MATCHED an ambiguity, choose the first one
+        ATermList tail = (ATermList) ATmake("<term>", t_amb);
+        t_operand = ATgetFirst(tail);
+#if CHECK_AMB
         cerr << "WARNING AMBIGUITY: OrContinuation \n";
         printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(term));
-        expr = SB::buildNullExpression_nfi();
-        return ATtrue;
-      }
+        printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(t_operand));
 #endif
+      }
       if (traverse_LogicalOperand(t_operand, rhs)) {
          ROSE_ASSERT(rhs);
          expr = SageBuilder::buildBitOrOp_nfi(expr, rhs);
       } else return ATfalse;
 
    } else if (ATmatch(term, "XorContinuation(<term>)", &t_operand)) {
-#if CHECK_AMB
       if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+        // MATCHED an ambiguity, choose the first one
+        ATermList tail = (ATermList) ATmake("<term>", t_amb);
+        t_operand = ATgetFirst(tail);
+#if CHECK_AMB
         cerr << "WARNING AMBIGUITY: XorContinuation \n";
         printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(term));
-        expr = SB::buildNullExpression_nfi();
-        return ATtrue;
-      }
+        printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(t_operand));
 #endif
+      }
       if (traverse_LogicalOperand(t_operand, rhs)) {
          ROSE_ASSERT(rhs);
          expr = SageBuilder::buildBitXorOp_nfi(expr, rhs);
       } else return ATfalse;
 
    } else if (ATmatch(term, "EqvContinuation(<term>)", &t_operand)) {
-#if CHECK_AMB
       if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+        // MATCHED an ambiguity, choose the first one
+        ATermList tail = (ATermList) ATmake("<term>", t_amb);
+        t_operand = ATgetFirst(tail);
+#if CHECK_AMB
         cerr << "WARNING AMBIGUITY: EqvContinuation \n";
         printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(term));
-        expr = SB::buildNullExpression_nfi();
-        return ATtrue;
-      }
+        printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(t_operand));
 #endif
+      }
       if (traverse_LogicalOperand(t_operand, rhs)) {
          ROSE_ASSERT(rhs);
          expr = SageBuilder::buildEqualityOp_nfi(expr, rhs);
