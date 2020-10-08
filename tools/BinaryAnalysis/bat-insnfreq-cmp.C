@@ -29,6 +29,12 @@ parseCommandLine(int argc, char *argv[]) {
 
     SwitchGroup generic = Rose::CommandLine::genericSwitches();
 
+    // Ignored when this tool is enabled. Causes zero exit status if tool is disabled.
+    bool noErrorIfDisabled = false;
+    generic.insert(Switch("no-error-if-disabled")
+                   .intrinsicValue(true, noErrorIfDisabled)
+                   .hidden());
+
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{freq_files}...");
@@ -84,10 +90,17 @@ main(int argc, char *argv[]) {
 
 // C++ comppiler is too old
 #include <iostream>
+#include <cstring>
 
 int main(int argc, char *argv[]) {
+    int exitStatus = 1;
+    for (int i = 1; i < argc; ++i) {
+        if (!strcmp(argv[i], "--no-error-if-disabled"))
+            exitStatus = 0;
+    }
+
     std::cerr <<argv[0] <<": this tool is disabled (your C++ compiler is too old)\n";
-    return 1;
+    return exitStatus;
 }
 
 #endif
