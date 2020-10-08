@@ -32,18 +32,24 @@ class AstUnparseAttribute : public AstAttribute
        // typedef PreprocessingInfo::RelativePositionType RelativeLocation;
           enum RelativePositionType
              {
-               e_defaultValue = 0, // let the zero value be an error value
-               e_undef        = 1, // Position of the directive is only going to be defined
-                                   // when the preprocessing object is copied into the AST,
-                                   // it remains undefined before that
-               e_before       = 2, // Directive goes before the correponding code segment
-               e_after        = 3, // Directive goes after the correponding code segment
-               e_inside       = 4, // Directive goes inside the correponding code segment (as in between "{" and "}" of an empty basic block)
+               e_defaultValue = 0,  // let the zero value be an error value
+               e_undef        = 1,  // Position of the directive is only going to be defined
+                                    // when the preprocessing object is copied into the AST,
+                                    // it remains undefined before that
+               e_before       = 2,  // Directive goes before the correponding code segment
+               e_after        = 3,  // Directive goes after the correponding code segment
+               e_inside       = 4,  // Directive goes inside the correponding code segment (as in between "{" and "}" of an empty basic block)
 
             // DQ (7/19/2008): Added additional fields so that we could use this enum type in the AstUnparseAttribute
                e_replace       = 5, // Support for replacing the IR node in the unparsing of any associated subtree
                e_before_syntax = 6, // We still have to specify the syntax
-               e_after_syntax  = 7  // We still have to specify the syntax
+               e_after_syntax  = 7, // We still have to specify the syntax
+
+            // DQ (10/4/2020): Added another kind of location.
+            // Sometimes the added text will reference declarations from included files, 
+            // in this case the text from be located after a statements associated CPP 
+            // directives (specifically the include directives).
+               e_before_but_after_cpp_directives_and_comments  = 8
              };
 
        // RelativePositionType location;

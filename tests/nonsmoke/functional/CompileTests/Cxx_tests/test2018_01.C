@@ -11,4 +11,5 @@
  *                           ^~~~~~~~
 **/
 
-typedef unsigned short char16_t;
+// DQ (9/27/2020): This is a builtin type in later gnu (at least 6.1 and later) compilers.
+// typedef unsigned short char16_t;

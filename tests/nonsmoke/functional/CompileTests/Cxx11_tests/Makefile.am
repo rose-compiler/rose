@@ -1199,6 +1199,9 @@ test2019_522_ab: ../../testTranslator
 test2020_51ab: ../../testTranslator
 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2020_51a.C $(srcdir)/test2020_51b.C
 
+test2020_113: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -DHEADER_FILE=\"test2020_113.h\" -c $(srcdir)/test2020_113.C 
+
 
 
 #########

@@ -7458,7 +7458,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
   // display("Data in SgFile in buildCompilerCommandLineOptions()");
 
-#define DEBUG_COMPILER_COMMAND_LINE 0
+#define DEBUG_COMPILER_COMMAND_LINE 1
 
 #if DEBUG_COMPILER_COMMAND_LINE || 0
      printf ("In buildCompilerCommandLineOptions(): compilerName = %s \n",compilerName.c_str());
@@ -8395,7 +8395,11 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
         {
 // Liao 5/5/2015, handle single and multiple files the same way
 // This is needed only if we see the combined compilation and linking (without -c specified)
-            if (!get_compileOnly())
+#if DEBUG_COMPILER_COMMAND_LINE
+            printf ("get_compileOnly() = %s \n",get_compileOnly() ? "true" : "false");
+#endif
+         // DQ (10/7/2020): We need to remove the existing "-o filename.o" options since we build them directly from the strings.
+         // if (!get_compileOnly())
 //          if (get_multifile_support() == true)
              {
             // Strip the -o <file> option and subsitute a *.o file based on the source file name.
@@ -8413,7 +8417,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                     if (i->substr(0,2) == "-o")
                        {
                       // argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
-#if 0
+#if DEBUG_COMPILER_COMMAND_LINE
                          printf ("Add to delete list: *i = %s \n",(*i).c_str());
 #endif
                       // deleteList.push_back(i);
@@ -8427,7 +8431,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
                          Rose_STL_Container<string>::iterator j = i;
                          j++;
-#if 0
+#if DEBUG_COMPILER_COMMAND_LINE
                          printf ("Add to delete list: *j = %s \n",(*j).c_str());
 #endif
                       // deleteList.push_back(j);
@@ -8445,7 +8449,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
             // for (std::vector<Rose_STL_Container<string>::iterator>::iterator i = deleteList.begin(); i != deleteList.end(); i++)
                for (std::vector<string>::iterator i = deleteList.begin(); i != deleteList.end(); i++)
                   {
-#if 0
+#if DEBUG_COMPILER_COMMAND_LINE
                   // printf ("Deleting *i = %s \n",(*(*i)).c_str());
                      printf ("Deleting *i = %s \n",(*i).c_str());
 #endif
