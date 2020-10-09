@@ -56,6 +56,7 @@ JOVIAL_TESTCODES = \
  4_10_abort_stmt_b.jov                  \
  5_2_logical_continuation_a.jov         \
  5_2_logical_continuation_b.jov         \
+ 5_2_logical_continuation_amb.jov       \
  6_1_ptr_dereference.jov                \
  6_1_table_dereference.jov              \
  6_3_user_def_function_call.jov         \
@@ -98,7 +99,8 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-156.jov                  \
  rose-issue-rc-157.jov                  \
  rose-issue-rc-158.jov                  \
- rose-issue-rc-159.jov
+ rose-issue-rc-159.jov                  \
+ rose-issue-rc-179.jov
 
 # status_enumval.jov                     \
 # 1_2_3_program-body_a.jov               \
