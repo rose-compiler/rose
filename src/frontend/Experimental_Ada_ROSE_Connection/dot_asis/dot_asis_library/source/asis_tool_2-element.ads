@@ -77,6 +77,8 @@ package Asis_Tool_2.Element is
 
 private
 
+   Module_Name : constant String := "Asis_Tool_2.Element";
+
    package Element_ID_Lists is new
      Ada.Containers.Doubly_Linked_Lists
        (Element_Type => a_nodes_h.Element_ID,
@@ -104,5 +106,75 @@ private
       -- we'll put it in the object and pass that:
          Outputs    : Outputs_Record; -- Initialized
       end record;
+
+   -- Helper methods for use by children:
+
+   -- String
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     String);
+
+   -- Wide_String
+   -- Add <Name> => <Value> to the label, and print it if trace is on:
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     Wide_String);
+
+   -- Element_ID
+   -- Add <Name> => <Value> to the label, and print it if trace is on:
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     a_nodes_h.Element_ID);
+
+   -- Boolean
+   -- Add <Name> => <Value> to the label, and print it if trace is on:
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     Boolean);
+
+   -- String:
+   -- Add <Value> to the label, and print it if trace is on:
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Value : in     String);
+
+   -- Add to dot label: ASIS_PROCESSING => "NOT_IMPLEMENTED_COMPLETELY"
+   procedure Add_Not_Implemented
+     (This : in out Class);
+
+   procedure Add_Dot_Edge
+     (This  : in out Class;
+      From  : in     a_nodes_h.Element_ID;
+      To    : in     a_nodes_h.Element_ID;
+      Label : in     String);
+
+   -- Add an edge and a dot label:
+   procedure Add_To_Dot_Label_And_Edge
+     (This  : in out Class;
+      Label : in     String;
+      To    : in     a_nodes_h.Element_ID);
+
+   function Add_Operator_Kind
+     (State   : in out Class;
+      Element : in     Asis.Element)
+      return a_nodes_h.Operator_Kinds;
+
+   function To_Element_ID_List
+     (This           : in out Class;
+      Elements_In    : in     Asis.Element_List;
+      Dot_Label_Name : in     String;
+      Add_Edges      : in     Boolean := False)
+      return  a_nodes_h.Element_ID_List;
+
+   procedure Add_Element_List
+     (This           : in out Class;
+      Elements_In    : in     Asis.Element_List;
+      Dot_Label_Name : in     String;
+      List_Out       :    out a_nodes_h.Element_ID_List;
+      Add_Edges      : in     Boolean := False);
 
 end Asis_Tool_2.Element;
