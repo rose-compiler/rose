@@ -8239,7 +8239,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
 
 #if DEBUG_COMPILER_COMMAND_LINE
-     printf ("In buildCompilerCommandLineOptions: test 1: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+     printf ("In buildCompilerCommandLineOptions: test 1: compilerNameString = %s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
 #if DEBUG_COMPILER_COMMAND_LINE
   // DQ (1/24/2010): Moved this inside of the true branch below.
@@ -8399,7 +8399,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
             printf ("get_compileOnly() = %s \n",get_compileOnly() ? "true" : "false");
 #endif
          // DQ (10/7/2020): We need to remove the existing "-o filename.o" options since we build them directly from the strings.
-         // if (!get_compileOnly())
+            if (!get_compileOnly())
 //          if (get_multifile_support() == true)
              {
             // Strip the -o <file> option and subsitute a *.o file based on the source file name.
@@ -8523,6 +8523,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
      argcArgvList.swap(tempArgcArgv);
 
+#if DEBUG_COMPILER_COMMAND_LINE || 0
+     printf ("In buildCompilerCommandLineOptions: test 1.5: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+#endif
+
   // DQ (4/14/2005): Fixup quoted strings in args fix "-DTEST_STRING_MACRO="Thu Apr 14 08:18:33 PDT 2005"
   // to be -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\"  This is a problem in the compilation of
   // a Kull file (version.cc), when the backend is specified as /usr/apps/kull/tools/mpig++-3.4.1.  The
@@ -8530,7 +8534,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // which does not tend to observe quotes well.  The solution is to add additional escaped quotes.
      for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
         {
-#if 0
+#if 1
           printf ("sizeof(std::string::size_type) = %d \n",sizeof(std::string::size_type));
           printf ("sizeof(std::string::iterator)  = %d \n",sizeof(std::string::iterator));
           printf ("sizeof(unsigned int)           = %d \n",sizeof(unsigned int));
@@ -8545,7 +8549,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
             // This string at least has a quote
             // unsigned int endingQuote   = i->rfind("\"");
                std::string::size_type endingQuote   = i->rfind("\"");
-#if 0
+#if 1
                printf ("startingQuote = %" PRIuPTR " endingQuote = %" PRIuPTR " \n",startingQuote,endingQuote);
 #endif
             // There should be a double quote on both ends of the string
@@ -8556,13 +8560,13 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
             // printf ("quotedSubstring = %s \n",quotedSubstring.c_str());
             // std::string quotedSubstringWithoutQuotes = i->substr(startingQuote,endingQuote);
                std::string::size_type substringWithoutQuotesSize = ((endingQuote-1) - (startingQuote+1)) + 1;
-#if 0
+#if 1
                printf ("substringWithoutQuotesSize = %" PRIuPTR " \n",substringWithoutQuotesSize);
 #endif
             // Generate the string without quotes so that we can rebuild the quoted string.
             // This is more critical if there were escpes before the quotes in the original string.
                std::string quotedSubstringWithoutQuotes = i->substr(startingQuote+1,substringWithoutQuotesSize);
-#if 0
+#if 1
                printf ("quotedSubstringWithoutQuotes = %s \n",quotedSubstringWithoutQuotes.c_str());
 #endif
             // DQ (11/1/2012): Robb has suggested using single quote instead of double quotes here.
@@ -8575,13 +8579,13 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
             // std::string fixedQuotedSubstring = std::string("\\") + quotedSubstringWithoutQuotes + std::string("\\");
             // std::string fixedQuotedSubstring = std::string("\\\"") + quotedSubstringWithoutQuotes + std::string("\\\"");
                std::string fixedQuotedSubstring = std::string("\"") + quotedSubstringWithoutQuotes + std::string("\"");
-#if 0
+#if 1
                printf ("fixedQuotedSubstring = %s \n",fixedQuotedSubstring.c_str());
 #endif
             // Now replace the quotedSubstring with the fixedQuotedSubstring
             // i->replace(startingQuote,endingQuote,fixedQuotedSubstring);
                i->replace(startingQuote,endingQuote,fixedQuotedSubstring);
-#if 0
+#if 1
                printf ("Modified argument = %s \n",(*i).c_str());
 #endif
              }
@@ -8596,7 +8600,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // Add any options specified by the user (and add space at the end)
      compilerNameString.insert(compilerNameString.end(), argcArgvList.begin(), argcArgvList.end());
 
+#if DEBUG_COMPILER_COMMAND_LINE || 0
   // printf ("buildCompilerCommandLineOptions() #1: compilerNameString = \n%s \n",compilerNameString.c_str());
+     printf ("In buildCompilerCommandLineOptions: test 2.5: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+#endif
 
      std::string sourceFileName = get_sourceFileNameWithPath();
 
@@ -8613,6 +8620,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      for (vector<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
         {
           string s = std::string("-I") + oldFileNamePathOnly;
+#if DEBUG_COMPILER_COMMAND_LINE || 0
+          printf ("Looking in argcArgvList for: s = %s \n",s.c_str());
+#endif
           if (s == *i)
              {
 #if 0
@@ -8622,7 +8632,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
         }
 
-#if DEBUG_COMPILER_COMMAND_LINE || 0
+#if DEBUG_COMPILER_COMMAND_LINE || 1
+     printf ("oldFileNamePathOnlyAlreadySpecifiedAsIncludePath = %s \n",oldFileNamePathOnlyAlreadySpecifiedAsIncludePath ? "true" : "false");
      printf ("In buildCompilerCommandLineOptions: test 3: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
 
@@ -8649,13 +8660,20 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                     string cur_string = *iter;
                     string::size_type pos = cur_string.find("-I",0);
                     if (pos==0)
+                       {
+#if 1
+                         printf ("Found first -I option: cur_string = %s \n",cur_string.c_str());
+#endif
                          break;
+                       }
                   }
             // Liao, 5/15/2009
             // the input source file's path has to be the first one to be searched for header!
             // This is required since one of the SPEC CPU 2006 benchmarks: gobmk relies on this to be compiled.
             // insert before the position
-
+#if 1
+               printf ("this->get_unparseHeaderFiles() = %s \n",this->get_unparseHeaderFiles() ? "true" : "false");
+#endif
             // negara1 (07/14/2011): The functionality of header files unparsing takes care of this, so this is needed
             // only when header files unparsing is not enabled.
             // if (!this -> get_unparseHeaderFiles())
@@ -8672,17 +8690,20 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                  // ROSE_ASSERT(project != NULL);
                     if (project != NULL)
                        {
-#if 0
-                         printf ("In SgFile::buildCompilerCommandLineOptions(): project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
+#if 1
+                         printf ("In SgFile::buildCompilerCommandLineOptions(): project->get_unparse_in_same_directory_as_input_file() = %s \n",
+                              project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
 #endif
                          if (project->get_unparse_in_same_directory_as_input_file() == false)
                             {
-#if 0
-                              printf ("In buildCompilerCommandLineOptions(): BEFORE adding -I options of source file directory: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+#if 1
+                              printf ("In buildCompilerCommandLineOptions(): BEFORE adding -I options of source file directory: compilerNameString = \n%s\n",
+                                   CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
                               compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly);
-#if 0
-                              printf ("In buildCompilerCommandLineOptions(): AFTER adding -I options of source file directory: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+#if 1
+                              printf ("In buildCompilerCommandLineOptions(): AFTER adding -I options of source file directory: compilerNameString = \n%s\n",
+                                   CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
                             }
                        }
