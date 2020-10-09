@@ -29,12 +29,6 @@ parseCommandLine(int argc, char *argv[]) {
 
     SwitchGroup generic = Rose::CommandLine::genericSwitches();
 
-    // Ignored when this tool is enabled. Causes zero exit status if tool is disabled.
-    bool noErrorIfDisabled = false;
-    generic.insert(Switch("no-error-if-disabled")
-                   .intrinsicValue(true, noErrorIfDisabled)
-                   .hidden());
-
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{freq_files}...");
