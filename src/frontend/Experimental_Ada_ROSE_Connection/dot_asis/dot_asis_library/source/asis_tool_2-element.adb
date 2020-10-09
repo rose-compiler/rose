@@ -846,6 +846,9 @@ package body Asis_Tool_2.Element is
          begin
             State.Add_To_Dot_Label ("Is_Subunit", Value);
             Result.Is_Subunit := a_nodes_h.Support.To_bool (Value);
+            If Value then
+               Add_Corresponding_Body_Stub;
+            end if;
          end;
 
          -- Add_Iteration_Scheme_Name
@@ -1189,7 +1192,6 @@ package body Asis_Tool_2.Element is
                Add_Is_Name_Repeated;
                Add_Corresponding_Declaration;
                Add_Is_Subunit;
-               Add_Corresponding_Body_Stub;
                Add_Is_Dispatching_Operation;
 
             when A_Function_Body_Declaration =>
@@ -1207,7 +1209,6 @@ package body Asis_Tool_2.Element is
                Add_Is_Name_Repeated;
                Add_Corresponding_Declaration;
                Add_Is_Subunit;
-               Add_Corresponding_Body_Stub;
                Add_Is_Dispatching_Operation;
 
             when A_Return_Variable_Specification =>
@@ -1242,7 +1243,6 @@ package body Asis_Tool_2.Element is
                Add_Is_Name_Repeated;
                Add_Corresponding_Declaration;
                Add_Is_Subunit;
-               Add_Corresponding_Body_Stub;
 
             when An_Object_Renaming_Declaration =>
                Add_Object_Declaration_View; -- A2005
@@ -1315,11 +1315,9 @@ package body Asis_Tool_2.Element is
                Add_Is_Name_Repeated;
                Add_Corresponding_Declaration;
                Add_Is_Subunit;
-               Add_Corresponding_Body_Stub;
 
             when A_Protected_Body_Declaration =>
                Add_Corresponding_Body;
-               Add_Corresponding_Body_Stub;
                Add_Corresponding_Declaration;
                Add_Corresponding_End_Name;
                Add_Has_Protected;
@@ -1355,7 +1353,6 @@ package body Asis_Tool_2.Element is
 
             when A_Procedure_Body_Stub =>
                Add_Corresponding_Body;
-               Add_Corresponding_Body_Stub;
                Add_Corresponding_Declaration;
                Add_Corresponding_Subunit;
                Add_Is_Dispatching_Operation;
@@ -1376,20 +1373,17 @@ package body Asis_Tool_2.Element is
 
             when A_Package_Body_Stub =>
                Add_Corresponding_Body;
-               Add_Corresponding_Body_Stub;
                Add_Corresponding_Declaration;
                Add_Corresponding_Subunit;
 
             when A_Task_Body_Stub =>
                Add_Corresponding_Body;
-               Add_Corresponding_Body_Stub;
                Add_Corresponding_Declaration;
                Add_Corresponding_Subunit;
                Add_Has_Task;
 
             when A_Protected_Body_Stub =>
                Add_Corresponding_Body;
-               Add_Corresponding_Body_Stub;
                Add_Corresponding_Declaration;
                Add_Corresponding_Subunit;
                Add_Has_Protected;
