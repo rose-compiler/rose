@@ -6905,12 +6905,18 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunctionVariable(ATerm term, SgE
       return_type = var_symbol->get_type();
    }
    else {
-      // TODO - this may not be correct as character size is that of the CharacterFormula argument
-      // not a variable so have to create a type which can't be shared
-      SgIntVal* length_val = isSgIntVal(length);
-      // This is an assumption (hack) for now.
-      ROSE_ASSERT(length_val);
-      SgExpression* new_length = SageBuilder::buildIntVal(length_val->get_value());
+      // Create the return type. The length expression for the return_type can't be shared
+      // so we need to either make a new one (if isSgIntVal) or a copy (if isSgVarRefExp).
+      //
+      SgExpression* new_length = nullptr;
+      if (isSgIntVal(length)) {
+        SgIntVal* length_val = isSgIntVal(length);
+        new_length = SageBuilder::buildIntVal(length_val->get_value());
+      }
+      else {
+        new_length = isSgVarRefExp(SageInterface::deepCopyNode(length));
+      }
+      ROSE_ASSERT(new_length);
 
       return_type = SageBuilder::buildStringType(new_length);
    }
@@ -7271,7 +7277,6 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionC
    func_call = nullptr;
 
    if (ATmatch(term, "ByteFunction(<term>, <term>,<term>)", &t_formula, &t_fbyte, &t_nbyte)) {
-      // TODO - is this really called (perhaps can't be reached because of ambiguous modifications)
 #if PRINT_WARNINGS
       cerr << "WARNING UNIMPLEMENTED: ByteFunction\n";
 #endif
@@ -7294,11 +7299,18 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionC
    params->append_expression(first_byte);
    params->append_expression(length);
 
-   // Create the return type. The length expression for the return_type can't be shared.
-   SgIntVal* length_val = isSgIntVal(length);
-   // This is an assumption (hack) for now.
-   ROSE_ASSERT(length_val);
-   SgExpression* new_length = SageBuilder::buildIntVal(length_val->get_value());
+   // Create the return type. The length expression for the return_type can't be shared
+   // so we need to either make a new one (if isSgIntVal) or a copy (if isSgVarRefExp).
+   //
+   SgExpression* new_length = nullptr;
+   if (isSgIntVal(length)) {
+     SgIntVal* length_val = isSgIntVal(length);
+     new_length = SageBuilder::buildIntVal(length_val->get_value());
+   }
+   else {
+     new_length = isSgVarRefExp(SageInterface::deepCopyNode(length));
+   }
+   ROSE_ASSERT(new_length);
 
    SgType* return_type = SageBuilder::buildStringType(new_length);
 

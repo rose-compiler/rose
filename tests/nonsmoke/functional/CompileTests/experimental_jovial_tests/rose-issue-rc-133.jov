@@ -1,0 +1,21 @@
+START
+PROGRAM byteFunction;
+BEGIN
+
+   ITEM CODE C 10;
+   ITEM istart U = 5;
+   ITEM iend U = 5;
+
+% important to use variables %
+   CODE = BYTE('helloo',istart,iend);
+
+% test ByteFunctionVariable %
+   CODE = 'ABQFGHIAAZ';
+   BYTE(CODE,5,iend) = 'ZXXXY';
+
+% byte function call using integer values %
+   CODE = BYTE('HELLO',1,3);
+   CODE = BYTE('ECHO_',1,3);
+
+END
+TERM

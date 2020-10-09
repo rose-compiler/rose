@@ -57,9 +57,11 @@ JOVIAL_TESTCODES = \
  5_2_logical_continuation_a.jov         \
  5_2_logical_continuation_b.jov         \
  5_2_logical_continuation_amb.jov       \
+ 6_1_byte_function_variable.jov         \
  6_1_ptr_dereference.jov                \
  6_1_table_dereference.jov              \
  6_3_user_def_function_call.jov         \
+ 6_3_4_byte_function.jov                \
  6_3_5_shift_function.jov               \
  6_3_6_abs_function.jov                 \
  6_3_10_nwdsen_function.jov             \
@@ -86,6 +88,7 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-94.jov                   \
  rose-issue-rc-96.jov                   \
  rose-issue-rc-122-lcopy.jov            \
+ rose-issue-rc-133.jov                  \
  rose-issue-rc-134.jov                  \
  rose-issue-rc-135.jov                  \
  rose-issue-rc-136.jov                  \
