@@ -2,7 +2,7 @@ with Ada.Text_IO;
 
 -- source https://en.wikibooks.org/wiki/Ada_Programming/Control
 
-procedure IterateRange is
+procedure Iterate_Range is
    type Range_Type is range -5 .. 10;
 
    package T_IO renames Ada.Text_IO;
@@ -20,4 +20,4 @@ begin
          T_IO.New_Line;
       end if;
    end loop;
-end IterateRange;
+end Iterate_Range;

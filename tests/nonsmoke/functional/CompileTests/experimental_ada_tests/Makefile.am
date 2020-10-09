@@ -29,86 +29,87 @@ ROSE_COMPILER ?= ../../testTranslator
 
 
 PASSING_TESTS :=                       \
+  procedure_call.adb                   \
+  task_with_body.adb                   \
+  recursive_call.adb                   \
+  raise_statement.adb                  \
+  type_conversion.adb                  \
+  unit_1.adb                           \
+  loop_statement.adb                   \
+  minimal.adb                          \
+  if_statement.adb                     \
+  fib.adb                              \
+  while_loop_statement.adb             \
+  increment.adb	                       \
   pkgrename.ads                        \
   variable_declaration.ads             \
   constant_declaration.ads             \
   derived_record.ads                   \
   empty_package.ads                    \
-  entry_declaration.ads                \
-  exception_declaration.ads            \
-  gototest.ads                         \
-  nested_package.ads                   \
   named.ads                            \
   opaque.ads                           \
   ordinary_type_declaration.ads        \
-  package_with_body.ads                \
   parent-child.ads                     \
   selected_component.ads               \
   simple_expression_range.ads          \
   tagged_definition.ads                \
   task_type_declaration.ads            \
   task_with_body.ads                   \
-  test_unit.ads                        \
-  test.ads                             \
-  unit_2.ads                           \
   EndOfList
 
 # pass asis, frontend, backend, but representation is incomplete
 PASSING_INCOMPLETE_TESTS :=            \
   component_declaration.ads            \
-  mpiuse.ads                           \
   real_typedecl.ads                    \
-  sender.ads                           \
-  subtypes.ads                         \ 
-  EndOfList 
+  subtypes.ads                         \
+  EndOfList
 
 # fail in backend
-PASSING_FRONTEND :=                    \ 
+PASSING_FRONTEND :=                    \
+  constants.ads                        \
+  loop_exit.adb                        \
+  operator.adb                         \
   EndOfList
 
 # fail in frontend
 PASSING_ASIS := \
+  hello_world.adb                      \
+  choice_parameter_specification.adb   \
   EndOfList
 
+# incomplete Asis or Dot file
 NOT_HANDLED := \
-  unit_2.adb                           \
-  entry_call.adb                       \
-  hello_world.adb                      \
-  test_unit.adb                        \
-  test.adb                             \
-  function_call.adb                    \
-  function_declaration.adb             \
-  unit_3.ads                           \
   accept_statement.adb                 \
-  procedure_call.adb                   \
-  task_with_body.adb                   \
-  some_modes.ads                       \
-  recursive_call.adb                   \
-  short_circuit.adb                    \
-  raise_statement.adb                  \
-  type_conversion.adb                  \
-  procedure_declaration.ads            \
-  procedure_declaration.adb            \
-  package_with_body.adb                \
-  parameter_declaration.ads            \
-  unit_1.adb                           \
-  loop_statement.adb                   \
-  loop_exit.adb                        \
-  minimal.adb                          \
-  operator.adb                         \
-  if_statement.adb                     \
-  gototest.adb                         \
   all_modes.ads                        \
   case_function.ads                    \
-  constants.ads                        \
-  choice_parameter_specification.adb   \
-  fib.adb                              \
-  for_loop.adb                         \
-  function_declaration.ads             \
   case_function.adb                    \
-  iterateRange.adb                     \
-  while_loop_statement.adb             \
-  increment.adb	                       \
+  entry_declaration.ads                \
+  entry_call.adb                       \
+  exception_declaration.ads            \
+  for_loop.adb                         \
+  function_call.adb                    \
+  function_declaration.ads             \
+  function_declaration.adb             \
+  gototest.ads                         \
+  gototest.adb                         \
+  iterate_range.adb                    \
+  mpiuse.ads                           \
+  nested_package.ads                   \
+  parameter_declaration.ads            \
+  package_with_body.ads                \
+  package_with_body.adb                \
+  procedure_declaration.ads            \
+  procedure_declaration.adb            \
+  sender.ads                           \
+  short_circuit.adb                    \
+  some_modes.ads                       \
+  test.ads                             \
+  test.adb                             \
+  test_unit.ads                        \
+  test_unit.adb                        \
+  unit_2.ads                           \
+  unit_2.adb                           \
+  unit_3.ads                           \
   EndOfList
 
 NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
@@ -126,12 +127,14 @@ TESTCODES_REQUIRED_TO_PASS := $(TEST_TARGETS)
 
 #
 # targets
-
 .PHONY: all
-all: $(ALL_TEST_TARGETS)
+all: passing
 
 .PHONY: passing
 passing: $(TEST_TARGETS)
+
+.PHONY: complete
+complete: $(ALL_TEST_TARGETS)
 
 .PHONY: passing-frontend
 passing-frontend: $(PASSING_FRONTEND)
@@ -151,10 +154,10 @@ print:
 
 $(top_builddir)/src/rose-compiler:
 	$(MAKE) -C $(top_builddir)/src rose-compiler
-	
+
 %.ads:$(abs_srcdir)/tests/%.ads $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
-	
+
 %.adb:$(abs_srcdir)/tests/%.adb $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
 
