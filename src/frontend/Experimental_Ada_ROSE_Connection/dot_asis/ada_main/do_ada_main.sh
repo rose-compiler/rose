@@ -27,9 +27,9 @@ target_dir=${base_dir}/../test_units
 #target_units="unit_2.ads"
 #target_units="unit_2.adb"
 #target_units="variable_declaration.ads"
-#target_units="if_statement.adb"
+target_units="if_statement.adb"
 #target_units="ordinary_type_declaration.ads"
-target_units=`(cd ${target_dir}; ls *.ad[bs])`
+# target_units=`(cd ${target_dir}; ls *.ad[bs])`
 
 show_compiler_version () {
   log_separator_1

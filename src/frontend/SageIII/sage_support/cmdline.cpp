@@ -7464,6 +7464,30 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("In buildCompilerCommandLineOptions(): compilerName = %s \n",compilerName.c_str());
 #endif
 
+     const SgSourceFile* sourceFile = isSgSourceFile(this);
+
+#if 1
+  // DQ (10/10/2020): Output values before manipulation.
+     if (sourceFile != NULL)
+        {
+          SgProject* project = TransformationSupport::getProject(sourceFile);
+          ROSE_ASSERT(project != NULL);
+
+          printf ("(TOP of buildCompilerCommandLineOptions(): project->get_includeDirectorySpecifierList().size() = %zu \n",project->get_includeDirectorySpecifierList().size());
+          for (size_t i = 0; i < project->get_includeDirectorySpecifierList().size(); i++)
+             {
+               printf ("project->get_includeDirectorySpecifierList()[%zu] = %s \n",i,project->get_includeDirectorySpecifierList()[i].c_str());
+             }
+
+          printf ("(TOP of buildCompilerCommandLineOptions(): project->get_extraIncludeDirectorySpecifierList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierList().size());
+          for (size_t i = 0; i < project->get_extraIncludeDirectorySpecifierList().size(); i++)
+             {
+               printf ("project->get_extraIncludeDirectorySpecifierList()[%zu] = %s \n",i,project->get_extraIncludeDirectorySpecifierList()[i].c_str());
+             }
+        }
+#endif
+
+
      if ( SgProject::get_verbose() > 0 )
         {
           printf ("In buildCompilerCommandLineOptions(): compilerName = %s \n",compilerName.c_str());
@@ -8016,7 +8040,21 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // DQ (3/31/2004): New cleaned up source file handling
      Rose_STL_Container<string> argcArgvList = argv;
 
-#define DEBUG_INCLUDE_PATHS 0
+#if DEBUG_COMPILER_COMMAND_LINE
+     printf ("In buildCompilerCommandLineOptions: test 0: compilerNameString = %s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+     printf ("argcArgvList.size()                                            = %" PRIuPTR " \n",argcArgvList.size());
+     printf ("In buildCompilerCommandLineOptions: test 0: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
+#endif
+#if 1
+  // DQ (10/10/2020): Debugging.
+     printf ("In buildCompilerCommandLineOptions: test 0: argcArgvList.size() = %zu \n",argcArgvList.size());
+     for (size_t i = 0; i < argcArgvList.size(); i++)
+        {
+          printf ("argcArgvList()[%zu] = %s \n",i,argcArgvList[i].c_str());
+        }
+#endif
+
+#define DEBUG_INCLUDE_PATHS 1
 
 #if DEBUG_INCLUDE_PATHS
      printf ("\n\n****************************************************************************** \n");
@@ -8063,7 +8101,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
 
   // DQ (11/8/2018): Adding extra include paths identified as being required in the unparsing of headers, either for the source file or for otehr included headers (nested headers).
-     const SgSourceFile* sourceFile = isSgSourceFile(this);
+  // const SgSourceFile* sourceFile = isSgSourceFile(this);
 
 #if DEBUG_INCLUDE_PATHS
      printf ("sourceFile = %p \n",sourceFile);
@@ -8117,9 +8155,15 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                     project->get_extraIncludeDirectorySpecifierList().erase(project->get_extraIncludeDirectorySpecifierList().begin() + i);
                     --i;
                   }
+                 else
+                  {
+#if 1
+                    printf ("Skipping over a duplicate extra include path: project->get_extraIncludeDirectorySpecifierList()[%zu] = %s \n",i,project->get_extraIncludeDirectorySpecifierList()[i].c_str());
+#endif
+                  }
              }
 
-#if 0
+#if 1
        // DQ (6/27/2020): Compress to just the unique elements.
           ROSE_ASSERT(project != NULL);
           printf ("(After removing duplicate paths) project->get_extraIncludeDirectorySpecifierList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierList().size());
@@ -8129,18 +8173,29 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
 #endif
 
-#if 0
+#if 1
           printf ("Before reserve(): \n");
           printf (" --- argcArgvList.size() = %zu \n",argcArgvList.size());
           printf (" --- project->get_extraIncludeDirectorySpecifierList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierList().size());
 #endif
+#if 1
+       // DQ (6/29/2020): Debugging.
+          ROSE_ASSERT(project != NULL);
+          printf ("Before reserve(): argcArgvList.size() = %zu \n",argcArgvList.size());
+          for (size_t i = 0; i < argcArgvList.size(); i++)
+             {
+               printf ("argcArgvList()[%zu] = %s \n",i,argcArgvList[i].c_str());
+             }
+#endif
+
+       // Increase the size of the argcArgvList so that we can insert the new extra include directory paths.
           argcArgvList.reserve(argcArgvList.size()+project->get_extraIncludeDirectorySpecifierList().size());
 
-#if 0
+#if 1
           printf ("After reserve(): \n");
           printf (" --- argcArgvList.size() = %zu \n",argcArgvList.size());
 #endif
-#if 0
+#if 1
        // DQ (6/29/2020): Debugging.
           ROSE_ASSERT(project != NULL);
           printf ("After reserve(): argcArgvList.size() = %zu \n",argcArgvList.size());
@@ -8158,31 +8213,110 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("****************************************************************************** \n\n");
 #endif
 
+       // DQ (10/10/2020): Find the first include.
+          string firstInclude;
+          int indexOfFirstIncludeDirective = -1;
+          bool foundFirstInclude = false;
+          std::vector<string>::iterator positionForIncludes = argcArgvList.begin();
+#if 1
+          printf ("Find the first include directive in the command line \n");
+          printf ("argcArgvList.size() = %zu \n",argcArgvList.size());
+#endif
+       // for (size_t i = 0; i < argcArgvList.size(); i++)
+          size_t i = 0;
+          while (foundFirstInclude == false && i < argcArgvList.size())
+             {
+               size_t length = argcArgvList[i].size();
+#if 1
+               printf ("argcArgvList[%zu].size() = %zu \n",i,length);
+               printf ("argcArgvList[%zu] = %s \n",i,argcArgvList[i].c_str());
+#endif
+            // look only for -I include directories (directories where #include<filename> will be found)
+               if ((foundFirstInclude == false) && (length > 2) && (argcArgvList[i][0] == '-') && (argcArgvList[i][1] == 'I'))
+                  {
+                 // std::string include_path = argv[i].substr(2);
+                    firstInclude = argcArgvList[i];
+                    indexOfFirstIncludeDirective = (int) i;
+                    foundFirstInclude = true;
+#if 1
+                    printf ("Found first include option on command line: indexOfFirstIncludeDirective = %d firstInclude = %s \n",indexOfFirstIncludeDirective,firstInclude.c_str());
+#endif
+                  }
+
+               positionForIncludes++;
+               i++;
+             }
+
+#if 1
+          printf ("After computing first include: firstInclude                 = %s \n",firstInclude.c_str());
+          printf ("After computing first include: indexOfFirstIncludeDirective = %d \n",indexOfFirstIncludeDirective);
+#endif
+
+       // If the first include is the same as the first entry in the extra include list then remove the first entry in the extra include list (it was added previously).
+          if (project->get_extraIncludeDirectorySpecifierList().size() > 0)
+             {
+               if (firstInclude == project->get_extraIncludeDirectorySpecifierList()[0])
+                  {
+#if 1
+                    printf ("The first include matches the first entry in the extraIncludeDirectorySpecifierList \n");
+                    printf ("Before erase: project->get_extraIncludeDirectorySpecifierList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierList().size());
+#endif
+                    project->get_extraIncludeDirectorySpecifierList().erase(project->get_extraIncludeDirectorySpecifierList().begin());
+#if 1
+                    printf ("After erase: project->get_extraIncludeDirectorySpecifierList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierList().size());
+#endif
+                  }
+                 else
+                  {
+#if 1
+                    printf ("firstInclude != project->get_extraIncludeDirectorySpecifierList()[0] \n");
+                    printf ("firstInclude                                         = %s \n",firstInclude.c_str());
+                    printf ("project->get_extraIncludeDirectorySpecifierList()[0] = %s \n",project->get_extraIncludeDirectorySpecifierList()[0].c_str());
+#endif
+                  }
+             }
+
+#if 0
        // DQ (3/16/2020): Need to change the locations in the argcArgvList where we insert the added 
        // include paths (must be added before those specified on the original command line).
        // argcArgvList.insert(argcArgvList.end(),project->get_extraIncludeDirectorySpecifierList().begin(),project->get_extraIncludeDirectorySpecifierList().end());
           std::vector<string>::iterator positionForIncludes = argcArgvList.begin();
        // ROSE_ASSERT(positionForIncludes != argcArgvList.end());
+
+#error "DEAD CODE!"
+
           if (project->get_includeDirectorySpecifierList().size() > 0)
              {
-               string firstInclude = project->get_includeDirectorySpecifierList()[0];
-               int indexOfFirstIncludeDirective = findIndexForFirstIncludeDirectiveInArgumentList(argcArgvList, firstInclude );
-#if 0
+            // string firstInclude = project->get_includeDirectorySpecifierList()[0];
+            // int indexOfFirstIncludeDirective = findIndexForFirstIncludeDirectiveInArgumentList(argcArgvList, firstInclude );
+#if 1
+               printf ("firstInclude                 = %s \n",firstInclude.c_str());
                printf ("indexOfFirstIncludeDirective = %d \n",indexOfFirstIncludeDirective);
 #endif
                int index = 0;
+
+#error "DEAD CODE!"
+
                while ( (index < indexOfFirstIncludeDirective) && (positionForIncludes != argcArgvList.end()) )
                   {
                     index++;
                     positionForIncludes++;
                   }
-#if 0
+#if 1
                printf ("index = %d \n",index);
                printf ("*positionForIncludes = %s \n",(*positionForIncludes).c_str());
 #endif
              }
+            else
+             {
+            // DQ (10/10/2020): If there are no include directives then we can use any location (selected the end).
+               indexOfFirstIncludeDirective = argcArgvList.size() - 1;
+             }
 
-#if 0
+#error "DEAD CODE!"
+
+#endif
+#if 1
        // DQ (6/29/2020): Debugging.
           ROSE_ASSERT(project != NULL);
           printf ("Before insert(): argcArgvList.size() = %zu \n",argcArgvList.size());
@@ -8197,7 +8331,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
           argcArgvList.insert(positionForIncludes,project->get_extraIncludeDirectorySpecifierList().begin(),project->get_extraIncludeDirectorySpecifierList().end());
 
-#if 0
+#if 1
        // DQ (6/29/2020): Debugging.
           ROSE_ASSERT(project != NULL);
           printf ("After insert(): argcArgvList.size() = %zu \n",argcArgvList.size());
@@ -8240,6 +8374,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
 #if DEBUG_COMPILER_COMMAND_LINE
      printf ("In buildCompilerCommandLineOptions: test 1: compilerNameString = %s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+     printf ("argcArgvList.size()                                            = %" PRIuPTR " \n",argcArgvList.size());
+     printf ("In buildCompilerCommandLineOptions: test 1: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
 #endif
 #if DEBUG_COMPILER_COMMAND_LINE
   // DQ (1/24/2010): Moved this inside of the true branch below.
@@ -8287,6 +8423,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                     argcArgvList.remove(*i);
                   }
 #else
+#if DEBUG_COMPILER_COMMAND_LINE || 0
+          printf ("In buildCompilerCommandLineOptions: test 1.04: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+          printf ("argcArgvList.size()                                            = %" PRIuPTR " \n",argcArgvList.size());
+          printf ("In buildCompilerCommandLineOptions: test 1.04: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
+#endif
+
             // DQ (9/25/2007): Moved to std::vector from std::list uniformally within ROSE.
             // printf ("Skipping test for absolute path removing the source filename as it appears in the source file name list file = % \n",i->c_str());
             // argcArgvList.remove(*i);
@@ -8298,6 +8440,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
              }
         }
+
+#if DEBUG_COMPILER_COMMAND_LINE || 0
+     printf ("In buildCompilerCommandLineOptions: test 1.05: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+     printf ("argcArgvList.size()                                            = %" PRIuPTR " \n",argcArgvList.size());
+     printf ("In buildCompilerCommandLineOptions: test 1.05: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
+#endif
 
 #if DEBUG_COMPILER_COMMAND_LINE || 0
      printf ("In buildCompilerCommandLineOptions: After removing source file name: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
@@ -8341,10 +8489,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                 deleteList.push_back(*i);
              }
         }
-        for (std::vector<string>::iterator i = deleteList.begin(); i != deleteList.end(); i++)
-           {
-             argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
-           }
+
+     for (std::vector<string>::iterator i = deleteList.begin(); i != deleteList.end(); i++)
+        {
+          argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
+        }
+
 #if DEBUG_COMPILER_COMMAND_LINE
      printf ("In buildCompilerCommandLineOptions: After removing -std option for Intel compiler,  argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
 #endif
@@ -8356,6 +8506,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #if 0
      printf ("Exitng as a test! \n");
      ROSE_ASSERT(false);
+#endif
+
+#if DEBUG_COMPILER_COMMAND_LINE || 0
+     printf ("In buildCompilerCommandLineOptions: test 1.1: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+     printf ("argcArgvList.size()                                            = %" PRIuPTR " \n",argcArgvList.size());
+     printf ("In buildCompilerCommandLineOptions: test 1.1: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
 #endif
 
      bool  objectNameSpecified = false;
@@ -8389,6 +8545,13 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
 #if DEBUG_COMPILER_COMMAND_LINE
      printf ("get_objectFileNameWithPath().length() = %zu \n",get_objectFileNameWithPath().length());
+     printf ("objectNameSpecified = %s \n",objectNameSpecified ? "true" : "false");
+#endif
+
+#if DEBUG_COMPILER_COMMAND_LINE || 0
+     printf ("In buildCompilerCommandLineOptions: test 1.2: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+     printf ("argcArgvList.size()                                            = %" PRIuPTR " \n",argcArgvList.size());
+     printf ("In buildCompilerCommandLineOptions: test 1.2: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
 #endif
 
      if (get_objectFileNameWithPath().length() > 0)
@@ -8467,7 +8630,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                printf ("get_objectFileNameWithPath() = %s: get_multifile_support() == false: leaving the originally specified -o output option in place \n",get_objectFileNameWithPath().c_str());
 #endif
              }
-#endif             
+#endif
+#if DEBUG_COMPILER_COMMAND_LINE || 0
+          printf ("In buildCompilerCommandLineOptions: test 1.3: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+          printf ("argcArgvList.size()                                            = %" PRIuPTR " \n",argcArgvList.size());
+          printf ("In buildCompilerCommandLineOptions: test 1.3: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
+#endif
         }
 
 #if DEBUG_COMPILER_COMMAND_LINE || 0
@@ -8521,10 +8689,18 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
         }
 
+#if DEBUG_COMPILER_COMMAND_LINE || 0
+     printf ("In buildCompilerCommandLineOptions: test 1.4: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+     printf ("argcArgvList.size()                                            = %" PRIuPTR " \n",argcArgvList.size());
+     printf ("In buildCompilerCommandLineOptions: test 1.4: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
+#endif
+
      argcArgvList.swap(tempArgcArgv);
 
 #if DEBUG_COMPILER_COMMAND_LINE || 0
      printf ("In buildCompilerCommandLineOptions: test 1.5: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+     printf ("argcArgvList.size()                                            = %" PRIuPTR " \n",argcArgvList.size());
+     printf ("In buildCompilerCommandLineOptions: test 1.5: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
 #endif
 
   // DQ (4/14/2005): Fixup quoted strings in args fix "-DTEST_STRING_MACRO="Thu Apr 14 08:18:33 PDT 2005"
@@ -8535,10 +8711,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
         {
 #if 1
-          printf ("sizeof(std::string::size_type) = %d \n",sizeof(std::string::size_type));
-          printf ("sizeof(std::string::iterator)  = %d \n",sizeof(std::string::iterator));
-          printf ("sizeof(unsigned int)           = %d \n",sizeof(unsigned int));
-          printf ("sizeof(unsigned long)          = %d \n",sizeof(unsigned long));
+          printf ("sizeof(std::string::size_type) = %lu \n",sizeof(std::string::size_type));
+          printf ("sizeof(std::string::iterator)  = %lu \n",sizeof(std::string::iterator));
+          printf ("sizeof(unsigned int)           = %lu \n",sizeof(unsigned int));
+          printf ("sizeof(unsigned long)          = %lu \n",sizeof(unsigned long));
 #endif
 
        // DQ (1/26/2006): Fix for 64 bit support.
