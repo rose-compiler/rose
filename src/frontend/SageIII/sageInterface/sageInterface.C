@@ -6047,7 +6047,7 @@ SageInterface::lookupTemplateMemberFunctionSymbolInParentScopes(const SgName & f
 void
 SageInterface::addTextForUnparser ( SgNode* astNode, string s, AstUnparseAttribute::RelativePositionType inputlocation )
    {
-    // printf ("addText(): using new attribute interface (s = %s) \n",s.c_str());
+  // printf ("addText(): using new attribute interface (s = %s) \n",s.c_str());
 
      if (isSgType(astNode) != NULL)
         {
