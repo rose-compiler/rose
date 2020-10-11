@@ -4920,13 +4920,14 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                            // DQ (11/8/2018): Adding the "-I" prefix required for use on the command line.
                               string include_line = string("-I") + adjusted_header_file_directory;
                            // unparsedFile->get_extraIncludeDirectorySpecifierList().push_back(include_line);
-                              translation_unit_source_file->get_extraIncludeDirectorySpecifierList().push_back(include_line);
+                           // translation_unit_source_file->get_extraIncludeDirectorySpecifierList().push_back(include_line);
+                              translation_unit_source_file->get_extraIncludeDirectorySpecifierBeforeList().push_back(include_line);
 #if 0
                               printf ("unparsedFile->getFileName() = %s \n",unparsedFile->getFileName().c_str());
-                              printf ("unparsedFile->get_extraIncludeDirectorySpecifierList().size() = %zu \n",unparsedFile->get_extraIncludeDirectorySpecifierList().size());
-                              for (size_t i = 0; i < translation_unit_source_file->get_extraIncludeDirectorySpecifierList().size(); i++)
+                              printf ("unparsedFile->get_extraIncludeDirectorySpecifierBeforeList().size() = %zu \n",unparsedFile->get_extraIncludeDirectorySpecifierBeforeList().size());
+                              for (size_t i = 0; i < translation_unit_source_file->get_extraIncludeDirectorySpecifierBeforeList().size(); i++)
                                  {
-                                   printf ("translation_unit_source_file->get_extraIncludeDirectorySpecifierList()[%zu] = %s \n",i,translation_unit_source_file->get_extraIncludeDirectorySpecifierList()[i].c_str());
+                                   printf ("translation_unit_source_file->get_extraIncludeDirectorySpecifierBeforeList()[%zu] = %s \n",i,translation_unit_source_file->get_extraIncludeDirectorySpecifierBeforeList()[i].c_str());
                                  }
 #endif
 #if 0
@@ -5094,7 +5095,8 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
                       // DQ (3/11/2020): Add the path to the modified (transformed) include file.
                          string adjusted_header_file_directory_include_line = string("-I") + adjusted_header_file_directory;
-                         unparsedFile->get_extraIncludeDirectorySpecifierList().push_back(adjusted_header_file_directory_include_line);
+                      // unparsedFile->get_extraIncludeDirectorySpecifierList().push_back(adjusted_header_file_directory_include_line);
+                         unparsedFile->get_extraIncludeDirectorySpecifierBeforeList().push_back(adjusted_header_file_directory_include_line);
 #if 0
                          printf ("Adding adjusted_header_file_directory_include_line = %s \n",adjusted_header_file_directory_include_line.c_str());
 #endif
@@ -5104,7 +5106,8 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                       // DQ (3/14/2020): Add the header file path to the project (not just the SgSourceFile, since the project is where 
                       // we accumulate all of the header file paths so that source files that are not the unparsedFile (which represents 
                       // a header file) can be unparsed and compiled using to file the header files that have been modified.
-                         project->get_extraIncludeDirectorySpecifierList().push_back(adjusted_header_file_directory_include_line);
+                      // project->get_extraIncludeDirectorySpecifierList().push_back(adjusted_header_file_directory_include_line);
+                         project->get_extraIncludeDirectorySpecifierBeforeList().push_back(adjusted_header_file_directory_include_line);
 #if 0
                          ROSE_ASSERT(unparsedFile->get_project() != NULL);
                          printf ("Output includeDirectorySpecifierList for unparsedFile->getFileName() = %s \n",unparsedFile->getFileName().c_str());
@@ -5115,20 +5118,20 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                               printf ("unparsedFile->get_project()->get_includeDirectorySpecifierList()[%zu] = %s \n",i,unparsedFile->get_project()->get_includeDirectorySpecifierList()[i].c_str());
                             }
 
-                         printf ("Output extraIncludeDirectorySpecifierList for unparsedFile->getFileName() = %s \n",unparsedFile->getFileName().c_str());
+                         printf ("Output extraIncludeDirectorySpecifierBeforeList for unparsedFile->getFileName() = %s \n",unparsedFile->getFileName().c_str());
                       // printf ("Calling unparsedFile->get_project()->get_extraIncludeDirectorySpecifierList().size() \n");
-                         printf ("(added for source file) unparsedFile->get_extraIncludeDirectorySpecifierList().size() = %zu \n",unparsedFile->get_extraIncludeDirectorySpecifierList().size());
-                         for (size_t i = 0; i < unparsedFile->get_extraIncludeDirectorySpecifierList().size(); i++)
+                         printf ("(added for source file) unparsedFile->get_extraIncludeDirectorySpecifierBeforeList().size() = %zu \n",unparsedFile->get_extraIncludeDirectorySpecifierBeforeList().size());
+                         for (size_t i = 0; i < unparsedFile->get_extraIncludeDirectorySpecifierBeforeList().size(); i++)
                             {
-                              printf ("unparsedFile->get_extraIncludeDirectorySpecifierList()[%zu] = %s \n",i,unparsedFile->get_extraIncludeDirectorySpecifierList()[i].c_str());
+                              printf ("unparsedFile->get_extraIncludeDirectorySpecifierBeforeList()[%zu] = %s \n",i,unparsedFile->get_extraIncludeDirectorySpecifierBeforeList()[i].c_str());
                             }
 
                       // DQ (3/14/2020): Added output of the extraIncludeDirectorySpecifierList held on the SgProject node.
                          ROSE_ASSERT(project != NULL);
-                         printf ("(added for source file) project->get_extraIncludeDirectorySpecifierList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierList().size());
-                         for (size_t i = 0; i < project->get_extraIncludeDirectorySpecifierList().size(); i++)
+                         printf ("(added for source file) project->get_extraIncludeDirectorySpecifierBeforeList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierBeforeList().size());
+                         for (size_t i = 0; i < project->get_extraIncludeDirectorySpecifierBeforeList().size(); i++)
                             {
-                              printf ("project->get_extraIncludeDirectorySpecifierList()[%zu] = %s \n",i,project->get_extraIncludeDirectorySpecifierList()[i].c_str());
+                              printf ("project->get_extraIncludeDirectorySpecifierBeforeList()[%zu] = %s \n",i,project->get_extraIncludeDirectorySpecifierBeforeList()[i].c_str());
                             }
 
 #endif
@@ -5372,14 +5375,14 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                     if (isSubstring == true)
                        {
 #if 0
-                         printf ("Adding to extraIncludeDirectorySpecifierList: header_file_directory = %s \n",header_file_directory.c_str());
+                         printf ("Adding to extraIncludeDirectorySpecifierBeforeList: header_file_directory = %s \n",header_file_directory.c_str());
 #endif
-                         translation_unit_source_file->get_extraIncludeDirectorySpecifierList().push_back(include_line);
+                         translation_unit_source_file->get_extraIncludeDirectorySpecifierBeforeList().push_back(include_line);
                        }
                       else
                        {
 #if 0
-                         printf ("Supress output of this directory in the extraIncludeDirectorySpecifierList \n");
+                         printf ("Supress output of this directory in the extraIncludeDirectorySpecifierBeforeList \n");
 #endif
                        }
 

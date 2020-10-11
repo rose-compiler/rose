@@ -38,6 +38,7 @@ test_multiple_files_1: $(CXX_FILE_DIR)/test2012_246a.C $(CXX_FILE_DIR)/test2012_
            exit 1; \
         fi;
 
+# DQ (9/27/2020): This test fails for gnu compilers 5.x and later (fixed in test2018_01.C).
 # DQ (7/24/2018): Test for output spew from multiple files on the same command line.
 test_multiple_files_2: $(CXX_FILE_DIR)/test2018_01.C $(CXX_FILE_DIR)/test2018_02.C
 	rm -f outputFile; \
@@ -59,6 +60,28 @@ test_multiple_files_2: $(CXX_FILE_DIR)/test2018_01.C $(CXX_FILE_DIR)/test2018_02
         fi;
 
 
+# DQ (9/27/2020): This test fails for gnu compilers 5.x and later (fixed in test2018_01.C).
+# DQ (7/24/2018): Test for output spew from multiple files on the same command line.
+test_hello_world: $(srcdir)/helloworld.C
+	rm -f outputFile; \
+	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) -c $(srcdir)/helloworld.C >& outputFile; \
+	outputLines=`wc -l < outputFile`; \
+	echo "Spurious lines of output = $$outputLines"; \
+	if test $$outputLines -eq 0; then \
+           echo "#############################################################################"; \
+           echo "PASSED: Output from C++ translation is quiet (no output detected from translator): test_hello_world"; \
+           echo "#############################################################################"; \
+        else \
+           echo "####################################################################################################"; \
+           echo "FAILED: Output from C++ compilation detected (clean up translator to eliminate output when verbose == 0): test_hello_world"; \
+           echo "####################################################################################################"; \
+           echo "*** Output detected ***"; \
+           cat outputFile; \
+           echo "####################################################################################################"; \
+           exit 1; \
+        fi;
+
+
 
 # This rule is run after automake's internal check rule (which we don't want to use)
 check-local:
@@ -70,6 +93,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	@$(MAKE) $(CXX_TEST_Objects)
 	@$(MAKE) test_multiple_files_1
 	@$(MAKE) test_multiple_files_2
+	@$(MAKE) test_hello_world
 endif
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 	@$(MAKE) $(F90_TEST_Objects)
