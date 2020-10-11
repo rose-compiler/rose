@@ -2337,7 +2337,22 @@ Grammar::setUpSupport ()
   // are unparsed. This list is added to support extra directories added to support transformed header files.
   // And additional extraIncludeDirectorySpecifierList is available on the SgSourceFile IR node to support 
   // header file directories that are source file specific.
-     Project.setDataPrototype("SgStringList","extraIncludeDirectorySpecifierList", "",
+  // Project.setDataPrototype("SgStringList","extraIncludeDirectorySpecifierList", "",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/10/2020): These paths are used in the construction of the backend compiler's command line.
+  // Some include paths have be be specified before, so that unparsed versions of header files will be 
+  // seen instead of the original header file. And some include paths must be speficied after the users include paths 
+  // so that they will not interfer with the users include files. For example: the unit test requires that the DMTCP 
+  // header file path come last else some applications (e.g. wget) will find the wrong config.h header file (which is 
+  // in both wget's directory paths and also within the DMTCP header files.  So we need to be more specific and specify
+  // two list of extra include directory paths, one to be inserted before the user's header file paths and one after 
+  // the user's header file paths.  Different tools will have different requirements.
+  // DQ (10/10/2020): List of extra include paths to be inserted before the users include paths.
+     Project.setDataPrototype("SgStringList","extraIncludeDirectorySpecifierBeforeList", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (10/10/2020): List of extra include paths to be inserted after the users include paths.
+     Project.setDataPrototype("SgStringList","extraIncludeDirectorySpecifierAfterList", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (4/6/2020): Now that we can support only unparsing modified header files the tests of header file 

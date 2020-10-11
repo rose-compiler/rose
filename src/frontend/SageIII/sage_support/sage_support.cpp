@@ -6642,7 +6642,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
      ROSE_ASSERT(false);
 #endif
 
-#define DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS 1
+#define DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS 0
 
 #if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS
      printf ("\n\n***************************************************** \n");
