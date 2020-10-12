@@ -8,9 +8,11 @@
 #define PRINT_ATERM_TRAVERSAL 0
 #define PRINT_SOURCE_POSITION 0
 #define PRINT_WARNINGS 0
+#define CHECK_AMB 1
 
 using namespace ATermSupport;
 using namespace Jovial_ROSE_Translation;
+namespace SB = SageBuilder;
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -6009,6 +6011,18 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
    expr = nullptr;
 
    if (ATmatch(term, "BitFormula(<term>,<term>)", &t_operand, &t_continuation)) {
+#if 0 // This one should be caught ok
+#if CHECK_AMB
+      if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+        cerr << "WARNING AMBIGUITY: BitFormula-operand \n";
+        printf("... traverse_BitFormula: %s\n", ATwriteToString(term));
+      }
+      if (ATmatch(t_continuation, "amb(<term>)", &t_amb)) {
+        cerr << "WARNING AMBIGUITY: BitFormula-continuation \n";
+        printf("... traverse_BitFormula: %s\n", ATwriteToString(term));
+      }
+#endif
+#endif
       if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
          ATermList tail = (ATermList) ATmake("<term>", t_amb);
          ATerm head = ATgetFirst(tail);
@@ -6043,6 +6057,10 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
          // MATCHED LogicalOperand
       }
       else if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+#if CHECK_AMB
+         cerr << "WARNING AMBIGUITY: BitFormulaNOT \n";
+         printf("... traverse_BitFormula: %s\n", ATwriteToString(term));
+#endif
          // BitFormulaNOT is sometimes ambiguous, try the first path
          ATermList tail = (ATermList) ATmake("<term>", t_amb);
          ATerm head = ATgetFirst(tail);
@@ -6057,6 +6075,13 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
       expr = not_op;
 
    } else if (ATmatch(term, "BitVariableFormula(<term>)", &t_operand)) {
+#if CHECK_AMB
+        if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+          cerr << "WARNING AMBIGUITY: BitFormula(BitVariableFormula) \n";
+          printf("... traverse_BitFormula: %s\n", ATwriteToString(term));
+          expr = SB::buildNullExpression_nfi();
+        }
+#endif
       if (traverse_Variable(t_operand, expr)) {
          // MATCHED Variable
       } else return ATfalse;
@@ -6102,30 +6127,75 @@ ATbool ATermToSageJovialTraversal::traverse_LogicalContinuation(ATerm term, SgEx
    printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_operand;
+   ATerm t_operand, t_amb;
    SgExpression* rhs;
 
    ROSE_ASSERT(expr);
 
+// The LogicalContinuation may produce an ambiguous ATerm representation. The
+// code below tries to match the ambiguity and chooses (uses) the first path
+// for the LogicalOperand if ambiguity found (testing may show the second path
+// needs to be checked as well).
+//
    if (ATmatch(term, "AndContinuation(<term>)", &t_operand)) {
+      if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+        // MATCHED an ambiguity, choose the first one
+        ATermList tail = (ATermList) ATmake("<term>", t_amb);
+        t_operand = ATgetFirst(tail);
+#if CHECK_AMB
+        cerr << "WARNING AMBIGUITY: AndContinuation \n";
+        printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(term));
+        printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(t_operand));
+#endif
+      }
       if (traverse_LogicalOperand(t_operand, rhs)) {
          ROSE_ASSERT(rhs);
          expr = SageBuilder::buildBitAndOp_nfi(expr, rhs);
       } else return ATfalse;
 
    } else if (ATmatch(term, "OrContinuation(<term>)", &t_operand)) {
+      if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+        // MATCHED an ambiguity, choose the first one
+        ATermList tail = (ATermList) ATmake("<term>", t_amb);
+        t_operand = ATgetFirst(tail);
+#if CHECK_AMB
+        cerr << "WARNING AMBIGUITY: OrContinuation \n";
+        printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(term));
+        printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(t_operand));
+#endif
+      }
       if (traverse_LogicalOperand(t_operand, rhs)) {
          ROSE_ASSERT(rhs);
          expr = SageBuilder::buildBitOrOp_nfi(expr, rhs);
       } else return ATfalse;
 
    } else if (ATmatch(term, "XorContinuation(<term>)", &t_operand)) {
+      if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+        // MATCHED an ambiguity, choose the first one
+        ATermList tail = (ATermList) ATmake("<term>", t_amb);
+        t_operand = ATgetFirst(tail);
+#if CHECK_AMB
+        cerr << "WARNING AMBIGUITY: XorContinuation \n";
+        printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(term));
+        printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(t_operand));
+#endif
+      }
       if (traverse_LogicalOperand(t_operand, rhs)) {
          ROSE_ASSERT(rhs);
          expr = SageBuilder::buildBitXorOp_nfi(expr, rhs);
       } else return ATfalse;
 
    } else if (ATmatch(term, "EqvContinuation(<term>)", &t_operand)) {
+      if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+        // MATCHED an ambiguity, choose the first one
+        ATermList tail = (ATermList) ATmake("<term>", t_amb);
+        t_operand = ATgetFirst(tail);
+#if CHECK_AMB
+        cerr << "WARNING AMBIGUITY: EqvContinuation \n";
+        printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(term));
+        printf("... traverse_LogicalContinuation: %s\n", ATwriteToString(t_operand));
+#endif
+      }
       if (traverse_LogicalOperand(t_operand, rhs)) {
          ROSE_ASSERT(rhs);
          expr = SageBuilder::buildEqualityOp_nfi(expr, rhs);
@@ -6165,7 +6235,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
    printf("... traverse_BitPrimary: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_bit, t_conv_type, t_formula;
+   ATerm t_bit, t_conv_type, t_formula, t_amb;
 
    expr = nullptr;
 
@@ -6173,6 +6243,14 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
       // MATCHED BooleanLiteral
    }
    else if (ATmatch(term,"BitPrimaryParens(<term>)", &t_bit)) {
+#if CHECK_AMB
+        if (ATmatch(t_bit, "amb(<term>)", &t_amb)) {
+          cerr << "WARNING AMBIGUITY: BitPrimary \n";
+          printf("... traverse_BitPrimary: %s\n", ATwriteToString(term));
+          expr = SB::buildNullExpression_nfi();
+          return ATtrue;
+        }
+#endif
       if (traverse_BitFormula(t_bit, expr)) {
          // MATCHED BitFormula
       } else return ATfalse;
@@ -6183,6 +6261,20 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
       // MATCHED BitLiteral
    }
    else if (ATmatch(term, "BitPrimaryConversion(<term>, <term>)", &t_conv_type, &t_formula)) {
+#if CHECK_AMB
+        if (ATmatch(t_conv_type, "amb(<term>)", &t_amb)) {
+          cerr << "WARNING AMBIGUITY: BitPrimaryConversion \n";
+          printf("... traverse_BitPrimary: %s\n", ATwriteToString(term));
+          expr = SB::buildNullExpression_nfi();
+          return ATtrue;
+        }
+        if (ATmatch(t_formula, "amb(<term>)", &t_amb)) {
+          cerr << "WARNING AMBIGUITY: BitPrimaryConversion \n";
+          printf("... traverse_BitPrimary: %s\n", ATwriteToString(term));
+          expr = SB::buildNullExpression_nfi();
+          return ATtrue;
+        }
+#endif
       // MATCHED BitPrimaryConversion
       SgExpression* cast_formula = nullptr;
       SgType* conv_type = nullptr;
@@ -6205,6 +6297,14 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
       expr = cast_expr;
    }
    else if (ATmatch(term, "BitVariable(<term>)", &t_formula)) {
+#if CHECK_AMB
+        if (ATmatch(t_formula, "amb(<term>)", &t_amb)) {
+          cerr << "WARNING AMBIGUITY: BitVariable \n";
+          printf("... traverse_BitPrimary: %s\n", ATwriteToString(term));
+          expr = SB::buildNullExpression_nfi();
+          return ATtrue;
+        }
+#endif
       if (traverse_Variable(t_formula, expr)) {
          // MATCHED BitVariable
       } else return ATfalse;
@@ -6229,7 +6329,7 @@ ATbool ATermToSageJovialTraversal::traverse_RelationalExpression(ATerm term, SgE
    printf("... traverse_RelationalExpression: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_lhs, t_operator, t_rhs;
+   ATerm t_lhs, t_operator, t_rhs, t_amb;
    SgExpression *lhs = nullptr, *rhs = nullptr;
 
    if (ATmatch(term, "RelationalExpression(<term>,<term>,<term>)", &t_lhs, &t_operator, &t_rhs)) {
@@ -6260,8 +6360,16 @@ ATbool ATermToSageJovialTraversal::traverse_RelationalExpression(ATerm term, SgE
       }
       else if (ATmatch(t_operator, "NotEqualOp()")) {
          expr = new SgNotEqualOp(lhs, rhs, nullptr);
-      } else return ATfalse;
-
+      }
+#if CHECK_AMB
+      else if (ATmatch(t_operator, "amb(<term>)", &t_amb)) {
+          cerr << "WARNING AMBIGUITY: RelationalExpression \n";
+          printf("... traverse_BitPrimary: %s\n", ATwriteToString(term));
+          expr = SB::buildNullExpression_nfi();
+          return ATtrue;
+      }
+#endif
+      else return ATfalse;
    } else return ATfalse;
 
    ROSE_ASSERT(expr);
@@ -6797,12 +6905,18 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunctionVariable(ATerm term, SgE
       return_type = var_symbol->get_type();
    }
    else {
-      // TODO - this may not be correct as character size is that of the CharacterFormula argument
-      // not a variable so have to create a type which can't be shared
-      SgIntVal* length_val = isSgIntVal(length);
-      // This is an assumption (hack) for now.
-      ROSE_ASSERT(length_val);
-      SgExpression* new_length = SageBuilder::buildIntVal(length_val->get_value());
+      // Create the return type. The length expression for the return_type can't be shared
+      // so we need to either make a new one (if isSgIntVal) or a copy (if isSgVarRefExp).
+      //
+      SgExpression* new_length = nullptr;
+      if (isSgIntVal(length)) {
+        SgIntVal* length_val = isSgIntVal(length);
+        new_length = SageBuilder::buildIntVal(length_val->get_value());
+      }
+      else {
+        new_length = isSgVarRefExp(SageInterface::deepCopyNode(length));
+      }
+      ROSE_ASSERT(new_length);
 
       return_type = SageBuilder::buildStringType(new_length);
    }
@@ -7163,7 +7277,6 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionC
    func_call = nullptr;
 
    if (ATmatch(term, "ByteFunction(<term>, <term>,<term>)", &t_formula, &t_fbyte, &t_nbyte)) {
-      // TODO - is this really called (perhaps can't be reached because of ambiguous modifications)
 #if PRINT_WARNINGS
       cerr << "WARNING UNIMPLEMENTED: ByteFunction\n";
 #endif
@@ -7186,11 +7299,18 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionC
    params->append_expression(first_byte);
    params->append_expression(length);
 
-   // Create the return type. The length expression for the return_type can't be shared.
-   SgIntVal* length_val = isSgIntVal(length);
-   // This is an assumption (hack) for now.
-   ROSE_ASSERT(length_val);
-   SgExpression* new_length = SageBuilder::buildIntVal(length_val->get_value());
+   // Create the return type. The length expression for the return_type can't be shared
+   // so we need to either make a new one (if isSgIntVal) or a copy (if isSgVarRefExp).
+   //
+   SgExpression* new_length = nullptr;
+   if (isSgIntVal(length)) {
+     SgIntVal* length_val = isSgIntVal(length);
+     new_length = SageBuilder::buildIntVal(length_val->get_value());
+   }
+   else {
+     new_length = isSgVarRefExp(SageInterface::deepCopyNode(length));
+   }
+   ROSE_ASSERT(new_length);
 
    SgType* return_type = SageBuilder::buildStringType(new_length);
 
