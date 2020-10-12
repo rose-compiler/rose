@@ -1595,7 +1595,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                    << "\n  limited: " << decl.Has_Limited
                    << "\n  private: " << decl.Has_Private
                    << std::endl;
+
+        // \todo this may only declare one name (use singleName)
         ElemIdRange     range  = idRange(decl.Names);
+        ROSE_ASSERT(range.size() == 1);
         name_container  names  = traverseIDs(range, elemMap(), NameCreator{ctx});
         SgType&         opaque = mkDefaultType();
 
@@ -1627,7 +1630,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                    << "\n  abstract: " << decl.Has_Abstract
                    << "\n  limited: " << decl.Has_Limited
                    << std::endl;
-        ElemIdRange    range = idRange(decl.Names);
+        // \todo this may only declare one name (use singleName)
+        ElemIdRange    range  = idRange(decl.Names);
+        ROSE_ASSERT(range.size() == 1);
         name_container names = traverseIDs(range, elemMap(), NameCreator{ctx});
         TypeData       ty    = getTypeFoundation(decl, ctx);
 
