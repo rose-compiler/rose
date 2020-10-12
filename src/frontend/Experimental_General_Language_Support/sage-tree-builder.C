@@ -16,6 +16,9 @@ namespace builder {
 using namespace Rose::Diagnostics;
 using namespace LanguageTranslation;
 
+namespace SB = SageBuilder;
+namespace SI = SageInterface;
+
 SgGlobal* initialize_global_scope(SgSourceFile* file)
 {
  // First we have to get the global scope initialized (and pushed onto the stack).
@@ -361,8 +364,8 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* re
 
    if (is_defining_decl)
       {
-         function_decl = SageBuilder::buildProcedureHeaderStatement(SgName(name), return_type,
-                                                                    param_list, subprogram_kind, scope);
+         function_decl = SB::buildProcedureHeaderStatement(SgName(name), return_type,
+                                                           param_list, subprogram_kind, scope);
          ROSE_ASSERT(function_decl);
 
          function_def = function_decl->get_definition();
@@ -375,7 +378,8 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* re
       }
    else
       {
-         function_decl = SageBuilder::buildNondefiningProcedureHeaderStatement(SgName(name), return_type, param_list, scope);
+         function_decl = SB::buildNondefiningProcedureHeaderStatement(SgName(name), return_type,
+                                                                      param_list, subprogram_kind, scope);
       }
    ROSE_ASSERT(function_decl);
    SageInterface::setSourcePosition(function_decl);
@@ -392,6 +396,10 @@ Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
 
+   ROSE_ASSERT(function_decl);
+
+   SgName function_name = function_decl->get_name();
+   SgVariableSymbol* result_symbol = param_scope->lookup_variable_symbol(function_decl->get_name());
    bool is_defining_decl = (isSgFunctionParameterScope(param_scope) == nullptr);
 
 // If this is a defining declaration then the function body has to be moved from the
@@ -400,11 +408,6 @@ Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope)
      {
        SgBasicBlock* function_body = isSgBasicBlock(SageBuilder::topScopeStack());
        ROSE_ASSERT(function_body);
-
-    // Save the result symbol before moving statements from parameter scope
-    //
-       SgName function_name = function_decl->get_name();
-       SgVariableSymbol* result_symbol = param_scope->lookup_variable_symbol(function_name);
 
     // Move all of the statements temporarily stored in param_scope
     // into the scope of the function body.
@@ -417,11 +420,9 @@ Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope)
     // into the scope of the function body.
     //
        if (result_symbol) {
-         SgInitializedName* result_name = isSgInitializedName(result_symbol->get_declaration());
-         ROSE_ASSERT(result_name);
-
          SgProcedureHeaderStatement* proc_decl = isSgProcedureHeaderStatement(function_decl);
-         ROSE_ASSERT(proc_decl);
+         SgInitializedName* result_name = isSgInitializedName(result_symbol->get_declaration());
+         ROSE_ASSERT(proc_decl && result_name);
 
          proc_decl->set_result_name(result_name);
          result_name->set_parent(function_decl);
@@ -442,6 +443,14 @@ Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope)
        ROSE_ASSERT(isSgFunctionParameterScope(param_scope));
        ROSE_ASSERT(function_decl->get_functionParameterScope() == nullptr);
        function_decl->set_functionParameterScope(isSgFunctionParameterScope(param_scope));
+
+       if (result_symbol) {
+         SgProcedureHeaderStatement* proc_decl = isSgProcedureHeaderStatement(function_decl);
+         SgInitializedName* result_name = isSgInitializedName(result_symbol->get_declaration());
+         ROSE_ASSERT(proc_decl && result_name);
+         proc_decl->set_result_name(result_name);
+         result_name->set_parent(function_decl);
+       }
      }
 
    SageInterface::appendStatement(function_decl, SageBuilder::topScopeStack());
@@ -585,8 +594,9 @@ Enter(SgFunctionCallExp* &func_call, const std::string &name, SgExprListExp* par
         SgType* return_type = SageBuilder::buildVoidType();
         SgGlobal* global_scope = SageInterface::getGlobalScope(SageBuilder::topScopeStack());
         SgFunctionParameterList* param_list = SageBuilder::buildFunctionParameterList_nfi();
+        SgProcedureHeaderStatement::subprogram_kind_enum kind = SgProcedureHeaderStatement::e_function_subprogram_kind;
         function_decl  = SageBuilder::buildNondefiningProcedureHeaderStatement(SgName(name), return_type,
-                                                                               param_list, global_scope);
+                                                                               param_list, kind, global_scope);
         SageInterface::setSourcePosition(function_decl);
 
         func_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name, SageBuilder::topScopeStack());
