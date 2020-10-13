@@ -89,7 +89,8 @@ $(top_builddir)/src/rose-compiler:
 
 .PHONY: clean-local
 clean-local:
-	rm -f *.adb *.ads *.ali tests/obj/* *.dot
+	rm -f *.adb *.ads *.ali *.dot
+	rm -f $(srcdir)/tests/obj/*
 
 .PHONY: check-local
 check-local:
