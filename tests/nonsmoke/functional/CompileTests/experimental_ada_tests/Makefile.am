@@ -27,90 +27,16 @@ ROSE_COMPILER ?= ../../testTranslator
 #	$(VALGRIND) ../../../testTranslator $(ROSE_FLAGS) -rose:cs -c $(srcdir)/$(@:.o=.cs)
 # endif
 
+#
+# include test lists
 
-PASSING_TESTS :=                       \
-  procedure_call.adb                   \
-  task_with_body.adb                   \
-  recursive_call.adb                   \
-  raise_statement.adb                  \
-  type_conversion.adb                  \
-  unit_1.adb                           \
-  loop_statement.adb                   \
-  minimal.adb                          \
-  if_statement.adb                     \
-  fib.adb                              \
-  while_loop_statement.adb             \
-  increment.adb	                       \
-  pkgrename.ads                        \
-  variable_declaration.ads             \
-  constant_declaration.ads             \
-  derived_record.ads                   \
-  empty_package.ads                    \
-  named.ads                            \
-  opaque.ads                           \
-  ordinary_type_declaration.ads        \
-  parent-child.ads                     \
-  selected_component.ads               \
-  simple_expression_range.ads          \
-  tagged_definition.ads                \
-  task_type_declaration.ads            \
-  task_with_body.ads                   \
-  EndOfList
+ADA_TEST_SRC_DIR := $(top_srcdir)/tests/nonsmoke/functioncal/CompileTests/experimental_ada_tests
 
-# pass asis, frontend, backend, but representation is incomplete
-PASSING_INCOMPLETE_TESTS :=            \
-  component_declaration.ads            \
-  real_typedecl.ads                    \
-  subtypes.ads                         \
-  EndOfList
-
-# fail in backend
-PASSING_FRONTEND :=                    \
-  constants.ads                        \
-  loop_exit.adb                        \
-  operator.adb                         \
-  EndOfList
-
-# fail in frontend
-PASSING_ASIS := \
-  hello_world.adb                      \
-  choice_parameter_specification.adb   \
-  EndOfList
-
-# incomplete Asis or Dot file
-NOT_HANDLED := \
-  accept_statement.adb                 \
-  all_modes.ads                        \
-  case_function.ads                    \
-  case_function.adb                    \
-  entry_declaration.ads                \
-  entry_call.adb                       \
-  exception_declaration.ads            \
-  for_loop.adb                         \
-  function_call.adb                    \
-  function_declaration.ads             \
-  function_declaration.adb             \
-  gototest.ads                         \
-  gototest.adb                         \
-  iterate_range.adb                    \
-  mpiuse.ads                           \
-  nested_package.ads                   \
-  parameter_declaration.ads            \
-  package_with_body.ads                \
-  package_with_body.adb                \
-  procedure_declaration.ads            \
-  procedure_declaration.adb            \
-  sender.ads                           \
-  short_circuit.adb                    \
-  some_modes.ads                       \
-  test.ads                             \
-  test.adb                             \
-  test_unit.ads                        \
-  test_unit.adb                        \
-  unit_2.ads                           \
-  unit_2.adb                           \
-  unit_3.ads                           \
-  EndOfList
+include $(srcdir)/passing-tests-list.mk
+include $(srcdir)/passing-incomplete-tests-list.mk
+include $(srcdir)/rose-backend-todo-list.mk
+include $(srcdir)/rose-frontend-todo-list.mk
+include $(srcdir)/asis-todo-list.mk
 
 NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
   parent.ads                           \
@@ -121,7 +47,7 @@ NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
 #
 # define test suite
 TEST_TARGETS := $(PASSING_TESTS) $(PASSING_INCOMPLETE_TESTS)
-ALL_TEST_TARGETS := $(PASSING_TESTS) $(PASSING_INCOMPLETE_TESTS) $(PASSING_FRONTEND) $(PASSING_ASIS) $(NOT_HANDLED)
+ALL_TEST_TARGETS := $(PASSING_TESTS) $(PASSING_INCOMPLETE_TESTS) $(ROSE_BACKEND_TODO) $(ROSE_FRONTEND_TODO) $(ASIS_TODO)
 
 TESTCODES_REQUIRED_TO_PASS := $(TEST_TARGETS)
 
