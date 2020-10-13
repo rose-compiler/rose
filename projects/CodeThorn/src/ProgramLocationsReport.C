@@ -86,24 +86,24 @@ string CodeThorn::ProgramLocationsReport::sourceCodeAtProgramLocation(Labeler* l
   return SgNodeHelper::doubleQuotedEscapedString(node->unparseToString());
 }
 
-bool CodeThorn::ProgramLocationsReport::isNonRecordedLocation(Label lab) {
-  return !definitiveLocations.isElement(lab)&&!potentialLocations.isElement(lab);
+bool CodeThorn::ProgramLocationsReport::isRecordedLocation(Label lab) {
+  return definitiveLocations.isElement(lab)||potentialLocations.isElement(lab);
 }
 
 LabelSet CodeThorn::ProgramLocationsReport::determineRecordFreeFunctions(CFAnalysis& cfAnalyzer, Flow& flow) {
   LabelSet funEntries=cfAnalyzer.functionEntryLabels(flow);
   LabelSet verifiedFunctions;
   for (Label entryLab : funEntries) {
-    bool noLocationsRecorded=true;
+    bool locationsRecorded=false;
     LabelSet funLabelSet=cfAnalyzer.functionLabelSet(entryLab,flow);
     // determine whether all labels are verified
     for (Label funLab : funLabelSet) {
-      if(!isNonRecordedLocation(funLab)) {
-        noLocationsRecorded=false;
+      if(isRecordedLocation(funLab)) {
+        locationsRecorded=true;
         break;
       }
     }
-    if(noLocationsRecorded) {
+    if(!locationsRecorded) {
       // entire function has no violations
       verifiedFunctions.insert(entryLab);
     }
@@ -130,8 +130,9 @@ size_t ProgramLocationsReport::numDefinitiveLocations() {
  size_t ProgramLocationsReport::numPotentialLocations() {
   return potentialLocations.size();
 }
-size_t ProgramLocationsReport::numTotalLocations() {
-  return definitiveLocations.size()+potentialLocations.size();
+size_t ProgramLocationsReport::numTotalRecordedLocations() {
+  // elements can be in both sets
+  return (potentialLocations+definitiveLocations).size();
 }
 
 void CodeThorn::ProgramLocationsReport::writeResultFile(string fileName, CodeThorn::Labeler* labeler) {

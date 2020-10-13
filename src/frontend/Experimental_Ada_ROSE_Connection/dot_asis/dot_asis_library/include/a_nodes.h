@@ -767,6 +767,12 @@ struct Declaration_Struct {
   //  A_Task_Body_Declaration,                  // 9.1(6)
   //  A_Protected_Body_Declaration,             // 9.4(7)
   bool                           Is_Subunit;
+  //  ONLY present if Is_Subunit is true:
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Package_Body_Declaration,               // 7.2(2)
+  //  A_Task_Body_Declaration,                  // 9.1(6)
+  //  A_Protected_Body_Declaration,             // 9.4(7)
   Declaration_ID                 Corresponding_Body_Stub;
   //  A_Generic_Procedure_Declaration,          // 12.1(2)
   //  A_Generic_Function_Declaration,           // 12.1(2)

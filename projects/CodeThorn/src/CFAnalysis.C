@@ -1232,7 +1232,7 @@ Flow CFAnalysis::flow(SgNode* n) {
   switch (node->variantT()) {
   case V_SgFunctionDefinition: {
     Sg_File_Info* fi = node->get_file_info();
-    SAWYER_MESG(logger[INFO])<<"Building CFG for function: "<<SgNodeHelper::getFunctionName(node)<< " :" << fi->displayString() << endl;
+    SAWYER_MESG(logger[INFO])<<"Building CFG for function: "<<SgNodeHelper::getFunctionName(node)<< endl;
     // PP (04/09/20)
     // do nothing for function definitions that did not receive a label
     // e.g., templated functions

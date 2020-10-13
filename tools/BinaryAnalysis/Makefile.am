@@ -105,7 +105,7 @@ bat_stack_deltas_SOURCES = bat-stack-deltas.C
 bat_stack_deltas_CPPFLAGS = $(ROSE_INCLUDES)
 bat_stack_deltas_LDFLAGS = $(ROSE_RPATHS)
 bat_stack_deltas_LDADD = libbatSupport.a $(ROSE_LIBS)
-tests += bat-stack.passed
+tests += bat-stack-deltas.passed
 
 bin_PROGRAMS += bat-trace
 bat_trace_SOURCES = bat-trace.C
@@ -115,9 +115,12 @@ bat_trace_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-trace.passed
 
 $(tests): %.passed: %
-	@$(RTH_RUN)						\
-		TITLE="testing $* [$@]"				\
-		CMD="$$(pwd)/$* --self-test"			\
+	@$(RTH_RUN)							\
+		TITLE="testing $* [$@]"					\
+		CMD="$$(pwd)/$* --self-test --no-error-if-disabled"	\
 		$(top_srcdir)/scripts/test_exit_status $@
 
+check-local: $(tests) bat-insnfreq.passed bat-insnfreq-cmp.passed
+
+MOSTLYCLEANFILES = $(tests)
 endif

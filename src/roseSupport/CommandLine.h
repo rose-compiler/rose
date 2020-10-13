@@ -132,9 +132,15 @@ struct GenericSwitchArgs {
                                                          *   The empty string means no solver is used. Additional switches
                                                          *   might be present to override this global solver for specific
                                                          *   situations. */
-
+    bool errorIfDisabled;                               /**< Controls behavior of a tool when disabled. If true (the default)
+                                                         *   and a tool's primary feature set is disabled (such as when ROSE is
+                                                         *   compiled with too old a compiler or without the necessary
+                                                         *   supporting software packages), then the tool should emit an error
+                                                         *   message and exit with a failure status. When this data member is
+                                                         *   false, then the tool will silently exit with success, which is
+                                                         *   useful during "make check" or similar testing. */
     GenericSwitchArgs()
-        : threads(0), smtSolver("none") {}
+        : threads(0), smtSolver("none"), errorIfDisabled(true) {}
 };
 
 /** Global location for parsed generic command-line switches.

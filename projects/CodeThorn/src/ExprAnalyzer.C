@@ -985,39 +985,55 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           return resultList;
         }
         // array variable NOT in state. Special space optimization case for constant array.
-        if(_variableIdMapping->hasArrayType(arrayVarId) /* MS 5/20/2020: removed mode: && _analyzer->getOptionsRef().explicitArrays==false*/) {
-          SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
-          int elemIndex=0;
-          // TODO: slow linear lookup (TODO: pre-compute all values and provide access function)
-          for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
-            SgExpression* exp=*i;
-            SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
-            if(assignInit) {
-              SgExpression* initExp=assignInit->get_operand_i();
-              ROSE_ASSERT(initExp);
-              if(SgIntVal* intValNode=isSgIntVal(initExp)) {
-                int intVal=intValNode->get_value();
-                //newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AbstractValue(AbstractValue(intVal)));
-                int index2=arrayPtrPlusIndexValue.getIndexIntValue();
-                if(elemIndex==index2) {
-                  AbstractValue val=AbstractValue(intVal); // TODO BYTEMODE
+        if(_variableIdMapping->hasArrayType(arrayVarId)) {
+          if(_variableIdMapping->hasAssignInitializer(arrayVarId)) {
+            // special case of string initializer: x[2]="";
+            SAWYER_MESG(logger[WARN])<<"array assign initializer is not supported yet (assuming any value):"<<node->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(node)<<endl;
+            AbstractValue val=AbstractValue::createTop();
+            res.result=val;
+            return listify(res);
+          }
+          if(_variableIdMapping->isAggregateWithInitializerList(arrayVarId)) {
+            cout<<"DEBUG: WE ARE HERE!!!!!!"<<endl;
+            SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
+            cout<<"DEBUG: WE ARE HERE 22222 !!!!!!"<<endl;
+            int elemIndex=0;
+            // TODO: slow linear lookup (TODO: pre-compute all values and provide access function)
+            for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
+              SgExpression* exp=*i;
+              SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
+              if(assignInit) {
+                SgExpression* initExp=assignInit->get_operand_i();
+                ROSE_ASSERT(initExp);
+                if(SgIntVal* intValNode=isSgIntVal(initExp)) {
+                  int intVal=intValNode->get_value();
+                  //newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AbstractValue(AbstractValue(intVal)));
+                  int index2=arrayPtrPlusIndexValue.getIndexIntValue();
+                  if(elemIndex==index2) {
+                    AbstractValue val=AbstractValue(intVal); // TODO BYTEMODE
+                    res.result=val;
+                    return listify(res);
+                  }
+                } else {
+                  SAWYER_MESG(logger[WARN])<<"unsupported array initializer value (assuming any value):"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+                  AbstractValue val=AbstractValue::createTop();
                   res.result=val;
                   return listify(res);
                 }
               } else {
-                SAWYER_MESG(logger[WARN])<<"unsupported array initializer value (assuming any value):"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+                SAWYER_MESG(logger[WARN])<<"no assign initialize:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
                 AbstractValue val=AbstractValue::createTop();
                 res.result=val;
                 return listify(res);
               }
-            } else {
-              SAWYER_MESG(logger[FATAL])<<"no assign initialize:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
-              exit(1);
-            }
             elemIndex++;
+            }
+          } else {
+            // no initializer, initialize with top
+            AbstractValue val=AbstractValue::createTop();
+            res.result=val;
+            return listify(res);
           }
-          SAWYER_MESG(logger[ERROR])<<"Error: access to element of constant array (not in state). Not supported."<<endl;
-          exit(1);
         } else if(_variableIdMapping->isStringLiteralAddress(arrayVarId)) {
           SAWYER_MESG(logger[ERROR])<<"Error: Found string literal address, but data not present in state."<<endl;
           exit(1);

@@ -842,8 +842,8 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
         REG_PATH = RegisterDescriptor(registers_->firstUnusedMajor(), 0, 0, 1);
         registers_->insert("path", REG_PATH);
 
-        // Where are return values stored?  FIXME[Robb Matzke 2015-12-01]: We need to support returning multiple values. We
-        // should be using the new calling convention analysis to detect these.
+        // Where are return values stored?  See also, end of this function. FIXME[Robb Matzke 2015-12-01]: We need to support
+        // returning multiple values. We should be using the new calling convention analysis to detect these.
         ASSERT_require(REG_RETURN_.isEmpty());
         RegisterDescriptor r;
         if ((r = registers_->find("rax")) || (r = registers_->find("eax")) || (r = registers_->find("ax"))) {
@@ -873,6 +873,14 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
     ASSERT_not_null(partitioner.instructionProvider().dispatcher());
     BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
     ASSERT_not_null(cpu);
+
+    // More return value stuff, continued from above
+#ifdef ROSE_ENABLE_ASM_A64
+    if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherA64>(cpu)) {
+        REG_RETURN_ = registers_->find("x0");
+    }
+#endif
+
     return cpu;
 }
 
@@ -1032,6 +1040,14 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
                          returnTarget->get_width() / 8;
             stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
             ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
+#ifdef ROSE_ENABLE_ASM_A64
+        } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherA64>(cpu)) {
+            // Return address is in the link register, lr
+            const RegisterDescriptor LR = cpu->callReturnRegister();
+            ASSERT_forbid(LR.isEmpty());
+            BaseSemantics::SValuePtr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
+            ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
+#endif
         }
     }
 
@@ -1215,6 +1231,24 @@ FeasiblePath::cfgToPaths(const P2::CfgConstVertexSet &vertexSet) const {
     return retval;
 }
 
+P2::CfgConstEdgeSet
+FeasiblePath::cfgToPaths(const P2::CfgConstEdgeSet &cfgEdgeSet) const {
+    P2::CfgConstEdgeSet retval;
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgEdge, cfgEdgeSet.values()) {
+        // We don't have a mapping directly from CFG to Paths for edges, so we use the vertex mapping instead.
+        Sawyer::Optional<P2::ControlFlowGraph::ConstVertexIterator> pathSrcVertex = vmap_.forward().find(cfgEdge->source());
+        Sawyer::Optional<P2::ControlFlowGraph::ConstVertexIterator> pathTgtVertex = vmap_.forward().find(cfgEdge->target());
+        if (pathSrcVertex && pathTgtVertex) {
+            boost::iterator_range<P2::ControlFlowGraph::ConstEdgeIterator> pathEdges = pathSrcVertex.get()->outEdges();
+            for (P2::ControlFlowGraph::ConstEdgeIterator pathEdge = pathEdges.begin(); pathEdge != pathEdges.end(); ++pathEdge) {
+                if (pathEdge->target() == *pathTgtVertex && pathEdge->value().type() == cfgEdge->value().type())
+                    retval.insert(pathEdge);
+            }
+        }
+    }
+    return retval;
+}
+
 void
 FeasiblePath::setSearchBoundary(const P2::Partitioner &partitioner,
                                 const P2::CfgConstVertexSet &cfgBeginVertices,
@@ -1253,10 +1287,14 @@ FeasiblePath::setSearchBoundary(const P2::Partitioner &partitioner,
     partitioner_ = &partitioner;
     isDirectedSearch_ = false;
 
-    // Find top-level paths. These paths don't traverse into function calls unless they must do so in order to reach an ending
-    // vertex.
-    findInterFunctionPaths(partitioner.cfg(), paths_/*out*/, vmap_/*out*/,
-                           cfgBeginVertices, cfgAvoidVertices, cfgAvoidEdges);
+    if (isDirectedSearch_) {
+        // Find top-level paths. These paths don't traverse into function calls unless they must do so in order to reach an
+        // ending vertex.
+        findInterFunctionPaths(partitioner.cfg(), paths_/*out*/, vmap_/*out*/, cfgBeginVertices, cfgAvoidVertices, cfgAvoidEdges);
+    } else {
+        // Find top-level paths. These paths don't traverse into any function calls since all the calls will be inlined later.
+        findFunctionPaths(partitioner.cfg(), paths_/*out*/, vmap_/*out*/, cfgBeginVertices, cfgAvoidVertices, cfgAvoidEdges);
+    }
     if (paths_.isEmpty())
         return;
 
@@ -1287,7 +1325,7 @@ FeasiblePath::isFunctionCall(const P2::ControlFlowGraph::ConstVertexIterator &pa
     return false;
 }
 
-// True if path ends with a function call.
+ // True if path ends with a function call.
 bool
 FeasiblePath::pathEndsWithFunctionCall(const P2::CfgPath &path) const {
     if (path.isEmpty())
@@ -1867,10 +1905,12 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             if (!doBacktrack && pathEndsWithFunctionCall(path) && !P2::findCallReturnEdges(backVertex).empty()) {
                 ASSERT_require(partitioner().cfg().isValidVertex(cfgBackVertex));
                 P2::CfgConstEdgeSet callEdges = P2::findCallEdges(cfgBackVertex);
+                P2::CfgConstEdgeSet erasableEdges;
                 BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, callEdges.values()) {
                     if (shouldSummarizeCall(path.backVertex(), partitioner().cfg(), cfgCallEdge->target())) {
                         SAWYER_MESG(debug) <<indent <<"summarizing function for edge " <<partitioner().edgeName(cfgCallEdge) <<"\n";
                         insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);
+                        erasableEdges.insert(cfgCallEdge);
                     } else if (shouldInline(path, cfgCallEdge->target())) {
                         SAWYER_MESG(debug) <<indent <<"inlining function call paths at vertex "
                                            <<partitioner().vertexName(backVertex) <<"\n";
@@ -1905,12 +1945,14 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                     } else {
                         SAWYER_MESG(debug) <<indent <<"summarizing function for edge " <<partitioner().edgeName(cfgCallEdge) <<"\n";
                         insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);
+                        erasableEdges.insert(cfgCallEdge);
                     }
                 }
 
                 // Remove all call-return edges. This is necessary so we don't re-enter this case with infinite recursion. No
                 // need to worry about adjusting the path because these edges aren't on the current path.
                 P2::eraseEdges(paths_, P2::findCallReturnEdges(backVertex));
+                P2::eraseEdges(paths_, cfgToPaths(erasableEdges));
 
                 // If the inlined function had no "return" instructions but the call site had a call-return edge and that edge
                 // was the only possible way to get from the starting vertex to an ending vertex, then that ending vertex is no

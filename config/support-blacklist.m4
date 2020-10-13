@@ -36,7 +36,7 @@ AC_DEFUN([ROSE_SUPPORT_BLACKLIST],[
         if test "$rose_boost_version" -ge 106100 -a "$rose_boost_version" -le 106300 -a \
                 "$FRONTEND_CXX_COMPILER_VENDOR" = "intel" -a \
                 "$support_binaries_frontend" = "yes"; then
-            prohibited="binary analysis enabled with boost 1.62 with Intel compiler"
+            prohibited="binary analysis enabled with boost 1.61 through 1.63 with Intel compiler"
             break
         fi
 

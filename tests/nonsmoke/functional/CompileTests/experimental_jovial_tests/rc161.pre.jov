@@ -1,0 +1,8 @@
+START 
+!COMPOOL('RC161B'); 
+!COMPOOL('RC161A'); 
+DEF PROC PROC'1 ; 
+   BEGIN 
+   STOP 0 ; 
+   END 
+TERM 
