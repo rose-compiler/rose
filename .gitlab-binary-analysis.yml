@@ -1,0 +1,100 @@
+########################################################################################################################
+# Configuration for making binary release of ROSE Binary Analysis under GitLab continuous integration.
+########################################################################################################################
+#
+# This YAML file describes to the GitLab continuous integration system how to create a binary release distribution of
+# ROSE configured for Binary Analysis on various operating systems.  Each job in this file starts with the string "ba"
+# for "binary analysis" and builds a binary release for a particular architecture.  The commands in each section are
+# more or less the same and should be kept that way as much as possible. Most of the OS-specific actions occur in the
+# scripts that are distributed as part of Robb's ROSE installers (https://github.com/matzke1/rose-installers) and which
+# are already present in the Docker images.
+#
+# ===============================================================
+# Instructions for build ROSE interactively in a Docker container
+# ===============================================================
+#
+# You can also use these same Docker images to compile your own versions of ROSE as well. Here's how...
+#
+#   1. Choose a Docker image based on operating system. You can get the names from the "image" values below, such as
+#      "matzke/rosedev:u20.04".
+#
+#   2. Create a docker container but cause it to enter an interactive shell.
+#
+#       $ docker run --interactive --tty --rm --privileged matzke/rosedev:u20.04 /bin/bash
+#
+#      If you need to mount a Docker volume such as what normally happens with GitLab, use the -v switch (e.g., -v
+#      ouo-software:/software:ro). See
+#      https://github.com/matzke1/rose-installers/blob/master/scripts/create-software-volume for an example of creating
+#      a volume. You can also mount host directories directly into a container, which might be easier but not as
+#      flexible.
+#
+#   3. Download the ROSE source code to the container and place it in "/rose". One possibility is to do this:
+#
+#       $ git clone --branch develop https://github.com/rose-compiler/rose /rose
+#
+#   4. At this point you have a choice between doing everything with one command, or building ROSE one step at a time.
+#      The command that will do everything varies by operating system, but is listed in each of the GitLab CI jobs below.
+#
+#       $ cd /   # must run in parent of "rose" source directory, which happens to be "/" in these instructions.
+#       $ ./rose-installers/install-binaryanalysis-ubuntu2004
+#
+########################################################################################################################
+########################################################################################################################
+
+# This is just a default. Actual images differ by job.
+image: ubuntu:20.04
+
+services:
+  # The docker-in-docker service is required if you want to build ROSE with Tup.
+  - docker:dind
+
+########################################################################################################################
+# Build, test, and install ROSE configured for binary analysis on Ubuntu:20.04.
+ba-u20.04:
+  image: matzke/rosedev:u20.04
+  script: /rose-installers/scripts/gitlab-ci
+  artifacts:
+    paths:
+      - artifacts/
+    expire_in: 1 week
+
+########################################################################################################################
+# Build, test, and install ROSE configured for binary analysis on Ubuntu:18.04.
+ba-u18.04:
+  image: matzke/rosedev:u18.04
+  script: /rose-installers/scripts/gitlab-ci
+  artifacts:
+    paths:
+      - artifacts/
+    expire_in: 1 week
+
+########################################################################################################################
+# Build, test, and install ROSE configured for binary analysis on centos6, which is compatible with Red Hat 6.
+ba-centos6:
+  image: matzke/rosedev:centos6
+  script: /rose-installers/scripts/gitlab-ci
+  artifacts:
+    paths:
+      - artifacts/
+    expire_in: 1 week
+
+########################################################################################################################
+# Build, test, and install ROSE configured for binary analysis on centos7, which is compatible with Red Hat 7.
+ba-centos7:
+  image: matzke/rosedev:centos7
+  script: /rose-installers/scripts/gitlab-ci
+  artifacts:
+    paths:
+      - artifacts/
+    expire_in: 1 week
+
+########################################################################################################################
+# Build, test, and install ROSE configured for binary analysis on centos8, which is compatible with Red Hat 8.
+ba-centos8:
+  image: matzke/rosedev:centos8
+  script: /rose-installers/scripts/gitlab-ci
+  artifacts:
+    paths:
+      - artifacts/
+    expire_in: 1 week
+

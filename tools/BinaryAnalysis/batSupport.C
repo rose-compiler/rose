@@ -258,7 +258,7 @@ printPath(std::ostream &out, const FeasiblePath &fpAnalysis, const P2::CfgPath &
                 std::string idxStr = (boost::format("%-6d") % insnIdx++).str();
                 out <<"      #" <<idxStr <<" " <<unparser->unparse(partitioner, insn) <<"\n";
                 if (insn->semanticFailure()) {
-                    out <<"            semantic error caused by revious instruction\n"
+                    out <<"            semantic error caused by previous instruction\n"
                         <<"            previous insn ignored; semantic state may be invalid from this point on\n";
                 }
                 if (insnIdx > lastInsnIdx)

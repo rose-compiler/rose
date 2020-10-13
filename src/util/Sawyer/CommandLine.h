@@ -11,6 +11,7 @@
 
 #include <Sawyer/Assert.h>
 #include <Sawyer/DocumentMarkup.h>
+#include <Sawyer/IntervalSet.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Optional.h>
@@ -444,6 +445,23 @@ public:
         }                                                                                                                      \
     }
 
+// Partial specialization of TypedSaver for saving values into set-like containers. The CONTAINER_TEMPLATE should take one
+// parameter: the value type (not part of this specialization). The value is stored by invoking the INSERT_METHOD with one
+// argument: the value to save. The value is always an interval.
+#define SAWYER_COMMANDLINE_INTERVALSET_SAVER(CONTAINER_TEMPLATE, INSERT_METHOD)                                                \
+    template<typename Interval>                                                                                                \
+    class TypedSaver<CONTAINER_TEMPLATE<Interval> >: public ValueSaver {                                                         \
+        CONTAINER_TEMPLATE<Interval> &storage_;                                                                                \
+    protected:                                                                                                                 \
+        TypedSaver(CONTAINER_TEMPLATE<Interval> &storage): storage_(storage) {}                                                \
+    public:                                                                                                                    \
+        static Ptr instance(CONTAINER_TEMPLATE<Interval> &storage) { return Ptr(new TypedSaver(storage)); }                    \
+        virtual void save(const boost::any &value, const std::string &switchKey) /*override*/ {                                \
+            Interval typed = boost::any_cast<Interval>(value);                                                                        \
+            storage_.INSERT_METHOD(typed);                                                                                     \
+        }                                                                                                                      \
+    }
+
 // Partial specialization of TypedSaver for saving values into map-like containers using the STL approach where the insert
 // operator takes an std::pair(key,value) rather than two arguments. The CONTAINER_TEMPLATE should take two parameters: the key
 // type (always std::string) and the value type (not part of this specialization). The value is stored by invoking the
@@ -469,6 +487,7 @@ SAWYER_COMMANDLINE_SEQUENCE_SAVER(Sawyer::Container::Set, insert);
 SAWYER_COMMANDLINE_SEQUENCE_SAVER(Optional, operator=);
 SAWYER_COMMANDLINE_MAP_PAIR_SAVER(std::map, insert);
 SAWYER_COMMANDLINE_MAP_SAVER(Sawyer::Container::Map, insert);
+SAWYER_COMMANDLINE_INTERVALSET_SAVER(Sawyer::Container::IntervalSet, insert);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Parsed value

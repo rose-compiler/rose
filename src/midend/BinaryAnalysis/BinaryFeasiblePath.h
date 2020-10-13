@@ -488,6 +488,12 @@ public:
     Partitioner2::CfgConstVertexSet
     cfgToPaths(const Partitioner2::CfgConstVertexSet&) const;
 
+    /** Convert CFG edges to path edges.
+     *
+     *  Any edges that don't exist in the paths graph are ignored and not returned. */
+    Partitioner2::CfgConstEdgeSet
+    cfgToPaths(const Partitioner2::CfgConstEdgeSet&) const;
+
     /** True if path ends with a function call. */
     bool pathEndsWithFunctionCall(const Partitioner2::CfgPath&) const;
 
