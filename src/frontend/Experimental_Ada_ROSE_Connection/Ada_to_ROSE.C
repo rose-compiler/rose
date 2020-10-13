@@ -459,7 +459,7 @@ namespace
     if (pos != std::string::npos)
       res = res.substr(0, pos);
 
-    res += "_rose.dot";
+    res += "_rose";
     return res;
   }
 }
