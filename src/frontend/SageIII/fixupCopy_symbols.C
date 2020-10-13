@@ -902,10 +902,11 @@ SgIfStmt::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
      ROSE_ASSERT(thsTruBody != NULL);
      SgStatement* ifStmtCopyTruBody = ifStatement_copy->get_true_body();
      ROSE_ASSERT(ifStmtCopyTruBody != NULL);
-     if (isSgScopeStatement(ifStmtCopyTruBody) != NULL) {
-     // ROSE_ASSERT(isSgScopeStatement(ifStmtCopyTruBody)->get_symbol_table() != NULL);
-     // ROSE_ASSERT(isSgScopeStatement(ifStmtCopyTruBody)->get_symbol_table()->size()  == 0);
-        ROSE_ASSERT(isSgScopeStatement(ifStmtCopyTruBody)->symbol_table_size() == 0);
+     SgScopeStatement* scopeStmntCopyTrueBody = isSgScopeStatement(ifStmtCopyTruBody);
+     if (scopeStmntCopyTrueBody != NULL) {
+     // ROSE_ASSERT(scopeStmntCopyTrueBody->get_symbol_table() != NULL);
+     // ROSE_ASSERT(scopeStmntCopyTrueBody->get_symbol_table()->size()  == 0);
+        ROSE_ASSERT(scopeStmntCopyTrueBody->symbol_table_size() == 0);
      }
 
   // printf ("\nProcess the TRUE body of the SgIfStmt \n\n");

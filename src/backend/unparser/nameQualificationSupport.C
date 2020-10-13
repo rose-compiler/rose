@@ -639,6 +639,8 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeFloat80:
           case V_SgTypeFloat128:
 
+          case V_SgTypeFixed:
+          case V_SgJovialTableType:
        // TV (09/06/2018): Type of an unresolved auto keyword
           case V_SgAutoType:
              {
@@ -3324,6 +3326,13 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                            symbol = SageInterface::lookupNonrealSymbolInParentScopes(name,currentScope,templateParameterList,templateArgumentList);
                          }
 
+                         break;
+                       }
+
+                    case V_SgProcedureHeaderStatement:
+                    case V_SgJovialTableStatement:
+                       {
+                         return 0;
                          break;
                        }
 

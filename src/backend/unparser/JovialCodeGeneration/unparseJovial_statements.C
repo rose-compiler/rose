@@ -170,7 +170,7 @@ Unparse_Jovial::unparseDefineDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgJovialDefineDeclaration* define = isSgJovialDefineDeclaration(stmt);
      ASSERT_not_null(define);
 
-     curprint("DEFINE ");
+     curprint_indented("DEFINE ", info);
      curprint(define->get_define_string());
      curprint(";\n");
    }
