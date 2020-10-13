@@ -1088,7 +1088,7 @@ namespace
           ElemIdRange   blkDecls = idRange(stmt.Block_Declarative_Items);
           ElemIdRange   blkStmts = idRange(stmt.Block_Statements);
           ElemIdRange   exHndlrs = idRange(stmt.Block_Exception_Handlers);
-          logWarn() << "block ex handlers: " << exHndlrs.size() << std::endl;
+          //~ logInfo() << "block ex handlers: " << exHndlrs.size() << std::endl;
 
           TryBlockNodes trydata  = createTryBlockIfNeeded(exHndlrs.size() > 0, sgnode);
           SgTryStmt*    tryblk   = trydata.first;
@@ -1551,7 +1551,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ROSE_ASSERT(sgnode.get_parent() == &outer);
 
         ElemIdRange            hndlrs  = idRange(decl.Body_Exception_Handlers);
-        logWarn() << "block ex handlers: " << hndlrs.size() << std::endl;
+        //~ logInfo() << "block ex handlers: " << hndlrs.size() << std::endl;
 
         TryBlockNodes          trydata = createTryBlockIfNeeded(hndlrs.size() > 0, declblk);
         SgTryStmt*             trystmt = trydata.first;
@@ -1880,7 +1880,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         if (decl.Renamed_Entity < 0)
         {
-          logWarn() << "skipping unknown renaming: " << adaname.ident << "/" << adaname.fullName
+          logWarn() << "skipping unknown package renaming: " << adaname.ident << "/" << adaname.fullName
                     << ": " << elem.ID << " / " << decl.Renamed_Entity
                     << std::endl;
           return;

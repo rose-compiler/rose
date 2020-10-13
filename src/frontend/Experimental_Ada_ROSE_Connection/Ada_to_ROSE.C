@@ -344,9 +344,10 @@ namespace
 
           if (elemRange.size() || unitRange.size())
           {
-            logWarn() << "   elems# " << elemRange.size()
-                      << "\n    subs# " << unitRange.size()
-                      << std::endl;
+            (unitRange.size() ? logWarn() : logInfo())
+               << "   elems# " << elemRange.size()
+               << "\n    subs# " << unitRange.size()
+               << std::endl;
 
             traverseIDs(elemRange, elemMap(), ElemCreator{ctx});
 
@@ -373,9 +374,10 @@ namespace
 
           if (elemRange.size() || unitRange.size())
           {
-            logWarn() << "   elems# " << elemRange.size()
-                      << "\n    subs# " << unitRange.size()
-                      << std::endl;
+            (unitRange.size() ? logWarn() : logInfo())
+                 << "   elems# " << elemRange.size()
+                 << "\n    subs# " << unitRange.size()
+                 << std::endl;
 
             traverseIDs(elemRange, elemMap(), ElemCreator{ctx});
             // units seem to be included in the elements
@@ -447,6 +449,19 @@ namespace
         ROSE_ASSERT(!FAIL_ON_ERROR);
     }
   }
+
+  std::string
+  astDotFileName(const SgSourceFile& file)
+  {
+    std::string            res = file.generateOutputFileName();
+    std::string::size_type pos = res.find('.');
+
+    if (pos != std::string::npos)
+      res = res.substr(0, pos);
+
+    res += "_rose.dot";
+    return res;
+  }
 }
 
 
@@ -454,6 +469,8 @@ void ElemCreator::operator()(Element_Struct& elem)
 {
   handleElement(elem, ctx, privateElems);
 }
+
+
 
 void secondConversion(Nodes_Struct& headNodes, SgSourceFile* file)
 {
@@ -470,8 +487,9 @@ void secondConversion(Nodes_Struct& headNodes, SgSourceFile* file)
   traverse(adaUnit, adaLimit, UnitCreator{AstContext{astScope}});
   clearMappings();
 
-  logTrace() << "Generating DOT file: " << "adaTypedAst.dot" << std::endl;
-  generateDOT(&astScope, "adaTypedAst");
+  std::string astDotFile = astDotFileName(*file);
+  logTrace() << "Generating DOT file for ROSE AST: " << astDotFile << std::endl;
+  generateDOT(&astScope, astDotFile);
 
   file->set_processedToIncludeCppDirectivesAndComments(false);
   logInfo() << "Building ROSE AST done" << std::endl;
