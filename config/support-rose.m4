@@ -2222,6 +2222,8 @@ src/frontend/Experimental_OpenFortranParser_ROSE_Connection/Makefile
 src/frontend/Experimental_Flang_ROSE_Connection/Makefile
 src/frontend/Experimental_Csharp_ROSE_Connection/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/Makefile
+src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/Makefile
+src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/dot_asis_library/Makefile
 src/frontend/Experimental_Jovial_ROSE_Connection/Makefile
 src/frontend/Experimental_Cobol_ROSE_Connection/Makefile
 src/frontend/Experimental_Matlab_ROSE_Connection/Makefile
