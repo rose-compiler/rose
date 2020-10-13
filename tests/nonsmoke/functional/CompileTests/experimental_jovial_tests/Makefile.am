@@ -130,12 +130,16 @@ JOVIAL_PARSER_TESTCODES = \
  6_3_2_next_function_pointer.jov        \
  6_3_2_next_function_status.jov
 
+## List of compool modules that need to be compiled first:
+#     rc161b.pre.cpl before rc161a.pre.cpl before rc161.jov
+#
 COMPOOL_TESTCODES = \
  define_dollar.cpl                      \
  simple_compool.cpl                     \
  status_type.cpl                        \
  2_4_define.cpl                         \
  3_0_rent_and_rec.cpl                   \
+ rc161b.pre.cpl                         \
  rose-issue-2143.cpl                    \
  rose-issue-2267.cpl                    \
  rose-issue-2654.cpl                    \
@@ -177,7 +181,6 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-128.cpl                  \
  rose-issue-rc-129.cpl                  \
  rose-issue-rc-160a.cpl                 \
- rc161b.pre.cpl                         \
  rc161a.pre.cpl
 
 
