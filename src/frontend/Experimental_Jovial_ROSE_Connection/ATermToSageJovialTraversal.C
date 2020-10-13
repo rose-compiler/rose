@@ -7012,9 +7012,11 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 
    // Several different options due to ambiguous grammar:
    //  1. function call
+   //     a. With a function symbol
+   //     b. Without a function symbol (must build nondefining declaration)
    //  2. type conversion
    //     a. General conversion (isSgTypedefSymbol)
-   //     b. StatusConversion   (isSgEnuSymbol)
+   //     b. StatusConversion   (isSgEnumSymbol)
    //  3. variable
    //     a. Table initialization replication operator
    //     b. Table reference
@@ -7023,11 +7025,10 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 // For Jovial the symbol should be present, unfortuately this is not true for Fortran
 //
    SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
-   ROSE_ASSERT(symbol);
 
 // Look for function call
 //
-   if (isSgFunctionSymbol(symbol)) {
+   if (isSgFunctionSymbol(symbol) || symbol == nullptr) {
       SgFunctionCallExp* func_call = nullptr;
       sage_tree_builder.Enter(func_call, name, expr_list);
       sage_tree_builder.Leave(func_call);
