@@ -6064,7 +6064,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
          // BitFormulaNOT is sometimes ambiguous, try the first path
          ATermList tail = (ATermList) ATmake("<term>", t_amb);
          ATerm head = ATgetFirst(tail);
-         if (traverse_TableItem(head, expr)) {
+         if (traverse_Variable(head, expr)) {
             // MATCHED RelationalExpression
          }
       } else return ATfalse;
