@@ -1806,6 +1806,9 @@ ROSE_DLL_API void deleteExpressionTreeWithOriginalExpressionSubtrees(SgNode* roo
 //! Move statements in first block to the second block (preserves order and rebuilds the symbol table).
 ROSE_DLL_API void moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicBlock* targetBlock );
 
+//! Move statements in Ada's package into C++ namespace's definition
+ROSE_DLL_API void moveStatementsBetweenBlocks ( SgAdaPackageSpec * sourceBlock, SgNamespaceDefinitionStatement* targetBlock );
+
 //! Move a variable declaration to a new scope, handle symbol, special scopes like For loop, etc.
 ROSE_DLL_API void moveVariableDeclaration(SgVariableDeclaration* decl, SgScopeStatement* target_scope);
 //! Append a statement to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
