@@ -44,12 +44,12 @@ libbinaryMidend_la_SOURCES =					\
     Concolic/ConcolicExecutor.C					\
     Concolic/ConcreteExecutor.C					\
     Concolic/Database.C						\
-    Concolic/Database2.C					\
     Concolic/ExecutionManager.C					\
     Concolic/LinuxExecutor.C					\
     Concolic/LinuxExitStatus.C					\
     Concolic/LinuxTraceExecutor.C				\
     Concolic/Specimen.C						\
+    Concolic/SystemCall.C					\
     Concolic/TestCase.C						\
     Concolic/TestSuite.C					\
     Concolic/Utility.C						\
@@ -171,7 +171,18 @@ pkginclude_HEADERS =					\
     Concolic/io-utility.h
 
 nobase_pkginclude_HEADERS =			\
-    Concolic/ConcolicExecutor.h
+    Concolic/BasicTypes.h			\
+    Concolic/ConcolicExecutor.h			\
+    Concolic/ConcreteExecutor.h			\
+    Concolic/Database.h				\
+    Concolic/ExecutionManager.h			\
+    Concolic/LinuxExecutor.h			\
+    Concolic/LinuxExitStatus.h			\
+    Concolic/LinuxTraceExecutor.h		\
+    Concolic/Specimen.h				\
+    Concolic/SystemCall.h			\
+    Concolic/TestCase.h				\
+    Concolic/TestSuite.h
 
 if ROSE_USE_SQLITE_DATABASE
 pkginclude_HEADERS +=					\
