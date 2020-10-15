@@ -630,7 +630,7 @@ namespace
     private:
       std::string       dclname;
       SgScopeStatement& dclscope;
-      TypeData   foundation;
+      TypeData          foundation;
   };
 
 
@@ -1141,19 +1141,32 @@ namespace
 
       case A_Procedure_Call_Statement:          // 6.4
         {
-          SgDeclarationStatement& tgt    = lookupNode(asisDecls(), stmt.Corresponding_Called_Entity);
-          SgFunctionDeclaration*  fundcl = isSgFunctionDeclaration(&tgt);
-          SgFunctionRefExp&       funref = SG_DEREF(sb::buildFunctionRefExp(fundcl));
-          ElemIdRange             range  = idRange(stmt.Call_Statement_Parameters);
-          SgExprListExp&          arglst = traverseIDs(range, elemMap(), ArgListCreator{ctx});
-          SgStatement&            sgnode = SG_DEREF(sb::buildFunctionCallStmt(&funref, &arglst));
+          SgExpression*  funrefexp = nullptr;
+
+          //~ SgDeclarationStatement& tgt    = lookupNode(asisDecls(), stmt.Corresponding_Called_Entity);
+
+          if (SgDeclarationStatement* tgt = findNode(asisDecls(), stmt.Corresponding_Called_Entity))
+          {
+            funrefexp = sb::buildFunctionRefExp(isSgFunctionDeclaration(tgt));
+          }
+          else
+          {
+            logWarn() << "unable to find declaration for procedure call"
+                      << std::endl;
+
+            funrefexp = &getExprID(stmt.Called_Name, ctx);
+          }
+
+          ROSE_ASSERT(funrefexp);
+          ElemIdRange    range  = idRange(stmt.Call_Statement_Parameters);
+          SgExprListExp& arglst = traverseIDs(range, elemMap(), ArgListCreator{ctx});
+          SgStatement&   sgnode = SG_DEREF(sb::buildFunctionCallStmt(funrefexp, &arglst));
 
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
               bool        Is_Prefix_Notation
               bool        Is_Dispatching_Call
               bool        Is_Call_On_Dispatching_Operation
-              Element_ID  Called_Name
               Declaration Corresponding_Called_Entity_Unwound
           */
           break;
