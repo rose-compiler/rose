@@ -26,7 +26,8 @@
 #if !defined(ROSE_ENABLE_CONCOLIC_TESTING) && \
     __cplusplus >= 201402L && \
     (defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)) && \
-    BOOST_VERSION >= 106400
+    BOOST_VERSION >= 106400 && \
+    defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
 #define ROSE_ENABLE_CONCOLIC_TESTING
 #endif
 
