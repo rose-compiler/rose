@@ -1701,6 +1701,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         handleVarCstDecl(decl, ctx, isPrivate, tyConstify, elem);
         /* unused fields:
              bool                           Has_Aliased;
+
+           break;
         */
         break;
       }
@@ -1928,8 +1930,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Private_Extension_Declaration:          // 3.2.1(2):7.3(3) -> Trait_Kinds
     case A_Single_Task_Declaration:                // 3.3.1(2):9.1(3)
     case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
-    case An_Enumeration_Literal_Specification:     // 3.5.1(3)
     case A_Discriminant_Specification:             // 3.7(5)   -> Trait_Kinds
+    case An_Enumeration_Literal_Specification:     // 3.5.1(3)
     case A_Generalized_Iterator_Specification:     // 5.5.2    -> Trait_Kinds
     case An_Element_Iterator_Specification:        // 5.5.2    -> Trait_Kinds
     case A_Return_Variable_Specification:          // 6.5
