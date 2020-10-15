@@ -3537,6 +3537,28 @@ TestAstSymbolTables::visit ( SgNode* node )
           symbolTable->print();
 #endif
         }
+    // for each namespace declaration: there are ast least two SgNamespaceDefinitionStatement nodes: 
+    // global definition and firstNondefinining declaration's definition
+    // their symbol counts should be the same.
+     SgNamespaceDeclarationStatement *nsd = isSgNamespaceDeclarationStatement(node); 
+       // global_definition should have the same alias symbol count as the first definition's symbol table
+       // check first nondefinining declaration
+     if (nsd&& nsd->get_firstNondefiningDeclaration() == nsd) 
+     {
+       SgNamespaceDefinitionStatement* local_def = nsd->get_definition();
+       SgNamespaceDefinitionStatement* global_def = local_def->get_global_definition();
+
+       ROSE_ASSERT(local_def && global_def && (local_def!=global_def));
+
+       size_t countL= local_def->get_symbol_table()->get_symbols().size();
+       size_t countG= global_def->get_symbol_table()->get_symbols().size();
+       if (countL!= countG)
+       {
+         printf ("Error: namespace definitions: global definition =%p alias symbol count %zd does not match local definition=%p symbol count %zd\n",
+            global_def, countG, local_def, countL);
+         ROSE_ASSERT(false); 
+       }
+     }
    }
 
 
