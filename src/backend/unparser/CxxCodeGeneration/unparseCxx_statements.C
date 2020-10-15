@@ -3491,7 +3491,31 @@ Unparse_ExprStmt::unparseEmptyDeclaration (SgStatement* stmt, SgUnparse_Info& in
 
   // Nothing to unparse for this case, comment and CPP directives should have been unparsed before getting to this point.
 #if 0
-     curprint( string("\n /* unparseEmptyDeclaration */ " ) );
+     printf ("In unparseEmptyDeclaration() \n");
+     curprint( string("\n /* unparseEmptyDeclaration */ \n " ) );
+
+     AstUnparseAttribute* unparseAttribute = dynamic_cast<AstUnparseAttribute*>(stmt->getAttribute(AstUnparseAttribute::markerName));
+     if (unparseAttribute != NULL)
+        {
+          string code = unparseAttribute->toString(AstUnparseAttribute::e_before);
+#if 0
+       // DQ (9/27/2020): Debugging use of SgTextAttribute node.
+          printf ("Found an AstUnparseAttribute: code = %s \n",code.c_str());
+          curprint (" /* Found an AstUnparseAttribute */ \n");
+#endif
+       // Note that in most cases unparseLanguageSpecificStatement() will be called, some formatting 
+       // via "unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);" may be done.  This can cause extra 
+       // CRs to be inserted (which only looks bad).  Not clear now to best clean this up.
+          curprint (code);
+        }
+       else
+        {
+#if 1
+       // DQ (9/27/2020): Debugging use of SgTextAttribute node.
+          printf ("Found NO AstUnparseAttribute \n");
+          curprint (" /* Found NO AstUnparseAttribute */ \n");
+#endif
+        }
 #endif
 
   // unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);

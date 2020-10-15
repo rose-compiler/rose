@@ -3,6 +3,12 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # DQ (8/23/2017): Use command line option to alternatively test the experimental fortran frontend.
 # ROSE_FLAGS = -rose:verbose 0 -rose:experimental_csharp_frontend -I$(srcdir)
 ROSE_FLAGS    ?= -rose:skipfinalCompileStep
+
+# testTranslator runs the AST consistency checks
+../../testTranslator:
+	cd ../..; $(MAKE) testTranslator
+
+
 # ROSE_COMPILER ?= $(top_builddir)/src/rose-compiler
 ROSE_COMPILER ?= ../../testTranslator
 
@@ -21,101 +27,40 @@ ROSE_COMPILER ?= ../../testTranslator
 #	$(VALGRIND) ../../../testTranslator $(ROSE_FLAGS) -rose:cs -c $(srcdir)/$(@:.o=.cs)
 # endif
 
+#
+# include test lists
 
-PASSING_TESTS :=                       \
-  pkgrename.ads                        \
-  variable_declaration.ads             \
-  constant_declaration.ads             \
-  derived_record.ads                   \
-  empty_package.ads                    \
-  entry_declaration.ads                \
-  exception_declaration.ads            \
-  gototest.ads                         \
-  nested_package.ads                   \
-  ordinary_type_declaration.ads        \
-  package_with_body.ads                \
-  selected_component.ads               \
-  simple_expression_range.ads          \
-  tagged_definition.ads                \
-  task_type_declaration.ads            \
-  task_with_body.ads                   \
-  test_unit.ads                        \
-  test.ads                             \
-  unit_2.ads                           \
+ADA_TEST_SRC_DIR := $(top_srcdir)/tests/nonsmoke/functioncal/CompileTests/experimental_ada_tests
+
+include $(srcdir)/passing-tests-list.mk
+include $(srcdir)/passing-incomplete-tests-list.mk
+include $(srcdir)/rose-backend-todo-list.mk
+include $(srcdir)/rose-frontend-todo-list.mk
+include $(srcdir)/asis-todo-list.mk
+
+NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
+  parent.ads                           \
+  comm.ads                             \
+  mpi.ads                              \
   EndOfList
-
-# pass asis, frontend, backend, but representation is incomplete
-PASSING_INCOMPLETE_TESTS :=            \
-  component_declaration.ads            \
-  subtypes.ads                         \ 
-  real_typedecl.ads                    \
-  EndOfList 
-
-# fail in backend
-PASSING_FRONTEND :=                    \ 
-  EndOfList
-
-# fail in frontend
-PASSING_ASIS := \
-  EndOfList
-
-NOT_HANDLED := \
-  unit_2.adb                           \
-  entry_call.adb                       \
-  hello_world.adb                      \
-  test_unit.adb                        \
-  test.adb                             \
-  function_call.adb                    \
-  function_declaration.adb             \
-  unit_3.ads                           \
-  accept_statement.adb                 \
-  procedure_call.adb                   \
-  task_with_body.adb                   \
-  some_modes.ads                       \
-  recursive_call.adb                   \
-  short_circuit.adb                    \
-  raise_statement.adb                  \
-  type_conversion.adb                  \
-  procedure_declaration.ads            \
-  procedure_declaration.adb            \
-  package_with_body.adb                \
-  parameter_declaration.ads            \
-  unit_1.adb                           \
-  loop_statement.adb                   \
-  loop_exit.adb                        \
-  minimal.adb                          \
-  operator.adb                         \
-  if_statement.adb                     \
-  gototest.adb                         \
-  all_modes.ads                        \
-  case_function.ads                    \
-  constants.ads                        \
-  choice_parameter_specification.adb   \
-  fib.adb                              \
-  for_loop.adb                         \
-  function_declaration.ads             \
-  case_function.adb                    \
-  iterateRange.adb                     \
-  while_loop_statement.adb             \
-  increment.adb	                       \
-  EndOfList
-
 
 #
 # define test suite
 TEST_TARGETS := $(PASSING_TESTS) $(PASSING_INCOMPLETE_TESTS)
-ALL_TEST_TARGETS := $(PASSING_TESTS) $(PASSING_INCOMPLETE_TESTS) $(PASSING_FRONTEND) $(PASSING_ASIS) $(NOT_HANDLED)
+ALL_TEST_TARGETS := $(PASSING_TESTS) $(PASSING_INCOMPLETE_TESTS) $(ROSE_BACKEND_TODO) $(ROSE_FRONTEND_TODO) $(ASIS_TODO)
 
 TESTCODES_REQUIRED_TO_PASS := $(TEST_TARGETS)
 
 #
 # targets
-
 .PHONY: all
-all: $(ALL_TEST_TARGETS)
+all: passing
 
 .PHONY: passing
 passing: $(TEST_TARGETS)
+
+.PHONY: complete
+complete: $(ALL_TEST_TARGETS)
 
 .PHONY: passing-frontend
 passing-frontend: $(PASSING_FRONTEND)
@@ -135,11 +80,11 @@ print:
 
 $(top_builddir)/src/rose-compiler:
 	$(MAKE) -C $(top_builddir)/src rose-compiler
-	
-%.ads:$(abs_srcdir)/tests/%.ads
+
+%.ads:$(abs_srcdir)/tests/%.ads $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
-	
-%.adb:$(abs_srcdir)/tests/%.adb
+
+%.adb:$(abs_srcdir)/tests/%.adb $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
 
 .PHONY: clean-local

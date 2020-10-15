@@ -1147,8 +1147,8 @@ buildProcedureHeaderStatement(const char* name, SgType* return_type, SgFunctionP
 // CR (9/24/2020)
 //! Build a nondefining SgProcedureHeaderStatement, handle function type, symbol etc transparently
 ROSE_DLL_API SgProcedureHeaderStatement*
-buildNondefiningProcedureHeaderStatement(const SgName & name, SgType* return_type,
-                                         SgFunctionParameterList* param_list, SgScopeStatement* scope=NULL);
+buildNondefiningProcedureHeaderStatement(const SgName & name, SgType* return_type, SgFunctionParameterList* param_list,
+                                         SgProcedureHeaderStatement::subprogram_kind_enum, SgScopeStatement* scope=NULL);
 
 //! Build a regular function call statement
 ROSE_DLL_API SgExprStatement*

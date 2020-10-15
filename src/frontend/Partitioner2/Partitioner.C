@@ -2459,6 +2459,45 @@ Partitioner::checkConsistency() const {
     aum_.checkConsistency();
 }
 
+SgAsmGenericSection*
+Partitioner::elfGot(SgAsmElfFileHeader *elfHeader) {
+    if (!elfHeader)
+        return NULL;
+    SgAsmGenericSection *found = NULL;
+
+    // Get the section pointed to by the DT_PLTGOT entry of the .dynamic section.
+    if (SgAsmElfDynamicSection *dynamic = isSgAsmElfDynamicSection(elfHeader->get_section_by_name(".dynamic"))) {
+        if (SgAsmElfDynamicEntryList *dentriesNode = dynamic->get_entries()) {
+            BOOST_FOREACH (SgAsmElfDynamicEntry *dentry, dentriesNode->get_entries()) {
+                if (dentry->get_d_tag() == SgAsmElfDynamicEntry::DT_PLTGOT) {
+                    rose_rva_t rva = dentry->get_d_val();
+                    found = rva.get_section();
+                    break;
+                }
+            }
+        }
+    }
+
+    // If that failed, just try some common names.
+    if (!found)
+        found = elfHeader->get_section_by_name(".got.plt");
+    if (!found)
+        found = elfHeader->get_section_by_name(".plt.got");
+
+    if (found) {
+        elfGotVa_ = found->get_mapped_actual_va();
+    } else {
+        elfGotVa_.reset();
+    }
+
+    return found;
+}
+
+Sawyer::Optional<rose_addr_t>
+Partitioner::elfGotVa() const {
+    return elfGotVa_;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CFG utilities
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

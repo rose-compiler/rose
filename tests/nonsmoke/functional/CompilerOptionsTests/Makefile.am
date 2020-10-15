@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if USING_GNU_COMPILER
-if !ROSE_USING_GCC_VERSION_LATER_4_9
+# if !ROSE_USING_GCC_VERSION_LATER_4_9
 
 SUBDIRS = \
    testOutputFileOption \
@@ -24,7 +24,7 @@ if !USING_XTENSA_BACKEND_COMPILER
   SUBDIRS += testForSpuriousOutput collectAllCommentsAndDirectives_tests 
 endif
 
-endif # ROSE_USING_GCC_VERSION_LATER_4_9
+# endif # ROSE_USING_GCC_VERSION_LATER_4_9
 endif # USING_GNU_COMPILER
 
 # See the README file (in this dirctory) for a brief description of the purpuse for each subdirectory.

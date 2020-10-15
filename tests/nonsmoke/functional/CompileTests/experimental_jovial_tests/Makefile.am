@@ -56,9 +56,12 @@ JOVIAL_TESTCODES = \
  4_10_abort_stmt_b.jov                  \
  5_2_logical_continuation_a.jov         \
  5_2_logical_continuation_b.jov         \
+ 5_2_logical_continuation_amb.jov       \
+ 6_1_byte_function_variable.jov         \
  6_1_ptr_dereference.jov                \
  6_1_table_dereference.jov              \
  6_3_user_def_function_call.jov         \
+ 6_3_4_byte_function.jov                \
  6_3_5_shift_function.jov               \
  6_3_6_abs_function.jov                 \
  6_3_10_nwdsen_function.jov             \
@@ -85,6 +88,7 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-94.jov                   \
  rose-issue-rc-96.jov                   \
  rose-issue-rc-122-lcopy.jov            \
+ rose-issue-rc-133.jov                  \
  rose-issue-rc-134.jov                  \
  rose-issue-rc-135.jov                  \
  rose-issue-rc-136.jov                  \
@@ -97,7 +101,15 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-155.jov                  \
  rose-issue-rc-156.jov                  \
  rose-issue-rc-157.jov                  \
- rose-issue-rc-158.jov
+ rose-issue-rc-158.jov                  \
+ rose-issue-rc-159.jov                  \
+ rose-issue-rc-160.jov                  \
+ rc161.pre.jov                          \
+ rose-issue-rc-179.jov                  \
+ rose-issue-rc-186.jov                  \
+ rose-issue-rc-190.jov                  \
+ rose-issue-rc-191.jov                  \
+ rose-issue-rc-193.jov
 
 # status_enumval.jov                     \
 # 1_2_3_program-body_a.jov               \
@@ -118,12 +130,16 @@ JOVIAL_PARSER_TESTCODES = \
  6_3_2_next_function_pointer.jov        \
  6_3_2_next_function_status.jov
 
+## List of compool modules that need to be compiled first:
+#     rc161b.pre.cpl before rc161a.pre.cpl before rc161.jov
+#
 COMPOOL_TESTCODES = \
  define_dollar.cpl                      \
  simple_compool.cpl                     \
  status_type.cpl                        \
  2_4_define.cpl                         \
  3_0_rent_and_rec.cpl                   \
+ rc161b.pre.cpl                         \
  rose-issue-2143.cpl                    \
  rose-issue-2267.cpl                    \
  rose-issue-2654.cpl                    \
@@ -163,7 +179,10 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-120.cpl                  \
  rose-issue-rc-121.cpl                  \
  rose-issue-rc-128.cpl                  \
- rose-issue-rc-129.cpl
+ rose-issue-rc-129.cpl                  \
+ rose-issue-rc-160a.cpl                 \
+ rc161a.pre.cpl
+
 
 COMPOOL_DIRECTIVE_TESTCODES = \
  9_1_compool_directive.cpl              \

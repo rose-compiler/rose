@@ -36,6 +36,9 @@ public:
             struct {
                 size_t idx1, idx2;
             } arrayOfStrings;
+            struct {
+                size_t serialNumber;
+            } systemCall;
         };
 
     public:
@@ -67,6 +70,16 @@ public:
             return v;
         }
 
+        /** Create a variable for a system call return value.
+         *
+         *  The serial number is a serial number of all system calls, starting at zero. */
+        static Variable systemCallReturn(size_t serialNumber) {
+            Variable v;
+            v.whence_ = SYSTEM_CALL_RETVAL;
+            v.systemCall.serialNumber = serialNumber;
+            return v;
+        }
+        
         /** Index of string in array. */
         size_t variableIndex() const {
             switch (whence_) {
@@ -86,6 +99,16 @@ public:
                     return arrayOfStrings.idx2;
                 default:
                     ASSERT_not_reachable("character index not available");
+            }
+        }
+
+        /** Serial number fo system call. */
+        size_t serialNumber() {
+            switch (whence_) {
+                case SYSTEM_CALL_RETVAL:
+                    return systemCall.serialNumber;
+                default:
+                    ASSERT_not_reachable("serial number not available");
             }
         }
         
@@ -117,6 +140,11 @@ public:
      *
      *  The @p i and @p j are the indexes for the <code>char *envp[]</code> argument of a C or C++ program's "main" function. */
     void insertEnvironmentVariable(size_t i, size_t j, const SymbolicExpr::Ptr&);
+
+    /** Insert a record for a system call return.
+     *
+     *  The argument is the sequence number of the system call. I.e., how many system calls have occurred before this one. */
+    void insertSystemCallReturn(size_t serialNumber, const SymbolicExpr::Ptr&);
 
     /** Find a variable record when given a symbolic variable name. */
     Variable get(const std::string &symbolicVarName) const;
@@ -164,6 +192,17 @@ public:
     }
 };
 
+/** Description of a system call. */
+class SystemCall {
+public:
+    InstructionSemantics2::BaseSemantics::SValuePtr functionNumber;
+    std::vector<InstructionSemantics2::BaseSemantics::SValuePtr> arguments;
+    InstructionSemantics2::BaseSemantics::SValuePtr returnValue;
+
+    void print(std::ostream &out) const;
+    friend std::ostream& operator<<(std::ostream&, const SystemCall&);
+};
+
 /** Semantic operations. */
 class RiscOperators: public InstructionSemantics2::SymbolicSemantics::RiscOperators {
 public:
@@ -190,6 +229,7 @@ private:
     Debugger::Ptr process_;                             // subordinate process
     InputVariables &inputVariables_;                    // where did symbolic variables come from?
     Sawyer::Optional<rose_addr_t> overrideNextIp_;      // next instruction to execute, used to skip over syscalls
+    std::vector<SystemCall> systemCalls_;               // list of system calls in the order they're executed
 
 protected:
     /** Allocating constructor. */
@@ -272,8 +312,23 @@ public:
     }
     /** @} */
 
+    /** Information about system calls that have been processed.
+     *
+     * @{ */
+    const std::vector<SystemCall>& systemCalls() const { return systemCalls_; }
+    std::vector<SystemCall>& systemCalls() { return systemCalls_; }
+    /** @} */
+
+    /** Get system call information from machine state.
+     *
+     *  @{ */
+    InstructionSemantics2::BaseSemantics::SValuePtr systemCallFunctionNumber();
+    InstructionSemantics2::BaseSemantics::SValuePtr systemCallArgument(size_t idx);
+    InstructionSemantics2::BaseSemantics::SValuePtr systemCallReturnValue();
+    /** @} */
 
 public:
+    // Base class overrides -- the acutal RISC operations
     virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
@@ -300,8 +355,6 @@ private:
     // Handles a Linux system call of the INT 0x80 variety.
     void systemCall();
 
-    InstructionSemantics2::BaseSemantics::SValuePtr systemCallNumber();
-    InstructionSemantics2::BaseSemantics::SValuePtr systemCallArgument(size_t idx);
 
     void doExit(const InstructionSemantics2::BaseSemantics::SValuePtr&);
     void doGetuid();
@@ -464,6 +517,9 @@ private:
 
     // True if the two test cases are close enough that we only need to run one of them.
     bool areSimilar(const TestCase::Ptr&, const TestCase::Ptr&) const;
+
+    // After processing a system call, update the symbolic state with any necessary system call side effects.
+    void updateSystemCallSideEffects(const Emulation::RiscOperatorsPtr&, Emulation::SystemCall&);
 
 public:
     // TODO: Lots of properties to control the finer aspects of executing a test case!
