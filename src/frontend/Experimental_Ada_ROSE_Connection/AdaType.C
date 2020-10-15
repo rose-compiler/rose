@@ -40,6 +40,13 @@ namespace
   SgNode&
   getExprTypeID(Element_ID tyid, AstContext ctx);
 
+  SgInitializedName&
+  getException(Expression_Struct& ex, AstContext ctx)
+  {
+    ROSE_ASSERT(ex.Expression_Kind == An_Identifier);
+
+    return lookupNode(asisExcps(), ex.Corresponding_Name_Definition);
+  }
 
   SgNode&
   getExprType(Expression_Struct& typeEx, AstContext ctx)
@@ -473,8 +480,8 @@ void ExHandlerTypeCreator::operator()(Element_Struct& elem)
   ROSE_ASSERT(elem.Element_Kind == An_Expression);
 
   Expression_Struct& asisexpr  = elem.The_Union.Expression;
-  SgInitializedName* exception = isSgInitializedName(&getExprType(asisexpr, ctx));
-  SgExpression&      exref     = mkExceptionRef(SG_DEREF(exception), ctx.scope());
+  SgInitializedName& exception = getException(asisexpr, ctx);
+  SgExpression&      exref     = mkExceptionRef(exception, ctx.scope());
   SgType&            extype    = mkExceptionType(exref);
 
   lst.push_back(&extype);
