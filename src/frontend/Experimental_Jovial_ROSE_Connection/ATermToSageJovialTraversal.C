@@ -7158,9 +7158,9 @@ ATbool ATermToSageJovialTraversal::traverse_IntrinsicFunctionCall(ATerm term, Sg
    else if (traverse_SizeFunction(term, func_call)) {
       // MATCHED SizeFunction
    }
-
-   //   BoundsFunction              -> IntrinsicFunctionCall
-
+   else if (traverse_BoundsFunction(term, func_call)) {
+      // MATCHED BoundsFunction
+   }
    else if (traverse_NwdsenFunction(term, func_call)) {
       // MATCHED NwdsenFunction
    }
@@ -7448,6 +7448,79 @@ ATbool ATermToSageJovialTraversal::traverse_SizeFunction(ATerm term, SgFunctionC
    SgType* return_type = SageBuilder::buildUnsignedIntType();
 
    func_call = SageBuilder::buildFunctionCallExp(func_name, return_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
+   setSourcePosition(func_call, term);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 6.3.9 BOUNDS FUNCTIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToSageJovialTraversal::traverse_BoundsFunction(ATerm term, SgFunctionCallExp* &func_call)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_BoundsFunction: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_which, t_table_arg, t_dim;
+   std::string function_name, table_or_type_name;
+   SgExpression* table_arg = nullptr;
+   SgExpression* dim_number = nullptr;
+
+   func_call = nullptr;
+
+   if (ATmatch(term, "BoundsFunction(<term>,<term>,<term>)", &t_which, &t_table_arg, &t_dim)) {
+      if (ATmatch(t_which, "LBOUND()")) {
+         function_name = "LBOUND";
+      }
+      else if (ATmatch(t_which, "UBOUND()")) {
+         function_name = "UBOUND";
+      } else return ATfalse;
+
+      if (traverse_Name(t_table_arg, table_or_type_name)) {
+        // MATCHED TableName
+      } else return ATfalse;
+
+      if (traverse_NumericFormula(t_dim, dim_number)) {
+         // MATCHED NumericFormula
+      } else return ATfalse;
+
+   } else return ATfalse;
+
+   // Find symbol and table name or table type name
+   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(table_or_type_name, SageBuilder::topScopeStack());
+   ROSE_ASSERT(symbol);
+   SgJovialTableType* type = isSgJovialTableType(symbol->get_type());
+   ROSE_ASSERT(type);
+
+   switch (symbol->variantT())
+      {
+      case V_SgClassSymbol:
+         {
+            table_arg = SageBuilder::buildTypeExpression(type);
+            break;
+         }
+      case V_SgVariableSymbol:
+         {
+            table_arg = SageBuilder::buildVarRefExp_nfi(isSgVariableSymbol(symbol));
+            break;
+         }
+      default: ROSE_ASSERT(false); break;
+      }
+
+   ROSE_ASSERT(dim_number);
+   ROSE_ASSERT(table_arg);
+   setSourcePosition(table_arg, t_table_arg);
+
+   // build the parameter list
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   params->append_expression(table_arg);
+   params->append_expression(dim_number);
+
+   SgType* return_type = SageBuilder::buildSignedIntType();
+
+   func_call = SageBuilder::buildFunctionCallExp(function_name, return_type, params, SageBuilder::topScopeStack());
    ROSE_ASSERT(func_call);
    setSourcePosition(func_call, term);
 
