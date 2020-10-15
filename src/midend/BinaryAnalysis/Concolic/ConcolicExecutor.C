@@ -1,9 +1,12 @@
 #include <sage3basic.h>
-#include <BinaryConcolic.h>
+#include <Concolic/ConcolicExecutor.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <boost/format.hpp>
 #include <CommandLine.h>
+#include <Concolic/Database.h>
+#include <Concolic/Specimen.h>
+#include <Concolic/TestCase.h>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/FileSystem.h>
@@ -616,7 +619,7 @@ P2::Partitioner
 ConcolicExecutor::partition(const Database::Ptr &db, const Specimen::Ptr &specimen) {
     ASSERT_not_null(db);
     ASSERT_not_null(specimen);
-    Database::SpecimenId specimenId = db->id(specimen, Update::NO);
+    SpecimenId specimenId = db->id(specimen, Update::NO);
     ASSERT_require2(specimenId, "specimen must be in the database");
 
     P2::Engine engine;
@@ -698,7 +701,7 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
 
     // Mark the test case as having NOT been run concolically, and clear any data saved as part of a previous concolic run.
     testCase->concolicResult(0);
-    db->clearSystemCalls(db->id(testCase, Update::NO));
+    db->eraseSystemCalls(db->id(testCase, Update::NO));
 
     // Create the semantics layers. The symbolic semantics uses a Partitioner, and the concrete semantics uses a suborinate
     // process which is created from the specimen.
@@ -959,7 +962,7 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
     SAWYER_MESG(debug) <<"generating new test case...\n";
 
     std::vector<std::string> args = oldTestCase->args();   // like argv, but excluding argv[argc]
-    std::vector<SystemCall> syscalls = oldTestCase->syscalls();
+    std::vector<SystemCallId> syscalls = db->systemCalls(db->id(oldTestCase, Update::NO));
     args.insert(args.begin(), oldTestCase->specimen()->name());
     Sawyer::Optional<size_t> maxArgvAdjusted;           // max index of any adjusted argument
     Sawyer::Optional<size_t> adjustedArgc;                 // whether we have a new argc value from the solver
