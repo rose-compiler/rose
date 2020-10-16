@@ -3552,9 +3552,9 @@ TestAstSymbolTables::visit ( SgNode* node )
 
        size_t countL= local_def->get_symbol_table()->get_symbols().size();
        size_t countG= global_def->get_symbol_table()->get_symbols().size();
-       if (countL!= countG)
+       if (countG < countL)
        {
-         printf ("Error: namespace definitions: global definition =%p alias symbol count %zd does not match local definition=%p symbol count %zd\n",
+         printf ("Error: namespace definitions: global definition =%p alias symbol count %zd is smaller than local definition=%p symbol count %zd\n",
             global_def, countG, local_def, countL);
          ROSE_ASSERT(false); 
        }
