@@ -483,7 +483,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     CodeThorn::IntervalAnalysis* intervalAnalyzer=new CodeThorn::IntervalAnalysis();
     cout << "STATUS: initializing interval analyzer."<<endl;
     intervalAnalyzer->setNoTopologicalSort(option_no_topological_sort);
-    intervalAnalyzer->initialize(root);
+    intervalAnalyzer->initialize(root,nullptr);
     cout << "STATUS: running pointer analysis."<<endl;
     ROSE_ASSERT(intervalAnalyzer->getVariableIdMapping());
     CodeThorn::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(), intervalAnalyzer->getFunctionIdMapping(), root);
@@ -530,7 +530,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     cout << "STATUS: initializing LV analysis."<<endl;
     lvAnalysis->setBackwardAnalysis();
     lvAnalysis->setNoTopologicalSort(option_no_topological_sort);
-    lvAnalysis->initialize(root);
+    lvAnalysis->initialize(root,nullptr);
     cout << "STATUS: running pointer analysis."<<endl;
     ROSE_ASSERT(lvAnalysis->getVariableIdMapping());
     CodeThorn::FIPointerAnalysis* fipa = new FIPointerAnalysis(lvAnalysis->getVariableIdMapping(), lvAnalysis->getFunctionIdMapping(), root);
