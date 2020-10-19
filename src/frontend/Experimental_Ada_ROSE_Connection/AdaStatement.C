@@ -630,7 +630,7 @@ namespace
     private:
       std::string       dclname;
       SgScopeStatement& dclscope;
-      TypeData   foundation;
+      TypeData          foundation;
   };
 
 
@@ -1088,7 +1088,7 @@ namespace
           ElemIdRange   blkDecls = idRange(stmt.Block_Declarative_Items);
           ElemIdRange   blkStmts = idRange(stmt.Block_Statements);
           ElemIdRange   exHndlrs = idRange(stmt.Block_Exception_Handlers);
-          logWarn() << "block ex handlers: " << exHndlrs.size() << std::endl;
+          //~ logInfo() << "block ex handlers: " << exHndlrs.size() << std::endl;
 
           TryBlockNodes trydata  = createTryBlockIfNeeded(exHndlrs.size() > 0, sgnode);
           SgTryStmt*    tryblk   = trydata.first;
@@ -1141,19 +1141,32 @@ namespace
 
       case A_Procedure_Call_Statement:          // 6.4
         {
-          SgDeclarationStatement& tgt    = lookupNode(asisDecls(), stmt.Corresponding_Called_Entity);
-          SgFunctionDeclaration*  fundcl = isSgFunctionDeclaration(&tgt);
-          SgFunctionRefExp&       funref = SG_DEREF(sb::buildFunctionRefExp(fundcl));
-          ElemIdRange             range  = idRange(stmt.Call_Statement_Parameters);
-          SgExprListExp&          arglst = traverseIDs(range, elemMap(), ArgListCreator{ctx});
-          SgStatement&            sgnode = SG_DEREF(sb::buildFunctionCallStmt(&funref, &arglst));
+          SgExpression*  funrefexp = nullptr;
+
+          //~ SgDeclarationStatement& tgt    = lookupNode(asisDecls(), stmt.Corresponding_Called_Entity);
+
+          if (SgDeclarationStatement* tgt = findNode(asisDecls(), stmt.Corresponding_Called_Entity))
+          {
+            funrefexp = sb::buildFunctionRefExp(isSgFunctionDeclaration(tgt));
+          }
+          else
+          {
+            logWarn() << "unable to find declaration for procedure call"
+                      << std::endl;
+
+            funrefexp = &getExprID(stmt.Called_Name, ctx);
+          }
+
+          ROSE_ASSERT(funrefexp);
+          ElemIdRange    range  = idRange(stmt.Call_Statement_Parameters);
+          SgExprListExp& arglst = traverseIDs(range, elemMap(), ArgListCreator{ctx});
+          SgStatement&   sgnode = SG_DEREF(sb::buildFunctionCallStmt(funrefexp, &arglst));
 
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
               bool        Is_Prefix_Notation
               bool        Is_Dispatching_Call
               bool        Is_Call_On_Dispatching_Operation
-              Element_ID  Called_Name
               Declaration Corresponding_Called_Entity_Unwound
           */
           break;
@@ -1551,7 +1564,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ROSE_ASSERT(sgnode.get_parent() == &outer);
 
         ElemIdRange            hndlrs  = idRange(decl.Body_Exception_Handlers);
-        logWarn() << "block ex handlers: " << hndlrs.size() << std::endl;
+        //~ logInfo() << "block ex handlers: " << hndlrs.size() << std::endl;
 
         TryBlockNodes          trydata = createTryBlockIfNeeded(hndlrs.size() > 0, declblk);
         SgTryStmt*             trystmt = trydata.first;
@@ -1595,7 +1608,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                    << "\n  limited: " << decl.Has_Limited
                    << "\n  private: " << decl.Has_Private
                    << std::endl;
+
+        // \todo this may only declare one name (use singleName)
         ElemIdRange     range  = idRange(decl.Names);
+        ROSE_ASSERT(range.size() == 1);
         name_container  names  = traverseIDs(range, elemMap(), NameCreator{ctx});
         SgType&         opaque = mkDefaultType();
 
@@ -1627,7 +1643,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                    << "\n  abstract: " << decl.Has_Abstract
                    << "\n  limited: " << decl.Has_Limited
                    << std::endl;
-        ElemIdRange    range = idRange(decl.Names);
+        // \todo this may only declare one name (use singleName)
+        ElemIdRange    range  = idRange(decl.Names);
+        ROSE_ASSERT(range.size() == 1);
         name_container names = traverseIDs(range, elemMap(), NameCreator{ctx});
         TypeData       ty    = getTypeFoundation(decl, ctx);
 
@@ -1875,7 +1893,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         if (decl.Renamed_Entity < 0)
         {
-          logWarn() << "skipping unknown renaming: " << adaname.ident << "/" << adaname.fullName
+          logWarn() << "skipping unknown package renaming: " << adaname.ident << "/" << adaname.fullName
                     << ": " << elem.ID << " / " << decl.Renamed_Entity
                     << std::endl;
           return;

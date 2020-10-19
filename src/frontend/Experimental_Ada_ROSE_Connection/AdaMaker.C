@@ -691,18 +691,30 @@ mkParameter( const std::vector<SgInitializedName*>& parms,
 
 namespace
 {
-  template <class Const_iterator>
+  template <class FwdIterator>
   SgVariableDeclaration&
-  mkVarDeclInternal(Const_iterator aa, Const_iterator zz, SgScopeStatement& scope)
+  mkVarExceptionDeclInternal(FwdIterator aa, FwdIterator zz, SgScopeStatement& scope)
   {
     SgVariableDeclaration&    vardcl = SG_DEREF( new SgVariableDeclaration(&mkFileInfo()) );
     SgInitializedNamePtrList& names  = vardcl.get_variables();
 
     names.insert(names.end(), aa, zz);
+    std::for_each( aa, zz,
+                   [&](SgInitializedName* var) -> void { var->set_parent(&vardcl); }
+                 );
 
     markCompilerGenerated(vardcl);
     si::fixVariableDeclaration(&vardcl, &scope);
     vardcl.set_parent(&scope);
+
+    return vardcl;
+  }
+
+  template <class FwdIterator>
+  SgVariableDeclaration&
+  mkVarDeclInternal(FwdIterator aa, FwdIterator zz, SgScopeStatement& scope)
+  {
+    SgVariableDeclaration&    vardcl = mkVarExceptionDeclInternal(aa, zz, scope);
 
     ROSE_ASSERT(vardcl.get_definingDeclaration() == nullptr);
     ROSE_ASSERT(vardcl.get_firstNondefiningDeclaration() == nullptr);
@@ -730,15 +742,8 @@ mkVarDecl(SgInitializedName& var, SgScopeStatement& scope)
 SgVariableDeclaration&
 mkExceptionDecl(const std::vector<SgInitializedName*>& vars, SgScopeStatement& scope)
 {
-  SgVariableDeclaration&    vardcl = SG_DEREF( new SgVariableDeclaration(&mkFileInfo()) );
-  SgInitializedNamePtrList& names  = vardcl.get_variables();
-
-  names.insert(names.end(), vars.begin(), vars.end());
-
-  markCompilerGenerated(vardcl);
-  si::fixVariableDeclaration(&vardcl, &scope);
-  vardcl.set_parent(&scope);
-  return vardcl;
+  // \todo revise exception declarations
+  return mkVarExceptionDeclInternal(vars.begin(), vars.end(), scope);
 }
 
 SgBaseClass&

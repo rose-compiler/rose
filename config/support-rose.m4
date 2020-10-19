@@ -2222,6 +2222,9 @@ src/frontend/Experimental_OpenFortranParser_ROSE_Connection/Makefile
 src/frontend/Experimental_Flang_ROSE_Connection/Makefile
 src/frontend/Experimental_Csharp_ROSE_Connection/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/Makefile
+src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/Makefile
+src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/dot_asis_library/Makefile
+src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/ada_main/Makefile
 src/frontend/Experimental_Jovial_ROSE_Connection/Makefile
 src/frontend/Experimental_Cobol_ROSE_Connection/Makefile
 src/frontend/Experimental_Matlab_ROSE_Connection/Makefile
@@ -2379,6 +2382,7 @@ tests/nonsmoke/functional/CompileTests/Java_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Java_tests/unit_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_csharp_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_fortran_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_jovial_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_cobol_tests/Makefile
