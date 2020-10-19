@@ -414,18 +414,27 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
         break ;
       }
 
+    case A_Record_Type_Definition:               // 3.8(2)     -> Trait_Kinds
     case A_Tagged_Record_Type_Definition:        // 3.8(2)     -> Trait_Kinds
       {
         SgClassDefinition& def = getRecordBodyID(typenode.Record_Definition, ctx);
 
-        //~ logInfo() << "tagged ? " << typenode.Has_Tagged << std::endl;
+        (typenode.Has_Tagged ? logWarn() : logTrace())
+           << "tagged set ? " << typenode.Has_Tagged
+           << std::endl;
 
-        /* unused fields:
+        /*
+           unused fields (A_Record_Type_Definition):
+
+           unused fields (A_Tagged_Record_Type_Definition):
               bool                 Has_Private;
               bool                 Has_Tagged;
               Declaration_List     Corresponding_Type_Operators;
+
+           break;
         */
-        res = TypeData{&def, typenode.Has_Abstract, typenode.Has_Limited, true};
+        res = TypeData{&def, typenode.Has_Abstract, typenode.Has_Limited, typenode.Type_Kind == A_Tagged_Record_Type_Definition};
+        //~ res = TypeData{&def, typenode.Has_Abstract, typenode.Has_Limited, typenode.Has_Tagged};
         break;
       }
 
@@ -438,7 +447,6 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
     case An_Ordinary_Fixed_Point_Definition:     // 3.5.9(3)
     case A_Decimal_Fixed_Point_Definition:       // 3.5.9(6)
     case A_Constrained_Array_Definition:         // 3.6(2)
-    case A_Record_Type_Definition:               // 3.8(2)     -> Trait_Kinds
     //  //|A2005 start
     case An_Interface_Type_Definition:           // 3.9.4      -> Interface_Kinds
     //  //|A2005 end
