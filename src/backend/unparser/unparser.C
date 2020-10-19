@@ -333,6 +333,10 @@ Unparser::computeNameQualification(SgSourceFile* file)
          isCxxFile = true;
        }
 
+#if 0
+     printf ("In computeNameQualification(): file->getFileName() = %s isCxxFile = %s \n",file->getFileName().c_str(),isCxxFile ? "true" : "false");
+#endif
+
   // DQ (11/10/2007): Moved computation of hidden list from astPostProcessing.C to unparseFile so that 
   // it will be called AFTER any transformations and immediately before code generation where it is 
   // really required.  This part of a fix for Liao's outliner, but should be useful for numerous 
@@ -361,11 +365,21 @@ Unparser::computeNameQualification(SgSourceFile* file)
              {
                printf ("Calling name qualification support. \n");
              }
+
+       // DQ (10/17/2020): I have discovered that this was added by Tristan, and it is not clear to me what it is about.
+       // After discussion with Tristan, this is specific to Jovial to C++ translator, and supports the development of
+       // seperate header files that are built, instead of using the single translation unit and the unparse header file
+       // support that has been recently built into ROSE (last year).  This is fine, but it brings up a possible somewhat
+       // philosophical discussion about how to defaine a translation unit in C and C++, nameily that the SgFile and SgSourceFile
+       // is really a translation unit for the source code in any source file (and does not refer to only the source file 
+       // to the exclusion of associated included file via CPP #include directives.
           SgNodePtrList & nodes_for_namequal_init = file->get_extra_nodes_for_namequal_init();
           for (SgNodePtrList::iterator it = nodes_for_namequal_init.begin(); it != nodes_for_namequal_init.end(); ++it) {
             generateNameQualificationSupport(*it, referencedNameSet);
           }
+
           generateNameQualificationSupport(file, referencedNameSet);
+
           if (SgProject::get_verbose() > 0)
              {
                printf ("DONE: Calling name qualification support. \n");
@@ -427,11 +441,15 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
 #if 0
   // printf ("\n\n");
+     printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
+     printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
      printf ("In unparseFile(): file = %p filename = %s unparseScope = %p \n",file,file->getFileName().c_str(),unparseScope);
      if (unparseScope != NULL)
         {
           printf ("   --- unparseScope = %p = %s \n",unparseScope,unparseScope->class_name().c_str());
         }
+     printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
+     printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
 #endif
 
   // DQ (11/20/2019): Added assertion, if we are unparsing this file, then it should have had comments and CPP directives already added.
@@ -3562,6 +3580,19 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
              }
 
 #if 0
+          printf ("######################################################################################################## \n");
+          printf ("######################################################################################################## \n");
+          printf ("In unparseFile(SgFile*): Need to include CPP directives (#includes especially): outputFilename = %s \n",outputFilename.c_str());
+          printf ("######################################################################################################## \n");
+          printf ("######################################################################################################## \n");
+#endif
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+
+#if 0
           printf ("In unparseFile(SgFile*): open file for output of generated source code: outputFilename = %s \n",outputFilename.c_str());
 #endif
        // DQ (3/19/2014): Added support for noclobber option.
@@ -4201,9 +4232,10 @@ SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFi
 #else
      printf ("Skip building a new SgGlobalScope for the header \n");
 
+#error "DEAD CODE!"
+
   // DQ (11/20/2019): Make sure that we have some declarations.
      ROSE_ASSERT(include_sourceFile->get_globalScope()->get_declarations().empty() == false);
-
 #endif
 
 #if 0
@@ -4228,6 +4260,7 @@ SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFi
   // DQ (11/9/2019): We need this to be set so that transformation in the AST will be unparsed consistantly 
   // between source files where this is true and header files where this has sometimes been false.
   // ROSE_ASSERT(include_sourceFile->get_unparseHeaderFiles() == false);
+#if 0
      if (include_sourceFile->get_unparseHeaderFiles() == true)
         {
           printf ("NOTE: include_sourceFile->get_unparseHeaderFiles() = %s \n",include_sourceFile->get_unparseHeaderFiles() ? "true" : "false");
@@ -4240,6 +4273,7 @@ SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFi
           printf ("WARNING: In buildSourceFileForHeaderFile(): test 2: include_sourceFile->get_processedToIncludeCppDirectivesAndComments() == false \n");
         }
   // ROSE_ASSERT(include_sourceFile->get_processedToIncludeCppDirectivesAndComments() == true);
+#endif
 
   // DQ (5/4/2010): This does not have to be true, just building the support to have the comments and CPP 
   // directives embedded in the AST does not have to require that we are unparsing the header files (or 
@@ -5448,7 +5482,11 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
 
   // Put the call to support name qualification here!
 #if 0
+     printf ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n");
+     printf ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n");
      printf ("In unparseProject(): calling computeNameQualification() for the whole AST \n");
+     printf ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n");
+     printf ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n");
 #endif
 
   // DQ (8/7/2018): Added assertion.
