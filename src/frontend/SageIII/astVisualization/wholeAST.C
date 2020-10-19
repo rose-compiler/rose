@@ -2106,7 +2106,11 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   {
                     SgFile* file = isSgFile(node);
                     additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";
-                    labelWithSourceCode = string("\\n  ") + file->get_sourceFileNameWithPath() + "  ";
+                 // DQ (10/18/2020): Added more information to make it clearer when using buildSourceFile().
+                 // labelWithSourceCode = string("\\n  ") + file->get_sourceFileNameWithPath() + "  ";
+                    labelWithSourceCode = string("\\n  getFileName = ") + file->getFileName() + "  ";
+                    labelWithSourceCode += string("\\n  sourceFileNameWithPath = ") + file->get_sourceFileNameWithPath() + "  ";
+
                     labelWithSourceCode += string("\\n  ") + StringUtility::numberToString(file) + "  ";
                  // printf ("########## SgFile = %s \n",file->get_sourceFileNameWithPath().c_str());
                     ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
