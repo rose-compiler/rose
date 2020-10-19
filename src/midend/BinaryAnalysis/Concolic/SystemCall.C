@@ -2,6 +2,7 @@
 #include <Concolic/SystemCall.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
+#include <Concolic/Database.h>
 #include <Concolic/TestCase.h>
 
 namespace Rose {
@@ -92,6 +93,16 @@ void
 SystemCall::returnValue(int retval) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     returnValue_ = retval;
+}
+
+std::string
+SystemCall::printableName(const Database::Ptr &db) {
+    std::string retval = "syscall";
+    if (db) {
+        if (SystemCallId id = db->id(sharedFromThis(), Update::NO))
+            retval += " " + boost::lexical_cast<std::string>(*id);
+    }
+    return retval;
 }
 
 } // namespace

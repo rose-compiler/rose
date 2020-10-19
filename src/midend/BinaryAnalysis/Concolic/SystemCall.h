@@ -102,6 +102,12 @@ public:
     int returnValue() const;
     void returnValue(int);
     /** @} */
+
+    /** Returns a printable name of a system call for diagnostic output.
+     *
+     * Returns a string suitable for printing to a terminal, containing the word "syscall" and some additional identifying
+     * information. If a database is specified, then the database ID is also shown. */
+    std::string printableName(const DatabasePtr &db = DatabasePtr());
 };
 
 #include <Sawyer/SharedObject.h>
