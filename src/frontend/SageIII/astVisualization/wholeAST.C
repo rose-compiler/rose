@@ -1653,7 +1653,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgTemplateInstantiationDecl:
                   {
                     SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     string flagString  = (classDeclaration->isForward() == true) ? "isForward" : "!isForward";
                     string flagString2 = (classDeclaration->get_isAutonomousDeclaration() == true) ? "isAutonomousDeclaration" : "!isAutonomousDeclaration";
                     labelWithSourceCode = "\\n  " + classDeclaration->get_name().getString() + 
@@ -1698,7 +1698,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgTemplateInstantiationTypedefDeclaration:
                   {
                     SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(node);
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     string flagString  = (templateInstantiationTypedefDeclaration->isForward() == true) ? "isForward" : "!isForward";
                     string flagString2 = (templateInstantiationTypedefDeclaration->get_isAutonomousDeclaration() == true) ? "isAutonomousDeclaration" : "!isAutonomousDeclaration";
                     labelWithSourceCode = "\\n  " + templateInstantiationTypedefDeclaration->get_name().getString() + 
@@ -1749,7 +1749,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgNamespaceDeclarationStatement:
                   {
                     SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(node);
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = "\\n  " + namespaceDeclaration->get_name().getString() + 
                                           "\\n  " + StringUtility::numberToString(namespaceDeclaration) + "  ";
                     break;
@@ -1757,7 +1757,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
                case V_SgNamespaceDefinitionStatement:
                   {
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
 
                     SgNamespaceDefinitionStatement* ns = isSgNamespaceDefinitionStatement(node);
                     ROSE_ASSERT(ns != NULL);
@@ -1782,7 +1782,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgNamespaceAliasDeclarationStatement:
                   {
                     SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration = isSgNamespaceAliasDeclarationStatement(node);
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = "\\n  " + namespaceAliasDeclaration->get_name().getString() + 
                                           "\\n  " + StringUtility::numberToString(namespaceAliasDeclaration) + "  ";
                     break;
@@ -2122,7 +2122,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgIncludeFile:
                   {
                     SgIncludeFile* include_file = isSgIncludeFile(node);
-                    additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
 
                  // DQ (5/6/2020): Trigger the root fo the include tree associated with the input source file to be collored differently.
                     if (include_file->get_isRootSourceFile() == true)
@@ -2757,6 +2757,7 @@ CustomMemoryPoolDOTGeneration::s_Filter_Flags::print_commandline_help()
   cout<<"   -rose:dotgraph:variableDefinitionFilter         [0|1]  Disable or enable variableDefinitionFilter filter"<<endl;
 
   cout<<"   -rose:dotgraph:noFilter                         [0|1]  Disable or enable no filtering"<<endl;
+  cout<<"   -DSKIP_ROSE_BUILTIN_DECLARATIONS                Enable builtin function filtering, defaut is to show all of them"<<endl;
 }
 
 

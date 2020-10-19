@@ -754,7 +754,7 @@ void runSolver(CodeThornOptions& ctOpt,Analyzer* analyzer, SgProject* sageProjec
       break;
     case 2:
       cout<<"INFO: PA framework: initialization."<<endl;
-      analyzer->initialize(sageProject);
+      analyzer->initialize(sageProject,nullptr);
       cout<<"INFO: running PA Framework solver."<<endl;
       analyzer->run();
       cout<<"INFO: PA framework: finished."<<endl;

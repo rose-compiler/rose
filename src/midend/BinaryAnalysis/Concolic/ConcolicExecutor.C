@@ -44,7 +44,7 @@ InputVariables::Variable::print(std::ostream &out) const {
             out <<"envp[" <<arrayOfStrings.idx1 <<"][" <<arrayOfStrings.idx2 <<"]";
             break;
         case SYSTEM_CALL_RETVAL:
-            out <<"syscall";
+            out <<"syscall[" <<systemCall.serialNumber <<"]";
             break;
     }
 }
@@ -70,6 +70,13 @@ InputVariables::insertEnvironmentVariable(size_t i, size_t j, const SymbolicExpr
     variables_.insert(*symbolic->variableId(), Variable::environmentVariable(i, j));
 }
 
+void
+InputVariables::insertSystemCallReturn(size_t serialNumber, const SymbolicExpr::Ptr &symbolic) {
+    ASSERT_not_null(symbolic);
+    ASSERT_require(symbolic->isVariable2());
+    variables_.insert(*symbolic->variableId(), Variable::systemCallReturn(serialNumber));
+}
+
 InputVariables::Variable
 InputVariables::get(const std::string &symbolicVariableName) const {
     ASSERT_require(symbolicVariableName.size() >= 2);
@@ -88,6 +95,27 @@ InputVariables::print(std::ostream &out, const std::string &prefix) const {
 // RiscOperators for concolic emulation
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Emulation {
+
+void
+SystemCall::print(std::ostream &out) const {
+    out <<"syscall " <<*functionNumber <<"\n";
+    for (size_t i = 0; i < arguments.size(); ++i) {
+        out <<"  arg[" <<i <<"] = ";
+        if (arguments[i]) {
+            out <<*arguments[i] <<"\n";
+        } else {
+            out <<"null\n";
+        }
+    }
+    if (returnValue)
+        out <<"  returning " <<*returnValue <<"\n";
+}
+
+std::ostream&
+operator<<(std::ostream &out, const SystemCall &sc) {
+    sc.print(out);
+    return out;
+}
 
 RiscOperatorsPtr
 RiscOperators::instance(const Settings &settings, const P2::Partitioner &partitioner, const Debugger::Ptr &process,
@@ -141,7 +169,7 @@ RiscOperators::interrupt(int majr, int minr) {
 }
 
 IS::BaseSemantics::SValuePtr
-RiscOperators::systemCallNumber() {
+RiscOperators::systemCallFunctionNumber() {
     // FIXME[Robb Matzke 2020-08-28]: Assumes x86
     if (32 == partitioner_.instructionProvider().wordSize()) {
         const RegisterDescriptor AX = partitioner_.instructionProvider().registerDictionary()->findOrThrow("eax");
@@ -216,8 +244,23 @@ RiscOperators::systemCallArgument(size_t idx) {
     ASSERT_not_reachable("invalid system call number");
 }
 
+IS::BaseSemantics::SValuePtr
+RiscOperators::systemCallReturnValue() {
+    // FIXME[Robb Matzke 2020-08-28]: Assumes x86
+    if (32 == partitioner_.instructionProvider().wordSize()) {
+        const RegisterDescriptor AX = partitioner_.instructionProvider().registerDictionary()->findOrThrow("eax");
+        return readRegister(AX);
+    } else {
+        ASSERT_require(64 == partitioner_.instructionProvider().wordSize());
+        const RegisterDescriptor AX = partitioner_.instructionProvider().registerDictionary()->findOrThrow("rax");
+        return readRegister(AX);
+    }
+}
+
 void
 RiscOperators::doExit(const IS::BaseSemantics::SValuePtr &status) {
+    // This is called during the symbolic phase. The concrete system call hasn't happened yet.
+    systemCalls().back().arguments.resize(1);
     if (status->is_number()) {
         int exitValue = status->get_number();
         mlog[INFO] <<"specimen exiting with " <<exitValue <<"\n";
@@ -230,18 +273,32 @@ RiscOperators::doExit(const IS::BaseSemantics::SValuePtr &status) {
 
 void
 RiscOperators::doGetuid() {
-    ASSERT_not_implemented("[Robb Matzke 2020-08-28]");
+    // This is called during the symbolic phase. The concrete system call hasn't happened yet, so we can't get a return value.
+    // However, if the return value is intended to be an input, we can do that now.
+    systemCalls().back().arguments.resize(0);
+    systemCalls().back().returnValue = undefined_(partitioner_.instructionProvider().wordSize());
+    inputVariables_.insertSystemCallReturn(systemCalls().size() - 1, SValue::promote(systemCalls().back().returnValue)->get_expression());
 }
 
 void
 RiscOperators::systemCall() {
     ASSERT_always_require2(isSgAsmX86Instruction(currentInstruction()), "ISA not implemented yet");
-    IS::BaseSemantics::SValuePtr scn = systemCallNumber();
+
+    // All system calls get appended to a vector of system calls that have been seen so far. We don't know how many arguments
+    // the call has without having a huge switch statement per architecture, but since arguments are passed in registers and
+    // registers are always present, and there's a maximum number of arguments possible, we'll just save all possible arguments
+    // even if the syscall uses only some.  Linux system calls have at most six arguments.
+    SystemCall sc;
+    sc.functionNumber = systemCallFunctionNumber();
+    for (size_t i = 0; i < 6; ++i)
+        sc.arguments.push_back(systemCallArgument(i));
+    systemCalls_.push_back(sc);
+    mlog[DEBUG] <<"encountered " <<sc;
 
     // A few system calls are handled directly.
-    if (scn->is_number()) {
+    if (sc.functionNumber->is_number()) {
         if (32 == partitioner_.instructionProvider().wordSize()) {
-            switch (scn->get_number()) {
+            switch (sc.functionNumber->get_number()) {
                 case 1:                                 // exit
                 case 252:                               // exit_group
                     return doExit(systemCallArgument(0));
@@ -250,7 +307,7 @@ RiscOperators::systemCall() {
             }
         } else {
             ASSERT_require(partitioner_.instructionProvider().wordSize() == 64);
-            switch (scn->get_number()) {
+            switch (sc.functionNumber->get_number()) {
                 case 60:                                // exit
                 case 231:                               // exit_group
                     return doExit(systemCallArgument(0));
@@ -259,7 +316,6 @@ RiscOperators::systemCall() {
             }
         }
     }
-
     // FIXME[Robb Matzke 2020-08-28]: all other system calls are just ignored for now
 }
 
@@ -360,7 +416,7 @@ RiscOperators::markProgramArguments(const SmtSolver::Ptr &solver) {
     // The argc value cannot be less than 1 since it always points to at least the program name.
 #if 1 // [Robb Matzke 2020-07-17]: Breaks concolic demo 0
     SymbolicExpr::Ptr argcConstraint = SymbolicExpr::makeSignedGt(symbolicArgc->get_expression(),
-                                                                  SymbolicExpr::makeInteger(SP.nBits(), 0));
+                                                                  SymbolicExpr::makeIntegerConstant(SP.nBits(), 0));
     solver->insert(argcConstraint);
 #endif
 
@@ -784,6 +840,13 @@ ConcolicExecutor::handleBranch(const Database::Ptr &db, const TestCase::Ptr &tes
 }
 
 void
+ConcolicExecutor::updateSystemCallSideEffects(const Emulation::RiscOperatorsPtr &ops, Emulation::SystemCall &sc) {
+    mlog[DEBUG] <<"side effects for " <<sc;
+    sc.returnValue = ops->systemCallReturnValue();
+    mlog[DEBUG] <<"  return value is " <<*sc.returnValue <<"\n";
+}
+
+void
 ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, const Emulation::DispatcherPtr &cpu) {
     ASSERT_not_null(db);
     ASSERT_not_null(testCase);
@@ -813,6 +876,7 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
             cpu->concreteSingleStep();
             continue;
         }
+        const size_t oldNSysCalls = ops->systemCalls().size();
 
         try {
             cpu->processInstruction(insn);
@@ -841,6 +905,12 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
         if (cpu->isTerminated()) {
             SAWYER_MESG_OR(trace, debug) <<"subordinate has terminated\n";
             break;
+        }
+
+        // If we had a system call, we need to update the symbolic state with the side effects of the system call.
+        if (ops->systemCalls().size() != oldNSysCalls) {
+            ASSERT_require(oldNSysCalls + 1 == ops->systemCalls().size());
+            updateSystemCallSideEffects(ops, ops->systemCalls().back());
         }
 
         if (settings_.traceState)

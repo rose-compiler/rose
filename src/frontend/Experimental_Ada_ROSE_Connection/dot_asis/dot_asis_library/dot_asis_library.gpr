@@ -3,7 +3,7 @@ with "asis";
 library project DOT_ASIS_Library is
 
    for Library_Name use "dot_asis";
-   for Library_Dir  use "./lib";
+   for Library_Dir  use "lib";
    for Library_Kind use "dynamic";
    
    -- This is a "stand-alone library". See
@@ -26,8 +26,8 @@ library project DOT_ASIS_Library is
    for Library_Auto_Init use "false";
    
    for Source_Dirs use
-     ("./source",
-      "./include");
+     ("source",
+      "include");
      
    for Object_Dir use "./obj";
 
