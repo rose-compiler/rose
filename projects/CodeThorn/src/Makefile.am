@@ -93,6 +93,7 @@ CODETHORN_HEADER_FILES=\
   DataRaceDetection.h \
   defUseQuery.h \
   DFAbstractSolver.h \
+  PAFAnalysisBase.h \
   DFAnalysisBase.h \
   DFTransferFunctions.h \
   DotGraphCfgFrontend.h \
@@ -220,6 +221,7 @@ CODETHORN_SOURCE_FILES=\
   DataDependenceVisualizer.C \
   defUseQuery.C \
   DataRaceDetection.C \
+  PAFAnalysisBase.C \
   DFAnalysisBase.C \
   DFTransferFunctions.C \
   DotGraphCfgFrontend.C \

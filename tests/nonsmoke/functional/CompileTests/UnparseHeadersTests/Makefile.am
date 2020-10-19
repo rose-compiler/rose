@@ -71,6 +71,9 @@ $(TEST_TARGETS): %.passed: $(srcdir)/% %/config TestUnparseHeaders
 	$(RTH_RUN) ROSE_SWITCHES="$(ROSE_SWITCHES) $(OUTLINER_SWITCHES) $(APP_ROOT_SWITCHES)/$(@:.passed=)" HDR_ROOT_SWITCHES="$(HDR_ROOT_SWITCHES)" "$</config" "$@"
 
 check-local: $(TEST_TARGETS)
+	@echo "*****************************************************************************************************************************"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests: make check rule complete (terminated normally) ******"
+	@echo "*****************************************************************************************************************************"
 
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)

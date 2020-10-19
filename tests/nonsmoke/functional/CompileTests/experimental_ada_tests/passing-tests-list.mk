@@ -27,4 +27,7 @@ PASSING_TESTS :=                       \
   tagged_definition.ads                \
   task_type_declaration.ads            \
   task_with_body.ads                   \
+  constants.ads                        \
+  loop_exit.adb                        \
+  operator.adb                         \
   EndOfList

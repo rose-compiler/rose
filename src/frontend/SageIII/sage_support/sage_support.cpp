@@ -1591,9 +1591,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
   // DQ (7/2/2020): Added assertion (fails for snippet tests).
      if (file->get_preprocessorDirectivesAndCommentsList() == NULL)
-       {
-         file->set_preprocessorDirectivesAndCommentsList(new ROSEAttributesListContainer());
-       }
+        {
+          file->set_preprocessorDirectivesAndCommentsList(new ROSEAttributesListContainer());
+        }
      ROSE_ASSERT(file->get_preprocessorDirectivesAndCommentsList() != NULL);
 
      return file;
@@ -3668,6 +3668,8 @@ SgFile::secondaryPassOverSourceFile()
 #endif
                  // ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
 
+                 // DQ (10/18/2020): This is enforced within attachPreprocessingInfo(), so move the enforcement to be as early as possible.
+                    ROSE_ASSERT(sourceFile->get_processedToIncludeCppDirectivesAndComments() == false);
 #if 0
                     printf ("@@@@@@@@@@@@@@ In SgFile::secondaryPassOverSourceFile(): Calling attachPreprocessingInfo(): sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
 #endif
