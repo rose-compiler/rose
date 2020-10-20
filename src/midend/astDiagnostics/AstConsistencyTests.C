@@ -3537,9 +3537,9 @@ TestAstSymbolTables::visit ( SgNode* node )
           symbolTable->print();
 #endif
         }
-    // for each namespace declaration: there are ast least two SgNamespaceDefinitionStatement nodes: 
+#if 0
+    // for each namespace declaration: there are at least two SgNamespaceDefinitionStatement nodes: 
     // global definition and firstNondefinining declaration's definition
-    // their symbol counts should be the same.
      SgNamespaceDeclarationStatement *nsd = isSgNamespaceDeclarationStatement(node); 
        // global_definition should have the same alias symbol count as the first definition's symbol table
        // check first nondefinining declaration
@@ -3559,6 +3559,7 @@ TestAstSymbolTables::visit ( SgNode* node )
          ROSE_ASSERT(false); 
        }
      }
+#endif     
    }
 
 
