@@ -1,5 +1,6 @@
 with Asis.Elements;
 with Asis.Statements;
+with Ada.Text_IO;
 
 package body Asis_Tool_2.Element.Statements is
 
@@ -18,6 +19,17 @@ package body Asis_Tool_2.Element.Statements is
         Asis.Elements.Statement_Kind (Element);
 
       -- Supporting procedures are in alphabetical order:
+      procedure Add_Aborted_Tasks is
+      begin
+         Add_Element_List
+           (This           => State,
+            Elements_In    => Asis.Statements.Aborted_Tasks (Element),
+            Dot_Label_Name => "Aborted_Tasks",
+            List_Out       => Result.Aborted_Tasks,
+            Add_Edges      => True);
+      end;
+
+
       procedure Add_Accept_Body_Exception_Handlers is
       begin
          Add_Element_List
@@ -88,6 +100,36 @@ package body Asis_Tool_2.Element.Statements is
          Result.Associated_Message := ID;
       end;
 
+      procedure Add_Block_Declarative_Items is
+      begin
+         Add_Element_List
+           (This           => State,
+            Elements_In    => Asis.Statements.Block_Declarative_Items (Element),
+            Dot_Label_Name => "Block_Declarative_Items",
+            List_Out       => Result.Block_Declarative_Items,
+            Add_Edges      => True);
+      end;
+
+      procedure Add_Block_Exception_Handlers is begin
+         Add_Element_List
+           (This           => State,
+            Elements_In    => Asis.Statements.Block_Exception_Handlers (Element),
+            Dot_Label_Name => "Block_Exception_Handlers",
+            List_Out       => Result.Block_Exception_Handlers,
+            Add_Edges      => True);
+      end;
+
+      procedure Add_Block_Statements is
+      begin
+         Add_Element_List
+           (This           => State,
+            Elements_In    => Asis.Statements.Block_Statements (Element),
+            Dot_Label_Name => "Block_Statements",
+            List_Out       => Result.Block_Statements,
+            Add_Edges      => True);
+      end;
+
+
       procedure Add_Call_Statement_Parameters is
       begin
          Add_Element_List
@@ -122,6 +164,15 @@ package body Asis_Tool_2.Element.Statements is
          Result.Corresponding_Called_Entity := ID;
       end;
 
+
+      procedure Add_Corresponding_Destination_Statement is
+         ID : constant a_nodes_h.Element_ID :=
+           Get_Element_ID (Asis.Statements.Corresponding_Destination_Statement(Element));
+      begin
+         State.Add_To_Dot_Label ("Corresponding_Destination_Statement", To_String (ID));
+         Result.Corresponding_Destination_Statement := ID;
+      end;
+
       procedure Add_Corresponding_Entry is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Statements.Corresponding_Entry (Element));
@@ -136,6 +187,14 @@ package body Asis_Tool_2.Element.Statements is
       begin
          State.Add_To_Dot_Label ("Corresponding_Loop_Exited", To_String (ID));
          Result.Corresponding_Loop_Exited := ID;
+      end;
+
+      procedure Add_Delay_Expression is
+         ID : constant a_nodes_h.Element_ID :=
+           Get_Element_ID (Asis.Statements.Delay_Expression (Element));
+      begin
+         State.Add_To_Dot_Label_And_Edge ("Delay_Expression", ID);
+         Result.Delay_Expression := ID;
       end;
 
       procedure Add_Exit_Condition is
@@ -162,6 +221,23 @@ package body Asis_Tool_2.Element.Statements is
          Result.For_Loop_Parameter_Specification := ID;
       end;
 
+      procedure Add_Goto_Label is
+         ID : constant a_nodes_h.Element_ID :=
+           Get_Element_ID (Asis.Statements.Goto_Label (Element));
+      begin
+         State.Add_To_Dot_Label_And_Edge ("Goto_Label", ID);
+         Result.Goto_Label := ID;
+      end;
+
+      procedure Add_Is_Declare_Block is
+         Value : constant Boolean := Asis.Statements.Is_Declare_Block (Element);
+      begin
+         State.Add_To_Dot_Label ("Is_Declare_Block", Value);
+         Result.Is_Declare_Block := a_nodes_h.Support.To_bool (Value);
+      end;
+
+      --In a declaration this says if the block name is repeated on the
+      --end line or not.  e.g. end MyBlock;
       procedure Add_Is_Name_Repeated is
          Value : constant Boolean := Asis.Statements.Is_Name_Repeated (Element);
       begin
@@ -189,12 +265,28 @@ package body Asis_Tool_2.Element.Statements is
             Add_Edges      => True);
       end;
 
+      procedure Add_Qualified_Expression is
+         ID : constant a_nodes_h.Element_ID :=
+           Get_Element_ID (Asis.Statements.Qualified_Expression (Element));
+      begin
+         State.Add_To_Dot_Label_And_Edge ("Qualified_Expression", ID);
+         Result.Qualified_Expression := ID;
+      end;
+
       procedure Add_Raised_Exception is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Statements.Raised_Exception (Element));
       begin
          State.Add_To_Dot_Label_And_Edge ("Raised_Exception", ID);
          Result.Raised_Exception := ID;
+      end;
+
+      procedure Add_Requeue_Entry_Name is
+         ID : constant a_nodes_h.Element_ID :=
+           Get_Element_ID (Asis.Statements.Requeue_Entry_Name (Element));
+      begin
+         State.Add_To_Dot_Label_And_Edge ("Requeue_Entry_Name", ID);
+         Result.Requeue_Entry_Name := ID;
       end;
 
       procedure Add_Return_Expression is
@@ -283,13 +375,12 @@ package body Asis_Tool_2.Element.Statements is
             Add_Common_Loop_Items;
 
          when A_Block_Statement =>
-            State.Add_Not_Implemented;
-            -- Statement_Identifier
-            -- Is_Name_Repeated
-            -- Is_Declare_Block
-            -- Block_Declarative_Items
-            -- Block_Statements
-            -- Block_Exception_Handlers
+            Add_Statement_Identifier;
+            Add_Is_Name_Repeated;
+            Add_Is_Declare_Block;
+            Add_Block_Declarative_Items;
+            Add_Block_Statements;
+            Add_Block_Exception_Handlers;
 
          when An_Exit_Statement =>
             Add_Exit_Condition;
@@ -297,9 +388,8 @@ package body Asis_Tool_2.Element.Statements is
             Add_Corresponding_Loop_Exited;
 
          when A_Goto_Statement =>
-            State.Add_Not_Implemented;
-            -- Goto_Label
-            -- Corresponding_Destination_Statement
+            Add_Goto_Label;
+            Add_Corresponding_Destination_Statement;
 
          when A_Procedure_Call_Statement =>
             Add_Called_Name;
@@ -310,6 +400,7 @@ package body Asis_Tool_2.Element.Statements is
             Add_Return_Expression;
 
          when An_Extended_Return_Statement =>
+            --Added in Ada 2005, Skip
             State.Add_Not_Implemented;
 
          when An_Accept_Statement =>
@@ -326,49 +417,58 @@ package body Asis_Tool_2.Element.Statements is
             Add_Call_Statement_Parameters;
 
          when A_Requeue_Statement =>
-            State.Add_Not_Implemented;
-            -- Requeue_Entry_Name
+            --I think this works, but it cannot be tested until task declaration work
+            --Ada.Text_IO.Put_Line("----  Requeue----");
+            Add_Requeue_Entry_Name;
+
          when A_Requeue_Statement_With_Abort =>
-            State.Add_Not_Implemented;
-            -- Requeue_Entry_Name
+            --I think this works, but it cannot be tested until task declaration work
+            --Ada.Text_IO.Put_Line("----  Requeue----");
+            Add_Requeue_Entry_Name;
 
          when A_Delay_Until_Statement =>
-            State.Add_Not_Implemented;
-            -- Delay_Expression
+            Add_Delay_Expression;
+
          when A_Delay_Relative_Statement =>
-            State.Add_Not_Implemented;
-            -- Delay_Expression
+            Add_Delay_Expression;
 
          when A_Terminate_Alternative_Statement =>
             null; -- No more info
 
          when A_Selective_Accept_Statement =>
-            State.Add_Not_Implemented;
-            -- Statement_Paths
+            --I think this works, but it cannot be tested until task declaration work
+            --Ada.Text_IO.Put_Line("----  Selective Accept----");
+            Add_Statement_Paths;
 
          when A_Timed_Entry_Call_Statement =>
-            State.Add_Not_Implemented;
-            -- Statement_Paths
+            --I think this works, but it cannot be tested until task declaration work
+            --Ada.Text_IO.Put_Line("----  Timed Entry Call----");
+            Add_Statement_Paths;
 
          when A_Conditional_Entry_Call_Statement =>
-            State.Add_Not_Implemented;
-            -- Statement_Paths
+            --I think this works, but it cannot be tested until task declaration work
+            --Ada.Text_IO.Put_Line("----  Conditional Entry Call----");
+            Add_Statement_Paths;
 
          when An_Asynchronous_Select_Statement =>
-            State.Add_Not_Implemented;
-            -- Statement_Paths
+            --I think this works, but it cannot be tested until task declaration work
+            --Ada.Text_IO.Put_Line("----  Asynchronous Select----");
+            Add_Statement_Paths;
 
          when An_Abort_Statement =>
-            State.Add_Not_Implemented;
-            -- Aborted_Tasks
+            --I think this works, but it cannot be tested until task declaration work
+            Add_Aborted_Tasks;
 
          when A_Raise_Statement =>
             Add_Raised_Exception;
             Add_Associated_Message;
 
          when A_Code_Statement =>
-            State.Add_Not_Implemented;
-            -- Qualified_Expression
+            -- TODO: Untested.  I can't figure out how to get this statement
+            -- The standard example is unintelligble, and everywhere else says
+            -- "Don't do this, use gcc style asm instead."
+            Add_Qualified_Expression;
+
       end case;
 
       State.A_Element.Element_Kind := a_nodes_h.A_Statement;
