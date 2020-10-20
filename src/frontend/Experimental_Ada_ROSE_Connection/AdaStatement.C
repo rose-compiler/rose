@@ -252,7 +252,7 @@ namespace
     //~ copyFileInfo(stmt, sgn);
     attachSourceLocation(sgn, lblelem);
     sgn.set_parent(&parent);
-    ctx.labels().label(lblid, sgn);
+    ctx.labelsAndLoops().label(lblid, sgn);
 
     ROSE_ASSERT(stmt.get_parent() == &sgn);
     return sgn;
@@ -1026,7 +1026,7 @@ namespace
 
           completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
 
-          recordNode(asisLoops(), elem.ID, sgnode);
+          recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
           traverseIDs(adaStmts, elemMap(), StmtCreator{ctx.scope(block)});
           /* unused fields:
                 Pragma_Element_ID_List    Pragmas;
@@ -1043,7 +1043,7 @@ namespace
 
           completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
 
-          recordNode(asisLoops(), elem.ID, sgnode);
+          recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
           traverseIDs(adaStmts, elemMap(), StmtCreator{ctx.scope(block)});
 
           /* unused fields:
@@ -1072,7 +1072,7 @@ namespace
 
           ElemIdRange         loopStmts = idRange(stmt.Loop_Statements);
 
-          recordNode(asisLoops(), elem.ID, sgnode);
+          recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
           traverseIDs(loopStmts, elemMap(), StmtCreator{ctx.scope(block)});
 
           /* unused fields:
@@ -1114,7 +1114,7 @@ namespace
 
       case An_Exit_Statement:                   // 5.7
         {
-          SgStatement&  exitedLoop    = lookupNode(asisLoops(), stmt.Corresponding_Loop_Exited);
+          SgStatement&  exitedLoop    = lookupNode(ctx.labelsAndLoops().asisLoops(), stmt.Corresponding_Loop_Exited);
           SgExpression& exitCondition = getExprID_opt(stmt.Exit_Condition, ctx);
           const bool    loopIsNamed   = stmt.Exit_Loop_Name > 0;
           SgStatement&  sgnode        = mkAdaExitStmt(exitedLoop, exitCondition, loopIsNamed);
@@ -1130,7 +1130,7 @@ namespace
         {
           SgGotoStatement& sgnode = SG_DEREF( sb::buildGotoStatement() );
 
-          ctx.labels().gotojmp(stmt.Goto_Label, sgnode);
+          ctx.labelsAndLoops().gotojmp(stmt.Goto_Label, sgnode);
 
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
@@ -1423,6 +1423,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //~ recordNode(asisDecls(), adaname.id(), sgnode);
 
         privatize(sgnode, isPrivate);
+        attachSourceLocation(pkgspec, elem);
         attachSourceLocation(sgnode, elem);
         outer.append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &outer);
@@ -1577,10 +1578,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         }
 
         {
-          LabelManager lblmgr;
-          ElemIdRange  range = idRange(decl.Body_Statements);
+          LabelAndLoopManager lblmgr;
+          ElemIdRange         range = idRange(decl.Body_Statements);
 
-          traverseIDs(range, elemMap(), StmtCreator{ctx.scope(stmtblk).labels(lblmgr)});
+          traverseIDs(range, elemMap(), StmtCreator{ctx.scope(stmtblk).labelsAndLoops(lblmgr)});
         }
 
         if (trystmt)
@@ -1731,6 +1732,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         SgVariableDeclaration& sgnode  = mkVarDecl(loopvar, scope);
 
+        attachSourceLocation(loopvar, elem);
         attachSourceLocation(sgnode, elem);
         scope.append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &scope);
