@@ -121,7 +121,7 @@ public:
    void Enter(SgFunctionDeclaration* &, const std::string &, SgType*, SgFunctionParameterList*,
                                         const LanguageTranslation::FunctionModifierList &, bool);
    void Leave(SgFunctionDeclaration*, SgScopeStatement*);
-   void Leave(SgFunctionDeclaration*, SgScopeStatement*, bool, std::string result_name = "");
+   void Leave(SgFunctionDeclaration*, SgScopeStatement*, bool, const std::string &result_name = "");
 
    void Enter(SgFunctionDefinition* &);
    void Leave(SgFunctionDefinition*);
@@ -203,8 +203,8 @@ public:
    void Leave(SgJovialDirectiveStatement*);
 
    void Enter(SgJovialForThenStatement* &, const std::string &);
-   void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*,
-                                           SgJovialForThenStatement::loop_statement_type_enum);
+   //   void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*,
+   //                                           SgJovialForThenStatement::loop_statement_type_enum);
 
    void Leave(SgJovialForThenStatement*);
 
@@ -260,7 +260,6 @@ namespace SageBuilderCpp17 {
    SgType* buildFloatType(SgExpression* kind_expr);
    SgType* buildStringType(SgExpression* stringLengthExpression);
    SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_shape_list);
-   SgType* getFunctionReturnType(std::string result_name, SgScopeStatement* scope);
 
 // Operators
    SgExpression*  buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs);
@@ -295,6 +294,11 @@ namespace SageBuilderCpp17 {
 
 // Other
    SgCommonBlockObject* buildCommonBlockObject(std::string name = "", SgExprListExp* expr_list = nullptr);
+
+// Non builder helper functions
+   SgType* getFunctionReturnType(const std::string &result_name, SgScopeStatement* scope);
+   void fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type);
+
 
 } // namespace SageBuilderCpp17
 } // namespace builder

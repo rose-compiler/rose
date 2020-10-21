@@ -216,25 +216,43 @@ void Build(const parser::FunctionSubprogram &x, T* scope)
    SgFunctionParameterList* param_list{nullptr};
    SgScopeStatement* param_scope{nullptr};
    SgFunctionDeclaration* function_decl{nullptr};
+   SgType* return_type{nullptr};
    LanguageTranslation::FunctionModifierList function_modifiers;
    std::list<std::string> dummy_arg_name_list;
    std::string name, result_name;
    bool is_defining_decl = true;
 
-   // Traverse FunctionStmt to get dummy argument list, name of function, and name of result
-   Build(std::get<0>(x.t).statement, dummy_arg_name_list, name, result_name, function_modifiers);
+   // Traverse FunctionStmt to get dummy argument list, name of function, name of result, and return type if part of prefix
+   Build(std::get<0>(x.t).statement, dummy_arg_name_list, name, result_name, function_modifiers, return_type);
+
+   // TEMPORARY - fix soon
+   bool fix_return_type = false;
+   if (!return_type) {
+      return_type = SageBuilderCpp17::buildIntType();
+      fix_return_type = true;
+      // possibly create unknown type here and fix up in SageTreeBuilder
+   }
 
    // Enter SageTreeBuilder for SgFunctionParameterList
-   builder.Enter(param_list, param_scope, name, nullptr /* return_type */, is_defining_decl);
+   builder.Enter(param_list, param_scope, name, return_type, is_defining_decl);
 
-   // Traverse SpecificationPart and ExecutionPart
+   // Traverse SpecificationPart
    Build(std::get<parser::SpecificationPart>(x.t), param_scope);
-   Build(std::get<parser::    ExecutionPart>(x.t), param_scope);
+
+   // Need to create initialized name here for result, if result is not declared in SpecificationPart
+   if (!result_name.empty() && !fix_return_type) {
+      SageBuilderCpp17::fixUndeclaredResultName(result_name, param_scope, return_type);
+   }
+
+   // Traverse ExecutionPart
+   Build(std::get<parser::ExecutionPart>(x.t), param_scope);
 
    // Leave SageTreeBuilder for SgFunctionParameterList
    builder.Leave(param_list, param_scope, dummy_arg_name_list);
 
-   SgType* return_type = SageBuilderCpp17::getFunctionReturnType(result_name, param_scope);
+   if (fix_return_type) {
+      return_type = SageBuilderCpp17::getFunctionReturnType(result_name, param_scope);
+   }
 
    // Begin SageTreeBuilder for SgFunctionDeclaration
    builder.Enter(function_decl, name, return_type, param_list, function_modifiers, is_defining_decl);
@@ -432,17 +450,17 @@ void Build(const parser::AssignmentStmt &x, T* scope)
    builder.Leave(assign_stmt);
 }
 
-void Build(const parser::FunctionStmt &x, std::list<std::string> &dummy_arg_name_list, std::string &name, std::string &result_name, LanguageTranslation::FunctionModifierList &function_modifiers)
+void Build(const parser::FunctionStmt &x, std::list<std::string> &dummy_arg_name_list, std::string &name, std::string &result_name, LanguageTranslation::FunctionModifierList &function_modifiers, SgType* &type)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(FunctionStmt)\n";
 #endif
 
-   Build(std::get<0>(x.t), function_modifiers);    // std::list<PrefixSpec>
-   Build(std::get<1>(x.t), name);                  // Name
-   Build(std::get<2>(x.t), dummy_arg_name_list);   // std::list<Name>
+   Build(std::get<0>(x.t), function_modifiers, type);   // std::list<PrefixSpec>
+   Build(std::get<1>(x.t), name);                       // Name
+   Build(std::get<2>(x.t), dummy_arg_name_list);        // std::list<Name>
 
-   if (auto & opt = std::get<3>(x.t)) {            // std::optional<Suffix>
+   if (auto & opt = std::get<3>(x.t)) {                 // std::optional<Suffix>
       Build(opt.value(), result_name);
    }
 }
@@ -453,18 +471,36 @@ void Build(const parser::SubroutineStmt &x, std::list<std::string> &dummy_arg_na
    std::cout << "Rose::builder::Build(SubroutineStmt)\n";
 #endif
 
-   Build(std::get<0>(x.t), function_modifiers);    // std::list<PrefixSpec>
-   Build(std::get<1>(x.t), name);                  // Name
-   Build(std::get<2>(x.t), dummy_arg_name_list);   // std::list<DummyArg>
+   SgType* type;
+
+   Build(std::get<0>(x.t), function_modifiers, type);    // std::list<PrefixSpec>
+   Build(std::get<1>(x.t), name);                        // Name
+   Build(std::get<2>(x.t), dummy_arg_name_list);         // std::list<DummyArg>
 
 #if 0
-   if (auto & opt = std::get<3>(x.t)) {            // std::optional<LanguageBindingSpec>
+   if (auto & opt = std::get<3>(x.t)) {                  // std::optional<LanguageBindingSpec>
       Build(opt.value(), expr);
    }
 #endif
 }
 
-void Build(const parser::PrefixSpec &x, LanguageTranslation::FunctionModifier &function_mod)
+void Build(const std::list<parser::PrefixSpec> &x, LanguageTranslation::FunctionModifierList &function_modifiers, SgType* &type)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(PrefixSpec)\n";
+#endif
+
+   for (const auto &elem : x) {
+      LanguageTranslation::FunctionModifier function_mod;
+
+      Build(elem, function_mod, type);
+
+      function_modifiers.push_back(function_mod);
+   }
+
+}
+
+void Build(const parser::PrefixSpec &x, LanguageTranslation::FunctionModifier &function_mod, SgType* &type)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(PrefixSpec)\n";
@@ -472,28 +508,31 @@ void Build(const parser::PrefixSpec &x, LanguageTranslation::FunctionModifier &f
 
    std::visit(
       common::visitors{
-         [&] (const Fortran::parser::PrefixSpec::Elemental &y)
+         [&] (const parser::PrefixSpec::Elemental &y)
             {
                function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_elemental;
             },
-         [&] (const Fortran::parser::PrefixSpec::Impure &y)
+         [&] (const parser::PrefixSpec::Impure &y)
             {
                function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_impure;
             },
-         [&] (const Fortran::parser::PrefixSpec::Module &y)
+         [&] (const parser::PrefixSpec::Module &y)
             {
                function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_module;
             },
-         [&] (const Fortran::parser::PrefixSpec::Pure &y)
+         [&] (const parser::PrefixSpec::Pure &y)
             {
                function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_pure;
             },
-         [&] (const Fortran::parser::PrefixSpec::Recursive &y)
+         [&] (const parser::PrefixSpec::Recursive &y)
             {
                function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_recursive;
             },
-         // DeclarationTypeSpec, Non_Recursive
-         [&] (const auto &y) { ; },
+         [&] (const parser::DeclarationTypeSpec &y)
+            {
+               Build(y, type);
+            },
+         [&] (const auto &y) { ; }   // Non_Recursive
       },
       x.u);
 }

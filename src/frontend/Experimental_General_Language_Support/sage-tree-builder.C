@@ -474,30 +474,41 @@ Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope)
 }
 
 void SageTreeBuilder::
-Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope, bool have_end_stmt, std::string result_name /* = "" */)
+Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope, bool have_end_stmt, const std::string &result_name /* = "" */)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
 
-   // If result is named, get initialized name for it now before declarations are moved out of param_scope
-   SgInitializedName* init_name;
-   if (!result_name.empty()) {
-      SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(result_name, param_scope);
-      ROSE_ASSERT(symbol);
-      init_name = symbol->get_declaration();
-      ROSE_ASSERT(init_name);
-   }
-
-   // Call more generic leave for function_decl, will move declarations and set result name as name of function
+   // Call more generic leave for SgFunctionDeclaration, will move declarations out of param_scope into
+   // the body of the function declaration and will set the result name as name of the function
    Leave(function_decl, param_scope);
 
-   // Reset result name if needed
-   if (init_name) {
+   // If result is named, get symbol and init name of the result to set it for the function declaration
+   if (!result_name.empty()) {
+      // Get symbol and associated initialized name
+      SgFunctionDefinition* func_def = function_decl->get_definition();
+      ROSE_ASSERT(func_def);
+      SgBasicBlock* body = func_def->get_body();
+      ROSE_ASSERT(body);
+      SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(result_name, body);
+      ROSE_ASSERT(symbol);
+      SgInitializedName* init_name = symbol->get_declaration();
+      ROSE_ASSERT(init_name);
+
       SgProcedureHeaderStatement* proc_header_stmt = isSgProcedureHeaderStatement(function_decl);
       ROSE_ASSERT(proc_header_stmt);
 
+      // If result is named but not declared, need to fix up initialized name created earlier for it
+      if (!init_name->get_parent()) {
+         init_name->set_parent(proc_header_stmt);
+         init_name->set_scope(body);
+         proc_header_stmt->get_scope()->insert_symbol(result_name, symbol);
+      }
+
+      // Reset the result name to the correct initialized name
       proc_header_stmt->set_result_name(init_name);
    }
 
+   // Set named end statement if needed
    if (have_end_stmt) {
       function_decl->set_named_in_end_statement(have_end_stmt);
    }
@@ -1133,7 +1144,7 @@ Enter(SgJovialForThenStatement* &for_stmt, const std::string &init_var_name)
    SageInterface::appendStatement(for_stmt, scope);
    SageBuilder::pushScopeStack(body);
 }
-
+#if 0
 void SageTreeBuilder::
 Enter(SgJovialForThenStatement* &for_stmt, SgExpression* init_expr, SgExpression* while_expr,
       SgExpression* by_or_then_expr, SgJovialForThenStatement::loop_statement_type_enum loop_type)
@@ -1155,7 +1166,7 @@ Enter(SgJovialForThenStatement* &for_stmt, SgExpression* init_expr, SgExpression
 
    SageBuilder::pushScopeStack(body);
 }
-
+#endif
 void SageTreeBuilder::
 Leave(SgJovialForThenStatement* for_stmt)
 {
@@ -1552,14 +1563,6 @@ SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_sha
    return SageBuilder::buildArrayType(base_type, dim_info);
 }
 
-SgType* getFunctionReturnType(std::string result_name, SgScopeStatement* scope)
-{
-   SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(result_name, scope);
-   ROSE_ASSERT(symbol);
-
-   return symbol->get_type();
-}
-
 // Operators
 //
 SgExpression* buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs)
@@ -1722,6 +1725,29 @@ SgCommonBlockObject* buildCommonBlockObject(std::string name, SgExprListExp* exp
    SgCommonBlockObject* common_block_object = SageBuilder::buildCommonBlockObject(name, expr_list);
    SageInterface::setSourcePosition(common_block_object);
    return common_block_object;
+}
+
+SgType* getFunctionReturnType(const std::string &result_name, SgScopeStatement* scope)
+{
+   SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(result_name, scope);
+   ROSE_ASSERT(symbol);
+
+   return symbol->get_type();
+}
+
+void fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type)
+{
+   // This function should only be called if there is no symbol and there is a result type
+   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(result_name, scope);
+   ROSE_ASSERT(!symbol);
+   ROSE_ASSERT(result_type);
+
+   SgInitializedName* init_name = SageBuilder::buildInitializedName(result_name, result_type);
+   SageInterface::setSourcePosition(init_name);
+   init_name->set_scope(scope);
+   SgVariableSymbol* result_symbol = new SgVariableSymbol(init_name);
+   ROSE_ASSERT(result_symbol);
+   scope->insert_symbol(result_name, result_symbol);
 }
 
 } // namespace SageBuilderCpp17
