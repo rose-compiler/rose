@@ -94,8 +94,7 @@ CXX_TESTS_REQUIRED_TO_PASS =		\
 	moreTest6.cpp				\
 	moreTest7.cpp				\
         charStar.cpp  \
-	reference.cpp \
-	test_52.cpp
+	reference.cpp
 
 # Add a few tool_G's regression tests
 # 	test_26_v2_2020.cpp  this is not ready, not sure what happened for preprocessing
