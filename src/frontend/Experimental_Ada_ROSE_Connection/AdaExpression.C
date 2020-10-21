@@ -503,9 +503,12 @@ namespace
   /// \private
   /// returns an expression from the Asis definition \ref def
   SgExpression&
-  getDefinitionExpr(Definition_Struct& def, AstContext ctx)
+  getDefinitionExpr(Element_Struct& el, AstContext ctx)
   {
-    SgExpression* res = nullptr;
+    ROSE_ASSERT(el.Element_Kind == A_Definition);
+
+    Definition_Struct& def = el.The_Union.Definition;
+    SgExpression*      res = nullptr;
 
     switch (def.Definition_Kind)
     {
@@ -523,7 +526,8 @@ namespace
         ROSE_ASSERT(!FAIL_ON_ERROR);
     }
 
-    return SG_DEREF(res);
+    attachSourceLocation(SG_DEREF(res), el);
+    return *res;
   }
 }
 
@@ -534,7 +538,7 @@ namespace
     if (el.Element_Kind == An_Expression)
       res = &getExpr(el, ctx);
     else if (el.Element_Kind == A_Definition)
-      res = &getDefinitionExpr(el.The_Union.Definition, ctx);
+      res = &getDefinitionExpr(el, ctx);
 
     ROSE_ASSERT(res);
     elems.push_back(res);

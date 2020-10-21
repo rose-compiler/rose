@@ -252,7 +252,7 @@ namespace
     //~ copyFileInfo(stmt, sgn);
     attachSourceLocation(sgn, lblelem);
     sgn.set_parent(&parent);
-    ctx.labels().label(lblid, sgn);
+    ctx.labelsAndLoops().label(lblid, sgn);
 
     ROSE_ASSERT(stmt.get_parent() == &sgn);
     return sgn;
@@ -1026,7 +1026,7 @@ namespace
 
           completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
 
-          recordNode(asisLoops(), elem.ID, sgnode);
+          recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
           traverseIDs(adaStmts, elemMap(), StmtCreator{ctx.scope(block)});
           /* unused fields:
                 Pragma_Element_ID_List    Pragmas;
@@ -1043,7 +1043,7 @@ namespace
 
           completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
 
-          recordNode(asisLoops(), elem.ID, sgnode);
+          recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
           traverseIDs(adaStmts, elemMap(), StmtCreator{ctx.scope(block)});
 
           /* unused fields:
@@ -1072,7 +1072,7 @@ namespace
 
           ElemIdRange         loopStmts = idRange(stmt.Loop_Statements);
 
-          recordNode(asisLoops(), elem.ID, sgnode);
+          recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
           traverseIDs(loopStmts, elemMap(), StmtCreator{ctx.scope(block)});
 
           /* unused fields:
@@ -1114,7 +1114,7 @@ namespace
 
       case An_Exit_Statement:                   // 5.7
         {
-          SgStatement&  exitedLoop    = lookupNode(asisLoops(), stmt.Corresponding_Loop_Exited);
+          SgStatement&  exitedLoop    = lookupNode(ctx.labelsAndLoops().asisLoops(), stmt.Corresponding_Loop_Exited);
           SgExpression& exitCondition = getExprID_opt(stmt.Exit_Condition, ctx);
           const bool    loopIsNamed   = stmt.Exit_Loop_Name > 0;
           SgStatement&  sgnode        = mkAdaExitStmt(exitedLoop, exitCondition, loopIsNamed);
@@ -1130,7 +1130,7 @@ namespace
         {
           SgGotoStatement& sgnode = SG_DEREF( sb::buildGotoStatement() );
 
-          ctx.labels().gotojmp(stmt.Goto_Label, sgnode);
+          ctx.labelsAndLoops().gotojmp(stmt.Goto_Label, sgnode);
 
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
@@ -1423,6 +1423,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //~ recordNode(asisDecls(), adaname.id(), sgnode);
 
         privatize(sgnode, isPrivate);
+        attachSourceLocation(pkgspec, elem);
         attachSourceLocation(sgnode, elem);
         outer.append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &outer);
@@ -1577,10 +1578,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         }
 
         {
-          LabelManager lblmgr;
-          ElemIdRange  range = idRange(decl.Body_Statements);
+          LabelAndLoopManager lblmgr;
+          ElemIdRange         range = idRange(decl.Body_Statements);
 
-          traverseIDs(range, elemMap(), StmtCreator{ctx.scope(stmtblk).labels(lblmgr)});
+          traverseIDs(range, elemMap(), StmtCreator{ctx.scope(stmtblk).labelsAndLoops(lblmgr)});
         }
 
         if (trystmt)
@@ -1701,6 +1702,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         handleVarCstDecl(decl, ctx, isPrivate, tyConstify, elem);
         /* unused fields:
              bool                           Has_Aliased;
+
+           break;
         */
         break;
       }
@@ -1729,6 +1732,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         SgVariableDeclaration& sgnode  = mkVarDecl(loopvar, scope);
 
+        attachSourceLocation(loopvar, elem);
         attachSourceLocation(sgnode, elem);
         scope.append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &scope);
@@ -1928,8 +1932,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Private_Extension_Declaration:          // 3.2.1(2):7.3(3) -> Trait_Kinds
     case A_Single_Task_Declaration:                // 3.3.1(2):9.1(3)
     case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
-    case An_Enumeration_Literal_Specification:     // 3.5.1(3)
     case A_Discriminant_Specification:             // 3.7(5)   -> Trait_Kinds
+    case An_Enumeration_Literal_Specification:     // 3.5.1(3)
     case A_Generalized_Iterator_Specification:     // 5.5.2    -> Trait_Kinds
     case An_Element_Iterator_Specification:        // 5.5.2    -> Trait_Kinds
     case A_Return_Variable_Specification:          // 6.5

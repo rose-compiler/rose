@@ -27,13 +27,13 @@ ASIS_SPEC_FAILED_TESTS := \
 	task_with_body.ads \
 	test_unit.ads \
 	variable_declaration.ads \
-	unit_2.ads 
+	unit_2.ads
 
 ASIS_SPEC_PASS_TESTS := \
 	component_declaration.ads \
 	constant_declaration.ads \
 	exception_declaration.ads \
-	ordinary_type_declaration.ads 
+	ordinary_type_declaration.ads
 
 ASIS_SPEC_TESTS = $(ASIS_SPEC_PASS_TESTS) $(ASIS_SPEC_FAILED_TESTS)
 
@@ -60,7 +60,7 @@ ASIS_BODY_FAILED_TESTS := \
 	task_with_abort.adb \
 	task_with_body.adb \
 	test_unit.adb \
-	unit_2.adb 
+	unit_2.adb
 
 ASIS_BODY_PASS_TESTS := \
 	block_statement.adb \
@@ -72,9 +72,9 @@ ASIS_BODY_PASS_TESTS := \
 	procedure_call.adb \
 	raise_statement.adb \
 	type_conversion.adb \
-	while_loop_statement.adb 
+	while_loop_statement.adb
 
-ASIS_BODY_TESTS = $(ASIS_BODY_PASS_TESTS) $(ASIS_BODY_FAILED_TESTS) 
+ASIS_BODY_TESTS = $(ASIS_BODY_PASS_TESTS) $(ASIS_BODY_FAILED_TESTS)
 
 ASIS_TESTS = $(ASIS_SPEC_TESTS) $(ASIS_BODY_TESTS)
 
@@ -86,11 +86,11 @@ DOT_FILES = $(DOT_SPEC_PASS_FILES) $(DOT_BODY_PASS_FILES)
 
 $(DOT_SPEC_PASS_FILES): %.ads.dot: $(ASIS_TESTS_DIR)/%.ads  $(RUN_ASIS_TOOL)
 	@echo "Testing spec file:" $<
-	$(RUN_ASIS_TOOL) --file=$< --gnat_home=$(GNAT_HOME) --output_dir=$(builddir) 2> /dev/null | not grep -i "ASIS Error" || (echo "$< failed $?"; exit 1)
+	$(RUN_ASIS_TOOL) --file=$< --gnat_home=$(GNAT_HOME) --output_dir=$(builddir) 2> /dev/null | (! grep -i "ASIS Error") || (echo "$< failed $?"; exit 1)
 
 $(DOT_BODY_PASS_FILES): %.adb.dot: $(ASIS_TESTS_DIR)/%.adb  $(RUN_ASIS_TOOL)
 	@echo "Testing body file:" $<
-	$(RUN_ASIS_TOOL) --file=$< --gnat_home=$(GNAT_HOME) --output_dir=$(builddir) 2> /dev/null | not grep -i "ASIS Error" || (echo "$< failed $?"; exit 1)
+	$(RUN_ASIS_TOOL) --file=$< --gnat_home=$(GNAT_HOME) --output_dir=$(builddir) 2> /dev/null | (! grep -i "ASIS Error") || (echo "$< failed $?"; exit 1)
 
 
 print:
@@ -100,7 +100,7 @@ print:
 	@echo "DOT_SPEC_PASS_FILES = $(DOT_SPEC_PASS_FILES)"
 	@echo "DOT_BODY_PASS_FILES = $(DOT_BODY_PASS_FILES)"
 
-check-local: 
+check-local:
 	@echo "Tests for ASIS."
 	@$(MAKE) $(DOT_FILES)
 
