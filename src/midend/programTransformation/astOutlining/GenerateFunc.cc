@@ -21,7 +21,7 @@
 #include <string>
 #include <sstream>
 #include <set>
-
+#include <map>
 
 #include "Outliner.hh"
 #include "ASTtools.hh"
@@ -29,6 +29,7 @@
 #include "Copy.hh"
 #include "StmtRewrite.hh"
 #include "Outliner.hh"
+#include "RoseAst.h"
 
 //! Stores a variable symbol remapping.
 typedef std::map<const SgVariableSymbol *, SgVariableSymbol *> VarSymRemap_t;
@@ -1314,6 +1315,96 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
   remapVarSyms (sym_remap, pdSyms, private_remap , func_body);
 }
 
+// same input file: two SgSourceFile nodes are created from it.
+// we build symbol mapping from first to second. 
+// This is used to support reset symbols of AST subtree moved from first to second file.
+class SymbolMapOfTwoFiles
+{
+  public:
+    static std::map <SgSymbol*, SgSymbol*>& getDict(SgScopeStatement* sf1, SgScopeStatement* sf2)
+    {
+      return get_inst(sf1, sf2)->dict;
+    }
+
+ private:
+    static SymbolMapOfTwoFiles* get_inst(SgScopeStatement* sf1, SgScopeStatement* sf2)
+    {
+      if (inst== 0)
+        inst = new SymbolMapOfTwoFiles(sf1, sf2);
+      return inst;
+    }
+
+    // TODO: use unordered_map if c++11 is enabled.
+    std::map <SgSymbol*, SgSymbol*> dict; //symbol from file1 to file 2
+
+    static SymbolMapOfTwoFiles* inst; 
+    // constructor is called only once, set up the dict
+    // Let's focus on namespaces first: easier to handle due to qualified names
+    SymbolMapOfTwoFiles (SgScopeStatement* sf1, SgScopeStatement* sf2)
+    {
+      if (sf1==sf2) return; 
+       Rose_STL_Container<SgNode*> nodeList1 = NodeQuery::querySubTree(sf1, V_SgNamespaceDeclarationStatement);  
+       Rose_STL_Container<SgNode*> nodeList2 = NodeQuery::querySubTree(sf2, V_SgNamespaceDeclarationStatement);  
+       ROSE_ASSERT (nodeList1.size()== nodeList2.size());
+       for (size_t i=0; i<nodeList1.size(); i++)
+       {
+          SgNamespaceDeclarationStatement * dec1= isSgNamespaceDeclarationStatement(nodeList1[i]);
+          SgNamespaceDeclarationStatement * dec2= isSgNamespaceDeclarationStatement(nodeList2[i]);
+          ROSE_ASSERT(dec1->get_qualified_name()==dec2->get_qualified_name()) ; 
+          SgNamespaceDefinitionStatement* def1= dec1->get_definition();
+          SgNamespaceDefinitionStatement* def2= dec2->get_definition();
+          rose_hash_multimap * set1= def1->get_symbol_table()->get_table();
+          rose_hash_multimap * set2= def2->get_symbol_table()->get_table();
+
+          if (set1->size()!=set2->size()) 
+            cerr<<"Warning: two identifical namespace with different symbol counts!" << set1->size() <<" vs. " << set2->size()   <<endl;
+#if 0 // this won't work since we are face different symbol counts         
+          rose_hash_multimap::iterator i1, i2;
+          for (i1=set1->begin(), i2=set2->begin(); i1!=set1->end() && i2!= set2->end() ; i1++, i2++)
+            dict[i1->second]=i2->second;
+#endif          
+          rose_hash_multimap::iterator i1, i2;
+          boost::unordered_map<string, SgVariableSymbol*> varSymDict; 
+          boost::unordered_map<string, SgFunctionSymbol*> funcSymDict; 
+
+          // cache mapping of new symbols,indexed by qualified name : qualified name to symbol
+          for (i2=set2->begin(); i2!=set2->end(); i2++)
+          {
+            SgFunctionSymbol* fsym2 = isSgFunctionSymbol(i2->second);
+            SgVariableSymbol* vsym2 = isSgVariableSymbol(i2->second);
+            if (fsym2) 
+              funcSymDict[fsym2->get_declaration()->get_qualified_name()]=fsym2; 
+            else if (vsym2) 
+              varSymDict [vsym2->get_declaration()->get_qualified_name()]=vsym2; 
+          } // end for
+
+
+          //for old symbols, link them to new symbols, through qualified names
+          for (i1=set1->begin(); i1!=set1->end(); i1++) // for each old symbol, we find a matching new symbol
+          {
+            SgFunctionSymbol* fsym1 = isSgFunctionSymbol(i1->second);
+            SgVariableSymbol* vsym1 = isSgVariableSymbol(i1->second);
+            if (fsym1) 
+              dict[i1->second]= funcSymDict[fsym1->get_declaration()->get_qualified_name()]; 
+            else if (vsym1) 
+              dict[i1->second]= varSymDict[vsym1->get_declaration()->get_qualified_name()]; 
+#if 1
+            if (fsym1|| vsym1)
+            {
+              if (dict[i1->second] == NULL)
+                cerr<<"Warning: no matching new symbol is found for old symbol:"<< i1->first <<endl;
+    //          else
+    //            cout<<"found matching func symbols for:"<< i1->first <<endl;
+            }
+#endif            
+         } // end for
+
+       }
+    }
+}; // end SymbolMapOfTwoFiles
+
+SymbolMapOfTwoFiles* SymbolMapOfTwoFiles::inst=0; 
+
 // =====================================================================
 
 // DQ (2/25/2009): Modified function interface to pass "SgBasicBlock*" as not const parameter.
@@ -1404,7 +1495,44 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
   SageInterface::moveStatementsBetweenBlocks (s, func_body);
 
   if (Outliner::useNewFile)
+  {
     ASTtools::setSourcePositionAtRootAndAllChildrenAsTransformation(func_body);
+
+    // after the moving, reset symbols to be the ones from the current new file's scope
+
+    // Liao, 2020/10/19: relinking symbols from original source file to symbols in _lib file
+    // current global scope
+    SgGlobal* new_global = isSgGlobal(scope); 
+    SgGlobal* old_global = const_cast<SgGlobal *> (TransformationSupport::getGlobalScope (s));
+    ROSE_ASSERT (new_global != old_global);
+
+    RoseAst ast(func_body);
+    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) 
+    {
+      SgFunctionRefExp* f_ref = isSgFunctionRefExp(*i);
+      SgVarRefExp* v_ref= isSgVarRefExp(*i);
+      if (f_ref || v_ref)
+      {
+        SgSymbol* sym;
+        if (f_ref)
+          sym = isSgSymbol(f_ref->get_symbol());
+        else
+          sym = isSgSymbol(v_ref->get_symbol()); 
+
+        // check the symbol 's parent, symbol table's scope, if reaching to the same global scope?
+        // if not, reset the symbol to a corresponding symbol under current global scope
+        if (getGlobalScope(sym)==old_global)
+        {
+          SgSymbol * n_sym = SymbolMapOfTwoFiles::getDict(old_global, new_global)[sym];
+          if (f_ref)
+            f_ref->set_symbol(isSgFunctionSymbol(n_sym)); 
+          else
+            v_ref->set_symbol(isSgVariableSymbol(n_sym));
+        }
+      }
+    } // end for
+  }
+
 
 #if 0
   // We can't call this here because "s" is passed in as "cont".
