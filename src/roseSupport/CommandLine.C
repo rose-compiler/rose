@@ -116,6 +116,14 @@ genericSwitches() {
                .doc("Show this documentation.")
                .action(showHelpAndExit(0)));
 
+    gen.insert(Switch("color")
+               .argument("how", Color::colorizationParser(genericSwitchArgs.colorization), "on,dark")
+               .whichValue(SAVE_AUGMENTED)
+               .valueAugmenter(Color::ColorizationMerge::instance())
+               .doc("Whether to use color in the output, and the theme to use. " +
+                    Color::ColorizationParser::docString() +
+                    " The @s{color} switch with no argument is the same as @s{color}=on,dark."));
+
     gen.insert(Switch("log")
                .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
                .argument("config")
