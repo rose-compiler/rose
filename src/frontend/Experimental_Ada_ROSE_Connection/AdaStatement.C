@@ -759,6 +759,15 @@ namespace
     return getAliased(elem.The_Union.Expression, ctx);
   }
 
+  SgDeclarationStatement&
+  getAliasedExcnDecl(Element_ID declid, AstContext ctx)
+  {
+    Element_Struct& elem = retrieveAs<Element_Struct>(elemMap(), declid);
+    ROSE_ASSERT(elem.Element_Kind == A_Defining_Name);
+
+    SgInitializedName* the_name = findFirst(asisExcps(), elem.ID, elem.ID);
+    return SG_DEREF(the_name->get_declaration());
+  }
 
   SgAdaTaskBody&
   getTaskBody(Declaration_Struct& decl, AstContext ctx)
@@ -1914,6 +1923,34 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
+    case An_Exception_Renaming_Declaration:        // 8.5.2(2)
+      {
+        NameData                adaname = singleName(decl, ctx);
+
+        if (decl.Renamed_Entity < 0)
+        {
+          logWarn() << "skipping unknown renaming: " << adaname.ident << "/" << adaname.fullName
+                    << ": " << elem.ID << " / " << decl.Renamed_Entity
+                    << std::endl;
+          return;
+        }
+
+        Element_Struct& renamed_entity_elem = retrieveAs<Element_Struct>(elemMap(), decl.Renamed_Entity);
+        ROSE_ASSERT(renamed_entity_elem.Element_Kind == An_Expression);
+
+        Expression_Struct& renamed_entity_expr = renamed_entity_elem.The_Union.Expression;
+        SgDeclarationStatement& aliased = getAliasedExcnDecl(renamed_entity_expr.Corresponding_Name_Definition, ctx);
+        SgScopeStatement&       scope   = ctx.scope();
+        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, aliased, scope);
+
+        attachSourceLocation(sgnode, elem);
+        privatize(sgnode, isPrivate);
+        scope.append_statement(&sgnode);
+        ROSE_ASSERT(sgnode.get_parent() == &scope);
+      break;
+    }
+
+
     case A_Choice_Parameter_Specification:         // 11.2(4)
       {
         // handled in handleExceptionHandler
@@ -1936,7 +1973,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Return_Constant_Specification:          // 6.5
     case A_Null_Procedure_Declaration:             // 6.7
     case An_Object_Renaming_Declaration:           // 8.5.1(2)
-    case An_Exception_Renaming_Declaration:        // 8.5.2(2)
     case A_Procedure_Renaming_Declaration:         // 8.5.4(2)
     case A_Function_Renaming_Declaration:          // 8.5.4(2)
     case A_Generic_Package_Renaming_Declaration:   // 8.5.5(2)
