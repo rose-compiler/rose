@@ -4,6 +4,8 @@ ASIS_TODO := \
   all_modes.ads                        \
   case_function.ads                    \
   case_function.adb                    \
+  complex.ads                          \
+  complex.adb                          \
   entry_declaration.ads                \
   entry_call.adb                       \
   enum_colors.ads                      \
