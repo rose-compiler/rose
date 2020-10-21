@@ -30,7 +30,7 @@ Sawyer::Message::Facility adalogger;
 
 void logInit()
 {
-  adalogger = Sawyer::Message::Facility("ADA-Frontend", Rose::Diagnostics::destination);
+  adalogger = Sawyer::Message::Facility("Ada2ROSE", Rose::Diagnostics::destination);
 }
 
 //
@@ -53,10 +53,6 @@ namespace
   /// stores a mapping from Element_ID to ROSE type declaration
   map_t<int, SgDeclarationStatement*> asisTypesMap;
 
-  /// stores a mapping from an Element_ID to a loop statement
-  /// \todo this should be localized in the AstContext class
-  map_t<int, SgStatement*> asisLoopsMap;
-
   /// stores a mapping from string to builtin type nodes
   map_t<std::string, SgType*> adaTypesMap;
 } // anonymous namespace
@@ -66,7 +62,6 @@ map_t<int, SgInitializedName*>&      asisVars()  { return asisVarsMap;  }
 map_t<int, SgInitializedName*>&      asisExcps() { return asisExcpsMap; }
 map_t<int, SgDeclarationStatement*>& asisDecls() { return asisDeclsMap; }
 map_t<int, SgDeclarationStatement*>& asisTypes() { return asisTypesMap; }
-map_t<int, SgStatement*>&            asisLoops() { return asisLoopsMap; }
 map_t<std::string, SgType*>&         adaTypes()  { return adaTypesMap;  }
 ASIS_element_id_to_ASIS_MapType&     elemMap()   { return asisMap;      }
 ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
@@ -75,13 +70,13 @@ ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
 //
 // auxiliary classes and functions
 
-LabelManager::~LabelManager()
+LabelAndLoopManager::~LabelAndLoopManager()
 {
   for (GotoContainer::value_type el : gotos)
     el.first->set_label(&lookupNode(labels, el.second));
 }
 
-void LabelManager::label(Element_ID id, SgLabelStatement& lblstmt)
+void LabelAndLoopManager::label(Element_ID id, SgLabelStatement& lblstmt)
 {
   SgLabelStatement*& mapped = labels[id];
 
@@ -89,7 +84,7 @@ void LabelManager::label(Element_ID id, SgLabelStatement& lblstmt)
   mapped = &lblstmt;
 }
 
-void LabelManager::gotojmp(Element_ID id, SgGotoStatement& gotostmt)
+void LabelAndLoopManager::gotojmp(Element_ID id, SgGotoStatement& gotostmt)
 {
   gotos.emplace_back(&gotostmt, id);
 }
@@ -109,11 +104,11 @@ AstContext AstContext::scope(SgScopeStatement& s) const
   return scope_npc(s);
 }
 
-AstContext AstContext::labels(LabelManager& lm) const
+AstContext AstContext::labelsAndLoops(LabelAndLoopManager& lm) const
 {
   AstContext tmp{*this};
 
-  tmp.all_labels = &lm;
+  tmp.all_labels_loops = &lm;
   return tmp;
 }
 
@@ -147,7 +142,6 @@ namespace
     asisExcps().clear();
     asisDecls().clear();
     asisTypes().clear();
-    asisLoops().clear();
     adaTypes().clear();
   }
 
