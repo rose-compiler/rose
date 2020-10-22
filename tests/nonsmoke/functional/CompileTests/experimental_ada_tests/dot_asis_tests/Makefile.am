@@ -26,14 +26,21 @@ ASIS_SPEC_FAILED_TESTS := \
 	task_type_declaration.ads \
 	task_with_body.ads \
 	test_unit.ads \
-	variable_declaration.ads \
 	unit_2.ads 
 
 ASIS_SPEC_PASS_TESTS := \
 	component_declaration.ads \
 	constant_declaration.ads \
+	derived_record.ads \
+	empty_package.ads \
 	exception_declaration.ads \
-	ordinary_type_declaration.ads 
+	ordinary_type_declaration.ads \
+	selected_component.ads \
+	simple_expression_range.ads \
+	tagged_definition.ads \
+	task_type_declaration.ads \
+	task_with_body.ads \
+	variable_declaration.ads 
 
 ASIS_SPEC_TESTS = $(ASIS_SPEC_PASS_TESTS) $(ASIS_SPEC_FAILED_TESTS)
 
@@ -46,13 +53,8 @@ ASIS_BODY_FAILED_TESTS := \
 	case_statement.adb \
 	choice_parameter_specification.adb \
 	entry_call.adb \
-	for_loop_statement.adb \
 	function_call.adb \
 	function_declaration.adb \
-	if_statement.adb \
-	loop_statement.adb \
-	minimal.adb \
-	operator.adb \
 	package_with_body.adb \
 	procedure_declaration.adb \
 	requeue_statements.adb \
@@ -64,13 +66,21 @@ ASIS_BODY_FAILED_TESTS := \
 
 ASIS_BODY_PASS_TESTS := \
 	block_statement.adb \
+	case_statement.adb \
+	choice_parameter_specification.adb \
 	delay_relative.adb \
 	delay_until.adb \
 	exit_statement.adb \
 	goto_loop.adb \
+	for_loop_statement.adb \
 	hello_world.adb \
+	if_statement.adb \
+	loop_statement.adb \
+	minimal.adb \
+	operator.adb \
 	procedure_call.adb \
 	raise_statement.adb \
+	task_with_body.adb \
 	type_conversion.adb \
 	while_loop_statement.adb 
 
