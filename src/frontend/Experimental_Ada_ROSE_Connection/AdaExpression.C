@@ -313,6 +313,12 @@ getExpr(Element_Struct& elem, AstContext ctx)
         break;
       }
 
+    case A_String_Literal:                          // 2.6
+      {
+        res = &mkValue<SgStringVal>(expr.Value_Image);
+        break;
+      }
+
     case A_Real_Literal:                            // 2.4.1
       {
         res = &mkValue<SgLongDoubleVal>(expr.Value_Image);
@@ -406,7 +412,6 @@ getExpr(Element_Struct& elem, AstContext ctx)
       }
 
     case A_Box_Expression:                          // Ada 2005 4.3.1(4): 4.3.3(3:6)
-    case A_String_Literal:                          // 2.6
 
     case An_Explicit_Dereference:                   // 4.1
 

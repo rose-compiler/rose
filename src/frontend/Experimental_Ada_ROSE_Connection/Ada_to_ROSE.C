@@ -73,11 +73,15 @@ ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
 LabelAndLoopManager::~LabelAndLoopManager()
 {
   for (GotoContainer::value_type el : gotos)
+  {
+    logWarn() << "find " << el.second << std::endl;
     el.first->set_label(&lookupNode(labels, el.second));
+  }
 }
 
 void LabelAndLoopManager::label(Element_ID id, SgLabelStatement& lblstmt)
 {
+  logWarn() << "record " << id << std::endl;
   SgLabelStatement*& mapped = labels[id];
 
   ROSE_ASSERT(mapped == nullptr);

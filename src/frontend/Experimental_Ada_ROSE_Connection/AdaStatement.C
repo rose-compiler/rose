@@ -488,6 +488,17 @@ namespace
     return getDefinitionTypeID(decl.Object_Declaration_View, ctx);
   }
 
+  Element_ID getLabelRef(Element_ID id, AstContext ctx)
+  {
+    Element_Struct&    labelref = retrieveAs<Element_Struct>(elemMap(), id);
+    ROSE_ASSERT(labelref.Element_Kind == An_Expression);
+
+    Expression_Struct& labelexp = labelref.The_Union.Expression;
+    ROSE_ASSERT(labelexp.Expression_Kind == An_Identifier);
+
+    return labelexp.Corresponding_Name_Definition;
+  }
+
 
   /// converts an Asis parameter declaration to a ROSE paramter (i.e., variable)
   ///   declaration.
@@ -1130,7 +1141,7 @@ namespace
         {
           SgGotoStatement& sgnode = SG_DEREF( sb::buildGotoStatement() );
 
-          ctx.labelsAndLoops().gotojmp(stmt.Goto_Label, sgnode);
+          ctx.labelsAndLoops().gotojmp(getLabelRef(stmt.Goto_Label, ctx), sgnode);
 
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
@@ -1223,6 +1234,22 @@ namespace
           break;
         }
 
+      case A_Delay_Until_Statement:             // 9.6
+      case A_Delay_Relative_Statement:          // 9.6
+        {
+          SgExpression&   delayexpr = getExprID(stmt.Delay_Expression, ctx);
+          SgAdaDelayStmt& sgnode    = mkAdaDelayStmt(delayexpr, stmt.Statement_Kind != A_Delay_Until_Statement);
+
+          completeStmt(sgnode, elem, ctx);
+
+          /* unused fields:
+              Pragma_Element_ID_List       Pragmas;
+
+             break;
+          */
+          break;
+        }
+
       case A_Raise_Statement:                   // 11.3
         {
           SgExpression&   raised = getExprID(stmt.Raised_Exception, ctx);
@@ -1236,16 +1263,13 @@ namespace
         }
 
 
+      case Not_A_Statement: /* break; */        // An unexpected element
       //|A2005 start
       case An_Extended_Return_Statement:        // 6.5
       //|A2005 end
-
-      case Not_A_Statement: /* break; */        // An unexpected element
       case An_Entry_Call_Statement:             // 9.5.3
       case A_Requeue_Statement:                 // 9.5.4
       case A_Requeue_Statement_With_Abort:      // 9.5.4
-      case A_Delay_Until_Statement:             // 9.6
-      case A_Delay_Relative_Statement:          // 9.6
       case A_Terminate_Alternative_Statement:   // 9.7.1
       case A_Selective_Accept_Statement:        // 9.7.1
       case A_Timed_Entry_Call_Statement:        // 9.7.2

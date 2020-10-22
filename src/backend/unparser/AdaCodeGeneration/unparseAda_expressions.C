@@ -168,6 +168,12 @@ namespace
       prn(")");
     }
 
+    void handle(SgStringVal& n)
+    {
+      prn("\"\"");
+    }
+
+
     void handle(SgThrowOp& n)
     {
       prn("raise ");
@@ -313,6 +319,5 @@ void Unparse_Ada::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
 
 void Unparse_Ada::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
 {
-  printf ("Unparse_Ada::unparseStringVal(): not implemented! \n");
-  ROSE_ASSERT(false);
+  sg::dispatch(AdaExprUnparser{*this, info, std::cerr}, expr);
 }

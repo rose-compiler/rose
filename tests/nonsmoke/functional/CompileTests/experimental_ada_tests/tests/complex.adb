@@ -5,5 +5,4 @@ begin
   return Complex'(0.0, 1.0);
 end II;
 
-
 end Complex;
