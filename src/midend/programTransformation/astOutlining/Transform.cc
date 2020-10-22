@@ -1020,7 +1020,12 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
 #endif
 
       if (enable_debug)
+      {
         printf ("DONE: In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
+        //generateDOTforMultipleFile(*project);   // this is too large
+      //  string filename = SageInterface::generateProjectName(project);
+       // generateWholeGraphOfAST(filename+".WholeAST");
+      }
 
       // buildFile() will set filename to be input file name by default. 
       // we have to rename the input file to be output file name. This is used to avoid duplicated creation later on
