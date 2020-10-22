@@ -161,9 +161,9 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
           SgNode* parent = initializedName_copy->get_parent();
 
        // printf ("In SgInitializedName::fixupCopy_scopes(): parent = %p \n",parent);
- 
-       // Since the parent might not have been set yet we have to allow for this case. In the case of a 
-       // SgInitializedName in a SgVariableDeclaration the SgInitializedName objects have their parents 
+
+       // Since the parent might not have been set yet we have to allow for this case. In the case of a
+       // SgInitializedName in a SgVariableDeclaration the SgInitializedName objects have their parents
        // set after the SgInitializedName is copied and in the copy function for the parent (SgVariableDeclaration).
           // fprintf (stderr, "In SgInitializedName::fixupCopy_scopes(): parent = %p = %s \n",parent,parent->class_name().c_str());
           if (parent != NULL)
@@ -238,13 +238,13 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
    }
 
 
-// DQ (11/1/2007): Build lighter weight versions of SgStatement::fixupCopy_scopes() and SgExpression::fixupCopy_scopes() 
+// DQ (11/1/2007): Build lighter weight versions of SgStatement::fixupCopy_scopes() and SgExpression::fixupCopy_scopes()
 // and refactor code into the SgLocatedNode::fixupCopy_scopes().
 
 void
 SgStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
    {
-  // We need to call the fixupCopy function from the parent of a SgVariableDeclaration because the 
+  // We need to call the fixupCopy function from the parent of a SgVariableDeclaration because the
   // copy function in the parent of the variable declaration sets the parent of the SgVariableDeclaration
   // and we need this parent in the fixupCopy function in the SgInitializedName.
 
@@ -299,8 +299,8 @@ SgLocatedNode::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
   // ROSE_ASSERT(this->get_parent() != NULL);
   // ROSE_ASSERT(copyStatement->get_parent() != NULL);
 
-  // DQ (10/15/2007): If the parent of the original AST is not set then we will not process the parent in the copy, 
-  // thus the AST copy mechanism can handle incompletely setup AST (as required for use in the EDG/Sage translation) 
+  // DQ (10/15/2007): If the parent of the original AST is not set then we will not process the parent in the copy,
+  // thus the AST copy mechanism can handle incompletely setup AST (as required for use in the EDG/Sage translation)
   // yet only return an AST of similar quality.
      if (this->get_parent() != NULL)
         {
@@ -340,8 +340,8 @@ SgLocatedNode::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
   // ROSE_ASSERT(copy->get_parent() != NULL);
      if (copy->get_parent() == NULL)
         {
-       // Note that using SageInterface::get_name(this) will work where SageInterface::get_name(copy) 
-       // will fail because sometimes the parent pointer is required to be valid within 
+       // Note that using SageInterface::get_name(this) will work where SageInterface::get_name(copy)
+       // will fail because sometimes the parent pointer is required to be valid within
        // SageInterface::get_name() (e.g. between SgFunctionParameterList and it's parent: SgFunctionDeclaration).
 #if 0
           printf ("Returning a copy = %p = %s = %s with NULL parent \n",copy,copy->class_name().c_str(),SageInterface::get_name(this).c_str());
@@ -356,7 +356,7 @@ SgLocatedNode::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 void
 SgScopeStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
    {
-  // We need to call the fixupCopy function from the parent of a SgVariableDeclaration because the 
+  // We need to call the fixupCopy function from the parent of a SgVariableDeclaration because the
   // copy function in the parent of the variable declaration sets the parent of the SgVariableDeclaration
   // and we need this parent in the fixupCopy function in the SgInitializedName.
 
@@ -560,11 +560,11 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 #if 0
                printf ("*** this = %p this->get_firstNondefiningDeclaration() != NULL && firstNondefiningDeclarationCopied == false && this == this->get_definingDeclaration() \n",this);
 #endif
-            // Setup the firstNondefining declaration 
+            // Setup the firstNondefining declaration
             // ROSE_ASSERT(definingDeclarationCopied == true);
 
             // We could build vitual constructors, but then that is what the copy function is so call copy!
-            // This also added the firstNondefiningDeclaration to the copy map 
+            // This also added the firstNondefiningDeclaration to the copy map
 
             // DQ (10/21/2007): Use the copy help object so that it can control copying of defining vs. non-defining declaration.
             // SgNode* copyOfFirstNondefiningDeclarationNode = this->get_firstNondefiningDeclaration()->copy(help);
@@ -608,7 +608,7 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                     printf ("*** this = %p this->get_definingDeclaration() != NULL && definingDeclarationCopied == false \n",this);
 #endif
                  // DQ (2/19/2009): I don't think that the firstNondefiningDeclarationCopied has to be true (here we are copying the defining declaration).
-                 // Setup the defining declaration 
+                 // Setup the defining declaration
                  // ROSE_ASSERT(firstNondefiningDeclarationCopied == true);
 #if 0
                     if (firstNondefiningDeclarationCopied == false)
@@ -616,7 +616,7 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                       // This is the case of copying a definind declaration from one file to another (we have to
                       // copy the associated non-defining declarations so that they will have the same scopes).
                          ROSE_ASSERT(this->get_firstNondefiningDeclaration() != NULL);
-                         SgNode* copyOfFirstNondefiningDeclarationNode = help.copyAst(this->get_firstNondefiningDeclaration()); 
+                         SgNode* copyOfFirstNondefiningDeclarationNode = help.copyAst(this->get_firstNondefiningDeclaration());
 
                          ROSE_ASSERT(copyOfFirstNondefiningDeclarationNode != NULL);
                          ROSE_ASSERT(copyOfFirstNondefiningDeclarationNode->get_parent() == NULL);
@@ -633,7 +633,7 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                     SgNode* copyOfDefiningDeclarationNode = help.copyAst(this->get_definingDeclaration());
                     ROSE_ASSERT(copyOfDefiningDeclarationNode != NULL);
 
-                 // If we didn't make a copy of the definingDeclaration then this is still a valid pointer, so there is no need to reset the parent or call 
+                 // If we didn't make a copy of the definingDeclaration then this is still a valid pointer, so there is no need to reset the parent or call
                     if (copyOfDefiningDeclarationNode != this->get_definingDeclaration())
                        {
 #if 0
@@ -737,9 +737,9 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
              }
         }
 
-  // DQ (10/12/2007): It is not always clear if this is a great idea.  This uncovered a bug in the 
+  // DQ (10/12/2007): It is not always clear if this is a great idea.  This uncovered a bug in the
   // SageInterface::isOverloaded() function. Having two declarations marked as the firstNondefiningDeclaration
-  // could be a problem at some point.  But for now this preserves the concept of an exact copy, so I am 
+  // could be a problem at some point.  But for now this preserves the concept of an exact copy, so I am
   // leaving it as is.
 
   // If this is a declaration which is a nondefining declaration, then the copy should be as well.
@@ -771,7 +771,7 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
             // printf ("In SgDeclarationStatement::fixupCopy_scopes(): this->get_firstNondefiningDeclaration() == NULL \n");
              }
         }
-     
+
 
   // DQ (10/16/2007): Added assertion (see copytest2007_17.C)
      if (this->get_definingDeclaration() != NULL && this->get_firstNondefiningDeclaration() != NULL)
@@ -824,7 +824,7 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
              }
 
 #if 0
-       // DQ (3/3/2009): For some declaration there is a defining and non-defining and if in copying both only one has 
+       // DQ (3/3/2009): For some declaration there is a defining and non-defining and if in copying both only one has
        // been copied before this test they will appear to be from different file until the second declaration is copied.
           if (copyDeclarationStatement->get_firstNondefiningDeclaration() != NULL)
              {
@@ -860,7 +860,7 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
   // DQ (10/19/2007): Added test...
      if (this->get_definingDeclaration() != NULL && this->get_firstNondefiningDeclaration() != NULL)
         {
-       // DQ (11/6/2007): If these are in the same namespace but different in different instances of the namespace 
+       // DQ (11/6/2007): If these are in the same namespace but different in different instances of the namespace
        // definition (SgNamespaceDefinitionStatement objects), then the test for the same scope is more complex.
           SgNamespaceDefinitionStatement* definingNamespace         = isSgNamespaceDefinitionStatement(this->get_definingDeclaration()->get_scope());
           SgNamespaceDefinitionStatement* firstNondefiningNamespace = isSgNamespaceDefinitionStatement(this->get_firstNondefiningDeclaration()->get_scope());
@@ -973,7 +973,7 @@ SgFunctionDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
             // Reset this!
                functionDeclaration_copy->unsetForward();
 
-            // DQ (3/15/2014): This is a Java specific issue. I don't want to be changing the original 
+            // DQ (3/15/2014): This is a Java specific issue. I don't want to be changing the original
             // version of the statement we are copying. This needs to be fixed properly in the Java AST.
                printf ("TODO (Java): isForward() status is being reset for the original SgFunctionDeclaration as part of SgFunctionDeclaration::fixupCopy_scopes(): this = %p = %s = %s \n",this,this->class_name().c_str(),this->get_name().str());
             // this->unsetForward();
@@ -984,8 +984,8 @@ SgFunctionDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
        // DQ (2/26/2009): Handle special cases where the copyHelp function is non-trivial.
        // Is every version of copyHelp object going to be a problem?
 
-       // For the outlining, our copyHelp object does not copy defining function declarations 
-       // and substitutes a non-defining declarations, so if the copy has been built this way 
+       // For the outlining, our copyHelp object does not copy defining function declarations
+       // and substitutes a non-defining declarations, so if the copy has been built this way
        // then skip trying to reset the SgFunctionDefinition.
        // printf ("In SgFunctionDeclaration::fixupCopy_scopes(): functionDeclaration_copy->get_definition() = %p \n",functionDeclaration_copy->get_definition());
        // this->get_definition()->fixupCopy_scopes(functionDeclaration_copy->get_definition(),help);
@@ -1258,7 +1258,7 @@ SgTemplateInstantiationFunctionDecl::fixupCopy_scopes(SgNode* copy, SgCopyHelp &
 
           templateArguments_iterator_original++;
           templateArguments_iterator_copy++;
-        } 
+        }
 #endif
    }
 
@@ -1308,7 +1308,7 @@ SgVariableDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
        // printf ("baseTypeDeclaration_copy = %p = %s \n",baseTypeDeclaration_copy,baseTypeDeclaration_copy->class_name().c_str());
 
        // DQ (10/17/2007): This is now fixed!
-       // I think that calling get_baseTypeDefiningDeclaration() is a problem because it calls compute_baseTypeDefiningDeclaration() 
+       // I think that calling get_baseTypeDefiningDeclaration() is a problem because it calls compute_baseTypeDefiningDeclaration()
        // which uses the symbol table and other infor which is not setup correctly.
        // printf ("Need to compute the baseTypeDeclaration_copy better (perhaps we shoul look into the map of copies? \n");
        // ROSE_ASSERT(false);
@@ -1346,7 +1346,7 @@ SgVariableDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 void
 SgClassDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
    {
-  // We need to call the fixupCopy function from the parent of a SgVariableDeclaration because the 
+  // We need to call the fixupCopy function from the parent of a SgVariableDeclaration because the
   // copy function in the parent of the variable declaration sets the parent of the SgVariableDeclaration
   // and we need this parent in the fixupCopy function in the SgInitializedName.
 
@@ -1617,8 +1617,24 @@ SgAdaExitStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
           ROSE_ASSERT(loop_copy != NULL);
           exitStmt_copy->set_loop(loop_copy);
         }
-        
+
      this->get_condition()->fixupCopy_scopes(exitStmt_copy->get_condition(),help);
+
+  // Also call the base class version of the fixupCopycopy() member function
+     SgStatement::fixupCopy_scopes(copy,help);
+   }
+
+void
+SgAdaDelayStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgAdaDelayStmt::fixupCopy_scopes() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+     SgAdaDelayStmt* delayStmt_copy = isSgAdaDelayStmt(copy);
+     ROSE_ASSERT(delayStmt_copy != NULL);
+
+     this->get_time()->fixupCopy_scopes(delayStmt_copy->get_time(),help);
 
   // Also call the base class version of the fixupCopycopy() member function
      SgStatement::fixupCopy_scopes(copy,help);
@@ -1629,7 +1645,7 @@ void
 SgAdaAcceptStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
    {
 #if DEBUG_FIXUP_COPY
-     printf ("Inside of SgAdaExitStmt::fixupCopy_scopes() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+     printf ("Inside of SgAdaAcceptStmt::fixupCopy_scopes() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
 #endif
 
      SgAdaAcceptStmt* acceptStmt_copy = isSgAdaAcceptStmt(copy);
@@ -1647,12 +1663,12 @@ SgAdaAcceptStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
           ROSE_ASSERT(body_copy != NULL);
           acceptStmt_copy->set_body(body_copy);
         }
-        
+
   // Also call the base class version of the fixupCopycopy() member function
      SgStatement::fixupCopy_scopes(copy,help);
    }
 
-   
+
 void
 SgAdaLoopStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
    {
@@ -1675,16 +1691,16 @@ SgAdaLoopStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
           ROSE_ASSERT(body_copy != NULL);
           loop_copy->set_body(body_copy);
         }
-        
+
   // Also call the base class version of the fixupCopycopy() member function
      SgStatement::fixupCopy_scopes(copy,help);
    }
-   
+
 
 void
 SgTypedefDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
    {
-  // We need to call the fixupCopy function from the parent of a SgTypedefDeclaration because the 
+  // We need to call the fixupCopy function from the parent of a SgTypedefDeclaration because the
   // copy function in the parent of the variable declaration sets the parent of the SgVariableDeclaration
   // and we need this parent in the fixupCopy function in the SgInitializedName.
 
@@ -1718,7 +1734,7 @@ SgTypedefDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                ROSE_ASSERT(typedefDeclaration_copy->get_declaration() != this->get_declaration());
                this->get_declaration()->fixupCopy_scopes(typedefDeclaration_copy->get_declaration(),help);
              }
-        }     
+        }
 #else
      SgTypedefDeclaration* typedefDeclaration_copy = isSgTypedefDeclaration(copy);
      ROSE_ASSERT(typedefDeclaration_copy != NULL);
@@ -1747,7 +1763,7 @@ SgEnumDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
      SgEnumDeclaration* enumDeclaration_copy = isSgEnumDeclaration(copy);
      ROSE_ASSERT(enumDeclaration_copy != NULL);
-     
+
   // DQ (10/17/2007): fixup the type used to make sure it has the declaration set the AST copy.
      SgEnumType* enum_type_original = this->get_type();
      ROSE_ASSERT(enum_type_original != NULL);
@@ -1929,7 +1945,7 @@ SgSourceFile::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
      ROSE_ASSERT(get_globalScope() != NULL);
      ROSE_ASSERT(file_copy->get_globalScope() != NULL);
      get_globalScope()->fixupCopy_scopes(file_copy->get_globalScope(),help);
-   } 
+   }
 
 
 
@@ -1976,7 +1992,7 @@ SgIfStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
      SgStatement* ifStmtCopyTruBody = ifStatement_copy->get_true_body();
      ROSE_ASSERT(ifStmtCopyTruBody != NULL);
      SgScopeStatement* scopeIfStmtCopyTruBody = isSgScopeStatement(ifStmtCopyTruBody);
-     if (scopeIfStmtCopyTruBody != NULL) 
+     if (scopeIfStmtCopyTruBody != NULL)
         {
        // DQ (5/21/2013): Restrict direct access to the symbol table.
        // ROSE_ASSERT(scopeIfStmtCopyTruBody->get_symbol_table() != NULL);
@@ -2032,7 +2048,7 @@ SgForStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
      this->get_for_init_stmt()->fixupCopy_scopes(forStatement_copy->get_for_init_stmt(),help);
 
   // DQ (11/1/2007): Force the symbol table to be setup so that references can be made to it later.
-  // If we built it too early then the scope (on The SgInitializedName objects) have not be setup, 
+  // If we built it too early then the scope (on The SgInitializedName objects) have not be setup,
   // and if we build it too late then we don't have the symbols in place to reset the references.
   // printf ("Calling SgScopeStatement::fixupCopy_scopes() \n");
      SgScopeStatement::fixupCopy_scopes(copy,help);
@@ -2074,7 +2090,7 @@ SgRangeBasedForStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) cons
      this->get_range_declaration()->fixupCopy_scopes(forStatement_copy->get_range_declaration(),help);
 
   // DQ (11/1/2007): Force the symbol table to be setup so that references can be made to it later.
-  // If we built it too early then the scope (on The SgInitializedName objects) have not be setup, 
+  // If we built it too early then the scope (on The SgInitializedName objects) have not be setup,
   // and if we build it too late then we don't have the symbols in place to reset the references.
   // printf ("Calling SgScopeStatement::fixupCopy_scopes() \n");
      SgScopeStatement::fixupCopy_scopes(copy,help);

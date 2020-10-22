@@ -1,6 +1,7 @@
 
 # defines that are fully supported by ROSE
 PASSING_TESTS :=                       \
+  block_statement.adb                  \
   component_declaration.ads            \
   constant_declaration.ads             \
   constants.ads                        \
