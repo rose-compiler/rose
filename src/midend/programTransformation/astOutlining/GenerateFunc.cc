@@ -1499,38 +1499,48 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
     ASTtools::setSourcePositionAtRootAndAllChildrenAsTransformation(func_body);
 
     // after the moving, reset symbols to be the ones from the current new file's scope
-
+     // We only do this when we have _lib file constructed from the original input file
     // Liao, 2020/10/19: relinking symbols from original source file to symbols in _lib file
     // current global scope
-    SgGlobal* new_global = isSgGlobal(scope); 
-    SgGlobal* old_global = const_cast<SgGlobal *> (TransformationSupport::getGlobalScope (s));
-    ROSE_ASSERT (new_global != old_global);
-
-    RoseAst ast(func_body);
-    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) 
+    if (Outliner::copy_origFile) // we only do the symbol resetting when copy_origFile is turned on.
     {
-      SgFunctionRefExp* f_ref = isSgFunctionRefExp(*i);
-      SgVarRefExp* v_ref= isSgVarRefExp(*i);
-      if (f_ref || v_ref)
-      {
-        SgSymbol* sym;
-        if (f_ref)
-          sym = isSgSymbol(f_ref->get_symbol());
-        else
-          sym = isSgSymbol(v_ref->get_symbol()); 
+      SgGlobal* new_global = isSgGlobal(scope); 
+      SgGlobal* old_global = const_cast<SgGlobal *> (TransformationSupport::getGlobalScope (s));
+      ROSE_ASSERT (new_global != old_global);
 
-        // check the symbol 's parent, symbol table's scope, if reaching to the same global scope?
-        // if not, reset the symbol to a corresponding symbol under current global scope
-        if (getGlobalScope(sym)==old_global)
+      RoseAst ast(func_body);
+      for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) 
+      {
+        SgFunctionRefExp* f_ref = isSgFunctionRefExp(*i);
+        SgVarRefExp* v_ref= isSgVarRefExp(*i);
+        if (f_ref || v_ref)
         {
-          SgSymbol * n_sym = SymbolMapOfTwoFiles::getDict(old_global, new_global)[sym];
+          SgSymbol* sym;
           if (f_ref)
-            f_ref->set_symbol(isSgFunctionSymbol(n_sym)); 
+            sym = isSgSymbol(f_ref->get_symbol());
           else
-            v_ref->set_symbol(isSgVariableSymbol(n_sym));
+            sym = isSgSymbol(v_ref->get_symbol()); 
+
+          // check the symbol 's parent, symbol table's scope, if reaching to the same global scope?
+          // if not, reset the symbol to a corresponding symbol under current global scope
+          if (getGlobalScope(sym)==old_global)
+          {
+            SgSymbol * n_sym = SymbolMapOfTwoFiles::getDict(old_global, new_global)[sym];
+            if(n_sym)
+            {
+              if (f_ref)
+                f_ref->set_symbol(isSgFunctionSymbol(n_sym)); 
+              else
+                v_ref->set_symbol(isSgVariableSymbol(n_sym));
+            }
+            else
+            {
+              cerr<<"Warning: cannot find new symbol for old sym:"<<sym << " "<< sym->get_name() <<endl; 
+            }
+          }
         }
-      }
-    } // end for
+      } // end for
+    }
   }
 
 
