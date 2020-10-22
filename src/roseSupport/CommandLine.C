@@ -7,6 +7,8 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+using namespace Sawyer::Message::Common;
+
 namespace Rose {
 namespace CommandLine {
 
@@ -93,6 +95,17 @@ createEmptyParser(const std::string &purpose, const std::string &description) {
 #endif
     parser.version(v, ROSE_CONFIGURE_DATE);
     parser.groupNameSeparator(":");                     // ROSE's style is "--rose:help" rather than "--rose-help"
+    parser.errorStream(Diagnostics::mlog[FATAL]);       // probably overridden by individual tools
+
+    parser.environmentVariable("ROSE_ARGS");
+    parser.doc("Environment variables",
+               "The ROSE_ARGS environment variable contains a string which is prepended to the command-line arguments "
+               "in order to supply default command-line switches on a per-user basis for all ROSE tools that use the "
+               "Sawyer-based parser. The string is split at white space boundaries, but quotes can be used to protect "
+               "white space from splitting. When setting the environment variable from a shell, you may need to protect "
+               "the quotes from the shell itself with additional quoting. A common use of the environment variable is to "
+               "specify whether output should be colorized, and whether to use dark or light foreground colors.");
+
     return parser;
 }
 
