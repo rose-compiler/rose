@@ -68,6 +68,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/raw_os_ostream.h"
 
+#include "llvm/Frontend/OpenMP/OMPIRBuilder.h"
+
 // Print visitor name when visiting a node inheritance hierarchy
 #ifdef DEBUG_VISITOR
 #  ifndef DEBUG_VISIT_STMT

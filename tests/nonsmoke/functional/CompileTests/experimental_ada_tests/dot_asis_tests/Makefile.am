@@ -13,11 +13,18 @@ ASIS_TESTS_DIR = $(srcdir)/test_units
 
 ASIS_SPEC_FAILED_TESTS := \
 	all_modes.ads \
+	derived_record.ads \
+	empty_package.ads \
 	entry_declaration.ads \ 
 	function_declaration.ads \
 	package_with_body.ads \
 	parameter_declaration.ads \ 
 	procedure_declaration.ads \
+	selected_component.ads \
+	simple_expression_range.ads \
+	tagged_definition.ads \
+	task_type_declaration.ads \
+	task_with_body.ads \
 	test_unit.ads \
 	unit_2.ads 
 
@@ -43,6 +50,8 @@ ASIS_SPEC_TESTS = $(ASIS_SPEC_PASS_TESTS) $(ASIS_SPEC_FAILED_TESTS)
 ASIS_BODY_FAILED_TESTS := \
 	accept_statement.adb \
 	asm_machine_code.adb \
+	case_statement.adb \
+	choice_parameter_specification.adb \
 	entry_call.adb \
 	function_call.adb \
 	function_declaration.adb \
@@ -51,13 +60,18 @@ ASIS_BODY_FAILED_TESTS := \
 	requeue_statements.adb \
 	select_accept.adb \
 	task_with_abort.adb \
+	task_with_body.adb \
 	test_unit.adb \
 	unit_2.adb 
 
 ASIS_BODY_PASS_TESTS := \
+	block_statement.adb \
 	case_statement.adb \
 	choice_parameter_specification.adb \
+	delay_relative.adb \
+	delay_until.adb \
 	exit_statement.adb \
+	goto_loop.adb \
 	for_loop_statement.adb \
 	hello_world.adb \
 	if_statement.adb \
