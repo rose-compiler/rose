@@ -2,13 +2,17 @@
 # defines that are fully supported by ROSE
 PASSING_TESTS :=                       \
   block_statement.adb                  \
+  case_statement.adb                   \
   component_declaration.ads            \
   constant_declaration.ads             \
   constants.ads                        \
+  delay_relative.adb                   \
   derived_record.ads                   \
   empty_package.ads                    \
+  exception_declaration.ads            \
   exit_statement.adb                   \
   fib.adb                              \
+  goto_loop.adb                        \
   if_statement.adb                     \
   increment.adb	                       \
   loop_exit.adb                        \
@@ -25,6 +29,7 @@ PASSING_TESTS :=                       \
   recursive_call.adb                   \
   selected_component.ads               \
   simple_expression_range.ads          \
+  subtypes.ads                         \
   tagged_definition.ads                \
   task_type_declaration.ads            \
   task_with_body.adb                   \
@@ -34,3 +39,4 @@ PASSING_TESTS :=                       \
   variable_declaration.ads             \
   while_loop_statement.adb             \
   EndOfList
+

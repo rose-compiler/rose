@@ -219,7 +219,6 @@ mkAdaExitStmt(SgStatement& loop, SgExpression& cond, bool explicitLoopName)
 {
   SgAdaExitStmt& sgnode = mkBareNode<SgAdaExitStmt>(&loop, &cond, explicitLoopName);
 
-  loop.set_parent(&sgnode);
   cond.set_parent(&sgnode);
   return sgnode;
 }
@@ -274,7 +273,6 @@ mkTypeDecl(const std::string& name, SgType& ty, SgScopeStatement& scope)
 {
   SgTypedefDeclaration& sgnode = SG_DEREF( sb::buildTypedefDeclaration(name, &ty, &scope) );
 
-  markCompilerGenerated(sgnode);
   return sgnode;
 }
 

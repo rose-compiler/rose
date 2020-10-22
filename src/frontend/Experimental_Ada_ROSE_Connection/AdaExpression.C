@@ -461,7 +461,7 @@ getExprID_opt(Element_ID el, AstContext ctx)
 {
   if (isInvaldId(el))
   {
-    logWarn() << "unintialized expression id " << el << std::endl;
+    logWarn() << "uninitalized expression id " << el << std::endl;
     return SG_DEREF( sb::buildNullExpression() );
   }
 
