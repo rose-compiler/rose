@@ -199,6 +199,16 @@ namespace
     //~ void handle(SgBasicBlock& n)   { res = n.get_string_label(); }
   };
 
+  struct IsLoopStmt : sg::DispatchHandler<bool>
+  {
+    void handle(SgNode& n)         { SG_UNEXPECTED_NODE(n); }
+
+    void handle(SgStatement& n)    { res = false; }
+    void handle(SgForStatement& n) { res = true;  }
+    void handle(SgAdaLoopStmt& n)  { res = true;  }
+    void handle(SgWhileStmt& n)    { res = true;  }
+  };
+
   struct AdaStatementUnparser
   {
     typedef std::vector<std::string> ScopePath;
@@ -216,7 +226,7 @@ namespace
     void prn(const std::string& s)
     {
       unparser.curprint(s);
-      os << s;
+      // os << s;
     }
 
     void handleBasicBlock(SgBasicBlock& n, bool functionbody = false);
@@ -432,6 +442,13 @@ namespace
       prn("end if;\n");
     }
 
+    void handle(SgGotoStatement& n)
+    {
+      prn("goto ");
+      prn(SG_DEREF(n.get_label()).get_name());
+      prn(EOS_NL);
+    }
+
     void handle(SgWhileStmt& n)
     {
       prn("while ");
@@ -508,8 +525,11 @@ namespace
 
     void handle(SgLabelStatement& n)
     {
+      const bool loopLabel = sg::dispatch(IsLoopStmt(), n.get_statement());
+
+      prn(loopLabel ? "" : "<<");
       prn(n.get_label());
-      prn(": ");
+      prn(loopLabel ? ": " : ">>");
       stmt(n.get_statement());
     }
 
@@ -533,6 +553,15 @@ namespace
 
       prn(EOS_NL);
     }
+
+    void handle(SgAdaDelayStmt& n)
+    {
+      prn("delay ");
+      if (!n.get_isRelative()) prn("until ");
+      expr(n.get_time());
+      prn(EOS_NL);
+    }
+
 
     void handle(SgImportStatement& n)
     {
