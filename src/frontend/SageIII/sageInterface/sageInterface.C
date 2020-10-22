@@ -21002,6 +21002,18 @@ void SageInterface::collectReadOnlyVariables(SgStatement* stmt, std::set<SgIniti
         writeVars.begin(), writeVars.end(),
         std::inserter(readOnlyVars, readOnlyVars.begin()));
   }
+  else // Qing's side effect analysis often fails, we do a simple type based read only variable collection, find all referenced variables of const type
+  {
+    RoseAst ast(stmt);
+
+    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+      if (SgVarRefExp* v_ref = isSgVarRefExp(*i))
+      {
+        if (isConstType(v_ref->get_type()))
+          readOnlyVars.insert (v_ref->get_symbol()->get_declaration());
+      }
+    } // end for 
+  } // end else
 }
 
 
