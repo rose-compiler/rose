@@ -465,7 +465,7 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
 
 void initializeAdaTypes(SgGlobal& global)
 {
-  SgAdaPackageSpec& hiddenScope = mkBareNode<SgAdaPackageSpec>();
+  SgAdaPackageSpec& hiddenScope = mkLocatedNode<SgAdaPackageSpec>();
 
   hiddenScope.set_parent(&global);
 
@@ -477,6 +477,9 @@ void initializeAdaTypes(SgGlobal& global)
   adaTypes()[std::string{"Positive"}]  = sb::buildIntType();    // Positive is a subtype of int
   adaTypes()[std::string{"Natural"}]   = sb::buildIntType();    // Natural is a subtype of int
   adaTypes()[std::string{"Boolean"}]   = sb::buildBoolType();   // Boolean is an enumeration of True and False
+
+  // String is represented as Fortran-String with null
+  adaTypes()[std::string{"String"}]    = sb::buildStringType(sb::buildNullExpression());
 
   adaTypes()[std::string{"Exception"}] = sb::buildOpaqueType("Exception", &hiddenScope);
 }
