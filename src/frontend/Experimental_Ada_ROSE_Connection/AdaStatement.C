@@ -601,6 +601,7 @@ namespace
         SgDeclarationStatement* dcl  = &mkTypeDecl(name, ty, scope);
         ROSE_ASSERT(dcl);
 
+        markCompilerGenerated(*dcl);
         privatize(*dcl, privateElems);
         scope.append_statement(dcl);
         recordNode(asisTypes(), id, *dcl);
@@ -663,6 +664,7 @@ namespace
         SgDeclarationStatement* dcl = sg::dispatch(MakeDeclaration(name, scope, foundation), foundation.n);
         ROSE_ASSERT(dcl);
 
+        markCompilerGenerated(*dcl);
         privatize(*dcl, privateElems);
         scope.append_statement(dcl);
         recordNode(asisTypes(), id, *dcl);
@@ -1337,7 +1339,6 @@ namespace
     SgCatchOptionStmt&       sgnode  = mkExceptionHandler(SG_DEREF(lst[0]), body);
     ElemIdRange              range   = idRange(ex.Handler_Statements);
 
-    logWarn() << "catch handler" << std::endl;
     sg::linkParentChild(tryStmt, as<SgStatement>(sgnode), &SgTryStmt::append_catch_statement);
     sgnode.set_trystmt(&tryStmt);
 
@@ -1700,16 +1701,26 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       }
 
 
-    //~ case A_Subtype_Declaration:                    // 3.2.2(2)
-      //~ {
+    case A_Subtype_Declaration:                    // 3.2.2(2)
+      {
+        NameData              adaname = singleName(decl, ctx);
+        ROSE_ASSERT(adaname.fullName == adaname.ident);
 
-        //~ /* unused fields:
-              //~ Declaration_ID                 Corresponding_First_Subtype;
-              //~ Declaration_ID                 Corresponding_Last_Constraint;
-              //~ Declaration_ID                 Corresponding_Last_Subtype;
-        //~ */
-        //~ break ;
-      //~ }
+        SgType&               subtype = getDefinitionTypeID(decl.Type_Declaration_View, ctx);
+        SgScopeStatement&     scope   = ctx.scope();
+        SgTypedefDeclaration& sgnode  = mkTypeDecl(adaname.ident, subtype, scope);
+
+        attachSourceLocation(sgnode, elem);
+        scope.append_statement(&sgnode);
+        ROSE_ASSERT(sgnode.get_parent() == &scope);
+
+        /* unused fields:
+              Declaration_ID                 Corresponding_First_Subtype;
+              Declaration_ID                 Corresponding_Last_Constraint;
+              Declaration_ID                 Corresponding_Last_Subtype;
+        */
+        break;
+      }
 
     case A_Variable_Declaration:                   // 3.3.1(2) -> Trait_Kinds
       {
