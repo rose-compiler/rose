@@ -7,8 +7,10 @@
 #include "CFG.h"
 #include <sstream>
 
-// DQ (3/21/2006): Added namespace to separate the 
-// PRE specific work (and it's use of the type named 
+namespace legacy {
+
+// DQ (3/21/2006): Added namespace to separate the
+// PRE specific work (and it's use of the type named
 // ControlFlowGraph which conflicts with the OTHER
 // ControlFlowGraph in:
 //    src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers
@@ -87,7 +89,7 @@ struct myControlFlowGraph {
 };
 
 
-// DQ (3/21/2006): We put this is it's own namespace because it conflicted with 
+// DQ (3/21/2006): We put this is it's own namespace because it conflicted with
 // the ControlFlowGraph built in dominatorTreesAndDominanceFrontiers/ControlFlowGraph.h
 typedef myControlFlowGraph ControlFlowGraph;
 
@@ -106,5 +108,7 @@ void printCfgAsDot(std::ostream& dotfile,
 
 // closing scope of namespace: PRE
 }
+
+} // namespace legacy
 
 #endif // CONTROLFLOWGRAPH_H
