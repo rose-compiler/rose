@@ -246,7 +246,7 @@ namespace
     typedeclSyntax(SgType* n);
 
     std::string
-    renamingdeclSyntax(SgDeclarationStatement* n);
+    renamingDeclSyntax(SgDeclarationStatement* n, size_t idx);
 
     void startPrivateIfNeeded(SgDeclarationStatement* n);
 
@@ -373,8 +373,8 @@ namespace
 
     void handle(SgAdaRenamingDecl& n)
     {
-      SgDeclarationStatement* orig = n.get_renamed();
-      std::string             what = renamingdeclSyntax(orig);
+      SgDeclarationStatement* orig = n.get_renamedDecl();
+      std::string             what = renamingDeclSyntax(orig, n.get_renamedIndex());
 
       prn("package ");
       prn(n.get_name());
@@ -907,35 +907,37 @@ namespace
     return sg::dispatch(TypedeclSyntax(), n);
   }
 
-  struct RenamingdeclSyntax : sg::DispatchHandler<std::string>
+  struct RenamingDeclSyntax : sg::DispatchHandler<std::string>
   {
     typedef sg::DispatchHandler<std::string> base;
 
     explicit
-    RenamingdeclSyntax(size_t i)
+    RenamingDeclSyntax(size_t i)
     : base(), idx(i)
     {}
 
     void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgDeclarationStatement&) { result("-- unknown todo", false); }
-    void handle(SgAdaPackageSpecDecl&)   { result("package", idx == 0); }
-    void handle(SgAdaPackageBodyDecl&)   { result("package", idx == 0); }
+    void handle(SgDeclarationStatement&) { res = ("-- unknown todo"); }
+    void handle(SgAdaPackageSpecDecl&)   { res = ("package"); }
+    void handle(SgAdaPackageBodyDecl&)   { res = ("package"); }
 
     void handle(SgVariableDeclaration& n)
     {
       SgInitializedName& el = SG_DEREF(n.get_variables().at(idx));
+      SgTypedefType*     ty = isSgTypedefType(el.get_type());
 
-      result("exception", true);
+      ROSE_ASSERT(ty);
+      res = ty->get_name();
     }
 
-    size_t idx;
+    const size_t idx;
   };
 
   std::string
-  AdaStatementUnparser::renamingdeclSyntax(SgDeclarationStatement* n, size_t idx)
+  AdaStatementUnparser::renamingDeclSyntax(SgDeclarationStatement* n, size_t idx)
   {
-    return sg::dispatch(RenamingdeclSyntax(idx), n);
+    return sg::dispatch(RenamingDeclSyntax(idx), n);
   }
 
   bool isPrivate(SgDeclarationStatement& dcl)

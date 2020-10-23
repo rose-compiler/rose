@@ -1,6 +1,8 @@
 
 #include "sage3basic.h"
 
+#include <algorithm>
+
 #include "AdaMaker.h"
 
 #include "Ada_to_ROSE.h"
@@ -318,23 +320,42 @@ mkAdaPackageSpecDecl(const std::string& name, SgScopeStatement& scope)
   return sgnode;
 }
 
-SgAdaRenamingDecl&
-mkAdaRenamingDecl(const std::string& name, SgDeclarationStatement& aliased, size_t /*idx*/, SgScopeStatement& scope)
+namespace
 {
-  SgAdaRenamingDecl& sgnode = mkLocatedNode<SgAdaRenamingDecl>(name, &aliased);
+  SgAdaRenamingDecl&
+  mkAdaRenamingDeclInternal(const std::string& name, SgDeclarationStatement& dcl, size_t dclIdx, SgScopeStatement& scope)
+  {
+    SgAdaRenamingDecl& sgnode = mkLocatedNode<SgAdaRenamingDecl>(name, &dcl, dclIdx);
 
-  sgnode.set_parent(&scope);
-  sgnode.set_firstNondefiningDeclaration(&sgnode);
-  //~ scope.insert_symbol(name, new SgAdaPackageSymbol(&sgnode));
-  return sgnode;
+    sgnode.set_parent(&scope);
+    sgnode.set_firstNondefiningDeclaration(&sgnode);
+    //~ scope.insert_symbol(name, new SgAdaPackageSymbol(&sgnode));
+    return sgnode;
+  }
 }
 
 SgAdaRenamingDecl&
-mkAdaRenamingDecl(const std::string& name, SgDeclarationStatement& aliased, SgScopeStatement& scope)
+mkAdaRenamingDecl(const std::string& name, SgDeclarationStatement& dcl, SgScopeStatement& scope)
 {
   // \todo test that aliased has exactly one declaration
-  return mkAdaRenamingDecl(name, aliased, 0, scope);
+  return mkAdaRenamingDeclInternal(name, dcl, 0, scope);
 }
+
+SgAdaRenamingDecl&
+mkAdaRenamingDecl(const std::string& name, SgInitializedName& ini, SgScopeStatement& scope)
+{
+  typedef SgInitializedNamePtrList::iterator Iterator;
+
+  // \todo get the declaration index of ini within its parent
+  SgVariableDeclaration&    var = sg::ancestor<SgVariableDeclaration>(ini);
+  SgInitializedNamePtrList& lst = var.get_variables();
+  Iterator                  aa  = lst.begin();
+  const size_t              idx = std::distance(aa, std::find(aa, lst.end(), &ini));
+
+  ROSE_ASSERT(idx < lst.size());
+  return mkAdaRenamingDeclInternal(name, sg::ancestor<SgVariableDeclaration>(ini), idx, scope);
+}
+
 
 SgAdaPackageBodyDecl&
 mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl, SgScopeStatement& scope)
