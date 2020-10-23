@@ -32,7 +32,7 @@ ASIS_SPEC_PASS_TESTS := \
 	component_declaration.ads \
 	constant_declaration.ads \
 	derived_record.ads \
-	empty_package.ads \
+	empty_package.ads \ 
 	exception_declaration.ads \
 	ordinary_type_declaration.ads \
 	selected_component.ads \
@@ -96,11 +96,11 @@ DOT_FILES = $(DOT_SPEC_PASS_FILES) $(DOT_BODY_PASS_FILES)
 
 $(DOT_SPEC_PASS_FILES): %.ads.dot: $(ASIS_TESTS_DIR)/%.ads  $(RUN_ASIS_TOOL)
 	@echo "Testing spec file:" $<
-	$(RUN_ASIS_TOOL) --file=$< --gnat_home=$(GNAT_HOME) --output_dir=$(builddir) 2> /dev/null | not grep -i "ASIS Error" || (echo "$< failed $?"; exit 1)
+	$(RUN_ASIS_TOOL) --file=$< --gnat_home=$(GNAT_HOME) --output_dir=$(builddir) 2> /dev/null | (! grep -i "ASIS Error") || (echo "$< failed $?"; exit 1)
 
 $(DOT_BODY_PASS_FILES): %.adb.dot: $(ASIS_TESTS_DIR)/%.adb  $(RUN_ASIS_TOOL)
 	@echo "Testing body file:" $<
-	$(RUN_ASIS_TOOL) --file=$< --gnat_home=$(GNAT_HOME) --output_dir=$(builddir) 2> /dev/null | not grep -i "ASIS Error" || (echo "$< failed $?"; exit 1)
+	$(RUN_ASIS_TOOL) --file=$< --gnat_home=$(GNAT_HOME) --output_dir=$(builddir) 2> /dev/null | (! grep -i "ASIS Error") || (echo "$< failed $?"; exit 1)
 
 
 print:

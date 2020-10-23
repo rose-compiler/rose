@@ -49,11 +49,12 @@ namespace
     //
     // Fundamental types
 
-    void handle(SgTypeBool&)  { prn(" Boolean"); }
-    void handle(SgTypeInt&)   { prn(" Integer"); }
-    void handle(SgTypeChar&)  { prn(" Character"); }
-    void handle(SgTypeFloat&) { prn(" Float"); }
-    void handle(SgTypeVoid&)  { prn(" -- void\n"); }
+    void handle(SgTypeBool&)   { prn(" Boolean"); }
+    void handle(SgTypeInt&)    { prn(" Integer"); }
+    void handle(SgTypeChar&)   { prn(" Character"); }
+    void handle(SgTypeFloat&)  { prn(" Float"); }
+    void handle(SgTypeString&) { prn(" String"); }
+    void handle(SgTypeVoid&)   { prn(" -- void\n"); }
 
     //
     // Ada types
