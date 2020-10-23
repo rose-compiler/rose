@@ -236,6 +236,20 @@ package body Asis_Tool_2.Element.Statements is
          Result.Is_Declare_Block := a_nodes_h.Support.To_bool (Value);
       end;
 
+      procedure Add_Is_Dispatching_Call is
+         Value : constant Boolean := Asis.Statements.Is_Dispatching_Call (Element);
+      begin
+         State.Add_To_Dot_Label ("Is_Dispatching_Call", Value);
+         Result.Is_Dispatching_Call := a_nodes_h.Support.To_bool (Value);
+      end;
+
+      procedure Add_Is_Call_On_Dispatching_Operation is
+         Value : constant Boolean := Asis.Statements.Is_Call_On_Dispatching_Operation (Element);
+      begin
+         State.Add_To_Dot_Label ("Is_Call_On_Dispatching_Operation", Value);
+         Result.Is_Call_On_Dispatching_Operation := a_nodes_h.Support.To_bool (Value);
+      end;
+
       --In a declaration this says if the block name is repeated on the
       --end line or not.  e.g. end MyBlock;
       procedure Add_Is_Name_Repeated is
@@ -395,6 +409,8 @@ package body Asis_Tool_2.Element.Statements is
             Add_Called_Name;
             Add_Corresponding_Called_Entity;
             Add_Call_Statement_Parameters;
+            Add_Is_Dispatching_Call;
+            Add_Is_Call_On_Dispatching_Operation;
 
          when A_Return_Statement =>
             Add_Return_Expression;
@@ -404,6 +420,7 @@ package body Asis_Tool_2.Element.Statements is
             State.Add_Not_Implemented;
 
          when An_Accept_Statement =>
+            --I think this works, but it cannot be tested until task declaration work
             Add_Accept_Entry_Index;
             Add_Accept_Entry_Direct_Name;
             Add_Accept_Parameters;
@@ -412,6 +429,7 @@ package body Asis_Tool_2.Element.Statements is
             Add_Corresponding_Entry;
 
          when An_Entry_Call_Statement =>
+            --I think this works, but it cannot be tested until task declaration work
             Add_Called_Name;
             Add_Corresponding_Called_Entity;
             Add_Call_Statement_Parameters;

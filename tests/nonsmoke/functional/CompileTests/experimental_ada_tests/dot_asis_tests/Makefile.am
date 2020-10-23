@@ -15,10 +15,10 @@ ASIS_SPEC_FAILED_TESTS := \
 	all_modes.ads \
 	derived_record.ads \
 	empty_package.ads \
-	entry_declaration.ads \ 
+	entry_declaration.ads \
 	function_declaration.ads \
 	package_with_body.ads \
-	parameter_declaration.ads \ 
+	parameter_declaration.ads \
 	procedure_declaration.ads \
 	selected_component.ads \
 	simple_expression_range.ads \
