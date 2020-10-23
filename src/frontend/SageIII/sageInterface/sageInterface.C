@@ -25410,8 +25410,13 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
        // Likely we should build a new nondefining function declaration instead of reusing the existing non-defining declaration.
        // removeStatement(functionDeclaration);
 
+       // DQ (10/21/2020): I think we may want to return the orignal defining function declaration.
        // DQ (12/2/2019): Need to support member functions which can't be declared when outside of their class.
           replaceStatement(functionDeclaration,nondefiningFunctionDeclaration);
+
+       // DQ (10/22/2020): Added assertion.
+          ROSE_ASSERT(nondefiningFunctionDeclaration->get_parent() != NULL);
+
 #else
        // DQ (7/12/2019): Debugging test_17.cpp.
           printf ("SKIPPING CALL TO REPLACE STATEMENT: functionDeclaration = %p nondefiningFunctionDeclaration = %p \n",functionDeclaration,nondefiningFunctionDeclaration);
