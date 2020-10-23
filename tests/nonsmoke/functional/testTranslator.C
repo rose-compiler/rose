@@ -108,5 +108,13 @@ int main( int argc, char * argv[] )
 
   // regenerate the source code and call the vendor 
   // compiler, only backend error code is reported.
-     return backend(project);
+  // return backend(project);
+     int status = backend(project);
+
+  // DQ (10/21/2020): Adding performance reporting.
+     TimingPerformance::generateReport();
+  // TimingPerformance::generateReportToFile(project);
+  // TimingPerformance::set_project(SgProject* project);
+
+     return status;
    }
