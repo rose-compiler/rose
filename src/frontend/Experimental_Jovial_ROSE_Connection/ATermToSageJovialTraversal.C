@@ -4512,7 +4512,8 @@ ATbool ATermToSageJovialTraversal::traverse_SimpleStatement(ATerm term)
       }
       else if (traverse_ProcedureCallStatement(t_stmt)) {
          // MATCHED ProcedureCallStatement
-      } else if (ATmatch(t_stmt, "amb(<term>)", &t_amb)) {
+      }
+      else if (ATmatch(t_stmt, "amb(<term>)", &t_amb)) {
          // MATCHED amb
          ATermList tail = (ATermList) ATmake("<term>", t_amb);
          ATerm head = ATgetFirst(tail);
@@ -7151,10 +7152,12 @@ ATbool ATermToSageJovialTraversal::traverse_IntrinsicFunctionCall(ATerm term, Sg
    else if (traverse_AbsFunction(term, func_call)) {
       // MATCHED AbsFunction
    }
-
-   //   BitFunction                 -> IntrinsicFunctionCall
-   //   SignFunction                -> IntrinsicFunctionCall
-
+   else if (traverse_BitFunction(term, func_call)) {
+      // MATCHED BitFunction
+   }
+   else if (traverse_SignFunction(term, func_call)) {
+      // MATCHED SizeFunction
+   }
    else if (traverse_SizeFunction(term, func_call)) {
       // MATCHED SizeFunction
    }
@@ -7164,8 +7167,9 @@ ATbool ATermToSageJovialTraversal::traverse_IntrinsicFunctionCall(ATerm term, Sg
    else if (traverse_NwdsenFunction(term, func_call)) {
       // MATCHED NwdsenFunction
    }
-
-   //   NentFunction                -> IntrinsicFunctionCall
+   else if (traverse_NentFunction(term, func_call)) {
+      // MATCHED NentFunction
+   }
 
    else return ATfalse;
 
@@ -7257,6 +7261,61 @@ ATbool ATermToSageJovialTraversal::traverse_NextFunction(ATerm term, SgFunctionC
    params->append_expression(increment);
 
    func_call = SageBuilder::buildFunctionCallExp("NEXT", return_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
+   setSourcePosition(func_call, term);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 6.3.3 BIT FUNCTION
+//----------------------------------------------------------------------------------------
+ATbool ATermToSageJovialTraversal::traverse_BitFunction(ATerm term, SgFunctionCallExp* &func_call)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_BitFunction: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_formula, t_fbit, t_nbit, t_fbit_formula, t_length;
+   SgExpression* bit_formula, * first_bit, * length;
+   SgType* return_type;
+
+   func_call = nullptr;
+
+   if (ATmatch(term, "BitFunction(<term>, <term>,<term>)", &t_formula, &t_fbit, &t_nbit)) {
+      bit_formula = nullptr;
+      first_bit = nullptr;
+      length = nullptr;
+      return_type = nullptr;
+
+      if (traverse_BitFormula(t_formula, bit_formula)) {
+         // The return type is the same as the type of the BitFormula argument
+         return_type = bit_formula->get_type();
+      } else return ATfalse;
+
+      if (ATmatch(t_fbit, "Fbit(<term>)", &t_fbit_formula)) {
+         if (traverse_NumericFormula(t_fbit_formula, first_bit)) {
+            // MATCHED NumericFormula
+         } else return ATfalse;
+      } else return ATfalse;
+
+      if (ATmatch(t_nbit, "Nbit(<term>)", &t_length)) {
+         if (traverse_NumericFormula(t_length, length)) {
+            // MATCHED NumericFormula
+         } else return ATfalse;
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   ROSE_ASSERT(bit_formula && first_bit && length && return_type);
+
+   // build the parameter list
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   params->append_expression(bit_formula);
+   params->append_expression(first_bit);
+   params->append_expression(length);
+
+   func_call = SageBuilder::buildFunctionCallExp("BIT", return_type, params, SageBuilder::topScopeStack());
    ROSE_ASSERT(func_call);
    setSourcePosition(func_call, term);
 
@@ -7411,7 +7470,30 @@ ATbool ATermToSageJovialTraversal::traverse_AbsFunction(ATerm term, SgFunctionCa
 }
 
 //========================================================================================
-// 6.3.7 SIZE FUNCTIONS
+// 6.3.7 SIGN FUNCTION
+//----------------------------------------------------------------------------------------
+ATbool ATermToSageJovialTraversal::traverse_SignFunction(ATerm term, SgFunctionCallExp* &func_call)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_SignFunction: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_formula;
+
+   func_call = nullptr;
+
+   if (ATmatch(term, "SignFunction(<term>)", &t_formula)) {
+      cerr << "WARNING UNIMPLEMENTED: SignFunction \n";
+      printf("... traverse_SignFunction: %s\n", ATwriteToString(term));
+      ROSE_ASSERT(false);
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 6.3.8 SIZE FUNCTIONS
 //----------------------------------------------------------------------------------------
 ATbool ATermToSageJovialTraversal::traverse_SizeFunction(ATerm term, SgFunctionCallExp* &func_call)
 {
@@ -7634,13 +7716,28 @@ ATbool ATermToSageJovialTraversal::traverse_StatusInverseFunction(ATerm term, Sg
 
    ROSE_ASSERT(func_call);
 
-#if 0
-   cout << ".x. Function argument name is " << var_name << endl;
-   cout << ".x. Function return_type is  " << return_type << ": " << return_type->class_name() << endl;
-   cout << ".x. Function param is  " << param << ": " << param->class_name() << endl;
-   cout << ".x. Function param list is  " << params << ": " << params->get_expressions().size() << endl;
-   cout << ".x. Function func_call is  " << func_call << ": " << func_call->class_name() << endl;
+   return ATtrue;
+}
+
+//========================================================================================
+// 6.3.12 NENT FUNCTION
+//----------------------------------------------------------------------------------------
+ATbool ATermToSageJovialTraversal::traverse_NentFunction(ATerm term, SgFunctionCallExp* &func_call)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_NentFunction: %s\n", ATwriteToString(term));
 #endif
+
+   ATerm t_argument;
+
+   func_call = nullptr;
+
+   if (ATmatch(term, "NentFunction(<term>)", &t_argument)) {
+      cerr << "WARNING UNIMPLEMENTED: NentFunction \n";
+      printf("... traverse_NentFunction: %s\n", ATwriteToString(term));
+      ROSE_ASSERT(false);
+   }
+   else return ATfalse;
 
    return ATtrue;
 }
