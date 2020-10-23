@@ -1343,63 +1343,83 @@ class SymbolMapOfTwoFiles
     SymbolMapOfTwoFiles (SgScopeStatement* sf1, SgScopeStatement* sf2)
     {
       if (sf1==sf2) return; 
-       Rose_STL_Container<SgNode*> nodeList1 = NodeQuery::querySubTree(sf1, V_SgNamespaceDeclarationStatement);  
-       Rose_STL_Container<SgNode*> nodeList2 = NodeQuery::querySubTree(sf2, V_SgNamespaceDeclarationStatement);  
-       ROSE_ASSERT (nodeList1.size()== nodeList2.size());
-       for (size_t i=0; i<nodeList1.size(); i++)
-       {
-          SgNamespaceDeclarationStatement * dec1= isSgNamespaceDeclarationStatement(nodeList1[i]);
-          SgNamespaceDeclarationStatement * dec2= isSgNamespaceDeclarationStatement(nodeList2[i]);
-          ROSE_ASSERT(dec1->get_qualified_name()==dec2->get_qualified_name()) ; 
-          SgNamespaceDefinitionStatement* def1= dec1->get_definition();
-          SgNamespaceDefinitionStatement* def2= dec2->get_definition();
-          rose_hash_multimap * set1= def1->get_symbol_table()->get_table();
-          rose_hash_multimap * set2= def2->get_symbol_table()->get_table();
+      //To be efficient, we only search for global and namespace scopes.
+      // They are mostly the cause to have cross-file symbol fixups.
+      VariantVector vv; 
+      vv.push_back(V_SgGlobal); // we search for global first
+      vv.push_back(V_SgNamespaceDefinitionStatement);
+      Rose_STL_Container<SgNode*> nodeList1 = NodeQuery::querySubTree(sf1, vv);  
+      Rose_STL_Container<SgNode*> nodeList2 = NodeQuery::querySubTree(sf2, vv);  
+      ROSE_ASSERT (nodeList1.size()== nodeList2.size());
+      for (size_t i=0; i<nodeList1.size(); i++)
+      {
+        ROSE_ASSERT (nodeList1[i]->variantT() == nodeList2[i]->variantT());
+        SgScopeStatement* sc1 = isSgScopeStatement(nodeList1[i]);
+        SgScopeStatement* sc2 = isSgScopeStatement(nodeList2[i]);
+        ROSE_ASSERT (sc1&&sc2);
+        
+        SgSymbolTable* st1= sc1->get_symbol_table();
+        SgSymbolTable* st2= sc2->get_symbol_table();
+        ROSE_ASSERT (st1&&st2);
 
-          if (set1->size()!=set2->size()) 
-            cerr<<"Warning: two identifical namespace with different symbol counts!" << set1->size() <<" vs. " << set2->size()   <<endl;
+        rose_hash_multimap * set1 = st1->get_table();;
+        rose_hash_multimap * set2 = st2->get_table();;
+
+        // additional assertion for namespaces
+        SgNamespaceDefinitionStatement* def1= isSgNamespaceDefinitionStatement(nodeList1[i]);
+        SgNamespaceDefinitionStatement* def2= isSgNamespaceDefinitionStatement(nodeList2[i]);
+        if (def1 && def2)
+        {
+          ROSE_ASSERT(def1->get_namespaceDeclaration ()->get_qualified_name()==def2->get_namespaceDeclaration ()->get_qualified_name()) ; 
+        }
+
+        if (set1->size()!=set2->size()) 
+        {
+          cerr<<"Warning: two matched SgScopeStatement have different symbol counts!" << set1->size() <<" vs. " << set2->size()   <<endl;
+          cerr<< nodeList1[i] << " " << nodeList1[i]->class_name() << " vs. " <<nodeList2[i] << " " << nodeList2[i]->class_name() <<endl; 
+        }
 #if 0 // this won't work since we are face different symbol counts         
-          rose_hash_multimap::iterator i1, i2;
-          for (i1=set1->begin(), i2=set2->begin(); i1!=set1->end() && i2!= set2->end() ; i1++, i2++)
-            dict[i1->second]=i2->second;
+        rose_hash_multimap::iterator i1, i2;
+        for (i1=set1->begin(), i2=set2->begin(); i1!=set1->end() && i2!= set2->end() ; i1++, i2++)
+          dict[i1->second]=i2->second;
 #endif          
-          rose_hash_multimap::iterator i1, i2;
-          boost::unordered_map<string, SgVariableSymbol*> varSymDict; 
-          boost::unordered_map<string, SgFunctionSymbol*> funcSymDict; 
+        rose_hash_multimap::iterator i1, i2;
+        boost::unordered_map<string, SgVariableSymbol*> varSymDict; 
+        boost::unordered_map<string, SgFunctionSymbol*> funcSymDict; 
 
-          // cache mapping of new symbols,indexed by qualified name : qualified name to symbol
-          for (i2=set2->begin(); i2!=set2->end(); i2++)
-          {
-            SgFunctionSymbol* fsym2 = isSgFunctionSymbol(i2->second);
-            SgVariableSymbol* vsym2 = isSgVariableSymbol(i2->second);
-            if (fsym2) 
-              funcSymDict[fsym2->get_declaration()->get_qualified_name()]=fsym2; 
-            else if (vsym2) 
-              varSymDict [vsym2->get_declaration()->get_qualified_name()]=vsym2; 
-          } // end for
+        // cache mapping of new symbols,indexed by qualified name : qualified name to symbol
+        for (i2=set2->begin(); i2!=set2->end(); i2++)
+        {
+          SgFunctionSymbol* fsym2 = isSgFunctionSymbol(i2->second);
+          SgVariableSymbol* vsym2 = isSgVariableSymbol(i2->second);
+          if (fsym2) 
+            funcSymDict[fsym2->get_declaration()->get_qualified_name()]=fsym2; 
+          else if (vsym2) 
+            varSymDict [vsym2->get_declaration()->get_qualified_name()]=vsym2; 
+        } // end for
 
 
-          //for old symbols, link them to new symbols, through qualified names
-          for (i1=set1->begin(); i1!=set1->end(); i1++) // for each old symbol, we find a matching new symbol
-          {
-            SgFunctionSymbol* fsym1 = isSgFunctionSymbol(i1->second);
-            SgVariableSymbol* vsym1 = isSgVariableSymbol(i1->second);
-            if (fsym1) 
-              dict[i1->second]= funcSymDict[fsym1->get_declaration()->get_qualified_name()]; 
-            else if (vsym1) 
-              dict[i1->second]= varSymDict[vsym1->get_declaration()->get_qualified_name()]; 
+        //for old symbols, link them to new symbols, through qualified names
+        for (i1=set1->begin(); i1!=set1->end(); i1++) // for each old symbol, we find a matching new symbol
+        {
+          SgFunctionSymbol* fsym1 = isSgFunctionSymbol(i1->second);
+          SgVariableSymbol* vsym1 = isSgVariableSymbol(i1->second);
+          if (fsym1) 
+            dict[i1->second]= funcSymDict[fsym1->get_declaration()->get_qualified_name()]; 
+          else if (vsym1) 
+            dict[i1->second]= varSymDict[vsym1->get_declaration()->get_qualified_name()]; 
 #if 1
-            if (fsym1|| vsym1)
-            {
-              if (dict[i1->second] == NULL)
-                cerr<<"Warning: no matching new symbol is found for old symbol:"<< i1->first <<endl;
-    //          else
-    //            cout<<"found matching func symbols for:"<< i1->first <<endl;
-            }
+          if (fsym1|| vsym1)
+          {
+            if (dict[i1->second] == NULL)
+              cerr<<"Warning: no matching new symbol is found for old symbol:"<< i1->first <<endl;
+            //          else
+            //            cout<<"found matching func symbols for:"<< i1->first <<endl;
+          }
 #endif            
-         } // end for
+        } // end for
 
-       }
+      }
     }
 }; // end SymbolMapOfTwoFiles
 
