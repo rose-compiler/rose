@@ -20371,9 +20371,30 @@ void moveStatementsBetweenScopes( T1* sourceBlock, T2* targetBlock)
 
 }
 
+static void createAliasSymbols (SgNamespaceDeclarationStatement* decl)
+{   
+  ROSE_ASSERT(decl);
+  SgNamespaceDefinitionStatement* local_def = decl->get_definition();
+  SgNamespaceDefinitionStatement* global_def = local_def->get_global_definition();
+
+  ROSE_ASSERT(local_def && global_def && (local_def!=global_def));
+
+  std::set<SgNode*> syms = local_def->get_symbol_table()->get_symbols();
+//  cout<<"Found syms.size()=="<<syms.size()<<endl;
+  for (std::set<SgNode*>::iterator iter= syms.begin(); iter != syms.end(); iter++)
+  {   
+    SgSymbol *orig_sym = isSgSymbol(*iter);
+    ROSE_ASSERT (orig_sym);
+    SgAliasSymbol* asym = new SgAliasSymbol (orig_sym);
+    global_def->get_symbol_table()->insert (asym->get_name(), asym);
+  }   
+}
+
 void SageInterface::moveStatementsBetweenBlocks ( SgAdaPackageSpec * sourceBlock, SgNamespaceDefinitionStatement* targetBlock )
 {
   moveDeclarationsBetweenScopes(sourceBlock, targetBlock); 
+  //create alias symbols in its global definition 
+  createAliasSymbols(isSgNamespaceDeclarationStatement(targetBlock->get_parent()));
 }
 
 void
@@ -21002,6 +21023,18 @@ void SageInterface::collectReadOnlyVariables(SgStatement* stmt, std::set<SgIniti
         writeVars.begin(), writeVars.end(),
         std::inserter(readOnlyVars, readOnlyVars.begin()));
   }
+  else // Qing's side effect analysis often fails, we do a simple type based read only variable collection, find all referenced variables of const type
+  {
+    RoseAst ast(stmt);
+
+    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+      if (SgVarRefExp* v_ref = isSgVarRefExp(*i))
+      {
+        if (isConstType(v_ref->get_type()))
+          readOnlyVars.insert (v_ref->get_symbol()->get_declaration());
+      }
+    } // end for 
+  } // end else
 }
 
 
