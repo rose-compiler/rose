@@ -1610,6 +1610,10 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    ROSE_ASSERT(def);
    ROSE_ASSERT(def->isCaseInsensitive());
 
+// Jovial block and table members are visible in parent scope so create an alias
+// to the symbol if needed.
+   sage_tree_builder.injectAliasSymbol(table_var_name);
+
    sage_tree_builder.Leave(var_decl);
 
    return ATtrue;
@@ -2069,7 +2073,8 @@ ATbool ATermToSageJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATerm t
    sage_tree_builder.Enter(var_decl, std::string(name), item_type, preset);
    setSourcePosition(var_decl, term);
 
-// Jovial table members are visible in parent scope so create an alias to the symbol
+// Jovial block and table members are visible in parent scope so create an alias
+// to the symbol if needed.
    sage_tree_builder.injectAliasSymbol(std::string(name));
 
    sage_tree_builder.Leave(var_decl);
@@ -2324,7 +2329,8 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATerm 
 // The bitfield is used to contain both the start_bit and start_word as an expression list
    setLocationSpecifier(var_decl, loc_spec);
 
-// Jovial table members are visible in parent scope so create an alias to the symbol
+// Jovial block and table members are visible in parent scope so create an alias
+// to the symbol if needed.
    sage_tree_builder.injectAliasSymbol(std::string(name));
 
 // End SageTreeBuilder
@@ -2546,7 +2552,11 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, int def
       SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
    }
 
-   // End SageTreeBuilder for variable declaration
+// Jovial block and table members are visible in parent scope so create an alias
+// to the symbol if needed.
+   sage_tree_builder.injectAliasSymbol(std::string(block_name));
+
+  // End SageTreeBuilder for variable declaration
    sage_tree_builder.Leave(var_decl);
 
    return ATtrue;
