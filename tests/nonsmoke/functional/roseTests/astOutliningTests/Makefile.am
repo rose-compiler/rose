@@ -94,6 +94,7 @@ CXX_TESTS_REQUIRED_TO_PASS =		\
 	moreTest6.cpp				\
 	moreTest7.cpp				\
         charStar.cpp  \
+	const-global.cpp \
 	reference.cpp
 
 # Add a few tool_G's regression tests
