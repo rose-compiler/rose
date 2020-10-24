@@ -29,6 +29,7 @@ void logInit();
 
 //
 // node mapping accessors, storage, and retrieval
+// of globally visible elements
 
 /// returns a mapping from an Asis Element_ID to an Asis struct
 std::map<int, Element_Struct*>& elemMap();
@@ -58,10 +59,6 @@ map_t<int, SgDeclarationStatement*>& asisDecls();
 /// returns a mapping from Element_ID to ROSE type declaration
 map_t<int, SgDeclarationStatement*>& asisTypes();
 
-/// returns a mapping from an Element_ID to a loop statement
-/// \todo this should be localized in the AstContext class
-map_t<int, SgStatement*>& asisLoops();
-
 /// returns a mapping from string to builtin type nodes
 map_t<std::string, SgType*>& adaTypes();
 
@@ -75,14 +72,13 @@ void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem);
 
 /// \brief resolves all goto statements to labels
 ///        at the end of procedures or functions.
-/// \todo fold asisLoop handling into this class
-struct LabelManager
+struct LabelAndLoopManager
 {
-    LabelManager() = default;
+    LabelAndLoopManager() = default;
 
     /// patch gotos with target (a label statement)
     ///   at the end of a procudure / function.
-    ~LabelManager();
+    ~LabelAndLoopManager();
 
     /// records a new labeled statement \ref lblstmt with key \ref id.
     void label(Element_ID id, SgLabelStatement& lblstmt);
@@ -90,18 +86,25 @@ struct LabelManager
     /// records a new goto statement \ref gotostmt with label key \ref id.
     void gotojmp(Element_ID id, SgGotoStatement& gotostmt);
 
+    /// returns a mapping from an Element_ID to a loop statement
+    map_t<int, SgStatement*>& asisLoops() { return loops; }
+
   private:
     typedef std::map<Element_ID, SgLabelStatement*>               LabelContainer;
     typedef std::vector<std::pair<SgGotoStatement*, Element_ID> > GotoContainer;
+    typedef map_t<int, SgStatement*>                              LoopMap;
 
     LabelContainer labels;
     GotoContainer  gotos;
+    LoopMap        loops;
 
-    LabelManager(const LabelManager&)            = delete;
-    LabelManager(LabelManager&&)                 = delete;
-    LabelManager& operator=(const LabelManager&) = delete;
-    LabelManager& operator=(LabelManager&&)      = delete;
+    LabelAndLoopManager(const LabelAndLoopManager&)            = delete;
+    LabelAndLoopManager(LabelAndLoopManager&&)                 = delete;
+    LabelAndLoopManager& operator=(const LabelAndLoopManager&) = delete;
+    LabelAndLoopManager& operator=(LabelAndLoopManager&&)      = delete;
 };
+
+
 
 
 /// The context class for translation from Asis to ROSE
@@ -110,7 +113,7 @@ struct AstContext
 {
     explicit
     AstContext(SgScopeStatement& s)
-    : the_scope(&s), all_labels(nullptr)
+    : the_scope(&s), all_labels_loops(nullptr)
     {}
 
     AstContext()                             = default;
@@ -123,7 +126,7 @@ struct AstContext
     SgScopeStatement& scope()  const { return *the_scope; }
 
     /// returns the current label manager
-    LabelManager&     labels() const { return SG_DEREF(all_labels); }
+    LabelAndLoopManager& labelsAndLoops() const { return SG_DEREF(all_labels_loops); }
 
     // sets scope without parent check (no-parent-check)
     //   e.g., when the parent node is built after the scope \ref s (e.g., if statements)
@@ -133,11 +136,11 @@ struct AstContext
     AstContext scope(SgScopeStatement& s) const;
 
     // sets a new label manager
-    AstContext labels(LabelManager& lm) const;
+    AstContext labelsAndLoops(LabelAndLoopManager& lm) const;
 
   private:
-    SgScopeStatement* the_scope;
-    LabelManager*     all_labels;
+    SgScopeStatement*    the_scope;
+    LabelAndLoopManager* all_labels_loops;
 };
 
 // functor to create elements

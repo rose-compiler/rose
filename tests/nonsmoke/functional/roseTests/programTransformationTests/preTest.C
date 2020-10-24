@@ -20,7 +20,7 @@ int main (int argc, char* argv[])
   // AstTests::runAllTests(const_cast<SgProject*>(project));
      AstTests::runAllTests(sageProject);
 
-     PRE::partialRedundancyElimination(sageProject);
+     legacy::PRE::partialRedundancyElimination(sageProject);
 
   // AstPDFGeneration().generateInputFiles(sageProject);
 

@@ -252,7 +252,7 @@ namespace
     //~ copyFileInfo(stmt, sgn);
     attachSourceLocation(sgn, lblelem);
     sgn.set_parent(&parent);
-    ctx.labels().label(lblid, sgn);
+    ctx.labelsAndLoops().label(lblid, sgn);
 
     ROSE_ASSERT(stmt.get_parent() == &sgn);
     return sgn;
@@ -488,6 +488,17 @@ namespace
     return getDefinitionTypeID(decl.Object_Declaration_View, ctx);
   }
 
+  Element_ID getLabelRef(Element_ID id, AstContext ctx)
+  {
+    Element_Struct&    labelref = retrieveAs<Element_Struct>(elemMap(), id);
+    ROSE_ASSERT(labelref.Element_Kind == An_Expression);
+
+    Expression_Struct& labelexp = labelref.The_Union.Expression;
+    ROSE_ASSERT(labelexp.Expression_Kind == An_Identifier);
+
+    return labelexp.Corresponding_Name_Definition;
+  }
+
 
   /// converts an Asis parameter declaration to a ROSE paramter (i.e., variable)
   ///   declaration.
@@ -590,6 +601,7 @@ namespace
         SgDeclarationStatement* dcl  = &mkTypeDecl(name, ty, scope);
         ROSE_ASSERT(dcl);
 
+        markCompilerGenerated(*dcl);
         privatize(*dcl, privateElems);
         scope.append_statement(dcl);
         recordNode(asisTypes(), id, *dcl);
@@ -652,6 +664,7 @@ namespace
         SgDeclarationStatement* dcl = sg::dispatch(MakeDeclaration(name, scope, foundation), foundation.n);
         ROSE_ASSERT(dcl);
 
+        markCompilerGenerated(*dcl);
         privatize(*dcl, privateElems);
         scope.append_statement(dcl);
         recordNode(asisTypes(), id, *dcl);
@@ -1035,7 +1048,7 @@ namespace
 
           completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
 
-          recordNode(asisLoops(), elem.ID, sgnode);
+          recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
           traverseIDs(adaStmts, elemMap(), StmtCreator{ctx.scope(block)});
           /* unused fields:
                 Pragma_Element_ID_List    Pragmas;
@@ -1052,7 +1065,7 @@ namespace
 
           completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
 
-          recordNode(asisLoops(), elem.ID, sgnode);
+          recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
           traverseIDs(adaStmts, elemMap(), StmtCreator{ctx.scope(block)});
 
           /* unused fields:
@@ -1081,7 +1094,7 @@ namespace
 
           ElemIdRange         loopStmts = idRange(stmt.Loop_Statements);
 
-          recordNode(asisLoops(), elem.ID, sgnode);
+          recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
           traverseIDs(loopStmts, elemMap(), StmtCreator{ctx.scope(block)});
 
           /* unused fields:
@@ -1123,7 +1136,7 @@ namespace
 
       case An_Exit_Statement:                   // 5.7
         {
-          SgStatement&  exitedLoop    = lookupNode(asisLoops(), stmt.Corresponding_Loop_Exited);
+          SgStatement&  exitedLoop    = lookupNode(ctx.labelsAndLoops().asisLoops(), stmt.Corresponding_Loop_Exited);
           SgExpression& exitCondition = getExprID_opt(stmt.Exit_Condition, ctx);
           const bool    loopIsNamed   = stmt.Exit_Loop_Name > 0;
           SgStatement&  sgnode        = mkAdaExitStmt(exitedLoop, exitCondition, loopIsNamed);
@@ -1139,7 +1152,7 @@ namespace
         {
           SgGotoStatement& sgnode = SG_DEREF( sb::buildGotoStatement() );
 
-          ctx.labels().gotojmp(stmt.Goto_Label, sgnode);
+          ctx.labelsAndLoops().gotojmp(getLabelRef(stmt.Goto_Label, ctx), sgnode);
 
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
@@ -1232,6 +1245,22 @@ namespace
           break;
         }
 
+      case A_Delay_Until_Statement:             // 9.6
+      case A_Delay_Relative_Statement:          // 9.6
+        {
+          SgExpression&   delayexpr = getExprID(stmt.Delay_Expression, ctx);
+          SgAdaDelayStmt& sgnode    = mkAdaDelayStmt(delayexpr, stmt.Statement_Kind != A_Delay_Until_Statement);
+
+          completeStmt(sgnode, elem, ctx);
+
+          /* unused fields:
+              Pragma_Element_ID_List       Pragmas;
+
+             break;
+          */
+          break;
+        }
+
       case A_Raise_Statement:                   // 11.3
         {
           SgExpression&   raised = getExprID(stmt.Raised_Exception, ctx);
@@ -1245,16 +1274,13 @@ namespace
         }
 
 
+      case Not_A_Statement: /* break; */        // An unexpected element
       //|A2005 start
       case An_Extended_Return_Statement:        // 6.5
       //|A2005 end
-
-      case Not_A_Statement: /* break; */        // An unexpected element
       case An_Entry_Call_Statement:             // 9.5.3
       case A_Requeue_Statement:                 // 9.5.4
       case A_Requeue_Statement_With_Abort:      // 9.5.4
-      case A_Delay_Until_Statement:             // 9.6
-      case A_Delay_Relative_Statement:          // 9.6
       case A_Terminate_Alternative_Statement:   // 9.7.1
       case A_Selective_Accept_Statement:        // 9.7.1
       case A_Timed_Entry_Call_Statement:        // 9.7.2
@@ -1313,7 +1339,6 @@ namespace
     SgCatchOptionStmt&       sgnode  = mkExceptionHandler(SG_DEREF(lst[0]), body);
     ElemIdRange              range   = idRange(ex.Handler_Statements);
 
-    logWarn() << "catch handler" << std::endl;
     sg::linkParentChild(tryStmt, as<SgStatement>(sgnode), &SgTryStmt::append_catch_statement);
     sgnode.set_trystmt(&tryStmt);
 
@@ -1432,6 +1457,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //~ recordNode(asisDecls(), adaname.id(), sgnode);
 
         privatize(sgnode, isPrivate);
+        attachSourceLocation(pkgspec, elem);
         attachSourceLocation(sgnode, elem);
         outer.append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &outer);
@@ -1586,10 +1612,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         }
 
         {
-          LabelManager lblmgr;
-          ElemIdRange  range = idRange(decl.Body_Statements);
+          LabelAndLoopManager lblmgr;
+          ElemIdRange         range = idRange(decl.Body_Statements);
 
-          traverseIDs(range, elemMap(), StmtCreator{ctx.scope(stmtblk).labels(lblmgr)});
+          traverseIDs(range, elemMap(), StmtCreator{ctx.scope(stmtblk).labelsAndLoops(lblmgr)});
         }
 
         if (trystmt)
@@ -1675,16 +1701,26 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       }
 
 
-    //~ case A_Subtype_Declaration:                    // 3.2.2(2)
-      //~ {
+    case A_Subtype_Declaration:                    // 3.2.2(2)
+      {
+        NameData              adaname = singleName(decl, ctx);
+        ROSE_ASSERT(adaname.fullName == adaname.ident);
 
-        //~ /* unused fields:
-              //~ Declaration_ID                 Corresponding_First_Subtype;
-              //~ Declaration_ID                 Corresponding_Last_Constraint;
-              //~ Declaration_ID                 Corresponding_Last_Subtype;
-        //~ */
-        //~ break ;
-      //~ }
+        SgType&               subtype = getDefinitionTypeID(decl.Type_Declaration_View, ctx);
+        SgScopeStatement&     scope   = ctx.scope();
+        SgTypedefDeclaration& sgnode  = mkTypeDecl(adaname.ident, subtype, scope);
+
+        attachSourceLocation(sgnode, elem);
+        scope.append_statement(&sgnode);
+        ROSE_ASSERT(sgnode.get_parent() == &scope);
+
+        /* unused fields:
+              Declaration_ID                 Corresponding_First_Subtype;
+              Declaration_ID                 Corresponding_Last_Constraint;
+              Declaration_ID                 Corresponding_Last_Subtype;
+        */
+        break;
+      }
 
     case A_Variable_Declaration:                   // 3.3.1(2) -> Trait_Kinds
       {
@@ -1710,6 +1746,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         handleVarCstDecl(decl, ctx, isPrivate, tyConstify, elem);
         /* unused fields:
              bool                           Has_Aliased;
+
+           break;
         */
         break;
       }
@@ -1738,6 +1776,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         SgVariableDeclaration& sgnode  = mkVarDecl(loopvar, scope);
 
+        attachSourceLocation(loopvar, elem);
         attachSourceLocation(sgnode, elem);
         scope.append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &scope);
@@ -1965,8 +2004,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Private_Extension_Declaration:          // 3.2.1(2):7.3(3) -> Trait_Kinds
     case A_Single_Task_Declaration:                // 3.3.1(2):9.1(3)
     case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
-    case An_Enumeration_Literal_Specification:     // 3.5.1(3)
     case A_Discriminant_Specification:             // 3.7(5)   -> Trait_Kinds
+    case An_Enumeration_Literal_Specification:     // 3.5.1(3)
     case A_Generalized_Iterator_Specification:     // 5.5.2    -> Trait_Kinds
     case An_Element_Iterator_Specification:        // 5.5.2    -> Trait_Kinds
     case A_Return_Variable_Specification:          // 6.5
