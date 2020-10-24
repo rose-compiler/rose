@@ -1,0 +1,46 @@
+# File patterns and directories:
+
+# Editor backup files:
+*~
+
+# GPS temporary files:
+.#*#
+
+# GNAT generates these files in the project directory when there is no project 
+# file present that specifies an obj directory:
+*.ali
+*.adt
+
+# (Temporary for now) graph files:
+*.dot
+
+# GNAT/gprbuild library project lib and .ali files:
+lib/
+
+# Log files:
+*.log
+
+# GPS pretty printer:
+*.npp
+
+# GNAT/gprbuild .ali and .o files:
+obj/
+
+# Produced when compiling code for the .adt files:
+*.stderr
+*.stdout
+
+# directory containing temporarily undeletable .nfs files:
+trash/
+
+# Specific files:
+
+# GNAT C to Ada:
+# g++ -c -fdump-ada-spec:
+research/animals_h.ads
+research/root_h.ads
+
+# GNAT Ada to C:
+# g++ -c -gnatceg:
+research/a_nodes_h.h
+
