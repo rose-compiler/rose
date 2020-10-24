@@ -105,7 +105,7 @@ main ( int argc,  char * argv[] )
    }
 
    if (CmdOptions::GetInstance()->HasOption("-pre")) {
-       PRE::partialRedundancyElimination(project);
+       legacy::PRE::partialRedundancyElimination(project); // PP (10/16/20) 
    }
 #ifdef USE_OMEGA
      DepStats.SetDepChoice(0x1 | 0x2 | 0x4);

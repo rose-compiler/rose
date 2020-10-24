@@ -265,19 +265,19 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
     if (Outliner::enable_debug)
     {
-      cout<<"Outliner::Transform::generateFunction() -----Found "<<readOnlyVars.size()<<" read only variables..:";
+      cout<<"Transform.cc Outliner::outlineBlock() -----Found "<<readOnlyVars.size()<<" read only variables..:";
       for (std::set<SgInitializedName*>::const_iterator iter = readOnlyVars.begin();
           iter!=readOnlyVars.end(); iter++)
         cout<<" "<<(*iter)->get_name().getString()<<" ";
       cout<<endl;
 
-      cout<<"Outliner::Transform::generateFunction() -----Found "<<pdSyms.size()<<" varaibles to be replaced as pointer dereferencing variables..:";
+      cout<<"Outliner::outlineBlock() -----Found "<<pdSyms.size()<<" varaibles to be replaced as pointer dereferencing variables..:";
       for (ASTtools::VarSymSet_t::const_iterator iter = pdSyms.begin();
           iter!=pdSyms.end(); iter++)
         cout<<" "<<(*iter)->get_name().getString()<<" ";
       cout<<endl;
 
-      cout<<"Outliner::Transform::generateFunction() -----Found "<<liveOuts.size()<<" live out variables..:";
+      cout<<"Outliner::outlineBlock() -----Found "<<liveOuts.size()<<" live out variables..:";
       for (std::set<SgInitializedName*>::const_iterator iter = liveOuts.begin();
           iter!=liveOuts.end(); iter++)
         cout<<" "<<(*iter)->get_name().getString()<<" ";
