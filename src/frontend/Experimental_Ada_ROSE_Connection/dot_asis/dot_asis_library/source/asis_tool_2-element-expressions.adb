@@ -61,6 +61,7 @@ package body Asis_Tool_2.Element.Expressions is
       end;
 
       procedure Add_Corresponding_Name_Declaration is
+         use Asis;
          Parent_Name : constant String := Module_Name;
          Module_Name : constant String := Parent_Name &
            ".Add_Corresponding_Name_Declaration";
@@ -109,6 +110,7 @@ package body Asis_Tool_2.Element.Expressions is
       end;
 
       procedure Add_Corresponding_Name_Definition_List is
+         use Asis;
          Parent_Name : constant String := Module_Name;
          Module_Name : constant String := Parent_Name &
            ".Add_Corresponding_Name_Definition_List";
@@ -214,7 +216,6 @@ package body Asis_Tool_2.Element.Expressions is
             Add_Value_Image;
          when An_Identifier =>
             Add_Name_Image;
-            Add_Corresponding_Name_Definition;
             Add_Corresponding_Name_Definition_List;
             Add_Corresponding_Name_Declaration;
          when An_Operator_Symbol =>
