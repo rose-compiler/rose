@@ -730,7 +730,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
    else return ATfalse;
 
    if (declared_type == nullptr) {
-      cerr << "WARNING UNIMPLEMENTED: ItemDeclaration - type is null \n";
+      cerr << "ERROR: ItemDeclaration - variable type is null \n";
       ROSE_ASSERT(declared_type);
    }
 
@@ -769,7 +769,6 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDescription(ATerm term, SgTy
 #endif
 
    std::string name;
-
    type = nullptr;
 
 // StatusItemDescription is handled separately because it requires different arguments
@@ -800,10 +799,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDescription(ATerm term, SgTy
       SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
 
       if (symbol == nullptr) {
-#if PRINT_WARNINGS
-         cerr << "WARNING UNIMPLEMENTED: ItemTypeDescription - symbol lookup failed for ItemTypeName " << name << "\n";
-         ROSE_ASSERT(false);
-#endif
+         cerr << "ERROR: ItemTypeDescription - symbol lookup failed for ItemTypeName " << name << "\n";
       }
       ROSE_ASSERT(symbol);
       type = symbol->get_type();
