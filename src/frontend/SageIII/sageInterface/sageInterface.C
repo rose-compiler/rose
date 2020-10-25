@@ -20233,15 +20233,19 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
               SgEnumDeclaration* def_decl = isSgEnumDeclaration(decl->get_definingDeclaration());
               SgEnumDeclaration* nondef_decl = isSgEnumDeclaration(decl->get_firstNondefiningDeclaration());
 
-              def_decl->set_scope(targetBlock);
-              nondef_decl->set_scope(targetBlock);
-              nondef_decl->set_parent(targetBlock);
-
-              // Move the scope of the enumerators to the new block as well
-              SgInitializedNamePtrList & enums = def_decl->get_enumerators();
-              for (SgInitializedNamePtrList::iterator e = enums.begin(); e != enums.end(); e++)
+              if (decl->get_scope() == sourceBlock)
               {
-                (*e)->set_scope(targetBlock);
+                // Needs to be moved
+                def_decl->set_scope(targetBlock);
+                nondef_decl->set_scope(targetBlock);
+                nondef_decl->set_parent(targetBlock);
+
+                // Move the scope of the enumerators to the new block as well
+                SgInitializedNamePtrList & enums = def_decl->get_enumerators();
+                for (SgInitializedNamePtrList::iterator e = enums.begin(); e != enums.end(); e++)
+                {
+                  (*e)->set_scope(targetBlock);
+                }
               }
             }
             else if (isSgJovialTableType(init_name->get_type()))
