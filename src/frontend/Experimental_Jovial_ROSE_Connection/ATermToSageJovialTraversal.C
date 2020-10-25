@@ -676,6 +676,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
    Sawyer::Optional<SgExpression*> status_size;
    Sawyer::Optional<LanguageTranslation::ExpressionKind> modifier_enum;
    SgEnumDeclaration* enum_decl = nullptr;
+   bool is_anonymous = false;
 
    std::string label = "";
 
@@ -691,8 +692,13 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
       if (match_StatusItemDescription(t_type)) {
          // Build EnumDecl so that StatusItemDescription traversal has it to use
 
+         // This status variable declaration has an anonymous type declaration
+         // TODO: test to see if this holds if a type name is used for the item/variable type
+         is_anonymous = true;
+         std::string anon_type_name = std::string("_anon_typeof_") + name;
+
       // Begin SageTreeBuilder
-         sage_tree_builder.Enter(enum_decl, name);
+         sage_tree_builder.Enter(enum_decl, anon_type_name);
          setSourcePosition(enum_decl, term);
       }
 
@@ -711,10 +717,9 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
          // End SageTreeBuilder
          sage_tree_builder.Leave(enum_decl);
 
-#if PRINT_WARNINGS
-         cerr << "WARNING UNIMPLEMENTED: ItemDeclaration for StatusItemDescription \n";
-         ROSE_ASSERT(false);
-#endif
+         ROSE_ASSERT(enum_decl);
+         declared_type = isSgEnumType(enum_decl->get_type());
+         ROSE_ASSERT(declared_type);
       }
       else return ATfalse;
 
@@ -725,10 +730,8 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
    else return ATfalse;
 
    if (declared_type == nullptr) {
-#if PRINT_WARNINGS
       cerr << "WARNING UNIMPLEMENTED: ItemDeclaration - type is null \n";
       ROSE_ASSERT(declared_type);
-#endif
    }
 
 // Begin SageTreeBuilder
@@ -742,6 +745,16 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
 // Jovial block and table members are visible in parent scope so create an alias
 // to the symbol if needed.
    sage_tree_builder.injectAliasSymbol(std::string(name));
+
+   if (is_anonymous) {
+      SgEnumType* enum_type = isSgEnumType(declared_type);
+      ROSE_ASSERT(enum_type);
+      SgEnumDeclaration* decl = isSgEnumDeclaration(enum_type->get_declaration());
+      ROSE_ASSERT(decl);
+      SgEnumDeclaration* def_decl = isSgEnumDeclaration(decl->get_definingDeclaration());
+      ROSE_ASSERT(def_decl);
+      SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
+   }
 
 // End SageTreeBuilder
    sage_tree_builder.Leave(var_decl);
