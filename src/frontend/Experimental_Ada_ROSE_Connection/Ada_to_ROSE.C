@@ -30,7 +30,7 @@ Sawyer::Message::Facility adalogger;
 
 void logInit()
 {
-  adalogger = Sawyer::Message::Facility("ADA-Frontend", Rose::Diagnostics::destination);
+  adalogger = Sawyer::Message::Facility("Ada2ROSE", Rose::Diagnostics::destination);
 }
 
 //
@@ -53,10 +53,6 @@ namespace
   /// stores a mapping from Element_ID to ROSE type declaration
   map_t<int, SgDeclarationStatement*> asisTypesMap;
 
-  /// stores a mapping from an Element_ID to a loop statement
-  /// \todo this should be localized in the AstContext class
-  map_t<int, SgStatement*> asisLoopsMap;
-
   /// stores a mapping from string to builtin type nodes
   map_t<std::string, SgType*> adaTypesMap;
 } // anonymous namespace
@@ -66,7 +62,6 @@ map_t<int, SgInitializedName*>&      asisVars()  { return asisVarsMap;  }
 map_t<int, SgInitializedName*>&      asisExcps() { return asisExcpsMap; }
 map_t<int, SgDeclarationStatement*>& asisDecls() { return asisDeclsMap; }
 map_t<int, SgDeclarationStatement*>& asisTypes() { return asisTypesMap; }
-map_t<int, SgStatement*>&            asisLoops() { return asisLoopsMap; }
 map_t<std::string, SgType*>&         adaTypes()  { return adaTypesMap;  }
 ASIS_element_id_to_ASIS_MapType&     elemMap()   { return asisMap;      }
 ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
@@ -75,13 +70,13 @@ ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
 //
 // auxiliary classes and functions
 
-LabelManager::~LabelManager()
+LabelAndLoopManager::~LabelAndLoopManager()
 {
   for (GotoContainer::value_type el : gotos)
     el.first->set_label(&lookupNode(labels, el.second));
 }
 
-void LabelManager::label(Element_ID id, SgLabelStatement& lblstmt)
+void LabelAndLoopManager::label(Element_ID id, SgLabelStatement& lblstmt)
 {
   SgLabelStatement*& mapped = labels[id];
 
@@ -89,7 +84,7 @@ void LabelManager::label(Element_ID id, SgLabelStatement& lblstmt)
   mapped = &lblstmt;
 }
 
-void LabelManager::gotojmp(Element_ID id, SgGotoStatement& gotostmt)
+void LabelAndLoopManager::gotojmp(Element_ID id, SgGotoStatement& gotostmt)
 {
   gotos.emplace_back(&gotostmt, id);
 }
@@ -109,11 +104,11 @@ AstContext AstContext::scope(SgScopeStatement& s) const
   return scope_npc(s);
 }
 
-AstContext AstContext::labels(LabelManager& lm) const
+AstContext AstContext::labelsAndLoops(LabelAndLoopManager& lm) const
 {
   AstContext tmp{*this};
 
-  tmp.all_labels = &lm;
+  tmp.all_labels_loops = &lm;
   return tmp;
 }
 
@@ -147,7 +142,6 @@ namespace
     asisExcps().clear();
     asisDecls().clear();
     asisTypes().clear();
-    asisLoops().clear();
     adaTypes().clear();
   }
 
@@ -344,9 +338,10 @@ namespace
 
           if (elemRange.size() || unitRange.size())
           {
-            logWarn() << "   elems# " << elemRange.size()
-                      << "\n    subs# " << unitRange.size()
-                      << std::endl;
+            (unitRange.size() ? logWarn() : logInfo())
+               << "   elems# " << elemRange.size()
+               << "\n    subs# " << unitRange.size()
+               << std::endl;
 
             traverseIDs(elemRange, elemMap(), ElemCreator{ctx});
 
@@ -373,9 +368,10 @@ namespace
 
           if (elemRange.size() || unitRange.size())
           {
-            logWarn() << "   elems# " << elemRange.size()
-                      << "\n    subs# " << unitRange.size()
-                      << std::endl;
+            (unitRange.size() ? logWarn() : logInfo())
+                 << "   elems# " << elemRange.size()
+                 << "\n    subs# " << unitRange.size()
+                 << std::endl;
 
             traverseIDs(elemRange, elemMap(), ElemCreator{ctx});
             // units seem to be included in the elements
@@ -447,6 +443,19 @@ namespace
         ROSE_ASSERT(!FAIL_ON_ERROR);
     }
   }
+
+  std::string
+  astDotFileName(const SgSourceFile& file)
+  {
+    std::string            res = file.generateOutputFileName();
+    std::string::size_type pos = res.find('.');
+
+    if (pos != std::string::npos)
+      res = res.substr(0, pos);
+
+    res += "_rose";
+    return res;
+  }
 }
 
 
@@ -454,6 +463,8 @@ void ElemCreator::operator()(Element_Struct& elem)
 {
   handleElement(elem, ctx, privateElems);
 }
+
+
 
 void secondConversion(Nodes_Struct& headNodes, SgSourceFile* file)
 {
@@ -470,8 +481,9 @@ void secondConversion(Nodes_Struct& headNodes, SgSourceFile* file)
   traverse(adaUnit, adaLimit, UnitCreator{AstContext{astScope}});
   clearMappings();
 
-  logTrace() << "Generating DOT file: " << "adaTypedAst.dot" << std::endl;
-  generateDOT(&astScope, "adaTypedAst");
+  std::string astDotFile = astDotFileName(*file);
+  logTrace() << "Generating DOT file for ROSE AST: " << astDotFile << std::endl;
+  generateDOT(&astScope, astDotFile);
 
   file->set_processedToIncludeCppDirectivesAndComments(false);
   logInfo() << "Building ROSE AST done" << std::endl;
