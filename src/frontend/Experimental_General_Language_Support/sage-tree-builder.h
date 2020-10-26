@@ -296,7 +296,6 @@ namespace SageBuilderCpp17 {
    SgCommonBlockObject* buildCommonBlockObject(std::string name = "", SgExprListExp* expr_list = nullptr);
 
 // Non builder helper functions
-   SgType* getFunctionReturnType(const std::string &result_name, SgScopeStatement* scope);
    void  fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type);
 
 

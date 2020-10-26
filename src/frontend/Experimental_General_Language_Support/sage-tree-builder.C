@@ -1734,14 +1734,6 @@ SgCommonBlockObject* buildCommonBlockObject(std::string name, SgExprListExp* exp
    return common_block_object;
 }
 
-SgType* getFunctionReturnType(const std::string &result_name, SgScopeStatement* scope)
-{
-   SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(result_name, scope);
-   ROSE_ASSERT(symbol);
-
-   return symbol->get_type();
-}
-
 void fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type)
 {
    // This function should only be called if there is no symbol and there is a result type
