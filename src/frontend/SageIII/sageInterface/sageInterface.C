@@ -20188,6 +20188,10 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
       {
         // CR 9/21/2020: Uncovered by issue RC-135 and scope moved in switch below
       }
+      else if (SgTypedefDeclaration* decl = isSgTypedefDeclaration(stmt))
+      {
+        // CR 10/19/2020: Uncovered by issue RC-227 and scope moved in switch below
+      }
       else
       {
         printf ("Warning: test failing (*i)->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks() \n");
@@ -20218,22 +20222,42 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
 
             SgInitializedName * init_name = (*ii);
 
-            // CR (6/29/2020): Variable declarations related to Jovial anonymous table types are not
-            // moved. This is fixed below. SgJovialTableType derives from SgClassType, it may be that
-            // class types are not moved correctly either.
-
-            SgJovialTableType* table_type = isSgJovialTableType(init_name->get_type());
-            if (table_type)
+            // CR (6/29/2020) and (10/19/2020): Variable declarations related to anonymous types are not
+            // moved. This is fixed below. Note that SgJovialTableType derives from SgClassType, it may
+            // be that class types are not moved correctly either.
+            //
+            if (isSgEnumType(init_name->get_type()))
             {
+              SgEnumType* enum_type = isSgEnumType(init_name->get_type());
+              SgEnumDeclaration* decl = isSgEnumDeclaration(enum_type->get_declaration());
+              SgEnumDeclaration* def_decl = isSgEnumDeclaration(decl->get_definingDeclaration());
+              SgEnumDeclaration* nondef_decl = isSgEnumDeclaration(decl->get_firstNondefiningDeclaration());
+
+              if (decl->get_scope() == sourceBlock)
+              {
+                // Needs to be moved
+                def_decl->set_scope(targetBlock);
+                nondef_decl->set_scope(targetBlock);
+                nondef_decl->set_parent(targetBlock);
+
+                // Move the scope of the enumerators to the new block as well
+                SgInitializedNamePtrList & enums = def_decl->get_enumerators();
+                for (SgInitializedNamePtrList::iterator e = enums.begin(); e != enums.end(); e++)
+                {
+                  (*e)->set_scope(targetBlock);
+                }
+              }
+            }
+            else if (isSgJovialTableType(init_name->get_type()))
+            {
+              SgJovialTableType* table_type = isSgJovialTableType(init_name->get_type());
               SgDeclarationStatement* decl = table_type->get_declaration();
               SgDeclarationStatement* def_decl = decl->get_definingDeclaration();
               SgDeclarationStatement* nondef_decl = decl->get_firstNondefiningDeclaration();
 
-              nondef_decl->set_parent(targetBlock);
-              nondef_decl->set_scope(targetBlock);
-
               def_decl->set_scope(targetBlock);
-              def_decl->set_parent(varDecl);
+              nondef_decl->set_scope(targetBlock);
+              nondef_decl->set_parent(targetBlock);
             }
 
             // Must also move the symbol into the source block, Liao 2019/8/14
@@ -20258,6 +20282,19 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
           ROSE_ASSERT (funcDecl);
           break;
         }
+      case V_SgEnumDeclaration:
+        {
+          // CR 10/17/2020: Needed for issue RC-189
+          SgEnumDeclaration* enum_decl = isSgEnumDeclaration(declaration);
+          ROSE_ASSERT (enum_decl);
+
+          SgDeclarationStatement* def_decl = enum_decl->get_definingDeclaration();
+          SgDeclarationStatement* nondef_decl = enum_decl->get_firstNondefiningDeclaration();
+          nondef_decl->set_parent(targetBlock);
+          nondef_decl->set_scope(targetBlock);
+          def_decl->set_scope(targetBlock);
+          break;
+        }
       case V_SgJovialTableStatement:
         {
           // CR 9/21/2020: Needed for issue RC-135
@@ -20271,6 +20308,15 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
           def_decl->set_scope(targetBlock);
           break;
         }
+      case V_SgTypedefDeclaration: // CR (10/19/2020)
+        {
+          // CR 10/19/2020: Needed for issue RC-227
+          SgTypedefDeclaration* typedef_decl = isSgTypedefDeclaration(declaration);
+          ROSE_ASSERT (typedef_decl);
+          typedef_decl->set_parent(targetBlock);
+          typedef_decl->set_scope(targetBlock);
+          break;
+       }
       case V_SgAttributeSpecificationStatement:
       case V_SgEmptyDeclaration:
       case V_SgFortranIncludeLine:
@@ -20326,7 +20372,6 @@ void moveDeclarationsBetweenScopes( T1* sourceBlock, T2* targetBlock)
   // to the target block to match #if (which is attached
   // before some statement moved to the target block)
   SageInterface::moveUpPreprocessingInfo (targetBlock, sourceBlock, PreprocessingInfo::inside);
-
 }
 
 
@@ -20402,205 +20447,6 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
 {
   moveStatementsBetweenScopes (sourceBlock, targetBlock); 
 }
-
-#if 0
-   {
-  // This function moves statements from one block to another (used by the outliner).
-  // printf ("***** Moving statements from sourceBlock %p to targetBlock %p ***** \n",sourceBlock,targetBlock);
-    ROSE_ASSERT (sourceBlock && targetBlock);
-    if (sourceBlock == targetBlock)
-    {
-      cerr<<"warning: SageInterface::moveStatementsBetweenBlocks() is skipped, "<<endl;
-      cerr<<"         since program is trying to move statements from and to the identical basic block. "<<endl;
-      return;
-    }
-
-     SgStatementPtrList & srcStmts = sourceBlock->get_statements();
-     std::vector <SgInitializedName*> initname_vec;
-
-     SgSymbolTable* s_table = sourceBlock->get_symbol_table();
-
-     for (SgStatementPtrList::iterator i = srcStmts.begin(); i != srcStmts.end(); i++)
-        {
-          // append statement to the target block
-          targetBlock->append_statement(*i);
-
-       // Make sure that the parents are set.
-          ROSE_ASSERT((*i)->get_parent() == targetBlock);
-          if ((*i)->hasExplicitScope())
-             {
-            // DQ (3/4/2009): This fails the test in ROSE/tutorial/outliner/inputCode_OutlineNonLocalJumps.cc
-            // I am unclear if this is a reasonable constraint, it passes all tests but this one!
-               if ((*i)->get_scope() != targetBlock)
-                  {
-                    if (SgFunctionDeclaration* func = isSgFunctionDeclaration(*i))
-                    { // A call to a undeclared function will introduce a hidden func prototype declaration in the enclosing scope .
-                      // The func declaration should be moved along with the call site.
-                      // The scope should be set to the new block also
-                      // Liao 1/14/2011
-                      if (func->get_firstNondefiningDeclaration() == func)
-                        func->set_scope(targetBlock);
-                    }
-                    else if (SgJovialTableStatement* table = isSgJovialTableStatement(*i))
-                    {
-                      // CR 9/21/2020: Uncovered by issue RC-135 and scope moved in switch below
-                    }
-                    else
-                    {
-                      printf ("Warning: test failing (*i)->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks() \n");
-                      cerr<<"  "<<(*i)->class_name()<<endl;
-                    }
-                  }
-             }
-
-          SgDeclarationStatement* declaration = isSgDeclarationStatement(*i);
-          if (declaration != NULL)
-             {
-            // Need to reset the scope from sourceBlock to targetBlock.
-               switch(declaration->variantT())
-                  {
-                 // There will be other cases to handle, but likely not all declaration will be possible to support.
-
-                    case V_SgVariableDeclaration:
-                       {
-                      // Reset the scopes on any SgInitializedName objects.
-                         SgVariableDeclaration* varDecl = isSgVariableDeclaration(declaration);
-                         SgInitializedNamePtrList & l = varDecl->get_variables();
-                         for (SgInitializedNamePtrList::iterator ii = l.begin(); ii != l.end(); ii++)
-                         {
-                           // reset the scope, but make sure it was set to sourceBlock to make sure.
-                           // This might be an issue for extern variable declaration that have a scope
-                           // in a separate namespace of a static class member defined external to
-                           // its class, etc. I don't want to worry about those cases right now.
-
-                           SgInitializedName * init_name = (*ii);
-
-                           // CR (6/29/2020): Variable declarations related to Jovial anonymous table types are not
-                           // moved. This is fixed below. SgJovialTableType derives from SgClassType, it may be that
-                           // class types are not moved correctly either.
-
-                           SgJovialTableType* table_type = isSgJovialTableType(init_name->get_type());
-                           if (table_type)
-                              {
-                                 SgDeclarationStatement* decl = table_type->get_declaration();
-                                 SgDeclarationStatement* def_decl = decl->get_definingDeclaration();
-                                 SgDeclarationStatement* nondef_decl = decl->get_firstNondefiningDeclaration();
-
-                                 nondef_decl->set_parent(targetBlock);
-                                 nondef_decl->set_scope(targetBlock);
-
-                                 def_decl->set_scope(targetBlock);
-                                 def_decl->set_parent(varDecl);
-                              }
-
-                           // Must also move the symbol into the source block, Liao 2019/8/14
-                           SgVariableSymbol* var_sym = isSgVariableSymbol(init_name -> search_for_symbol_from_symbol_table ()) ;
-                           ROSE_ASSERT (var_sym);
-                           SgScopeStatement * old_scope = var_sym -> get_scope();
-#if 1 // we will later move entire source symbol table to target scope,  so we move symbol to the sourceBlock first here.
-                           if (old_scope != sourceBlock)
-                           {
-                             old_scope->remove_symbol (var_sym);
-                             sourceBlock ->insert_symbol(init_name->get_name(), var_sym);
-                           }
-#endif
-                           init_name->set_scope(targetBlock);
-                           initname_vec.push_back(init_name);
-                         }
-                         break;
-                       }
-                     case V_SgFunctionDeclaration: // Liao 1/15/2009, I don't think there is any extra things to do here
-                       {
-                         SgFunctionDeclaration * funcDecl = isSgFunctionDeclaration(declaration);
-                         ROSE_ASSERT (funcDecl);
-                         break;
-                       }
-                     case V_SgJovialTableStatement:
-                       {
-                      // CR 9/21/2020: Needed for issue RC-135
-                         SgJovialTableStatement* table = isSgJovialTableStatement(declaration);
-                         ROSE_ASSERT (table);
-
-                         SgDeclarationStatement* def_decl = table->get_definingDeclaration();
-                         SgDeclarationStatement* nondef_decl = table->get_firstNondefiningDeclaration();
-                         nondef_decl->set_parent(targetBlock);
-                         nondef_decl->set_scope(targetBlock);
-                         def_decl->set_scope(targetBlock);
-                         break;
-                       }
-                     case V_SgAttributeSpecificationStatement:
-                     case V_SgEmptyDeclaration:
-                     case V_SgFortranIncludeLine:
-                     case V_SgJovialDefineDeclaration:
-                     case V_SgJovialDirectiveStatement:
-                     case V_SgPragmaDeclaration:
-                       break;
-                    default:
-                       {
-                         printf ("Moving this declaration = %p = %s = %s between blocks is not yet supported \n",declaration,declaration->class_name().c_str(),get_name(declaration).c_str());
-                         declaration->get_file_info()->display("file info");
-                         ROSE_ASSERT(false);
-                       }
-                }
-             } // end if
-        } // end for
-
-  // Remove the statements in the sourceBlock
-     srcStmts.clear();
-     ROSE_ASSERT(srcStmts.empty() == true);
-     ROSE_ASSERT(sourceBlock->get_statements().empty() == true);
-
-  // Move the symbol table
-     ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
-     // Liao, 11/26/2019 make sure the symbol table has symbols for init names before and after the move
-     for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
-     {
-       SgInitializedName* iname = *iter;
-       SgSymbol* symbol = s_table->find(iname);
-       ROSE_ASSERT (symbol != NULL);
-     }
-
-
-     targetBlock->set_symbol_table(sourceBlock->get_symbol_table());
-
-     ROSE_ASSERT(sourceBlock != NULL);
-     ROSE_ASSERT(targetBlock != NULL);
-     ROSE_ASSERT(targetBlock->get_symbol_table() != NULL);
-     ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
-     targetBlock->get_symbol_table()->set_parent(targetBlock);
-
-     ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
-     sourceBlock->set_symbol_table(NULL);
-
-  // DQ (9/23/2011): Reset with a valid symbol table.
-     sourceBlock->set_symbol_table(new SgSymbolTable());
-     sourceBlock->get_symbol_table()->set_parent(sourceBlock);
-
-     ROSE_ASSERT (targetBlock->get_symbol_table() == s_table);
-     for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
-     {
-       SgInitializedName* iname = *iter;
-       SgSymbol* symbol = s_table->find(iname);
-       ROSE_ASSERT (symbol != NULL);
-     }
-
-     // Liao, 11/26/2019 make sure init names have symbols after the move.
-     for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
-     {
-       SgInitializedName* iname = *iter;
-       SgSymbol* symbol = iname->get_symbol_from_symbol_table();
-       ROSE_ASSERT (symbol != NULL);
-     }
-
-     // Liao 2/4/2009
-     // Finally , move preprocessing information attached inside the source block to the target block
-     // Outliner uses this function to move a code block to the outlined function.
-     // This will ensure that a trailing #endif (which is attached inside the source block) will be moved
-     // to the target block to match #if (which is attached
-     // before some statement moved to the target block)
-     moveUpPreprocessingInfo (targetBlock, sourceBlock, PreprocessingInfo::inside);
-   }
-#endif
 
 //! Check if a function declaration is a C++11 lambda function
 // TODO, expose to SageInterface namespace

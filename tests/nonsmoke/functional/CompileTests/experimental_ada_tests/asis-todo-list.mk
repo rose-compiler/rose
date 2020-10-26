@@ -4,11 +4,13 @@ ASIS_TODO := \
   all_modes.ads                        \
   case_function.ads                    \
   case_function.adb                    \
+  complex.ads                          \
+  complex.adb                          \
   entry_declaration.ads                \
   entry_call.adb                       \
   enum_colors.ads                      \
-  exception_declaration.ads            \
   for_loop.adb                         \
+	for_loop_statement.adb               \
   function_call.adb                    \
   function_declaration.ads             \
   function_declaration.adb             \
@@ -22,6 +24,7 @@ ASIS_TODO := \
   package_with_body.adb                \
   procedure_declaration.ads            \
   procedure_declaration.adb            \
+  real_typedecl.ads                    \
   sender.ads                           \
   short_circuit.adb                    \
   some_modes.ads                       \

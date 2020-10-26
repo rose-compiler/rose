@@ -7,6 +7,8 @@
 #include <AstInterface_ROSE.h>
 #include "preControlFlowGraph.h"
 
+namespace legacy {
+
 using namespace std;
 
 class CfgConfig: public BuildCFGConfig<int> {
@@ -128,8 +130,8 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
                     printf ("Warning adding an edge using a NULL pointer! at %p \n",&(controlflow.edge_insertion_point[*out]));
                   }
 #endif
-               controlflow.edge_insertion_point[*out] = make_pair(expr_parent, 
-                    (isSgGotoStatement(expr_parent) ? 
+               controlflow.edge_insertion_point[*out] = make_pair(expr_parent,
+                    (isSgGotoStatement(expr_parent) ?
                  /* Put insertion before goto statements but after other statement types */ true :
                     false));
              }
@@ -192,7 +194,7 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
                                         if (kind == CFGConfig::COND_TRUE)
                                            {
                                              insert_point = make_pair(isSgWhileStmt(expr_parent)->get_body(), true);
-                                           } 
+                                           }
                                           else
                                            {
                                              insert_point = make_pair(expr_parent, false);
@@ -219,8 +221,8 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
                                            }
                                         break;
 #if 0
-                                // DQ (3/13/2006): Added case for SgExpressionStatment, since it is now the conditonal 
-                                // test in a SgForStatement (due to a recent change in the IR to support such things 
+                                // DQ (3/13/2006): Added case for SgExpressionStatment, since it is now the conditonal
+                                // test in a SgForStatement (due to a recent change in the IR to support such things
                                 // which are leagal code in C and C++).
                                    case V_SgExprStatement:
                                         printf ("Found a SgExprStatement, likely the test in a SgForStatment or such \n");
@@ -263,7 +265,7 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
              }
         }
 
-     EdgeIter ei   = controlflow.graph.edges().begin(), 
+     EdgeIter ei   = controlflow.graph.edges().begin(),
               eend = controlflow.graph.edges().end();
      for (; ei != eend; ++ei)
         {
@@ -273,7 +275,7 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
                if (controlflow.graph.out_edges(src).size() == 1 && !controlflow.node_statements[src].empty())
                   {
                     vector<SgNode*> stmts = controlflow.node_statements[src];
-                    controlflow.edge_insertion_point[*ei] = 
+                    controlflow.edge_insertion_point[*ei] =
                     make_pair(stmts[stmts.size() - 1], false);
                   }
              }
@@ -287,14 +289,14 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
 void PRE::printCfgAsDot(ostream& dotfile,
                    const PRE::ControlFlowGraph& controlflow) {
   dotfile << "digraph cfg {" << endl;
-  VertexIter i = controlflow.graph.vertices().begin(), 
+  VertexIter i = controlflow.graph.vertices().begin(),
              end = controlflow.graph.vertices().end();
   for (; i != end; ++i) {
     std::ostringstream statementdata;
     statementdata << "{";
     statementdata << *i;
     const vector<SgNode*>& stmts = controlflow.node_statements[*i];
-    for (vector<SgNode*>::const_iterator j = stmts.begin();  
+    for (vector<SgNode*>::const_iterator j = stmts.begin();
          j != stmts.end(); ++j) {
       statementdata << "\\n";
       if (isSgExpression(*j)) {
@@ -310,7 +312,7 @@ void PRE::printCfgAsDot(ostream& dotfile,
           expr_parent = 0;
       }
       if (expr_parent) {
-        statementdata << string(" in ") + 
+        statementdata << string(" in ") +
                          expr_parent->sage_class_name();
       }
     }
@@ -319,7 +321,7 @@ void PRE::printCfgAsDot(ostream& dotfile,
     // Escape < and > and " in statementdata
     string statementdata_new;
     for (unsigned int j = 0; j < statementdatastr.size(); ++j) {
-      if (statementdatastr[j] == '<' || statementdatastr[j] == '>' || 
+      if (statementdatastr[j] == '<' || statementdatastr[j] == '>' ||
           statementdatastr[j] == '"')
         statementdata_new += string("\\") + statementdatastr[j];
       else
@@ -328,16 +330,18 @@ void PRE::printCfgAsDot(ostream& dotfile,
     dotfile << *i << " [label = \"" << statementdata_new << "\", shape=record];" << endl;
   }
 
-  EdgeIter j = controlflow.graph.edges().begin(), 
+  EdgeIter j = controlflow.graph.edges().begin(),
            jend = controlflow.graph.edges().end();
   for (; j != jend; ++j) {
     CFGConfig::EdgeType kind = controlflow.edge_type[*j];
-    string color = (kind == CFGConfig::COND_TRUE ? "green" : 
-                    kind == CFGConfig::COND_FALSE ? "red" : 
-                    kind == CFGConfig::ALWAYS ? "black" : 
+    string color = (kind == CFGConfig::COND_TRUE ? "green" :
+                    kind == CFGConfig::COND_FALSE ? "red" :
+                    kind == CFGConfig::ALWAYS ? "black" :
                     "blue");
     pair<SgNode*, bool> insert_point = controlflow.edge_insertion_point[*j];
     dotfile << controlflow.graph.source(*j) << " -> " << controlflow.graph.target(*j) << " [color=" << color << ", label = \"" << (insert_point.first ? (string(insert_point.first->sage_class_name()) + " " + (insert_point.second ? "before" : "after")) : "") << "\"];" << endl;
   }
   dotfile << "}" << endl;
 }
+
+} // namespace legacy
