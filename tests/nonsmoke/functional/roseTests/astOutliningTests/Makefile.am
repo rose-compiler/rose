@@ -94,6 +94,7 @@ CXX_TESTS_REQUIRED_TO_PASS =		\
 	moreTest6.cpp				\
 	moreTest7.cpp				\
         charStar.cpp  \
+	const-global.cpp \
 	reference.cpp
 
 # Add a few tool_G's regression tests
@@ -105,7 +106,8 @@ CXX2_TESTS_REQUIRED_TO_PASS = \
 	test_26_v1_2020.cpp \
 	charStar.cpp  \
 	test_37_2020.cpp \
-	ft_cfftz.cpp
+	ft_cfftz.cpp \
+	test_52.cpp
 
 #This set of CPP files must contain main() to run
 CXX4_TESTS_REQUIRED_TO_RUN=	\

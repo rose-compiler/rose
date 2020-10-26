@@ -265,19 +265,19 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
     if (Outliner::enable_debug)
     {
-      cout<<"Outliner::Transform::generateFunction() -----Found "<<readOnlyVars.size()<<" read only variables..:";
+      cout<<"Transform.cc Outliner::outlineBlock() -----Found "<<readOnlyVars.size()<<" read only variables..:";
       for (std::set<SgInitializedName*>::const_iterator iter = readOnlyVars.begin();
           iter!=readOnlyVars.end(); iter++)
         cout<<" "<<(*iter)->get_name().getString()<<" ";
       cout<<endl;
 
-      cout<<"Outliner::Transform::generateFunction() -----Found "<<pdSyms.size()<<" varaibles to be replaced as pointer dereferencing variables..:";
+      cout<<"Outliner::outlineBlock() -----Found "<<pdSyms.size()<<" varaibles to be replaced as pointer dereferencing variables..:";
       for (ASTtools::VarSymSet_t::const_iterator iter = pdSyms.begin();
           iter!=pdSyms.end(); iter++)
         cout<<" "<<(*iter)->get_name().getString()<<" ";
       cout<<endl;
 
-      cout<<"Outliner::Transform::generateFunction() -----Found "<<liveOuts.size()<<" live out variables..:";
+      cout<<"Outliner::outlineBlock() -----Found "<<liveOuts.size()<<" live out variables..:";
       for (std::set<SgInitializedName*>::const_iterator iter = liveOuts.begin();
           iter!=liveOuts.end(); iter++)
         cout<<" "<<(*iter)->get_name().getString()<<" ";
@@ -1020,7 +1020,12 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
 #endif
 
       if (enable_debug)
+      {
         printf ("DONE: In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
+        //generateDOTforMultipleFile(*project);   // this is too large
+      //  string filename = SageInterface::generateProjectName(project);
+       // generateWholeGraphOfAST(filename+".WholeAST");
+      }
 
       // buildFile() will set filename to be input file name by default. 
       // we have to rename the input file to be output file name. This is used to avoid duplicated creation later on

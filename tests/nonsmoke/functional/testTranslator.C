@@ -35,11 +35,14 @@ int main( int argc, char * argv[] )
        //    to activate specific messge streams use (e.g.): -rose:log none,EDG_ROSE_Translation::(debug)
        //    there are numerous additional options...
 #if 0
-       // DQ (3/5/2017): Disable to support evaluation of ROSE compilationwithout output spew 
+       // DQ (3/5/2017): Disable to support evaluation of ROSE compilation without output spew 
        // (then convert those messge to use the message log).
 
        // DQ (3/5/2017): Allow output of diagnostic messages from the EDG/ROSE translation.
           EDG_ROSE_Translation::mlog[Rose::Diagnostics::DEBUG].enable(true);
+
+       // DQ (10/17/2020): Turning on the name qualification diagnostics.
+       // Rose::Diagnostics::mlog[Rose::Diagnostics::WARN].enable(true);
 
        // DQ (3/5/2017): Allow output of diagnostic messages from the ROSE IR nodes.
           Rose::ir_node_mlog[Rose::Diagnostics::DEBUG].enable(true);

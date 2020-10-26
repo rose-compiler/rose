@@ -172,10 +172,11 @@ class AbstractValue {
   AbstractValue topOrError(std::string) const;
   ValueType valueType;
   CodeThorn::VariableId variableId;
-  //union {
-  long int intValue=0;
-  double floatValue;
-  //};
+  union {
+    long intValue=0;
+    double floatValue;
+    void* extension; // not used yet
+  };
   Label label;
   CodeThorn::TypeSize typeSize=0;
   CodeThorn::TypeSize elementTypeSize=0; // shapr: set, use in +,- operations

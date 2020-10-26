@@ -174,7 +174,8 @@ namespace
                          { A_Divide_Operator,                mk2_wrapper<SgDivideOp,         sb::buildDivideOp> },         /* break; */
                          { A_Mod_Operator,                   mk2_wrapper<SgModOp,            sb::buildModOp> },            /* break; */
                          { A_Rem_Operator,                   mk2_wrapper<SgRemOp,            buildRemOp> },                /* break; */
-                         { An_Exponentiate_Operator,         mk2_wrapper<SgPowerOp,          sb::buildPowerOp> },          /* break; */
+                         //~ { An_Exponentiate_Operator,         mk2_wrapper<SgPowerOp,          sb::buildPowerOp> },          /* break; */
+                         { An_Exponentiate_Operator,         mk2_wrapper<SgExponentiationOp, sb::buildExponentiationOp> },          /* break; */
                          { An_Abs_Operator,                  mk1_wrapper<SgAbsOp,            buildAbsOp> },                /* break; */
                          { A_Not_Operator,                   mk1_wrapper<SgNotOp,            sb::buildNotOp> },            /* break; */
                        };
@@ -312,6 +313,12 @@ getExpr(Element_Struct& elem, AstContext ctx)
         break;
       }
 
+    case A_String_Literal:                          // 2.6
+      {
+        res = &mkValue<SgStringVal>(expr.Value_Image);
+        break;
+      }
+
     case A_Real_Literal:                            // 2.4.1
       {
         res = &mkValue<SgLongDoubleVal>(expr.Value_Image);
@@ -405,7 +412,6 @@ getExpr(Element_Struct& elem, AstContext ctx)
       }
 
     case A_Box_Expression:                          // Ada 2005 4.3.1(4): 4.3.3(3:6)
-    case A_String_Literal:                          // 2.6
 
     case An_Explicit_Dereference:                   // 4.1
 
@@ -455,7 +461,7 @@ getExprID_opt(Element_ID el, AstContext ctx)
 {
   if (isInvaldId(el))
   {
-    logWarn() << "unintialized expression id " << el << std::endl;
+    logWarn() << "uninitalized expression id " << el << std::endl;
     return SG_DEREF( sb::buildNullExpression() );
   }
 
@@ -502,9 +508,12 @@ namespace
   /// \private
   /// returns an expression from the Asis definition \ref def
   SgExpression&
-  getDefinitionExpr(Definition_Struct& def, AstContext ctx)
+  getDefinitionExpr(Element_Struct& el, AstContext ctx)
   {
-    SgExpression* res = nullptr;
+    ROSE_ASSERT(el.Element_Kind == A_Definition);
+
+    Definition_Struct& def = el.The_Union.Definition;
+    SgExpression*      res = nullptr;
 
     switch (def.Definition_Kind)
     {
@@ -522,7 +531,8 @@ namespace
         ROSE_ASSERT(!FAIL_ON_ERROR);
     }
 
-    return SG_DEREF(res);
+    attachSourceLocation(SG_DEREF(res), el);
+    return *res;
   }
 }
 
@@ -533,7 +543,7 @@ namespace
     if (el.Element_Kind == An_Expression)
       res = &getExpr(el, ctx);
     else if (el.Element_Kind == A_Definition)
-      res = &getDefinitionExpr(el.The_Union.Definition, ctx);
+      res = &getDefinitionExpr(el, ctx);
 
     ROSE_ASSERT(res);
     elems.push_back(res);

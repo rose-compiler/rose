@@ -139,7 +139,7 @@ namespace MatlabToCpp
 
 
 /*
-struct PowerOpPattern : sg:: <std::vector<SgPowerOp*> >
+struct PowerOpPattern : sg::DispatchHandler <std::vector<SgPowerOp*> >
 {
   void handle(SgNode& n) {}
   void handle(SgPowerOp& n) { res.push_back(&n); }

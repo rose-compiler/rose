@@ -24,7 +24,7 @@ package body Asis_Tool_2.Tool is
       Simple_File_Name : aliased String := AD.Simple_Name (Full_File_Name);
       Base_File_Name   : constant String := AD.Base_Name (Simple_File_Name);
 
-      Tree_File_Dir    : constant String := AD.Compose (Source_File_Dir, "obj");
+      Tree_File_Dir    : constant String := AD.Compose (AD.Current_Directory, "obj");
       Tree_File_Name   : constant String :=
         AD.Compose (Tree_File_Dir, Base_File_Name, "adt");
       Real_Output_Dir  : constant String :=
@@ -67,6 +67,7 @@ package body Asis_Tool_2.Tool is
       Create_Missing_Dirs : aliased String := "-p";
       Project_File        : aliased String :=
         "-P" & Source_File_Dir & "/default.gpr";
+      Relocate_build_tree : aliased String := "--relocate-build-tree";
       -- From GNAT docs:
       -- "Args contains only needed -I, -gnatA, -gnatec options, and project
       -- file in case of the GPRBUILD call."
@@ -74,7 +75,8 @@ package body Asis_Tool_2.Tool is
       -- the pointed-to strings out of scope:
       GPRBUILD_Args       : Gnat.OS_Lib.Argument_List :=
         (1 => Create_Missing_Dirs'Unchecked_Access,
-         2 => Project_File'Unchecked_Access);
+         2 => Project_File'Unchecked_Access,
+         3 => Relocate_build_tree'Unchecked_Access);
    begin
       Asis_Tool_2.Trace_On := Debug;
       Log ("BEGIN");

@@ -34,6 +34,24 @@ package body Asis_Tool_2.Element.Associations is
          Result.Actual_Parameter := ID;
       end;
 
+      procedure Add_Discriminant_Selector_Names is
+      begin
+         Add_Element_List
+           (This           => State,
+            Elements_In    => Asis.Expressions.Discriminant_Selector_Names (Element),
+            Dot_Label_Name => "Discriminant_Selector_Names",
+            List_Out       => Result.Discriminant_Selector_Names,
+            Add_Edges      => True);
+      end;
+
+      procedure Add_Discriminant_Expression is
+         ID : constant a_nodes_h.Element_ID :=
+           Get_Element_ID (Asis.Expressions.Discriminant_Expression (Element));
+      begin
+         State.Add_To_Dot_Label_And_Edge ("Discriminant_Expression", ID);
+         Result.Discriminant_Expression := ID;
+      end;
+
       procedure Add_Is_Defaulted_Association is
          Value : constant Boolean := Asis.Expressions.Is_Defaulted_Association (Element);
       begin
@@ -47,6 +65,34 @@ package body Asis_Tool_2.Element.Associations is
       begin
          State.Add_To_Dot_Label ("Is_Normalized", Value);
          Result.Is_Normalized := a_nodes_h.Support.To_bool (Value);
+      end;
+
+      procedure Add_Record_Component_Choices is
+      begin
+         Add_Element_List
+           (This           => State,
+            Elements_In    => Asis.Expressions.Record_Component_Choices (Element),
+            Dot_Label_Name => "Record_Component_Choices",
+            List_Out       => Result.Record_Component_Choices,
+            Add_Edges      => True);
+      end;
+
+      procedure Add_Component_Expression is
+         ID : constant a_nodes_h.Element_ID :=
+           Get_Element_ID (Asis.Expressions.Component_Expression (Element));
+      begin
+         State.Add_To_Dot_Label_And_Edge ("Component_Expression", ID);
+         Result.Component_Expression := ID;
+      end;
+
+      procedure Add_Array_Component_Choices is
+      begin
+         Add_Element_List
+           (This           => State,
+            Elements_In    => Asis.Expressions.Array_Component_Choices (Element),
+            Dot_Label_Name => "Array_Component_Choices",
+            List_Out       => Result.Array_Component_Choices,
+            Add_Edges      => True);
       end;
 
       procedure Add_Common_Items is
@@ -66,24 +112,20 @@ package body Asis_Tool_2.Element.Associations is
             raise Program_Error with
             Module_Name & " called with: " & Association_Kind'Image;
          when A_Pragma_Argument_Association =>
-            --                 Add_Formal_Parameter;
-            --                 Add_Actual_Parameter;
-            State.Add_Not_Implemented;
+            Add_Formal_Parameter;
+            Add_Actual_Parameter;
          when A_Discriminant_Association =>
-            --                 Add_Discriminant_Selector_Names;
-            --                 Add_Discriminant_Expression;
-            --                 Add_Is_Normalized;
-            State.Add_Not_Implemented;
+            Add_Discriminant_Selector_Names;
+            Add_Discriminant_Expression;
+            Add_Is_Normalized;
          when A_Record_Component_Association =>
-            --                 Add_Record_Component_Choices;
-            --                 Add_Component_Expression;
-            --                 Add_Is_Normalized;
-            --                 Add_Is_Defaulted_Association;
-            State.Add_Not_Implemented;
+            Add_Record_Component_Choices;
+            Add_Component_Expression;
+            Add_Is_Normalized;
+            Add_Is_Defaulted_Association;
          when An_Array_Component_Association =>
-            --                 Add_Array_Component_Choices;
-            --                 Add_Component_Expression;
-            State.Add_Not_Implemented;
+            Add_Array_Component_Choices;
+            Add_Component_Expression;
          when A_Parameter_Association |
               A_Generic_Association =>
             Add_Formal_Parameter;

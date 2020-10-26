@@ -3,6 +3,7 @@ SgActualArgumentExpression
 SgAbsOp
 SgAdaAccessType
 SgAdaAcceptStmt
+SgAdaDelayStmt
 SgAdaEntryDecl
 SgAdaExitStmt
 SgAdaFloatType

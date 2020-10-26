@@ -1,6 +1,4 @@
 # this tests fail in the backend
 ROSE_BACKEND_TODO :=                   \
-  constants.ads                        \
-  loop_exit.adb                        \
-  operator.adb                         \
+  exception_rename.ads                 \
   EndOfList
