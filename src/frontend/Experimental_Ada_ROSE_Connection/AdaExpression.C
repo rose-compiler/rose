@@ -459,7 +459,7 @@ getExprID(Element_ID el, AstContext ctx)
 SgExpression&
 getExprID_opt(Element_ID el, AstContext ctx)
 {
-  if (isInvaldId(el))
+  if (isInvalidId(el))
   {
     logWarn() << "uninitalized expression id " << el << std::endl;
     return SG_DEREF( sb::buildNullExpression() );

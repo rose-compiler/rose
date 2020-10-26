@@ -346,7 +346,6 @@ mkAdaRenamingDecl(const std::string& name, SgInitializedName& ini, SgScopeStatem
 {
   typedef SgInitializedNamePtrList::iterator Iterator;
 
-  // \todo get the declaration index of ini within its parent
   SgVariableDeclaration&    var = sg::ancestor<SgVariableDeclaration>(ini);
   SgInitializedNamePtrList& lst = var.get_variables();
   Iterator                  aa  = lst.begin();
