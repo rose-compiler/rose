@@ -1,7 +1,6 @@
 
 # defines that are fully supported by ROSE
 PASSING_TESTS :=                       \
-  block_statement.adb                  \
   case_statement.adb                   \
   component_declaration.ads            \
   constant_declaration.ads             \
@@ -10,6 +9,7 @@ PASSING_TESTS :=                       \
   derived_record.ads                   \
   empty_package.ads                    \
   exception_declaration.ads            \
+  exception_rename.ads                 \
   exit_statement.adb                   \
   fib.adb                              \
   goto_loop.adb                        \

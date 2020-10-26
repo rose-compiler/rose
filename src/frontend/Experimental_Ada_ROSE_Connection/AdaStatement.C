@@ -772,14 +772,14 @@ namespace
     return getAliased(elem.The_Union.Expression, ctx);
   }
 
-  SgDeclarationStatement&
+  SgInitializedName&
   getAliasedExcnDecl(Element_ID declid, AstContext ctx)
   {
     Element_Struct& elem = retrieveAs<Element_Struct>(elemMap(), declid);
     ROSE_ASSERT(elem.Element_Kind == A_Defining_Name);
 
     SgInitializedName* the_name = findFirst(asisExcps(), elem.ID, elem.ID);
-    return SG_DEREF(the_name->get_declaration());
+    return SG_DEREF(the_name);
   }
 
   SgAdaTaskBody&
@@ -1939,7 +1939,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         NameData                adaname = singleName(decl, ctx);
 
-        if (decl.Renamed_Entity < 0)
+        if (isInvalidId(decl.Renamed_Entity))
         {
           logWarn() << "skipping unknown package renaming: " << adaname.ident << "/" << adaname.fullName
                     << ": " << elem.ID << " / " << decl.Renamed_Entity
@@ -1966,7 +1966,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         NameData                adaname = singleName(decl, ctx);
 
-        if (decl.Renamed_Entity < 0)
+        if (isInvalidId(decl.Renamed_Entity))
         {
           logWarn() << "skipping unknown renaming: " << adaname.ident << "/" << adaname.fullName
                     << ": " << elem.ID << " / " << decl.Renamed_Entity
@@ -1978,7 +1978,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ROSE_ASSERT(renamed_entity_elem.Element_Kind == An_Expression);
 
         Expression_Struct& renamed_entity_expr = renamed_entity_elem.The_Union.Expression;
-        SgDeclarationStatement& aliased = getAliasedExcnDecl(renamed_entity_expr.Corresponding_Name_Definition, ctx);
+        SgInitializedName& aliased = getAliasedExcnDecl(renamed_entity_expr.Corresponding_Name_Definition, ctx);
         SgScopeStatement&       scope   = ctx.scope();
         SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, aliased, scope);
 

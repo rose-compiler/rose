@@ -38,18 +38,20 @@ Unparse_Ada::unparseAdaFile(SgSourceFile *sourcefile, SgUnparse_Info& info)
 
 namespace
 {
+  inline
   SgName nameOf(const SgSymbol& sy)
   {
     return sy.get_name();
   }
 
+  inline
   SgName nameOf(const SgVarRefExp& var_ref)
   {
     return nameOf(SG_DEREF(var_ref.get_symbol()));
   }
 
-  const char* COMMA_SEP = ", ";
-  const char* EOS_NL = ";\n";
+  static const std::string COMMA_SEP = ", ";
+  static const std::string EOS_NL = ";\n";
 
   bool isAdaFunction(SgFunctionType& ty)
   {
@@ -77,8 +79,6 @@ namespace
     unparseTypeModifiers(unparser, n.get_declarationModifier().get_typeModifier());
   }
 
-  std::string renamedName(SgDeclarationStatement& n);
-
   struct AdaParamUnparser
   {
     AdaParamUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp, const char* separator)
@@ -88,7 +88,7 @@ namespace
     void prn(const std::string& s)
     {
       unparser.curprint(s);
-      os << s;
+      //~ os << s;
     }
 
     void handle(SgVariableDeclaration& n)
@@ -127,7 +127,7 @@ namespace
     Unparse_Ada&    unparser;
     SgUnparse_Info& info;
     std::ostream&   os;
-    const char*     sep;
+    std::string     sep;
   };
 
   template <class AstVisitor>
@@ -171,7 +171,8 @@ namespace
 
     void handle(SgNullStatement&)
     {
-      prn("null;\n");
+      prn("null");
+      prn(EOS_NL);
     }
 
     Unparse_Ada&    unparser;
@@ -196,17 +197,47 @@ namespace
     void handle(SgForStatement& n) { res = n.get_string_label(); }
     void handle(SgAdaLoopStmt& n)  { res = n.get_string_label(); }
     void handle(SgWhileStmt& n)    { res = n.get_string_label(); }
-    //~ void handle(SgBasicBlock& n)   { res = n.get_string_label(); }
+    void handle(SgBasicBlock& n)   { res = n.get_string_label(); }
   };
 
-  struct IsLoopStmt : sg::DispatchHandler<bool>
+  struct LabelSyntax : sg::DispatchHandler<std::pair<std::string, std::string> >
   {
     void handle(SgNode& n)         { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgStatement& n)    { res = false; }
-    void handle(SgForStatement& n) { res = true;  }
-    void handle(SgAdaLoopStmt& n)  { res = true;  }
-    void handle(SgWhileStmt& n)    { res = true;  }
+    ReturnType stmtSyntax() const;
+    ReturnType loopSyntax() const;
+
+    void handle(SgStatement& n)      { res = stmtSyntax(); }
+    void handle(SgForStatement& n)   { res = loopSyntax();  }
+    void handle(SgAdaLoopStmt& n)    { res = loopSyntax();  }
+    void handle(SgWhileStmt& n)      { res = loopSyntax();  }
+    //~ void handle(SgBasicBlockStmt& n) { res = blockSyntax();  }
+  };
+
+  LabelSyntax::ReturnType LabelSyntax::stmtSyntax() const
+  {
+    return std::make_pair(std::string("<<"), std::string(">> "));
+  }
+
+  LabelSyntax::ReturnType LabelSyntax::loopSyntax() const
+  {
+    return std::make_pair(std::string(""), std::string(": "));
+  }
+
+
+  struct RenamingSyntax
+  {
+      RenamingSyntax()
+      : prefixSyntax(), infixSyntax(), renamedName()
+      {}
+
+      RenamingSyntax(std::string prefix, std::string infix, std::string renamed)
+      : prefixSyntax(prefix), infixSyntax(infix), renamedName(renamed)
+      {}
+
+      std::string prefixSyntax;
+      std::string infixSyntax;
+      std::string renamedName;
   };
 
   struct AdaStatementUnparser
@@ -245,7 +276,7 @@ namespace
     std::pair<std::string, std::string>
     typedeclSyntax(SgType* n);
 
-    std::string
+    RenamingSyntax
     renamingDeclSyntax(SgDeclarationStatement* n, size_t idx);
 
     void startPrivateIfNeeded(SgDeclarationStatement* n);
@@ -263,7 +294,8 @@ namespace
 
     void handle(SgNullStatement& n)
     {
-      prn("null;\n");
+      prn("null");
+      prn(EOS_NL);
     }
 
     void handle(SgAdaTaskTypeDecl& n)
@@ -373,14 +405,15 @@ namespace
 
     void handle(SgAdaRenamingDecl& n)
     {
-      SgDeclarationStatement* orig = n.get_renamedDecl();
-      std::string             what = renamingDeclSyntax(orig, n.get_renamedIndex());
+      SgDeclarationStatement* orig    = n.get_renamedDecl();
+      RenamingSyntax          renamed = renamingDeclSyntax(orig, n.get_renamedIndex());
 
-      prn("package ");
+      prn(renamed.prefixSyntax);
       prn(n.get_name());
+      prn(renamed.infixSyntax);
       prn(" renames ");
       prnPrefix(n, *orig);
-      prn(renamedName(*orig));
+      prn(renamed.renamedName);
       prn(EOS_NL);
     }
 
@@ -447,7 +480,8 @@ namespace
 
       unparseElseBranch(AdaElseUnparser(unparser, info, os), n.get_false_body());
 
-      prn("end if;\n");
+      prn("end if;");
+      prn(EOS_NL);
     }
 
     void handle(SgGotoStatement& n)
@@ -533,11 +567,11 @@ namespace
 
     void handle(SgLabelStatement& n)
     {
-      const bool loopLabel = sg::dispatch(IsLoopStmt(), n.get_statement());
+      std::pair<std::string, std::string> syntax = sg::dispatch(LabelSyntax(), n.get_statement());
 
-      prn(loopLabel ? "" : "<<");
+      prn(syntax.first);
       prn(n.get_label());
-      prn(loopLabel ? ": " : ">> ");
+      prn(syntax.second);
       stmt(n.get_statement());
     }
 
@@ -907,9 +941,9 @@ namespace
     return sg::dispatch(TypedeclSyntax(), n);
   }
 
-  struct RenamingDeclSyntax : sg::DispatchHandler<std::string>
+  struct RenamingDeclSyntax : sg::DispatchHandler<RenamingSyntax>
   {
-    typedef sg::DispatchHandler<std::string> base;
+    typedef sg::DispatchHandler<RenamingSyntax> base;
 
     explicit
     RenamingDeclSyntax(size_t i)
@@ -918,23 +952,39 @@ namespace
 
     void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgDeclarationStatement&) { res = ("-- unknown todo"); }
-    void handle(SgAdaPackageSpecDecl&)   { res = ("package"); }
-    void handle(SgAdaPackageBodyDecl&)   { res = ("package"); }
+    void handle(SgDeclarationStatement&)
+    {
+      static const std::string unknown("-- unknown todo");
+
+      res = RenamingSyntax(unknown, unknown, unknown);
+    }
+
+    void handle(SgAdaPackageSpecDecl& n)
+    {
+      ROSE_ASSERT(idx == 0);
+
+      res = RenamingSyntax("package", "", n.get_name());
+    }
+
+    void handle(SgAdaPackageBodyDecl& n)
+    {
+      ROSE_ASSERT(idx == 0);
+
+      res = RenamingSyntax("package", "", n.get_name());
+    }
 
     void handle(SgVariableDeclaration& n)
     {
       SgInitializedName& el = SG_DEREF(n.get_variables().at(idx));
-      SgTypedefType*     ty = isSgTypedefType(el.get_type());
 
-      ROSE_ASSERT(ty);
-      res = ty->get_name();
+      ROSE_ASSERT(SG_DEREF(isSgTypedefType(el.get_type())).get_name() == std::string("Exception"));
+      res = RenamingSyntax("", ": exception", el.get_name());
     }
 
     const size_t idx;
   };
 
-  std::string
+  RenamingSyntax
   AdaStatementUnparser::renamingDeclSyntax(SgDeclarationStatement* n, size_t idx)
   {
     return sg::dispatch(RenamingDeclSyntax(idx), n);
@@ -1000,7 +1050,6 @@ namespace
 
 #if REVISIT_IF_NEEDED
 
-  // \note also compare to RenamedName
   struct DeclaredNameQuery : IsNamedScope
   {
     using IsNamedScope::handle;
@@ -1089,27 +1138,6 @@ namespace
       prn(*pathit);
       prn(".");
     }
-  }
-
-  struct RenamedName : sg::DispatchHandler<std::string>
-  {
-    void handle(SgNode& n)            { SG_UNEXPECTED_NODE(n); }
-
-    void handle(SgImportStatement& n)
-    {
-      SgExpressionPtrList& lst = n.get_import_list();
-      ROSE_ASSERT(lst.size() == 1);
-
-      SgVarRefExp*         item = isSgVarRefExp(lst.back());
-
-      res = nameOf(SG_DEREF(item));
-    }
-  };
-
-
-  std::string renamedName(SgDeclarationStatement& n)
-  {
-    return sg::dispatch(RenamedName(), &n);
   }
 }
 

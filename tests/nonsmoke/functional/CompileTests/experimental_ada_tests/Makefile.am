@@ -7,9 +7,6 @@ SUBDIRS = \
 # ROSE_FLAGS = -rose:verbose 0 -rose:experimental_csharp_frontend -I$(srcdir)
 ROSE_FLAGS    ?= -rose:skipfinalCompileStep
 
-# testTranslator runs the AST consistency checks
-../../testTranslator:
-	cd ../..; $(MAKE) testTranslator
 
 
 # ROSE_COMPILER ?= $(top_builddir)/src/rose-compiler
@@ -49,8 +46,16 @@ NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
 
 #
 # define test suite
-TEST_TARGETS := $(PASSING_TESTS) $(PASSING_INCOMPLETE_TESTS)
+ROSE_OUTPUT_DIR := rose-ada-output
+# ROSE_OUTPUT_DIR := .
+
+TMP_PASSING_TESTS := $(addprefix $(ROSE_OUTPUT_DIR)/,$(PASSING_TESTS))
+# TMP_PASSING_TESTS := $(ROSE_OUTPUT_DIR)/pkgrename.ads
+
+# TEST_TARGETS := $(PASSING_TESTS) $(PASSING_INCOMPLETE_TESTS)
+TEST_TARGETS := $(TMP_PASSING_TESTS)
 ALL_TEST_TARGETS := $(PASSING_TESTS) $(PASSING_INCOMPLETE_TESTS) $(ROSE_BACKEND_TODO) $(ROSE_FRONTEND_TODO) $(ASIS_TODO)
+
 
 TESTCODES_REQUIRED_TO_PASS := $(TEST_TARGETS)
 
@@ -71,8 +76,8 @@ passing-frontend: $(PASSING_FRONTEND)
 .PHONY: passing-asis
 passing-asis: $(PASSING_ASIS)
 
-.PHONY: EndOfList
-EndOfList:
+.PHONY: $(ROSE_OUTPUT_DIR)/EndOfList
+$(ROSE_OUTPUT_DIR)/EndOfList:
 
 .PHONY: print
 print:
@@ -84,15 +89,19 @@ print:
 $(top_builddir)/src/rose-compiler:
 	$(MAKE) -C $(top_builddir)/src rose-compiler
 
-%.ads:$(abs_srcdir)/tests/%.ads $(ROSE_COMPILER)
+# testTranslator runs the AST consistency checks
+../../testTranslator:
+	cd ../..; $(MAKE) testTranslator
+
+$(ROSE_OUTPUT_DIR)/%.ads:$(abs_srcdir)/tests/%.ads $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
 
-%.adb:$(abs_srcdir)/tests/%.adb $(ROSE_COMPILER)
+$(ROSE_OUTPUT_DIR)/%.adb:$(abs_srcdir)/tests/%.adb $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
 
 .PHONY: clean-local
 clean-local:
-	rm -f *.adb *.ads *.ali *.dot
+	rm -f $(ROSE_OUTPUT_DIR)/*.adb *$(ROSE_OUTPUT_DIR)/.ads *.ali *.dot 
 	rm -f $(srcdir)/tests/obj/*
 
 .PHONY: check-local
