@@ -128,7 +128,6 @@ void buildGraph(Sawyer::Container::Graph<V, E> &graph, size_t nverts, size_t ned
 
 template<class V, class E>
 void checkGraphs(const Sawyer::Container::Graph<V, E> &a, const Sawyer::Container::Graph<V, E> &b) {
-    typedef typename Sawyer::Container::Graph<V, E>::ConstVertexIterator Vertex;
     typedef typename Sawyer::Container::Graph<V, E>::ConstEdgeIterator Edge;
 
     ASSERT_always_require(a.nVertices()==b.nVertices());
@@ -156,8 +155,6 @@ int main(int argc, char *argv[]) {
     using namespace StringUtility;
 
     typedef Sawyer::Container::Graph<VertexValue, EdgeValue> Graph;
-    typedef Graph::VertexIterator Vertex;
-    typedef Graph::EdgeIterator Edge;
 
     ROSE_INITIALIZE;
 

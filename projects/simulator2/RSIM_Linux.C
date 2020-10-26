@@ -55,9 +55,9 @@ public:
 
     SimLoader(SgAsmInterpretation *interpretation, std::string default_interpname)
         : interpreter(NULL), vdso(NULL), vdso_mapped_va(0), vdso_entry_va(0) {
-        set_perform_dynamic_linking(false);             /* we explicitly link in the interpreter and nothing else */
-        set_perform_remap(true);                        /* map interpreter and main binary into specimen memory */
-        set_perform_relocations(false);                 /* allow simulated interpreter to perform relocation fixups */
+        performingDynamicLinking(false);                /* we explicitly link in the interpreter and nothing else */
+        performingRemap(true);                          /* map interpreter and main binary into specimen memory */
+        performingRelocations(false);                   /* allow simulated interpreter to perform relocation fixups */
 
         /* Link the interpreter into the AST */
         SgAsmGenericHeader *header = interpretation->get_headers()->get_headers().front();

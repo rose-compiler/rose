@@ -695,7 +695,7 @@ void CodeThorn::Analyzer::printStatusMessage(bool forceDisplay) {
     {
       estateWorkListCurrentSize = estateWorkListCurrent->size();
     }
-    ss <<color("white")<<"Number of pstates/estates/trans/csets/wl/iter/time: ";
+    ss <<color("white")<<"Number of pstates/estates/trans/c/wl/iter/time/mem: ";
     ss <<color("magenta")<<pstateSetSize
        <<color("white")<<"/"
        <<color("cyan")<<estateSetSize
@@ -706,23 +706,25 @@ void CodeThorn::Analyzer::printStatusMessage(bool forceDisplay) {
        <<color("white")<<"/"
        <<estateWorkListCurrentSize
        <<"/"<<getIterations()<<"-"<<getApproximatedIterations()
-       <<" "<<analysisRunTimeInSeconds()<<" secs"
-      ;
-    ss<<" "<<color("normal")<<analyzerStateToString();
-    ss<<endl;
+       <<"/"<<analysisRunTimeInSeconds()<<"<"<<(_maxSeconds!=-1?std::to_string(_maxSeconds)+"s"     :"inf")
+       <<"/"<<getPhysicalMemorySize()/(1024*1024) <<"<"<<(_maxBytes  !=-1?std::to_string(_maxBytes/(1024*1024))  +" MiB":"inf")
+       <<"/"<<color("normal")<<analyzerStateToString()
+       <<endl
+    ;
     printStatusMessage(ss.str());
   }
 }
 
 string CodeThorn::Analyzer::analyzerStateToString() {
   stringstream ss;
-  ss<<"isPrec:"<<isPrecise();
+  ss<<"[P:"<<isPrecise();
   ss<<" ";
-  ss<<"TopMode:"<<_globalTopifyMode;
+  ss<<"T:"<<_globalTopifyMode;
   ss<<" ";
-  ss<<"RBin:"<<_ctOpt.rers.rersBinary;
+  ss<<"B:"<<_ctOpt.rers.rersBinary;
   ss<<" ";
-  ss<<"incSTGReady:"<<isIncompleteSTGReady();
+  ss<<"R:"<<isIncompleteSTGReady();
+  ss<<"]";
   return ss.str();
 }
 
@@ -1944,7 +1946,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
 
   EState estate(slab,initialPStateStored,emptycsetstored);
   if(SgProject* project=isSgProject(root)) {
-    SAWYER_MESG(logger[TRACE])<< "STATUS: Number of global variables: ";
+    SAWYER_MESG(logger[INFO])<< "Number of global variables: ";
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
     SAWYER_MESG(logger[TRACE])<< globalVars.size()<<endl;
 
@@ -1964,7 +1966,13 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
       // TODO: investigate why array variables get filtered (but should not)
       if(true || (setOfUsedVars.find(globalVarId)!=setOfUsedVars.end() && _variablesToIgnore.find(globalVarId)==_variablesToIgnore.end())) {
         globalVarName2VarIdMapping[variableIdMapping->variableName(variableIdMapping->variableId(*i))]=variableIdMapping->variableId(*i);
-        estate=analyzeVariableDeclaration(*i,estate,estate.label());
+        if(_ctOpt.getInterProceduralFlag()) {
+          // only initialize global variable in inter-procedural mode
+          estate=analyzeVariableDeclaration(*i,estate,estate.label());
+        } else {
+          // do not intialize global variable
+          SAWYER_MESG(logger[TRACE])<<"NOT INITIALIZED GLOBAL VARIABLE:"<<(*i)->unparseToString()<<endl;
+        }
       } else {
         filteredVars++;
       }

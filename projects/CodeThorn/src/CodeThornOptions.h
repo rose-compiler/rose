@@ -97,7 +97,9 @@ struct CodeThornOptions : public CodeThorn::Options {
   int testSelector=0;
   bool intraProcedural=false;
   int precisionLevel=1;
-
+  std::string csvReportModeString="generate";
+  std::string forkFunction1="!undefined:forkFunction1!";
+  
   // RERS C-subset program options
   struct Rers {
     std::string assertResultsOutputFileName;

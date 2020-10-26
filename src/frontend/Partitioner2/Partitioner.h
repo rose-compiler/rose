@@ -371,6 +371,9 @@ private:
     ControlFlowGraph::VertexIterator nonexistingVertex_;
     static const size_t nSpecialVertices = 3;
 
+    // Optional cached information
+    Sawyer::Optional<rose_addr_t> elfGotVa_;            // address of ELF GOT, set by findElfGotVa
+
     // Protects the following data members
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
     Progress::Ptr progress_;                            // Progress reporter to update, or null
@@ -432,6 +435,8 @@ private:
         // s & undiscoveredVertex_;             -- initialized by rebuildVertexIndices
         // s & indeterminateVertex_;            -- initialized by rebuildVertexIndices
         // s & nonexistingVertex_;              -- initialized by rebuildVertexIndices
+        if (version >= 2)
+            s & BOOST_SERIALIZATION_NVP(elfGotVa_);
         // s & progress_;                       -- not saved/restored
         // s & cfgProgressTotal_;               -- not saved/restored
     }
@@ -2349,6 +2354,19 @@ public:
     // Checks consistency of internal data structures when debugging is enable (when NDEBUG is not defined).
     void checkConsistency() const;
 
+    /** Find the ELF global offset table and save its address.
+     *
+     *  Returns the GOT section and caches the section's actual mapped address.
+     *
+     *  See also, @ref elfGotVa. */
+    SgAsmGenericSection* elfGot(SgAsmElfFileHeader*);
+
+    /** Returns a previously cached ELF GOT address.
+     *
+     *  See also, @ref elfGot. */
+    Sawyer::Optional<rose_addr_t> elfGotVa() const;
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Settings
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2570,7 +2588,7 @@ private:
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Partitioner, 1);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Partitioner, 2);
 
 #endif
 #endif

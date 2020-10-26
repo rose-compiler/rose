@@ -113,6 +113,7 @@ ProcessTemplateHandlingOptions::visit ( SgNode* node )
                   {
                  // Mark all template function instantiations except specialized template 
                  // instantiations to NOT be output in code generation
+                    ROSE_ASSERT(s != NULL);
                     if (s->get_file_info()->isOutputInCodeGeneration() == true && s->isSpecialization() == false)
                        {
                          printf ("AST Fixup: This template function will not be output within code generation \n");

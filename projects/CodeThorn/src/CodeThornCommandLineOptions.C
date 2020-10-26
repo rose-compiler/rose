@@ -44,6 +44,13 @@ void checkNumThreads(CodeThornOptions& ctOpt) {
   }
 }
 
+void checkReportMode(CodeThornOptions& ctOpt) {
+  if(ctOpt.csvReportModeString!="generate" && ctOpt.csvReportModeString!="append") {
+    cerr<<"Error: unsupported argument for --report-mode : "<<ctOpt.csvReportModeString<<endl;
+    exit(1);
+  }
+}
+
 CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger, std::string version,
                                                 CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
 
@@ -208,6 +215,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("test-selector",po::value< int >(&ctOpt.testSelector)->default_value(0)->implicit_value(0),"Option for selecting dev tests.")
     ("intra",po::value< bool >(&ctOpt.intraProcedural)->default_value(false)->implicit_value(true),"Select intra-procedural analysis.")
     ("precision",po::value< int >(&ctOpt.precisionLevel),"Option for selecting level of precision.")
+    ("csv-report-mode",po::value< std::string >(&ctOpt.csvReportModeString)->default_value("generate"),"Report file mode: generate|append.");
     ;
 
   rersOptions.add_options()
@@ -432,7 +440,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   checkSpotOptions(ltlOpt,parProOpt);
   checkZ3Options(ctOpt);
   checkNumThreads(ctOpt);
-
+  checkReportMode(ctOpt);
+  
   return args;
 }
 

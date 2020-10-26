@@ -181,6 +181,13 @@ genericSwitches() {
                .action(ShowLicenseAndExit::instance())
                .doc("Show the ROSE software license and exiit."));
 
+    // This undocumented switch is used for internal testing during "make check" and similar. If a tool is disabled due to ROSE
+    // being compiled with too old a compiler or without some necessary software prerequisite, then the tool will print an
+    // error message that it is disabled but will still exit with a successful status (i.e., main returns zero).
+    gen.insert(Switch("no-error-if-disabled")
+               .intrinsicValue(false, genericSwitchArgs.errorIfDisabled)
+               .hidden(true));
+
     return gen;
 }
 
