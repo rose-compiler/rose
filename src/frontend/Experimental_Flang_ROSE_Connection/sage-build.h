@@ -39,15 +39,19 @@ template<typename T> void Build(const Fortran::parser::             Submodule &x
 template<typename T> void Build(const Fortran::parser::             BlockData &x, T* scope);
 
 template<typename T> void Build(const Fortran::parser::     SpecificationPart &x, T* scope);
+void BuildFunctionReturnType   (const Fortran::parser::     SpecificationPart &x, std::string &, SgType* &);
 template<typename T> void Build(const Fortran::parser::         ExecutionPart &x, T* scope);
 template<typename T> void Build(const Fortran::parser::ExecutionPartConstruct &x, T* scope);
 template<typename T> void Build(const Fortran::parser::   ExecutableConstruct &x, T* scope);
 template<typename T> void Build(const Fortran::parser::            ActionStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::        AssignmentStmt &x, T* scope);
 
-void Build(const Fortran::parser::SubroutineStmt &x, std::list<std::string> &, std::string &, LanguageTranslation::FunctionModifierList &function_modifiers);
-void Build(const Fortran::parser::    PrefixSpec &x, LanguageTranslation::FunctionModifier &function_mod);
+void Build(const Fortran::parser::  FunctionStmt &x, std::list<std::string> &, std::string &, std::string &, LanguageTranslation::FunctionModifierList &, SgType* &);
+void Build(const Fortran::parser::SubroutineStmt &x, std::list<std::string> &, std::string &, LanguageTranslation::FunctionModifierList &);
+void Build(const std::list<Fortran::parser::PrefixSpec> &x, LanguageTranslation::FunctionModifierList &, SgType* &);
+void Build(const Fortran::parser::    PrefixSpec &x, LanguageTranslation::FunctionModifier &, SgType* &);
 void Build(const Fortran::parser::      DummyArg &x, std::string &);
+void Build(const Fortran::parser::        Suffix &x, std::string &);
 
 void Build(const Fortran::parser::              Variable &x, SgExpression* &expr);
 void Build(const Fortran::parser::            Designator &x, SgExpression* &expr);
