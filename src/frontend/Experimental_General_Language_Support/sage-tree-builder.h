@@ -297,7 +297,7 @@ namespace SageBuilderCpp17 {
 
 // Non builder helper functions
    SgType* getFunctionReturnType(const std::string &result_name, SgScopeStatement* scope);
-   void fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type);
+   void  fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type);
 
 
 } // namespace SageBuilderCpp17

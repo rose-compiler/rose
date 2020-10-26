@@ -225,12 +225,15 @@ void Build(const parser::FunctionSubprogram &x, T* scope)
    // Traverse FunctionStmt to get dummy argument list, name of function, name of result, and return type if part of prefix
    Build(std::get<0>(x.t).statement, dummy_arg_name_list, name, result_name, function_modifiers, return_type);
 
-   // TEMPORARY - fix soon
-   bool fix_return_type = false;
+   // Set bool for an undeclared result name so can fix it at the right time
+   bool undeclared_result_name = false;
+   if (!result_name.empty() && return_type) {
+      undeclared_result_name = true;
+   }
+
+   // Peek into the SpecificationPart to get the return type if don't already know it
    if (!return_type) {
-      return_type = SageBuilderCpp17::buildIntType();
-      fix_return_type = true;
-      // possibly create unknown type here and fix up in SageTreeBuilder
+      BuildFunctionReturnType(std::get<parser::SpecificationPart>(x.t), result_name, return_type);
    }
 
    // Enter SageTreeBuilder for SgFunctionParameterList
@@ -240,7 +243,7 @@ void Build(const parser::FunctionSubprogram &x, T* scope)
    Build(std::get<parser::SpecificationPart>(x.t), param_scope);
 
    // Need to create initialized name here for result, if result is not declared in SpecificationPart
-   if (!result_name.empty() && !fix_return_type) {
+   if (undeclared_result_name) {
       SageBuilderCpp17::fixUndeclaredResultName(result_name, param_scope, return_type);
    }
 
@@ -249,10 +252,6 @@ void Build(const parser::FunctionSubprogram &x, T* scope)
 
    // Leave SageTreeBuilder for SgFunctionParameterList
    builder.Leave(param_list, param_scope, dummy_arg_name_list);
-
-   if (fix_return_type) {
-      return_type = SageBuilderCpp17::getFunctionReturnType(result_name, param_scope);
-   }
 
    // Begin SageTreeBuilder for SgFunctionDeclaration
    builder.Enter(function_decl, name, return_type, param_list, function_modifiers, is_defining_decl);
@@ -352,6 +351,32 @@ void Build(const parser::SpecificationPart &x, T* scope)
    const auto & decl_construct = std::get<std::list<parser::DeclarationConstruct>>(x.t);
    Build(decl_construct, scope);
 
+}
+
+void BuildFunctionReturnType(const parser::SpecificationPart &x, std::string &result_name, SgType* &return_type)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(SpecificationPart)\n";
+#endif
+
+   // Look for the variable declaration of the result to get the function return type
+
+   const auto & decl_construct = std::get<std::list<parser::DeclarationConstruct>>(x.t);
+
+   for (const auto &elem : decl_construct) {
+      const auto & spec_construct = std::get<parser::SpecificationConstruct>(elem.u);
+      const auto & type_decl_stmt = std::get<parser::Statement<common::Indirection<parser::TypeDeclarationStmt>>>(spec_construct.u).statement.value();
+      const auto & entity_decl = std::get<std::list<parser::EntityDecl>>(type_decl_stmt.t);
+
+      for (const auto &name : entity_decl) {
+         // Look for the result name
+         if (std::get<0>(name.t).ToString() == result_name) {
+            // When result name is found, get the return type
+            const auto & decl_type_spec = std::get<parser::DeclarationTypeSpec>(type_decl_stmt.t);
+            Build(decl_type_spec, return_type);
+         }
+      }
+   }
 }
 
 template<typename T>

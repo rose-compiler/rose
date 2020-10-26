@@ -39,6 +39,7 @@ template<typename T> void Build(const Fortran::parser::             Submodule &x
 template<typename T> void Build(const Fortran::parser::             BlockData &x, T* scope);
 
 template<typename T> void Build(const Fortran::parser::     SpecificationPart &x, T* scope);
+void BuildFunctionReturnType   (const Fortran::parser::     SpecificationPart &x, std::string &, SgType* &);
 template<typename T> void Build(const Fortran::parser::         ExecutionPart &x, T* scope);
 template<typename T> void Build(const Fortran::parser::ExecutionPartConstruct &x, T* scope);
 template<typename T> void Build(const Fortran::parser::   ExecutableConstruct &x, T* scope);
