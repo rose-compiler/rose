@@ -2411,17 +2411,19 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                     }
                                }
 
-                            ROSE_ASSERT(targetNode->get_file_info() != NULL);
+                            ROSE_ASSERT(targetNode != NULL);
+                            Sg_File_Info* nodeFileInfo = targetNode->get_file_info();
+                            ROSE_ASSERT(nodeFileInfo != NULL);
                          // This case appears for test2008_08.f90: the SgProgramHeaderStatement is not present in the source code
                          // so we can't attach a comment to it.
-                         // if (targetNode->get_file_info()->get_file_id() < 0)
-                            if (targetNode->get_file_info()->get_physical_file_id(source_file_id) < 0)
+                         // if (nodeFileInfo->get_file_id() < 0)
+                            if (nodeFileInfo->get_physical_file_id(source_file_id) < 0)
                                {
 #if 0
-                                 printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_file_id()          = %d \n",targetNode->get_file_info()->get_file_id());
+                                 printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_file_id()          = %d \n",nodeFileInfo->get_file_id());
 #endif
 #if 0
-                                 printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_physical_file_id() = %d \n",targetNode->get_file_info()->get_physical_file_id(source_file_id));
+                                 printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_physical_file_id() = %d \n",nodeFileInfo->get_physical_file_id(source_file_id));
                                  printf ("In SgFile: targetNode = %s \n",targetNode->class_name().c_str());
                                  printf ("currentFileName for currentFileNameId = %d = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
                                  printf ("sourceFile = %s \n",sourceFile->get_sourceFileNameWithPath().c_str());

@@ -1,5 +1,5 @@
 /* unparseAda_expressions.C
- * 
+ *
  *
  */
 #include "sage3basic.h"
@@ -38,38 +38,38 @@ namespace
   {
     return nameOf(SG_DEREF(fun_ref.get_symbol()));
   }
-  
-  std::string 
+
+  std::string
   operator_sym(SgNode& n)
   {
     typedef std::map<int, std::string> operator_symbols_map;
 
 /*
-    static const operator_symbols_map operator_symbols; 
-                = { 
+    static const operator_symbols_map operator_symbols;
+                = {
                     { V_SgAssignOp,         ":=" },
-                    { V_SgOrOp,             "or else" },          
-                    { V_SgAndOp,            "and then" },          
+                    { V_SgOrOp,             "or else" },
+                    { V_SgAndOp,            "and then" },
                     { V_SgBitAndOp,         "and" },
-                    { V_SgBitOrOp,          "or" },          
-                    { V_SgBitXorOp,         "xor" },         
-                    { V_SgEqualityOp,       "=" },       
-                    { V_SgNotEqualOp,       "!=" },       
-                    { V_SgLessThanOp,       "<" },       
-                    { V_SgLessOrEqualOp,    "<=" },    
-                    { V_SgGreaterThanOp,    ">" },    
-                    { V_SgGreaterOrEqualOp, ">=" }, 
-                    { V_SgAddOp,            "+" },            
-                    { V_SgSubtractOp,       "-" },       
-                    { V_SgConcatenationOp,  "&" },  
-                    { V_SgUnaryAddOp,       "+" },       
-                    { V_SgMinusOp,          "-" },          
-                    { V_SgMultiplyOp,       "*" },       
-                    { V_SgDivideOp,         "/" },         
-                    { V_SgModOp,            "mod" },            
-                    //~ { V_SgRemOp,            "rem" },        
-                    { V_SgPowerOp,          "**" },          
-                    //~ { V_SgAbsOp,            "abs" },       
+                    { V_SgBitOrOp,          "or" },
+                    { V_SgBitXorOp,         "xor" },
+                    { V_SgEqualityOp,       "=" },
+                    { V_SgNotEqualOp,       "!=" },
+                    { V_SgLessThanOp,       "<" },
+                    { V_SgLessOrEqualOp,    "<=" },
+                    { V_SgGreaterThanOp,    ">" },
+                    { V_SgGreaterOrEqualOp, ">=" },
+                    { V_SgAddOp,            "+" },
+                    { V_SgSubtractOp,       "-" },
+                    { V_SgConcatenationOp,  "&" },
+                    { V_SgUnaryAddOp,       "+" },
+                    { V_SgMinusOp,          "-" },
+                    { V_SgMultiplyOp,       "*" },
+                    { V_SgDivideOp,         "/" },
+                    { V_SgModOp,            "mod" },
+                    //~ { V_SgRemOp,            "rem" },
+                    { V_SgExponentiationOp, "**" },
+                    //~ { V_SgAbsOp,            "abs" },
                     { V_SgNotOp,            "not" },
                     // SgCommaOpExp is not really in Ada, but separates discrete choices in case-when.
                     { V_SgCommaOpExp,       "|" }
@@ -99,59 +99,59 @@ namespace
       operator_symbols[V_SgMultiplyOp] =       "*";
       operator_symbols[V_SgDivideOp] =         "/";
       operator_symbols[V_SgModOp] =            "mod";
-      operator_symbols[V_SgPowerOp] =          "**";
+      operator_symbols[V_SgExponentiationOp] = "**";
       operator_symbols[V_SgNotOp] =            "not";
       operator_symbols[V_SgAbsOp] =            "abs";
       operator_symbols[V_SgRemOp] =            "rem";
       // not an official operator
       operator_symbols[V_SgDotExp] =           ".";
-      // not really in Ada (when clause separator)   
+      // not really in Ada (when clause separator)
       operator_symbols[V_SgCommaOpExp] =       "|";
     }
 
     operator_symbols_map::const_iterator pos = operator_symbols.find(n.variantT());
-    
+
     if (pos == operator_symbols.end())
     {
       std::cerr << "unknown operator: " << typeid(n).name() << std::endl;
-      
+
       return "<OP>";
     }
-    
+
     return pos->second;
   }
-  
+
   struct AdaExprUnparser
   {
     AdaExprUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
     : unparser(unp), info(inf), os(outp)
     {}
-    
+
     void prn(const std::string& s)
     {
       unparser.curprint(s);
       os << s;
     }
-    
+
     void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
-    
-    void handle(SgBinaryOp& n);  
-    void handle(SgUnaryOp& n);  
-    
+
+    void handle(SgBinaryOp& n);
+    void handle(SgUnaryOp& n);
+
     /*
     void handle(SgIntVal& n)
     {
       prn(n.get_valueString());
     }
     */
-    
+
     void handle(SgRangeExp& n)
     {
       expr(n.get_start());
       prn("..");
       expr(n.get_end());
     }
-    
+
     void handle(SgCallExpression& n)
     {
       expr(n.get_function());
@@ -159,7 +159,7 @@ namespace
       expr(n.get_args());
       prn(")");
     }
-    
+
     void handle(SgCastExp& n)
     {
       type(n.get_type());
@@ -167,129 +167,157 @@ namespace
       expr(n.get_operand());
       prn(")");
     }
-    
+
+    void handle(SgStringVal& n)
+    {
+      prn("\"\"");
+    }
+
+
     void handle(SgThrowOp& n)
     {
       prn("raise ");
       expr(n.get_operand());
     }
-    
+
     void handle(SgActualArgumentExpression& n)
     {
       prn(n.get_argument_name());
       prn(" => ");
       expr(n.get_expression());
     }
-    
+
     void handle(SgVarRefExp& n)
     {
       prn(nameOf(n));
     }
-    
+
     void handle(SgNullExpression& n)
     {
       prn("<null>");
     }
-    
+
     void handle(SgFunctionRefExp& n)
     {
       prn(nameOf(n));
     }
-    
+
     void expr(SgExpression* exp)
     {
-      // let the generic unparser handle its things.. 
-      unparser.unparseExpression(exp, info); 
-      
+      // let the generic unparser handle its things..
+      unparser.unparseExpression(exp, info);
+
       // or just handle everything
       //~ sg::dispatch(*this, exp);
     }
-    
+
     void handle(SgAssignInitializer& n)
     {
-      expr(n.get_operand());  
+      expr(n.get_operand());
     }
-    
+
     void expr(SgExprListExp* exp)
     {
       SgExpressionPtrList& lst = exp->get_expressions();
       bool                 first = true;
-      
+
       //~ for (SgExpression* exp : lst)
       for (size_t i = 0; i < lst.size(); ++i)
       {
         SgExpression* exp = lst[i];
         if (!first)
-        { 
+        {
           prn(", ");
         }
-        else 
+        else
           first = false;
-        
+
         expr(exp);
       }
     }
-    
+
     void operator()(SgExpression* exp)
     {
       expr(exp);
     }
-    
+
     void type(SgType* t)
     {
       unparser.unparseType(t, info);
     }
-    
+
     Unparse_Ada&    unparser;
     SgUnparse_Info& info;
     std::ostream&   os;
   };
-  
+
+  bool arg_requires_call_syntax(SgExpression* n)
+  {
+    return isSgActualArgumentExpression(n);
+  }
+
   void AdaExprUnparser::handle(SgBinaryOp& n)
   {
-    expr(n.get_lhs_operand());
+    // print either lhs binop rhs
+    //           or "binop" (lhs, rhs)
+
+    SgExpression* lhs    = n.get_lhs_operand();
+    SgExpression* rhs    = n.get_rhs_operand();
+    const bool    prefix = (  arg_requires_call_syntax(lhs)
+                           || arg_requires_call_syntax(rhs)
+                           );
+
+    if (prefix)
+    {
+      prn("\"");
+      prn(operator_sym(n));
+      prn("\" (");
+    }
+
+    expr(lhs);
     prn(" ");
-    prn(operator_sym(n));  
+    prn(prefix ? std::string(", ") : operator_sym(n));
     prn(" ");
-    expr(n.get_rhs_operand());  
+    expr(rhs);
+
+    if (prefix) prn(")");
   }
-  
+
   void AdaExprUnparser::handle(SgUnaryOp& n)
   {
     const bool isprefix = true; // \todo
-    
-    if (isprefix) { prn(operator_sym(n)); prn(" "); }  
-    expr(n.get_operand());  
-    if (!isprefix) prn(operator_sym(n));  
+
+    if (isprefix) { prn(operator_sym(n)); prn(" "); }
+    expr(n.get_operand());
+    if (!isprefix) prn(operator_sym(n));
   }
 }
 
 bool Unparse_Ada::requiresParentheses(SgExpression* expr, SgUnparse_Info& info)
 {
   ASSERT_not_null(expr);
-  
+
   SgStatement* stmt = sg::ancestor<SgStatement>(expr);
-  
+
   // inside a type, etc. ?
-  if (!stmt) return false; 
-  
+  if (!stmt) return false;
+
   if (!isTransformed(stmt))
     return expr->get_need_paren();
-  
+
   return base::requiresParentheses(expr, info);
 }
 
 
-void Unparse_Ada::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info) 
+void Unparse_Ada::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info)
 {
   ASSERT_not_null(expr);
-  
+
   sg::dispatch(AdaExprUnparser{*this, info, std::cerr}, expr);
 }
 
 
 void Unparse_Ada::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
 {
-  printf ("Unparse_Ada::unparseStringVal(): not implemented! \n");
-  ROSE_ASSERT(false);
+  sg::dispatch(AdaExprUnparser{*this, info, std::cerr}, expr);
 }

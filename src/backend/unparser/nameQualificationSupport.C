@@ -7,17 +7,22 @@ using namespace std;
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
 using namespace Rose::Diagnostics;
 
+// This value must be greater than 3 to cause most output to be generated.
 #define DEBUG_NAME_QUALIFICATION_LEVEL 0
 
 #ifndef WARNING_FOR_NONREAL_DEVEL
 #  define WARNING_FOR_NONREAL_DEVEL 0
 #endif
 
-// DQ (9/2/2020): Moved to the tope of the file from the SgInitializedName case in the evaluate inherited attribute function.
+// DQ (9/2/2020): Moved to the top of the file from the SgInitializedName case in the evaluate inherited attribute function.
 // DQ (4/27/2019): Set these to be the same for now.
-// #define DEBUG_INITIALIZED_NAME 0
-#define DEBUG_INITIALIZED_NAME DEBUG_NAME_QUALIFICATION_LEVEL
+#define DEBUG_INITIALIZED_NAME 0
+// #define DEBUG_INITIALIZED_NAME DEBUG_NAME_QUALIFICATION_LEVEL
 
+// DQ (10/17/2020): Worked with Tristan, but this was the only way that I could turn on the debug output for my tool in ROSE_GARDEN.
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#define mfprintf(a) printf
+#endif
 
 // ***********************************************************
 // Main calling function to support name qualification support
@@ -43,6 +48,15 @@ generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNa
   // DQ (5/28/2011): Initialize the local maps to the static maps in SgNode.  This is requires so the
   // types used in template arguments can call the unparser to support there generation of name qualified 
   // nested types.
+
+#if 0
+     printf ("In generateNameQualificationSupport(): node = %p = %s \n",node,node->class_name().c_str());
+     SgSourceFile* sourceFile = isSgSourceFile(node);
+     if (sourceFile != NULL)
+        {
+          printf (" --- sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
+        }
+#endif
 
 #if 0
      mfprintf(mlog [ WARN ] ) ("In generateNameQualificationSupport(): MangledNameSupport::visitedTemplateDefinitions.size() = %zu \n",MangledNameSupport::visitedTemplateDefinitions.size());
@@ -72,6 +86,12 @@ generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNa
 
   // Call the traversal.
      t.traverse(node,ih);
+
+
+#if 0
+     printf("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 void NameQualificationTraversal::initDiagnostics() 
@@ -639,6 +659,8 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeFloat80:
           case V_SgTypeFloat128:
 
+          case V_SgTypeFixed:
+          case V_SgJovialTableType:
        // TV (09/06/2018): Type of an unresolved auto keyword
           case V_SgAutoType:
              {
@@ -2138,7 +2160,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                               forceMoreNameQualification = true;
 #else
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_FUNCTION_RESOLUTION
+#if ( (DEBUG_NAME_QUALIFICATION_LEVEL > 3) && 0) || DEBUG_FUNCTION_RESOLUTION
                               printf ("In NameQualificationTraversal::nameQualificationDepth(): Skip setting forceMoreNameQualification = true: forceMoreNameQualification = %s \n",
                                    forceMoreNameQualification ? "true" : "false");
                               printf ("In NameQualificationTraversal::nameQualificationDepth(): Skip setting forceMoreNameQualification = true: declaration = %p = %s name = %s \n",
@@ -2199,7 +2221,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                               if (functionType != functionTypeAssociatedWithSymbol)
                                  {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_FUNCTION_RESOLUTION
+#if ((DEBUG_NAME_QUALIFICATION_LEVEL > 3) && 0) || DEBUG_FUNCTION_RESOLUTION
                                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
                                    mfprintf(mlog [ WARN ] ) ("NOTE: we are now using the function type in the initial function symbol lookup? \n");
                                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
@@ -2255,7 +2277,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                         alternate_scope = alternate_scope->get_scope();
                                       }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_FUNCTION_RESOLUTION
+#if ((DEBUG_NAME_QUALIFICATION_LEVEL > 3) && 0) || DEBUG_FUNCTION_RESOLUTION
                                    printf ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& \n");
                                    printf ("In NameQualificationTraversal::nameQualificationDepth(): check if we need function parameter resolution: forceMoreNameQualification = %s \n",
                                         forceMoreNameQualification ? "true" : "false");
@@ -3327,6 +3349,13 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          break;
                        }
 
+                    case V_SgProcedureHeaderStatement:
+                    case V_SgJovialTableStatement:
+                       {
+                         return 0;
+                         break;
+                       }
+
                     default:
                        {
                       // Handle cases are we work through specific example codes.
@@ -3424,7 +3453,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) ("forceMoreNameQualification = %s \n",forceMoreNameQualification ? "true" : "false");
 #endif
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) && 0
                printf ("In NameQualificationTraversal::nameQualificationDepth(): forceMoreNameQualification = %s \n",forceMoreNameQualification ? "true" : "false");
                printf ("In NameQualificationTraversal::nameQualificationDepth(): declaration = %p = %s name = %s \n",
                     declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
@@ -3943,7 +3972,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                  {
                                 // DQ (4/12/2014): Now we know that it can be found, but we still need to check if there would 
                                 // be another function that could be used and for which we need name qualification to avoid.
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) && 0
                                    printf ("Using foundAnOverloadedFunctionWithSameName = %s \n",foundAnOverloadedFunctionWithSameName ? "true" : "false");
                                    printf ("Using foundAnOverloadedFunctionInSameScope  = %s \n",foundAnOverloadedFunctionInSameScope  ? "true" : "false");
 #endif
@@ -6308,26 +6337,99 @@ NameQualificationTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDecla
      ASSERT_not_null(declarationToSearchForInReferencedNameSet);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-     mfprintf(mlog [ WARN ] ) ("In skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(): declaration->get_firstNondefiningDeclaration() = %p \n",declaration->get_firstNondefiningDeclaration());
-     mfprintf(mlog [ WARN ] ) ("   --- declarationToSearchForInReferencedNameSet->get_parent() = %p = %s \n",declarationToSearchForInReferencedNameSet->get_parent(),declarationToSearchForInReferencedNameSet->get_parent()->class_name().c_str());
+     mfprintf(mlog [ WARN ] ) ("In skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(): declaration->get_firstNondefiningDeclaration() = %p \n",
+          declaration->get_firstNondefiningDeclaration());
+     mfprintf(mlog [ WARN ] ) ("   --- declarationToSearchForInReferencedNameSet->get_parent() = %p = %s \n",
+          declarationToSearchForInReferencedNameSet->get_parent(),declarationToSearchForInReferencedNameSet->get_parent()->class_name().c_str());
 
      mfprintf(mlog [ WARN ] ) ("   --- declaration                                             = %p = %s \n",declaration,declaration->class_name().c_str());
      mfprintf(mlog [ WARN ] ) ("   --- declaration->get_parent()                               = %p = %s \n",declaration->get_parent(),declaration->get_parent()->class_name().c_str());
      if (declaration->get_firstNondefiningDeclaration() != NULL)
         {
-          mfprintf(mlog [ WARN ] ) ("   --- declaration ->get_firstNondefiningDeclaration()              = %p = %s \n",declaration->get_firstNondefiningDeclaration(),declaration->get_firstNondefiningDeclaration()->class_name().c_str());
-          mfprintf(mlog [ WARN ] ) ("   --- declaration->get_firstNondefiningDeclaration()->get_parent() = %p = %s \n",declaration->get_firstNondefiningDeclaration()->get_parent(),declaration->get_firstNondefiningDeclaration()->get_parent()->class_name().c_str());
+          mfprintf(mlog [ WARN ] ) ("   --- declaration ->get_firstNondefiningDeclaration()              = %p = %s \n",
+               declaration->get_firstNondefiningDeclaration(),declaration->get_firstNondefiningDeclaration()->class_name().c_str());
+          mfprintf(mlog [ WARN ] ) ("   --- declaration->get_firstNondefiningDeclaration()->get_parent() = %p = %s \n",
+               declaration->get_firstNondefiningDeclaration()->get_parent(),declaration->get_firstNondefiningDeclaration()->get_parent()->class_name().c_str());
         }
      if (declaration->get_definingDeclaration() != NULL)
         {
-          mfprintf(mlog [ WARN ] ) ("   --- declaration ->get_definingDeclaration()                      = %p = %s \n",declaration->get_definingDeclaration(),declaration->get_definingDeclaration()->class_name().c_str());
-          mfprintf(mlog [ WARN ] ) ("   --- declaration->get_definingDeclaration()->get_parent()         = %p = %s \n",declaration->get_definingDeclaration()->get_parent(),declaration->get_definingDeclaration()->get_parent()->class_name().c_str());
+          mfprintf(mlog [ WARN ] ) ("   --- declaration ->get_definingDeclaration()                      = %p = %s \n",
+               declaration->get_definingDeclaration(),declaration->get_definingDeclaration()->class_name().c_str());
+          mfprintf(mlog [ WARN ] ) ("   --- declaration->get_definingDeclaration()->get_parent()         = %p = %s \n",
+               declaration->get_definingDeclaration()->get_parent(),declaration->get_definingDeclaration()->get_parent()->class_name().c_str());
         }
 #endif
-#if 0
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) && 0
+     SgFunctionDeclaration* inputFunctionDeclaration = isSgFunctionDeclaration(declaration);
+     if (inputFunctionDeclaration != NULL)
+        {
+          printf ("inputFunctionDeclaration name = %s \n",inputFunctionDeclaration->get_name().str());
+          SgScopeStatement* scope = inputFunctionDeclaration->get_scope();
+          printf ("scope = %p = %s \n",scope,scope->class_name().c_str());
+
+          SgName mangledName = inputFunctionDeclaration->get_mangled_name();
+          printf ("mangledName = %s \n",mangledName.str());
+
+          SgSourceFile* sourceFile = SageInterface::getEnclosingNode<SgSourceFile>(inputFunctionDeclaration);
+          ROSE_ASSERT(sourceFile != NULL);
+          printf ("sourceFile = %p name = %s \n",sourceFile,sourceFile->getFileName().c_str());
+          inputFunctionDeclaration->get_file_info()->display("inputFunctionDeclaration: debug");
+        }
+
+     SgFunctionDeclaration* inputFunctionDeclarationToSearchForInReferencedNameSet = isSgFunctionDeclaration(declarationToSearchForInReferencedNameSet);
+     if (inputFunctionDeclarationToSearchForInReferencedNameSet != NULL)
+        {
+          printf ("inputFunctionDeclarationToSearchForInReferencedNameSet name = %s \n",inputFunctionDeclarationToSearchForInReferencedNameSet->get_name().str());
+          SgScopeStatement* scope = inputFunctionDeclarationToSearchForInReferencedNameSet->get_scope();
+          printf ("scope = %p = %s \n",scope,scope->class_name().c_str());
+
+          SgName mangledName = inputFunctionDeclarationToSearchForInReferencedNameSet->get_mangled_name();
+          printf ("mangledName = %s \n",mangledName.str());
+
+          SgSourceFile* sourceFile = SageInterface::getEnclosingNode<SgSourceFile>(inputFunctionDeclarationToSearchForInReferencedNameSet);
+          ROSE_ASSERT(sourceFile != NULL);
+          printf ("sourceFile = %p name = %s \n",sourceFile,sourceFile->getFileName().c_str());
+
+          inputFunctionDeclarationToSearchForInReferencedNameSet->get_file_info()->display("inputFunctionDeclarationToSearchForInReferencedNameSet: debug");
+        }
+
+     printf ("Output referencedNameSet: \n");
      for (std::set<SgNode*>::iterator i = referencedNameSet.begin(); i != referencedNameSet.end(); i++)
         {
-          mfprintf(mlog [ WARN ] ) ("   --- *** referencedNameSet member *i = %p = %s \n",*i,(*i)->class_name().c_str());
+       // printf (" --- referencedNameSet: element: \n");
+
+       // DQ (10/17/2020): There is a NULL entry in the referencedNameSet, this should not exist.
+       // ROSE_ASSERT(*i != NULL);
+
+          if (*i != NULL)
+             {
+               mfprintf(mlog [ WARN ] ) ("   --- *** referencedNameSet member *i = %p = %s \n",*i,(*i)->class_name().c_str());
+               SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(*i);
+               if (functionDeclaration != NULL)
+                  {
+                 // DQ (10/17/2020): This is a declaration from likely a different file, but with the same name as what we are searching for.
+                 // So although I would not want to compare function names, that could be one solution.
+                 // Either that or identify if these are from a different file.                   
+                    printf ("   --- *** functionDeclaration name = %s \n",functionDeclaration->get_name().str());
+                    SgScopeStatement* scope = functionDeclaration->get_scope();
+                    printf ("   --- *** scope = %p = %s \n",scope,scope->class_name().c_str());
+
+                    SgName mangledName = functionDeclaration->get_mangled_name();
+                    printf ("   --- *** mangledName = %s \n",mangledName.str());
+
+                    SgSourceFile* sourceFile = SageInterface::getEnclosingNode<SgSourceFile>(functionDeclaration);
+                    ROSE_ASSERT(sourceFile != NULL);
+                    printf ("   --- *** sourceFile = %p name = %s \n",sourceFile,sourceFile->getFileName().c_str());
+
+                    functionDeclaration->get_file_info()->display("functionDeclaration: debug");
+                  }
+             }
+            else
+             {
+            // printf (" --- element = %p \n",*i);
+               mfprintf(mlog [ WARN ] ) ("   --- *** referencedNameSet member *i = %p \n",*i);
+             }
         }
 #endif
 
@@ -7158,6 +7260,14 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           mfprintf(mlog [ WARN ] ) ("inheritedAttribute.get_currentScope() NOT set \n");
         }
 #endif
+
+     SgSourceFile* sourceFile = isSgSourceFile(n);
+     if (sourceFile != NULL)
+        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("In evaluateInheritedAttribute(): sourceFile = %p = %s \n",sourceFile,sourceFile->getFileName().c_str());
+#endif
+        }
 
   // DQ (5/24/2013): Allow the current scope to be tracked from the traversal of the AST
   // instead of being computed at each IR node which is a problem for template arguments.
@@ -8298,7 +8408,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        // DQ (8/8/2020): Moved from the refactored code below.
        // DQ (4/27/2019): Refactored this code to be outside of the flase block below, so it can be used both there 
        // and outside the false branch afterward.
-          SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(initializedName->get_type());
+
+       // DQ (10/18/2020): Commented out to see where this is first used.
+       // SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(initializedName->get_type());
 
           SgType* type = initializedName->get_type();
           ASSERT_not_null(type);
@@ -9033,7 +9145,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 
        // DQ (9/2/2020): This is the start of the non-commented out code!
-#if DEBUG_INITIALIZED_NAME
+#if DEBUG_INITIALIZED_NAME && 0
           printf("222222222222222222222222222222222222222222222222222222222222222222222222222 \n");
           printf("222222222222222222222222222222222222222222222222222222222222222222222222222 \n");
           printf("222222222222222222222222222222222222222222222222222222222222222222222222222 \n");
@@ -9197,7 +9309,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
             // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-#if DEBUG_INITIALIZED_NAME
+#if DEBUG_INITIALIZED_NAME && 0
           printf("333333333333333333333333333333333333333333333333333333333333333333333333333 \n");
           printf("333333333333333333333333333333333333333333333333333333333333333333333333333 \n");
           printf("333333333333333333333333333333333333333333333333333333333333333333333333333 \n");
@@ -9435,6 +9547,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                         mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: Processing the SgInitializedName IR node's type ((initializedName->get_name() == functionName) == true) \n");
                                         mfprintf(mlog [ WARN ] ) ("############################################################################################################################### \n");
 #endif
+                                     // DQ (10/18/2020): Moved declaration to where it is being used.
+                                        SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(initializedName->get_type());
+                                        ROSE_ASSERT(declaration != NULL);
+
                                      // DQ (4/28/2019): Added variable to allow this section to be compiled.
                                         bool skipGlobalNameQualification = false;
                                         setNameQualificationOnName(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
@@ -9585,13 +9701,35 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 
 #if 1
+            // DQ (10/18/2020): Moved declaration to where it is being used.
+               SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(initializedName->get_type());
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               if (declaration == NULL)
+                  {
+                    printf ("initializedName->get_type() = %p = %s \n",initializedName->get_type(),initializedName->get_type()->class_name().c_str());
+                    SgType* strippedType = initializedName->get_type()->stripType();
+                    printf ("strippedType = %p = %s \n",strippedType,strippedType->class_name().c_str());
+                  }
+            // ROSE_ASSERT(declaration != NULL);
+#endif
+
+            // DQ (10/18/2020): Only insert into the referencedNameSet if this is a declaration that we have seen, must be non-null.
             // DQ (8/4/2012): Isolate that handling of the referencedNameSet from the use of skipGlobalNameQualification so that we can debug (test2012_96.C).
             // if (skipGlobalNameQualification == true && referencedNameSet.find(declaration) == referencedNameSet.end())
-               if (referencedNameSet.find(declaration) == referencedNameSet.end())
+            // if (referencedNameSet.find(declaration) == referencedNameSet.end())
+               if ((declaration != NULL) && (referencedNameSet.find(declaration) == referencedNameSet.end()))
                   {
                  // No qualification is required but we do want to count this as a reference to the class.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     mfprintf(mlog [ WARN ] ) ("No qualification should be used for this type (class = %p = %s) AND insert it into the referencedNameSet \n", declaration, declaration ? declaration->class_name().c_str() : "");
+#endif
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                    printf ("INSERTING INTO referencedNameSet: declaration = %p = %s name = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 #endif
                     referencedNameSet.insert(declaration);
                   }
@@ -10807,7 +10945,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
           namespaceAliasDeclarationMap.insert(pair<SgDeclarationStatement*,SgNamespaceAliasDeclarationStatement*>(namespaceDeclaration,namespaceAliasDeclaration));
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) && 0
           printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
           printf ("In evaluateInheritedAttribute(): Saved namespace alias: %s to namespace declaration = %s \n",namespaceAliasDeclaration->get_name().str(),namespaceDeclarationName.c_str());
 #if 0
@@ -12053,7 +12191,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  // bool inDesignatedInitializer = false;
                     if ((variableDeclaration != NULL) && (variableDeclaration != variableDeclaration->get_definingDeclaration()) )
                        {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) && 0
                          printf ("SgVarRefExp is not in a defining SgVariableDeclaration: might be in a SgDesignatedInitializer \n");
 #endif
                          SgExprListExp* exprListExp = isSgExprListExp(varRefExp->get_parent());
@@ -12579,7 +12717,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                bool inDesignatedInitializer = false;
                if (variableDeclaration == variableDeclaration->get_definingDeclaration())
                   {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) && 0
                     printf ("SgVarRefExp is not in a defining SgVariableDeclaration: might be in a SgDesignatedInitializer \n");
                     SgExprListExp* exprListExp = isSgExprListExp(varRefExp->get_parent());
                     if (exprListExp != NULL)
@@ -13628,7 +13766,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               mfprintf(mlog [ WARN ] ) ("I hope that we can make this an error (scopeOfDeclaration == NULL) declaration = %p = %s declaration->get_parent() = %p = %s \n",declaration,declaration->class_name().c_str(),declaration->get_parent(),declaration->get_parent()->class_name().c_str());
+               mfprintf(mlog [ WARN ] ) ("I hope that we can make this an error (scopeOfDeclaration == NULL) declaration = %p = %s declaration->get_parent() = %p = %s \n",
+                    declaration,declaration->class_name().c_str(),declaration->get_parent(),declaration->get_parent()->class_name().c_str());
 #endif
             // ROSE_ASSERT(false);
              }
@@ -13640,6 +13779,15 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) ("Adding declarationForReferencedNameSet = %p = %s to set of visited declarations \n",declarationForReferencedNameSet,declarationForReferencedNameSet->class_name().c_str());
+#endif
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+               printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+               printf ("INSERTING INTO referencedNameSet: declarationForReferencedNameSet = %p = %s name = %s \n",
+                    declarationForReferencedNameSet,declarationForReferencedNameSet->class_name().c_str(),SageInterface::get_name(declarationForReferencedNameSet).c_str());
+               printf (" --- Could have used: declaration = %p = %s name = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
+               printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+               printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 #endif
                referencedNameSet.insert(declarationForReferencedNameSet);
              }
@@ -17192,7 +17340,7 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 
           if (breakOutOfLoop == true)
              {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) && 0
                printf ("breakOutOfLoop == true: short curcuit this loop over the name qualification depth (becasue we used a namespace alias) \n");
 #endif
                break;
@@ -17207,7 +17355,7 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
      mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualificationSupport(): After loop over name qualifiction depth: inputNameQualificationLength = %d \n",inputNameQualificationLength);
 #endif
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) && 0
      printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
      printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
      mfprintf(mlog [ WARN ] ) ("Leaving NameQualificationTraversal::setNameQualificationSupport(): outputGlobalQualification = %s output_amountOfNameQualificationRequired = %d qualifierString = %s \n",

@@ -333,6 +333,10 @@ Unparser::computeNameQualification(SgSourceFile* file)
          isCxxFile = true;
        }
 
+#if 0
+     printf ("In computeNameQualification(): file->getFileName() = %s isCxxFile = %s \n",file->getFileName().c_str(),isCxxFile ? "true" : "false");
+#endif
+
   // DQ (11/10/2007): Moved computation of hidden list from astPostProcessing.C to unparseFile so that 
   // it will be called AFTER any transformations and immediately before code generation where it is 
   // really required.  This part of a fix for Liao's outliner, but should be useful for numerous 
@@ -361,11 +365,21 @@ Unparser::computeNameQualification(SgSourceFile* file)
              {
                printf ("Calling name qualification support. \n");
              }
+
+       // DQ (10/17/2020): I have discovered that this was added by Tristan, and it is not clear to me what it is about.
+       // After discussion with Tristan, this is specific to Jovial to C++ translator, and supports the development of
+       // seperate header files that are built, instead of using the single translation unit and the unparse header file
+       // support that has been recently built into ROSE (last year).  This is fine, but it brings up a possible somewhat
+       // philosophical discussion about how to defaine a translation unit in C and C++, nameily that the SgFile and SgSourceFile
+       // is really a translation unit for the source code in any source file (and does not refer to only the source file 
+       // to the exclusion of associated included file via CPP #include directives.
           SgNodePtrList & nodes_for_namequal_init = file->get_extra_nodes_for_namequal_init();
           for (SgNodePtrList::iterator it = nodes_for_namequal_init.begin(); it != nodes_for_namequal_init.end(); ++it) {
             generateNameQualificationSupport(*it, referencedNameSet);
           }
+
           generateNameQualificationSupport(file, referencedNameSet);
+
           if (SgProject::get_verbose() > 0)
              {
                printf ("DONE: Calling name qualification support. \n");
@@ -427,11 +441,15 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
 #if 0
   // printf ("\n\n");
+     printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
+     printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
      printf ("In unparseFile(): file = %p filename = %s unparseScope = %p \n",file,file->getFileName().c_str(),unparseScope);
      if (unparseScope != NULL)
         {
           printf ("   --- unparseScope = %p = %s \n",unparseScope,unparseScope->class_name().c_str());
         }
+     printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
+     printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
 #endif
 
   // DQ (11/20/2019): Added assertion, if we are unparsing this file, then it should have had comments and CPP directives already added.
@@ -3562,6 +3580,19 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
              }
 
 #if 0
+          printf ("######################################################################################################## \n");
+          printf ("######################################################################################################## \n");
+          printf ("In unparseFile(SgFile*): Need to include CPP directives (#includes especially): outputFilename = %s \n",outputFilename.c_str());
+          printf ("######################################################################################################## \n");
+          printf ("######################################################################################################## \n");
+#endif
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+
+#if 0
           printf ("In unparseFile(SgFile*): open file for output of generated source code: outputFilename = %s \n",outputFilename.c_str());
 #endif
        // DQ (3/19/2014): Added support for noclobber option.
@@ -4201,9 +4232,10 @@ SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFi
 #else
      printf ("Skip building a new SgGlobalScope for the header \n");
 
+#error "DEAD CODE!"
+
   // DQ (11/20/2019): Make sure that we have some declarations.
      ROSE_ASSERT(include_sourceFile->get_globalScope()->get_declarations().empty() == false);
-
 #endif
 
 #if 0
@@ -4228,6 +4260,7 @@ SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFi
   // DQ (11/9/2019): We need this to be set so that transformation in the AST will be unparsed consistantly 
   // between source files where this is true and header files where this has sometimes been false.
   // ROSE_ASSERT(include_sourceFile->get_unparseHeaderFiles() == false);
+#if 0
      if (include_sourceFile->get_unparseHeaderFiles() == true)
         {
           printf ("NOTE: include_sourceFile->get_unparseHeaderFiles() = %s \n",include_sourceFile->get_unparseHeaderFiles() ? "true" : "false");
@@ -4240,6 +4273,7 @@ SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFi
           printf ("WARNING: In buildSourceFileForHeaderFile(): test 2: include_sourceFile->get_processedToIncludeCppDirectivesAndComments() == false \n");
         }
   // ROSE_ASSERT(include_sourceFile->get_processedToIncludeCppDirectivesAndComments() == true);
+#endif
 
   // DQ (5/4/2010): This does not have to be true, just building the support to have the comments and CPP 
   // directives embedded in the AST does not have to require that we are unparsing the header files (or 
@@ -4920,13 +4954,14 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                            // DQ (11/8/2018): Adding the "-I" prefix required for use on the command line.
                               string include_line = string("-I") + adjusted_header_file_directory;
                            // unparsedFile->get_extraIncludeDirectorySpecifierList().push_back(include_line);
-                              translation_unit_source_file->get_extraIncludeDirectorySpecifierList().push_back(include_line);
+                           // translation_unit_source_file->get_extraIncludeDirectorySpecifierList().push_back(include_line);
+                              translation_unit_source_file->get_extraIncludeDirectorySpecifierBeforeList().push_back(include_line);
 #if 0
                               printf ("unparsedFile->getFileName() = %s \n",unparsedFile->getFileName().c_str());
-                              printf ("unparsedFile->get_extraIncludeDirectorySpecifierList().size() = %zu \n",unparsedFile->get_extraIncludeDirectorySpecifierList().size());
-                              for (size_t i = 0; i < translation_unit_source_file->get_extraIncludeDirectorySpecifierList().size(); i++)
+                              printf ("unparsedFile->get_extraIncludeDirectorySpecifierBeforeList().size() = %zu \n",unparsedFile->get_extraIncludeDirectorySpecifierBeforeList().size());
+                              for (size_t i = 0; i < translation_unit_source_file->get_extraIncludeDirectorySpecifierBeforeList().size(); i++)
                                  {
-                                   printf ("translation_unit_source_file->get_extraIncludeDirectorySpecifierList()[%zu] = %s \n",i,translation_unit_source_file->get_extraIncludeDirectorySpecifierList()[i].c_str());
+                                   printf ("translation_unit_source_file->get_extraIncludeDirectorySpecifierBeforeList()[%zu] = %s \n",i,translation_unit_source_file->get_extraIncludeDirectorySpecifierBeforeList()[i].c_str());
                                  }
 #endif
 #if 0
@@ -5094,7 +5129,8 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
                       // DQ (3/11/2020): Add the path to the modified (transformed) include file.
                          string adjusted_header_file_directory_include_line = string("-I") + adjusted_header_file_directory;
-                         unparsedFile->get_extraIncludeDirectorySpecifierList().push_back(adjusted_header_file_directory_include_line);
+                      // unparsedFile->get_extraIncludeDirectorySpecifierList().push_back(adjusted_header_file_directory_include_line);
+                         unparsedFile->get_extraIncludeDirectorySpecifierBeforeList().push_back(adjusted_header_file_directory_include_line);
 #if 0
                          printf ("Adding adjusted_header_file_directory_include_line = %s \n",adjusted_header_file_directory_include_line.c_str());
 #endif
@@ -5104,7 +5140,8 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                       // DQ (3/14/2020): Add the header file path to the project (not just the SgSourceFile, since the project is where 
                       // we accumulate all of the header file paths so that source files that are not the unparsedFile (which represents 
                       // a header file) can be unparsed and compiled using to file the header files that have been modified.
-                         project->get_extraIncludeDirectorySpecifierList().push_back(adjusted_header_file_directory_include_line);
+                      // project->get_extraIncludeDirectorySpecifierList().push_back(adjusted_header_file_directory_include_line);
+                         project->get_extraIncludeDirectorySpecifierBeforeList().push_back(adjusted_header_file_directory_include_line);
 #if 0
                          ROSE_ASSERT(unparsedFile->get_project() != NULL);
                          printf ("Output includeDirectorySpecifierList for unparsedFile->getFileName() = %s \n",unparsedFile->getFileName().c_str());
@@ -5115,20 +5152,20 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                               printf ("unparsedFile->get_project()->get_includeDirectorySpecifierList()[%zu] = %s \n",i,unparsedFile->get_project()->get_includeDirectorySpecifierList()[i].c_str());
                             }
 
-                         printf ("Output extraIncludeDirectorySpecifierList for unparsedFile->getFileName() = %s \n",unparsedFile->getFileName().c_str());
+                         printf ("Output extraIncludeDirectorySpecifierBeforeList for unparsedFile->getFileName() = %s \n",unparsedFile->getFileName().c_str());
                       // printf ("Calling unparsedFile->get_project()->get_extraIncludeDirectorySpecifierList().size() \n");
-                         printf ("(added for source file) unparsedFile->get_extraIncludeDirectorySpecifierList().size() = %zu \n",unparsedFile->get_extraIncludeDirectorySpecifierList().size());
-                         for (size_t i = 0; i < unparsedFile->get_extraIncludeDirectorySpecifierList().size(); i++)
+                         printf ("(added for source file) unparsedFile->get_extraIncludeDirectorySpecifierBeforeList().size() = %zu \n",unparsedFile->get_extraIncludeDirectorySpecifierBeforeList().size());
+                         for (size_t i = 0; i < unparsedFile->get_extraIncludeDirectorySpecifierBeforeList().size(); i++)
                             {
-                              printf ("unparsedFile->get_extraIncludeDirectorySpecifierList()[%zu] = %s \n",i,unparsedFile->get_extraIncludeDirectorySpecifierList()[i].c_str());
+                              printf ("unparsedFile->get_extraIncludeDirectorySpecifierBeforeList()[%zu] = %s \n",i,unparsedFile->get_extraIncludeDirectorySpecifierBeforeList()[i].c_str());
                             }
 
                       // DQ (3/14/2020): Added output of the extraIncludeDirectorySpecifierList held on the SgProject node.
                          ROSE_ASSERT(project != NULL);
-                         printf ("(added for source file) project->get_extraIncludeDirectorySpecifierList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierList().size());
-                         for (size_t i = 0; i < project->get_extraIncludeDirectorySpecifierList().size(); i++)
+                         printf ("(added for source file) project->get_extraIncludeDirectorySpecifierBeforeList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierBeforeList().size());
+                         for (size_t i = 0; i < project->get_extraIncludeDirectorySpecifierBeforeList().size(); i++)
                             {
-                              printf ("project->get_extraIncludeDirectorySpecifierList()[%zu] = %s \n",i,project->get_extraIncludeDirectorySpecifierList()[i].c_str());
+                              printf ("project->get_extraIncludeDirectorySpecifierBeforeList()[%zu] = %s \n",i,project->get_extraIncludeDirectorySpecifierBeforeList()[i].c_str());
                             }
 
 #endif
@@ -5372,14 +5409,14 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                     if (isSubstring == true)
                        {
 #if 0
-                         printf ("Adding to extraIncludeDirectorySpecifierList: header_file_directory = %s \n",header_file_directory.c_str());
+                         printf ("Adding to extraIncludeDirectorySpecifierBeforeList: header_file_directory = %s \n",header_file_directory.c_str());
 #endif
-                         translation_unit_source_file->get_extraIncludeDirectorySpecifierList().push_back(include_line);
+                         translation_unit_source_file->get_extraIncludeDirectorySpecifierBeforeList().push_back(include_line);
                        }
                       else
                        {
 #if 0
-                         printf ("Supress output of this directory in the extraIncludeDirectorySpecifierList \n");
+                         printf ("Supress output of this directory in the extraIncludeDirectorySpecifierBeforeList \n");
 #endif
                        }
 
@@ -5445,7 +5482,11 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
 
   // Put the call to support name qualification here!
 #if 0
+     printf ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n");
+     printf ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n");
      printf ("In unparseProject(): calling computeNameQualification() for the whole AST \n");
+     printf ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n");
+     printf ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n");
 #endif
 
   // DQ (8/7/2018): Added assertion.

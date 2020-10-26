@@ -132,6 +132,8 @@ namespace CodeThorn {
     //void setModeVariableIdForEachArrayElement(bool active);
     //bool getModeVariableIdForEachArrayElement();
 
+    bool hasAssignInitializer(VariableId arrayVar);
+    bool isAggregateWithInitializerList(VariableId arrayVar);
     SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar);
     size_t getArrayDimensions(SgArrayType* t, std::vector<size_t> *dimensions = NULL);
     size_t getArrayElementCount(SgArrayType* t);

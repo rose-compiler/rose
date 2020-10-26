@@ -811,7 +811,18 @@ VariableIdMapping::VariableIdSet VariableIdMapping::variableIdsOfAstSubTree(SgNo
   return vset;
 }
 
+bool VariableIdMapping::hasAssignInitializer(VariableId arrayVar) {
+  SgVariableDeclaration* decl=this->getVariableDeclaration(arrayVar);
+  return SgNodeHelper::hasAssignInitializer(decl);
+}
+
+bool VariableIdMapping::isAggregateWithInitializerList(VariableId arrayVar) {
+ SgVariableDeclaration* decl=this->getVariableDeclaration(arrayVar);
+ return SgNodeHelper::isAggregateDeclarationWithInitializerList(decl);
+}
+
 SgExpressionPtrList& VariableIdMapping::getInitializerListOfArrayVariable(VariableId arrayVar) {
+  ROSE_ASSERT(isAggregateWithInitializerList(arrayVar));
   SgVariableDeclaration* decl=this->getVariableDeclaration(arrayVar);
   return SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
 }

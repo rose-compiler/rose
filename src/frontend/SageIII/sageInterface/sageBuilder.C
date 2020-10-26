@@ -709,6 +709,8 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
        // PC (10/11/13):  Added case of SgJavaPackageDeclaration
        // DQ (8/11/2013): Added cases for SgFunctionDeclaration and SgMemberFunctionDeclaration
        // I forget why we needed this case...
+          case V_SgProcedureHeaderStatement:
+          case V_SgJovialTableStatement:
           case V_SgJavaPackageDeclaration:
           case V_SgFunctionDeclaration:
           case V_SgMemberFunctionDeclaration:
@@ -851,6 +853,8 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
        // PC (10/11/13):  Added case of SgJavaPackageDeclaration
        // DQ (8/12/2013): This function has to be supported when called using any kind of declaration (at least SgFunctionDeclaration and SgClassDeclaration).
        // DQ (9/16/2012): I think it should be an error to call this function for a SgClassDeclaration.
+          case V_SgProcedureHeaderStatement:
+          case V_SgJovialTableStatement:
           case V_SgJavaPackageDeclaration:
           case V_SgFunctionDeclaration:
           case V_SgMemberFunctionDeclaration:
@@ -3493,16 +3497,6 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
   // declarations in the AST and a general update of this function to support this expanded use.
 
   // DQ (11/27/2011) Note: it is not clear if we need the newly added input paramter: buildTemplateInstantiation; since this is represented in the template parameter.
-
-#if 0
-  // FMZ (3/23/2009): We need this for the  coarray translator
-     if (SageInterface::is_Fortran_language() == true)
-        {
-       // We don't expect this is being called for Fortran
-          cerr<<"Building nondefining function in Fortran is not allowed!"<<endl;
-          ROSE_ASSERT(false);
-        }
-#endif
 
 #if 0
      printf ("In buildNondefiningFunctionDeclaration_T(): XXX_name = %s\n", XXX_name.str());
@@ -6279,81 +6273,70 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
    }
 
 // Build a nondefining SgProcedureHeaderStatement, handle function type, symbol etc transparently [CR 9/24/2020]
-SgProcedureHeaderStatement*
-SageBuilder::buildNondefiningProcedureHeaderStatement(const SgName & name, SgType* return_type,
-                                                      SgFunctionParameterList* param_list, SgScopeStatement* scope)
+SgProcedureHeaderStatement* SageBuilder::
+buildNondefiningProcedureHeaderStatement(const SgName & name, SgType* return_type, SgFunctionParameterList* param_list,
+                                         SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope)
   {
     ROSE_ASSERT(return_type);
     ROSE_ASSERT(param_list);
+
+    SgProcedureHeaderStatement* nondef_decl = NULL;
 
     if (scope == NULL)
       {
         scope = SageBuilder::topScopeStack();
       }
 
-    SgProcedureHeaderStatement* nondef_decl = NULL;
-
-    SgFunctionType* func_type = buildFunctionType(return_type, param_list);
-    SgFunctionSymbol* func_symbol = scope->find_symbol_by_type_of_function<SgProcedureHeaderStatement>(name,func_type,NULL,NULL);
-    if (func_symbol)
-      {
-        nondef_decl = isSgProcedureHeaderStatement(func_symbol->get_declaration());
-      }
-    else
-      {
-        nondef_decl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>
-                            ( name, return_type, param_list, /*isMemberFunction*/false, scope, /*decoratorList*/NULL,
-                              /*functionConstVolatileFlags*/0, NULL, NULL, SgStorageModifier::e_default );
-      }
+  // A new nondefing declaration is needed even if the function symbol already exists. The function symbol
+  // should always contain the _first_ nondefining declaration (even though this may not be the first one).
+    nondef_decl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>
+                       ( name, return_type, param_list, /*isMemberFunction*/false, scope, /*decoratorList*/NULL,
+                        /*functionConstVolatileFlags*/0, NULL, NULL, SgStorageModifier::e_default );
 
     ROSE_ASSERT(isSgProcedureHeaderStatement(nondef_decl));
     ROSE_ASSERT(nondef_decl->get_firstNondefiningDeclaration());
-    ROSE_ASSERT(nondef_decl->get_firstNondefiningDeclaration() == nondef_decl);
+
+    nondef_decl->set_subprogram_kind(kind);
 
     return nondef_decl;
   }
 
 // DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
 // We need to decide if the SageBuilder API should include these sorts of functions.
-SgProcedureHeaderStatement*
-SageBuilder::buildProcedureHeaderStatement(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope)
+// CR (10/7/2020): May not be appropriate for C++ but improves capability for Fortran and Jovial.
+SgProcedureHeaderStatement* SageBuilder::
+buildProcedureHeaderStatement(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list,
+                              SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope)
    {
-  // DQ (8/23/2013): Added assertions.
      ROSE_ASSERT(return_type != NULL);
      ROSE_ASSERT(parameter_list != NULL);
 
-  // DQ (8/23/2013): We need to provide the buildDefiningFunctionDeclaration() function with a pointer to the first non-defining declaration.
-  // So we need to find it, and if it does not exist we need to build one so that we have a simple API for building defining declarations.
-  // DQ (11/12/2012): Building a defining declaration from scratch now requires a non-defining declaration to exist.
-  // SgFunctionDeclaration* nondefininfDeclaration = buildNondefiningFunctionDeclaration(name,return_type,parameter_list,scope,NULL);
+     SgFunctionDeclaration* nondef_decl = NULL;
 
      if (scope == NULL)
         {
           scope = SageBuilder::topScopeStack();
         }
 
-     SgFunctionDeclaration* nondefiningDeclaration = NULL;
-
      SgFunctionType* func_type = buildFunctionType(return_type,parameter_list);
      SgFunctionSymbol* func_symbol = scope->find_symbol_by_type_of_function<SgProcedureHeaderStatement>(name,func_type,NULL,NULL);
-     if (func_symbol != NULL)
+     if (func_symbol == NULL)
         {
-          nondefiningDeclaration = func_symbol->get_declaration();
+       // CR (3/25/2020): Replaced call to builder function with templated version.
+          nondef_decl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>
+                           ( name, return_type, parameter_list, /*isMemberFunction*/false, scope,
+                            /*decoratorList*/NULL, /*functionConstVolatileFlags*/0, NULL, NULL, SgStorageModifier::e_default);
         }
        else
         {
-       // CR (3/25/2020): Replaced call to builder function with templated version.
-          nondefiningDeclaration = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>
-                                                 ( name, return_type, parameter_list, /*isMemberFunction*/false, scope,
-                                                   /*decoratorList*/NULL, /*functionConstVolatileFlags*/0, NULL, NULL, SgStorageModifier::e_default);
+          nondef_decl = func_symbol->get_declaration();
         }
 
-  // DQ (8/23/2013): Added assertions.
-     assert(nondefiningDeclaration != NULL);
-     assert(nondefiningDeclaration->get_firstNondefiningDeclaration() != NULL);
-     assert(nondefiningDeclaration->get_firstNondefiningDeclaration() == nondefiningDeclaration);
+     assert(nondef_decl != NULL);
+     assert(nondef_decl->get_firstNondefiningDeclaration() != NULL);
+     assert(nondef_decl->get_firstNondefiningDeclaration() == nondef_decl);
 
-     SgProcedureHeaderStatement* proc_header_stmt = isSgProcedureHeaderStatement(nondefiningDeclaration);
+     SgProcedureHeaderStatement* proc_header_stmt = isSgProcedureHeaderStatement(nondef_decl);
      ROSE_ASSERT(proc_header_stmt);
 
      return buildProcedureHeaderStatement(name.str(), return_type, parameter_list, kind, scope, proc_header_stmt);
@@ -6366,12 +6349,8 @@ SageBuilder::buildProcedureHeaderStatement( const char* name, SgType* return_typ
                                             SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope/*=NULL*/,
                                             SgProcedureHeaderStatement* first_nondefining_declaration)
    {
-  // DQ (7/14/2013): We would like to insist that a nondefining declaration has been built at this point.
+  // CR (10/7/2020): Cleaned up code
      ROSE_ASSERT(first_nondefining_declaration != NULL);
-
-  // We will want to call: SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgType* return_type, SgFunctionParameterList * paralist,
-  //                                                                           bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList,
-  //                                                                           unsigned int functionConstVolatileFlags, SgTemplateArgumentPtrList* templateArgumentsList)
 
      if (kind == SgProcedureHeaderStatement::e_subroutine_subprogram_kind)
         {
@@ -6381,17 +6360,16 @@ SageBuilder::buildProcedureHeaderStatement( const char* name, SgType* return_typ
         {
           if (kind != SgProcedureHeaderStatement::e_function_subprogram_kind)
              {
-               mlog[ERROR] << "unhandled subprogram kind for Fortran (or Jovial) function declaration:" << kind << endl;
+               mlog[ERROR] << "unhandled subprogram kind for Fortran (or Jovial) function declaration:"
+                           << kind << endl;
                ROSE_ASSERT(false);
              }
         }
 
-     SgName rose_name = name;
-  // SgProcedureHeaderStatement* func = buildDefiningFunctionDeclaration_T<SgProcedureHeaderStatement> (rose_name,return_type,paralist,/* isMemberFunction = */ false,scope,NULL,0U,first_nondefining_declaration);
-     SgProcedureHeaderStatement* func = buildDefiningFunctionDeclaration_T<SgProcedureHeaderStatement> (rose_name,return_type,paralist,/* isMemberFunction = */ false,scope,NULL,0U,first_nondefining_declaration, NULL);
+     SgProcedureHeaderStatement* func = buildDefiningFunctionDeclaration_T<SgProcedureHeaderStatement> (SgName(name),return_type,paralist,/* isMemberFunction = */ false,scope,NULL,0U,first_nondefining_declaration, NULL);
      ROSE_ASSERT(func != NULL);
 
-     func->set_subprogram_kind(kind) ;
+     func->set_subprogram_kind(kind);
 
      return func;
    }
@@ -8421,7 +8399,7 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
 
  // TODO: consider C++ template functions
     SgFunctionDeclaration * funcDecl = NULL;
-    if (SageInterface::is_Fortran_language ())
+    if (SageInterface::is_Fortran_language() || SageInterface::is_Jovial_language())
        {
       // DQ (8/21/2013): Fixed number of parameters in buildNondefiningFunctionDeclaration_T() function call.
          funcDecl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>(name,return_type,parList,false,globalscope,NULL, false, NULL, NULL, SgStorageModifier::e_default);
@@ -8606,7 +8584,6 @@ SageBuilder::buildFunctionRefExp(const SgName& name, SgScopeStatement* scope /*=
 #endif
 
     funcDecl->get_declarationModifier().get_storageModifier().setExtern();
-
 
     symbol = lookupFunctionSymbolInParentScopes(name,scope);
     ROSE_ASSERT(symbol);
