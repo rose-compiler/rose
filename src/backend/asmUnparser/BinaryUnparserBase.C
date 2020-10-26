@@ -459,7 +459,7 @@ Settings::Settings() {
     bblock.cfg.showingPredecessors = true;
     bblock.cfg.showingSuccessors = true;
     bblock.cfg.showingSharing = true;
-    bblock.cfg.showingArrows = false;
+    bblock.cfg.showingArrows = true;
     bblock.reach.showingReachability = true;
     bblock.cfg.arrowStyle.foreground = Color::HSV(0.58, 0.90, 0.3); // blue
 
@@ -478,8 +478,7 @@ Settings::Settings() {
     insn.mnemonic.fieldWidth = 8;
     insn.mnemonic.semanticFailureMarker = "[!]";
     insn.mnemonic.semanticFailureStyle.foreground = Color::HSV(0, 1, 0.4); // red
-    insn.mnemonic.style.foreground = Color::HSV_BLACK;
-    insn.mnemonic.style.background = Color::HSV_WHITE;
+    insn.mnemonic.style.foreground = Color::HSV(0.17, 1.00, 0.4); // yellow
     insn.operands.separator = ", ";
     insn.operands.fieldWidth = 40;
     insn.operands.showingWidth = false;
@@ -1839,9 +1838,11 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
 
         std::string full = juxtaposeColumns(parts, fieldWidths, styles);
         std::vector<std::string> lines = StringUtility::split('\n', full);
-        BOOST_FOREACH (const std::string &line, lines) {
+        for (size_t i = 0; i < lines.size(); ++i) {
             state.frontUnparser().emitLinePrefix(out, state);
-            out <<line;
+            out <<lines[i];
+            if (i + 1 < lines.size())
+                out <<"\n";
         }
     }
 }
