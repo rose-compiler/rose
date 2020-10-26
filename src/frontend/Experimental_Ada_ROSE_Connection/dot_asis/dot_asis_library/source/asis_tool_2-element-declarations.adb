@@ -82,7 +82,7 @@ package body Asis_Tool_2.Element.Declarations is
 
       procedure Add_Corresponding_Body_If_A_Protected_Definition is
          use A4G.Int_Knds;
-         ID : a_nodes_h.Element_ID := 0;
+         ID : a_nodes_h.Element_ID := a_nodes_h.Support.Empty_ID;
       begin
             if Asis.Set_Get.Int_Kind (Asis.Elements.Enclosing_Element (Element)) =
                  A_Protected_Definition
@@ -196,7 +196,7 @@ package body Asis_Tool_2.Element.Declarations is
       --So we need to check that before we call into ASIS
       procedure Add_Corresponding_Subprogram_Derivation is
          use Asis.Set_Get;
-         ID : a_nodes_h.Element_ID := 0;
+         ID : a_nodes_h.Element_ID := a_nodes_h.Support.Empty_ID;
       begin
          if(Is_From_Inherited (Element))
          then
@@ -210,7 +210,7 @@ package body Asis_Tool_2.Element.Declarations is
       --So we need to check that before we call into ASIS
       procedure Add_Corresponding_Type is
          use Asis.Set_Get;
-         ID : a_nodes_h.Element_ID := 0;
+         ID : a_nodes_h.Element_ID := a_nodes_h.Support.Empty_ID;
       begin
          if(Is_From_Implicit (Element))
          then
