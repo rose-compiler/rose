@@ -1,6 +1,7 @@
-
-# defines that are fully supported by ROSE
+# defines tests that are fully supported
 PASSING_TESTS :=                       \
+  accept_statement.adb                 \
+  block_statement.adb                  \
   case_statement.adb                   \
   component_declaration.ads            \
   constant_declaration.ads             \
@@ -8,6 +9,8 @@ PASSING_TESTS :=                       \
   delay_relative.adb                   \
   derived_record.ads                   \
   empty_package.ads                    \
+  entry_call.adb                       \
+  entry_declaration.ads                \
   exception_declaration.ads            \
   exception_rename.ads                 \
   exit_statement.adb                   \
@@ -37,6 +40,7 @@ PASSING_TESTS :=                       \
   type_conversion.adb                  \
   unit_1.adb                           \
   variable_declaration.ads             \
+  week_string_literal.ads              \
   while_loop_statement.adb             \
   EndOfList
 

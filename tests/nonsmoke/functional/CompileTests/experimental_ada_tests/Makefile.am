@@ -49,11 +49,11 @@ NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
 ROSE_OUTPUT_DIR := rose-ada-output
 # ROSE_OUTPUT_DIR := .
 
-TMP_PASSING_TESTS := $(addprefix $(ROSE_OUTPUT_DIR)/,$(PASSING_TESTS))
+TEST_TARGETS := $(addprefix $(ROSE_OUTPUT_DIR)/,$(PASSING_TESTS))
+TEST_TARGETS += $(addprefix $(ROSE_OUTPUT_DIR)/,$(PASSING_INCOMPLETE_TESTS))
 # TMP_PASSING_TESTS := $(ROSE_OUTPUT_DIR)/pkgrename.ads
 
 # TEST_TARGETS := $(PASSING_TESTS) $(PASSING_INCOMPLETE_TESTS)
-TEST_TARGETS := $(TMP_PASSING_TESTS)
 ALL_TEST_TARGETS := $(PASSING_TESTS) $(PASSING_INCOMPLETE_TESTS) $(ROSE_BACKEND_TODO) $(ROSE_FRONTEND_TODO) $(ASIS_TODO)
 
 
@@ -101,7 +101,7 @@ $(ROSE_OUTPUT_DIR)/%.adb:$(abs_srcdir)/tests/%.adb $(ROSE_COMPILER)
 
 .PHONY: clean-local
 clean-local:
-	rm -f $(ROSE_OUTPUT_DIR)/*.adb *$(ROSE_OUTPUT_DIR)/.ads *.ali *.dot 
+	rm -f $(ROSE_OUTPUT_DIR)/*.adb *$(ROSE_OUTPUT_DIR)/.ads *.ali *.dot
 	rm -f $(srcdir)/tests/obj/*
 
 .PHONY: check-local
