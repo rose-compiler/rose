@@ -1303,6 +1303,10 @@ Enter(SgTypedefDeclaration* &type_def, const std::string &name, SgType* type)
    mlog[TRACE] << "SageTreeBuilder::Enter(SgTypedefDeclaration*) \n";
 
    type_def = SageBuilder::buildTypedefDeclaration(name, type, SageBuilder::topScopeStack());
+   // This should be done in SageBuilder.
+   type_def->set_base_type(type);
+
+   SageInterface::appendStatement(type_def, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
