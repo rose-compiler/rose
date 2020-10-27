@@ -173,9 +173,22 @@ Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
         case V_SgTypeUnsignedInt:
         case V_SgTypeChar:
         case V_SgTypeFloat:
-        case V_SgPointerType:
            unparseType(type, info);
            break;
+
+        case V_SgPointerType:
+          {
+            SgPointerType* pointer = isSgPointerType(type);
+            if (SgTypedefType* typedef_type = isSgTypedefType(pointer->get_base_type())) {
+              curprint("(* P ");
+              unparseType(typedef_type, info);
+              curprint(" *)");
+            }
+            else {
+              unparseType(type, info);
+            }
+            break;
+          }
 
         case V_SgJovialBitType:
         case V_SgModifierType:
@@ -435,6 +448,11 @@ Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
         case V_SgVarRefExp:
            curprint("@");
            unparseVarRef(operand, info);
+           break;
+        case V_SgCastExp:
+           curprint("@ (");
+           unparseCastExp(operand, info);
+           curprint(")");
            break;
         default:
            std::cout << "error: unparsePtrDeref() is unimplemented for " << operand->class_name() << "\n";
