@@ -216,6 +216,7 @@ package body Asis_Tool_2.Element.Expressions is
             Add_Value_Image;
          when An_Identifier =>
             Add_Name_Image;
+            Add_Corresponding_Name_Definition;
             Add_Corresponding_Name_Definition_List;
             Add_Corresponding_Name_Declaration;
          when An_Operator_Symbol =>

@@ -435,12 +435,12 @@ package body Asis_Tool_2.Element.Statements is
             Add_Call_Statement_Parameters;
 
          when A_Requeue_Statement =>
-            --I think this works, but it cannot be tested until task declaration work
+            --I think this works, but it cannot be tested until attributes work
             --Ada.Text_IO.Put_Line("----  Requeue----");
             Add_Requeue_Entry_Name;
 
          when A_Requeue_Statement_With_Abort =>
-            --I think this works, but it cannot be tested until task declaration work
+            --I think this works, but it cannot be tested until attributes work
             --Ada.Text_IO.Put_Line("----  Requeue----");
             Add_Requeue_Entry_Name;
 
