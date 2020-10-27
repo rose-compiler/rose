@@ -19,6 +19,8 @@
 #include "sage_support.h"
 #include "sageGeneric.h"
 
+#include <boost/algorithm/string.hpp>
+
 Unparse_Ada::Unparse_Ada(Unparser* unp, std::string fname)
    : UnparseLanguageIndependentConstructs(unp,fname)
    {
@@ -197,33 +199,46 @@ namespace
     void handle(SgForStatement& n) { res = n.get_string_label(); }
     void handle(SgAdaLoopStmt& n)  { res = n.get_string_label(); }
     void handle(SgWhileStmt& n)    { res = n.get_string_label(); }
-    void handle(SgBasicBlock& n)   { res = n.get_string_label(); }
+    //~ void handle(SgBasicBlock& n)   { res = n.get_string_label(); }
   };
 
   struct LabelSyntax : sg::DispatchHandler<std::pair<std::string, std::string> >
   {
-    void handle(SgNode& n)         { SG_UNEXPECTED_NODE(n); }
+    typedef sg::DispatchHandler<std::pair<std::string, std::string> > base;
+
+    explicit
+    LabelSyntax(const std::string& labelname)
+    : base(), lbl(labelname)
+    {}
+
+    void handle(SgNode& n)           { SG_UNEXPECTED_NODE(n); }
 
     ReturnType stmtSyntax() const;
-    ReturnType loopSyntax() const;
+    ReturnType blockSyntax(const std::string& blklbl) const;
 
     void handle(SgStatement& n)      { res = stmtSyntax(); }
-    void handle(SgForStatement& n)   { res = loopSyntax();  }
-    void handle(SgAdaLoopStmt& n)    { res = loopSyntax();  }
-    void handle(SgWhileStmt& n)      { res = loopSyntax();  }
-    //~ void handle(SgBasicBlockStmt& n) { res = blockSyntax();  }
+    void handle(SgForStatement& n)   { res = blockSyntax(n.get_string_label());  }
+    void handle(SgAdaLoopStmt& n)    { res = blockSyntax(n.get_string_label());  }
+    void handle(SgWhileStmt& n)      { res = blockSyntax(n.get_string_label());  }
+    void handle(SgBasicBlock& n)     { res = blockSyntax(n.get_string_label());  }
+
+    const std::string& lbl;
   };
 
-  LabelSyntax::ReturnType LabelSyntax::stmtSyntax() const
+  LabelSyntax::ReturnType
+  LabelSyntax::blockSyntax(const std::string& blklbl) const
   {
-    return std::make_pair(std::string("<<"), std::string(">> "));
-  }
+    if (lbl != blklbl)
+      return stmtSyntax();
 
-  LabelSyntax::ReturnType LabelSyntax::loopSyntax() const
-  {
     return std::make_pair(std::string(""), std::string(": "));
   }
 
+  LabelSyntax::ReturnType
+  LabelSyntax::stmtSyntax() const
+  {
+    return std::make_pair(std::string("<<"), std::string(">> "));
+  }
 
   struct RenamingSyntax
   {
@@ -239,6 +254,39 @@ namespace
       std::string infixSyntax;
       std::string renamedName;
   };
+
+  bool declaredInMainFile(SgDeclarationStatement& dcl, const std::string& mainFile)
+  {
+    Sg_File_Info& fileInfo = SG_DEREF(dcl.get_startOfConstruct());
+
+    //~ std::cerr << fileInfo.get_filenameString() << " =?= " << mainFile
+              //~ << std::endl;
+
+    std::string mainFileUp = boost::to_upper_copy(mainFile);
+    std::string fileNameUp = boost::to_upper_copy(fileInfo.get_filenameString());
+    size_t      pos = mainFileUp.rfind(fileNameUp);
+
+    //~ std::cerr << (pos + fileNameUp.size()) << " =?= " << mainFileUp.size()
+              //~ << std::endl;
+
+    return (  (pos != std::string::npos)
+           && (pos + fileNameUp.size() == mainFileUp.size())
+           );
+  }
+
+  std::pair<SgDeclarationStatementPtrList::iterator, SgDeclarationStatementPtrList::iterator>
+  declsInPackage(SgDeclarationStatementPtrList& lst, const std::string& mainFile)
+  {
+    SgDeclarationStatementPtrList::iterator aa = lst.begin();
+    SgDeclarationStatementPtrList::iterator zz = lst.end();
+
+    // skip over imported packages
+    while (aa != zz && !declaredInMainFile(SG_DEREF(*aa), mainFile))
+      ++aa;
+
+    return std::make_pair(aa, zz);
+  }
+
 
   struct AdaStatementUnparser
   {
@@ -286,10 +334,15 @@ namespace
 
     void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgStatement& n)
+    void handle(SgStatement& n);
+
+    void handle(SgGlobal& n)
     {
-      // if not handled here, have the language independent parser handle it..
-      unparser.UnparseLanguageIndependentConstructs::unparseStatement(&n, info);
+      typedef SgDeclarationStatementPtrList::iterator Iterator;
+
+      std::pair<Iterator, Iterator> declRange = declsInPackage(n.get_declarations(), unparser.getFileName());
+
+      list(declRange.first, declRange.second);
     }
 
     void handle(SgNullStatement& n)
@@ -567,7 +620,9 @@ namespace
 
     void handle(SgLabelStatement& n)
     {
-      std::pair<std::string, std::string> syntax = sg::dispatch(LabelSyntax(), n.get_statement());
+      typedef std::pair<std::string, std::string> syntax_t;
+
+      syntax_t syntax = sg::dispatch(LabelSyntax(n.get_label()), n.get_statement());
 
       prn(syntax.first);
       prn(n.get_label());
@@ -816,6 +871,12 @@ namespace
     return isSgDeclarationStatement(s) == NULL;
   }
 
+  void AdaStatementUnparser::handle(SgStatement& n)
+  {
+    // if not handled here, have the language independent parser handle it..
+    unparser.UnparseLanguageIndependentConstructs::unparseStatement(&n, info);
+  }
+
   void AdaStatementUnparser::handleBasicBlock(SgBasicBlock& n, bool functionbody)
   {
     SgStatementPtrList&          stmts    = n.get_statements();
@@ -826,16 +887,25 @@ namespace
     if (!functionbody && (aa != dcllimit))
       prn("declare\n");
 
+    const std::string label = n.get_string_label();
+    const bool        requiresBeginEnd = (functionbody || (aa != dcllimit) || label.size());
+
     list(stmts.begin(), dcllimit);
 
-    if (functionbody || (aa != dcllimit))
+    if (requiresBeginEnd)
       prn("begin\n");
 
     list(dcllimit, stmts.end());
 
-    if (functionbody || (aa != dcllimit))
+    if (requiresBeginEnd)
     {
       prn("end");
+
+      if (label.size())
+      {
+        prn(" ");
+        prn(label);
+      }
 
       if (!functionbody)
         prn(EOS_NL);

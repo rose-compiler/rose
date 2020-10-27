@@ -154,10 +154,17 @@ namespace
 
     void handle(SgCallExpression& n)
     {
+      SgExprListExp& args = SG_DEREF(n.get_args());
+
       expr(n.get_function());
-      prn("(");
-      expr(n.get_args());
-      prn(")");
+
+      // print () only if there are arguments to the call
+      if (args.get_expressions().size())
+      {
+        prn("(");
+        expr(&args);
+        prn(")");
+      }
     }
 
     void handle(SgCastExp& n)
@@ -170,7 +177,9 @@ namespace
 
     void handle(SgStringVal& n)
     {
-      prn("\"\"");
+      prn("\"");
+      prn(n.get_value());
+      prn("\"");
     }
 
 

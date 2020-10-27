@@ -238,10 +238,8 @@ namespace
     dcl.get_declarationModifier().get_accessModifier().setPrivate();
   }
 
-  /// labels a statement with a block label or a sequence of labels (if needed)
-  /// @{
-  SgStatement&
-  labelIfNeeded(SgStatement& stmt, std::string lblname, Defining_Name_ID lblid, AstContext ctx)
+  SgLabelStatement&
+  labelStmt(SgStatement& stmt, std::string lblname, Defining_Name_ID lblid, AstContext ctx)
   {
     ROSE_ASSERT(lblid > 0);
 
@@ -264,6 +262,8 @@ namespace
     return getNameID(el, ctx).fullName;
   }
 
+  /// labels a statement with a block label or a sequence of labels (if needed)
+  /// @{
   template <class SageAdaStmt>
   SgStatement&
   labelIfNeeded(SageAdaStmt& stmt, Defining_Name_ID lblid, AstContext ctx)
@@ -275,7 +275,7 @@ namespace
     std::string lblname = getLabelName(lblid, ctx);
 
     stmt.set_string_label(lblname);
-    return labelIfNeeded(stmt, lblname, lblid, ctx);
+    return labelStmt(stmt, lblname, lblid, ctx);
   }
 
   SgStatement&
@@ -290,7 +290,7 @@ namespace
                                              [&](SgStatement* labeled, const NameData& el) -> SgStatement*
                                              {
                                                ROSE_ASSERT(el.fullName == el.ident);
-                                               return &labelIfNeeded(SG_DEREF(labeled), el.fullName, el.id(), ctx);
+                                               return &labelStmt(SG_DEREF(labeled), el.fullName, el.id(), ctx);
                                              }
                                            );
 
@@ -318,9 +318,9 @@ namespace
     ROSE_ASSERT(sgn.get_parent() == &ctx.scope());
   }
 
-  template <class SageAdaStmt>
+  template <class SageScopeStmt>
   void
-  completeStmt(SageAdaStmt& sgnode, Element_Struct& elem, AstContext ctx, Defining_Name_ID lblid)
+  completeStmt(SageScopeStmt& sgnode, Element_Struct& elem, AstContext ctx, Defining_Name_ID lblid)
   {
     ROSE_ASSERT(elem.Element_Kind == A_Statement);
 
@@ -1161,6 +1161,8 @@ namespace
           break;
         }
 
+
+      case An_Entry_Call_Statement:             // 9.5.3
       case A_Procedure_Call_Statement:          // 6.4
         {
           SgExpression*  funrefexp = nullptr;
@@ -1173,7 +1175,9 @@ namespace
           }
           else
           {
-            logWarn() << "unable to find declaration for procedure call"
+            logWarn() << "unable to find declaration for "
+                      << (stmt.Statement_Kind == An_Entry_Call_Statement ? "entry" : "procedure")
+                      << " call"
                       << std::endl;
 
             funrefexp = &getExprID(stmt.Called_Name, ctx);
@@ -1186,10 +1190,14 @@ namespace
 
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
+              + for A_Procedure_Call_Statement / An_Entry_Call_Statement
+              Declaration Corresponding_Called_Entity_Unwound
+
+              + for A_Procedure_Call_Statement
               bool        Is_Prefix_Notation
               bool        Is_Dispatching_Call
               bool        Is_Call_On_Dispatching_Operation
-              Declaration Corresponding_Called_Entity_Unwound
+              break;
           */
           break;
         }
@@ -1278,7 +1286,6 @@ namespace
       //|A2005 start
       case An_Extended_Return_Statement:        // 6.5
       //|A2005 end
-      case An_Entry_Call_Statement:             // 9.5.3
       case A_Requeue_Statement:                 // 9.5.4
       case A_Requeue_Statement_With_Abort:      // 9.5.4
       case A_Terminate_Alternative_Statement:   // 9.7.1
@@ -1329,7 +1336,7 @@ namespace
       names.emplace_back(std::string{}, std::string{}, &ctx.scope(), &elem);
     }
 
-    ROSE_ASSERT (names.size() == 1);
+    ROSE_ASSERT(names.size() == 1);
     ElemIdRange              tyRange = idRange(ex.Exception_Choices);
     SgType&                  extypes = traverseIDs(tyRange, elemMap(), ExHandlerTypeCreator{ctx});
     SgInitializedNamePtrList lst     = constructInitializedNamePtrList(asisVars(), names, extypes);
@@ -1827,6 +1834,20 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
          break;
       }
 
+    case A_Single_Task_Declaration:                // 3.3.1(2):9.1(3)
+      {
+        /* unused fields:
+             bool                           Has_Task;
+             Element_ID                     Corresponding_End_Name;
+             Definition_ID                  Object_Declaration_View;
+             bool                           Is_Name_Repeated;
+             Declaration_ID                 Corresponding_Declaration;
+             Declaration_ID                 Corresponding_Body;
+             Expression_List                Declaration_Interface_List
+        */
+        break;
+      }
+
     case A_Task_Body_Declaration:                  // 9.1(6)
       {
         SgAdaTaskBody&          tskbody = getTaskBody(decl, ctx);
@@ -1872,7 +1893,11 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         privatize(sgnode, isPrivate);
         ctx.scope().append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &ctx.scope());
-        //~ recordNode(asisDecls(), elem.ID, sgnode);
+
+        // the entry call links back to the declaration ID
+        recordNode(asisDecls(), elem.ID, sgnode);
+
+        // for consistency, also map the name id to the node
         recordNode(asisDecls(), adaname.id(), sgnode);
 
         /* unused fields:
@@ -2002,7 +2027,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case An_Incomplete_Type_Declaration:           // 3.2.1(2):3.10(2)
     case A_Tagged_Incomplete_Type_Declaration:     //  3.10.1(2)
     case A_Private_Extension_Declaration:          // 3.2.1(2):7.3(3) -> Trait_Kinds
-    case A_Single_Task_Declaration:                // 3.3.1(2):9.1(3)
     case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
     case A_Discriminant_Specification:             // 3.7(5)   -> Trait_Kinds
     case An_Enumeration_Literal_Specification:     // 3.5.1(3)
