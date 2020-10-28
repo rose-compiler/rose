@@ -133,6 +133,7 @@ void optionallyRunZ3AndExit(CodeThornOptions& ctOpt,Analyzer* analyzer) {
     }
 #endif	
 }
+
 void optionallyRunSSAGeneratorAndExit(CodeThornOptions& ctOpt, Analyzer* analyzer) {
   if(ctOpt.ssa) {
     SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
