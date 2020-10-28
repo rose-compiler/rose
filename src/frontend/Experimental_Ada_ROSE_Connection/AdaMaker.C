@@ -346,7 +346,6 @@ mkAdaRenamingDecl(const std::string& name, SgInitializedName& ini, SgScopeStatem
 {
   typedef SgInitializedNamePtrList::iterator Iterator;
 
-  // \todo get the declaration index of ini within its parent
   SgVariableDeclaration&    var = sg::ancestor<SgVariableDeclaration>(ini);
   SgInitializedNamePtrList& lst = var.get_variables();
   Iterator                  aa  = lst.begin();
@@ -395,15 +394,33 @@ mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl, SgScopeStatement& scope)
   return sgnode;
 }
 
+
+namespace
+{
+  template <class SagaAdaTaskDecl>
+  SagaAdaTaskDecl&
+  mkAdaTaskDeclInternal(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope)
+  {
+    SagaAdaTaskDecl& sgnode = mkLocatedNode<SagaAdaTaskDecl>(name, &spec);
+
+    scope.insert_symbol(name, &mkBareNode<SgAdaTaskSymbol>(&sgnode));
+
+    spec.set_parent(&sgnode);
+    return sgnode;
+  }
+}
+
+
 SgAdaTaskTypeDecl&
 mkAdaTaskTypeDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope)
 {
-  SgAdaTaskTypeDecl& sgnode = mkLocatedNode<SgAdaTaskTypeDecl>(name, &spec);
+  return mkAdaTaskDeclInternal<SgAdaTaskTypeDecl>(name, spec, scope);
+}
 
-  scope.insert_symbol(name, &mkBareNode<SgAdaTaskSymbol>(&sgnode));
-
-  spec.set_parent(&sgnode);
-  return sgnode;
+SgAdaTaskSpecDecl&
+mkAdaTaskSpecDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope)
+{
+  return mkAdaTaskDeclInternal<SgAdaTaskSpecDecl>(name, spec, scope);
 }
 
 namespace

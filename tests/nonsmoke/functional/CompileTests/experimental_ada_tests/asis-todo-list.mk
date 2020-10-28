@@ -1,13 +1,11 @@
 # tests with an incomplete Asis AST or Dot file
 ASIS_TODO := \
-  accept_statement.adb                 \
+  asm_machine_code.adb                 \
   all_modes.ads                        \
   case_function.ads                    \
   case_function.adb                    \
   complex.ads                          \
   complex.adb                          \
-  entry_declaration.ads                \
-  entry_call.adb                       \
   enum_colors.ads                      \
   for_loop.adb                         \
 	for_loop_statement.adb               \
@@ -25,6 +23,8 @@ ASIS_TODO := \
   procedure_declaration.ads            \
   procedure_declaration.adb            \
   real_typedecl.ads                    \
+  requeue_statements.adb               \
+  select_accept.adb                    \
   sender.ads                           \
   short_circuit.adb                    \
   some_modes.ads                       \
