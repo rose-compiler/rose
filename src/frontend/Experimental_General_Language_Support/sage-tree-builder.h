@@ -130,9 +130,9 @@ public:
    void Leave(SgDerivedTypeStatement*);
 
    void Enter(SgVariableDeclaration* &, const std::string &, SgType*, SgExpression*);
-   void Leave(SgVariableDeclaration*, std::list<LanguageTranslation::ExpressionKind> &);
+   void Enter(SgVariableDeclaration* &, SgType*, std::list<std::tuple<std::string, SgType*, SgExpression*>> &);
    void Leave(SgVariableDeclaration*);
-
+   void Leave(SgVariableDeclaration*, std::list<LanguageTranslation::ExpressionKind> &);
 
    void Enter(SgEnumDeclaration* &, const std::string &);
    void Leave(SgEnumDeclaration*);
