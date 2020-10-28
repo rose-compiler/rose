@@ -7263,10 +7263,8 @@ ATbool ATermToSageJovialTraversal::traverse_NextFunction(ATerm term, SgFunctionC
          // I don't think it will ever get here. The only way for the parser to arrive
          // here is if it uses a StatusConstant as the argument and
          // StatusConstant doesn't seem to be applicable.
-#if PRINT_WARNINGS
          cerr << "WARNING UNIMPLEMENTED: NextFunction with a status constant\n";
          ROSE_ASSERT(false);
-#endif
       } else return ATfalse;
 
       if (traverse_NumericFormula(t_increment, increment)) {
@@ -7356,9 +7354,6 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionC
    func_call = nullptr;
 
    if (ATmatch(term, "ByteFunction(<term>, <term>,<term>)", &t_formula, &t_fbyte, &t_nbyte)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: ByteFunction\n";
-#endif
       if (traverse_CharacterFormula(t_formula, character_formula)) {
          // MATCHED CharacterFormula
       } else return ATfalse;
@@ -7370,7 +7365,8 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionC
       if (traverse_NumericFormula(t_nbyte, length)) {
          // MATCHED NumericFormula
       } else return ATfalse;
-   } else return ATfalse;
+   }
+   else return ATfalse;
 
    // build the parameter list
    SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
@@ -7392,6 +7388,9 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionC
    ROSE_ASSERT(new_length);
 
    SgType* return_type = SageBuilder::buildStringType(new_length);
+
+// TODO???
+   cerr << "WARNING UNIMPLEMENTED: ByteFunction\n";
 
    func_call = SageBuilder::buildFunctionCallExp("BYTE", return_type, params, SageBuilder::topScopeStack());
    ROSE_ASSERT(func_call);
