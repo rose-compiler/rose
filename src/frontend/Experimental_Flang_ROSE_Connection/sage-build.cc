@@ -504,6 +504,11 @@ void Build(const parser::Name &x, SgExpression* &expr)
    std::cout << "Rose::builder::Build(Name)\n";
 }
 
+void Build(const parser::NamedConstant &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(NamedConstant)\n";
+}
+
 void Build(const parser::Expr &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(Expr)\n";
@@ -529,6 +534,15 @@ void Build(const parser::Expr::IntrinsicBinary &x, SgExpression* &expr)
    std::cout << "Rose::builder::Build(IntrinsicBinary)\n";
 }
 
+void Build(const parser::ConstantValue &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(ConstantValue)\n";
+   // std::variant<LiteralConstant, NamedConstant> u;
+
+   auto ConstantValueVisitor = [&] (const auto &y) { Build(y, expr); };
+   std::visit(ConstantValueVisitor, x.u);
+}
+
 void Build(const parser::LiteralConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(LiteralConstant)\n";
@@ -542,52 +556,80 @@ void Build(const parser::LiteralConstant &x, SgExpression* &expr)
 }
 
    // LiteralConstant
-template<typename T>
-void Build(const parser::HollerithLiteralConstant &x, T* &expr)
+void Build(const parser::HollerithLiteralConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(HollerithLiteralConstant)\n";
 }
 
-template<typename T>
-void Build(const parser::IntLiteralConstant &x, T* &expr)
+void Build(const parser::IntLiteralConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(IntLiteralConstant)\n";
 
    expr = SageBuilderCpp17::buildIntVal_nfi(stoi(std::get<0>(x.t).ToString()));
 }
 
-template<typename T>
-void Build(const parser::RealLiteralConstant &x, T* &expr)
+void Build(const parser::SignedIntLiteralConstant &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(SignedIntLiteralConstant)\n";
+   // std::tuple<CharBlock, std::optional<KindParam>> t;
+
+   expr = SageBuilderCpp17::buildIntVal_nfi(stoi(std::get<0>(x.t).ToString()));
+}
+
+void Build(const parser::RealLiteralConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(RealLiteralConstant)\n";
+
+   expr = SageBuilderCpp17::buildFloatVal_nfi(x.real.source.ToString());
 }
 
-template<typename T>
-void Build(const parser::ComplexLiteralConstant &x, T* &expr)
+void Build(const parser::SignedRealLiteralConstant &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(SignedRealLiteralConstant)\n";
+   // std::tuple<std::optional<Sign>, RealLiteralConstant> t;
+
+   Build(std::get<1>(x.t), expr);
+}
+
+void Build(const parser::ComplexLiteralConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(ComplexLiteralConstant)\n";
+   // std::tuple<ComplexPart, ComplexPart> t;
+
+   SgExpression * real_value = nullptr, * imaginary_value = nullptr;
+
+   Build(std::get<0>(x.t), real_value);
+   Build(std::get<1>(x.t), imaginary_value);
+
+   expr = SageBuilderCpp17::buildComplexVal_nfi(real_value, imaginary_value, "");
 }
 
-template<typename T>
-void Build(const parser::BOZLiteralConstant &x, T* &expr)
+void Build(const parser::BOZLiteralConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(BOZLiteralConstant)\n";
 }
 
-template<typename T>
-void Build(const parser::CharLiteralConstant &x, T* &expr)
+void Build(const parser::CharLiteralConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(CharLiteralConstant)\n";
-   std::string literal = x.GetString();
-   std::cout << " The CHAR LITERAL CONSTANT is \"" << literal << "\"" << std::endl;
+
+   expr = SageBuilderCpp17::buildStringVal_nfi(x.GetString());
 }
 
-template<typename T>
-void Build(const parser::LogicalLiteralConstant &x, T* &expr)
+void Build(const parser::LogicalLiteralConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(LogicalLiteralConstant)\n";
-   bool literal = std::get<0>(x.t);
-   std::cout << " The LOGICAL LITERAL CONSTANT is " << literal << std::endl;
+
+   expr = SageBuilderCpp17::buildBoolValExp_nfi(std::get<0>(x.t));
+}
+
+void Build(const parser::ComplexPart &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(ComplexPart)\n";
+   // std::variant<SignedIntLiteralConstant, SignedRealLiteralConstant, NamedConstant>
+
+   auto ComplexPartVisitor = [&](const auto& y) { Build(y, expr); };
+   std::visit(ComplexPartVisitor, x.u);
 }
 
 template<typename T>
@@ -772,37 +814,90 @@ void Build(const parser::IntegerTypeSpec &x, SgType* &type)
 void Build(const parser::IntrinsicTypeSpec::Real &x, SgType* &type)
 {
    std::cout << "Rose::builder::Build(Real)\n";
-   std::cout << "TYPE IS : Real\n";
+
+   type = SageBuilderCpp17::buildFloatType();
 }
 
 void Build(const parser::IntrinsicTypeSpec::DoublePrecision &x, SgType* &type)
 {
    std::cout << "Rose::builder::Build(DoublePrecision)\n";
-   std::cout << "TYPE IS : DoublePrecision\n";
+
+   type = SageBuilderCpp17::buildDoubleType();
 }
 
 void Build(const parser::IntrinsicTypeSpec::Complex &x, SgType* &type)
 {
    std::cout << "Rose::builder::Build(Complex)\n";
-   std::cout << "TYPE IS : Complex\n";
+
+   SgType* base_type = SageBuilderCpp17::buildIntType();
+   type = SageBuilderCpp17::buildComplexType(base_type);
 }
 
 void Build(const parser::IntrinsicTypeSpec::Character &x, SgType* &type)
 {
    std::cout << "Rose::builder::Build(Character)\n";
-   std::cout << "TYPE IS : Character\n";
+
+   SgExpression* expr = nullptr;
+
+   if (auto & opt = x.selector) {    // std::optional<CharSelector> selector
+      Build(opt.value(), expr);
+      type = SageBuilderCpp17::buildStringType(expr);
+   } else {
+      type = SageBuilderCpp17::buildCharType();
+   }
 }
 
 void Build(const parser::IntrinsicTypeSpec::Logical &x, SgType* &type)
 {
    std::cout << "Rose::builder::Build(Logical)\n";
-   std::cout << "TYPE IS : Logical\n";
+
+   type = SageBuilderCpp17::buildBoolType();
 }
 
 void Build(const parser::IntrinsicTypeSpec::DoubleComplex &x, SgType* &type)
 {
    std::cout << "Rose::builder::Build(DoubleComplex)\n";
-   std::cout << "TYPE IS : DoubleComplex\n";
+
+   SgType* base_type = SageBuilderCpp17::buildDoubleType();
+   type = SageBuilderCpp17::buildComplexType(base_type);
+}
+
+void Build(const parser::CharSelector &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(CharSelector)\n";
+   // std::variant<LengthSelector, LengthAndKind> u;
+
+   auto CharSelectorVisitor = [&](const auto& y) { Build(y, expr); };
+   std::visit(CharSelectorVisitor, x.u);
+}
+
+void Build(const parser::LengthSelector &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(LengthSelector)\n";
+   //  std::variant<TypeParamValue, CharLength> u;
+
+   auto LengthSelectorVisitor = [&](const auto& y) { Build(y, expr); };
+   std::visit(LengthSelectorVisitor, x.u);
+}
+
+void Build(const parser::CharSelector::LengthAndKind &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(LengthAndKind)\n";
+   //    std::optional<TypeParamValue> length;
+   //    ScalarIntConstantExpr kind;
+}
+
+void Build(const parser::TypeParamValue &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(TypeParamVale)\n";
+   //  std::variant<ScalarIntExpr, Star, Deferred> u;
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::ScalarIntExpr &y)  { Build(y, expr); },
+         [&] (const auto &y)                                 { ; },
+      },
+      x.u);
 }
 
 void Build(const std::list<Fortran::parser::EntityDecl> &x, std::string &name, SgExpression* &init)
@@ -833,7 +928,7 @@ void Build(const parser::EntityDecl &x, std::string &name, SgExpression* &init)
    }
 
    if (auto & opt = std::get<3>(x.t)) {    // CharLength
-      Build(opt.value(), scope);
+      //      Build(opt.value(), scope);
    }
 
    if (auto & opt = std::get<4>(x.t)) {    // Initialization
@@ -861,8 +956,7 @@ void Build(const parser::CoarraySpec &x, T* scope)
    std::cout << "Rose::builder::Build(CoarraySpec)\n";
 }
 
-template<typename T>
-void Build(const parser::CharLength &x, T* scope)
+void Build(const parser::CharLength &x, SgExpression* &)
 {
    std::cout << "Rose::builder::Build(CharLength)\n";
 }
@@ -875,8 +969,14 @@ void Build(const parser::Initialization &x, SgExpression* &expr)
 
    std::visit(
       common::visitors{
-         [&] (const parser::ConstantExpr &y)  { Build(y, expr); },
-         [&] (const auto &y)                                { ; }
+         [&] (const std::list<common::Indirection<parser::DataStmtValue>> &y)
+            {
+               for (const auto &elem : y) {
+                  Build(elem.value(), expr);
+               }
+            },
+         [&] (const parser::ConstantExpr &y) { Build(y, expr); },
+         [&] (const auto &y)                               { ; }
       },
       x.u);
 }
@@ -980,6 +1080,33 @@ template<typename T>
 void Build(const parser::ErrorRecovery &x, T* scope)
 {
    std::cout << "Rose::builder::Build(ErrorRecovery)\n";
+}
+
+   // DataStmt
+void Build(const parser::DataStmtValue &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(DataStmtValue)\n";
+   // std::tuple<std::optional<DataStmtRepeat>, DataStmtConstant> t;
+
+   Build(std::get<parser::DataStmtConstant>(x.t), expr);
+}
+
+void Build(const parser::DataStmtConstant &x, SgExpression* &expr)
+{
+   std::cout << "Rose::builder::Build(DataStmtConstant)\n";
+   // CharBlock source;
+   // mutable TypedExpr typedExpr;
+   // std::variant<Scalar<ConstantValue>, Scalar<ConstantSubobject>,
+   //     SignedIntLiteralConstant, SignedRealLiteralConstant,
+   //     SignedComplexLiteralConstant, NullInit, InitialDataTarget,
+   //     StructureConstructor> u;
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::Scalar<parser::ConstantValue> &y) { Build(y.thing, expr); },
+         [&] (const auto &y) { ; }
+      },
+      x.u);
 }
 
    // ActionStmt
