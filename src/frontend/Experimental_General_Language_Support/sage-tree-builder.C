@@ -1492,6 +1492,25 @@ SgExpression* buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpressi
    return SageBuilder::buildSubscriptExpression_nfi(lower_bound, upper_bound, stride);
 }
 
+SgExpression* buildPntrArrRefExp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildPntrArrRefExp_nfi(lhs, rhs);
+}
+
+SgExpression* buildAggregateInitializer_nfi(SgExprListExp* initializers, SgType* type)
+{
+   return SageBuilder::buildAggregateInitializer_nfi(initializers, type);
+}
+
+SgExpression* buildAsteriskShapeExp_nfi()
+{
+   SgAsteriskShapeExp* shape = new SgAsteriskShapeExp();
+   ROSE_ASSERT(shape);
+   SageInterface::setSourcePosition(shape);
+
+   return shape;
+}
+
 SgExpression* buildNullExpression_nfi()
 {
    return SageBuilder::buildNullExpression_nfi();

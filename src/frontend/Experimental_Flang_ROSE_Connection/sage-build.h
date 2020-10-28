@@ -85,10 +85,10 @@ void Build(const Fortran::parser::DeclarationTypeSpec::ClassStar&x, SgType* &);
 void Build(const Fortran::parser::DeclarationTypeSpec::   Record&x, SgType* &);
 
 void Build(const Fortran::parser::       DerivedTypeSpec &x,                      SgType* &);
-void Build(const Fortran::parser::            EntityDecl &x, std::string &, SgExpression* &);
-void Build(const std::list<Fortran::parser:: EntityDecl> &x, std::string &, SgExpression* &);
+void Build(const Fortran::parser::            EntityDecl &x, std::string &, SgExpression* &, SgType* &, SgType *);
+void Build(const std::list<Fortran::parser:: EntityDecl> &x, std::string &, SgExpression* &, SgType* &, SgType *);
 template<typename T> void Build(const Fortran::parser::              AttrSpec &x, T* scope);
-template<typename T> void Build(const Fortran::parser::             ArraySpec &x, T* scope);
+void Build(const Fortran::parser::             ArraySpec &x, SgType* &type, SgType* base_type);
 template<typename T> void Build(const Fortran::parser::           CoarraySpec &x, T* scope);
 void Build(const Fortran::parser::            CharLength &x, SgExpression* &);
 void Build(const Fortran::parser::        Initialization &x, SgExpression* &);
@@ -187,7 +187,9 @@ template<typename T> void Build(const Fortran::parser::     OldParameterStmt &x,
 template<typename T> void traverseBinaryExprs(const T &x, SgExpression* &lhs, SgExpression* &rhs);
 
 template<typename T> void Build(const Fortran::parser::CharLiteralConstantSubstring &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::            ArrayConstructor &x, T* &expr);
+void Build(const Fortran::parser::            ArrayConstructor &x, SgExpression* &expr);
+void Build(const Fortran::parser::                      AcSpec &x, SgExpression* &expr);
+void Build(const Fortran::parser::                     AcValue &x, SgExpression* &expr);
 template<typename T> void Build(const Fortran::parser::        StructureConstructor &x, T* &expr);
 template<typename T> void Build(const Fortran::parser::         Expr::DefinedBinary &x, T* &expr);
 template<typename T> void Build(const Fortran::parser::    Expr::ComplexConstructor &x, T* &expr);
