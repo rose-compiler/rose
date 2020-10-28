@@ -1054,11 +1054,6 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
 
      switch (type->variantT())
         {
-          case V_SgEnumType:
-             curprint("ITEM ");
-             curprint(name.str());
-             curprint(" STATUS ");
-             break;
           case V_SgJovialTableType:
              if (is_block) {
                 curprint("BLOCK ");
