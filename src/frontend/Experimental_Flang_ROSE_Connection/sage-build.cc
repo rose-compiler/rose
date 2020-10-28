@@ -1017,16 +1017,13 @@ void Build(const parser::TypeDeclarationStmt &x, T* scope)
    SgExpression* init = nullptr;
    std::list<LanguageTranslation::ExpressionKind> modifier_enum_list;
    std::string name{};
+   std::list<EntityDeclTuple> init_info;
 
    Build(std::get<0>(x.t), base_type);                    // DeclarationTypeSpec
    Build(std::get<1>(x.t), modifier_enum_list);           // std::list<AttrSpec>
-   Build(std::get<2>(x.t), name, init, type, base_type);  // std::list<EntityDecl>
+   Build(std::get<2>(x.t), init_info, base_type);         // std::list<EntityDecl>
 
-   if (!type) {
-      type = base_type;
-   }
-
-   builder.Enter(var_decl, name, type, init);
+   builder.Enter(var_decl, base_type, init_info);
    builder.Leave(var_decl, modifier_enum_list);
 }
 
@@ -1316,15 +1313,21 @@ void Build(const parser::TypeParamValue &x, SgExpression* &expr)
       },
       x.u);
 }
-
-void Build(const std::list<Fortran::parser::EntityDecl> &x, std::string &name, SgExpression* &init, SgType* &type, SgType* base_type)
+void Build(const std::list<Fortran::parser::EntityDecl> &x, std::list<EntityDeclTuple> &entity_decls, SgType* base_type)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(std::list) for EntityDecl\n";
 #endif
 
    for (const auto &elem : x) {
+      EntityDeclTuple entity_decl;
+      std::string name;
+      SgType* type = nullptr;
+      SgExpression* init = nullptr;
+
       Build(elem, name, init, type, base_type);
+      entity_decl = std::make_tuple(name, type, init);
+      entity_decls.push_back(entity_decl);
    }
 }
 
