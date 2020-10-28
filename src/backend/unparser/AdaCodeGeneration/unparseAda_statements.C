@@ -259,19 +259,20 @@ namespace
   {
     Sg_File_Info& fileInfo = SG_DEREF(dcl.get_startOfConstruct());
 
-    //~ std::cerr << fileInfo.get_filenameString() << " =?= " << mainFile
-              //~ << std::endl;
+    return fileInfo.get_filenameString() == mainFile;
+/*
 
     std::string mainFileUp = boost::to_upper_copy(mainFile);
     std::string fileNameUp = boost::to_upper_copy(fileInfo.get_filenameString());
     size_t      pos = mainFileUp.rfind(fileNameUp);
 
-    //~ std::cerr << (pos + fileNameUp.size()) << " =?= " << mainFileUp.size()
-              //~ << std::endl;
+    std::cerr << (pos + fileNameUp.size()) << " =?= " << mainFileUp.size()
+              << std::endl;
 
     return (  (pos != std::string::npos)
            && (pos + fileNameUp.size() == mainFileUp.size())
            );
+*/
   }
 
   std::pair<SgDeclarationStatementPtrList::iterator, SgDeclarationStatementPtrList::iterator>
@@ -377,6 +378,7 @@ namespace
       prn("task body ");
       prn(n.get_name());
       prn(" is\n");
+      prn("begin\n");
 
       stmt(n.get_definition());
 
@@ -533,7 +535,7 @@ namespace
 
       unparseElseBranch(AdaElseUnparser(unparser, info, os), n.get_false_body());
 
-      prn("end if;");
+      prn("end if");
       prn(EOS_NL);
     }
 
@@ -1021,26 +1023,39 @@ namespace
     {}
 
     void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
-
-    void handle(SgDeclarationStatement&)
+/*
+    void handle(SgDeclarationStatement& n)
     {
       static const std::string unknown("-- unknown todo");
 
       res = RenamingSyntax(unknown, unknown, unknown);
+    }
+*/
+    void handle(SgImportStatement& n)
+    {
+      ROSE_ASSERT(idx == 0);
+
+      SgExpressionPtrList& lst = n.get_import_list();
+      //~ ROSE_ASSERT(lst.size() != 0);
+      ROSE_ASSERT(lst.size() == 1);
+
+      std::string renamed = nameOf(SG_DEREF(isSgVarRefExp(lst.back())));
+
+      res = RenamingSyntax("package ", "", renamed);
     }
 
     void handle(SgAdaPackageSpecDecl& n)
     {
       ROSE_ASSERT(idx == 0);
 
-      res = RenamingSyntax("package", "", n.get_name());
+      res = RenamingSyntax("package ", "", n.get_name());
     }
 
     void handle(SgAdaPackageBodyDecl& n)
     {
       ROSE_ASSERT(idx == 0);
 
-      res = RenamingSyntax("package", "", n.get_name());
+      res = RenamingSyntax("package ", "", n.get_name());
     }
 
     void handle(SgVariableDeclaration& n)
@@ -1214,6 +1229,7 @@ namespace
 void
 Unparse_Ada::unparseStatement(SgStatement* stmt, SgUnparse_Info& info)
 {
+  //~ std::cerr << typeid(*stmt).name() << std::endl;
   sg::dispatch(AdaStatementUnparser(*this, info, std::cerr), stmt);
 }
 
