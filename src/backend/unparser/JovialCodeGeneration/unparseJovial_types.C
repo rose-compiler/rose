@@ -203,6 +203,7 @@ Unparse_Jovial::unparseJovialType(SgEnumType* enum_type, SgUnparse_Info& info)
 
      if (info.inVarDecl() && is_anonymous)
        {
+         curprint("STATUS ");
          unparseEnumBody(decl, info);
        }
      else if (info.inVarDecl())
