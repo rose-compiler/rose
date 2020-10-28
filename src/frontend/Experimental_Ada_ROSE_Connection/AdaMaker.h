@@ -237,6 +237,11 @@ namespace Ada_ROSE_Translation
   SgAdaTaskTypeDecl&
   mkAdaTaskTypeDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope);
 
+  /// creates an Ada task declaration
+  // \todo revisit Ada task symbol creation
+  SgAdaTaskSpecDecl&
+  mkAdaTaskSpecDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope);
+
   /// creates an Ada task body declaration
   /// \param tskdecl the corresponding tasl declaration which can either be of type SgAdaTaskSpecDecl
   ///                or of type SgAdaTaskTypeDecl.
@@ -424,7 +429,7 @@ namespace Ada_ROSE_Translation
   inline
   SageValue& mkValue(const char* textrep)
   {
-    static_assert( std::is_base_of<SgValueExp, SageValue>::value ,
+    static_assert( std::is_base_of<SgValueExp, SageValue>::value,
                    "template argument is not derived from SgValueExp"
                  );
 
@@ -440,8 +445,14 @@ namespace Ada_ROSE_Translation
   inline
   SgStringVal& mkValue<SgStringVal>(const char* textrep)
   {
-    ROSE_ASSERT(textrep);
-    return mkLocatedNode<SgStringVal>(std::string(textrep));
+    ROSE_ASSERT(textrep && *textrep == '"');
+
+    std::string lit{textrep+1};
+
+    ROSE_ASSERT(lit.back() == '"');
+    lit.pop_back();
+
+    return mkLocatedNode<SgStringVal>(lit);
   }
 } // namespace Ada_ROSE_Translation
 

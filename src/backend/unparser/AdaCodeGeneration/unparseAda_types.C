@@ -27,7 +27,7 @@ namespace
     void prn(const std::string& s)
     {
       unparser.curprint(s);
-      os << s;
+      //~ os << s;
     }
 
     void handle(SgNode& n)    { SG_UNEXPECTED_NODE(n); }
