@@ -1,4 +1,4 @@
-digraph "/home/lin32/Development/projects/ROSE/build/autotool-default-ada-support/tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/obj/ordinary_type_declaration.adt" {
+digraph "ordinary_type_declaration.adt" {
   Unit_3 -> Element_2315112
       [ label=Unit_Declaration ];
   Unit_3

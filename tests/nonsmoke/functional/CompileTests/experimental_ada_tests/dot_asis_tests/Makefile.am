@@ -124,5 +124,5 @@ check-local:
 
 .PHONY: clean-local
 clean-local:
-	rm -rf obj *.dot
+	rm -rf obj *.dot *.dot.diff
 

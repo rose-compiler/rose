@@ -1,4 +1,4 @@
-digraph "/home/lin32/Development/projects/ROSE/build/autotool-default-ada-support/tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/obj/goto_loop.adt" {
+digraph "goto_loop.adt" {
   Unit_3 -> Element_2305106
       [ label=Unit_Declaration ];
   Unit_3 -> Element_2293428
