@@ -512,7 +512,7 @@ namespace
   ///        or incomplete.
   /// \note  function should become obsolete eventually.
   inline
-  bool isInvaldId(int id) { return id == -1; }
+  bool isInvalidId(int id) { return id == -1; }
 
 } // anonymous
 
