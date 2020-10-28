@@ -1,17 +1,12 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = \
-	dot_asis_tests \
-        compile_tests
-
 # DQ (8/23/2017): Use command line option to alternatively test the experimental fortran frontend.
 # ROSE_FLAGS = -rose:verbose 0 -rose:experimental_csharp_frontend -I$(srcdir)
 ROSE_FLAGS    ?= -rose:skipfinalCompileStep
 
 
-
 # ROSE_COMPILER ?= $(abs_top_builddir)/src/rose-compiler
-ROSE_COMPILER ?= $(abs_builddir)/../../testTranslator
+ROSE_COMPILER ?= $(abs_builddir)/../../../testTranslator
 
 #VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
@@ -31,14 +26,14 @@ ROSE_COMPILER ?= $(abs_builddir)/../../testTranslator
 #
 # include test lists
 #
-# passing-incomplete-tests-list, rose-backend-todo-list, rose-frontend-todo-list.mk,
-# asis-todo-list.mk are not included, b/c they are currently not full-circle tested.
+# rose-backend-todo-list, rose-frontend-todo-list.mk, asis-todo-list.mk
+# are not included, b/c they are currently not tested.
 
-include $(srcdir)/passing-tests-list.mk
-#~ include $(srcdir)/passing-incomplete-tests-list.mk
-#~ include $(srcdir)/rose-backend-todo-list.mk
-#~ include $(srcdir)/rose-frontend-todo-list.mk
-#~ include $(srcdir)/asis-todo-list.mk
+include $(srcdir)/../passing-tests-list.mk
+include $(srcdir)/../passing-incomplete-tests-list.mk
+#~ include $(srcdir)/../rose-backend-todo-list.mk
+#~ include $(srcdir)/../rose-frontend-todo-list.mk
+#~ include $(srcdir)/../asis-todo-list.mk
 
 NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
   parent.ads                           \
@@ -52,7 +47,7 @@ ROSE_OUTPUT_DIR := rose-ada-output
 # ROSE_OUTPUT_DIR := .
 
 TEST_TARGETS := $(addprefix $(ROSE_OUTPUT_DIR)/,$(PASSING_TESTS))
-
+TEST_TARGETS += $(addprefix $(ROSE_OUTPUT_DIR)/,$(PASSING_INCOMPLETE_TESTS))
 
 TESTCODES_REQUIRED_TO_PASS := $(TEST_TARGETS)
 
@@ -74,26 +69,25 @@ print:
 	@echo "TEST_Source_passed   = $(TEST_Source_passed)"
 	@echo "TEST_Objects_passed  = $(TEST_Objects_passed)"
 
-compile_tests/$(ROSE_OUTPUT_DIR)/default.gpr: $(srcdir)/tests/default.gpr
-	cp $< $@
-
+# rose-compiler does not run AST tests
 $(abs_top_builddir)/src/rose-compiler:
 	$(MAKE) -C $(top_builddir)/src rose-compiler
 
 # testTranslator runs the AST consistency checks
-$(abs_builddir)/../../testTranslator:
-	cd ../..; $(MAKE) testTranslator
+$(abs_builddir)/../../../testTranslator:
+	cd ../../..; $(MAKE) testTranslator
 
-$(ROSE_OUTPUT_DIR)/%.ads: compile_tests/$(ROSE_OUTPUT_DIR)/%.ads compile_tests/$(ROSE_OUTPUT_DIR)/default.gpr $(ROSE_COMPILER)
+$(ROSE_OUTPUT_DIR)/%.ads:$(abs_srcdir)/../tests/%.ads $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
 
-$(ROSE_OUTPUT_DIR)/%.adb: compile_tests/$(ROSE_OUTPUT_DIR)/%.adb compile_tests/$(ROSE_OUTPUT_DIR)/default.gpr $(ROSE_COMPILER)
+$(ROSE_OUTPUT_DIR)/%.adb:$(abs_srcdir)/../tests/%.adb $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
 
 .PHONY: clean-local
 clean-local:
 	rm -rf ./rose-ada-output ./obj
 	rm -f *.dot
+	rm -f $(srcdir)/tests/obj/*
 
 .PHONY: check-local
 check-local:
