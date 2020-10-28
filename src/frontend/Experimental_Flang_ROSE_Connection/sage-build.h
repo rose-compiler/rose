@@ -46,18 +46,24 @@ void Build(const Fortran::parser::         ActualArgSpec &x, SgExpression* &expr
 void Build(const Fortran::parser::             ActualArg &x, SgExpression* &expr);
 void Build(const Fortran::parser::               Keyword &x, SgExpression* &expr);
 void Build(const Fortran::parser::                  Name &x, SgExpression* &expr);
+void Build(const Fortran::parser::         NamedConstant &x, SgExpression* &expr);
 void Build(const Fortran::parser::                  Expr &x, SgExpression* &expr);
 void Build(const Fortran::parser:: Expr::IntrinsicBinary &x, SgExpression* &expr);
+void Build(const Fortran::parser::         ConstantValue &x, SgExpression* &expr);
 void Build(const Fortran::parser::       LiteralConstant &x, SgExpression* &expr);
 
 // LiteralConstant
-template<typename T> void Build(const Fortran::parser::HollerithLiteralConstant &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::     IntLiteralConstant &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::    RealLiteralConstant &x, T* &expr);
-template<typename T> void Build(const Fortran::parser:: ComplexLiteralConstant &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::     BOZLiteralConstant &x, T* &expr);
-template<typename T> void Build(const Fortran::parser::    CharLiteralConstant &x, T* &expr);
-template<typename T> void Build(const Fortran::parser:: LogicalLiteralConstant &x, T* &expr);
+void Build(const Fortran::parser:: HollerithLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser::       IntLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser:: SignedIntLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser::      RealLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser::SignedRealLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser::   ComplexLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser::       BOZLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser::      CharLiteralConstant &x, SgExpression* &expr);
+void Build(const Fortran::parser::   LogicalLiteralConstant &x, SgExpression* &expr);
+
+void Build(const Fortran::parser::ComplexPart &x, SgExpression* &expr);
 
 template<typename T> void Build(const Fortran::parser::InternalSubprogramPart &x, T* scope);
 template<typename T> void Build(const Fortran::parser::          ImplicitPart &x, T* scope);
@@ -84,7 +90,7 @@ void Build(const std::list<Fortran::parser:: EntityDecl> &x, std::string &, SgEx
 template<typename T> void Build(const Fortran::parser::              AttrSpec &x, T* scope);
 template<typename T> void Build(const Fortran::parser::             ArraySpec &x, T* scope);
 template<typename T> void Build(const Fortran::parser::           CoarraySpec &x, T* scope);
-template<typename T> void Build(const Fortran::parser::            CharLength &x, T* scope);
+void Build(const Fortran::parser::            CharLength &x, SgExpression* &);
 void Build(const Fortran::parser::        Initialization &x, SgExpression* &);
 void Build(const Fortran::parser::     IntrinsicTypeSpec &x,       SgType* &);
 void Build(const Fortran::parser::       IntegerTypeSpec &x,       SgType* &);
@@ -108,12 +114,21 @@ void Build(const Fortran::parser::IntrinsicTypeSpec::      Character &x, SgType*
 void Build(const Fortran::parser::IntrinsicTypeSpec::        Logical &x, SgType* &);
 void Build(const Fortran::parser::IntrinsicTypeSpec::  DoubleComplex &x, SgType* &);
 
+void Build(const Fortran::parser::               CharSelector &x, SgExpression* &expr);
+void Build(const Fortran::parser::             LengthSelector &x, SgExpression* &expr);
+void Build(const Fortran::parser::CharSelector::LengthAndKind &x, SgExpression* &expr);
+void Build(const Fortran::parser::             TypeParamValue &x, SgExpression* &expr);
+
 // DeclarationConstruct
 template<typename T> void Build(const Fortran::parser::        DataStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::      FormatStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::       EntryStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::StmtFunctionStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::   ErrorRecovery &x, T* scope);
+
+// DataStmt
+void Build(const Fortran::parser::   DataStmtValue &x, SgExpression* &expr);
+void Build(const Fortran::parser::DataStmtConstant &x, SgExpression* &expr);
 
 // ActionStmt
 template<typename T> void Build(const Fortran::parser::         ContinueStmt &x, T* scope);
