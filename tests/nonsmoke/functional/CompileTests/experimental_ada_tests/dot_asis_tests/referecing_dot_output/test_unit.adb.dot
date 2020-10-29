@@ -14,7 +14,7 @@ digraph "test_unit.adt" {
           <TR><TD ALIGN="LEFT">Exists  </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Can_Be_Main_Program     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Is_Body_Required     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
-          <TR><TD ALIGN="LEFT">Text_Name   </TD><TD> = </TD><TD ALIGN="LEFT">/home/lin32/Development/projects/ROSE/rose/tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/test_units/test_unit.adb</TD></TR>
+          <TR><TD ALIGN="LEFT">Text_Name   </TD><TD> = </TD><TD ALIGN="LEFT">test_unit.adb</TD></TR>
           <TR><TD ALIGN="LEFT">Text_Form   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
           <TR><TD ALIGN="LEFT">Object_Name   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
           <TR><TD ALIGN="LEFT">Object_Form   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
@@ -2130,7 +2130,7 @@ digraph "test_unit.adt" {
           <TR><TD ALIGN="LEFT">Exists  </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Can_Be_Main_Program     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Is_Body_Required     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
-          <TR><TD ALIGN="LEFT">Text_Name   </TD><TD> = </TD><TD ALIGN="LEFT">/home/lin32/Development/projects/ROSE/rose/tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/test_units/test_unit.ads</TD></TR>
+          <TR><TD ALIGN="LEFT">Text_Name   </TD><TD> = </TD><TD ALIGN="LEFT">test_unit.ads</TD></TR>
           <TR><TD ALIGN="LEFT">Text_Form   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
           <TR><TD ALIGN="LEFT">Object_Name   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
           <TR><TD ALIGN="LEFT">Object_Form   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
