@@ -4733,6 +4733,8 @@ SgStatement::get_scope(void) const
 
                     if (stmt->get_parent() == NULL)
                        {
+                         if (isSgJovialCompoolStatement(stmt) || isSgEmptyDeclaration(stmt)) return NULL; // TODO dangling SgJovialCompoolStatement without parent AND SgEmptyDeclaration generate in "collect" phase of the translator but files are created later leading to pool traversal in post-processing.
+
                          printf ("Error: NULL parent pointer not allowed for statement = %p = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
                          ROSE_ASSERT(stmt->get_file_info() != NULL);
                          stmt->get_file_info()->display("Error: NULL parent pointer not allowed for statement");
