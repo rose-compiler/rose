@@ -11,8 +11,6 @@ with Dot;
 
 package body Asis_Tool_2.Unit is
 
-   Module_Name : constant String := "Asis_Tool_2.Unit";
-
    package ACU renames Asis.Compilation_Units;
 
    -----------------------------------------------------------------------------
@@ -272,22 +270,20 @@ package body Asis_Tool_2.Unit is
 
    -- Create a Dot node for this unit, add all the attributes, and append it to the
    -- graph.
-   procedure Process_Application_Unit
+   procedure Process_Unit
      (This    : in out Class;
       Unit    : in Asis.Compilation_Unit)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name &
-        ".Process_Application_Unit";
+      Module_Name : constant String := Parent_Name & ".Process_Unit";
+      procedure Log (Message : in String) is
+      begin
+         Put_Line (Module_Name & ":  " & Message);
+      end;
 
       Unit_Class     : constant Asis.Unit_Classes := ACU.Unit_Class (Unit);
       Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
       Unit_Kind      : constant Asis.Unit_Kinds   := ACU.Unit_Kind (Unit);
-
-      procedure Log (Message : in String) is
-      begin
-         Put_Line (Module_Name & ":  " & message);
-      end;
 
       -- These are in alphabetical order:
       procedure Add_Can_Be_Main_Program is
@@ -565,7 +561,7 @@ package body Asis_Tool_2.Unit is
       end;
 
       use all type Asis.Unit_Kinds;
-   begin -- Process_Application_Unit
+   begin -- Process_Unit
       If Unit_Kind /= Not_A_Unit then
          Start_Output;
       end if;
@@ -624,7 +620,7 @@ package body Asis_Tool_2.Unit is
       Process_Element_Trees (This, Unit);
       Log ("DONE Processing " & To_String (Unit_Full_Name) & " " &
              To_String (To_Wide_String (Unit_Class)));
-   end Process_Application_Unit;
+   end Process_Unit;
 
    ------------
    -- EXPORTED:
@@ -632,18 +628,46 @@ package body Asis_Tool_2.Unit is
    procedure Process
      (This    : in out Class;
       Unit    : in     Asis.Compilation_Unit;
+      Options : in     Options_Record;
       Outputs : in     Outputs_Record)
    is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process";
-
-      Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
-      Unit_Origin    : constant Asis.Unit_Origins := Acu.Unit_Origin (Unit);
-
       procedure Log (Message : in Wide_String) is
       begin
          Put_Line (Module_Name & ":  " & To_String (Message));
       end;
+
+      function To_Description (This : in Asis.Unit_Origins)
+                               return Wide_String is
+      begin
+         case This is
+            when Asis.Not_An_Origin =>
+               return "(unit origin is nil or nonexistent)";
+            when Asis.A_Predefined_Unit =>
+               return "(Ada predefined language environment unit)";
+            when Asis.An_Implementation_Unit =>
+               return "(Implementation specific library unit)";
+            when Asis.An_Application_Unit =>
+               return "(Application unit)";
+         end case;
+      end To_Description;
+
+      Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
+      Unit_Origin    : constant Asis.Unit_Origins := Acu.Unit_Origin (Unit);
+
+      -- Trying to process package Standard or System leads to constraint errors when
+      -- calling certain ASIS queries, so let's avoid that:
+      procedure Process_Acceptable_Unit is
+      begin
+         if Unit_Full_Name = "Standard" or
+           Unit_Full_Name = "System" then
+            Log ("Skipped package" & Unit_Full_Name & ")");
+         else
+            Process_Unit (This, Unit);
+         end if;
+      end Process_Acceptable_Unit;
+
 
    begin
       -- I would like to just pass Outputs through and not store it in the
@@ -653,17 +677,12 @@ package body Asis_Tool_2.Unit is
       -- that:
       This.Outputs := Outputs;
 
-      case Unit_Origin is
-         when Asis.An_Application_Unit =>
-            Process_Application_Unit (This, Unit);
-         when Asis.A_Predefined_Unit =>
-            Log ("Skipped " & Unit_Full_Name & " (predefined unit)");
-         when Asis.An_Implementation_Unit =>
-            Log ("Skipped " & Unit_Full_Name & " (implementation-defined unit)");
-         when Asis.Not_An_Origin =>
-            Log ("Skipped " & Unit_Full_Name & " (non-existent unit)");
-      end case;
-
+      if Options.Process_If_Origin_Is (Unit_Origin) then
+         Process_Acceptable_Unit;
+      else
+         Log ("Skipped " & Unit_Full_Name &
+                " (" & To_Description(Unit_Origin) & ")");
+      end if;
    end Process;
 
 end Asis_Tool_2.Unit;
