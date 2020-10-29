@@ -20184,14 +20184,6 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
         if (func->get_firstNondefiningDeclaration() == func)
           func->set_scope(targetBlock);
       }
-      else if (SgJovialTableStatement* table = isSgJovialTableStatement(stmt))
-      {
-        // CR 9/21/2020: Uncovered by issue RC-135 and scope moved in switch below
-      }
-      else if (SgTypedefDeclaration* decl = isSgTypedefDeclaration(stmt))
-      {
-        // CR 10/19/2020: Uncovered by issue RC-227 and scope moved in switch below
-      }
       else
       {
         printf ("Warning: test failing (*i)->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks() \n");
@@ -20282,16 +20274,20 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
           ROSE_ASSERT (funcDecl);
           break;
         }
+      // needed to move Ada record into definition of C++ namespace
+      case V_SgClassDeclaration: 
       case V_SgEnumDeclaration:
         {
           // CR 10/17/2020: Needed for issue RC-189
-          SgEnumDeclaration* enum_decl = isSgEnumDeclaration(declaration);
-          ROSE_ASSERT (enum_decl);
+//          SgEnumDeclaration* enum_decl = isSgEnumDeclaration(declaration);
+//          ROSE_ASSERT (enum_decl);
+          SgDeclarationStatement* def_decl = declaration->get_definingDeclaration();
+          SgDeclarationStatement* nondef_decl = declaration->get_firstNondefiningDeclaration();
 
-          SgDeclarationStatement* def_decl = enum_decl->get_definingDeclaration();
-          SgDeclarationStatement* nondef_decl = enum_decl->get_firstNondefiningDeclaration();
           nondef_decl->set_parent(targetBlock);
           nondef_decl->set_scope(targetBlock);
+
+          def_decl->set_parent(targetBlock);
           def_decl->set_scope(targetBlock);
           break;
         }
