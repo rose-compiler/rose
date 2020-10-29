@@ -501,6 +501,7 @@ NameQualificationTraversal::associatedDeclaration(SgScopeStatement* scope)
           case V_SgSwitchStatement:
           case V_SgCatchOptionStmt:
           case V_SgUpcForAllStatement:
+          case V_SgJovialForThenStatement:
              {
                return_declaration = NULL;
                break;
