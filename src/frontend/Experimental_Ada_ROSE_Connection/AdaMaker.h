@@ -274,7 +274,7 @@ namespace Ada_ROSE_Translation
   /// \param scope    the enclosing scope
   /// \param retty    return type of a function (SgVoidType for procedures)
   /// \param complete a functor that is called after the function parameter list and
-  ///                 the function parameter list have been constructed. The task of complete
+  ///                 the function parameter scope have been constructed. The task of complete
   ///                 is to fill these objects with function parameters.
   SgFunctionDeclaration&
   mkProcedure( const std::string& name,
@@ -288,7 +288,7 @@ namespace Ada_ROSE_Translation
   /// \param scope    the enclosing scope
   /// \param retty    return type of a function (SgVoidType for procedures)
   /// \param complete a functor that is called after the function parameter list and
-  ///                 the function parameter list have been constructed. The task of complete
+  ///                 the function parameter scope have been constructed. The task of complete
   ///                 is to fill these objects with function parameters.
   SgFunctionDeclaration&
   mkProcedureDef( SgFunctionDeclaration& ndef,
@@ -302,7 +302,7 @@ namespace Ada_ROSE_Translation
   /// \param scope    the enclosing scope
   /// \param retty    return type of a function (SgVoidType for procedures)
   /// \param complete a functor that is called after the function parameter list and
-  ///                 the function parameter list have been constructed. The task of complete
+  ///                 the function parameter scope have been constructed. The task of complete
   ///                 is to fill these objects with function parameters.
   ///                 Note: Here complete is called twice, once for the defining, and once for the
   ///                       non-defining declaration.
@@ -440,20 +440,9 @@ namespace Ada_ROSE_Translation
   }
 
   /// \overload
-  /// \note overloaded since SgStringVal constructor only takes a text representation
+  /// \note specialized since SgStringVal constructor requires special handling
   template <>
-  inline
-  SgStringVal& mkValue<SgStringVal>(const char* textrep)
-  {
-    ROSE_ASSERT(textrep && *textrep == '"');
-
-    std::string lit{textrep+1};
-
-    ROSE_ASSERT(lit.back() == '"');
-    lit.pop_back();
-
-    return mkLocatedNode<SgStringVal>(lit);
-  }
+  SgStringVal& mkValue<SgStringVal>(const char* textrep);
 } // namespace Ada_ROSE_Translation
 
 #endif /* _ADA_MAKER_H */

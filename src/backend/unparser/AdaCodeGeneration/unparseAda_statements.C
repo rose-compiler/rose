@@ -504,6 +504,8 @@ namespace
 
         ASSERT_not_null(ini);
         prn(ini->get_name());
+
+        std::cerr << ini->get_qualified_name() << std::endl;
       }
 
       prn(": ");
