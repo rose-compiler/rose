@@ -822,6 +822,27 @@ mkSelectedComponent(SgExpression& prefix, SgExpression& selector)
   return SG_DEREF( sb::buildDotExp(&prefix, &selector) );
 }
 
+
+//
+// specialized templates
+
+template <>
+SgStringVal& mkValue<SgStringVal>(const char* textrep)
+{
+  ROSE_ASSERT(textrep && *textrep == '"');
+
+  std::string lit{textrep+1};
+
+  ROSE_ASSERT(lit.back() == '"');
+  lit.pop_back();
+
+  return mkLocatedNode<SgStringVal>(lit);
+}
+
+
+//
+// builder functions
+
 SgRemOp*
 buildRemOp(SgExpression* lhs, SgExpression* rhs)
 {
