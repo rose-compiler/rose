@@ -150,7 +150,6 @@ int main( int argc, char * argv[] ) {
     CodeThorn::initDiagnosticsLTL();
 
     TimingCollector tc;
-    TimeMeasurement timer;
 
     tc.startTimer();
     CodeThornOptions ctOpt;
