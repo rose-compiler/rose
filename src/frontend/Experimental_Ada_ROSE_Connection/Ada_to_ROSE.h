@@ -21,10 +21,7 @@ static constexpr bool FAIL_ON_ERROR = false;
 //
 // logging
 
-extern Sawyer::Message::Facility adalogger;
-
-/// initializes the logger facilities
-void logInit();
+extern Sawyer::Message::Facility mlog;
 
 
 //
@@ -229,33 +226,33 @@ namespace
 #ifndef USE_SIMPLE_STD_LOGGER
 
   inline
-  auto logTrace() -> decltype(Ada_ROSE_Translation::adalogger[Sawyer::Message::TRACE])
+  auto logTrace() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::TRACE])
   {
-    return Ada_ROSE_Translation::adalogger[Sawyer::Message::TRACE];
+    return Ada_ROSE_Translation::mlog[Sawyer::Message::TRACE];
   }
 
   inline
-  auto logInfo() -> decltype(Ada_ROSE_Translation::adalogger[Sawyer::Message::INFO])
+  auto logInfo() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::INFO])
   {
-    return Ada_ROSE_Translation::adalogger[Sawyer::Message::INFO];
+    return Ada_ROSE_Translation::mlog[Sawyer::Message::INFO];
   }
 
   inline
-  auto logWarn() -> decltype(Ada_ROSE_Translation::adalogger[Sawyer::Message::WARN])
+  auto logWarn() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::WARN])
   {
-    return Ada_ROSE_Translation::adalogger[Sawyer::Message::WARN];
+    return Ada_ROSE_Translation::mlog[Sawyer::Message::WARN];
   }
 
   inline
-  auto logError() -> decltype(Ada_ROSE_Translation::adalogger[Sawyer::Message::ERROR])
+  auto logError() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::ERROR])
   {
-    return Ada_ROSE_Translation::adalogger[Sawyer::Message::ERROR];
+    return Ada_ROSE_Translation::mlog[Sawyer::Message::ERROR];
   }
 
   inline
-  auto logFatal() -> decltype(Ada_ROSE_Translation::adalogger[Sawyer::Message::FATAL])
+  auto logFatal() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::FATAL])
   {
-    return Ada_ROSE_Translation::adalogger[Sawyer::Message::FATAL];
+    return Ada_ROSE_Translation::mlog[Sawyer::Message::FATAL];
   }
 
 
