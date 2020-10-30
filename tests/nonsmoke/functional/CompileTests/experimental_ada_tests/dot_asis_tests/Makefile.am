@@ -93,6 +93,12 @@ $(DOT_BODY_PASS_FILES): %.adb.dot: $(ASIS_TESTS_DIR)/%.adb  $(RUN_ASIS_TOOL)
 	@echo "Testing body file:" $<
 	$(RUN_ASIS_TOOL) --file=$< --gnat_home=$(GNAT_HOME) --output_dir=$(builddir) 2> /dev/null | (! grep -i "ASIS Error") || (echo "$< failed $?"; exit 1)
 
+PASSING_DOT_DIFF=$(addsuffix .diff, $(DOT_FILES))
+REFERENCE_PATH=$(top_srcdir)/tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/referecing_dot_output
+
+$(PASSING_DOT_DIFF): %.dot.diff: %.dot
+	@echo "Comparing dot file:" $<
+	if diff $(@:.dot.diff=.dot) $(REFERENCE_PATH)/$(@:.dot.diff=.dot) > $@ ; then echo "$< passed" ; else echo "$< differ; test falied"; rm -rf $@; exit 1; fi
 
 print:
 	@echo "Output Makefile variables:"
@@ -102,10 +108,12 @@ print:
 	@echo "DOT_BODY_PASS_FILES = $(DOT_BODY_PASS_FILES)"
 
 check-local: 
-	@echo "Tests for ASIS."
+	@echo "Tests ASIS."
 	@$(MAKE) $(DOT_FILES)
+	@echo "Compare Dot files."
+	@$(MAKE) $(PASSING_DOT_DIFF)
 
 .PHONY: clean-local
 clean-local:
-	rm -rf obj *.dot
+	rm -rf obj *.dot *.dot.diff
 
