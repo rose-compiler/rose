@@ -9,8 +9,9 @@ namespace CodeThorn
 struct Lattice;  
 
 /// Defines the abstract solver interface 
-struct DFAbstractSolver 
+class DFAbstractSolver 
 {
+ public:
   /// runs the solver
   virtual void runSolver() = 0;
   

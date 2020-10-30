@@ -49,6 +49,7 @@ namespace CodeThorn {
   Lattice* getPreInfo(Label lab);
   Lattice* getPostInfo(Label lab);
 
+  WorkListSeq<Edge>* getWorkList();
   
   protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice*);

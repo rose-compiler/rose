@@ -264,5 +264,9 @@ namespace CodeThorn
     _analyzerDataPostInfo[lab.getId()]=el;
   }
   
+  WorkListSeq<Edge>* DFAnalysisBase::getWorkList() {
+    return &_workList;
+  }
+
 }
 

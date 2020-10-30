@@ -67,6 +67,10 @@ namespace CodeThorn {
     void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pa);
     CodeThorn::PointerAnalysisInterface* getPointerAnalysis();
 
+    void setInitialElementFactory(PropertyStateFactory*);
+    PropertyStateFactory* getInitialElementFactory();
+    DFTransferFunctions* getTransferFunctions();
+
   protected:
     enum AnalysisType {FORWARD_ANALYSIS, BACKWARD_ANALYSIS};
     virtual void setPostInfo(Label lab,Lattice*) =0;
@@ -78,9 +82,6 @@ namespace CodeThorn {
     LabelSet _extremalLabels;
     Flow* _flow=nullptr;
     long _numberOfLabels=0;
-
-    void setInitialElementFactory(PropertyStateFactory*);
-    PropertyStateFactory* getInitialElementFactory();
 
     DFTransferFunctions* _transferFunctions=nullptr;
 

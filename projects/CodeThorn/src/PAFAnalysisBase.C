@@ -244,4 +244,8 @@ namespace CodeThorn
     return _programAbstractionLayer->getFunctionIdMapping();
   }
 
+  CodeThorn::DFTransferFunctions* PAFAnalysisBase::getTransferFunctions() {
+    return _transferFunctions;
+  }
+
 }
