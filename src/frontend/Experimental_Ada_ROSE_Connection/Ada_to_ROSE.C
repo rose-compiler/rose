@@ -26,12 +26,8 @@ namespace Ada_ROSE_Translation
 //
 // logger
 
-Sawyer::Message::Facility adalogger;
+extern Sawyer::Message::Facility mlog;
 
-void logInit()
-{
-  adalogger = Sawyer::Message::Facility("Ada2ROSE", Rose::Diagnostics::destination);
-}
 
 //
 // declaration store and retrieval
@@ -481,7 +477,6 @@ void secondConversion(Nodes_Struct& headNodes, SgSourceFile* file)
 {
   ROSE_ASSERT(file);
 
-  logInit();
   logInfo() << "Building ROSE AST .." << std::endl;
 
   Unit_Struct_List_Struct* adaLimit = 0;
