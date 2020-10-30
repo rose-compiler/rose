@@ -3482,19 +3482,23 @@ HEADER_TEMPLATE_INSTANTIATION_DIRECTIVE_STATEMENT_END
 HEADER_ADA_PACKAGE_SPEC_DECL_STATEMENT_START
 SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE;
 SgName get_mangled_name() const ROSE_OVERRIDE;
+SgName get_qualified_name() const;
 HEADER_ADA_PACKAGE_SPEC_DECL_STATEMENT_END
 
 HEADER_ADA_PACKAGE_BODY_DECL_STATEMENT_START
 SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE;
 SgName get_mangled_name() const ROSE_OVERRIDE;
+SgName get_qualified_name() const;
 HEADER_ADA_PACKAGE_BODY_DECL_STATEMENT_END
 
 HEADER_ADA_PACKAGE_SPEC_STATEMENT_START
 SgName get_mangled_name() const ROSE_OVERRIDE;
+SgName get_qualified_name() const ROSE_OVERRIDE;
 HEADER_ADA_PACKAGE_SPEC_STATEMENT_END
 
 HEADER_ADA_PACKAGE_BODY_STATEMENT_START
 SgName get_mangled_name() const ROSE_OVERRIDE;
+SgName get_qualified_name() const ROSE_OVERRIDE;
 HEADER_ADA_PACKAGE_BODY_STATEMENT_END
 
 
@@ -20257,6 +20261,17 @@ SgAdaPackageSpecDecl::get_mangled_name() const
   name.append(get_name());
   return name;
 }
+
+SgName
+SgAdaPackageSpecDecl::get_qualified_name() const
+{
+  SgScopeStatement* scope = get_scope();
+
+  ROSE_ASSERT(scope);
+  return SgName::assembleQualifiedName(scope->get_qualified_name(), get_name());
+}
+
+
 SOURCE_ADA_PACKAGE_SPEC_DECL_STATEMENT_END
 
 SOURCE_ADA_PACKAGE_BODY_DECL_STATEMENT_START
@@ -20280,6 +20295,16 @@ SgAdaPackageBodyDecl::get_mangled_name() const
   name.append(get_name());
   return name;
 }
+
+SgName
+SgAdaPackageBodyDecl::get_qualified_name() const
+{
+  SgScopeStatement* scope = get_scope();
+
+  ROSE_ASSERT(scope);
+  return SgName::assembleQualifiedName(scope->get_qualified_name(), get_name());
+}
+
 SOURCE_ADA_PACKAGE_BODY_DECL_STATEMENT_END
 
 SOURCE_ADA_PACKAGE_SPEC_STATEMENT_START
@@ -20291,6 +20316,16 @@ SgAdaPackageSpec::get_mangled_name() const
   return "ada$pkg$spec";
 }
 
+SgName
+SgAdaPackageSpec::get_qualified_name() const
+{
+  SgAdaPackageSpecDecl* decl = isSgAdaPackageSpecDecl(get_parent());
+
+  ROSE_ASSERT(decl);
+  return decl->get_qualified_name();
+}
+
+
 SOURCE_ADA_PACKAGE_SPEC_STATEMENT_END
 
 SOURCE_ADA_PACKAGE_BODY_STATEMENT_START
@@ -20301,6 +20336,16 @@ SgAdaPackageBody::get_mangled_name() const
 {
   return "ada$pkg$body";
 }
+
+SgName
+SgAdaPackageBody::get_qualified_name() const
+{
+  SgAdaPackageBodyDecl* decl = isSgAdaPackageBodyDecl(get_parent());
+
+  ROSE_ASSERT(decl);
+  return decl->get_qualified_name();
+}
+
 
 SOURCE_ADA_PACKAGE_BODY_STATEMENT_END
 
@@ -20373,6 +20418,7 @@ SgAdaTaskBodyDecl::get_mangled_name() const
   name.append(get_name());
   return name;
 }
+
 SOURCE_ADA_TASK_BODY_DECL_STATEMENT_END
 
 SOURCE_ADA_RENAMING_DECL_STATEMENT_START
