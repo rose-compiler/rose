@@ -1,5 +1,6 @@
 with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
+with Ada.Directories;
 
 package body Dot is
 
@@ -534,6 +535,9 @@ package body Dot is
       procedure Put
         (This : access Class;
          File : in     ATI.File_Type) is
+      package AD renames Ada.Directories;
+      Full_File_Name   : constant String := AD.Full_Name (To_String(This.ID));
+      Simple_File_Name : aliased String := '"' & AD.Simple_Name (Full_File_Name);
       begin
          if This.Strict then
             Indented.Put (File, "strict ");
@@ -545,7 +549,7 @@ package body Dot is
             Indented.Put (File, "graph ");
             Is_Digraph := False;
          end if;
-         Indented.Put_Spaced (File, To_String(This.ID));
+         Indented.Put_Spaced (File, Simple_File_Name);
          Indented.Put (File, "{");
          This.Stmt_List.Put (File);
          Indented.New_Line (File);
