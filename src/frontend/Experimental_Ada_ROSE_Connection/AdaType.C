@@ -71,7 +71,7 @@ namespace
           if (!res)
           {
             // is it a predefined Ada type?
-            res = findFirst(adaTypes(), std::string{typeEx.Name_Image});
+            res = findFirst(adaTypes(), AdaIdentifier{typeEx.Name_Image});
           }
 
           if (!res)
@@ -471,19 +471,19 @@ void initializeAdaTypes(SgGlobal& global)
 
   hiddenScope.set_parent(&global);
 
-  adaTypes()[std::string{"Integer"}]   = sb::buildIntType();
-  adaTypes()[std::string{"Character"}] = sb::buildCharType();
+  adaTypes()["INTEGER"]   = sb::buildIntType();
+  adaTypes()["CHARACTER"] = sb::buildCharType();
 
   // \todo items
-  adaTypes()[std::string{"Float"}]     = sb::buildFloatType();  // Float is a subtype of Real
-  adaTypes()[std::string{"Positive"}]  = sb::buildIntType();    // Positive is a subtype of int
-  adaTypes()[std::string{"Natural"}]   = sb::buildIntType();    // Natural is a subtype of int
-  adaTypes()[std::string{"Boolean"}]   = sb::buildBoolType();   // Boolean is an enumeration of True and False
+  adaTypes()["FLOAT"]     = sb::buildFloatType();  // Float is a subtype of Real
+  adaTypes()["POSITIVE"]  = sb::buildIntType();    // Positive is a subtype of int
+  adaTypes()["NATURAL"]   = sb::buildIntType();    // Natural is a subtype of int
+  adaTypes()["BOOLEAN"]   = sb::buildBoolType();   // Boolean is an enumeration of True and False
 
   // String is represented as Fortran-String with null
-  adaTypes()[std::string{"String"}]    = sb::buildStringType(sb::buildNullExpression());
+  adaTypes()["STRING"]    = sb::buildStringType(sb::buildNullExpression());
 
-  adaTypes()[std::string{"Exception"}] = sb::buildOpaqueType("Exception", &hiddenScope);
+  adaTypes()["EXCEPTION"] = sb::buildOpaqueType("Exception", &hiddenScope);
 }
 
 
