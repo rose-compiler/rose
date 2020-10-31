@@ -9,6 +9,7 @@
 #define PRINT_SOURCE_POSITION 0
 #define PRINT_WARNINGS 0
 #define CHECK_AMB 1
+#define PRINT_AMB_WARNINGS 0
 
 using namespace ATermSupport;
 using namespace Jovial_ROSE_Translation;
@@ -6071,8 +6072,39 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
       if (traverse_OptLogicalContinuation(t_continuation, expr)) {
          // MATCHED OptLogicalContinuation
       } else return ATfalse;
+   }
 
-   } else if (ATmatch(term, "BitFormulaNOT(<term>)", &t_operand)) {
+// BitOperand now also produces BitFormula to remove ambiguity
+   else if (ATmatch(term, "BitOperand(<term>)", &t_operand)) {
+      if (traverse_LogicalOperand(t_operand, expr)) {
+         // MATCHED LogicalOperand
+      }
+#if CHECK_AMB
+      else if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+         ATermList tail = (ATermList) ATmake("<term>", t_amb);
+         ATerm head = ATgetFirst(tail);
+
+         // try first amb path
+         if (traverse_RelationalExpression(head, expr)) {
+            // MATCHED RelationalExpression
+         }
+#if PRINT_AMB_WARNINGS
+          cerr << "WARNING AMBIGUITY: BitFormula ... BitOperand \n";
+#endif
+        }
+#endif
+      else return ATfalse;
+   }
+   else if (ATmatch(term, "BitOperandContinuation(<term>,<term>)", &t_operand, &t_continuation)) {
+      if (traverse_LogicalOperand(t_operand, expr)) {
+         // MATCHED LogicalOperand
+      }
+      if (traverse_OptLogicalContinuation(t_continuation, expr)) {
+         // MATCHED OptLogicalContinuation
+      } else return ATfalse;
+   }
+
+   else if (ATmatch(term, "BitFormulaNOT(<term>)", &t_operand)) {
       if (traverse_LogicalOperand(t_operand, expr)) {
          // MATCHED LogicalOperand
       }
@@ -6081,13 +6113,23 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
          cerr << "WARNING AMBIGUITY: BitFormulaNOT \n";
          printf("... traverse_BitFormula: %s\n", ATwriteToString(term));
 #endif
-         // BitFormulaNOT is sometimes ambiguous, try the first path
+         // BitFormulaNOT is sometimes ambiguous
          ATermList tail = (ATermList) ATmake("<term>", t_amb);
          ATerm head = ATgetFirst(tail);
-         if (traverse_Variable(head, expr)) {
+
+         tail = ATgetNext(tail);
+         ATerm next = ATgetFirst(tail);
+
+         // Try second path first as RC-290 is not ambiguous when whitespace
+         // is removed (producing a TableItem which is the second path)
+         if (traverse_Variable(next, expr)) {
             // MATCHED RelationalExpression
          }
-      } else return ATfalse;
+         else if (traverse_Variable(head, expr)) {
+            // MATCHED RelationalExpression
+         }
+      }
+      else return ATfalse;
 
       ROSE_ASSERT(expr);
       SgNotOp* not_op = SageBuilder::buildNotOp(expr);
@@ -6122,6 +6164,7 @@ ATbool ATermToSageJovialTraversal::traverse_OptLogicalContinuation(ATerm term, S
 // expr is an input variable (and may be modified on output)
    ROSE_ASSERT(expr);
 
+// "no-logical-continuation" removed from grammar productions
    if (ATmatch(term, "no-logical-continuation")) {
       // MATCHED no-logical-continuation
    } else {
