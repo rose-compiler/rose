@@ -33,13 +33,23 @@ namespace Ada_ROSE_Translation
   ///   endOfConstruct to compiler generated.
   void markCompilerGenerated(SgLocatedNode& n);
 
-  /// creates a new node by calling new SageNode(args)
+  /// creates a new node by calling new SageNode(args...)
   template <class SageNode, class ... Args>
   inline
   SageNode&
   mkBareNode(Args... args)
   {
-    SageNode& sgnode = SG_DEREF(new SageNode(args...));
+    return SG_DEREF(new SageNode(args...));
+  }
+
+  /// creates a new node by calling new SageNode(args...) and marks the
+  /// location as compiler generated
+  template <class SageNode, class ... Args>
+  inline
+  SageNode&
+  mkLocatedNode(Args... args)
+  {
+    SageNode& sgnode = mkBareNode<SageNode>(args...);
 
     markCompilerGenerated(sgnode);
     return sgnode;
@@ -119,6 +129,10 @@ namespace Ada_ROSE_Translation
   SgStatement&
   mkRaiseStmt(SgExpression& raised);
 
+  /// builds a node representing raising exception \ref raised with message \ref what
+  SgStatement&
+  mkRaiseStmt(SgExpression& raised, SgExpression& what);
+
   /// creates a basic block
   SgBasicBlock&
   mkBasicBlock();
@@ -154,6 +168,13 @@ namespace Ada_ROSE_Translation
   //   as ADA is a bit more restrictive in its switch case syntax compared to C++
   SgSwitchStatement&
   mkAdaCaseStmt(SgExpression& selector, SgBasicBlock& body);
+
+  /// creates an Ada delay statement
+  /// \param timeExp      delay expression
+  /// \param relativeTime true, if the delay is a period,
+  ///                     false if it is a point in time (delay until)
+  SgAdaDelayStmt&
+  mkAdaDelayStmt(SgExpression& timeExp, bool relativeTime);
 
   /// creates an Ada labeled statement.
   /// \param label the label name
@@ -193,8 +214,19 @@ namespace Ada_ROSE_Translation
   mkAdaPackageSpecDecl(const std::string& name, SgScopeStatement& scope);
 
   /// creates an Ada renaming declaration
+  /// \param name    the new name
+  /// \param aliased the aliased declaration
+  /// \param scope   the scope of the renaming decl
+  /// \note the idx is assumed to be 0.
   SgAdaRenamingDecl&
   mkAdaRenamingDecl(const std::string& name, SgDeclarationStatement& aliased, SgScopeStatement& scope);
+
+  /// creates an Ada renaming declaration
+  /// \param name    the new name
+  /// \param aliased the aliased initialized name
+  /// \param scope   the scope of the renaming decl
+  SgAdaRenamingDecl&
+  mkAdaRenamingDecl(const std::string& name, SgInitializedName& ini, SgScopeStatement& scope);
 
   /// creates an Ada package body declaration
   SgAdaPackageBodyDecl&
@@ -204,6 +236,11 @@ namespace Ada_ROSE_Translation
   // \todo revisit Ada task symbol creation
   SgAdaTaskTypeDecl&
   mkAdaTaskTypeDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope);
+
+  /// creates an Ada task declaration
+  // \todo revisit Ada task symbol creation
+  SgAdaTaskSpecDecl&
+  mkAdaTaskSpecDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope);
 
   /// creates an Ada task body declaration
   /// \param tskdecl the corresponding tasl declaration which can either be of type SgAdaTaskSpecDecl
@@ -217,7 +254,7 @@ namespace Ada_ROSE_Translation
   // \todo not sure why a task body can independently exist without prior declaration.
   //       maybe this function is not needed.
   SgAdaTaskBodyDecl&
-  mkAdaTaskBodyDecl(std::string name, SgAdaTaskBody& tskbody, SgScopeStatement& scope);
+  mkAdaTaskBodyDecl(const std::string& name, SgAdaTaskBody& tskbody, SgScopeStatement& scope);
 
   /// creates an empty task specification definition node
   SgAdaTaskSpec&
@@ -237,7 +274,7 @@ namespace Ada_ROSE_Translation
   /// \param scope    the enclosing scope
   /// \param retty    return type of a function (SgVoidType for procedures)
   /// \param complete a functor that is called after the function parameter list and
-  ///                 the function parameter list have been constructed. The task of complete
+  ///                 the function parameter scope have been constructed. The task of complete
   ///                 is to fill these objects with function parameters.
   SgFunctionDeclaration&
   mkProcedure( const std::string& name,
@@ -251,7 +288,7 @@ namespace Ada_ROSE_Translation
   /// \param scope    the enclosing scope
   /// \param retty    return type of a function (SgVoidType for procedures)
   /// \param complete a functor that is called after the function parameter list and
-  ///                 the function parameter list have been constructed. The task of complete
+  ///                 the function parameter scope have been constructed. The task of complete
   ///                 is to fill these objects with function parameters.
   SgFunctionDeclaration&
   mkProcedureDef( SgFunctionDeclaration& ndef,
@@ -265,7 +302,7 @@ namespace Ada_ROSE_Translation
   /// \param scope    the enclosing scope
   /// \param retty    return type of a function (SgVoidType for procedures)
   /// \param complete a functor that is called after the function parameter list and
-  ///                 the function parameter list have been constructed. The task of complete
+  ///                 the function parameter scope have been constructed. The task of complete
   ///                 is to fill these objects with function parameters.
   ///                 Note: Here complete is called twice, once for the defining, and once for the
   ///                       non-defining declaration.
@@ -342,8 +379,10 @@ namespace Ada_ROSE_Translation
   // Expression Makers
 
   /// creates an expression for an unresolved name (e.g., imported names)
+  /// \note unresolved names are an indication for an incomplete AST
+  /// \todo remove this function, once translation is complete
   SgExpression&
-  mkUnresolvedName(std::string n, SgScopeStatement& scope);
+  mkUnresolvedName(const std::string& n, SgScopeStatement& scope);
 
   /// creates a range expression from the bounds
   /// \param start lower bound
@@ -390,14 +429,20 @@ namespace Ada_ROSE_Translation
   inline
   SageValue& mkValue(const char* textrep)
   {
-    static_assert( std::is_base_of<SgValueExp, SageValue>::value ,
+    static_assert( std::is_base_of<SgValueExp, SageValue>::value,
                    "template argument is not derived from SgValueExp"
                  );
 
     typedef decltype(std::declval<SageValue>().get_value()) rose_rep_t;
 
-    return mkBareNode<SageValue>(conv<rose_rep_t>(textrep), textrep);
+    ROSE_ASSERT(textrep);
+    return mkLocatedNode<SageValue>(conv<rose_rep_t>(textrep), textrep);
   }
+
+  /// \overload
+  /// \note specialized since SgStringVal constructor requires special handling
+  template <>
+  SgStringVal& mkValue<SgStringVal>(const char* textrep);
 } // namespace Ada_ROSE_Translation
 
 #endif /* _ADA_MAKER_H */

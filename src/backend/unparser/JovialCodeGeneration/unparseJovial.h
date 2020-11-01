@@ -49,11 +49,12 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseBreakStmt              (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseTypeDefStmt            (SgStatement* stmt, SgUnparse_Info& info);
 
-
           virtual void unparseProcessControlStmt     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseReturnStmt             (SgStatement* stmt, SgUnparse_Info& info);
 
           virtual void unparseEnumDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
+                  void unparseEnumBody               (SgEnumDeclaration* enum_decl, SgUnparse_Info& info);
+
           virtual void unparseOverlayDeclStmt        (SgStatement* stmt, SgUnparse_Info& info);
                   void unparseTableDeclStmt          (SgStatement* stmt, SgUnparse_Info& info);
                   void unparseTableBody              (SgClassDefinition* table_def, SgUnparse_Info& info);

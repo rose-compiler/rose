@@ -27,7 +27,7 @@ namespace
     void prn(const std::string& s)
     {
       unparser.curprint(s);
-      os << s;
+      //~ os << s;
     }
 
     void handle(SgNode& n)    { SG_UNEXPECTED_NODE(n); }
@@ -49,11 +49,12 @@ namespace
     //
     // Fundamental types
 
-    void handle(SgTypeBool&)  { prn(" Boolean"); }
-    void handle(SgTypeInt&)   { prn(" Integer"); }
-    void handle(SgTypeChar&)  { prn(" Character"); }
-    void handle(SgTypeFloat&) { prn(" Float"); }
-    void handle(SgTypeVoid&)  { prn(" -- void\n"); }
+    void handle(SgTypeBool&)   { prn(" Boolean"); }
+    void handle(SgTypeInt&)    { prn(" Integer"); }
+    void handle(SgTypeChar&)   { prn(" Character"); }
+    void handle(SgTypeFloat&)  { prn(" Float"); }
+    void handle(SgTypeString&) { prn(" String"); }
+    void handle(SgTypeVoid&)   { prn(" -- void\n"); }
 
     //
     // Ada types
@@ -76,6 +77,12 @@ namespace
     {
       prn(" private");
     }
+
+    void handle(SgAutoType& n)
+    {
+      /* print nothing - used for Integer and Real Number constants */
+    }
+
 
     void handle(SgNamedType& n)
     {

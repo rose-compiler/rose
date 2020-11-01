@@ -19,6 +19,8 @@
 #include "sage_support.h"
 #include "sageGeneric.h"
 
+#include <boost/algorithm/string.hpp>
+
 Unparse_Ada::Unparse_Ada(Unparser* unp, std::string fname)
    : UnparseLanguageIndependentConstructs(unp,fname)
    {
@@ -38,18 +40,20 @@ Unparse_Ada::unparseAdaFile(SgSourceFile *sourcefile, SgUnparse_Info& info)
 
 namespace
 {
+  inline
   SgName nameOf(const SgSymbol& sy)
   {
     return sy.get_name();
   }
 
+  inline
   SgName nameOf(const SgVarRefExp& var_ref)
   {
     return nameOf(SG_DEREF(var_ref.get_symbol()));
   }
 
-  const char* COMMA_SEP = ", ";
-  const char* EOS_NL = ";\n";
+  static const std::string COMMA_SEP = ", ";
+  static const std::string EOS_NL = ";\n";
 
   bool isAdaFunction(SgFunctionType& ty)
   {
@@ -77,8 +81,6 @@ namespace
     unparseTypeModifiers(unparser, n.get_declarationModifier().get_typeModifier());
   }
 
-  std::string renamedName(SgDeclarationStatement& n);
-
   struct AdaParamUnparser
   {
     AdaParamUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp, const char* separator)
@@ -88,7 +90,7 @@ namespace
     void prn(const std::string& s)
     {
       unparser.curprint(s);
-      os << s;
+      //~ os << s;
     }
 
     void handle(SgVariableDeclaration& n)
@@ -127,7 +129,7 @@ namespace
     Unparse_Ada&    unparser;
     SgUnparse_Info& info;
     std::ostream&   os;
-    const char*     sep;
+    std::string     sep;
   };
 
   template <class AstVisitor>
@@ -171,7 +173,8 @@ namespace
 
     void handle(SgNullStatement&)
     {
-      prn("null;\n");
+      prn("null");
+      prn(EOS_NL);
     }
 
     Unparse_Ada&    unparser;
@@ -199,6 +202,93 @@ namespace
     //~ void handle(SgBasicBlock& n)   { res = n.get_string_label(); }
   };
 
+  struct LabelSyntax : sg::DispatchHandler<std::pair<std::string, std::string> >
+  {
+    typedef sg::DispatchHandler<std::pair<std::string, std::string> > base;
+
+    explicit
+    LabelSyntax(const std::string& labelname)
+    : base(), lbl(labelname)
+    {}
+
+    void handle(SgNode& n)           { SG_UNEXPECTED_NODE(n); }
+
+    ReturnType stmtSyntax() const;
+    ReturnType blockSyntax(const std::string& blklbl) const;
+
+    void handle(SgStatement& n)      { res = stmtSyntax(); }
+    void handle(SgForStatement& n)   { res = blockSyntax(n.get_string_label());  }
+    void handle(SgAdaLoopStmt& n)    { res = blockSyntax(n.get_string_label());  }
+    void handle(SgWhileStmt& n)      { res = blockSyntax(n.get_string_label());  }
+    void handle(SgBasicBlock& n)     { res = blockSyntax(n.get_string_label());  }
+
+    const std::string& lbl;
+  };
+
+  LabelSyntax::ReturnType
+  LabelSyntax::blockSyntax(const std::string& blklbl) const
+  {
+    if (lbl != blklbl)
+      return stmtSyntax();
+
+    return std::make_pair(std::string(""), std::string(": "));
+  }
+
+  LabelSyntax::ReturnType
+  LabelSyntax::stmtSyntax() const
+  {
+    return std::make_pair(std::string("<<"), std::string(">> "));
+  }
+
+  struct RenamingSyntax
+  {
+      RenamingSyntax()
+      : prefixSyntax(), infixSyntax(), renamedName()
+      {}
+
+      RenamingSyntax(std::string prefix, std::string infix, std::string renamed)
+      : prefixSyntax(prefix), infixSyntax(infix), renamedName(renamed)
+      {}
+
+      std::string prefixSyntax;
+      std::string infixSyntax;
+      std::string renamedName;
+  };
+
+  bool declaredInMainFile(SgDeclarationStatement& dcl, const std::string& mainFile)
+  {
+    Sg_File_Info& fileInfo = SG_DEREF(dcl.get_startOfConstruct());
+
+    return fileInfo.get_filenameString() == mainFile;
+/*
+
+    std::string mainFileUp = boost::to_upper_copy(mainFile);
+    std::string fileNameUp = boost::to_upper_copy(fileInfo.get_filenameString());
+    size_t      pos = mainFileUp.rfind(fileNameUp);
+
+    std::cerr << (pos + fileNameUp.size()) << " =?= " << mainFileUp.size()
+              << std::endl;
+
+    return (  (pos != std::string::npos)
+           && (pos + fileNameUp.size() == mainFileUp.size())
+           );
+*/
+  }
+
+  std::pair<SgDeclarationStatementPtrList::iterator, SgDeclarationStatementPtrList::iterator>
+  declsInPackage(SgDeclarationStatementPtrList& lst, const std::string& mainFile)
+  {
+    SgDeclarationStatementPtrList::iterator aa = lst.begin();
+    SgDeclarationStatementPtrList::iterator zz = lst.end();
+
+    // skip over imported packages
+    while (aa != zz && !declaredInMainFile(SG_DEREF(*aa), mainFile))
+      ++aa;
+
+    return std::make_pair(aa, zz);
+  }
+
+
   struct AdaStatementUnparser
   {
     typedef std::vector<std::string> ScopePath;
@@ -216,7 +306,7 @@ namespace
     void prn(const std::string& s)
     {
       unparser.curprint(s);
-      os << s;
+      // os << s;
     }
 
     void handleBasicBlock(SgBasicBlock& n, bool functionbody = false);
@@ -232,7 +322,12 @@ namespace
 
     void handleParameterList(SgInitializedNamePtrList& params);
 
-    bool requiresNew(SgType* n);
+    std::pair<std::string, std::string>
+    typedeclSyntax(SgType* n);
+
+    RenamingSyntax
+    renamingDeclSyntax(SgDeclarationStatement* n, size_t idx);
+
     void startPrivateIfNeeded(SgDeclarationStatement* n);
 
     //
@@ -240,15 +335,21 @@ namespace
 
     void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgStatement& n)
+    void handle(SgStatement& n);
+
+    void handle(SgGlobal& n)
     {
-      // if not handled here, have the language independent parser handle it..
-      unparser.UnparseLanguageIndependentConstructs::unparseStatement(&n, info);
+      typedef SgDeclarationStatementPtrList::iterator Iterator;
+
+      std::pair<Iterator, Iterator> declRange = declsInPackage(n.get_declarations(), unparser.getFileName());
+
+      list(declRange.first, declRange.second);
     }
 
     void handle(SgNullStatement& n)
     {
-      prn("null;\n");
+      prn("null");
+      prn(EOS_NL);
     }
 
     void handle(SgAdaTaskTypeDecl& n)
@@ -277,6 +378,7 @@ namespace
       prn("task body ");
       prn(n.get_name());
       prn(" is\n");
+      prn("begin\n");
 
       stmt(n.get_definition());
 
@@ -358,24 +460,28 @@ namespace
 
     void handle(SgAdaRenamingDecl& n)
     {
-      SgDeclarationStatement& orig = SG_DEREF(n.get_renamed());
+      SgDeclarationStatement* orig    = n.get_renamedDecl();
+      RenamingSyntax          renamed = renamingDeclSyntax(orig, n.get_renamedIndex());
 
-      prn("package ");
+      prn(renamed.prefixSyntax);
       prn(n.get_name());
+      prn(renamed.infixSyntax);
       prn(" renames ");
-      prnPrefix(n, orig);
-      prn(renamedName(orig));
+      prnPrefix(n, *orig);
+      prn(renamed.renamedName);
       prn(EOS_NL);
     }
 
     void handle(SgTypedefDeclaration& n)
     {
-      prn("type ");
+      std::pair<std::string, std::string> declwords = typedeclSyntax(n.get_base_type());
+
+      prn(declwords.first);
+      prn(" ");
       prn(n.get_name());
       prn(" is");
-
-      if (requiresNew(n.get_base_type())) prn(" new");
-
+      prn(declwords.second);
+      prn(" ");
       type(n.get_base_type());
       prn(EOS_NL);
     }
@@ -398,6 +504,8 @@ namespace
 
         ASSERT_not_null(ini);
         prn(ini->get_name());
+
+        std::cerr << ini->get_qualified_name() << std::endl;
       }
 
       prn(": ");
@@ -429,7 +537,15 @@ namespace
 
       unparseElseBranch(AdaElseUnparser(unparser, info, os), n.get_false_body());
 
-      prn("end if;\n");
+      prn("end if");
+      prn(EOS_NL);
+    }
+
+    void handle(SgGotoStatement& n)
+    {
+      prn("goto ");
+      prn(SG_DEREF(n.get_label()).get_name());
+      prn(EOS_NL);
     }
 
     void handle(SgWhileStmt& n)
@@ -508,8 +624,13 @@ namespace
 
     void handle(SgLabelStatement& n)
     {
+      typedef std::pair<std::string, std::string> syntax_t;
+
+      syntax_t syntax = sg::dispatch(LabelSyntax(n.get_label()), n.get_statement());
+
+      prn(syntax.first);
       prn(n.get_label());
-      prn(": ");
+      prn(syntax.second);
       stmt(n.get_statement());
     }
 
@@ -533,6 +654,15 @@ namespace
 
       prn(EOS_NL);
     }
+
+    void handle(SgAdaDelayStmt& n)
+    {
+      prn("delay ");
+      if (!n.get_isRelative()) prn("until ");
+      expr(n.get_time());
+      prn(EOS_NL);
+    }
+
 
     void handle(SgImportStatement& n)
     {
@@ -745,6 +875,12 @@ namespace
     return isSgDeclarationStatement(s) == NULL;
   }
 
+  void AdaStatementUnparser::handle(SgStatement& n)
+  {
+    // if not handled here, have the language independent parser handle it..
+    unparser.UnparseLanguageIndependentConstructs::unparseStatement(&n, info);
+  }
+
   void AdaStatementUnparser::handleBasicBlock(SgBasicBlock& n, bool functionbody)
   {
     SgStatementPtrList&          stmts    = n.get_statements();
@@ -755,16 +891,25 @@ namespace
     if (!functionbody && (aa != dcllimit))
       prn("declare\n");
 
+    const std::string label = n.get_string_label();
+    const bool        requiresBeginEnd = (functionbody || (aa != dcllimit) || label.size());
+
     list(stmts.begin(), dcllimit);
 
-    if (functionbody || (aa != dcllimit))
+    if (requiresBeginEnd)
       prn("begin\n");
 
     list(dcllimit, stmts.end());
 
-    if (functionbody || (aa != dcllimit))
+    if (requiresBeginEnd)
     {
       prn("end");
+
+      if (label.size())
+      {
+        prn(" ");
+        prn(label);
+      }
 
       if (!functionbody)
         prn(EOS_NL);
@@ -810,6 +955,7 @@ namespace
   }
 
 
+
   void
   AdaStatementUnparser::handleFunctionEntryDecl(SgFunctionDeclaration& n, std::string keyword, bool hasReturn)
   {
@@ -853,18 +999,82 @@ namespace
     list(lst.begin(), lst.end());
   }
 
-  struct RequiresNew : sg::DispatchHandler<bool>
+  struct TypedeclSyntax : sg::DispatchHandler<std::pair<std::string, std::string> >
   {
     void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgType&)        { res = true;  }
-    void handle(SgTypeDefault&) { res = false; }
-    void handle(SgArrayType&)   { res = false; }
+    void handle(SgType&)        { res = ReturnType("type",    "new"); }
+    void handle(SgAdaSubtype&)  { res = ReturnType("subtype", ""); }
+    void handle(SgTypeDefault&) { res = ReturnType("type",    ""); }
+    void handle(SgArrayType&)   { res = ReturnType("type",    ""); }
   };
 
-  bool AdaStatementUnparser::requiresNew(SgType* n)
+  std::pair<std::string, std::string>
+  AdaStatementUnparser::typedeclSyntax(SgType* n)
   {
-    return sg::dispatch(RequiresNew(), n);
+    return sg::dispatch(TypedeclSyntax(), n);
+  }
+
+  struct RenamingDeclSyntax : sg::DispatchHandler<RenamingSyntax>
+  {
+    typedef sg::DispatchHandler<RenamingSyntax> base;
+
+    explicit
+    RenamingDeclSyntax(size_t i)
+    : base(), idx(i)
+    {}
+
+    void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
+/*
+    void handle(SgDeclarationStatement& n)
+    {
+      static const std::string unknown("-- unknown todo");
+
+      res = RenamingSyntax(unknown, unknown, unknown);
+    }
+*/
+    void handle(SgImportStatement& n)
+    {
+      ROSE_ASSERT(idx == 0);
+
+      SgExpressionPtrList& lst = n.get_import_list();
+      //~ ROSE_ASSERT(lst.size() != 0);
+      ROSE_ASSERT(lst.size() == 1);
+
+      std::string renamed = nameOf(SG_DEREF(isSgVarRefExp(lst.back())));
+
+      res = RenamingSyntax("package ", "", renamed);
+    }
+
+    void handle(SgAdaPackageSpecDecl& n)
+    {
+      ROSE_ASSERT(idx == 0);
+
+      res = RenamingSyntax("package ", "", n.get_name());
+    }
+
+    void handle(SgAdaPackageBodyDecl& n)
+    {
+      ROSE_ASSERT(idx == 0);
+
+      res = RenamingSyntax("package ", "", n.get_name());
+    }
+
+    void handle(SgVariableDeclaration& n)
+    {
+      SgInitializedName& el = SG_DEREF(n.get_variables().at(idx));
+
+      ROSE_ASSERT(SG_DEREF(isSgTypedefType(el.get_type())).get_name() == std::string("Exception"));
+      res = RenamingSyntax("", ": exception", el.get_name());
+    }
+
+    const size_t idx;
+  };
+
+  RenamingSyntax
+  AdaStatementUnparser::renamingDeclSyntax(SgDeclarationStatement* n, size_t idx)
+  {
+    return sg::dispatch(RenamingDeclSyntax(idx), n);
   }
 
   bool isPrivate(SgDeclarationStatement& dcl)
@@ -927,7 +1137,6 @@ namespace
 
 #if REVISIT_IF_NEEDED
 
-  // \note also compare to RenamedName
   struct DeclaredNameQuery : IsNamedScope
   {
     using IsNamedScope::handle;
@@ -1017,32 +1226,12 @@ namespace
       prn(".");
     }
   }
-
-  struct RenamedName : sg::DispatchHandler<std::string>
-  {
-    void handle(SgNode& n)            { SG_UNEXPECTED_NODE(n); }
-
-    void handle(SgImportStatement& n)
-    {
-      SgExpressionPtrList& lst = n.get_import_list();
-      ROSE_ASSERT(lst.size() == 1);
-
-      SgVarRefExp*         item = isSgVarRefExp(lst.back());
-
-      res = nameOf(SG_DEREF(item));
-    }
-  };
-
-
-  std::string renamedName(SgDeclarationStatement& n)
-  {
-    return sg::dispatch(RenamedName(), &n);
-  }
 }
 
 void
 Unparse_Ada::unparseStatement(SgStatement* stmt, SgUnparse_Info& info)
 {
+  //~ std::cerr << typeid(*stmt).name() << std::endl;
   sg::dispatch(AdaStatementUnparser(*this, info, std::cerr), stmt);
 }
 
