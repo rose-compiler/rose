@@ -88,7 +88,7 @@ Grammar::setUpStatements ()
   // test2017_47.C).  the purpose of this scope is similar to the unused FunctionParameterScope (above), 
   // which was developed to support the case of "void foobar (int n, int array[n]);" type declarations
   // which are allowed in C99, but not in C++.  This nondefining (prototype) declaration works in ROSE,
-  // but is still assign the scope of the function parametes to gloval scope (but not assigning symbols 
+  // but is still assigned the scope of the function parameters to global scope (but not assigning symbols 
   // for them, so working OK, but is still not ideal).  The case of templates generating class declarations
   // (which in EDG are listed as proxy and nonreal classes) requires a better fix to support getting the
   // name qualification correct.  This is part of fixing a bug in the "backstroke" project (the last one 
@@ -798,6 +798,10 @@ Grammar::setUpStatements ()
 
   // DQ (7/17/2017): Adding support for a new concept of declaration scope (see documentation above).
      DeclarationStatement.setDataPrototype ( "SgDeclarationScope*", "declarationScope", "= NULL",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/26/2020): Adding support to unparse the templates from the AST on a declaration by declaration basis.
+     DeclarationStatement.setDataPrototype ("bool", "unparse_template_ast", "= false",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 

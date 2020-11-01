@@ -179,6 +179,9 @@ class ROSE_DLL_API AstPerformance
        // This is the evolving data (built locally so that parents in the hierarchy can refer to it)
           ProcessingPhase* localData;
 
+       // DQ (10/28/2020): Adding control over output of performance report.
+          static bool outputCompilationPerformance;
+
        // DQ (9/1/2006): Moved to the base class.
        // Use the Linux timer to provide nanosecond resolution
        // JJW (5/21/2008): Changed back to clock(3) for portability

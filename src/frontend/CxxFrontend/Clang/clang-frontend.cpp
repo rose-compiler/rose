@@ -36,6 +36,10 @@ void clang::PPCallbacks::type_info() {};
 extern bool roseInstallPrefix(std::string&);
 
 int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
+
+ // DQ (10/23/2020): Calling clang-to-dot generator (I don't thing this modifies the argv list).
+    int clang_to_dot_status = clang_to_dot_main(argc,argv);
+
   // 0 - Analyse Cmd Line
 
     std::vector<std::string> inc_dirs_list;
@@ -160,8 +164,16 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
             inc_list.push_back("clang-builtin-opencl.h");
             break;
         case ClangToSageTranslator::OBJC:
-        default:
+          {
+         // DQ (10/23/2020): Added error message for Objective C language not supported in ROSE.
+            printf ("Objective C langauge support is not available in ROSE \n");
             ROSE_ASSERT(false);
+          }
+        default:
+          {
+            printf ("Default reached in switch(language) support \n");
+            ROSE_ASSERT(false);
+          }
     }
 
     // FIXME should be handle by Clang ?
