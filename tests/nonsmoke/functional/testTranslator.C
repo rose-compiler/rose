@@ -111,6 +111,9 @@ int main( int argc, char * argv[] )
   // return backend(project);
      int status = backend(project);
 
+  // DQ (10/21/2020): Adding IR node usage statistics reporting.
+  // AstNodeStatistics::IRnodeUsageStatistics();
+
   // DQ (10/21/2020): Adding performance reporting.
      TimingPerformance::generateReport();
   // TimingPerformance::generateReportToFile(project);

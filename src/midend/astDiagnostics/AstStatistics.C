@@ -173,7 +173,7 @@ AstNodeMemoryPoolStatistics::ElementType::operator<(const ElementType & x)
                int numberOfNodes   = castNode->numberOfNodes(); \
                int memoryFootprint = castNode->memoryUsage(); \
                double percent = (((double) memoryFootprint) / ((double) totalMemoryUsed)) * 100.0; \
-               if ( SgProject::get_verbose() >= 2 ) \
+               if ( SgProject::get_verbose() >= 0 ) \
                     printf ("AST Memory Pool Statistics: numberOfNodes = %9d memory consumption = %10d bytes (%6.3f percent of total) sizeof() = %4ld node = %s \n",numberOfNodes,memoryFootprint,percent,sizeof(*castNode),castNode->class_name().c_str());\
                break; \
              }
@@ -720,23 +720,6 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgLocatedNodeSupport)
           IR_NODE_VISIT_CASE(SgToken)
 
-#if 0
-Case not handled: SgTemplateMemberFunctionDeclaration 
-Case not handled: SgTemplateFunctionDeclaration 
-Case not handled: SgTemplateVariableDeclaration 
-Case not handled: SgTemplateClassDefinition 
-Case not handled: SgTemplateFunctionDefinition 
-Case not handled: SgTemplateMemberFunctionRefExp 
-No representative for SgShortVal found in memory pools 
-No representative for SgUnsignedCharVal found in memory pools 
-No representative for SgWcharVal found in memory pools 
-No representative for SgUnsignedShortVal found in memory pools 
-Case not handled: SgTemplateParameterVal 
-Case not handled: SgTemplateClassSymbol 
-Case not handled: SgTemplateFunctionSymbol 
-Case not handled: SgTemplateMemberFunctionSymbol 
-#endif
-
        // DQ (11/19/2012): Added missing IR nodes.
           IR_NODE_VISIT_CASE(SgTypeTable)
           IR_NODE_VISIT_CASE(SgPartialFunctionType)
@@ -751,6 +734,44 @@ Case not handled: SgTemplateMemberFunctionSymbol
           IR_NODE_VISIT_CASE(SgTemplateClassSymbol)
           IR_NODE_VISIT_CASE(SgTemplateFunctionSymbol)
           IR_NODE_VISIT_CASE(SgTemplateMemberFunctionSymbol)
+
+
+       // DQ (10/28/2020): Added missing IR nodes.
+       // IR_NODE_VISIT_CASE(SgUnparse_Info)
+          IR_NODE_VISIT_CASE(SgTypeNullptr)
+          IR_NODE_VISIT_CASE(SgDeclType)
+          IR_NODE_VISIT_CASE(SgTypeSigned128bitInteger)
+       // IR_NODE_VISIT_CASE(SgPartialFunctionType)
+          IR_NODE_VISIT_CASE(SgDeclarationScope)
+       // IR_NODE_VISIT_CASE(SgAggregateInitializer)
+          IR_NODE_VISIT_CASE(SgNullptrValExp)
+          IR_NODE_VISIT_CASE(SgNonrealBaseClass)
+          IR_NODE_VISIT_CASE(SgTypeSignedLongLong)
+          IR_NODE_VISIT_CASE(SgRvalueReferenceType)
+          IR_NODE_VISIT_CASE(SgTypeOfType)
+          IR_NODE_VISIT_CASE(SgTypeUnsigned128bitInteger)
+          IR_NODE_VISIT_CASE(SgNonrealType)
+          IR_NODE_VISIT_CASE(SgAutoType)
+          IR_NODE_VISIT_CASE(SgTypeChar16)
+          IR_NODE_VISIT_CASE(SgTypeChar32)
+          IR_NODE_VISIT_CASE(SgTemplateTypedefDeclaration)
+          IR_NODE_VISIT_CASE(SgTemplateInstantiationTypedefDeclaration)
+          IR_NODE_VISIT_CASE(SgNonrealDecl)
+          IR_NODE_VISIT_CASE(SgStaticAssertionDeclaration)
+          IR_NODE_VISIT_CASE(SgNonrealRefExp)
+          IR_NODE_VISIT_CASE(SgTemplateFunctionRefExp)
+          IR_NODE_VISIT_CASE(SgAlignOfOp)
+          IR_NODE_VISIT_CASE(SgNoexceptOp)
+          IR_NODE_VISIT_CASE(SgLambdaExp)
+          IR_NODE_VISIT_CASE(SgBracedInitializer)
+          IR_NODE_VISIT_CASE(SgFunctionParameterRefExp)
+          IR_NODE_VISIT_CASE(SgPseudoDestructorRefExp)
+          IR_NODE_VISIT_CASE(SgTypeTraitBuiltinOperator)
+          IR_NODE_VISIT_CASE(SgTemplateVariableSymbol)
+          IR_NODE_VISIT_CASE(SgNonrealSymbol)
+          IR_NODE_VISIT_CASE(SgLambdaCapture)
+          IR_NODE_VISIT_CASE(SgLambdaCaptureList)
+          IR_NODE_VISIT_CASE(SgTemplateTypedefSymbol)
 
        // IR_NODE_VISIT_CASE()
 
@@ -786,6 +807,20 @@ string
 AstNodeStatistics::IRnodeUsageStatistics()
    {
   // printf ("IR node statistics not implemented! \n");
+
+#if 0
+     printf ("AstNodeStatistics::IRnodeUsageStatistics(): AstPerformance::outputCompilationPerformance = %s \n",AstPerformance::outputCompilationPerformance ? "true" : "false");
+#endif
+
+#if 0
+  // DQ (10/28/2020): This function is now called from within the AstPerformance::generateReportFromObject() function.
+  // DQ (10/28/2020): Control output of reporting using static bool data member outputCompilationPerformance.
+     if (AstPerformance::outputCompilationPerformance == false)
+        {
+          return "";
+        }
+#endif
+
      string s = "\n\n";
      AstNodeMemoryPoolStatistics memoryPoolTraversal;
      memoryPoolTraversal.traverseRepresentativeIRnodes();
