@@ -1,0 +1,15 @@
+START
+  DEF ITEM colors STATUS
+    (
+      V(red),
+      V(green),
+      V(blue)
+    );
+
+DEF PROC test'status;
+  BEGIN
+    ITEM cardinal STATUS (V(north),V(south),V(east),V(west));
+    STOP;
+  END
+
+TERM
