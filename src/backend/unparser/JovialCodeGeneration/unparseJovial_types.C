@@ -193,8 +193,23 @@ void
 Unparse_Jovial::unparseJovialType(SgEnumType* enum_type, SgUnparse_Info& info)
   {
      ASSERT_not_null(enum_type);
-  // TODO - for now only unparse the name
-     curprint(enum_type->get_name());
+
+     SgEnumDeclaration* decl = isSgEnumDeclaration(enum_type->get_declaration());
+     ASSERT_not_null(decl);
+
+  // TODO: There is a better way to do this by seeing if variableDeclarationContainsBaseTypeDefineingDeclaration (need function)
+     std::string type_name = enum_type->get_name();
+     bool is_anonymous = (type_name.find("_anon_typeof_") != std::string::npos);
+
+     if (info.inVarDecl() && is_anonymous)
+       {
+         curprint("STATUS ");
+         unparseEnumBody(decl, info);
+       }
+     else if (info.inVarDecl())
+       {
+         curprint(type_name);
+       }
   }
 
 void

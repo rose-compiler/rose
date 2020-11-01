@@ -71,13 +71,15 @@ namespace
           if (!res)
           {
             // is it a predefined Ada type?
-            res = findFirst(adaTypes(), std::string{typeEx.Name_Image});
+            res = findFirst(adaTypes(), AdaIdentifier{typeEx.Name_Image});
           }
 
           if (!res)
           {
             // what is it?
-            logWarn() << "unknown type name: " << typeEx.Name_Image << std::endl;
+            logWarn() << "unknown type name: " << typeEx.Name_Image
+                      << " / " << typeEx.Corresponding_Name_Definition
+                      << std::endl;
 
             ROSE_ASSERT(!FAIL_ON_ERROR);
             res = sb::buildVoidType();
@@ -165,7 +167,7 @@ namespace
   SgAdaRangeConstraint&
   getRangeConstraint(Element_ID el, AstContext ctx)
   {
-    if (isInvaldId(el))
+    if (isInvalidId(el))
     {
       logWarn() << "Uninitialized element [range constraint]" << std::endl;
       return mkAdaRangeConstraint(mkRangeExp());
@@ -328,7 +330,7 @@ getDeclTypeID(Element_ID id, AstContext ctx)
 SgType&
 getDefinitionTypeID(Element_ID defid, AstContext ctx)
 {
-  if (isInvaldId(defid))
+  if (isInvalidId(defid))
   {
     logWarn() << "undefined type id: " << defid << std::endl;
     return SG_DEREF(sb::buildVoidType());
@@ -414,18 +416,27 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
         break ;
       }
 
+    case A_Record_Type_Definition:               // 3.8(2)     -> Trait_Kinds
     case A_Tagged_Record_Type_Definition:        // 3.8(2)     -> Trait_Kinds
       {
         SgClassDefinition& def = getRecordBodyID(typenode.Record_Definition, ctx);
 
-        //~ logInfo() << "tagged ? " << typenode.Has_Tagged << std::endl;
+        (typenode.Has_Tagged ? logWarn() : logTrace())
+           << "Type_Definition_Struct::tagged set ? " << typenode.Has_Tagged
+           << std::endl;
 
-        /* unused fields:
+        /*
+           unused fields (A_Record_Type_Definition):
+
+           unused fields (A_Tagged_Record_Type_Definition):
               bool                 Has_Private;
               bool                 Has_Tagged;
               Declaration_List     Corresponding_Type_Operators;
+
+           break;
         */
-        res = TypeData{&def, typenode.Has_Abstract, typenode.Has_Limited, true};
+        res = TypeData{&def, typenode.Has_Abstract, typenode.Has_Limited, typenode.Type_Kind == A_Tagged_Record_Type_Definition};
+        //~ res = TypeData{&def, typenode.Has_Abstract, typenode.Has_Limited, typenode.Has_Tagged};
         break;
       }
 
@@ -438,7 +449,6 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
     case An_Ordinary_Fixed_Point_Definition:     // 3.5.9(3)
     case A_Decimal_Fixed_Point_Definition:       // 3.5.9(6)
     case A_Constrained_Array_Definition:         // 3.6(2)
-    case A_Record_Type_Definition:               // 3.8(2)     -> Trait_Kinds
     //  //|A2005 start
     case An_Interface_Type_Definition:           // 3.9.4      -> Interface_Kinds
     //  //|A2005 end
@@ -457,20 +467,23 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
 
 void initializeAdaTypes(SgGlobal& global)
 {
-  SgAdaPackageSpec& hiddenScope = mkBareNode<SgAdaPackageSpec>();
+  SgAdaPackageSpec& hiddenScope = mkLocatedNode<SgAdaPackageSpec>();
 
   hiddenScope.set_parent(&global);
 
-  adaTypes()[std::string{"Integer"}]   = sb::buildIntType();
-  adaTypes()[std::string{"Character"}] = sb::buildCharType();
+  adaTypes()["INTEGER"]   = sb::buildIntType();
+  adaTypes()["CHARACTER"] = sb::buildCharType();
 
   // \todo items
-  adaTypes()[std::string{"Float"}]     = sb::buildFloatType();  // Float is a subtype of Real
-  adaTypes()[std::string{"Positive"}]  = sb::buildIntType();    // Positive is a subtype of int
-  adaTypes()[std::string{"Natural"}]   = sb::buildIntType();    // Natural is a subtype of int
-  adaTypes()[std::string{"Boolean"}]   = sb::buildBoolType();   // Boolean is an enumeration of True and False
+  adaTypes()["FLOAT"]     = sb::buildFloatType();  // Float is a subtype of Real
+  adaTypes()["POSITIVE"]  = sb::buildIntType();    // Positive is a subtype of int
+  adaTypes()["NATURAL"]   = sb::buildIntType();    // Natural is a subtype of int
+  adaTypes()["BOOLEAN"]   = sb::buildBoolType();   // Boolean is an enumeration of True and False
 
-  adaTypes()[std::string{"Exception"}] = sb::buildOpaqueType("Exception", &hiddenScope);
+  // String is represented as Fortran-String with null
+  adaTypes()["STRING"]    = sb::buildStringType(sb::buildNullExpression());
+
+  adaTypes()["EXCEPTION"] = sb::buildOpaqueType("Exception", &hiddenScope);
 }
 
 

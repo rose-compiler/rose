@@ -7,20 +7,20 @@
 //~ #include "Utf8.h"
 #include "sageGeneric.h"
 
-using namespace std;
+//~ using namespace std;
 
-#define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
-#define OUTPUT_HIDDEN_LIST_DATA 0
-#define OUTPUT_DEBUGGING_INFORMATION 0
+//~ #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
+//~ #define OUTPUT_HIDDEN_LIST_DATA 0
+//~ #define OUTPUT_DEBUGGING_INFORMATION 0
 
-#ifdef _MSC_VER
-#include "Cxx_Grammar.h"
-#endif
+//~ #ifdef _MSC_VER
+//~ #include "Cxx_Grammar.h"
+//~ #endif
 
 // DQ (10/14/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 // Interestingly it must be at the top of the list of include files.
-#include "rose_config.h"
+//~ #include "rose_config.h"
 
 namespace
 {
@@ -130,7 +130,7 @@ namespace
     void prn(const std::string& s)
     {
       unparser.curprint(s);
-      os << s;
+      //~ os << s;
     }
 
     void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
@@ -154,10 +154,17 @@ namespace
 
     void handle(SgCallExpression& n)
     {
+      SgExprListExp& args = SG_DEREF(n.get_args());
+
       expr(n.get_function());
-      prn("(");
-      expr(n.get_args());
-      prn(")");
+
+      // print () only if there are arguments to the call
+      if (args.get_expressions().size())
+      {
+        prn("(");
+        expr(&args);
+        prn(")");
+      }
     }
 
     void handle(SgCastExp& n)
@@ -167,6 +174,14 @@ namespace
       expr(n.get_operand());
       prn(")");
     }
+
+    void handle(SgStringVal& n)
+    {
+      prn("\"");
+      prn(n.get_value());
+      prn("\"");
+    }
+
 
     void handle(SgThrowOp& n)
     {
@@ -313,6 +328,5 @@ void Unparse_Ada::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
 
 void Unparse_Ada::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
 {
-  printf ("Unparse_Ada::unparseStringVal(): not implemented! \n");
-  ROSE_ASSERT(false);
+  sg::dispatch(AdaExprUnparser{*this, info, std::cerr}, expr);
 }

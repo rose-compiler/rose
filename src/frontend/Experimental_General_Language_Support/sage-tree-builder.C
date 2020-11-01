@@ -544,6 +544,7 @@ Enter(SgExprStatement* &proc_call_stmt, const std::string &proc_name,
 
    SgFunctionCallExp* proc_call_exp;
 
+   // I think entering an expression is a little awkward (what about leave an expression, maybe ok)
    Enter(proc_call_exp, proc_name, param_list);
 
    // TODO: AbortPhrase for Jovial
@@ -597,33 +598,27 @@ Enter(SgFunctionCallExp* &func_call, const std::string &name, SgExprListExp* par
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionCallExp* &, ...) \n";
 
+   // Function calls are ambiguous with arrays in Fortran (and type casts and the replication operator
+   // in Jovial).  Start out by assuming it's a function call if another symbol doesn't exist.
+
    SgFunctionSymbol* func_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name, SageBuilder::topScopeStack());
 
    if (func_symbol == nullptr) {
-      // Function calls are ambiguous with arrays in Fortran and type casts (at least) in Jovial.
-      // But if there are no parameters we know this can't be an array
-      if (params->get_expressions().size() == 0) {
-        // Build a nondefining declaration, assuming a void return type (without further knowledge)
-        SgFunctionDeclaration* function_decl = nullptr;
-        SgType* return_type = SageBuilder::buildVoidType();
-        SgGlobal* global_scope = SageInterface::getGlobalScope(SageBuilder::topScopeStack());
-        SgFunctionParameterList* param_list = SageBuilder::buildFunctionParameterList_nfi();
-        SgProcedureHeaderStatement::subprogram_kind_enum kind = SgProcedureHeaderStatement::e_function_subprogram_kind;
-        function_decl  = SageBuilder::buildNondefiningProcedureHeaderStatement(SgName(name), return_type,
-                                                                               param_list, kind, global_scope);
-        SageInterface::setSourcePosition(function_decl);
-
-        func_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name, SageBuilder::topScopeStack());
-        ROSE_ASSERT(func_symbol);
+      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
+      if (symbol) {
+         // There is a symbol but it is not a function, punt and let someone else deal with it.
       }
       else {
-        // Must assume it is an array at this point (what could go wrong?)
-        func_call = nullptr;
-        return;
+         // Assume a void return type.
+        SgType* return_type = SageBuilder::buildVoidType();
+        func_call = SB::buildFunctionCallExp(SgName(name), return_type, params, SageBuilder::topScopeStack());
       }
    }
+   else {
+      func_call = SageBuilder::buildFunctionCallExp(func_symbol, params);
+   }
 
-   func_call = SageBuilder::buildFunctionCallExp(func_symbol, params);
+   ROSE_ASSERT(func_call);
    SageInterface::setSourcePosition(func_call);
 }
 
@@ -1308,14 +1303,16 @@ Enter(SgTypedefDeclaration* &type_def, const std::string &name, SgType* type)
    mlog[TRACE] << "SageTreeBuilder::Enter(SgTypedefDeclaration*) \n";
 
    type_def = SageBuilder::buildTypedefDeclaration(name, type, SageBuilder::topScopeStack());
+   // This should be done in SageBuilder.
+   type_def->set_base_type(type);
+
+   SageInterface::appendStatement(type_def, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
 Leave(SgTypedefDeclaration* type_def)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgTypedefDeclaration*) \n";
-
-   SageInterface::appendStatement(type_def, SageBuilder::topScopeStack());
 }
 
 // template <typename T>
