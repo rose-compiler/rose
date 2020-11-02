@@ -37,8 +37,10 @@ extern bool roseInstallPrefix(std::string&);
 
 int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
+#if 0
  // DQ (10/23/2020): Calling clang-to-dot generator (I don't thing this modifies the argv list).
     int clang_to_dot_status = clang_to_dot_main(argc,argv);
+#endif
 
   // 0 - Analyse Cmd Line
 
