@@ -161,7 +161,7 @@ BooleanLiteral
 BitLiteral
 RelationalExpression
 BitPrimary
-OptLogicalContinuation
+BitOperand
 LogicalOperand
 LogicalComponent
 FixedConversion
@@ -1629,8 +1629,16 @@ context-free syntax
 
 %% 5.2 BIT FORMULAS
 %%
+
+%% Removed OptLogicalContinuation to remove ambiguity
+%%   LogicalOperand
+%%     OptLogicalContinuation -> BitFormula              {cons("BitFormula")}
+
+  LogicalOperand              -> BitOperand              {cons("BitOperand"), prefer}
   LogicalOperand
-    OptLogicalContinuation    -> BitFormula             {cons("BitFormula")}
+    LogicalContinuation       -> BitOperand              {cons("BitOperandContinuation")}
+
+  BitOperand                  -> BitFormula
 
 %% Added for when variable is used with LogicalContinuation
   LogicalComponent
@@ -1666,9 +1674,6 @@ context-free syntax
   OrContinuation+             -> LogicalContinuation
   XorContinuation+            -> LogicalContinuation
   EqvContinuation+            -> LogicalContinuation
-
-  LogicalContinuation         -> OptLogicalContinuation
-  % empty %                   -> OptLogicalContinuation {cons("no-logical-continuation")}
 
 %% Using LogicalComponent instead of LogicalOperand
 %% for these continuations to allow use of variables

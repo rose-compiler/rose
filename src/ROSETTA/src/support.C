@@ -2095,6 +2095,11 @@ Grammar::setUpSupport ()
      Project.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 #endif
 
+  // DQ (10/28/2020): Adding option to output compilation performance.  Relocated to be a 
+  // static data member of AstPerformance class.
+  // Project.setDataPrototype         ( "bool", "compilationPerformance", "= false",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (8/29/2006): Support for CSV data file reporting performance of compilation.
   // This file accumulates information (if specified) and permits plots of performance
   // for different parts of the compilation internally within ROSE.

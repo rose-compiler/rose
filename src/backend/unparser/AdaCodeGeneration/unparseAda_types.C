@@ -78,6 +78,12 @@ namespace
       prn(" private");
     }
 
+    void handle(SgAutoType& n)
+    {
+      /* print nothing - used for Integer and Real Number constants */
+    }
+
+
     void handle(SgNamedType& n)
     {
       prn(" ");

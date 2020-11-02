@@ -21,6 +21,8 @@
 
 #include <boost/thread.hpp>     // sleep()
 
+#include "AstStatistics.h"
+
 // DQ (12/8/2006): Linux memory usage mechanism (no longer used, implemented internally (below)).
 // #include<memoryUsage.h>
 
@@ -202,6 +204,10 @@ std::list<AstPerformance*> AstPerformance::performanceStack;
 // static SgProject IR node require for report generation to a file
 SgProject* AstPerformance::project = NULL;
 
+// DQ (10/28/2020): Adding control over output of performance report (static data member).
+bool AstPerformance::outputCompilationPerformance = false;
+
+
 AstPerformance::AstPerformance( std::string s , bool outputReport )
    : label(s), outputReportInDestructor(outputReport)
    {
@@ -209,10 +215,13 @@ AstPerformance::AstPerformance( std::string s , bool outputReport )
   // check the stack for an existing performance monitor (it will be come the parent)
   // TOO1 (4/11/2013): TODO: -rose:keep_going tends to segfault here, so for now we
   //                         will simply skip AstPerformance processing.
-  if (project != NULL && project->get_keep_going() == true)
-  {
-      project = NULL;
-  }
+     if (project != NULL && project->get_keep_going() == true)
+        {
+          project = NULL;
+        }
+
+  // DQ (10/28/2020): Reset this to be controlled via the command line (static data member).
+  // outputReportInDestructor = outputCompilationPerformance;
 
      if (project != NULL && performanceStack.size() > 0)
         {
@@ -239,6 +248,10 @@ AstPerformance::AstPerformance( std::string s , bool outputReport )
 
   // Put this performance monitor onto the stack
      performanceStack.push_front(this);
+
+#if 0
+     printf ("In AstPerformance constructor: performanceStack.size() = %zu \n",performanceStack.size());
+#endif
    }
 
 AstPerformance::~AstPerformance()
@@ -270,15 +283,25 @@ AstPerformance::~AstPerformance()
         }
 #endif
 
-     if (project != NULL)
+  // DQ (10/28/2020): Reset this to be controlled via the command line (static data member).
+  // outputReportInDestructor = outputCompilationPerformance;
+
+  // if (project != NULL)
+     if (project != NULL && outputCompilationPerformance == true)
         {
-       // printf ("Calling generateReportToFile() ... \n");
+#if 0
+          printf ("Calling generateReportToFile() ... \n");
+#endif
           generateReportToFile(project);
-       // printf ("DONE: Calling generateReportToFile() ... \n");
+#if 0
+          printf ("DONE: Calling generateReportToFile() ... \n");
+#endif
         }
        else
         {
-       // printf ("Skipped performance report generation to the performance file \n");
+#if 0
+          printf ("Skipped performance report generation to the performance file \n");
+#endif
         }
 
   // printf ("Leaving AstPerformance destructor ... \n");
@@ -558,6 +581,19 @@ struct rusage
     long int ru_nivcsw;
   };
 #endif
+
+#if 0
+     printf ("AstPerformance::generateReportFromObject(): outputCompilationPerformance = %s \n",outputCompilationPerformance ? "true" : "false");
+#endif
+
+  // DQ (10/28/2020): Control output of reporting using static bool data member outputCompilationPerformance.
+     if (outputCompilationPerformance == false)
+        {
+          return;
+        }
+
+  // DQ (10/21/2020): Adding IR node usage statistics reporting.
+     AstNodeStatistics::IRnodeUsageStatistics();
 
      printf ("\n\n");
      std::vector<ProcessingPhase*>::iterator i = data.begin();

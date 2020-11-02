@@ -5,6 +5,5 @@ ROSE_FRONTEND_TODO :=                  \
   hello_world.adb                      \
   io_test.adb                          \
   simple_select_accept.adb             \
-	task_with_abort.adb                  \
   EndOfList
 

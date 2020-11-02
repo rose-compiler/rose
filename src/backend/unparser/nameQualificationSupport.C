@@ -6440,7 +6440,8 @@ NameQualificationTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDecla
      if (templateInstantiationFunctionDecl != NULL)
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          mfprintf(mlog [ WARN ] ) ("In skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(): templateInstantiationFunctionDecl->get_name() = %p = %s \n",templateInstantiationFunctionDecl,templateInstantiationFunctionDecl->get_name().str());
+          mfprintf(mlog [ WARN ] ) ("In skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(): templateInstantiationFunctionDecl->get_name() = %p = %s \n",
+               templateInstantiationFunctionDecl,templateInstantiationFunctionDecl->get_name().str());
 #endif
 
        // DQ (8/18/2012): Note that test2012_57.C and test2012_59.C have template specalizations that don't appear 
@@ -6448,7 +6449,8 @@ NameQualificationTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDecla
        // declarationToSearchForInReferencedNameSet = templateInstantiationFunctionDecl->get_templateDeclaration();
           if (templateInstantiationFunctionDecl->get_templateDeclaration() == NULL)
              {
-               mfprintf(mlog [ WARN ] ) ("WARNING: templateInstantiationFunctionDecl->get_templateDeclaration() == NULL for templateInstantiationFunctionDecl = %p = %s \n",templateInstantiationFunctionDecl,templateInstantiationFunctionDecl->get_name().str());
+               mfprintf(mlog [ WARN ] ) ("WARNING: templateInstantiationFunctionDecl->get_templateDeclaration() == NULL for templateInstantiationFunctionDecl = %p = %s \n",
+                    templateInstantiationFunctionDecl,templateInstantiationFunctionDecl->get_name().str());
              }
             else
              {
@@ -6463,7 +6465,8 @@ NameQualificationTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDecla
           if (templateInstantiationMemberFunctionDecl != NULL)
              {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               mfprintf(mlog [ WARN ] ) ("In skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(): templateInstantiationMemberFunctionDecl->get_name() = %p = %s \n",templateInstantiationMemberFunctionDecl,templateInstantiationMemberFunctionDecl->get_name().str());
+               mfprintf(mlog [ WARN ] ) ("In skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(): templateInstantiationMemberFunctionDecl->get_name() = %p = %s \n",
+                    templateInstantiationMemberFunctionDecl,templateInstantiationMemberFunctionDecl->get_name().str());
 #endif
                declarationToSearchForInReferencedNameSet = templateInstantiationMemberFunctionDecl->get_templateDeclaration();
                ASSERT_not_null(declarationToSearchForInReferencedNameSet);
@@ -6481,7 +6484,8 @@ NameQualificationTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDecla
      if (referencedNameSet.find(declarationToSearchForInReferencedNameSet) == referencedNameSet.end())
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          mfprintf(mlog [ WARN ] ) ("   --- $$$$$$$$$$ NOT Found: declaration %p = %s in referencedNameSet referencedNameSet.size() = %" PRIuPTR " \n",declaration,declaration->class_name().c_str(),referencedNameSet.size());
+          mfprintf(mlog [ WARN ] ) ("   --- $$$$$$$$$$ NOT Found: declaration %p = %s in referencedNameSet referencedNameSet.size() = %" PRIuPTR " \n",
+               declaration,declaration->class_name().c_str(),referencedNameSet.size());
 #endif
           skipNameQualification = true;
         }
@@ -11301,6 +11305,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          classChain_iterator++;
                        }
 #endif
+#if 0
+                 // DQ (10/31/2020): This is triggered by the codes used to get codeSegregation.
                  // DQ (2/21/2019): This fails in roseTests/astOutliningTests for file: test2004_35.C.
                  // DQ (2/16/2019): I think this is always true, since base class abiguity is not allowed in the C++ language.
                  // ROSE_ASSERT(classChain.size() == 1);
@@ -11310,7 +11316,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          mfprintf(mlog [ WARN ] ) ("Note: Not clear how this happens: classChain.size() > 1 size = %zu \n",classChain.size());
                        }
                  // ROSE_ASSERT(classChain.empty() == true || classChain.size() == 1);
-
+#endif
                  // DQ (2/16/2019): We need to call something like this, but specialized to just use the single class in the classChain.
                  // setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
 

@@ -519,9 +519,11 @@ AC_LANG(C++)
 AX_COMPILER_VENDOR
 FRONTEND_CXX_COMPILER_VENDOR="$ax_cv_cxx_compiler_vendor"
 
-echo "_AC_LANG_ABBREV              = $_AC_LANG_ABBREV"
-echo "ax_cv_c_compiler_vendor      = $ax_cv_c_compiler_vendor"
-echo "ax_cv_cxx_compiler_vendor    = $ax_cv_cxx_compiler_vendor"
+# DQ (10/27/2020): Fixed to avoid output spew.
+AC_MSG_NOTICE([_AC_LANG_ABBREV              = "$_AC_LANG_ABBREV"])
+AC_MSG_NOTICE([ax_cv_c_compiler_vendor      = "$ax_cv_c_compiler_vendor"])
+AC_MSG_NOTICE([ax_cv_cxx_compiler_vendor    = $ax_cv_cxx_compiler_vendor"])
+
 AC_MSG_NOTICE([FRONTEND_CXX_COMPILER_VENDOR = "$FRONTEND_CXX_COMPILER_VENDOR"])
 
 unset ax_cv_cxx_compiler_vendor
@@ -2383,6 +2385,7 @@ tests/nonsmoke/functional/CompileTests/Java_tests/unit_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_csharp_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_ada_tests/compile_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_fortran_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_jovial_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_cobol_tests/Makefile

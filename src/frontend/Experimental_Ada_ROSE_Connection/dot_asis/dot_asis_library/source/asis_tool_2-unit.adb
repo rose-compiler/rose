@@ -1,6 +1,8 @@
 with Asis.Compilation_Units;
 with Asis.Elements;
 with Asis.Iterator;
+with Ada.Directories;
+with Ada.Characters.Handling;
 
 -- GNAT-specific:
 with Asis.Set_Get;
@@ -436,9 +438,11 @@ package body Asis_Tool_2.Unit is
       end;
 
       procedure Add_Text_Name is
+         package AD renames Ada.Directories;
          WS : constant Wide_String := ACU.Text_Name (Unit);
+         Simple_File_Name : aliased String := AD.Simple_Name (To_String(WS));
       begin
-         This.Add_To_Dot_Label ("Text_Name", WS);
+         This.Add_To_Dot_Label ("Text_Name", Simple_File_Name);
          This.A_Unit.Text_Name := To_Chars_Ptr (WS);
       end;
 

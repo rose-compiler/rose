@@ -21,10 +21,7 @@ static constexpr bool FAIL_ON_ERROR = false;
 //
 // logging
 
-extern Sawyer::Message::Facility adalogger;
-
-/// initializes the logger facilities
-void logInit();
+extern Sawyer::Message::Facility mlog;
 
 
 //
@@ -40,8 +37,27 @@ std::map<int, Element_Struct*>& elemMap();
 /// \note seems not needed
 // std::map<int, Element_Struct*>& unitMap();
 
-template <class KeyNode, class SageNode>
-using map_t = std::map<KeyNode, SageNode>;
+template <class KeyType, class SageNode>
+using map_t = std::map<KeyType, SageNode>;
+
+struct AdaIdentifier : std::string
+{
+  typedef std::string base;
+
+  AdaIdentifier()                                = default;
+  AdaIdentifier(const AdaIdentifier&)            = default;
+  AdaIdentifier(AdaIdentifier&&)                 = default;
+  AdaIdentifier& operator=(const AdaIdentifier&) = default;
+  AdaIdentifier& operator=(AdaIdentifier&&)      = default;
+
+  AdaIdentifier(const std::string& rep)
+  : std::string(boost::to_upper_copy(rep))
+  {}
+
+  AdaIdentifier(const char* rep)
+  : AdaIdentifier(std::string(rep))
+  {}
+};
 
 /// returns a mapping from Unit_ID to constructed root node in AST
 //~ map_t<int, SgDeclarationStatement*>& asisUnits();
@@ -60,15 +76,12 @@ map_t<int, SgDeclarationStatement*>& asisDecls();
 map_t<int, SgDeclarationStatement*>& asisTypes();
 
 /// returns a mapping from string to builtin type nodes
-map_t<std::string, SgType*>& adaTypes();
+map_t<AdaIdentifier, SgType*>& adaTypes();
 
 
 //
 // auxiliary functions and types
 
-/// attaches the source location information from \ref elem to
-///   the AST node \ref n.
-void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem);
 
 /// \brief resolves all goto statements to labels
 ///        at the end of procedures or functions.
@@ -111,11 +124,6 @@ struct LabelAndLoopManager
 ///   containts context that is passed top-down
 struct AstContext
 {
-    explicit
-    AstContext(SgScopeStatement& s)
-    : the_scope(&s), all_labels_loops(nullptr)
-    {}
-
     AstContext()                             = default;
     AstContext(AstContext&&)                 = default;
     AstContext& operator=(AstContext&&)      = default;
@@ -123,27 +131,42 @@ struct AstContext
     AstContext& operator=(const AstContext&) = default;
 
     /// returns the current scope
-    SgScopeStatement& scope()  const { return *the_scope; }
+    SgScopeStatement& scope()  const { return SG_DEREF(the_scope); }
 
     /// returns the current label manager
     LabelAndLoopManager& labelsAndLoops() const { return SG_DEREF(all_labels_loops); }
 
-    // sets scope without parent check (no-parent-check)
-    //   e.g., when the parent node is built after the scope \ref s (e.g., if statements)
+    /// returns the source file name
+    /// \note the Asis source names do not always match the true source file name
+    ///       e.g., loop_exit.adb contains a top level function Compute, and the Asis
+    ///             nodes under Compute report Compute.adb as the source file.
+    const std::string& sourceFileName() const { return SG_DEREF(unit_file_name); }
+
+    /// sets scope without parent check (no-parent-check)
+    ///   e.g., when the parent node is built after the scope \ref s (e.g., if statements)
+    /// \note the passed object needs to survive the lifetime of the return AstContext
     AstContext scope_npc(SgScopeStatement& s) const;
 
-    // sets scope and checks that the parent of \ref s is set properly
+    /// sets scope and checks that the parent of \ref s is set properly
+    /// \note the passed object needs to survive the lifetime of the return AstContext
     AstContext scope(SgScopeStatement& s) const;
 
-    // sets a new label manager
+    /// sets a new label manager
+    /// \note the passed object needs to survive the lifetime of the return AstContext
     AstContext labelsAndLoops(LabelAndLoopManager& lm) const;
+
+    /// unit file name
+    /// \note the passed object needs to survive the lifetime of the return AstContext
+    AstContext sourceFileName(std::string& file) const;
 
   private:
     SgScopeStatement*    the_scope;
     LabelAndLoopManager* all_labels_loops;
+    const std::string*   unit_file_name;
 };
 
-// functor to create elements
+
+/// functor to create elements that are added to the current scope
 struct ElemCreator
 {
     explicit
@@ -159,6 +182,11 @@ struct ElemCreator
 
     ElemCreator() = delete;
 };
+
+/// attaches the source location information from \ref elem to
+///   the AST node \ref n.
+void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem, AstContext ctx);
+
 
 /// anonymous namespace for auxiliary templates and functions
 namespace
@@ -198,33 +226,33 @@ namespace
 #ifndef USE_SIMPLE_STD_LOGGER
 
   inline
-  auto logTrace() -> decltype(Ada_ROSE_Translation::adalogger[Sawyer::Message::TRACE])
+  auto logTrace() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::TRACE])
   {
-    return Ada_ROSE_Translation::adalogger[Sawyer::Message::TRACE];
+    return Ada_ROSE_Translation::mlog[Sawyer::Message::TRACE];
   }
 
   inline
-  auto logInfo() -> decltype(Ada_ROSE_Translation::adalogger[Sawyer::Message::INFO])
+  auto logInfo() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::INFO])
   {
-    return Ada_ROSE_Translation::adalogger[Sawyer::Message::INFO];
+    return Ada_ROSE_Translation::mlog[Sawyer::Message::INFO];
   }
 
   inline
-  auto logWarn() -> decltype(Ada_ROSE_Translation::adalogger[Sawyer::Message::WARN])
+  auto logWarn() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::WARN])
   {
-    return Ada_ROSE_Translation::adalogger[Sawyer::Message::WARN];
+    return Ada_ROSE_Translation::mlog[Sawyer::Message::WARN];
   }
 
   inline
-  auto logError() -> decltype(Ada_ROSE_Translation::adalogger[Sawyer::Message::ERROR])
+  auto logError() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::ERROR])
   {
-    return Ada_ROSE_Translation::adalogger[Sawyer::Message::ERROR];
+    return Ada_ROSE_Translation::mlog[Sawyer::Message::ERROR];
   }
 
   inline
-  auto logFatal() -> decltype(Ada_ROSE_Translation::adalogger[Sawyer::Message::FATAL])
+  auto logFatal() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::FATAL])
   {
-    return Ada_ROSE_Translation::adalogger[Sawyer::Message::FATAL];
+    return Ada_ROSE_Translation::mlog[Sawyer::Message::FATAL];
   }
 
 
