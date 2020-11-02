@@ -9,6 +9,7 @@ CXXFLAGS += -w
 
 if ROSE_USE_CLANG_FRONTEND
 
+
 # DQ (10/31/2020): Don't build the clang dot support just yet.
 noinst_LTLIBRARIES = libroseClangFrontend.la
 # noinst_LTLIBRARIES = libroseClangFrontend.la libClangToDot.la
@@ -18,18 +19,19 @@ libroseClangFrontend_la_SOURCES      = \
   clang-frontend.cpp \
   clang-frontend-decl.cpp \
   clang-frontend-stmt.cpp \
-  clang-frontend-type.cpp
+  clang-frontend-type.cpp 
+# clang-to-dot.cpp 
 libroseClangFrontend_la_LDFLAGS      = $(CLANG_LDFLAGS)
 libroseClangFrontend_la_CXXFLAGS     = $(CLANG_CXXFLAGS)
 
-# libClangToDot_la_DEPENDENCIES =
-# libClangToDot_la_SOURCES      = \
+libClangToDot_la_DEPENDENCIES =
+libClangToDot_la_SOURCES      = \
   clang-to-dot.cpp 
 #  clang-to-dot-decl.cpp 
 #  clang-to-dot-stmt.cpp 
 #  clang-to-dot-type.cpp
-# libClangToDot_la_LDFLAGS      = $(CLANG_LDFLAGS)
-# libClangToDot_la_CXXFLAGS     = $(CLANG_CXXFLAGS)
+libClangToDot_la_LDFLAGS      = $(CLANG_LDFLAGS)
+libClangToDot_la_CXXFLAGS     = $(CLANG_CXXFLAGS)
 
 pkginclude_HEADERS = clang-frontend.hpp clang-frontend-private.hpp
 
