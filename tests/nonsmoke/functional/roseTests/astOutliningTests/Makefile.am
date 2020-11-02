@@ -88,7 +88,8 @@ C_TESTS_REQUIRED_TO_PASS =			\
 # This is not ready
 #         variables_in_header.c
 # template_function1.cpp
-
+# name qualification class ::A
+#	test_66_2020.cpp
 CXX_TESTS_REQUIRED_TO_PASS =		\
 	array2.cpp				\
 	moreTest6.cpp				\
@@ -107,7 +108,8 @@ CXX2_TESTS_REQUIRED_TO_PASS = \
 	charStar.cpp  \
 	test_37_2020.cpp \
 	ft_cfftz.cpp \
-	test_52.cpp
+	test_52.cpp \
+	test_66_2020.cpp
 
 #This set of CPP files must contain main() to run
 CXX4_TESTS_REQUIRED_TO_RUN=	\

@@ -1063,6 +1063,8 @@ insertFriendDecls (SgFunctionDeclaration* func,
       
    // Get a list of all function reference expressions.
       NodeList_t func_refs = NodeQuery::querySubTree (func,V_SgMemberFunctionRefExp);
+      if (enable_debug)
+         printf ("Calling classes.insert(): found member function ref exps count= %zu \n",func_refs.size());
       for (NodeList_t::iterator f = func_refs.begin (); f != func_refs.end ();
            ++f)
         {
@@ -1075,6 +1077,30 @@ insertFriendDecls (SgFunctionDeclaration* func,
             classes.insert (cl_def);
           }
         }
+    //C++ constructors are called through SgConstructorInitializer, not SgMemberFunctionRefExp.
+   // Get a list of all SgConstructorInitializer nodes
+      NodeList_t ctor_init = NodeQuery::querySubTree (func,V_SgConstructorInitializer);
+      if (enable_debug)
+         printf ("Calling classes.insert(): found SgConstructorInitializer count= %zu \n",ctor_init.size());
+      for (NodeList_t::iterator f = ctor_init.begin (); f != ctor_init.end (); ++f)
+        {
+          SgConstructorInitializer* ctor = isSgConstructorInitializer(*f);
+          SgMemberFunctionDeclaration * fuc_decl = ctor->get_declaration();
+          SgClassDeclaration * def_cls_decl = isSgClassDeclaration(ctor->get_class_decl()->get_definingDeclaration());
+          if (!def_cls_decl)
+          {
+            printf ("Calling classes.insert(): constructor allocated class declaration has no defining declaration = %p = %s \n", ctor ,ctor->class_name().c_str());
+            continue; 
+          }
+          SgClassDefinition* cl_def = def_cls_decl->get_definition();
+          if (isProtPriv(fuc_decl) && cl_def)
+          {
+            if (enable_debug)
+              printf ("Calling classes.insert(): member functions: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
+            classes.insert (cl_def);
+          }
+        }
+
 
    // DQ (8/13/2019): Set the target classes.
       if (enable_debug)
