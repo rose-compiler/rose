@@ -8,7 +8,31 @@ package body tool_2_wrapper_h is
 
    package anhS renames a_nodes_h.Support;
 
+   ------------
+   -- EXPORTED:
+   ------------
    function tool_2_wrapper
+     (target_file_in               : in Interfaces.C.Strings.chars_ptr;
+      gnat_home                    : in Interfaces.C.Strings.chars_ptr;
+      output_dir                   : in Interfaces.C.Strings.chars_ptr
+     )
+      return a_nodes_h.Nodes_Struct
+   is
+      package ICE renames Interfaces.C.Extensions;
+   begin
+      return tool_2_wrapper_with_flags
+        (target_file_in               => target_file_in,
+         gnat_home                    => gnat_home,
+         output_dir                   => output_dir,
+         process_predefined_units     => ICE.bool(False),
+         process_implementation_units => ICE.bool(False),
+         debug                        => ICE.bool(False));
+   end tool_2_wrapper;
+
+   ------------
+   -- EXPORTED:
+   ------------
+   function tool_2_wrapper_with_flags
      (target_file_in               : in Interfaces.C.Strings.chars_ptr;
       gnat_home                    : in Interfaces.C.Strings.chars_ptr;
       output_dir                   : in Interfaces.C.Strings.chars_ptr;
@@ -53,6 +77,6 @@ package body tool_2_wrapper_h is
       Log ("Returning " & Result.Elements.Next_Count'Image  & " + 1 Elements.");
       Log ("END");
       return Result;
-   end tool_2_wrapper;
+   end tool_2_wrapper_with_flags;
 
 end tool_2_wrapper_h;
