@@ -77,7 +77,9 @@ namespace
           if (!res)
           {
             // what is it?
-            logWarn() << "unknown type name: " << typeEx.Name_Image << std::endl;
+            logWarn() << "unknown type name: " << typeEx.Name_Image
+                      << " / " << typeEx.Corresponding_Name_Definition
+                      << std::endl;
 
             ROSE_ASSERT(!FAIL_ON_ERROR);
             res = sb::buildVoidType();
@@ -165,7 +167,7 @@ namespace
   SgAdaRangeConstraint&
   getRangeConstraint(Element_ID el, AstContext ctx)
   {
-    if (isInvaldId(el))
+    if (isInvalidId(el))
     {
       logWarn() << "Uninitialized element [range constraint]" << std::endl;
       return mkAdaRangeConstraint(mkRangeExp());
@@ -328,7 +330,7 @@ getDeclTypeID(Element_ID id, AstContext ctx)
 SgType&
 getDefinitionTypeID(Element_ID defid, AstContext ctx)
 {
-  if (isInvaldId(defid))
+  if (isInvalidId(defid))
   {
     logWarn() << "undefined type id: " << defid << std::endl;
     return SG_DEREF(sb::buildVoidType());
@@ -420,7 +422,7 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
         SgClassDefinition& def = getRecordBodyID(typenode.Record_Definition, ctx);
 
         (typenode.Has_Tagged ? logWarn() : logTrace())
-           << "tagged set ? " << typenode.Has_Tagged
+           << "Type_Definition_Struct::tagged set ? " << typenode.Has_Tagged
            << std::endl;
 
         /*

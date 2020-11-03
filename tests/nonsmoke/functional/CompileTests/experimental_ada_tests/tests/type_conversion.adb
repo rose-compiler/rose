@@ -1,7 +1,7 @@
 procedure Type_Conversion is
    X : Integer;
-   Y : Float;
+   Y : Positive;
 begin
    X := 1;
-   Y := Float (X);
+   Y := Positive (X);
 end Type_Conversion;

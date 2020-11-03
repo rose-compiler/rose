@@ -1,0 +1,8 @@
+START
+DEF PROC main;
+BEGIN
+  TYPE TT1 U;
+  ITEM X1 TT1;
+  X1 = 5;
+END
+TERM
