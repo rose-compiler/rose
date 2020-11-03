@@ -1710,6 +1710,8 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   // DQ (2/17/2019): Display the shared nodes in the AST for debugging.
   ROSE_DLL_API void outputSharedNodes( SgNode* node );
 
+  // DQ (10/31/2020): Added function to help debug edits to statements in scopes.
+  ROSE_DLL_API void displayScope(SgScopeStatement* scope);
 
 // TODO
 #if 0
@@ -2052,8 +2054,16 @@ ROSE_DLL_API void resetInternalMapsForTargetStatement(SgStatement* sourceStateme
 ROSE_DLL_API void convertFunctionDefinitionsToFunctionPrototypes(SgNode* node);
 
 // DQ (11/10/2019): Lower level support for convertFunctionDefinitionsToFunctionPrototypes().
-ROSE_DLL_API void replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunctionDeclaration* functionDeclaration );
+// DQ (10/27/2020): Need to return the generated function prototype (incase we want to mark it for output or template unparsing from the AST).
+// ROSE_DLL_API void replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunctionDeclaration* functionDeclaration );
+// ROSE_DLL_API SgDeclarationStatement* replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunctionDeclaration* functionDeclaration );
+ROSE_DLL_API SgFunctionDeclaration* replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunctionDeclaration* functionDeclaration );
 ROSE_DLL_API std::vector<SgFunctionDeclaration*> generateFunctionDefinitionsList(SgNode* node);
+
+// DQ (10/29/2020): build a function prototype for all but member functions outside of the class (except for template instantiations).
+// The reason why member functions outside of the class are an exception is because they can not be used except in a class and there 
+// would already be one present for the code to compile.
+ROSE_DLL_API SgFunctionDeclaration* buildFunctionPrototype ( SgFunctionDeclaration* functionDeclaration );
 
 
 //@}

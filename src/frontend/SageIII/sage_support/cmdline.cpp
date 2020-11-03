@@ -1523,6 +1523,16 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           p_projectSpecificDatabaseFile = projectSpecificDatabaseFileParamater;
         }
 
+  // DQ (10/28/2020): Adding option to output the compilation performance data.
+  // optionCount = sla_none(local_commandLineArgumentList, "-rose:", "($)", "(performance_tracking)",1);
+  // if ( optionCount > 0 )
+     AstPerformance::outputCompilationPerformance = false;
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(compilationPerformance)",true) == true )
+        {
+       // printf ("SgProject::processCommandLine(): option -rose:compilationPerformance found \n");
+          AstPerformance::outputCompilationPerformance = true;
+        }
+
   // DQ (8/29/2006): Added support for accumulation of performance data into CSV data file (for later processing to build performance graphs)
      std::string compilationPerformanceFilenameParameter;
      if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,
@@ -3241,6 +3251,10 @@ SgFile::usage ( int status )
 "     -rose:projectSpecificDatabaseFile FILE\n"
 "                             filename where a database of all files used in a project are stored\n"
 "                             for producing unique trace ids and retrieving the reverse mapping from trace to files"
+"     -rose:compilationPerformance\n"
+"                             Output compilation performance after compilation of input file.\n"
+"                             Reports internal phases of ROSE compilation (time and memory requirements), output to stdout.\n"
+"                             See also \"-rose:compilationPerformanceFile FILE\" for CSV report in a file.\n"
 "     -rose:compilationPerformanceFile FILE\n"
 "                             filename where compiler performance for internal\n"
 "                             phases (in CSV form) is placed for later\n"
@@ -5581,6 +5595,10 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      char* filename = NULL;
      optionCount = sla(argv, "-rose:", "($)^", "(astMergeCommandFile)",filename,1);
      optionCount = sla(argv, "-rose:", "($)^", "(projectSpecificDatabaseFile)",filename,1);
+
+  // DQ (10/28/2020): Added to support output of compile-time performance data.
+     optionCount = sla(argv, "-rose:", "($)^", "(compilationPerformance)",1);
+
      optionCount = sla(argv, "-rose:", "($)^", "(compilationPerformanceFile)",filename,1);
 
          //AS(093007) Remove paramaters relating to excluding and include comments and directives

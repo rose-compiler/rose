@@ -156,10 +156,13 @@ $CLASSNAME::visitRepresentativeNode(ROSE_VisitTraversal & traversal)
                i++;
              }
 
+#if 0
+       // DQ (10/28/2020): Commented out this output spew that happens in the output of IR node statistics.
           if (done == false)
              {
                printf ("No representative for $CLASSNAME found in memory pools \n");
              }
+#endif
         }
    }
 

@@ -363,7 +363,7 @@ Unparser::computeNameQualification(SgSourceFile* file)
 #endif
           if (SgProject::get_verbose() > 0)
              {
-               printf ("Calling name qualification support. \n");
+               printf ("Calling name qualification support \n");
              }
 
        // DQ (10/17/2020): I have discovered that this was added by Tristan, and it is not clear to me what it is about.
@@ -382,7 +382,7 @@ Unparser::computeNameQualification(SgSourceFile* file)
 
           if (SgProject::get_verbose() > 0)
              {
-               printf ("DONE: Calling name qualification support. \n");
+               printf ("DONE: Calling name qualification support \n");
              }
 
        // DQ (6/5/2007): We actually need this now since the hidden lists are not pushed to lower scopes where they are required.
@@ -415,7 +415,6 @@ Unparser::computeNameQualification(SgSourceFile* file)
   // DQ (10/23/2018): Output report of AST nodes marked as modified!
      SageInterface::reportModifiedStatements("Leaving Unparser::computeNameQualification()",file);
 #endif
-
    }
 
 
@@ -476,7 +475,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
           if (tmp_globalScope != NULL)
              {
 #if 0
-               printf ("In Unparser::unparseFile(): TOP tmp_globalScope = %p tmp_globalScope->get_parent() = %p = %s \n",tmp_globalScope,tmp_globalScope->get_parent(),globalScope->get_parent()->class_name().c_str());
+               printf ("In Unparser::unparseFile(): TOP tmp_globalScope = %p tmp_globalScope->get_parent() = %p = %s \n",
+                    tmp_globalScope,tmp_globalScope->get_parent(),globalScope->get_parent()->class_name().c_str());
 #endif
 #if 0
                SgSourceFile* parentSourceFile = isSgSourceFile(tmp_globalScope->get_parent());
@@ -961,6 +961,9 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                     ROSE_ASSERT(this->currentFile == globalScope->get_parent());
 
                     u_exprStmt->unparseStatement(globalScope, info);
+#if 0
+                    printf ("DONE: In Unparser::unparseFile(): case C/C++: unparseStatement(globalScope, info): globalScope = %p \n",globalScope);
+#endif
 #if 0
                     printf ("Exiting as a test! \n");
                     ROSE_ASSERT(false);
@@ -3979,7 +3982,8 @@ namespace EDG_ROSE_Translation
    }
 
 
-SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
+SgSourceFile*
+buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
    {
   // When we have not processed all of the header files we need to support specific ones seperately.
   // This function supports this seperate handlign for individual header files and is part of the
@@ -4059,8 +4063,8 @@ SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFi
   // DQ (10/26/2019): Added debugging code.
      if (include_sourceFile == NULL)
         {
-#if 0
-          printf ("include_sourceFile == NULL: include_file = %p include_file->get_filename() = %s \n",include_file,include_file->get_filename().str());
+#if 1
+          printf ("In buildSourceFileForHeaderFile(): include_sourceFile == NULL: include_file = %p include_file->get_filename() = %s \n",include_file,include_file->get_filename().str());
 #endif
        // DQ (10/26/2019): If it does not exist, then add one here.
        // SgSourceFile* sourceFile = new SgSourceFile();
@@ -4129,7 +4133,7 @@ SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFi
           ROSE_ASSERT(returnListOfAttributes != NULL);
 #endif
 
-#if 1
+#if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
 #endif
@@ -5272,7 +5276,13 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                  // This might be a better solution.
                     if (isSgGlobal(header_file_associated_scope) != NULL)
                        {
+#if 0
+                         printf ("isSgGlobal(header_file_associated_scope) != NULL: calling unparseFile() \n");
+#endif
                          unparseFile(unparsedFile, unparseFormatHelp, unparseDelegate, NULL);
+#if 0
+                         printf ("DONE: isSgGlobal(header_file_associated_scope) != NULL: calling unparseFile() \n");
+#endif
                        }
                       else
                        {
@@ -5752,7 +5762,7 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
 
   // #if 0
   // DQ (4/9/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 3)
         {
           printf ("In unparseFileList(): fileList->get_listOfFiles().size() = %zu \n",fileList->get_listOfFiles().size());
         }
@@ -5811,7 +5821,7 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
 #endif
        // #if 0
        // DQ (4/9/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 3)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
              {
                printf ("\n**************************************************** \n");
                printf ("In unparseFileList(): unparse file = %p filename = %s \n",file,file->getFileName().c_str());
@@ -5887,7 +5897,7 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
 
        // #if 0
        // DQ (4/9/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 5)
              {
                printf ("In unparseFileList(): base of loop \n");
                printf ("**************************************************** \n");

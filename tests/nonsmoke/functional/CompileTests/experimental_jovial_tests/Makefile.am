@@ -24,6 +24,7 @@ JOVIAL_TESTCODES = \
  1_2_3_main-program-module_c.jov        \
  1_2_3_main-program-module_d.jov        \
  2_1_1_4_bit_type.jov                   \
+ 2_1_1_6_status_item_b.jov              \
  2_1_1_7_pointer_type.jov               \
  2_1_2_simple_table_var.jov             \
  2_1_2_compound_table_var.jov           \
@@ -113,14 +114,19 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-192.jov                  \
  rose-issue-rc-193.jov                  \
  rose-issue-rc-201.jov                  \
+ rose-issue-rc-201.pre.jov              \
  rose-issue-rc-203.jov                  \
  rose-issue-rc-204.jov                  \
  rose-issue-rc-225.jov                  \
+ rose-issue-rc-225.pre.jov              \
  rose-issue-rc-227.jov                  \
  rose-issue-rc-240.jov                  \
  rose-issue-rc-241.jov                  \
  rose-issue-rc-260.jov                  \
  rose-issue-rc-271.jov                  \
+ rose-issue-rc-271.pre.jov              \
+ rose-issue-rc-290.jov                  \
+ rose-issue-rc-290.pre.jov              \
  rose-issue-rc-291.jov
 
 # status_enumval.jov                     \

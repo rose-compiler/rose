@@ -2158,7 +2158,7 @@ void IncludedFilesUnparser::visit(SgNode* node)
 #if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
                printf ("In IncludedFilesUnparser::visit(): node -> get_isModified(): node = %p = %s  \n",node,node->class_name().c_str());
 #endif
-               if (SgProject::get_verbose() > 0)
+               if (SgProject::get_verbose() > 2)
                   {
                     cout << "Found a modified node: "    << node -> class_name() << endl;
                     cout << "   In file: "               << normalizedFileName << endl;
