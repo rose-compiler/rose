@@ -32,6 +32,7 @@ parseBytes(int argc, char *argv[]) {
 
 int
 main(int argc, char *argv[]) {
+    ROSE_INITIALIZE;
     MemoryMap::Ptr memory = parseBytes(argc, argv);
     P2::Engine engine;
     engine.settings().disassembler.isaName = "a64";

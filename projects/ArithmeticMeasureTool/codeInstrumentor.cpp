@@ -319,6 +319,8 @@ void instrumentSourceFile (SgSourceFile * sfile, string file_w_loop_count, strin
 
 int main (int argc, char** argv)
 {
+  ROSE_INITIALIZE;
+
   // Some command line processing must happen before frontend() is called. 
   vector<string> argvList (argv, argv + argc); 
 
