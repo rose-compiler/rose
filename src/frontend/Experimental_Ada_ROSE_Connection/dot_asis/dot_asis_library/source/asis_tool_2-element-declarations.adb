@@ -684,12 +684,9 @@ package body Asis_Tool_2.Element.Declarations is
          Add_Declaration_Interface_List;
 
       when An_Incomplete_Type_Declaration =>
-         Add_Corresponding_End_Name;
-         Add_Initialization_Expression;
          Add_Discriminant_Part;
          Add_Corresponding_Type_Declaration;
          Add_Corresponding_Type_Completion;
-         Add_Corresponding_Type_Partial_View;
          -- TODO: (2005)
          -- asis.limited_withs.ads (2005)
          --   Is_From_Limited_View

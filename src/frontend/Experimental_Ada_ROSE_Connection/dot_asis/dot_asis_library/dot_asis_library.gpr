@@ -19,6 +19,7 @@ library project DOT_ASIS_Library is
       "asis_tool_2.ads",
       "asis_tool_2-context.ads",
       "asis_tool_2-tool.ads",
+      "asis_tool_2-unit.ads",
       "dot.ads",
       "indented_text.ads",
       "tool_2_wrapper_h.ads");

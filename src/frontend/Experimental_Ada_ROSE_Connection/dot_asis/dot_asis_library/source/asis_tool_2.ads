@@ -38,6 +38,7 @@ package Asis_Tool_2 is
    External_Error : Exception;
 
 private
+   Module_Name : constant String := "Asis_Tool_2";
 
    package AEX renames Ada.Exceptions;
    package ASU renames Ada.Strings.Unbounded;

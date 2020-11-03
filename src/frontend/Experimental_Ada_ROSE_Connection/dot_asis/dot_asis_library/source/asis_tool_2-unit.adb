@@ -13,8 +13,6 @@ with Dot;
 
 package body Asis_Tool_2.Unit is
 
-   Module_Name : constant String := "Asis_Tool_2.Unit";
-
    package ACU renames Asis.Compilation_Units;
 
    -----------------------------------------------------------------------------
@@ -274,22 +272,20 @@ package body Asis_Tool_2.Unit is
 
    -- Create a Dot node for this unit, add all the attributes, and append it to the
    -- graph.
-   procedure Process_Application_Unit
+   procedure Process_Unit
      (This    : in out Class;
       Unit    : in Asis.Compilation_Unit)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name &
-        ".Process_Application_Unit";
+      Module_Name : constant String := Parent_Name & ".Process_Unit";
+      procedure Log (Message : in String) is
+      begin
+         Put_Line (Module_Name & ":  " & Message);
+      end;
 
       Unit_Class     : constant Asis.Unit_Classes := ACU.Unit_Class (Unit);
       Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
       Unit_Kind      : constant Asis.Unit_Kinds   := ACU.Unit_Kind (Unit);
-
-      procedure Log (Message : in String) is
-      begin
-         Put_Line (Module_Name & ":  " & message);
-      end;
 
       -- These are in alphabetical order:
       procedure Add_Can_Be_Main_Program is
@@ -444,7 +440,20 @@ package body Asis_Tool_2.Unit is
       procedure Add_Text_Name is
          package AD renames Ada.Directories;
          WS : constant Wide_String := ACU.Text_Name (Unit);
-         Simple_File_Name : aliased String := AD.Simple_Name (To_String(WS));
+         -- Package Standard has an empty file name, which AD.Simple_Name
+         -- doesn't like.  Handle that here:
+         function To_Simple_File_Name
+           (Name_String : in String)
+            return String is
+         begin
+            if Name_String = "" then
+               return "";
+            else
+               return  AD.Simple_Name (Name_String);
+               end if;
+         end To_Simple_File_Name;
+
+         Simple_File_Name : aliased String := To_Simple_File_Name (To_String(WS));
       begin
          This.Add_To_Dot_Label ("Text_Name", Simple_File_Name);
          This.A_Unit.Text_Name := To_Chars_Ptr (WS);
@@ -569,7 +578,7 @@ package body Asis_Tool_2.Unit is
       end;
 
       use all type Asis.Unit_Kinds;
-   begin -- Process_Application_Unit
+   begin -- Process_Unit
       If Unit_Kind /= Not_A_Unit then
          Start_Output;
       end if;
@@ -628,7 +637,7 @@ package body Asis_Tool_2.Unit is
       Process_Element_Trees (This, Unit);
       Log ("DONE Processing " & To_String (Unit_Full_Name) & " " &
              To_String (To_Wide_String (Unit_Class)));
-   end Process_Application_Unit;
+   end Process_Unit;
 
    ------------
    -- EXPORTED:
@@ -636,18 +645,33 @@ package body Asis_Tool_2.Unit is
    procedure Process
      (This    : in out Class;
       Unit    : in     Asis.Compilation_Unit;
+      Options : in     Options_Record;
       Outputs : in     Outputs_Record)
    is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process";
-
-      Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
-      Unit_Origin    : constant Asis.Unit_Origins := Acu.Unit_Origin (Unit);
-
       procedure Log (Message : in Wide_String) is
       begin
          Put_Line (Module_Name & ":  " & To_String (Message));
       end;
+
+      function To_Description (This : in Asis.Unit_Origins)
+                               return Wide_String is
+      begin
+         case This is
+            when Asis.Not_An_Origin =>
+               return "(unit origin is nil or nonexistent)";
+            when Asis.A_Predefined_Unit =>
+               return "(Ada predefined language environment unit)";
+            when Asis.An_Implementation_Unit =>
+               return "(Implementation specific library unit)";
+            when Asis.An_Application_Unit =>
+               return "(Application unit)";
+         end case;
+      end To_Description;
+
+      Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
+      Unit_Origin    : constant Asis.Unit_Origins := Acu.Unit_Origin (Unit);
 
    begin
       -- I would like to just pass Outputs through and not store it in the
@@ -657,17 +681,19 @@ package body Asis_Tool_2.Unit is
       -- that:
       This.Outputs := Outputs;
 
-      case Unit_Origin is
-         when Asis.An_Application_Unit =>
-            Process_Application_Unit (This, Unit);
-         when Asis.A_Predefined_Unit =>
-            Log ("Skipped " & Unit_Full_Name & " (predefined unit)");
-         when Asis.An_Implementation_Unit =>
-            Log ("Skipped " & Unit_Full_Name & " (implementation-defined unit)");
-         when Asis.Not_An_Origin =>
-            Log ("Skipped " & Unit_Full_Name & " (non-existent unit)");
-      end case;
-
+      if Options.Process_If_Origin_Is (Unit_Origin) and then
+         -- Processing package Standard causes a constraint error:
+         -- +===========================ASIS BUG DETECTED==============================+
+         -- | ASIS 2.0.R for GNAT Community 2019 (20190517) CONSTRAINT_ERROR a4g-a_sinput.adb:210 index check failed|
+         -- | when processing Asis.Declarations.Is_Name_Repeated                       |
+         -- ...
+         -- So skip it for now:
+         Unit_Full_Name /= "Standard" then
+            Process_Unit (This, Unit);
+      else
+         Log ("Skipped " & Unit_Full_Name &
+                " (" & To_Description(Unit_Origin) & ")");
+      end if;
    end Process;
 
 end Asis_Tool_2.Unit;

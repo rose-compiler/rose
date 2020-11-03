@@ -44,12 +44,18 @@ package body Asis_Tool_2.Element.Paths is
 
       procedure Add_Sequence_Of_Statements is
       begin
-         Add_Element_List
-           (This           => State,
-            Elements_In    => Asis.Statements.Sequence_Of_Statements (Element),
-            Dot_Label_Name => "Sequence_Of_Statements",
-            List_Out       => Result.Sequence_Of_Statements,
-            Add_Edges      => True);
+         if Path_Kind in Asis.A_Statement_Path then
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Statements.Sequence_Of_Statements (Element),
+               Dot_Label_Name => "Sequence_Of_Statements",
+               List_Out       => Result.Sequence_Of_Statements,
+               Add_Edges      => True);
+         else
+            -- Asis.Statements.Sequence_Of_Statements doesn't like paths outside
+            -- A_Statement_Path:
+            State.Add_Not_Implemented;
+         end if;
       end;
 
       procedure Add_Common_Items is

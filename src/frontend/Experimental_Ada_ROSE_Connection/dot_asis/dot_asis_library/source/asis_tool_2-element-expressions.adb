@@ -1,6 +1,7 @@
 with Asis.Elements;
 with Asis.Exceptions;
 with Asis.Expressions;
+with Asis.Extensions;
 
 package body Asis_Tool_2.Element.Expressions is
 
@@ -62,48 +63,24 @@ package body Asis_Tool_2.Element.Expressions is
 
       procedure Add_Corresponding_Name_Declaration is
          use Asis;
-         Parent_Name : constant String := Module_Name;
-         Module_Name : constant String := Parent_Name &
-           ".Add_Corresponding_Name_Declaration";
-         procedure Log (Message : in Wide_String) is
-         begin
-            Put_Line (Module_Name & ":  " & To_String (Message));
-         end;
-
          ID : a_nodes_h.Element_ID := anhS.Invalid_Element_ID;
       begin
-         begin
+         if Asis.Extensions.Is_Uniquely_Defined (Element) then
             ID := Get_Element_ID
               (Asis.Expressions.Corresponding_Name_Declaration (Element));
-         exception
-            when X : Asis.Exceptions.Asis_Inappropriate_Element =>
-               Log_Exception (X);
-               Log ("Continuing...");
-         end;
+         end if;
          State.Add_To_Dot_Label
            ("Corresponding_Name_Declaration", To_String (ID));
          Result.Corresponding_Name_Declaration := ID;
       end;
 
       procedure Add_Corresponding_Name_Definition is
-         Parent_Name : constant String := Module_Name;
-         Module_Name : constant String := Parent_Name &
-           ".Add_Corresponding_Name_Definition";
-         procedure Log (Message : in Wide_String) is
-         begin
-            Put_Line (Module_Name & ":  " & To_String (Message));
-         end;
-
          ID : a_nodes_h.Element_ID := anhS.Invalid_Element_ID;
       begin
-         begin
+         if Asis.Extensions.Is_Uniquely_Defined (Element) then
             ID := Get_Element_ID
               (Asis.Expressions.Corresponding_Name_Definition (Element));
-         exception
-            when X : Asis.Exceptions.Asis_Inappropriate_Element =>
-               Log_Exception (X);
-               Log ("Continuing...");
-         end;
+         end if;
          State.Add_To_Dot_Label
            ("Corresponding_Name_Definition", To_String (ID));
          Result.Corresponding_Name_Definition := ID;
@@ -118,19 +95,25 @@ package body Asis_Tool_2.Element.Expressions is
          begin
             Put_Line (Module_Name & ":  " & To_String (Message));
          end;
-      begin
+
+         procedure Add_List (Elements_In : in Asis.Element_List) is
          begin
             Add_Element_List
               (This           => State,
-               Elements_In    => Asis.Expressions.
-                 Corresponding_Name_Definition_List (Element),
+               Elements_In    => Elements_In,
                Dot_Label_Name => "Corresponding_Name_Definition_List",
                List_Out       => Result.Corresponding_Name_Definition_List);
          exception
             when X : Asis.Exceptions.Asis_Inappropriate_Element =>
                Log_Exception (X);
                Log ("Continuing...");
-         end;
+         end Add_List;
+      begin
+         if Asis.Extensions.Is_Uniquely_Defined (Element) then
+            Add_List (Asis.Expressions.Corresponding_Name_Definition_List (Element));
+         else
+            Add_List (Asis.Nil_Element_List);
+         end if;
       end;
 
       procedure Add_Function_Call_Parameters is

@@ -25,6 +25,7 @@ package body Asis_Tool_2.Context is
 
    procedure Process_Units
      (This    : in out Class;
+      Options : in     Unit.Options_Record;
       Outputs : in     Outputs_Record)
    is
       use Asis.Exceptions;
@@ -35,7 +36,7 @@ package body Asis_Tool_2.Context is
          declare
             Tool_Unit : Asis_Tool_2.Unit.Class;
          begin
-            Tool_Unit.Process (Unit, Outputs);
+            Tool_Unit.Process (Unit, Options, Outputs);
          end;
       end loop;
    exception
@@ -66,11 +67,14 @@ package body Asis_Tool_2.Context is
    procedure Process
      (This           : in out Class;
       Tree_File_Name : in     String;
+      Unit_Options   : in     Unit.Options_Record;
       Outputs        : in     Outputs_Record)
    is
+      Parent_Name : constant String := Module_Name;
+      Module_Name : constant String := Parent_Name & ".Process";
       procedure Log (Message : in String) is
       begin
-         Put_Line ("Asis_Tool_2.Context.Process:  " & message);
+         Put_Line (Module_Name & ":  " & Message);
       end;
       procedure Begin_Environment is begin
          Asis.Ada_Environments.Associate
@@ -93,7 +97,7 @@ package body Asis_Tool_2.Context is
       Outputs.Graph.Set_ID
         ("""" & To_String (Asis.Ada_Environments.Name (This.Asis_Context)) & """");
       Set_Context (This.Asis_Context, Outputs.A_Nodes);
-      Process_Units (This, Outputs);
+      Process_Units (This, Unit_Options, Outputs);
       End_Environment;
       Log ("END");
    end Process;
