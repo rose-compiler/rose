@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 
 #include <vector>
+#include <boost/algorithm/string.hpp>
 
 #include "sageGeneric.h"
 #include "sageBuilder.h"
@@ -214,9 +215,11 @@ namespace
     std::string   enumstr{expr.Name_Image};
     SgExpression* res = NULL;
 
-    if (enumstr == "True")
+    boost::to_upper(enumstr);
+
+    if (enumstr == "TRUE")
       res = sb::buildBoolValExp(1);
-    else if (enumstr == "False")
+    else if (enumstr == "FALSE")
       res = sb::buildBoolValExp(0);
 
     return SG_DEREF( res );
@@ -332,7 +335,6 @@ getExpr(Element_Struct& elem, AstContext ctx)
       {
         res = &getOperator(expr, ctx);
         /* unused fields:
-           char                 *Name_Image;
            Defining_Name_ID      Corresponding_Name_Definition;
            Defining_Name_List    Corresponding_Name_Definition_List;
            Element_ID            Corresponding_Name_Declaration;
@@ -444,7 +446,7 @@ getExpr(Element_Struct& elem, AstContext ctx)
       ROSE_ASSERT(!FAIL_ON_ERROR);
   }
 
-  attachSourceLocation(SG_DEREF(res), elem);
+  attachSourceLocation(SG_DEREF(res), elem, ctx);
   res->set_need_paren(withParen);
   return *res;
 }
@@ -531,7 +533,7 @@ namespace
         ROSE_ASSERT(!FAIL_ON_ERROR);
     }
 
-    attachSourceLocation(SG_DEREF(res), el);
+    attachSourceLocation(SG_DEREF(res), el, ctx);
     return *res;
   }
 }
