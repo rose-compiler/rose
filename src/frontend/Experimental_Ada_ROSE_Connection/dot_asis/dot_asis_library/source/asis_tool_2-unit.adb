@@ -440,7 +440,20 @@ package body Asis_Tool_2.Unit is
       procedure Add_Text_Name is
          package AD renames Ada.Directories;
          WS : constant Wide_String := ACU.Text_Name (Unit);
-         Simple_File_Name : aliased String := AD.Simple_Name (To_String(WS));
+         -- Package Standard has an empty file name, which AD.Simple_Name
+         -- doesn't like.  Handle that here:
+         function To_Simple_File_Name
+           (Name_String : in String)
+            return String is
+         begin
+            if Name_String = "" then
+               return "";
+            else
+               return  AD.Simple_Name (Name_String);
+               end if;
+         end To_Simple_File_Name;
+
+         Simple_File_Name : aliased String := To_Simple_File_Name (To_String(WS));
       begin
          This.Add_To_Dot_Label ("Text_Name", Simple_File_Name);
          This.A_Unit.Text_Name := To_Chars_Ptr (WS);
@@ -668,7 +681,14 @@ package body Asis_Tool_2.Unit is
       -- that:
       This.Outputs := Outputs;
 
-      if Options.Process_If_Origin_Is (Unit_Origin) then
+      if Options.Process_If_Origin_Is (Unit_Origin) and then
+         -- Processing package Standard causes a constraint error:
+         -- +===========================ASIS BUG DETECTED==============================+
+         -- | ASIS 2.0.R for GNAT Community 2019 (20190517) CONSTRAINT_ERROR a4g-a_sinput.adb:210 index check failed|
+         -- | when processing Asis.Declarations.Is_Name_Repeated                       |
+         -- ...
+         -- So skip it for now:
+         Unit_Full_Name /= "Standard" then
             Process_Unit (This, Unit);
       else
          Log ("Skipped " & Unit_Full_Name &
