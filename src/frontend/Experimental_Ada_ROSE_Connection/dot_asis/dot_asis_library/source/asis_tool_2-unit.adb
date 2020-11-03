@@ -660,19 +660,6 @@ package body Asis_Tool_2.Unit is
       Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
       Unit_Origin    : constant Asis.Unit_Origins := Acu.Unit_Origin (Unit);
 
-      -- Trying to process package Standard or System leads to constraint errors when
-      -- calling certain ASIS queries, so let's avoid that:
-      procedure Process_Acceptable_Unit is
-      begin
-         if Unit_Full_Name = "Standard" or
-           Unit_Full_Name = "System" then
-            Log ("Skipped package" & Unit_Full_Name & ")");
-         else
-            Process_Unit (This, Unit);
-         end if;
-      end Process_Acceptable_Unit;
-
-
    begin
       -- I would like to just pass Outputs through and not store it in the
       -- object, since it is all pointers and we doesn't need to store their
@@ -682,7 +669,7 @@ package body Asis_Tool_2.Unit is
       This.Outputs := Outputs;
 
       if Options.Process_If_Origin_Is (Unit_Origin) then
-         Process_Acceptable_Unit;
+            Process_Unit (This, Unit);
       else
          Log ("Skipped " & Unit_Full_Name &
                 " (" & To_Description(Unit_Origin) & ")");
