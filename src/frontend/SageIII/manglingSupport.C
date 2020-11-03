@@ -131,10 +131,15 @@ findRootFunc (const SgScopeStatement* scope)
 
                     SgScopeStatement* nextOuterScope = scope->get_scope();
                     ROSE_ASSERT(nextOuterScope != NULL);
-#if 0
-                    printf ("nextOuterScope = %p = %s \n",nextOuterScope,nextOuterScope->class_name().c_str());
-#endif
-                    ROSE_ASSERT(nextOuterScope != scope);
+
+                 // CR (10/19/2020): Allowing nextOuterScope == scope. Otherwise (see issue RC-227)
+                 // SgTypedefDeclaration::get_mangled_name() causes havoc for Jovial. It may be that
+                 // I'm not prepending typedef_ to the typename. But then I'm not sure how symbol
+                 // lookup goes.
+                 // ROSE_ASSERT(nextOuterScope != scope);
+                    if (nextOuterScope == scope) {
+                      return NULL;
+                    }
 
                     return findRootFunc(scope->get_scope());
                   }
