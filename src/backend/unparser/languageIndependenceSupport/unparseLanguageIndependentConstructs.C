@@ -230,7 +230,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
 #if 0
   // DQ (4/9/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() > 0)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 0)
         {
           printf ("\nIn statementFromFile(): sourceFilename = %s stmt = %p = %s \n",sourceFilename.c_str(),stmt,stmt->class_name().c_str());
         }
@@ -238,6 +238,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
   // #if 0
   // DQ (4/9/2020): Added header file unparsing feature specific debug level.
+  // if (SgProject::get_unparseHeaderFilesDebug() >= 10)
      if (SgProject::get_unparseHeaderFilesDebug() >= 10)
         {
           printf ("\n");
@@ -436,10 +437,20 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                bool isCompilerGenerated = stmt->get_file_info()->isCompilerGenerated();
 #if 0
                printf ("In statementFromFile(): stmt isCompilerGenerated = %s \n",isCompilerGenerated ? "true" : "false");
+               printf ("sourceFile->get_file_info()->get_physical_file_id() = %d \n",sourceFile->get_file_info()->get_physical_file_id());
+               printf ("stmt->get_file_info()->get_physical_file_id()       = %d \n",stmt->get_file_info()->get_physical_file_id());
+               printf ("sourceFile->get_unparseHeaderFiles()                = %s \n",sourceFile->get_unparseHeaderFiles() ? "true" : "false");
 #endif
                if (sourceFile->get_file_info()->get_physical_file_id() != stmt->get_file_info()->get_physical_file_id() &&
                    sourceFile->get_unparseHeaderFiles() == true && isCompilerGenerated == false)
                   {
+#if 0
+                    printf ("########## Forcing isOutputInCodeGeneration == false and forceOutputOfGeneratedCode == false \n");
+                    printf ("sourceFile->get_file_info()->get_physical_file_id() = %d \n",sourceFile->get_file_info()->get_physical_file_id());
+                    printf ("stmt->get_file_info()->get_physical_file_id()       = %d \n",stmt->get_file_info()->get_physical_file_id());
+                    printf ("sourceFile->get_unparseHeaderFiles()                = %s \n",sourceFile->get_unparseHeaderFiles() ? "true" : "false");
+                    printf ("isCompilerGenerated                                 = %s \n",isCompilerGenerated ? "true" : "false");
+#endif
                     isOutputInCodeGeneration   = false;
 
                  // DQ (10/30/2018): Also for this to be false since it was required to trigger the traversal
@@ -606,8 +617,8 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt);
                if (functionDeclaration != NULL && functionDeclaration->isNormalizedTemplateFunction() == true)
                   {
-                 // SgSourceFile* sourcefile = info.get_current_source_file();
 #if 0
+                    SgSourceFile* sourcefile = info.get_current_source_file();
                     printf ("output of normalized template declaration member and non-member functions: sourcefile = %p \n",sourcefile);
 #endif
 
@@ -650,10 +661,18 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
   // #if 0
   // DQ (4/9/2020): Added header file unparsing feature specific debug level.
+  // if (SgProject::get_unparseHeaderFilesDebug() >= 9)
      if (SgProject::get_unparseHeaderFilesDebug() >= 9)
         {
-          printf ("Leaving statementFromFile(): stmt = %p = %s = %s statementInFile = %s sourceFilename = %s \n",
-               stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false",sourceFilename.c_str());
+          bool isDefiningDeclaration = false;
+          SgDeclarationStatement* declaration = isSgDeclarationStatement(stmt);
+          if (declaration != NULL && declaration == declaration->get_definingDeclaration())
+             {
+               isDefiningDeclaration = true;
+             }
+          printf ("Leaving statementFromFile(): stmt = %p = %s = %s statementInFile = %s sourceFilename = %s isDefiningDeclaration = %s \n",
+               stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false",
+               sourceFilename.c_str(),isDefiningDeclaration ? "true" : "false");
         }
   // #endif
 
@@ -1520,6 +1539,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if 0
                          if (globalScope->get_declarations().empty() == true)
                             {
+#error "DEAD CODE!"
                            // If this is the empty global scope then consider the SgGlobal to be the last statement to be unparsed.
                            // This will trigger the output of the remaining tokens in the file and suppress any CPP directives and
                            // comments that are attached to the SgGlobal (because there was no other IR node to attach them to which
@@ -1528,6 +1548,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                             }
                            else
                             {
+#error "DEAD CODE!"
                            // Else we have to make sure that none of the declarations in global scope are from this file.
                            // These can de declarations from header files or the rose_edg_required_macros_and_functions.h
                            // file that is read to support GNU predefined macros.
@@ -1539,6 +1560,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
                                    printf ("   --- global scope statements: i = %p = %s \n",decl,decl->class_name().c_str());
 #endif
+#error "DEAD CODE!"
                                    if (statementFromFile(decl, getFileName(), info) == true)
                                       {
 #if 0
@@ -1548,6 +1570,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                                       }
                                  }
 
+#error "DEAD CODE!"
                               if (lastStatementOfGlobalScopeUnparsedUsingTokenStream == true)
                                  {
                                 // This SgGlobal will be treated as the last statement so that we can know to supporess the generation
@@ -1556,6 +1579,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                                    printf ("Global scope being treated as last statement in file (will be unparsed using the token sequence and CPP directives associated with SgGlobal will be supressed) \n");
 #endif
                                  }
+#error "DEAD CODE!"
                             }
 #else
 #if 0
@@ -4136,9 +4160,10 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
         {
           printf ("\n\n");
           printf ("****************************************************************************** \n");
-          printf ("In Unparse_ExprStmt::unparseAttachedPreprocessingInfo(%p = %s): whereToUnparse = %s \n",
+          printf ("In Unparse_ExprStmt::unparseAttachedPreprocessingInfo(%p = %s): whereToUnparse = %s = %s \n",
                stmt,stmt->sage_class_name(),
-               (whereToUnparse == PreprocessingInfo::before) ? "before" : "after");
+               (whereToUnparse == PreprocessingInfo::before) ? "before" : "after",
+               PreprocessingInfo::relativePositionName(whereToUnparse).c_str());
           printf ("stmt->get_startOfConstruct() = %p stmt->get_endOfConstruct() = %p \n",stmt->get_startOfConstruct(),stmt->get_endOfConstruct());
           stmt->get_startOfConstruct()->display("startOfConstruct");
           if (stmt->get_endOfConstruct() != NULL)
@@ -4239,6 +4264,13 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
           bool isCommentFromCurrentFile = true;
 
           bool isSharedLocatedNode = (stmt->get_file_info()->isShared() == true);
+
+#if 0
+          printf ("In Unparse_ExprStmt::unparseAttachedPreprocessingInfo(): \n");
+          printf (" --- isSharedLocatedNode            = %s \n",isSharedLocatedNode ? "true" : "false");
+          printf (" --- infoSaysGoAhead                = %s \n",infoSaysGoAhead     ? "true" : "false");
+          printf (" --- info.get_current_source_file() = %s \n",info.get_current_source_file() ? "true" : "false");
+#endif
 
        // DQ (3/12/2019): Only review the decission to reset infoSaysGoAhead if it is true.
        // if (info.get_current_source_file() != NULL)

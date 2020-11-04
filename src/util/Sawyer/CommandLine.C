@@ -1586,7 +1586,10 @@ Parser::parse(const std::vector<std::string> &programArguments) {
 }
 
 SAWYER_EXPORT ParserResult
-Parser::parseInternal(const std::vector<std::string> &programArguments) {
+Parser::parseInternal(std::vector<std::string> programArguments) {
+    std::vector<std::string> envArgs = readArgsFromEnvVar(environmentVariable_);
+    programArguments.insert(programArguments.begin(), envArgs.begin(), envArgs.end());
+
     ParserResult result(*this, programArguments);
     Cursor &cursor = result.cursor();
 
@@ -1939,6 +1942,58 @@ Parser::apparentSwitch(const Cursor &cursor) const {
     return false;
 }
 
+// Split a line into words
+SAWYER_EXPORT std::vector<std::string>
+Parser::splitLineIntoWords(std::string line) {
+    std::vector<std::string> retval;
+    boost::trim(line);
+    size_t nchars = line.size();
+    if (line.empty() || '#'==line[0])
+        return retval;
+    char inQuote = '\0';
+    std::string word;
+
+    for (size_t i = 0; i < nchars; ++i) {
+        char ch = line[i];
+        if ('\'' == ch || '"' == ch) {
+            if (ch == inQuote) {
+                inQuote = '\0';
+            } else if (!inQuote) {
+                inQuote = ch;
+            } else {
+                word += ch;
+            }
+        } else if ('\\' == ch && i+1 < nchars && (strchr("'\"\\", line[i+1]) || isspace(line[i+1]))) {
+            word += line[++i];
+        } else if (isspace(ch) && !inQuote) {
+            while (i+1 < nchars && isspace(line[i+1]))
+                ++i;
+            retval.push_back(word);
+            word = "";
+        } else {
+            word += ch;
+        }
+    }
+    if (inQuote)
+        throw std::runtime_error("unterminated quote");
+    retval.push_back(word);
+    return retval;
+}
+
+// Read an environment variable
+SAWYER_EXPORT std::vector<std::string>
+Parser::readArgsFromEnvVar(const std::string &varName) {
+    if (const char *value = getenv(varName.c_str())) {
+        try {
+            return splitLineIntoWords(value);
+        } catch (const std::runtime_error &e) {
+            throw std::runtime_error(std::string(e.what()) + " from environment variable " + varName);
+        }
+    } else {
+        return std::vector<std::string>();
+    }
+}
+
 // Read a text file to obtain command line arguments which are returned.
 SAWYER_EXPORT std::vector<std::string>
 Parser::readArgsFromFile(const std::string &filename) {
@@ -1962,41 +2017,14 @@ Parser::readArgsFromFile(const std::string &filename) {
         std::string line = readOneLine(file.f);
         if (line.empty())
             break;
-        boost::trim(line);
-        size_t nchars = line.size();
-        if (line.empty() || '#'==line[0])
-            continue;
-        char inQuote = '\0';
-        std::string word;
-
-        for (size_t i=0; i<nchars; ++i) {
-            char ch = line[i];
-            if ('\''==ch || '"'==ch) {
-                if (ch==inQuote) {
-                    inQuote = '\0';
-                } else if (!inQuote) {
-                    inQuote = ch;
-                } else {
-                    word += ch;
-                }
-            } else if ('\\'==ch && i+1<nchars && (strchr("'\"\\", line[i+1]) || isspace(line[i+1]))) {
-                word += line[++i];
-            } else if (isspace(ch) && !inQuote) {
-                while (i+1<nchars && isspace(line[i+1]))
-                    ++i;
-                retval.push_back(word);
-                word = "";
-            } else {
-                word += ch;
-            }
+        std::vector<std::string> words;
+        try {
+            words = splitLineIntoWords(line);
+        } catch (const std::runtime_error &e) {
+            throw std::runtime_error(std::string(e.what()) + " at line " + boost::lexical_cast<std::string>(nlines) +
+                                     " in " + filename);
         }
-        retval.push_back(word);
-
-        if (inQuote) {
-            std::ostringstream ss;
-            ss <<"unterminated quote at line " <<nlines <<" in " <<filename;
-            throw std::runtime_error(ss.str());
-        }
+        retval.insert(retval.end(), words.begin(), words.end());
     }
     return retval;
 }

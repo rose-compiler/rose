@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 
 #include <vector>
+#include <boost/algorithm/string.hpp>
 
 #include "sageGeneric.h"
 #include "sageBuilder.h"
@@ -214,9 +215,11 @@ namespace
     std::string   enumstr{expr.Name_Image};
     SgExpression* res = NULL;
 
-    if (enumstr == "True")
+    boost::to_upper(enumstr);
+
+    if (enumstr == "TRUE")
       res = sb::buildBoolValExp(1);
-    else if (enumstr == "False")
+    else if (enumstr == "FALSE")
       res = sb::buildBoolValExp(0);
 
     return SG_DEREF( res );
@@ -313,6 +316,12 @@ getExpr(Element_Struct& elem, AstContext ctx)
         break;
       }
 
+    case A_String_Literal:                          // 2.6
+      {
+        res = &mkValue<SgStringVal>(expr.Value_Image);
+        break;
+      }
+
     case A_Real_Literal:                            // 2.4.1
       {
         res = &mkValue<SgLongDoubleVal>(expr.Value_Image);
@@ -326,7 +335,6 @@ getExpr(Element_Struct& elem, AstContext ctx)
       {
         res = &getOperator(expr, ctx);
         /* unused fields:
-           char                 *Name_Image;
            Defining_Name_ID      Corresponding_Name_Definition;
            Defining_Name_List    Corresponding_Name_Definition_List;
            Element_ID            Corresponding_Name_Declaration;
@@ -406,7 +414,6 @@ getExpr(Element_Struct& elem, AstContext ctx)
       }
 
     case A_Box_Expression:                          // Ada 2005 4.3.1(4): 4.3.3(3:6)
-    case A_String_Literal:                          // 2.6
 
     case An_Explicit_Dereference:                   // 4.1
 
@@ -439,7 +446,7 @@ getExpr(Element_Struct& elem, AstContext ctx)
       ROSE_ASSERT(!FAIL_ON_ERROR);
   }
 
-  attachSourceLocation(SG_DEREF(res), elem);
+  attachSourceLocation(SG_DEREF(res), elem, ctx);
   res->set_need_paren(withParen);
   return *res;
 }
@@ -454,9 +461,9 @@ getExprID(Element_ID el, AstContext ctx)
 SgExpression&
 getExprID_opt(Element_ID el, AstContext ctx)
 {
-  if (isInvaldId(el))
+  if (isInvalidId(el))
   {
-    logWarn() << "unintialized expression id " << el << std::endl;
+    logWarn() << "uninitalized expression id " << el << std::endl;
     return SG_DEREF( sb::buildNullExpression() );
   }
 
@@ -503,9 +510,12 @@ namespace
   /// \private
   /// returns an expression from the Asis definition \ref def
   SgExpression&
-  getDefinitionExpr(Definition_Struct& def, AstContext ctx)
+  getDefinitionExpr(Element_Struct& el, AstContext ctx)
   {
-    SgExpression* res = nullptr;
+    ROSE_ASSERT(el.Element_Kind == A_Definition);
+
+    Definition_Struct& def = el.The_Union.Definition;
+    SgExpression*      res = nullptr;
 
     switch (def.Definition_Kind)
     {
@@ -523,7 +533,8 @@ namespace
         ROSE_ASSERT(!FAIL_ON_ERROR);
     }
 
-    return SG_DEREF(res);
+    attachSourceLocation(SG_DEREF(res), el, ctx);
+    return *res;
   }
 }
 
@@ -534,7 +545,7 @@ namespace
     if (el.Element_Kind == An_Expression)
       res = &getExpr(el, ctx);
     else if (el.Element_Kind == A_Definition)
-      res = &getDefinitionExpr(el.The_Union.Definition, ctx);
+      res = &getDefinitionExpr(el, ctx);
 
     ROSE_ASSERT(res);
     elems.push_back(res);

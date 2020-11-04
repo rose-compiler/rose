@@ -2,6 +2,10 @@
 #include "sage3basic.h"
 #include "expressionTreeEqual.h"
 
+//~ namespace legacy
+//~ {
+
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
@@ -149,3 +153,5 @@ bool expressionTreeEqual(SgExpression* a, SgExpression* b) {
   /* Avoid MSVC warning */
      return false;
 }
+
+//~ } // namespace legacy
