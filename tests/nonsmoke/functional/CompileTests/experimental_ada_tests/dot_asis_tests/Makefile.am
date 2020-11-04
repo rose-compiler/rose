@@ -42,6 +42,7 @@ ASIS_SPEC_TESTS = $(ASIS_SPEC_PASS_TESTS) $(ASIS_SPEC_FAILED_TESTS)
 
 ASIS_BODY_FAILED_TESTS := \
 	asm_machine_code.adb \
+	enumeration.adb \
 	for_loop_statement.adb \
 	requeue_statements.adb \
         pragma.adb 

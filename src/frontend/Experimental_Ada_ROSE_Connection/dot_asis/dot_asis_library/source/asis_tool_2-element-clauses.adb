@@ -17,6 +17,8 @@ package body Asis_Tool_2.Element.Clauses is
 
       Clause_Kind : constant Asis.Clause_Kinds :=
         Asis.Elements.Clause_Kind (Element);
+      Representation_Clause_Kind : constant Asis.Representation_Clause_Kinds :=
+        Asis.Elements.Representation_Clause_Kind (Element);
 
       procedure Add_Clause_Names is
       begin
@@ -47,7 +49,7 @@ package body Asis_Tool_2.Element.Clauses is
          ID : constant a_nodes_h.Expression_ID :=
            Get_Element_ID (Asis.Clauses.Representation_Clause_Expression (Element));
       begin
-         State.Add_To_Dot_Label ("Representation_Clause_Expression", To_String(ID));
+         State.Add_To_Dot_Label_And_Edge ("Representation_Clause_Expression", ID);
          Result.Representation_Clause_Expression := ID;
       end;
 
@@ -55,7 +57,7 @@ package body Asis_Tool_2.Element.Clauses is
          ID : constant a_nodes_h.Expression_ID :=
            Get_Element_ID (Asis.Clauses.Mod_Clause_Expression (Element));
       begin
-         State.Add_To_Dot_Label ("Mod_Clause_Expression", To_String(ID));
+         State.Add_To_Dot_Label_And_Edge ("Mod_Clause_Expression", ID);
          Result.Mod_Clause_Expression := ID;
       end;
 
@@ -73,7 +75,7 @@ package body Asis_Tool_2.Element.Clauses is
          ID : constant a_nodes_h.Expression_ID :=
            Get_Element_ID (Asis.Clauses.Component_Clause_Position (Element));
       begin
-         State.Add_To_Dot_Label ("Component_Clause_Position", To_String(ID));
+         State.Add_To_Dot_Label_And_Edge ("Component_Clause_Position",ID);
          Result.Component_Clause_Position := ID;
       end;
 
@@ -81,7 +83,7 @@ package body Asis_Tool_2.Element.Clauses is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Clauses.Component_Clause_Range (Element));
       begin
-         State.Add_To_Dot_Label ("Component_Clause_Range", To_String(ID));
+         State.Add_To_Dot_Label_And_Edge ("Component_Clause_Range", ID);
          Result.Component_Clause_Range := ID;
       end;
 
@@ -90,6 +92,28 @@ package body Asis_Tool_2.Element.Clauses is
          State.Add_To_Dot_Label ("Clause_Kind", Clause_Kind'Image);
          Result.Clause_Kind := anhS.To_Clause_Kinds (Clause_Kind);
       end Add_Common_Items;
+
+      use all type Asis.Representation_Clause_Kinds;
+      procedure Do_A_Representation_Clause is
+      begin
+      case Representation_Clause_Kind is
+         when Not_A_Representation_Clause =>
+            raise Program_Error with
+              "Element.Do_A_Representation_Clause called with: " &
+              Clause_Kind'Image;
+         when An_Attribute_Definition_Clause =>
+            Add_Representation_Clause_Expression;
+         when An_Enumeration_Representation_Clause =>
+            Add_Representation_Clause_Expression;
+         when A_Record_Representation_Clause =>
+            Add_Mod_Clause_Expression;
+            Add_Component_Clauses;
+         when An_At_Clause =>
+            Add_Representation_Clause_Expression;
+      end case;
+
+      end Do_A_Representation_Clause;
+
 
       use all type Asis.Clause_Kinds;
    begin
@@ -112,8 +136,7 @@ package body Asis_Tool_2.Element.Clauses is
             Add_Has_Limited;
             Add_Clause_Names;
          when A_Representation_Clause =>
-            --                                         -> Representation_Clause_Kinds
-            State.Add_Not_Implemented;
+            Do_A_Representation_Clause;
          when A_Component_Clause =>
             Add_Representation_Clause_Name;
             Add_Representation_Clause_Expression;
