@@ -31,7 +31,7 @@ private
 
    -- For debuggng:
    Parent_Name : constant String := Module_Name;
-   Module_Name : constant String := Parent_Name & ".Element";
+   Module_Name : constant String := Parent_Name & ".Tool";
 
    type Class is tagged limited -- Initialized
       record

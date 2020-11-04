@@ -242,13 +242,6 @@ package body Asis_Tool_2.Unit is
       Process_Element_Tree (This, Top_Element_Asis);
       -- TODO: later
       -- Process_Compilation_Pragmas (This, Asis_Unit);
-   exception
-      when X : others =>
-         Print_Exception_Info (X);
-         Awti.Put_Line
-           ("EXCEPTION when processing unit " &
-              Acu.Unit_Full_Name (Asis_Unit));
-         raise;
    end Process_Element_Trees;
 
 
@@ -278,10 +271,7 @@ package body Asis_Tool_2.Unit is
    is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process_Unit";
-      procedure Log (Message : in String) is
-      begin
-         Put_Line (Module_Name & ":  " & Message);
-      end;
+      package Logging is new Generic_Logging (Module_Name); use Logging;
 
       Unit_Class     : constant Asis.Unit_Classes := ACU.Unit_Class (Unit);
       Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
@@ -650,10 +640,7 @@ package body Asis_Tool_2.Unit is
    is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process";
-      procedure Log (Message : in Wide_String) is
-      begin
-         Put_Line (Module_Name & ":  " & To_String (Message));
-      end;
+      package Logging is new Generic_Logging (Module_Name); use Logging;
 
       function To_Description (This : in Asis.Unit_Origins)
                                return Wide_String is
@@ -670,7 +657,8 @@ package body Asis_Tool_2.Unit is
          end case;
       end To_Description;
 
-      Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
+      Unit_Full_Name : constant String            :=
+        To_String (Acu.Unit_Full_Name (Unit));
       Unit_Origin    : constant Asis.Unit_Origins := Acu.Unit_Origin (Unit);
 
    begin
@@ -692,8 +680,14 @@ package body Asis_Tool_2.Unit is
             Process_Unit (This, Unit);
       else
          Log ("Skipped " & Unit_Full_Name &
-                " (" & To_Description(Unit_Origin) & ")");
+                " (" & To_String (To_Description(Unit_Origin) & ")"));
       end if;
+   exception
+      when X : others =>
+         Log ("EXCEPTION " & Aex.Exception_Name (X) & " when processing " &
+                Unit_Full_Name);
+         Log ("Reraising.");
+         raise;
    end Process;
 
 end Asis_Tool_2.Unit;

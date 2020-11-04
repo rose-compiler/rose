@@ -26,7 +26,7 @@ private
 
    -- For debuggng:
    Parent_Name : constant String := Module_Name;
-   Module_Name : constant String := Parent_Name & ".Tool";
+   Module_Name : constant String := Parent_Name & ".Unit";
 
    type Class (Trace : Boolean := False) is tagged limited
       record
