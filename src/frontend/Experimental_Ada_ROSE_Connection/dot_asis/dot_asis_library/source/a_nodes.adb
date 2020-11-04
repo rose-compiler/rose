@@ -92,7 +92,7 @@ package body A_Nodes is
       exception
          when X : Usage_Error =>
             Print_Exception_Info (Module_Name, X);
-            ATI.Put_Line ("Continuing...");
+            raise;
       end;
       List_Node.Unit := Unit;
       if This.Nodes.Units = null then
@@ -124,7 +124,7 @@ package body A_Nodes is
       exception
          when X : Usage_Error =>
             Print_Exception_Info (Module_Name, X);
-            ATI.Put_Line ("Continuing...");
+            raise;
       end;
       List_Node.Element := Element;
       if This.Nodes.Elements = null then

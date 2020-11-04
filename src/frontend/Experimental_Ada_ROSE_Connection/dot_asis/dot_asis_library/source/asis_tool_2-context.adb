@@ -28,6 +28,9 @@ package body Asis_Tool_2.Context is
       Options : in     Unit.Options_Record;
       Outputs : in     Outputs_Record)
    is
+      Parent_Name : constant String := Module_Name;
+      Module_Name : constant String := Parent_Name & ".Process_Units";
+      package Logging is new Generic_Logging (Module_Name); use Logging;
       use Asis.Exceptions;
       Units : Asis.Compilation_Unit_List :=
         Asis.Compilation_Units.Compilation_Units (This.Asis_Context);
@@ -47,18 +50,12 @@ package body Asis_Tool_2.Context is
            ASIS_Inappropriate_Line             |
            ASIS_Inappropriate_Line_Number      |
            ASIS_Failed                         =>
-         Print_Exception_Info (Ex);
-         Awti.Put_Line
-           ("ASIS Error Status is " &
-              Asis.Errors.Error_Kinds'Wide_Image (Asis.Implementation.Status));
-         Awti.Put_Line
-           ("ASIS Diagnosis is " & (Asis.Implementation.Diagnosis));
-            Asis.Implementation.Set_Status (Asis.Errors.Not_An_Error);
-         Awti.Put_Line ("Continuing...");
-
-      when X : others =>
-         Print_Exception_Info (X);
-         Awti.Put_Line ("Continuing...");
+         Log ("Caught ASIS exception: " & AEX.Exception_Name (Ex));
+         Log ("ASIS Error Status: " &
+              Asis.Errors.Error_Kinds'Image (Asis.Implementation.Status));
+         Log ("ASIS Diagnosis: " & To_String (Asis.Implementation.Diagnosis));
+         Log ("Reraising");
+         raise;
    end Process_Units;
 
    ------------
@@ -72,10 +69,7 @@ package body Asis_Tool_2.Context is
    is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process";
-      procedure Log (Message : in String) is
-      begin
-         Put_Line (Module_Name & ":  " & Message);
-      end;
+      package Logging is new Generic_Logging (Module_Name); use Logging;
       procedure Begin_Environment is begin
          Asis.Ada_Environments.Associate
            (The_Context => This.Asis_Context,

@@ -37,6 +37,10 @@ package Asis_Tool_2 is
    -- Raised when an external routine fails and the subprogram cannot continue:
    External_Error : Exception;
 
+   -- Raised when an external routine raises a usage-error-like exception or
+   -- there is an internal logic error:
+   Internal_Error : Exception;
+
 private
    Module_Name : constant String := "Asis_Tool_2";
 
@@ -64,15 +68,24 @@ private
 
    procedure Put      (Item : in String) renames ATI.Put;
    procedure Put_Line (Item : in String) renames ATI.Put_Line;
+   procedure Put_Wide      (Item : in Wide_String) renames AWTI.Put;
+   procedure Put_Line_Wide (Item : in Wide_String) renames AWTI.Put_Line;
 
    procedure Trace_Put      (Message : in Wide_String) renames
      Indented_Text.Trace_Put;
    procedure Trace_Put_Line (Message : in Wide_String) renames
      Indented_Text.Trace_Put_Line;
 
-   procedure Print_Exception_Info (X : in Aex.Exception_Occurrence);
-   procedure Log_Exception (X : in Aex.Exception_Occurrence)
-     renames Print_Exception_Info;
+   -- Provides routines that peofix the output with the name of the current
+   -- module:
+   generic
+      Module_Name : in string;
+   package Generic_Logging is
+      procedure Log (Message : in String);
+      procedure Log_Wide (Message : in Wide_String);
+      procedure Log_Exception (X : in Aex.Exception_Occurrence);
+   end Generic_Logging;
+
 
    -- Returns the image minus the leading space:
    function Spaceless_Image (Item : in Natural) return String;
