@@ -12,6 +12,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 #include <cstring>
 #include <inttypes.h>
 #include <iostream>
@@ -749,7 +750,23 @@ removeRedundantSubstrings(const std::string &s) {
     return listToString(XStringList);
 }
 
+std::string
+removeAnsiEscapes(const std::string &s) {
+    boost::regex csiSequences("\\033\\[[\\x30-\\x3f]*[\\x20-\\x2f]*[\\x40-x7e]");
+    std::string retval;
 
+    const char *iter = s.c_str();
+    const char *end = s.c_str() + s.size();
+    boost::cmatch found;
+    while (boost::regex_search(iter, end, found, csiSequences)) {
+        retval += std::string(iter, iter + found.position());
+        iter += found.position() + found.length();
+    }
+
+    if (iter != end)
+        retval += std::string(iter, end);
+    return retval;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Functions for encoding/decoding/hashing

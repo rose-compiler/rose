@@ -6,6 +6,7 @@
 #include <boost/format.hpp>
 #include <boost/serialization/access.hpp>
 #include <Sawyer/Assert.h>
+#include <Sawyer/BitFlags.h>
 #include <vector>
 
 namespace Rose {
@@ -56,244 +57,31 @@ namespace Rose {
  *  };
  * @endcode */
 template<typename E, typename V = int64_t>
-class BitFlags {
+class BitFlags: public Sawyer::BitFlags<E, V> {
 public:
     typedef E Enum;
     typedef V Vector;
 
-private:
-    Vector vector_;
-
-private:
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_NVP(vector_);
-    }
-#endif
-
-public:
     /** Default constructor with all bits clear. */
     BitFlags()
-        : vector_(0) {}
+        : Sawyer::BitFlags<E, V>(0) {}
 
     /** Construct bit vector from value or bit. */
     BitFlags(Vector v) /*implicit*/
-        : vector_(v) {}
+        : Sawyer::BitFlags<E, V>(v) {}
 
-    /** Current value of the bit vector. */
-    Vector vector() const {
-        return vector_;
-    }
-
-    /** Test whether a bit is set. */
-    bool isSet(Enum e) const {
-        return (vector_ & Vector(e)) != 0;
-    }
-
-    /** True if all specified bits are set. */
-    bool isAllSet(BitFlags other) const {
-        return (vector_ & other.vector_) == other.vector_;
-    }
-
-    /** True if any of the specified bits are set. */
-    bool isAnySet(BitFlags other) const {
-        return (vector_ & other.vector_) != 0;
-    }
-
-    /** True if any bit is set. */
-    bool isAnySet() const {
-        return vector_ != 0;
-    }
-
-    /** True if no bits are set. */
-    bool isEmpty() const {
-        return 0 == vector_;
-    }
-
-    /** Test whether a bit is clear. */
-    bool isClear(Enum e) const {
-        return !isSet(e);
-    }
-
-    /** Set the specified bit. */
-    BitFlags& set(Enum e) {
-        vector_ |= Vector(e);
-        return *this;
-    }
-
-    /** Set all bits that are set in @p other. */
-    BitFlags& set(BitFlags other) {
-        vector_ |= other.vector_;
-        return *this;
-    }
-
-    /** Clear the specified bit. */
-    BitFlags& clear(Enum e) {
-        vector_ &= ~Vector(e);
-        return *this;
-    }
-
-    /** Clear all bits that are set in @p other. */
-    BitFlags& clear(BitFlags other) {
-        vector_ &= ~other.vector_;
-        return *this;
-    }
-
-    /** Clear all bits. */
-    BitFlags& clear() {
-        vector_ = Vector(0);
-        return *this;
-    }
-
-    /** Test whether a bit is set, then clear it. */
-    bool testAndClear(Enum e) {
-        bool retval = isSet(e);
-        clear(e);
-        return retval;
-    }
-
-    /** Test whether a bit is set, then set it. */
-    bool testAndSet(Enum e) {
-        bool retval = isSet(e);
-        set(e);
-        return retval;
-    }
-
-    /** Set the vector to an exact value. */
-    BitFlags& operator=(Vector v) {
-        vector_ = v;
-        return *this;
-    }
-
-    /** Set the vector to the same as another. */
-    BitFlags& operator=(BitFlags other) {
-        vector_ = other.vector_;
-        return *this;
-    }
-
-    /** Create a new vector that's the union of two vectors.
-     *
-     * @{ */
-    BitFlags operator|(BitFlags other) const {
-        return vector_ | other.vector_;
-    }
-    BitFlags operator|(Enum e) const {
-        return vector_ | Vector(e);
-    }
-    /** @} */
-
-    /** Create a new vector that's the intersection of two vectors.
-     *
-     * @{ */
-    BitFlags intersection(BitFlags other) const {
-        return vector_ & other.vector_;
-    }
-    BitFlags intersection(Enum e) const {
-        return vector_ & Vector(e);
-    }
-    BitFlags operator&(BitFlags other) const {
-        return intersection(other);
-    }
-    BitFlags operator&(Enum e) const {
-        return intersection(e);
-    }
-    /** @} */
-
-    /** Compare two vectors.
-     *
-     * @{ */
-    bool operator==(BitFlags other) const {
-        return vector_ == other.vector_;
-    }
-    bool operator!=(BitFlags other) const {
-        return vector_ != other.vector_;
-    }
-    bool operator<(BitFlags other) const {
-        return vector_ < other.vector_;
-    }
-    bool operator<=(BitFlags other) const {
-        return vector_ <= other.vector_;
-    }
-    bool operator>(BitFlags other) const {
-        return vector_ > other.vector_;
-    }
-    bool operator>=(BitFlags other) const {
-        return vector_ >= other.vector_;
-    }
-    /** @} */
-
-    /** Split a vector into the individual enum values.
-     *
-     *  The enum constants are first sorted so that those with more set bits appear before those with fewer bits. Then each
-     *  constant is searched in the bit vector and those bits are removed. This continues until either no bits remain or no
-     *  matching constant is found. The @p leftovers is set to those bits that could not be matched by this process. */
-    std::vector<Enum> split(std::vector<int64_t> constants, Vector &leftovers /*out*/) const {
-        leftovers = Vector(0);
-        std::vector<Enum> retval;
-        std::sort(constants.begin(), constants.end(), moreBits);
-        Vector tmp = vector_;
-        while (tmp) {
-            bool found = false;
-            for (size_t i=0; i<constants.size() && !found; ++i) {
-                if (Vector(tmp & constants[i]) == Vector(constants[i]) && constants[i] != 0) {
-                    retval.push_back(Enum(constants[i]));
-                    tmp &= ~constants[i];
-                    found = true;
-                }
-            }
-            if (!found) {
-                leftovers = tmp;
-                tmp = 0;
-            }
-        }
-        return retval;
-    }
-
-    /** Split a vector into the individual bits values. */
-    std::vector<Enum> split(Vector &leftovers /*out*/) const {
-        std::vector<Enum> retval;
-        for (size_t i = 0; i < 8*sizeof(Enum); ++i) {
-            Enum e = static_cast<Enum>(uint64_t(1) << i);
-            if (isSet(e))
-                retval.push_back(e);
-        }
-        return retval;
-    }
-
-#if __cplusplus >= 201103L
-    /** Call a functor for each constant in the bit vector.
-     *
-     *  The functor is called with one argument each time. */
-    template<class F>
-    void each(std::vector<int64_t> constants, const F &functor) const {
-        Vector leftovers;
-        for (Enum e: split(constants, leftovers))
-            functor(e);
-    }
-
-    /** Call a functor for each bit in the bit vector.
-     *
-     *  The functor is called with one argument each time. */
-    template<class F>
-    void each(const F &functor) const {
-        Vector leftovers;
-        for (Enum e: split(leftovers))
-            functor(e);
-    }
-#endif
-
+    BitFlags(Sawyer::BitFlags<E, V> bf) /*implicit*/
+        : Sawyer::BitFlags<E, V>(bf) {}
+    
     /** Convert to string.
      *
      *  Converts a bit vector to a string of the form "NAME1|NAME2|...". The @p constants are the individual enum flags, and
      *  the @p stringifier is a function that converts each of those constants to strings. */
     std::string toString(std::vector<int64_t> constants, const char*(*stringifier)(int64_t)) const {
         std::string retval;
-        if (vector_ != Vector(0)) {
+        if (this->vector() != Vector(0)) {
             Vector leftovers(0);
-            std::vector<Enum> members = split(constants, leftovers /*out*/);
+            std::vector<Enum> members = this->split(constants, leftovers /*out*/);
             BOOST_FOREACH (Enum member, members) {
                 const char *name = stringifier(member);
                 ASSERT_not_null(name);
@@ -309,20 +97,6 @@ public:
             }
         }
         return retval;
-    }
-
-private:
-    static size_t nBits(Vector vector) {
-        size_t retval = 0;
-        for (size_t i = 0; i < 8*sizeof(Vector); ++i) {
-            if ((vector & (Vector(1) << i)) != 0)
-                ++retval;
-        }
-        return retval;
-    }
-
-    static bool moreBits(Vector a, Vector b) {
-        return nBits(a) > nBits(b);
     }
 };
 
