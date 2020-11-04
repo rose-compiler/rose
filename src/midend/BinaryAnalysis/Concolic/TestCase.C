@@ -1,12 +1,19 @@
 #include <sage3basic.h>
-#include <BinaryConcolic.h>
+#include <Concolic/TestCase.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
+#include <Concolic/Database.h>
+#include <Concolic/Specimen.h>
 #include <boost/lexical_cast.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
+
+TestCase::TestCase()
+    : concreteIsInteresting_(false) {}
+
+TestCase::~TestCase() {}
 
 TestCase::Ptr
 TestCase::instance(const Specimen::Ptr& specimen) {

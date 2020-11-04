@@ -1,10 +1,16 @@
 #include <sage3basic.h>
-#include <BinaryConcolic.h>
+#include <Concolic/TestSuite.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
+
+#include <Concolic/Database.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
+
+TestSuite::TestSuite() {}
+
+TestSuite::~TestSuite() {}
 
 TestSuite::Ptr
 TestSuite::instance(const std::string& tsname) {

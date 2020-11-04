@@ -1,0 +1,21 @@
+START
+DEF TABLE TABLE'2 (0:1);
+  BEGIN
+    ITEM ITEM'2 B;
+  END
+
+TYPE TABLE'TYPE'1 TABLE;
+  BEGIN
+    ITEM ITEM'1 U;
+  END
+DEF TABLE TABLE'1 (0:1) TABLE'TYPE'1;
+
+DEF PROC PROC'1;
+  BEGIN
+  % DOES NOT FAIL when the two lines below are concatenated: %
+    IF (NOT ITEM'2
+         (ITEM'1 @ (LOC(TABLE'1(1)))));
+      BEGIN
+      END
+  END
+TERM

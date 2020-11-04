@@ -26,12 +26,8 @@ namespace Ada_ROSE_Translation
 //
 // logger
 
-Sawyer::Message::Facility adalogger;
+extern Sawyer::Message::Facility mlog;
 
-void logInit()
-{
-  adalogger = Sawyer::Message::Facility("ADA-Frontend", Rose::Diagnostics::destination);
-}
 
 //
 // declaration store and retrieval
@@ -53,12 +49,8 @@ namespace
   /// stores a mapping from Element_ID to ROSE type declaration
   map_t<int, SgDeclarationStatement*> asisTypesMap;
 
-  /// stores a mapping from an Element_ID to a loop statement
-  /// \todo this should be localized in the AstContext class
-  map_t<int, SgStatement*> asisLoopsMap;
-
   /// stores a mapping from string to builtin type nodes
-  map_t<std::string, SgType*> adaTypesMap;
+  map_t<AdaIdentifier, SgType*> adaTypesMap;
 } // anonymous namespace
 
 //~ map_t<int, SgDeclarationStatement*>& asisUnits() { return asisUnitsMap; }
@@ -66,8 +58,7 @@ map_t<int, SgInitializedName*>&      asisVars()  { return asisVarsMap;  }
 map_t<int, SgInitializedName*>&      asisExcps() { return asisExcpsMap; }
 map_t<int, SgDeclarationStatement*>& asisDecls() { return asisDeclsMap; }
 map_t<int, SgDeclarationStatement*>& asisTypes() { return asisTypesMap; }
-map_t<int, SgStatement*>&            asisLoops() { return asisLoopsMap; }
-map_t<std::string, SgType*>&         adaTypes()  { return adaTypesMap;  }
+map_t<AdaIdentifier, SgType*>&       adaTypes()  { return adaTypesMap;  }
 ASIS_element_id_to_ASIS_MapType&     elemMap()   { return asisMap;      }
 ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
 
@@ -75,13 +66,13 @@ ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
 //
 // auxiliary classes and functions
 
-LabelManager::~LabelManager()
+LabelAndLoopManager::~LabelAndLoopManager()
 {
   for (GotoContainer::value_type el : gotos)
     el.first->set_label(&lookupNode(labels, el.second));
 }
 
-void LabelManager::label(Element_ID id, SgLabelStatement& lblstmt)
+void LabelAndLoopManager::label(Element_ID id, SgLabelStatement& lblstmt)
 {
   SgLabelStatement*& mapped = labels[id];
 
@@ -89,7 +80,7 @@ void LabelManager::label(Element_ID id, SgLabelStatement& lblstmt)
   mapped = &lblstmt;
 }
 
-void LabelManager::gotojmp(Element_ID id, SgGotoStatement& gotostmt)
+void LabelAndLoopManager::gotojmp(Element_ID id, SgGotoStatement& gotostmt)
 {
   gotos.emplace_back(&gotostmt, id);
 }
@@ -109,20 +100,28 @@ AstContext AstContext::scope(SgScopeStatement& s) const
   return scope_npc(s);
 }
 
-AstContext AstContext::labels(LabelManager& lm) const
+AstContext AstContext::labelsAndLoops(LabelAndLoopManager& lm) const
 {
   AstContext tmp{*this};
 
-  tmp.all_labels = &lm;
+  tmp.all_labels_loops = &lm;
+  return tmp;
+}
+
+AstContext AstContext::sourceFileName(std::string& file) const
+{
+  AstContext tmp{*this};
+
+  tmp.unit_file_name = &file;
   return tmp;
 }
 
 /// attaches the source location information from \ref elem to
 ///   the AST node \ref n.
-void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem)
+void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem, AstContext ctx)
 {
   Source_Location_Struct& loc  = elem.Source_Location;
-  std::string             unit{loc.Unit_Name};
+  const std::string&      unit = ctx.sourceFileName();
 
   // \todo consider deleting existing source location information
   //~ delete n.get_file_info();
@@ -147,7 +146,6 @@ namespace
     asisExcps().clear();
     asisDecls().clear();
     asisTypes().clear();
-    asisLoops().clear();
     adaTypes().clear();
   }
 
@@ -283,8 +281,11 @@ namespace
     return os;
   }
 
-  void handleUnit(Unit_Struct& adaUnit, AstContext ctx)
+  void handleUnit(Unit_Struct& adaUnit, AstContext context)
   {
+    std::string unitFile{adaUnit.Text_Name};
+    AstContext  ctx = context.sourceFileName(unitFile);
+
     // dispatch based on unit kind
     switch (adaUnit.Unit_Kind)
     {
@@ -476,7 +477,6 @@ void secondConversion(Nodes_Struct& headNodes, SgSourceFile* file)
 {
   ROSE_ASSERT(file);
 
-  logInit();
   logInfo() << "Building ROSE AST .." << std::endl;
 
   Unit_Struct_List_Struct* adaLimit = 0;
@@ -484,7 +484,7 @@ void secondConversion(Nodes_Struct& headNodes, SgSourceFile* file)
   SgGlobal&                astScope = SG_DEREF(file->get_globalScope());
 
   initializeAdaTypes(astScope);
-  traverse(adaUnit, adaLimit, UnitCreator{AstContext{astScope}});
+  traverse(adaUnit, adaLimit, UnitCreator{AstContext{}.scope(astScope)});
   clearMappings();
 
   std::string astDotFile = astDotFileName(*file);

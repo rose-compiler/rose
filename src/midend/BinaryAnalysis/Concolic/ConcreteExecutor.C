@@ -1,6 +1,8 @@
 #include <sage3basic.h>
-#include <BinaryConcolic.h>
+#include <Concolic/ConcreteExecutor.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
+
+#include <Concolic/Database.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -10,6 +12,8 @@ ConcreteExecutor::ConcreteExecutor(const Database::Ptr &db)
     : db_(db) {
     ASSERT_not_null(db);
 }
+
+ConcreteExecutor::~ConcreteExecutor() {}
 
 Database::Ptr
 ConcreteExecutor::database() const {

@@ -27,6 +27,10 @@
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/nvp.hpp>
 
+#if __cplusplus >= 201103L
+#include <type_traits>
+#endif
+
 namespace Sawyer {
 namespace Container {
 
@@ -97,7 +101,35 @@ public:
     AddressMapConstraints(AddressMap *map)
         : map_(map), never_(false), maxSize_(size_t(-1)), singleSegment_(false), requiredAccess_(0), prohibitedAccess_(0) {}
 
-    // Implicitly construct constraints for a const AddressMap from a non-const address map.
+#if __cplusplus >= 201103L
+    // Implicitly construct constraints for a const AddressMap from a non-const address map. The dummy U parameter is to force
+    // type deduction to be delayed to the point where this function is instantiated.
+    template<typename U = AddressMap, typename = typename std::enable_if<!std::is_const<U>::value, void>::type>
+    operator AddressMapConstraints<const U>() const {
+        AddressMapConstraints<const AddressMap> cc(map_);
+        if (neverMatches())
+            cc = cc.none();
+        if (isAnchored()) {
+            if (anchored().isSingleton()) {
+                cc = cc.at(anchored().least());
+            } else {
+                cc = cc.at(anchored());
+            }
+        }
+        if (least())
+            cc = cc.atOrAfter(*least());
+        if (greatest())
+            cc = cc.atOrBefore(*greatest());
+        cc = cc.limit(limit());
+        if (isSingleSegment())
+            cc = cc.singleSegment();
+        cc = cc.require(required());
+        cc = cc.prohibit(prohibited());
+        cc = cc.substr(substr());
+        cc = cc.segmentPredicates(segmentPredicates());
+        return cc;
+    }
+#else
     operator AddressMapConstraints<const AddressMap>() const {
         AddressMapConstraints<const AddressMap> cc(map_);
         if (neverMatches())
@@ -122,6 +154,7 @@ public:
         cc = cc.segmentPredicates(segmentPredicates());
         return cc;
     }
+#endif
 
     /** Print constraints in a human readable form. */
     void print(std::ostream &out) const {

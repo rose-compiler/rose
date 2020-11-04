@@ -776,53 +776,64 @@ Unparse_Jovial::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
+Unparse_Jovial::unparseEnumBody(SgEnumDeclaration* enum_decl, SgUnparse_Info& info)
+{
+   ASSERT_not_null(enum_decl);
+
+   SgEnumDeclaration* def_decl = isSgEnumDeclaration(enum_decl->get_definingDeclaration());
+   ASSERT_not_null(def_decl);
+
+   SgType* field_type = enum_decl->get_field_type();
+   if (field_type) {
+      SgTypeInt* int_type = isSgTypeInt(field_type);
+      ASSERT_not_null(int_type);
+      curprint(" ");
+      SgExpression* kind_expr = int_type->get_type_kind();
+      ASSERT_not_null(kind_expr);
+      unparseExpression(kind_expr, info);
+   }
+
+   unp->cur.insert_newline(1);
+
+   curprint_indented("(\n", info);
+   info.inc_nestingLevel();
+
+   int n = def_decl->get_enumerators().size();
+   foreach(SgInitializedName* init_name, def_decl->get_enumerators())
+     {
+       std::string name = init_name->get_name().str();
+       name.replace(0, 3, "V(");
+       name.append(")");
+
+       SgAssignInitializer* assign_expr = isSgAssignInitializer(init_name->get_initializer());
+       ASSERT_not_null(assign_expr);
+       SgEnumVal* enum_val = isSgEnumVal(assign_expr->get_operand());
+       ASSERT_not_null(enum_val);
+
+       curprint_indented(tostring(enum_val->get_value()), info);
+       curprint(name);
+       if (--n > 0) curprint(",");
+       unp->cur.insert_newline(1);
+     }
+   info.dec_nestingLevel();
+
+   curprint_indented(");", info);
+   unp->cur.insert_newline(1);
+}
+
+void
 Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgEnumDeclaration* enum_decl = isSgEnumDeclaration(stmt);
      ASSERT_not_null(enum_decl);
 
      SgName enum_name = enum_decl->get_name();
-     SgType* field_type = enum_decl->get_field_type();
 
      curprint_indented("TYPE ", info);
      curprint(enum_name.str());
      curprint(" STATUS");
 
-     if (field_type) {
-        SgTypeInt* int_type = isSgTypeInt(field_type);
-        ASSERT_not_null(int_type);
-        curprint(" ");
-        SgExpression* kind_expr = int_type->get_type_kind();
-        ASSERT_not_null(kind_expr);
-        unparseExpression(kind_expr, info);
-     }
-
-     unp->cur.insert_newline(1);
-
-     curprint_indented("(\n", info);
-     info.inc_nestingLevel();
-
-     int n = enum_decl->get_enumerators().size();
-     foreach(SgInitializedName* init_name, enum_decl->get_enumerators())
-        {
-           std::string name = init_name->get_name().str();
-           name.replace(0, 3, "V(");
-           name.append(")");
-
-           SgAssignInitializer* assign_expr = isSgAssignInitializer(init_name->get_initializer());
-           ASSERT_not_null(assign_expr);
-           SgEnumVal* enum_val = isSgEnumVal(assign_expr->get_operand());
-           ASSERT_not_null(enum_val);
-
-           curprint_indented(tostring(enum_val->get_value()), info);
-           curprint(name);
-           if (--n > 0) curprint(",");
-           unp->cur.insert_newline(1);
-        }
-     info.dec_nestingLevel();
-
-     curprint_indented(");", info);
-     unp->cur.insert_newline(1);
+     unparseEnumBody(enum_decl, info);
    }
 
 void
@@ -1108,9 +1119,9 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgJovialTableStatement* table_decl = NULL; // C++11 nullptr
      if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
+        // typedefs (e.g., TYPE utype U) also have a base_type (in this case U)
            table_decl = dynamic_cast<SgJovialTableStatement*>(var_decl->get_baseTypeDefiningDeclaration());
-           ASSERT_not_null(table_decl);
-           if (table_decl->get_has_table_entry_size())
+           if (table_decl && table_decl->get_has_table_entry_size())
              {
                // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
                if (table_decl->get_table_entry_size() != NULL)
@@ -1134,15 +1145,15 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
   // Unparse anonymous type declaration body if present
      if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
-           ASSERT_not_null(table_decl);
+          if (table_decl) {
+            SgClassDefinition* table_def = table_decl->get_definition();
+            ASSERT_not_null(table_def);
 
-           SgClassDefinition* table_def = table_decl->get_definition();
-           ASSERT_not_null(table_def);
+            curprint(";\n");
 
-           curprint(";\n");
-
-        // Unparse table body
-           unparseTableBody(table_def, info);
+         // Unparse table body
+            unparseTableBody(table_def, info);
+          }
         }
      else
         {

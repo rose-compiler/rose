@@ -598,6 +598,18 @@ FeasiblePath::FunctionSummary::FunctionSummary(const P2::ControlFlowGraph::Const
     name = P2::Partitioner::vertexName(*cfgFuncVertex);
 }
 
+FeasiblePath::Statistics&
+FeasiblePath::Statistics::operator+=(const FeasiblePath::Statistics &other) {
+    maxVertexVisitHits += other.maxVertexVisitHits;
+    maxPathLengthHits += other.maxPathLengthHits;
+    maxCallDepthHits += other.maxCallDepthHits;
+    maxRecursionDepthHits += other.maxRecursionDepthHits;
+    typedef Sawyer::Container::Map<rose_addr_t, size_t> Map;
+    BOOST_FOREACH (const Map::Node &node, other.reachedBlockVas.nodes())
+        reachedBlockVas.insertMaybe(node.key(), 0) += node.value();
+    return *this;
+}
+
 // class method
 void
 FeasiblePath::initDiagnostics() {
@@ -1633,15 +1645,10 @@ FeasiblePath::pathLength(const P2::CfgPath &path) {
     return retval;
 }
 
-const FeasiblePath::AddressSet&
-FeasiblePath::reachedBlockVas() const {
-    return reachedBlockVas_;
-}
-
 void
 FeasiblePath::markAsReached(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
     if (Sawyer::Optional<rose_addr_t> addr = vertex->value().optionalAddress())
-        reachedBlockVas_.insert(*addr);
+        ++stats_.reachedBlockVas.insertMaybe(*addr, 0);
 }
 
 void
@@ -1649,7 +1656,6 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     ASSERT_not_null(partitioner_);
     static size_t callId = 0;                           // number of calls to this function
     size_t graphId = 0;                                 // incremented each time the graph is modified
-    reachedBlockVas_.clear();
     {
         static SAWYER_THREAD_TRAITS::Mutex mutex;
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
@@ -1846,6 +1852,10 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                     doBacktrack = true;
                 }
             }
+
+            // Mark the CFG vertex as being reachable by this analysis.
+            if (pathIsFeasible && cfgBackVertex != partitioner().cfg().vertices().end())
+                markAsReached(cfgBackVertex);
 
             // Call user-supplied path processor when appropriate
             if (atEndOfPath && pathIsFeasible) {

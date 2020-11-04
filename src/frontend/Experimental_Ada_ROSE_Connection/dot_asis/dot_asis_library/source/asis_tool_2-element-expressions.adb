@@ -1,6 +1,7 @@
 with Asis.Elements;
 with Asis.Exceptions;
 with Asis.Expressions;
+with Asis.Extensions;
 
 package body Asis_Tool_2.Element.Expressions is
 
@@ -61,54 +62,32 @@ package body Asis_Tool_2.Element.Expressions is
       end;
 
       procedure Add_Corresponding_Name_Declaration is
-         Parent_Name : constant String := Module_Name;
-         Module_Name : constant String := Parent_Name &
-           ".Add_Corresponding_Name_Declaration";
-         procedure Log (Message : in Wide_String) is
-         begin
-            Put_Line (Module_Name & ":  " & To_String (Message));
-         end;
-
+         use Asis;
          ID : a_nodes_h.Element_ID := anhS.Invalid_Element_ID;
       begin
-         begin
+         if Asis.Extensions.Is_Uniquely_Defined (Element) then
             ID := Get_Element_ID
               (Asis.Expressions.Corresponding_Name_Declaration (Element));
-         exception
-            when X : Asis.Exceptions.Asis_Inappropriate_Element =>
-               Log_Exception (X);
-               Log ("Continuing...");
-         end;
+         end if;
          State.Add_To_Dot_Label
            ("Corresponding_Name_Declaration", To_String (ID));
          Result.Corresponding_Name_Declaration := ID;
       end;
 
       procedure Add_Corresponding_Name_Definition is
-         Parent_Name : constant String := Module_Name;
-         Module_Name : constant String := Parent_Name &
-           ".Add_Corresponding_Name_Definition";
-         procedure Log (Message : in Wide_String) is
-         begin
-            Put_Line (Module_Name & ":  " & To_String (Message));
-         end;
-
          ID : a_nodes_h.Element_ID := anhS.Invalid_Element_ID;
       begin
-         begin
+         if Asis.Extensions.Is_Uniquely_Defined (Element) then
             ID := Get_Element_ID
               (Asis.Expressions.Corresponding_Name_Definition (Element));
-         exception
-            when X : Asis.Exceptions.Asis_Inappropriate_Element =>
-               Log_Exception (X);
-               Log ("Continuing...");
-         end;
+         end if;
          State.Add_To_Dot_Label
            ("Corresponding_Name_Definition", To_String (ID));
          Result.Corresponding_Name_Definition := ID;
       end;
 
       procedure Add_Corresponding_Name_Definition_List is
+         use Asis;
          Parent_Name : constant String := Module_Name;
          Module_Name : constant String := Parent_Name &
            ".Add_Corresponding_Name_Definition_List";
@@ -116,19 +95,25 @@ package body Asis_Tool_2.Element.Expressions is
          begin
             Put_Line (Module_Name & ":  " & To_String (Message));
          end;
-      begin
+
+         procedure Add_List (Elements_In : in Asis.Element_List) is
          begin
             Add_Element_List
               (This           => State,
-               Elements_In    => Asis.Expressions.
-                 Corresponding_Name_Definition_List (Element),
+               Elements_In    => Elements_In,
                Dot_Label_Name => "Corresponding_Name_Definition_List",
                List_Out       => Result.Corresponding_Name_Definition_List);
          exception
             when X : Asis.Exceptions.Asis_Inappropriate_Element =>
                Log_Exception (X);
                Log ("Continuing...");
-         end;
+         end Add_List;
+      begin
+         if Asis.Extensions.Is_Uniquely_Defined (Element) then
+            Add_List (Asis.Expressions.Corresponding_Name_Definition_List (Element));
+         else
+            Add_List (Asis.Nil_Element_List);
+         end if;
       end;
 
       procedure Add_Function_Call_Parameters is
@@ -249,52 +234,79 @@ package body Asis_Tool_2.Element.Expressions is
          when An_Attribute_Reference =>
             State.Add_To_Dot_Label ("Attribute_Kind",
                                     Asis.Elements.Attribute_Kind (Element)'Image);
+            -- Attribute_Kind
             -- Prefix
             -- Attribute_Designator_Identifier
             -- Attribute_Designator_Expressions
             State.Add_Not_Implemented;
          when A_Record_Aggregate =>
+            -- Record_Component_Associations
             State.Add_Not_Implemented;
          when An_Extension_Aggregate =>
+            -- Record_Component_Associations
+            -- Extension_Aggregate_Expression           
             State.Add_Not_Implemented;
          when A_Positional_Array_Aggregate =>
+            -- Array_Component_Associations
             State.Add_Not_Implemented;
          when A_Named_Array_Aggregate =>
+            -- Array_Component_Associations
             State.Add_Not_Implemented;
          when An_And_Then_Short_Circuit =>
+            -- Short_Circuit_Operation_Left_Expression
+            -- Short_Circuit_Operation_Right_Expression
             State.Add_Not_Implemented;
          when An_Or_Else_Short_Circuit =>
+            -- Short_Circuit_Operation_Left_Expression
+            -- Short_Circuit_Operation_Right_Expression
             State.Add_Not_Implemented;
          when An_In_Membership_Test =>
+            -- Membership_Test_Expression
+            -- Membership_Test_Choices
             State.Add_Not_Implemented;
          when A_Not_In_Membership_Test =>
+            -- Membership_Test_Expression
+            -- Membership_Test_Choices
             State.Add_Not_Implemented;
          when A_Null_Literal =>
             -- No more information:
             null;
             State.Add_Not_Implemented;
          when A_Parenthesized_Expression =>
+            -- Expression_Parenthesized
             State.Add_Not_Implemented;
          when A_Raise_Expression =>
+            -- No information
             State.Add_Not_Implemented;
          when A_Type_Conversion =>
             Add_Converted_Or_Qualified_Subtype_Mark;
             Add_Converted_Or_Qualified_Expression;
          when A_Qualified_Expression =>
-            State.Add_Not_Implemented;
+            -- DQ (10/19/2020): Implemented this!
+            Add_Converted_Or_Qualified_Subtype_Mark;
+            Add_Converted_Or_Qualified_Expression;
+            -- State.Add_Not_Implemented;
          when An_Allocation_From_Subtype =>
+            -- Allocator_Subtype_Indication
             Add_Subpool_Name;
             State.Add_Not_Implemented;
          when An_Allocation_From_Qualified_Expression =>
+            -- Allocator_Qualified_Expression
             Add_Subpool_Name;
             State.Add_Not_Implemented;
          when A_Case_Expression =>
+            -- Expression_Paths
             State.Add_Not_Implemented;
          when An_If_Expression =>
+            -- Expression_Paths
             State.Add_Not_Implemented;
          when A_For_All_Quantified_Expression =>
+            -- Iterator_Specification
+            -- Predicate
             State.Add_Not_Implemented;
          when A_For_Some_Quantified_Expression =>
+            -- Iterator_Specification
+            -- Predicate
             State.Add_Not_Implemented;
       end case;
 

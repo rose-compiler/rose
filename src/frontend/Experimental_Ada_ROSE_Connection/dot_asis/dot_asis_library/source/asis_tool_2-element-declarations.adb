@@ -2,6 +2,7 @@ with Asis.Declarations;
 with Asis.Definitions;
 with Asis.Elements;
 with Asis.Expressions;
+with Asis.Set_Get;
 
 package body Asis_Tool_2.Element.Declarations is
 
@@ -74,6 +75,22 @@ package body Asis_Tool_2.Element.Declarations is
       begin
          State.Add_To_Dot_Label ("Corresponding_Body", ID);
          Result.Corresponding_Body := ID;
+      end;
+
+      --You can only call Add_Corresponding_Body on An_Entry_Declaration if it's
+      --a protected definition.  Weird, but I don't know how else to do this-Jim
+
+      procedure Add_Corresponding_Body_If_A_Protected_Definition is
+         use A4G.Int_Knds;
+         ID : a_nodes_h.Element_ID := a_nodes_h.Support.Empty_ID;
+      begin
+            if Asis.Set_Get.Int_Kind (Asis.Elements.Enclosing_Element (Element)) =
+                 A_Protected_Definition
+            then
+               ID := Get_Element_ID (Asis.Declarations.Corresponding_Body (Element));
+               State.Add_To_Dot_Label ("Corresponding_Body", ID);
+            end if;
+            Result.Corresponding_Body := ID;
       end;
 
       procedure Add_Corresponding_Body_Stub is
@@ -175,21 +192,34 @@ package body Asis_Tool_2.Element.Declarations is
          Result.Corresponding_Subprogram_Derivation := ID;
       end;
 
+      --Asis will only accept this call on subprograms that have been derived.
+      --So we need to check that before we call into ASIS
       procedure Add_Corresponding_Subprogram_Derivation is
-         ID : constant a_nodes_h.Element_ID :=
-           Get_Element_ID (Asis.Declarations.Corresponding_Subprogram_Derivation (Element));
+         use Asis.Set_Get;
+         ID : a_nodes_h.Element_ID := a_nodes_h.Support.Empty_ID;
       begin
-         State.Add_To_Dot_Label ("Corresponding_Subprogram_Derivation", ID);
+         if(Is_From_Inherited (Element))
+         then
+               ID := Get_Element_ID (Asis.Declarations.Corresponding_Subprogram_Derivation (Element));
+               State.Add_To_Dot_Label ("Corresponding_Subprogram_Derivation", ID);
+            end if;
          Result.Corresponding_Subprogram_Derivation := ID;
-      end;
+         end;
 
+      --Asis will only accept this call on subprograms that are implicit?
+      --So we need to check that before we call into ASIS
       procedure Add_Corresponding_Type is
-         ID : constant a_nodes_h.Element_ID :=
-           Get_Element_ID (Asis.Declarations.Corresponding_Type (Element));
+         use Asis.Set_Get;
+         ID : a_nodes_h.Element_ID := a_nodes_h.Support.Empty_ID;
       begin
-         State.Add_To_Dot_Label ("Corresponding_Type", ID);
+         if(Is_From_Implicit (Element))
+         then
+               ID := Get_Element_ID (Asis.Declarations.Corresponding_Type (Element));
+               State.Add_To_Dot_Label ("Corresponding_Type", ID);
+            end if;
          Result.Corresponding_Type := ID;
-      end;
+         end;
+
 
       procedure Add_Corresponding_Type_Completion is
          ID : constant a_nodes_h.Element_ID :=
@@ -654,12 +684,9 @@ package body Asis_Tool_2.Element.Declarations is
          Add_Declaration_Interface_List;
 
       when An_Incomplete_Type_Declaration =>
-         Add_Corresponding_End_Name;
-         Add_Initialization_Expression;
          Add_Discriminant_Part;
          Add_Corresponding_Type_Declaration;
          Add_Corresponding_Type_Completion;
-         Add_Corresponding_Type_Partial_View;
          -- TODO: (2005)
          -- asis.limited_withs.ads (2005)
          --   Is_From_Limited_View
@@ -946,7 +973,8 @@ package body Asis_Tool_2.Element.Declarations is
          Add_Parameter_Profile;
          Add_Is_Overriding_Declaration;
          Add_Is_Not_Overriding_Declaration;
-         Add_Corresponding_Body;
+         Add_Corresponding_Declaration;
+         Add_Corresponding_Body_If_A_Protected_Definition;
          Add_Entry_Family_Definition;
 
       when An_Entry_Body_Declaration =>
@@ -962,7 +990,6 @@ package body Asis_Tool_2.Element.Declarations is
          Add_Is_Name_Repeated;
          Add_Parameter_Profile;
          Add_Pragmas;
-         Add_Protected_Operation_Items;
 
       when An_Entry_Index_Specification =>
          Add_Specification_Subtype_Definition;

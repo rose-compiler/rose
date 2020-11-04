@@ -9,7 +9,10 @@
 #include "expressionTreeEqual.h"
 #include "preControlFlowGraph.h"
 
-// DQ (3/21/2006): Moved this outside of PRE namespace since it is also used in 
+namespace legacy
+{
+
+// DQ (3/21/2006): Moved this outside of PRE namespace since it is also used in
 // the finiteDifferencing transformation.
 //! Are any variables in syms modified anywhere within n, or is n a declaration
 //! of one of them?
@@ -23,8 +26,8 @@ bool expressionComputedIn(SgExpression* expr, SgNode* root);
 //! expressionComputedIn.
 int countComputationsOfExpressionIn(SgExpression* expr, SgNode* root);
 
-// DQ (3/21/2006): Added namespace to separate the 
-// PRE specific work (and it's use of the type named 
+// DQ (3/21/2006): Added namespace to separate the
+// PRE specific work (and it's use of the type named
 // ControlFlowGraph which conflicts with the OTHER
 // ControlFlowGraph in:
 //    src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers
@@ -42,7 +45,7 @@ SgFunctionDefinition* getFunctionDefinition(SgNode* n);
 //! pragmatic, and provably correct algorithm", Science of Computer Programming
 //! 48 (2003) 1--20).
 void partialRedundancyEliminationOne(
-    SgExpression* expr, 
+    SgExpression* expr,
     SgBasicBlock* root,
     const myControlFlowGraph& cfg);
 
@@ -55,5 +58,7 @@ void ROSE_DLL_API partialRedundancyElimination(SgNode* n);
 
 // closing scope of namespace: PRE
 }
+
+} // namespace legacy
 
 #endif // PRE_H

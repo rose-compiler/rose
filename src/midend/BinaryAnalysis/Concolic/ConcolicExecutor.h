@@ -1,6 +1,6 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_ConcolicExecutor_H
 #define ROSE_BinaryAnalysis_Concolic_ConcolicExecutor_H
-#include <BinaryConcolic.h>
+#include <Concolic/BasicTypes.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <BinaryDebugger.h>
@@ -325,6 +325,7 @@ public:
     InstructionSemantics2::BaseSemantics::SValuePtr systemCallFunctionNumber();
     InstructionSemantics2::BaseSemantics::SValuePtr systemCallArgument(size_t idx);
     InstructionSemantics2::BaseSemantics::SValuePtr systemCallReturnValue();
+    InstructionSemantics2::BaseSemantics::SValuePtr systemCallReturnValue(const InstructionSemantics2::BaseSemantics::SValuePtr&);
     /** @} */
 
 public:
@@ -430,10 +431,10 @@ public:
         Emulation::RiscOperators::Settings emulationSettings;
 
         bool traceSemantics;                            /** Whether to debug semantic steps by using a semantic tracer. */
-        bool traceState;                                /** Whether to output machine state after each instruction. */
+        AddressIntervalSet showingStates;               /** Instructions after which to show the semantic state. */
 
         Settings()
-            : traceSemantics(false), traceState(false) {}
+            : traceSemantics(false) {}
     };
 
     /** Information about a called function. */
@@ -486,19 +487,19 @@ public:
     /** Execute the test case.
      *
      *  Executes the test case to produce new test cases. */
-    std::vector<TestCase::Ptr> execute(const DatabasePtr&, const TestCase::Ptr&);
+    std::vector<TestCasePtr> execute(const DatabasePtr&, const TestCasePtr&);
 
 private:
     // Disassemble the specimen and cache the result in the database. If the specimen has previously been disassembled
     // then reconstitute the analysis results from the database.
-    Partitioner2::Partitioner partition(const DatabasePtr&, const Specimen::Ptr&);
+    Partitioner2::Partitioner partition(const DatabasePtr&, const SpecimenPtr&);
 
     // Create the process for the concrete execution.
-    Debugger::Ptr makeProcess(const DatabasePtr&, const TestCase::Ptr&, Sawyer::FileSystem::TemporaryDirectory&,
+    Debugger::Ptr makeProcess(const DatabasePtr&, const TestCasePtr&, Sawyer::FileSystem::TemporaryDirectory&,
                               const Partitioner2::Partitioner&);
 
     // Run the execution
-    void run(const DatabasePtr&, const TestCase::Ptr&, const Emulation::DispatcherPtr&);
+    void run(const DatabasePtr&, const TestCasePtr&, const Emulation::DispatcherPtr&);
 
     // Handle function calls. This is mainly for debugging so we have some idea where we are in the execution when an error
     // occurs.  Returns true if the call stack changed.
@@ -508,15 +509,15 @@ private:
     void printCallStack(std::ostream&);
 
     // Handle conditional branches
-    void handleBranch(const DatabasePtr&, const TestCase::Ptr&, const Emulation::DispatcherPtr&, SgAsmInstruction*,
+    void handleBranch(const DatabasePtr&, const TestCasePtr&, const Emulation::DispatcherPtr&, SgAsmInstruction*,
                       const SmtSolverPtr&);
 
     // Generae a new test case. This must be called only after the SMT solver's assertions have been checked and found
     // to be satisfiable.
-    void generateTestCase(const DatabasePtr&, const TestCase::Ptr&, const SmtSolverPtr&);
+    void generateTestCase(const DatabasePtr&, const TestCasePtr&, const SmtSolverPtr&);
 
     // True if the two test cases are close enough that we only need to run one of them.
-    bool areSimilar(const TestCase::Ptr&, const TestCase::Ptr&) const;
+    bool areSimilar(const TestCasePtr&, const TestCasePtr&) const;
 
     // After processing a system call, update the symbolic state with any necessary system call side effects.
     void updateSystemCallSideEffects(const Emulation::RiscOperatorsPtr&, Emulation::SystemCall&);

@@ -7,12 +7,26 @@ package Asis_Tool_2.Unit is
 
    type Class (Trace : Boolean := False) is tagged limited private; -- Initialized
 
+   type Origin_To_Boolean_Array is array (Asis.Unit_Origins) of Boolean;
+
+   type Options_Record is -- nitialized:
+      record
+         Process_If_Origin_Is : Origin_To_Boolean_Array :=
+           (Asis.An_Application_Unit => True,
+            others                   => False);
+      end record;
+
    procedure Process
      (This    : in out Class;
       Unit    : in     Asis.Compilation_Unit;
+      Options : in     Options_Record;
       Outputs : in     Outputs_Record);
 
 private
+
+   -- For debuggng:
+   Parent_Name : constant String := Module_Name;
+   Module_Name : constant String := Parent_Name & ".Tool";
 
    type Class (Trace : Boolean := False) is tagged limited
       record

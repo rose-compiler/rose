@@ -40,6 +40,92 @@ void initDiagnostics() {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Styles
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string
+Style::ansiStyle() const {
+    std::string retval;
+    if (foreground || background) {
+        if (foreground)
+            retval += foreground->toAnsi(Color::Layer::FOREGROUND);
+        if (background)
+            retval += background->toAnsi(Color::Layer::BACKGROUND);
+    } else {
+        retval = "\033[0m";
+    }
+    return retval;
+}
+
+size_t
+StyleStack::push(const Style &style) {
+    stack_.push_back(style);
+    merge(style);
+    return stack_.size() - 1;
+}
+
+void
+StyleStack::pop() {
+    ASSERT_require(!stack_.empty());
+    stack_.pop_back();
+    mergeAll();
+}
+
+void
+StyleStack::popTo(size_t n) {
+    if (n < stack_.size()) {
+        stack_.resize(n);
+        mergeAll();
+    }
+}
+
+void
+StyleStack::reset() {
+    stack_.clear();
+    current_ = Style();
+}
+
+size_t
+StyleStack::size() const {
+    return stack_.size();
+}
+
+const Style&
+StyleStack::current() const {
+    return current_;
+}
+
+void
+StyleStack::merge(const Style &style) {
+    if (style.foreground)
+        current_.foreground = Color::terminal(*style.foreground, Rose::CommandLine::genericSwitchArgs.colorization);
+    if (style.background)
+        current_.background = Color::terminal(*style.background, Rose::CommandLine::genericSwitchArgs.colorization);
+}
+
+void
+StyleStack::mergeAll() {
+    current_ = Style();
+    BOOST_REVERSE_FOREACH (const Style &style, stack_) {
+        if (current_.foreground && current_.background)
+            break;
+        if (!current_.foreground && style.foreground)
+            current_.foreground = Color::terminal(*style.foreground, Rose::CommandLine::genericSwitchArgs.colorization);
+        if (!current_.background && style.background)
+            current_.background = Color::terminal(*style.background, Rose::CommandLine::genericSwitchArgs.colorization);
+    }
+}
+
+std::string
+StyleGuard::render() const {
+    return stack_.usingColor() ? current_.ansiStyle() : "";
+}
+
+std::string
+StyleGuard::restore() const {
+    return stack_.usingColor() ? previous_.ansiStyle() : "";
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      State
@@ -54,6 +140,7 @@ State::State(const P2::Partitioner &p, const Settings &settings, const Base &fro
     globalBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
     globalBlockArrows_.flags.set(ArrowMargin::ALWAYS_RENDER);
     cfgArrowsPointToInsns_ = !settings.bblock.cfg.showingPredecessors || !settings.bblock.cfg.showingSuccessors;
+    styleStack_.usingColor(CommandLine::genericSwitchArgs.colorization.isEnabled());
 }
 
 State::State(const P2::Partitioner &p, const RegisterDictionary *regdict, const Settings &settings, const Base &frontUnparser)
@@ -65,8 +152,8 @@ State::State(const P2::Partitioner &p, const RegisterDictionary *regdict, const 
     globalBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
     globalBlockArrows_.flags.set(ArrowMargin::ALWAYS_RENDER);
     cfgArrowsPointToInsns_ = !settings.bblock.cfg.showingPredecessors || !settings.bblock.cfg.showingSuccessors;
+    styleStack_.usingColor(CommandLine::genericSwitchArgs.colorization.isEnabled());
 }
-
 
 State::~State() {}
 
@@ -303,15 +390,23 @@ Base::~Base() {}
 // class method
 std::string
 Base::leftJustify(const std::string &s, size_t width) {
-    if (s.size() > width)
+
+    // Assume that ANSI escapes occupy no space and do not move the cursor.
+    std::string noEscapes = StringUtility::removeAnsiEscapes(s);
+
+    if (noEscapes.size() > width)
         return s;
-    return s + std::string(width-s.size(), ' ');
+    return s + std::string(width-noEscapes.size(), ' ');
 }
 
 // class method
 std::string
 Base::juxtaposeColumns(const std::vector<std::string> &parts, const std::vector<size_t> &minWidths,
+                       const std::vector<std::pair<std::string, std::string> > &colorEscapes,
                        const std::string &columnSeparator) {
+    ASSERT_require(minWidths.size() == parts.size());
+    ASSERT_require(colorEscapes.size() == parts.size());
+
     std::string retval;
 
     // Split each part into separate lines
@@ -332,7 +427,7 @@ Base::juxtaposeColumns(const std::vector<std::string> &parts, const std::vector<
             const std::string &s = i < partLines[j].size() ? partLines[j][i] : empty;
             if (j > 0)
                 ss <<columnSeparator;
-            ss <<leftJustify(s, minWidths[j]);
+            ss <<colorEscapes[j].first <<leftJustify(s, minWidths[j]) <<colorEscapes[j].second;
         }
         retval += boost::trim_right_copy(ss.str());
     }
@@ -345,6 +440,11 @@ Base::juxtaposeColumns(const std::vector<std::string> &parts, const std::vector<
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Settings::Settings() {
+    // All colors listed here are assumed to be dark foreground colors on a light background.
+    comment.line.style.foreground = Color::HSV(0.0, 0.0, 0.6);
+
+    function.separatorStyle.foreground = Color::HSV(0.33, 1.0, 0.3);
+    function.titleStyle.foreground = Color::HSV(0.33, 1.0, 0.3);
     function.showingSourceLocation = true;
     function.showingReasons = true;
     function.showingDemangled = true;
@@ -359,23 +459,30 @@ Settings::Settings() {
     bblock.cfg.showingPredecessors = true;
     bblock.cfg.showingSuccessors = true;
     bblock.cfg.showingSharing = true;
-    bblock.cfg.showingArrows = false;
+    bblock.cfg.showingArrows = true;
     bblock.reach.showingReachability = true;
+    bblock.cfg.arrowStyle.foreground = Color::HSV(0.58, 0.90, 0.3); // blue
 
     dblock.showingSourceLocation = true;
 
     insn.address.showing = true;
     insn.address.fieldWidth = 11;                       // "0x" + 8 hex digits + ":"
+    insn.address.style.foreground = Color::HSV(0.05, 0.9, 0.3); // orange
     insn.bytes.showing = true;
     insn.bytes.perLine = 8;
     insn.bytes.fieldWidth = 25;
+    insn.bytes.style.foreground = Color::HSV(0.58, 0.41, 0.4); // faded blue
     insn.stackDelta.showing = true;
     insn.stackDelta.fieldWidth = 2;
+    insn.stackDelta.style.foreground = Color::HSV(0.9, 0.7, 0.4); // magenta
     insn.mnemonic.fieldWidth = 8;
     insn.mnemonic.semanticFailureMarker = "[!]";
+    insn.mnemonic.semanticFailureStyle.foreground = Color::HSV(0, 1, 0.4); // red
+    insn.mnemonic.style.foreground = Color::HSV(0.17, 1.00, 0.4); // yellow
     insn.operands.separator = ", ";
     insn.operands.fieldWidth = 40;
     insn.operands.showingWidth = false;
+    insn.operands.style.foreground = Color::HSV(0.33, 0.31, 0.3); // lightish green
     insn.comment.showing = true;
     insn.comment.usingDescription = true;
     insn.comment.pre = "; ";
@@ -384,6 +491,7 @@ Settings::Settings() {
     insn.semantics.tracing = false;                     // not usually desired even for full output
     insn.semantics.formatter.set_show_latest_writers(false);
     insn.semantics.formatter.set_line_prefix("        ;; state: ");
+    insn.semantics.style.foreground = Color::HSV(0.17, 0.30, 0.3);
 
     arrow.style = EdgeArrows::UNICODE_2;
 }
@@ -421,7 +529,6 @@ Settings::minimal() {
     s.insn.bytes.showing = false;
     s.insn.stackDelta.showing = false;
     s.insn.mnemonic.fieldWidth = 8;
-    s.insn.mnemonic.semanticFailureMarker = "[!]";
     s.insn.operands.fieldWidth = 40;
     s.insn.operands.showingWidth = false;
     s.insn.comment.showing = false;
@@ -752,23 +859,34 @@ Base::emitFunctionPrologue(std::ostream &out, const P2::Function::Ptr &function,
         nextUnparser()->emitFunctionPrologue(out, function, state);
     } else {
         state.frontUnparser().emitLinePrefix(out, state);
-        out <<std::string(120, ';') <<"\n";
+
+        {
+            StyleGuard style(state.styleStack(), settings().comment.line.style, settings().function.separatorStyle);
+            out <<style.render();
+            out <<std::string(120, ';') <<"\n";
+            out <<style.restore();
+        }
 
         if (settings().function.showingDemangled) {
             state.frontUnparser().emitLinePrefix(out, state);
-            out <<";;; " <<function->printableName() <<"\n";
+
+            StyleGuard style(state.styleStack(), settings().comment.line.style, settings().function.titleStyle);
+            out <<style.render() <<";;; " <<function->printableName() <<"\n";
             if (function->demangledName() != function->name()) {
                 state.frontUnparser().emitLinePrefix(out, state);
                 out <<";;; mangled name is \"" <<StringUtility::cEscape(function->name()) <<"\"\n";
             }
+            out <<style.restore();
         } else {
             state.frontUnparser().emitLinePrefix(out, state);
-            out <<";;; function " <<StringUtility::addrToString(function->address());
+
+            StyleGuard style(state.styleStack(), settings().comment.line.style, settings().function.titleStyle);
+            out <<style.render() <<";;; function " <<StringUtility::addrToString(function->address());
             if (!function->name().empty()) {
                 state.frontUnparser().emitLinePrefix(out, state);
                 out <<" \"" <<StringUtility::cEscape(function->name()) <<"\"";
             }
-            out <<"\n";
+            out <<style.restore() <<"\n";
         }
         state.frontUnparser().emitFunctionComment(out, function, state);
         if (settings().function.showingSourceLocation)
@@ -821,10 +939,16 @@ struct EmitBlockVisitor: public boost::static_visitor<> {
         if (bb->address() != *function->basicBlockAddresses().begin()) {
             if (bb->address() > nextBlockVa) {
                 state.frontUnparser().emitLinePrefix(out, state);
+                StyleGuard style(state.styleStack(), state.frontUnparser().settings().comment.line.style);
+                out <<style.render();
                 out <<";;; skip forward " <<StringUtility::plural(bb->address() - nextBlockVa, "bytes") <<"\n";
+                out <<style.restore();
             } else if (bb->address() < nextBlockVa) {
                 state.frontUnparser().emitLinePrefix(out, state);
+                StyleGuard style(state.styleStack(), state.frontUnparser().settings().comment.line.style);
+                out <<style.render();
                 out <<";;; skip backward " <<StringUtility::plural(nextBlockVa - bb->address(), "bytes") <<"\n";
+                out <<style.restore();
             }
         }
         state.frontUnparser().emitBasicBlock(out, bb, state);
@@ -841,17 +965,22 @@ struct EmitBlockVisitor: public boost::static_visitor<> {
         if (db->address() != *function->basicBlockAddresses().begin()) {
             if (db->address() > nextBlockVa) {
                 state.frontUnparser().emitLinePrefix(out, state);
+                StyleGuard style(state.styleStack(), state.frontUnparser().settings().comment.line.style);
+                out <<style.render();
                 out <<";;; skip forward " <<StringUtility::plural(db->address() - nextBlockVa, "bytes") <<"\n";
+                out <<style.restore();
             } else if (db->address() < nextBlockVa) {
                 state.frontUnparser().emitLinePrefix(out, state);
+                StyleGuard style(state.styleStack(), state.frontUnparser().settings().comment.line.style);
+                out <<style.render();
                 out <<";;; skip backward " <<StringUtility::plural(nextBlockVa - db->address(), "bytes") <<"\n";
+                out <<style.restore();
             }
         }
         state.frontUnparser().emitDataBlock(out, db, state);
         nextBlockVa = db->address() + db->size();
     }
 };
-
 
 void
 Base::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
@@ -898,7 +1027,10 @@ Base::emitFunctionSourceLocation(std::ostream &out, const P2::Function::Ptr &fun
     } else {
         if (!function->sourceLocation().isEmpty()) {
             state.frontUnparser().emitLinePrefix(out, state);
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
+            out <<style.render();
             out <<";;; defined at " <<function->sourceLocation() <<"\n";
+            out <<style.restore();
         }
     }
 }
@@ -982,13 +1114,15 @@ Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, 
             sprintf(buf, "0x%08x", flags);
             strings.push_back("other (" + std::string(buf));
         }
+
+        StyleGuard style(state.styleStack(), settings().comment.line.style);
         if (!strings.empty()) {
             state.frontUnparser().emitLinePrefix(out, state);
-            out <<";;; reasons for function: " <<boost::join(strings, ", ") <<"\n";
+            out <<style.render() <<";;; reasons for function: " <<boost::join(strings, ", ") <<style.restore() <<"\n";
         }
         if (!function->reasonComment().empty()) {
             state.frontUnparser().emitLinePrefix(out, state);
-            out <<";;; reason comment: " <<function->reasonComment() <<"\n";
+            out <<style.render() <<";;; reason comment: " <<function->reasonComment() <<style.restore() <<"\n";
         }
     }
 }
@@ -1000,9 +1134,10 @@ Base::emitFunctionCallers(std::ostream &out, const P2::Function::Ptr &function, 
     } else {
         P2::FunctionCallGraph::Graph::ConstVertexIterator vertex = state.cg().findFunction(function);
         if (state.cg().graph().isValidVertex(vertex)) {
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
             BOOST_FOREACH (const P2::FunctionCallGraph::Graph::Edge &edge, vertex->inEdges()) {
                 state.frontUnparser().emitLinePrefix(out, state);
-                out <<";;; ";
+                out <<style.render() <<";;; ";
                 switch (edge.value().type()) {
                     case P2::E_FUNCTION_CALL:
                         out <<"called from ";
@@ -1017,7 +1152,7 @@ Base::emitFunctionCallers(std::ostream &out, const P2::Function::Ptr &function, 
                 out <<edge.source()->value()->printableName();
                 if (edge.value().count() > 1)
                     out <<" " <<edge.value().count() <<" times";
-                out <<"\n";
+                out <<style.restore() <<"\n";
             }
         }
     }
@@ -1030,9 +1165,10 @@ Base::emitFunctionCallees(std::ostream &out, const P2::Function::Ptr &function, 
     } else {
         P2::FunctionCallGraph::Graph::ConstVertexIterator vertex = state.cg().findFunction(function);
         if (state.cg().graph().isValidVertex(vertex)) {
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
             BOOST_FOREACH (const P2::FunctionCallGraph::Graph::Edge &edge, vertex->outEdges()) {
                 state.frontUnparser().emitLinePrefix(out, state);
-                out <<";;; ";
+                out <<style.render() <<";;; ";
                 switch (edge.value().type()) {
                     case P2::E_FUNCTION_CALL:
                         out <<"calls ";
@@ -1047,7 +1183,7 @@ Base::emitFunctionCallees(std::ostream &out, const P2::Function::Ptr &function, 
                 out <<edge.target()->value()->printableName();
                 if (edge.value().count() > 1)
                     out <<" " <<edge.value().count() <<" times";
-                out <<"\n";
+                out <<style.restore() <<"\n";
             }
         }
     }
@@ -1061,10 +1197,11 @@ Base::emitFunctionComment(std::ostream &out, const P2::Function::Ptr &function, 
         std::string s = boost::trim_copy(function->comment());
         if (!s.empty()) {
             state.frontUnparser().emitLinePrefix(out, state);
-            out <<";;;\n";
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
+            out <<style.render() <<";;;" <<style.restore() <<"\n";
             state.frontUnparser().emitCommentBlock(out, s, state, ";;; ");
             state.frontUnparser().emitLinePrefix(out, state);
-            out <<";;;\n";
+            out <<style.render() <<";;;" <<style.restore() <<"\n";
         }
     }
 }
@@ -1074,16 +1211,19 @@ Base::emitFunctionStackDelta(std::ostream &out, const P2::Function::Ptr &functio
     if (nextUnparser()) {
         nextUnparser()->emitFunctionStackDelta(out, function, state);
     } else {
+        StyleGuard style(state.styleStack(), settings().comment.line.style);
         if (settings().function.stackDelta.concrete) {
             int64_t delta = function->stackDeltaConcrete();
             if (delta != SgAsmInstruction::INVALID_STACK_DELTA) {
                 state.frontUnparser().emitLinePrefix(out, state);
-                out <<";;; function stack delta is " <<StringUtility::toHex2(delta, 64) <<"\n";
+                out <<style.render() <<";;; function stack delta is " <<StringUtility::toHex2(delta, 64)
+                    <<style.restore() <<"\n";
             }
         } else if (S2::BaseSemantics::SValuePtr delta = function->stackDelta()) {
             state.frontUnparser().emitLinePrefix(out, state);
-            out <<";;; function stack delta is " <<*delta <<"\n";
+            out <<style.render() <<";;; function stack delta is " <<*delta <<style.restore() <<"\n";
         }
+        out <<style.restore();
     }
 }
 
@@ -1113,7 +1253,10 @@ Base::emitFunctionCallingConvention(std::ostream &out, const P2::Function::Ptr &
                 state.frontUnparser().emitCommentBlock(out, s, state);
             } else {
                 state.frontUnparser().emitLinePrefix(out, state);
+                StyleGuard style(state.styleStack(), settings().comment.line.style);
+                out <<style.render();
                 out <<";;; calling convention analysis did not converge\n";
+                out <<style.restore();
             }
         }
     }
@@ -1126,7 +1269,10 @@ Base::emitFunctionNoopAnalysis(std::ostream &out, const P2::Function::Ptr &funct
     } else {
         if (function->isNoop().getOptional().orElse(false)) {
             state.frontUnparser().emitLinePrefix(out, state);
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
+            out <<style.render();
             out <<";;; this function is a no-op\n";
+            out <<style.restore();
         }
     }
 }
@@ -1138,7 +1284,10 @@ Base::emitFunctionMayReturn(std::ostream &out, const P2::Function::Ptr &function
     } else {
         if (!state.partitioner().functionOptionalMayReturn(function).orElse(true)) {
             state.frontUnparser().emitLinePrefix(out, state);
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
+            out <<style.render();
             out <<";;; this function does not return to its caller\n";
+            out <<style.restore();
         }
     }
 }
@@ -1178,13 +1327,15 @@ Base::emitBasicBlockPrologue(std::ostream &out, const P2::BasicBlock::Ptr &bb, S
         if (state.currentFunction() && bb->address() == *state.currentFunction()->basicBlockAddresses().begin() &&
             bb->address() != state.currentFunction()->address()) {
             state.frontUnparser().emitLinePrefix(out, state);
-            out <<"\t;; this is not the function entry point; entry point is ";
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
+            out <<"\t" <<style.render() <<";; this is not the function entry point; entry point is ";
             if (settings().insn.address.showing) {
-                out <<StringUtility::addrToString(state.currentFunction()->address()) <<"\n";
+                out <<StringUtility::addrToString(state.currentFunction()->address());
             } else {
                 out <<state.basicBlockLabels().getOrElse(state.currentFunction()->address(),
-                                                         StringUtility::addrToString(state.currentFunction()->address())) <<"\n";
+                                                         StringUtility::addrToString(state.currentFunction()->address()));
             }
+            out <<style.restore() <<"\n";
         }
     }
 }
@@ -1221,7 +1372,9 @@ Base::emitBasicBlockEpilogue(std::ostream &out, const P2::BasicBlock::Ptr &bb, S
     } else {
         BOOST_FOREACH (P2::DataBlock::Ptr db, bb->dataBlocks()) {
             state.frontUnparser().emitLinePrefix(out, state);
-            out <<"\t;; related " <<db->printableName() <<", " <<StringUtility::plural(db->size(), "bytes") <<"\n";
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
+            out <<"\t" <<style.render() <<";; related " <<db->printableName() <<", " <<StringUtility::plural(db->size(), "bytes")
+                <<style.restore() <<"\n";
         }
         if (settings().bblock.cfg.showingSuccessors)
             state.frontUnparser().emitBasicBlockSuccessors(out, bb, state);
@@ -1235,7 +1388,8 @@ Base::emitBasicBlockSourceLocation(std::ostream &out, const P2::BasicBlock::Ptr 
     } else {
         if (!bb->sourceLocation().isEmpty()) {
             state.frontUnparser().emitLinePrefix(out, state);
-            out <<"\t;; defined at " <<bb->sourceLocation() <<"\n";
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
+            out <<"\t" <<style.render() <<";; defined at " <<bb->sourceLocation() <<style.restore() <<"\n";
         }
     }
 }
@@ -1264,7 +1418,8 @@ Base::emitBasicBlockSharing(std::ostream &out, const P2::BasicBlock::Ptr &bb, St
             functions.erase(current);
         BOOST_FOREACH (P2::Function::Ptr function, functions) {
             state.frontUnparser().emitLinePrefix(out, state);
-            out <<"\t;; block also owned by " <<function->printableName() <<"\n";
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
+            out <<"\t" <<style.render() <<";; block also owned by " <<function->printableName() <<style.restore() <<"\n";
         }
     }
 }
@@ -1324,7 +1479,8 @@ Base::emitBasicBlockPredecessors(std::ostream &out, const P2::BasicBlock::Ptr &b
             }
 
             state.frontUnparser().emitLinePrefix(out, state);
-            out <<"\t;; predecessor: " <<s <<"\n";
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
+            out <<"\t" <<style.render() <<";; predecessor: " <<s <<style.restore() <<"\n";
         }
     }
 }
@@ -1357,9 +1513,10 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
                 if (targetVa && expr->toUnsigned().isEqual(targetVa)) {
                     // Edge to concrete node
                     state.frontUnparser().emitLinePrefix(out, state);
-                    out <<"\t;; successor: " <<edgeTypeName(successors[i].type()) <<" edge to ";
+                    StyleGuard style(state.styleStack(), settings().comment.line.style);
+                    out <<"\t" <<style.render() <<";; successor: " <<edgeTypeName(successors[i].type()) <<" edge to ";
                     state.frontUnparser().emitAddress(out, *targetVa, state);
-                    out <<"\n";
+                    out <<style.restore() <<"\n";
                     successors.erase(successors.begin()+i);
                     emitted = true;
                     break;
@@ -1367,7 +1524,9 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
                 } else if (!targetVa && !expr->isIntegerConstant()) {
                     // Edge to computed address
                     state.frontUnparser().emitLinePrefix(out, state);
-                    out <<"\t;; successor: " <<edgeTypeName(successors[i].type()) <<" edge to " <<*expr <<"\n";
+                    StyleGuard style(state.styleStack(), settings().comment.line.style);
+                    out <<"\t" <<style.render() <<";; successor: " <<edgeTypeName(successors[i].type())
+                        <<" edge to " <<*expr <<style.restore() <<"\n";
                     successors.erase(successors.begin()+i);
                     emitted = true;
                     break;
@@ -1377,13 +1536,14 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
             // When this CFG edge has no matching successor. Not sure whether this can happen. [Robb Matzke 2018-12-05]
             if (!emitted) {
                 state.frontUnparser().emitLinePrefix(out, state);
-                out <<"\t;; successor: (only in CFG) " <<edgeTypeName(edge->value().type()) <<" edge to ";
+                StyleGuard style(state.styleStack(), settings().comment.line.style);
+                out <<"\t" <<style.render() <<";; successor: (only in CFG) " <<edgeTypeName(edge->value().type()) <<" edge to ";
                 if (targetVa) {
                     state.frontUnparser().emitAddress(out, *targetVa, state);
-                    out <<"\n";
                 } else {
-                    out <<"unknown\n";
+                    out <<"unknown";
                 }
+                out <<style.restore() <<"\n";
             }
         }
 
@@ -1394,17 +1554,22 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
             if (expr->isIntegerConstant() && expr->nBits() <= 64) {
                 // Edge to concrete node
                 state.frontUnparser().emitLinePrefix(out, state);
-                out <<"\t;; successor: (not in CFG) " <<edgeTypeName(successor.type()) <<" edge to ";
+                StyleGuard style(state.styleStack(), settings().comment.line.style);
+                out <<"\t" <<style.render() <<";; successor: (not in CFG) " <<edgeTypeName(successor.type()) <<" edge to ";
                 state.frontUnparser().emitAddress(out, expr->toUnsigned().get(), state);
-                out <<"\n";
+                out <<style.restore() <<"\n";
             } else if (expr->isLeafNode()) {
                 // What?
                 state.frontUnparser().emitLinePrefix(out, state);
-                out <<"\t;; successor: (not in CFG) " <<edgeTypeName(successor.type()) <<" edge to unknown\n";
+                StyleGuard style(state.styleStack(), settings().comment.line.style);
+                out <<"\t" <<style.render() <<";; successor: (not in CFG) " <<edgeTypeName(successor.type()) <<" edge to unknown"
+                    <<style.restore() <<"\n";
             } else {
                 // Edge to computed address
                 state.frontUnparser().emitLinePrefix(out, state);
-                out <<"\t;; successor: (not in CFG) " <<edgeTypeName(successor.type()) <<" edge to " <<*expr <<"\n";
+                StyleGuard style(state.styleStack(), settings().comment.line.style);
+                out <<"\t" <<style.render() <<";; successor: (not in CFG) " <<edgeTypeName(successor.type()) <<" edge to " <<*expr
+                    <<style.restore() <<"\n";
             }
         }
 
@@ -1412,9 +1577,10 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
         if (bb->ghostSuccessors().isCached()) {
             BOOST_FOREACH (rose_addr_t va, bb->ghostSuccessors().get()) {
                 state.frontUnparser().emitLinePrefix(out, state);
-                out <<"\t;; successor: (ghost) ";
+                StyleGuard style(state.styleStack(), settings().comment.line.style);
+                out <<"\t" <<style.render() <<";; successor: (ghost) ";
                 state.frontUnparser().emitAddress(out, va, state);
-                out <<"\n";
+                out <<style.restore() <<"\n";
             }
         }
     }
@@ -1428,12 +1594,14 @@ Base::emitBasicBlockReachability(std::ostream &out, const P2::BasicBlock::Ptr &b
         P2::ControlFlowGraph::ConstVertexIterator vertex = state.partitioner().findPlaceholder(bb->address());
         if (vertex != state.partitioner().cfg().vertices().end()) {
             Reachability::ReasonFlags reachable = state.isCfgVertexReachable(vertex->id());
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
             if (reachable.isAnySet()) {
                 state.frontUnparser().emitLinePrefix(out, state);
-                out <<"\t;; reachable from: " <<state.reachabilityName(reachable) <<"\n";
+                out <<"\t" <<style.render() <<";; reachable from: " <<state.reachabilityName(reachable)
+                    <<style.restore() <<"\n";
             } else {
                 state.frontUnparser().emitLinePrefix(out, state);
-                out <<"\t;; not reachable\n";
+                out <<"\t" <<style.render() <<";; not reachable" <<style.restore() <<"\n";
             }
         }
     }
@@ -1465,20 +1633,28 @@ Base::emitDataBlockPrologue(std::ostream &out, const P2::DataBlock::Ptr &db, Sta
             state.frontUnparser().emitCommentBlock(out, db->comment(), state, "\t;; ");
 
         state.frontUnparser().emitLinePrefix(out, state);
-        out <<"\t;; " <<db->printableName() <<", " <<StringUtility::plural(db->size(), "bytes") <<"\n";
+        {
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
+            out <<"\t" <<style.render() <<";; " <<db->printableName() <<", " <<StringUtility::plural(db->size(), "bytes")
+                <<style.restore() <<"\n";
+        }
         if (P2::Function::Ptr function = state.currentFunction()) {
             BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
                 if (P2::BasicBlock::Ptr bb = state.partitioner().basicBlockExists(bbVa)) {
                     if (bb->dataBlockExists(db)) {
                         state.frontUnparser().emitLinePrefix(out, state);
-                        out <<"\t;; referenced by " <<bb->printableName() <<"\n";
+                        StyleGuard style(state.styleStack(), settings().comment.line.style);
+                        out <<"\t" <<style.render() <<";; referenced by " <<bb->printableName() <<style.restore() <<"\n";
                     }
                 }
             }
         }
 
         state.frontUnparser().emitLinePrefix(out, state);
-        out <<"\t;; block type is " <<db->type()->toString() <<"\n";
+        {
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
+            out <<"\t" <<style.render() <<";; block type is " <<db->type()->toString() <<style.restore() <<"\n";
+        }
     }
 }
 
@@ -1507,7 +1683,10 @@ Base::emitDataBlockBody(std::ostream &out, const P2::DataBlock::Ptr &db, State &
             }
         } else {
             state.frontUnparser().emitLinePrefix(out, state);
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
+            out <<style.render();
             out <<";;; no memory map from which to obtain the static block data\n";
+            out <<style.restore();
         }
     }
 }
@@ -1527,7 +1706,8 @@ Base::emitDataBlockSourceLocation(std::ostream &out, const P2::DataBlock::Ptr &d
     } else {
         if (!db->sourceLocation().isEmpty()) {
             state.frontUnparser().emitLinePrefix(out, state);
-            out <<"\t;; defined at " <<db->sourceLocation() <<"\n";
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
+            out <<"\t" <<style.render() <<";; defined at " <<db->sourceLocation() <<style.restore() <<"\n";
         }
     }
 }
@@ -1562,6 +1742,7 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
     } else {
         std::vector<std::string> parts;
         std::vector<size_t> fieldWidths;
+        std::vector<std::pair<std::string, std::string> > styles;
 
         // Address or label
         if (settings().insn.address.showing) {
@@ -1573,11 +1754,17 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
             } else {
                 parts.push_back("");
             }
+            StyleGuard style(state.styleStack(), settings().insn.address.style);
+            styles.push_back(std::make_pair(style.render(), style.restore()));
         } else if (!state.nextInsnLabel().empty()) {
             // Use the label that has been specified in the state
             parts.push_back(state.nextInsnLabel() + ":");
+            StyleGuard style(state.styleStack(), settings().insn.address.style);
+            styles.push_back(std::make_pair(style.render(), style.restore()));
         } else {
             // No address or label
+            StyleGuard style(state.styleStack(), settings().insn.address.style);
+            styles.push_back(std::make_pair(style.render(), style.restore()));
             parts.push_back("");
         }
         fieldWidths.push_back(settings().insn.address.fieldWidth);
@@ -1593,6 +1780,8 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
                 parts.push_back("");
             }
             fieldWidths.push_back(settings().insn.bytes.fieldWidth);
+            StyleGuard style(state.styleStack(), settings().insn.bytes.style);
+            styles.push_back(std::make_pair(style.render(), style.restore()));
         }
 
         // Stack delta
@@ -1605,6 +1794,8 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
                 parts.push_back("");
             }
             fieldWidths.push_back(settings().insn.stackDelta.fieldWidth);
+            StyleGuard style(state.styleStack(), settings().insn.stackDelta.style);
+            styles.push_back(std::make_pair(style.render(), style.restore()));
         }
 
         // Mnemonic
@@ -1612,8 +1803,12 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
             std::ostringstream ss;
             state.frontUnparser().emitInstructionMnemonic(ss, insn, state);
             parts.push_back(ss.str());
+            StyleGuard style(state.styleStack(), settings().insn.mnemonic.style);
+            styles.push_back(std::make_pair(style.render(), style.restore()));
         } else {
             parts.push_back("none");
+            StyleGuard style(state.styleStack(), settings().insn.mnemonic.style);
+            styles.push_back(std::make_pair(style.render(), style.restore()));
         }
         fieldWidths.push_back(settings().insn.mnemonic.fieldWidth);
 
@@ -1622,8 +1817,12 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
             std::ostringstream ss;
             state.frontUnparser().emitInstructionOperands(ss, insn, state);
             parts.push_back(ss.str());
+            StyleGuard style(state.styleStack(), settings().insn.operands.style);
+            styles.push_back(std::make_pair(style.render(), style.restore()));
         } else {
             parts.push_back("");
+            StyleGuard style(state.styleStack(), settings().insn.operands.style);
+            styles.push_back(std::make_pair(style.render(), style.restore()));
         }
         fieldWidths.push_back(settings().insn.operands.fieldWidth);
 
@@ -1633,13 +1832,17 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
             state.frontUnparser().emitInstructionComment(ss, insn, state);
             parts.push_back(ss.str());
             fieldWidths.push_back(settings().insn.comment.fieldWidth);
+            StyleGuard style(state.styleStack(), settings().comment.trailing.style);
+            styles.push_back(std::make_pair(style.render(), style.restore()));
         }
 
-        std::string full = juxtaposeColumns(parts, fieldWidths);
+        std::string full = juxtaposeColumns(parts, fieldWidths, styles);
         std::vector<std::string> lines = StringUtility::split('\n', full);
-        BOOST_FOREACH (const std::string &line, lines) {
+        for (size_t i = 0; i < lines.size(); ++i) {
             state.frontUnparser().emitLinePrefix(out, state);
-            out <<line;
+            out <<lines[i];
+            if (i + 1 < lines.size())
+                out <<"\n";
         }
     }
 }
@@ -1720,8 +1923,10 @@ Base::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn, State &
         nextUnparser()->emitInstructionMnemonic(out, insn, state);
     } else {
         out <<insn->get_mnemonic();
-        if (insn->semanticFailure() > 0)
-            out <<settings().insn.mnemonic.semanticFailureMarker;
+        if (insn->semanticFailure() > 0) {
+            StyleGuard style(state.styleStack(), settings().insn.mnemonic.semanticFailureStyle);
+            out <<style.render() <<settings().insn.mnemonic.semanticFailureMarker <<style.restore();
+        }
     }
 }
 
@@ -1750,8 +1955,10 @@ Base::emitInstructionComment(std::ostream &out, SgAsmInstruction *insn, State &s
         boost::trim(comment);
         if (comment.empty() && settings().insn.comment.usingDescription)
             comment = insn->description();
-        if (!comment.empty())
-            out <<"; " <<StringUtility::cEscape(comment);
+        if (!comment.empty()) {
+            StyleGuard style(state.styleStack(), settings().comment.trailing.style);
+            out <<style.render() <<"; " <<StringUtility::cEscape(comment) <<style.restore();
+        }
     }
 }
 
@@ -1769,7 +1976,8 @@ Base::emitInstructionSemantics(std::ostream &out, SgAsmInstruction *insn, State 
                 S2::BaseSemantics::Formatter fmt = settings().insn.semantics.formatter;
                 std::ostringstream ss;
                 ss <<"\n" <<(*cpu->currentState()->registerState() + fmt) <<(*cpu->currentState()->memoryState() + fmt);
-                out <<StringUtility::trim(ss.str(), "\n", false, true);
+                StyleGuard style(state.styleStack(), settings().insn.semantics.style);
+                out <<style.render() <<StringUtility::trim(ss.str(), "\n", false, true) <<style.restore();
             } catch (...) {
             }
         }
@@ -1929,11 +2137,14 @@ Base::emitCommentBlock(std::ostream &out, const std::string &comment, State &sta
     if (nextUnparser()) {
         nextUnparser()->emitCommentBlock(out, comment, state, prefix);
     } else {
+        StyleGuard style(state.styleStack(), settings().comment.line.style);
+        out <<style.render();
         std::vector<std::string> lines = StringUtility::split('\n', comment);
         BOOST_FOREACH (const std::string &line, lines) {
             state.frontUnparser().emitLinePrefix(out, state);
             out <<prefix <<line <<"\n";
         }
+        out <<style.restore();
     }
 }
 
@@ -1982,6 +2193,9 @@ Base::emitLinePrefix(std::ostream &out, State &state) const {
     } else {
         // Generate intra-function arrows that point to basic blocks. I.e., basic blocks are the pointable entities,
         // and we're only drawing arrows that both originate and terminate within the current function.
+        StyleGuard style(state.styleStack(), settings().bblock.cfg.arrowStyle);
+        out <<style.render();
+
         Sawyer::Optional<EdgeArrows::VertexId> arrowVertexId;
         if (state.currentBasicBlock())
             arrowVertexId = state.currentBasicBlock()->address();
@@ -1996,6 +2210,8 @@ Base::emitLinePrefix(std::ostream &out, State &state) const {
                 out <<state.intraFunctionCfgArrows().render(state.currentPredSuccId());
             }
         }
+
+        out <<style.restore();
     }
 }
 
