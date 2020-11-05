@@ -13,6 +13,7 @@ package Asis_Tool_2.Element is
    type Class is tagged private; -- Initialized
 
    -- Process an element and all of its components:
+   -- Raises Internal_Error for unhandled internal exceptions.
    procedure Process_Element_Tree
      (This    : in out Class;
       Element : in     Asis.Element;

@@ -91,10 +91,7 @@ package body Asis_Tool_2.Element.Expressions is
          Parent_Name : constant String := Module_Name;
          Module_Name : constant String := Parent_Name &
            ".Add_Corresponding_Name_Definition_List";
-         procedure Log (Message : in Wide_String) is
-         begin
-            Put_Line (Module_Name & ":  " & To_String (Message));
-         end;
+      package Logging is new Generic_Logging (Module_Name); use Logging;
 
          procedure Add_List (Elements_In : in Asis.Element_List) is
          begin

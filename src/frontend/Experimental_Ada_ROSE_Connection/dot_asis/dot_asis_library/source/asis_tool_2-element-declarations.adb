@@ -1,5 +1,4 @@
 with Asis.Declarations;
-with Asis.Definitions;
 with Asis.Elements;
 with Asis.Expressions;
 with Asis.Set_Get;
@@ -149,14 +148,6 @@ package body Asis_Tool_2.Element.Declarations is
          Result.Corresponding_Last_Subtype := ID;
       end;
 
-      procedure Add_Corresponding_Parent_Subtype is
-         ID : constant a_nodes_h.Element_ID :=
-           Get_Element_ID (Asis.Definitions.Corresponding_Parent_Subtype (Element));
-      begin
-         State.Add_To_Dot_Label ("Corresponding_Parent_Subtype", ID);
-         Result.Corresponding_Last_Subtype := ID;
-      end;
-
       procedure Add_Corresponding_Pragmas is begin
          Add_Element_List
            (This           => State,
@@ -172,16 +163,6 @@ package body Asis_Tool_2.Element.Declarations is
             Elements_In    => Asis.Declarations.Corresponding_Representation_Clauses (Element),
             Dot_Label_Name => "Corresponding_Representation_Clauses",
             List_Out       => Result.Corresponding_Representation_Clauses);
-      end;
-
-      procedure Add_Corresponding_Root_Type is
-         ID : constant a_nodes_h.Element_ID :=
-           Get_Element_ID (Asis.Definitions.Corresponding_Root_Type (Element));
-      begin
-         State.Add_To_Dot_Label ("Corresponding_Root_Type", ID);
-         -- Not in a_nodes?
-         --            Result.Corresponding_Root_Type := ID;
-         State.Add_Not_Implemented;
       end;
 
       procedure Add_Corresponding_Subunit is
@@ -255,16 +236,6 @@ package body Asis_Tool_2.Element.Declarations is
       begin
          State.Add_To_Dot_Label ("Corresponding_Type_Partial_View", ID);
          Result.Corresponding_Type_Partial_View := ID;
-      end;
-
-      procedure Add_Corresponding_Type_Structure is
-         ID : constant a_nodes_h.Element_ID :=
-           Get_Element_ID (Asis.Definitions.Corresponding_Type_Structure (Element));
-      begin
-         State.Add_To_Dot_Label ("Corresponding_Type_Structure", ID);
-         -- No Corresponding_Type_Operators in Declaration_Struct:
-         --              Result.Corresponding_Type_Structure := ID;
-         State.Add_Not_Implemented;
       end;
 
       procedure Add_Declaration_Interface_List is begin
@@ -1097,10 +1068,7 @@ package body Asis_Tool_2.Element.Declarations is
          Add_Corresponding_First_Subtype;
          Add_Corresponding_Last_Constraint;
          Add_Corresponding_Last_Subtype;
-         Add_Corresponding_Parent_Subtype;
-         Add_Corresponding_Root_Type;
          Add_Corresponding_Type_Operators;
-         Add_Corresponding_Type_Structure;
          Add_Discriminant_Part;
          Add_Type_Declaration_View;
 

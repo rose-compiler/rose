@@ -23,10 +23,7 @@ package body Asis_Tool_2.Tool is
    is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process";
-      procedure Log (Message : in String) is
-      begin
-         Put_Line (Module_Name & ":  " & Message);
-      end;
+      package Logging is new Generic_Logging (Module_Name); use Logging;
 
       package AD renames Ada.Directories;
       Full_File_Name   : constant String := AD.Full_Name (File_Name);
@@ -125,6 +122,15 @@ package body Asis_Tool_2.Tool is
          raise External_Error with "*** Asis.Extensions.Compile FAILED. Exiting.";
       end if;
       Log ("END");
+   exception
+      when X : External_Error =>
+         Log_Exception (X);
+         Log ("Reraising");
+         raise;
+      when X: others =>
+         Log_Exception (X);
+         Log ("Raising Internal_Error");
+         raise Internal_Error;
    end Process;
 
    ------------
@@ -132,9 +138,17 @@ package body Asis_Tool_2.Tool is
    ------------
    function Get_Nodes
      (This      : in out Class)
-      return a_nodes_h.Nodes_Struct is
+      return a_nodes_h.Nodes_Struct
+   is
+      Parent_Name : constant String := Module_Name;
+      Module_Name : constant String := Parent_Name & ".Get_Nodes";
+      package Logging is new Generic_Logging (Module_Name); use Logging;
    begin
       return This.Outputs.A_Nodes.Get_Nodes;
+   exception
+      when X : others =>
+         Log_Exception (X);
+         raise Internal_Error;
    end Get_Nodes;
 
 end Asis_Tool_2.Tool;

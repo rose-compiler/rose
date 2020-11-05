@@ -53,7 +53,7 @@ procedure Run_Asis_Tool_2 is
       GCL.Getopt (Options.Config);
    exception
       when X : GNAT.Command_Line.Exit_From_Command_Line =>
-         Log ("*** GCL raised Exit_From_Command_Line.  Program will exit now.");
+         Log ("*** GNAT.Command_Line raised Exit_From_Command_Line.  Program will exit now.");
          raise;
    end Get_Options;
 
