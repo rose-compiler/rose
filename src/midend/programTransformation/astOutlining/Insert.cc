@@ -1086,18 +1086,27 @@ insertFriendDecls (SgFunctionDeclaration* func,
         {
           SgConstructorInitializer* ctor = isSgConstructorInitializer(*f);
           SgMemberFunctionDeclaration * fuc_decl = ctor->get_declaration();
-          SgClassDeclaration * def_cls_decl = isSgClassDeclaration(ctor->get_class_decl()->get_definingDeclaration());
-          if (!def_cls_decl)
+          SgClassDeclaration* cls_decl= ctor->get_class_decl();
+          if (!cls_decl)
           {
-            printf ("Calling classes.insert(): constructor allocated class declaration has no defining declaration = %p = %s \n", ctor ,ctor->class_name().c_str());
+            printf ("Warning: calling classes.insert() friend decl: constructor has no class declaration = %p = %s \n", ctor ,ctor->class_name().c_str());
             continue; 
           }
-          SgClassDefinition* cl_def = def_cls_decl->get_definition();
-          if (isProtPriv(fuc_decl) && cl_def)
+          else
           {
-            if (enable_debug)
-              printf ("Calling classes.insert(): member functions: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
-            classes.insert (cl_def);
+            SgClassDeclaration * def_cls_decl = isSgClassDeclaration(cls_decl->get_definingDeclaration());
+            if (!def_cls_decl)
+            {
+              printf ("Calling classes.insert(): constructor's class declaration has no defining declaration = %p = %s \n", ctor ,ctor->class_name().c_str());
+              continue; 
+            }
+            SgClassDefinition* cl_def = def_cls_decl->get_definition();
+            if (isProtPriv(fuc_decl) && cl_def)
+            {
+              if (enable_debug)
+                printf ("Calling classes.insert(): member functions: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
+              classes.insert (cl_def);
+            }
           }
         }
 
