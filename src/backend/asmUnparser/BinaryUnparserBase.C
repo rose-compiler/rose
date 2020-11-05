@@ -1756,18 +1756,14 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
             }
             StyleGuard style(state.styleStack(), settings().insn.address.style);
             styles.push_back(std::make_pair(style.render(), style.restore()));
+            fieldWidths.push_back(settings().insn.address.fieldWidth);
         } else if (!state.nextInsnLabel().empty()) {
             // Use the label that has been specified in the state
             parts.push_back(state.nextInsnLabel() + ":");
             StyleGuard style(state.styleStack(), settings().insn.address.style);
             styles.push_back(std::make_pair(style.render(), style.restore()));
-        } else {
-            // No address or label
-            StyleGuard style(state.styleStack(), settings().insn.address.style);
-            styles.push_back(std::make_pair(style.render(), style.restore()));
-            parts.push_back("");
+            fieldWidths.push_back(settings().insn.address.fieldWidth);
         }
-        fieldWidths.push_back(settings().insn.address.fieldWidth);
         state.nextInsnLabel("");
 
         // Raw bytes
