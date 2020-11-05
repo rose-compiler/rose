@@ -86,17 +86,16 @@ public:
 class StyleStack {
     std::vector<Style> stack_;
     Style current_;
-    bool usingColor_;
+    Color::Colorization colorization_;
 
 public:
-    StyleStack()
-        : usingColor_(true) {}
+    StyleStack() {}
 
-    /** Property: Use color escapes.
+    /** Property: Colorization settings.
      *
      * @{ */
-    bool usingColor() const { return usingColor_; }
-    void usingColor(bool b) { usingColor_ = b; }
+    Color::Colorization colorization() const { return colorization_; }
+    void colorization(const Color::Colorization c) { colorization_ = c; }
     /** @} */
 
     /** Push style onto stack.

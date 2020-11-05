@@ -261,6 +261,14 @@ Colorization::isEnabled() const {
     ASSERT_not_reachable("invalid Rose::Color::Colorization::enabled value");
 }
 
+Colorization
+Colorization::merge(const Colorization &other) const {
+    Colorization retval;
+    retval.enabled = enabled.orElse(other.enabled);
+    retval.theme = theme.orElse(other.theme);
+    return retval;
+}
+
 std::string
 ColorizationParser::docString() {
     return ("The argument is one or two words separated by a comma. If the word is \"off\", \"on\", or \"auto\" "

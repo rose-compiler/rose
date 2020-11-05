@@ -119,12 +119,12 @@ StyleStack::mergeAll() {
 
 std::string
 StyleGuard::render() const {
-    return stack_.usingColor() ? current_.ansiStyle() : "";
+    return stack_.colorization().isEnabled() ? current_.ansiStyle() : "";
 }
 
 std::string
 StyleGuard::restore() const {
-    return stack_.usingColor() ? previous_.ansiStyle() : "";
+    return stack_.colorization().isEnabled() ? previous_.ansiStyle() : "";
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -140,7 +140,7 @@ State::State(const P2::Partitioner &p, const Settings &settings, const Base &fro
     globalBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
     globalBlockArrows_.flags.set(ArrowMargin::ALWAYS_RENDER);
     cfgArrowsPointToInsns_ = !settings.bblock.cfg.showingPredecessors || !settings.bblock.cfg.showingSuccessors;
-    styleStack_.usingColor(CommandLine::genericSwitchArgs.colorization.isEnabled());
+    styleStack_.colorization(settings.colorization.merge(CommandLine::genericSwitchArgs.colorization));
 }
 
 State::State(const P2::Partitioner &p, const RegisterDictionary *regdict, const Settings &settings, const Base &frontUnparser)
@@ -152,7 +152,7 @@ State::State(const P2::Partitioner &p, const RegisterDictionary *regdict, const 
     globalBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
     globalBlockArrows_.flags.set(ArrowMargin::ALWAYS_RENDER);
     cfgArrowsPointToInsns_ = !settings.bblock.cfg.showingPredecessors || !settings.bblock.cfg.showingSuccessors;
-    styleStack_.usingColor(CommandLine::genericSwitchArgs.colorization.isEnabled());
+    styleStack_.colorization(settings.colorization.merge(CommandLine::genericSwitchArgs.colorization));
 }
 
 State::~State() {}

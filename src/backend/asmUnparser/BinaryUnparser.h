@@ -31,6 +31,8 @@ struct Style {
 struct Settings {
     virtual ~Settings() {}
 
+    Color::Colorization colorization;                   /**< Overrides for global color settings. */
+
     struct {
         struct {
             Style style;
