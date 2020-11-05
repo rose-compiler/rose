@@ -169,6 +169,21 @@ namespace Ada_ROSE_Translation
   SgSwitchStatement&
   mkAdaCaseStmt(SgExpression& selector, SgBasicBlock& body);
 
+  /// builds a when path for a given case
+  /// \param cond the condition guarding the expression
+  /// \param blk  the body of the path
+  /// \note multiple conditions can be combined using SgCommaOp
+  /// \todo should we just use an SgExprListExp for multiple conditions?
+  SgCaseOptionStmt&
+  mkWhenPath(SgExpression& cond, SgBasicBlock& blk);
+
+  /// builds a when others path with a body of \ref blk
+  /// \note adaic 5.4: A discrete_choice others, if present, shall
+  ///                  appear alone and in the last discrete_choice_list.
+  SgDefaultOptionStmt&
+  mkWhenOthersPath(SgBasicBlock& blk);
+
+
   /// creates an Ada delay statement
   /// \param timeExp      delay expression
   /// \param relativeTime true, if the delay is a period,
@@ -267,7 +282,6 @@ namespace Ada_ROSE_Translation
   /// builds a fresh function parameter list
   SgFunctionParameterList&
   mkFunctionParameterList();
-
 
   /// creates a function/procedure declaration
   /// \param nm       name of the function/procedure

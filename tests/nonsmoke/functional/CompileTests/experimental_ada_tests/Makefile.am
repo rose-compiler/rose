@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = \
 	dot_asis_tests \
-        compile_tests
+  compile_tests
 
 # DQ (8/23/2017): Use command line option to alternatively test the experimental fortran frontend.
 # ROSE_FLAGS = -rose:verbose 0 -rose:experimental_csharp_frontend -I$(srcdir)
@@ -74,20 +74,24 @@ print:
 	@echo "TEST_Source_passed   = $(TEST_Source_passed)"
 	@echo "TEST_Objects_passed  = $(TEST_Objects_passed)"
 
-compile_tests/$(ROSE_OUTPUT_DIR)/default.gpr: $(srcdir)/tests/default.gpr
-	cp $< $@
+#compile_tests/$(ROSE_OUTPUT_DIR)/default.gpr: $(srcdir)/tests/default.gpr
+#	cp $< $@
 
 $(abs_top_builddir)/src/rose-compiler:
 	$(MAKE) -C $(top_builddir)/src rose-compiler
 
 # testTranslator runs the AST consistency checks
 $(abs_builddir)/../../testTranslator:
-	cd ../..; $(MAKE) testTranslator
+	$(MAKE) -C../.. testTranslator
 
-$(ROSE_OUTPUT_DIR)/%.ads: compile_tests/$(ROSE_OUTPUT_DIR)/%.ads compile_tests/$(ROSE_OUTPUT_DIR)/default.gpr $(ROSE_COMPILER)
+
+compile_tests/$(ROSE_OUTPUT_DIR)/%: 
+	make -C compile_tests $(ROSE_OUTPUT_DIR)/%
+
+$(ROSE_OUTPUT_DIR)/%.ads: compile_tests/$(ROSE_OUTPUT_DIR)/%.ads $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
 
-$(ROSE_OUTPUT_DIR)/%.adb: compile_tests/$(ROSE_OUTPUT_DIR)/%.adb compile_tests/$(ROSE_OUTPUT_DIR)/default.gpr $(ROSE_COMPILER)
+$(ROSE_OUTPUT_DIR)/%.adb: compile_tests/$(ROSE_OUTPUT_DIR)/%.adb $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
 
 .PHONY: clean-local
