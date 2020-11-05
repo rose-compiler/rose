@@ -76,7 +76,7 @@ Grammar::setUpTypes ()
   // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
      NEW_TERMINAL_MACRO ( TypeLabel           , "TypeLabel",            "T_LABEL" );
 
-  // DQ (5/7/2004): Made this a AstNodeClass, was previously a nonterminal 
+  // DQ (5/7/2004): Made this a AstNodeClass, was previously a nonterminal
   // with a TemplateInstantiationType derived from it.
   //   NEW_TERMINAL_MACRO ( ClassType           , "ClassType",            "T_CLASS" );
 
@@ -139,8 +139,8 @@ Grammar::setUpTypes ()
                            "PartialFunctionType","T_PARTIAL_FUNCTION", true);
 #endif
 
-  // It seems that ROSETTA has a bug in the copy constructor that forces us 
-  // to specify product rules with more than one AstNodeClass or nonTerminal object 
+  // It seems that ROSETTA has a bug in the copy constructor that forces us
+  // to specify product rules with more than one AstNodeClass or nonTerminal object
   // (under some circomstances at least).
 #define ROSETTA_BUG false
 #if !ROSE_MICROSOFT_OS
@@ -166,9 +166,9 @@ Grammar::setUpTypes ()
   // This is an error that ROSETTA currently does not catch and which I need to discuss with Danny Thorne
   // For the moment it seems that ROSETTA is by default ignoring this connection!
   // printf ("WARNING: TemplateInstantiationType specificed as a child of both NamedType and ClassType! \n");
-  
-  // PP 05/07/20   
-     NEW_TERMINAL_MACRO ( AdaTaskType , "AdaTaskType", "T_ADA_TASK_TYPE" );  
+
+  // PP 05/07/20
+     NEW_TERMINAL_MACRO ( AdaTaskType , "AdaTaskType", "T_ADA_TASK_TYPE" );
 
   // NEW_NONTERMINAL_MACRO (NamedType,
   //                        ClassType | TemplateInstantiationType | EnumType | TypedefType,
@@ -189,7 +189,7 @@ Grammar::setUpTypes ()
                             JavaParameterizedType | JavaQualifiedType | JavaWildcardType | AdaTaskType,
                             "NamedType","T_NAME", false);
 #endif
- 
+
   // DQ (5/11/2011): This is no longer used, and has not be used since the 3rd rewite of the name qualification
   // support in 2007.  We are now working on the 4rh rewrite of this horrible subject and it is not clear if it
   // should be revived.  I would rather place the name qualification information into the constructs the reference
@@ -201,16 +201,16 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TypeChar16           , "TypeChar16",            "T_CHAR16" );
      NEW_TERMINAL_MACRO ( TypeChar32           , "TypeChar32",            "T_CHAR32" );
 
-  // DQ (5/7/2004): Added TemplateType to be derived from SgType (this leaves room later to 
-  // build more specific types for template classes ? template function, etc. unless they 
-  // should be derived from there non-template associated types as is done for the template 
-  // instantiations; this is a judgement call).  For now we can define a TemplateDeclarationStatement 
-  // to have a TemplateType and since all templates are the same (until they are instatiated, 
+  // DQ (5/7/2004): Added TemplateType to be derived from SgType (this leaves room later to
+  // build more specific types for template classes ? template function, etc. unless they
+  // should be derived from there non-template associated types as is done for the template
+  // instantiations; this is a judgement call).  For now we can define a TemplateDeclarationStatement
+  // to have a TemplateType and since all templates are the same (until they are instatiated,
   // likely there should only be a single TemplateType).
      NEW_NONTERMINAL_MACRO (Type,
-          TypeUnknown          | TypeChar                | TypeSignedChar            | TypeUnsignedChar     | 
-          TypeShort            | TypeSignedShort         | TypeUnsignedShort         | TypeInt              | 
-          TypeSignedInt        | TypeUnsignedInt         | TypeLong                  | TypeSignedLong       | 
+          TypeUnknown          | TypeChar                | TypeSignedChar            | TypeUnsignedChar     |
+          TypeShort            | TypeSignedShort         | TypeUnsignedShort         | TypeInt              |
+          TypeSignedInt        | TypeUnsignedInt         | TypeLong                  | TypeSignedLong       |
           TypeUnsignedLong     | TypeVoid                | TypeGlobalVoid            | TypeWchar            |
           TypeFloat            | TypeDouble              | TypeLongLong              | TypeSignedLongLong   |
           TypeUnsignedLongLong | TypeSigned128bitInteger | TypeUnsigned128bitInteger | TypeFloat80          |
@@ -218,10 +218,10 @@ Grammar::setUpTypes ()
           ReferenceType        | NamedType               | ModifierType              | FunctionType         |
           ArrayType            | TypeEllipse             | TemplateType              | QualifiedNameType    |
           TypeComplex          | TypeImaginary           | TypeDefault               | TypeCAFTeam          |
-          TypeCrayPointer      | TypeLabel               | JavaUnionType             | RvalueReferenceType  | 
+          TypeCrayPointer      | TypeLabel               | JavaUnionType             | RvalueReferenceType  |
           TypeNullptr          | DeclType                | TypeOfType                | TypeMatrix           |
           TypeTuple            | TypeChar16              | TypeChar32                | TypeFloat128         |
-          TypeFixed            | AutoType                | AdaAccessType             | AdaSubtype           | 
+          TypeFixed            | AutoType                | AdaAccessType             | AdaSubtype           |
           AdaFloatType         | JovialBitType,
         "Type","TypeTag", false);
 
@@ -253,11 +253,11 @@ Grammar::setUpTypes ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/7/2004): This functionality was added to EDG 1.4 (and has not yet been added to EDG_3.3)
-  // The purpose it to allow types to be marked internally as being associated with a template 
-  // argument.  There may be more information required to nail down more details in this mapping 
-  // (pointer to the template, the template argument (in the instantiation), the matching template 
-  // parameter (in the template), etc.  IR nodes specific to template parameters and template 
-  // arguments have not yet been added and will be added incrementally as more of the template 
+  // The purpose it to allow types to be marked internally as being associated with a template
+  // argument.  There may be more information required to nail down more details in this mapping
+  // (pointer to the template, the template argument (in the instantiation), the matching template
+  // parameter (in the template), etc.  IR nodes specific to template parameters and template
+  // arguments have not yet been added and will be added incrementally as more of the template
   // support is brought on line.
   // [DT] 8/14/2000 -- substitutedForTemplateParam
      Type.setDataPrototype("int","substitutedForTemplateParam","= 0",
@@ -316,7 +316,7 @@ Grammar::setUpTypes ()
      Type.setDataPrototype("SgExpression*","type_kind","= NULL",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
 #endif
-     
+
 #if 1
   // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
   // DQ (1/24/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
@@ -396,8 +396,8 @@ Grammar::setUpTypes ()
      PointerType.excludeFunctionSource      ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      ArrayType.excludeFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      ArrayType.excludeFunctionSource        ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     
-     
+
+
   // PP (5/7/20): Adding ADA types
      AdaTaskType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      AdaTaskType.setFunctionSource        ( "SOURCE_ADA_TASK_TYPE", "../Grammar/Type.code");
@@ -474,13 +474,13 @@ Grammar::setUpTypes ()
      TypeString.excludeFunctionPrototype ( "HEADER_CREATE_TYPE_WITH_PARAMETER", "../Grammar/Type.code" );
   // TypeString.excludeFunctionPrototype ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
 
-  // DQ (10/12/2014): I now think that the builtin_type data member should not be marked as 
+  // DQ (10/12/2014): I now think that the builtin_type data member should not be marked as
   // part of the type traversal (DEF_TRAVERSAL). It is a static data member used within the
   // management of types to define the required sharing that we seek for all types independent
   // (but related to) the global type table support added 2 years ago.  Fixing this might be
-  // a better way to support the ATerm support in ROSE and eliminate the special case handling 
-  // to exclude this from the successor containers that are computed in the grammar.C file in 
-  // the Grammar::buildTreeTraversalFunctions() function.  I wish to discuss this internally 
+  // a better way to support the ATerm support in ROSE and eliminate the special case handling
+  // to exclude this from the successor containers that are computed in the grammar.C file in
+  // the Grammar::buildTreeTraversalFunctions() function.  I wish to discuss this internally
   // before making the change.
 
      TypeUnknown.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -541,14 +541,14 @@ Grammar::setUpTypes ()
      TypeMatrix.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
      TypeTuple.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     
+
      TypeTuple.setDataPrototype("SgTypePtrList", "types", "",
                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      TypeTuple.setFunctionPrototype     ("HEADER_TYPE_TUPLE", "../Grammar/Type.code" );
      TypeTuple.setFunctionSource     ("SOURCE_TYPE_TUPLE", "../Grammar/Type.code" );
 
-     
+
      TypeDefault.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // PointerType.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // ReferenceType.setDataPrototype        ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -572,7 +572,7 @@ Grammar::setUpTypes ()
   // DQ (8/18/2011): Java specific support for generics.
   // JavaParameterizedType.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
-  // DQ (8/25/2006): We can't specify an initializer if this is a static pointer type 
+  // DQ (8/25/2006): We can't specify an initializer if this is a static pointer type
   // (since this triggers the output of the initialization code in the constructor).
   // DQ (8/10/2006): Added support for different kinds of complex types (float,double, and long double)
   // JJW (11/22/2008): Changed to a static variable in a function for the builtin complex and imaginary type caches
@@ -680,17 +680,18 @@ Grammar::setUpTypes ()
             "SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE",
             "SgType* type = NULL, SgExpression* expr = NULL");
 
-  // PP (5/07/20): Adding ADA types          
+  // PP (5/07/20): Adding ADA types
      CUSTOM_CREATE_TYPE_MACRO(AdaTaskType,
             "SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE",
             "SgDeclarationStatement* decl = NULL");
-  
-  // PP (3/24/20): Adding ADA types          
+            //~ "SgAdaTaskTypeDecl* decl = NULL");
+
+  // PP (3/24/20): Adding ADA types
      CUSTOM_CREATE_TYPE_MACRO(AdaAccessType,
             "SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE",
             "SgType* type = NULL");
 
-  // PP (3/31/20): Adding ADA types          
+  // PP (3/31/20): Adding ADA types
      CUSTOM_CREATE_TYPE_MACRO(AdaSubtype,
             "SOURCE_CREATE_TYPE_FOR_ADA_SUBTYPE",
             "SgType* type = NULL, SgAdaTypeConstraint* constraint = NULL");
@@ -698,7 +699,7 @@ Grammar::setUpTypes ()
      CUSTOM_CREATE_TYPE_MACRO(AdaFloatType,
             "SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE",
             "SgExpression* digits = NULL, SgAdaRangeConstraint* range = NULL");
-     
+
      CUSTOM_CREATE_TYPE_MACRO(JovialBitType,
             "SOURCE_CREATE_TYPE_FOR_JOVIAL_BIT_TYPE",
             "SgExpression* size = NULL");
@@ -739,7 +740,7 @@ Grammar::setUpTypes ()
 
      TypeMatrix.setDataPrototype           ("SgType*","base_type","= NULL",
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     
+
   // DQ (4/23/2014): I think this has to be defined as DEF_TRAVERSAL so that we can traverse the nested type.
   // This is required to support type transformations fo the shared memory DSL work. Likely also required for ReferenceType
   // and any other type with a base_type.
@@ -759,12 +760,12 @@ Grammar::setUpTypes ()
      DeclType.setDataPrototype ("SgExpression*","base_expression","= NULL",
                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/11/2014): We need to handle the case were the input is a function parameter code (number and level) 
+  // DQ (8/11/2014): We need to handle the case were the input is a function parameter code (number and level)
   // and then store the associated type until we can translate the code into a parameter.  Then we need only
   // make sure that the expression type (if available) is consistant with the associated stored type.
-  // If the expresssion's type is available, then the expression weill be stored, but if the expression's 
+  // If the expresssion's type is available, then the expression weill be stored, but if the expression's
   // type is unavailable (either the expression is unavailable or the expression is a SgFunctionParameterRefExp
-  // then the type is stored).  This is the more complex handling of stored type, but is hidden within the 
+  // then the type is stored).  This is the more complex handling of stored type, but is hidden within the
   // SgDeclType and the SgFunctionParameterRefExp, as required to present a simple API).
      DeclType.setDataPrototype ("SgType*","base_type","= NULL",
                                 CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -785,9 +786,9 @@ Grammar::setUpTypes ()
 
   // DQ (4/17/2019): To support SgPointerMemberType name qualification for the class type and the base type,
   // we need to add a name qualification field to the SgPointerMemberType which will allow the name qualification
-  // to be computed for a set of types in a specific context (location in the code, e.g. statement) and then use 
+  // to be computed for a set of types in a specific context (location in the code, e.g. statement) and then use
   // the mechanism to generate a string for the type (as is used for template instantiations) and then put the
-  // generated string into a map used for name qualificaiton of types.  The reason we can't just use a limited 
+  // generated string into a map used for name qualificaiton of types.  The reason we can't just use a limited
   // number of fields on each IR node that can reference a type is that there can be an abitrary number of
   // points in the nested representation of SgPointerMemberType(s) where name qualificaiton is required.
   // To this extent it is similar to the name qualification complexity of the template instantiations which
@@ -814,7 +815,7 @@ Grammar::setUpTypes ()
      NamedType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 
   // DQ (7/18/2004): Added traversal of the class declaration in the named type
-  // If we get to the type in a traversal then we want to traverse its members, 
+  // If we get to the type in a traversal then we want to traverse its members,
   // else we would not have traversed the type!
   // NamedType.setDataPrototype     ("SgDeclarationStatement*", "declaration","= NULL",
   //      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -912,8 +913,8 @@ Grammar::setUpTypes ()
      TemplateType.setFunctionPrototype ("HEADER_TEMPLATE_TYPE", "../Grammar/Type.code" );
   // TemplateInstantiationType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 
-  // DQ (8/25/2012): Added support for name of template type. Note that this is the name "T1" in instantiation of a template 
-  // using a template parameter.  This should likely be mapped back to the template parameter by position in the sequence of 
+  // DQ (8/25/2012): Added support for name of template type. Note that this is the name "T1" in instantiation of a template
+  // using a template parameter.  This should likely be mapped back to the template parameter by position in the sequence of
   // template parameters and the template declaration (OR just the template paramters only; I have not decided).
      TemplateType.setDataPrototype     ("SgName","name","= \"\"",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateType.setDataPrototype     ("int","template_parameter_position","= -1",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -934,7 +935,7 @@ Grammar::setUpTypes ()
           NamedType.excludeFunctionPrototype ( "HEADER_PARSER", "../Grammar/Node.code" );
           NamedType.excludeFunctionSource   ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );
         }
-     
+
      EnumType.setFunctionPrototype ("HEADER_ENUM_TYPE", "../Grammar/Type.code" );
      EnumType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 
@@ -996,15 +997,15 @@ Grammar::setUpTypes ()
   //      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
 #endif
 
-  // DQ (8/12/2012): This is used as a wrapper to support type references that will be fixed up after the AST 
-  // is build and all types exist. It is part of the new C++ support and required for types hidden in template 
+  // DQ (8/12/2012): This is used as a wrapper to support type references that will be fixed up after the AST
+  // is build and all types exist. It is part of the new C++ support and required for types hidden in template
   // instantiations that have not yet been processed yet.
      ModifierType.setDataPrototype ("char*", "frontend_type_reference" , "= NULL",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (10/10/2006): The idea here is that these would be wrappers for existing types, 
-  // but I think this was ultimately a problem to make it really work (because it could 
-  // only replace SgType and not SgNamedType, for example; so it is not used as an IR 
+  // DQ (10/10/2006): The idea here is that these would be wrappers for existing types,
+  // but I think this was ultimately a problem to make it really work (because it could
+  // only replace SgType and not SgNamedType, for example; so it is not used as an IR
   // node at present.
   // DQ (12/21/2005): Global qualification and qualified name handling are now represented explicitly in the AST
   // Exclude the get_mangled function since we include it in the HEADER_MODIFIER_TYPE string
@@ -1039,8 +1040,8 @@ Grammar::setUpTypes ()
 
 #if 0
   // DQ (12/21/2005): This global qualification is now replaced by a more general mechanism to handle
-  // qualified names. Here we have a list of qualified names a global qualification is represented by 
-  // a SgQualifiedName that contains a pointer to the SgGlobal scope. This is so variables such as 
+  // qualified names. Here we have a list of qualified names a global qualification is represented by
+  // a SgQualifiedName that contains a pointer to the SgGlobal scope. This is so variables such as
   // "::X::Y::Z::variable" can be represented properly.
      FunctionType.setDataPrototype ( "SgQualifiedNamePtrList", "returnTypeQualifiedNameList", "",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1051,7 +1052,7 @@ Grammar::setUpTypes ()
   // Don't use the setDataPrototype method since the access functions require a reference return type
   // FunctionType.setDataPrototype       ("SgTypePtrList", "arguments","");
 
-     MemberFunctionType.setFunctionPrototype ("HEADER_MEMBER_FUNCTION_TYPE", "../Grammar/Type.code" );        
+     MemberFunctionType.setFunctionPrototype ("HEADER_MEMBER_FUNCTION_TYPE", "../Grammar/Type.code" );
      MemberFunctionType.setDataPrototype     ("SgType*", "class_type","= NULL",
                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      MemberFunctionType.setDataPrototype     ("unsigned int", "mfunc_specifier","= 0",
@@ -1062,7 +1063,7 @@ Grammar::setUpTypes ()
      PartialFunctionType.setFunctionPrototype ("HEADER_PARTIAL_FUNCTION_TYPE", "../Grammar/Type.code" );
 
 
-  // DQ (3/22/2017): I think it is a mistake to include this this way. This is for the virtual 
+  // DQ (3/22/2017): I think it is a mistake to include this this way. This is for the virtual
   // function support and it is not a virtual function in SgArrayType.
   // ArrayType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
      ArrayType.setFunctionPrototype ("HEADER_ARRAY_TYPE", "../Grammar/Type.code" );
@@ -1078,7 +1079,7 @@ Grammar::setUpTypes ()
      ArrayType.setDataPrototype ("SgExpression*", "index"    , "= NULL",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
 
-  // DQ (8/15/2007): This could replace the "index" above, we need the list to handle Fortran, even 
+  // DQ (8/15/2007): This could replace the "index" above, we need the list to handle Fortran, even
   // though we only need a single expression for C and C++.
      ArrayType.setDataPrototype ("SgExprListExp*", "dim_info" , "= NULL",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
@@ -1099,7 +1100,7 @@ Grammar::setUpTypes ()
 
      AdaTaskType.setDataPrototype ("SgAdaTaskTypeDecl*", "decl", "= NULL",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  
+
   // PP (3/24/20): Adding ADA types
      AdaAccessType.setFunctionPrototype ("HEADER_ADA_ACCESS_TYPE", "../Grammar/Type.code" );
 
@@ -1159,20 +1160,20 @@ Grammar::setUpTypes ()
 
 #if 0
   // DQ (8/12/2012): I might not need this, since I have a more direct approach.
-  // DQ (8/12/2012): I need a mechanism to store references to types (typically in template instantiations) 
-  // that have not been seen yet and will be fixed up later.  I will use a SgDefaultType (used similarly in 
+  // DQ (8/12/2012): I need a mechanism to store references to types (typically in template instantiations)
+  // that have not been seen yet and will be fixed up later.  I will use a SgDefaultType (used similarly in
   // the Fortran support) and then fixed up in a seperate pass of AST post-processing.  At this point the
   // type_translation_cache map (of EDG types to ROSE types) should have a valid entry (because all of the
   // template instantiations will have been processed).  Note that this need not confuse the name mangling
   // since that can alternatively be done with either the typedef type of the typedef's base type.  It is
-  // more important to support this where types are output (e.g as part of variable declarations) so that 
+  // more important to support this where types are output (e.g as part of variable declarations) so that
   // the type names being output will not be private. We have to store both sides of the reference so that
   // we can find the IR node in the ROSE AST to be reset (points to this SgTypeDefault IR node).  Then the
   // proper SgType node to use instead is found from:
   //      "type_translation_cache[(a_type_ptr)frontend_type_reference]".
   // This replacement must be done ast the AST has been build as a preliminary step in the AST post-processing.
   // All of the associated SgDefaultIr nodes can then be deleted.
-  // I regret that I don't have a better solution for this problem, I don't like these solutions.  Maybe I 
+  // I regret that I don't have a better solution for this problem, I don't like these solutions.  Maybe I
   // will still have a better idea...
      TypeDefault.setDataPrototype ("SgNode*", "rose_node" , "= \"\"",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1323,7 +1324,7 @@ Grammar::setUpTypes ()
 
      TypeMatrix.editSubstitute( "MANGLED_ID_STRING", "matrix_t" );
      TypeTuple.editSubstitute( "MANGLED_ID_STRING", "tuple_t" );
-     
+
      TypeComplex.editSubstitute( "MANGLED_ID_STRING", "Complex" );
      TypeImaginary.editSubstitute( "MANGLED_ID_STRING", "Imaginary" );
   // TypeDefault.editSubstitute( "MANGLED_ID_STRING", "u" );
