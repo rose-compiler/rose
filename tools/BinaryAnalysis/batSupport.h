@@ -4,10 +4,12 @@
 #include <rose.h>
 #include <BinaryFeasiblePath.h>                         // rose
 #include <BinarySerialIo.h>                             // rose
+#include <BinarySymbolicExpr.h>                         // rose
 #include <Partitioner2/Function.h>                      // rose
 #include <Partitioner2/Partitioner.h>                   // rose
 
 #include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
 #include <fstream>
 #include <map>
 #include <Sawyer/CommandLine.h>
@@ -29,13 +31,232 @@
 namespace Bat {
 
 /** Whether to print state information. */
-namespace ShowStates {
+namespace ShowStates {                                  // using a namespace since we don't have C++11 enum classes
     /** Whether to print state information. */
     enum Flag {
         NO,                                             /**< Do not print state. */
         YES                                             /**< Print state. */
     };
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Output formatters
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Output formats for results.
+ *
+ *  This is the base class for output formatters for tools. */
+class OutputFormatter: public Sawyer::SharedObject {
+public:
+    typedef Sawyer::SharedPointer<OutputFormatter> Ptr;
+
+protected:
+    OutputFormatter() {}
+
+public:
+    // Path as a whole
+    virtual void title(std::ostream&, const std::string&) = 0;/**< Path title. */
+    virtual void pathNumber(std::ostream&, size_t) = 0; /**< Path identification number. */
+    virtual void pathHash(std::ostream&, const std::string&) = 0;/**< Path identification hash. */
+    virtual void ioMode(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::IoMode,
+                        const std::string &what = std::string()) = 0;/**< Input or output. */
+    virtual void mayMust(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::MayOrMust,
+                         const std::string &what = std::string()) = 0;/**< Solver mode. */
+    virtual void objectAddress(std::ostream&, const Rose::BinaryAnalysis::SymbolicExpr::Ptr&) = 0;/**< Address of sentence object. */
+    virtual void finalInsn(std::ostream&, const Rose::BinaryAnalysis::Partitioner2::Partitioner&,
+                           SgAsmInstruction*) = 0;/**< Final instruction of path. */
+    virtual void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&) = 0;/**< Location of weakness. */
+    virtual void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::GlobalVariable&) = 0;/**< Location of weakness. */
+    virtual void frameOffset(std::ostream&, const Rose::BinaryAnalysis::Variables::OffsetInterval&) = 0;/**< Location on stack. */
+    virtual void frameRelative(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&,
+                               const Rose::BinaryAnalysis::Variables::OffsetInterval&,
+                               Rose::BinaryAnalysis::FeasiblePath::IoMode) = 0;/**< Loc of var w.r.t. accessed stack frame. */
+    virtual void localVarsFound(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariables&,
+                                const Rose::BinaryAnalysis::Partitioner2::Partitioner&) = 0;/**< Local variables. */
+    virtual void pathLength(std::ostream&, size_t nVerts, size_t nSteps) = 0;     /**< Say number of steps in path. */
+    virtual void startFunction(std::ostream&, const std::string&) = 0; /**< Name of first function. */
+    virtual void endFunction(std::ostream&, const std::string&) = 0; /**< Name of last function. */
+    virtual void solverEvidence(std::ostream&,
+                                const Rose::BinaryAnalysis::SmtSolverPtr &solver) = 0; /**< Solver evidence of satisfiability. */
+    virtual void pathIntro(std::ostream&) = 0;/**< Line introducing the path elements. */
+
+    // Parts of the path
+    virtual void bbVertex(std::ostream&, size_t id, const Rose::BinaryAnalysis::Partitioner2::BasicBlockPtr&,
+                          const std::string &funcName) = 0; /**< Path vertex name. */
+    virtual void bbSrcLoc(std::ostream&, const Rose::SourceLocation&) = 0; /**< Location of basic block. */
+    virtual void insnListIntro(std::ostream&) = 0;      /**< Introduce a list of instructions. */
+    virtual void insnStep(std::ostream&, size_t idx, const Rose::BinaryAnalysis::Partitioner2::Partitioner&,
+                          SgAsmInstruction *insn) = 0; /**< Instruction within vertex. */
+    virtual void semanticFailure(std::ostream&) = 0;    /**< semantic failure message. */
+    virtual void indetVertex(std::ostream&, size_t idx) = 0;  /**< path vertex that's indeterminate. */
+    virtual void indetStep(std::ostream&, size_t idx) = 0;  /**< Indeterminate location within vertex. */
+    virtual void summaryVertex(std::ostream&, size_t idx, rose_addr_t) = 0; /**< Function summary vertex. */
+    virtual void summaryStep(std::ostream&, size_t idx, const std::string &name) = 0; /**< Function summary within vertex. */
+    virtual void edge(std::ostream&, const std::string&) = 0; /**< Name of edge along path. */
+    virtual void state(std::ostream&, size_t vertexIdx, const std::string &title,
+                       const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr&,
+                       const Rose::BinaryAnalysis::RegisterDictionary*) = 0; /**< Semantic state within path. */
+};
+
+/** Produce no output.
+ *
+ *  This is mainly for testing that a command produces no unformatted output. */
+class NullFormatter: public OutputFormatter {
+protected:
+    NullFormatter() {}
+
+public:
+    static Ptr instance();
+    void title(std::ostream&, const std::string&) ROSE_OVERRIDE {}
+    void pathNumber(std::ostream&, size_t) ROSE_OVERRIDE {}
+    void pathHash(std::ostream&, const std::string&) ROSE_OVERRIDE {}
+    void ioMode(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::IoMode, const std::string &what) ROSE_OVERRIDE {}
+    void mayMust(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::MayOrMust, const std::string &what) ROSE_OVERRIDE {}
+    void objectAddress(std::ostream&, const Rose::BinaryAnalysis::SymbolicExpr::Ptr&) ROSE_OVERRIDE {}
+    void finalInsn(std::ostream&, const Rose::BinaryAnalysis::Partitioner2::Partitioner&, SgAsmInstruction*) ROSE_OVERRIDE {}
+    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&) ROSE_OVERRIDE {}
+    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::GlobalVariable&) ROSE_OVERRIDE {}
+    void frameOffset(std::ostream&, const Rose::BinaryAnalysis::Variables::OffsetInterval&) ROSE_OVERRIDE {}
+    void frameRelative(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&,
+                       const Rose::BinaryAnalysis::Variables::OffsetInterval&,
+                       Rose::BinaryAnalysis::FeasiblePath::IoMode) ROSE_OVERRIDE {}
+    void localVarsFound(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariables&,
+                        const Rose::BinaryAnalysis::Partitioner2::Partitioner&) ROSE_OVERRIDE {}
+    void pathLength(std::ostream&, size_t nVerts, size_t nSteps) ROSE_OVERRIDE {}
+    void startFunction(std::ostream&, const std::string &name) ROSE_OVERRIDE {}
+    void endFunction(std::ostream&, const std::string &name) ROSE_OVERRIDE {}
+    void pathIntro(std::ostream&) ROSE_OVERRIDE {}
+    void bbVertex(std::ostream&, size_t id, const Rose::BinaryAnalysis::Partitioner2::BasicBlockPtr&,
+                  const std::string &funcName) ROSE_OVERRIDE {}
+    void bbSrcLoc(std::ostream&, const Rose::SourceLocation &loc) ROSE_OVERRIDE {}
+    void insnListIntro(std::ostream&) ROSE_OVERRIDE {}
+    void insnStep(std::ostream&, size_t idx, const Rose::BinaryAnalysis::Partitioner2::Partitioner&,
+                  SgAsmInstruction *insn) ROSE_OVERRIDE {}
+    void semanticFailure(std::ostream&) ROSE_OVERRIDE {}
+    void indetVertex(std::ostream&, size_t idx) ROSE_OVERRIDE {}
+    void indetStep(std::ostream&, size_t idx) ROSE_OVERRIDE {}
+    void summaryVertex(std::ostream&, size_t idx, rose_addr_t) ROSE_OVERRIDE {}
+    void summaryStep(std::ostream&, size_t idx, const std::string &name) ROSE_OVERRIDE {}
+    void edge(std::ostream&, const std::string &name) ROSE_OVERRIDE {}
+    void state(std::ostream&, size_t vertexIdx, const std::string &title,
+               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr&,
+               const Rose::BinaryAnalysis::RegisterDictionary*) ROSE_OVERRIDE {}
+    void solverEvidence(std::ostream&, const Rose::BinaryAnalysis::SmtSolverPtr&) ROSE_OVERRIDE {}
+};
+
+/** Format results using plain text.
+ *
+ *  This produces unformatted, ad hoc, output intended for human consumption. */
+class PlainTextFormatter: public OutputFormatter {
+protected:
+    PlainTextFormatter() {}
+
+public:
+    static Ptr instance();
+    void title(std::ostream&, const std::string&) ROSE_OVERRIDE;
+    void pathNumber(std::ostream&, size_t) ROSE_OVERRIDE;
+    void pathHash(std::ostream&, const std::string&) ROSE_OVERRIDE;
+    void ioMode(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::IoMode,
+                const std::string &what = std::string()) ROSE_OVERRIDE;
+    void mayMust(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::MayOrMust,
+                 const std::string &what = std::string()) ROSE_OVERRIDE;
+    void objectAddress(std::ostream&, const Rose::BinaryAnalysis::SymbolicExpr::Ptr&) ROSE_OVERRIDE;
+    void finalInsn(std::ostream&, const Rose::BinaryAnalysis::Partitioner2::Partitioner&, SgAsmInstruction*) ROSE_OVERRIDE;
+    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&) ROSE_OVERRIDE;
+    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::GlobalVariable&) ROSE_OVERRIDE;
+    void frameOffset(std::ostream&, const Rose::BinaryAnalysis::Variables::OffsetInterval&) ROSE_OVERRIDE;
+    void frameRelative(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&,
+                       const Rose::BinaryAnalysis::Variables::OffsetInterval&,
+                       Rose::BinaryAnalysis::FeasiblePath::IoMode) ROSE_OVERRIDE;
+    void localVarsFound(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariables&,
+                        const Rose::BinaryAnalysis::Partitioner2::Partitioner&) ROSE_OVERRIDE;
+    void pathLength(std::ostream&, size_t nVerts, size_t nSteps) ROSE_OVERRIDE;
+    void startFunction(std::ostream&, const std::string &name) ROSE_OVERRIDE;
+    void endFunction(std::ostream&, const std::string &name) ROSE_OVERRIDE;
+    void pathIntro(std::ostream&) ROSE_OVERRIDE;
+    void bbVertex(std::ostream&, size_t id, const Rose::BinaryAnalysis::Partitioner2::BasicBlockPtr&,
+                  const std::string &funcName) ROSE_OVERRIDE;
+    void bbSrcLoc(std::ostream&, const Rose::SourceLocation &loc) ROSE_OVERRIDE;
+    void insnListIntro(std::ostream&) ROSE_OVERRIDE;
+    void insnStep(std::ostream&, size_t idx, const Rose::BinaryAnalysis::Partitioner2::Partitioner&,
+                  SgAsmInstruction *insn) ROSE_OVERRIDE;
+    void semanticFailure(std::ostream&) ROSE_OVERRIDE;
+    void indetVertex(std::ostream&, size_t idx) ROSE_OVERRIDE;
+    void indetStep(std::ostream&, size_t idx) ROSE_OVERRIDE;
+    void summaryVertex(std::ostream&, size_t idx, rose_addr_t) ROSE_OVERRIDE;
+    void summaryStep(std::ostream&, size_t idx, const std::string &name) ROSE_OVERRIDE;
+    void edge(std::ostream&, const std::string &name) ROSE_OVERRIDE;
+    void state(std::ostream&, size_t vertexIdx, const std::string &title,
+               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr&,
+               const Rose::BinaryAnalysis::RegisterDictionary*) ROSE_OVERRIDE;
+    void solverEvidence(std::ostream&, const Rose::BinaryAnalysis::SmtSolverPtr&) ROSE_OVERRIDE;
+};
+
+/**  Format output as YAML.
+ *
+ *   This output formatter produces YAML. */
+class YamlFormatter: public OutputFormatter {
+protected:
+    YamlFormatter() {}
+    std::string formatTag(const std::string &tag);
+
+    template<class T>
+    void writeln(std::ostream &out, const std::string &tag, const T &value) {
+        out <<formatTag(tag);
+        std::string s = boost::lexical_cast<std::string>(value);
+        if (!s.empty())
+            out <<" " <<s;
+        out <<"\n";
+    }
+
+    void writeln(std::ostream &out, const std::string &tag) {
+        writeln(out, tag, "");
+    }
+
+public:
+    static Ptr instance();
+    void title(std::ostream&, const std::string&) ROSE_OVERRIDE;
+    void pathNumber(std::ostream&, size_t) ROSE_OVERRIDE;
+    void pathHash(std::ostream&, const std::string&) ROSE_OVERRIDE;
+    void ioMode(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::IoMode,
+                const std::string &what = std::string()) ROSE_OVERRIDE;
+    void mayMust(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::MayOrMust,
+                 const std::string &what = std::string()) ROSE_OVERRIDE;
+    void objectAddress(std::ostream&, const Rose::BinaryAnalysis::SymbolicExpr::Ptr&) ROSE_OVERRIDE;
+    void finalInsn(std::ostream&, const Rose::BinaryAnalysis::Partitioner2::Partitioner&, SgAsmInstruction*) ROSE_OVERRIDE;
+    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&) ROSE_OVERRIDE;
+    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::GlobalVariable&) ROSE_OVERRIDE;
+    void frameOffset(std::ostream&, const Rose::BinaryAnalysis::Variables::OffsetInterval&) ROSE_OVERRIDE;
+    void frameRelative(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&,
+                       const Rose::BinaryAnalysis::Variables::OffsetInterval&,
+                       Rose::BinaryAnalysis::FeasiblePath::IoMode) ROSE_OVERRIDE;
+    void localVarsFound(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariables&,
+                        const Rose::BinaryAnalysis::Partitioner2::Partitioner&) ROSE_OVERRIDE;
+    void pathLength(std::ostream&, size_t nVerts, size_t nSteps) ROSE_OVERRIDE;
+    void pathIntro(std::ostream&) ROSE_OVERRIDE;
+    void startFunction(std::ostream&, const std::string &name) ROSE_OVERRIDE;
+    void endFunction(std::ostream&, const std::string &name) ROSE_OVERRIDE;
+    void bbVertex(std::ostream&, size_t id, const Rose::BinaryAnalysis::Partitioner2::BasicBlockPtr&,
+                  const std::string &funcName) ROSE_OVERRIDE;
+    void bbSrcLoc(std::ostream&, const Rose::SourceLocation &loc) ROSE_OVERRIDE;
+    void insnListIntro(std::ostream&) ROSE_OVERRIDE;
+    void insnStep(std::ostream&, size_t idx, const Rose::BinaryAnalysis::Partitioner2::Partitioner&,
+                  SgAsmInstruction *insn) ROSE_OVERRIDE;
+    void semanticFailure(std::ostream&) ROSE_OVERRIDE;
+    void indetVertex(std::ostream&, size_t idx) ROSE_OVERRIDE;
+    void indetStep(std::ostream&, size_t idx) ROSE_OVERRIDE;
+    void summaryVertex(std::ostream&, size_t idx, rose_addr_t) ROSE_OVERRIDE;
+    void summaryStep(std::ostream&, size_t idx, const std::string &name) ROSE_OVERRIDE;
+    void edge(std::ostream&, const std::string &name) ROSE_OVERRIDE;
+    void state(std::ostream&, size_t vertexIdx, const std::string &title,
+               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr&,
+               const Rose::BinaryAnalysis::RegisterDictionary*) ROSE_OVERRIDE;
+    void solverEvidence(std::ostream&, const Rose::BinaryAnalysis::SmtSolverPtr&) ROSE_OVERRIDE;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Initialization functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Checks whether the ROSE version number is sufficient.
  *
@@ -47,11 +268,22 @@ bool checkRoseVersionNumber(const std::string &minimumVersion);
 void checkRoseVersionNumber(const std::string &minimumVersion, Sawyer::Message::Stream &fatalStream);
 /** @} */
 
+/** Register all the Bat self tests for the --self-test switch. */
+void registerSelfTests();
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Stuff related to ROSE binary analysis files
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Create a command-line switch for the state file format. */
 Sawyer::CommandLine::Switch stateFileFormatSwitch(Rose::BinaryAnalysis::SerialIo::Format &fmt/*in,out*/);
 
 /** Check that output file name is valid or exit. */
 void checkRbaOutput(const boost::filesystem::path &name, Sawyer::Message::Facility &mlog);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Functions for selecting things
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Select functions by name or address.
  *
@@ -95,8 +327,9 @@ Rose::BinaryAnalysis::Partitioner2::ControlFlowGraph::ConstEdgeIterator
 edgeForInstructions(const Rose::BinaryAnalysis::Partitioner2::Partitioner &partitioner, const std::string &sourceNameOrVa,
                     const std::string &targetNameOrVa);
 
-/** Register all the Bat self tests for the --self-test switch. */
-void registerSelfTests();
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Stuff for execution paths
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Return the first and last function names from the path if known. */
 std::pair<std::string, std::string>
@@ -107,7 +340,7 @@ void
 printPath(std::ostream&, const Rose::BinaryAnalysis::FeasiblePath&,
           const Rose::BinaryAnalysis::Partitioner2::CfgPath&, const Rose::BinaryAnalysis::SmtSolverPtr&,
           const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
-          SgAsmInstruction *lastInsn, ShowStates::Flag);
+          SgAsmInstruction *lastInsn, ShowStates::Flag, const OutputFormatter::Ptr&);
 
 /** Compute calling conventions. */
 void assignCallingConventions(const Rose::BinaryAnalysis::Partitioner2::Partitioner&);
