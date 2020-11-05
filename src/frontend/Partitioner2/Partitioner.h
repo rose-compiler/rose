@@ -358,6 +358,7 @@ private:
     SemanticMemoryParadigm semanticMemoryParadigm_;     // Slow and precise, or fast and imprecise?
     Unparser::BasePtr unparser_;                        // For unparsing things to pseudo-assembly
     Unparser::BasePtr insnUnparser_;                    // For unparsing single instructions in diagnostics
+    Unparser::BasePtr insnPlainUnparser_;               // For unparsing just instruction mnemonic and operands
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -577,6 +578,11 @@ public:
     /** Configure the single-instruction unparser. */
     void configureInsnUnparser(const Unparser::BasePtr&) const /*final*/;
 
+    /** Configure plain single-instruction unparser.
+     *
+     *  This configures an unparser for showing just the instruction mnemonic and operands. */
+    void configureInsnPlainUnparser(const Unparser::BasePtr&) const /*final*/;
+
     /** Unparse some entity.
      *
      *  Unparses an instruction, basic block, data block, function, or all functions using the unparser returned by @ref
@@ -592,6 +598,11 @@ public:
     void unparse(std::ostream&, const Function::Ptr&) const;
     void unparse(std::ostream&) const;
     /** @} */
+
+    /** Unparse an instruction in a plain way.
+     *
+     *  This generates a string for the instruction that shows only the mnemonic and arguments. */
+    std::string unparsePlain(SgAsmInstruction*) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

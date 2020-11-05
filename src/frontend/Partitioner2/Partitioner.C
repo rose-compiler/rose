@@ -123,6 +123,8 @@ Partitioner::operator=(BOOST_RV_REF(Partitioner) other) {
 
     insnUnparser_ = other.insnUnparser_;
     other.insnUnparser_ = Unparser::BasePtr();
+    insnPlainUnparser_ = other.insnPlainUnparser_;
+    other.insnPlainUnparser_ = Unparser::BasePtr();
 
     {
         SAWYER_THREAD_TRAITS::LockGuard2(mutex_, other.mutex_);
@@ -196,6 +198,7 @@ Partitioner::operator=(const Partitioner &other) {
     semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
     unparser_ = other.unparser_;
     insnUnparser_ = other.insnUnparser_;
+    insnPlainUnparser_ = other.insnPlainUnparser_;
 
     {
         SAWYER_THREAD_TRAITS::LockGuard2(mutex_, other.mutex_);
@@ -230,6 +233,8 @@ Partitioner::init(Disassembler *disassembler, const MemoryMap::Ptr &map) {
         unparser_ = disassembler->unparser()->copy();
         insnUnparser_ = disassembler->unparser()->copy();
         configureInsnUnparser(insnUnparser_);
+        insnPlainUnparser_ = disassembler->unparser()->copy();
+        configureInsnPlainUnparser(insnPlainUnparser_);
     }
     undiscoveredVertex_ = cfg_.insertVertex(CfgVertex(V_UNDISCOVERED));
     indeterminateVertex_ = cfg_.insertVertex(CfgVertex(V_INDETERMINATE));
@@ -288,6 +293,17 @@ Partitioner::configureInsnUnparser(const Unparser::Base::Ptr &unparser) const {
     unparser->settings().insn.operands.fieldWidth = 1;
 }
 
+void
+Partitioner::configureInsnPlainUnparser(const Unparser::Base::Ptr &unparser) const {
+    configureInsnUnparser(unparser);
+    unparser->settings().insn.address.showing = false;
+    unparser->settings().insn.bytes.showing = false;
+    unparser->settings().insn.stackDelta.showing = false;
+    unparser->settings().insn.mnemonic.fieldWidth = 1;
+    unparser->settings().insn.comment.showing = false;
+    unparser->settings().insn.semantics.showing = false;
+}
+
 Unparser::BasePtr
 Partitioner::unparser() const {
     return unparser_;
@@ -322,6 +338,16 @@ Partitioner::unparse(std::ostream &out, SgAsmInstruction *insn) const {
     } else {
         ASSERT_not_null(insnUnparser());
         (*insnUnparser())(out, *this, insn);
+    }
+}
+
+std::string
+Partitioner::unparsePlain(SgAsmInstruction *insn) const {
+    if (!insn) {
+        return "null instruction";
+    } else {
+        ASSERT_not_null(insnPlainUnparser_);
+        return (*insnPlainUnparser_)(*this, insn);
     }
 }
 
@@ -3034,9 +3060,12 @@ Partitioner::rebuildVertexIndices() {
     if (!isDefaultConstructed() && instructionProvider().disassembler()) {
         unparser_ = instructionProvider().disassembler()->unparser()->copy();
         insnUnparser_ = instructionProvider().disassembler()->unparser()->copy();
+        insnPlainUnparser_ = instructionProvider().disassembler()->unparser()->copy();
     }
     if (insnUnparser_)
         configureInsnUnparser(insnUnparser_);
+    if (insnPlainUnparser_)
+        configureInsnPlainUnparser(insnPlainUnparser_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
