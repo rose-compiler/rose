@@ -3424,7 +3424,7 @@ ExprExprHashMap::invert() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream&
-operator<<(std::ostream &o, Node &node) {
+operator<<(std::ostream &o, const Node &node) {
     Formatter fmt;
     node.print(o, fmt);
     return o;
