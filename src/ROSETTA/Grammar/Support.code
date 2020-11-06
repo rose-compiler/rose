@@ -4570,15 +4570,30 @@ class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol
           rose_hash_multimap()
           // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(boost::unordered_detail::default_bucket_count,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
              : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(17,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
-             {}
+             {
+#if 0
+            // DQ (11/5/2020): Added debugging support.
+               printf ("In rose_hash_multimap() default constructor \n");
+#endif
+             }
 
          rose_hash_multimap(int sz)
              : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
-             {}
+             {
+#if 0
+            // DQ (11/5/2020): Added debugging support.
+               printf ("In rose_hash_multimap(int sz) constructor \n");
+#endif
+             }
 
           rose_hash_multimap(const rose_hash_multimap & rhs)
              : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(/*(rose_hash_multimap)*/rhs), parent(rhs.parent), case_insensitive_semantics(rhs.case_insensitive_semantics)
-             {}
+             {
+#if 0
+            // DQ (11/5/2020): Added debugging support.
+               printf ("In rose_hash_multimap() copy constructor \n");
+#endif
+             }
 #endif
           void set_parent(SgNode * new_parent)
              {
@@ -4602,21 +4617,13 @@ class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol
                return case_insensitive_semantics;
              }
 
-          void delete_elements()
-             {
-#if 0
-            // DQ (2/19/2007): I am not sure why this is commented out (has been since it was introduced summer of 2005)
-               hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it;
-               for (it = begin(); it != end(); ++it)
-                  {
-                    delete (*it).second;
-                    (*it).second = NULL;
-                  }
-#endif
-             }
+          void delete_elements();
 
          ~rose_hash_multimap()
              {
+#if 0
+               printf ("Inside of rose_hash_multimap destructor: this = %p derived from public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>: \n",this);
+#endif
                delete_elements();
 
             // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
@@ -7796,6 +7803,42 @@ eqstr::operator()(const SgName & s1, const SgName & s2) const
           return s1 == s2;
         }
    }
+
+
+// DQ (11/5/2020): Moved this out of the generated header file and into the generated source 
+// file so that it could be more easily changed without recompiling all of ROSE.
+void
+rose_hash_multimap::delete_elements()
+   {
+#if 0
+     printf ("Inside of rose_hash_multimap::delete_elements(): this = %p derived from public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>: \n",this);
+#endif
+#if 0
+  // DQ (11/5/2020): Uncommenting this code out.
+  // DQ (2/19/2007): I am not sure why this is commented out (has been since it was introduced summer of 2005)
+  // hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it;
+     rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it;
+     for (it = begin(); it != end(); ++it)
+        {
+#if 0
+          printf ("Removing symbol (commented out delete): (*it).first = %s \n",(*it).first.str());
+#endif
+       // delete (*it).second;
+       // (*it).second = NULL;
+        }
+#endif
+#if 0
+     printf ("Inside of rose_hash_multimap::delete_elements(): this = %p calling clear(): size() = %zu \n",this,size());
+#endif
+
+  // DQ (11/5/2020): Call the clear function so that we can remove all elements.
+     clear();
+
+#if 0
+     printf ("DONE: Inside of rose_hash_multimap::delete_elements(): this = %p calling clear(): size() = %zu \n",this,size());
+#endif
+   }
+
 
 size_t
 hash_Name::operator()(const SgName & name) const

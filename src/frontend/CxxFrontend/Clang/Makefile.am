@@ -19,8 +19,12 @@ libroseClangFrontend_la_SOURCES      = \
   clang-frontend.cpp \
   clang-frontend-decl.cpp \
   clang-frontend-stmt.cpp \
-  clang-frontend-type.cpp 
-# clang-to-dot.cpp 
+  clang-frontend-type.cpp \
+  clang-to-dot.cpp \
+  clang-to-dot-decl.cpp \
+  clang-to-dot-stmt.cpp \
+  clang-to-dot-type.cpp \
+  clang_graph.cpp
 libroseClangFrontend_la_LDFLAGS      = $(CLANG_LDFLAGS)
 libroseClangFrontend_la_CXXFLAGS     = $(CLANG_CXXFLAGS)
 
@@ -33,7 +37,7 @@ libClangToDot_la_SOURCES      = \
 libClangToDot_la_LDFLAGS      = $(CLANG_LDFLAGS)
 libClangToDot_la_CXXFLAGS     = $(CLANG_CXXFLAGS)
 
-pkginclude_HEADERS = clang-frontend.hpp clang-frontend-private.hpp
+pkginclude_HEADERS = clang-frontend.hpp clang-frontend-private.hpp 	clang-to-dot-private.hpp clang-to-dot.hpp clang_graph.h
 
 endif
 
