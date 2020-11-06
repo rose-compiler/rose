@@ -619,7 +619,7 @@ SageInterface::initializeIfStmt(SgIfStmt *ifstmt, SgStatement* conditional, SgSt
      if (ifstmt->get_false_body() == NULL)
           ifstmt->set_false_body(false_body);
 
-  // CR (3/22/2020): Fixed setting case insensitivity
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
      if (is_language_case_insensitive())
          ifstmt->setCaseInsensitive(true);
 
@@ -635,7 +635,7 @@ SageInterface::initializeSwitchStatement(SgSwitchStatement* switchStatement,SgSt
    {
      ROSE_ASSERT(switchStatement != NULL);
 
-  // CR (3/22/2020): Fixed setting case insensitivity
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
      if (is_language_case_insensitive())
           switchStatement->setCaseInsensitive(true);
 
@@ -658,7 +658,7 @@ SageInterface::initializeWhileStatement(SgWhileStmt* whileStatement, SgStatement
    {
      ROSE_ASSERT(whileStatement);
 
-  // CR (3/22/2020): Fixed setting case insensitivity
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
      if (is_language_case_insensitive())
           whileStatement->setCaseInsensitive(true);
 
@@ -1410,7 +1410,7 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                name = isSgClassDeclaration(declaration)->get_name().str();
                break;
 
-       // CR (8/2/2019): Added SgJovialDefineDeclaration and SgJovialDirectiveStatement
+       // Rasmussen (8/2/2019): Added SgJovialDefineDeclaration and SgJovialDirectiveStatement
        // I'm not sure class_name() is correct. Probably get_name() should be fixed.
           case V_SgJovialDefineDeclaration:
           case V_SgJovialDirectiveStatement:
@@ -1847,8 +1847,8 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
 
-          case V_SgJovialForThenStatement: //CR: Jovial for statement
-          case V_SgMatlabForStatement: //SK: Matlab for statement
+          case V_SgJovialForThenStatement: // Rasmussen: Jovial for statement
+          case V_SgMatlabForStatement: // SK: Matlab for statement
           case V_SgBasicBlock:
           case V_SgCatchOptionStmt:
           case V_SgDoWhileStmt:
@@ -4848,7 +4848,7 @@ void SageInterface::addVarRefExpFromArrayDimInfo(SgNode * astNode, Rose_STL_Cont
 }
 
 
-// CR (4/8/2018): Added Ada
+// Rasmussen (4/8/2018): Added Ada
 bool
 SageInterface::is_Ada_language()
    {
@@ -4883,7 +4883,7 @@ SageInterface::is_C_language()
      return returnValue;
    }
 
-// CR (4/8/2018): Added Cobol
+// Rasmussen (4/8/2018): Added Cobol
 bool
 SageInterface::is_Cobol_language()
    {
@@ -5033,7 +5033,7 @@ SageInterface::is_Java_language()
      return returnValue;
    }
 
-// CR (4/4/2018): Added Jovial
+// Rasmussen (4/4/2018): Added Jovial
 bool
 SageInterface::is_Jovial_language()
    {
@@ -5192,7 +5192,7 @@ bool SageInterface::is_mixed_Fortran_and_C_and_Cxx_language()
      return is_Fortran_language() && is_C_language() && is_Cxx_language();
    }
 
-// CR (3/22/2020): Added this function because ROSE supports multiple
+// Rasmussen (3/22/2020): Added this function because ROSE supports multiple
 // languages that are case insensitive. Warning, this doesn't work for mixed languages.
 bool SageInterface::is_language_case_insensitive()
    {
@@ -5201,7 +5201,7 @@ bool SageInterface::is_language_case_insensitive()
       return symbol_table_case_insensitive_semantics == true;
    }
 
-// CR (3/28/2020): Collecting all languages that may have scopes that contain
+// Rasmussen (3/28/2020): Collecting all languages that may have scopes that contain
 // statements that are not only declarations here. For Fortran (at least), function
 // definitions may be declared at the end of other procedures.
 bool SageInterface::language_may_contain_nondeclarations_in_scope()
@@ -14565,7 +14565,7 @@ void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value,
      ROSE_ASSERT (stmt != NULL);
      ROSE_ASSERT (label_value >0 && label_value <=99999); //five digits for Fortran label
 
-  // Added optional label_type and label_scope [CR 2019.01.20]
+  // Added optional label_type and label_scope [Rasmussen 2019.01.20]
      if (label_scope == NULL)
         {
            label_scope = getEnclosingFunctionDefinition(stmt);
@@ -14671,7 +14671,7 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
 
   // Liao 4/23/2010,  Fix function symbol
   // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
-  // Added SgProgramHeaderStatement [CR, 2020.01.19]
+  // Added SgProgramHeaderStatement [Rasmussen, 2020.01.19]
      SgFunctionDeclaration               * func         = isSgFunctionDeclaration(stmt);
      SgMemberFunctionDeclaration         * mfunc        = isSgMemberFunctionDeclaration(stmt);
      SgTemplateFunctionDeclaration       * tfunc        = isSgTemplateFunctionDeclaration(stmt);
@@ -20196,15 +20196,11 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
         if (func->get_firstNondefiningDeclaration() == func)
           func->set_scope(targetBlock);
       }
-   // DQ (10/27/2020): Fixed warning of unused variable by compiler.
-   // else if (SgJovialTableStatement* table = isSgJovialTableStatement(stmt))
-      else if (isSgJovialTableStatement(stmt) != NULL)
+      else if (isSgJovialTableStatement(stmt) || isSgTypedefDeclaration(stmt))
       {
-        // CR 9/21/2020: Uncovered by issue RC-135 and scope moved in switch below
-      }
-      else if (SgTypedefDeclaration* decl = isSgTypedefDeclaration(stmt))
-      {
-        // CR 10/19/2020: Uncovered by issue RC-227 and scope moved in switch below
+        // Rasmussen 9/21/2020,10/27/2020,11/4/2020: Uncovered by issues RC-135 and RC-227.
+        // The issues are fixed in the switch statement below but this test is needed
+        // so that the warning message immediately below is not triggered.
       }
       else
       {
@@ -20236,7 +20232,7 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
 
             SgInitializedName * init_name = (*ii);
 
-            // CR (6/29/2020) and (10/19/2020): Variable declarations related to anonymous types are not
+            // Rasmussen (6/29/2020) and (10/19/2020): Variable declarations related to anonymous types are not
             // moved. This is fixed below. Note that SgJovialTableType derives from SgClassType, it may
             // be that class types are not moved correctly either.
             //
@@ -20296,22 +20292,26 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
           ROSE_ASSERT (funcDecl);
           break;
         }
+      // needed to move Ada record into definition of C++ namespace
+      case V_SgClassDeclaration: 
       case V_SgEnumDeclaration:
         {
-          // CR 10/17/2020: Needed for issue RC-189
-          SgEnumDeclaration* enum_decl = isSgEnumDeclaration(declaration);
-          ROSE_ASSERT (enum_decl);
+          // Rasmussen 10/17/2020: Needed for issue RC-189
+//          SgEnumDeclaration* enum_decl = isSgEnumDeclaration(declaration);
+//          ROSE_ASSERT (enum_decl);
+          SgDeclarationStatement* def_decl = declaration->get_definingDeclaration();
+          SgDeclarationStatement* nondef_decl = declaration->get_firstNondefiningDeclaration();
 
-          SgDeclarationStatement* def_decl = enum_decl->get_definingDeclaration();
-          SgDeclarationStatement* nondef_decl = enum_decl->get_firstNondefiningDeclaration();
           nondef_decl->set_parent(targetBlock);
           nondef_decl->set_scope(targetBlock);
+
+          def_decl->set_parent(targetBlock);
           def_decl->set_scope(targetBlock);
           break;
         }
       case V_SgJovialTableStatement:
         {
-          // CR 9/21/2020: Needed for issue RC-135
+          // Rasmussen 9/21/2020: Needed for issue RC-135
           SgJovialTableStatement* table = isSgJovialTableStatement(declaration);
           ROSE_ASSERT (table);
 
@@ -20322,9 +20322,9 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
           def_decl->set_scope(targetBlock);
           break;
         }
-      case V_SgTypedefDeclaration: // CR (10/19/2020)
+      case V_SgTypedefDeclaration: // Rasmussen (10/19/2020)
         {
-          // CR 10/19/2020: Needed for issue RC-227
+          // Rasmussen 10/19/2020: Needed for issue RC-227
           SgTypedefDeclaration* typedef_decl = isSgTypedefDeclaration(declaration);
           ROSE_ASSERT (typedef_decl);
           typedef_decl->set_parent(targetBlock);
@@ -23877,7 +23877,7 @@ void SageInterface::printAST(SgNode* node)
 
 void printAST2TextFile (SgNode* node, std::string filename)
 {
-  // CR 9/21/2020: This leads to infinite recursion (clang warning message) and should be removed from API)
+  // Rasmussen 9/21/2020: This leads to infinite recursion (clang warning message) and should be removed from API)
   ROSE_ASSERT(false);
   printAST2TextFile (node, filename.c_str());
 }

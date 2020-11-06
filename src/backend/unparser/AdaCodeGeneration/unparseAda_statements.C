@@ -693,22 +693,19 @@ namespace
       prn("end case;\n");
     }
 
-    void handleCaseWhenExp(SgExpression* n)
-    {
-      if (isSgNullExpression(n))
-      {
-        prn("others");
-        return;
-      }
-
-      expr(n);
-    }
 
     void handle(SgCaseOptionStmt& n)
     {
       prn("when ");
-      handleCaseWhenExp(n.get_key());
+      expr(n.get_key());
       prn(" => ");
+      stmt(n.get_body());
+      prn("\n");
+    }
+
+    void handle(SgDefaultOptionStmt& n)
+    {
+      prn("when others => ");
       stmt(n.get_body());
       prn("\n");
     }
