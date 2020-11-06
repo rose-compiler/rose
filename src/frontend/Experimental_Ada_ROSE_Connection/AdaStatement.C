@@ -1226,7 +1226,7 @@ namespace
           SgExpression*  funrefexp = nullptr;
 
           //~ SgDeclarationStatement& tgt    = lookupNode(asisDecls(), stmt.Corresponding_Called_Entity);
-
+/*
           if (SgDeclarationStatement* tgt = findNode(asisDecls(), stmt.Corresponding_Called_Entity))
           {
             funrefexp = sb::buildFunctionRefExp(isSgFunctionDeclaration(tgt));
@@ -1238,8 +1238,9 @@ namespace
                       << " call"
                       << std::endl;
 
-            funrefexp = &getExprID(stmt.Called_Name, ctx);
           }
+*/
+          funrefexp = &getExprID(stmt.Called_Name, ctx);
 
           ROSE_ASSERT(funrefexp);
           ElemIdRange    range  = idRange(stmt.Call_Statement_Parameters);
