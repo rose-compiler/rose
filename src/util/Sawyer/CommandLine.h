@@ -10,6 +10,7 @@
 #define Sawyer_CommandLine_H
 
 #include <Sawyer/Assert.h>
+#include <Sawyer/BitFlags.h>
 #include <Sawyer/DocumentMarkup.h>
 #include <Sawyer/IntervalSet.h>
 #include <Sawyer/Map.h>
@@ -485,6 +486,7 @@ SAWYER_COMMANDLINE_SEQUENCE_SAVER(std::list, push_back);
 SAWYER_COMMANDLINE_SEQUENCE_SAVER(std::set, insert);
 SAWYER_COMMANDLINE_SEQUENCE_SAVER(Sawyer::Container::Set, insert);
 SAWYER_COMMANDLINE_SEQUENCE_SAVER(Optional, operator=);
+SAWYER_COMMANDLINE_SEQUENCE_SAVER(BitFlags, set);
 SAWYER_COMMANDLINE_MAP_PAIR_SAVER(std::map, insert);
 SAWYER_COMMANDLINE_MAP_SAVER(Sawyer::Container::Map, insert);
 SAWYER_COMMANDLINE_INTERVALSET_SAVER(Sawyer::Container::IntervalSet, insert);
@@ -1480,6 +1482,10 @@ typename EnumParser<T>::Ptr enumParser(std::vector<T> &storage) {
 template<typename T>
 typename EnumParser<T>::Ptr enumParser(Optional<T> &storage) {
     return EnumParser<T>::instance(TypedSaver<Optional<T> >::instance(storage));
+}
+template<typename T>
+typename EnumParser<T>::Ptr enumParser(BitFlags<T> &storage) {
+    return EnumParser<T>::instance(TypedSaver<BitFlags<T> >::instance(storage));
 }
 template<typename T>
 typename EnumParser<T>::Ptr enumParser() {
@@ -2755,6 +2761,7 @@ class SAWYER_EXPORT Parser {
     Optional<std::string> exitMessage_;                 /**< Additional message before exit when errorStream_ is not empty. */
     SortOrder switchGroupOrder_;                        /**< Order of switch groups in the documentation. */
     bool reportingAmbiguities_;                         /**< Whether to report ambiguous switches. */
+    std::string environmentVariable_;                   /**< parse() reads from this variable first. */
 #include <Sawyer/WarningsRestore.h>
 
 public:
@@ -2987,6 +2994,16 @@ public:
     std::string exitMessage() const { return exitMessage_ ? *exitMessage_ : std::string(); }
     /** @} */
 
+    /** Name of environment variable holding initial arguments.
+     *
+     *  If the environment variable is set and has a value, its value string is treated as command-line arguments in the same
+     *  way that command-line arguments are read from files by @ref readArgsFromFile.
+     *
+     * @{ */
+    Parser& environmentVariable(const std::string &s) { environmentVariable_ = s; return *this; }
+    const std::string& environmentVariable() const { return environmentVariable_; }
+    /** @} */
+
     /** Parse program arguments.  The first program argument, <code>argv[0]</code>, is considered to be the name of the program
      *  and is not parsed as a program argument.  This function does not require that <code>argv[argc]</code> be a member of
      *  the argv array (normally, <code>argv[argc]==NULL</code> in <code>main</code>). */
@@ -3005,12 +3022,23 @@ public:
     }
 #endif
 
+    /** Split line of text into words.
+     *
+     *  Line is split at white space, but honoring the usual convention of single and double quotes. */
+    static std::vector<std::string> splitLineIntoWords(std::string);
+
     /** Read a text file to obtain arguments.  The specified file is opened and each line is read to obtain a vector of
      *  arguments.  Blank lines and lines whose first non-space character is "#" are ignored.  The remaining lines are split
      *  into one or more arguments at white space.  Single and double quoted regions within a line are treated as single
      *  arguments (the quotes are removed).  The backslash can be used to escape quotes, white space, and backslash; any other
      *  use of the backslash is not special. */
     static std::vector<std::string> readArgsFromFile(const std::string &filename);
+
+    /** Read an envrionment variable to obtain arguments.
+     *
+     *  This function behaves identically to @ref readArgsFromFile except the content comes from the environment variable. An
+     *  undefined variable is treated as an empty variable. */
+    static std::vector<std::string> readArgsFromEnvVar(const std::string &varName);
 
     /** Expand file arguments.
      *
@@ -3214,7 +3242,7 @@ private:
     void init();
 
     // Implementation for the public parse methods.
-    ParserResult parseInternal(const std::vector<std::string> &programArguments);
+    ParserResult parseInternal(std::vector<std::string> programArguments);
 
     // Parse one switch from the current position in the command line and return the switch descriptor.  If the cursor is at
     // the end of the command line then return false without updating the cursor or parsed values.  If the cursor is at a

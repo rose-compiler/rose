@@ -231,6 +231,25 @@ mkAdaCaseStmt(SgExpression& selector, SgBasicBlock& body)
   return SG_DEREF(sb::buildSwitchStatement(&selector, &body));
 }
 
+SgCaseOptionStmt&
+mkWhenPath(SgExpression& cond, SgBasicBlock& blk)
+{
+  SgCaseOptionStmt& sgnode = SG_DEREF(sb::buildCaseOptionStmt(&cond, &blk));
+
+  sgnode.set_has_fall_through(false);
+  return sgnode;
+}
+
+SgDefaultOptionStmt&
+mkWhenOthersPath(SgBasicBlock& blk)
+{
+  SgDefaultOptionStmt& sgnode = SG_DEREF(sb::buildDefaultOptionStmt(&blk));
+
+  sgnode.set_has_fall_through(false);
+  return sgnode;
+}
+
+
 SgAdaDelayStmt&
 mkAdaDelayStmt(SgExpression& timeExp, bool relativeTime)
 {

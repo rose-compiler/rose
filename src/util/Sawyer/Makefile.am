@@ -50,6 +50,7 @@ sawyerinclude_HEADERS =				\
 	Assert.h				\
 	Attribute.h				\
 	BiMap.h					\
+	BitFlags.h				\
 	BitVector.h				\
 	BitVectorSupport.h			\
 	Buffer.h				\

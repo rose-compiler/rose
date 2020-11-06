@@ -2,6 +2,7 @@
 #define ROSE_CommandLine_H
 
 #include <Sawyer/CommandLine.h>
+#include <Color.h>
 
 namespace Rose {
 
@@ -139,6 +140,8 @@ struct GenericSwitchArgs {
                                                          *   message and exit with a failure status. When this data member is
                                                          *   false, then the tool will silently exit with success, which is
                                                          *   useful during "make check" or similar testing. */
+    Color::Colorization colorization;                   /**< Controls colorized output. */
+
     GenericSwitchArgs()
         : threads(0), smtSolver("none"), errorIfDisabled(true) {}
 };

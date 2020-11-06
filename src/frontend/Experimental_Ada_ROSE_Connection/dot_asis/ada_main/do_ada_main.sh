@@ -22,14 +22,17 @@ gnat_home=`dirname ${gnat_bin}`
 obj_dir=${base_dir}/obj
 
 tool_name=run_asis_tool_2
-target_dir=${base_dir}/../test_units
+# From: src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/ada_main/obj
+# To:   tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/test_units
+target_dir=${base_dir}/../../../../../tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/test_units
 #target_units="minimal.adb"
 #target_units="unit_2.ads"
 #target_units="unit_2.adb"
 #target_units="variable_declaration.ads"
 #target_units="if_statement.adb"
+target_units="hello_world.adb"
 #target_units="ordinary_type_declaration.ads"
-target_units=`(cd ${target_dir}; ls *.ad[bs])`
+#target_units=`(cd ${target_dir}; ls *.ad[bs])`
 
 show_compiler_version () {
   log_separator_1
@@ -44,10 +47,12 @@ build_asis_tool () {
   # -P proj  Use Project File proj
   # -v       Verbose output
   # -vPx     Specify verbosity when parsing Project Files (x = 0/1/2)
+  # -ws      Ignore builder warnings
   # -Xnm=val Specify an external reference for Project Files
   log_then_run gprbuild \
   -p \
   -P ${base_dir}/dot_asis.gpr \
+  -ws \
   -XLIBRARY_TYPE=static \
   -XASIS_BUILD=static \
   ${tool_name} || exit $?
@@ -61,10 +66,14 @@ process_units () {
   for target_unit in ${target_units}
   do
     log "Processing ${target_unit}"
+    # -d, --debug - turn on debug
     # -f, --file - Input file name (required)
     # -g, --gnat_home - GNAT home directory (required)
+    # -i, --process_implementation_units - Process implementation-specific library units
+    # -p, --process_predefined_units     - Process Ada predefined language environment units
     # -o, --output_dir - Output directory (optional)
     log_then_run ${obj_dir}/${tool_name} \
+-i -p -d \
        --file=${target_dir}/${target_unit} \
        --gnat_home=${gnat_home} \
        --output_dir=`pwd` \

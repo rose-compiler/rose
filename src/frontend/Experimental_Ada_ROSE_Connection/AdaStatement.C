@@ -880,6 +880,19 @@ namespace
       : ctx(astctx), caseNode(caseStmt)
       {}
 
+      bool isWhenOthers(ElemIdRange choices)
+      {
+        ROSE_ASSERT(!choices.empty());
+
+        if (choices.size() > 1) return false;
+
+        Element_Struct& el = retrieveAs<Element_Struct>(elemMap(), *choices.first);
+
+        return (  el.Element_Kind == A_Definition
+               && el.The_Union.Definition.Definition_Kind == An_Others_Choice
+               );
+      }
+
       void operator()(Element_Struct& elem)
       {
         Path_Struct& path = elem.The_Union.Path;
@@ -888,25 +901,39 @@ namespace
         {
           case A_Case_Path:
             {
-              ElemIdRange                caseChoices = idRange(path.Case_Path_Alternative_Choices);
-              std::vector<SgExpression*> choices     = traverseIDs(caseChoices, elemMap(), ExprSeqCreator{ctx});
-              ElemIdRange                caseBlock   = idRange(path.Sequence_Of_Statements);
+              SgStatement*  sgnode      = nullptr;
+              SgBasicBlock& block       = mkBasicBlock();
+              ElemIdRange   caseChoices = idRange(path.Case_Path_Alternative_Choices);
 
-              // \todo reconsider the "reuse" of SgCommaOp
-              //   SgCommaOp is only used to separate discrete choices in case-when
-              ROSE_ASSERT(choices.size());
-              SgExpression&              caseCond    = SG_DEREF( std::accumulate( choices.begin()+1, choices.end(),
+              if (isWhenOthers(caseChoices))
+              {
+                SgDefaultOptionStmt* whenOthersNode = &mkWhenOthersPath(block);
+
+                caseNode.append_default(whenOthersNode);
+                sgnode = whenOthersNode;
+              }
+              else
+              {
+                std::vector<SgExpression*> choices   = traverseIDs(caseChoices, elemMap(), ExprSeqCreator{ctx});
+
+                // \todo reconsider the "reuse" of SgCommaOp
+                //   SgCommaOp is only used to separate discrete choices in case-when
+                ROSE_ASSERT(choices.size());
+                SgExpression&              caseCond  = SG_DEREF( std::accumulate( choices.begin()+1, choices.end(),
                                                                                   choices.front(),
                                                                                   sb::buildCommaOpExp
                                                                                 ));
+                SgCaseOptionStmt*          whenNode  = &mkWhenPath(caseCond, block);
 
-              SgBasicBlock&              block       = mkBasicBlock();
-              SgCaseOptionStmt*          sgnode      = sb::buildCaseOptionStmt(&caseCond, &block);
+                caseNode.append_case(whenNode);
+                sgnode = whenNode;
+              }
 
-              attachSourceLocation(SG_DEREF(sgnode), elem, ctx);
-              sgnode->set_has_fall_through(false);
-              caseNode.append_case(sgnode);
+              ROSE_ASSERT(sgnode);
+              ElemIdRange caseBlock = idRange(path.Sequence_Of_Statements);
+
               traverseIDs(caseBlock, elemMap(), StmtCreator{ctx.scope(block)});
+              attachSourceLocation(*sgnode, elem, ctx);
               break;
             }
 

@@ -13,6 +13,7 @@ package Asis_Tool_2.Element is
    type Class is tagged private; -- Initialized
 
    -- Process an element and all of its components:
+   -- Raises Internal_Error for unhandled internal exceptions.
    procedure Process_Element_Tree
      (This    : in out Class;
       Element : in     Asis.Element;
@@ -77,7 +78,9 @@ package Asis_Tool_2.Element is
 
 private
 
-   Module_Name : constant String := "Asis_Tool_2.Element";
+   -- For debuggng:
+   Parent_Name : constant String := Module_Name;
+   Module_Name : constant String := Parent_Name & ".Element";
 
    package Element_ID_Lists is new
      Ada.Containers.Doubly_Linked_Lists

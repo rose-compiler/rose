@@ -1,5 +1,5 @@
 #include <sage3basic.h>
-#include <BinaryConcolic.h>
+#include <Concolic/Specimen.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <boost/lexical_cast.hpp>
@@ -9,6 +9,11 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 namespace Concolic {
+
+Specimen::Specimen()
+    : read_only_(false), empty_(false) {}
+
+Specimen::~Specimen() {}
 
 // class method
 Specimen::Ptr
