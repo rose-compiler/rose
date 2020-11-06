@@ -116,7 +116,7 @@ namespace
       unparseModifiers(*this, n);
 
       ASSERT_not_null(first);
-      unparser.unparseType(first->get_type(), info);
+      unparser.unparseType(first->get_type(), &n, info);
     }
 
     void operator()(SgVariableDeclaration* s)
@@ -291,8 +291,6 @@ namespace
 
   struct AdaStatementUnparser
   {
-    typedef std::vector<std::string> ScopePath;
-
     AdaStatementUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
     : unparser(unp), info(inf), os(outp), publicMode(true)
     {}
@@ -423,14 +421,14 @@ namespace
     void handle(SgAdaPackageSpecDecl& n)
     {
       prn("package ");
-      prnPrefix(n, SG_DEREF(n.get_scope()));
+      prn(scopeQual(n, SG_DEREF(n.get_scope())));
       prn(n.get_name());
       prn(" is\n");
 
       stmt(n.get_definition());
 
       prn("end ");
-      prnPrefix(n, SG_DEREF(n.get_scope()));
+      prn(scopeQual(n, SG_DEREF(n.get_scope())));
       prn(n.get_name());
       prn(EOS_NL);
     }
@@ -467,7 +465,7 @@ namespace
       prn(n.get_name());
       prn(renamed.infixSyntax);
       prn(" renames ");
-      prnPrefix(n, *orig);
+      prn(scopeQual(n, *orig));
       prn(renamed.renamedName);
       prn(EOS_NL);
     }
@@ -482,7 +480,7 @@ namespace
       prn(" is");
       prn(declwords.second);
       prn(" ");
-      type(n.get_base_type());
+      type(n.get_base_type(), n);
       prn(EOS_NL);
     }
 
@@ -505,14 +503,14 @@ namespace
         ASSERT_not_null(ini);
         prn(ini->get_name());
 
-        std::cerr << ini->get_qualified_name() << std::endl;
+        //~ std::cerr << ini->get_qualified_name() << std::endl;
       }
 
       prn(": ");
       unparseModifiers(*this, n);
 
       ASSERT_not_null(first);
-      type(first->get_type());
+      type(first->get_type(), n);
 
       if (SgExpression* exp = first->get_initializer())
       {
@@ -734,10 +732,10 @@ namespace
       handleBasicBlock(n);
     }
 
-    ScopePath pathToGlobal(SgStatement& n);
+    //~ ScopePath pathToGlobal(SgStatement& n);
     //~ std::string recoverScopeName(SgLocatedNode& n);
 
-    void prnPrefix(SgStatement& local, SgStatement& remote);
+    std::string scopeQual(SgStatement& local, SgStatement& remote);
 
     void parentRecord(SgClassDefinition& def)
     {
@@ -749,8 +747,9 @@ namespace
       SgClassDeclaration& decl   = SG_DEREF(parent.get_base_class());
 
       prn(" new ");
-      prnPrefix(def, decl);
+      prn(scopeQual(def, decl));
       prn(decl.get_name());
+      prn(" with");
     }
 
     void handle(SgClassDeclaration& n)
@@ -814,7 +813,7 @@ namespace
         prn(": ");
       }
 
-      type(exvar.get_type());
+      type(exvar.get_type(), n);
       prn(" =>\n");
 
       stmt(n.get_body());
@@ -851,9 +850,9 @@ namespace
       expr(e);
     }
 
-    void type(SgType* t)
+    void type(SgType* t, SgStatement& ctx)
     {
-      unparser.unparseType(t, info);
+      unparser.unparseType(t, &ctx, info);
     }
 
     void operator()(SgStatement* s)
@@ -965,7 +964,7 @@ namespace
     if (hasReturn)
     {
       prn(" return");
-      type(n.get_orig_return_type());
+      type(n.get_orig_return_type(), n);
     }
 
     SgFunctionDefinition* def = n.get_definition();
@@ -1000,7 +999,7 @@ namespace
   {
     void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgType&)        { res = ReturnType("type",    "new"); }
+    void handle(SgType&)        { res = ReturnType("type",    " new"); }
     void handle(SgAdaSubtype&)  { res = ReturnType("subtype", ""); }
     void handle(SgTypeDefault&) { res = ReturnType("type",    ""); }
     void handle(SgArrayType&)   { res = ReturnType("type",    ""); }
@@ -1025,7 +1024,7 @@ namespace
 /*
     void handle(SgDeclarationStatement& n)
     {
-      static const std::string unknown("-- unknown todo");
+      static const s  td::string unknown("-- unknown todo");
 
       res = RenamingSyntax(unknown, unknown, unknown);
     }
@@ -1167,8 +1166,8 @@ namespace
       const size_t firstpos = (dotpos == std::string::npos ? 0 : dotpos+1);
       const int    len      = int(currpos)-int(firstpos+1);
 
-      std::cerr << declaredName << "/" << currpos << "/" << firstpos << ":" << len
-                << std::endl;
+      //~ std::cerr << declaredName << "/" << currpos << "/" << firstpos << ":" << len
+                //~ << std::endl;
       ROSE_ASSERT(len > 0);
 
       path.push_back(declaredName.substr(firstpos, len));
@@ -1178,8 +1177,10 @@ namespace
   }
 #endif /* REVISIT_IF_NEEDED */
 
-  AdaStatementUnparser::ScopePath
-  AdaStatementUnparser::pathToGlobal(SgStatement& n)
+  typedef std::vector<std::string> ScopePath;
+
+  ScopePath
+  pathToGlobal(SgStatement& n)
   {
     ScopePath res;
 
@@ -1204,25 +1205,33 @@ namespace
     return res;
   }
 
-  void
-  AdaStatementUnparser::prnPrefix(SgStatement& local, SgStatement& remote)
+  std::string
+  AdaStatementUnparser::scopeQual(SgStatement& local, SgStatement& remote)
   {
-    typedef ScopePath::reverse_iterator PathIterator;
-
-    ScopePath    localPath  = pathToGlobal(local);
-    ScopePath    remotePath = pathToGlobal(remote);
-    size_t       pathlen    = std::min(localPath.size(), remotePath.size());
-    PathIterator localstart = localPath.rbegin();
-    PathIterator pathit     = std::mismatch( localstart, localstart + pathlen,
-                                             remotePath.rbegin()
-                                           ).second;
-
-    for (; pathit != remotePath.rend(); ++pathit)
-    {
-      prn(*pathit);
-      prn(".");
-    }
+    return unparser.computeScopeQualification(local, remote);
   }
+}
+
+std::string
+Unparse_Ada::computeScopeQualification(SgStatement& local, SgStatement& remote)
+{
+  typedef ScopePath::reverse_iterator PathIterator;
+
+  ScopePath         localPath  = pathToGlobal(local);
+  ScopePath         remotePath = pathToGlobal(remote);
+  size_t            pathlen    = std::min(localPath.size(), remotePath.size());
+  PathIterator      localstart = localPath.rbegin();
+  PathIterator      pathit     = std::mismatch( localstart, localstart + pathlen,
+                                                remotePath.rbegin()
+                                              ).second;
+  std::stringstream qual;
+
+  for (; pathit != remotePath.rend(); ++pathit)
+  {
+    qual << *pathit << '.';
+  }
+
+  return qual.str();
 }
 
 void
