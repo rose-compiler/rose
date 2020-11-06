@@ -11,16 +11,15 @@ PASSING_TESTS :=                       \
   exception_declaration.ads            \
   exception_rename.ads                 \
   exit_statement.adb                   \
-	fib.adb                              \
+  fib.adb                              \
   goto_loop.adb                        \
   if_statement.adb                     \
   increment.adb	                       \
-	loop_exit.adb                        \
+  loop_exit.adb                        \
   loop_statement.adb                   \
   minimal.adb                          \
   named.ads                            \
   operator.adb                         \
-	pkgrename.ads                        \
   procedure_call.adb                   \
   raise_statement.adb                  \
   recursive_call.adb                   \
@@ -34,5 +33,14 @@ PASSING_TESTS :=                       \
   variable_declaration.ads             \
   week_string_literal.ads              \
   while_loop_statement.adb             \
+  accept_statement.adb                 \
+  derived_record.ads                   \
+  entry_call.adb                       \
+  opaque.ads                           \
+  ordinary_type_declaration.ads        \
+  parent.ads                           \
+  parent-child.ads                     \
+  task_with_body.adb                   \
+  task_with_body.ads                   \
   EndOfList
 
