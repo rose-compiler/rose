@@ -28,9 +28,9 @@ libroseClangFrontend_la_SOURCES      = \
 libroseClangFrontend_la_LDFLAGS      = $(CLANG_LDFLAGS)
 libroseClangFrontend_la_CXXFLAGS     = $(CLANG_CXXFLAGS)
 
-libClangToDot_la_DEPENDENCIES =
-libClangToDot_la_SOURCES      = \
-  clang-to-dot.cpp 
+# libClangToDot_la_DEPENDENCIES =
+# libClangToDot_la_SOURCES      = 
+#  clang-to-dot.cpp 
 #  clang-to-dot-decl.cpp 
 #  clang-to-dot-stmt.cpp 
 #  clang-to-dot-type.cpp

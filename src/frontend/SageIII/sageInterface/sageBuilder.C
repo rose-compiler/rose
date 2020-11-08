@@ -16437,31 +16437,34 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
   // DQ (11/5/2020): Experiment with clearing the global scope that is supporting multiple translation 
   // units, since it is the cause of some problem when a tool is designed to read an input file twice.
-     SgGlobal* globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-     ROSE_ASSERT(globalScopeAcrossFiles != NULL);
+     if (project != NULL)
+        {
+          SgGlobal* globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+          ROSE_ASSERT(globalScopeAcrossFiles != NULL);
 
-     ROSE_ASSERT(globalScopeAcrossFiles->get_symbol_table() != NULL);
-     ROSE_ASSERT(globalScopeAcrossFiles->get_symbol_table()->get_table() != NULL);
-
-#if 0
-     printf ("In SageBuilder::buildFile(): globalScopeAcrossFiles                  = %p \n",globalScopeAcrossFiles);
-     printf (" --- globalScopeAcrossFiles->get_declarations().size()               = %zu \n",globalScopeAcrossFiles->get_declarations().size());
-     printf (" --- globalScopeAcrossFiles->get_symbol_table()->size()              = %d \n",globalScopeAcrossFiles->get_symbol_table()->size());
-     printf (" --- globalScopeAcrossFiles->get_symbol_table()->get_table()->size() = %d \n",globalScopeAcrossFiles->get_symbol_table()->get_table()->size());
-#endif
-#if 0
-     printf ("Removing all elements from the globalScopeAcrossFiles->get_symbol_table() \n");
-#endif
-
-  // DQ (11/5/2020): Clear the symbol table used to support multifile handling.
-  // This breaks only one of the test codes in the codeSegregation tool, but it is a name 
-  // qualification that should likely be handled better so I think this is a good fix.
-     globalScopeAcrossFiles->get_symbol_table()->get_table()->delete_elements();
+          ROSE_ASSERT(globalScopeAcrossFiles->get_symbol_table() != NULL);
+          ROSE_ASSERT(globalScopeAcrossFiles->get_symbol_table()->get_table() != NULL);
 
 #if 0
-     printf ("After removing all symbols (alias symbols): globalScopeAcrossFiles->get_symbol_table()->size()              = %d \n",globalScopeAcrossFiles->get_symbol_table()->size());
-     printf ("After removing all symbols (alias symbols): globalScopeAcrossFiles->get_symbol_table()->get_table()->size() = %d \n",globalScopeAcrossFiles->get_symbol_table()->get_table()->size());
+          printf ("In SageBuilder::buildFile(): globalScopeAcrossFiles                  = %p \n",globalScopeAcrossFiles);
+          printf (" --- globalScopeAcrossFiles->get_declarations().size()               = %zu \n",globalScopeAcrossFiles->get_declarations().size());
+          printf (" --- globalScopeAcrossFiles->get_symbol_table()->size()              = %d \n",globalScopeAcrossFiles->get_symbol_table()->size());
+          printf (" --- globalScopeAcrossFiles->get_symbol_table()->get_table()->size() = %d \n",globalScopeAcrossFiles->get_symbol_table()->get_table()->size());
 #endif
+#if 0
+          printf ("Removing all elements from the globalScopeAcrossFiles->get_symbol_table() \n");
+#endif
+
+       // DQ (11/5/2020): Clear the symbol table used to support multifile handling.
+       // This breaks only one of the test codes in the codeSegregation tool, but it is a name 
+       // qualification that should likely be handled better so I think this is a good fix.
+          globalScopeAcrossFiles->get_symbol_table()->get_table()->delete_elements();
+
+#if 0
+          printf ("After removing all symbols (alias symbols): globalScopeAcrossFiles->get_symbol_table()->size()              = %d \n",globalScopeAcrossFiles->get_symbol_table()->size());
+          printf ("After removing all symbols (alias symbols): globalScopeAcrossFiles->get_symbol_table()->get_table()->size() = %d \n",globalScopeAcrossFiles->get_symbol_table()->get_table()->size());
+#endif
+        }
 
   // DQ (9/18/2019): Test that the use of fullname has no effect.
   // ROSE_ASSERT(sourceFilename == sourceFilename_fullname);
