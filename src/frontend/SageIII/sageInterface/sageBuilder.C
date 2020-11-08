@@ -16417,7 +16417,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 // infrequently used option.
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildFile(inputFileName = %s, outputFileName = %s, project = %p) \n",inputFileName.c_str(),outputFileName.c_str(),project);
   // printf (" --- fullname = %s \n",fullname.c_str());
 #endif
@@ -16443,13 +16443,13 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      ROSE_ASSERT(globalScopeAcrossFiles->get_symbol_table() != NULL);
      ROSE_ASSERT(globalScopeAcrossFiles->get_symbol_table()->get_table() != NULL);
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildFile(): globalScopeAcrossFiles                  = %p \n",globalScopeAcrossFiles);
      printf (" --- globalScopeAcrossFiles->get_declarations().size()               = %zu \n",globalScopeAcrossFiles->get_declarations().size());
      printf (" --- globalScopeAcrossFiles->get_symbol_table()->size()              = %d \n",globalScopeAcrossFiles->get_symbol_table()->size());
      printf (" --- globalScopeAcrossFiles->get_symbol_table()->get_table()->size() = %d \n",globalScopeAcrossFiles->get_symbol_table()->get_table()->size());
 #endif
-#if 1
+#if 0
      printf ("Removing all elements from the globalScopeAcrossFiles->get_symbol_table() \n");
 #endif
 
@@ -16458,7 +16458,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // qualification that should likely be handled better so I think this is a good fix.
      globalScopeAcrossFiles->get_symbol_table()->get_table()->delete_elements();
 
-#if 1
+#if 0
      printf ("After removing all symbols (alias symbols): globalScopeAcrossFiles->get_symbol_table()->size()              = %d \n",globalScopeAcrossFiles->get_symbol_table()->size());
      printf ("After removing all symbols (alias symbols): globalScopeAcrossFiles->get_symbol_table()->get_table()->size() = %d \n",globalScopeAcrossFiles->get_symbol_table()->get_table()->size());
 #endif
@@ -17002,21 +17002,21 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
   // This function needs a way to specify the associated language for the generated file.
   // Currently this is taken from the input file (generated from a prefix on the output filename.
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildSourceFile(outputFileName = %s, project = %p) \n",outputFileName.c_str(),project);
 #endif
 
   // Call the supporting function to build a file.
      string inputFilePrefix = "temp_dummy_file_";
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* project): calling buildFile() \n");
 #endif
 
      SgFile* file = buildFile(inputFilePrefix+outputFileName,outputFileName,project);
      ROSE_ASSERT(file != NULL);
 
-#if 1
+#if 0
      printf ("DONE: In SageBuilder::buildSourceFile(): calling buildFile() \n");
 #endif
 
@@ -17040,7 +17040,7 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
 
 SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project)
    {
-#if 1
+#if 0
      printf ("In SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project): calling buildFile() \n");
   // printf (" --- inputFileName  = %s outputFileName = %s \n",inputFileName.c_str(),outputFileName.c_str());
      printf (" --- inputFileName  = %s \n",inputFileName.c_str());
@@ -17050,7 +17050,7 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
      SgFile* file = buildFile(inputFileName, outputFileName,project);
      ROSE_ASSERT(file != NULL);
 
-#if 1
+#if 0
      printf ("DONE: In SageBuilder::buildSourceFile(): calling buildFile() \n");
 #endif
 
