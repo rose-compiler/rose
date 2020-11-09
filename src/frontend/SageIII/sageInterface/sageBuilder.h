@@ -1573,17 +1573,17 @@ ROSE_DLL_API SgStatement* buildStatementFromString(const std::string & stmt_str,
 //! Build a SgFile node and attach it to SgProject
 /*! The input file will be loaded if exists, or an empty one will be generated from scratch transparently. Output file name is used to specify the output file name of unparsing. The final SgFile will be inserted to project automatically. If not provided, a new SgProject will be generated internally. Using SgFile->get_project() to retrieve it in this case.
  */
-ROSE_DLL_API SgFile* buildFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project=NULL);
+ROSE_DLL_API SgFile* buildFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project = NULL, bool clear_globalScopeAcrossFiles = false);
 
 //! Build a SgFile node and attach it to SgProject
 /*! The file will be build with an empty global scope to support declarations being added.
  */
-ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& outputFileName, SgProject* project=NULL);
+ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& outputFileName, SgProject* project=NULL, bool clear_globalScopeAcrossFiles = false);
 
 //! Build a SgSourceFile node and attach it to SgProject
 /*! The input file will be loaded if exists, or an empty one will be generated from scratch transparently. Output file name is used to specify the output file name of unparsing. The final SgFile will be inserted to project automatically. If not provided, a new SgProject will be generated internally. Using SgFile->get_project() to retrieve it in this case.
  */
-ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project);
+ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project, bool clear_globalScopeAcrossFiles = false);
 
 // DQ (11/8/2019): Support function for the new file (to support changing the file names in the source position info objects of each AST subtree node.
 //! Change the source file associated with the source position information in the AST.
