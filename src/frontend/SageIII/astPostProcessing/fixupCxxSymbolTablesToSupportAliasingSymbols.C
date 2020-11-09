@@ -1152,7 +1152,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                   }
                  else
                   {
-#if ALIAS_SYMBOL_DEBUGGING
+#if ALIAS_SYMBOL_DEBUGGING || 0
                     printf ("An alias symbol for the same kind of symbol already exists, so add to the existing SgAliasSymbol \n");
                     printf ("  --- symbol          = %p = %s \n",symbol,symbol->class_name().c_str());
                     printf ("  --- original_symbol = %p = %s \n",original_symbol,original_symbol->class_name().c_str());
