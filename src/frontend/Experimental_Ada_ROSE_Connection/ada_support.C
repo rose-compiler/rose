@@ -9,6 +9,10 @@
 #include "sage3basic.h"
 #include "rose_config.h"
 
+#include "CommandLine.h"
+#include "Sawyer/CommandLine.h"
+
+
 #include <boost/filesystem.hpp>
 
 #include "ada_support.h"
@@ -23,10 +27,19 @@
 // extern "C" void dot_asisfinal (void);
 
 namespace boostfs = boost::filesystem;
+namespace scl     = Sawyer::CommandLine;
 
 namespace Ada_ROSE_Translation
 {
   Sawyer::Message::Facility mlog;
+
+  struct Settings
+  {
+    bool processPredefinedUnits = false;
+    bool processImplementationUnits = false;
+    bool asisDebug = false;
+  };
+
 }
 
 
@@ -44,7 +57,37 @@ int main(int argc, char** argv)
      const char *prefix = "call_asis_tool_2.main";
 
      mlog = Sawyer::Message::Facility("Ada2ROSE", Rose::Diagnostics::destination);
+     //~ Rose::Diagnostics::initAndRegister(&mlog, "Ada2ROSE");
      mprintf ("In ada_support.C: In ada_main(): calling ada support for file = %s \n",file->getFileName().c_str());
+
+     Ada_ROSE_Translation::Settings settings;
+/*
+     scl::Parser p = Rose::CommandLine::createEmptyParserStage("", "");
+
+     p.errorStream(mlog[Sawyer::Message::FATAL]);               // print messages and exit rather than throwing exceptions
+     //~ p.with(CommandLine::genericSwitches());   // things like --help, --version, --log, --threads, etc.
+     //~ p.doc("Synopsis", "@prop{programName} [@v{switches}] @v{file_names}..."); // customized synopsis
+
+     // Create a group of switches specific to this tool
+     scl::SwitchGroup ada2Rose("Ada2ROSE (A2R) - specific switches");
+
+     ada2Rose.name("A2R");  // the optional switch prefix
+
+     ada2Rose.insert(scl::Switch("process_predefined_units")
+           .intrinsicValue(settings.processPredefinedUnits, settings.processPredefinedUnits)
+           .doc("With Asis's predefined units"));
+
+     ada2Rose.insert(scl::Switch("process_implementation_units")
+           .intrinsicValue(settings.processImplementationUnits, settings.processImplementationUnits)
+           .doc("Enables Asis implementation unit processing"));
+
+     ada2Rose.insert(scl::Switch("asis_debug")
+           .intrinsicValue(settings.asisDebug, settings.asisDebug)
+           .doc("Sets Asis debug flag"));
+
+     // std::vector<std::string> files = p.with(ada2Rose).parse(argc, argv).apply().unreachedArgs();
+     p.with(ada2Rose).parse(argc, argv).apply();
+*/
 
   // char *target_file = "../test_units/unit_2.adb";
   // const char *target_file = file->getFileName().c_str();
@@ -89,22 +132,31 @@ int main(int argc, char** argv)
        boostfs::create_directory(gnatOutputDir);
        boostfs::current_path(gnatOutputDir);
 
-       string_type xyz = boostfs::current_path().string<string_type>();
-
-       mprintf ("changed working directory: %s\n", xyz.c_str());
-
        char* cstring_SrcFile = const_cast<char*>(srcFile.c_str());
        char* cstring_GnatOutputDir = const_cast<char*>(gnatOutputDir.c_str());
 
     // DQ (31/8/2017): Definitions of these functions still need to be provided to via libraries to be able to link ROSE.
        dot_asisinit();
-       head_nodes = tool_2_wrapper (cstring_SrcFile, const_cast<char*>(gnat_home), cstring_GnatOutputDir);
+
+    // PP (11/5/20): Use Charles' new tool_2_wrapper_with_flags function
+       mprintf( "calling Asis: src:%s gnat:%s outdir:%s pdunit:%d implunit:%d dbg:%d\n",
+                cstring_SrcFile, gnat_home, cstring_GnatOutputDir,
+                settings.processPredefinedUnits, settings.processImplementationUnits, settings.asisDebug
+              );
+
+       head_nodes = tool_2_wrapper_with_flags( cstring_SrcFile,
+                                               const_cast<char*>(gnat_home),
+                                               cstring_GnatOutputDir,
+                                               settings.processPredefinedUnits,
+                                               settings.processImplementationUnits,
+                                               settings.asisDebug
+                                             );
 
        if (head_nodes.Elements == NULL) {
-          mprintf ("%s:  tool_2_wrapper returned NO elements.\n", prefix);
+          mprintf ("%s:  tool_2_wrapper_with_flags returned NO elements.\n", prefix);
           status = 1;
        } else {
-          mprintf ("%s:  tool_2_wrapper returned %i elements.\n" , prefix, head_nodes.Elements->Next_Count + 1);
+          mprintf ("%s:  tool_2_wrapper_with_flags returned %i elements.\n" , prefix, head_nodes.Elements->Next_Count + 1);
        }
 
        boostfs::current_path(currentDir);
@@ -118,7 +170,6 @@ int main(int argc, char** argv)
      dot_asisfinal();
 
      mprintf ("Leaving ada_main(): status = %d \n", status);
-
      return status;
    }
 

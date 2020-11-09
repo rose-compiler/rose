@@ -129,9 +129,12 @@ public:
         size_t maxPathLengthHits;                       /**< Number of times settings.maxPathLength was hit (effective K). */
         size_t maxCallDepthHits;                        /**< Number of times settings.maxCallDepth was hit. */
         size_t maxRecursionDepthHits;                   /**< Number of times settings.maxRecursionDepth was hit. */
+        Sawyer::Container::Map<rose_addr_t, size_t> reachedBlockVas; /**< Number of times each basic block was reached. */
 
         Statistics()
             : maxVertexVisitHits(0), maxPathLengthHits(0), maxCallDepthHits(0), maxRecursionDepthHits(0) {}
+
+        Statistics& operator+=(const Statistics&);
     };
 
     /** Diagnostic output. */
@@ -334,7 +337,6 @@ private:
     Partitioner2::CfgConstEdgeSet cfgAvoidEdges_;       // CFG edges to avoid
     Partitioner2::CfgConstVertexSet cfgEndAvoidVertices_;// CFG end-of-path and other avoidance vertices
     FunctionSummarizer::Ptr functionSummarizer_;        // user-defined function for handling function summaries
-    AddressSet reachedBlockVas_;                        // basic block addresses reached during analysis
     InstructionSemantics2::BaseSemantics::StatePtr initialState_; // set by setInitialState.
     Statistics stats_;                                  // statistical results of the analysis
     static Sawyer::Attribute::Id POST_STATE;            // stores semantic state after executing the insns for a vertex
@@ -365,7 +367,6 @@ public:
         isDirectedSearch_ = true;
         cfgAvoidEdges_.clear();
         cfgEndAvoidVertices_.clear();
-        reachedBlockVas_.clear();
         resetStatistics();
     }
 
@@ -630,16 +631,6 @@ public:
     Statistics statistics() const {
         return stats_;
     }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Functions for code coverage
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    /** Property: Addresses reached during analysis.
-     *
-     *  This read-only property holds the set of basic block addresses that were reached during the analysis. It is reset
-     *  each time @ref depthFirstSearch is called. */
-    const AddressSet& reachedBlockVas() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Private supporting functions

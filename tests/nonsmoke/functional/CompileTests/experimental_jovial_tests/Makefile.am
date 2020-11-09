@@ -114,7 +114,9 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-192.jov                  \
  rose-issue-rc-193.jov                  \
  rose-issue-rc-201.jov                  \
+ rose-issue-rc-201.pre.jov              \
  rose-issue-rc-203.jov                  \
+ rose-issue-rc-203.pre.jov              \
  rose-issue-rc-204.jov                  \
  rose-issue-rc-225.jov                  \
  rose-issue-rc-225.pre.jov              \
@@ -124,6 +126,8 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-260.jov                  \
  rose-issue-rc-271.jov                  \
  rose-issue-rc-271.pre.jov              \
+ rose-issue-rc-290.jov                  \
+ rose-issue-rc-290.pre.jov              \
  rose-issue-rc-291.jov
 
 # status_enumval.jov                     \

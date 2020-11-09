@@ -6,6 +6,8 @@
 
 #include "rose_config.h"
 
+#include "clang-to-dot.hpp"
+
 #if 0
 // DQ (4/5/2017): nothing works since we need the version of Clang/LLVM that we are using to be3 compilied without the "-fno-rtti" option.
 // DQ (3/1/2017): Trying to get rid of linker error.
@@ -37,8 +39,19 @@ extern bool roseInstallPrefix(std::string&);
 
 int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
- // DQ (10/23/2020): Calling clang-to-dot generator (I don't thing this modifies the argv list).
+#if 0
+ // DQ (11/8/2020): Need to uncomment this to generate clang graph (which is not yet working).
+ // DQ (10/23/2020): Calling clang-to-dot generator (I don't think this modifies the argv list).
     int clang_to_dot_status = clang_to_dot_main(argc,argv);
+#endif
+
+#if 0
+    printf ("Exiting as a test! \n");
+    ROSE_ASSERT(false);
+#endif
+
+    printf ("Returing from top of clang_main(): after calling clang_to_dot_main(): clang_to_dot_status = %d \n",clang_to_dot_status);
+    return clang_to_dot_status;
 
   // 0 - Analyse Cmd Line
 
@@ -540,6 +553,7 @@ bool ClangToSageTranslator::preprocessor_pop() {
 
 // struct NextPreprocessorToInsert
 
+// NextPreprocessorToInsert::NextPreprocessorToInsert(ClangToSageTranslator & translator_) :
 NextPreprocessorToInsert::NextPreprocessorToInsert(ClangToSageTranslator & translator_) :
   cursor(NULL),
   candidat(NULL),

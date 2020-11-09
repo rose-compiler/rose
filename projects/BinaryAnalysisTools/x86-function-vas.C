@@ -13,6 +13,8 @@ using namespace Rose::BinaryAnalysis;
 int
 main(int argc, char *argv[])
 {
+    ROSE_INITIALIZE;
+
     // Parse command-line
     int argno=1;
     for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {

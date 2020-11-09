@@ -46,7 +46,8 @@ NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
 ROSE_OUTPUT_DIR := rose-ada-output
 # ROSE_OUTPUT_DIR := .
 
-TEST_TARGETS := $(addprefix $(ROSE_OUTPUT_DIR)/,$(PASSING_TESTS))
+TEST_TARGETS := $(ROSE_OUTPUT_DIR)/default.gpr
+TEST_TARGETS += $(addprefix $(ROSE_OUTPUT_DIR)/,$(PASSING_TESTS))
 TEST_TARGETS += $(addprefix $(ROSE_OUTPUT_DIR)/,$(PASSING_INCOMPLETE_TESTS))
 
 TESTCODES_REQUIRED_TO_PASS := $(TEST_TARGETS)
@@ -68,6 +69,11 @@ print:
 	@echo "PASSING_TEST_Objects = $(PASSING_TEST_Objects)"
 	@echo "TEST_Source_passed   = $(TEST_Source_passed)"
 	@echo "TEST_Objects_passed  = $(TEST_Objects_passed)"
+
+# copy default.gpr needed by final full-circle test
+$(ROSE_OUTPUT_DIR)/default.gpr: $(srcdir)/../tests/default.gpr
+	mkdir -p $(ROSE_OUTPUT_DIR)
+	cp $< $@
 
 # rose-compiler does not run AST tests
 $(abs_top_builddir)/src/rose-compiler:
