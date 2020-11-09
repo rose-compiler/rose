@@ -18440,13 +18440,19 @@ generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& d
                copy_functionDeclaration->set_parent(targetScope);
 
                assert(copy_functionDeclaration->get_firstNondefiningDeclaration() != NULL);
-               assert(copy_functionDeclaration->get_firstNondefiningDeclaration() != copy_functionDeclaration);
+
+            // DQ (11/8/2020): This can not be asserted now that the buildSourceFile() has the 
+            // feature of clearing the symbol table used across multiple files.
+            // assert(copy_functionDeclaration->get_firstNondefiningDeclaration() != copy_functionDeclaration);
+
                assert(copy_functionDeclaration->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
 
                assert(copy_functionDeclaration->get_scope() != NULL);
                assert(copy_functionDeclaration->get_scope() == targetScope);
-               assert(copy_functionDeclaration->get_scope()->lookup_function_symbol(copy_functionDeclaration->get_name(), copy_functionDeclaration->get_type()) != NULL);
-               assert(copy_functionDeclaration->get_scope()->lookup_function_symbol(copy_functionDeclaration->get_name(), copy_functionDeclaration->get_type())->get_symbol_basis() == copy_functionDeclaration->get_firstNondefiningDeclaration());
+               assert(copy_functionDeclaration->get_scope()->lookup_function_symbol(copy_functionDeclaration->get_name(), 
+                    copy_functionDeclaration->get_type()) != NULL);
+               assert(copy_functionDeclaration->get_scope()->lookup_function_symbol(copy_functionDeclaration->get_name(), 
+                    copy_functionDeclaration->get_type())->get_symbol_basis() == copy_functionDeclaration->get_firstNondefiningDeclaration());
 
                copy_node = copy_functionDeclaration;
 #if 0

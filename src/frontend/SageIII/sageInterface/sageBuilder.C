@@ -16409,7 +16409,7 @@ SageBuilder::fixupSharingSourcePosition(SgNode* subtreeRoot, int new_file_id)
 
   //! Build a SgFile node
 SgFile*
-SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
+SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/, bool clear_globalScopeAcrossFiles /*=false*/)
    {
 // Note that ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT defines a reduced set of ROSE to support front-end specific development.
 // It is mostly used by quinlan to support laptop development where the smaller set of files permits one to do limited
@@ -16418,7 +16418,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 
 #if 0
-     printf ("In SageBuilder::buildFile(inputFileName = %s, outputFileName = %s, project = %p \n",inputFileName.c_str(),outputFileName.c_str(),project);
+     printf ("In SageBuilder::buildFile(inputFileName = %s, outputFileName = %s, project = %p) \n",inputFileName.c_str(),outputFileName.c_str(),project);
   // printf (" --- fullname = %s \n",fullname.c_str());
 #endif
 
@@ -16433,6 +16433,41 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // printf ("sourceFilename_fullname = %s \n",sourceFilename_fullname.c_str());
      printf ("sourceFilename          = %s \n",sourceFilename.c_str());
 #endif
+
+
+  // DQ (11/5/2020): Experiment with clearing the global scope that is supporting multiple translation 
+  // units, since it is the cause of some problem when a tool is designed to read an input file twice.
+     if (project != NULL)
+        {
+          SgGlobal* globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+          ROSE_ASSERT(globalScopeAcrossFiles != NULL);
+
+          ROSE_ASSERT(globalScopeAcrossFiles->get_symbol_table() != NULL);
+          ROSE_ASSERT(globalScopeAcrossFiles->get_symbol_table()->get_table() != NULL);
+
+#if 0
+          printf ("In SageBuilder::buildFile(): globalScopeAcrossFiles                  = %p \n",globalScopeAcrossFiles);
+          printf (" --- globalScopeAcrossFiles->get_declarations().size()               = %zu \n",globalScopeAcrossFiles->get_declarations().size());
+          printf (" --- globalScopeAcrossFiles->get_symbol_table()->size()              = %d \n",globalScopeAcrossFiles->get_symbol_table()->size());
+          printf (" --- globalScopeAcrossFiles->get_symbol_table()->get_table()->size() = %d \n",globalScopeAcrossFiles->get_symbol_table()->get_table()->size());
+#endif
+#if 0
+          printf ("Removing all elements from the globalScopeAcrossFiles->get_symbol_table() \n");
+#endif
+
+       // DQ (11/5/2020): Clear the symbol table used to support multifile handling.
+       // This breaks only one of the test codes in the codeSegregation tool, but it is a name 
+       // qualification that should likely be handled better so I think this is a good fix.
+          if (clear_globalScopeAcrossFiles == true)
+             {
+               globalScopeAcrossFiles->get_symbol_table()->get_table()->delete_elements();
+             }
+
+#if 0
+          printf ("After removing all symbols (alias symbols): globalScopeAcrossFiles->get_symbol_table()->size()              = %d \n",globalScopeAcrossFiles->get_symbol_table()->size());
+          printf ("After removing all symbols (alias symbols): globalScopeAcrossFiles->get_symbol_table()->get_table()->size() = %d \n",globalScopeAcrossFiles->get_symbol_table()->get_table()->size());
+#endif
+        }
 
   // DQ (9/18/2019): Test that the use of fullname has no effect.
   // ROSE_ASSERT(sourceFilename == sourceFilename_fullname);
@@ -16963,7 +16998,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
 //! Build a SgFile node
 SgSourceFile*
-SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* project)
+SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* project, bool clear_globalScopeAcrossFiles /*=false*/)
    {
   // DQ (2/9/2013): Adding support to build a SgSourceFile with an empty global scope.
   // This function calls the buildFile(string,string,SgProject*) function and provides
@@ -16974,7 +17009,7 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
   // Currently this is taken from the input file (generated from a prefix on the output filename.
 
 #if 0
-     printf ("In SageBuilder::buildSourceFile(outputFileName = %s, project = %p \n",outputFileName.c_str(),project);
+     printf ("In SageBuilder::buildSourceFile(outputFileName = %s, project = %p) \n",outputFileName.c_str(),project);
 #endif
 
   // Call the supporting function to build a file.
@@ -16984,7 +17019,7 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
      printf ("In SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* project): calling buildFile() \n");
 #endif
 
-     SgFile* file = buildFile(inputFilePrefix+outputFileName,outputFileName,project);
+     SgFile* file = buildFile(inputFilePrefix+outputFileName,outputFileName,project,clear_globalScopeAcrossFiles);
      ROSE_ASSERT(file != NULL);
 
 #if 0
@@ -17009,7 +17044,7 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
 
    }
 
-SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project)
+SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project, bool clear_globalScopeAcrossFiles /*=false*/)
    {
 #if 0
      printf ("In SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project): calling buildFile() \n");
@@ -17018,7 +17053,7 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
      printf (" --- outputFileName = %s \n",outputFileName.c_str());
 #endif
 
-     SgFile* file = buildFile(inputFileName, outputFileName,project);
+     SgFile* file = buildFile(inputFileName, outputFileName,project,clear_globalScopeAcrossFiles);
      ROSE_ASSERT(file != NULL);
 
 #if 0
