@@ -5567,6 +5567,10 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
                printf ("project->get_fileList_ptr()->get_listOfFiles()[%zu] is not a SgSourceFile \n",i);
 #endif
              }
+#if 0
+          printf ("Exiting after computing the name qualification on the first file (as a test for debugging codeSegregation tool) \n");
+          ROSE_ASSERT(false);
+#endif
         }
 
 #if 0
