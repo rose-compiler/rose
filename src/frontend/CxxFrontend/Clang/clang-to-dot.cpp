@@ -2,11 +2,9 @@
 #include <iostream>
 
 #include "sage3basic.h"
-#include "clang-frontend-private.hpp"
+#include "clang-to-dot-private.hpp"
 
 #include "rose_config.h"
-
-#include "clang-to-dot.hpp"
 
 #if 0
 // DQ (4/5/2017): nothing works since we need the version of Clang/LLVM that we are using to be3 compilied without the "-fno-rtti" option.
@@ -37,21 +35,67 @@ void clang::PPCallbacks::type_info() {};
 
 extern bool roseInstallPrefix(std::string&);
 
-int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
+// DQ (11/1/2020): Added to resolve types (e.g string)
+using namespace std;
 
-#if 0
- // DQ (11/8/2020): Need to uncomment this to generate clang graph (which is not yet working).
- // DQ (10/23/2020): Calling clang-to-dot generator (I don't think this modifies the argv list).
-    int clang_to_dot_status = clang_to_dot_main(argc,argv);
+// File for output for generated graph.
+std::ofstream CLANG_ROSE_Graph::file;
+
+// DQ (11/1/2020): Added to resolve namespace variables.
+using namespace CLANG_ROSE_Graph;
+
+// DQ (10/23/2020): We need a list to make sure that we don't add nodes twice (once when traversing the source sequence lists and a second time when traversing the AST).
+// We need to show the AST plus the edges that are specific to the source sequence lists (and which node's source sequence list they are associated with).
+std::set<void*> graphNodeSet;
+
+#define DEBUG_CLANG_DOT_GRAPH_SUPPPORT 0
+
+#define DEBUG_HEADER_GRAPH_SUPPPORT 0
+
+
+// int clang_to_dot_main(int argc, char ** argv, SgSourceFile& sageFile) 
+int clang_to_dot_main(int argc, char ** argv) 
+   {
+  // DQ (9/6/2013): Build a dot graph of the EDG AST.
+
+  // Build filename...
+     string filename = "clangGraph";
+
+     string dot_header = filename;
+     filename += ".dot";
+
+#if DEBUG_EDG_DOT_GRAPH_SUPPPORT
+     printf ("In clang_to_dot_main(): filename = %s \n",filename.c_str());
 #endif
 
+  // std::set<void*> graphNodeSet;
+     if (graphNodeSet.empty() == false)
+        {
+#if 1
+          printf ("In graph_edg_ast(): calling graphNodeSet.clear() to support multiple files \n");
+#endif
+          graphNodeSet.clear();
+        }
+
+  // Open file...(file is declared in the EDG_ROSE_Graph namespace).
+     file.open(filename.c_str());
+
+  // Output the opening header for a DOT file.
+     file << "digraph \"" << dot_header << "\" {" << endl;
+
 #if 0
-    printf ("Exiting as a test! \n");
-    ROSE_ASSERT(false);
+  // DQ (11/1/2020): This is not defined for Clang (only EDG).
+
+  // Calling recursive function to build dot file for scope, starting at the top level scope.
+     graph (il_header.primary_scope,"EDG Global Scope");
+
+  // Function "main" is stored seperately.
+     if (il_header.main_routine != NULL)
+        {
+          graph (il_header.main_routine);
+        }
 #endif
 
-    printf ("Returing from top of clang_main(): after calling clang_to_dot_main(): clang_to_dot_status = %d \n",clang_to_dot_status);
-    return clang_to_dot_status;
 
   // 0 - Analyse Cmd Line
 
@@ -102,28 +146,28 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
         }
     }
 
-    ClangToSageTranslator::Language language = ClangToSageTranslator::unknown;
+    ClangToDotTranslator::Language language = ClangToDotTranslator::unknown;
 
     size_t last_period = input_file.find_last_of(".");
     std::string extention(input_file.substr(last_period + 1));
 
     if (extention == "c") {
-        language = ClangToSageTranslator::C;
+        language = ClangToDotTranslator::C;
     }
     else if (extention == "C" || extention == "cxx" || extention == "cpp" || extention == "cc") {
-        language = ClangToSageTranslator::CPLUSPLUS;
+        language = ClangToDotTranslator::CPLUSPLUS;
     }
     else if (extention == "objc") {
-        language = ClangToSageTranslator::OBJC;
+        language = ClangToDotTranslator::OBJC;
     }
     else if (extention == "cu") {
-        language = ClangToSageTranslator::CUDA;
+        language = ClangToDotTranslator::CUDA;
     }
     else if (extention == "ocl" || extention == "cl") {
-        language = ClangToSageTranslator::OPENCL;
+        language = ClangToDotTranslator::OPENCL;
     }
 
-    ROSE_ASSERT(language != ClangToSageTranslator::unknown);
+    ROSE_ASSERT(language != ClangToDotTranslator::unknown);
 
     const char * cxx_config_include_dirs_array [] = CXX_INCLUDE_STRING;
     const char * c_config_include_dirs_array   [] = C_INCLUDE_STRING;
@@ -159,24 +203,24 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
     // FIXME add ROSE path to gcc headers...
     switch (language) {
-        case ClangToSageTranslator::C:
+        case ClangToDotTranslator::C:
             inc_dirs_list.insert(inc_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
             inc_list.push_back("clang-builtin-c.h");
             break;
-        case ClangToSageTranslator::CPLUSPLUS:
+        case ClangToDotTranslator::CPLUSPLUS:
             inc_dirs_list.insert(inc_dirs_list.begin(), cxx_config_include_dirs.begin(), cxx_config_include_dirs.end());
             inc_list.push_back("clang-builtin-cpp.hpp");
             break;
-        case ClangToSageTranslator::CUDA:
+        case ClangToDotTranslator::CUDA:
             inc_dirs_list.insert(inc_dirs_list.begin(), cxx_config_include_dirs.begin(), cxx_config_include_dirs.end());
             inc_list.push_back("clang-builtin-cuda.hpp");
             break;
-        case ClangToSageTranslator::OPENCL:
+        case ClangToDotTranslator::OPENCL:
 //          inc_dirs_list.insert(inc_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
             // FIXME get the path right
             inc_list.push_back("clang-builtin-opencl.h");
             break;
-        case ClangToSageTranslator::OBJC:
+        case ClangToDotTranslator::OBJC:
           {
          // DQ (10/23/2020): Added error message for Objective C language not supported in ROSE.
             printf ("Objective C langauge support is not available in ROSE \n");
@@ -245,23 +289,23 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     clang::LangOptions & lang_opts = compiler_instance->getLangOpts();
 
     switch (language) {
-        case ClangToSageTranslator::C:
+        case ClangToDotTranslator::C:
 //          compiler_instance->getInvocation().setLangDefaults(lang_opts, clang::IK_C, );
             break;
-        case ClangToSageTranslator::CPLUSPLUS:
+        case ClangToDotTranslator::CPLUSPLUS:
             lang_opts.CPlusPlus = 1;
 //          compiler_instance->getInvocation().setLangDefaults(lang_opts, clang::IK_CXX, );
             break;
-        case ClangToSageTranslator::CUDA:
+        case ClangToDotTranslator::CUDA:
             lang_opts.CUDA = 1;
 //          lang_opts.CPlusPlus = 1;
 //          compiler_instance->getInvocation().setLangDefaults(lang_opts, clang::IK_CUDA,   clang::LangStandard::lang_cuda);
             break;
-        case ClangToSageTranslator::OPENCL:
+        case ClangToDotTranslator::OPENCL:
             lang_opts.OpenCL = 1;
 //          compiler_instance->getInvocation().setLangDefaults(lang_opts, clang::IK_OpenCL, clang::LangStandard::lang_opencl);
             break;
-        case ClangToSageTranslator::OBJC:
+        case ClangToDotTranslator::OBJC:
             ROSE_ASSERT(!"Objective-C is not supported by ROSE Compiler.");
 //          compiler_instance->getInvocation().setLangDefaults(lang_opts, clang::IK_, );
         default:
@@ -287,7 +331,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
     if (!compiler_instance->hasASTContext()) compiler_instance->createASTContext();
 
-    ClangToSageTranslator translator(compiler_instance, language);
+    ClangToDotTranslator translator(compiler_instance, language);
     compiler_instance->setASTConsumer(std::move(std::unique_ptr<clang::ASTConsumer>(&translator)));
 
     if (!compiler_instance->hasSema()) compiler_instance->createSema(clang::TU_Complete, NULL);
@@ -306,8 +350,10 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     clang::ParseAST(compiler_instance->getPreprocessor(), &translator, compiler_instance->getASTContext());
     compiler_instance->getDiagnosticClient().EndSourceFile();
 
+#if 0
     SgGlobal * global_scope = translator.getGlobalScope();
 
+#if 0
   // 4 - Attach to the file
 
     if (sageFile.get_globalScope() != NULL) SageInterface::deleteAST(sageFile.get_globalScope());
@@ -315,6 +361,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     sageFile.set_globalScope(global_scope);
 
     global_scope->set_parent(&sageFile);
+#endif
 
     std::string file_name(input_file);
 
@@ -324,15 +371,31 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     global_scope->set_startOfConstruct(start_fi);
 
     global_scope->set_endOfConstruct(end_fi);
+#endif
 
   // 5 - Finish the AST (fixup phase)
 
-    finishSageAST(translator);
+    printf ("Calling finishSageAST(): needs to call DOT graph generator \n");
+
+ // finishSageAST(translator);
+
+  // DOT specific code to close off the file.
+  // Close off the DOT file.
+     file << endl;
+     file << "} " << endl;
+     file.close();
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
     return 0;
 }
 
-void finishSageAST(ClangToSageTranslator & translator) {
+#if 0
+// We don't need this for for the generation of the dot file.
+void finishSageAST(ClangToDotTranslator & translator) {
     SgGlobal * global_scope = translator.getGlobalScope();
 
  // 1 - Label Statements: Move sub-statement after the label statement.
@@ -352,29 +415,59 @@ void finishSageAST(ClangToSageTranslator & translator) {
 
  // 2 - Place Preprocessor informations
 }
+#endif
 
-SgGlobal * ClangToSageTranslator::getGlobalScope() { return p_global_scope; }
+#if 0
+SgGlobal * ClangToDotTranslator::getGlobalScope() { return p_global_scope; }
+#endif
 
-ClangToSageTranslator::ClangToSageTranslator(clang::CompilerInstance * compiler_instance, Language language_) :
+#if 1
+ClangToDotTranslator::ClangToDotTranslator(clang::CompilerInstance * compiler_instance, Language language_) :
+    clang::ASTConsumer(),
+    p_compiler_instance(compiler_instance),
+    p_decl_translation_map(),
+    p_stmt_translation_map(),
+    p_type_translation_map(),
+    p_node_desc(),
+ // DQ (11/3/2020): Added data member.
+    p_sage_preprocessor_recorder(new ClangToDotPreprocessorRecord(&(p_compiler_instance->getSourceManager()))),
+    language(language_),
+    ident_cnt(0)
+{}
+#endif
+
+ClangToDotTranslator::~ClangToDotTranslator() {}
+
+std::string ClangToDotTranslator::genNextIdent() {
+    std::ostringstream oss;
+    oss << "ident" << ident_cnt++;
+    return oss.str();
+}
+
+#if 0
+ClangToDotTranslator::ClangToDotTranslator(clang::CompilerInstance * compiler_instance, Language language_) :
     clang::ASTConsumer(),
     p_decl_translation_map(),
     p_stmt_translation_map(),
     p_type_translation_map(),
-    p_global_scope(NULL),
-    p_class_type_decl_first_see_in_type(),
-    p_enum_type_decl_first_see_in_type(),
+ // p_global_scope(NULL),
+ // p_class_type_decl_first_see_in_type(),
+ // p_enum_type_decl_first_see_in_type(),
     p_compiler_instance(compiler_instance),
-    p_sage_preprocessor_recorder(new SagePreprocessorRecord(&(p_compiler_instance->getSourceManager()))),
+ // p_sage_preprocessor_recorder(new ClangToDotPreprocessorRecord(&(p_compiler_instance->getSourceManager()))),
     language(language_)
 {}
 
-ClangToSageTranslator::~ClangToSageTranslator() {
-    delete p_sage_preprocessor_recorder;
-}
+ClangToDotTranslator::~ClangToDotTranslator() 
+   {
+  // delete p_sage_preprocessor_recorder;
+   }
+#endif
 
 /* (protected) Helper methods */
 
-void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange source_range) {
+#if 0
+void ClangToDotTranslator::applySourceRange(SgNode * node, clang::SourceRange source_range)  {
     SgLocatedNode * located_node = isSgLocatedNode(node);
     SgInitializedName * init_name = isSgInitializedName(node);
 
@@ -489,8 +582,10 @@ void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange s
     }
 
 }
+#endif
 
-void ClangToSageTranslator::setCompilerGeneratedFileInfo(SgNode * node, bool to_be_unparse) {
+#if 0
+void ClangToDotTranslator::setCompilerGeneratedFileInfo(SgNode * node, bool to_be_unparse) {
     Sg_File_Info * start_fi = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
     Sg_File_Info * end_fi   = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
 
@@ -534,37 +629,50 @@ void ClangToSageTranslator::setCompilerGeneratedFileInfo(SgNode * node, bool to_
         init_name->set_endOfConstruct(end_fi);
     }
 }
+#endif
 
 /* Overload of ASTConsumer::HandleTranslationUnit, it is the "entry point" */
 
-void ClangToSageTranslator::HandleTranslationUnit(clang::ASTContext & ast_context) {
+void ClangToDotTranslator::HandleTranslationUnit(clang::ASTContext & ast_context) {
+
+#if 1
+     printf ("In ClangToDotTranslator::HandleTranslationUnit(): calling Traverse(ast_context.getTranslationUnitDecl()); \n");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
     Traverse(ast_context.getTranslationUnitDecl());
 }
 
 /* Preprocessor Stack */
 
-std::pair<Sg_File_Info *, PreprocessingInfo *> ClangToSageTranslator::preprocessor_top() {
+#if 1
+std::pair<Sg_File_Info *, PreprocessingInfo *> ClangToDotTranslator::preprocessor_top() {
     return p_sage_preprocessor_recorder->top();
 }
-
-bool ClangToSageTranslator::preprocessor_pop() {
+#endif
+#if 1
+bool ClangToDotTranslator::preprocessor_pop() {
     return p_sage_preprocessor_recorder->pop();
 }
+#endif
 
 // struct NextPreprocessorToInsert
 
-// NextPreprocessorToInsert::NextPreprocessorToInsert(ClangToSageTranslator & translator_) :
-NextPreprocessorToInsert::NextPreprocessorToInsert(ClangToSageTranslator & translator_) :
+ClangToDotNextPreprocessorToInsert::ClangToDotNextPreprocessorToInsert(ClangToDotTranslator & translator_) :
   cursor(NULL),
   candidat(NULL),
   next_to_insert(NULL),
   translator(translator_)
 {}
 
-NextPreprocessorToInsert * NextPreprocessorToInsert::next() {
+ClangToDotNextPreprocessorToInsert * ClangToDotNextPreprocessorToInsert::next() {
     if (!translator.preprocessor_pop()) return NULL;
 
-    NextPreprocessorToInsert * res = new NextPreprocessorToInsert(translator);
+    ClangToDotNextPreprocessorToInsert * res = new ClangToDotNextPreprocessorToInsert(translator);
 
     std::pair<Sg_File_Info *, PreprocessingInfo *> next = translator.preprocessor_top();
     res->cursor = next.first;
@@ -574,7 +682,7 @@ NextPreprocessorToInsert * NextPreprocessorToInsert::next() {
 
 // class
 
-NextPreprocessorToInsert * PreprocessorInserter::evaluateInheritedAttribute(SgNode * astNode, NextPreprocessorToInsert * inheritedValue) {
+ClangToDotNextPreprocessorToInsert * ClangToDotPreprocessorInserter::evaluateInheritedAttribute(SgNode * astNode, ClangToDotNextPreprocessorToInsert * inheritedValue) {
     SgLocatedNode * loc_node = isSgLocatedNode(astNode);
     if (loc_node == NULL) return inheritedValue;
 
@@ -592,12 +700,12 @@ NextPreprocessorToInsert * PreprocessorInserter::evaluateInheritedAttribute(SgNo
 
 // class SagePreprocessorRecord
 
-SagePreprocessorRecord::SagePreprocessorRecord(clang::SourceManager * source_manager) :
+ClangToDotPreprocessorRecord::ClangToDotPreprocessorRecord(clang::SourceManager * source_manager) :
   p_source_manager(source_manager),
   p_preprocessor_record_list()
 {}
 
-void SagePreprocessorRecord::InclusionDirective(clang::SourceLocation HashLoc, const clang::Token & IncludeTok, llvm::StringRef FileName, bool IsAngled,
+void ClangToDotPreprocessorRecord::InclusionDirective(clang::SourceLocation HashLoc, const clang::Token & IncludeTok, llvm::StringRef FileName, bool IsAngled,
                                                 const clang::FileEntry * File, clang::SourceLocation EndLoc, llvm::StringRef SearchPath, llvm::StringRef RelativePath) {
     std::cerr << "InclusionDirective" << std::endl;
 
@@ -628,102 +736,110 @@ void SagePreprocessorRecord::InclusionDirective(clang::SourceLocation HashLoc, c
     p_preprocessor_record_list.push_back(std::pair<Sg_File_Info *, PreprocessingInfo *>(file_info, preproc_info));
 }
 
-void SagePreprocessorRecord::EndOfMainFile() {
+void ClangToDotPreprocessorRecord::EndOfMainFile() {
     std::cerr << "EndOfMainFile" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::Ident(clang::SourceLocation Loc, const std::string & str) {
+void ClangToDotPreprocessorRecord::Ident(clang::SourceLocation Loc, const std::string & str) {
     std::cerr << "Ident" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::PragmaComment(clang::SourceLocation Loc, const clang::IdentifierInfo * Kind, const std::string & Str) {
+void ClangToDotPreprocessorRecord::PragmaComment(clang::SourceLocation Loc, const clang::IdentifierInfo * Kind, const std::string & Str) {
     std::cerr << "PragmaComment" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::PragmaMessage(clang::SourceLocation Loc, llvm::StringRef Str) {
+void ClangToDotPreprocessorRecord::PragmaMessage(clang::SourceLocation Loc, llvm::StringRef Str) {
     std::cerr << "PragmaMessage" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::PragmaDiagnosticPush(clang::SourceLocation Loc, llvm::StringRef Namespace) {
+void ClangToDotPreprocessorRecord::PragmaDiagnosticPush(clang::SourceLocation Loc, llvm::StringRef Namespace) {
     std::cerr << "PragmaDiagnosticPush" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::PragmaDiagnosticPop(clang::SourceLocation Loc, llvm::StringRef Namespace) {
+void ClangToDotPreprocessorRecord::PragmaDiagnosticPop(clang::SourceLocation Loc, llvm::StringRef Namespace) {
     std::cerr << "PragmaDiagnosticPop" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::PragmaDiagnostic(clang::SourceLocation Loc, llvm::StringRef Namespace, clang::diag::Severity Severity, llvm::StringRef Str) {
+void ClangToDotPreprocessorRecord::PragmaDiagnostic(clang::SourceLocation Loc, llvm::StringRef Namespace, clang::diag::Severity Severity, llvm::StringRef Str) {
     std::cerr << "PragmaDiagnostic" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::MacroExpands(const clang::Token & MacroNameTok, const clang::MacroInfo * MI, clang::SourceRange Range) {
+void ClangToDotPreprocessorRecord::MacroExpands(const clang::Token & MacroNameTok, const clang::MacroInfo * MI, clang::SourceRange Range) {
     std::cerr << "MacroExpands" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::MacroDefined(const clang::Token & MacroNameTok, const clang::MacroInfo * MI) {
+void ClangToDotPreprocessorRecord::MacroDefined(const clang::Token & MacroNameTok, const clang::MacroInfo * MI) {
     std::cerr << "" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::MacroUndefined(const clang::Token & MacroNameTok, const clang::MacroInfo * MI) {
+void ClangToDotPreprocessorRecord::MacroUndefined(const clang::Token & MacroNameTok, const clang::MacroInfo * MI) {
     std::cerr << "MacroUndefined" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::Defined(const clang::Token & MacroNameTok) {
+void ClangToDotPreprocessorRecord::Defined(const clang::Token & MacroNameTok) {
     std::cerr << "Defined" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::SourceRangeSkipped(clang::SourceRange Range) {
+void ClangToDotPreprocessorRecord::SourceRangeSkipped(clang::SourceRange Range) {
     std::cerr << "SourceRangeSkipped" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::If(clang::SourceRange Range) {
+void ClangToDotPreprocessorRecord::If(clang::SourceRange Range) {
     std::cerr << "If" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::Elif(clang::SourceRange Range) {
+void ClangToDotPreprocessorRecord::Elif(clang::SourceRange Range) {
     std::cerr << "Elif" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::Ifdef(const clang::Token & MacroNameTok) {
+void ClangToDotPreprocessorRecord::Ifdef(const clang::Token & MacroNameTok) {
     std::cerr << "Ifdef" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::Ifndef(const clang::Token & MacroNameTok) {
+void ClangToDotPreprocessorRecord::Ifndef(const clang::Token & MacroNameTok) {
     std::cerr << "Ifndef" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::Else() {
+void ClangToDotPreprocessorRecord::Else() {
     std::cerr << "Else" << std::endl;
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::Endif() {
+void ClangToDotPreprocessorRecord::Endif() {
     std::cerr << "Endif" << std::endl;
     ROSE_ASSERT(false);
 }
 
-std::pair<Sg_File_Info *, PreprocessingInfo *> SagePreprocessorRecord::top() {
+std::pair<Sg_File_Info *, PreprocessingInfo *> ClangToDotPreprocessorRecord::top() {
     return p_preprocessor_record_list.front();
 }
 
-bool SagePreprocessorRecord::pop() {
+bool ClangToDotPreprocessorRecord::pop() {
     p_preprocessor_record_list.erase(p_preprocessor_record_list.begin());
     return !p_preprocessor_record_list.empty();
 }
 
+
+
+ClangToDotTranslator::NodeDescriptor::NodeDescriptor(std::string ident_) :
+    ident(ident_),
+    kind_hierarchy(),
+    successors(),
+    attributes()
+{}
