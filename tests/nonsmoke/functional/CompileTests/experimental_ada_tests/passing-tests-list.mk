@@ -42,5 +42,6 @@ PASSING_TESTS :=                       \
   parent-child.ads                     \
   task_with_body.adb                   \
   task_with_body.ads                   \
+  task_with_abort.adb                  \
   EndOfList
 

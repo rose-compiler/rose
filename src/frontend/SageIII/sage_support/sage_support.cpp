@@ -4913,7 +4913,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // compiled together on the same command line.
      ROSE_ASSERT(astIncludeStack.size() == 0);
 
-  // DQ (6/7/2013): Added support for call the experimental frontran frontend (if the associated option is specified on the command line).
+  // DQ (6/7/2013): Added support for the call to the experimental Fortran frontend (if the associated option is specified on the command line).
      int frontendErrorLevel = 0;
      if (get_experimental_fortran_frontend() == true || get_experimental_flang_frontend() == true)
         {

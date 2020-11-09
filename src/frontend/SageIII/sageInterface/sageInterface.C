@@ -1847,8 +1847,8 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
 
-          case V_SgJovialForThenStatement: // Rasmussen: Jovial for statement
-          case V_SgMatlabForStatement: // SK: Matlab for statement
+          case V_SgJovialForThenStatement: //Rasmussen: Jovial for statement
+          case V_SgMatlabForStatement: //SK: Matlab for statement
           case V_SgBasicBlock:
           case V_SgCatchOptionStmt:
           case V_SgDoWhileStmt:
@@ -15123,35 +15123,40 @@ PreprocessingInfo* SageInterface::attachComment(
      PreprocessingInfo::DirectiveType mytype=dtype;
      string comment;
 
+  // Rasmussen (11/3/2020): Added Ada and Jovial style comments
   // DQ (5/5/2010): infer comment type from target's language
      if (mytype == PreprocessingInfo::CpreprocessorUnknownDeclaration)
         {
        // This is a rather expensive way to detect the language type (chases pointers back to the SgFile object).
           if (is_C_language() || is_C99_language())
              {
-               mytype = PreprocessingInfo::C_StyleComment;
-            // comment = "/* "+ content + " */";
+             // Comment = "/* "+ content + " */";
+                mytype = PreprocessingInfo::C_StyleComment;
              }
-            else
+          else if (is_Cxx_language() || is_Java_language())
              {
-               if (is_Cxx_language() || is_Java_language())
-                  {
-                    mytype = PreprocessingInfo::CplusplusStyleComment;
-                 // comment = "// "+ content;
-                  }
-                 else  // TODO :What about Fortran?
-                  {
-                    if (is_Fortran_language() || is_CAF_language()) //FMZ:3/23/2009
-                       {
-                         mytype = PreprocessingInfo::F90StyleComment;
-                      // comment = "// "+ content;
-                       }
-                      else  // TODO :What about Fortran?
-                       {
-                         cout<<"Un-handled programming languages when building source comments.. "<<endl;
-                         ROSE_ASSERT(false);
-                       }
-                  }
+             // Comment = "// "+ content;
+                mytype = PreprocessingInfo::CplusplusStyleComment;
+             }
+          else if (is_Fortran_language() || is_CAF_language()) //FMZ:3/23/2009
+             {
+             // Comment = "! "+ content;
+                mytype = PreprocessingInfo::F90StyleComment;
+             }
+          else if (is_Ada_language())
+             {
+             // Comment = "-- " + content;
+                mytype = PreprocessingInfo::AdaStyleComment;
+             }
+          else if (is_Jovial_language())
+             {
+             // Comment = "% " + content + " %";
+                mytype = PreprocessingInfo::JovialStyleComment;
+             }
+          else
+             {
+               cout << "WARNING: SageInterface::attachComment(): Unknown programming language \n";
+               ROSE_ASSERT(false);
              }
         }
 
@@ -15162,7 +15167,9 @@ PreprocessingInfo* SageInterface::attachComment(
           case PreprocessingInfo::C_StyleComment:        comment = "/* " + content + " */"; break;
           case PreprocessingInfo::CplusplusStyleComment: comment = "// " + content;         break;
           case PreprocessingInfo::FortranStyleComment:   comment = "      C " + content;    break;
-          case PreprocessingInfo::F90StyleComment:   comment = "!" + content;    break;
+          case PreprocessingInfo::F90StyleComment:       comment = "!"   + content;         break;
+          case PreprocessingInfo::AdaStyleComment:       comment = "-- " + content;         break;
+          case PreprocessingInfo::JovialStyleComment:    comment = "% "  + content + " %";  break;
           case PreprocessingInfo::CpreprocessorLineDeclaration:
                comment = "#myline " + content;
                mytype = PreprocessingInfo::CplusplusStyleComment;
@@ -18433,13 +18440,19 @@ generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& d
                copy_functionDeclaration->set_parent(targetScope);
 
                assert(copy_functionDeclaration->get_firstNondefiningDeclaration() != NULL);
-               assert(copy_functionDeclaration->get_firstNondefiningDeclaration() != copy_functionDeclaration);
+
+            // DQ (11/8/2020): This can not be asserted now that the buildSourceFile() has the 
+            // feature of clearing the symbol table used across multiple files.
+            // assert(copy_functionDeclaration->get_firstNondefiningDeclaration() != copy_functionDeclaration);
+
                assert(copy_functionDeclaration->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
 
                assert(copy_functionDeclaration->get_scope() != NULL);
                assert(copy_functionDeclaration->get_scope() == targetScope);
-               assert(copy_functionDeclaration->get_scope()->lookup_function_symbol(copy_functionDeclaration->get_name(), copy_functionDeclaration->get_type()) != NULL);
-               assert(copy_functionDeclaration->get_scope()->lookup_function_symbol(copy_functionDeclaration->get_name(), copy_functionDeclaration->get_type())->get_symbol_basis() == copy_functionDeclaration->get_firstNondefiningDeclaration());
+               assert(copy_functionDeclaration->get_scope()->lookup_function_symbol(copy_functionDeclaration->get_name(), 
+                    copy_functionDeclaration->get_type()) != NULL);
+               assert(copy_functionDeclaration->get_scope()->lookup_function_symbol(copy_functionDeclaration->get_name(), 
+                    copy_functionDeclaration->get_type())->get_symbol_basis() == copy_functionDeclaration->get_firstNondefiningDeclaration());
 
                copy_node = copy_functionDeclaration;
 #if 0
@@ -20296,9 +20309,6 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
       case V_SgClassDeclaration: 
       case V_SgEnumDeclaration:
         {
-          // Rasmussen 10/17/2020: Needed for issue RC-189
-//          SgEnumDeclaration* enum_decl = isSgEnumDeclaration(declaration);
-//          ROSE_ASSERT (enum_decl);
           SgDeclarationStatement* def_decl = declaration->get_definingDeclaration();
           SgDeclarationStatement* nondef_decl = declaration->get_firstNondefiningDeclaration();
 
