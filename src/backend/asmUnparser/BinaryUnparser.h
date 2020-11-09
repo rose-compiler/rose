@@ -86,7 +86,8 @@ struct Settings {
 
     struct {
         struct {
-            bool showing;                               /**< Show instruction addresses? */
+            bool showing;                               /**< Show instruction addresses or labels? */
+            bool useLabels;                             /**< Generate labels and use them instead of addresses? */
             size_t fieldWidth;                          /**< Min characters to use per insn address. */
             Style style;                                /**< Style for printing the address. */
         } address;                                      /**< Settings for instruction starting addresses. */

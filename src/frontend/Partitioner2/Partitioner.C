@@ -288,6 +288,7 @@ Partitioner::configureInsnUnparser(const Unparser::Base::Ptr &unparser) const {
     ASSERT_not_null(unparser);
     unparser->settings() = Unparser::Settings::minimal();
     unparser->settings().insn.address.showing = true;
+    unparser->settings().insn.address.useLabels = false;
     unparser->settings().insn.address.fieldWidth = 1;
     unparser->settings().insn.mnemonic.fieldWidth = 1;
     unparser->settings().insn.operands.fieldWidth = 1;
@@ -346,7 +347,12 @@ Partitioner::unparsePlain(SgAsmInstruction *insn) const {
     if (!insn) {
         return "null instruction";
     } else {
+        // We don't allow the user to modify the plain unparser but there are certain settings we want to copy from the main
+        // instruction unparser. Since the user can modify the main instruction unparser any time, we need to always copy those
+        // important settings the the plain unparser.
+        ASSERT_not_null(insnUnparser_);
         ASSERT_not_null(insnPlainUnparser_);
+        insnPlainUnparser_->settings().colorization = insnUnparser_->settings().colorization;
         return (*insnPlainUnparser_)(*this, insn);
     }
 }

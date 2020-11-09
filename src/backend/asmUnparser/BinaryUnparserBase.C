@@ -466,6 +466,7 @@ Settings::Settings() {
     dblock.showingSourceLocation = true;
 
     insn.address.showing = true;
+    insn.address.useLabels = false;                     // show addresses instead of labels
     insn.address.fieldWidth = 11;                       // "0x" + 8 hex digits + ":"
     insn.address.style.foreground = Color::HSV(0.05, 0.9, 0.3); // orange
     insn.bytes.showing = true;
@@ -524,7 +525,8 @@ Settings::minimal() {
 
     s.dblock.showingSourceLocation = false;
 
-    s.insn.address.showing = false;
+    s.insn.address.showing = true;
+    s.insn.address.useLabels = true;                    // generate and use labels instead of addresses
     s.insn.address.fieldWidth = 8;
     s.insn.bytes.showing = false;
     s.insn.stackDelta.showing = false;
@@ -631,13 +633,21 @@ commandLineSwitches(Settings &settings) {
 
     //----- Instructions -----
 
-    insertBooleanSwitch(sg, "insn-address", settings.insn.address.showing,
-                        "Show the address of each instruction.");
+    // The --insn-address and --no-insn-address only have effects when settings.insn.address.showing is true.
+    sg.insert(Switch("insn-address")
+              .intrinsicValue(false, settings.insn.address.useLabels)
+              .doc("Show the address of each instruction. The @s{no-insn-address} switch suppresses the address and generates "
+                   "labels when necessary. The defaut is to use " +
+                   std::string(settings.insn.address.useLabels ? "labels" : "addresses") + "."));
+    sg.insert(Switch("no-insn-address")
+              .key("insn-address")
+              .intrinsicValue(true, settings.insn.address.useLabels)
+              .hidden(true));
 
     sg.insert(Switch("insn-address-width")
               .argument("nchars", positiveIntegerParser(settings.insn.address.fieldWidth))
-              .doc("Minimum size of the address field in characters if addresses are enabled with @s{insn-address}. The "
-                   "default is " + boost::lexical_cast<std::string>(settings.insn.address.fieldWidth) + "."));
+              .doc("Minimum size of the address or label field in characters if addresses are enabled with @s{insn-address}. "
+                   "The default is " + boost::lexical_cast<std::string>(settings.insn.address.fieldWidth) + "."));
 
     insertBooleanSwitch(sg, "insn-bytes", settings.insn.bytes.showing,
                         "Show the raw bytes that make up each instruction. See also, @s{insn-bytes-per-line}.");
@@ -988,7 +998,7 @@ Base::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, Sta
         nextUnparser()->emitFunctionBody(out, function, state);
     } else {
         // If we're not emitting instruction addresses then we need some other way to identify basic blocks for branch targets.
-        if (!settings().insn.address.showing) {
+        if (settings().insn.address.showing && settings().insn.address.useLabels) {
             state.basicBlockLabels().clear();
             BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
                 std::string label = "L" + boost::lexical_cast<std::string>(state.basicBlockLabels().size()+1);
@@ -1330,10 +1340,12 @@ Base::emitBasicBlockPrologue(std::ostream &out, const P2::BasicBlock::Ptr &bb, S
             StyleGuard style(state.styleStack(), settings().comment.line.style);
             out <<"\t" <<style.render() <<";; this is not the function entry point; entry point is ";
             if (settings().insn.address.showing) {
-                out <<StringUtility::addrToString(state.currentFunction()->address());
-            } else {
-                out <<state.basicBlockLabels().getOrElse(state.currentFunction()->address(),
-                                                         StringUtility::addrToString(state.currentFunction()->address()));
+                if (settings().insn.address.useLabels) {
+                    out <<state.basicBlockLabels().getOrElse(state.currentFunction()->address(),
+                                                             StringUtility::addrToString(state.currentFunction()->address()));
+                } else {
+                    out <<StringUtility::addrToString(state.currentFunction()->address());
+                }
             }
             out <<style.restore() <<"\n";
         }
@@ -1744,22 +1756,26 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
         std::vector<size_t> fieldWidths;
         std::vector<std::pair<std::string, std::string> > styles;
 
-        // Address or label
+        // Address or label or nothing.
         if (settings().insn.address.showing) {
-            // Use the instruction address instead of any label
-            if (insn) {
-                std::ostringstream ss;
-                state.frontUnparser().emitInstructionAddress(ss, insn, state);
-                parts.push_back(ss.str());
+            if (settings().insn.address.useLabels) {
+                if (!state.nextInsnLabel().empty()) {
+                    // Use the label that has been specified in the state
+                    parts.push_back(state.nextInsnLabel() + ":");
+                } else {
+                    // We're using labels, but no label is necessary for this instruction. We still need to reserve the space
+                    // for this column.
+                    parts.push_back("");
+                }
             } else {
-                parts.push_back("");
+                if (insn) {
+                    std::ostringstream ss;
+                    state.frontUnparser().emitInstructionAddress(ss, insn, state);
+                    parts.push_back(ss.str());
+                } else {
+                    parts.push_back("");
+                }
             }
-            StyleGuard style(state.styleStack(), settings().insn.address.style);
-            styles.push_back(std::make_pair(style.render(), style.restore()));
-            fieldWidths.push_back(settings().insn.address.fieldWidth);
-        } else if (!state.nextInsnLabel().empty()) {
-            // Use the label that has been specified in the state
-            parts.push_back(state.nextInsnLabel() + ":");
             StyleGuard style(state.styleStack(), settings().insn.address.style);
             styles.push_back(std::make_pair(style.render(), style.restore()));
             fieldWidths.push_back(settings().insn.address.fieldWidth);

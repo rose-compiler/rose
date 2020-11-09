@@ -418,6 +418,8 @@ public:
      *  directly without the programmer having to invervene by creating a subclss or chaining a new parser. Most of
      *  the switches simply turn things on and off.
      *
+     *  Copying an unparser also copies its settings.
+     *
      * @{ */
     virtual const Settings& settings() const = 0;
     virtual Settings& settings() = 0;
