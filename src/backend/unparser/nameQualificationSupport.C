@@ -12062,6 +12062,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          classChain_iterator++;
                        }
 #endif
+                 // DQ (11/8/2020): I now think that Cxx11_tests/test_2019_120.C could be used to make this arbitrarily long.
                  // DQ (12/11/2019): Modified to provide a larger upper bound for classChain.size().
                  // DQ (2/16/2019): I think this is always true, since base class abiguity is not allowed in the C++ language.
                  // ROSE_ASSERT(classChain.size() == 1);
@@ -12081,14 +12082,149 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 1
                          std::list<SgClassType*>::iterator classChain_first = classChain.begin();
-#if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          mfprintf(mlog [ WARN ] ) ("(*classChain_first)->get_name().str() = %s \n",(*classChain_first)->get_name().str());
 #endif
+#if 0
+                      // DQ (11/8/2020): Original code.
+                      // This code is required to pass Cxx11_tests/test2019_129.C, test2019_130.C, etc.
+                      // However, there might be a solution to make test_24_2020.cpp in codeSegregation also work.
                          std::string qualifier = std::string((*classChain_first)->get_name().str()) + "::";
+#else
+                      // This is much more complex code, but it satisfies all of the test codes including the ones 
+                      // for codeSegragation when the the symbol table for the global scope across file is cleared.
+#if 0
+                         printf ("################################################# \n");
+                         printf ("Iterate over the classChain: size = %zu \n",classChain.size());
+                         printf ("################################################# \n");
+#endif
+                      // DQ (11/8/2020): Potential bug fix for name qualification error that only happens in 
+                      // transformations (e.g. codeSegregation and outlining). Note that it appears as an issue 
+                      // to fix only when the buildSourceFile() function is used and the symbol table associated 
+                      // with the global scope across files is cleared (recently implementd in SageInterface::buildFile()
+                      // (called by SageInterface::getSourceFile()).
+                         std::list<SgClassType*>::iterator classChain_last;
+                         std::list<SgClassType*>::iterator classChain_target = classChain.begin();
+                         std::list<SgClassType*>::iterator i = classChain.begin();
+
+                         bool useNextClass = false;
+                      // Note that the start of the chain may not be the most apropriate class to use.
+                      // This is demonstrated by Cxx_tests/test2019_130.C and the codeSegragation tool test_93.cpp.
+                         while (i != classChain.end())
+                            {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                              mfprintf(mlog [ WARN ] ) (" --- (*i)->get_name().str() = %s \n",(*i)->get_name().str());
+#endif
+                           // Review the length of the causal nodes for the alias symbol.  If is is one then no name qualification 
+                           // is needed, if it is more than one then name qualification is required to disambiguate the member access.
+                              SgClassType* classType = *i;
+                              ROSE_ASSERT(classType != NULL);
+
+                              SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+                              ROSE_ASSERT(classDeclaration != NULL);
+#if 0
+                              printf (" ---  --- classDeclaration = %p = %s name = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+#endif
+                              SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+                              if (definingClassDeclaration != NULL)
+                                 {
+                                   SgSymbol* varRefExp_symbol = varRefExp->get_symbol();
+                                   ROSE_ASSERT(varRefExp_symbol != NULL);
+
+                                   SgName varRefExp_name = varRefExp_symbol->get_name();
+#if 0
+                                   printf (" ---  --- varRefExp_name = %s \n",varRefExp_name.str());
+#endif
+                                   SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
+                                   ROSE_ASSERT(classDefinition != NULL);
+
+                                   size_t number_of_alias_symbols = classDefinition->count_alias_symbol(varRefExp_name);
+#if 0
+                                   printf (" ---  --- number_of_alias_symbols = %zu \n",number_of_alias_symbols);
+#endif
+                                   if (number_of_alias_symbols > 0)
+                                      {
+                                        SgAliasSymbol* aliasSymbol = classDefinition->lookup_alias_symbol(varRefExp_name,varRefExp_symbol);
+#if 0
+                                        printf (" ---  --- number_of_alias_symbols > 0: aliasSymbol = %p \n",aliasSymbol);
+#endif
+                                        if (aliasSymbol != NULL)
+                                           {
+#if 0
+                                             printf (" ---  --- number_of_alias_symbols > 0: Found an alias symbol: aliasSymbol = %p = %s \n",aliasSymbol,aliasSymbol->class_name().c_str());
+                                             printf (" ---  --- number_of_alias_symbols > 0: Found an alias symbol: causal_nodes list size = %zu \n",aliasSymbol->get_causal_nodes().size());
+#endif
+                                             if (aliasSymbol->get_causal_nodes().size() == 1)
+                                                {
+                                               // Reset to where there will be no ambiguity.
+#if 0
+                                                  printf ("Reset because aliasSymbol->get_causal_nodes().size() == 1 \n");
+#endif
+                                                  classChain_target = i;
+                                                }
+                                               else
+                                                {
+                                                  if (aliasSymbol->get_causal_nodes().size() > 1)
+                                                     {
+                                                    // Use the next element in the chain.
+                                                       useNextClass = true;
+                                                     }
+                                                }
+                                           }
+                                      }
+                                     else
+                                      {
+                                     // Reset to where there will be no ambiguity.
+#if 0
+                                        printf ("Reset because number_of_alias_symbols == 0: useNextClass = %s \n",useNextClass ? "true" : "false");
+#endif
+                                        if (useNextClass == true)
+                                           {
+                                             classChain_target = i;
+                                             useNextClass = false;
+                                           }
+                                      }
+#if 0
+                                   SgSymbol* symbol = classDefinition->lookup_variable_symbol(varRefExp_name);
+                                // ROSE_ASSERT(symbol != NULL);
+                                   if (symbol != NULL)
+                                      {
+#if 0
+                                        printf (" ---  --- symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+                                        bool hasAmbiguity = classDefinition->hasAmbiguity(varRefExp_name,symbol);
+                                        printf (" ---  --- hasAmbiguity = %s \n",hasAmbiguity ? "true" : "false");
+#endif
+                                        SgAliasSymbol* aliasSymbol = classDefinition->lookup_alias_symbol(varRefExp_name,symbol);
+#if 0
+                                        printf (" ---  --- aliasSymbol = %p \n",aliasSymbol);
+                                        if (aliasSymbol != NULL)
+                                           {
+                                             printf (" ---  --- Found an alias symbol: aliasSymbol = %p = %s \n",aliasSymbol,aliasSymbol->class_name().c_str());
+                                             printf (" ---  --- Found an alias symbol: causal_nodes list size = %zu \n",aliasSymbol->get_causal_nodes().size());
+                                           }
+#endif
+                                      }
+                                     else
+                                      {
+#if 0
+                                        printf (" ---  --- symbol == NULL \n");
+#endif
+                                      }
+#endif
+                                 }
+
+                           // qualifier += std::string((*i)->get_name().str()) + "::";
+                              classChain_last = i;
+                              i++;
+                            }
+                      // std::string qualifier = std::string((*classChain_last)->get_name().str()) + "::";
+                         std::string qualifier = std::string((*classChain_target)->get_name().str()) + "::";
+#endif
 #else
                       // DQ (1/20/2020): Accumulate the list of names from the classChain list.
                          std::list<SgClassType*>::iterator i = classChain.begin();
                          std::string qualifier;
+#error "DEAD CODE!"
                          while (i != classChain.end())
                             {
 #if 0
