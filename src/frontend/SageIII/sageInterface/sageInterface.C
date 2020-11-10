@@ -25451,9 +25451,9 @@ SageInterface::buildFunctionPrototype ( SgFunctionDeclaration* functionDeclarati
 
             // We do want to build prototypes for template instantiation member functions, and template instantiation non-member functions (see below).
                bool buildPrototype = isTemplateInstantiationMemberFunctionDecl || original_memberFunctionDeclaration->get_parent() == original_memberFunctionDeclaration->get_scope();
-
+#if 0
                printf ("In SageInterface::buildFunctionPrototype(): buildPrototype = %s \n",buildPrototype ? "true" : "false");
-
+#endif
             // if (original_memberFunctionDeclaration->get_parent() == original_memberFunctionDeclaration->get_scope())
                if (buildPrototype == true)
                   {
