@@ -3,12 +3,12 @@
 
 #include "sage3basic.h"
 
-#include "PASolver1.h"
+#include "DFSolver1.h"
 #include "TimeMeasurement.h"
 
 using namespace std;
 
-CodeThorn::PASolver1::PASolver1(WorkListSeq<Edge>& workList,
+CodeThorn::DFSolver1::DFSolver1(WorkListSeq<Edge>& workList,
 				  vector<Lattice*>& analyzerDataPreInfo,
 				  vector<Lattice*>& analyzerDataPostInfo,
 				  PropertyStateFactory& initialElementFactory,
@@ -26,7 +26,7 @@ CodeThorn::PASolver1::PASolver1(WorkListSeq<Edge>& workList,
 }
 
 void
-CodeThorn::PASolver1::computeCombinedPreInfo(Label lab,Lattice& info) {
+CodeThorn::DFSolver1::computeCombinedPreInfo(Label lab,Lattice& info) {
   if(!_flow.contains(lab)) {
     // schroder3 (2016-07-07): If the label does not exist in the CFG, then
     //  it does not have predecessors and the given pre-info therefore does
@@ -46,13 +46,13 @@ CodeThorn::PASolver1::computeCombinedPreInfo(Label lab,Lattice& info) {
 }
 
 void
-CodeThorn::PASolver1::computePostInfo(Label lab,Lattice& info) {
+CodeThorn::DFSolver1::computePostInfo(Label lab,Lattice& info) {
   _transferFunctions.transfer(lab,info);
 }
 
 // runs until worklist is empty
 void
-CodeThorn::PASolver1::runSolver() {
+CodeThorn::DFSolver1::runSolver() {
   constexpr uint64_t REPORT_INTERVAL = (1 << 12);
   
   TimeMeasurement solverTimer;

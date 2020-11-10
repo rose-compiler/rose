@@ -12,7 +12,7 @@
 #include "AstUtility.h"
 #include "ExtractFunctionArguments.h"
 #include "FunctionNormalization.h"
-#include "PASolver1.h" 
+#include "DFSolver1.h" 
 #include "AstAnnotator.h"
 
 using namespace std;

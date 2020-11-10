@@ -148,8 +148,8 @@ CODETHORN_HEADER_FILES=\
   LTLOptions.h \
   ParProOptions.h \
   LTLRersMapping.h \
-  PASolver1.h \
-  PASolver2.h \
+  DFSolver1.h \
+  DFSolver2.h \
   PointerAnalysisInterface.h \
   PragmaHandler.h \
   PredefinedSemanticFunctions.h \
@@ -276,8 +276,8 @@ CODETHORN_SOURCE_FILES=\
   NormalizationInliner.C \
   NormalizationOp.C \
   NumberIntervalLattice.C \
-  PASolver1.C \
-  PASolver2.C \
+  DFSolver1.C \
+  DFSolver2.C \
   PointerAnalysisInterface.C \
   PragmaHandler.C \
   PredefinedSemanticFunctions.C \

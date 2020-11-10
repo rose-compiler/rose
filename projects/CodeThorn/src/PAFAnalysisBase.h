@@ -10,11 +10,10 @@
 
 #include "Labeler.h"
 #include "CFAnalysis.h"
+#include "DFAbstractSolver.h"
+#include "DFTransferFunctions.h"
 #include "WorkListSeq.h"
 #include "CollectionOperators.h"
-#include "DFTransferFunctions.h"
-#include "DFAbstractSolver.h"
-#include "DFAstAttribute.h"
 #include "PointerAnalysisInterface.h"
 #include "ProgramAbstractionLayer.h"
 

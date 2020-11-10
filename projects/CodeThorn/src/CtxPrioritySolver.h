@@ -19,7 +19,7 @@
 namespace CodeThorn {
   
 /// A context and priority aware solver  
-// \note derived from PASolver1
+// \note derived from DFSolver1
 struct CtxPrioritySolver : DFAbstractSolver
 {
     // define your call context
@@ -109,7 +109,7 @@ struct CtxPrioritySolver : DFAbstractSolver
 };
 
 /// A priority-aware solver  
-// \note derived from PASolver1
+// \note derived from DFSolver1
 struct SeqPrioritySolver : DFAbstractSolver
 {
     // define your call context

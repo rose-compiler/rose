@@ -8,7 +8,7 @@
 #include "CtxSolver0.h"
 #include "CtxPrioritySolver.h"
 // #include "HTMPrioritySolver.h"
-#include "PASolver1.h"
+#include "DFSolver1.h"
 #include "SgNodeHelper.h"
 #include "DFAnalysisBase.h"
 #include "CtxLattice.h"
@@ -487,7 +487,7 @@ namespace // anonymous
                                                 SG_DEREF(getLabeler())
                                               );
 #else
-        PASolver1* theSolver = new PASolver1( _workList,
+        DFSolver1* theSolver = new DFSolver1( _workList,
                                               _analyzerDataPreInfo,
                                               _analyzerDataPostInfo,
                                               SG_DEREF(getInitialElementFactory()),

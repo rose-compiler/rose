@@ -37,7 +37,7 @@ struct CtxLatticeRange
 
 
 /// A context-aware solver  
-// \note derived from PASolver1
+// \note derived from DFSolver1
 struct CtxSolver0 : DFAbstractSolver
 {
     // define your call context

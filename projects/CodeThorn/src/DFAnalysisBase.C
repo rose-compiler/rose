@@ -7,7 +7,7 @@
 #include "AstUtility.h"
 #include "ExtractFunctionArguments.h"
 #include "FunctionNormalization.h"
-#include "PASolver1.h" 
+#include "DFSolver1.h" 
 
 
 using namespace std;
@@ -35,7 +35,7 @@ namespace CodeThorn
     ROSE_ASSERT(getFlow());
     ROSE_ASSERT(&_transferFunctions);
      
-    _solver = new PASolver1( _workList,
+    _solver = new DFSolver1( _workList,
                              _analyzerDataPreInfo,
                              _analyzerDataPostInfo,
                              *getInitialElementFactory(),

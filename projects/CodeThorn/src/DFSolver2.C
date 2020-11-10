@@ -3,7 +3,7 @@
 
 #include "sage3basic.h"
 
-#include "PASolver2.h"
+#include "DFSolver2.h"
 #include "TimeMeasurement.h"
 
 using namespace std;
