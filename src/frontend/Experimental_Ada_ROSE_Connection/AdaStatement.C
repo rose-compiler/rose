@@ -1753,7 +1753,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                    << "\n  private: " << decl.Has_Private
                    << std::endl;
 
-        // \todo this may only declare one name (use singleName -- e.g., An_Incomplete_Type_Declaration)
+        // \todo this may only declare one name
+        //       (use singleName -- e.g., An_Incomplete_Type_Declaration)
         ElemIdRange     range  = idRange(decl.Names);
         ROSE_ASSERT(range.size() == 1);
         name_container  names  = traverseIDs(range, elemMap(), NameCreator{ctx});
