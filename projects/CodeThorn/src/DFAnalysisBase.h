@@ -10,7 +10,7 @@
 
 #include "Labeler.h"
 #include "CFAnalysis.h"
-#include "PAFAnalysisBase.h"
+#include "DFAnalysisBaseWithoutData.h"
 #include "WorkListSeq.h"
 #include "CollectionOperators.h"
 #include "DFTransferFunctions.h"
@@ -23,7 +23,7 @@ namespace CodeThorn {
 
 #include "PropertyState.h"
 
-  class DFAnalysisBase : public PAFAnalysisBase {
+  class DFAnalysisBase : public DFAnalysisBaseWithoutData {
  public:  
   DFAnalysisBase();
   virtual ~DFAnalysisBase();

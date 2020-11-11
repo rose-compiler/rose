@@ -44,10 +44,6 @@ class DFSolver1 : public DFAbstractSolver {
   Flow& _flow;
   DFTransferFunctions& _transferFunctions;
   Labeler* l;
- public:
-  void setTrace(bool trace) ROSE_OVERRIDE { _trace=trace; }
- private:
-  bool _trace;
 };
 
 }

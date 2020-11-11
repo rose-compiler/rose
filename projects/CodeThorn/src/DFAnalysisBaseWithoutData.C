@@ -8,7 +8,7 @@
 #include <string>
 #include <sstream>
 
-#include "PAFAnalysisBase.h"
+#include "DFAnalysisBaseWithoutData.h"
 #include "AstUtility.h"
 #include "ExtractFunctionArguments.h"
 #include "FunctionNormalization.h"
@@ -20,23 +20,23 @@ using namespace std;
 namespace CodeThorn 
 {
 
-  PAFAnalysisBase::PAFAnalysisBase()
+  DFAnalysisBaseWithoutData::DFAnalysisBaseWithoutData()
   {
     // all data member initializers are specified in class definition
   }
 
-  PAFAnalysisBase::~PAFAnalysisBase() {
+  DFAnalysisBaseWithoutData::~DFAnalysisBaseWithoutData() {
     if(_pointerAnalysisEmptyImplementation)
       delete _pointerAnalysisEmptyImplementation;
     if(_programAbstractionLayer && _programAbstractionLayerOwner)
       delete _programAbstractionLayer;
   }
 
-  Flow* PAFAnalysisBase::getFlow() const {
+  Flow* DFAnalysisBaseWithoutData::getFlow() const {
     return _flow;
   }
 
-  void PAFAnalysisBase::computeAllPreInfo() {
+  void DFAnalysisBaseWithoutData::computeAllPreInfo() {
     if(!_preInfoIsValid) {
       _solver->runSolver();
       _preInfoIsValid=true;
@@ -44,7 +44,7 @@ namespace CodeThorn
     }
   }
 
-  void PAFAnalysisBase::computeAllPostInfo() {
+  void DFAnalysisBaseWithoutData::computeAllPostInfo() {
     if(!_postInfoIsValid) {
       computeAllPreInfo();
       // compute set of used labels in ICFG.
@@ -63,60 +63,60 @@ namespace CodeThorn
   }
 
   PropertyStateFactory*
-  PAFAnalysisBase::getInitialElementFactory() {
+  DFAnalysisBaseWithoutData::getInitialElementFactory() {
     ROSE_ASSERT(_transferFunctions);
     return _transferFunctions->getInitialElementFactory();
   }
 
-  void PAFAnalysisBase::setInitialElementFactory(PropertyStateFactory* pf) {
+  void DFAnalysisBaseWithoutData::setInitialElementFactory(PropertyStateFactory* pf) {
     ROSE_ASSERT(_transferFunctions);
     _transferFunctions->setInitialElementFactory(pf);
   }
 
-  void PAFAnalysisBase::setExtremalLabels(LabelSet extremalLabels) {
+  void DFAnalysisBaseWithoutData::setExtremalLabels(LabelSet extremalLabels) {
     _extremalLabels=extremalLabels;
   }
 
-  void PAFAnalysisBase::setForwardAnalysis() {
-    _analysisType=PAFAnalysisBase::FORWARD_ANALYSIS;
+  void DFAnalysisBaseWithoutData::setForwardAnalysis() {
+    _analysisType=DFAnalysisBaseWithoutData::FORWARD_ANALYSIS;
   }
 
-  void PAFAnalysisBase::setBackwardAnalysis() {
-    _analysisType=PAFAnalysisBase::BACKWARD_ANALYSIS;
+  void DFAnalysisBaseWithoutData::setBackwardAnalysis() {
+    _analysisType=DFAnalysisBaseWithoutData::BACKWARD_ANALYSIS;
   }
 
-  bool PAFAnalysisBase::isForwardAnalysis() {
-    return _analysisType==PAFAnalysisBase::FORWARD_ANALYSIS;
+  bool DFAnalysisBaseWithoutData::isForwardAnalysis() {
+    return _analysisType==DFAnalysisBaseWithoutData::FORWARD_ANALYSIS;
   }
 
-  bool PAFAnalysisBase::isBackwardAnalysis() {
-    return _analysisType==PAFAnalysisBase::BACKWARD_ANALYSIS;
+  bool DFAnalysisBaseWithoutData::isBackwardAnalysis() {
+    return _analysisType==DFAnalysisBaseWithoutData::BACKWARD_ANALYSIS;
   }
 
-  bool PAFAnalysisBase::getTopologicalSort() {
+  bool DFAnalysisBaseWithoutData::getTopologicalSort() {
     return !_no_topological_sort;
   }
 
-  void PAFAnalysisBase::setTopologicalSort(bool topological_sort) {
+  void DFAnalysisBaseWithoutData::setTopologicalSort(bool topological_sort) {
     _no_topological_sort = !topological_sort;
   }
 
   // deprecated
-  bool PAFAnalysisBase::getNoTopologicalSort() {
+  bool DFAnalysisBaseWithoutData::getNoTopologicalSort() {
     return _no_topological_sort;
   }
 
   // deprecated
-  void PAFAnalysisBase::setNoTopologicalSort(bool no_topological_sort) {
+  void DFAnalysisBaseWithoutData::setNoTopologicalSort(bool no_topological_sort) {
     _no_topological_sort = no_topological_sort;
   }
 
-  void PAFAnalysisBase::initializeExtremalValue(Lattice* element) {
+  void DFAnalysisBaseWithoutData::initializeExtremalValue(Lattice* element) {
     ROSE_ASSERT(_transferFunctions);
     _transferFunctions->initializeExtremalValue(*element);
   }
 
-  Lattice* PAFAnalysisBase::initializeGlobalVariables(SgProject* root) {
+  Lattice* DFAnalysisBaseWithoutData::initializeGlobalVariables(SgProject* root) {
     ROSE_ASSERT(_transferFunctions);
     Lattice* elem=_transferFunctions->initializeGlobalVariables(root);
     _globalVariablesState=elem;
@@ -125,18 +125,18 @@ namespace CodeThorn
 
   // runs until worklist is empty
   void
-  PAFAnalysisBase::solve() {
+  DFAnalysisBaseWithoutData::solve() {
     computeAllPreInfo();
     computeAllPostInfo();
   }
 
   void
-  PAFAnalysisBase::initialize(SgProject* root) {
+  DFAnalysisBaseWithoutData::initialize(SgProject* root) {
     this->initialize(root,nullptr);
   }
 
   void
-  PAFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
+  DFAnalysisBaseWithoutData::initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
     cout << "INIT: establishing program abstraction layer." << endl;
     if(programAbstractionLayer) {
       ROSE_ASSERT(_programAbstractionLayer==nullptr);
@@ -162,7 +162,7 @@ namespace CodeThorn
     cout << "STATUS: initialized solver."<<endl;
   }
 
-  void PAFAnalysisBase::initializeTransferFunctions() {
+  void DFAnalysisBaseWithoutData::initializeTransferFunctions() {
     ROSE_ASSERT(_transferFunctions);
     ROSE_ASSERT(getLabeler());
     _transferFunctions->setProgramAbstractionLayer(_programAbstractionLayer);
@@ -173,16 +173,16 @@ namespace CodeThorn
     _transferFunctions->addParameterPassingVariables();
   }
 
-  void PAFAnalysisBase::setPointerAnalysis(PointerAnalysisInterface* pa) {
+  void DFAnalysisBaseWithoutData::setPointerAnalysis(PointerAnalysisInterface* pa) {
     _pointerAnalysisInterface=pa;
   }
 
-  CodeThorn::PointerAnalysisInterface* PAFAnalysisBase::getPointerAnalysis() {
+  CodeThorn::PointerAnalysisInterface* DFAnalysisBaseWithoutData::getPointerAnalysis() {
     return _pointerAnalysisInterface;
   }
 
   void
-  PAFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot,bool onlySingleStartLabel) {
+  DFAnalysisBaseWithoutData::determineExtremalLabels(SgNode* startFunRoot,bool onlySingleStartLabel) {
     if(startFunRoot) {
       Labeler* labeler = getLabeler();
     
@@ -226,25 +226,25 @@ namespace CodeThorn
     cout<<"STATUS: Number of extremal labels: "<<_extremalLabels.size()<<endl;
   }
 
-  CFAnalysis* PAFAnalysisBase::getCFAnalyzer() {
+  CFAnalysis* DFAnalysisBaseWithoutData::getCFAnalyzer() {
     ROSE_ASSERT(_programAbstractionLayer);
 
     return _programAbstractionLayer->getCFAnalyzer();
   }
 
-  Labeler* PAFAnalysisBase::getLabeler() const {
+  Labeler* DFAnalysisBaseWithoutData::getLabeler() const {
     return _programAbstractionLayer->getLabeler();
   }
 
-  VariableIdMappingExtended* PAFAnalysisBase::getVariableIdMapping() {
+  VariableIdMappingExtended* DFAnalysisBaseWithoutData::getVariableIdMapping() {
     return _programAbstractionLayer->getVariableIdMapping();
   }
 
-  FunctionIdMapping* PAFAnalysisBase::getFunctionIdMapping() {
+  FunctionIdMapping* DFAnalysisBaseWithoutData::getFunctionIdMapping() {
     return _programAbstractionLayer->getFunctionIdMapping();
   }
 
-  CodeThorn::DFTransferFunctions* PAFAnalysisBase::getTransferFunctions() {
+  CodeThorn::DFTransferFunctions* DFAnalysisBaseWithoutData::getTransferFunctions() {
     return _transferFunctions;
   }
 

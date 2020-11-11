@@ -21,10 +21,10 @@
 
 namespace CodeThorn {
 
-  class PAFAnalysisBase {
+  class DFAnalysisBaseWithoutData {
   public:  
-    PAFAnalysisBase();
-    virtual ~PAFAnalysisBase();
+    DFAnalysisBaseWithoutData();
+    virtual ~DFAnalysisBaseWithoutData();
 
     // computes state for global variable initializations
     virtual Lattice* initializeGlobalVariables(SgProject* root);
@@ -91,7 +91,7 @@ namespace CodeThorn {
     void computeAllPostInfo();
     DFAbstractSolver* _solver=nullptr;
     Lattice* _globalVariablesState=nullptr;
-    AnalysisType _analysisType=PAFAnalysisBase::FORWARD_ANALYSIS;
+    AnalysisType _analysisType=DFAnalysisBaseWithoutData::FORWARD_ANALYSIS;
     bool _no_topological_sort=false;
     PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
     PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;

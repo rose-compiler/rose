@@ -59,8 +59,6 @@ struct CtxSolver0 : DFAbstractSolver
     void runSolver() ROSE_OVERRIDE;
     void computeCombinedPreInfo(Label lab, Lattice& inInfo) ROSE_OVERRIDE;
     
-    void setTrace(bool) ROSE_OVERRIDE { /* supported in name only */ }
-
   private:
     //
     // internal types

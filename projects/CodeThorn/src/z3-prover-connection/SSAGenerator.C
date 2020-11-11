@@ -6,7 +6,7 @@
 
 #include"SSAGenerator.h"
 #include<iostream>
-#include"Analyzer.h"
+#include"CTAnalysis.h"
 #include"staticSingleAssignment.h"
 #include"Flow.h"
 #include<assert.h>

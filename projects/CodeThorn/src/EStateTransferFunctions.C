@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "EStateTransferFunctions.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "AstUtility.h"
 
 using namespace std;
@@ -33,11 +33,11 @@ void EStateTransferFunctions::initDiagnostics() {
     return _analyzer->getOptionOutputWarnings();
   }
 
-  void EStateTransferFunctions::setAnalyzer(Analyzer* analyzer) {
+  void EStateTransferFunctions::setAnalyzer(CTAnalysis* analyzer) {
     _analyzer=analyzer;
   }
 
-  Analyzer* EStateTransferFunctions::getAnalyzer() {
+  CTAnalysis* EStateTransferFunctions::getAnalyzer() {
     return _analyzer;
   }
 

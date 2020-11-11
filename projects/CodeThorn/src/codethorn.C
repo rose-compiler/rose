@@ -117,7 +117,7 @@ Solver* createSolver(CodeThornOptions& ctOpt) {
   return solver;
 }
 
-void optionallyRunZ3AndExit(CodeThornOptions& ctOpt,Analyzer* analyzer) {
+void optionallyRunZ3AndExit(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
 #ifdef HAVE_Z3
   if(ctOpt.z3BasedReachabilityAnalysis)
     {
@@ -134,7 +134,7 @@ void optionallyRunZ3AndExit(CodeThornOptions& ctOpt,Analyzer* analyzer) {
 #endif	
 }
 
-void optionallyRunSSAGeneratorAndExit(CodeThornOptions& ctOpt, Analyzer* analyzer) {
+void optionallyRunSSAGeneratorAndExit(CodeThornOptions& ctOpt, CTAnalysis* analyzer) {
   if(ctOpt.ssa) {
     SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
     ssaGen->generateSSAForm();

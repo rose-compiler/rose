@@ -3,7 +3,7 @@
 
 namespace CodeThorn {
 
-  class Analyzer;
+  class CTAnalysis;
 
 /*! 
   * \author Marc Jasper
@@ -12,19 +12,19 @@ namespace CodeThorn {
  */
   class Solver {
 
-  friend class Analyzer;
+  friend class CTAnalysis;
 
   public:
     Solver();
-    Solver(Analyzer* analyzer);
+    Solver(CTAnalysis* analyzer);
     virtual void run() = 0;
     virtual int getId() = 0;
 
   protected:
-    virtual void setAnalyzer(Analyzer* analyzer);
+    virtual void setAnalyzer(CTAnalysis* analyzer);
     void initDiagnostics(Sawyer::Message::Facility& logger, int solverId);
 
-    Analyzer* _analyzer = nullptr;
+    CTAnalysis* _analyzer = nullptr;
   };
 
 } // end of namespace CodeThorn

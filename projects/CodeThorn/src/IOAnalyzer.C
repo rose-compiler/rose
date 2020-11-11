@@ -33,7 +33,7 @@ IOAnalyzer::IOAnalyzer() {
 }
 
 void IOAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
-  Analyzer::initializeSolver(functionToStartAt, root, oneFunctionOnly);
+  CTAnalysis::initializeSolver(functionToStartAt, root, oneFunctionOnly);
   const EState* currentEState=estateWorkListCurrent->front();
   ROSE_ASSERT(currentEState);
   if(getModeLTLDriven()) {
@@ -234,7 +234,7 @@ void IOAnalyzer::continueAnalysisFrom(EState * newStartEState) {
 }
 
 void IOAnalyzer::resetAnalysis() {
-  Analyzer::resetAnalysis();
+  CTAnalysis::resetAnalysis();
   _prevStateSetSizeDisplay = 0;
   _prevStateSetSizeResource = 0;
 }
@@ -292,7 +292,7 @@ void IOAnalyzer::printAnalyzerStatistics(double totalRunTime, string title) {
   printStatusMessage(ss.str());
 }
 
-void IOAnalyzer::setup(Analyzer* analyzer, Sawyer::Message::Facility logger,
+void IOAnalyzer::setup(CTAnalysis* analyzer, Sawyer::Message::Facility logger,
                        CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
   analyzer->setOptionOutputWarnings(ctOpt.printWarnings);
   analyzer->setPrintDetectedViolations(ctOpt.printViolations);
@@ -378,28 +378,28 @@ void IOAnalyzer::setup(Analyzer* analyzer, Sawyer::Message::Facility logger,
 
   if(ctOpt.maxIterationsForcedTop!=-1) {
     analyzer->setMaxIterationsForcedTop(ctOpt.maxIterationsForcedTop);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
   }
 
-  // TODO: Analyzer::GTM_IO is only mode used now, all others are deprecated
+  // TODO: CTAnalysis::GTM_IO is only mode used now, all others are deprecated
   if(ctOpt.maxTransitionsForcedTop!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
   } else if(ctOpt.maxTransitionsForcedTop1!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop1);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
   } else if(ctOpt.maxTransitionsForcedTop2!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop2);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCF);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IOCF);
   } else if(ctOpt.maxTransitionsForcedTop3!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop3);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCFPTR);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IOCFPTR);
   } else if(ctOpt.maxTransitionsForcedTop4!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop4);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_COMPOUNDASSIGN);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_COMPOUNDASSIGN);
   } else if(ctOpt.maxTransitionsForcedTop5!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop5);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_FLAGS);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_FLAGS);
   }
 
   int gigaByteMultiply=1; //1024*1024*1024;

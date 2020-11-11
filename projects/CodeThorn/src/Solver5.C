@@ -1,13 +1,13 @@
 #include "sage3basic.h"
 #include "Solver5.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "CodeThornCommandLineOptions.h"
 
 using namespace std;
 using namespace CodeThorn;
 using namespace Sawyer::Message;
 
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 
 Sawyer::Message::Facility Solver5::logger;
 // initialize static member flag

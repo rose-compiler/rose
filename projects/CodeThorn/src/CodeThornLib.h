@@ -35,32 +35,32 @@ namespace CodeThorn {
      format is wrong. */
   bool readAndParseLTLRersMappingFile(string ltlRersMappingFileName, LtlRersMapping& ltlRersMapping);
 
-  void processCtOptGenerateAssertions(CodeThornOptions& ctOpt, Analyzer* analyzer, SgProject* root);
+  void processCtOptGenerateAssertions(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgProject* root);
   IOAnalyzer* createAnalyzer(CodeThornOptions& ctOpt, LTLOptions& ltlOpt);
   void optionallyRunInternalChecks(CodeThornOptions& ctOpt, int argc, char * argv[]);
   void optionallyRunInliner(CodeThornOptions& ctOpt, Normalization& normalization, SgProject* sageProject);
-  void optionallyRunVisualizer(CodeThornOptions& ctOpt, Analyzer* analyzer, SgNode* root);
+  void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNode* root);
   void optionallyGenerateExternalFunctionsFile(CodeThornOptions& ctOpt, SgProject* sageProject);
   void optionallyGenerateAstStatistics(CodeThornOptions& ctOpt, SgProject* sageProject);
   void optionallyGenerateSourceProgramAndExit(CodeThornOptions& ctOpt, SgProject* sageProject);
   void optionallyGenerateTraversalInfoAndExit(CodeThornOptions& ctOpt, SgProject* sageProject);
   void optionallyRunRoseAstChecksAndExit(CodeThornOptions& ctOpt, SgProject* sageProject);
   void optionallyRunIOSequenceGenerator(CodeThornOptions& ctOpt, IOAnalyzer* analyzer);
-  void optionallyAnnotateTermsAndUnparse(CodeThornOptions& ctOpt, SgProject* sageProject, Analyzer* analyzer);
-  void optionallyRunDataRaceDetection(CodeThornOptions& ctOpt, Analyzer* analyzer);
+  void optionallyAnnotateTermsAndUnparse(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer);
+  void optionallyRunDataRaceDetection(CodeThornOptions& ctOpt, CTAnalysis* analyzer);
   SgProject* runRoseFrontEnd(int argc, char * argv[], CodeThornOptions& ctOpt, TimingCollector& timingCollector);
-  void optionallyPrintProgramInfos(CodeThornOptions& ctOpt, Analyzer* analyzer);
+  void optionallyPrintProgramInfos(CodeThornOptions& ctOpt, CTAnalysis* analyzer);
   void optionallyRunNormalization(CodeThornOptions& ctOpt,SgProject* sageProject, TimingCollector& timingCollector);
-  void setAssertConditionVariablesInAnalyzer(SgNode* root,Analyzer* analyzer);
-  void optionallyEliminateCompoundStatements(CodeThornOptions& ctOpt, Analyzer* analyzer, SgNode* root);
-  void optionallyEliminateRersArraysAndExit(CodeThornOptions& ctOpt, SgProject* sageProject, Analyzer* analyzer);
-  void optionallyPrintFunctionIdMapping(CodeThornOptions& ctOpt,Analyzer* analyzer);
-  void optionallyWriteSVCompWitnessFile(CodeThornOptions& ctOpt, Analyzer* analyzer);
+  void setAssertConditionVariablesInAnalyzer(SgNode* root,CTAnalysis* analyzer);
+  void optionallyEliminateCompoundStatements(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNode* root);
+  void optionallyEliminateRersArraysAndExit(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer);
+  void optionallyPrintFunctionIdMapping(CodeThornOptions& ctOpt,CTAnalysis* analyzer);
+  void optionallyWriteSVCompWitnessFile(CodeThornOptions& ctOpt, CTAnalysis* analyzer);
   void optionallyAnalyzeAssertions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, IOAnalyzer* analyzer, TimingCollector& tc);
-  void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,Analyzer* analyzer);
-  void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,Analyzer* analyzer);
-  void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,Analyzer* analyzer,SgNode* root, TimingCollector& tc);
-  void runSolver(CodeThornOptions& ctOpt,Analyzer* analyzer, SgProject* sageProject,TimingCollector& tc);
+  void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,CTAnalysis* analyzer);
+  void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* analyzer);
+  void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,CTAnalysis* analyzer,SgNode* root, TimingCollector& tc);
+  void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProject,TimingCollector& tc);
   void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt);
 } // end of namespace CodeThorn
 

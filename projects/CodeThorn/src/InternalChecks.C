@@ -10,7 +10,7 @@
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 #include "VariableIdMapping.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "LanguageRestrictor.h"
 #include <cstdio>
 #include <cstring>

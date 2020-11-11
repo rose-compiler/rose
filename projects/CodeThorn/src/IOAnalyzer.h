@@ -1,16 +1,16 @@
 #ifndef IO_ANALYZER_H
 #define IO_ANALYZER_H
 
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "ParProOptions.h"
 
 namespace CodeThorn {
   /*! 
   * \author Marc Jasper
   * \date 2017.
-  * \brief Analyzer with additional input/output-related functionality
+  * \brief CTAnalysis with additional input/output-related functionality
  */
-  class IOAnalyzer : public Analyzer {
+  class IOAnalyzer : public CTAnalysis {
 
     friend class Solver8;
     friend class Solver10;
@@ -24,7 +24,7 @@ namespace CodeThorn {
   public:
     static void initDiagnostics();
     void configureOptions(CodeThornOptions ctOpt, LTLOptions ltlOpt, ParProOptions parProOpt);
-    void setup(Analyzer* analyzer, Sawyer::Message::Facility logger,
+    void setup(CTAnalysis* analyzer, Sawyer::Message::Facility logger,
                CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt);
     // overwritten or extended analyzer functions
     virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);

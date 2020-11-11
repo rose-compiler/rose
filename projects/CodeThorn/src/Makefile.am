@@ -68,7 +68,7 @@ CODETHORN_HEADER_FILES=\
   AstUtility.h \
   AnalysisAstAnnotator.h \
   AnalysisReporting.h \
-  Analyzer.h \
+  CTAnalysis.h \
   ArrayElementAccessData.h \
   AstNodeInfo.h \
   AstTermRepresentation.h \
@@ -93,7 +93,7 @@ CODETHORN_HEADER_FILES=\
   DataRaceDetection.h \
   defUseQuery.h \
   DFAbstractSolver.h \
-  PAFAnalysisBase.h \
+  DFAnalysisBaseWithoutData.h \
   DFAnalysisBase.h \
   DFTransferFunctions.h \
   DotGraphCfgFrontend.h \
@@ -198,7 +198,7 @@ CODETHORN_SOURCE_FILES=\
   AstUtility.C \
   AnalysisAstAnnotator.C \
   AnalysisReporting.C \
-  Analyzer.C \
+  CTAnalysis.C \
   ArrayElementAccessData.C \
   AstNodeInfo.C \
   AstTermRepresentation.C \
@@ -222,7 +222,7 @@ CODETHORN_SOURCE_FILES=\
   DataDependenceVisualizer.C \
   defUseQuery.C \
   DataRaceDetection.C \
-  PAFAnalysisBase.C \
+  DFAnalysisBaseWithoutData.C \
   DFAnalysisBase.C \
   DFTransferFunctions.C \
   DotGraphCfgFrontend.C \
@@ -928,6 +928,7 @@ clean-local:
 	rm -f *.imout.check
 	rm -Rf make_check_log_*
 	rm -f *-LTLParser.c++
+	rm -f *.csv
 
 distclean-local: clean
 	rm -f *.tgz

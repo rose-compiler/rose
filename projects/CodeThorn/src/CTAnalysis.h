@@ -80,7 +80,7 @@ namespace CodeThorn {
    */
 
 
-  class Analyzer : public DFAnalysisBase {
+  class CTAnalysis : public DFAnalysisBase {
     friend class Solver;
     friend class Solver5;
     friend class Solver8;
@@ -92,8 +92,8 @@ namespace CodeThorn {
     friend class ExprAnalyzer;
   public:
     static void initDiagnostics();
-    Analyzer();
-    virtual ~Analyzer();
+    CTAnalysis();
+    virtual ~CTAnalysis();
 
     void initAstNodeInfo(SgNode* node);
     virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
@@ -510,7 +510,7 @@ namespace CodeThorn {
     const CodeThorn::PState* _initialPStateStored=nullptr;
     const CodeThorn::ConstraintSet* _emptycsetstored=nullptr;
     CodeThorn::EStateTransferFunctions* _estateTransferFunctions=nullptr;
-  }; // end of class Analyzer
+  }; // end of class CTAnalysis
 } // end of namespace CodeThorn
 
 #include "RersSpecialization.h"

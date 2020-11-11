@@ -8,17 +8,17 @@
 
 using namespace std;
 
-CodeThorn::PASolver2::PASolver2(DFAnalysisBase* dfAnalysisBase):
+CodeThorn::DFSolver2::DFSolver2(DFAnalysisBase* dfAnalysisBase):
   _dfAnalysisBase(dfAnalysisBase)
 {
 }
 
-void CodeThorn::PASolver2::setDFAnalysis(DFAnalysisBase* dfAnalysisBase) {
+void CodeThorn::DFSolver2::setDFAnalysis(DFAnalysisBase* dfAnalysisBase) {
   _dfAnalysisBase=dfAnalysisBase;
 }
 
 void
-CodeThorn::PASolver2::computeCombinedPreInfo(Label lab,Lattice& info) {
+CodeThorn::DFSolver2::computeCombinedPreInfo(Label lab,Lattice& info) {
   if(!_dfAnalysisBase->getFlow()->contains(lab)) {
     // schroder3 (2016-07-07): If the label does not exist in the CFG, then
     //  it does not have predecessors and the given pre-info therefore does
@@ -38,13 +38,13 @@ CodeThorn::PASolver2::computeCombinedPreInfo(Label lab,Lattice& info) {
 }
 
 void
-CodeThorn::PASolver2::computePostInfo(Label lab,Lattice& info) {
+CodeThorn::DFSolver2::computePostInfo(Label lab,Lattice& info) {
   _dfAnalysisBase->getTransferFunctions()->transfer(lab,info);
 }
 
 // runs until worklist is empty
 void
-CodeThorn::PASolver2::runSolver() {
+CodeThorn::DFSolver2::runSolver() {
   constexpr uint64_t REPORT_INTERVAL = (1 << 12);
   
   TimeMeasurement solverTimer;
@@ -60,7 +60,7 @@ CodeThorn::PASolver2::runSolver() {
     Label lab0=edge.source();
     Label lab1=edge.target();
 
-    if(_trace)
+    if(getTrace())
     {
       cout<<"TRACE: computing edge "<<lab0<<"->"<<lab1<<endl;
       cout<<"  from: " << _dfAnalysisBase->getLabeler()->getNode(lab0)->unparseToString() 
@@ -72,20 +72,20 @@ CodeThorn::PASolver2::runSolver() {
     //info->combine(*_analyzerDataPreInfo[lab0.getId()]);
     info->combine(*_dfAnalysisBase->getPreInfo(lab0));
     if(info->isBot()) {
-      if(_trace) {
+      if(getTrace()) {
         cout<<"TRACE: computing transfer function: "<<lab0<<":";info->toStream(cout,0);
         cout<<" ==> cancel (because of bot)";
         cout<<endl;
       }
       // do nothing (non-reachable code)
     } else {
-      if(_trace) {
+      if(getTrace()) {
         cout<<"TRACE: computing transfer function: "<<lab0<<":";info->toStream(cout,0);
         cout<<" ==> "<<lab1<<":";_dfAnalysisBase->getPreInfo(lab1)->toStream(cout,0);
         cout<<endl;
       }
       _dfAnalysisBase->getTransferFunctions()->transfer(edge,*info);
-      if(_trace) {
+      if(getTrace()) {
         cout<<"TRACE: transfer function result: "<<lab1<<":";
         ROSE_ASSERT(info);
         info->toStream(cout,0);
@@ -94,11 +94,11 @@ CodeThorn::PASolver2::runSolver() {
 
       bool isApproximatedBy=info->approximatedBy(*_dfAnalysisBase->getPreInfo(lab1));
       if(!isApproximatedBy) {
-        if(_trace) {
+        if(getTrace()) {
           cout<<"TRACE: old df value : "<<lab1<<":";_dfAnalysisBase->getPreInfo(lab1)->toStream(cout,0);
           cout<<endl;
         }
-        if(_trace) {
+        if(getTrace()) {
           cout<<"TRACE: combined with: "<<lab1<<":";info->toStream(cout,0);
           cout<<endl;
         }
@@ -106,7 +106,7 @@ CodeThorn::PASolver2::runSolver() {
         //_analyzerDataPreInfo[lab1.getId()]->combine(*info);
         _dfAnalysisBase->getPreInfo(lab1)->combine(*info);
 
-        if(_trace) {
+        if(getTrace()) {
           cout<<"TRACE: new df value : "<<lab1<<":";_dfAnalysisBase->getPreInfo(lab1)->toStream(cout,0);
           cout<<endl;
         }
@@ -115,11 +115,11 @@ CodeThorn::PASolver2::runSolver() {
         for (Flow::iterator i=outEdges.begin(); i!=outEdges.end(); ++i) {
           workListRef.add(*i);
         }
-        if(_trace)
+        if(getTrace())
           cout<<"TRACE: adding to worklist: "<<outEdges.toString()<<endl;
       } else {
         // no new information was computed. Nothing to do.
-        if(_trace)
+        if(getTrace())
           cout<<"TRACE: noop."<<endl;
       }
     }

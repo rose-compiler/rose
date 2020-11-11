@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "Solver12.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "CodeThornCommandLineOptions.h"
 
 using namespace CodeThorn;

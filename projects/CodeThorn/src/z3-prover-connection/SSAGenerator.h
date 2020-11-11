@@ -3,7 +3,7 @@
 #define SSA_GENERATOR_H
 
 #include"sage3basic.h"
-#include"Analyzer.h"
+#include"CTAnalysis.h"
 #include"ContNodeAttribute.h"
 #include<map>
 
@@ -84,7 +84,7 @@ class SSAGenerator
 {
 	private:
 	Sawyer::Message::Facility logger;
-	Analyzer* analyzer;
+	CTAnalysis* analyzer;
 	Flow* flow;
 	CTIOLabeler* labeler;
 
@@ -96,7 +96,7 @@ class SSAGenerator
 
 	public:
 	//Regular constructor that only generates the plain SSA form
-	SSAGenerator(Analyzer* analyzer, Sawyer::Message::Facility* logger)
+	SSAGenerator(CTAnalysis* analyzer, Sawyer::Message::Facility* logger)
 	{
 		this->analyzer = analyzer;
 		this->logger = *logger;
@@ -109,7 +109,7 @@ class SSAGenerator
 	//RERS specific constructor
 	//Additionally generates SSA form numbers and phi statements for calls to __VERIFIER_error(RERSVerifierErrorNumber)
 	//Use if the generated SSA form is meant to be used by a ReachabilityAnalyzerZ3 object 
-	SSAGenerator(int RERSVerifierErrorNumber, Analyzer* analyzer, Sawyer::Message::Facility* logger): SSAGenerator(analyzer, logger)
+	SSAGenerator(int RERSVerifierErrorNumber, CTAnalysis* analyzer, Sawyer::Message::Facility* logger): SSAGenerator(analyzer, logger)
 	{
 		this->RERSVerifierErrorNumber = RERSVerifierErrorNumber;
 		prepareReachabilityAnalysisZ3 = true;	

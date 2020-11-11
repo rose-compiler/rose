@@ -35,7 +35,7 @@ private:
   string _precond;
 };
 
-AssertionExtractor::AssertionExtractor(Analyzer* analyzer)
+AssertionExtractor::AssertionExtractor(CTAnalysis* analyzer)
 {
   setLabeler(analyzer->getLabeler());
   setVariableIdMapping(analyzer->getVariableIdMapping());
@@ -118,7 +118,7 @@ Visualizer::Visualizer():
 {}
 
 //! The analyzer provides all necessary information
-Visualizer::Visualizer(Analyzer* analyzer):
+Visualizer::Visualizer(CTAnalysis* analyzer):
   tg1(false),
   tg2(false),
   optionTransitionGraphDotHtmlNode(true)
