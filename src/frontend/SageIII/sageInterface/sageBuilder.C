@@ -169,15 +169,22 @@ SageBuilder::buildDefaultConstructor (SgClassType* classType)
 
      SgTemplateArgumentPtrList templateArgumentsList;
 
-     SgMemberFunctionDeclaration* first_nondefing_declaration = buildNondefiningMemberFunctionDeclaration (className, return_type, functionParameterList,
+     SgMemberFunctionDeclaration* first_nondefining_declaration = buildNondefiningMemberFunctionDeclaration (className, return_type, functionParameterList,
           classDefinition, decoratorList, functionConstVolatileFlags, buildTemplateInstantiation, &templateArgumentsList);
-     ROSE_ASSERT(first_nondefing_declaration != NULL);
+     ROSE_ASSERT(first_nondefining_declaration != NULL);
 
-     first_nondefing_declaration->get_specialFunctionModifier().setConstructor();
-     ROSE_ASSERT(first_nondefing_declaration->get_specialFunctionModifier().isConstructor() == true);
+     first_nondefining_declaration->get_specialFunctionModifier().setConstructor();
+     ROSE_ASSERT(first_nondefining_declaration->get_specialFunctionModifier().isConstructor() == true);
+
+  // DQ (11/10/2020): Need to make sure that the firstNondefiningDeclaration is being used (reset is needed).
+     if (first_nondefining_declaration->get_firstNondefiningDeclaration() != first_nondefining_declaration)
+        {
+          first_nondefining_declaration = isSgMemberFunctionDeclaration(first_nondefining_declaration->get_firstNondefiningDeclaration());
+        }
+     ROSE_ASSERT(first_nondefining_declaration->get_firstNondefiningDeclaration() == first_nondefining_declaration);
 
      SgMemberFunctionDeclaration* memberFunctionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (className, return_type, functionParameterList, 
-          classDefinition, decoratorList, buildTemplateInstantiation, functionConstVolatileFlags, first_nondefing_declaration, &templateArgumentsList);
+          classDefinition, decoratorList, buildTemplateInstantiation, functionConstVolatileFlags, first_nondefining_declaration, &templateArgumentsList);
      ROSE_ASSERT(memberFunctionDeclaration != NULL);
 
      memberFunctionDeclaration->get_specialFunctionModifier().setConstructor();
