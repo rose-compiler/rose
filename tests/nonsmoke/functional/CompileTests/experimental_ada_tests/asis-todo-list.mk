@@ -35,5 +35,6 @@ ASIS_TODO := \
   unit_2.ads                           \
   unit_2.adb                           \
   unit_3.ads                           \
+  pkgrename.ads                        \
   EndOfList
 
