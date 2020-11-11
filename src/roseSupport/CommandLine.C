@@ -117,6 +117,10 @@ createEmptyParserStage(const std::string &purpose, const std::string &descriptio
 // Global place to store result of parsing genericSwitches.
 GenericSwitchArgs genericSwitchArgs;
 
+// Global place to store the string printed by --version.  This static variable is initialized by the ROSE_INITIALIZE macro
+// called from every ROSE tool's "main" function.
+std::string versionString;
+
 // Returns command-line description for switches that should be always available.
 // Don't add anything to this that might not be applicable to some tool -- this is for all tools, both source and binary.
 // See header file for more documentation including examples.
@@ -159,15 +163,9 @@ genericSwitches() {
                     "switch shows only the dotted quad of the ROSE library itself."));
 
     gen.insert(Switch("version", 'V')
-#if defined(ROSE_PACKAGE_VERSION)
-               .action(showVersionAndExit(ROSE_PACKAGE_VERSION, 0))
-#elif defined(PACKAGE_VERSION)
-               .action(showVersionAndExit(PACKAGE_VERSION, 0))
-#else
-               .action(showVersionAndExit("unknown", 0))
-#endif
-               .doc("Shows the dotted quad ROSE version and then exits.  See also @s{version-long}, which prints much more "
-                    "information."));
+               .action(showVersionAndExit(versionString, 0))
+               .doc("Shows the version and then exits.  See also @s{version-long}, which prints much more "
+                    "information about the ROSE library and supporting software."));
 
     // Control how a failing assertion acts. It could abort, exit with non-zero, or throw Rose::Diagnostics::FailedAssertion.
     gen.insert(Switch("assert")
