@@ -121,7 +121,7 @@ namespace
     Expression_Struct& expr = elem.The_Union.Expression;
     ROSE_ASSERT (expr.Expression_Kind == An_Identifier);
 
-    SgDeclarationStatement* dcl = findFirst( asisDecls(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration);
+    SgDeclarationStatement* dcl = getDecl_opt(expr, ctx);
     SgScopeStatement*       res = sg::dispatch(ScopeQuery(), dcl);
 
     return SG_DEREF(res);
@@ -630,6 +630,14 @@ namespace
       void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
       void handle(SgType& n) { res = &mkTypeDecl(dclname, n, dclscope); }
 
+      void handle(SgEnumDeclaration& n)
+      {
+        ROSE_ASSERT(n.get_scope() == &dclscope);
+
+        n.set_name(dclname);
+        res = &n;
+      }
+
       void handle(SgClassDefinition& n)
       {
         SgClassDeclaration&    rec = mkRecordDecl(dclname, n, dclscope);
@@ -664,22 +672,22 @@ namespace
 
         const std::string&      name = nameelem.fullName;
         Element_ID              id   = nameelem.id();
-        SgDeclarationStatement* dcl = sg::dispatch(MakeDeclaration(name, scope, foundation), foundation.n);
+        SgDeclarationStatement* dcl  = sg::dispatch(MakeDeclaration(name, scope, foundation), foundation.n);
         ROSE_ASSERT(dcl);
 
         markCompilerGenerated(*dcl);
         privatize(*dcl, privateElems);
         scope.append_statement(dcl);
+
+        // \todo double check that recorded types are consistent with ROSE representation
         recordNode(asisTypes(), id, *dcl);
         ROSE_ASSERT(dcl->get_parent() == &scope);
       }
 
     private:
-      TypeData   foundation;
+      TypeData          foundation;
       SgScopeStatement& scope;
       bool              privateElems;
-
-      DeclareType() = delete;
   };
 
 
@@ -1702,6 +1710,39 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
+    case An_Incomplete_Type_Declaration:           // 3.2.1(2):3.10(2)
+      {
+        typedef NameCreator::result_container name_container;
+
+        NameData                adaname = singleName(decl, ctx);
+        ROSE_ASSERT(adaname.fullName == adaname.ident);
+
+        logTrace() << "Incomplete Type: " << adaname.fullName
+                   << "\n  private: " << decl.Has_Private
+                   << "\n  limited: " << decl.Has_Limited
+                   << "\n  private: " << decl.Has_Private
+                   << std::endl;
+
+        SgScopeStatement&       scope  = ctx.scope();
+        SgType&                 opaque = mkOpaqueType();
+        SgDeclarationStatement& sgnode = mkTypeDecl(adaname.ident, opaque, scope);
+
+        markCompilerGenerated(sgnode);
+        privatize(sgnode, isPrivate);
+        scope.append_statement(&sgnode);
+        recordNode(asisTypes(), adaname.id(), sgnode);
+        ROSE_ASSERT(sgnode.get_parent() == &scope);
+
+        /*
+           unhandled fields:
+             Definition_ID                  Discriminant_Part
+             Definition_ID                  Type_Declaration_View
+             Declaration_ID                 Corresponding_Type_Declaration
+             Declaration_ID                 Corresponding_Type_Completion
+             Declaration_ID                 Corresponding_Type_Partial_View (* notes)
+        */
+        break;
+      }
     case A_Private_Type_Declaration:               // 3.2.1(2):7.3(2) -> Trait_Kinds
       {
         typedef NameCreator::result_container name_container;
@@ -1712,11 +1753,12 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                    << "\n  private: " << decl.Has_Private
                    << std::endl;
 
-        // \todo this may only declare one name (use singleName)
+        // \todo this may only declare one name
+        //       (use singleName -- e.g., An_Incomplete_Type_Declaration)
         ElemIdRange     range  = idRange(decl.Names);
         ROSE_ASSERT(range.size() == 1);
         name_container  names  = traverseIDs(range, elemMap(), NameCreator{ctx});
-        SgType&         opaque = mkDefaultType();
+        SgType&         opaque = mkOpaqueType();
 
         ROSE_ASSERT(ctx.scope().get_parent());
         std::for_each(names.begin(), names.end(), DeclarePrivateType{opaque, ctx, isPrivate});
@@ -2096,7 +2138,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case Not_A_Declaration: /* break; */           // An unexpected element
     case A_Protected_Type_Declaration:             // 9.4(2)
-    case An_Incomplete_Type_Declaration:           // 3.2.1(2):3.10(2)
     case A_Tagged_Incomplete_Type_Declaration:     //  3.10.1(2)
     case A_Private_Extension_Declaration:          // 3.2.1(2):7.3(3) -> Trait_Kinds
     case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
