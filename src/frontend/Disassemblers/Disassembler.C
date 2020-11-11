@@ -11,6 +11,7 @@
 #include <DisassemblerA64.h>
 #include <DisassemblerM68k.h>
 #include <DisassemblerMips.h>
+#include <DisassemblerNull.h>
 #include <DisassemblerX86.h>
 #include <BinaryLoader.h>
 #include <stringify.h>
@@ -187,6 +188,7 @@ Disassembler::isaNames() {
     v.push_back("m68040");
     v.push_back("mips-be");
     v.push_back("mips-le");
+    // v.push_back("null"); -- intentionally undocumented
     v.push_back("ppc32-be");
     v.push_back("ppc32-le");
     v.push_back("ppc64-be");
@@ -230,6 +232,8 @@ Disassembler::lookup(const std::string &name)
         retval = new DisassemblerM68k(m68k_68040);
     } else if (name == "coldfire") {
         retval = new DisassemblerM68k(m68k_freescale_emacb);
+    } else if (name == "null") {
+        retval = new DisassemblerNull;
     } else {
         throw std::runtime_error("invalid ISA name \"" + StringUtility::cEscape(name) + "\"; use --isa=list");
     }
