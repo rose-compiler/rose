@@ -1602,7 +1602,7 @@ Ptr makeZerop(const Ptr &a,
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-std::ostream& operator<<(std::ostream &o, Node&);
+std::ostream& operator<<(std::ostream &o, const Node&);
 std::ostream& operator<<(std::ostream &o, const Node::WithFormatter&);
 
 /** Convert a set to an ite expression. */

@@ -1467,6 +1467,9 @@ int num_of_newlines(char* s)
 // ROSEAttributesList *getPreprocessorDirectives( std::string fileName, LexTokenStreamTypePointer & input_token_stream_pointer )
 ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
    {
+  // DQ (11/9/2020): Introduce tracking of performance of ROSE.
+     TimingPerformance timer ("AST collect comments and CPP directives():");
+
      FILE *fp = NULL;
      ROSEAttributesList *preprocessorInfoList = new ROSEAttributesList; // create a new list
      ROSE_ASSERT (preprocessorInfoList != NULL);

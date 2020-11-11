@@ -86,17 +86,16 @@ public:
 class StyleStack {
     std::vector<Style> stack_;
     Style current_;
-    bool usingColor_;
+    Color::Colorization colorization_;
 
 public:
-    StyleStack()
-        : usingColor_(true) {}
+    StyleStack() {}
 
-    /** Property: Use color escapes.
+    /** Property: Colorization settings.
      *
      * @{ */
-    bool usingColor() const { return usingColor_; }
-    void usingColor(bool b) { usingColor_ = b; }
+    Color::Colorization colorization() const { return colorization_; }
+    void colorization(const Color::Colorization c) { colorization_ = c; }
     /** @} */
 
     /** Push style onto stack.
@@ -418,6 +417,8 @@ public:
      *  Most of these settings can also be configured from the command-line. They control features of the unparser
      *  directly without the programmer having to invervene by creating a subclss or chaining a new parser. Most of
      *  the switches simply turn things on and off.
+     *
+     *  Copying an unparser also copies its settings.
      *
      * @{ */
     virtual const Settings& settings() const = 0;

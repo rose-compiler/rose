@@ -135,7 +135,12 @@ genericSwitches() {
                .valueAugmenter(Color::ColorizationMerge::instance())
                .doc("Whether to use color in the output, and the theme to use. " +
                     Color::ColorizationParser::docString() +
-                    " The @s{color} switch with no argument is the same as @s{color}=on,dark."));
+                    " The @s{color} switch with no argument is the same as @s{color}=on,dark, and @s{no-color} is "
+                    "shorthand for @s{color}=off."));
+    gen.insert(Switch("no-color")
+               .key("color")
+               .intrinsicValue("off", Color::colorizationParser(genericSwitchArgs.colorization))
+               .hidden(true));
 
     gen.insert(Switch("log")
                .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
@@ -200,7 +205,7 @@ genericSwitches() {
 
     gen.insert(Switch("license")
                .action(ShowLicenseAndExit::instance())
-               .doc("Show the ROSE software license and exiit."));
+               .doc("Show the ROSE software license and exit."));
 
     // This undocumented switch is used for internal testing during "make check" and similar. If a tool is disabled due to ROSE
     // being compiled with too old a compiler or without some necessary software prerequisite, then the tool will print an
