@@ -18,8 +18,8 @@
 #include <string>
 
 // Minimum ROSE versions required by this tool
-#define MINIMUM_ROSE_HEADER_VERSION 9013017ul
-#define MINIMUM_ROSE_LIBRARY_VERSION "0.9.13.17"
+#define MINIMUM_ROSE_HEADER_VERSION 11007006uL
+#define MINIMUM_ROSE_LIBRARY_VERSION "0.11.7.6"
 
 #if !defined(ROSE_VERSION)
     #warning "unknown ROSE version"
