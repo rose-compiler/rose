@@ -652,15 +652,6 @@ void optionallyEliminateRersArraysAndExit(CodeThornOptions& ctOpt, SgProject* sa
   }
 }
 
-void optionallyPrintFunctionIdMapping(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
-  // function-id-mapping is initialized with initializeSolver function.
-  if(ctOpt.info.printFunctionIdMapping) {
-    ROSE_ASSERT(analyzer->getCFAnalyzer());
-    ROSE_ASSERT(analyzer->getCFAnalyzer()->getFunctionIdMapping());
-    analyzer->getCFAnalyzer()->getFunctionIdMapping()->toStream(cout);
-  }
-}
-
 void optionallyWriteSVCompWitnessFile(CodeThornOptions& ctOpt, CTAnalysis* analyzer) {
   if (ctOpt.svcomp.svcompMode && ctOpt.svcomp.witnessFileName.size()>0) {
     analyzer->writeWitnessToFile(ctOpt.svcomp.witnessFileName);

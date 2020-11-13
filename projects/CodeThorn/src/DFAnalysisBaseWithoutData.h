@@ -55,7 +55,6 @@ namespace CodeThorn {
     virtual Labeler* getLabeler() const;
     virtual CFAnalysis* getCFAnalyzer(); 
     virtual VariableIdMappingExtended* getVariableIdMapping();
-    virtual FunctionIdMapping* getFunctionIdMapping();
     virtual Flow* getFlow() const;
     virtual Lattice* getPreInfo(Label lab) =0;
     virtual Lattice* getPostInfo(Label lab) =0;

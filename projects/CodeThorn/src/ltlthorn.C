@@ -154,7 +154,6 @@ int main( int argc, char * argv[] ) {
     optionallyEliminateRersArraysAndExit(ctOpt,sageProject,analyzer);
     initializeSolverWithStartFunction(ctOpt,analyzer,root,tc);
     analyzer->initLabeledAssertNodes(sageProject);
-    optionallyPrintFunctionIdMapping(ctOpt,analyzer);
     optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);
     runSolver(ctOpt,analyzer,sageProject,tc);
     analyzer->printStatusMessageLine("==============================================================");

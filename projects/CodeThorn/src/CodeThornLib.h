@@ -54,7 +54,6 @@ namespace CodeThorn {
   void setAssertConditionVariablesInAnalyzer(SgNode* root,CTAnalysis* analyzer);
   void optionallyEliminateCompoundStatements(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNode* root);
   void optionallyEliminateRersArraysAndExit(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer);
-  void optionallyPrintFunctionIdMapping(CodeThornOptions& ctOpt,CTAnalysis* analyzer);
   void optionallyWriteSVCompWitnessFile(CodeThornOptions& ctOpt, CTAnalysis* analyzer);
   void optionallyAnalyzeAssertions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, IOAnalyzer* analyzer, TimingCollector& tc);
   void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,CTAnalysis* analyzer);

@@ -240,10 +240,6 @@ namespace CodeThorn
     return _programAbstractionLayer->getVariableIdMapping();
   }
 
-  FunctionIdMapping* DFAnalysisBaseWithoutData::getFunctionIdMapping() {
-    return _programAbstractionLayer->getFunctionIdMapping();
-  }
-
   CodeThorn::DFTransferFunctions* DFAnalysisBaseWithoutData::getTransferFunctions() {
     return _transferFunctions;
   }

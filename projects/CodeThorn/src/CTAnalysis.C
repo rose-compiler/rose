@@ -84,6 +84,16 @@ std::set<int> CodeThorn::CTAnalysis::getInputVarValues() {
   return _inputVarValues;
 }
 
+#if 0
+EState* CodeThorn::CTAnalysis::getPreInfo(Label lab) {
+  return 0;
+}
+
+EState* CodeThorn::CTAnalysis::getPostInfo(Label lab) {
+  return 0;
+}
+#endif
+
 // also sets inputvarvalues
 void CodeThorn::CTAnalysis::setLtlRersMapping(CodeThorn::LtlRersMapping m) {
   _ltlRersMapping=m;
@@ -154,9 +164,6 @@ ExplorationMode CodeThorn::CTAnalysis::getExplorationMode() {
 
 CodeThorn::CTAnalysis::~CTAnalysis() {
   if(cfanalyzer) {
-    if(FunctionIdMapping* fim=cfanalyzer->getFunctionIdMapping()) {
-      delete fim;
-    }
     delete cfanalyzer;
   }
   if(variableIdMapping)
@@ -1708,7 +1715,6 @@ void CodeThorn::CTAnalysis::initializeVariableIdMapping(SgProject* project) {
   SAWYER_MESG(logger[INFO])<<"initializeVariableIdMapping:done"<<endl;
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   AbstractValue::setVariableIdMapping(getVariableIdMapping());
-  functionIdMapping.computeFunctionSymbolMapping(project);
   functionCallMapping.computeFunctionCallMapping(project);
 }
 
@@ -1843,8 +1849,6 @@ void CodeThorn::CTAnalysis::initializeSolver(std::string functionToStartAt,SgNod
 
   SAWYER_MESG(logger[TRACE])<< "Creating Labeler."<<endl;
   Labeler* labeler= new CTIOLabeler(root,getVariableIdMapping());
-  //SAWYER_MESG(logger[TRACE])<< "INIT: Initializing VariableIdMapping."<<endl;
-  //exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   SAWYER_MESG(logger[TRACE])<< "Creating CFAnalysis."<<endl;
   cfanalyzer=new CFAnalysis(labeler,true);
   
@@ -1863,11 +1867,6 @@ void CodeThorn::CTAnalysis::initializeSolver(std::string functionToStartAt,SgNod
                              << std::endl;
   }
   
-  //FunctionIdMapping* funIdMapping=new FunctionIdMapping();
-  //ROSE_ASSERT(isSgProject(root));
-  //funIdMapping->computeFunctionSymbolMapping(isSgProject(root));
-  //cfanalyzer->setFunctionIdMapping(funIdMapping);
-  cfanalyzer->setFunctionIdMapping(getFunctionIdMapping());
   cfanalyzer->setFunctionCallMapping(getFunctionCallMapping());
   cfanalyzer->setFunctionCallMapping2(getFunctionCallMapping2());
   cfanalyzer->setInterProcedural(_ctOpt.getInterProceduralFlag());
@@ -1876,9 +1875,7 @@ void CodeThorn::CTAnalysis::initializeSolver(std::string functionToStartAt,SgNod
 
   CallString::setMaxLength(_ctOpt.callStringLength);
   
-  // logger[DEBUG]<< "mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   SAWYER_MESG(logger[INFO])<< "Building CFGs."<<endl;
-
   flow=cfanalyzer->flow(root); // START_INIT 3
   if(_ctOpt.getInterProceduralFlag()) {
     Label slab2=getLabeler()->getLabel(_startFunRoot);
@@ -2331,7 +2328,6 @@ void CodeThorn::CTAnalysis::setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
 CodeThorn::CFAnalysis* CodeThorn::CTAnalysis::getCFAnalyzer() const { return cfanalyzer; }
 
 VariableIdMappingExtended* CodeThorn::CTAnalysis::getVariableIdMapping() { return variableIdMapping; }
-CodeThorn::FunctionIdMapping* CodeThorn::CTAnalysis::getFunctionIdMapping() { return &functionIdMapping; }
 CodeThorn::FunctionCallMapping* CodeThorn::CTAnalysis::getFunctionCallMapping() { return &functionCallMapping; }
 CodeThorn::FunctionCallMapping2* CodeThorn::CTAnalysis::getFunctionCallMapping2() { return &functionCallMapping2; }
 CodeThorn::Flow* CodeThorn::CTAnalysis::getFlow() { return &flow; }
@@ -2844,7 +2840,6 @@ void CodeThorn::CTAnalysis::setFunctionResolutionModeInCFAnalysis(CodeThornOptio
   switch(int argVal=ctOpt.functionResolutionMode) {
   case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
   case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
-  case 3: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_ID_MAPPING;break;
   case 4: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;break;
   default: 
     cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";

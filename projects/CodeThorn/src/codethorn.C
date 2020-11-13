@@ -189,7 +189,6 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
     analyzer->initLabeledAssertNodes(sageProject);
-    optionallyPrintFunctionIdMapping(ctOpt,analyzer);
     optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);
     runSolver(ctOpt,analyzer,sageProject,tc);
     analyzer->printStatusMessageLine("==============================================================");

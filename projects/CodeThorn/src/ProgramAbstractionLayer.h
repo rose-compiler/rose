@@ -3,7 +3,6 @@
 
 #include "Labeler.h"
 #include "VariableIdMapping.h"
-#include "FunctionIdMapping.h"
 #include "FunctionCallMapping.h"
 #include "CFAnalysis.h"
 #include "Flow.h"
@@ -22,7 +21,6 @@ namespace CodeThorn {
     SgProject* getRoot();
     Labeler* getLabeler();
     VariableIdMappingExtended* getVariableIdMapping();
-    FunctionIdMapping* getFunctionIdMapping();
     FunctionCallMapping* getFunctionCallMapping();
     FunctionCallMapping2* getFunctionCallMapping2();
     ClassHierarchyWrapper* getClassHierarchy();
@@ -42,7 +40,6 @@ namespace CodeThorn {
   private:
     Labeler* _labeler=nullptr;
     VariableIdMappingExtended* _variableIdMapping=nullptr;
-    FunctionIdMapping* _functionIdMapping=nullptr;
     FunctionCallMapping* _functionCallMapping=nullptr;
     FunctionCallMapping2* _functionCallMapping2=nullptr;
     ClassHierarchyWrapper* _classHierarchy=nullptr;

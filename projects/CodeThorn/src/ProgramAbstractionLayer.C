@@ -31,18 +31,11 @@ void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
   
   _classHierarchy=new ClassHierarchyWrapper(root);
   _cfanalyzer=new CFAnalysis(_labeler);
-  _functionIdMapping=nullptr; 
   _functionCallMapping=nullptr; 
   _functionCallMapping2=nullptr;
 
   if (!SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL)
   {
-    // a function resolution mode
-    _functionIdMapping = new FunctionIdMapping();
-    
-    getFunctionIdMapping()->computeFunctionSymbolMapping(root);
-    _cfanalyzer->setFunctionIdMapping(getFunctionIdMapping());
-    
     // another function resolution mode
     _functionCallMapping = new FunctionCallMapping();
   
@@ -108,11 +101,6 @@ CodeThorn::Labeler* CodeThorn::ProgramAbstractionLayer::getLabeler(){
 CodeThorn::VariableIdMappingExtended* CodeThorn::ProgramAbstractionLayer::getVariableIdMapping(){
   ROSE_ASSERT(_variableIdMapping!=0);
   return _variableIdMapping;
-}
-
-CodeThorn::FunctionIdMapping* CodeThorn::ProgramAbstractionLayer::getFunctionIdMapping(){
-  ROSE_ASSERT(_functionIdMapping!=0);
-  return _functionIdMapping;
 }
 
 CodeThorn::FunctionCallMapping* CodeThorn::ProgramAbstractionLayer::getFunctionCallMapping(){

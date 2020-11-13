@@ -99,7 +99,6 @@ void runMemAnalysis(SgProject* astRoot, SgNode* startFunRoot) {
   MemAnalysis* memAnalysis=new MemAnalysis();
   memAnalysis->initialize(astRoot);
   ROSE_ASSERT(memAnalysis->getVariableIdMapping());
-  ROSE_ASSERT(memAnalysis->getFunctionIdMapping());
   
   memAnalysis->determineExtremalLabels(startFunRoot,false);
   memAnalysis->initializeTransferFunctions();
@@ -111,7 +110,6 @@ void runEStateAnalysis(SgProject* astRoot, SgNode* startFunRoot) {
   EStateAnalysis* estateAnalysis=new EStateAnalysis();
   estateAnalysis->initialize(astRoot);
   ROSE_ASSERT(estateAnalysis->getVariableIdMapping());
-  ROSE_ASSERT(estateAnalysis->getFunctionIdMapping());
 
   estateAnalysis->determineExtremalLabels(startFunRoot,false);
   estateAnalysis->initializeTransferFunctions();

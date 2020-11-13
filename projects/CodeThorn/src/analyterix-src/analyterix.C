@@ -478,6 +478,9 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 #endif
   }
   
+  FunctionIdMapping fim;
+  fim.computeFunctionSymbolMapping(root);
+
   if(option_interval_analysis) {
     cout << "STATUS: creating interval analyzer."<<endl;
     CodeThorn::IntervalAnalysis* intervalAnalyzer=new CodeThorn::IntervalAnalysis();
@@ -486,7 +489,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     intervalAnalyzer->initialize(root,nullptr);
     cout << "STATUS: running pointer analysis."<<endl;
     ROSE_ASSERT(intervalAnalyzer->getVariableIdMapping());
-    CodeThorn::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(), intervalAnalyzer->getFunctionIdMapping(), root);
+    CodeThorn::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(), &fim, root);
     fipa->initialize();
     fipa->run();
     intervalAnalyzer->setPointerAnalysis(fipa);
@@ -533,7 +536,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     lvAnalysis->initialize(root,nullptr);
     cout << "STATUS: running pointer analysis."<<endl;
     ROSE_ASSERT(lvAnalysis->getVariableIdMapping());
-    CodeThorn::FIPointerAnalysis* fipa = new FIPointerAnalysis(lvAnalysis->getVariableIdMapping(), lvAnalysis->getFunctionIdMapping(), root);
+    CodeThorn::FIPointerAnalysis* fipa = new FIPointerAnalysis(lvAnalysis->getVariableIdMapping(), &fim, root);
     fipa->initialize();
     fipa->run();
     lvAnalysis->setPointerAnalysis(fipa);

@@ -297,7 +297,9 @@ int main( int argc, char * argv[] ) {
 
     IOAnalyzer* analyzer;
     if(ctOpt.dr.checkShuffleAlgorithm) {
-      analyzer = new ReadWriteAnalyzer();
+      cout<<"Error: ReadWriteAnalyzer not supported."<<endl;
+      exit(1);
+      //analyzer = new ReadWriteAnalyzer();
     } else {
       analyzer = new IOAnalyzer();
     }
@@ -323,7 +325,6 @@ int main( int argc, char * argv[] ) {
       switch(int argVal=ctOpt.functionResolutionMode) {
       case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
       case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
-      case 3: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_ID_MAPPING;break;
       case 4: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;break;
       default: 
         cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
@@ -712,12 +713,6 @@ int main( int argc, char * argv[] ) {
     }
     analyzer->initLabeledAssertNodes(sageProject);
 
-    // function-id-mapping is initialized in initializeSolver.
-    if(ctOpt.info.printFunctionIdMapping) {
-      ROSE_ASSERT(analyzer->getCFAnalyzer());
-      ROSE_ASSERT(analyzer->getCFAnalyzer()->getFunctionIdMapping());
-      analyzer->getCFAnalyzer()->getFunctionIdMapping()->toStream(cout);
-    }
     // pattern search: requires that exploration mode is set,
     // otherwise no pattern search is performed
     if(ctOpt.patSearch.explorationMode.size()>0) {
