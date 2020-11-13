@@ -1976,6 +1976,16 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_60.C \
    test2020_61.C \
    test2020_62.C \
+   test2020_63.C \
+   test2020_64.C \
+   test2020_65.C \
+   test2020_66.C \
+   test2020_67.C \
+   test2020_68.C \
+   test2020_69.C \
+   test2020_70.C \
+   test2020_71.C \
+   test2020_72.C \
    test_CplusplusMacro_Cpp.C \
    test_int_lexemes.C \
    test_int_lexemes_donot_pass.C \

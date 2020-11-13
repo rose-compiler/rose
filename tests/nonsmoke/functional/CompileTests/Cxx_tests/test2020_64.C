@@ -29,6 +29,7 @@ void F::foobar()
 {
   x.foo_1(true);
 
+  // DQ (11/12/2020) This was an issue for the code segregation tool.
   // This is unparsed as (when the global symbol across files is cleared):
   // ((class ::B *)((class ::C *)this__ptr__)) -> C::x .  bafoo_2 (true);
   // ((class ::B *)((class ::C *)this__ptr__)) -> C::x .  bafoo_3 (true);

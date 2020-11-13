@@ -25597,6 +25597,7 @@ SageInterface::buildFunctionPrototype ( SgFunctionDeclaration* functionDeclarati
      return nondefiningFunctionDeclaration;
    }
 
+
 // DQ (10/27/2020): Need to return the generated function prototype (incase we want to mark it for output or template unparsing from the AST).
 // void SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunctionDeclaration* functionDeclaration )
 // SgDeclarationStatement* SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunctionDeclaration* functionDeclaration )
@@ -25606,8 +25607,18 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
      SgFunctionDeclaration* nondefiningFunctionDeclaration = NULL;
   // SgDeclarationStatement* nondefiningFunctionDeclaration = NULL;
 
+  // DQ (11/12/2020): Added assertion.
+     ROSE_ASSERT(functionDeclaration != NULL);
+
 #if 0
      printf ("In SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(): functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+     printf ("In SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(): functionDeclaration = %s \n",functionDeclaration->unparseToString().c_str());
+
+     printf ("   --- functionDeclaration->isExternBrace()                                            = %s \n",functionDeclaration->isExternBrace() ? "true" : "false");
+     printf ("   --- functionDeclaration->get_declarationModifier().get_storageModifier().isExtern() = %s \n",functionDeclaration->get_declarationModifier().get_storageModifier().isExtern() ? "true" : "false");
+     printf ("   --- functionDeclaration->get_linkage().empty()                                      = %s \n",functionDeclaration->get_linkage().empty() ? "true" : "false");
+     printf ("   --- functionDeclaration->get_linkage()                                              = %s \n",functionDeclaration->get_linkage().c_str());
+
      SgMemberFunctionDeclaration* tmp_memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
      if (tmp_memberFunctionDeclaration != NULL && tmp_memberFunctionDeclaration->get_parent() != tmp_memberFunctionDeclaration->get_scope())
         {
@@ -25633,6 +25644,11 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
 #endif
 
      SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
+
+#if 0
+     printf ("After buildFunctionPrototype(): templateInstantiationFunctionDecl = %p \n",templateInstantiationFunctionDecl);
+#endif
+
 #else
   // DQ (11/21/2019): Check if this is a constructor, this is a temporary fix.
      bool isConstructor = false;
@@ -25671,6 +25687,8 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
           param_list = buildFunctionParameterList( functionDeclaration->get_type()->get_argument_list());
         }
 
+#error "DEAD CODE!"
+
      SgScopeStatement* scope             = functionDeclaration->get_scope();
   // SgTemplateParameterPtrList* templateParameterList = NULL; // functionDeclaration->get_templateParameterList();
      SgExprListExp* python_decoratorList = NULL;
@@ -25700,6 +25718,8 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
 
                ROSE_ASSERT(original_templateMemberFunctionDeclaration->get_type() != NULL);
 
+#error "DEAD CODE!"
+
             // Need to call:
             // unsigned int get_mfunc_specifier();
 
@@ -25722,6 +25742,8 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
                ROSE_ASSERT(false);
 #endif
                nondefiningFunctionDeclaration = templateMemberFunctionDeclaration;
+
+#error "DEAD CODE!"
 
                ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
 
@@ -25751,6 +25773,8 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
             //      SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, SgTemplateParameterPtrList* templateParameterList = NULL);
 
                SgTemplateParameterPtrList templateParameterList = original_templateFunctionDeclaration->get_templateParameters();
+
+#error "DEAD CODE!"
 
                templateFunctionDeclaration = buildNondefiningTemplateFunctionDeclaration ( name, return_type, param_list, scope, python_decoratorList, &templateParameterList );
 #if 0
@@ -25784,6 +25808,8 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
 
                ROSE_ASSERT(original_memberFunctionDeclaration->get_type() != NULL);
 
+#error "DEAD CODE!"
+
             // Need to call:
             // unsigned int get_mfunc_specifier();
 
@@ -25810,6 +25836,8 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
                          memberFunctionDeclaration->get_specialFunctionModifier().setConstructor();
                        }
 
+#error "DEAD CODE!"
+
                     nondefiningFunctionDeclaration = memberFunctionDeclaration;
 
                     ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
@@ -25831,6 +25859,8 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
                     ROSE_ASSERT(emptyDeclaration != NULL);
 #endif
                     ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+
+#error "DEAD CODE!"
 
                  // Since we din't build a member function we don't need the parameter list.
                     delete param_list;
@@ -25859,6 +25889,8 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
              {
             // DQ (12/4/2019): If this is any other case than that handled above, then we just return.
             // These cases would be only template instantiations.
+
+#error "DEAD CODE!"
 
             // Nothing to do, except delete the parameter list we built, and return.
                delete param_list;
@@ -25905,6 +25937,51 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
             // DQ (10/29/2020): Match the associated declaration modifiers.
                nondefiningFunctionDeclaration->get_declarationModifier() = functionDeclaration->get_declarationModifier();
 
+            // DQ (11/11/2020): Match the associated other kinds of modifiers.
+               nondefiningFunctionDeclaration->get_functionModifier()        = functionDeclaration->get_functionModifier();
+               nondefiningFunctionDeclaration->get_specialFunctionModifier() = functionDeclaration->get_specialFunctionModifier();
+
+            // std::string get_linkage() const
+               nondefiningFunctionDeclaration->set_linkage( functionDeclaration->get_linkage() );
+
+            // bool get_externBrace() const 
+               nondefiningFunctionDeclaration->set_externBrace( functionDeclaration->get_externBrace() );
+
+            // bool get_forward() const 
+            // nondefiningFunctionDeclaration->set_forward( functionDeclaration->get_forward() );
+               ROSE_ASSERT(nondefiningFunctionDeclaration->get_forward() == true);
+#if 0
+            // DQ (11/11/2020): Match the associated other kinds of bool and pointers.
+               nondefiningFunctionDeclaration->set_oldStyleDefinition    ( functionDeclaration->get_oldStyleDefinition() );
+               nondefiningFunctionDeclaration->set_gnu_regparm_attribute ( functionDeclaration->get_gnu_regparm_attribute() );
+
+            // enforce these to be false or copy the associated pointer:
+            // if get_type_syntax_is_available() == true then copy get_type_syntax()
+            // pointer: parameterList_syntax
+            // bool: using_C11_Noreturn_keyword
+            // bool: is_constexpr
+            // bool: using_new_function_return_type_syntax
+            // bool: marked_as_edg_normalization
+            // bool: is_implicit_function
+
+            // nondefiningFunctionDeclaration->set_parameterList_syntax                  ( functionDeclaration->get_parameterList_syntax() );
+               nondefiningFunctionDeclaration->set_using_C11_Noreturn_keyword            ( functionDeclaration->get_using_C11_Noreturn_keyword() );
+               nondefiningFunctionDeclaration->set_is_constexpr                          ( functionDeclaration->get_is_constexpr() );
+               nondefiningFunctionDeclaration->set_using_new_function_return_type_syntax ( functionDeclaration->get_using_new_function_return_type_syntax() );
+               nondefiningFunctionDeclaration->set_marked_as_edg_normalization           ( functionDeclaration->get_marked_as_edg_normalization() );
+               nondefiningFunctionDeclaration->set_is_implicit_function                  ( functionDeclaration->get_is_implicit_function() );
+#endif
+#if 0
+               SgMemberFunctionDeclaration* nondefiningMemberFunctionDeclaration = isSgMemberFunctionDeclaration(nondefiningFunctionDeclaration);
+               if (nondefiningMemberFunctionDeclaration != NULL)
+                  {
+                    SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(nondefiningFunctionDeclaration);
+                    ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+                 // DQ (11/11/2020): Match the associated other kinds of modifiers (for member functions).
+                 // nondefiningMemberFunctionDeclaration->set_isDefinedInClass ( memberFunctionDeclaration->isDefinedInClass() );
+                  }
+#endif
             // DQ (10/15/2019): Set the physical_file_id of the transformation to match that of the original defining declaration.
                int file_id = functionDeclaration->get_file_info()->get_physical_file_id();
                nondefiningFunctionDeclaration->get_file_info()->set_physical_file_id(file_id);
@@ -25954,15 +26031,21 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
                printf ("calling displayScope: scope = %p = %s \n",scope,scope->class_name().c_str());
                displayScope(scope);
 #endif
+#if 0
+               printf ("Calling replaceStatement(): functionDeclaration            = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+               printf ("Calling replaceStatement(): nondefiningFunctionDeclaration = %p = %s \n",nondefiningFunctionDeclaration,nondefiningFunctionDeclaration->class_name().c_str());
+#endif
             // DQ (10/21/2020): I think we may want to return the orignal defining function declaration.
             // DQ (12/2/2019): Need to support member functions which can't be declared when outside of their class.
                replaceStatement(functionDeclaration,nondefiningFunctionDeclaration);
 
             // DQ (10/22/2020): Added assertion.
                ROSE_ASSERT(nondefiningFunctionDeclaration->get_parent() != NULL);
-
 #else
             // DQ (7/12/2019): Debugging test_17.cpp.
+
+#error "DEAD CODE!"
+
                printf ("SKIPPING CALL TO REPLACE STATEMENT: functionDeclaration = %p nondefiningFunctionDeclaration = %p \n",functionDeclaration,nondefiningFunctionDeclaration);
 #endif
              }
@@ -26011,6 +26094,18 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
         {
           ROSE_ASSERT(nondefiningFunctionDeclaration->get_declarationModifier().get_storageModifier().isStatic() == true);
         }
+
+#if 0
+  // DQ (11/12/2020): Added assertion.
+     if (nondefiningFunctionDeclaration != NULL)
+        {
+          printf ("Leaving SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(): nondefiningFunctionDeclaration = %s \n",nondefiningFunctionDeclaration->unparseToString().c_str());
+        }
+       else
+        {
+          printf ("Leaving SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(): nondefiningFunctionDeclaration = %p \n",nondefiningFunctionDeclaration);
+        }
+#endif
 
   // DQ (10/27/2020): Added return value so that we can access the new function prototype.
      return nondefiningFunctionDeclaration;
