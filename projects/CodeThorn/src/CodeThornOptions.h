@@ -187,7 +187,6 @@ struct CodeThornOptions : public CodeThorn::Options {
 
   struct Info {
     bool printVariableIdMapping=false;
-    bool printFunctionIdMapping=false;
     bool printAstNodeStats=false;
     std::string astNodeStatsCSVFileName;
     std::string astTraversalCSVFileName;

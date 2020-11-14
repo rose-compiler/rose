@@ -301,7 +301,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 
   infoOptions.add_options()
     ("print-variable-id-mapping",po::value< bool >(&ctOpt.info.printVariableIdMapping)->default_value(false)->implicit_value(true),"Print variable-id-mapping on stdout.")
-    ("print-function-id-mapping",po::value< bool >(&ctOpt.info.printFunctionIdMapping)->default_value(false)->implicit_value(true),"Print function-id-mapping on stdout.")
     ("ast-stats-print",po::value< bool >(&ctOpt.info.printAstNodeStats)->default_value(false)->implicit_value(true),"Print ast node statistics on stdout.")
     ("ast-stats-csv",po::value< string >(&ctOpt.info.astNodeStatsCSVFileName),"Write ast node statistics to CSV file [arg].")
     ("ast-traversal-csv",po::value< string >(&ctOpt.info.astTraversalCSVFileName),"Write ast node traversal (sequence of node types) to file [arg].")
