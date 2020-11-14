@@ -31,6 +31,7 @@ namespace CodeThorn {
     void setInliningOption(bool flag);
     bool getInliningOption();
     Flow* getFlow(bool backwardflow = false);
+    InterFlow* getInterFlow();
     CFAnalysis* getCFAnalyzer(); 
     
     // PP (08/25/20) added to support working with unfolded ICFG
@@ -52,6 +53,7 @@ namespace CodeThorn {
     CFAnalysis* _cfanalyzer = nullptr;
     Flow        _fwFlow;
     Flow        _bwFlow;
+    InterFlow   _interFlow;
   };
 
 } // end of namespace CodeThorn

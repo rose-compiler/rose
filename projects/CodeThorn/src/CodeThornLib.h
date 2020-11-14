@@ -58,7 +58,7 @@ namespace CodeThorn {
   void optionallyAnalyzeAssertions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, IOAnalyzer* analyzer, TimingCollector& tc);
   void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,CTAnalysis* analyzer);
   void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* analyzer);
-  void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,CTAnalysis* analyzer,SgNode* root, TimingCollector& tc);
+  void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,CTAnalysis* analyzer,SgProject* root, TimingCollector& tc);
   void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProject,TimingCollector& tc);
   void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt);
 } // end of namespace CodeThorn

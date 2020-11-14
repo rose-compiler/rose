@@ -2,6 +2,7 @@
 #include "ProgramAbstractionLayer.h"
 #include "ClassHierarchyGraph.h"
 #include "Normalization.h"
+#include "CTIOLabeler.h"
 
 #include <iostream>
 
@@ -21,13 +22,16 @@ SgProject* CodeThorn::ProgramAbstractionLayer::getRoot() {
 
 void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
   _root=root;
-  cout << "INIT: Normalization level " << getNormalizationLevel() << endl;
   CodeThorn::Normalization normalization;
   normalization.setInliningOption(getInliningOption());
   normalization.normalizeAst(root,getNormalizationLevel());
   _variableIdMapping=new VariableIdMappingExtended();
-  getVariableIdMapping()->computeVariableSymbolMapping(root);
-  _labeler=new Labeler(root);
+  _variableIdMapping->computeVariableSymbolMapping(root);
+  //cout << "INIT: variableIdMapping: " << _variableIdMapping->getNumVarIds() << " variables."<<endl;
+
+  //_labeler=new Labeler(root);
+  _labeler=new CTIOLabeler(root,_variableIdMapping);
+  //cout << "INIT: labeler: " << _labeler->numberOfLabels() << " labels."<<endl;
   
   _classHierarchy=new ClassHierarchyWrapper(root);
   _cfanalyzer=new CFAnalysis(_labeler);
@@ -54,18 +58,21 @@ void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
   }
   
   //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
-  cout << "INIT: Building CFG for each function."<<endl;
+  //cout << "INIT: Building CFG for each function."<<endl;
   _fwFlow = _cfanalyzer->flow(root);
-  cout << "STATUS: Building CFGs finished."<<endl;
-  cout << "INIT: Intra-Flow OK. (size: " << _fwFlow.size() << " edges)"<<endl;
-  InterFlow interFlow=_cfanalyzer->interFlow(_fwFlow);
-  cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
-  _cfanalyzer->intraInterFlow(_fwFlow,interFlow);
-  cout << "INIT: IntraInter-CFG OK. (size: " << _fwFlow.size() << " edges)"<<endl;
+  //cout << "STATUS: Building CFGs finished."<<endl;
+  //cout << "INIT: Intra-Flow OK. (size: " << _fwFlow.size() << " edges)"<<endl;
+  _interFlow=_cfanalyzer->interFlow(_fwFlow);
+  //cout << "INIT: Inter-Flow OK. (size: " << _interFlow.size()*2 << " edges)"<<endl;
+  _cfanalyzer->intraInterFlow(_fwFlow,_interFlow);
+  //cout << "INIT: IntraInter-CFG OK. (size: " << _fwFlow.size() << " edges)"<<endl;
 
   _bwFlow = _fwFlow.reverseFlow();
 }
 
+CodeThorn::InterFlow* CodeThorn::ProgramAbstractionLayer::getInterFlow() {
+  return &_interFlow;
+}
 
 void CodeThorn::ProgramAbstractionLayer::setForwardFlow(const Flow& fwdflow)
 {

@@ -21,6 +21,20 @@
 
 using namespace std;
 
+SSAGenerator::SSAGenerator(CTAnalysis* analyzer, Sawyer::Message::Facility* logger) {
+  this->analyzer = analyzer;
+  this->logger = *logger;
+  this->flow = analyzer->getFlow();
+  this->labeler = analyzer->getLabeler();
+  prepareReachabilityAnalysisZ3 = false;	
+}
+
+SSAGenerator::SSAGenerator(int RERSVerifierErrorNumber, CTAnalysis* analyzer, Sawyer::Message::Facility* logger): SSAGenerator(analyzer, logger)
+{
+  this->RERSVerifierErrorNumber = RERSVerifierErrorNumber;
+  prepareReachabilityAnalysisZ3 = true;	
+}
+
 
 //Returns the current SSA form number for the variable s that is referenced in the inTrueBranch branch of the if node labeled with *condLabel
 int SSAGenerator::currentNumber(string s, Label* condLabel, bool inTrueBranch)

@@ -42,5 +42,7 @@ namespace CodeThorn {
       }
     }
   }
-
+  size_t  VariableIdMappingExtended::getNumVarIds() {
+    return mappingVarIdToInfo.size();
+  }
 }

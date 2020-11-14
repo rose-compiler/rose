@@ -730,6 +730,8 @@ CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer check-rea
 
 CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_ONLY_PASSING)
 
+check-default: $(CHECK_DEFAULT_PASSING)
+
 if ROSE_WITH_SPOT
 check-local: $(CHECK_WITH_SPOT_PASSING)
 else

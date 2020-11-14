@@ -28,12 +28,12 @@ void IOAnalyzer::initDiagnostics() {
   }
 }
 
-IOAnalyzer::IOAnalyzer() {
+IOAnalyzer::IOAnalyzer():CTAnalysis() {
   initDiagnostics();
 }
 
-void IOAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
-  CTAnalysis::initializeSolver(functionToStartAt, root, oneFunctionOnly);
+void IOAnalyzer::initializeSolver3(std::string functionToStartAt,SgProject* root, bool oneFunctionOnly) {
+  super::initializeSolver3(functionToStartAt, root, oneFunctionOnly);
   const EState* currentEState=estateWorkListCurrent->front();
   ROSE_ASSERT(currentEState);
   if(getModeLTLDriven()) {
@@ -97,7 +97,7 @@ void IOAnalyzer::removeOutputOutputTransitions() {
         const EState* pred = (*k)->source;
         if (pred->io.isStdOutIO()) {
           transitionGraph.erase(**k);
-          logger[DEBUG]<< "erased an output -> output transition." << endl;
+          SAWYER_MESG(logger[DEBUG])<< "erased an output -> output transition." << endl;
         }
       }
     }
@@ -118,7 +118,7 @@ void IOAnalyzer::removeInputInputTransitions() {
         const EState* succ = (*k)->target;
         if (succ->io.isStdInIO()) {
           transitionGraph.erase(**k);
-          logger[DEBUG]<< "erased an input -> input transition." << endl;
+          SAWYER_MESG(logger[DEBUG])<< "erased an input -> input transition." << endl;
         }
       }
     }
@@ -198,7 +198,7 @@ void IOAnalyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerDat
     estateWorkListCurrent = &newEStateWorkList;
     TransitionGraph newTransitionGraph;
     transitionGraph = newTransitionGraph;
-    Label startLabel=flow.getStartLabel();
+    Label startLabel=getFlow()->getStartLabel();
     transitionGraph.setStartLabel(startLabel);
     list<int> newInputSequence;
     _inputSequence = newInputSequence;
@@ -451,15 +451,12 @@ void CodeThorn::IOAnalyzer::configureOptions(CodeThornOptions ctOpt, LTLOptions 
   if (ctOpt.callStringLength >= 2) 
     setFiniteCallStringMaxLength(ctOpt.callStringLength);
 
-  //configureOptionSets(ctOpt);
-
   optionStringLiteralsInState=ctOpt.inStateStringLiterals;
   setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
   setIgnoreFunctionPointers(ctOpt.ignoreFunctionPointers);
   setStdFunctionSemantics(ctOpt.stdFunctions);
 
   setup(this, logger, ctOpt, ltlOpt, parProOpt);
-  //setSolver(createSolver(ctOpt));
     
   switch(int mode=ctOpt.interpreterMode) {
   case 0: setInterpreterMode(IM_DISABLED); break;
@@ -494,7 +491,6 @@ void CodeThorn::IOAnalyzer::configureOptions(CodeThornOptions ctOpt, LTLOptions 
   if(ctOpt.svcomp.detectedErrorFunctionName.size()>0) {
     setExternalErrorFunctionName(ctOpt.svcomp.detectedErrorFunctionName);
   }
-
 
   // Build the AST used by ROSE
   if(ctOpt.status) {

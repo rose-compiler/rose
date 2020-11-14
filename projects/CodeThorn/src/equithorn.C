@@ -537,7 +537,7 @@ int main( int argc, char * argv[] ) {
       cout<<"STATUS: analysis started."<<endl;
     }
     // TODO: introduce ProgramAbstractionLayer
-    analyzer->initializeVariableIdMapping(sageProject);
+    analyzer->initialize(sageProject,nullptr);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
 
     if(ctOpt.info.printVariableIdMapping) {
@@ -656,7 +656,7 @@ int main( int argc, char * argv[] ) {
     SAWYER_MESG(logger[TRACE])<< "INIT: creating solver "<<analyzer->getSolver()->getId()<<"."<<endl;
 
     if(option_specialize_fun_name!="") {
-      analyzer->initializeSolver(option_specialize_fun_name,root,true);
+      analyzer->initializeSolver3(option_specialize_fun_name,sageProject,true);
     } else {
       // if main function exists, start with main-function
       // if a single function exist, use this function
@@ -682,7 +682,7 @@ int main( int argc, char * argv[] ) {
         }
       }
       ROSE_ASSERT(startFunction!="");
-      analyzer->initializeSolver(startFunction,root,false);
+      analyzer->initializeSolver3(startFunction,sageProject,false);
     }
     analyzer->initLabeledAssertNodes(sageProject);
 

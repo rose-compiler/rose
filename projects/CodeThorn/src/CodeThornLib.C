@@ -625,6 +625,8 @@ void optionallyRunNormalization(CodeThornOptions& ctOpt,SgProject* sageProject, 
 }
 
 void setAssertConditionVariablesInAnalyzer(SgNode* root,CTAnalysis* analyzer) {
+  SAWYER_MESG(logger[TRACE])<<"setAssertConditionVariablesInAnalyzer started"<<endl;
+  ROSE_ASSERT(analyzer->getVariableIdMapping());
   AbstractValueSet varsInAssertConditions=AstUtility::determineVarsInAssertConditions(root,analyzer->getVariableIdMapping());
   SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
   analyzer->setAssertCondVarsSet(varsInAssertConditions);
@@ -720,7 +722,7 @@ void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* anal
   }
 }
 
-  void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,CTAnalysis* analyzer,SgNode* root, TimingCollector& tc) {
+  void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,CTAnalysis* analyzer,SgProject* root, TimingCollector& tc) {
   tc.startTimer();
   SAWYER_MESG(logger[INFO])<< "Iinitializing solver "<<analyzer->getSolver()->getId()<<" started"<<endl;
   string startFunctionName;
@@ -729,7 +731,7 @@ void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* anal
   } else {
     startFunctionName = "main";
   }
-  analyzer->initializeSolver(startFunctionName,root,false);
+  analyzer->initializeSolver3(startFunctionName,root,false);
   SAWYER_MESG(logger[INFO])<< "Initializing solver "<<analyzer->getSolver()->getId()<<" finished"<<endl;
   tc.initRunTime=tc.timer.getTimeDurationAndStop().milliSeconds();
 }

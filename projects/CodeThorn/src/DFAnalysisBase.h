@@ -24,41 +24,40 @@ namespace CodeThorn {
 #include "PropertyState.h"
 
   class DFAnalysisBase : public DFAnalysisBaseWithoutData {
- public:  
-  DFAnalysisBase();
-  virtual ~DFAnalysisBase();
-  void initializeSolver();
+  public:  
+    DFAnalysisBase();
+    virtual ~DFAnalysisBase();
+    void initializeSolver();
 
-  void initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) override;
+    void initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) override;
 
-  void initializeAnalyzerDataInfo();
-  void run();
+    void initializeAnalyzerDataInfo();
+    void run();
 
-  void attachInInfoToAst(string attributeName);
-  void attachOutInfoToAst(string attributeName);
+    void attachInInfoToAst(string attributeName);
+    void attachOutInfoToAst(string attributeName);
 
-  virtual void setPostInfo(Label lab,Lattice*);
+    virtual void setPostInfo(Label lab,Lattice*);
   
-  void attachInfoToAst(string attributeName,bool inInfo);
-  void setSolverTrace(bool trace) { _solver->setTrace(trace); }
+    void attachInfoToAst(string attributeName,bool inInfo);
+    void setSolverTrace(bool trace) { _solver->setTrace(trace); }
 
-  void setSkipUnknownFunctionCalls(bool defer);
+    void setSkipUnknownFunctionCalls(bool defer);
 
-  DFTransferFunctions* _transferFunctions=nullptr;
+    DFTransferFunctions* _transferFunctions=nullptr;
 
-  Lattice* getPreInfo(Label lab);
-  Lattice* getPostInfo(Label lab);
+    Lattice* getPreInfo(Label lab);
+    Lattice* getPostInfo(Label lab);
 
-  WorkListSeq<Edge>* getWorkList();
+    WorkListSeq<Edge>* getWorkList();
   
   protected:
-  virtual DFAstAttribute* createDFAstAttribute(Lattice*);
-  std::vector<Lattice*> _analyzerDataPreInfo;
-  std::vector<Lattice*> _analyzerDataPostInfo;
-  WorkListSeq<Edge> _workList;
-
- private:
-  bool _skipSelectedFunctionCalls=false;
+    virtual DFAstAttribute* createDFAstAttribute(Lattice*);
+    std::vector<Lattice*> _analyzerDataPreInfo;
+    std::vector<Lattice*> _analyzerDataPostInfo;
+    WorkListSeq<Edge> _workList;
+  private:
+    bool _skipSelectedFunctionCalls=false;
   };
 
 } // end of namespace
