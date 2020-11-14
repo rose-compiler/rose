@@ -17,8 +17,6 @@ package body Asis_Tool_2.Element.Clauses is
 
       Clause_Kind : constant Asis.Clause_Kinds :=
         Asis.Elements.Clause_Kind (Element);
-      Representation_Clause_Kind : constant Asis.Representation_Clause_Kinds :=
-        Asis.Elements.Representation_Clause_Kind (Element);
 
       procedure Add_Clause_Names is
       begin
@@ -35,22 +33,6 @@ package body Asis_Tool_2.Element.Clauses is
       begin
          State.Add_To_Dot_Label ("Has_Limited", Value);
          Result.Has_Limited := a_nodes_h.Support.To_bool (Value);
-      end;
-
-      procedure Add_Representation_Clause_Name is
-         ID : constant a_nodes_h.Name_ID :=
-           Get_Element_ID (Asis.Clauses.Representation_Clause_Name (Element));
-      begin
-         State.Add_To_Dot_Label ("Representation_Clause_Name", To_String(ID));
-         Result.Representation_Clause_Name := ID;
-      end;
-
-      procedure Add_Representation_Clause_Expression is
-         ID : constant a_nodes_h.Expression_ID :=
-           Get_Element_ID (Asis.Clauses.Representation_Clause_Expression (Element));
-      begin
-         State.Add_To_Dot_Label_And_Edge ("Representation_Clause_Expression", ID);
-         Result.Representation_Clause_Expression := ID;
       end;
 
       procedure Add_Mod_Clause_Expression is
@@ -93,10 +75,85 @@ package body Asis_Tool_2.Element.Clauses is
          Result.Clause_Kind := anhS.To_Clause_Kinds (Clause_Kind);
       end Add_Common_Items;
 
-      use all type Asis.Representation_Clause_Kinds;
-      procedure Do_A_Representation_Clause is
+      --Clause_Struct takes a Name_ID
+      procedure Add_Representation_Clause_Name is
+         ID : constant a_nodes_h.Name_ID :=
+           Get_Element_ID (Asis.Clauses.Representation_Clause_Name (Element));
       begin
-      case Representation_Clause_Kind is
+         State.Add_To_Dot_Label ("Representation_Clause_Name", To_String(ID));
+         Result.Representation_Clause_Name := ID;
+      end;
+
+      procedure Add_Representation_Clause_Expression is
+         ID : constant a_nodes_h.Expression_ID :=
+           Get_Element_ID (Asis.Clauses.Representation_Clause_Expression (Element));
+      begin
+         State.Add_To_Dot_Label_And_Edge ("Representation_Clause_Expression", ID);
+         Result.Representation_Clause_Expression := ID;
+      end;
+
+
+      function Representation_Clause
+        return a_nodes_h.Representation_Clause_Struct
+      is
+         use all type Asis.Representation_Clause_Kinds;
+         Result : a_nodes_h.Representation_Clause_Struct :=
+           a_nodes_h.Support.Default_Representation_Clause_Struct;
+         Representation_Clause_Kind : constant Asis.Representation_Clause_Kinds :=
+           Asis.Elements.Representation_Clause_Kind (Element);
+
+         procedure Add_Mod_Clause_Expression is
+            ID : constant a_nodes_h.Expression_ID :=
+              Get_Element_ID (Asis.Clauses.Mod_Clause_Expression (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Mod_Clause_Expression", ID);
+            Result.Mod_Clause_Expression := ID;
+         end;
+
+         procedure Add_Representation_Clause_Name is
+            ID : constant a_nodes_h.Name_ID :=
+              Get_Element_ID (Asis.Clauses.Representation_Clause_Name (Element));
+         begin
+            State.Add_To_Dot_Label ("Representation_Clause_Name", To_String(ID));
+            Result.Representation_Clause_Name := ID;
+         end;
+
+         procedure Add_Representation_Clause_Expression is
+            ID : constant a_nodes_h.Expression_ID :=
+              Get_Element_ID (Asis.Clauses.Representation_Clause_Expression (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Representation_Clause_Expression", ID);
+            Result.Representation_Clause_Expression := ID;
+         end;
+
+         procedure Add_Common_Representation_Clause_Items is
+         begin
+            State.Add_To_Dot_Label("Representation_Clause_Kind", Representation_Clause_Kind'Image);
+            Ada.Text_IO.Put_Line(Representation_Clause_Kind'Image);
+            Ada.Text_IO.Put_Line(Representation_Clause_Kind'Image);
+            Ada.Text_IO.Put_Line(Representation_Clause_Kind'Image);
+            Ada.Text_IO.Put_Line(Representation_Clause_Kind'Image);
+            Ada.Text_IO.Put_Line(Representation_Clause_Kind'Image);
+            Result.Representation_Clause_Kind := anhS.To_Representation_Clause_Kinds (Representation_Clause_Kind);
+            Add_Representation_Clause_Name;
+         end Add_Common_Representation_Clause_Items;
+
+         procedure Add_Pragmas is begin
+         Add_Element_List
+           (This           => State,
+            Elements_In    => Asis.Elements.Pragmas (Element),
+            Dot_Label_Name => "Pragmas",
+            List_Out       => Result.Pragmas,
+            Add_Edges      => True);
+         end;
+
+      begin
+         If Representation_Clause_Kind /= Not_A_Representation_Clause then
+            Add_Common_Representation_Clause_Items;
+         end if;
+
+         case Representation_Clause_Kind is
+
          when Not_A_Representation_Clause =>
             raise Program_Error with
               "Element.Do_A_Representation_Clause called with: " &
@@ -106,13 +163,16 @@ package body Asis_Tool_2.Element.Clauses is
          when An_Enumeration_Representation_Clause =>
             Add_Representation_Clause_Expression;
          when A_Record_Representation_Clause =>
+            Add_Pragmas;
             Add_Mod_Clause_Expression;
             Add_Component_Clauses;
          when An_At_Clause =>
             Add_Representation_Clause_Expression;
-      end case;
+         end case;
 
-      end Do_A_Representation_Clause;
+         return Result;
+
+      end Representation_Clause;
 
 
       use all type Asis.Clause_Kinds;
@@ -136,12 +196,14 @@ package body Asis_Tool_2.Element.Clauses is
             Add_Has_Limited;
             Add_Clause_Names;
          when A_Representation_Clause =>
-            Do_A_Representation_Clause;
+            Result.Representation_Clause := Representation_Clause;
          when A_Component_Clause =>
             Add_Representation_Clause_Name;
-            Add_Representation_Clause_Expression;
-            Add_Mod_Clause_Expression;
-            Add_Component_Clauses;
+            -- Very odd, asis-clauses.ads says this call is supported for Component_Clause
+            -- But asis-clauses.adb says it's not.  But Representation_Clause_Name IS.  WTF  -Jim
+            --Add_Representation_Clause_Expression;
+            -- Same for this one.  -Jim
+            --Add_Mod_Clause_Expression;
             Add_Component_Clause_Position;
             Add_Component_Clause_Range;
       end case;
