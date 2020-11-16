@@ -13,10 +13,11 @@
 
 using namespace ATermSupport;
 using namespace Jovial_ROSE_Translation;
-namespace SB = SageBuilder;
 using std::cout;
 using std::cerr;
 using std::endl;
+namespace SB = SageBuilder;
+namespace SI = SageInterface;
 
 ATermToSageJovialTraversal::ATermToSageJovialTraversal(SgSourceFile* source) : ATermToUntypedTraversal(source)
 {
@@ -6845,10 +6846,11 @@ ATbool ATermToSageJovialTraversal::traverse_BitFunctionVariable(ATerm term, SgEx
    SgExpression* variable = nullptr;
    SgExpression* first_bit = nullptr;
    SgExpression* length = nullptr;
+   SgType* return_type = nullptr;
 
    func_call = nullptr;
 
-   // Grammar (this may be an lvalue call expression! or an rvalue depending on ambiguous context)
+   // Grammar (this is an lvalue call expression, I don't think it can be an rvalue (BitFunction)
    //  'BIT' '(' BitVariable ',' Fbit ',' Nbit ')' -> BitFunctionVariable {cons("BitFunctionVariable"), prefer}
    //  'BIT' '(' BitFormula ','  Fbit ',' Nbit ')' -> BitFunctionVariable {cons("BitFunctionVariable")}
    //
@@ -6875,9 +6877,6 @@ ATbool ATermToSageJovialTraversal::traverse_BitFunctionVariable(ATerm term, SgEx
    }
    else return ATfalse;
 
-// TODO - distinguish if this is a variable or a formula (can we fix the cons names in the grammar?)
-   SgVarRefExp* var_ref = isSgVarRefExp(variable);
-   ROSE_ASSERT(var_ref);
    ROSE_ASSERT(first_bit);
    ROSE_ASSERT(length);
 
@@ -6888,15 +6887,25 @@ ATbool ATermToSageJovialTraversal::traverse_BitFunctionVariable(ATerm term, SgEx
    params->append_expression(length);
 
    // get the variable type
-   SgVariableSymbol* var_symbol = var_ref->get_symbol();
-   ROSE_ASSERT(var_symbol);
-
-   SgType* return_type = var_symbol->get_type();
+   SgVarRefExp* var_ref = isSgVarRefExp(variable);
+   if (var_ref) {
+     // The return type is the type of the variable
+     SgVariableSymbol* var_symbol = var_ref->get_symbol();
+     ROSE_ASSERT(var_symbol);
+     return_type = var_symbol->get_type();
+   }
+   else {
+     // Note: _assume_ that the return type is an intrinsic bit type
+     SgExpression* size = nullptr;
+     return_type = SageBuilder::buildJovialBitType(size);
+   }
    ROSE_ASSERT(return_type);
 
    func_call = SageBuilder::buildFunctionCallExp("BIT", return_type, params, SageBuilder::topScopeStack());
    ROSE_ASSERT(func_call);
    setSourcePosition(func_call, term);
+
+   func_call->set_lvalue(true);
 
    return ATtrue;
 }
