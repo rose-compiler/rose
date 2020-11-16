@@ -14255,19 +14255,7 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
                     printf ("namedType_nondefiningDecl->get_declaration() = %p = %s \n",namedType_nondefiningDecl->get_declaration(),namedType_nondefiningDecl->get_declaration()->class_name().c_str());
                   }
              }
-          ROSE_ASSERT(defdecl->get_type() == nondefdecl->get_type());
-
-          if (defdecl->get_type() != nondefdecl->get_type())
-             {
-               if (defdecl->get_type())
-                  {
-                    printf ("WARNING: In SageInterface::fixStructDeclaration(): skipped calling delete on (defdecl = %p = %s) defdecl->get_type() = %p = %s \n",defdecl,defdecl->class_name().c_str(),defdecl->get_type(),defdecl->get_type()->class_name().c_str());
-                 // delete defdecl->get_type();
-                  }
-               defdecl->set_type(nondefdecl->get_type());
-             }
-          ROSE_ASSERT (defdecl->get_type() != NULL);
-          ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
+          //ROSE_ASSERT(defdecl->get_type() == nondefdecl->get_type());
         }
    }
 
