@@ -123,7 +123,7 @@ namespace
     {
       prn(sep);
       handle(SG_DEREF(s));
-      sep = COMMA_SEP;
+      sep = "; ";
     }
 
     Unparse_Ada&    unparser;
