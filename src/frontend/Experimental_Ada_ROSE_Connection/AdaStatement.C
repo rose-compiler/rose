@@ -122,6 +122,14 @@ namespace
     ROSE_ASSERT (expr.Expression_Kind == An_Identifier);
 
     SgDeclarationStatement* dcl = getDecl_opt(expr, ctx);
+
+    if (dcl == nullptr)
+    {
+      logError() << "Unable to find scope/declaration for " << expr.Name_Image
+                 << std::endl;
+      ROSE_ASSERT(false);
+    }
+
     SgScopeStatement*       res = sg::dispatch(ScopeQuery(), dcl);
 
     return SG_DEREF(res);
@@ -201,15 +209,26 @@ namespace
         }
 
       case A_Defining_Identifier:
-        // nothing to do, the fields are already set
-        break;
+        {
+          // nothing to do, the fields are already set
+          break;
+        }
+
+      case A_Defining_Operator_Symbol:     // 6.1(9)
+        {
+          // nothing to do, the fields are already set
+
+          /* unused field:
+               enum Operator_Kinds       Operator_Kind
+          */
+          break;
+        }
 
       case Not_A_Defining_Name:
         /* break; */
 
       case A_Defining_Character_Literal:   // 3.5.1(4)
       case A_Defining_Enumeration_Literal: // 3.5.1(3)
-      case A_Defining_Operator_Symbol:     // 6.1(9)
       default:
         logWarn() << "unknown name kind " << asisname.Defining_Name_Kind
                   << " (" << name << ")"
@@ -1528,7 +1547,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                    << std::endl;
 
         recordNode(asisDecls(), elem.ID, sgnode);
-        //~ recordNode(asisDecls(), adaname.id(), sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
 
         privatize(sgnode, isPrivate);
         attachSourceLocation(pkgspec, elem, ctx);
@@ -1571,6 +1590,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgAdaPackageSpecDecl& specdcl = lookupNodeAs<SgAdaPackageSpecDecl>(asisDecls(), specID);
         SgAdaPackageBodyDecl& sgnode  = mkAdaPackageBodyDecl(specdcl, outer);
         SgAdaPackageBody&     pkgbody = SG_DEREF(sgnode.get_definition());
+
+        //~ recordNode(asisDecls(), elem.ID, sgnode);
+        //~ recordNode(asisDecls(), adaname.id(), sgnode);
 
         sgnode.set_scope(specdcl.get_scope());
         attachSourceLocation(pkgbody, elem, ctx);
@@ -1623,7 +1645,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         setOverride(sgnode.get_declarationModifier(), decl.Is_Overriding_Declaration);
         recordNode(asisDecls(), elem.ID, sgnode);
-        //~ recordNode(asisDecls(), adaname.id(), sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
 
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
@@ -1668,7 +1690,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgBasicBlock&          declblk = getFunctionBody(sgnode);
 
         recordNode(asisDecls(), elem.ID, sgnode);
-        //~ recordNode(asisDecls(), adaname.id(), sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
         outer.append_statement(&sgnode);
@@ -1712,8 +1734,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Incomplete_Type_Declaration:           // 3.2.1(2):3.10(2)
       {
-        typedef NameCreator::result_container name_container;
-
         NameData                adaname = singleName(decl, ctx);
         ROSE_ASSERT(adaname.fullName == adaname.ident);
 

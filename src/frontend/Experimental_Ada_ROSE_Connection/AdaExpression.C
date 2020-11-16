@@ -217,10 +217,13 @@ namespace
 
     boost::to_upper(enumstr);
 
+    // \todo replace with actual enum values
     if (enumstr == "TRUE")
       res = sb::buildBoolValExp(1);
     else if (enumstr == "FALSE")
       res = sb::buildBoolValExp(0);
+    else
+      res = sb::buildStringVal(enumstr);
 
     return SG_DEREF( res );
   }
@@ -454,7 +457,6 @@ getExpr(Element_Struct& elem, AstContext ctx)
 
     case An_Indexed_Component:                      // 4.1.1
     case A_Slice:                                   // 4.1.2
-    case An_Attribute_Reference:                    // 4.1.4  -> Attribute_Kinds
     case A_Record_Aggregate:                        // 4.3
     case An_Extension_Aggregate:                    // 4.3
     case A_Positional_Array_Aggregate:              // 4.3

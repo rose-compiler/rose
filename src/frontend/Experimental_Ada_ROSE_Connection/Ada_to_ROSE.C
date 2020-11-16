@@ -340,8 +340,8 @@ namespace
                      << PrnUnitHeader(adaUnit)
                      << std::endl;
 
-          ElemIdRange           elemRange = idRange(adaUnit.Context_Clause_Elements);
-          UnitIdRange           unitRange = idRange(adaUnit.Corresponding_Children);
+          ElemIdRange elemRange = idRange(adaUnit.Context_Clause_Elements);
+          UnitIdRange unitRange = idRange(adaUnit.Corresponding_Children);
 
           if (elemRange.size() || unitRange.size())
           {
@@ -370,8 +370,8 @@ namespace
                      << PrnUnitHeader(adaUnit)
                      << std::endl;
 
-          ElemIdRange           elemRange = idRange(adaUnit.Context_Clause_Elements);
-          UnitIdRange           unitRange = idRange(adaUnit.Corresponding_Children);
+          ElemIdRange elemRange = idRange(adaUnit.Context_Clause_Elements);
+          UnitIdRange unitRange = idRange(adaUnit.Corresponding_Children);
 
           if (elemRange.size() || unitRange.size())
           {
@@ -473,15 +473,19 @@ void ElemCreator::operator()(Element_Struct& elem)
 
 
 
-void secondConversion(Nodes_Struct& headNodes, SgSourceFile* file)
+void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 {
   ROSE_ASSERT(file);
 
   logInfo() << "Building ROSE AST .." << std::endl;
 
-  Unit_Struct_List_Struct* adaLimit = 0;
-  Unit_Struct_List_Struct* adaUnit  = headNodes.Units;
-  SgGlobal&                astScope = SG_DEREF(file->get_globalScope());
+  Unit_Struct_List_Struct*  adaLimit = 0;
+  Unit_Struct_List_Struct*  adaUnit  = headNodes.Units;
+  SgGlobal&                 astScope = SG_DEREF(file->get_globalScope());
+  //~ std::vector<Unit_Struct*> units    = toVector(adaUnit);
+
+  for (Unit_Struct_List_Struct* x = adaUnit; x != adaLimit; x = x->Next)
+    logWarn() << PrnUnitHeader(x->Unit) << std::endl;
 
   initializeAdaTypes(astScope);
   traverse(adaUnit, adaLimit, UnitCreator{AstContext{}.scope(astScope)});
