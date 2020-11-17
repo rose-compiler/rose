@@ -46,6 +46,7 @@ namespace
   {
     ROSE_ASSERT(ex.Expression_Kind == An_Identifier);
 
+    logKind("An_Identifier");
     return lookupNode(asisExcps(), ex.Corresponding_Name_Definition);
   }
 
@@ -58,6 +59,8 @@ namespace
     {
       case An_Identifier:
         {
+          logKind("An_Identifier");
+
           // is it a type?
           // typeEx.Corresponding_Name_Declaration ?
           res = findFirst(asisTypes(), typeEx.Corresponding_Name_Definition);
@@ -91,6 +94,7 @@ namespace
 
       case A_Selected_Component:
         {
+          logKind("A_Selected_Component");
           res = &getExprTypeID(typeEx.Selector, ctx);
           break /* counted in getExpr */;
         }
@@ -118,6 +122,8 @@ namespace
   getAccessType(Definition_Struct& def, AstContext ctx)
   {
     ROSE_ASSERT(def.Definition_Kind == An_Access_Definition);
+
+    logKind("An_Access_Definition");
 
     Access_Definition_Struct& access = def.The_Union.The_Access_Definition;
 
@@ -181,12 +187,16 @@ namespace
     Definition_Struct&    def = elem.The_Union.Definition;
     ROSE_ASSERT(def.Definition_Kind == A_Constraint);
 
+    logKind("A_Constraint");
+
     Constraint_Struct&    constraint = def.The_Union.The_Constraint;
 
     switch (constraint.Constraint_Kind)
     {
       case A_Simple_Expression_Range:             // 3.2.2: 3.5(3)
         {
+          logKind("A_Simple_Expression_Range");
+
           SgExpression& lb       = getExprID(constraint.Lower_Bound, ctx);
           SgExpression& ub       = getExprID(constraint.Upper_Bound, ctx);
           SgRangeExp&   rangeExp = mkRangeExp(lb, ub);
@@ -197,6 +207,8 @@ namespace
 
       case A_Range_Attribute_Reference:           // 3.5(2)
         {
+          logKind("A_Range_Attribute_Reference");
+
           SgExpression& expr     = getExprID(constraint.Range_Attribute, ctx);
           SgRangeExp&   rangeExp = SG_DEREF(isSgRangeExp(&expr));
 
@@ -227,6 +239,8 @@ namespace
     {
       case A_Subtype_Indication:
         {
+          logKind("A_Subtype_Indication");
+
           Subtype_Indication_Struct& subtype   = def.The_Union.The_Subtype_Indication;
 
           res = &getDeclTypeID(subtype.Subtype_Mark, ctx);
@@ -248,6 +262,8 @@ namespace
 
       case A_Component_Definition:
         {
+          logKind("A_Component_Definition");
+
           Component_Definition_Struct& component = def.The_Union.The_Component_Definition;
 
           res = &getDefinitionTypeID(component.Component_Definition_View, ctx);
@@ -290,6 +306,8 @@ namespace
     Definition_Struct&        def = elem.The_Union.Definition;
     ROSE_ASSERT(def.Definition_Kind == A_Record_Definition);
 
+    logKind("A_Record_Definition");
+
     return getRecordBody(def.The_Union.The_Record_Definition, ctx);
   }
 
@@ -297,6 +315,8 @@ namespace
   getParentRecordDecl(Definition_Struct& def, AstContext ctx)
   {
     ROSE_ASSERT(def.Definition_Kind == A_Subtype_Indication);
+
+    logKind("A_Subtype_Indication");
 
     Subtype_Indication_Struct& subtype = def.The_Union.The_Subtype_Indication;
     ROSE_ASSERT (subtype.Subtype_Constraint == 0);
@@ -356,6 +376,8 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
   Definition_Struct&      def = elem.The_Union.Definition;
   ROSE_ASSERT(def.Definition_Kind == A_Type_Definition);
 
+  logKind("A_Type_Definition");
+
   /* unused fields:
      Definition_Struct
        bool                           Has_Null_Exclusion;
@@ -366,6 +388,7 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
   {
     case A_Derived_Type_Definition:              // 3.4(2)     -> Trait_Kinds
       {
+        logKind("A_Derived_Type_Definition");
         /*
            unused fields: (derivedTypeDef)
               Declaration_List     Implicit_Inherited_Declarations;
@@ -377,6 +400,8 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
 
     case A_Derived_Record_Extension_Definition:  // 3.4(2)     -> Trait_Kinds
       {
+        logKind("A_Derived_Record_Extension_Definition");
+
         SgClassDefinition&  def    = getRecordBodyID(typenode.Record_Definition, ctx);
         SgClassDeclaration& basecl = getParentRecordDeclID(typenode.Parent_Subtype_Indication, ctx);
         SgBaseClass&        parent = mkRecordParent(basecl);
@@ -397,6 +422,7 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
 
     case An_Enumeration_Type_Definition:         // 3.5.1(2)
       {
+        logKind("An_Enumeration_Type_Definition");
 
         /*
            unused fields:
@@ -408,6 +434,8 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
 
     case A_Signed_Integer_Type_Definition:       // 3.5.4(3)
       {
+        logKind("A_Signed_Integer_Type_Definition");
+
         SgAdaRangeConstraint& constraint = getRangeConstraint(typenode.Integer_Constraint, ctx);
         SgTypeInt&            superty    = SG_DEREF(sb::buildIntType());
 
@@ -420,6 +448,8 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
 
     case A_Floating_Point_Definition:            // 3.5.7(2)
       {
+        logKind("A_Floating_Point_Definition");
+
         SgExpression&         digits     = getExprID_opt(typenode.Digits_Expression, ctx);
         SgAdaRangeConstraint& constraint = getRangeConstraint(typenode.Real_Range_Constraint, ctx);
 
@@ -429,6 +459,8 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
 
     case An_Unconstrained_Array_Definition:      // 3.6(2)
       {
+        logKind("An_Unconstrained_Array_Definition");
+
         ElemIdRange                indicesAsis = idRange(typenode.Index_Subtype_Definitions);
         std::vector<SgExpression*> indicesSeq  = traverseIDs(indicesAsis, elemMap(), ExprSeqCreator{ctx});
         SgExprListExp&             indicesAst  = SG_DEREF(sb::buildExprListExp(indicesSeq));
@@ -443,6 +475,8 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
     case A_Record_Type_Definition:               // 3.8(2)     -> Trait_Kinds
     case A_Tagged_Record_Type_Definition:        // 3.8(2)     -> Trait_Kinds
       {
+        logKind(typenode.Type_Kind == A_Record_Type_Definition ? "A_Record_Type_Definition" : "A_Tagged_Record_Type_Definition");
+
         SgClassDefinition& def = getRecordBodyID(typenode.Record_Definition, ctx);
 
         (typenode.Has_Tagged ? logWarn() : logTrace())

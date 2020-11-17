@@ -121,6 +121,8 @@ namespace
     Expression_Struct& expr = elem.The_Union.Expression;
     ROSE_ASSERT (expr.Expression_Kind == An_Identifier);
 
+    logKind("An_Identifier");
+
     SgDeclarationStatement* dcl = getDecl_opt(expr, ctx);
 
     if (dcl == nullptr)
@@ -162,6 +164,8 @@ namespace
 
     if (idex.Expression_Kind == An_Identifier)
     {
+      logKind("An_Identifier");
+
       std::string        ident{idex.Name_Image};
 
       return NameData{ ident, ident, &ctx.scope(), &elem };
@@ -200,6 +204,8 @@ namespace
     {
       case A_Defining_Expanded_Name:
         {
+          logKind("A_Defining_Expanded_Name");
+
           NameData        defname    = getNameID(asisname.Defining_Selector, ctx);
           Element_Struct& prefixelem = retrieveAs<Element_Struct>(elemMap(), asisname.Defining_Prefix);
 
@@ -210,12 +216,14 @@ namespace
 
       case A_Defining_Identifier:
         {
+          logKind("A_Defining_Identifier");
           // nothing to do, the fields are already set
           break;
         }
 
       case A_Defining_Operator_Symbol:     // 6.1(9)
         {
+          logKind("A_Defining_Operator_Symbol");
           // nothing to do, the fields are already set
 
           /* unused field:
@@ -447,18 +455,22 @@ namespace
     switch (asisKind)
     {
       case A_Default_In_Mode:
+        logKind("A_Default_In_Mode");
         res.setDefault();
         break;
 
       case An_In_Mode:
+        logKind("An_In_Mode");
         res.setIntent_in();
         break;
 
       case An_Out_Mode:
+        logKind("An_Out_Mode");
         res.setIntent_out();
         break;
 
       case An_In_Out_Mode:
+        logKind("An_In_Out_Mode");
         res.setIntent_inout();
         break;
 
@@ -516,6 +528,7 @@ namespace
     Expression_Struct& labelexp = labelref.The_Union.Expression;
     ROSE_ASSERT(labelexp.Expression_Kind == An_Identifier);
 
+    logKind("An_Identifier");
     return labelexp.Corresponding_Name_Definition;
   }
 
@@ -789,9 +802,13 @@ namespace
   getAliased(Expression_Struct& expr, AstContext ctx)
   {
     if (expr.Expression_Kind == An_Identifier)
+    {
+      logKind("An_Identifier");
       return SG_DEREF(getDecl_opt(expr, ctx));
+    }
 
     ROSE_ASSERT(expr.Expression_Kind == A_Selected_Component);
+    logKind("A_Selected_Component");
     return getAliasedID(expr.Selector, ctx);
   }
 
@@ -848,6 +865,8 @@ namespace
 
     Definition_Struct&      def = elem.The_Union.Definition;
     ROSE_ASSERT(def.Definition_Kind == A_Task_Definition);
+
+    logKind("A_Task_Definition");
 
     Task_Definition_Struct& tasknode = def.The_Union.The_Task_Definition;
 
@@ -928,12 +947,16 @@ namespace
         {
           case A_Case_Path:
             {
+              logKind("A_Case_Path");
+
               SgStatement*  sgnode      = nullptr;
               SgBasicBlock& block       = mkBasicBlock();
               ElemIdRange   caseChoices = idRange(path.Case_Path_Alternative_Choices);
 
               if (isWhenOthers(caseChoices))
               {
+                logKind("An_Others_Choice");
+
                 SgDefaultOptionStmt* whenOthersNode = &mkWhenOthersPath(block);
 
                 caseNode.append_default(whenOthersNode);
@@ -1006,6 +1029,7 @@ namespace
         {
           case An_If_Path:
             {
+              logKind("An_If_Path");
               ROSE_ASSERT(branches.size() == 0);
               conditionedBranch(path);
               break;
@@ -1013,6 +1037,7 @@ namespace
 
           case An_Elsif_Path:
             {
+              logKind("An_Elsif_Path");
               ROSE_ASSERT(branches.size() != 0);
               conditionedBranch(path);
               break;
@@ -1020,6 +1045,7 @@ namespace
 
           case An_Else_Path:
             {
+              logKind("An_Else_Path");
               ROSE_ASSERT(branches.size() != 0);
               commonBranch(path);
               break;
@@ -1080,6 +1106,8 @@ namespace
     {
       case A_Null_Statement:                    // 5.1
         {
+          logKind("A_Null_Statement");
+
           completeStmt(mkNullStmt(), elem, ctx);
           /* unused fields:
           */
@@ -1088,6 +1116,8 @@ namespace
 
       case An_Assignment_Statement:             // 5.2
         {
+          logKind("An_Assignment_Statement");
+
           SgExpression& lhs    = getExprID(stmt.Assignment_Variable_Name, ctx);
           SgExpression& rhs    = getExprID(stmt.Assignment_Expression, ctx);
           SgExpression& assign = SG_DEREF(sb::buildAssignOp(&lhs, &rhs));
@@ -1101,6 +1131,8 @@ namespace
 
       case An_If_Statement:                     // 5.3
         {
+          logKind("An_If_Statement");
+
           ElemIdRange  range  = idRange(stmt.Statement_Paths);
           SgStatement& sgnode = traverseIDs(range, elemMap(), IfStmtCreator{ctx});
 
@@ -1112,6 +1144,8 @@ namespace
 
       case A_Case_Statement:                    // 5.4
         {
+          logKind("A_Case_Statement");
+
           SgExpression&      caseexpr = getExprID(stmt.Case_Expression, ctx);
           SgBasicBlock&      casebody = mkBasicBlock();
           SgSwitchStatement& sgnode   = mkAdaCaseStmt(caseexpr, casebody);
@@ -1126,6 +1160,8 @@ namespace
 
       case A_While_Loop_Statement:              // 5.5
         {
+          logKind("A_While_Loop_Statement");
+
           SgExpression& cond     = getExprID(stmt.While_Condition, ctx);
           SgBasicBlock& block    = mkBasicBlock();
           ElemIdRange   adaStmts = idRange(stmt.Loop_Statements);
@@ -1144,6 +1180,8 @@ namespace
 
         case A_Loop_Statement:                    // 5.5
         {
+          logKind("A_Loop_Statement");
+
           SgBasicBlock&  block    = mkBasicBlock();
           ElemIdRange    adaStmts = idRange(stmt.Loop_Statements);
           SgAdaLoopStmt& sgnode   = mkLoopStmt(block);
@@ -1163,6 +1201,8 @@ namespace
 
       case A_For_Loop_Statement:                // 5.5
         {
+          logKind("A_For_Loop_Statement");
+
           SgBasicBlock&       block  = mkBasicBlock();
           SgForStatement&     sgnode = mkForStatement(block);
           Element_Struct&     forvar = retrieveAs<Element_Struct>(elemMap(), stmt.For_Loop_Parameter_Specification);
@@ -1191,6 +1231,8 @@ namespace
 
       case A_Block_Statement:                   // 5.6
         {
+          logKind("A_Block_Statement");
+
           SgBasicBlock& sgnode   = mkBasicBlock();
           ElemIdRange   blkDecls = idRange(stmt.Block_Declarative_Items);
           ElemIdRange   blkStmts = idRange(stmt.Block_Statements);
@@ -1221,6 +1263,8 @@ namespace
 
       case An_Exit_Statement:                   // 5.7
         {
+          logKind("An_Exit_Statement");
+
           SgStatement&  exitedLoop    = lookupNode(ctx.labelsAndLoops().asisLoops(), stmt.Corresponding_Loop_Exited);
           SgExpression& exitCondition = getExprID_opt(stmt.Exit_Condition, ctx);
           const bool    loopIsNamed   = stmt.Exit_Loop_Name > 0;
@@ -1235,6 +1279,7 @@ namespace
 
       case A_Goto_Statement:                    // 5.8
         {
+          logKind("A_Goto_Statement");
           SgGotoStatement& sgnode = SG_DEREF( sb::buildGotoStatement() );
 
           ctx.labelsAndLoops().gotojmp(getLabelRef(stmt.Goto_Label, ctx), sgnode);
@@ -1250,6 +1295,8 @@ namespace
       case An_Entry_Call_Statement:             // 9.5.3
       case A_Procedure_Call_Statement:          // 6.4
         {
+          logKind(stmt.Statement_Kind == An_Entry_Call_Statement ? "An_Entry_Call_Statement" : "A_Procedure_Call_Statement");
+
           SgExpression*  funrefexp = nullptr;
 
           //~ SgDeclarationStatement& tgt    = lookupNode(asisDecls(), stmt.Corresponding_Called_Entity);
@@ -1290,6 +1337,7 @@ namespace
 
       case A_Return_Statement:                  // 6.5
         {
+          logKind("A_Return_Statement");
           Element_Struct* exprel = retrieveAsOpt<Element_Struct>(elemMap(), stmt.Return_Expression);
           SgExpression*   retval = exprel ? &getExpr(*exprel, ctx) : NULL;
           SgStatement&    sgnode = SG_DEREF( sb::buildReturnStmt(retval) );
@@ -1302,6 +1350,7 @@ namespace
 
       case An_Accept_Statement:                 // 9.5.2
         {
+          logKind("An_Accept_Statement");
           SgExpression&           entryref = getExprID(stmt.Accept_Entry_Direct_Name, ctx);
           SgExpression&           idx      = getExprID_opt(stmt.Accept_Entry_Index, ctx);
           SgAdaAcceptStmt&        sgnode   = mkAdaAcceptStmt(entryref, idx);
@@ -1342,6 +1391,8 @@ namespace
       case A_Delay_Until_Statement:             // 9.6
       case A_Delay_Relative_Statement:          // 9.6
         {
+          logKind(stmt.Statement_Kind == A_Delay_Until_Statement ? "A_Delay_Until_Statement" : "A_Delay_Relative_Statement");
+
           SgExpression&   delayexpr = getExprID(stmt.Delay_Expression, ctx);
           SgAdaDelayStmt& sgnode    = mkAdaDelayStmt(delayexpr, stmt.Statement_Kind != A_Delay_Until_Statement);
 
@@ -1357,6 +1408,7 @@ namespace
 
       case A_Raise_Statement:                   // 11.3
         {
+          logKind("A_Raise_Statement");
           SgExpression&   raised = getExprID(stmt.Raised_Exception, ctx);
           SgStatement&    sgnode = mkRaiseStmt(raised);
 
@@ -1401,6 +1453,7 @@ namespace
 
     ROSE_ASSERT((asisDecl.Declaration_Kind == A_Choice_Parameter_Specification));
 
+    logKind("A_Choice_Parameter_Specification");
     // SgType&                   dcltype = tyModifier(getVarType(decl, ctx));
     ElemIdRange              range    = idRange(asisDecl.Names);
 
@@ -1413,6 +1466,7 @@ namespace
 
     ROSE_ASSERT(elem.Element_Kind == An_Exception_Handler);
 
+    logKind("An_Exception_Handler");
     Exception_Handler_Struct& ex      = elem.The_Union.Exception_Handler;
     name_container            names   = queryDeclNames(ex.Choice_Parameter_Specification, ctx);
 
@@ -1502,6 +1556,7 @@ void handleClause(Element_Struct& elem, AstContext ctx)
   {
     case A_With_Clause:                // 10.1.2
       {
+        logKind("A_Choice_Parameter_Specification");
         ElemIdRange        range  = idRange(clause.Clause_Names);
 
         traverseIDs(range, elemMap(), WithClauseCreator{ctx});
@@ -1533,6 +1588,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
   {
     case A_Package_Declaration:                    // 7.1(2)
       {
+        logKind("A_Package_Declaration");
+
         SgScopeStatement&     outer   = ctx.scope();
         NameData              adaname = singleName(decl, ctx);
         //~ SgAdaPackageSpecDecl& sgnode  = mkAdaPackageSpecDecl(adaname.ident, outer);
@@ -1583,7 +1640,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Package_Body_Declaration:               // 7.2(2)
       {
-        logTrace() << "package body decl" << std::endl;
+        logKind("A_Package_Body_Declaration");
 
         SgScopeStatement&     outer   = ctx.scope();
         Element_ID            specID  = decl.Corresponding_Declaration;
@@ -1630,8 +1687,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Function_Declaration:                   // 6.1(4)   -> Trait_Kinds
     case A_Procedure_Declaration:                  // 6.1(4)   -> Trait_Kinds
       {
-        logTrace() << (decl.Declaration_Kind == A_Function_Declaration ? "function" : "procedure") << " decl"
-                   << std::endl;
+        logKind(decl.Declaration_Kind == A_Function_Declaration ? "A_Function_Declaration" : "A_Procedure_Declaration");
 
         const bool             isFunc  = decl.Declaration_Kind == A_Function_Declaration;
         SgScopeStatement&      outer   = ctx.scope();
@@ -1675,8 +1731,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Function_Body_Declaration:              // 6.3(2)
     case A_Procedure_Body_Declaration:             // 6.3(2)
       {
-        logTrace() << (decl.Declaration_Kind == A_Function_Body_Declaration ? "function" : "procedure") << " body decl"
-                   << std::endl;
+        logKind(decl.Declaration_Kind == A_Function_Declaration ? "A_Function_Body_Declaration" : "A_Procedure_Body_Declaration");
 
         const bool             isFunc  = decl.Declaration_Kind == A_Function_Body_Declaration;
         SgScopeStatement&      outer   = ctx.scope();
@@ -1734,6 +1789,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Incomplete_Type_Declaration:           // 3.2.1(2):3.10(2)
       {
+        logKind("An_Incomplete_Type_Declaration");
+
         NameData                adaname = singleName(decl, ctx);
         ROSE_ASSERT(adaname.fullName == adaname.ident);
 
@@ -1763,8 +1820,11 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         */
         break;
       }
+
     case A_Private_Type_Declaration:               // 3.2.1(2):7.3(2) -> Trait_Kinds
       {
+        logKind("A_Private_Type_Declaration");
+
         typedef NameCreator::result_container name_container;
 
         logTrace() << "Private Type "
@@ -1802,6 +1862,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Ordinary_Type_Declaration:            // 3.2.1(3)
       {
+        logKind("An_Ordinary_Type_Declaration");
+
         typedef NameCreator::result_container name_container;
 
         logTrace() << "Ordinary Type "
@@ -1833,6 +1895,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Subtype_Declaration:                    // 3.2.2(2)
       {
+        logKind("A_Subtype_Declaration");
+
         NameData              adaname = singleName(decl, ctx);
         ROSE_ASSERT(adaname.fullName == adaname.ident);
 
@@ -1854,6 +1918,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Variable_Declaration:                   // 3.3.1(2) -> Trait_Kinds
       {
+        logKind("A_Variable_Declaration");
+
         handleVarCstDecl(decl, ctx, isPrivate, tyIdentity, elem);
         /* unused fields:
              bool                           Has_Aliased;
@@ -1863,6 +1929,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Integer_Number_Declaration:            // 3.3.2(2)
       {
+        logKind("An_Integer_Number_Declaration");
+
         handleNumberDecl(decl, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), elem);
 
         /* unused fields:
@@ -1873,6 +1941,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Deferred_Constant_Declaration:          // 3.3.1(6):7.4(2) -> Trait_Kinds
     case A_Constant_Declaration:
       {
+        logKind(decl.Declaration_Kind == A_Constant_Declaration ? "A_Constant_Declaration" : "A_Deferred_Constant_Declaration");
+
         handleVarCstDecl(decl, ctx, isPrivate, tyConstify, elem);
         /* unused fields:
              bool                           Has_Aliased;
@@ -1884,6 +1954,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Real_Number_Declaration:                // 3.5.6(2)
       {
+        logKind("A_Real_Number_Declaration");
+
         handleNumberDecl(decl, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), elem);
 
         /* unused fields:
@@ -1893,6 +1965,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Loop_Parameter_Specification:           // 5.5(4)   -> Trait_Kinds
       {
+        logKind("A_Loop_Parameter_Specification");
+
         ROSE_ASSERT(!isPrivate);
 
         NameData               adaname = singleName(decl, ctx);
@@ -1927,6 +2001,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Task_Type_Declaration:                  // 9.1(2)
       {
+        logKind("A_Task_Type_Declaration");
+
         SgAdaTaskSpec&     spec    = getTaskSpecForTaskType(decl, ctx);
         NameData           adaname = singleName(decl, ctx);
         ROSE_ASSERT(adaname.fullName == adaname.ident);
@@ -1959,6 +2035,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Single_Task_Declaration:                // 3.3.1(2):9.1(3)
       {
+        logKind("A_Single_Task_Declaration");
+
         SgAdaTaskSpec&     spec    = getTaskSpecForSingleTask(decl, ctx);
         NameData           adaname = singleName(decl, ctx);
         ROSE_ASSERT(adaname.fullName == adaname.ident);
@@ -1984,6 +2062,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Task_Body_Declaration:                  // 9.1(6)
       {
+        logKind("A_Task_Body_Declaration");
+
         SgAdaTaskBody&          tskbody = getTaskBody(decl, ctx);
         NameData                adaname = singleName(decl, ctx);
         Element_ID              declID  = decl.Corresponding_Declaration;
@@ -2017,6 +2097,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Entry_Declaration:                     // 9.5.2(2)
       {
+        logKind("An_Entry_Declaration");
+
         NameData        adaname = singleName(decl, ctx);
         ElemIdRange     range   = idRange(decl.Parameter_Profile);
 
@@ -2045,6 +2127,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Exception_Declaration:                 // 11.1(2)
       {
+        logKind("An_Exception_Declaration");
+
         typedef NameCreator::result_container name_container;
 
         ElemIdRange              range    = idRange(decl.Names);
@@ -2063,6 +2147,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Component_Declaration:                  // 3.8(6)
       {
+        logKind("A_Component_Declaration");
+
         handleVarCstDecl(decl, ctx, isPrivate, tyIdentity, elem);
         /* unused clause:
               Pragma_Element_ID_List         Corresponding_Pragmas;
@@ -2096,6 +2182,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Package_Renaming_Declaration:           // 8.5.3(2)
       {
+        logKind("A_Package_Renaming_Declaration");
+
         NameData                adaname = singleName(decl, ctx);
 
         if (isInvalidId(decl.Renamed_Entity))
@@ -2123,6 +2211,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Exception_Renaming_Declaration:        // 8.5.2(2)
       {
+        logKind("An_Exception_Renaming_Declaration");
+
         NameData                adaname = singleName(decl, ctx);
 
         if (isInvalidId(decl.Renamed_Entity))
