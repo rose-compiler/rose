@@ -53,5 +53,8 @@ PASSING_TESTS :=                       \
   procedure_declaration.ads            \
   procedure_declaration.adb            \
   some_modes.ads                       \
+  unit_3.ads                           \
+  simpleada.ads                        \
+  simpleada-io.ads                     \
+  simple_hello_world.adb               \
   EndOfList
-

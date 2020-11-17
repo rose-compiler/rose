@@ -198,6 +198,14 @@ struct ElemCreator
 ///   the AST node \ref n.
 void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem, AstContext ctx);
 
+/// logs that an asis element kind \ref kind has been explored
+/// \param kind a C-string naming the Asis kind
+/// \param primaryHandler true if this is the primary handler
+//~ void logKind(const char* kind, bool primaryHandler = true);
+
+/// non-tracing alternative
+static inline
+void logKind(const char*, bool = false) {}
 
 /// anonymous namespace for auxiliary templates and functions
 namespace
@@ -266,7 +274,6 @@ namespace
     return Ada_ROSE_Translation::mlog[Sawyer::Message::FATAL];
   }
 
-
 #else /* USE_SIMPLE_STD_LOGGER */
 
   inline
@@ -301,7 +308,6 @@ namespace
 
   void logInit() {}
 #endif /* USE_SIMPLE_STD_LOGGER */
-
 
   /// records a node (value) \ref val with key \ref key in map \ref m.
   /// \pre key is not in the map yet
