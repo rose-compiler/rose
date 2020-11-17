@@ -3,6 +3,7 @@ SgActualArgumentExpression
 SgAbsOp
 SgAdaAccessType
 SgAdaAcceptStmt
+SgAdaDelayStmt
 SgAdaEntryDecl
 SgAdaExitStmt
 SgAdaFloatType
@@ -282,6 +283,7 @@ SgAssignStatement
 SgAssignedGotoStatement
 SgAssociateStatement
 SgAsteriskShapeExp
+SgAtOp
 SgAttribute
 SgAttributeSpecificationStatement
 SgAutoType

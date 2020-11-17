@@ -21,7 +21,7 @@ SgInitializedName::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
 void
 SgStatement::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
    {
-  // We need to call the fixupCopy function from the parent of a SgVariableDeclaration because the 
+  // We need to call the fixupCopy function from the parent of a SgVariableDeclaration because the
   // copy function in the parent of the variable declaration sets the parent of the SgVariableDeclaration
   // and we need this parent in the fixupCopy function in the SgInitializedName.
 
@@ -100,7 +100,7 @@ SgScopeStatement::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
      printf ("Inside of SgScopeStatement::fixupCopy_symbols() for %p = %s copy = %p (calling SageInterface::fixupReferencesToSymbols()) \n",this,this->class_name().c_str(),copy);
 #endif
 
-  // DQ (3/1/2009): After rebuilding the symbol table, we have to reset references 
+  // DQ (3/1/2009): After rebuilding the symbol table, we have to reset references
   // to old symbols (from the original symbol table) to the new symbols just built.
      SageInterface::fixupReferencesToSymbols(this,copyScopeStatement,help);
 
@@ -260,8 +260,8 @@ SgFunctionDeclaration::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
        // DQ (2/26/2009): Handle special cases where the copyHelp function is non-trivial.
        // Is every version of copyHelp object going to be a problem?
 
-       // For the outlining, our copyHelp object does not copy defining function declarations 
-       // and substitutes a non-defining declarations, so if the copy has been built this way 
+       // For the outlining, our copyHelp object does not copy defining function declarations
+       // and substitutes a non-defining declarations, so if the copy has been built this way
        // then skip trying to reset the SgFunctionDefinition.
        // printf ("In SgFunctionDeclaration::fixupCopy_symbols(): functionDeclaration_copy->get_definition() = %p \n",functionDeclaration_copy->get_definition());
        // this->get_definition()->fixupCopy_symbols(functionDeclaration_copy->get_definition(),help);
@@ -444,7 +444,7 @@ SgTemplateInstantiationFunctionDecl::fixupCopy_symbols(SgNode* copy, SgCopyHelp 
 
           templateArguments_iterator_original++;
           templateArguments_iterator_copy++;
-        } 
+        }
 #endif
    }
 
@@ -665,6 +665,18 @@ SgAdaExitStmt::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
    }
 
 void
+SgAdaDelayStmt::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgAdaDelayStmt::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+  // Also call the base class version of the fixupCopycopy() member function
+     SgStatement::fixupCopy_symbols(copy,help);
+   }
+
+
+void
 SgAdaLoopStmt::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
    {
 #if DEBUG_FIXUP_COPY
@@ -679,7 +691,7 @@ void
 SgAdaAcceptStmt::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
    {
 #if DEBUG_FIXUP_COPY
-     printf ("Inside of SgAdaLoopStmt::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+     printf ("Inside of SgAdaAcceptStmt::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
 #endif
 
   // Also call the base class version of the fixupCopycopy() member function
@@ -737,7 +749,7 @@ SgEnumDeclaration::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
 
      SgEnumDeclaration* enumDeclaration_copy = isSgEnumDeclaration(copy);
      ROSE_ASSERT(enumDeclaration_copy != NULL);
-     
+
   // DQ (10/17/2007): fixup the type used to make sure it has the declaration set the AST copy.
      SgEnumType* enum_type_original = this->get_type();
      ROSE_ASSERT(enum_type_original != NULL);
@@ -877,7 +889,7 @@ SgSourceFile::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
      ROSE_ASSERT(get_globalScope() != NULL);
      ROSE_ASSERT(file_copy->get_globalScope() != NULL);
      get_globalScope()->fixupCopy_symbols(file_copy->get_globalScope(),help);
-   } 
+   }
 
 
 void
@@ -902,10 +914,11 @@ SgIfStmt::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
      ROSE_ASSERT(thsTruBody != NULL);
      SgStatement* ifStmtCopyTruBody = ifStatement_copy->get_true_body();
      ROSE_ASSERT(ifStmtCopyTruBody != NULL);
-     if (isSgScopeStatement(ifStmtCopyTruBody) != NULL) {
-     // ROSE_ASSERT(isSgScopeStatement(ifStmtCopyTruBody)->get_symbol_table() != NULL);
-     // ROSE_ASSERT(isSgScopeStatement(ifStmtCopyTruBody)->get_symbol_table()->size()  == 0);
-        ROSE_ASSERT(isSgScopeStatement(ifStmtCopyTruBody)->symbol_table_size() == 0);
+     SgScopeStatement* scopeStmntCopyTrueBody = isSgScopeStatement(ifStmtCopyTruBody);
+     if (scopeStmntCopyTrueBody != NULL) {
+     // ROSE_ASSERT(scopeStmntCopyTrueBody->get_symbol_table() != NULL);
+     // ROSE_ASSERT(scopeStmntCopyTrueBody->get_symbol_table()->size()  == 0);
+        ROSE_ASSERT(scopeStmntCopyTrueBody->symbol_table_size() == 0);
      }
 
   // printf ("\nProcess the TRUE body of the SgIfStmt \n\n");

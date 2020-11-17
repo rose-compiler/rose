@@ -320,8 +320,8 @@ ATbool traverse_VariableList     (ATerm term, std::vector<SgExpression*> &vars);
 ATbool traverse_TableItem        (ATerm term, SgExpression* &var);
 ATbool traverse_Subscript        (ATerm term, std::vector<SgExpression*> & indexes);
 ATbool traverse_Index            (ATerm term, SgExpression* &expr);
-ATbool traverse_TableDereference (ATerm term, SgExpression* &expr);
-ATbool traverse_Dereference      (ATerm term, SgExpression* &expr);
+ATbool traverse_TableDereference (ATerm term, SgExpression* &expr, bool build_ptr_ref=true);
+ATbool traverse_Dereference      (ATerm term, SgExpression* &expr, bool build_ptr_ref=true);
 ATbool traverse_BitFunctionVariable  (ATerm term, SgExpression* &func_call);
 ATbool traverse_ByteFunctionVariable (ATerm term, SgExpression* &func_call);
 
@@ -339,6 +339,9 @@ ATbool traverse_LocFunction          (ATerm term, SgFunctionCallExp* &func_call)
 // 6.3.2 NEXT FUNCTION
 ATbool traverse_NextFunction         (ATerm term, SgFunctionCallExp* &func_call);
 
+// 6.3.3 BIT FUNCTION
+ATbool traverse_BitFunction          (ATerm term, SgFunctionCallExp* &func_call);
+
 // 6.3.4 BYTE FUNCTION
 ATbool traverse_ByteFunction         (ATerm term, SgFunctionCallExp* &func_call);
 
@@ -348,14 +351,23 @@ ATbool traverse_ShiftFunction        (ATerm term, SgFunctionCallExp* &func_call)
 // 6.3.6 ABS FUNCTIONS
 ATbool traverse_AbsFunction          (ATerm term, SgFunctionCallExp* &func_call);
 
-// 6.3.7 SIZE FUNCTION
+// 6.3.7 SIGN FUNCTION
+ATbool traverse_SignFunction         (ATerm term, SgFunctionCallExp* &func_call);
+
+// 6.3.8 SIZE FUNCTION
 ATbool traverse_SizeFunction         (ATerm term, SgFunctionCallExp* &func_call);
+
+// 6.3.9 BOUNDS FUNCTION
+ATbool traverse_BoundsFunction       (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.10 NWDSEN FUNCTION
 ATbool traverse_NwdsenFunction       (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.11 STATUS INVERSE FUNCTIONS
 ATbool traverse_StatusInverseFunction(ATerm term, SgFunctionCallExp* &func_call);
+
+// 6.3.12 NENT FUNCTION
+ATbool traverse_NentFunction(ATerm term, SgFunctionCallExp* &func_call);
 
 // 7.0 TYPE MATCHING AND TYPE CONVERSIONS
 ATbool traverse_BitConversion        (ATerm term, SgType* &type);

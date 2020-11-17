@@ -45,6 +45,7 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
           case V_SgAssignOp:            unparseAssignOp   (expr, info);          break;
 
           case V_SgAddOp:               unparseBinaryOperator(expr, "+", info);  break;
+          case V_SgAtOp:                unparseBinaryOperator(expr, "@", info);  break;
           case V_SgSubtractOp:          unparseBinaryOperator(expr, "-", info);  break;
           case V_SgMultiplyOp:          unparseBinaryOperator(expr, "*", info);  break;
           case V_SgDivideOp:            unparseBinaryOperator(expr, "/", info);  break;
@@ -172,9 +173,22 @@ Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
         case V_SgTypeUnsignedInt:
         case V_SgTypeChar:
         case V_SgTypeFloat:
-        case V_SgPointerType:
            unparseType(type, info);
            break;
+
+        case V_SgPointerType:
+          {
+            SgPointerType* pointer = isSgPointerType(type);
+            if (SgTypedefType* typedef_type = isSgTypedefType(pointer->get_base_type())) {
+              curprint("(* P ");
+              unparseType(typedef_type, info);
+              curprint(" *)");
+            }
+            else {
+              unparseType(type, info);
+            }
+            break;
+          }
 
         case V_SgJovialBitType:
         case V_SgModifierType:
@@ -187,6 +201,11 @@ Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
         case V_SgTypedefType:
            curprint("(* ");
            unparseJovialType(isSgTypedefType(type), info);
+           curprint(" *)");
+           break;
+        case V_SgEnumType:
+           curprint("(* ");
+           unparseJovialType(isSgEnumType(type), info);
            curprint(" *)");
            break;
         default:
@@ -429,6 +448,11 @@ Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
         case V_SgVarRefExp:
            curprint("@");
            unparseVarRef(operand, info);
+           break;
+        case V_SgCastExp:
+           curprint("@ (");
+           unparseCastExp(operand, info);
+           curprint(")");
            break;
         default:
            std::cout << "error: unparsePtrDeref() is unimplemented for " << operand->class_name() << "\n";

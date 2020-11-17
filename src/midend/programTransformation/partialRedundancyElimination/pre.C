@@ -12,10 +12,13 @@
 
 #include "constantFolding.h"
 
+namespace legacy
+{
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
-// DQ (8/1/2005): test use of new static function to create 
+// DQ (8/1/2005): test use of new static function to create
 // Sg_File_Info object that are marked as transformations
 #undef SgNULL_FILE
 #define SgNULL_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
@@ -48,7 +51,7 @@ bool anyOfListPotentiallyModifiedIn(const vector<SgVariableSymbol*>& syms,
     if (modified) break;
     if (isSgVariableDeclaration(n)) {
       SgVariableDeclaration* decl = isSgVariableDeclaration(n);
-      for (SgInitializedNamePtrList::const_iterator i = 
+      for (SgInitializedNamePtrList::const_iterator i =
              decl->get_variables().begin();
            i != decl->get_variables().end(); ++i) {
         if (*i == (*j)->get_declaration()) {
@@ -67,7 +70,7 @@ class ExpressionComputedInVisitor: public AstSimpleProcessing {
   SgExpression* expr;
 
   public:
-  ExpressionComputedInVisitor(int& count, SgExpression* expr): 
+  ExpressionComputedInVisitor(int& count, SgExpression* expr):
     count(count), expr(expr) {}
 
   virtual void visit(SgNode* n) {
@@ -164,7 +167,7 @@ class ReplaceExpressionWithVarrefVisitor: public AstSimpleProcessing {
   SgVarRefExp* vr;
 
   public:
-  ReplaceExpressionWithVarrefVisitor(SgExpression* expr, 
+  ReplaceExpressionWithVarrefVisitor(SgExpression* expr,
                                      SgVarRefExp* vr):
     expr(expr), vr(vr) {}
 
@@ -208,10 +211,10 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
      if (isSgExprListExp(expr)) return;
      if (isSgInitializer(expr)) return;
 #if 0
-     if ( (isSgAddOp(expr) || isSgSubtractOp(expr)) && 
-          (isSgVarRefExp(isSgBinaryOp(expr)->get_lhs_operand()) || 
+     if ( (isSgAddOp(expr) || isSgSubtractOp(expr)) &&
+          (isSgVarRefExp(isSgBinaryOp(expr)->get_lhs_operand()) ||
            isSgValueExp(isSgBinaryOp(expr)->get_lhs_operand())) &&
-          (isSgVarRefExp(isSgBinaryOp(expr)->get_rhs_operand()) || 
+          (isSgVarRefExp(isSgBinaryOp(expr)->get_rhs_operand()) ||
            isSgValueExp(isSgBinaryOp(expr)->get_rhs_operand())))
           return;
 #endif
@@ -222,7 +225,7 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
 
   // cerr << "Trying to do PRE using expression " << expr->unparseToString() << " whose type is " << expr->sage_class_name() << endl;
 
-     VertexIter i   = cfg.graph.vertices().begin(), 
+     VertexIter i   = cfg.graph.vertices().begin(),
                      end = cfg.graph.vertices().end();
 
   // cerr << "CFG has " << distance(i, end) << " nodes" << endl;
@@ -452,7 +455,7 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
           if (edge_insert[*j])
              {
                needToMakeCachevar = true;
-            // cerr << "Insert computation of " << expr->unparseToString() << " on edge from " 
+            // cerr << "Insert computation of " << expr->unparseToString() << " on edge from "
             //      << cfg.graph.source(*j) << " to " << cfg.graph.target(*j) << endl;
              }
         }
@@ -480,9 +483,9 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
        // DQ (10/5/2007): Added an assertion.
           ROSE_ASSERT(initname != NULL);
 
-          decl->addToAttachedPreprocessingInfo( 
-               new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment, 
-               (string("// Partial redundancy elimination: ") + cachevarname.str() + 
+          decl->addToAttachedPreprocessingInfo(
+               new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment,
+               (string("// Partial redundancy elimination: ") + cachevarname.str() +
                " is a cache of " + expr->unparseToString()).c_str(),
                "Compiler-Generated in PRE", 0, 0, 0, PreprocessingInfo::before));
           SgVariableSymbol* cachevarsym = new SgVariableSymbol(initname);
@@ -647,10 +650,10 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
                            // Only modify the STL list outside of the loop over the list to avoid interator invalidation
                               if (addToForInitList == true)
                                  {
-                                // Add the the_computation statment to the list in the SgForInitStatement. 
-                                // Later if we abandon the SgForInitStatement then we would have to add it to 
-                                // the list of SgInitializedName objects in the SgVariableDeclaration OR modify 
-                                // the expression list to handle the extra expression (but I think this case in 
+                                // Add the the_computation statment to the list in the SgForInitStatement.
+                                // Later if we abandon the SgForInitStatement then we would have to add it to
+                                // the list of SgInitializedName objects in the SgVariableDeclaration OR modify
+                                // the expression list to handle the extra expression (but I think this case in
                                 // handled above).
                                 // printf ("Adding the_computation to the list in the SgForInitStatement \n");
                                    statementList.push_back(the_computation);
@@ -690,7 +693,7 @@ class FindExpressionsVisitor: public AstSimpleProcessing {
 // when expressions are used that are a part of the constant folded expression trees
 // now available (and traversed) in the AST.  Because we traverse the expression trees
 // of constant folded values we were collecting them into the list of expressions
-// upon which to apply PRE.  This is likely nore a great idea, just because we 
+// upon which to apply PRE.  This is likely nore a great idea, just because we
 // make such things available in the AST and in the traversal does not imply that
 // they need to be optimized.  In general the rule is that the AST represents
 // the structure of the original source code, and the traversals in ROSE traverse
@@ -827,3 +830,4 @@ PRE::partialRedundancyElimination(SgNode* n)
      DoPreOnEachFunctionVisitor().traverse(n, preorder);
    }
 
+} // namespace legacy

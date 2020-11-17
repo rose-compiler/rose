@@ -6,14 +6,14 @@
 #include <iostream>
 #include <string>
 #include <iomanip>
-#include "pre.h"
+// PP(14/10/20) PRE->legacy::PRE #include "pre.h"
 #include "rose_config.h" // for BOOST_FILESYSTEM_VERSION
 #include "RoseAst.h" // using AST Iterator
 #include <Diagnostics.h>
 #include <AstConsistencyTests.h>
 
 
-// DQ (8/1/2005): test use of new static function to create 
+// DQ (8/1/2005): test use of new static function to create
 // Sg_File_Info object that are marked as transformations
 #undef SgNULL_FILE
 #define SgNULL_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
@@ -32,7 +32,7 @@ using namespace SageInterface;
 namespace Inliner {
   bool skipHeaders = false;
   bool verbose = false ; // if set to true, generate debugging information
-} 
+}
 
 SgExpression* generateAssignmentMaybe(SgExpression* lhs, SgExpression* rhs)
    {
@@ -128,14 +128,14 @@ class ReplaceCaptureVariableVisitor: public AstSimpleProcessing {
   // map < closureSymbol, captureSymbol>
   typedef std::map<SgVariableSymbol*, SgVariableSymbol*> captureVarMap;
 
- 
+
   private:
   const captureVarMap& varMap;
 
   public:
   ReplaceCaptureVariableVisitor(const captureVarMap& varMap):
   varMap(varMap) {}
-    
+
   virtual void visit(SgNode* n) {
     if (isSgDotExp(n) || isSgArrowExp(n)) {
       SgBinaryOp* binaryOp = isSgBinaryOp(n);
@@ -158,10 +158,10 @@ class ReplaceCaptureVariableVisitor: public AstSimpleProcessing {
 // variable.  Used as part of inlining non-static member functions.
 class ReplaceThisWithRefVisitor: public AstSimpleProcessing {
   SgVariableSymbol* sym;
-  
+
   public:
   ReplaceThisWithRefVisitor(SgVariableSymbol* sym): sym(sym) {}
-    
+
   virtual void visit(SgNode* n) {
     if (isSgThisExp(n)) {
       SgVarRefExp* vr = new SgVarRefExp(SgNULL_FILE, sym);
@@ -250,20 +250,20 @@ markAsTransformation(SgNode *ast) {
 static void recursivePrintCurrentAndParent (SgNode* n)
 {
   // print current level's info
-  if (!n) return; 
+  if (!n) return;
   cout<<"--------------"<<endl;
   cout<<n<<":"<<n->class_name()<<  endl;
   if (SgLocatedNode * lnode = isSgLocatedNode(n))
-  { 
+  {
     cout<<"file info:\t ";
     lnode->get_file_info()->display();
     cout<<"\n unparseToString:\t ";
     lnode->unparseToString();
-  }  
+  }
 
   // track back to its parent
   recursivePrintCurrentAndParent (n->get_parent());
-} 
+}
 #endif
 // Main inliner code.  Accepts a function call as a parameter, and inlines
 // only that single function call.  Returns true if it succeeded, and false
@@ -287,7 +287,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      checkTransformedFlagsVisitor(globalScope);
 #endif
 
-   if (Inliner::verbose)        
+   if (Inliner::verbose)
    {
      Sg_File_Info* info_start = funcall->get_startOfConstruct ();
      size_t a_start = (size_t)info_start->get_line ();
@@ -296,16 +296,16 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
    }
     if (Inliner::skipHeaders)
     {
-      // Liao 1/23/2018. we ignore function calls within header files, which are not unparsed by ROSE. 
+      // Liao 1/23/2018. we ignore function calls within header files, which are not unparsed by ROSE.
       string filename= funcall->get_file_info()->get_filename();
       string suffix = StringUtility ::fileNameSuffix(filename);
       //vector.tcc: This is an internal header file, included by other library headers
       if (suffix=="h" ||suffix=="hpp"|| suffix=="hh"||suffix=="H" ||suffix=="hxx"||suffix=="h++" ||suffix=="tcc")
-        return false; 
+        return false;
 
       // also check if it is compiler generated, mostly template instantiations. They are not from user code.
       if (funcall->get_file_info()->isCompilerGenerated() )
-        return false; 
+        return false;
       // check if the file is within include-staging/ header directories
       if (insideSystemHeader(funcall))
         return false;
@@ -326,7 +326,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 
            // Skip operator overloading functions for now.
             SgExpression* rhs = dotexp->get_rhs_operand();
-           // TODO: refactored into SageInterface: isOperatorOverloading() 
+           // TODO: refactored into SageInterface: isOperatorOverloading()
             SgMemberFunctionRefExp* m_ref_exp = isSgMemberFunctionRefExp(rhs);
             if (m_ref_exp)
             {
@@ -338,7 +338,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
                 string::size_type a_pos = q_name.find("::__anonymous_",0); // lambda expression is call through an anonymous operator
                 if (pos !=string::npos && a_pos !=0)  // a non-anonymous operator
                 {
-//                  if (Inliner::verbose)        
+//                  if (Inliner::verbose)
                     std::cout << "Inline returns false: skip non-anonymous operator function named:" << q_name << std::endl;
                   return false;
                 }
@@ -372,7 +372,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 
      if (!func_ref_exp)
         {
-           if (Inliner::verbose)        
+           if (Inliner::verbose)
            {
               std::cout << "Inline returns false: not a call to a named function for SgFunctionCallExp*"<< funcall << std::endl;
            }
@@ -396,7 +396,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      if (isSgMemberFunctionSymbol(funsym) &&
          isSgMemberFunctionSymbol(funsym)->get_declaration()->get_functionModifier().isVirtual())
         {
-           if (Inliner::verbose)        
+           if (Inliner::verbose)
               std::cout << "Inline returns false: cannot inline virtual member functions" << std::endl;
           return false;
         }
@@ -406,7 +406,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 #if 0
     if (!isSgTemplateInstantiationFunctionDecl (fundecl))
     {
-      if (Inliner::verbose)        
+      if (Inliner::verbose)
         std::cout << "Inline returns false: skipping function calls to non-template instantiations:" << fundecl->class_name() << " at line: "
             << func_ref_exp->get_file_info()->get_line() << std::endl;
       return false;
@@ -419,7 +419,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
        string::size_type pos = q_name.find ("::std::",0);
        if (pos ==0)
        {
-         if (Inliner::verbose)        
+         if (Inliner::verbose)
            std::cout << "Inline returns false: skip std function named:" << q_name << std::endl;
          return false;
        }
@@ -428,7 +428,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      SgFunctionDefinition* fundef = fundecl ? fundecl->get_definition() : NULL;
      if (!fundef)
         {
-           if (Inliner::verbose)        
+           if (Inliner::verbose)
              std::cout << "Inline returns false: no function definition is visible" << std::endl;
           return false; // No definition of the function is visible
         }
@@ -451,7 +451,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
           assert (isSgFunctionDefinition(my_fundef));
           if (isSgFunctionDefinition(my_fundef) == fundef)
              {
-               if (Inliner::verbose)    
+               if (Inliner::verbose)
                   std::cout << "Inline failed: trying to inline a procedure into itself" << std::endl;
                return false;
              }
@@ -464,14 +464,14 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      // Pei-Hung (06/12/20) Need to check if this is a lambda function call
      bool isLambdaMemberFuncCall = false;
      ReplaceCaptureVariableVisitor::captureVarMap varMap;
-     // create a new variable declaration for member function call : 
+     // create a new variable declaration for member function call :
      //   TYPE*  this__ =  thisPtr; ??
-     // static member functions cannot access this->data (non-static data). That is why we check non-static for thisptr case. 
+     // static member functions cannot access this->data (non-static data). That is why we check non-static for thisptr case.
      if (isSgMemberFunctionSymbol(funsym) && !fundecl->get_declarationModifier().get_storageModifier().isStatic())
      {
        assert (thisptr != NULL);
        SgType* thisptrtype = thisptr->get_type();
-       const SgSpecialFunctionModifier& specialMod = 
+       const SgSpecialFunctionModifier& specialMod =
        funsym->get_declaration()->get_specialFunctionModifier();
        SgFunctionType* ft = funsym->get_declaration()->get_type();
        ROSE_ASSERT (ft);
@@ -504,12 +504,12 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
            SgVarRefExp* closureVarRef = isSgVarRefExp(capture->get_closure_variable());
            ROSE_ASSERT(closureVarRef);
            SgVariableSymbol* closureVarSym = closureVarRef->get_symbol();
-           // Mapping closure and capture. 
+           // Mapping closure and capture.
            varMap[closureVarSym] = captureVarSym;
          }
        }
        else
-       { 
+       {
          SgConstVolatileModifier& thiscv = fundecl->get_declarationModifier().get_typeModifier().get_constVolatileModifier();
          // if (thiscv.isConst() || thiscv.isVolatile()) { FIXME
          thisptrtype = new SgModifierType(thisptrtype);
@@ -520,11 +520,11 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
          assignInitializer->set_endOfConstruct(SgNULL_FILE);
 #if 0
          printf ("before new SgVariableDeclaration(): assignInitializer = %p assignInitializer->isTransformation() = %s \n",assignInitializer,assignInitializer->isTransformation() ? "true" : "false");
-#endif   
+#endif
          thisdecl = new SgVariableDeclaration(SgNULL_FILE, thisname, thisptrtype, assignInitializer);
 #if 0
          printf ("(after new SgVariableDeclaration(): assignInitializer = %p assignInitializer->isTransformation() = %s \n",assignInitializer,assignInitializer->isTransformation() ? "true" : "false");
-#endif   
+#endif
          thisdecl->set_endOfConstruct(SgNULL_FILE);
          thisdecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
          thisdecl->set_definingDeclaration(thisdecl);
@@ -545,7 +545,9 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      // Get the list of actual argument expressions from the function call, which we'll later use to initialize new local
      // variables in the inlined code.  We need to detach the actual arguments from the AST here since we'll be reattaching
      // them below (otherwise we would violate the invariant that the AST is a tree).
-     SgFunctionDefinition* targetFunction = PRE::getFunctionDefinition(funcall);
+     // PP (10/14/20) PRE -> legacy::PRE
+     // was: SgFunctionDefinition* targetFunction = PRE::getFunctionDefinition(funcall);
+     SgFunctionDefinition* targetFunction = SageInterface::getEnclosingFunctionDefinition(funcall, false /* do not include self */);
      SgExpressionPtrList funargs = funcall->get_args()->get_expressions();
      funcall->get_args()->get_expressions().clear();
      BOOST_FOREACH (SgExpression *actual, funargs)
@@ -558,8 +560,8 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      SgTreeCopy tc;
      SgFunctionDefinition* function_copy = isSgFunctionDefinition(fundef->copy(tc));
 
-     // Pei-Hung (07/15/2020) the SgClassSymbol for the copied SgthisExp is associated with original 
-     // symbol table.  This should better be fixed in the deep copy function.  This should serve as 
+     // Pei-Hung (07/15/2020) the SgClassSymbol for the copied SgthisExp is associated with original
+     // symbol table.  This should better be fixed in the deep copy function.  This should serve as
      // a tentative fix only.
      for(SgCopyHelp::copiedNodeMapTypeIterator iter = tc.get_copiedNodeMap().begin(); iter !=tc.get_copiedNodeMap().end(); iter++)
      {
@@ -585,7 +587,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
               //std::cout << "copy stack :" << iter->first<< ":" << iter->second << std::endl;
             }
           }
-        } 
+        }
      }
 
      ROSE_ASSERT (function_copy);
@@ -602,8 +604,8 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
             ROSE_ASSERT(ctor_init_list == ctor_init_list->get_definingDeclaration());
           }
      }
-#endif     
-     // rename labels in an inlined function definition. goto statements to them will be updated. 
+#endif
+     // rename labels in an inlined function definition. goto statements to them will be updated.
      renameLabels(funbody_copy, targetFunction);
 
      // print more information in case the following assertion fails
@@ -624,10 +626,10 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
           SgSymbol* sym = isSgSymbol(*i);
           cout << " copy symbol name = " << sym->get_name() << endl;
         }
-        
+
      }
      ASSERT_require(funbody_raw->get_symbol_table()->size() == funbody_copy->get_symbol_table()->size());
-   
+
      // We don't need to keep the copied SgFunctionDefinition now that the labels in it have been moved to the target function
      // (having it in the memory pool confuses the AST tests), but we must not delete the formal argument list or the body
      // because we need them below.
@@ -677,7 +679,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
          if(isSgClassType(formalArg->get_typeptr()))
          {
            SgClassType* classtype = isSgClassType(formalArg->get_typeptr());
-           classdecl = isSgClassDeclaration(classtype->get_declaration()); 
+           classdecl = isSgClassDeclaration(classtype->get_declaration());
            ROSE_ASSERT(classdecl);
            // check if the parent of SgClassDeclaration is SgLambdaExp
            if(isSgLambdaExp(classdecl->get_parent()))
@@ -711,8 +713,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
            lambdaFuncClassCopy->set_firstNondefiningDeclaration(lambdaFuncClassCopy);
            lambdaFuncClassCopy->set_parent(funbody_copy);
            lambdaFuncClassCopy->set_scope(funbody_copy);
-           SgClassType* class_type = NULL;
-           class_type = SgClassType::createType(lambdaFuncClassCopy);
+           SgClassType* class_type = SgClassType::createType(lambdaFuncClassCopy);
            setOneSourcePositionForTransformation(lambdaFuncClassCopy);
            SgClassDefinition* lambdaClassDef = SageBuilder::buildClassDefinition();
 
@@ -741,8 +742,8 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
            //cout << lambdaFuncClassCopy->get_name() << ":" << lambdaFuncClassCopy << ":" << lambdaFuncClassCopy->get_explicit_anonymous() << ":" << lambdaFuncClassCopy->get_isAutonomousDeclaration() << endl;
            //cout << lambdaFuncClassCopy->get_parent() << ":" << classdecl->get_parent()<< endl;
            //cout << lambdaFuncClassCopy->get_type() << ":" << classdecl->get_type()<< endl;
-       
-           // Insert the class definition to expose the class details. 
+
+           // Insert the class definition to expose the class details.
            lambdaClassDef->append_member(lambdaFuncDefCopy);
 
            // adding capture list
@@ -764,7 +765,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
              captureParamList->append_arg(captureInitializedName);
              captureInitializedName->set_parent(captureParamList);
              captureInitializedName->set_scope(lambdaClassDef);
- 
+
              // closure list
              SgVarRefExp* closureVarRef = isSgVarRefExp(capture->get_closure_variable());
              ROSE_ASSERT(closureVarRef);
@@ -819,7 +820,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
            vardeclInitializedName->set_auto_decltype(SageBuilder::buildAutoType());
          }
          else
-         { 
+         {
            SgAssignInitializer* assignInitializer = new SgAssignInitializer(SgNULL_FILE, actualArg, formalArg->get_type());
            ASSERT_not_null(assignInitializer);
            initializer = isSgInitializer(assignInitializer);
@@ -862,7 +863,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      if(isLambdaMemberFuncCall)
      {
        ReplaceCaptureVariableVisitor(varMap).traverse(funbody_copy, postorder);
-        
+
      }
      ReplaceParameterUseVisitor(paramMap).traverse(funbody_copy, postorder);
 
