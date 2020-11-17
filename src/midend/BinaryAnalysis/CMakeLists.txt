@@ -35,12 +35,12 @@ set(midend_binary_sources
   Concolic/ConcolicExecutor.C
   Concolic/ConcreteExecutor.C
   Concolic/Database.C
-  Concolic/Database2.C
   Concolic/ExecutionManager.C
   Concolic/LinuxExecutor.C
   Concolic/LinuxExitStatus.C
   Concolic/LinuxTraceExecutor.C
   Concolic/Specimen.C
+  Concolic/SystemCall.C
   Concolic/TestCase.C
   Concolic/TestSuite.C
   Concolic/Utility.C
@@ -175,4 +175,19 @@ if(SQLITE3_FOUND_LIB)
 endif()
 
 install(FILES ${midend_binary_headers} DESTINATION ${INCLUDE_INSTALL_DIR})
-install(FILES Concolic/ConcolicExecutor.h DESTINATION ${INCLUDE_INSTALL_DIR}/Concolic)
+
+install(
+  FILES
+  Concolic/BasicTypes.h
+  Concolic/ConcolicExecutor.h
+  Concolic/ConcreteExecutor.h
+  Concolic/Database.h
+  Concolic/ExecutionManager.h
+  Concolic/LinuxExecutor.h
+  Concolic/LinuxExitStatus.h
+  Concolic/LinuxTraceExecutor.h
+  Concolic/Specimen.h
+  Concolic/SystemCall.h
+  Concolic/TestCase.h
+  Concolic/TestSuite.h
+  DESTINATION ${INCLUDE_INSTALL_DIR}/Concolic)

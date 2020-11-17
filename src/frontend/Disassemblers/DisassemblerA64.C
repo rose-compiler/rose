@@ -20,7 +20,8 @@ DisassemblerArm::clone() const {
 bool
 DisassemblerArm::canDisassemble(SgAsmGenericHeader *header) const {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family;
+    return ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family &&
+            header->get_exec_format()->get_word_size() == 8);
 }
 
 void
@@ -66,6 +67,7 @@ DisassemblerArm::init() {
     // Architecture independent ROSE disassembler properties
     REG_IP = registerDictionary()->findOrThrow("pc");
     REG_SP = registerDictionary()->findOrThrow("sp");
+    REG_LINK = registerDictionary()->findOrThrow("lr");
 
     // Build the Capstone context object, which must be explicitly closed in the destructor.
     if (CS_ERR_OK != cs_open(arch, mode, &capstone_))

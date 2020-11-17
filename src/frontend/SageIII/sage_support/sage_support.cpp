@@ -846,7 +846,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 #if 0
      printf("In determineFileType():\n");
      size_t cnt = 0;
-     for ( std::vector<std::string>::iterator i = argv.begin(); i != argv.end(); i++) 
+     for ( std::vector<std::string>::iterator i = argv.begin(); i != argv.end(); i++)
         {
           printf("  argv[%zd] = %s\n", cnt++, i->c_str());
         }
@@ -1591,9 +1591,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
   // DQ (7/2/2020): Added assertion (fails for snippet tests).
      if (file->get_preprocessorDirectivesAndCommentsList() == NULL)
-       {
-         file->set_preprocessorDirectivesAndCommentsList(new ROSEAttributesListContainer());
-       }
+        {
+          file->set_preprocessorDirectivesAndCommentsList(new ROSEAttributesListContainer());
+        }
      ROSE_ASSERT(file->get_preprocessorDirectivesAndCommentsList() != NULL);
 
      return file;
@@ -2178,22 +2178,22 @@ SgProject::RunFrontend()
 void compute_IR_node_pointers ( SgSourceFile* sourceFile, unordered_map < SgNode*, set <int> > & umap )
    {
   // This function traverses each translation unit (called for each one) and traverses the associated AST
-  // and adds each IR node to the hash table or addes to the set of file IDs over which the IR node is 
+  // and adds each IR node to the hash table or addes to the set of file IDs over which the IR node is
   // shared if it is shared.  The complexity should be in the number of IR nodes over all of the ASTs of
   // the translation units (shared nodes count the number of times that they are shared).
 
-     class Visitor: public AstSimpleProcessing 
+     class Visitor: public AstSimpleProcessing
         {
           public:
                SgSourceFile* sourceFile;
                unordered_map < SgNode*, set <int> > & local_umap;
 
-               Visitor(SgSourceFile* tmp_sourceFile, unordered_map < SgNode*, set <int> > & tmp_umap) 
-                  : sourceFile(tmp_sourceFile), local_umap(tmp_umap) 
+               Visitor(SgSourceFile* tmp_sourceFile, unordered_map < SgNode*, set <int> > & tmp_umap)
+                  : sourceFile(tmp_sourceFile), local_umap(tmp_umap)
                   {
                   }
 
-               void visit(SgNode* n) 
+               void visit(SgNode* n)
                   {
                     ROSE_ASSERT( n != NULL);
 #if 0
@@ -2592,8 +2592,8 @@ SgProject::parse()
                     printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
                     printf ("Calling secondaryPassOverSourceFile(): file = %s \n",file->getFileName().c_str());
 #endif
-                 // DQ (8/19/2019): Divide this into two parts, for optimization of header file unparsing, optionally 
-                 // support the main file collection of comments and CPP directives, and seperately the header file 
+                 // DQ (8/19/2019): Divide this into two parts, for optimization of header file unparsing, optionally
+                 // support the main file collection of comments and CPP directives, and seperately the header file
                  // collection of comments and CPP directives.
 #if 0
                     printf ("######### In calling secondaryPassOverSourceFile() support an optimization improve performance of header file unparsing \n");
@@ -2742,12 +2742,12 @@ SgProject::parse()
 #endif
 
 #if 0
-  // DQ (7/2/2020): This code has to be moved to where the other support for collect of comments 
+  // DQ (7/2/2020): This code has to be moved to where the other support for collect of comments
   // and CPP directives is located.  At this early stage we don't know yet which header files are
   // required to be processed, and until we do we can't process the token stream, else we would
-  // have to do so for all header files, and this is inconsistant with the new design that 
-  // supports an optimized handling of header file processing (namely, only processing the 
-  // header files that are required to be processed (this is a huge optimization and so it is 
+  // have to do so for all header files, and this is inconsistant with the new design that
+  // supports an optimized handling of header file processing (namely, only processing the
+  // header files that are required to be processed (this is a huge optimization and so it is
   // important).
 
 #error "DEAD CODE!"
@@ -3483,8 +3483,8 @@ SgFile::secondaryPassOverSourceFile()
    {
   // DQ (8/19/2019): We want to optionally seperate this function out over two phases to optimize the support for header file unparsing.
   // When not optimized, we process all of the header file with the source file.
-  // When we are supporting optimization, we handle the collection of comments and 
-  // CPP directives and their insertion into the AST in two phases: 
+  // When we are supporting optimization, we handle the collection of comments and
+  // CPP directives and their insertion into the AST in two phases:
   //  1) Just the source file (no header files)
   //  2) Just the header files (not the source file)
 
@@ -3494,7 +3494,7 @@ SgFile::secondaryPassOverSourceFile()
      printf (" --- get_header_file_unparsing_optimization() = %s \n",this->get_header_file_unparsing_optimization() ? "true" : "false");
 #endif
 
-  // To support initial testing we will call one phase immediately after the other.  Late we will call the second phase, header 
+  // To support initial testing we will call one phase immediately after the other.  Late we will call the second phase, header
   // file processing, from within the unparser when we know what header files are intended to be unparsed.
 
   // DQ (12/21/2019): Two of these three are not used and generate a compiler warning.
@@ -3668,6 +3668,8 @@ SgFile::secondaryPassOverSourceFile()
 #endif
                  // ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
 
+                 // DQ (10/18/2020): This is enforced within attachPreprocessingInfo(), so move the enforcement to be as early as possible.
+                    ROSE_ASSERT(sourceFile->get_processedToIncludeCppDirectivesAndComments() == false);
 #if 0
                     printf ("@@@@@@@@@@@@@@ In SgFile::secondaryPassOverSourceFile(): Calling attachPreprocessingInfo(): sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
 #endif
@@ -4306,7 +4308,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // add option to specify preprocessing only
 #if BACKEND_FORTRAN_IS_GNU_COMPILER
           fortran_C_preprocessor_commandLine.push_back("-E");
-      // Pei-Hung (06/18/2020) gfortran option to inhibit generation of linemarkers in the output from the preprocessor. 
+      // Pei-Hung (06/18/2020) gfortran option to inhibit generation of linemarkers in the output from the preprocessor.
           fortran_C_preprocessor_commandLine.push_back("-P");
 #elif BACKEND_FORTRAN_IS_PGI_COMPILER
      // Pei-Hung 12/09/2019 This is for PGI Fortran compiler, add others if necessary
@@ -4347,7 +4349,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           if ( SgProject::get_verbose() > 0 )
                printf ("cpp command line = %s \n",CommandlineProcessing::generateStringFromArgList(fortran_C_preprocessor_commandLine,false,false).c_str());
 
-       // Pei-Hung 12/09/2019 the preprocess command has to be executed by all Fortran compiler  
+       // Pei-Hung 12/09/2019 the preprocess command has to be executed by all Fortran compiler
 //#if BACKEND_FORTRAN_IS_GNU_COMPILER
        // Some security checking here could be helpful!!!
           errorCode = systemFromVector (fortran_C_preprocessor_commandLine);
@@ -4508,7 +4510,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                     use_line_length_none_string = "-ffree-line-length-none";
 #elif BACKEND_FORTRAN_IS_INTEL_COMPILER
                     use_line_length_none_string = "-free";
-#endif 
+#endif
                   }
                  else
                   {
@@ -4911,7 +4913,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // compiled together on the same command line.
      ROSE_ASSERT(astIncludeStack.size() == 0);
 
-  // DQ (6/7/2013): Added support for call the experimental frontran frontend (if the associated option is specified on the command line).
+  // DQ (6/7/2013): Added support for the call to the experimental Fortran frontend (if the associated option is specified on the command line).
      int frontendErrorLevel = 0;
      if (get_experimental_fortran_frontend() == true || get_experimental_flang_frontend() == true)
         {
@@ -6119,36 +6121,38 @@ SgSourceFile::build_Csharp_AST( vector<string> argv, vector<string> inputCommand
 
 
 int
-SgSourceFile::build_Ada_AST( vector<string> argv, vector<string> inputCommandLine )
+SgSourceFile::build_Ada_AST( vector<string> argv, vector<string> /*inputCommandLine*/ )
    {
-  // Note that to avoid the const_cast we could pass in a pointer to the SgSourceFile.
-
   // DQ (28/8/2017) In case of a mixed language project, force case sensitivity here.
      SageBuilder::symbol_table_case_insensitive_semantics = false;
 
      std::string frontEndCommandLineString;
-     frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
+     //~ frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
 
      if ( get_verbose() > 1 )
         {
           printf ("In build_Ada_AST(): Before calling ada_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
         }
 
+     //~ for (std::string& s : inputCommandLine) std::cerr << "ic: " << s << std::endl;
+     //~ for (std::string& s : argv) std::cerr << "ar: " << s << std::endl;
+
      int frontendErrorLevel = 0;
-     int ada_argc = 0;
-     char **ada_argv = NULL;
-     CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, ada_argc, ada_argv);
 
-  // Prototype declaration.
-     int ada_main(int argc, char** argv, SgSourceFile* file);
-
-  // int frontendErrorLevel = ada_main (ada_argc, ada_argv);
-     SgSourceFile* nonconst_file = const_cast<SgSourceFile*>(this);
-     ROSE_ASSERT(nonconst_file != NULL);
+  // PP (11/09/20): pass unhandled args as string to the Ada frontend
+     //~ was:
+     //~ int ada_argc = 0;
+     //~ char **ada_argv = NULL;
+     //~ CommandlineProcessing::generateArgcArgvFromList(argv, ada_argc, ada_argv);
 
   // Rasmussen (10/9/2017) Added compile time check to build if not configured for Ada
 #ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
-     frontendErrorLevel = ada_main (ada_argc, ada_argv, nonconst_file);
+  // Prototype declaration.
+     //~ int ada_main(int argc, char** argv, SgSourceFile* file);
+     int ada_main(const std::vector<std::string>& args, SgSourceFile* file);
+
+  // int frontendErrorLevel = ada_main (ada_argc, ada_argv, this);
+     frontendErrorLevel = ada_main(argv, this);
 #else
      printf ("ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION is not defined \n");
      return frontendErrorLevel;

@@ -60,11 +60,11 @@ AC_MSG_NOTICE([after initialization: with_CXX_DEBUG = "$with_CXX_DEBUG"])
 # echo "OS_VENDOR_APPLE = $OS_VENDOR_APPLE"
 # echo "OS_vendor = $OS_vendor"
 
-if "x$OS_vendor" == "xapple"; then
-    echo "This IS a Mac OSX machine (even though we call the g++ compiler (which is really clang), CXX resolves to clang): Cxx = $CXX"
-else
-    echo "This is NOT a Mac OSX machine"
-fi
+# if "x$OS_vendor" == "xapple"; then
+#    echo "This IS a Mac OSX machine (even though we call the g++ compiler (which is really clang), CXX resolves to clang): Cxx = $CXX"
+# else
+#    echo "This is NOT a Mac OSX machine"
+# fi
 
 # echo "FRONTEND_CXX_VERSION_MAJOR = $FRONTEND_CXX_VERSION_MAJOR"
 
@@ -156,7 +156,7 @@ AC_SUBST(CXX_DEBUG)
 if test -n "$CXX_DEBUG"; then CXXFLAGS="$CXXFLAGS $CXX_DEBUG"; fi
 
 # echo "Am I set: CXX_DEBUG= $CXX_DEBUG"
-echo "CXXFLAGS currently set to $CXXFLAGS"
+AC_MSG_NOTICE([CXXFLAGS currently set to $CXXFLAGS])
 
 # exit 1
 

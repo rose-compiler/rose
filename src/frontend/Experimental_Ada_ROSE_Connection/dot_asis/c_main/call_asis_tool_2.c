@@ -11,12 +11,21 @@ int main (int argc, char *argv[])
   char *gnat_home   = argv[4];
   // argv[o] should be "-o":
   char *output_dir  = argv[6];
+  bool process_predefined_units = false;
+  bool process_implementation_units = false;
+  bool debug = false;
   Nodes_Struct nodes;
 
   printf ("%s:  BEGIN.\n", prefix);
 
   dot_asisinit();
-  nodes = tool_2_wrapper (target_file, gnat_home, output_dir);
+  nodes = tool_2_wrapper 
+    (target_file,
+    gnat_home, 
+    output_dir,
+    process_predefined_units,
+    process_implementation_units,
+    debug);
   dot_asisfinal();
 
   if (nodes.Units == 0) {

@@ -101,8 +101,9 @@ if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
    libroseAdalibraries = frontend/Experimental_Ada_ROSE_Connection/libexperimentalRoseAda.la
 
 # DQ (31/8/2017): This library needs to be provided at configure time.
-   DOT_ASIS_LIB_DIR_ ?= /home/quinlan1/ROSE/ADA/dot_asis/dot_asis_library/lib
-   dot_asis_lib_dir := $(DOT_ASIS_LIB_DIR_)
+#   DOT_ASIS_LIB_DIR_ ?= /home/quinlan1/ROSE/ADA/dot_asis/dot_asis_library/lib
+#   DOT_ASIS_LIB_DIR_ = $(abs_top_builddir)/src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/dot_asis_library/lib
+#   dot_asis_lib_dir := $(DOT_ASIS_LIB_DIR_)
 
 # DQ (31/8/2017): At least the Asis library needs to be provided built in to GNAT (atypical installation of GNAT).
 #  asis_lib_dir = @gnat_home@/lib/asis/asislib
@@ -113,8 +114,9 @@ if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
 # libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.a ${asis_lib_dir}/libasis.a ${gnat_lib_dir}/libgnarl.a ${gnat_lib_dir}/libgnat.a
 #  libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.so
 #  libroseAdalibraries += -Wl,-rpath -Wl,${dot_asis_lib_dir}/libdot_asis.so
-   libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.so
+#   libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.so
 else
+# Ada is not enabled
    libroseAdalibraries =
 endif
 
@@ -338,10 +340,16 @@ if ROSE_USE_GCC_OMP
    librose_la_LIBADD += lgomp
 endif
 
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+  librose_la_LIBADD += -L${DOT_ASIS_LIB_DIR_} -ldot_asis 
+endif
 # librose_la_LDFLAGS = -no-undefined --rpath $(INTEL_PIN_PATH)/intel64/lib-ext
 librose_la_LDFLAGS = -no-undefined $(ROSE_RPATHS)
 
 #librose_la_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
+#if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+#  librose_la_LDFLAGS += -R ${DOT_ASIS_LIB_DIR_} 
+#endif
 
 # DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
 if USING_CLANG_COMPILER
@@ -457,6 +465,9 @@ rose_config_installed_ldflags =			\
 	-lm
 if ROSE_USE_EDG_QUAD_FLOAT
   rose_config_installed_ldflags += -lquadmath
+endif
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+  rose_config_installed_ldflags += -L${DOT_ASIS_LIB_DIR_} -ldot_asis 
 endif
 rose_config_cfgdir = $(libdir)
 rose_config_cfg_DATA = rose-config.cfg

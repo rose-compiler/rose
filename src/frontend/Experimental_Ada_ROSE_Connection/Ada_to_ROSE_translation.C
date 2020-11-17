@@ -9,6 +9,8 @@
 #include "rose_config.h"
 
 #include "Ada_to_ROSE_translation.h"
+
+#include "Ada_to_ROSE.h"
 //~ #include "untypedBuilder.h"
 
 using namespace std;
@@ -31,10 +33,6 @@ Ada_ROSE_Translation::ASIS_element_id_to_ASIS_MapType Ada_ROSE_Translation::asis
 SgUntypedFile* Ada_ROSE_Translation::globalUntypedFile = NULL;
 #endif
 
-namespace Ada_ROSE_Translation
-{
-  void secondConversion(Nodes_Struct& head_nodes, SgSourceFile* file);
-}
 
 // Attribute constructor.
 Ada_ROSE_Translation::ASIS_Attribute::ASIS_Attribute (int element_id)
@@ -137,12 +135,12 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
             // This code treats duplicate entries as a warning and skips the redundant entry.
                if (asisMap.find(element_id) == asisMap.end())
                   {
-                    std::cerr << "***** adding element " << element_id << std::endl;
+                    //~ logTrace() << "***** adding element " << element_id << std::endl;
                     asisMap[element_id] = &element;
                   }
                  else
                   {
-                    printf ("ERROR: element_id = %d already processed (skipping additional instance) \n",element_id);
+                    logError() << "ERROR: element_id = " << element_id << " already processed (skipping additional instance) \n";
                   }
                ROSE_ASSERT(asisMap.find(element_id) != asisMap.end());
 #else
@@ -158,6 +156,8 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
           current_element = current_element->Next;
         }
 
+
+#if FIRST_CONVERSION
      Unit_Struct_List_Struct *current_unit = NULL;
 
      current_unit = head_nodes.Units;
@@ -165,7 +165,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 #if 0
      printf ("current_unit = %p \n",current_unit);
 #endif
-     std::cerr << "***** adding units (element) MAX: " << MAX_NUMBER_OF_UNITS << std::endl;
+     logTrace() << "***** adding units (element) MAX: " << MAX_NUMBER_OF_UNITS << std::endl;
 
      while (current_unit != NULL)
         {
@@ -175,9 +175,9 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
           //~ if (current_node->Node.Node_Kind == A_Unit_Node)
           {
             Unit_Struct & unit = current_unit->Unit;
-        
-            std::cerr << "Initialize Unit: filename = " << unit.Text_Name;
-            
+
+            logTrace() << "Initialize Unit: filename = " << unit.Text_Name;
+
           // This code treats duplicate entries as a warning and skips the redundant entry.
             int unit_id = unit.ID;
 
@@ -187,24 +187,24 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
             if (asisMap.find(unit_id) == asisMap.end())
             {
-              std::cerr << "***** adding unit (element) " << unit_id << std::endl;
+              //~ logTrace() << "***** adding unit (element) " << unit_id << std::endl;
               asisMap[unit_id] = (Element_Struct*) (&unit);
             }
             else
             {
-              std::cerr << "ERROR: element_id = " << unit_id
-                        << " already processed (skipping additional instance) "
-                        << std::endl;
+              logError() << "ERROR: element_id = " << unit_id
+                         << " already processed (skipping additional instance) "
+                         << std::endl;
             }
 
             ROSE_ASSERT(asisMap.find(unit_id) != asisMap.end());
           }
-          
-          std::cerr << "current_unit->Next = " << current_unit->Next << std::endl;
+
+          logTrace() << "current_unit->Next = " << current_unit->Next << std::endl;
           current_unit = current_unit->Next;
         }
 
-#if FIRST_CONVERSION
+
 
 
 #if 1
@@ -625,7 +625,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
                          if (untypedNodeMap.find(statement_id) == untypedNodeMap.end())
                          {
-                           printf ("unhandled\n"); 
+                           printf ("unhandled\n");
                            continue;
                          }
 
@@ -1179,7 +1179,10 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
 #endif
 #endif /* FIRST_CONVERSION */
-     secondConversion(head_nodes, file);
+
+
+
+     convertAsisToROSE(head_nodes, file);
    }
 
 

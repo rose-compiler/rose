@@ -10,7 +10,7 @@ class A
           int & operator[](int i);
           A *operator->() const { return Aptr; }
           A& operator*() const  { return *Aptr; }
-          A* operator&() const  { return this; }
+          const A* operator&() const  { return this; }
           A ( const A & X ) {}
 
           A*  Aptr;

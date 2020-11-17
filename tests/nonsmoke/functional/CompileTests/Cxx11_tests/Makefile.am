@@ -739,7 +739,17 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2020_98.C \
    test2020_99.C \
    test2020_100.C \
-   test2020_101.C 
+   test2020_101.C \
+   test2020_102.C \
+   test2020_103.C \
+   test2020_104.C \
+   test2020_105.C \
+   test2020_106.C \
+   test2020_107.C \
+   test2020_108.C \
+   test2020_109.C \
+   test2020_110.C \
+   test2020_116.C 
 
 # DQ (9/18/2020): After retesting these older files, they now pass (at least with Clang 10.0).
 TESTCODES_REQUIRED_TO_PASS += \
@@ -799,30 +809,30 @@ TESTCODES_REQUIRED_TO_PASS += \
    test2020_51a.C \
    test2020_51b.C \
    test2020_72.C \
-     test2016_24.C \
-     test2016_33.C \
-     test2016_34.C \
-     test2016_90.C \
-     test2019_31.C \
-     test2019_33.C \
-     test2019_94.C \
-     test2012_14.C \
-     test2012_26.C \
-     test2019_04.C \
-     test2019_95.C \
-     test2019_121.C \
-     test2019_110.C \
-     test2019_111.C \
-     test2019_112.C \
-     test2019_218.C \
-     test2019_219.C \
-     test2019_230.C \
-     test2019_231.C \
-     test2019_355.C \
-     test2019_365.C \
-     test2019_367.C \
-     test2019_482.C \
-     rose-1774.C 
+   test2016_24.C \
+   test2016_33.C \
+   test2016_34.C \
+   test2016_90.C \
+   test2019_31.C \
+   test2019_33.C \
+   test2019_94.C \
+   test2012_14.C \
+   test2012_26.C \
+   test2019_04.C \
+   test2019_95.C \
+   test2019_121.C \
+   test2019_110.C \
+   test2019_111.C \
+   test2019_112.C \
+   test2019_218.C \
+   test2019_219.C \
+   test2019_230.C \
+   test2019_231.C \
+   test2019_355.C \
+   test2019_365.C \
+   test2019_367.C \
+   test2019_482.C \
+   rose-1774.C 
 
 # DQ (9/22/2020): This file fails because the #include <ext/aligned_buffer.h> can not be 
 # resolved by the Intel v17.0.4 compiler as it is installed on Jenkins. The issues seem 
@@ -1189,6 +1199,9 @@ test2019_522_ab: ../../testTranslator
 
 test2020_51ab: ../../testTranslator
 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2020_51a.C $(srcdir)/test2020_51b.C
+
+test2020_113: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -DHEADER_FILE=\"test2020_113.h\" -c $(srcdir)/test2020_113.C 
 
 
 

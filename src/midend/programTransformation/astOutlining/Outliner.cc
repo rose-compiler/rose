@@ -512,8 +512,8 @@ Outliner::Result::Result (SgFunctionDeclaration* decl,
 #else
   // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
 Outliner::Result::Result (SgFunctionDeclaration* decl,
-                          SgStatement* call, SgFile* file/*=NULL*/, DeferredTransformation input_deferedTransformation)
-  : decl_ (decl), call_ (call), file_(file),target_class_member(NULL),new_function_prototype(NULL),deferedTransformation(input_deferedTransformation)
+                          SgStatement* call, SgFile* file/*=NULL*/, DeferredTransformation input_deferredTransformation)
+  : decl_ (decl), call_ (call), file_(file),target_class_member(NULL),new_function_prototype(NULL),deferredTransformation(input_deferredTransformation)
 {
 }
 #endif
@@ -528,7 +528,7 @@ Outliner::Result::Result (const Result& b)
 // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
 // DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes.
 Outliner::Result::Result (const Result& b)
-  : decl_ (b.decl_), call_ (b.call_),target_class_member(b.target_class_member),new_function_prototype(b.target_class_member),deferedTransformation(b.deferedTransformation)
+  : decl_ (b.decl_), call_ (b.call_),target_class_member(b.target_class_member),new_function_prototype(b.target_class_member),deferredTransformation(b.deferredTransformation)
 {
 }
 #endif

@@ -1,10 +1,20 @@
-#include <cstdio>
+#include <Color.h>
+
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/numeric/conversion/cast.hpp>
-#include <Color.h>
 #include <cmath>
+#include <CommandLine.h>
+#include <cstdio>
+#include <ctype.h>
 #include <rose_isnan.h>
+#include <StringUtility.h>
+
+// Name space pollution cleanup
+#ifdef _MSC_VER
+  #undef RGB
+#endif
 
 namespace Rose {
 namespace Color {
@@ -84,12 +94,12 @@ std::string HSV::toHtml() const {
     return Color::toHtml(*this);
 }
 
-std::string RGB::toAnsi() const {
-    return Color::toAnsi(*this);
+std::string RGB::toAnsi(Layer::Flag layer) const {
+    return Color::toAnsi(*this, layer);
 }
 
-std::string HSV::toAnsi() const {
-    return Color::toAnsi(*this);
+std::string HSV::toAnsi(Layer::Flag layer) const {
+    return Color::toAnsi(*this, layer);
 }
 
 HSV invertBrightness(const HSV &hsv) {
@@ -111,6 +121,16 @@ HSV fade(const HSV &hsv, double amount) {
     return HSV(hsv.h(), s, hsv.v(), hsv.a());
 }
 
+HSV terminal(const HSV &color, const Colorization &output) {
+    if (!output.isEnabled()) {
+        return HSV_CLEAR;
+    } else if (Theme::LIGHT_ON_DARK == output.theme.orElse(Theme::DARK_ON_LIGHT)) {
+        return invertBrightness(color);
+    } else {
+        return color;
+    }
+}
+
 std::string toHtml(const RGB &rgb) {
     // Microsoft doesn't define round(double) in <cmath>
     unsigned r = boost::numeric::converter<unsigned, double>::convert(clip(rgb.r())*255);
@@ -120,13 +140,23 @@ std::string toHtml(const RGB &rgb) {
     return (boost::format("#%02x%02x%02x") % r % g % b).str();
 }
 
-std::string toAnsi(const RGB &rgb) {
-    // Microsoft doesn't define round(double) in <cmath>
-    unsigned r = boost::numeric::converter<unsigned, double>::convert(clip(rgb.r())*255);
-    unsigned g = boost::numeric::converter<unsigned, double>::convert(clip(rgb.g())*255);
-    unsigned b = boost::numeric::converter<unsigned, double>::convert(clip(rgb.b())*255);
+std::string toAnsi(const RGB &rgb, Layer::Flag layer) {
+    std::string retval;
+    // ANSI doesn't support alpha, so we treat the color as either clear or opaque.
+    if (rgb.a() >= 0.5) {
+        if (Layer::FOREGROUND == layer) {
+            retval = "\033[38;2;";
+        } else if (Layer::BACKGROUND == layer) {
+            retval = "\033[48;2;";
+        }
 
-    return (boost::format("%d;%d;%dm") % r % g % b).str();
+        // Microsoft doesn't define round(double) in <cmath>
+        unsigned r = boost::numeric::converter<unsigned, double>::convert(clip(rgb.r())*255);
+        unsigned g = boost::numeric::converter<unsigned, double>::convert(clip(rgb.g())*255);
+        unsigned b = boost::numeric::converter<unsigned, double>::convert(clip(rgb.b())*255);
+        retval += (boost::format("%d;%d;%dm") % r % g % b).str();
+    }
+    return retval;
 }
 
 HSV
@@ -209,6 +239,118 @@ ansiColorEscape(AnsiColor c) {
         case ANSI_GRAY:    return "\033[38;5;244m";
     }
     return "";
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Parsing
+
+bool
+Colorization::isEnabled() const {
+    switch (enabled.orElse(Enabled::AUTO)) {
+        case Enabled::ON:
+            return true;
+        case Enabled::OFF:
+            return false;
+        case Enabled::AUTO:
+#ifdef _MSC_VER
+            return false;
+#else
+            return 1 == isatty(1);
+#endif
+    }
+    ASSERT_not_reachable("invalid Rose::Color::Colorization::enabled value");
+}
+
+Colorization
+Colorization::merge(const Colorization &other) const {
+    Colorization retval;
+    retval.enabled = enabled.orElse(other.enabled);
+    retval.theme = theme.orElse(other.theme);
+    return retval;
+}
+
+std::string
+ColorizationParser::docString() {
+    return ("The argument is one or two words separated by a comma. If the word is \"off\", \"on\", or \"auto\" "
+            "then output colorization is turned off, turned on, or made contingent upon standard output being a "
+            "terminal. The words \"dark\" and \"light\" specify the theme: whether colors should be dark text on "
+            "a light background, or light text on a dark background, respectively.");
+}
+
+Sawyer::CommandLine::ParsedValue
+ColorizationParser::operator()(const char *input, const char **rest, const Sawyer::CommandLine::Location &loc) {
+    Colorization val = parse(input, rest);
+    std::string parsed(input, *rest-input);
+    return Sawyer::CommandLine::ParsedValue(val, loc, parsed, valueSaver());
+}
+
+Colorization
+ColorizationParser::parse(const char *input, const char **rest) {
+    // Input is words (including white space) separated by commas.
+    const char *end = input;
+    while (isalnum(*end) || ' ' == *end || '\t' == *end || ',' == *end)
+        ++end;
+    std::string parsed(input, end);
+    Colorization retval = parse(parsed);
+    if (rest)
+        *rest = end;
+    return retval;
+}
+
+ColorizationParser::Ptr
+colorizationParser(Colorization &storage) {
+    return ColorizationParser::instance(Sawyer::CommandLine::TypedSaver<Colorization>::instance(storage));
+}
+
+Colorization
+ColorizationParser::parse(const std::string &input) {
+    Colorization retval;
+    std::vector<std::string> words = StringUtility::split(",", input);
+
+    BOOST_FOREACH (std::string word, words) {
+        word = boost::trim_copy(word);
+        if ("off" == word) {
+            retval.enabled = Enabled::OFF;
+        } else if ("on" == word) {
+            retval.enabled = Enabled::ON;
+        } else if ("auto" == word) {
+            retval.enabled = Enabled::AUTO;
+        } else if ("light" == word) {
+            retval.theme = Theme::LIGHT_ON_DARK;
+        } else if ("dark" == word) {
+            retval.theme = Theme::DARK_ON_LIGHT;
+        } else {
+            throw std::range_error("invalid word \"" + StringUtility::cEscape(word) + "\"" +
+                                   " when parsing \"" + StringUtility::cEscape(input) + "\"");
+        }
+    }
+    return retval;
+}
+
+Sawyer::CommandLine::ParsedValues
+ColorizationMerge::operator()(const Sawyer::CommandLine::ParsedValues &prev,
+                              const Sawyer::CommandLine::ParsedValues &cur) {
+    ASSERT_forbid(prev.empty());
+    Colorization merged;
+    BOOST_FOREACH (const Sawyer::CommandLine::ParsedValue &pv, prev) {
+        const Colorization c = boost::any_cast<Colorization>(pv.value());
+        if (c.enabled)
+            merged.enabled = *c.enabled;
+        if (c.theme)
+            merged.theme = *c.theme;
+    }
+    BOOST_FOREACH (const Sawyer::CommandLine::ParsedValue &pv, cur) {
+        const Colorization c = boost::any_cast<Colorization>(pv.value());
+        if (c.enabled)
+            merged.enabled = *c.enabled;
+        if (c.theme)
+            merged.theme = *c.theme;
+    }
+    Sawyer::CommandLine::ParsedValue pval = cur.front(); // so we keep the same location information
+    pval.value(merged);
+    Sawyer::CommandLine::ParsedValues pvals;
+    pvals.push_back(pval);
+    return pvals;
 }
 
 } // namespace

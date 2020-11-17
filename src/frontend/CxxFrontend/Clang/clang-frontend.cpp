@@ -6,6 +6,8 @@
 
 #include "rose_config.h"
 
+#include "clang-to-dot.hpp"
+
 #if 0
 // DQ (4/5/2017): nothing works since we need the version of Clang/LLVM that we are using to be3 compilied without the "-fno-rtti" option.
 // DQ (3/1/2017): Trying to get rid of linker error.
@@ -36,6 +38,21 @@ void clang::PPCallbacks::type_info() {};
 extern bool roseInstallPrefix(std::string&);
 
 int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
+
+#if 0
+ // DQ (11/8/2020): Need to uncomment this to generate clang graph (which is not yet working).
+ // DQ (10/23/2020): Calling clang-to-dot generator (I don't think this modifies the argv list).
+    int clang_to_dot_status = clang_to_dot_main(argc,argv);
+#endif
+
+#if 0
+    printf ("Exiting as a test! \n");
+    ROSE_ASSERT(false);
+#endif
+
+    printf ("Returing from top of clang_main(): after calling clang_to_dot_main(): clang_to_dot_status = %d \n",clang_to_dot_status);
+    return clang_to_dot_status;
+
   // 0 - Analyse Cmd Line
 
     std::vector<std::string> inc_dirs_list;
@@ -160,8 +177,16 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
             inc_list.push_back("clang-builtin-opencl.h");
             break;
         case ClangToSageTranslator::OBJC:
-        default:
+          {
+         // DQ (10/23/2020): Added error message for Objective C language not supported in ROSE.
+            printf ("Objective C langauge support is not available in ROSE \n");
             ROSE_ASSERT(false);
+          }
+        default:
+          {
+            printf ("Default reached in switch(language) support \n");
+            ROSE_ASSERT(false);
+          }
     }
 
     // FIXME should be handle by Clang ?
@@ -528,6 +553,7 @@ bool ClangToSageTranslator::preprocessor_pop() {
 
 // struct NextPreprocessorToInsert
 
+// NextPreprocessorToInsert::NextPreprocessorToInsert(ClangToSageTranslator & translator_) :
 NextPreprocessorToInsert::NextPreprocessorToInsert(ClangToSageTranslator & translator_) :
   cursor(NULL),
   candidat(NULL),

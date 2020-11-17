@@ -88,16 +88,19 @@ C_TESTS_REQUIRED_TO_PASS =			\
 # This is not ready
 #         variables_in_header.c
 # template_function1.cpp
-
+# name qualification class ::A
+#	test_66_2020.cpp
 CXX_TESTS_REQUIRED_TO_PASS =		\
 	array2.cpp				\
 	moreTest6.cpp				\
 	moreTest7.cpp				\
         charStar.cpp  \
+	const-global.cpp \
 	reference.cpp
 
 # Add a few tool_G's regression tests
 # 	test_26_v2_2020.cpp  this is not ready, not sure what happened for preprocessing
+#	test_66_2020.cpp
 CXX2_TESTS_REQUIRED_TO_PASS = \
 	print.cpp \
 	test_42_2020.cpp \
@@ -105,7 +108,8 @@ CXX2_TESTS_REQUIRED_TO_PASS = \
 	test_26_v1_2020.cpp \
 	charStar.cpp  \
 	test_37_2020.cpp \
-	ft_cfftz.cpp
+	ft_cfftz.cpp \
+	test_52.cpp
 
 #This set of CPP files must contain main() to run
 CXX4_TESTS_REQUIRED_TO_RUN=	\
@@ -514,6 +518,6 @@ test-c-cxx:$(C_CXX_RESULTS)
 check-local: $(TEST_TARGETS) 
 
 clean-local:
-	rm -f $(TEST_TARGETS) 
+	rm -f $(TEST_TARGETS) OUT__*.cpp rose_*.cpp
 	rm -f $(TEST_TARGETS:.passed=.failed)
 	rm -rf unparseHeaderRoot_test_20_2019

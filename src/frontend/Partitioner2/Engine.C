@@ -2158,7 +2158,8 @@ Engine::makeNextCodeReferencedFunction(const Partitioner &partitioner) {
 
         // All seems okay, so make a function there
         // FIXME[Robb P Matzke 2017-04-13]: USERDEF is not the best, most descriptive reason, but it's what we have for now
-        mlog[INFO] <<"possible code address " <<StringUtility::addrToString(constant) <<"\n";
+        mlog[INFO] <<"possible code address " <<StringUtility::addrToString(constant)
+                   <<" found in instruction at " <<StringUtility::addrToString(srcVa) <<"\n";
         Function::Ptr function = Function::instance(constant, SgAsmFunction::FUNC_INSN_RO_DATA);
 
         function->reasonComment("from " + srcInsn->toString() + ", ro-data address " + StringUtility::addrToString(constant));

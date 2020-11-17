@@ -426,7 +426,11 @@ ROSE_UTIL_API std::string untab(const std::string &str, size_t tabstops=8, size_
  *  if it was non-empty and unique. This happened when it was not followed by a line-feed. */
 ROSE_UTIL_API std::string removeRedundantSubstrings(const std::string&);
 
-
+/** Remove ANSI escape characters.
+ *
+ *  Currently handles only the "Control Sequence Introducer" commands, but these are the most common and most useful commands
+ *  anyway since they include such things as cursor movement, erasing, scrolling, colors, and other graphic renditions. */
+ROSE_UTIL_API std::string removeAnsiEscapes(const std::string&);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Functions for string encoding/decoding/hashing
