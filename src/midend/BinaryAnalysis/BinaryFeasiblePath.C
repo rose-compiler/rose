@@ -431,7 +431,7 @@ public:
     // If multi-path is enabled, then return a new memory expression that describes the process of reading a value from the
     // specified address; otherwise, actually read the value and return it.  In any case, record some information about the
     // address that's being read if we've never seen it before.
-    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
+    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                                                 const BaseSemantics::SValuePtr &dflt_,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
         BaseSemantics::SValuePtr dflt = dflt_;
@@ -439,23 +439,32 @@ public:
         if (cond->is_number() && !cond->get_number())
             return dflt_;
 
+        // Offset the address by the value of the segment register.
+        BaseSemantics::SValuePtr adjustedVa;
+        if (segreg.isEmpty()) {
+            adjustedVa = addr_;
+        } else {
+            BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+            adjustedVa = add(addr_, signExtend(segregValue, addr_->get_width()));
+        }
+
         // Check for null pointer dereferences
         if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_) {
             SmtSolver::Transaction transaction(nullPtrSolver());
-            if (isNullDeref(addr)) {
+            if (isNullDeref(adjustedVa)) {
                 ASSERT_not_null(fpAnalyzer_);
                 ASSERT_not_null(path_);
                 BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
                 ASSERT_not_null(cpu);
                 pathProcessor_->nullDeref(*fpAnalyzer_, *path_, currentInstruction(), cpu, nullPtrSolver(),
-                                          FeasiblePath::READ, addr);
+                                          FeasiblePath::READ, adjustedVa);
             }
         }
         
         // If we know the address and that memory exists, then read the memory to obtain the default value.
         uint8_t buf[8];
-        if (addr->is_number() && nBytes < sizeof(buf) &&
-            nBytes == partitioner_->memoryMap()->at(addr->get_number()).limit(nBytes).read(buf).size()) {
+        if (adjustedVa->is_number() && nBytes < sizeof(buf) &&
+            nBytes == partitioner_->memoryMap()->at(adjustedVa->get_number()).limit(nBytes).read(buf).size()) {
             switch (partitioner_->memoryMap()->byteOrder()) {
                 case ByteOrder::ORDER_UNSPECIFIED:
                 case ByteOrder::ORDER_LSB: {
@@ -477,7 +486,7 @@ public:
         }
 
         // Read from the symbolic state, and update the state with the default from real memory if known.
-        BaseSemantics::SValuePtr retval = Super::readMemory(segreg, addr, dflt, cond);
+        BaseSemantics::SValuePtr retval = Super::readMemory(segreg, addr_, dflt, cond);
 
         if (!currentInstruction())
             return retval;                              // not called from dispatcher on behalf of an instruction
@@ -485,14 +494,14 @@ public:
         // Save a description of the variable
         SymbolicExpr::Ptr valExpr = SValue::promote(retval)->get_expression();
         if (valExpr->isLeafNode() && valExpr->isLeafNode()->isIntegerVariable())
-            State::promote(currentState())->varDetail(valExpr->isLeafNode()->toString(), detailForVariable(addr, "read"));
+            State::promote(currentState())->varDetail(valExpr->isLeafNode()->toString(), detailForVariable(adjustedVa, "read"));
 
         // Save a description for its addresses
         for (size_t i=0; i<nBytes; ++i) {
-            SValuePtr va = SValue::promote(add(addr, number_(addr->get_width(), i)));
+            SValuePtr va = SValue::promote(add(adjustedVa, number_(adjustedVa->get_width(), i)));
             if (va->get_expression()->isLeafNode()) {
                 State::promote(currentState())->varDetail(va->get_expression()->isLeafNode()->toString(),
-                                                          detailForVariable(addr, "read", i, nBytes));
+                                                          detailForVariable(adjustedVa, "read", i, nBytes));
             }
         }
 
@@ -504,7 +513,7 @@ public:
             SmtSolver::Transaction tx(s);
             BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
             ASSERT_not_null(cpu);
-            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, currentInstruction(), cpu, s, FeasiblePath::READ, addr, retval);
+            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, currentInstruction(), cpu, s, FeasiblePath::READ, adjustedVa, retval);
         }
 
         return retval;
@@ -513,37 +522,46 @@ public:
     // If multi-path is enabled, then return a new memory expression that updates memory with a new address/value pair;
     // otherwise update the memory directly.  In any case, record some information about the address that was written if we've
     // never seen it before.
-    virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
+    virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                              const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
         if (cond->is_number() && !cond->get_number())
             return;
-        Super::writeMemory(segreg, addr, value, cond);
+        Super::writeMemory(segreg, addr_, value, cond);
+
+        // Offset the address by the value of the segment register.
+        BaseSemantics::SValuePtr adjustedVa;
+        if (segreg.isEmpty()) {
+            adjustedVa = addr_;
+        } else {
+            BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+            adjustedVa = add(addr_, signExtend(segregValue, addr_->get_width()));
+        }
 
         // Check for null pointer dereferences
         if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_) {
             SmtSolver::Transaction transaction(nullPtrSolver());
-            if (isNullDeref(addr)) {
+            if (isNullDeref(adjustedVa)) {
                 ASSERT_not_null(fpAnalyzer_);
                 ASSERT_not_null(path_);
                 BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
                 ASSERT_not_null(cpu);
                 pathProcessor_->nullDeref(*fpAnalyzer_, *path_, currentInstruction(), cpu, nullPtrSolver(),
-                                          FeasiblePath::WRITE, addr);
+                                          FeasiblePath::WRITE, adjustedVa);
             }
         }
 
         // Save a description of the variable
         SymbolicExpr::Ptr valExpr = SValue::promote(value)->get_expression();
         if (valExpr->isLeafNode() && valExpr->isLeafNode()->isIntegerVariable())
-            State::promote(currentState())->varDetail(valExpr->isLeafNode()->toString(), detailForVariable(addr, "write"));
+            State::promote(currentState())->varDetail(valExpr->isLeafNode()->toString(), detailForVariable(adjustedVa, "write"));
 
         // Save a description for its addresses
         size_t nBytes = value->get_width() / 8;
         for (size_t i=0; i<nBytes; ++i) {
-            SValuePtr va = SValue::promote(add(addr, number_(addr->get_width(), i)));
+            SValuePtr va = SValue::promote(add(adjustedVa, number_(adjustedVa->get_width(), i)));
             if (va->get_expression()->isLeafNode()) {
                 State::promote(currentState())->varDetail(va->get_expression()->isLeafNode()->toString(),
-                                                          detailForVariable(addr, "read", i, nBytes));
+                                                          detailForVariable(adjustedVa, "read", i, nBytes));
             }
         }
 
@@ -555,7 +573,7 @@ public:
             SmtSolver::Transaction tx(s);
             BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
             ASSERT_not_null(cpu);
-            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, currentInstruction(), cpu, s, FeasiblePath::WRITE, addr, value);
+            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, currentInstruction(), cpu, s, FeasiblePath::WRITE, adjustedVa, value);
         }
     }
 };

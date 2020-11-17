@@ -91,6 +91,8 @@ public:
         BaseSemantics::RiscOperatorsPtr ops = cpu()->get_operators();
         BaseSemantics::StatePtr newState = ops->currentState()->clone();
         newState->clear();
+        cpu()->initializeState(newState);
+
         BaseSemantics::RegisterStateGenericPtr regState =
             BaseSemantics::RegisterStateGeneric::promote(newState->registerState());
 

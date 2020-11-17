@@ -3,6 +3,7 @@
 #include "sage3basic.h"
 #include <Partitioner2/BasicBlock.h>
 
+#include <DispatcherX86.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
 
@@ -139,6 +140,7 @@ BasicBlock::undropSemanticsNS(const Partitioner &partitioner) {
             ASSERT_not_null(sem.dispatcher);
             BaseSemantics::StatePtr curState = sem.operators->currentState();
             BaseSemantics::RegisterStateGeneric::promote(curState->registerState())->initialize_large();
+            sem.dispatcher->initializeState(curState);
             sem.initialState = curState->clone();
             sem.usingDispatcher = true;
 

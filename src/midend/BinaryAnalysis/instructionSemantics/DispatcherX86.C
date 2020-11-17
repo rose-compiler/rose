@@ -4469,6 +4469,18 @@ DispatcherX86::regcache_init()
 }
 
 void
+DispatcherX86::initializeState(const BaseSemantics::StatePtr &state) {
+    if (state) {
+        // The code, data, and stack segment registers in modern operating systems default to the entire virtual memory,
+        // thus their base addresses are always zero.
+        ASSERT_not_null(operators);
+        state->writeRegister(REG_CS, operators->number_(REG_CS.nBits(), 0), operators.get());
+        state->writeRegister(REG_DS, operators->number_(REG_CS.nBits(), 0), operators.get());
+        state->writeRegister(REG_SS, operators->number_(REG_CS.nBits(), 0), operators.get());
+    }
+}
+
+void
 DispatcherX86::memory_init() {
     if (BaseSemantics::StatePtr state = currentState()) {
         if (BaseSemantics::MemoryStatePtr memory = state->memoryState()) {

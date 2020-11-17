@@ -538,6 +538,8 @@ TransferFunction::initialState() const {
     BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
     BaseSemantics::StatePtr newState = ops->currentState()->clone();
     newState->clear();
+    ASSERT_not_null(cpu_);
+    cpu_->initializeState(newState);
 
     BaseSemantics::RegisterStateGenericPtr regState =
         BaseSemantics::RegisterStateGeneric::promote(newState->registerState());
@@ -545,11 +547,8 @@ TransferFunction::initialState() const {
     // Any register for which we need its initial state must be initialized rather than just springing into existence. We could
     // initialize all registers, but that makes output a bit verbose--users usually don't want to see values for registers that
     // weren't accessed by the dataflow, and omitting their initialization is one easy way to hide them.
-#if 0 // [Robb Matzke 2015-01-14]
-    regState->initialize_large();
-#else
     regState->writeRegister(STACK_POINTER_REG, ops->undefined_(STACK_POINTER_REG.nBits()), ops.get());
-#endif
+
     return newState;
 }
 

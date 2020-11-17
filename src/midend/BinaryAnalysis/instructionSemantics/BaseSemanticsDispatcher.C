@@ -144,6 +144,9 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool al
 }
 
 void
+Dispatcher::initializeState(const StatePtr&) {}
+
+void
 Dispatcher::decrementRegisters(SgAsmExpression *e)
 {
     struct T1: AstSimpleProcessing {

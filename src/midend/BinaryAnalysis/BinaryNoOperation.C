@@ -43,6 +43,8 @@ NoOperation::StateNormalizer::initialState(const BaseSemantics::DispatcherPtr &c
     if (rstate)
         rstate->initialize_large();
 
+    cpu->initializeState(state);
+
     RegisterDescriptor IP = cpu->instructionPointerRegister();
     state->writeRegister(IP, cpu->number_(IP.nBits(), insn->get_address()), cpu->get_operators().get());
 

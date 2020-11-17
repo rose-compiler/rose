@@ -221,6 +221,12 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Miscellaneous methods that tend to be the same for most dispatchers
 public:
+    /** Initialize the state.
+     *
+     *  Some architectures benefit from having their initial state initialized in a certain way. For instance, on x86/amd64 the
+     *  segment registers CS, DS, and SS typically refer to the entire machine memory and can be initialized to have a zero
+     *  base address. */
+    virtual void initializeState(const StatePtr&);
 
     /** Update the instruction pointer register.
      *

@@ -155,6 +155,13 @@ State::print(std::ostream &stream, Formatter &fmt) const
     stream <<prefix <<"registers:\n" <<(*registers_+fmt) <<prefix <<"memory:\n" <<(*memory_+fmt);
 }
 
+std::string
+State::toString() const {
+    std::ostringstream ss;
+    print(ss, "  ");
+    return ss.str();
+}
+
 State::WithFormatter
 State::operator+(const std::string &linePrefix) {
     static Formatter fmt;
