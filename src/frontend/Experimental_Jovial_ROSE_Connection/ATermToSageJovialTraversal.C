@@ -6996,16 +6996,23 @@ ATbool ATermToSageJovialTraversal::traverse_NamedConstant(ATerm term, SgExpressi
 #endif
 
    char* letter;
+   var = nullptr;
 
    if (ATmatch(term, "ControlLetter(<str>)" , &letter)) {
-      // MATCHED ControlLetter
-      cerr << "WARNING UNIMPLEMENTED: NamedConstant - ControlLetter " << letter << endl;
-      ROSE_ASSERT(false);
-   } else return ATfalse;
+      SgVarRefExp* var_ref = nullptr;
+      sage_tree_builder.Enter(var_ref, std::string(letter));
+      sage_tree_builder.Leave(var_ref);
+      ROSE_ASSERT(var_ref);
 
-      //  ConstantItemName            -> NamedConstant         {prefer}  %% ambiguous with ConstantTableName
-      //  ConstantTableName           -> NamedConstant         {cons("ConstantTableName")}
-      //  ConstantTableName Subscript -> NamedConstant         {cons("NamedConstant")}
+      var = var_ref;
+   }
+   else return ATfalse;
+
+   //  ConstantItemName            -> NamedConstant         {prefer}  %% ambiguous with ConstantTableName
+   //  ConstantTableName           -> NamedConstant         {cons("ConstantTableName")}
+   //  ConstantTableName Subscript -> NamedConstant         {cons("NamedConstant")}
+
+   ROSE_ASSERT(var);
 
    return ATtrue;
 }
