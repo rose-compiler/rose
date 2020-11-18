@@ -199,11 +199,9 @@ package body Asis_Tool_2.Element.Clauses is
             Result.Representation_Clause := Representation_Clause;
          when A_Component_Clause =>
             Add_Representation_Clause_Name;
-            -- Very odd, asis-clauses.ads says this call is supported for Component_Clause
-            -- But asis-clauses.adb says it's not.  But Representation_Clause_Name IS.  WTF  -Jim
             --Add_Representation_Clause_Expression;
-            -- Same for this one.  -Jim
             --Add_Mod_Clause_Expression;
+            --Add_Component_Clauses;
             Add_Component_Clause_Position;
             Add_Component_Clause_Range;
       end case;
