@@ -140,6 +140,12 @@ class CFAnalysis {
   static Sawyer::Message::Facility logger;
   void setInterProcedural(bool flag); // by default true
   bool getInterProcedural();
+  // this function stores the Flow and InterFlow in this object. getFlow() allows to get a Flow pointer.
+  void createICFG(SgProject* project);
+  // requires createICFG
+  Flow* getForwardFlow();
+  // requires createICFG
+  Flow* getBackwardFlow();
  protected:
   SgFunctionDefinition* determineFunctionDefinition2(SgFunctionCallExp* funCall);
   FunctionCallTargetSet determineFunctionDefinition4(SgFunctionCallExp* funCall);

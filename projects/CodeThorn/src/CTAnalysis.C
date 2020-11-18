@@ -1908,28 +1908,6 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   SAWYER_MESG(logger[TRACE])<< "Initializing AST node info."<<endl;
   initAstNodeInfo(root);
 
-  //SAWYER_MESG(logger[TRACE])<< "Creating Labeler."<<endl;
-  //Labeler* labeler= new CTIOLabeler(root,getVariableIdMapping());
-  //SAWYER_MESG(logger[TRACE])<< "Creating CFAnalysis."<<endl;
-  //cfanalyzer=new CFAnalysis(labeler,true);
-  
-  //getFunctionCallMapping2()->setLabeler(labeler);
-
-  //if (SgProject* prj = isSgProject(root)) {
-  //  ClassHierarchyWrapper* chw = new ClassHierarchyWrapper(prj);
-  //  if (SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL) { 
-  //    getFunctionCallMapping2()->setClassHierarchy(chw);
-  //   getFunctionCallMapping2()->computeFunctionCallMapping(prj);
-  //  }
-  //  getFunctionCallMapping()->setClassHierarchy(new ClassHierarchyWrapper(*chw));
-  //} else {
-  //  SAWYER_MESG(logger[WARN])<< "WARN: Need a SgProject object for building the class hierarchy\n"
-  //                           << "      virtual function call analysis not available!"
-  //                           << std::endl;
-  //}
-  
-  //cfanalyzer->setFunctionCallMapping(getFunctionCallMapping());
-  //cfanalyzer->setFunctionCallMapping2(getFunctionCallMapping2());
   getCFAnalyzer()->setInterProcedural(_ctOpt.getInterProceduralFlag());
   getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
   getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
@@ -1943,7 +1921,6 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   initializeTransferFunctions();
   SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3h."<<endl;
   
-  //SAWYER_MESG(logger[INFO])<< "Building CFGs."<<endl;
   if(_ctOpt.getInterProceduralFlag()) {
     Label slab2=getLabeler()->getLabel(_startFunRoot);
     ROSE_ASSERT(slab2.isValid());

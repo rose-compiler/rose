@@ -24,7 +24,7 @@
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
-#include "EquivalenceChecking.h"
+//#include "EquivalenceChecking.h"
 #include "Solver5.h"
 #include "Solver8.h"
 #include "ltlthorn-lib/Solver10.h"
@@ -756,4 +756,54 @@ void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProj
   }
   tc.analysisRunTime=tc.timer.getTimeDurationAndStop().milliSeconds();
 }
+
+#if 1
+  SgProject* parsingPass(CodeThornOptions& ctOpt, int argc, char * argv[]) {
+    TimingCollector timingCollector;
+    SgProject* project=runRoseFrontEnd(argc,argv,ctOpt,timingCollector);
+    return project;
+  }
+
+  void normalizationPass(CodeThornOptions& ctOpt, SgProject* project) {
+    CodeThorn::Normalization normalization;
+    int normalizationLevel=0;
+    if(ctOpt.normalizeFCalls)
+      normalizationLevel=1;
+    if(ctOpt.normalizeAll)
+      normalizationLevel=2;
+    normalization.normalizeAst(project,normalizationLevel);
+  }
+
+  VariableIdMappingExtended* createVariableIdMapping(CodeThornOptions& ctOpt, SgProject* project) {
+    VariableIdMappingExtended* variableIdMapping=new VariableIdMappingExtended();
+    variableIdMapping->computeVariableSymbolMapping(project);
+    return variableIdMapping;
+  }
+
+  Labeler* createLabeler(CodeThornOptions& ctOpt, SgProject* project, VariableIdMappingExtended* variableIdMapping) {
+    return new CTIOLabeler(project,variableIdMapping);
+  }
+    
+  CFAnalysis* createControlFlowGraph(CodeThornOptions& ctOpt, SgProject* project, Labeler* labeler) {
+    SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=true;
+    CFAnalysis* cfAnalyzer=new CFAnalysis(labeler);
+    FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
+    ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(project);
+    functionCallMapping2->setLabeler(labeler);
+    functionCallMapping2->setClassHierarchy(classHierarchy);
+    functionCallMapping2->computeFunctionCallMapping(project);
+    cfAnalyzer->setFunctionCallMapping2(functionCallMapping2);
+    cfAnalyzer->createICFG(project);
+    return cfAnalyzer;
+  }
+
+  IOAnalyzer* runMemoryAnalysis(CodeThornOptions& ctOpt, VariableIdMapping* vim, Labeler* labeler, CFAnalysis* icfg, TimingCollector& timingCollector) {
+    //new: IOAnalyzer* ioAnalysis=new IOAnalyzer(ctOpt,vim,labeler,icfg,timingCollector);
+    IOAnalyzer* ioAnalysis=new IOAnalyzer();
+    ioAnalysis->initializeSolver();
+    ioAnalysis->runSolver();
+    return ioAnalysis;
+  }
+#endif
+  
 } // end of namespace CodeThorn
