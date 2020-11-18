@@ -238,6 +238,9 @@ public:
     const Value& orElse(Value &dflt) {
         return isEmpty_ ? dflt : **this;
     }
+    const Optional orElse(const Optional &other) const {
+        return isEmpty_ ? other : *this;
+    }
     /** @} */
 
     /** Obtain a value or a default.

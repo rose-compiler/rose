@@ -35,6 +35,7 @@ namespace
     void handle(SgTypedefDeclaration& n) { res = &mkTypedefType(n); }
     void handle(SgClassDeclaration& n)   { res = &mkRecordType(n); }
     void handle(SgAdaTaskTypeDecl& n)    { res = &mkAdaTaskType(n); }
+    void handle(SgEnumDeclaration& n)    { res = n.get_type(); ROSE_ASSERT(res); }
   };
 
   SgNode&
@@ -394,6 +395,29 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
         break;
       }
 
+    case An_Enumeration_Type_Definition:         // 3.5.1(2)
+      {
+
+        /*
+           unused fields:
+             Declaration_List     Enumeration_Literal_Declarations
+         */
+        res.n = &mkEnumDecl("", ctx.scope());
+        break ;
+      }
+
+    case A_Signed_Integer_Type_Definition:       // 3.5.4(3)
+      {
+        SgAdaRangeConstraint& constraint = getRangeConstraint(typenode.Integer_Constraint, ctx);
+        SgTypeInt&            superty    = SG_DEREF(sb::buildIntType());
+
+        res.n = &mkAdaSubtype(superty, constraint);
+        /*
+           unused fields:
+         */
+        break;
+      }
+
     case A_Floating_Point_Definition:            // 3.5.7(2)
       {
         SgExpression&         digits     = getExprID_opt(typenode.Digits_Expression, ctx);
@@ -425,6 +449,7 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
            << "Type_Definition_Struct::tagged set ? " << typenode.Has_Tagged
            << std::endl;
 
+        res = TypeData{&def, typenode.Has_Abstract, typenode.Has_Limited, typenode.Type_Kind == A_Tagged_Record_Type_Definition};
         /*
            unused fields (A_Record_Type_Definition):
 
@@ -435,15 +460,10 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
 
            break;
         */
-        res = TypeData{&def, typenode.Has_Abstract, typenode.Has_Limited, typenode.Type_Kind == A_Tagged_Record_Type_Definition};
-        //~ res = TypeData{&def, typenode.Has_Abstract, typenode.Has_Limited, typenode.Has_Tagged};
         break;
       }
 
-
     case Not_A_Type_Definition: /* break; */     // An unexpected element
-    case An_Enumeration_Type_Definition:         // 3.5.1(2)
-    case A_Signed_Integer_Type_Definition:       // 3.5.4(3)
     case A_Modular_Type_Definition:              // 3.5.4(4)
     case A_Root_Type_Definition:                 // 3.5.4(14):  3.5.6(3)
     case An_Ordinary_Fixed_Point_Definition:     // 3.5.9(3)
@@ -471,19 +491,21 @@ void initializeAdaTypes(SgGlobal& global)
 
   hiddenScope.set_parent(&global);
 
-  adaTypes()["INTEGER"]   = sb::buildIntType();
-  adaTypes()["CHARACTER"] = sb::buildCharType();
+  adaTypes()["INTEGER"]           = sb::buildIntType();
+  adaTypes()["CHARACTER"]         = sb::buildCharType();
+  adaTypes()["LONG_LONG_INTEGER"] = sb::buildLongLongType();    // Long long int
 
   // \todo items
-  adaTypes()["FLOAT"]     = sb::buildFloatType();  // Float is a subtype of Real
-  adaTypes()["POSITIVE"]  = sb::buildIntType();    // Positive is a subtype of int
-  adaTypes()["NATURAL"]   = sb::buildIntType();    // Natural is a subtype of int
-  adaTypes()["BOOLEAN"]   = sb::buildBoolType();   // Boolean is an enumeration of True and False
+  adaTypes()["FLOAT"]             = sb::buildFloatType();  // Float is a subtype of Real
+  adaTypes()["LONG_LONG_FLOAT"]   = sb::buildLongDoubleType(); // Long long Double?
+  adaTypes()["POSITIVE"]          = sb::buildIntType();    // Positive is a subtype of int
+  adaTypes()["NATURAL"]           = sb::buildIntType();    // Natural is a subtype of int
+  adaTypes()["BOOLEAN"]           = sb::buildBoolType();   // Boolean is an enumeration of True and False
 
   // String is represented as Fortran-String with null
-  adaTypes()["STRING"]    = sb::buildStringType(sb::buildNullExpression());
+  adaTypes()["STRING"]            = sb::buildStringType(sb::buildNullExpression());
 
-  adaTypes()["EXCEPTION"] = sb::buildOpaqueType("Exception", &hiddenScope);
+  adaTypes()["EXCEPTION"]         = sb::buildOpaqueType("Exception", &hiddenScope);
 }
 
 

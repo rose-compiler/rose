@@ -20,7 +20,6 @@ PASSING_TESTS :=                       \
   minimal.adb                          \
   named.ads                            \
   operator.adb                         \
-  pkgrename.ads                        \
   procedure_call.adb                   \
   raise_statement.adb                  \
   recursive_call.adb                   \
@@ -43,5 +42,16 @@ PASSING_TESTS :=                       \
   parent-child.ads                     \
   task_with_body.adb                   \
   task_with_body.ads                   \
+  task_with_abort.adb                  \
+  function_declaration.ads             \
+  function_declaration.adb             \
+  gototest.ads                         \
+  gototest.adb                         \
+  package_with_body.ads                \
+  package_with_body.adb                \
+  parameter_declaration.ads            \
+  procedure_declaration.ads            \
+  procedure_declaration.adb            \
+  some_modes.ads                       \
   EndOfList
 

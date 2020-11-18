@@ -1559,6 +1559,7 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
      printf ("   --- decl_stmt->isExternBrace()                                            = %s \n",decl_stmt->isExternBrace() ? "true" : "false");
      printf ("   --- decl_stmt->get_declarationModifier().get_storageModifier().isExtern() = %s \n",decl_stmt->get_declarationModifier().get_storageModifier().isExtern() ? "true" : "false");
      printf ("   --- decl_stmt->get_linkage().empty()                                      = %s \n",decl_stmt->get_linkage().empty() ? "true" : "false");
+     printf ("   --- decl_stmt->get_linkage()                                              = %s \n",decl_stmt->get_linkage().c_str());
      printf ("   --- info.get_extern_C_with_braces()                                       = %s \n",info.get_extern_C_with_braces() ? "true" : "false");
      curprint ("\n/* Inside of outputExternLinkageSpecifier() */ \n ");
 #endif
@@ -1579,14 +1580,32 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
                     printf ("/* output extern brace */ \n");
 #endif
 #if 0
+                 // DQ (11/12/2020): This is done by the Comment and CPP directive handling, and so these 
+                 // DQ (11/11/2020): We need this to pass the Cxx_tests/test2020_65.C, also test2020_66.C, test2020_67.C, and test2020_68.C.
                  // DQ (8/16/2020): I think that this is redundant with the use of braces on the class containing such extern c declarations.
                  // These extern brace cases are handled via the CPP preprocessor support.
                     curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
-                    curprint( "{ ");
+                    curprint( "/* outputExternLinkageSpecifier */{ ");
 
                  // DQ (8/15/2020): Record when we are in an extern "C" so that we can avoid nesting (see Cxx_tests/test2020_28.C).
                     ROSE_ASSERT(info.get_extern_C_with_braces() == false);
                     info.set_extern_C_with_braces(true);
+#else
+                    ROSE_ASSERT(info.get_extern_C_with_braces() == false);
+
+                 // DQ (11/12/2020): We can't output the language linkage when the extern declaration is in a function (e.g. SgBasicBlock).
+                 // DQ (11/12/2020): output the non-brace of extern with linkage.
+                 // curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
+                 // curprint( "/* info.get_extern_C_with_braces() == false && decl_stmt->isExternBrace() == false */ extern \"" + decl_stmt->get_linkage() + "\" ");
+                    if (isSgBasicBlock(decl_stmt->get_parent()) != NULL)
+                       {
+                      // DQ (11/12/2020): See Cxx_tests/test2020_70.C for where this is required.
+                         curprint( "extern ");
+                       }
+                      else
+                       {
+                         curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
+                       }
 #endif
                   }
                  else
@@ -1600,7 +1619,7 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
             else
              {
 #if DEBUG_EXTERN
-               printf ("/* info.get_extern_C_with_braces() == true: output extern keyword only */ \n");
+               printf ("/* info.get_extern_C_with_braces() == true: check friend status to output extern keyword only */ \n");
 #endif
             // DQ (8/17/2020): This is required for test2020_37.C but not for test2020_28.C.
             // curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
@@ -1611,10 +1630,16 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
                if (decl_stmt->get_declarationModifier().isFriend() == true)
                   {
                    /* Suppress the extern keyword */
+#if DEBUG_EXTERN
+                    printf ("/* decl_stmt->get_declarationModifier().isFriend() == true: suppress the extern keyword */ \n");
+#endif
                    // curprint( "/* Suppress the extern keyword */ ");
                   }
                  else
                   {
+#if DEBUG_EXTERN
+                    printf ("/* decl_stmt->get_declarationModifier().isFriend() == false: output extern keyword only */ \n");
+#endif
                  // curprint( "extern /* not a friend declaration */ ");
                     curprint( "extern ");
                   }

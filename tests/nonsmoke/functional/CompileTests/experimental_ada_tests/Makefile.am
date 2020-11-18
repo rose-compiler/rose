@@ -6,7 +6,7 @@ SUBDIRS = \
 
 # DQ (8/23/2017): Use command line option to alternatively test the experimental fortran frontend.
 # ROSE_FLAGS = -rose:verbose 0 -rose:experimental_csharp_frontend -I$(srcdir)
-ROSE_FLAGS    ?= -rose:skipfinalCompileStep
+ROSE_FLAGS ?= -rose:skipfinalCompileStep --asis:process_predefined_units
 
 
 
@@ -41,7 +41,6 @@ include $(srcdir)/passing-tests-list.mk
 #~ include $(srcdir)/asis-todo-list.mk
 
 NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
-  parent.ads                           \
   comm.ads                             \
   mpi.ads                              \
   EndOfList
@@ -85,7 +84,7 @@ $(abs_builddir)/../../testTranslator:
 	$(MAKE) -C../.. testTranslator
 
 
-compile_tests/$(ROSE_OUTPUT_DIR)/%: 
+compile_tests/$(ROSE_OUTPUT_DIR)/%:
 	make -C compile_tests $(ROSE_OUTPUT_DIR)/%
 
 $(ROSE_OUTPUT_DIR)/%.ads: compile_tests/$(ROSE_OUTPUT_DIR)/%.ads $(ROSE_COMPILER)

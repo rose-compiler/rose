@@ -117,6 +117,10 @@ createEmptyParserStage(const std::string &purpose, const std::string &descriptio
 // Global place to store result of parsing genericSwitches.
 GenericSwitchArgs genericSwitchArgs;
 
+// Global place to store the string printed by --version.  This static variable is initialized by the ROSE_INITIALIZE macro
+// called from every ROSE tool's "main" function.
+std::string versionString;
+
 // Returns command-line description for switches that should be always available.
 // Don't add anything to this that might not be applicable to some tool -- this is for all tools, both source and binary.
 // See header file for more documentation including examples.
@@ -135,7 +139,12 @@ genericSwitches() {
                .valueAugmenter(Color::ColorizationMerge::instance())
                .doc("Whether to use color in the output, and the theme to use. " +
                     Color::ColorizationParser::docString() +
-                    " The @s{color} switch with no argument is the same as @s{color}=on,dark."));
+                    " The @s{color} switch with no argument is the same as @s{color}=on,dark, and @s{no-color} is "
+                    "shorthand for @s{color}=off."));
+    gen.insert(Switch("no-color")
+               .key("color")
+               .intrinsicValue("off", Color::colorizationParser(genericSwitchArgs.colorization))
+               .hidden(true));
 
     gen.insert(Switch("log")
                .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
@@ -154,15 +163,9 @@ genericSwitches() {
                     "switch shows only the dotted quad of the ROSE library itself."));
 
     gen.insert(Switch("version", 'V')
-#if defined(ROSE_PACKAGE_VERSION)
-               .action(showVersionAndExit(ROSE_PACKAGE_VERSION, 0))
-#elif defined(PACKAGE_VERSION)
-               .action(showVersionAndExit(PACKAGE_VERSION, 0))
-#else
-               .action(showVersionAndExit("unknown", 0))
-#endif
-               .doc("Shows the dotted quad ROSE version and then exits.  See also @s{version-long}, which prints much more "
-                    "information."));
+               .action(showVersionAndExit(versionString, 0))
+               .doc("Shows the version and then exits.  See also @s{version-long}, which prints much more "
+                    "information about the ROSE library and supporting software."));
 
     // Control how a failing assertion acts. It could abort, exit with non-zero, or throw Rose::Diagnostics::FailedAssertion.
     gen.insert(Switch("assert")
@@ -200,7 +203,7 @@ genericSwitches() {
 
     gen.insert(Switch("license")
                .action(ShowLicenseAndExit::instance())
-               .doc("Show the ROSE software license and exiit."));
+               .doc("Show the ROSE software license and exit."));
 
     // This undocumented switch is used for internal testing during "make check" and similar. If a tool is disabled due to ROSE
     // being compiled with too old a compiler or without some necessary software prerequisite, then the tool will print an

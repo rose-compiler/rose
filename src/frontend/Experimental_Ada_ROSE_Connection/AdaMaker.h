@@ -55,15 +55,6 @@ namespace Ada_ROSE_Translation
     return sgnode;
   }
 
-  /// creates a new node by calling new SageNode::createType(args)
-  template <class SageNode, class ... Args>
-  inline
-  SageNode&
-  mkTypeNode(Args... args)
-  {
-    return SG_DEREF(SageNode::createType(args...));
-  }
-
 
   //
   // Type Makers
@@ -96,7 +87,7 @@ namespace Ada_ROSE_Translation
 
   /// returns a default type, used to represent an opaque declaration
   SgTypeDefault&
-  mkDefaultType();
+  mkOpaqueType();
 
   /// creates a type union for a list of types
   /// \note
@@ -107,6 +98,10 @@ namespace Ada_ROSE_Translation
   /// creates a type that references a record declaration \ref dcl.
   SgClassType&
   mkRecordType(SgClassDeclaration& dcl);
+
+  /// creates an enumeration with name \ref name in scope \ref scope.
+  SgEnumDeclaration&
+  mkEnumDecl(const std::string& name, SgScopeStatement& scope);
 
   /// creates a task type that references a task type declaration \ref dcl.
   SgAdaTaskType&

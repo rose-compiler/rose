@@ -12062,12 +12062,17 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          classChain_iterator++;
                        }
 #endif
+                 // DQ (11/10/2020): This assertion failed (classChain.size() <= 2) where the value was 3 for some of the target code for codeSegregation.
                  // DQ (11/8/2020): I now think that Cxx11_tests/test_2019_120.C could be used to make this arbitrarily long.
                  // DQ (12/11/2019): Modified to provide a larger upper bound for classChain.size().
                  // DQ (2/16/2019): I think this is always true, since base class abiguity is not allowed in the C++ language.
                  // ROSE_ASSERT(classChain.size() == 1);
                  // ROSE_ASSERT(classChain.empty() == true || classChain.size() == 1);
-                    ROSE_ASSERT(classChain.empty() == true || classChain.size() <= 2);
+                 // ROSE_ASSERT(classChain.empty() == true || classChain.size() <= 2);
+                    if (classChain.size() > 3)
+                       {
+                         printf ("In name qualification: Case of SgVarRefExp: classChain.size() > 3: classChain.size() = %zu \n",classChain.size());
+                       }
 
                  // DQ (2/16/2019): We need to call something like this, but specialized to just use the single class in the classChain.
                  // setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
