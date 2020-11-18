@@ -137,6 +137,7 @@ public:
     const P2::Partitioner *partitioner_;
     FeasiblePath *fpAnalyzer_;
     FeasiblePath::PathProcessor *pathProcessor_;
+    FeasiblePath::PathProcessor::Action pathProcessorAction_; // how to proceed after a path processor call returns
     SmtSolver::Ptr nullPtrSolver_;
     const P2::CfgPath *path_;
 
@@ -144,14 +145,14 @@ protected:
     RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::SValuePtr &protoval,
                   const Rose::BinaryAnalysis::SmtSolverPtr &solver)
         : Super(protoval, solver), pathInsnIndex_(-1), partitioner_(partitioner), fpAnalyzer_(NULL),
-          pathProcessor_(NULL), path_(NULL){
+          pathProcessor_(NULL), pathProcessorAction_(FeasiblePath::PathProcessor::CONTINUE), path_(NULL){
         name("FindPath");
     }
 
     RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::StatePtr &state,
                   const Rose::BinaryAnalysis::SmtSolverPtr &solver)
         : Super(state, solver), pathInsnIndex_(-1), partitioner_(partitioner), fpAnalyzer_(NULL), pathProcessor_(NULL),
-          path_(NULL) {
+          pathProcessorAction_(FeasiblePath::PathProcessor::CONTINUE), path_(NULL) {
         name("FindPath");
     }
 
@@ -251,7 +252,18 @@ public:
         partitioner_ = p;
     }
 
+    /** Did any path processor callback request that we stop processing this path? */
+    bool breakRequested() const {
+        return FeasiblePath::PathProcessor::BREAK == pathProcessorAction_;
+    }
+
 private:
+    // Merge the return value of a path processor call into this object.
+    void merge(FeasiblePath::PathProcessor::Action action) {
+        if (pathProcessorAction_ != FeasiblePath::PathProcessor::BREAK)
+            pathProcessorAction_ = action;
+    }
+
     /** Description a variable stored in a register. */
     FeasiblePath::VarDetail detailForVariable(RegisterDescriptor reg, const std::string &accessMode) const {
         const RegisterDictionary *regs = currentState()->registerState()->get_register_dictionary();
@@ -449,15 +461,15 @@ public:
         }
 
         // Check for null pointer dereferences
-        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_) {
+        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && !breakRequested()) {
             SmtSolver::Transaction transaction(nullPtrSolver());
             if (isNullDeref(adjustedVa)) {
                 ASSERT_not_null(fpAnalyzer_);
                 ASSERT_not_null(path_);
                 BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
                 ASSERT_not_null(cpu);
-                pathProcessor_->nullDeref(*fpAnalyzer_, *path_, currentInstruction(), cpu, nullPtrSolver(),
-                                          FeasiblePath::READ, adjustedVa);
+                merge(pathProcessor_->nullDeref(*fpAnalyzer_, *path_, currentInstruction(), cpu, nullPtrSolver(),
+                                                FeasiblePath::READ, adjustedVa));
             }
         }
         
@@ -506,14 +518,15 @@ public:
         }
 
         // Callback for the memory access
-        if (pathProcessor_) {
+        if (pathProcessor_ && !breakRequested()) {
             ASSERT_not_null(fpAnalyzer_);
             ASSERT_not_null(path_);
             SmtSolver::Ptr s = nullPtrSolver();
             SmtSolver::Transaction tx(s);
             BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
             ASSERT_not_null(cpu);
-            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, currentInstruction(), cpu, s, FeasiblePath::READ, adjustedVa, retval);
+            merge(pathProcessor_->memoryIo(*fpAnalyzer_, *path_, currentInstruction(), cpu, s, FeasiblePath::READ,
+                                           adjustedVa, retval));
         }
 
         return retval;
@@ -538,15 +551,15 @@ public:
         }
 
         // Check for null pointer dereferences
-        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_) {
+        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && !breakRequested()) {
             SmtSolver::Transaction transaction(nullPtrSolver());
             if (isNullDeref(adjustedVa)) {
                 ASSERT_not_null(fpAnalyzer_);
                 ASSERT_not_null(path_);
                 BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
                 ASSERT_not_null(cpu);
-                pathProcessor_->nullDeref(*fpAnalyzer_, *path_, currentInstruction(), cpu, nullPtrSolver(),
-                                          FeasiblePath::WRITE, adjustedVa);
+                merge(pathProcessor_->nullDeref(*fpAnalyzer_, *path_, currentInstruction(), cpu, nullPtrSolver(),
+                                                FeasiblePath::WRITE, adjustedVa));
             }
         }
 
@@ -566,14 +579,15 @@ public:
         }
 
         // Callback for the memory access
-        if (pathProcessor_) {
+        if (pathProcessor_ && !breakRequested()) {
             ASSERT_not_null(fpAnalyzer_);
             ASSERT_not_null(path_);
             SmtSolver::Ptr s = nullPtrSolver();
             SmtSolver::Transaction tx(s);
             BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
             ASSERT_not_null(cpu);
-            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, currentInstruction(), cpu, s, FeasiblePath::WRITE, adjustedVa, value);
+            merge(pathProcessor_->memoryIo(*fpAnalyzer_, *path_, currentInstruction(), cpu, s, FeasiblePath::WRITE,
+                                           adjustedVa, value));
         }
     }
 };
@@ -1739,7 +1753,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
         BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner(), &path, &pathProcessor, solver);
         ASSERT_not_null(cpu);
         setInitialState(cpu, pathsBeginVertex);
-        BaseSemantics::RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+        RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
         ASSERT_not_null(ops);
         BaseSemantics::StatePtr originalState = ops->currentState();
         ASSERT_not_null(originalState);
@@ -1817,6 +1831,10 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 pathProcessed = true;
             }
 
+            // If a user-defined path process callback says we should backtrack, then backtrack.
+            if (ops->breakRequested())
+                doBacktrack = true;
+
             // Check whether this path is feasible. We've already validated the path up to but not including its final edge,
             // and we've processed instructions semantically up to the beginning of the final edge's target vertex (the
             // CPU points to this state).  Furthermore, the SMT solver knows all the path conditions up to but not including
@@ -1824,7 +1842,10 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             // also add any user-defined conditions that apply at the beginning of the last path vertex.
             SAWYER_MESG(debug) <<"    checking path feasibility";
             boost::logic::tribool pathIsFeasible = false;
-            if (!pathProcessed) {
+            if (doBacktrack) {
+                pathIsFeasible = false;
+                SAWYER_MESG(debug) <<" = not checked (path processor requesint backtrack)\n";
+            } else if (!pathProcessed) {
                 pathIsFeasible = false;                 // encountered unhandled error during semantic processing
                 SAWYER_MESG(debug) <<" = not feasible (semantic failure)\n";
             } else if (path.nEdges() == 0) {
