@@ -924,6 +924,7 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
     // Create the new state from an existing state and make the new state current.
     BaseSemantics::StatePtr state = cpu->currentState()->clone();
     state->clear();
+    cpu->initializeState(state);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     ops->currentState(state);
 
@@ -1784,19 +1785,23 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             bool atEndOfPath = pathsEndVertices_.exists(backVertex);
 
             // Process the second-to-last vertex of the path to obtain a new virtual machine state, and make that state
-            // the RiscOperators current state.
-            BaseSemantics::StatePtr penultimateState;
+            // the current state for the RiscOperators.
+            BaseSemantics::StatePtr penultimateState;   // eventually, the outgoing state of the penultimate path vertex
             size_t pathInsnIndex = 0;
             bool pathProcessed = false;                 // true if path semantic processing is successful, false if failed.
             if (path.nEdges() > 0) {
-                BaseSemantics::StatePtr state;
+                // Find the incoming state for the penultimate vertex
+                BaseSemantics::StatePtr state;          // state to be cloned to create the initial penultimate state
                 if (path.nVertices() >= 3) {
                     state = pathPostState(path, path.nVertices()-3);
                     pathInsnIndex = path.vertexAttributes(path.nVertices()-3).getAttribute<size_t>(POST_INSN_LENGTH);
                 } else {
+                    ASSERT_require(path.nVertices() == 2);
                     state = originalState;
                     pathInsnIndex = 0;
                 }
+
+                // Calculate and save the outgoing state for the penultimate vertex
                 penultimateState = state->clone();
                 ops->currentState(penultimateState);
                 try {
@@ -1940,15 +1945,22 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                         insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);
                         erasableEdges.insert(cfgCallEdge);
                     } else if (shouldInline(path, cfgCallEdge->target())) {
-                        SAWYER_MESG(debug) <<indent <<"inlining function call paths at vertex "
-                                           <<partitioner().vertexName(backVertex) <<"\n";
                         if (cfgCallEdge->target()->value().type() == P2::V_INDETERMINATE &&
                             cfgBackVertex->value().type() == P2::V_BASIC_BLOCK) {
                             // If the CFG has a vertex to an indeterminate function (e.g., from "call eax"), then instead of
                             // inlining the indeterminate vertex, see if we can inline an actual function by using the
                             // instruction pointer register. The cpu's currentState is the one at the beginning of the final
                             // vertex of the path; we need the state at the end of the final vertex.
-                            BaseSemantics::StatePtr savedState = cpu->get_operators()->currentState()->clone();
+                            SAWYER_MESG(debug) <<indent <<"inlining indeterminate function call paths at vertex "
+                                               <<partitioner().vertexName(backVertex) <<"\n";
+
+                            // Process the basic block containing the indirect function call in order to get the final IP
+                            // value, the target address of the call, if possible.  Be careful not to mess up the state that's
+                            // already been saved as the incoming state to this block.
+                            SmtSolver::Transaction tx(solver);
+                            BaseSemantics::StatePtr savedState = cpu->get_operators()->currentState();
+                            BaseSemantics::StatePtr tmpState = savedState->clone();
+                            cpu->get_operators()->currentState(tmpState);
                             BaseSemantics::SValuePtr ip;
                             try {
                                 BOOST_FOREACH (SgAsmInstruction *insn, cfgBackVertex->value().bblock()->instructions())
@@ -1959,6 +1971,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                                 mlog[ERROR] <<"semantics failed when trying to determine call target address: " <<e <<"\n";
                             }
                             cpu->get_operators()->currentState(savedState);
+
+                            // If the IP is concrete, then we found the target of the indirect call and can inline it.
                             if (ip && ip->is_number() && ip->get_width() <= 64) {
                                 rose_addr_t targetVa = ip->get_number();
                                 P2::ControlFlowGraph::ConstVertexIterator targetVertex = partitioner().findPlaceholder(targetVa);
@@ -1967,6 +1981,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                                                         targetVertex, cfgEndAvoidVertices_, cfgAvoidEdges_);
                             }
                         } else {
+                            SAWYER_MESG(debug) <<indent <<"inlining CFG function call paths at vertex "
+                                               <<partitioner().vertexName(backVertex) <<"\n";
                             P2::inlineMultipleCallees(paths_, backVertex, partitioner().cfg(),
                                                       cfgBackVertex, cfgEndAvoidVertices_, cfgAvoidEdges_);
                         }
