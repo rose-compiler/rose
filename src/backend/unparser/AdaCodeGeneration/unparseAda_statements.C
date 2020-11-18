@@ -123,7 +123,7 @@ namespace
     {
       prn(sep);
       handle(SG_DEREF(s));
-      sep = COMMA_SEP;
+      sep = "; ";
     }
 
     Unparse_Ada&    unparser;
@@ -1115,8 +1115,13 @@ namespace
 
     void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgLocatedNode& n)        { withoutName(); }
+    void handle(SgLocatedNode& n)
+    {
+      //~ std::cerr << "l " << typeid(n).name() << std::endl;
+      withoutName();
+    }
 
+    void handle(SgAdaTaskSpecDecl& n)    { withName(n.get_name()); }
     void handle(SgAdaPackageSpecDecl& n) { withName(n.get_name()); }
     void handle(SgAdaPackageBodyDecl& n) { withName(n.get_name()); }
   };

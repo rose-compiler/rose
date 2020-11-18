@@ -123,6 +123,93 @@ bool SageBuilder::symbol_table_case_insensitive_semantics = false;
 SageBuilder::SourcePositionClassification SageBuilder::SourcePositionClassificationMode = SageBuilder::e_sourcePositionTransformation;
 
 
+
+// ROSE_DLL_API SgMemberFunctionDeclaration* buildConstructor ( const SgName & typeName, SgClassType* initializedName_classType, SgClassDefinition* classDefinition);
+// SgMemberFunctionDeclaration* SageBuilder::buildConstructor ( const SgName & typeName, SgClassType* classType, SgClassDefinition* classDefinition)
+SgMemberFunctionDeclaration* 
+SageBuilder::buildDefaultConstructor (SgClassType* classType)
+   {
+     ROSE_ASSERT(classType != NULL);
+
+     SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+     ROSE_ASSERT(classDeclaration != NULL);
+
+     SgName className = classDeclaration->get_name();
+
+#if 1
+     printf ("In SageBuilder::buildDefaultConstructor(): building default constructor for class = %s \n",className.str());
+#endif
+
+     SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+     ROSE_ASSERT(definingClassDeclaration != NULL);
+     SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
+     ROSE_ASSERT(classDefinition != NULL);
+
+  // SgExprListExp* exprListExp = SageBuilder::buildExprListExp();
+  // ROSE_ASSERT(exprListExp != NULL);
+  // SgFunctionParameterTypeList* functionParameterTypeList = SageBuilder::buildFunctionParameterTypeList(exprListExp);
+  // ROSE_ASSERT(functionParameterTypeList != NULL);
+  // SgMemberFunctionType* memberFunctionType = SageBuilder::buildMemberFunctionType(return_type, functionParameterTypeList, initializedName_classType, mfunc_specifier, ref_qualifiers);
+
+     SgFunctionParameterList*     functionParameterList     = SageBuilder::buildFunctionParameterList();
+     ROSE_ASSERT(functionParameterList != NULL);
+
+  // Constructors are specified with type void internally, though the type name is not output.
+     SgType* return_type = SageBuilder::buildVoidType();
+     ROSE_ASSERT(return_type != NULL);
+
+  // unsigned int mfunc_specifier = 0;
+  // unsigned int ref_qualifiers  = 0;
+
+     SgExprListExp* decoratorList            = NULL;
+     bool buildTemplateInstantiation         = false;
+
+  // These are zero for a constructor.
+     unsigned int functionConstVolatileFlags = 0;
+
+     SgTemplateArgumentPtrList templateArgumentsList;
+
+     SgMemberFunctionDeclaration* first_nondefining_declaration = buildNondefiningMemberFunctionDeclaration (className, return_type, functionParameterList,
+          classDefinition, decoratorList, functionConstVolatileFlags, buildTemplateInstantiation, &templateArgumentsList);
+     ROSE_ASSERT(first_nondefining_declaration != NULL);
+
+     first_nondefining_declaration->get_specialFunctionModifier().setConstructor();
+     ROSE_ASSERT(first_nondefining_declaration->get_specialFunctionModifier().isConstructor() == true);
+
+  // DQ (11/10/2020): Need to make sure that the firstNondefiningDeclaration is being used (reset is needed).
+     if (first_nondefining_declaration->get_firstNondefiningDeclaration() != first_nondefining_declaration)
+        {
+          first_nondefining_declaration = isSgMemberFunctionDeclaration(first_nondefining_declaration->get_firstNondefiningDeclaration());
+        }
+     ROSE_ASSERT(first_nondefining_declaration->get_firstNondefiningDeclaration() == first_nondefining_declaration);
+
+     SgMemberFunctionDeclaration* memberFunctionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (className, return_type, functionParameterList, 
+          classDefinition, decoratorList, buildTemplateInstantiation, functionConstVolatileFlags, first_nondefining_declaration, &templateArgumentsList);
+     ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+     memberFunctionDeclaration->get_specialFunctionModifier().setConstructor();
+     ROSE_ASSERT(memberFunctionDeclaration->get_specialFunctionModifier().isConstructor() == true);
+
+  // We return the default constructor and the use should insert it, I think.
+  // classDefinition->prepend_statement(memberFunctionDeclaration);
+
+  // Mark the constructor as public.
+     memberFunctionDeclaration->get_declarationModifier().get_accessModifier().setPublic();
+
+     ROSE_ASSERT (memberFunctionDeclaration->get_declarationModifier().get_accessModifier().isPublic() == true);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return memberFunctionDeclaration;
+   }
+
+
+
+
+
 //! Get the current source position classification (defines how IR nodes built by the SageBuilder interface will be classified).
 SageBuilder::SourcePositionClassification
 SageBuilder::getSourcePositionClassificationMode()

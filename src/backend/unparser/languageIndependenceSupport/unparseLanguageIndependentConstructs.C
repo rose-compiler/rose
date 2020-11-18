@@ -9125,7 +9125,9 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
   // Rasmussen (3/25/2020): For unparsing of Jovial Conversion operators (casts)
      if (SageInterface::is_Jovial_language())
         {
-           if (SgCastExp* cast_expr = isSgCastExp(expr)) {
+        // DQ (11/12/2020): Eliminate compiler warning.
+        // if (SgCastExp* cast_expr = isSgCastExp(expr)) {
+           if (isSgCastExp(expr) != NULL) {
               return false;
            }
         }
@@ -9256,8 +9258,8 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #if 0
                printf ("In requiresParentheses(): expr = %p = %s \n",expr,expr->class_name().c_str());
 #endif
-               SgFunctionDeclaration* functionDeclaration = SageInterface::getFunctionDeclaration(rhs_FunctionCallExpr);
 #if 0
+               SgFunctionDeclaration* functionDeclaration = SageInterface::getFunctionDeclaration(rhs_FunctionCallExpr);
                printf ("In requiresParentheses(): calling getPrecedence(): functionDeclaration = %p = %s = %s \n",
                     functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
 #endif

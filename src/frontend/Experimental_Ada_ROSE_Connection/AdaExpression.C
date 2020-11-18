@@ -217,14 +217,43 @@ namespace
 
     boost::to_upper(enumstr);
 
+    // \todo replace with actual enum values
     if (enumstr == "TRUE")
       res = sb::buildBoolValExp(1);
     else if (enumstr == "FALSE")
       res = sb::buildBoolValExp(0);
+    else
+      res = sb::buildStringVal(enumstr);
 
     return SG_DEREF( res );
   }
 
+  struct RoseRequiresScopeQual : sg::DispatchHandler<bool>
+  {
+    void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
+
+    void handle(SgDeclarationStatement&) { res = true; }
+    void handle(SgAdaTaskSpecDecl&)      { res = false; }
+  };
+
+
+  /// tests whether ROSE represents the prefix expression
+  ///   (e.g., true for objects, false for scope-qualification)
+  bool roseRequiresPrefixID(Element_ID el, AstContext ctx)
+  {
+    Element_Struct&    elem = retrieveAs<Element_Struct>(elemMap(), el);
+    ROSE_ASSERT(elem.Element_Kind == An_Expression);
+
+    Expression_Struct& expr = elem.The_Union.Expression;
+    ROSE_ASSERT (expr.Expression_Kind == An_Identifier);
+
+    /// \todo dcl == nullptr should be an error (as soon as the Asis AST
+    ///       is generated completely.
+    SgDeclarationStatement* dcl = getDecl_opt(expr, ctx);
+    return (  dcl == nullptr
+           || sg::dispatch(RoseRequiresScopeQual(), dcl)
+           );
+  }
 } // anonymous
 
 
@@ -250,6 +279,7 @@ getExpr(Element_Struct& elem, AstContext ctx)
         else if (SgDeclarationStatement* dcl = getDecl_opt(expr, ctx))
         {
           SgFunctionDeclaration* fundcl = isSgFunctionDeclaration(dcl);
+          //~ logWarn() << typeid(*dcl).name() << std::endl;
           ROSE_ASSERT(fundcl);
 
           res = sb::buildFunctionRefExp(fundcl);
@@ -357,10 +387,18 @@ getExpr(Element_Struct& elem, AstContext ctx)
 
     case A_Selected_Component:                      // 4.1.3
       {
-        SgExpression& prefix   = getExprID(expr.Prefix, ctx);
         SgExpression& selector = getExprID(expr.Selector, ctx);
 
-        res = &mkSelectedComponent(prefix, selector);
+        if (roseRequiresPrefixID(expr.Prefix, ctx))
+        {
+          SgExpression& prefix = getExprID(expr.Prefix, ctx);
+
+          res = &mkSelectedComponent(prefix, selector);
+        }
+        else
+        {
+          res = &selector;
+        }
         /* unused fields: (Expression_Struct)
         */
         break;
@@ -419,7 +457,6 @@ getExpr(Element_Struct& elem, AstContext ctx)
 
     case An_Indexed_Component:                      // 4.1.1
     case A_Slice:                                   // 4.1.2
-    case An_Attribute_Reference:                    // 4.1.4  -> Attribute_Kinds
     case A_Record_Aggregate:                        // 4.3
     case An_Extension_Aggregate:                    // 4.3
     case A_Positional_Array_Aggregate:              // 4.3
