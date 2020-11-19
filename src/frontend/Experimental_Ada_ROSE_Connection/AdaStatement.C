@@ -1578,6 +1578,97 @@ void handleClause(Element_Struct& elem, AstContext ctx)
   }
 }
 
+
+void handleDefinition(Element_Struct& elem, AstContext ctx)
+{
+  ROSE_ASSERT(elem.Element_Kind == A_Definition);
+
+  // many definitions are handled else where
+  // here we want to convert the rest that can appear in declarative context
+
+  Definition_Struct& def = elem.The_Union.Definition;
+
+  switch (def.Definition_Kind)
+  {
+    case A_Null_Component:                 // 3.8(4)
+      {
+        SgScopeStatement&   scope = ctx.scope();
+        SgEmptyDeclaration& sgnode = mkNullDecl(scope);
+
+        attachSourceLocation(sgnode, elem, ctx);
+        ROSE_ASSERT(sgnode.get_parent() == &scope);
+        break;
+      }
+
+    case A_Type_Definition:                // 3.2.1(4)    -> Type_Kinds
+      // handled in getTypeFoundation
+      ROSE_ASSERT(false);
+      break;
+
+    case A_Subtype_Indication:             // 3.2.2(3)
+      // handled in getDefinitionType
+      ROSE_ASSERT(false);
+      break;
+
+    case A_Constraint:                     // 3.2.2(5)    -> Constraint_Kinds
+      // handled in getRangeConstraint
+      ROSE_ASSERT(false);
+      break;
+
+    case A_Component_Definition:           // 3.6(7)      -> Trait_Kinds
+      // handled in getDefinitionType
+      ROSE_ASSERT(false);
+      break;
+
+    case A_Discrete_Range:                 // 3.6.1(3)    -> Discrete_Range_Kinds
+      // handled in getDefinitionExpr
+      ROSE_ASSERT(false);
+      break;
+
+    case A_Record_Definition:              // 3.8(3)
+      // handled in getRecordBodyID
+      ROSE_ASSERT(false);
+      break;
+
+    case A_Null_Record_Definition:         // 3.8(3)
+      // handled in getRecordBodyID
+      ROSE_ASSERT(false);
+      break;
+
+    case An_Others_Choice:                 // 3.8.1(5): 4.3.1(5): 4.3.3(5): 11.2(5)
+      // handled in case creation (and getDefinitionExpr (obsolete?))
+      ROSE_ASSERT(false);
+      break;
+
+    case An_Access_Definition:             // 3.10(6/2)   -> Access_Definition_Kinds, A2005 start
+      // handled in getAccessType
+      ROSE_ASSERT(false);
+      break;
+
+    case A_Task_Definition:                // 9.1(4)
+      // handled in getTaskSpec
+      ROSE_ASSERT(false);
+      break;
+
+    case A_Discrete_Subtype_Definition:    // 3.6(6)      -> Discrete_Range_Kinds
+    case An_Unknown_Discriminant_Part:     // 3.7(3)
+    case A_Known_Discriminant_Part:        // 3.7(2)
+    case Not_A_Definition:                 // An unexpected element
+    case A_Variant_Part:                   // 3.8.1(2)
+    case A_Variant:                        // 3.8.1(3)
+    case A_Private_Type_Definition:        // 7.3(2)      -> Trait_Kinds
+    case A_Tagged_Private_Type_Definition: // 7.3(2)      -> Trait_Kinds
+    case A_Private_Extension_Definition:   // 7.3(3)      -> Trait_Kinds
+    case A_Protected_Definition:           // 9.4(4)
+    case A_Formal_Type_Definition:         // 12.5(3)     -> Formal_Type_Kinds
+    case An_Aspect_Specification:          // 13.3.1, A2012
+    default:
+      logWarn() << "unhandled clause kind: " << def.Definition_Kind << std::endl;
+      ROSE_ASSERT(!FAIL_ON_ERROR);
+  }
+
+}
+
 void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 {
   ROSE_ASSERT(elem.Element_Kind == A_Declaration);
@@ -2227,14 +2318,22 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ROSE_ASSERT(renamed_entity_elem.Element_Kind == An_Expression);
 
         Expression_Struct& renamed_entity_expr = renamed_entity_elem.The_Union.Expression;
-        SgInitializedName& aliased = getAliasedExcnDecl(renamed_entity_expr.Corresponding_Name_Definition, ctx);
-        SgScopeStatement&       scope   = ctx.scope();
-        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, aliased, scope);
 
-        attachSourceLocation(sgnode, elem, ctx);
-        privatize(sgnode, isPrivate);
-        scope.append_statement(&sgnode);
-        ROSE_ASSERT(sgnode.get_parent() == &scope);
+        if (isInvalidId(renamed_entity_expr.Corresponding_Name_Definition))
+        {
+          logError() << "unavailable name definition";
+        }
+        else
+        {
+          SgInitializedName& aliased = getAliasedExcnDecl(renamed_entity_expr.Corresponding_Name_Definition, ctx);
+          SgScopeStatement&       scope   = ctx.scope();
+          SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, aliased, scope);
+
+          attachSourceLocation(sgnode, elem, ctx);
+          privatize(sgnode, isPrivate);
+          scope.append_statement(&sgnode);
+          ROSE_ASSERT(sgnode.get_parent() == &scope);
+        }
       break;
     }
 

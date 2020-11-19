@@ -767,21 +767,36 @@ namespace
 
       if (SgClassDefinition* def = n.get_definition())
       {
+        const bool explicitNullrec = (  def->get_members().empty()
+                                     && def->get_inheritances().empty()
+                                     );
         SgDeclarationModifier& mod = n.get_declarationModifier();
 
         prn(" is");
 
-        parentRecord(*def);
+        if (!explicitNullrec) parentRecord(*def);
 
         if (mod.isAdaAbstract()) prn(" abstract");
         if (mod.isAdaLimited())  prn(" limited");
         if (mod.isAdaTagged())   prn(" tagged");
 
-        prn(" record\n");
-        stmt(def);
-        prn("end record");
+        if (explicitNullrec) prn(" null");
+        prn(" record");
+
+        if (!explicitNullrec)
+        {
+          prn("\n");
+          stmt(def);
+          prn("end record");
+        }
       }
 
+      prn(STMT_SEP);
+    }
+
+    void handle(SgEmptyDeclaration&)
+    {
+      prn("null");
       prn(STMT_SEP);
     }
 

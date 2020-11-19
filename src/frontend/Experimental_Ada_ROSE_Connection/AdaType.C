@@ -125,6 +125,7 @@ namespace
 
     logKind("An_Access_Definition");
 
+    SgType* res = nullptr;
     Access_Definition_Struct& access = def.The_Union.The_Access_Definition;
 
     switch (access.Access_Definition_Kind)
@@ -135,19 +136,14 @@ namespace
       case An_Anonymous_Access_To_Protected_Procedure: // access protected procedure
       case An_Anonymous_Access_To_Function:            // access function
       case An_Anonymous_Access_To_Protected_Function:  // access protected function
-        {
-          logWarn() << "ak: " << access.Access_Definition_Kind << std::endl;
-          break ; // not finished
-        }
-
       case Not_An_Access_Definition: /* break; */ // An unexpected element
       default:
         logWarn() << "ak? " << access.Access_Definition_Kind << std::endl;
-        ROSE_ASSERT(false);
+        res = sb::buildPointerType(sb::buildVoidType());
+        ROSE_ASSERT(!FAIL_ON_ERROR);
     }
 
-    ROSE_ASSERT(false);
-    return SG_DEREF(sb::buildVoidType());
+    return SG_DEREF(res);
   }
 
   SgType&
@@ -167,7 +163,9 @@ namespace
     if (def.Definition_Kind == An_Access_Definition)
       return getAccessType(def, ctx);
 
-    ROSE_ASSERT(false);
+    logError() << "getDeclType: unhandled definition kind: " << def.Definition_Kind
+               << std::endl;
+    ROSE_ASSERT(!FAIL_ON_ERROR);
     return SG_DEREF(sb::buildVoidType());
   }
 
@@ -304,10 +302,16 @@ namespace
     ROSE_ASSERT(elem.Element_Kind == A_Definition);
 
     Definition_Struct&        def = elem.The_Union.Definition;
+
+    if (def.Definition_Kind == A_Null_Record_Definition)
+    {
+      logKind("A_Null_Record_Definition");
+      return SG_DEREF( sb::buildClassDefinition() );
+    }
+
     ROSE_ASSERT(def.Definition_Kind == A_Record_Definition);
 
     logKind("A_Record_Definition");
-
     return getRecordBody(def.The_Union.The_Record_Definition, ctx);
   }
 

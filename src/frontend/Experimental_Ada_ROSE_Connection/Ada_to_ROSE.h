@@ -559,6 +559,9 @@ namespace
   inline
   bool isInvalidId(int id) { return id == -1; }
 
+  inline
+  bool isValidId(int id) { return !isInvalidId(id); }
+
 } // anonymous
 
 
