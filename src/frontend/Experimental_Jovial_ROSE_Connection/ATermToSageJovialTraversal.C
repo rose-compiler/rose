@@ -6356,11 +6356,14 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
          // MATCHED BitVariable
       } else return ATfalse;
    }
+   else if (traverse_FunctionCall(term, expr)) {
+      // FunctionCall      -> BitFunctionCall
+      // BitFunctionCall   -> BitPrimary (no cons)
+   }
    else return ATfalse;
 
    // TODO: create else if for following (is this still the case, testing should inform)
    // NamedBitConstant       -> BitPrimary {cons("NamedBitConstant")} (rejected in grammar)
-   // BitFunctionCall        -> BitPrimary (no cons)
 
    ROSE_ASSERT(expr != nullptr);
 
