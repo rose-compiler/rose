@@ -284,10 +284,19 @@ mkLabelStmt(const std::string& label, SgStatement& stmt, SgScopeStatement& encl)
   return sgnode;
 }
 
-SgStatement&
+SgNullStatement&
 mkNullStmt()
 {
   return SG_DEREF(sb::buildNullStatement());
+}
+
+SgEmptyDeclaration&
+mkNullDecl(SgScopeStatement& encl)
+{
+  SgEmptyDeclaration& sgnode = SG_DEREF(sb::buildEmptyDeclaration());
+
+  sg::linkParentChild(encl, as<SgStatement>(sgnode), &SgScopeStatement::append_statement);
+  return sgnode;
 }
 
 SgTryStmt&
