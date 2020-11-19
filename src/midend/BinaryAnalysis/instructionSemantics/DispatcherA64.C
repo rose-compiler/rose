@@ -2008,7 +2008,7 @@ DispatcherA64::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nb
         if (reg.majorNumber() == arm_regclass_gpr && reg.minorNumber() == 31) {
             if (0 == value_nbits)
                 value_nbits = reg.nBits();
-            return operators->number_(value_nbits, 0);
+            return operators()->number_(value_nbits, 0);
         }
     }
     return BaseSemantics::Dispatcher::read(e, value_nbits, addr_nbits);
@@ -2034,10 +2034,10 @@ DispatcherA64::advSimdExpandImm(SgAsmType *type, const SValuePtr &imm) {
     auto elmtType = vectorType->get_elmtType();
     ASSERT_not_null(elmtType);
     ASSERT_require(isSgAsmScalarType(elmtType));
-    SValuePtr elmt = operators->unsignedExtend(imm, elmtType->get_nBits());
+    SValuePtr elmt = operators()->unsignedExtend(imm, elmtType->get_nBits());
     SValuePtr result;
     for (size_t i = 0; i < vectorType->get_nElmts(); ++i)
-        result = result ? operators->concat(result, elmt) : elmt;
+        result = result ? operators()->concat(result, elmt) : elmt;
     return result;
 }
 
@@ -2048,11 +2048,11 @@ DispatcherA64::computeNZCV(const SValuePtr &sum, const SValuePtr &carries) {
     ASSERT_not_null(carries);
     ASSERT_require(carries->get_width() == sum->get_width());
 
-    SValuePtr isNeg = operators->extract(sum, sum->get_width()-1, sum->get_width());
-    SValuePtr isZero = operators->equalToZero(sum);
-    SValuePtr isCarry = operators->extract(carries, carries->get_width()-1, carries->get_width());
-    SValuePtr isOverflow = operators->xor_(operators->extract(carries, carries->get_width()-1, carries->get_width()),
-                                           operators->extract(carries, carries->get_width()-2, carries->get_width()-1));
+    SValuePtr isNeg = operators()->extract(sum, sum->get_width()-1, sum->get_width());
+    SValuePtr isZero = operators()->equalToZero(sum);
+    SValuePtr isCarry = operators()->extract(carries, carries->get_width()-1, carries->get_width());
+    SValuePtr isOverflow = operators()->xor_(operators()->extract(carries, carries->get_width()-1, carries->get_width()),
+                                             operators()->extract(carries, carries->get_width()-2, carries->get_width()-1));
 
     return NZCV(isNeg, isZero, isCarry, isOverflow);
 }
@@ -2061,10 +2061,10 @@ void
 DispatcherA64::updateNZCV(const SValuePtr &sum, const SValuePtr &carries) {
     NZCV nzcv = computeNZCV(sum, carries);
 
-    operators->writeRegister(REG_CPSR_N, nzcv.n);
-    operators->writeRegister(REG_CPSR_Z, nzcv.z);
-    operators->writeRegister(REG_CPSR_C, nzcv.c);
-    operators->writeRegister(REG_CPSR_V, nzcv.v);
+    operators()->writeRegister(REG_CPSR_N, nzcv.n);
+    operators()->writeRegister(REG_CPSR_Z, nzcv.z);
+    operators()->writeRegister(REG_CPSR_C, nzcv.c);
+    operators()->writeRegister(REG_CPSR_V, nzcv.v);
 }
 
 SValuePtr
@@ -2072,68 +2072,68 @@ DispatcherA64::conditionHolds(A64InstructionCondition cond) {
     // WARNING: ARM documentation is inconsistent and sometimes wrong when it describes how these flags are set.
     switch (cond) {
         case A64InstructionCondition::ARM64_CC_INVALID: // occurs for "B" instruction
-            return operators->boolean_(true);
+            return operators()->boolean_(true);
         case A64InstructionCondition::ARM64_CC_EQ:      // equal (z set)
-            return operators->readRegister(REG_CPSR_Z);
+            return operators()->readRegister(REG_CPSR_Z);
         case A64InstructionCondition::ARM64_CC_NE:      // not equal: not equal, or unordered (z clear)
-            return operators->invert(operators->readRegister(REG_CPSR_Z));
+            return operators()->invert(operators()->readRegister(REG_CPSR_Z));
         case A64InstructionCondition::ARM64_CC_HS:      // unsigned higher or same: >, ==, or unordered (c set)
-            return operators->readRegister(REG_CPSR_C);
+            return operators()->readRegister(REG_CPSR_C);
         case A64InstructionCondition::ARM64_CC_LO:      // unsigned lower or same: less than (c clear)
-            return operators->invert(operators->readRegister(REG_CPSR_C));
+            return operators()->invert(operators()->readRegister(REG_CPSR_C));
         case A64InstructionCondition::ARM64_CC_MI:      // minus, negative: less than (n set)
-            return operators->readRegister(REG_CPSR_N);
+            return operators()->readRegister(REG_CPSR_N);
         case A64InstructionCondition::ARM64_CC_PL:      // plus, positive or zero: >, ==, or unordered (n clear)
-            return operators->invert(operators->readRegister(REG_CPSR_N));
+            return operators()->invert(operators()->readRegister(REG_CPSR_N));
         case A64InstructionCondition::ARM64_CC_VS:      // overflow: unordered (v set)
-            return operators->readRegister(REG_CPSR_V);
+            return operators()->readRegister(REG_CPSR_V);
         case A64InstructionCondition::ARM64_CC_VC:      // no overflow: ordered (v clear)
-            return operators->invert(operators->readRegister(REG_CPSR_V));
+            return operators()->invert(operators()->readRegister(REG_CPSR_V));
         case A64InstructionCondition::ARM64_CC_HI: {    // unsigned higher: greater than, or unordered
             // WARNING: The ARM definition reads "c set and z clear", but see LS below.
-            SValuePtr c = operators->readRegister(REG_CPSR_C);
-            SValuePtr z = operators->readRegister(REG_CPSR_Z);
-            return operators->and_(c, operators->invert(z));
+            SValuePtr c = operators()->readRegister(REG_CPSR_C);
+            SValuePtr z = operators()->readRegister(REG_CPSR_Z);
+            return operators()->and_(c, operators()->invert(z));
         }
         case A64InstructionCondition::ARM64_CC_LS: {    // unsigned lower or same: less than or equal
             // WARNING: The ARM definition, which reads "c clear and z set" is not the inverse of the description for HI which
             // reads "c set and z clear", although it should be since HI and LS are inverses. The inverse of HI would be
             // "c clear or z set".
-            SValuePtr c = operators->readRegister(REG_CPSR_C);
-            SValuePtr z = operators->readRegister(REG_CPSR_Z);
-            return operators->and_(operators->invert(c), z);
+            SValuePtr c = operators()->readRegister(REG_CPSR_C);
+            SValuePtr z = operators()->readRegister(REG_CPSR_Z);
+            return operators()->and_(operators()->invert(c), z);
         }
         case A64InstructionCondition::ARM64_CC_GE: {    // greater than or equal: greater than or equal (n == v)
-            SValuePtr n = operators->readRegister(REG_CPSR_N);
-            SValuePtr v = operators->readRegister(REG_CPSR_V);
-            return operators->invert(operators->xor_(n, v));
+            SValuePtr n = operators()->readRegister(REG_CPSR_N);
+            SValuePtr v = operators()->readRegister(REG_CPSR_V);
+            return operators()->invert(operators()->xor_(n, v));
         }
         case A64InstructionCondition::ARM64_CC_LT: {    // less than: less than, or unordered (n != v)
-            SValuePtr n = operators->readRegister(REG_CPSR_N);
-            SValuePtr v = operators->readRegister(REG_CPSR_V);
-            return operators->xor_(n, v);
+            SValuePtr n = operators()->readRegister(REG_CPSR_N);
+            SValuePtr v = operators()->readRegister(REG_CPSR_V);
+            return operators()->xor_(n, v);
         }
         case A64InstructionCondition::ARM64_CC_GT: {    // signed greater than: greater than
             // WARNING: ARM documentation sometimes says "z clear, n and v the same", but see LE below.
-            SValuePtr n = operators->readRegister(REG_CPSR_N);
-            SValuePtr v = operators->readRegister(REG_CPSR_V);
-            SValuePtr z = operators->readRegister(REG_CPSR_Z);
-            SValuePtr nEqV = operators->invert(operators->xor_(n, v));
-            return operators->and_(operators->invert(z), nEqV);
+            SValuePtr n = operators()->readRegister(REG_CPSR_N);
+            SValuePtr v = operators()->readRegister(REG_CPSR_V);
+            SValuePtr z = operators()->readRegister(REG_CPSR_Z);
+            SValuePtr nEqV = operators()->invert(operators()->xor_(n, v));
+            return operators()->and_(operators()->invert(z), nEqV);
         }
         case A64InstructionCondition::ARM64_CC_LE: {    // signed less than or equal: <, ==, or unorderd
             // WARNING: ARM documentation reads "z set, n and v differ", which is not the inverse of the LE description
             // that reads "z clear, n and v the same" regardless of whether one treats the comma as "and" or "or". The correct
             // inverse of "z clear and n == v" is "z set or n != v".
-            SValuePtr n = operators->readRegister(REG_CPSR_N);
-            SValuePtr v = operators->readRegister(REG_CPSR_V);
-            SValuePtr z = operators->readRegister(REG_CPSR_Z);
-            SValuePtr nNeV = operators->xor_(n, v);
-            return operators->or_(z, nNeV);
+            SValuePtr n = operators()->readRegister(REG_CPSR_N);
+            SValuePtr v = operators()->readRegister(REG_CPSR_V);
+            SValuePtr z = operators()->readRegister(REG_CPSR_Z);
+            SValuePtr nNeV = operators()->xor_(n, v);
+            return operators()->or_(z, nNeV);
         }
         case A64InstructionCondition::ARM64_CC_AL:      // always (unconditional): always (unconditional)
         case A64InstructionCondition::ARM64_CC_NV:      // always (unconditional): always (unconditional)
-            return operators->boolean_(true);
+            return operators()->boolean_(true);
     }
     ASSERT_not_reachable("invalid condition");
 }

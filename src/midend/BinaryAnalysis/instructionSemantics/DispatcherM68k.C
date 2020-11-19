@@ -3903,7 +3903,7 @@ DispatcherM68k::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*
         if (re->get_descriptor() == REG_PC) {
             SgAsmInstruction *insn = currentInstruction();
             ASSERT_not_null(insn);
-            return operators->number_(32, insn->get_address() + 2);
+            return operators()->number_(32, insn->get_address() + 2);
         }
     }
     return Dispatcher::read(e, value_nbits, addr_nbits);
@@ -3923,20 +3923,20 @@ DispatcherM68k::updateFpsrExcInan(const SValuePtr &a, SgAsmType *aType, const SV
 
     SValuePtr aIsNan;
     if (SgAsmFloatType *aFpType = isSgAsmFloatType(aType)) {
-        aIsNan = operators->fpIsNan(a, aFpType);
+        aIsNan = operators()->fpIsNan(a, aFpType);
     } else {
-        aIsNan = operators->boolean_(false);
+        aIsNan = operators()->boolean_(false);
     }
 
     SValuePtr bIsNan;
     if (SgAsmFloatType *bFpType = isSgAsmFloatType(bType)) {
-        bIsNan = operators->fpIsNan(b, bFpType);
+        bIsNan = operators()->fpIsNan(b, bFpType);
     } else {
-        bIsNan = operators->boolean_(false);
+        bIsNan = operators()->boolean_(false);
     }
 
-    SValuePtr isNaN = operators->or_(aIsNan, bIsNan);
-    operators->writeRegister(REG_EXC_INAN, isNaN);
+    SValuePtr isNaN = operators()->or_(aIsNan, bIsNan);
+    operators()->writeRegister(REG_EXC_INAN, isNaN);
 }
 
 void
@@ -3951,20 +3951,20 @@ DispatcherM68k::updateFpsrExcIde(const SValuePtr &a, SgAsmType *aType, const SVa
 
     SValuePtr aIsDenorm;
     if (SgAsmFloatType *aFpType = isSgAsmFloatType(aType)) {
-        aIsDenorm = operators->fpIsDenormalized(a, aFpType);
+        aIsDenorm = operators()->fpIsDenormalized(a, aFpType);
     } else {
-        aIsDenorm = operators->boolean_(false);
+        aIsDenorm = operators()->boolean_(false);
     }
 
     SValuePtr bIsDenorm;
     if (SgAsmFloatType *bFpType = isSgAsmFloatType(bType)) {
-        bIsDenorm = operators->fpIsDenormalized(b, bFpType);
+        bIsDenorm = operators()->fpIsDenormalized(b, bFpType);
     } else {
-        bIsDenorm = operators->boolean_(false);
+        bIsDenorm = operators()->boolean_(false);
     }
 
-    SValuePtr isDenorm = operators->or_(aIsDenorm, bIsDenorm);
-    operators->writeRegister(REG_EXC_IDE, isDenorm);
+    SValuePtr isDenorm = operators()->or_(aIsDenorm, bIsDenorm);
+    operators()->writeRegister(REG_EXC_IDE, isDenorm);
 }
 
 void
@@ -3979,22 +3979,22 @@ DispatcherM68k::updateFpsrExcOvfl(const SValuePtr &value, SgAsmType *valueType, 
     SgAsmFloatType *dstFpType = isSgAsmFloatType(dstType);
 
     if (!valueFpType || !roundingFpType || !dstFpType) {
-        operators->writeRegister(REG_EXC_OVFL, operators->boolean_(false));
+        operators()->writeRegister(REG_EXC_OVFL, operators()->boolean_(false));
         return;
     }
 
     size_t nBits = std::max(valueFpType->exponentBits().size(), roundingFpType->exponentBits().size());
 
-    SValuePtr valueBias = operators->number_(nBits, valueFpType->exponentBias());
-    SValuePtr valueExp = operators->extract(value, valueFpType->exponentBits().least(), valueFpType->exponentBits().greatest()+1);
-    valueExp = operators->subtract(operators->unsignedExtend(valueExp, nBits), valueBias);
+    SValuePtr valueBias = operators()->number_(nBits, valueFpType->exponentBias());
+    SValuePtr valueExp = operators()->extract(value, valueFpType->exponentBits().least(), valueFpType->exponentBits().greatest()+1);
+    valueExp = operators()->subtract(operators()->unsignedExtend(valueExp, nBits), valueBias);
 
     SValuePtr roundingExp =
-        operators->number_(nBits,
+        operators()->number_(nBits,
                            IntegerOps::genMask<uint64_t>(roundingFpType->exponentBits().size()) - roundingFpType->exponentBias());
 
-    SValuePtr isOverflow = operators->isUnsignedGreaterThanOrEqual(valueExp, roundingExp);
-    operators->writeRegister(REG_EXC_OVFL, isOverflow);
+    SValuePtr isOverflow = operators()->isUnsignedGreaterThanOrEqual(valueExp, roundingExp);
+    operators()->writeRegister(REG_EXC_OVFL, isOverflow);
 }
 
 void
@@ -4009,53 +4009,53 @@ DispatcherM68k::updateFpsrExcUnfl(const SValuePtr &value, SgAsmType *valueType, 
     SgAsmFloatType *dstFpType = isSgAsmFloatType(dstType);
 
     if (!valueFpType || !roundingFpType || !dstFpType) {
-        operators->writeRegister(REG_EXC_UNFL, operators->boolean_(false));
+        operators()->writeRegister(REG_EXC_UNFL, operators()->boolean_(false));
         return;
     }
 
     size_t nBits = std::max(valueFpType->exponentBits().size(), roundingFpType->exponentBits().size());
 
-    SValuePtr valueBias = operators->number_(nBits, valueFpType->exponentBias());
-    SValuePtr valueExp = operators->extract(value, valueFpType->exponentBits().least(), valueFpType->exponentBits().greatest()+1);
-    valueExp = operators->subtract(operators->unsignedExtend(valueExp, nBits), valueBias);
+    SValuePtr valueBias = operators()->number_(nBits, valueFpType->exponentBias());
+    SValuePtr valueExp = operators()->extract(value, valueFpType->exponentBits().least(), valueFpType->exponentBits().greatest()+1);
+    valueExp = operators()->subtract(operators()->unsignedExtend(valueExp, nBits), valueBias);
 
     // Minimum exponent field is "1", therefore minimum exponent value is "1 - bias"
-    SValuePtr one = operators->number_(nBits, 1);
-    SValuePtr roundingBias = operators->number_(nBits, roundingFpType->exponentBias());
-    SValuePtr roundingExp = operators->subtract(one, roundingBias);
+    SValuePtr one = operators()->number_(nBits, 1);
+    SValuePtr roundingBias = operators()->number_(nBits, roundingFpType->exponentBias());
+    SValuePtr roundingExp = operators()->subtract(one, roundingBias);
     
-    SValuePtr isUnderflow = operators->isSignedLessThanOrEqual(valueExp, roundingExp);
-    operators->writeRegister(REG_EXC_UNFL, isUnderflow);
+    SValuePtr isUnderflow = operators()->isSignedLessThanOrEqual(valueExp, roundingExp);
+    operators()->writeRegister(REG_EXC_UNFL, isUnderflow);
 }
 
 void
 DispatcherM68k::updateFpsrExcInex() {
     // FIXME[Robb Matzke 2020-01-03]
-    operators->writeRegister(REG_EXC_INEX, operators->undefined_(1));
+    operators()->writeRegister(REG_EXC_INEX, operators()->undefined_(1));
 }
 
 void
 DispatcherM68k::accumulateFpExceptions() {
-    SValuePtr exc_ovfl = operators->readRegister(REG_EXC_OVFL);
-    operators->writeRegister(REG_AEXC_OVFL, operators->or_(operators->readRegister(REG_AEXC_OVFL), exc_ovfl));
-    SValuePtr exc_dz = operators->readRegister(REG_EXC_DZ);
-    operators->writeRegister(REG_AEXC_DZ, operators->or_(operators->readRegister(REG_AEXC_DZ), exc_dz));
-    SValuePtr exc_inex = operators->readRegister(REG_EXC_INEX);
-    operators->writeRegister(REG_AEXC_INEX, operators->or_(operators->readRegister(REG_AEXC_INEX), exc_inex));
-    SValuePtr exc_operr = operators->readRegister(REG_EXC_OPERR);
-    SValuePtr v1 = operators->or_(operators->readRegister(REG_EXC_INAN), exc_operr);
-    SValuePtr v2 = operators->or_(operators->readRegister(REG_EXC_BSUN), v1);
-    operators->writeRegister(REG_AEXC_IOP, operators->or_(operators->readRegister(REG_AEXC_IOP), v2));
-    SValuePtr v3 = operators->or_(operators->readRegister(REG_EXC_UNFL), exc_inex);
-    operators->writeRegister(REG_AEXC_UNFL, operators->or_(operators->readRegister(REG_AEXC_UNFL), v3));
+    SValuePtr exc_ovfl = operators()->readRegister(REG_EXC_OVFL);
+    operators()->writeRegister(REG_AEXC_OVFL, operators()->or_(operators()->readRegister(REG_AEXC_OVFL), exc_ovfl));
+    SValuePtr exc_dz = operators()->readRegister(REG_EXC_DZ);
+    operators()->writeRegister(REG_AEXC_DZ, operators()->or_(operators()->readRegister(REG_AEXC_DZ), exc_dz));
+    SValuePtr exc_inex = operators()->readRegister(REG_EXC_INEX);
+    operators()->writeRegister(REG_AEXC_INEX, operators()->or_(operators()->readRegister(REG_AEXC_INEX), exc_inex));
+    SValuePtr exc_operr = operators()->readRegister(REG_EXC_OPERR);
+    SValuePtr v1 = operators()->or_(operators()->readRegister(REG_EXC_INAN), exc_operr);
+    SValuePtr v2 = operators()->or_(operators()->readRegister(REG_EXC_BSUN), v1);
+    operators()->writeRegister(REG_AEXC_IOP, operators()->or_(operators()->readRegister(REG_AEXC_IOP), v2));
+    SValuePtr v3 = operators()->or_(operators()->readRegister(REG_EXC_UNFL), exc_inex);
+    operators()->writeRegister(REG_AEXC_UNFL, operators()->or_(operators()->readRegister(REG_AEXC_UNFL), v3));
 }
 
 void
 DispatcherM68k::adjustFpConditionCodes(const SValuePtr &result, SgAsmFloatType *fpType) {
-    operators->writeRegister(REG_FPCC_NAN, operators->fpIsNan(result, fpType));
-    operators->writeRegister(REG_FPCC_I, operators->fpIsInfinity(result, fpType));
-    operators->writeRegister(REG_FPCC_Z, operators->fpIsZero(result, fpType));
-    operators->writeRegister(REG_FPCC_N, operators->fpSign(result, fpType));
+    operators()->writeRegister(REG_FPCC_NAN, operators()->fpIsNan(result, fpType));
+    operators()->writeRegister(REG_FPCC_I, operators()->fpIsInfinity(result, fpType));
+    operators()->writeRegister(REG_FPCC_Z, operators()->fpIsZero(result, fpType));
+    operators()->writeRegister(REG_FPCC_N, operators()->fpSign(result, fpType));
 }
 
 } // namespace
