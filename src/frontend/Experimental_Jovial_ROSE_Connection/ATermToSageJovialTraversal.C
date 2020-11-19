@@ -5665,7 +5665,7 @@ ATbool ATermToSageJovialTraversal::traverse_NumericFormula(ATerm term, SgExpress
    printf("... traverse_NumericFormula: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_sign, t_expr, t_lhs, t_op, t_rhs;
+   ATerm t_sign, t_expr, t_lhs, t_op, t_rhs, t_amb;
 
    // OptSign NumericTerm -> NumericFormula
    //
@@ -5711,6 +5711,20 @@ ATbool ATermToSageJovialTraversal::traverse_NumericFormula(ATerm term, SgExpress
          setSourcePosition(expr, term);
       } else return ATfalse;
    }
+
+#if CHECK_AMB
+   else if (ATmatch(term, "amb(<term>)", &t_amb)) {
+#if PRINT_AMB_WARNINGS
+      cerr << "WARNING AMBIGUITY: NumericFormula \n";
+#endif
+      ATermList tail = (ATermList) ATmake("<term>", t_amb);
+      ATerm head = ATgetFirst(tail);
+
+      // try first amb path
+      return traverse_NumericFormula(head, expr);
+   }
+#endif
+
    else return ATfalse;
 
    return ATtrue;
