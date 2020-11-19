@@ -202,7 +202,7 @@ BasicBlock::append(const Partitioner &partitioner, SgAsmInstruction *insn) {
 
     // Process the instruction to create a new state
     semantics_.optionalPenultimateState = semantics_.usingDispatcher ?
-                                              semantics_.dispatcher->get_operators()->currentState()->clone() :
+                                              semantics_.dispatcher->operators()->currentState()->clone() :
                                               BaseSemantics::StatePtr();
     if (semantics_.usingDispatcher) {
         try {
@@ -233,7 +233,7 @@ BasicBlock::pop() {
         // If we didn't save a previous state it means that we didn't call processInstruction during the append, and therefore
         // we don't need to update the dispatcher (it's already out of date anyway).  Otherwise the dispatcher state needs to
         // be re-initialized by transferring ownership of the previous state into the partitioner.
-        semantics_.dispatcher->get_operators()->currentState(ps);
+        semantics_.dispatcher->operators()->currentState(ps);
         semantics_.optionalPenultimateState = Sawyer::Nothing();
     }
     clearCacheNS();

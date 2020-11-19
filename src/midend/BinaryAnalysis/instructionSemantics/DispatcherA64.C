@@ -32,7 +32,7 @@ public:
 
     virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) ROSE_OVERRIDE {
         DispatcherA64Ptr dispatcher = DispatcherA64::promote(dispatcher_);
-        BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
+        BaseSemantics::RiscOperatorsPtr operators = dispatcher->operators();
         SgAsmA64Instruction *insn = isSgAsmA64Instruction(insn_);
         ASSERT_not_null(insn);
         ASSERT_require(insn == operators->currentInstruction());

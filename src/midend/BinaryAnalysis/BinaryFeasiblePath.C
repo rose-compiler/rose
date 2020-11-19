@@ -939,7 +939,7 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
     BaseSemantics::StatePtr state = cpu->currentState()->clone();
     state->clear();
     cpu->initializeState(state);
-    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
     ops->currentState(state);
 
     // Start of path is always feasible.
@@ -977,7 +977,7 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
     SAWYER_MESG(debug) <<"      processing basic block " <<bblock->printableName() <<"\n";
 
     // Update the path constraint "register"
-    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
     const RegisterDescriptor IP = cpu->instructionPointerRegister();
     BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.nBits()));
     BaseSemantics::SValuePtr va = ops->number_(ip->get_width(), bblock->address());
@@ -1039,7 +1039,7 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
     const FunctionSummary &summary = functionSummaries_[pathsVertex->value().address()];
     SAWYER_MESG(debug) <<"      processing function summary " <<summary.name <<"\n";
 
-    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
     if (pathInsnIndex != size_t(-1))
         ops->pathInsnIndex(pathInsnIndex);
 
@@ -1134,9 +1134,9 @@ FeasiblePath::processVertex(const BaseSemantics::DispatcherPtr &cpu,
         default:
             mlog[ERROR] <<"cannot comput path feasibility; invalid vertex type at "
                         <<P2::Partitioner::vertexName(*pathsVertex) <<"\n";
-            cpu->get_operators()->writeRegister(cpu->instructionPointerRegister(),
-                                                cpu->get_operators()->number_(cpu->instructionPointerRegister().nBits(),
-                                                                              0x911 /*arbitrary, unlikely to be satisfied*/));
+            cpu->operators()->writeRegister(cpu->instructionPointerRegister(),
+                                            cpu->operators()->number_(cpu->instructionPointerRegister().nBits(),
+                                                                      0x911 /*arbitrary, unlikely to be satisfied*/));
             ++pathInsnIndex;
     }
 }
@@ -1193,7 +1193,7 @@ FeasiblePath::printPath(std::ostream &out, const P2::CfgPath &path) const {
 SymbolicExpr::Ptr
 FeasiblePath::pathEdgeConstraint(const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, BaseSemantics::DispatcherPtr &cpu) {
     ASSERT_not_null(cpu);
-    BaseSemantics::RiscOperatorsPtr ops = cpu->get_operators();
+    BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
     static const char *prefix = "      ";
 
     const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
@@ -1753,7 +1753,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
         BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner(), &path, &pathProcessor, solver);
         ASSERT_not_null(cpu);
         setInitialState(cpu, pathsBeginVertex);
-        RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+        RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
         ASSERT_not_null(ops);
         BaseSemantics::StatePtr originalState = ops->currentState();
         ASSERT_not_null(originalState);
@@ -1907,7 +1907,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 if (settings().processFinalVertex) {
                     SAWYER_MESG(debug) <<"    reached end of path; processing final path vertex\n";
                     BaseSemantics::StatePtr saved = cpu->currentState();
-                    cpu->get_operators()->currentState(saved->clone());
+                    cpu->operators()->currentState(saved->clone());
                     processVertex(cpu, path.backVertex(), pathInsnIndex /*in,out*/);
                 }
 
@@ -1979,19 +1979,19 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                             // value, the target address of the call, if possible.  Be careful not to mess up the state that's
                             // already been saved as the incoming state to this block.
                             SmtSolver::Transaction tx(solver);
-                            BaseSemantics::StatePtr savedState = cpu->get_operators()->currentState();
+                            BaseSemantics::StatePtr savedState = cpu->operators()->currentState();
                             BaseSemantics::StatePtr tmpState = savedState->clone();
-                            cpu->get_operators()->currentState(tmpState);
+                            cpu->operators()->currentState(tmpState);
                             BaseSemantics::SValuePtr ip;
                             try {
                                 BOOST_FOREACH (SgAsmInstruction *insn, cfgBackVertex->value().bblock()->instructions())
                                     cpu->processInstruction(insn);
                                 ip = cpu->currentState()->peekRegister(IP, cpu->undefined_(IP.nBits()),
-                                                                       cpu->get_operators().get());
+                                                                       cpu->operators().get());
                             } catch (const BaseSemantics::Exception &e) {
                                 mlog[ERROR] <<"semantics failed when trying to determine call target address: " <<e <<"\n";
                             }
-                            cpu->get_operators()->currentState(savedState);
+                            cpu->operators()->currentState(savedState);
 
                             // If the IP is concrete, then we found the target of the indirect call and can inline it.
                             if (ip && ip->is_number() && ip->get_width() <= 64) {

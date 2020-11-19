@@ -104,7 +104,7 @@ RSIM_Thread::tracing(TracingFacility tf)
 RSIM_Semantics::RiscOperatorsPtr
 RSIM_Thread::operators() const
 {
-    BaseSemantics::RiscOperatorsPtr baseOps = dispatcher_->get_operators();
+    BaseSemantics::RiscOperatorsPtr baseOps = dispatcher_->operators();
 
     // This is the usual case, so keep it here to be fast.
     if (RSIM_Semantics::RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RSIM_Semantics::RiscOperators>(baseOps))

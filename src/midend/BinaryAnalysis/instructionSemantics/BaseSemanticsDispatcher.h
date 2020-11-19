@@ -135,8 +135,8 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Convenience methods that defer the call to some member object
 public:
-    // Deprecated [Robb Matzke 2020-11-19]: use 'operators' instead
-    virtual RiscOperatorsPtr get_operators() const { return operators_; }
+    // Deprecated [Robb Matzke 2020-11-19]
+    virtual RiscOperatorsPtr get_operators() const ROSE_DEPRECATED("use \"operators\" instead") { return operators_; }
 
     /** Property: RISC operators.
      *
@@ -144,7 +144,7 @@ public:
      *
      * @{ */
     virtual RiscOperatorsPtr operators() const { return operators_; }
-    void operators(const RiscOperatorsPtr &ops) { operators_ = ops; }
+    virtual void operators(const RiscOperatorsPtr &ops);
     /** @} */
 
     /** Get a pointer to the state object. The state is stored in the RISC operators object, so this is just here for

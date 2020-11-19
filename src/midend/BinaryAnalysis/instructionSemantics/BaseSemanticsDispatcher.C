@@ -12,6 +12,12 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
+void
+Dispatcher::operators(const RiscOperatorsPtr &ops) {
+    ASSERT_not_null(ops);
+    operators_ = ops;
+}
+
 StatePtr
 Dispatcher::currentState() const {
     return operators() ? operators()->currentState() : StatePtr();
@@ -201,8 +207,8 @@ Dispatcher::preUpdate(SgAsmExpression *e) {
                 ASSERT_not_null(rre);
                 BaseSemantics::SValuePtr lhs = self->effectiveAddress(op->get_lhs(), rre->get_descriptor().nBits());
                 BaseSemantics::SValuePtr rhs = self->effectiveAddress(op->get_rhs(), rre->get_descriptor().nBits());
-                BaseSemantics::SValuePtr sum = self->get_operators()->add(lhs, rhs);
-                self->get_operators()->writeRegister(rre->get_descriptor(), sum);
+                BaseSemantics::SValuePtr sum = self->operators()->add(lhs, rhs);
+                self->operators()->writeRegister(rre->get_descriptor(), sum);
             }
         }
     } t1(this);
@@ -221,8 +227,8 @@ Dispatcher::postUpdate(SgAsmExpression *e) {
                 ASSERT_not_null(rre);
                 BaseSemantics::SValuePtr lhs = self->effectiveAddress(op->get_lhs(), rre->get_descriptor().nBits());
                 BaseSemantics::SValuePtr rhs = self->effectiveAddress(op->get_rhs(), rre->get_descriptor().nBits());
-                BaseSemantics::SValuePtr sum = self->get_operators()->add(lhs, rhs);
-                self->get_operators()->writeRegister(rre->get_descriptor(), sum);
+                BaseSemantics::SValuePtr sum = self->operators()->add(lhs, rhs);
+                self->operators()->writeRegister(rre->get_descriptor(), sum);
             }
         }
     } t1(this);

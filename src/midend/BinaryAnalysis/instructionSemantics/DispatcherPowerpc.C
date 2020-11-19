@@ -45,7 +45,7 @@ public:
 
     virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) ROSE_OVERRIDE {
         DispatcherPowerpcPtr dispatcher = DispatcherPowerpc::promote(dispatcher_);
-        BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
+        BaseSemantics::RiscOperatorsPtr operators = dispatcher->operators();
         SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
         ASSERT_require(insn!=NULL && insn==operators->currentInstruction());
         dispatcher->advanceInstructionPointer(insn);

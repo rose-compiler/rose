@@ -535,7 +535,7 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
 // Construct a new state from scratch
 BaseSemantics::StatePtr
 TransferFunction::initialState() const {
-    BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
+    BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
     BaseSemantics::StatePtr newState = ops->currentState()->clone();
     newState->clear();
     ASSERT_not_null(cpu_);
@@ -555,7 +555,7 @@ TransferFunction::initialState() const {
 // Required by dataflow engine: compute new output state given a vertex and input state.
 BaseSemantics::StatePtr
 TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const {
-    BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
+    BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
     BaseSemantics::StatePtr retval = incomingState->clone();
     const RegisterDictionary *regDict = cpu_->get_register_dictionary();
     ops->currentState(retval);

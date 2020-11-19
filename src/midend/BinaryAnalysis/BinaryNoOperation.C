@@ -46,7 +46,7 @@ NoOperation::StateNormalizer::initialState(const BaseSemantics::DispatcherPtr &c
     cpu->initializeState(state);
 
     RegisterDescriptor IP = cpu->instructionPointerRegister();
-    state->writeRegister(IP, cpu->number_(IP.nBits(), insn->get_address()), cpu->get_operators().get());
+    state->writeRegister(IP, cpu->number_(IP.nBits(), insn->get_address()), cpu->operators().get());
 
     return state;
 }
@@ -83,7 +83,7 @@ public:
 std::string
 NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, const BaseSemantics::StatePtr &state_) {
     BaseSemantics::StatePtr state = state_;
-    BaseSemantics::RiscOperatorsPtr ops = cpu->get_operators();
+    BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
     if (!state)
         return "";
     bool isCloned = false;                              // do we have our own copy of the state?
@@ -169,13 +169,13 @@ NoOperation::initialState(SgAsmInstruction *insn) const {
         state = cpu_->currentState()->clone();
         state->clear();
         RegisterDescriptor IP = cpu_->instructionPointerRegister();
-        state->writeRegister(IP, cpu_->number_(IP.nBits(), insn->get_address()), cpu_->get_operators().get());
+        state->writeRegister(IP, cpu_->number_(IP.nBits(), insn->get_address()), cpu_->operators().get());
     }
 
     // Set the stack pointer to a concrete value
     if (initialSp_) {
         const RegisterDescriptor regSp = cpu_->stackPointerRegister();
-        BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
+        BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
         state->writeRegister(regSp, ops->number_(regSp.nBits(), *initialSp_), ops.get());
     }
 
@@ -198,7 +198,7 @@ NoOperation::isNoop(const std::vector<SgAsmInstruction*> &insns) const {
     if (insns.empty())
         return true;
 
-    cpu_->get_operators()->currentState(initialState(insns.front()));
+    cpu_->operators()->currentState(initialState(insns.front()));
     std::string startState = normalizeState(cpu_->currentState());
     try {
         BOOST_FOREACH (SgAsmInstruction *insn, insns)
@@ -235,11 +235,11 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
     // for now. FIXME[Robb P. Matzke 2015-05-11]
     std::vector<std::string> states;
     bool hadError = false;
-    cpu_->get_operators()->currentState(initialState(insns.front()));
+    cpu_->operators()->currentState(initialState(insns.front()));
     const RegisterDescriptor regIP = cpu_->instructionPointerRegister();
     try {
         BOOST_FOREACH (SgAsmInstruction *insn, insns) {
-            cpu_->get_operators()->writeRegister(regIP, cpu_->get_operators()->number_(regIP.nBits(), insn->get_address()));
+            cpu_->operators()->writeRegister(regIP, cpu_->operators()->number_(regIP.nBits(), insn->get_address()));
             states.push_back(normalizeState(cpu_->currentState()));
             if (debug) {
                 debug <<"  normalized state #" <<states.size()-1 <<":\n" <<StringUtility::prefixLines(states.back(), "    ");
