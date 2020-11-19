@@ -177,6 +177,7 @@ namespace
     {
         case A_Declaration:             // Asis.Declarations
         {
+          logKind("A_Declaration");
           handleDeclaration(elem, ctx, isPrivate);
           break;
         }
@@ -184,6 +185,7 @@ namespace
       case A_Clause:                  // Asis.Clauses
         {
           // currently only handles with clauses
+          logKind("A_Clause");
           handleClause(elem, ctx);
           break;
         }
@@ -218,14 +220,8 @@ namespace
 
       case A_Definition:              // Asis.Definitions
         {
-          // records (one of many definitions) are handled by getRecordBody
-          Definition_Struct& def = elem.The_Union.Definition;
-
-          logWarn() << "Unhandled element " << elem.Element_Kind
-                    << "\n  definition kind: " << def.Definition_Kind
-                    << std::endl;
-
-          ROSE_ASSERT(false && !FAIL_ON_ERROR);
+          logKind("A_Definition");
+          handleDefinition(elem, ctx);
           break;
         }
 

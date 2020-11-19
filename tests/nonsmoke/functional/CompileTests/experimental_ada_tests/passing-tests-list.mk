@@ -57,4 +57,5 @@ PASSING_TESTS :=                       \
   simpleada.ads                        \
   simpleada-io.ads                     \
   simple_hello_world.adb               \
+  nullrecord.ads                       \
   EndOfList
