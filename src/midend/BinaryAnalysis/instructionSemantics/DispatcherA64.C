@@ -2069,58 +2069,67 @@ DispatcherA64::updateNZCV(const SValuePtr &sum, const SValuePtr &carries) {
 
 SValuePtr
 DispatcherA64::conditionHolds(A64InstructionCondition cond) {
+    // WARNING: ARM documentation is inconsistent and sometimes wrong when it describes how these flags are set.
     switch (cond) {
         case A64InstructionCondition::ARM64_CC_INVALID: // occurs for "B" instruction
             return operators->boolean_(true);
-        case A64InstructionCondition::ARM64_CC_EQ:      // equal
+        case A64InstructionCondition::ARM64_CC_EQ:      // equal (z set)
             return operators->readRegister(REG_CPSR_Z);
-        case A64InstructionCondition::ARM64_CC_NE:      // not equal: not equal, or unordered
+        case A64InstructionCondition::ARM64_CC_NE:      // not equal: not equal, or unordered (z clear)
             return operators->invert(operators->readRegister(REG_CPSR_Z));
-        case A64InstructionCondition::ARM64_CC_HS:      // unsigned higher or same: >, ==, or unordered
+        case A64InstructionCondition::ARM64_CC_HS:      // unsigned higher or same: >, ==, or unordered (c set)
             return operators->readRegister(REG_CPSR_C);
-        case A64InstructionCondition::ARM64_CC_LO:      // unsigned lower or same: less than
+        case A64InstructionCondition::ARM64_CC_LO:      // unsigned lower or same: less than (c clear)
             return operators->invert(operators->readRegister(REG_CPSR_C));
-        case A64InstructionCondition::ARM64_CC_MI:      // minus, negative: less than
+        case A64InstructionCondition::ARM64_CC_MI:      // minus, negative: less than (n set)
             return operators->readRegister(REG_CPSR_N);
-        case A64InstructionCondition::ARM64_CC_PL:      // plus, positive or zero: >, ==, or unordered
+        case A64InstructionCondition::ARM64_CC_PL:      // plus, positive or zero: >, ==, or unordered (n clear)
             return operators->invert(operators->readRegister(REG_CPSR_N));
-        case A64InstructionCondition::ARM64_CC_VS:      // overflow: unordered
+        case A64InstructionCondition::ARM64_CC_VS:      // overflow: unordered (v set)
             return operators->readRegister(REG_CPSR_V);
-        case A64InstructionCondition::ARM64_CC_VC:      // no overflow: ordered
+        case A64InstructionCondition::ARM64_CC_VC:      // no overflow: ordered (v clear)
             return operators->invert(operators->readRegister(REG_CPSR_V));
         case A64InstructionCondition::ARM64_CC_HI: {    // unsigned higher: greater than, or unordered
+            // WARNING: The ARM definition reads "c set and z clear", but see LS below.
             SValuePtr c = operators->readRegister(REG_CPSR_C);
             SValuePtr z = operators->readRegister(REG_CPSR_Z);
             return operators->and_(c, operators->invert(z));
         }
         case A64InstructionCondition::ARM64_CC_LS: {    // unsigned lower or same: less than or equal
+            // WARNING: The ARM definition, which reads "c clear and z set" is not the inverse of the description for HI which
+            // reads "c set and z clear", although it should be since HI and LS are inverses. The inverse of HI would be
+            // "c clear or z set".
             SValuePtr c = operators->readRegister(REG_CPSR_C);
             SValuePtr z = operators->readRegister(REG_CPSR_Z);
-            return operators->invert(operators->and_(c, operators->invert(z)));
+            return operators->and_(operators->invert(c), z);
         }
-        case A64InstructionCondition::ARM64_CC_GE: {    // greater than or equal: greater than or equal
+        case A64InstructionCondition::ARM64_CC_GE: {    // greater than or equal: greater than or equal (n == v)
             SValuePtr n = operators->readRegister(REG_CPSR_N);
             SValuePtr v = operators->readRegister(REG_CPSR_V);
             return operators->invert(operators->xor_(n, v));
         }
-        case A64InstructionCondition::ARM64_CC_LT: {    // less than: less than, or unordered
+        case A64InstructionCondition::ARM64_CC_LT: {    // less than: less than, or unordered (n != v)
             SValuePtr n = operators->readRegister(REG_CPSR_N);
             SValuePtr v = operators->readRegister(REG_CPSR_V);
             return operators->xor_(n, v);
         }
         case A64InstructionCondition::ARM64_CC_GT: {    // signed greater than: greater than
+            // WARNING: ARM documentation sometimes says "z clear, n and v the same", but see LE below.
             SValuePtr n = operators->readRegister(REG_CPSR_N);
             SValuePtr v = operators->readRegister(REG_CPSR_V);
             SValuePtr z = operators->readRegister(REG_CPSR_Z);
             SValuePtr nEqV = operators->invert(operators->xor_(n, v));
-            return operators->and_(nEqV, z);
+            return operators->and_(operators->invert(z), nEqV);
         }
         case A64InstructionCondition::ARM64_CC_LE: {    // signed less than or equal: <, ==, or unorderd
+            // WARNING: ARM documentation reads "z set, n and v differ", which is not the inverse of the LE description
+            // that reads "z clear, n and v the same" regardless of whether one treats the comma as "and" or "or". The correct
+            // inverse of "z clear and n == v" is "z set or n != v".
             SValuePtr n = operators->readRegister(REG_CPSR_N);
             SValuePtr v = operators->readRegister(REG_CPSR_V);
             SValuePtr z = operators->readRegister(REG_CPSR_Z);
-            SValuePtr nEqV = operators->invert(operators->xor_(n, v));
-            return operators->invert(operators->and_(nEqV, z));
+            SValuePtr nNeV = operators->xor_(n, v);
+            return operators->or_(z, nNeV);
         }
         case A64InstructionCondition::ARM64_CC_AL:      // always (unconditional): always (unconditional)
         case A64InstructionCondition::ARM64_CC_NV:      // always (unconditional): always (unconditional)
