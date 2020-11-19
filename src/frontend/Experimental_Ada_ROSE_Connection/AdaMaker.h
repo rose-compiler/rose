@@ -194,8 +194,12 @@ namespace Ada_ROSE_Translation
   mkLabelStmt(const std::string& label, SgStatement& stmt, SgScopeStatement& encl);
 
   /// creates an Ada NULL statement (represented in code)
-  SgStatement&
+  SgNullStatement&
   mkNullStmt();
+
+  /// creates an Ada NULL declaration (represented in code)
+  SgEmptyDeclaration&
+  mkNullDecl(SgScopeStatement& scope);
 
   /// creates an Ada Try block
   /// \note in Rose this is represented by a try statement that contains a block
