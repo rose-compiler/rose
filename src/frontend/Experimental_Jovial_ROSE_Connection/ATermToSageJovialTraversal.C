@@ -5889,7 +5889,7 @@ ATbool ATermToSageJovialTraversal::traverse_NumericTerm(ATerm term, SgExpression
    printf("... traverse_NumericTerm: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_lhs, t_op, t_rhs;
+   ATerm t_lhs, t_op, t_rhs, t_amb;
    SgExpression *lhs = nullptr, *rhs = nullptr;
 
    if (ATmatch(term, "NumericTerm(<term>,<term>,<term>)", &t_lhs, &t_op, &t_rhs)) {
@@ -5920,6 +5920,20 @@ ATbool ATermToSageJovialTraversal::traverse_NumericTerm(ATerm term, SgExpression
    else if (traverse_NumericFactor(term, expr)) {
          // MATCHED NumericFactor
    }
+
+#if CHECK_AMB
+   else if (ATmatch(term, "amb(<term>)", &t_amb)) {
+#if PRINT_AMB_WARNINGS
+      cerr << "WARNING AMBIGUITY: NumericTerm \n";
+#endif
+      ATermList tail = (ATermList) ATmake("<term>", t_amb);
+      ATerm head = ATgetFirst(tail);
+
+      // try first amb path
+      return traverse_NumericTerm(head, expr);
+   }
+#endif
+
    else return ATfalse;
 
    return ATtrue;
