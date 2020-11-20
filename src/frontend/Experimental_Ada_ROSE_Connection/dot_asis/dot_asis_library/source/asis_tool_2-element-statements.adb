@@ -415,9 +415,8 @@ package body Asis_Tool_2.Element.Statements is
          when A_Return_Statement =>
             Add_Return_Expression;
 
-         when An_Extended_Return_Statement =>
-            --Added in Ada 2005, Skip
-            State.Add_Not_Implemented;
+         when An_Extended_Return_Statement => -- A2005
+            State.Add_Not_Implemented (Ada_2005);
 
          when An_Accept_Statement =>
             --I think this works, but it cannot be tested until task declaration work

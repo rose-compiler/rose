@@ -261,7 +261,7 @@ package a_nodes_h.Support is
       Private_Part_Items => Empty_Element_ID_List,
       Is_Private_Present => Invalid_bool);
 
-   Defult_Formal_Type_Definition_Struct :
+   Default_Formal_Type_Definition_Struct :
    constant Formal_Type_Definition_Struct :=
      (Formal_Type_Kind                => Not_A_Formal_Type_Definition,
       Corresponding_Type_Operators    => Empty_Element_ID_List,
@@ -507,6 +507,10 @@ package a_nodes_h.Support is
       Elements => null);
 
    -- Order below is alphabetical:
+   function To_Access_Type_Kinds is new Unchecked_Conversion
+     (Source => Asis.Access_Type_Kinds,
+      Target => a_nodes_h.Access_Type_Kinds);
+
    function To_Association_Kinds is new Unchecked_Conversion
      (Source => Asis.Association_Kinds,
       Target => a_nodes_h.Association_Kinds);
@@ -539,6 +543,10 @@ package a_nodes_h.Support is
      (Source => Asis.Definition_Kinds,
       Target => a_nodes_h.Definition_Kinds);
 
+   function To_Discrete_Range_Kinds is new Unchecked_Conversion
+     (Source => Asis.Discrete_Range_Kinds,
+      Target => a_nodes_h.Discrete_Range_Kinds);
+
    function To_Element_Kinds is new Unchecked_Conversion
      (Source => Asis.Element_Kinds,
       Target => a_nodes_h.Element_Kinds);
@@ -546,6 +554,10 @@ package a_nodes_h.Support is
    function To_Expression_Kinds is new Unchecked_Conversion
      (Source => Asis.Expression_Kinds,
       Target => a_nodes_h.Expression_Kinds);
+
+   function To_Formal_Type_Kinds is new Unchecked_Conversion
+     (Source => Asis.Formal_Type_Kinds,
+      Target => a_nodes_h.Formal_Type_Kinds);
 
    function To_Mode_Kinds is new Unchecked_Conversion
      (Source => Asis.Mode_Kinds,
@@ -562,6 +574,10 @@ package a_nodes_h.Support is
    function To_Pragma_Kinds is new Unchecked_Conversion
      (Source => Asis.Pragma_Kinds,
       Target => a_nodes_h.Pragma_Kinds);
+
+   function To_Root_Type_Kinds is new Unchecked_Conversion
+     (Source => Asis.Root_Type_Kinds,
+      Target => a_nodes_h.Root_Type_Kinds);
 
    function To_Statement_Kinds is new Unchecked_Conversion
      (Source => Asis.Statement_Kinds,

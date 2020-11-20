@@ -185,7 +185,7 @@ package body Asis_Tool_2.Element.Expressions is
          when Not_An_Expression =>
             raise Program_Error with
             Module_Name & " called with: " & Expression_Kind'Image;
-         when A_Box_Expression =>
+         when A_Box_Expression => -- A2005
             -- No more info:
             null;
          when An_Integer_Literal =>
@@ -257,14 +257,14 @@ package body Asis_Tool_2.Element.Expressions is
             -- Short_Circuit_Operation_Left_Expression
             -- Short_Circuit_Operation_Right_Expression
             State.Add_Not_Implemented;
-         when An_In_Membership_Test =>
+         when An_In_Membership_Test => -- A2012
             -- Membership_Test_Expression
             -- Membership_Test_Choices
-            State.Add_Not_Implemented;
-         when A_Not_In_Membership_Test =>
+            State.Add_Not_Implemented (Ada_2012);
+         when A_Not_In_Membership_Test => -- A2012
             -- Membership_Test_Expression
             -- Membership_Test_Choices
-            State.Add_Not_Implemented;
+            State.Add_Not_Implemented (Ada_2012);
          when A_Null_Literal =>
             -- No more information:
             null;
@@ -272,17 +272,15 @@ package body Asis_Tool_2.Element.Expressions is
          when A_Parenthesized_Expression =>
             -- Expression_Parenthesized
             State.Add_Not_Implemented;
-         when A_Raise_Expression =>
+         when A_Raise_Expression => -- A2012
             -- No information
-            State.Add_Not_Implemented;
+            State.Add_Not_Implemented (Ada_2012);
          when A_Type_Conversion =>
             Add_Converted_Or_Qualified_Subtype_Mark;
             Add_Converted_Or_Qualified_Expression;
          when A_Qualified_Expression =>
-            -- DQ (10/19/2020): Implemented this!
             Add_Converted_Or_Qualified_Subtype_Mark;
             Add_Converted_Or_Qualified_Expression;
-            -- State.Add_Not_Implemented;
          when An_Allocation_From_Subtype =>
             -- Allocator_Subtype_Indication
             Add_Subpool_Name;
@@ -291,20 +289,20 @@ package body Asis_Tool_2.Element.Expressions is
             -- Allocator_Qualified_Expression
             Add_Subpool_Name;
             State.Add_Not_Implemented;
-         when A_Case_Expression =>
+         when A_Case_Expression => -- A2012
             -- Expression_Paths
-            State.Add_Not_Implemented;
-         when An_If_Expression =>
+            State.Add_Not_Implemented (Ada_2012);
+         when An_If_Expression => -- A2012
             -- Expression_Paths
-            State.Add_Not_Implemented;
-         when A_For_All_Quantified_Expression =>
+            State.Add_Not_Implemented (Ada_2012);
+         when A_For_All_Quantified_Expression => -- A2012
             -- Iterator_Specification
             -- Predicate
-            State.Add_Not_Implemented;
-         when A_For_Some_Quantified_Expression =>
+            State.Add_Not_Implemented (Ada_2012);
+         when A_For_Some_Quantified_Expression => -- A2012
             -- Iterator_Specification
             -- Predicate
-            State.Add_Not_Implemented;
+            State.Add_Not_Implemented (Ada_2012);
       end case;
 
       State.A_Element.Element_Kind := a_nodes_h.An_Expression;

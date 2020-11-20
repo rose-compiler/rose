@@ -56,7 +56,7 @@ package body Asis_Tool_2.Element.Clauses is
             Add_Clause_Names;
          when A_Use_Type_Clause =>
             Add_Clause_Names;
-         when A_Use_All_Type_Clause =>
+         when A_Use_All_Type_Clause => -- A2012
             Add_Clause_Names;
          when A_With_Clause =>
             Add_Has_Limited;

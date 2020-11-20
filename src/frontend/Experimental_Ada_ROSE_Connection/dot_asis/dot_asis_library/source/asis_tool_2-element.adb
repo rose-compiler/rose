@@ -70,10 +70,19 @@ package body Asis_Tool_2.Element is
    end;
 
    procedure Add_Not_Implemented
-     (This : in out Class) is
+     (This        : in out Class;
+      Ada_Version : in     Ada_Versions := Supported_Ada_Version) is
    begin
-      This.Add_To_Dot_Label ("ASIS_PROCESSING", String'("NOT_IMPLEMENTED_COMPLETELY"));
-      This.Outputs.A_Nodes.Add_Not_Implemented;
+      if Ada_Version <= Supported_Ada_Version then
+         This.Add_To_Dot_Label
+           ("ASIS_PROCESSING", String'("NOT_IMPLEMENTED_COMPLETELY"));
+         This.Outputs.A_Nodes.Add_Not_Implemented;
+      else
+         This.Add_To_Dot_Label
+           ("ASIS_PROCESSING",
+            Ada_Version'Image & "_FEATURE_NOT_IMPLEMENTED_IN_" &
+             Supported_Ada_Version'Image);
+      end if;
    end Add_Not_Implemented;
 
    procedure Add_Dot_Edge
