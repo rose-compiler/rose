@@ -14,6 +14,7 @@
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
 #include <SymbolicMemory2.h>
+#include <TraceSemantics2.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
@@ -599,6 +600,17 @@ hasVirtualAddress(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
     return vertex->value().type() == P2::V_BASIC_BLOCK || vertex->value().type() == P2::V_USER_DEFINED;
 }
 
+// Unwrap ops if necessary to return the feasible path operators
+static RiscOperatorsPtr
+fpOperators(BaseSemantics::RiscOperatorsPtr ops) {
+    ASSERT_not_null(ops);
+    if (TraceSemantics::RiscOperatorsPtr traceOps = boost::dynamic_pointer_cast<TraceSemantics::RiscOperators>(ops)) {
+        ops = traceOps->subdomain();
+    }
+    ASSERT_not_null(RiscOperators::promote(ops));
+    return RiscOperators::promote(ops);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 } // namespace
 
@@ -857,6 +869,11 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                                MAP_BASED_MEMORY==settings.memoryParadigm?"map-based":
                                "UNKNOWN") + " paradigm."));
 
+    CommandLine::insertBooleanSwitch(sg, "trace-semantics", settings.traceSemantics,
+                                     "Trace low-level instruction semantics operations. The instruction semantics \"info\" "
+                                     "diagnostic stream must also be enabled in order to see the output. This is intended "
+                                     "mostly as an aid to debugging ROSE.");
+
     sg.insert(Switch("ip-rewrite")
               .argument("from", nonNegativeIntegerParser(settings.ipRewrite))
               .argument("to", nonNegativeIntegerParser(settings.ipRewrite))
@@ -939,7 +956,7 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
     BaseSemantics::StatePtr state = cpu->currentState()->clone();
     state->clear();
     cpu->initializeState(state);
-    RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
+    BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
     ops->currentState(state);
 
     // Start of path is always feasible.
@@ -972,12 +989,13 @@ void
 FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::DispatcherPtr &cpu,
                                 size_t pathInsnIndex) {
     ASSERT_not_null(bblock);
+    ASSERT_not_null(cpu);
     checkSettings();
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"      processing basic block " <<bblock->printableName() <<"\n";
 
     // Update the path constraint "register"
-    RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
+    BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
     const RegisterDescriptor IP = cpu->instructionPointerRegister();
     BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.nBits()));
     BaseSemantics::SValuePtr va = ops->number_(ip->get_width(), bblock->address());
@@ -994,7 +1012,7 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
         try {
             if (pathInsnIndex != size_t(-1)) {
                 SAWYER_MESG(debug) <<"        processing path insn #" <<pathInsnIndex <<" at " <<insn->toString() <<"\n";
-                ops->pathInsnIndex(pathInsnIndex++);
+                fpOperators(ops)->pathInsnIndex(pathInsnIndex++);
             } else {
                 SAWYER_MESG(debug) <<"        processing path insn at " <<insn->toString() <<"\n";
             }
@@ -1039,9 +1057,9 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
     const FunctionSummary &summary = functionSummaries_[pathsVertex->value().address()];
     SAWYER_MESG(debug) <<"      processing function summary " <<summary.name <<"\n";
 
-    RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
+    BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
     if (pathInsnIndex != size_t(-1))
-        ops->pathInsnIndex(pathInsnIndex);
+        fpOperators(ops)->pathInsnIndex(pathInsnIndex);
 
     if (debug) {
         SymbolicSemantics::Formatter fmt = symbolicFormat("      ");
@@ -1054,8 +1072,8 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
     }
 
     SymbolicSemantics::SValuePtr retval;
-    if (functionSummarizer_ && functionSummarizer_->process(*this, summary, ops)) {
-        retval = functionSummarizer_->returnValue(*this, summary, ops);
+    if (functionSummarizer_ && functionSummarizer_->process(*this, summary, fpOperators(ops))) {
+        retval = functionSummarizer_->returnValue(*this, summary, fpOperators(ops));
     } else {
         // Make the function return an unknown value
         retval = SymbolicSemantics::SValue::promote(ops->undefined_(REG_RETURN_.nBits()));
@@ -1099,8 +1117,8 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
     if (retval) {
         VarDetail varDetail;
         varDetail.returnFrom = summary.address;
-        varDetail.firstAccessIdx = ops->pathInsnIndex();
-        ops->varDetail(retval->get_expression()->isLeafNode()->toString(), varDetail);
+        varDetail.firstAccessIdx = fpOperators(ops)->pathInsnIndex();
+        fpOperators(ops)->varDetail(retval->get_expression()->isLeafNode()->toString(), varDetail);
     }
 
     if (debug) {
@@ -1753,11 +1771,15 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
         BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner(), &path, &pathProcessor, solver);
         ASSERT_not_null(cpu);
         setInitialState(cpu, pathsBeginVertex);
-        RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
+        BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
         ASSERT_not_null(ops);
         BaseSemantics::StatePtr originalState = ops->currentState();
         ASSERT_not_null(originalState);
         double effectiveMaxPathLength = settings_.maxPathLength;
+        if (settings_.traceSemantics) {
+            BaseSemantics::RiscOperatorsPtr tracerOps = TraceSemantics::RiscOperators::instance(ops);
+            cpu->operators(tracerOps);
+        }
 
         // Make sure symbolic expression parsers use the latest state when expanding register and memory references.
         regSubber->riscOperators(ops);
@@ -1832,7 +1854,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             }
 
             // If a user-defined path process callback says we should backtrack, then backtrack.
-            if (ops->breakRequested())
+            if (fpOperators(ops)->breakRequested())
                 doBacktrack = true;
 
             // Check whether this path is feasible. We've already validated the path up to but not including its final edge,
