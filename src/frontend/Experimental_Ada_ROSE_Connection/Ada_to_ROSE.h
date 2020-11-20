@@ -11,6 +11,7 @@
 #include <sstream>
 
 #include "Diagnostics.h"
+#include "sageGeneric.h"
 
 #include "a_nodes.h"
 
@@ -22,6 +23,16 @@ static constexpr bool FAIL_ON_ERROR = false;
 // logging
 
 extern Sawyer::Message::Facility mlog;
+
+
+//
+// entry point to conversion routine
+
+/// converts all nodes reachable through the units in \ref head_nodes to ROSE
+/// \param head_nodes  entry point to ASIS
+/// \param file        the ROSE root for the translation unit
+void convertAsisToROSE(Nodes_Struct& head_nodes, SgSourceFile* file);
+
 
 
 //

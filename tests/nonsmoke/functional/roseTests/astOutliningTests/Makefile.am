@@ -96,7 +96,7 @@ CXX_TESTS_REQUIRED_TO_PASS =		\
 	moreTest7.cpp				\
         charStar.cpp  \
 	const-global.cpp \
-	reference.cpp
+	reference.cpp 
 
 # Add a few tool_G's regression tests
 # 	test_26_v2_2020.cpp  this is not ready, not sure what happened for preprocessing
@@ -109,6 +109,7 @@ CXX2_TESTS_REQUIRED_TO_PASS = \
 	charStar.cpp  \
 	test_37_2020.cpp \
 	ft_cfftz.cpp \
+	test_61_2020.cpp \
 	test_52.cpp
 
 #This set of CPP files must contain main() to run
@@ -308,6 +309,7 @@ test_newfile: $(tofile_test_targets)
 # Test outlining to a separate file using dlopen
 
 dlopen_test_targets  = $(addprefix dlopen_,  $(addsuffix .passed, $(C_TESTS_REQUIRED_TO_PASS)))
+dlopen_test_targets  += $(addprefix dlopen_,  $(addsuffix .passed, $(CXX_TESTS_REQUIRED_TO_PASS)))
 C_CXX_RESULTS +=  $(dlopen_test_targets)
 dlopen_test_flags =				\
 	-rose:outline:use_dlopen		\

@@ -523,6 +523,10 @@ package a_nodes_h.Support is
      (Source => Asis.Clause_Kinds,
       Target => a_nodes_h.Clause_Kinds);
 
+   function To_Representation_Clause_Kinds is new Unchecked_Conversion
+     (Source => Asis.Representation_Clause_Kinds,
+      Target => a_nodes_h.Representation_Clause_Kinds);
+
    function To_Constraint_Kinds is new Unchecked_Conversion
      (Source => Asis.Constraint_Kinds,
       Target => a_nodes_h.Constraint_Kinds);

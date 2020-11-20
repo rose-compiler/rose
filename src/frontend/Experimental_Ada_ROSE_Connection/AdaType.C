@@ -35,6 +35,7 @@ namespace
     void handle(SgTypedefDeclaration& n) { res = &mkTypedefType(n); }
     void handle(SgClassDeclaration& n)   { res = &mkRecordType(n); }
     void handle(SgAdaTaskTypeDecl& n)    { res = &mkAdaTaskType(n); }
+    void handle(SgEnumDeclaration& n)    { res = n.get_type(); ROSE_ASSERT(res); }
   };
 
   SgNode&
@@ -401,7 +402,7 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
            unused fields:
              Declaration_List     Enumeration_Literal_Declarations
          */
-        res.n = &mkEnumDecl("<placeholder>", ctx.scope());
+        res.n = &mkEnumDecl("", ctx.scope());
         break ;
       }
 
