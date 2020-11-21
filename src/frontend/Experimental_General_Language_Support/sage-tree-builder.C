@@ -120,7 +120,7 @@ void SageTreeBuilder::Leave(SgBasicBlock* block)
 
 void SageTreeBuilder::
 Enter(SgProgramHeaderStatement* &program_decl,
-      const boost::optional<std::string> &name, const std::list<std::string> &labels, const SourcePositions &sources)
+      const boost::optional<std::string> &name, const std::vector<std::string> &labels, const SourcePositions &sources)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgProgramHeaderStatement* &, ...) \n";
 

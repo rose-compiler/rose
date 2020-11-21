@@ -1,6 +1,6 @@
 #include "sage3basic.h"
-#include "untypedBuilder.h"
-#include "ATermToUntypedTraversal.h"
+//#include "untypedBuilder.h"
+#include "ATermTraversal.h"
 
 #define PRINT_ATERM_TRAVERSAL 0
 
@@ -9,34 +9,14 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-ATermToUntypedTraversal::ATermToUntypedTraversal(SgSourceFile* source)
+ATermTraversal::ATermTraversal(SgSourceFile* source)
 {
+   ROSE_ASSERT(source);
    pSourceFile = source;
-   ROSE_ASSERT(pSourceFile != NULL);
-
-   pUntypedFile = NULL;
-
-#if 0
-   SgUntypedGlobalScope* global_scope = UntypedBuilder::buildScope<SgUntypedGlobalScope>();
-
-   pUntypedFile = new SgUntypedFile(global_scope);
-   ROSE_ASSERT(pUntypedFile != NULL);
-
-// DQ (2/25/2013): Set the default for source position generation to be consistent with other languages (e.g. C/C++).
-   SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
-#endif
 }
-
-ATermToUntypedTraversal::~ATermToUntypedTraversal()
-{
-   if (pUntypedFile) {
-      delete pUntypedFile;
-   }
-}
-
 
 void
-ATermToUntypedTraversal::fixupLocation(PosInfo & loc)
+ATermTraversal::fixupLocation(PosInfo & loc)
 {
    int end_col = loc.getEndCol();
 
@@ -54,7 +34,7 @@ ATermToUntypedTraversal::fixupLocation(PosInfo & loc)
 }
 
 PosInfo
-ATermToUntypedTraversal::getLocation(ATerm term)
+ATermTraversal::getLocation(ATerm term)
 {
    PosInfo pinfo;
 
@@ -75,35 +55,14 @@ ATermToUntypedTraversal::getLocation(ATerm term)
 }
 
 void
-ATermToUntypedTraversal::setSourcePositionUnknown(SgLocatedNode* locatedNode)
-{
-     SageInterface::setSourcePosition(locatedNode);
-
-#if 0
-  // This function sets the source position to be marked as not available (since we don't have token information)
-  // These nodes WILL be unparsed in the code generation phase.
-
-  // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
-     ROSE_ASSERT(locatedNode != NULL);
-
-  // Make sure we never try to reset the source position of the global scope (set elsewhere in ROSE).
-     ROSE_ASSERT(isSgGlobal(locatedNode) == NULL);
-
-     ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
-     ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
-     SageInterface::setSourcePosition(locatedNode);
-#endif
-}
-
-void
-ATermToUntypedTraversal::setSourcePosition( SgLocatedNode* locatedNode, ATerm term )
+ATermTraversal::setSourcePosition( SgLocatedNode* locatedNode, ATerm term )
 {
    PosInfo pos = getLocation(term);
    return setSourcePosition(locatedNode, pos);
 }
 
 void
-ATermToUntypedTraversal::setSourcePosition( SgLocatedNode* locatedNode, PosInfo & pos )
+ATermTraversal::setSourcePosition( SgLocatedNode* locatedNode, PosInfo & pos )
 {
    ROSE_ASSERT(locatedNode != NULL);
 
@@ -124,7 +83,7 @@ ATermToUntypedTraversal::setSourcePosition( SgLocatedNode* locatedNode, PosInfo 
 }
 
 void
-ATermToUntypedTraversal::setSourcePositionFrom( SgLocatedNode* locatedNode, SgLocatedNode* fromNode )
+ATermTraversal::setSourcePositionFrom( SgLocatedNode* locatedNode, SgLocatedNode* fromNode )
 {
    PosInfo pos;
 
@@ -137,7 +96,7 @@ ATermToUntypedTraversal::setSourcePositionFrom( SgLocatedNode* locatedNode, SgLo
 }
 
 void
-ATermToUntypedTraversal::setSourcePositionExcludingTerm( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm )
+ATermTraversal::setSourcePositionExcludingTerm( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm )
 {
    PosInfo pos = getLocation(startTerm);
    PosInfo end = getLocation(endTerm);
@@ -149,7 +108,7 @@ ATermToUntypedTraversal::setSourcePositionExcludingTerm( SgLocatedNode* locatedN
 }
 
 void
-ATermToUntypedTraversal::setSourcePositionIncludingTerm( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm )
+ATermTraversal::setSourcePositionIncludingTerm( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm )
 {
    PosInfo pos = getLocation(startTerm);
    PosInfo end = getLocation(endTerm);
@@ -161,7 +120,7 @@ ATermToUntypedTraversal::setSourcePositionIncludingTerm( SgLocatedNode* locatedN
 }
 
 void
-ATermToUntypedTraversal::setSourcePositionIncludingNode( SgLocatedNode* locatedNode, ATerm startTerm, SgLocatedNode* endNode )
+ATermTraversal::setSourcePositionIncludingNode( SgLocatedNode* locatedNode, ATerm startTerm, SgLocatedNode* endNode )
 {
    PosInfo pos = getLocation(startTerm);
 
@@ -172,7 +131,7 @@ ATermToUntypedTraversal::setSourcePositionIncludingNode( SgLocatedNode* locatedN
 }
 
 void
-ATermToUntypedTraversal::setSourcePositionFromEndOnly( SgLocatedNode* locatedNode, SgLocatedNode* fromNode )
+ATermTraversal::setSourcePositionFromEndOnly( SgLocatedNode* locatedNode, SgLocatedNode* fromNode )
 {
    PosInfo pos;
 
@@ -184,8 +143,9 @@ ATermToUntypedTraversal::setSourcePositionFromEndOnly( SgLocatedNode* locatedNod
    return setSourcePosition(locatedNode, pos);
 }
 
+#ifdef CONVERT_LABELS
 SgUntypedStatement*
-ATermToUntypedTraversal::convert_Labels(std::vector<std::string> & labels, std::vector<PosInfo> & locations, SgUntypedStatement* stmt)
+ATermTraversal::convert_Labels(std::vector<std::string> & labels, std::vector<PosInfo> & locations, SgUntypedStatement* stmt)
 {
    ROSE_ASSERT(stmt != NULL);
    ROSE_ASSERT(stmt->get_startOfConstruct() != NULL);
@@ -213,3 +173,4 @@ ATermToUntypedTraversal::convert_Labels(std::vector<std::string> & labels, std::
 
    return stmt;
 }
+#endif

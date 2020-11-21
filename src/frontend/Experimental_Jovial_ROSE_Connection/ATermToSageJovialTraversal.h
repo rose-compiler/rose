@@ -1,33 +1,26 @@
 #ifndef ATERM_TO_SAGE_JOVIAL_TRAVERSAL_H_
 #define ATERM_TO_SAGE_JOVIAL_TRAVERSAL_H_
 
-#include "ATerm/ATermToUntypedTraversal.h"
+#include "ATerm/ATermTraversal.h"
 #include "general_language_translation.h"
 #include "Jovial_to_ROSE_translation.h"
 #include "sage-tree-builder.h"
-
-#define USE_SAGE_TREE_BUILDER 1
 
 namespace ATermSupport {
 
    using namespace LanguageTranslation;
 
-class ATermToSageJovialTraversal : public ATermToUntypedTraversal
+class ATermToSageJovialTraversal : public ATermTraversal
 {
  private:
-#if USE_SAGE_TREE_BUILDER
    Rose::builder::SageTreeBuilder sage_tree_builder;
-#else
-   Rose::builder::SageTreeBuilderNull sage_tree_builder;
-#endif
 
  protected:
    void setSourcePositions(ATerm term, Rose::builder::SourcePosition &start, Rose::builder::SourcePosition &end);
    void setDeclarationModifier(SgVariableDeclaration* var_decl, int def_or_ref);
 
  public:
-   ATermToSageJovialTraversal(SgSourceFile* source);
-   virtual ~ATermToSageJovialTraversal();
+   ATermToSageJovialTraversal(SgSourceFile* source) : ATermTraversal(source) { }
 
    void setLocationSpecifier(SgVariableDeclaration* var_decl, const LocationSpecifier &loc_spec);
 

@@ -5,7 +5,7 @@ AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/Experimental_General
 noinst_LTLIBRARIES = libexperimentalRoseATerm.la
 
 libexperimentalRoseATerm_la_SOURCES = \
-  ATermToUntypedTraversal.C
+  ATermTraversal.C
 
 noinst_HEADERS = \
-  ATermToUntypedTraversal.h
+  ATermTraversal.h

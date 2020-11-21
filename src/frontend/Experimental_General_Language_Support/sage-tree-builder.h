@@ -100,7 +100,7 @@ public:
    void Leave(SgBasicBlock*);
 
    void Enter(SgProgramHeaderStatement* &,
-              const boost::optional<std::string> &, const std::list<std::string> &, const SourcePositions &);
+              const boost::optional<std::string> &, const std::vector<std::string> &, const SourcePositions &);
    void Leave(SgProgramHeaderStatement*);
 
    void setFortranEndProgramStmt(SgProgramHeaderStatement*,
