@@ -831,7 +831,11 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-        // FIXME[Robb P Matzke 2017-02-13]: unused?
+        /** Property: Ordered list of instruction semantics.
+         *
+         *  If instruction semantics are available and attached to the instruction, then this subtree will contain a list of
+         *  semantic side effects of the instruction. The semantics are attached by using the @ref
+         *  Rose::BinaryAnalysis::InstructionSemantics2::StaticSemantics semantic domain. */
 #else
         AsmInstruction.setDataPrototype("SgAsmExprListExp*", "semantics", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
