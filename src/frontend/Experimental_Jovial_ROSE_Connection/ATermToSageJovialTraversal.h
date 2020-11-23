@@ -20,7 +20,7 @@ class ATermToSageJovialTraversal : public ATermTraversal
    void setDeclarationModifier(SgVariableDeclaration* var_decl, int def_or_ref);
 
  public:
-   ATermToSageJovialTraversal(SgSourceFile* source) : ATermTraversal(source) { }
+   ATermToSageJovialTraversal(SgSourceFile* source) : ATermTraversal(source) {}
 
    void setLocationSpecifier(SgVariableDeclaration* var_decl, const LocationSpecifier &loc_spec);
 

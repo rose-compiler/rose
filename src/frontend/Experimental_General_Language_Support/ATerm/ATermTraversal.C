@@ -1,6 +1,6 @@
 #include "sage3basic.h"
-//#include "untypedBuilder.h"
 #include "ATermTraversal.h"
+#include "sage-tree-builder.h"
 
 #define PRINT_ATERM_TRAVERSAL 0
 
@@ -52,6 +52,20 @@ ATermTraversal::getLocation(ATerm term)
    fixupLocation(pinfo);
 
    return pinfo;
+}
+
+void ATermTraversal::
+setSourcePositions(ATerm term, Rose::builder::SourcePosition &start, Rose::builder::SourcePosition &end)
+{
+   PosInfo pos = getLocation(term);
+
+   start.path   = getCurrentFilename();
+   start.line   = pos.getStartLine();
+   start.column = pos.getStartCol();
+
+   end.path   = getCurrentFilename();
+   end.line   = pos.getStartLine();
+   end.column = pos.getStartCol();
 }
 
 void

@@ -3,6 +3,12 @@
 
 #include <aterm2.h>
 
+namespace Rose {
+  namespace builder {
+    struct SourcePosition;
+  }
+}
+
 namespace ATermSupport {
 
 class PosInfo
@@ -62,6 +68,8 @@ class ATermTraversal
 
    static void    fixupLocation(PosInfo & loc);
    static PosInfo getLocation(ATerm term);
+
+   void setSourcePositions(ATerm term, Rose::builder::SourcePosition &start, Rose::builder::SourcePosition &end);
 
    void setSourcePosition              ( SgLocatedNode* locatedNode, ATerm term );
    void setSourcePosition              ( SgLocatedNode* locatedNode, PosInfo & pos );
