@@ -10,6 +10,7 @@
 //
 class SgBasicBlock;
 class SgCaseOptionStmt;
+class SgCastExp;
 class SgDefaultOptionStmt;
 class SgDerivedTypeStatement;
 class SgEnumDeclaration;
@@ -31,12 +32,15 @@ class SgLocatedNode;
 class SgNamespaceDeclarationStatement;
 class SgProcessControlStatement;
 class SgProgramHeaderStatement;
+class SgReplicationOp;
+class SgReturnStmt;
 class SgScopeStatement;
 class SgSourceFile;
 class SgSwitchStatement;
 class SgType;
 class SgTypedefDeclaration;
 class SgVariableDeclaration;
+class SgVarRefExp;
 class SgWhileStmt;
 
 // Jovial specific classes
@@ -122,6 +126,10 @@ public:
 
    void Enter(SgVariableDeclaration* &, const std::string &, SgType*, SgExpression*);
    void Leave(SgVariableDeclaration*);
+
+// Multiple variable form
+   void Enter(SgVariableDeclaration* &, SgType*, std::list<std::tuple<std::string, SgType*, SgExpression*>> &);
+   void Leave(SgVariableDeclaration*, std::list<LanguageTranslation::ExpressionKind> &);
 
    void Enter(SgEnumDeclaration* &, const std::string &);
    void Leave(SgEnumDeclaration*);
