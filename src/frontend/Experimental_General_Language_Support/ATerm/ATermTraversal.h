@@ -1,7 +1,13 @@
-#ifndef ATERM_TO_UNTYPED_TRAVERSAL_H
-#define ATERM_TO_UNTYPED_TRAVERSAL_H
+#ifndef ATERM_TRAVERSAL_H
+#define ATERM_TRAVERSAL_H
 
 #include <aterm2.h>
+
+namespace Rose {
+  namespace builder {
+    struct SourcePosition;
+  }
+}
 
 namespace ATermSupport {
 
@@ -47,30 +53,23 @@ class PosInfo
    int pEndLine,   pEndCol;    // location (line,col) of last  character (+1 col)
 };
 
-class ATermToUntypedTraversal
+class ATermTraversal
 {
  public:
-   ATermToUntypedTraversal(SgSourceFile* source);
-   virtual ~ATermToUntypedTraversal();
-
-#if 0
-   SgUntypedFile*        get_file()  { return pUntypedFile; }
-   SgUntypedGlobalScope* get_scope() { return pUntypedFile->get_scope(); }
-#endif
+   ATermTraversal(SgSourceFile* source);
 
    std::string getCurrentFilename()
-      {
-         return pSourceFile->get_sourceFileNameWithPath();
-      }
+     {
+       return pSourceFile->get_sourceFileNameWithPath();
+     }
 
  protected:
-   SgUntypedFile* pUntypedFile;
    SgSourceFile*  pSourceFile;
-
- protected:
 
    static void    fixupLocation(PosInfo & loc);
    static PosInfo getLocation(ATerm term);
+
+   void setSourcePositions(ATerm term, Rose::builder::SourcePosition &start, Rose::builder::SourcePosition &end);
 
    void setSourcePosition              ( SgLocatedNode* locatedNode, ATerm term );
    void setSourcePosition              ( SgLocatedNode* locatedNode, PosInfo & pos );
@@ -80,11 +79,11 @@ class ATermToUntypedTraversal
    void setSourcePositionIncludingNode ( SgLocatedNode* locatedNode, ATerm startTerm, SgLocatedNode* endNode );
    void setSourcePositionFromEndOnly   ( SgLocatedNode* locatedNode, SgLocatedNode* fromNode );
 
-   void setSourcePositionUnknown       ( SgLocatedNode* locatedNode);
-
+#ifdef CONVERT_LABELS
    SgUntypedStatement* convert_Labels (std::vector<std::string> & labels, std::vector<PosInfo> & locations, SgUntypedStatement* stmt);
+#endif
 
-}; // class ATermToUntypedTraversal
+}; // class ATermTraversal
 }  // namespace ATermSupport
 
 #endif

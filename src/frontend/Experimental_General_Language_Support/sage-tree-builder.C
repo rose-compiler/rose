@@ -120,7 +120,7 @@ void SageTreeBuilder::Leave(SgBasicBlock* block)
 
 void SageTreeBuilder::
 Enter(SgProgramHeaderStatement* &program_decl,
-      const boost::optional<std::string> &name, const std::list<std::string> &labels, const SourcePositions &sources)
+      const boost::optional<std::string> &name, const std::vector<std::string> &labels, const SourcePositions &sources)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgProgramHeaderStatement* &, ...) \n";
 
@@ -1256,6 +1256,67 @@ void SageTreeBuilder::
 Leave(SgVariableDeclaration* var_decl)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) \n";
+}
+
+void SageTreeBuilder::
+Enter(SgVariableDeclaration* &var_decl, SgType* base_type, std::list<std::tuple<std::string, SgType*, SgExpression*>> &init_info)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgVariableDeclaration* &, std::tuple<...>, ...) \n";
+
+   // Step through list of tuples to create the multi variable declaration
+   for (std::list<std::tuple<std::string, SgType*, SgExpression*>>::iterator it = init_info.begin(); it != init_info.end(); ++it) {
+      std::string name;
+      SgType* type;
+      SgExpression* init_expr;
+      std::tie(name, type, init_expr) = *it;
+
+      if (!type) {
+         type = base_type;
+      }
+
+      if (it == init_info.begin()) {   // On first pass, call Enter() to create variable declaration
+         Enter(var_decl, name, type, init_expr);
+      } else {                         // On later passes, create new initialized name and append to the var decl
+         SgAssignInitializer* init = nullptr;
+         if (init_expr) {
+            init = SageBuilder::buildAssignInitializer_nfi(init_expr, type);
+         }
+
+         SgInitializedName* init_name = SageBuilder::buildInitializedName(name, type, init);
+         var_decl->append_variable(init_name, init);
+         init_name->set_declptr(var_decl);
+      }
+   }
+}
+
+void SageTreeBuilder::
+Leave(SgVariableDeclaration* var_decl, std::list<LanguageTranslation::ExpressionKind> &modifier_enum_list)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) with modifiers \n";
+
+   BOOST_FOREACH(LanguageTranslation::ExpressionKind modifier_enum, modifier_enum_list) {
+      switch(modifier_enum)
+       {
+         case LanguageTranslation::ExpressionKind::e_type_modifier_intent_in:
+            {
+               var_decl->get_declarationModifier().get_typeModifier().setIntent_in();
+               break;
+            }
+         case LanguageTranslation::ExpressionKind::e_type_modifier_intent_out:
+            {
+               var_decl->get_declarationModifier().get_typeModifier().setIntent_out();
+               break;
+            }
+         case LanguageTranslation::ExpressionKind::e_type_modifier_intent_inout:
+            {
+               var_decl->get_declarationModifier().get_typeModifier().setIntent_inout();
+               break;
+            }
+         default: break;
+       }
+   }
+
+   Leave(var_decl);
 }
 
 void SageTreeBuilder::
