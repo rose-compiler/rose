@@ -32,8 +32,8 @@ IOAnalyzer::IOAnalyzer():CTAnalysis() {
   initDiagnostics();
 }
 
-void IOAnalyzer::initializeSolver3(std::string functionToStartAt,SgProject* root, bool oneFunctionOnly) {
-  super::initializeSolver3(functionToStartAt, root, oneFunctionOnly);
+void IOAnalyzer::initializeSolver2(std::string functionToStartAt,SgProject* root) {
+  super::initializeSolver2(functionToStartAt, root);
   const EState* currentEState=estateWorkListCurrent->front();
   ROSE_ASSERT(currentEState);
   if(getModeLTLDriven()) {

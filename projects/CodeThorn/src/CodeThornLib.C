@@ -731,7 +731,7 @@ void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* anal
   } else {
     startFunctionName = "main";
   }
-  analyzer->initializeSolver3(startFunctionName,root,false);
+  analyzer->initializeSolver2(startFunctionName,root);
   SAWYER_MESG(logger[INFO])<< "Initializing solver "<<analyzer->getSolver()->getId()<<" finished"<<endl;
   tc.initRunTime=tc.timer.getTimeDurationAndStop().milliSeconds();
 }
@@ -757,7 +757,6 @@ void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProj
   tc.analysisRunTime=tc.timer.getTimeDurationAndStop().milliSeconds();
 }
 
-#if 1
   SgProject* parsingPass(CodeThornOptions& ctOpt, int argc, char * argv[]) {
     TimingCollector timingCollector;
     SgProject* project=runRoseFrontEnd(argc,argv,ctOpt,timingCollector);
@@ -804,6 +803,5 @@ void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProj
     ioAnalysis->runSolver();
     return ioAnalysis;
   }
-#endif
   
 } // end of namespace CodeThorn

@@ -1876,5 +1876,12 @@ bool CFAnalysis::forkJoinConsistencyChecks(Flow &flow) const {
 }
 
 void CFAnalysis::createICFG(SgProject* project) {
-  
+  ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(project);
+  FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
+  functionCallMapping2->setClassHierarchy(classHierarchy);
+  functionCallMapping2->computeFunctionCallMapping(project);
+  setFunctionCallMapping2(functionCallMapping2);
+  _icfgFlow=flow(project);
+  _interFlow=interFlow(_icfgFlow);
+  intraInterFlow(_icfgFlow, _interFlow);
 }

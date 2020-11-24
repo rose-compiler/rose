@@ -20,6 +20,7 @@ SgProject* CodeThorn::ProgramAbstractionLayer::getRoot() {
   return _root;
 }
 
+
 void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
   _root=root;
   CodeThorn::Normalization normalization;

@@ -103,7 +103,7 @@ namespace CodeThorn {
 
     
     void initAstNodeInfo(SgNode* node);
-    virtual void initializeSolver3(std::string functionToStartAt, SgProject* root, bool oneFunctionOnly);
+    virtual void initializeSolver2(std::string functionToStartAt, SgProject* root);
     void initLabeledAssertNodes(SgProject* root);
     
     void setExplorationMode(ExplorationMode em);
@@ -130,7 +130,6 @@ namespace CodeThorn {
 
     // initialize command line arguments provided by option "--cl-options" in PState
     void initializeCommandLineArgumentsInState(PState& initialPState);
-    //void initialize(SgProject*);
     void initializeStringLiteralInState(PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId);
     void initializeStringLiteralsInState(PState& initialPState);
 
@@ -242,7 +241,6 @@ namespace CodeThorn {
     void setOptionContextSensitiveAnalysis(bool flag);
     bool getOptionContextSensitiveAnalysis();
   protected:
-    void configureOptionSets(CodeThornOptions& ctOpt);
     using super = CTAnalysis; // allows use of super like in Java without repeating the class name
   public:
     enum GlobalTopifyMode {GTM_IO, GTM_IOCF, GTM_IOCFPTR, GTM_COMPOUNDASSIGN, GTM_FLAGS};
@@ -254,7 +252,9 @@ namespace CodeThorn {
     bool svCompFunctionSemantics();
     bool getStdFunctionSemantics();
     void setStdFunctionSemantics(bool flag);
+    void run(CodeThornOptions& ctOpt, SgProject* root, Labeler* labeler, VariableIdMappingExtended* vim, CFAnalysis* icfg);
 
+    
     /* command line options provided to analyzed application
        if set they are used to initialize the initial state with argv and argc domain abstractions
     */
@@ -469,6 +469,7 @@ namespace CodeThorn {
     long int _maxSecondsForcedTop;
 
     VariableValueMonitor variableValueMonitor;
+
     CodeThornOptions _ctOpt;
     LTLOptions _ltlOpt;
     bool _treatStdErrLikeFailedAssert;

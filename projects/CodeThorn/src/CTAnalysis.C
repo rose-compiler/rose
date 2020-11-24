@@ -115,16 +115,6 @@ std::set<int> CodeThorn::CTAnalysis::getInputVarValues() {
   return _inputVarValues;
 }
 
-#if 0
-EState* CodeThorn::CTAnalysis::getPreInfo(Label lab) {
-  return 0;
-}
-
-EState* CodeThorn::CTAnalysis::getPostInfo(Label lab) {
-  return 0;
-}
-#endif
-
 // also sets inputvarvalues
 void CodeThorn::CTAnalysis::setLtlRersMapping(CodeThorn::LtlRersMapping m) {
   _ltlRersMapping=m;
@@ -549,7 +539,7 @@ string CodeThorn::CTAnalysis::astNodeInfoAttributeAndNodeToString(SgNode* node) 
 }
 
 bool CodeThorn::CTAnalysis::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
-  //return _labeler->getLabeler()->isFunctionCallWithAssignment(lab,varIdPtr);
+  //return _labeler->isFunctionCallWithAssignment(lab,varIdPtr);
   SgNode* node=getLabeler()->getNode(lab);
   if(getLabeler()->isFunctionCallLabel(lab)) {
     std::pair<SgVarRefExp*,SgFunctionCallExp*> p=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(node);
@@ -1863,8 +1853,11 @@ SgNode* CodeThorn::CTAnalysis::getStartFunRoot() {
   return _startFunRoot;
 }
 
-// change: pass in a set of labels (
-void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgProject* root, bool oneFunctionOnly) {
+void CodeThorn::CTAnalysis::run(CodeThornOptions& ctOpt, SgProject* root, Labeler* labeler, VariableIdMappingExtended* vim, CFAnalysis* icfg) {
+  // TODO
+}
+
+void CodeThorn::CTAnalysis::initializeSolver2(std::string functionToStartAt, SgProject* root) {
   SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3 started."<<endl;
   startAnalysisTimer();
   ROSE_ASSERT(root);
@@ -1876,7 +1869,7 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   if(_ctOpt.normalizeAll)
     programAbstractionLayer->setNormalizationLevel(2);
   programAbstractionLayer->initialize(root);
-  initialize(root,programAbstractionLayer); // creates ProgramAbstractionLayer
+  initialize(root,programAbstractionLayer);
   _programAbstractionLayer=programAbstractionLayer;
   _programAbstractionLayerOwner=true;
 
@@ -1950,15 +1943,8 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
     SAWYER_MESG(logger[TRACE])<< "CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
   }
   SAWYER_MESG(logger[TRACE])<< "Intra-Flow OK. (size: " << getFlow()->size() << " edges)"<<endl;
-  if(oneFunctionOnly) {
-    SAWYER_MESG(logger[TRACE])<<"Analyzing one function only."<<endl;
-  }
   ROSE_ASSERT(_programAbstractionLayer);
   ROSE_ASSERT(_programAbstractionLayer->getCFAnalyzer());
-  //_interFlow=_programAbstractionLayer->getCFAnalyzer()->interFlow(flow);
-  //SAWYER_MESG(logger[TRACE])<< "Inter-Flow OK. (size: " << _interFlow.size()*2 << " edges)"<<endl;
-  //_programAbstractionLayer->getCFAnalyzer()->intraInterFlow(flow,_interFlow);
-  //SAWYER_MESG(logger[INFO])<< "ICFG OK. (size: " << flow.size() << " edges)"<<endl;
 
 #if 0
   if(_ctOpt.reduceCfg) {
@@ -1981,7 +1967,6 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   // START_INIT 5
   const PState* initialPStateStored=processNew(initialPState);
   ROSE_ASSERT(initialPStateStored);
-  //SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
   SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
   //ROSE_ASSERT(cfanalyzer);
   ConstraintSet cset;
@@ -2843,73 +2828,6 @@ list<EState> CodeThorn::CTAnalysis::transferTrueFalseEdge(SgNode* nextNodeToAnal
     }
   }
   return newEStateList;
-}
-
-void CodeThorn::CTAnalysis::configureOptionSets(CodeThornOptions& ctOpt) {
-  string optionName="options-set";  // only used for error reporting
-  int optionValue=ctOpt.optionsSet; // only used for error reporting
-  switch(optionValue) {
-  case 0:
-    // fall-through for default
-    break;
-  case 1:
-    ctOpt.arraysNotInState=false;
-    ctOpt.inStateStringLiterals=true;
-    ctOpt.ignoreUnknownFunctions=true;
-    ctOpt.ignoreFunctionPointers=true;
-    ctOpt.stdFunctions=true;
-    ctOpt.contextSensitive=true;
-    ctOpt.normalizeAll=true;
-    ctOpt.abstractionMode=1;
-    AbstractValue::strictChecking=false;
-    break;
-  case 2:
-    ctOpt.arraysNotInState=false;
-    ctOpt.inStateStringLiterals=true;
-    ctOpt.ignoreUnknownFunctions=true;
-    ctOpt.ignoreFunctionPointers=false;
-    ctOpt.stdFunctions=true;
-    ctOpt.contextSensitive=true;
-    ctOpt.normalizeAll=true;
-    ctOpt.abstractionMode=1;
-    AbstractValue::strictChecking=false;
-    break;
-  case 3:
-    ctOpt.arraysNotInState=false;
-    ctOpt.inStateStringLiterals=false;
-    ctOpt.ignoreUnknownFunctions=true;
-    ctOpt.ignoreFunctionPointers=false;
-    ctOpt.stdFunctions=false;
-    ctOpt.contextSensitive=true;
-    ctOpt.normalizeAll=true;
-    ctOpt.abstractionMode=1;
-    AbstractValue::strictChecking=false;
-    break;
-  case 4:
-    ctOpt.arraysNotInState=false;
-    ctOpt.inStateStringLiterals=false;
-    ctOpt.ignoreUnknownFunctions=true;
-    ctOpt.ignoreFunctionPointers=false;
-    ctOpt.stdFunctions=false;
-    ctOpt.contextSensitive=true;
-    ctOpt.normalizeAll=true;
-    ctOpt.abstractionMode=1;
-    AbstractValue::strictChecking=true;
-    break;
-  case 11:
-    ctOpt.arraysNotInState=false;
-    ctOpt.inStateStringLiterals=true;
-    ctOpt.ignoreUnknownFunctions=true;
-    ctOpt.ignoreFunctionPointers=false;
-    ctOpt.stdFunctions=false;
-    ctOpt.contextSensitive=true;
-    ctOpt.normalizeAll=true;
-    ctOpt.abstractionMode=0;
-    break;
-  default:
-    cerr<<"Error: unsupported "<<optionName<<" value: "<<optionValue<<endl;
-    exit(1);
-  }
 }
 
 void CodeThorn::CTAnalysis::setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt) {

@@ -78,12 +78,14 @@ namespace CodeThorn {
   
     bool _programAbstractionLayerOwner=true;
     ProgramAbstractionLayer* _programAbstractionLayer=nullptr;
-    LabelSet _extremalLabels;
-    //Flow* _flow=nullptr;
-    long _numberOfLabels=0;
 
+    LabelSet _extremalLabels;
     DFTransferFunctions* _transferFunctions=nullptr;
 
+    Labeler* _labeler=nullptr;
+    VariableIdMappingExtended* _variableIdMapping=nullptr;
+    CFAnalysis* _icfg=nullptr;
+    
   protected:
     bool _preInfoIsValid=false;
     bool _postInfoIsValid=false;
