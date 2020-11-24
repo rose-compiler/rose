@@ -57,6 +57,7 @@
 #include <iostream>
 #include <algorithm> // for set operations
 #include <numeric>   // for std::accumulate
+#include <map>
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 #   include "jni.h"
@@ -15361,6 +15362,63 @@ void SageInterface::guardNode(SgLocatedNode * target, std::string guard) {
   endif_macro->get_file_info()->setTransformation();
 }
 
+// internal hash table to cache the results: fileHeaderDict[file][header-key]
+// header-key: 
+//    system header : <header.h> 
+//    non-system headers : "header.h"
+static map<SgSourceFile*, map<string, PreprocessingInfo*> > fileHeaderDict; 
+//! Find the preprocessingInfo node representing #include <header.h> or #include "header.h" within a source file. Return NULL if not found.
+PreprocessingInfo * SageInterface::findHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader)
+{
+  string header_key;
+  if (isSystemHeader)
+    header_key="<"+header_file_name+">";
+  else
+    header_key="\""+header_file_name+"\"";
+
+  if (fileHeaderDict.count(source_file) && fileHeaderDict[source_file].count(header_key))
+    return fileHeaderDict[source_file][header_key];
+
+  vector<SgLocatedNode*> candidates; 
+  // do a fresh check. we only check global scope's declarations since we insert header into global scope
+  // check SgGlobal
+  SgGlobal* global= source_file -> get_globalScope();
+
+  candidates.push_back(global);
+  
+  //check declarations within the global scope
+  SgDeclarationStatementPtrList decl_stmt_list = global->get_declarations();
+  for (SgDeclarationStatementPtrList::iterator iter= decl_stmt_list.begin(); iter!=decl_stmt_list.end(); iter++)
+    candidates.push_back(*iter);
+
+  bool found = false;
+  for (size_t ci=0; ci<candidates.size(); ci++)
+  {
+    SgLocatedNode* locatedNode= candidates[ci];
+    AttachedPreprocessingInfoType *comments = locatedNode->getAttachedPreprocessingInfo ();
+
+    if (comments == NULL) continue; 
+    AttachedPreprocessingInfoType::iterator i;
+    for (i = comments->begin (); i != comments->end (); i++)
+    { 
+      if ((*i)->getTypeOfDirective () != PreprocessingInfo::CpreprocessorIncludeDeclaration) continue; 
+      string content = (*i)->getString ();
+      if (content.find(header_key) != string::npos)
+      {
+        fileHeaderDict[source_file][header_key] = *i;
+        found =true; 
+        break; 
+      }
+
+    } // each comment
+ 
+    if (found) break; 
+  } // each node
+
+  if (found)
+    return fileHeaderDict[source_file][header_key];
+  return NULL; 
+}
 
 PreprocessingInfo*
 SageInterface::insertHeader(SgSourceFile * source_file, const string & header_file_name, bool isSystemHeader, PreprocessingInfo::RelativePositionType position)
