@@ -1561,7 +1561,7 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
      ROSE_ASSERT(prepInfoPtr != NULL);
 
 #if 0
-     printf ("In SgLocatedNode::addToAttachedPreprocessingInfo(): Current node is a %s: prepInfoPtr->getString() = %s \n",class_name().c_str(),prepInfoPtr->getString().c_str());
+     printf ("In SgLocatedNode::addToAttachedPreprocessingInfo(): Current node %p is a %s: prepInfoPtr->getString() = %s \n",this,class_name().c_str(),prepInfoPtr->getString().c_str());
 #endif
 
   // Nodes that should not have comments attached (since they are not unparsed)
@@ -1639,7 +1639,7 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
                     ROSE_ASSERT(false);
                   }
 #endif
-#if 1
+#if 0
                if (prepInfoPtr->getString() == (*i)->getString())
                   {
                     printf ("ERROR: redundant comment or CPP directive being added: prepInfoPtr->getString() = %s \n",prepInfoPtr->getString().c_str());
@@ -1661,13 +1661,23 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
                break;
 
           case PreprocessingInfo::before:
+             {
+#if 0
+               printf ("p_attachedPreprocessingInfoPtr = %p insert before \n",p_attachedPreprocessingInfoPtr);
+#endif
                p_attachedPreprocessingInfoPtr->insert(p_attachedPreprocessingInfoPtr->begin(),prepInfoPtr);
                break;
+             }
 
           case PreprocessingInfo::after:
+             {
+#if 0
+               printf ("p_attachedPreprocessingInfoPtr = %p insert after \n",p_attachedPreprocessingInfoPtr);
+#endif
             // (9/10/2003) DQ: Force new comments to be attached closest to the target statement
                p_attachedPreprocessingInfoPtr->push_back(prepInfoPtr);
                break;
+             }
 
           default:
                printf ("Error: default found in switch statement \n");

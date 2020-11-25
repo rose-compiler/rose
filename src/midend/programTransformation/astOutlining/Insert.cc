@@ -986,7 +986,9 @@ isProtPrivMember (SgMemberFunctionRefExp* f)
  */
 // static void insertFriendDecls (SgFunctionDeclaration* func, SgGlobal* scope, FuncDeclList_t& friends)
 static
-Outliner::DeferredTransformation
+// DQ (11/19/2020): DeferredTransformation support was moved to the SageInterface namespace to support more general usage.
+// Outliner::DeferredTransformation
+SageInterface::DeferredTransformation
 insertFriendDecls (SgFunctionDeclaration* func,
                    SgGlobal* scope,
                    FuncDeclList_t& friends)
@@ -1008,8 +1010,10 @@ insertFriendDecls (SgFunctionDeclaration* func,
     printf ("************************************************************ \n");
   }
 
+// DQ (11/19/2020): DeferredTransformation support was moved to the SageInterface namespace to support more general usage.
 // DQ (8/13/2019): Adding return value, used when header file unparsing is active.
-  Outliner::DeferredTransformation deferedFriendTransformation;
+// Outliner::DeferredTransformation deferedFriendTransformation;
+  SageInterface::DeferredTransformation deferedFriendTransformation;
 
   if (func && scope)
     {
@@ -1222,9 +1226,11 @@ insertFriendDecls (SgFunctionDeclaration* func,
 //  and insert necessary declarations into the global scope of
 //  target's original enclosing function). 
 
+// DQ (11/19/2020): DeferredTransformation support was moved to the SageInterface namespace to support more general usage.
 // DQ (8/15/2019): Adding support to defer the transformations to header files.
 // void Outliner::insert (SgFunctionDeclaration* func, SgGlobal* scope, SgBasicBlock* target_outlined_code )
-Outliner::DeferredTransformation
+// Outliner::DeferredTransformation
+SageInterface::DeferredTransformation
 Outliner::insert (SgFunctionDeclaration* func,
                              SgGlobal* scope,
                              SgBasicBlock* target_outlined_code )
@@ -1389,8 +1395,10 @@ Outliner::insert (SgFunctionDeclaration* func,
      ROSE_ASSERT(false);
 #endif
 
+  // DQ (11/19/2020): DeferredTransformation support was moved to the SageInterface namespace to support more general usage.
   // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
-     DeferredTransformation headerFileTransformation;
+  // DeferredTransformation headerFileTransformation;
+     SageInterface::DeferredTransformation headerFileTransformation;
 
   // Error checking...
      if (Outliner::useNewFile == false)
