@@ -191,13 +191,13 @@ LibcStartMain::operator()(bool chain, const Args &args) {
 
         } else if (dispatcher->addressWidth() == 32) {
             // x86 integer arguments are passed on the stack
-            dispatcher->get_operators()->currentState(state);
+            dispatcher->operators()->currentState(state);
             const RegisterDescriptor REG_ESP = args.partitioner.instructionProvider().stackPointerRegister();
             ASSERT_require(!REG_ESP.isEmpty());
-            BaseSemantics::SValuePtr esp = dispatcher->get_operators()->peekRegister(REG_ESP, dispatcher->undefined_(32));
-            BaseSemantics::SValuePtr arg0addr = dispatcher->get_operators()->add(esp, dispatcher->number_(32, 4));
-            BaseSemantics::SValuePtr arg0 = dispatcher->get_operators()->peekMemory(RegisterDescriptor(),
-                                                                                        arg0addr, dispatcher->undefined_(32));
+            BaseSemantics::SValuePtr esp = dispatcher->operators()->peekRegister(REG_ESP, dispatcher->undefined_(32));
+            BaseSemantics::SValuePtr arg0addr = dispatcher->operators()->add(esp, dispatcher->number_(32, 4));
+            BaseSemantics::SValuePtr arg0 = dispatcher->operators()->peekMemory(RegisterDescriptor(),
+                                                                                arg0addr, dispatcher->undefined_(32));
             if (arg0->is_number()) {
                 // The address of "main" is passed as the first argument.
                 SAWYER_MESG(debug) <<"LibcStartMain analysis: x86 with main as the first argument\n";

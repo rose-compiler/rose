@@ -4,13 +4,16 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS = $(ROSE_RPATHS)
 
-bin_PROGRAMS = matchPattern nopSourceTransform detectNopSequences nopBinaryTransform binaryCFGTraversalTutorial
+bin_PROGRAMS = matchPattern nopSourceTransform detectNopSequences nopBinaryTransform binaryCFGTraversalTutorial staticSemantics \
+	insnCfg
 
 matchPattern_SOURCES = matchPattern.C
 detectNopSequences_SOURCES = detectNopSequences.C detectNopSequencesTraversal.C
 nopSourceTransform_SOURCES = nopSourceTransform.C
 nopBinaryTransform_SOURCES = nopBinaryTransform.C detectNopSequencesTraversal.C
 binaryCFGTraversalTutorial_SOURCES = binaryCFGTraversalTutorial.C
+staticSemantics_SOURCES = staticSemantics.C
+insnCfg_SOURCES = insnCfg.C
 
 DEPENDENCIES = $(REQUIRED_LIBS)
 LDADD  = $(ROSE_LIBS)
@@ -57,7 +60,6 @@ testNopBinaryTransform: nopBinaryTransform input_nopTransform.C
 #	Note that we need "-rose:binary" option to avoid ambiguity that would cause linking using g++ compiler!
 	./nopBinaryTransform -rose:verbose 0 -rose:binary input_nopTransform -o input_nopTransform_rewritten
 #	./nopBinaryTransform -rose:verbose 0 input_nopTransform
-
 
 EXTRA_DIST = CMakeLists.txt input_matchPattern.C
 

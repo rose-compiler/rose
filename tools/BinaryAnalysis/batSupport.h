@@ -18,8 +18,8 @@
 #include <string>
 
 // Minimum ROSE versions required by this tool
-#define MINIMUM_ROSE_HEADER_VERSION 9013017ul
-#define MINIMUM_ROSE_LIBRARY_VERSION "0.9.13.17"
+#define MINIMUM_ROSE_HEADER_VERSION 11007006uL
+#define MINIMUM_ROSE_LIBRARY_VERSION "0.11.7.6"
 
 #if !defined(ROSE_VERSION)
     #warning "unknown ROSE version"
@@ -353,13 +353,16 @@ public:
     bool suppressUninteresting;                         /**< Suppress paths that are "uninteresting". */
     bool suppressDuplicatePaths;                        /**< Suppress paths that have the same CFG execution sequence. */
     bool suppressDuplicateEndpoints;                    /**< Suppress paths that end at the same address. */
+    bool showShorterPaths;                              /**< When suppressing endpoints, show shorter paths anyway. */
     size_t maxPaths;                                    /**< Maximum number of paths to show. */
     std::set<uint64_t> requiredHashes;                  /**< If non-empty, show only paths matching these hashes. */
 
+    typedef Sawyer::Container::Map<rose_addr_t, size_t> EndpointLengths; /**< Path length per endpoint. */
+
 private:
     SAWYER_THREAD_TRAITS::Mutex mutex_;                 // protects the following data members
-    std::set<uint64_t> seenPaths_;
-    std::set<rose_addr_t> seenEndpoints_;
+    std::set<uint64_t> seenPaths_;                      // hashes of paths we've seen
+    EndpointLengths seenEndpoints_;                     // path lengths for endpoints we've emitted
     size_t nSuppressed_;                                // number of paths suppressed for any reason
     size_t nUninteresting_;                             // number of uninteresting paths suppressed
     size_t nDuplicatePaths_;                            // number of duplicate paths suppressed
@@ -371,8 +374,8 @@ private:
 public:
     PathSelector()
         : suppressAll(false), suppressUninteresting(false), suppressDuplicatePaths(false), suppressDuplicateEndpoints(false),
-          maxPaths(Rose::UNLIMITED), nSuppressed_(0), nUninteresting_(0), nDuplicatePaths_(0), nDuplicateEndpoints_(0),
-          nWrongHashes_(0), nLimitExceeded_(0), nSelected_(0) {}
+          showShorterPaths(false), maxPaths(Rose::UNLIMITED), nSuppressed_(0), nUninteresting_(0), nDuplicatePaths_(0),
+          nDuplicateEndpoints_(0), nWrongHashes_(0), nLimitExceeded_(0), nSelected_(0) {}
 
 public:
     /** Reset statistics. */
@@ -420,7 +423,8 @@ public:
      *
      *  This does not include paths suppressed due to all paths being suppressed, paths suppressed due to being deemed
      *  uninteresting, paths suppressed because they didn't match the set of required path hashes, or paths suppressed because
-     *  the entire path was a duplicate. */
+     *  the entire path was a duplicate. This also does not include paths that would have been suppressed due to being a
+     *  duplicate endpoint when the path is shown anyway because its shorter than any previous path at that endpoint. */
     size_t nDuplicateEndpoints() const { return nDuplicateEndpoints_; }
 
     /** Property: Number of paths suppressed due to limit being exceeded.

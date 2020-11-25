@@ -584,8 +584,18 @@ RiscOperators::writeMemory(RegisterDescriptor segreg,
     if (condition->is_number() && !condition->get_number())
         return;
 
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = address;
+    } else {
+        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        adjustedVa = add(address, signExtend(segregValue, address->get_width()));
+    }
+
+
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    currentState()->writeMemory(address, value, this, this);
+    currentState()->writeMemory(adjustedVa, value, this, this);
 }
     
 BaseSemantics::SValuePtr
@@ -597,21 +607,35 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
     size_t nbits = dflt->get_width();
     ASSERT_require2(nbits % 8 == 0, "read from memory must be in byte units");
 
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = address;
+    } else {
+        BaseSemantics::SValuePtr segregValue;
+        if (allowSideEffects) {
+            segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        } else {
+            segregValue = peekRegister(segreg, undefined_(segreg.nBits()));
+        }
+        adjustedVa = add(address, signExtend(segregValue, address->get_width()));
+    }
+
     // Use the initial memory state if there is one.
     if (initialState()) {
         if (allowSideEffects) {
-            dflt = initialState()->readMemory(address, dflt, this, this);
+            dflt = initialState()->readMemory(adjustedVa, dflt, this, this);
         } else {
-            dflt = initialState()->peekMemory(address, dflt, this, this);
+            dflt = initialState()->peekMemory(adjustedVa, dflt, this, this);
         }
     }
     
     // Use the concrete MemoryMap if there is one.  Only those areas of the map that are readable and not writable are used.
-    if (map && address->is_number()) {
+    if (map && adjustedVa->is_number()) {
         size_t nbytes = nbits/8;
         uint8_t *buf = new uint8_t[nbytes];
         size_t nread = map->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE)
-                       .at(address->get_number()).limit(nbytes).read(buf).size();
+                       .at(adjustedVa->get_number()).limit(nbytes).read(buf).size();
         if (nread == nbytes) {
             if (nbytes > 1 && map->byteOrder() == ByteOrder::ORDER_UNSPECIFIED)
                 throw BaseSemantics::Exception("multi-byte read with memory having unspecified byte order", currentInstruction());
@@ -625,7 +649,7 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
     }
     
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    SValuePtr retval = SValue::promote(currentState()->readMemory(address, dflt, this, this));
+    SValuePtr retval = SValue::promote(currentState()->readMemory(adjustedVa, dflt, this, this));
     return retval;
 }
 

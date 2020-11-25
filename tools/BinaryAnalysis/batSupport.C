@@ -885,11 +885,17 @@ PathSelector::operator()(const FeasiblePath &fpAnalysis, const P2::CfgPath &path
     }
 
     // The user might want to show only one path per end-point.
-    if (suppressDuplicateEndpoints &&
-        !seenEndpoints_.insert(path.backVertex()->value().optionalAddress().orElse((rose_addr_t)(-1))).second) {
-        ++nSuppressed_;
-        ++nDuplicateEndpoints_;
-        return 0;
+    if (suppressDuplicateEndpoints) {
+        rose_addr_t va = path.backVertex()->value().optionalAddress().orElse((rose_addr_t)(-1));
+        size_t &oldLength = seenEndpoints_.insertMaybe(va, 0);
+        size_t newLength = path.nVertices();
+        bool show = 0==oldLength || (showShorterPaths && newLength < oldLength);
+        oldLength = newLength;
+        if (!show) {
+            ++nSuppressed_;
+            ++nDuplicateEndpoints_;
+            return 0;
+        }
     }
 
     // Have we selected too many paths already?
