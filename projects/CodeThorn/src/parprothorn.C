@@ -539,7 +539,7 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.status) {
       cout<<"STATUS: analysis started."<<endl;
     }
-    analyzer->initialize(sageProject,nullptr);
+    analyzer->initialize(ctOpt, sageProject,nullptr);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
 
     if(ctOpt.info.printVariableIdMapping) {

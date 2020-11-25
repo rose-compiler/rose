@@ -94,13 +94,17 @@ namespace CodeThorn {
     CTAnalysis();
     virtual ~CTAnalysis();
 
-    virtual void initializeSolver() override; // required (abstract in DFAnalysisWithoutData)
     virtual void run() override;
+    virtual void initializeSolver() override; // required (abstract in DFAnalysisWithoutData)
+
+  protected:    
+    virtual void initializeAnalyzerDataInfo() override;
+#if 0
     virtual Lattice* getPreInfo(Label lab) override;
     virtual Lattice* getPostInfo(Label lab) override;
     virtual void setPostInfo(Label lab,Lattice*) override;
-    virtual void initializeAnalyzerDataInfo()override;
-
+#endif
+  public:
     
     void initAstNodeInfo(SgNode* node);
     virtual void initializeSolver2(std::string functionToStartAt, SgProject* root);

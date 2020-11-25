@@ -65,7 +65,7 @@ namespace CodeThorn {
   
   SgProject* parsingPass(CodeThornOptions& ctOpt, int argc, char * argv[]);
   void normalizationPass(CodeThornOptions& ctOpt, SgProject* sageProject);
-  Labeler* createLabeler(CodeThornOptions& ctOpt, SgProject* sageProject);
+  Labeler* createLabeler(SgProject* sageProject, VariableIdMappingExtended* variableIdMapping);
   VariableIdMappingExtended* createVariableIdMapping(CodeThornOptions& ctOpt, SgProject* sageProject);
   CFAnalysis* createControlFlowGraph(CodeThornOptions& ctOpt, SgProject* project, Labeler* labeler);
   //CFAnalysis* createBackwardControlFlowGraph(SgProject* sageProject*, CodeThornOptions& ctOpt, SgProject* sageProject);

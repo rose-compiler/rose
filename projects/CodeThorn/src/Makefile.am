@@ -95,6 +95,7 @@ CODETHORN_HEADER_FILES=\
   DFAbstractSolver.h \
   DFAnalysisBaseWithoutData.h \
   DFAnalysisBase.h \
+  CSDFAnalysisBase.h \
   DFTransferFunctions.h \
   DotGraphCfgFrontend.h \
   EState.h \
@@ -223,6 +224,7 @@ CODETHORN_SOURCE_FILES=\
   DataRaceDetection.C \
   DFAnalysisBaseWithoutData.C \
   DFAnalysisBase.C \
+  CSDFAnalysisBase.C \
   DFTransferFunctions.C \
   DotGraphCfgFrontend.C \
   EState.C \

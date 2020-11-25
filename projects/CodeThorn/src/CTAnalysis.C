@@ -76,16 +76,25 @@ CodeThorn::CTAnalysis::CTAnalysis():
   _estateTransferFunctions->setAnalyzer(this);
 }
 
+// override
 void CodeThorn::CTAnalysis::initializeSolver() {
   EStateTransferFunctions* etf=new EStateTransferFunctions();
   etf->setAnalyzer(this);
   _transferFunctions=etf;
 }
 
+// override
 void CodeThorn::CTAnalysis::run() {
   runSolver();
 }
 
+// override
+void CodeThorn::CTAnalysis::initializeAnalyzerDataInfo() {
+  // will be changed for added context
+  SAWYER_MESG(logger[INFO])<<"INFO: CTAnalysis::initializeAnalyzerDataInfo (empty)."<<endl;
+}
+
+#if 0
 Lattice* CodeThorn::CTAnalysis::getPreInfo(Label lab) {
   // will be changed for added context
   ROSE_ASSERT(false);
@@ -100,12 +109,7 @@ void CodeThorn::CTAnalysis::setPostInfo(Label lab,Lattice*) {
   ROSE_ASSERT(false);
 
 }
-
-void CodeThorn::CTAnalysis::initializeAnalyzerDataInfo() {
-  // will be changed for added context
-  SAWYER_MESG(logger[INFO])<<"INFO: CTAnalysis::initializeAnalyzerDataInfo (empty)."<<endl;
-}
-
+#endif
 
 void CodeThorn::CTAnalysis::insertInputVarValue(int i) {
   _inputVarValues.insert(i);
@@ -184,17 +188,6 @@ ExplorationMode CodeThorn::CTAnalysis::getExplorationMode() {
 }
 
 CodeThorn::CTAnalysis::~CTAnalysis() {
-  /*
-  if(cfanalyzer) {
-    delete cfanalyzer;
-  }
-  if(variableIdMapping)
-    delete variableIdMapping;
-  if(getFunctionCallMapping())
-    delete getFunctionCallMapping()->getClassHierarchy();
-  if(getFunctionCallMapping2())
-    delete getFunctionCallMapping2()->getClassHierarchy();
-  */
   if(_estateTransferFunctions)
     delete _estateTransferFunctions;
   deleteWorkLists();
@@ -1868,8 +1861,8 @@ void CodeThorn::CTAnalysis::initializeSolver2(std::string functionToStartAt, SgP
     programAbstractionLayer->setNormalizationLevel(1);
   if(_ctOpt.normalizeAll)
     programAbstractionLayer->setNormalizationLevel(2);
-  programAbstractionLayer->initialize(root);
-  initialize(root,programAbstractionLayer);
+  programAbstractionLayer->initialize(_ctOpt,root);
+  initialize(_ctOpt,root,programAbstractionLayer);
   _programAbstractionLayer=programAbstractionLayer;
   _programAbstractionLayerOwner=true;
 

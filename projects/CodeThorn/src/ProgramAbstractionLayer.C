@@ -3,6 +3,7 @@
 #include "ClassHierarchyGraph.h"
 #include "Normalization.h"
 #include "CTIOLabeler.h"
+#include "CodeThornLib.h"
 
 #include <iostream>
 
@@ -21,18 +22,11 @@ SgProject* CodeThorn::ProgramAbstractionLayer::getRoot() {
 }
 
 
-void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
+void CodeThorn::ProgramAbstractionLayer::initialize(CodeThornOptions& ctOpt, SgProject* root) {
   _root=root;
-  CodeThorn::Normalization normalization;
-  normalization.setInliningOption(getInliningOption());
-  normalization.normalizeAst(root,getNormalizationLevel());
-  _variableIdMapping=new VariableIdMappingExtended();
-  _variableIdMapping->computeVariableSymbolMapping(root);
-  //cout << "INIT: variableIdMapping: " << _variableIdMapping->getNumVarIds() << " variables."<<endl;
-
-  //_labeler=new Labeler(root);
-  _labeler=new CTIOLabeler(root,_variableIdMapping);
-  //cout << "INIT: labeler: " << _labeler->numberOfLabels() << " labels."<<endl;
+  normalizationPass(ctOpt,root);
+  _variableIdMapping=CodeThorn::createVariableIdMapping(ctOpt,root);
+  _labeler=createLabeler(root,_variableIdMapping);
   
   _classHierarchy=new ClassHierarchyWrapper(root);
   _cfanalyzer=new CFAnalysis(_labeler);
@@ -44,7 +38,7 @@ void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
     // another function resolution mode
     _functionCallMapping = new FunctionCallMapping();
   
-    getFunctionCallMapping()->setClassHierarchy(getClassHierarchy());
+    getFunctionCallMapping()->setClassHierarchy(_classHierarchy);
     getFunctionCallMapping()->computeFunctionCallMapping(root);
     _cfanalyzer->setFunctionCallMapping(getFunctionCallMapping());
   }
@@ -53,7 +47,7 @@ void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
     // PP (02/17/20) add class hierarchy and call mapping
     _functionCallMapping2=new FunctionCallMapping2();
     getFunctionCallMapping2()->setLabeler(_labeler);
-    getFunctionCallMapping2()->setClassHierarchy(getClassHierarchy());
+    getFunctionCallMapping2()->setClassHierarchy(_classHierarchy);
     getFunctionCallMapping2()->computeFunctionCallMapping(root);
     _cfanalyzer->setFunctionCallMapping2(getFunctionCallMapping2());
   }
@@ -119,11 +113,6 @@ CodeThorn::FunctionCallMapping* CodeThorn::ProgramAbstractionLayer::getFunctionC
 CodeThorn::FunctionCallMapping2* CodeThorn::ProgramAbstractionLayer::getFunctionCallMapping2(){
   ROSE_ASSERT(_functionCallMapping2!=0);
   return _functionCallMapping2;
-}
-
-ClassHierarchyWrapper* CodeThorn::ProgramAbstractionLayer::getClassHierarchy(){
-  ROSE_ASSERT(_classHierarchy!=0);
-  return _classHierarchy;
 }
 
 void CodeThorn::ProgramAbstractionLayer::setNormalizationLevel(unsigned int level) {

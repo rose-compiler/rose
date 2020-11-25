@@ -747,7 +747,7 @@ void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProj
       break;
     case 2:
       cout<<"INFO: PA framework: initialization."<<endl;
-      analyzer->initialize(sageProject,nullptr);
+      analyzer->initialize(ctOpt,sageProject);
       cout<<"INFO: running PA Framework solver."<<endl;
       analyzer->run();
       cout<<"INFO: PA framework: finished."<<endl;
@@ -765,6 +765,7 @@ void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProj
 
   void normalizationPass(CodeThornOptions& ctOpt, SgProject* project) {
     CodeThorn::Normalization normalization;
+    normalization.setInliningOption(ctOpt.inlineFunctions);
     int normalizationLevel=0;
     if(ctOpt.normalizeFCalls)
       normalizationLevel=1;
@@ -779,7 +780,7 @@ void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProj
     return variableIdMapping;
   }
 
-  Labeler* createLabeler(CodeThornOptions& ctOpt, SgProject* project, VariableIdMappingExtended* variableIdMapping) {
+  Labeler* createLabeler(SgProject* project, VariableIdMappingExtended* variableIdMapping) {
     return new CTIOLabeler(project,variableIdMapping);
   }
     

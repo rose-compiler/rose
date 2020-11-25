@@ -28,12 +28,8 @@ namespace CodeThorn
   }
 
   void DFAnalysisBase::initializeSolver() {
-    //    ROSE_ASSERT(&_workList);
     ROSE_ASSERT(getInitialElementFactory());
-    //ROSE_ASSERT(&_analyzerDataPreInfo);
-    //ROSE_ASSERT(&_analyzerDataPostInfo);
     ROSE_ASSERT(getFlow());
-    //ROSE_ASSERT(&_transferFunctions);
      
     _solver = new DFSolver1( _workList,
                              _analyzerDataPreInfo,
@@ -54,6 +50,39 @@ namespace CodeThorn
     return _analyzerDataPostInfo[lab.getId()];
   }
 
+  void DFAnalysisBase::setPostInfo(Label lab,Lattice* el) {
+    if(getPostInfo(lab.getId())) {
+      delete _analyzerDataPostInfo[lab.getId()];
+    }
+    _analyzerDataPostInfo[lab.getId()]=el;
+  }
+
+  void DFAnalysisBase::computeAllPreInfo() {
+    if(!_preInfoIsValid) {
+      _solver->runSolver();
+      _preInfoIsValid=true;
+      _postInfoIsValid=false;
+    }
+  }
+
+  void DFAnalysisBase::computeAllPostInfo() {
+    if(!_postInfoIsValid) {
+      computeAllPreInfo();
+      // compute set of used labels in ICFG.
+      for(Labeler::iterator i=getLabeler()->begin();i!=getLabeler()->end();++i) {
+        Label lab=*i;
+        Lattice* info=getInitialElementFactory()->create();
+        _solver->computeCombinedPreInfo(lab,*info);
+        // TODO: invoke edge-based transfer function for each edge and
+        // (i) combine results or (ii) provide set of results (one
+        // result per edge)
+        _transferFunctions->transfer(lab,*info);
+        setPostInfo(lab.getId(),info);
+      }
+      _postInfoIsValid=true;
+    }
+  }
+
   void
   DFAnalysisBase::initializeAnalyzerDataInfo() {
     Labeler*              labeler = getLabeler();
@@ -72,7 +101,7 @@ namespace CodeThorn
   }
 
   void
-  DFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
+  DFAnalysisBase::initialize(CodeThornOptions& ctOpt, SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
     //cout << "INIT: establishing program abstraction layer." << endl;
     if(programAbstractionLayer) {
       ROSE_ASSERT(_programAbstractionLayer==nullptr);
@@ -81,7 +110,7 @@ namespace CodeThorn
     } else {
       _programAbstractionLayer=new ProgramAbstractionLayer();
       _programAbstractionLayerOwner=true;
-      _programAbstractionLayer->initialize(root);
+      _programAbstractionLayer->initialize(ctOpt,root);
     }
     _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(getVariableIdMapping());
     _pointerAnalysisEmptyImplementation->initialize();
@@ -94,11 +123,9 @@ namespace CodeThorn
     initializeAnalyzerDataInfo();
   }
 
-  DFAstAttribute* DFAnalysisBase::createDFAstAttribute(Lattice* elem) {
-    // elem ignored in default function
-    return new DFAstAttribute();
+  WorkListSeq<Edge>* DFAnalysisBase::getWorkList() {
+    return &_workList;
   }
-
 
   // runs until worklist is empty
   void
@@ -157,6 +184,25 @@ namespace CodeThorn
     solve();
   }
 
+  // runs until worklist is empty
+  void
+  DFAnalysisBase::solve() {
+    computeAllPreInfo();
+    computeAllPostInfo();
+  }
+
+  /*!
+   * \author Markus Schordan
+   * \date 2018.
+   */
+
+  void DFAnalysisBase::setSkipUnknownFunctionCalls(bool defer) {
+    _skipSelectedFunctionCalls=defer;
+    if(_transferFunctions) {
+      _transferFunctions->setSkipUnknownFunctionCalls(defer);
+    }
+  }
+
 #include <iostream>
 #include "AstAnnotator.h"
 #include <string>
@@ -164,6 +210,11 @@ namespace CodeThorn
   using std::string;
 
 #include <sstream>
+
+  DFAstAttribute* DFAnalysisBase::createDFAstAttribute(Lattice* elem) {
+    // elem ignored in default function
+    return new DFAstAttribute();
+  }
 
   /*!
    * \author Markus Schordan
@@ -239,29 +290,6 @@ namespace CodeThorn
   void DFAnalysisBase::attachOutInfoToAst(string attributeName) {
     attachInfoToAst(attributeName,false);
   }
-
-  /*!
-   * \author Markus Schordan
-   * \date 2018.
-   */
-
-  void DFAnalysisBase::setSkipUnknownFunctionCalls(bool defer) {
-    _skipSelectedFunctionCalls=defer;
-    if(_transferFunctions) {
-      _transferFunctions->setSkipUnknownFunctionCalls(defer);
-    }
-  }
-
-  void DFAnalysisBase::setPostInfo(Label lab,Lattice* el) {
-    if(getPostInfo(lab.getId())) {
-      delete _analyzerDataPostInfo[lab.getId()];
-    }
-    _analyzerDataPostInfo[lab.getId()]=el;
-  }
-  
-  WorkListSeq<Edge>* DFAnalysisBase::getWorkList() {
-    return &_workList;
-  }
-
+ 
 }
 

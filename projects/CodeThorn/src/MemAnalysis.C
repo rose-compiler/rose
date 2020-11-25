@@ -26,12 +26,6 @@ CodeThorn::MemAnalysis::~MemAnalysis() {
   delete _transferFunctions->getInitialElementFactory();
 }
 
-void CodeThorn::MemAnalysis::initialize(SgProject* root) {
-  ProgramAbstractionLayer* pal=new ProgramAbstractionLayer();
-  pal->initialize(root);
-  DFAnalysisBase::initialize(root, pal);
-}
-
 void CodeThorn::MemAnalysis::initializeExtremalValue(Lattice* element) {
   _transferFunctions->initializeExtremalValue(*element);
   cout<<"INFO: initialized extremal value."<<endl;

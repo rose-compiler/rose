@@ -144,7 +144,7 @@ int main( int argc, char * argv[] ) {
     optionallyGenerateTraversalInfoAndExit(ctOpt, sageProject);
     optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
-    analyzer->initialize(sageProject,nullptr);
+    analyzer->initialize(ctOpt,sageProject,nullptr);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
     optionallyPrintProgramInfos(ctOpt, analyzer);
     optionallyRunRoseAstChecksAndExit(ctOpt, sageProject);

@@ -2,11 +2,13 @@
 #define PROGRAM_ABSTRACTION_LAYER_H
 
 #include "Labeler.h"
+#include "CTIOLabeler.h"
 #include "VariableIdMapping.h"
 #include "FunctionCallMapping.h"
 #include "CFAnalysis.h"
 #include "Flow.h"
 #include "VariableIdMappingExtended.h"
+#include "CodeThornOptions.h"
 
 class SgProject;
 class ClassHierarchyWrapper;
@@ -17,13 +19,12 @@ namespace CodeThorn {
   public:
     ProgramAbstractionLayer();
     virtual ~ProgramAbstractionLayer();
-    virtual void initialize(SgProject* root);
+    virtual void initialize(CodeThornOptions& ctOpt, SgProject* root);
     SgProject* getRoot();
     Labeler* getLabeler();
     VariableIdMappingExtended* getVariableIdMapping();
     FunctionCallMapping* getFunctionCallMapping();
     FunctionCallMapping2* getFunctionCallMapping2();
-    ClassHierarchyWrapper* getClassHierarchy();
     void setNormalizationLevel(unsigned int level);
     unsigned int getNormalizationLevel();
     void setInliningOption(bool flag);

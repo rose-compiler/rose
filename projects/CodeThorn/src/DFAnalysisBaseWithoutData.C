@@ -36,32 +36,6 @@ namespace CodeThorn
     return _programAbstractionLayer->getFlow();
   }
 
-  void DFAnalysisBaseWithoutData::computeAllPreInfo() {
-    if(!_preInfoIsValid) {
-      _solver->runSolver();
-      _preInfoIsValid=true;
-      _postInfoIsValid=false;
-    }
-  }
-
-  void DFAnalysisBaseWithoutData::computeAllPostInfo() {
-    if(!_postInfoIsValid) {
-      computeAllPreInfo();
-      // compute set of used labels in ICFG.
-      for(Labeler::iterator i=getLabeler()->begin();i!=getLabeler()->end();++i) {
-        Label lab=*i;
-        Lattice* info=getInitialElementFactory()->create();
-        _solver->computeCombinedPreInfo(lab,*info);
-        // TODO: invoke edge-based transfer function for each edge and
-        // (i) combine results or (ii) provide set of results (one
-        // result per edge)
-        _transferFunctions->transfer(lab,*info);
-        setPostInfo(lab.getId(),info);
-      }
-      _postInfoIsValid=true;
-    }
-  }
-
   PropertyStateFactory*
   DFAnalysisBaseWithoutData::getInitialElementFactory() {
     ROSE_ASSERT(_transferFunctions);
@@ -123,20 +97,13 @@ namespace CodeThorn
     return elem;
   }
 
-  // runs until worklist is empty
   void
-  DFAnalysisBaseWithoutData::solve() {
-    computeAllPreInfo();
-    computeAllPostInfo();
+  DFAnalysisBaseWithoutData::initialize(CodeThornOptions& ctOpt, SgProject* root) {
+    this->initialize(ctOpt, root, nullptr);
   }
 
   void
-  DFAnalysisBaseWithoutData::initialize(SgProject* root) {
-    this->initialize(root,nullptr);
-  }
-
-  void
-  DFAnalysisBaseWithoutData::initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
+  DFAnalysisBaseWithoutData::initialize(CodeThornOptions& ctOpt, SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
     //cout << "INIT: establishing program abstraction layer." << endl;
     if(programAbstractionLayer) {
       ROSE_ASSERT(_programAbstractionLayer==nullptr);
@@ -145,7 +112,7 @@ namespace CodeThorn
     } else {
       _programAbstractionLayer=new ProgramAbstractionLayer();
       _programAbstractionLayerOwner=true;
-      _programAbstractionLayer->initialize(root);
+      _programAbstractionLayer->initialize(ctOpt,root);
     }
     _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(getVariableIdMapping());
     _pointerAnalysisEmptyImplementation->initialize();
@@ -157,6 +124,9 @@ namespace CodeThorn
     //cout << "INIT: initialized pre/post property states."<<endl;
   }
 
+  void DFAnalysisBaseWithoutData::initializeAnalyzerDataInfo() {
+  }
+  
   void DFAnalysisBaseWithoutData::initializeTransferFunctions() {
     ROSE_ASSERT(_transferFunctions);
     ROSE_ASSERT(getLabeler());

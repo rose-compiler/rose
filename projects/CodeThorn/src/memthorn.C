@@ -95,9 +95,9 @@ void configureRersSpecialization() {
 #endif
 }
 
-void runMemAnalysis(SgProject* astRoot, SgNode* startFunRoot) {
+void runMemAnalysis(CodeThornOptions& ctOpt, SgProject* astRoot, SgNode* startFunRoot) {
   MemAnalysis* memAnalysis=new MemAnalysis();
-  memAnalysis->initialize(astRoot);
+  memAnalysis->initialize(ctOpt,astRoot,nullptr);
   ROSE_ASSERT(memAnalysis->getVariableIdMapping());
   
   memAnalysis->determineExtremalLabels(startFunRoot,false);
@@ -106,9 +106,9 @@ void runMemAnalysis(SgProject* astRoot, SgNode* startFunRoot) {
   memAnalysis->run();
 }
 
-void runEStateAnalysis(SgProject* astRoot, SgNode* startFunRoot) {
+void runEStateAnalysis(CodeThornOptions& ctOpt, SgProject* astRoot, SgNode* startFunRoot) {
   EStateAnalysis* estateAnalysis=new EStateAnalysis();
-  estateAnalysis->initialize(astRoot);
+  estateAnalysis->initialize(ctOpt,astRoot,nullptr);
   ROSE_ASSERT(estateAnalysis->getVariableIdMapping());
 
   estateAnalysis->determineExtremalLabels(startFunRoot,false);
@@ -239,12 +239,12 @@ int main( int argc, char * argv[] ) {
       break;
     case 1: {
       cout<<"Running MemState analysis."<<endl;
-      runMemAnalysis(astRoot, startFunRoot);
+      runMemAnalysis(ctOpt,astRoot, startFunRoot);
       break;
     }
     case 2: {
       cout<<"Running EState analysis."<<endl;
-      runEStateAnalysis(astRoot, startFunRoot);
+      runEStateAnalysis(ctOpt,astRoot, startFunRoot);
     }
     }
     // reset terminal
