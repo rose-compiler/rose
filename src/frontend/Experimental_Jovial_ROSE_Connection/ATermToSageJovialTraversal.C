@@ -5035,7 +5035,7 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
    printf("... traverse_IfStatement: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_labels, t_cond, t_else, t_true, t_false;
+   ATerm t_labels, t_if, t_cond, t_else, t_true, t_false;
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
    SgExpression* conditional = nullptr;
@@ -5043,10 +5043,12 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
    SgBasicBlock* false_body = nullptr;
    SgIfStmt* if_stmt = nullptr;
 
-   if (ATmatch(term, "IfStatement(<term>,<term>,<term>,<term>)", &t_labels,&t_cond,&t_true,&t_else)) {
+   if (ATmatch(term, "IfStatement(<term>,<term>,<term>,<term>,<term>)", &t_labels,&t_if,&t_cond,&t_true,&t_else)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
+
+      // t_if is the keyword 'IF'
 
       if (traverse_BitFormula(t_cond, conditional)) {
          // MATCHED BitFormula

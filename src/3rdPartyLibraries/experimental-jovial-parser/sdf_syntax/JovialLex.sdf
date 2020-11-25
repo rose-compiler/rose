@@ -8,6 +8,7 @@ exports
     CharString                 %% 8.1
     Name                       %% 8.2.1  
     ReservedWord               %% 8.2.2
+    IfKeyword                                %% Added to ensure 'IF...' can be an identifier/name
     BeadSize Bead              %% 8.3.2
 
     SignedTypeDesc             %% 2.1.1.1
@@ -117,6 +118,10 @@ exports
 
 %% 8.2.2 RESERVED WORDS
 %%
+
+%% IfKeyword is needed so that 'ifvar' is not split into 'if' 'var'
+  'IF'                      -> IfKeyword
+
   'ABORT'                   -> ReservedWord
   'ABS'                     -> ReservedWord
   'AND'                     -> ReservedWord
@@ -159,7 +164,7 @@ exports
 
   'HANDLER*'                -> ReservedWord
 
-  'IF'                      -> ReservedWord
+  IfKeyword                 -> ReservedWord
   'IN*'                     -> ReservedWord
   'INLINE'                  -> ReservedWord
   'INSTANCE'                -> ReservedWord
@@ -255,6 +260,9 @@ exports
 
     PointerTypeDesc  -/- [A-Za-z0-9]
     StrucSpecT       -/- [A-Za-z0-9]
+
+    IfKeyword        -/- [A-Za-z0-9]
+    ReservedWord     -/- [A-Za-z0-9]
 
   context-free restrictions
 
