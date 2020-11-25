@@ -2332,6 +2332,12 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                       // ROSE_ASSERT(nondefiningDeclaration->get_parent() != NULL);
                          if (definingDeclaration != NULL)
                             {
+                           // DQ (11/25/2020): Adding debugging support.
+                              if (definingDeclaration->get_parent() == NULL)
+                                 {
+                                   printf ("Error: definingDeclaration->get_parent() == NULL: definingDeclaration = %p = %s \n",definingDeclaration,definingDeclaration->class_name().c_str());
+                                   printf (" --- definingDeclaration name = %s \n",SageInterface::get_name(definingDeclaration).c_str());
+                                 }
                               ROSE_ASSERT(definingDeclaration->get_parent() != NULL);
 
                            // Make the parent the same for both the defining and nondefining declarations

@@ -9489,7 +9489,10 @@ SageInterface::DeferredTransformation & SageInterface::DeferredTransformation::o
      return *this;
    }
 
-SageInterface::DeferredTransformation::~DeferredTransformation (void) {}; //! Shallow; does not delete fields.
+SageInterface::DeferredTransformation::~DeferredTransformation (void)
+   {
+   //! Shallow; does not delete fields.
+   }
 
 std::string SageInterface::DeferredTransformation::outputDeferredTransformationKind(const TransformationKind & kind)
    {
@@ -9880,7 +9883,7 @@ SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, boo
      SgStatement* surroundingStatement = targetStmt;
      int surroundingStatement_fileId   = Sg_File_Info::BAD_FILE_ID; // No file id can have this value.
 
-#if REMOVE_STATEMENT_DEBUG
+#if REMOVE_STATEMENT_DEBUG || 1
      printf ("TOP of findSurroundingStatementFromSameFile(): surroundingStatementPreceedsTargetStatement = %s \n",surroundingStatementPreceedsTargetStatement ? "true" : "false");
 #endif
 
@@ -26164,11 +26167,14 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
                bool movePreprocessingInfo = true;
                replaceStatement(functionDeclaration,nondefiningFunctionDeclaration,movePreprocessingInfo);
 
+            // DQ (11/25/2020): This is the cause of a problem in the outliner caught in the resetParentPointer.C (definingDeclaration->get_parent() != __null).
             // DQ (11/24/2020): Maybe we should set the parent of the functionDeclaration to NULL, so that we will know to set it properly later.
             // This is the cause of a name qualification bug when the functionDeclaration is inserted into global scope and the name qualification 
             // is not computed correctly (since the parent was still the namespace scope where it was originally.
-               functionDeclaration->set_parent(NULL);
-
+            // functionDeclaration->set_parent(NULL);
+#if 0
+               printf ("In SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(): Skip resetting the parent pointer to NULL \n");
+#endif
             // DQ (10/22/2020): Added assertion.
                ROSE_ASSERT(nondefiningFunctionDeclaration->get_parent() != NULL);
 #else

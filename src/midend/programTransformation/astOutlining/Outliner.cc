@@ -33,7 +33,12 @@ namespace Outliner {
   bool copy_origFile=false; // when generating the new file to store outlined function, copy entire original file to it.
   bool temp_variable=false; // use temporary variables to reduce pointer dereferencing
   bool enable_liveness =false;
+#if 1
   bool enable_debug=false; // 
+#else
+  // DQ (11/25/2020): Trying to turn on debugging of outliner.
+  bool enable_debug=true; // 
+#endif
   bool exclude_headers=false;
   bool use_dlopen=false; // Outlining the target to a separated file and calling it using a dlopen() scheme. It turns on useNewFile.
   bool enable_template=false; // Outlining code blocks inside C++ templates
