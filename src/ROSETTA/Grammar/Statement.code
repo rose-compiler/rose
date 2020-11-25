@@ -3486,12 +3486,14 @@ HEADER_ADA_PACKAGE_SPEC_DECL_STATEMENT_START
 SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE;
 SgName get_mangled_name() const ROSE_OVERRIDE;
 SgName get_qualified_name() const;
+bool hasExplicitScope() const $ROSE_OVERRIDE;
 HEADER_ADA_PACKAGE_SPEC_DECL_STATEMENT_END
 
 HEADER_ADA_PACKAGE_BODY_DECL_STATEMENT_START
 SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE;
 SgName get_mangled_name() const ROSE_OVERRIDE;
 SgName get_qualified_name() const;
+bool hasExplicitScope() const $ROSE_OVERRIDE;
 HEADER_ADA_PACKAGE_BODY_DECL_STATEMENT_END
 
 HEADER_ADA_PACKAGE_SPEC_STATEMENT_START
@@ -3513,6 +3515,7 @@ HEADER_ADA_TASK_SPEC_DECL_STATEMENT_END
 HEADER_ADA_TASK_TYPE_DECL_STATEMENT_START
 SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE;
 SgName get_mangled_name() const ROSE_OVERRIDE;
+bool hasExplicitScope() const $ROSE_OVERRIDE;
 HEADER_ADA_TASK_TYPE_DECL_STATEMENT_END
 
 HEADER_ADA_TASK_BODY_DECL_STATEMENT_START
@@ -20282,6 +20285,7 @@ SgAdaPackageSpecDecl::get_qualified_name() const
   return SgName::assembleQualifiedName(scope->get_qualified_name(), get_name());
 }
 
+bool SgAdaPackageSpecDecl::hasExplicitScope() const { return true; }
 
 SOURCE_ADA_PACKAGE_SPEC_DECL_STATEMENT_END
 
@@ -20315,6 +20319,8 @@ SgAdaPackageBodyDecl::get_qualified_name() const
   ROSE_ASSERT(scope);
   return SgName::assembleQualifiedName(scope->get_qualified_name(), get_name());
 }
+
+bool SgAdaPackageBodyDecl::hasExplicitScope() const { return true; }
 
 SOURCE_ADA_PACKAGE_BODY_DECL_STATEMENT_END
 
@@ -20406,6 +20412,8 @@ SgAdaTaskTypeDecl::get_mangled_name() const
   name.append(get_name());
   return name;
 }
+
+bool SgAdaTaskTypeDecl::hasExplicitScope() const { return true; }
 
 SOURCE_ADA_TASK_TYPE_DECL_STATEMENT_END
 

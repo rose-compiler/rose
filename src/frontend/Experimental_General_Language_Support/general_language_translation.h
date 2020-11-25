@@ -115,8 +115,8 @@ namespace LanguageTranslation
        // Relational operators
           e_operator_less_than,
           e_operator_greater_than,
-          e_operator_less_than_or_equal,
-          e_operator_greater_than_or_equal,
+          e_operator_less_or_equal,
+          e_operator_greater_or_equal,
           e_operator_equality,
           e_operator_not_equal,
 

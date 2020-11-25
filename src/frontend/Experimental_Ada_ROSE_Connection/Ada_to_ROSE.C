@@ -66,6 +66,21 @@ ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
 //
 // auxiliary classes and functions
 
+
+/// returns true of the kind is of interest
+static inline
+bool traceKind(const char* /* kind */)
+{
+  return true;
+}
+
+//~ void logKind(const char* kind, bool /* unused */)
+//~ {
+  //~ if (!traceKind(kind)) return;
+
+  //~ logTrace() << kind << std::endl;
+//~ }
+
 LabelAndLoopManager::~LabelAndLoopManager()
 {
   for (GotoContainer::value_type el : gotos)
@@ -162,6 +177,7 @@ namespace
     {
         case A_Declaration:             // Asis.Declarations
         {
+          logKind("A_Declaration");
           handleDeclaration(elem, ctx, isPrivate);
           break;
         }
@@ -169,6 +185,7 @@ namespace
       case A_Clause:                  // Asis.Clauses
         {
           // currently only handles with clauses
+          logKind("A_Clause");
           handleClause(elem, ctx);
           break;
         }
@@ -203,14 +220,8 @@ namespace
 
       case A_Definition:              // Asis.Definitions
         {
-          // records (one of many definitions) are handled by getRecordBody
-          Definition_Struct& def = elem.The_Union.Definition;
-
-          logWarn() << "Unhandled element " << elem.Element_Kind
-                    << "\n  definition kind: " << def.Definition_Kind
-                    << std::endl;
-
-          ROSE_ASSERT(false && !FAIL_ON_ERROR);
+          logKind("A_Definition");
+          handleDefinition(elem, ctx);
           break;
         }
 
@@ -241,7 +252,7 @@ namespace
       UnitCreator(AstContext astctx)
       : ctx(astctx)
       {}
-
+/*
       void operator()(Unit_Struct& adaUnit)
       {
         handleUnit(adaUnit, ctx);
@@ -250,6 +261,12 @@ namespace
       void operator()(Unit_Struct_List_Struct& adaUnit)
       {
         (*this)(adaUnit.Unit);
+      }
+*/
+
+      void operator()(Unit_Struct* adaUnit)
+      {
+        handleUnit(SG_DEREF(adaUnit), ctx);
       }
 
       AstContext ctx;
@@ -340,8 +357,8 @@ namespace
                      << PrnUnitHeader(adaUnit)
                      << std::endl;
 
-          ElemIdRange           elemRange = idRange(adaUnit.Context_Clause_Elements);
-          UnitIdRange           unitRange = idRange(adaUnit.Corresponding_Children);
+          ElemIdRange elemRange = idRange(adaUnit.Context_Clause_Elements);
+          UnitIdRange unitRange = idRange(adaUnit.Corresponding_Children);
 
           if (elemRange.size() || unitRange.size())
           {
@@ -370,8 +387,8 @@ namespace
                      << PrnUnitHeader(adaUnit)
                      << std::endl;
 
-          ElemIdRange           elemRange = idRange(adaUnit.Context_Clause_Elements);
-          UnitIdRange           unitRange = idRange(adaUnit.Corresponding_Children);
+          ElemIdRange elemRange = idRange(adaUnit.Context_Clause_Elements);
+          UnitIdRange unitRange = idRange(adaUnit.Corresponding_Children);
 
           if (elemRange.size() || unitRange.size())
           {
@@ -472,19 +489,69 @@ void ElemCreator::operator()(Element_Struct& elem)
 }
 
 
+template <class UnitQueue, class UnitMap>
+void enqueueUnit(UnitQueue& res, UnitMap& units, Unit_Struct& unit)
+{
+  std::vector<Unit_Struct*>& children = std::get<0>(units[unit.ID]);
 
-void secondConversion(Nodes_Struct& headNodes, SgSourceFile* file)
+  res.push_back(&unit);
+
+  for (Unit_Struct* child : children)
+    enqueueUnit(res, units, *child);
+
+  units.erase(unit.ID);
+}
+
+std::vector<Unit_Struct*>
+reorderUnits(Unit_Struct_List_Struct* adaUnit)
+{
+  using ElemType = std::tuple<std::vector<Unit_Struct*>, Unit_Struct*>;
+  using MapType  = std::map<std::size_t, ElemType>;
+
+  MapType units;
+
+  for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
+    units[unit->Unit.ID] = ElemType{std::vector<Unit_Struct*>{}, &unit->Unit};
+
+  std::vector<Unit_Struct*> res;
+
+  for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
+  {
+    size_t            parentID = unit->Unit.Corresponding_Parent_Declaration;
+    MapType::iterator pos = units.find(parentID);
+
+    if (pos != units.end())
+    {
+      std::get<0>(pos->second).push_back(&unit->Unit);
+    }
+    else
+    {
+      enqueueUnit(res, units, unit->Unit);
+    }
+  }
+
+  return res;
+}
+
+
+
+void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 {
   ROSE_ASSERT(file);
 
   logInfo() << "Building ROSE AST .." << std::endl;
 
-  Unit_Struct_List_Struct* adaLimit = 0;
-  Unit_Struct_List_Struct* adaUnit  = headNodes.Units;
-  SgGlobal&                astScope = SG_DEREF(file->get_globalScope());
+  Unit_Struct_List_Struct*  adaLimit = 0;
+  Unit_Struct_List_Struct*  adaUnit  = headNodes.Units;
+  SgGlobal&                 astScope = SG_DEREF(file->get_globalScope());
+  std::vector<Unit_Struct*> units    = reorderUnits(adaUnit);
+
+  //~ for (Unit_Struct_List_Struct* x = adaUnit; x != adaLimit; x = x->Next)
+    //~ logWarn() << PrnUnitHeader(x->Unit) << std::endl;
 
   initializeAdaTypes(astScope);
-  traverse(adaUnit, adaLimit, UnitCreator{AstContext{}.scope(astScope)});
+  //~ traverse(adaUnit, adaLimit, UnitCreator{AstContext{}.scope(astScope)});
+  std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});
   clearMappings();
 
   std::string astDotFile = astDotFileName(*file);
