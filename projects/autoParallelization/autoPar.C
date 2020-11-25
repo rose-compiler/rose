@@ -311,6 +311,8 @@ string getOpenMPFlag()
 int
 main (int argc, char *argv[])
 {
+  ROSE_INITIALIZE;
+
   vector<string> argvList(argv, argv+argc);
   //Processing debugging and annotation options
   //  autopar_command_processing(argvList);
