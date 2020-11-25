@@ -1949,9 +1949,9 @@ context-free syntax
 
 %% 6.3 FUNCTION CALLS
 %%
-  UserDefinedFunctionCall     -> FunctionCall
-  IntrinsicFunctionCall       -> FunctionCall
+  IntrinsicFunctionCall       -> FunctionCall         {prefer}
   MachineSpecificFunctionCall -> FunctionCall
+  UserDefinedFunctionCall     -> FunctionCall
 
 %% Removed Opt from ActualParameterList to distinguish from Variable.
 %% Now user-defined function calls must have parens. Resolution of function calls

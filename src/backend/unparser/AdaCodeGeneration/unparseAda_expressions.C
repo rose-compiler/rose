@@ -123,9 +123,18 @@ namespace
 
   struct AdaExprUnparser
   {
-    AdaExprUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
-    : unparser(unp), info(inf), os(outp)
+    AdaExprUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp, bool requiresScopeQual)
+    : unparser(unp), info(inf), os(outp), ctxRequiresScopeQualification(requiresScopeQual)
     {}
+
+    std::string
+    scopeQual(SgExpression& local, SgScopeStatement& remote);
+
+    std::string
+    scopeQual(SgExpression& local, SgScopeStatement* remote)
+    {
+      return scopeQual(local, SG_DEREF(remote));
+    }
 
     void prn(const std::string& s)
     {
@@ -134,6 +143,8 @@ namespace
     }
 
     void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
+
+    void handle(SgExpression& n);
 
     void handle(SgBinaryOp& n);
     void handle(SgUnaryOp& n);
@@ -144,6 +155,18 @@ namespace
       prn(n.get_valueString());
     }
     */
+
+    void handle(SgDotExp& n)
+    {
+      SgExpression* lhs    = n.get_lhs_operand();
+      SgExpression* rhs    = n.get_rhs_operand();
+
+      expr(lhs);
+      //~ prn(operator_sym(n));
+      prn(".");
+      expr(rhs, false /* no need to scope qual right hand side */);
+    }
+
 
     void handle(SgRangeExp& n)
     {
@@ -169,7 +192,7 @@ namespace
 
     void handle(SgCastExp& n)
     {
-      type(n.get_type());
+      type(n.get_type(), n);
       prn("(");
       expr(n.get_operand());
       prn(")");
@@ -208,17 +231,15 @@ namespace
 
     void handle(SgFunctionRefExp& n)
     {
+      SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
+
+      if (ctxRequiresScopeQualification)
+        prn(scopeQual(n, fundcl.get_scope()));
+
       prn(nameOf(n));
     }
 
-    void expr(SgExpression* exp)
-    {
-      // let the generic unparser handle its things..
-      unparser.unparseExpression(exp, info);
-
-      // or just handle everything
-      //~ sg::dispatch(*this, exp);
-    }
+    void expr(SgExpression* exp, bool requiresScopeQual = true);
 
     void handle(SgAssignInitializer& n)
     {
@@ -250,19 +271,35 @@ namespace
       expr(exp);
     }
 
-    void type(SgType* t)
+    void type(SgType* t, SgExpression& ctx)
     {
-      unparser.unparseType(t, info);
+      unparser.unparseType(t, &sg::ancestor<SgScopeStatement>(ctx), info);
     }
 
     Unparse_Ada&    unparser;
     SgUnparse_Info& info;
     std::ostream&   os;
+    bool            ctxRequiresScopeQualification;
   };
 
-  bool arg_requires_call_syntax(SgExpression* n)
+  bool argRequiresCallSyntax(SgExpression* n)
   {
     return isSgActualArgumentExpression(n);
+  }
+
+  void AdaExprUnparser::handle(SgExpression& n)
+  {
+    // if not handled here, have the language independent parser handle it..
+    unparser.UnparseLanguageIndependentConstructs::unparseExpression(&n, info);
+  }
+
+  void AdaExprUnparser::expr(SgExpression* exp, bool requiresScopeQual)
+  {
+    // let the generic unparser handle its things..
+    //~ unparser.unparseExpression(exp, info);
+
+    // or just handle everything
+    sg::dispatch(AdaExprUnparser{unparser, info, os, requiresScopeQual}, exp);
   }
 
   void AdaExprUnparser::handle(SgBinaryOp& n)
@@ -272,8 +309,8 @@ namespace
 
     SgExpression* lhs    = n.get_lhs_operand();
     SgExpression* rhs    = n.get_rhs_operand();
-    const bool    prefix = (  arg_requires_call_syntax(lhs)
-                           || arg_requires_call_syntax(rhs)
+    const bool    prefix = (  argRequiresCallSyntax(lhs)
+                           || argRequiresCallSyntax(rhs)
                            );
 
     if (prefix)
@@ -300,6 +337,13 @@ namespace
     expr(n.get_operand());
     if (!isprefix) prn(operator_sym(n));
   }
+
+  std::string
+  AdaExprUnparser::scopeQual(SgExpression& local, SgScopeStatement& remote)
+  {
+    return unparser.computeScopeQual(sg::ancestor<SgScopeStatement>(local), remote);
+  }
+
 }
 
 bool Unparse_Ada::requiresParentheses(SgExpression* expr, SgUnparse_Info& info)
@@ -322,11 +366,17 @@ void Unparse_Ada::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
 {
   ASSERT_not_null(expr);
 
-  sg::dispatch(AdaExprUnparser{*this, info, std::cerr}, expr);
+  SG_UNEXPECTED_NODE(*expr);
+}
+
+void Unparse_Ada::unparseExpression(SgExpression* expr, SgUnparse_Info& info)
+{
+  sg::dispatch(AdaExprUnparser{*this, info, std::cerr, false /* scope qual */}, expr);
 }
 
 
 void Unparse_Ada::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
 {
-  sg::dispatch(AdaExprUnparser{*this, info, std::cerr}, expr);
+  sg::dispatch(AdaExprUnparser{*this, info, std::cerr, false /* scope qual */}, expr);
 }
+

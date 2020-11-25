@@ -1847,8 +1847,8 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
 
-          case V_SgJovialForThenStatement: // Rasmussen: Jovial for statement
-          case V_SgMatlabForStatement: // SK: Matlab for statement
+          case V_SgJovialForThenStatement: //Rasmussen: Jovial for statement
+          case V_SgMatlabForStatement: //SK: Matlab for statement
           case V_SgBasicBlock:
           case V_SgCatchOptionStmt:
           case V_SgDoWhileStmt:
@@ -14481,19 +14481,7 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
                     printf ("namedType_nondefiningDecl->get_declaration() = %p = %s \n",namedType_nondefiningDecl->get_declaration(),namedType_nondefiningDecl->get_declaration()->class_name().c_str());
                   }
              }
-          ROSE_ASSERT(defdecl->get_type() == nondefdecl->get_type());
-
-          if (defdecl->get_type() != nondefdecl->get_type())
-             {
-               if (defdecl->get_type())
-                  {
-                    printf ("WARNING: In SageInterface::fixStructDeclaration(): skipped calling delete on (defdecl = %p = %s) defdecl->get_type() = %p = %s \n",defdecl,defdecl->class_name().c_str(),defdecl->get_type(),defdecl->get_type()->class_name().c_str());
-                 // delete defdecl->get_type();
-                  }
-               defdecl->set_type(nondefdecl->get_type());
-             }
-          ROSE_ASSERT (defdecl->get_type() != NULL);
-          ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
+          //ROSE_ASSERT(defdecl->get_type() == nondefdecl->get_type());
         }
    }
 
@@ -15481,35 +15469,40 @@ PreprocessingInfo* SageInterface::attachComment(
      PreprocessingInfo::DirectiveType mytype=dtype;
      string comment;
 
+  // Rasmussen (11/3/2020): Added Ada and Jovial style comments
   // DQ (5/5/2010): infer comment type from target's language
      if (mytype == PreprocessingInfo::CpreprocessorUnknownDeclaration)
         {
        // This is a rather expensive way to detect the language type (chases pointers back to the SgFile object).
           if (is_C_language() || is_C99_language())
              {
-               mytype = PreprocessingInfo::C_StyleComment;
-            // comment = "/* "+ content + " */";
+             // Comment = "/* "+ content + " */";
+                mytype = PreprocessingInfo::C_StyleComment;
              }
-            else
+          else if (is_Cxx_language() || is_Java_language())
              {
-               if (is_Cxx_language() || is_Java_language())
-                  {
-                    mytype = PreprocessingInfo::CplusplusStyleComment;
-                 // comment = "// "+ content;
-                  }
-                 else  // TODO :What about Fortran?
-                  {
-                    if (is_Fortran_language() || is_CAF_language()) //FMZ:3/23/2009
-                       {
-                         mytype = PreprocessingInfo::F90StyleComment;
-                      // comment = "// "+ content;
-                       }
-                      else  // TODO :What about Fortran?
-                       {
-                         cout<<"Un-handled programming languages when building source comments.. "<<endl;
-                         ROSE_ASSERT(false);
-                       }
-                  }
+             // Comment = "// "+ content;
+                mytype = PreprocessingInfo::CplusplusStyleComment;
+             }
+          else if (is_Fortran_language() || is_CAF_language()) //FMZ:3/23/2009
+             {
+             // Comment = "! "+ content;
+                mytype = PreprocessingInfo::F90StyleComment;
+             }
+          else if (is_Ada_language())
+             {
+             // Comment = "-- " + content;
+                mytype = PreprocessingInfo::AdaStyleComment;
+             }
+          else if (is_Jovial_language())
+             {
+             // Comment = "% " + content + " %";
+                mytype = PreprocessingInfo::JovialStyleComment;
+             }
+          else
+             {
+               cout << "WARNING: SageInterface::attachComment(): Unknown programming language \n";
+               ROSE_ASSERT(false);
              }
         }
 
@@ -15520,7 +15513,9 @@ PreprocessingInfo* SageInterface::attachComment(
           case PreprocessingInfo::C_StyleComment:        comment = "/* " + content + " */"; break;
           case PreprocessingInfo::CplusplusStyleComment: comment = "// " + content;         break;
           case PreprocessingInfo::FortranStyleComment:   comment = "      C " + content;    break;
-          case PreprocessingInfo::F90StyleComment:   comment = "!" + content;    break;
+          case PreprocessingInfo::F90StyleComment:       comment = "!"   + content;         break;
+          case PreprocessingInfo::AdaStyleComment:       comment = "-- " + content;         break;
+          case PreprocessingInfo::JovialStyleComment:    comment = "% "  + content + " %";  break;
           case PreprocessingInfo::CpreprocessorLineDeclaration:
                comment = "#myline " + content;
                mytype = PreprocessingInfo::CplusplusStyleComment;
@@ -20864,9 +20859,6 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
       case V_SgClassDeclaration: 
       case V_SgEnumDeclaration:
         {
-          // Rasmussen 10/17/2020: Needed for issue RC-189
-//          SgEnumDeclaration* enum_decl = isSgEnumDeclaration(declaration);
-//          ROSE_ASSERT (enum_decl);
           SgDeclarationStatement* def_decl = declaration->get_definingDeclaration();
           SgDeclarationStatement* nondef_decl = declaration->get_firstNondefiningDeclaration();
 

@@ -155,6 +155,15 @@ struct GenericSwitchArgs {
  *  See also, @ref genericSwitches. */
 ROSE_DLL_API extern GenericSwitchArgs genericSwitchArgs;
 
+/** Global location for version string.
+ *
+ *  This is the string that's printed by the --version switch. It defaults to the ROSE library version number, but can be
+ *  overridden by tools. When overriding, the tool should change this version string before constructing the command-line
+ *  parser.
+ *
+ *  See also, @ref genericSwitches. */
+ROSE_DLL_API extern std::string versionString;          // intentionally non-const so tools can change it
+
 /** Convenience for for adding Boolean switches.
  *
  *  Adds "--foo" (if @p switchName is "foo") and "--no-foo" to the specified switch group. The storage location's lifetime must

@@ -9,8 +9,7 @@ noinst_LTLIBRARIES = libexperimentalRoseFortran.la
 # DQ (6/7/2013): I'm not clear if we need makefile conditionals, since the directory is already conditionally processed in the parent directory.
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-  libexperimentalRoseFortran_la_SOURCES = fortran_support.C ATermToUntypedFortranTraversal.C \
-                                          UntypedFortranTraversal.C UntypedFortranConverter.C
+  libexperimentalRoseFortran_la_SOURCES = fortran_support.C ATermToSageFortranTraversal.C
 else
 # Compile using a function that represents the API of the Open Fortran Parser
   libexperimentalRoseFortran_la_SOURCES = dummy_openFortranParser_main.C

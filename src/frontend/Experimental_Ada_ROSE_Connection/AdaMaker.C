@@ -18,6 +18,15 @@ namespace si = SageInterface;
 // anonymous namespace for auxiliary functions
 namespace
 {
+  /// creates a new node by calling new SageNode::createType(args)
+  template <class SageNode, class ... Args>
+  inline
+  SageNode&
+  mkTypeNode(Args... args)
+  {
+    return SG_DEREF(SageNode::createType(args...));
+  }
+
   /// \private
   /// sets the symbol defining decl
   void linkDecls(SgFunctionSymbol& funcsy, SgFunctionDeclaration& func)
@@ -112,7 +121,7 @@ mkExceptionType(SgExpression& n)
 
 
 SgTypeDefault&
-mkDefaultType()
+mkOpaqueType()
 {
   return mkTypeNode<SgTypeDefault>();
 }
@@ -131,6 +140,12 @@ SgClassType&
 mkRecordType(SgClassDeclaration& dcl)
 {
   return mkTypeNode<SgClassType>(&dcl);
+}
+
+SgEnumDeclaration&
+mkEnumDecl(const std::string& name, SgScopeStatement& scope)
+{
+  return SG_DEREF(sb::buildEnumDeclaration(name, &scope));
 }
 
 SgAdaTaskType&
@@ -269,10 +284,19 @@ mkLabelStmt(const std::string& label, SgStatement& stmt, SgScopeStatement& encl)
   return sgnode;
 }
 
-SgStatement&
+SgNullStatement&
 mkNullStmt()
 {
   return SG_DEREF(sb::buildNullStatement());
+}
+
+SgEmptyDeclaration&
+mkNullDecl(SgScopeStatement& encl)
+{
+  SgEmptyDeclaration& sgnode = SG_DEREF(sb::buildEmptyDeclaration());
+
+  sg::linkParentChild(encl, as<SgStatement>(sgnode), &SgScopeStatement::append_statement);
+  return sgnode;
 }
 
 SgTryStmt&

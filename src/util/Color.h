@@ -41,7 +41,11 @@ struct Colorization {
     Sawyer::Optional<Enabled::Flag> enabled;            /**< Whether colored output is enabled. */
     Sawyer::Optional<Theme::Flag> theme;                /**< The color theme. */
 
+    /** True if color is enabled in this situation. */
     bool isEnabled() const;
+
+    /** Merge this color and another to produce a result. */
+    Colorization merge(const Colorization&) const;
 };
 
 /** Layer to which color applies. */

@@ -32,6 +32,9 @@ namespace Ada_ROSE_Translation
   /// converts an Asis declaration and adds the new node to the current scope
   void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate = false);
 
+  /// converts an Asis definition and adds the new node to the current scope
+  void handleDefinition(Element_Struct& elem, AstContext ctx);
+
   /// returns the declaration identified by \ref expr
   ///   if no record was found, nullptr is returned
   SgDeclarationStatement*
