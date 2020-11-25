@@ -665,13 +665,59 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    DECLARE_LEAF_CLASS(AsmNullInstruction);
+    IS_SERIALIZABLE(AsmNullInstruction);
+
+#ifdef DOCUMENTATION
+    class SgAsmNullInstruction: public SgAsmInstruction {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmNullInstruction);
+#if defined(SgAsmNullInstruction_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S & s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
+        }
+#endif
+
+    public:
+        // there's only one kind of null instruction
+        enum Kind { null_unknown };
+
+    public: // overrides
+        virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
+        virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
+                                        rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) $ROSE_OVERRIDE;
+        virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
+                                        rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
+        virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
+                                                               bool &complete,
+                                                               const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
+                                                               Rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
+        virtual bool isUnknown() const $ROSE_OVERRIDE;
+        virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
+#endif // SgAsmNullInstruction_OTHERS
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     NEW_NONTERMINAL_MACRO(AsmInstruction,
                           AsmX86Instruction
 #ifdef ROSE_ENABLE_ASM_A64
                           | AsmA64Instruction
 #endif
-                          | AsmPowerpcInstruction | AsmMipsInstruction |
-                          AsmM68kInstruction,
+                          | AsmPowerpcInstruction | AsmMipsInstruction | AsmM68kInstruction | AsmNullInstruction,
                           "AsmInstruction", "AsmInstructionTag", true);
     AsmInstruction.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmInstruction);
@@ -785,7 +831,11 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-        // FIXME[Robb P Matzke 2017-02-13]: unused?
+        /** Property: Ordered list of instruction semantics.
+         *
+         *  If instruction semantics are available and attached to the instruction, then this subtree will contain a list of
+         *  semantic side effects of the instruction. The semantics are attached by using the @ref
+         *  Rose::BinaryAnalysis::InstructionSemantics2::StaticSemantics semantic domain. */
 #else
         AsmInstruction.setDataPrototype("SgAsmExprListExp*", "semantics", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
