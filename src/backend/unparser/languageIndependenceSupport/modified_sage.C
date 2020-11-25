@@ -1593,18 +1593,30 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
 #else
                     ROSE_ASSERT(info.get_extern_C_with_braces() == false);
 
-                 // DQ (11/12/2020): We can't output the language linkage when the extern declaration is in a function (e.g. SgBasicBlock).
-                 // DQ (11/12/2020): output the non-brace of extern with linkage.
-                 // curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
-                 // curprint( "/* info.get_extern_C_with_braces() == false && decl_stmt->isExternBrace() == false */ extern \"" + decl_stmt->get_linkage() + "\" ");
-                    if (isSgBasicBlock(decl_stmt->get_parent()) != NULL)
+                 // DQ (11/15/2020): This fixes Cxx_tests/test2020_73.C.
+                    if (decl_stmt->get_declarationModifier().isFriend() == true)
                        {
-                      // DQ (11/12/2020): See Cxx_tests/test2020_70.C for where this is required.
-                         curprint( "extern ");
+                      // Suppress the extern keyword 
+#if DEBUG_EXTERN
+                         printf ("/* decl_stmt->get_declarationModifier().isFriend() == true: suppress the extern keyword */ \n");
+#endif
+                      // curprint( "/* Suppress the extern keyword */ ");
                        }
                       else
                        {
-                         curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
+                      // DQ (11/12/2020): We can't output the language linkage when the extern declaration is in a function (e.g. SgBasicBlock).
+                      // DQ (11/12/2020): output the non-brace of extern with linkage.
+                      // curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
+                      // curprint( "/* info.get_extern_C_with_braces() == false && decl_stmt->isExternBrace() == false */ extern \"" + decl_stmt->get_linkage() + "\" ");
+                         if (isSgBasicBlock(decl_stmt->get_parent()) != NULL)
+                            {
+                           // DQ (11/12/2020): See Cxx_tests/test2020_70.C for where this is required.
+                              curprint( "extern ");
+                            }
+                           else
+                            {
+                              curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
+                            }
                        }
 #endif
                   }

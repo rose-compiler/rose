@@ -1804,6 +1804,67 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   scope->append_statement(), exprListExp->append_expression() etc. are not enough to handle side effect of parent pointers, symbol tables, preprocessing info, defining/nondefining pointers etc.
 */
 
+#if 1
+struct DeferredTransformation
+   {
+  // DQ (11/19/2020): We need to expand the use of this to cover deffered transformations of common SageInterface transformations (e.g. replaceStatement).
+  // So I needed to move this out of being specific to the outliner and make it more generally data structure in the SageInterface.
+
+  // DQ (11/15/2020): Need to add the concept of deffered transformation to cover replaceStatement operations.
+
+  // DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes 
+  // into class declaration (when this is required to support the outlined function's access to protected or private data members).
+  // This is part of an optimization to support the optimization of header file unparsing (limiting the overhead of supporting any 
+  // header file to just focus on the few (typically one) header file that would have to be unparsed.
+
+     enum TransformationKind
+        {
+       // DQ (11/22/2020): Might need to also add SageInterface::addDefaultConstructorIfRequired() and SageStatement::insert_statment()
+       // to support the processStatements.C transforamtions to pre-process the AST (return expressions and variable initializations).
+          e_error,
+          e_default,
+          e_outliner,
+          e_replaceStatement,
+          e_removeStatement,
+          e_replaceDefiningFunctionDeclarationWithFunctionPrototype,
+          e_last
+        };
+
+     TransformationKind deferredTransformationKind;
+
+  // Remove sets statementToRemove, replace sets statementToRemove and StatementToAdd.
+     SgStatement* statementToRemove;
+     SgStatement* statementToAdd;
+
+     SgClassDefinition* class_definition;
+     SgDeclarationStatement* target_class_member;
+     SgDeclarationStatement* new_function_prototype;
+
+     typedef std::set<SgClassDefinition *> ClassDefSet_t;
+     ClassDefSet_t targetClasses;
+
+     typedef std::vector<SgFunctionDeclaration *> FuncDeclList_t;
+     FuncDeclList_t targetFriends;
+
+  // DQ (12/5/2019): Added ROSE_DLL_API prefix for Windows support (too all of these functions).
+     ROSE_DLL_API DeferredTransformation();
+     ROSE_DLL_API DeferredTransformation(SgClassDefinition* class_definition, SgDeclarationStatement* target_class_member, SgDeclarationStatement* new_function_prototype);
+     ROSE_DLL_API DeferredTransformation (const DeferredTransformation& X); //! Copy constructor.
+     ROSE_DLL_API ~DeferredTransformation (void); //! Shallow; does not delete fields.
+
+     ROSE_DLL_API DeferredTransformation & operator= (const DeferredTransformation& X); //! operator=()
+
+  // DQ (11/20/20): static function to generate specialized version of deferred transformation object.
+     static ROSE_DLL_API DeferredTransformation replaceDefiningFunctionDeclarationWithFunctionPrototype( SgFunctionDeclaration* functionDeclaration );
+     static ROSE_DLL_API DeferredTransformation replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessinInfo = false);
+
+     static ROSE_DLL_API std::string outputDeferredTransformationKind(const TransformationKind & kind);
+     ROSE_DLL_API void display ( std::string label ) const;
+
+   };
+#endif
+
+
 // DQ (2/24/2009): Simple function to delete an AST subtree (used in outlining).
 //! Function to delete AST subtree's nodes only, users must take care of any dangling pointers, symbols or types that result.
 ROSE_DLL_API void deleteAST(SgNode* node);
