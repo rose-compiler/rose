@@ -4361,6 +4361,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_upc_threads(integerOptionForUPCThreads);
           if ( SgProject::get_verbose() >= 1 )
                printf ("upc_threads is set to %d\n",integerOptionForUPCThreads);
+
+       // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+          Rose::is_UPC_dynamic_threads = true;
         }
 
 #if 0

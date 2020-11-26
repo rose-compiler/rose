@@ -641,9 +641,34 @@ void markNodeToBeUnparsed(SgNode* node, int physical_file_id);
   \brief version, language properties of current AST.
 */
 
+// DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+// The value of 0 allows the old implementation to be tested, and the value of 1 allows the new optimized implementation to be tested.
+// However to get all of the functions to be inlined, we have to recompile all of ROSE.
+#define INLINE_OPTIMIZED_IS_LANGUAGE_KIND_FUNCTIONS 1
+
 //  std::string version();  // utility_functions.h, version number
   /*! Brief These traverse the memory pool of SgFile IR nodes and determine what languages are in use!
    */
+#if INLINE_OPTIMIZED_IS_LANGUAGE_KIND_FUNCTIONS
+  ROSE_DLL_API inline bool is_Ada_language ()       { return Rose::is_Ada_language; }
+  ROSE_DLL_API inline bool is_C_language ()         { return Rose::is_C_language; }
+  ROSE_DLL_API inline bool is_Cobol_language ()     { return Rose::is_Cobol_language; }
+  ROSE_DLL_API inline bool is_OpenMP_language ()    { return Rose::is_OpenMP_language; }
+  ROSE_DLL_API inline bool is_UPC_language ()       { return Rose::is_UPC_language; }
+  ROSE_DLL_API inline bool is_UPC_dynamic_threads() { return Rose::is_UPC_dynamic_threads; }
+  ROSE_DLL_API inline bool is_C99_language ()       { return Rose::is_C99_language; }
+  ROSE_DLL_API inline bool is_Cxx_language ()       { return Rose::is_Cxx_language; }
+  ROSE_DLL_API inline bool is_Java_language ()      { return Rose::is_Java_language; }
+  ROSE_DLL_API inline bool is_Jovial_language ()    { return Rose::is_Jovial_language; }
+  ROSE_DLL_API inline bool is_Fortran_language ()   { return Rose::is_Fortran_language; }
+  ROSE_DLL_API inline bool is_CAF_language ()       { return Rose::is_CAF_language; }
+  ROSE_DLL_API inline bool is_PHP_language()        { return Rose::is_PHP_language; }
+  ROSE_DLL_API inline bool is_Python_language()     { return Rose::is_Python_language; }
+  ROSE_DLL_API inline bool is_Cuda_language()       { return Rose::is_Cuda_language; }
+  ROSE_DLL_API inline bool is_OpenCL_language()     { return Rose::is_OpenCL_language; }
+  ROSE_DLL_API inline bool is_X10_language()        { return Rose::is_X10_language; }
+  ROSE_DLL_API inline bool is_binary_executable()   { return Rose::is_binary_executable; }
+#else
   ROSE_DLL_API bool is_Ada_language ();
   ROSE_DLL_API bool is_C_language ();
   ROSE_DLL_API bool is_Cobol_language ();
@@ -663,6 +688,8 @@ void markNodeToBeUnparsed(SgNode* node, int physical_file_id);
   ROSE_DLL_API bool is_OpenCL_language();
   ROSE_DLL_API bool is_X10_language();
   ROSE_DLL_API bool is_binary_executable();
+#endif
+
   ROSE_DLL_API bool is_mixed_C_and_Cxx_language ();
   ROSE_DLL_API bool is_mixed_Fortran_and_C_language ();
   ROSE_DLL_API bool is_mixed_Fortran_and_Cxx_language ();
