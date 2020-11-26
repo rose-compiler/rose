@@ -1128,6 +1128,10 @@ Engine::roseFrontendReplacement(const std::vector<boost::filesystem::path> &file
     // FIXME[Robb Matzke 2019-01-29]: A SgBinaryComposite represents many files, not just one, so some of these settings
     //                                don't make much sense.
     SgBinaryComposite *binaryComposite = new SgBinaryComposite;
+
+ // DQ (11/25/2020): Add support to set this as a binary file (there is at least one binary file processed by ROSE).
+    Rose::is_binary_executable = true;
+
     binaryComposite->initialization(); // SgFile::initialization
     binaryComposite->set_skipfinalCompileStep(true);
     binaryComposite->set_genericFileList(fileList); fileList->set_parent(binaryComposite);

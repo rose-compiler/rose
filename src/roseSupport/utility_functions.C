@@ -191,6 +191,29 @@ std::map<int,std::map<SgStatement*,MacroExpansion*>*> Rose::macroExpansionMapOfM
 std::map<std::string, SgIncludeFile*> Rose::includeFileMapForUnparsing;
 
 
+// DQ (11/25/2020): These are the boolean variables that are computed in the function compute_language_kind() 
+// and inlined via the SageInterface::is_<language kind>_language() functions.  See more details comment in 
+// the header file.
+bool Rose::is_Ada_language        = false;
+bool Rose::is_C_language          = false;
+bool Rose::is_Cobol_language      = false;
+bool Rose::is_OpenMP_language     = false;
+bool Rose::is_UPC_language        = false;
+bool Rose::is_UPC_dynamic_threads = false;
+bool Rose::is_C99_language        = false;
+bool Rose::is_Cxx_language        = false;
+bool Rose::is_Java_language       = false;
+bool Rose::is_Jovial_language     = false;
+bool Rose::is_Fortran_language    = false;
+bool Rose::is_CAF_language        = false;
+bool Rose::is_PHP_language        = false;
+bool Rose::is_Python_language     = false;
+bool Rose::is_Cuda_language       = false;
+bool Rose::is_OpenCL_language     = false;
+bool Rose::is_X10_language        = false;
+bool Rose::is_binary_executable   = false;
+
+
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
 using namespace Rose::Diagnostics;
 
