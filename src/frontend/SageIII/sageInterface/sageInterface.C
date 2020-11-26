@@ -118,6 +118,11 @@ namespace SageInterface {
 // DQ (3/4/2014): We need this feature to support the function: isStructurallyEquivalentAST().
 #include "RoseAst.h"
 
+
+// DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+// The value of 0 allows the old implementation to be tested, and the value of 1 allows the new optimized implementation to be tested.
+#define OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS 1
+
 //! C++ SageBuilder namespace specific state for storage of the source code position state (used to control how the source code positon is defined for IR nodes built within the SageBuilder interface).
 extern SageBuilder::SourcePositionClassification SageBuilder::SourcePositionClassificationMode;
 
@@ -4980,10 +4985,17 @@ void SageInterface::addVarRefExpFromArrayDimInfo(SgNode * astNode, Rose_STL_Cont
 }
 
 
+// DQ (11/25/2020): This disables these non-inlined functions in favor of 
+// inlined versions of the functions in the sageInterface.h (header file).
+#if (INLINE_OPTIMIZED_IS_LANGUAGE_KIND_FUNCTIONS == 0)
 // Rasmussen (4/8/2018): Added Ada
 bool
 SageInterface::is_Ada_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Ada_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -4996,11 +5008,16 @@ SageInterface::is_Ada_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_C_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_C_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5013,12 +5030,17 @@ SageInterface::is_C_language()
         }
 
      return returnValue;
+#endif
    }
 
 // Rasmussen (4/8/2018): Added Cobol
 bool
 SageInterface::is_Cobol_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Cobol_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5031,11 +5053,16 @@ SageInterface::is_Cobol_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_OpenMP_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_OpenMP_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5048,11 +5075,16 @@ SageInterface::is_OpenMP_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_UPC_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_UPC_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5065,12 +5097,17 @@ SageInterface::is_UPC_language()
         }
 
      return returnValue;
+#endif
    }
 
 //FMZ
 bool
 SageInterface::is_CAF_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_CAF_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5083,6 +5120,7 @@ SageInterface::is_CAF_language()
         }
 
      return returnValue;
+#endif
    }
 
 
@@ -5090,6 +5128,10 @@ SageInterface::is_CAF_language()
 bool
 SageInterface::is_UPC_dynamic_threads()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_UPC_dynamic_threads;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5102,6 +5144,7 @@ SageInterface::is_UPC_dynamic_threads()
         }
 
      return returnValue;
+#endif
    }
 
 
@@ -5109,6 +5152,10 @@ SageInterface::is_UPC_dynamic_threads()
 bool
 SageInterface::is_C99_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_C99_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5121,11 +5168,16 @@ SageInterface::is_C99_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_Cxx_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Cxx_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5146,11 +5198,16 @@ SageInterface::is_Cxx_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_Java_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Java_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5163,12 +5220,17 @@ SageInterface::is_Java_language()
         }
 
      return returnValue;
+#endif
    }
 
 // Rasmussen (4/4/2018): Added Jovial
 bool
 SageInterface::is_Jovial_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Jovial_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5181,12 +5243,17 @@ SageInterface::is_Jovial_language()
         }
 
      return returnValue;
+#endif
    }
 
 
 bool
 SageInterface::is_Fortran_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Fortran_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5199,12 +5266,17 @@ SageInterface::is_Fortran_language()
         }
 
      return returnValue;
+#endif
    }
 
 
 bool
 SageInterface::is_binary_executable()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_binary_executable;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5217,11 +5289,16 @@ SageInterface::is_binary_executable()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_PHP_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_PHP_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5234,11 +5311,16 @@ SageInterface::is_PHP_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_Python_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Python_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5251,11 +5333,16 @@ SageInterface::is_Python_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_Cuda_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Cuda_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5268,11 +5355,16 @@ SageInterface::is_Cuda_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_OpenCL_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_OpenCL_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5285,24 +5377,32 @@ SageInterface::is_OpenCL_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_X10_language()
-{
-  bool returnValue = false;
+   {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_X10_language;
+#else
+     bool returnValue = false;
 
-  vector<SgFile*> fileList = generateFileList();
+     vector<SgFile*> fileList = generateFileList();
 
-  int size = (int)fileList.size();
-  for (int i = 0; i < size; i++)
-    {
-      if (fileList[i]->get_X10_only() == true)
-           returnValue = true;
-    }
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+       {
+         if (fileList[i]->get_X10_only() == true)
+              returnValue = true;
+       }
 
-  return returnValue;
+     return returnValue;
+#endif
 }
+// for if (INLINE_OPTIMIZED_IS_LANGUAGE_KIND_FUNCTIONS == 0)
+#endif
 
 bool SageInterface::is_mixed_C_and_Cxx_language()
    {
