@@ -4,4 +4,16 @@ DQ (8/29/2007):
 cycle.h was included (from FFTW) upon the suggestion of Matt Sottile to provide a more
 portable version of timers.
 
-
+MS (11/27/2020):
+The AstPerformance.C code now includes tracing facilities to emit traces for use with
+Chrome's chrome://tracing viewer or other tools.  By default tracing is disabled.
+If you want tracing to be enabled, set the ROSE_TRACEFILE environment variable to
+indicate the filename where the trace is to be placed.  Traces will contain
+events that are timer durations - each traced event will have a start time and a
+duration.  These work well with the Chrome trace viewer.  If you want to use the
+profile rollup tool that MS wrote to look at call path profiles, you should
+instead toggle tracing of event boundaries by setting the ROSE_TRACEBOUNDARIES
+environment variable to any value.  When this is enabled, an event will be emitted
+at the start of a timer and a second event will be emitted when the timer ends.
+This profile rollup tool is available in the rose-perftools project on the
+internal ROSE gitlab instance.
