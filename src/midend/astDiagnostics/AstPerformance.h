@@ -222,8 +222,50 @@ class ROSE_DLL_API AstPerformance
           static std::list<AstPerformance*> performanceStack;
    };
 
+// Base class for event tracing.  This class holds state related to
+// the output stream and methods for emitting trace events.  It is
+// separate from the TimingPerformance class so that we can have a
+// TraceOnlyPerformance object that performs the same timing role, but
+// does not record the timer in the performance stack.  This is useful
+// for tracing frequently made calls without causing the report to get
+// huge.
+class ROSE_DLL_API TracingPerformance
+  {
+  protected:
+  // MS (11/9/2020): tracing related fields
+  static std::ofstream *trace_stream;
+  static double trace_zero_time;
+  static bool first_event;
+  static bool trace_durations;
 
-class ROSE_DLL_API TimingPerformance : public AstPerformance
+  // private tracing functions.  these are private since they are only
+  // called from within the destructor
+  void emitTraceDurationEvent ( std::string label, double t, double dur );
+  void emitTraceBoundaryEvent ( std::string label, double t, bool isStart );
+  bool checkTracing ( );
+
+  public:
+  TracingPerformance() { }
+  };
+
+// MS (11/27/2020) TraceOnlyPerformance has the same API as
+// TimingPerformance, but does not derive from AstPerformance and thus
+// does not interfere with the performance reporting facility.
+class ROSE_DLL_API TraceOnlyPerformance : public TracingPerformance
+{
+ private:
+  RoseTimeType timer;
+  std::string label;
+
+ public:
+  TraceOnlyPerformance ( std::string s , bool outputReport = false );
+  virtual ~TraceOnlyPerformance();
+  void endTimer();
+  typedef RoseTimeType time_type;
+};
+
+class ROSE_DLL_API TimingPerformance :
+  public AstPerformance, public TracingPerformance
    {
      private:
           RoseTimeType timer;
