@@ -37,12 +37,19 @@ void clang::PPCallbacks::type_info() {};
 
 extern bool roseInstallPrefix(std::string&);
 
+// DQ (11/28/2020): Use this after testing.
+#define EXIT_AFTER_BUILDING_DOT_FILE 0
+
 int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
-    printf ("sageFile.get_clang_il_to_graphviz() = %s \n",sageFile.get_clang_il_to_graphviz() ? "true" : "false");
+ // printf ("sageFile.get_clang_il_to_graphviz() = %s \n",sageFile.get_clang_il_to_graphviz() ? "true" : "false");
 
  // DQ (11/27/2020): Use the -rose:clang_il_to_graphviz option to comntrol the use of the Clang Dot generator.
+#if EXIT_AFTER_BUILDING_DOT_FILE
+    if (true)
+#else
     if (sageFile.get_clang_il_to_graphviz() == true)
+#endif
        {
 #if 1
       // DQ (10/23/2020): Calling clang-to-dot generator (I don't think this modifies the argv list).
@@ -58,8 +65,14 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
             }
            else
             {
+#if 0
               printf ("Note: Dot file of Clang IR output in file: clangGraph.dot \n");
+#endif
             }
+#endif
+
+#if EXIT_AFTER_BUILDING_DOT_FILE
+         return 0;
 #endif
        }
 
