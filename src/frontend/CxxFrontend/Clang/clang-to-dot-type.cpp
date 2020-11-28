@@ -1,67 +1,12 @@
 #include "sage3basic.h"
-
-// #include "clang-frontend-private.hpp"
 #include "clang-to-dot-private.hpp"
 
-#if 0
-SgType * ClangToDotTranslator::buildTypeFromQualifiedType(const clang::QualType & qual_type) {
-    SgNode * tmp_type = Traverse(qual_type.getTypePtr());
-    SgType * type = isSgType(tmp_type);
-
-    ROSE_ASSERT(type != NULL); 
-
-    if (qual_type.hasLocalQualifiers()) {
-        SgModifierType * modified_type = new SgModifierType(type);
-        SgTypeModifier & sg_modifer = modified_type->get_typeModifier();
-        clang::Qualifiers qualifier = qual_type.getLocalQualifiers();
-
-        if (qualifier.hasConst()) sg_modifer.get_constVolatileModifier().setConst();
-        if (qualifier.hasVolatile()) sg_modifer.get_constVolatileModifier().setVolatile();
-        if (qualifier.hasRestrict()) sg_modifer.setRestrict();
-        
-        if (qualifier.hasAddressSpace()) {
-            clang::LangAS addrspace = qualifier.getAddressSpace();
-            switch (addrspace) {
-                case clang::LangAS::opencl_global:
-                    sg_modifer.setOpenclGlobal();
-                    break;
-                case clang::LangAS::opencl_local:
-                    sg_modifer.setOpenclLocal();
-                    break;
-                case clang::LangAS::opencl_constant:
-                    sg_modifer.setOpenclConstant();
-                    break;
-                default:
-                    sg_modifer.setAddressSpace();
-                    sg_modifer.set_address_space_value(static_cast<unsigned int>(addrspace));
-            }
-        }
-        modified_type = SgModifierType::insertModifierTypeIntoTypeTable(modified_type);
-
-        return modified_type;
-    }
-    else {
-        return type;
-    }
-}
-#endif
-
-// SgNode * ClangToDotTranslator::Traverse(const clang::Type * type) 
 std::string ClangToDotTranslator::Traverse(const clang::Type * type) 
    {
-#if 0
-     if (type == NULL)
-          return NULL;
-
-  // std::map<const clang::Type *, SgNode *>::iterator it = p_type_translation_map.find(type);
-     std::map<const clang::Type *, std::string *>::iterator it = p_type_translation_map.find(type);
-     if (it != p_type_translation_map.end()) 
-          return it->second;
-#endif
      if (type == NULL)
           return "";
 
-    // Look for previous translation
+ // Look for previous translation
     std::map<const clang::Type *, std::string>::iterator it = p_type_translation_map.find(type);
     if (it != p_type_translation_map.end()) 
          return it->second;
@@ -904,6 +849,8 @@ bool ClangToDotTranslator::VisitComplexType(clang::ComplexType * complex_type, N
 
      node_desc.kind_hierarchy.push_back("ComplexType");
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("element_type", Traverse(complex_type->getElementType().getTypePtr())));
+
     return VisitType(complex_type, node_desc) && res;
 }
 #endif
@@ -1287,6 +1234,18 @@ bool ClangToDotTranslator::VisitInjectedClassNameType(clang::InjectedClassNameTy
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
+    node_desc.successors.push_back(
+        std::pair<std::string, std::string>("injected_specialization_type", Traverse(injected_class_name_type->getInjectedSpecializationType().getTypePtr()))
+    );
+
+    node_desc.successors.push_back(
+        std::pair<std::string, std::string>("injected_template_specialization_type", Traverse(injected_class_name_type->getInjectedTST()))
+    );
+
+    node_desc.successors.push_back(
+        std::pair<std::string, std::string>("declaration", Traverse(injected_class_name_type->getDecl()))
+    );
+
     return VisitType(injected_class_name_type, node_desc) && res;
 }
 #endif
@@ -1417,6 +1376,8 @@ bool ClangToDotTranslator::VisitParenType(clang::ParenType * paren_type, NodeDes
 
      node_desc.kind_hierarchy.push_back("ParenType");
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("inner_type", Traverse(paren_type->getInnerType().getTypePtr())));
+
     return VisitType(paren_type, node_desc);
 }
 #endif
@@ -1473,6 +1434,8 @@ bool ClangToDotTranslator::VisitPointerType(clang::PointerType * pointer_type, N
 
      node_desc.kind_hierarchy.push_back("PointerType");
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("pointee_type", Traverse(pointer_type->getPointeeType().getTypePtr())));
+
     return VisitType(pointer_type, node_desc);
 }
 #endif
@@ -1497,7 +1460,9 @@ bool ClangToDotTranslator::VisitReferenceType(clang::ReferenceType * reference_t
 
      node_desc.kind_hierarchy.push_back("ReferenceType");
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("pointee_type", Traverse(reference_type->getPointeeType().getTypePtr())));
 
     return VisitType(reference_type, node_desc) && res;
 }
@@ -1603,6 +1568,11 @@ bool ClangToDotTranslator::VisitSubstTemplateTypeParmType(clang::SubstTemplateTy
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("replaced_parameter", Traverse(subst_template_type_parm_type->getReplacedParameter())));
+
+     node_desc.successors.push_back(
+        std::pair<std::string, std::string>("replacement_type", Traverse(subst_template_type_parm_type->getReplacementType().getTypePtr())) );
+
     return VisitType(subst_template_type_parm_type, node_desc) && res;
 }
 #endif
@@ -1621,15 +1591,17 @@ bool ClangToDotTranslator::VisitTagType(clang::TagType * tag_type, SgNode ** nod
 #else
 bool ClangToDotTranslator::VisitTagType(clang::TagType * tag_type, NodeDescriptor & node_desc) {
 #if DEBUG_VISIT_TYPE
-    std::cerr << "ClangToDotTranslator::VisitTagType" << std::endl;
+     std::cerr << "ClangToDotTranslator::VisitTagType" << std::endl;
 #endif
-    bool res = true;
+     bool res = true;
 
      node_desc.kind_hierarchy.push_back("TagType");
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
-    return VisitType(tag_type, node_desc) && res;
+     node_desc.successors.push_back(std::pair<std::string, std::string>("declaration", Traverse(tag_type->getDecl())));
+
+     return VisitType(tag_type, node_desc) && res;
 }
 #endif
 
@@ -1797,6 +1769,22 @@ bool ClangToDotTranslator::VisitTemplateSpecializationType(clang::TemplateSpecia
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
+    if (template_specialization_type->isTypeAlias())
+        node_desc.successors.push_back(
+            std::pair<std::string, std::string>("aliased_type", Traverse(template_specialization_type->getAliasedType().getTypePtr()))
+        );
+
+    const clang::TemplateName & template_name = template_specialization_type->getTemplateName();
+    VisitTemplateName(template_name, node_desc, "template_name");
+
+    clang::TemplateSpecializationType::iterator it;
+    unsigned cnt = 0;
+    for (it = template_specialization_type->begin(); it != template_specialization_type->end(); it++) {
+        std::ostringstream oss;
+        oss << "template_argument[" << cnt++ << "]";
+        VisitTemplateArgument(*it, node_desc, oss.str());
+    }
+
     return VisitType(template_specialization_type, node_desc) && res;
 }
 #endif
@@ -1804,26 +1792,34 @@ bool ClangToDotTranslator::VisitTemplateSpecializationType(clang::TemplateSpecia
 #if 0
 bool ClangToDotTranslator::VisitTemplateTypeParmType(clang::TemplateTypeParmType * template_type_parm_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
-    std::cerr << "ClangToDotTranslator::TemplateTypeParmType" << std::endl;
+     std::cerr << "ClangToDotTranslator::TemplateTypeParmType" << std::endl;
 #endif
-    bool res = true;
+     bool res = true;
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
-    return VisitType(template_type_parm_type, node) && res;
+     return VisitType(template_type_parm_type, node) && res;
 }
 #else
 bool ClangToDotTranslator::VisitTemplateTypeParmType(clang::TemplateTypeParmType * template_type_parm_type, NodeDescriptor & node_desc) {
 #if DEBUG_VISIT_TYPE
-    std::cerr << "ClangToDotTranslator::TemplateTypeParmType" << std::endl;
+     std::cerr << "ClangToDotTranslator::TemplateTypeParmType" << std::endl;
 #endif
-    bool res = true;
+     bool res = true;
 
      node_desc.kind_hierarchy.push_back("TemplateTypeParmType");
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
-    return VisitType(template_type_parm_type, node_desc) && res;
+     node_desc.successors.push_back(std::pair<std::string, std::string>("declaration", Traverse(template_type_parm_type->getDecl())));
+
+     clang::IdentifierInfo * indent_info = template_type_parm_type->getIdentifier();
+
+     assert(indent_info != NULL); // I am not sure of it let try
+
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("identifier_name", indent_info->getName().data()));
+
+     return VisitType(template_type_parm_type, node_desc) && res;
 }
 #endif
 
@@ -1869,7 +1865,9 @@ bool ClangToDotTranslator::VisitTypedefType(clang::TypedefType * typedef_type, N
 
      node_desc.kind_hierarchy.push_back("TypedefType");
 
-   return VisitType(typedef_type, node_desc) && res;
+     node_desc.successors.push_back(std::pair<std::string, std::string>("declaration", Traverse(typedef_type->getDecl())));
+
+    return VisitType(typedef_type, node_desc) && res;
 }
 #endif
 
@@ -1973,6 +1971,26 @@ bool ClangToDotTranslator::VisitTypeWithKeyword(clang::TypeWithKeyword * type_wi
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
+    switch (type_with_keyword->getKeyword()) {
+        case clang::ETK_Struct:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "struct"));
+            break;
+        case clang::ETK_Union:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "union"));
+            break;
+        case clang::ETK_Class:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "class"));
+            break;
+        case clang::ETK_Enum:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "enum"));
+            break;
+        case clang::ETK_Typename:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "typename"));
+            break;
+        case clang::ETK_None:
+            break;
+    }
+
     return VisitType(type_with_keyword, node_desc) && res;
 }
 #endif
@@ -1998,6 +2016,12 @@ bool ClangToDotTranslator::VisitDependentNameType(clang::DependentNameType * dep
      node_desc.kind_hierarchy.push_back("DependentNameType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    VisitNestedNameSpecifier(dependent_name_type->getQualifier(), node_desc, "nested_name_qualifier");
+
+    const clang::IdentifierInfo * identifier = dependent_name_type->getIdentifier();
+    assert(identifier != NULL);
+    node_desc.attributes.push_back(std::pair<std::string, std::string>("identifier" , identifier->getName().data()));
 
     return VisitTypeWithKeyword(dependent_name_type, node_desc) && res;
 }
@@ -2059,7 +2083,9 @@ bool ClangToDotTranslator::VisitElaboratedType(clang::ElaboratedType * elaborate
 
      node_desc.kind_hierarchy.push_back("ElaboratedType");
 
-    return VisitTypeWithKeyword(elaborated_type, node_desc);
+     node_desc.successors.push_back(std::pair<std::string, std::string>("named_type", Traverse(elaborated_type->getNamedType().getTypePtr())));
+
+     return VisitTypeWithKeyword(elaborated_type, node_desc);
 }
 #endif
 
@@ -2179,7 +2205,13 @@ bool ClangToDotTranslator::VisitVectorType(clang::VectorType * vector_type, Node
 
      node_desc.kind_hierarchy.push_back("VectorType");
 
-    return VisitType(vector_type, node_desc);
+     node_desc.successors.push_back(std::pair<std::string, std::string>("element_type", Traverse(vector_type->getElementType().getTypePtr())));
+
+     std::ostringstream oss;
+     oss << vector_type->getNumElements();
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("number_element", oss.str()));
+
+     return VisitType(vector_type, node_desc);
 }
 #endif
 
@@ -2197,14 +2229,14 @@ bool ClangToDotTranslator::VisitExtVectorType(clang::ExtVectorType * ext_vector_
 #else
 bool ClangToDotTranslator::VisitExtVectorType(clang::ExtVectorType * ext_vector_type, NodeDescriptor & node_desc) {
 #if DEBUG_VISIT_TYPE
-    std::cerr << "ClangToDotTranslator::VisitExtVectorType" << std::endl;
+     std::cerr << "ClangToDotTranslator::VisitExtVectorType" << std::endl;
 #endif
-    bool res = true;
+     bool res = true;
 
      node_desc.kind_hierarchy.push_back("ExtVectorType");
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME Is it anything to be done here?
+     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME Is it anything to be done here?
 
-    return VisitVectorType(ext_vector_type, node_desc) && res;
+     return VisitVectorType(ext_vector_type, node_desc) && res;
 }
 #endif
