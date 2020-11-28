@@ -20,7 +20,8 @@ std::string unparseA64Expression(SgAsmExpression *expr, const AsmUnparser::Label
         registers = RegisterDictionary::dictionary_a64();
     auto unparser = Unparser::Arm::instance(Unparser::ArmSettings());
     std::ostringstream ss;
-    Unparser::State state(Partitioner2::Partitioner(), registers, unparser->settings(), *unparser);
+    Partitioner2::Partitioner p;
+    Unparser::State state(p, registers, unparser->settings(), *unparser);
     unparser->emitOperand(ss, expr, state);
     return ss.str();
 }

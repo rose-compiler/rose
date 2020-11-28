@@ -362,7 +362,7 @@ private:
 protected:
     explicit Transcoder(const BaseSemantics::DispatcherPtr &dispatcher)
         : dispatcher(dispatcher), emit_funcfrags(false), quiet_errors(false) {
-        operators = RiscOperators::promote(dispatcher->get_operators());
+        operators = RiscOperators::promote(dispatcher->operators());
     }
 
 public:

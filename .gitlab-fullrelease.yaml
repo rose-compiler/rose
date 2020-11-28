@@ -1,13 +1,13 @@
 ########################################################################################################################
-# Configuration for making binary release of ROSE Binary Analysis under GitLab continuous integration.
+# Configuration for making full release of ROSE under GitLab continuous integration.
 ########################################################################################################################
 #
 # This YAML file describes to the GitLab continuous integration system how to create a binary release distribution of
-# ROSE configured for Binary Analysis on various operating systems.  Each job in this file starts with the string "ba"
-# for "binary analysis" and builds a binary release for a particular architecture.  The commands in each section are
-# more or less the same and should be kept that way as much as possible. Most of the OS-specific actions occur in the
-# scripts that are distributed as part of Robb's ROSE installers (https://github.com/matzke1/rose-installers) and which
-# are already present in the Docker images.
+# ROSE configured for source and binary analysis on various operating systems.  Each job in this file starts with the
+# string "release" and builds a full release for a particular architecture.  The commands in each section are more or
+# less the same and should be kept that way as much as possible. Most of the OS-specific actions occur in the scripts
+# that are distributed as part of Robb's ROSE installers (https://github.com/matzke1/rose-installers) and which are
+# already present in the Docker images.
 #
 # ===============================================================
 # Instructions for build ROSE interactively in a Docker container
@@ -36,7 +36,7 @@
 #      The command that will do everything varies by operating system, but is listed in each of the GitLab CI jobs below.
 #
 #       $ cd /   # must run in parent of "rose" source directory, which happens to be "/" in these instructions.
-#       $ ./rose-installers/install-binaryanalysis-ubuntu2004
+#       $ ./rose-installers/install-release-ubuntu2004
 #
 ########################################################################################################################
 ########################################################################################################################
@@ -49,50 +49,60 @@ services:
   - docker:dind
 
 ########################################################################################################################
-# Build, test, and install ROSE configured for binary analysis on Ubuntu:20.04.
-ba-u20.04:
+# Build, test, and install full ROSE release for Ubuntu:20.04.
+release-u20.04:
+  only:
+    - /.*-rc$/
   image: matzke/rosedev:u20.04
-  script: /rose-installers/scripts/gitlab-ci install-binaryanalysis-ubuntu2004
+  script: /rose-installers/scripts/gitlab-ci install-fullrelease-ubuntu2004
   artifacts:
     paths:
       - artifacts/
     expire_in: 1 week
 
 ########################################################################################################################
-# Build, test, and install ROSE configured for binary analysis on Ubuntu:18.04.
-ba-u18.04:
+# Build, test, and install full ROSE release Ubuntu:18.04.
+release-u18.04:
+  only:
+    - /.*-rc$/
   image: matzke/rosedev:u18.04
-  script: /rose-installers/scripts/gitlab-ci install-binaryanalysis-ubuntu1804
+  script: /rose-installers/scripts/gitlab-ci install-fullrelease-ubuntu1804
   artifacts:
     paths:
       - artifacts/
     expire_in: 1 week
 
 ########################################################################################################################
-# Build, test, and install ROSE configured for binary analysis on centos6, which is compatible with Red Hat 6.
-ba-centos6:
+# Build, test, and install full ROSE release centos6, which is compatible with Red Hat 6.
+release-centos6:
+  only:
+    - /.*-rc$/
   image: matzke/rosedev:centos6
-  script: /rose-installers/scripts/gitlab-ci install-binaryanalysis-centos6
+  script: /rose-installers/scripts/gitlab-ci install-fullrelease-centos6
   artifacts:
     paths:
       - artifacts/
     expire_in: 1 week
 
 ########################################################################################################################
-# Build, test, and install ROSE configured for binary analysis on centos7, which is compatible with Red Hat 7.
-ba-centos7:
+# Build, test, and install full ROSE release for centos7, which is compatible with Red Hat 7.
+release-centos7:
+  only:
+    - /.*-rc$/
   image: matzke/rosedev:centos7
-  script: /rose-installers/scripts/gitlab-ci install-binaryanalysis-centos7
+  script: /rose-installers/scripts/gitlab-ci install-fullrelease-centos7
   artifacts:
     paths:
       - artifacts/
     expire_in: 1 week
 
 ########################################################################################################################
-# Build, test, and install ROSE configured for binary analysis on centos8, which is compatible with Red Hat 8.
-ba-centos8:
+# Build, test, and install full ROSE release for centos8, which is compatible with Red Hat 8.
+release-centos8:
+  only:
+    - /.*-rc$/
   image: matzke/rosedev:centos8
-  script: /rose-installers/scripts/gitlab-ci install-binaryanalysis-centos8
+  script: /rose-installers/scripts/gitlab-ci install-fullrelease-centos8
   artifacts:
     paths:
       - artifacts/

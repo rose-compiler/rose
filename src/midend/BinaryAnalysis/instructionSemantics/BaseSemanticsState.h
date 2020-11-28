@@ -203,6 +203,11 @@ public:
     virtual void print(std::ostream&, Formatter&) const;
     /** @} */
 
+    /** Convert the state to a string for debugging.
+     *
+     *  This is intended mainly for debugging so that you can easily print the state from within a debugger. */
+    std::string toString() const;
+
     /** State with formatter. See with_formatter(). */
     class WithFormatter {
         StatePtr obj;

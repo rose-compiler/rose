@@ -290,7 +290,7 @@ analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &fun
     // Build the initial state. This will serve as the state whose values are lazily instantiated by the symbolic RiscOperators.
     SymbolicSemantics::StatePtr initialState = xfer.initialState();
 #if 1 // [Robb Matzke 2016-01-28]
-    cpu->get_operators()->initialState(initialState);
+    cpu->operators()->initialState(initialState);
 #endif
 
     // Run the data-flow

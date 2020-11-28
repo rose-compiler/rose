@@ -70,6 +70,7 @@ protected:
         regcache_init();
         iproc_init();
         memory_init();
+        initializeState(ops->currentState());
     }
 
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */

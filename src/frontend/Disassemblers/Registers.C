@@ -293,6 +293,20 @@ RegisterDictionary::dictionary_for_isa(SgAsmInterpretation *interp) {
     return hdrs.empty() ? NULL : dictionary_for_isa(hdrs.front()->get_isa());
 }
 
+const RegisterDictionary*
+RegisterDictionary::dictionary_null() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
+    static RegisterDictionary *regs = NULL;
+    if (!regs) {
+        regs = new RegisterDictionary("null");
+        regs->insert("pc", 0, 0, 0, 8);                 // program counter
+        regs->insert("sp", 0, 1, 0, 8);                 // stack pointer
+    }
+    return regs;
+}
+
 const RegisterDictionary *
 RegisterDictionary::dictionary_i8086() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;

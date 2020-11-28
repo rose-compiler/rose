@@ -535,9 +535,11 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
 // Construct a new state from scratch
 BaseSemantics::StatePtr
 TransferFunction::initialState() const {
-    BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
+    BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
     BaseSemantics::StatePtr newState = ops->currentState()->clone();
     newState->clear();
+    ASSERT_not_null(cpu_);
+    cpu_->initializeState(newState);
 
     BaseSemantics::RegisterStateGenericPtr regState =
         BaseSemantics::RegisterStateGeneric::promote(newState->registerState());
@@ -545,18 +547,15 @@ TransferFunction::initialState() const {
     // Any register for which we need its initial state must be initialized rather than just springing into existence. We could
     // initialize all registers, but that makes output a bit verbose--users usually don't want to see values for registers that
     // weren't accessed by the dataflow, and omitting their initialization is one easy way to hide them.
-#if 0 // [Robb Matzke 2015-01-14]
-    regState->initialize_large();
-#else
     regState->writeRegister(STACK_POINTER_REG, ops->undefined_(STACK_POINTER_REG.nBits()), ops.get());
-#endif
+
     return newState;
 }
 
 // Required by dataflow engine: compute new output state given a vertex and input state.
 BaseSemantics::StatePtr
 TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const {
-    BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
+    BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
     BaseSemantics::StatePtr retval = incomingState->clone();
     const RegisterDictionary *regDict = cpu_->get_register_dictionary();
     ops->currentState(retval);
