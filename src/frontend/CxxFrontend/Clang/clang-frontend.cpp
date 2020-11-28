@@ -325,13 +325,13 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
   // 3 - Translate
 
-    printf ("Calling clang::ParseAST() (generate ROSE AST) \n");
+ // printf ("Calling clang::ParseAST() (generate ROSE AST) \n");
 
     compiler_instance->getDiagnosticClient().BeginSourceFile(compiler_instance->getLangOpts(), &(compiler_instance->getPreprocessor()));
     clang::ParseAST(compiler_instance->getPreprocessor(), &translator, compiler_instance->getASTContext());
     compiler_instance->getDiagnosticClient().EndSourceFile();
 
-    printf ("DONE: Calling clang::ParseAST()  (generate ROSE AST) \n");
+ // printf ("DONE: Calling clang::ParseAST()  (generate ROSE AST) \n");
 
     SgGlobal * global_scope = translator.getGlobalScope();
 
