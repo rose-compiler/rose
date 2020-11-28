@@ -39,19 +39,29 @@ extern bool roseInstallPrefix(std::string&);
 
 int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
-#if 0
- // DQ (11/8/2020): Need to uncomment this to generate clang graph (which is not yet working).
- // DQ (10/23/2020): Calling clang-to-dot generator (I don't think this modifies the argv list).
-    int clang_to_dot_status = clang_to_dot_main(argc,argv);
-#endif
+    printf ("sageFile.get_clang_il_to_graphviz() = %s \n",sageFile.get_clang_il_to_graphviz() ? "true" : "false");
 
+ // DQ (11/27/2020): Use the -rose:clang_il_to_graphviz option to comntrol the use of the Clang Dot generator.
+    if (sageFile.get_clang_il_to_graphviz() == true)
+       {
+#if 1
+      // DQ (10/23/2020): Calling clang-to-dot generator (I don't think this modifies the argv list).
+         int clang_to_dot_status = clang_to_dot_main(argc,argv);
 #if 0
-    printf ("Exiting as a test! \n");
-    ROSE_ASSERT(false);
+         printf ("Exiting as a test! \n");
+         ROSE_ASSERT(false);
 #endif
-
-    printf ("Returing from top of clang_main(): after calling clang_to_dot_main(): clang_to_dot_status = %d \n",clang_to_dot_status);
-    return clang_to_dot_status;
+         if (clang_to_dot_status != 0)
+            {
+              printf ("Error in generation of dot file of Clang IR: returing from top of clang_main(): clang_to_dot_status = %d \n",clang_to_dot_status);
+              return clang_to_dot_status;
+            }
+           else
+            {
+              printf ("Note: Dot file of Clang IR output in file: clangGraph.dot \n");
+            }
+#endif
+       }
 
   // 0 - Analyse Cmd Line
 
@@ -302,9 +312,13 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
   // 3 - Translate
 
+    printf ("Calling clang::ParseAST() (generate ROSE AST) \n");
+
     compiler_instance->getDiagnosticClient().BeginSourceFile(compiler_instance->getLangOpts(), &(compiler_instance->getPreprocessor()));
     clang::ParseAST(compiler_instance->getPreprocessor(), &translator, compiler_instance->getASTContext());
     compiler_instance->getDiagnosticClient().EndSourceFile();
+
+    printf ("DONE: Calling clang::ParseAST()  (generate ROSE AST) \n");
 
     SgGlobal * global_scope = translator.getGlobalScope();
 
