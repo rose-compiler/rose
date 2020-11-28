@@ -748,6 +748,9 @@ void markNodeToBeUnparsed(SgNode* node, int physical_file_id);
   //! Dumps a located node's preprocessing information.
   void dumpPreprocInfo (SgLocatedNode* locatedNode);
 
+  //! Find the preprocessingInfo node representing #include <header.h> or #include "header.h" within a source file. Return NULL if not found.
+  PreprocessingInfo * findHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader);
+
 //! Insert  #include "filename" or #include <filename> (system header) onto the global scope of a source file, add to be the last #include .. by default among existing headers, Or as the first header. Recommended for use.
 PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader, bool asLastHeader);
 
