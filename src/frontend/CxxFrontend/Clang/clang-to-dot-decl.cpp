@@ -1,130 +1,12 @@
 #include "sage3basic.h"
-// #include "clang-frontend-private.hpp"
 #include "clang-to-dot-private.hpp"
 
-#if 0
-SgSymbol * ClangToDotTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * decl) {
-    if (decl == NULL) return NULL;
 
-    SgScopeStatement * scope = SageBuilder::topScopeStack();
-
-    SgName name(decl->getNameAsString());
-
-#if DEBUG_SYMBOL_TABLE_LOOKUP
-    std::cerr << "Lookup symbol for: " << name << std::endl;
-#endif
-
-    if (name == "") {
-        return NULL;
-    }
-
-    std::list<SgScopeStatement *>::reverse_iterator it;
-    SgSymbol * sym = NULL;
-    switch (decl->getKind()) {
-        case clang::Decl::Typedef:
-        {
-            it = SageBuilder::ScopeStack.rbegin();
-            while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
-                 sym = (*it)->lookup_typedef_symbol(name);
-                 it++;
-            }
-            break;
-        }
-        case clang::Decl::Var:
-        case clang::Decl::ParmVar:
-        {
-            it = SageBuilder::ScopeStack.rbegin();
-            while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
-                sym = (*it)->lookup_variable_symbol(name);
-                it++;
-            }
-            break;
-        }
-        case clang::Decl::Function:
-        {
-            SgType * tmp_type = buildTypeFromQualifiedType(((clang::FunctionDecl *)decl)->getType());
-            SgFunctionType * type = isSgFunctionType(tmp_type);
-            ROSE_ASSERT(type);
-            it = SageBuilder::ScopeStack.rbegin();
-            while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
-                sym = (*it)->lookup_function_symbol(name, type);
-                it++;
-            }
-            break;
-        }
-        case clang::Decl::Field:
-        {
-            SgClassDeclaration * sg_class_decl = isSgClassDeclaration(Traverse(((clang::FieldDecl *)decl)->getParent()));
-            ROSE_ASSERT(sg_class_decl != NULL);
-            if (sg_class_decl->get_definingDeclaration() == NULL)
-                std::cerr << "Runtime Error: cannot find the definition of the class/struct associate to the field: " << name << std::endl;
-            else {
-                scope = isSgClassDeclaration(sg_class_decl->get_definingDeclaration())->get_definition();
-                // TODO: for C++, if 'scope' is in 'SageBuilder::ScopeStack': problem!!!
-                //       It means that we are currently building the class
-                while (scope != NULL && sym == NULL) {
-                    sym = scope->lookup_variable_symbol(name);
-                    scope = scope->get_scope();
-                }
-            }
-            break;
-        }
-        case clang::Decl::CXXRecord:
-        case clang::Decl::Record:
-        {
-            it = SageBuilder::ScopeStack.rbegin();
-            while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
-                sym = (*it)->lookup_class_symbol(name);
-                it++;
-            }
-            break;
-        }
-        case clang::Decl::Label:
-        {
-            // Should not be reach as we use Traverse to retrieve Label (they are "terminal" statements) (it avoids the problem of forward use of label: goto before declaration)
-            name = SgName(((clang::LabelDecl *)decl)->getStmt()->getName());
-            it = SageBuilder::ScopeStack.rbegin();
-            while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
-                sym = (*it)->lookup_label_symbol(name);
-                it++;
-            }
-            break;
-        }
-        case clang::Decl::EnumConstant:
-        {
-            name = SgName(((clang::EnumConstantDecl *)decl)->getName());
-            it = SageBuilder::ScopeStack.rbegin();
-            while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
-                sym = (*it)->lookup_enum_field_symbol(name);
-                it++;
-            }
-            break;
-        }
-        case clang::Decl::Enum:
-        {
-            name = SgName(((clang::EnumDecl *)decl)->getName());
-            it = SageBuilder::ScopeStack.rbegin();
-            while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
-                sym = (*it)->lookup_enum_symbol(name);
-                it++;
-            }
-            break;
-        }
-        default:
-            std::cerr << "Runtime Error: Unknown type of Decl. (" << decl->getDeclKindName() << ")" << std::endl;
-    }
-
-    return sym;
-}
-#endif
-
-// SgNode * ClangToDotTranslator::Traverse(clang::Decl * decl) 
-std::string ClangToDotTranslator::Traverse(clang::Decl * decl) 
+std::string
+ClangToDotTranslator::Traverse(clang::Decl * decl) 
    {
      if (decl == NULL)
         {
-       // DQ (11/27/2020): Old code from the ROSE AST generation not converted to using Tristan's design.
-       // return NULL;
           return "";
         }
 
@@ -164,11 +46,9 @@ std::string ClangToDotTranslator::Traverse(clang::Decl * decl)
      switch (decl->getKind()) 
         {
         case clang::Decl::AccessSpec:
-         // ret_status = VisitAccessSpecDecl((clang::AccessSpecDecl *)decl, &result);
             ret_status = VisitAccessSpecDecl((clang::AccessSpecDecl *)decl, node_desc);
             break;
         case clang::Decl::Block:
-         // ret_status = VisitBlockDecl((clang::BlockDecl *)decl, &result);
             ret_status = VisitBlockDecl((clang::BlockDecl *)decl, node_desc);
             break;
         case clang::Decl::Captured:
@@ -467,7 +347,7 @@ bool ClangToDotTranslator::VisitDecl(clang::Decl * decl, NodeDescriptor & node_d
         {
           std::ostringstream oss;
           oss << "attribute[" << cnt++ << "]";
-#if 0
+#if 1
        // DQ (11/27/2020): I'm not clear what code this is exapanding into.
           switch ((*it)->getKind()) 
              {
@@ -696,6 +576,19 @@ bool ClangToDotTranslator::VisitFriendDecl(clang::FriendDecl * friend_decl, Node
 
      node_desc.kind_hierarchy.push_back("FriendDecl");
 
+    clang::NamedDecl * named_decl = friend_decl->getFriendDecl();
+    clang::TypeSourceInfo * type_source_info = friend_decl->getFriendType();
+
+    assert(named_decl == NULL xor type_source_info == NULL); // I think it is and only one: let see!
+
+    if (named_decl != NULL) {
+      node_desc.successors.push_back(std::pair<std::string, std::string>("friend_decl", Traverse(named_decl)));
+    }
+
+    if (type_source_info != NULL) {
+      node_desc.successors.push_back(std::pair<std::string, std::string>("friend_type", Traverse(type_source_info->getType().getTypePtr())));
+    }
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitDecl(friend_decl, node_desc) && res;
@@ -796,12 +689,15 @@ bool ClangToDotTranslator::VisitNamedDecl(clang::NamedDecl * named_decl, NodeDes
         }
 #else
   // DQ (11/27/2020): I want to print out this warning, but not too much.
+#if 0
+  // DQ (11/28/2020): Cleaned up all the remaining default output from ROSE using Clang as frontend.
      static int counter = 0;
      if (counter % 1000 == 0)
         {
           printf ("Need to support linkage from different location than Clang 3.x (assuming NoLinkage) \n");
         }
      counter++;
+#endif
 #endif
 
      switch (named_decl->getVisibility()) 
@@ -901,6 +797,19 @@ bool ClangToDotTranslator::VisitNamespaceDecl(clang::NamespaceDecl * namespace_d
 
      node_desc.kind_hierarchy.push_back("NamespaceDecl");
 
+    node_desc.successors.push_back(std::pair<std::string, std::string>("original_namespace", Traverse(namespace_decl->getOriginalNamespace())));
+
+ // DQ (11/28/2020): this function no longer exists in Clang 10.
+ // node_desc.successors.push_back(std::pair<std::string, std::string>("next_namespace", Traverse(namespace_decl->getNextNamespace())));
+
+    clang::DeclContext::decl_iterator it;
+    unsigned cnt = 0;
+    for (it = namespace_decl->decls_begin(); it != namespace_decl->decls_end(); it++) {
+        std::ostringstream oss;
+        oss << "child[" << cnt++ << "]";
+        node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
+    }
+
   // ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitNamedDecl(namespace_decl, node_desc) && res;
@@ -927,6 +836,19 @@ bool ClangToDotTranslator::VisitTemplateDecl(clang::TemplateDecl * template_decl
      bool res = true;
 
      node_desc.kind_hierarchy.push_back("TemplateDecl");
+
+    clang::TemplateParameterList * template_parameters = template_decl->getTemplateParameters();
+    assert(template_parameters != NULL);
+
+    clang::TemplateParameterList::iterator it;
+    unsigned cnt = 0;
+    for (it = template_parameters->begin(); it != template_parameters->end(); it++) {
+        std::ostringstream oss;
+        oss << "template_parameter[" << cnt++ << "]";
+        node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
+    }
+
+    node_desc.successors.push_back(std::pair<std::string, std::string>("templated_decl", Traverse(template_decl->getTemplatedDecl())));
 
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
@@ -1204,6 +1126,16 @@ bool ClangToDotTranslator::VisitTagDecl(clang::TagDecl * tag_decl, NodeDescripto
      bool res = true;
 
      node_desc.kind_hierarchy.push_back("TagDecl");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("canonical_decl", Traverse(tag_decl->getCanonicalDecl())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("definition", Traverse(tag_decl->getDefinition())));
+
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", tag_decl->getKindName()));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("typedef_name_for_anon_decl", Traverse(tag_decl->getTypedefNameForAnonDecl())));
+
+  // TODO NestedNameSpecifier * getQualifier () const 
 
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
@@ -1501,7 +1433,20 @@ bool ClangToDotTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, Node
 
      node_desc.kind_hierarchy.push_back("RecordDecl");
 
-    return VisitTagDecl(record_decl, node_desc) && res;
+  // DQ (11/28/2020): Name change in Clang 10.
+  // node_desc.successors.push_back(std::pair<std::string, std::string>("previous_declaration", Traverse(record_decl->getPreviousDeclaration())));
+     node_desc.successors.push_back(std::pair<std::string, std::string>("previous_declaration", Traverse(record_decl->getPreviousDecl())));
+
+     clang::RecordDecl::field_iterator it;
+     unsigned cnt = 0;
+     for (it = record_decl->field_begin(); it != record_decl->field_end(); it++)
+        {
+          std::ostringstream oss;
+          oss << "field[" << cnt++ << "]";
+          node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
+        }
+
+     return VisitTagDecl(record_decl, node_desc) && res;
 }
 #endif
 
@@ -1547,6 +1492,8 @@ bool ClangToDotTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record_
 
      node_desc.kind_hierarchy.push_back("CXXRecordDecl");
 
+#if 0
+  // DQ (11/28/2020): I think this skeleton is implemented as working code below.
      clang::CXXRecordDecl::base_class_iterator it_base;
      for (it_base = cxx_record_decl->bases_begin(); it_base !=  cxx_record_decl->bases_end(); it_base++) 
         {
@@ -1573,6 +1520,75 @@ bool ClangToDotTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record_
 
      clang::CXXDestructorDecl * destructor = cxx_record_decl->getDestructor();
   // TODO
+#endif
+
+    clang::CXXRecordDecl::base_class_iterator it_base;
+    unsigned cnt = 0;
+    for (it_base = cxx_record_decl->bases_begin(); it_base !=  cxx_record_decl->bases_end(); it_base++) {
+        std::ostringstream oss;
+        oss << "base_type[" << cnt++ << "]";
+        switch (it_base->getAccessSpecifier()) {
+            case clang::AS_public:
+                oss << " (public)";
+                break;
+            case clang::AS_protected:
+                oss << " (protected)";
+                break;
+            case clang::AS_private:
+                oss << " (private)";
+                break;
+            case clang::AS_none:
+                break;
+        }
+        node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(it_base->getType().getTypePtr())));
+    }
+
+    clang::CXXRecordDecl::base_class_iterator it_vbase;
+    cnt = 0;
+    for (it_vbase = cxx_record_decl->vbases_begin(); it_vbase !=  cxx_record_decl->vbases_end(); it_vbase++) {
+        std::ostringstream oss;
+        oss << "virtual_base_type[" << cnt++ << "]";
+        switch (it_base->getAccessSpecifier()) {
+            case clang::AS_public:
+                oss << " (public)";
+                break;
+            case clang::AS_protected:
+                oss << " (protected)";
+                break;
+            case clang::AS_private:
+                oss << " (private)";
+                break;
+            case clang::AS_none:
+                break;
+        }
+        node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(it_vbase->getType().getTypePtr())));
+    }
+
+    clang::CXXRecordDecl::method_iterator it_method;
+    cnt = 0;
+    for (it_method = cxx_record_decl->method_begin(); it_method !=  cxx_record_decl->method_end(); it_method++) {
+        std::ostringstream oss;
+        oss << "method[" << cnt++ << "]";
+        node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it_method)));
+    }
+
+    clang::CXXRecordDecl::ctor_iterator it_ctor;
+    cnt = 0;
+    for (it_ctor = cxx_record_decl->ctor_begin(); it_ctor != cxx_record_decl->ctor_end(); it_ctor++) {
+        std::ostringstream oss;
+        oss << "constructor[" << cnt++ << "]";
+        node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it_ctor)));
+    }
+
+    clang::CXXRecordDecl::friend_iterator it_friend;
+    cnt = 0;
+    for (it_friend = cxx_record_decl->friend_begin(); it_friend != cxx_record_decl->friend_end(); it_friend++) {
+        std::ostringstream oss;
+        oss << "friend[" << cnt++ << "]";
+        node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it_friend)));
+    }
+
+    node_desc.successors.push_back(std::pair<std::string, std::string>("destructor", Traverse(cxx_record_decl->getDestructor())));
 
      return res;
    }
@@ -1707,7 +1723,23 @@ bool ClangToDotTranslator::VisitEnumDecl(clang::EnumDecl * enum_decl, NodeDescri
 
      node_desc.kind_hierarchy.push_back("EnumDecl");
 
-    return VisitDecl(enum_decl, node_desc) && res;
+     node_desc.kind_hierarchy.push_back("EnumDecl");
+
+  // node_desc.successors.push_back(std::pair<std::string, std::string>("previous_declaration", Traverse(enum_decl->getPreviousDeclaration())));
+     node_desc.successors.push_back(std::pair<std::string, std::string>("previous_declaration", Traverse(enum_decl->getPreviousDecl())));
+
+     clang::EnumDecl::enumerator_iterator it;
+     unsigned cnt = 0;
+     for (it = enum_decl->enumerator_begin(); it != enum_decl->enumerator_end(); it++)
+        {
+          std::ostringstream oss;
+          oss << "enumerator[" << cnt++ << "]";
+          node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
+        }
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("promotion_type", Traverse(enum_decl->getPromotionType().getTypePtr())));
+
+     return VisitDecl(enum_decl, node_desc) && res;
 }
 #endif
 
@@ -1730,6 +1762,11 @@ bool ClangToDotTranslator::VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl
     bool res = true;
 
      node_desc.kind_hierarchy.push_back("TemplateTypeParmDecl");
+
+    if (template_type_parm_decl->hasDefaultArgument())
+        node_desc.successors.push_back(
+            std::pair<std::string, std::string>("default_argument", Traverse(template_type_parm_decl->getDefaultArgument().getTypePtr()))
+        );
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -1760,7 +1797,7 @@ bool ClangToDotTranslator::VisitTypedefNameDecl(clang::TypedefNameDecl * typedef
      node_desc.kind_hierarchy.push_back("TypedefNameDecl");
      node_desc.successors.push_back(std::pair<std::string, std::string>("underlying_type", Traverse(typedef_name_decl->getUnderlyingType().getTypePtr())));
 
-     node_desc.kind_hierarchy.push_back("TypedefNameDecl");
+  // node_desc.kind_hierarchy.push_back("TypedefNameDecl");
 
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
@@ -2246,6 +2283,12 @@ bool ClangToDotTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, NodeDes
 
      node_desc.kind_hierarchy.push_back("FieldDecl");
 
+    node_desc.successors.push_back(std::pair<std::string, std::string>("in_class_initializer", Traverse(field_decl->getInClassInitializer())));
+
+    node_desc.successors.push_back(std::pair<std::string, std::string>("bit_width", Traverse(field_decl->getBitWidth())));
+
+    node_desc.successors.push_back(std::pair<std::string, std::string>("parent", Traverse(field_decl->getParent())));
+
     return VisitDeclaratorDecl(field_decl, node_desc) && res; 
 }
 #endif
@@ -2703,6 +2746,17 @@ bool ClangToDotTranslator::VisitCXXConstructorDecl(clang::CXXConstructorDecl * c
 
      node_desc.kind_hierarchy.push_back("CXXConstructorDecl");
 
+    // ...
+
+    clang::CXXConstructorDecl::init_iterator it;
+    unsigned cnt = 0;
+    for (it = cxx_constructor_decl->init_begin(); it != cxx_constructor_decl->init_end(); it++) {
+        std::ostringstream oss;
+        oss << "init[" << cnt++ << "]";
+//      node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
+        node_desc.attributes.push_back(std::pair<std::string, std::string>(oss.str(), ""));
+    }
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitCXXMethodDecl(cxx_constructor_decl, node_desc) && res;
@@ -2808,6 +2862,9 @@ bool ClangToDotTranslator::VisitNonTypeTemplateParmDecl(clang::NonTypeTemplatePa
     bool res = true;
 
      node_desc.kind_hierarchy.push_back("NonTypeTemplateParmDecl");
+
+    if (non_type_template_param_decl->hasDefaultArgument())
+        node_desc.successors.push_back(std::pair<std::string, std::string>("default_argument", Traverse(non_type_template_param_decl->getDefaultArgument())));
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2958,6 +3015,15 @@ bool ClangToDotTranslator::VisitVarDecl(clang::VarDecl * var_decl, NodeDescripto
     *node = sg_var_decl;
 #endif
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("acting_definition", Traverse(var_decl->getActingDefinition())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("definition", Traverse(var_decl->getDefinition())));
+
+  // DQ (11/28/2020): I think this is no longer available in Clang 10.
+  // node_desc.successors.push_back(std::pair<std::string, std::string>("out_of_line_definition", Traverse(var_decl->getOutOfLineDefinition())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("init", Traverse(var_decl->getInit())));
+
      node_desc.kind_hierarchy.push_back("VarDecl");
 
     return VisitDeclaratorDecl(var_decl, node_desc) && res;
@@ -3107,9 +3173,13 @@ bool ClangToDotTranslator::VisitParmVarDecl(clang::ParmVarDecl * param_var_decl,
     *node = SageBuilder::buildInitializedName(name, type, init);
 #endif
 
+    node_desc.successors.push_back(std::pair<std::string, std::string>("original_type", Traverse(param_var_decl->getOriginalType().getTypePtr())));
+
+    node_desc.successors.push_back(std::pair<std::string, std::string>("default_arg", Traverse(param_var_decl->getDefaultArg())));
+
      node_desc.kind_hierarchy.push_back("ParmVarDecl");
 
-    return VisitDeclaratorDecl(param_var_decl, node_desc) && res;
+     return VisitDeclaratorDecl(param_var_decl, node_desc) && res;
 }
 #endif
 
@@ -3239,6 +3309,8 @@ bool  ClangToDotTranslator::VisitEnumConstantDecl(clang::EnumConstantDecl * enum
 #endif
 
      node_desc.kind_hierarchy.push_back("EnumConstantDecl");
+
+    node_desc.successors.push_back(std::pair<std::string, std::string>("init_expr", Traverse(enum_constant_decl->getInitExpr())));
 
     return VisitValueDecl(enum_constant_decl, node_desc) && res;
 }
@@ -3657,27 +3729,24 @@ bool ClangToDotTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl *
      SageBuilder::popScopeStack();
 #endif
 
- // Code copied from Tristan's dot file generator.
-    node_desc.kind_hierarchy.push_back("TranslationUnitDecl");
+  // Code copied from Tristan's dot file generator.
+     node_desc.kind_hierarchy.push_back("TranslationUnitDecl");
 
-    clang::DeclContext::decl_iterator it;
-    unsigned cnt = 0;
-    for (it = translation_unit_decl->decls_begin(); it != translation_unit_decl->decls_end(); it++) {
-        std::ostringstream oss;
-        oss << "child[" << cnt++ << "]";
+     clang::DeclContext::decl_iterator it;
+     unsigned cnt = 0;
+     for (it = translation_unit_decl->decls_begin(); it != translation_unit_decl->decls_end(); it++)
+        {
+          std::ostringstream oss;
+          oss << "child[" << cnt++ << "]";
 #ifdef SHORT_CUT_BUILTIN
-        if (cnt < 6) continue;
+          if (cnt < 6) continue;
 #endif
-        node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
-    }
+          node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
+        }
 
-    node_desc.successors.push_back(std::pair<std::string, std::string>("anonymous_namespace",  Traverse(translation_unit_decl->getAnonymousNamespace())));
-
- // return VisitDecl(translation_unit_decl, node_desc) && res;
-
+     node_desc.successors.push_back(std::pair<std::string, std::string>("anonymous_namespace",  Traverse(translation_unit_decl->getAnonymousNamespace())));
 
   // Traverse the class hierarchy
-
      return VisitDecl(translation_unit_decl, node_desc) && res;
    }
 #endif

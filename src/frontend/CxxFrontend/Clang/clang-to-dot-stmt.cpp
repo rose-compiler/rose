@@ -1189,6 +1189,10 @@ bool ClangToDotTranslator::VisitDoStmt(clang::DoStmt * do_stmt, NodeDescriptor &
 
      node_desc.kind_hierarchy.push_back("DoStmt");
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("condition", Traverse(do_stmt->getCond())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("body", Traverse(do_stmt->getBody())));
+
      return VisitStmt(do_stmt, node_desc); 
    }
 #endif
@@ -1452,6 +1456,14 @@ bool ClangToDotTranslator::VisitForStmt(clang::ForStmt * for_stmt, NodeDescripto
 
      node_desc.kind_hierarchy.push_back("ForStmt");
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("init", Traverse(for_stmt->getInit())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("cond", Traverse(for_stmt->getCond())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("inc", Traverse(for_stmt->getInc())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("body", Traverse(for_stmt->getBody())));
+
      return VisitStmt(for_stmt, node_desc) && res;
    }
 #endif
@@ -1521,6 +1533,8 @@ bool ClangToDotTranslator::VisitGotoStmt(clang::GotoStmt * goto_stmt, NodeDescri
 #endif
 
      node_desc.kind_hierarchy.push_back("GotoStmt");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("label", Traverse(goto_stmt->getLabel()->getStmt())));
 
      return VisitStmt(goto_stmt, node_desc) && res;
    }
@@ -1630,6 +1644,12 @@ bool ClangToDotTranslator::VisitIfStmt(clang::IfStmt * if_stmt, NodeDescriptor &
 #endif
 
      node_desc.kind_hierarchy.push_back("IfStmt");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("cond", Traverse(if_stmt->getCond())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("then", Traverse(if_stmt->getThen())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("else", Traverse(if_stmt->getElse())));
 
      return VisitStmt(if_stmt, node_desc) && res;
    }
@@ -2488,6 +2508,8 @@ bool ClangToDotTranslator::VisitReturnStmt(clang::ReturnStmt * return_stmt, Node
 
      node_desc.kind_hierarchy.push_back("ReturnStmt");
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("return_value", Traverse(return_stmt->getRetValue())));
+
     return VisitStmt(return_stmt, node_desc) && res;
 }
 #endif
@@ -2618,6 +2640,8 @@ bool ClangToDotTranslator::VisitSwitchCase(clang::SwitchCase * switch_case, Node
 
     // TODO
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("sub_stmt", Traverse(switch_case->getSubStmt())));
+
     return VisitStmt(switch_case, node_desc) && res;
 }
 #endif
@@ -2683,6 +2707,10 @@ bool ClangToDotTranslator::VisitCaseStmt(clang::CaseStmt * case_stmt, NodeDescri
 #endif
 
      node_desc.kind_hierarchy.push_back("CaseStmt");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("lhs", Traverse(case_stmt->getLHS())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("rhs", Traverse(case_stmt->getRHS())));
 
     return VisitSwitchCase(case_stmt, node_desc);
 }
@@ -2786,6 +2814,10 @@ bool ClangToDotTranslator::VisitSwitchStmt(clang::SwitchStmt * switch_stmt, Node
 
      node_desc.kind_hierarchy.push_back("SwitchStmt");
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("cond", Traverse(switch_stmt->getCond())));
+    
+     node_desc.successors.push_back(std::pair<std::string, std::string>("body", Traverse(switch_stmt->getBody())));
+
     return VisitStmt(switch_stmt, node_desc);
 }
 #endif
@@ -2862,6 +2894,8 @@ bool ClangToDotTranslator::VisitExpr(clang::Expr * expr, NodeDescriptor & node_d
 
      // TODO Is there anything to be done? (maybe in relation with typing?)
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("type", Traverse(expr->getType().getTypePtr())));
+
      return VisitValueStmt(expr, node_desc);
 }
 #endif
@@ -2885,6 +2919,12 @@ bool ClangToDotTranslator::VisitAbstractConditionalOperator(clang::AbstractCondi
      bool res = true;
 
      node_desc.kind_hierarchy.push_back("AbstractConditionalOperator");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("condition", Traverse(abstract_conditional_operator->getCond())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("true_stmt", Traverse(abstract_conditional_operator->getTrueExpr())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("false_stmt", Traverse(abstract_conditional_operator->getFalseExpr())));
 
      // TODO 
 
@@ -3100,6 +3140,10 @@ bool ClangToDotTranslator::VisitArraySubscriptExpr(clang::ArraySubscriptExpr * a
 
      node_desc.kind_hierarchy.push_back("ArraySubscriptExpr");
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("base", Traverse(array_subscript_expr->getBase())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("index", Traverse(array_subscript_expr->getIdx())));
+
     return VisitExpr(array_subscript_expr, node_desc) && res;
 }
 #endif
@@ -3308,7 +3352,13 @@ bool ClangToDotTranslator::VisitBinaryOperator(clang::BinaryOperator * binary_op
 
      node_desc.kind_hierarchy.push_back("BinaryOperator");
 
-    return VisitExpr(binary_operator, node_desc) && res;
+     node_desc.successors.push_back(std::pair<std::string, std::string>("lhs", Traverse(binary_operator->getLHS())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("rhs", Traverse(binary_operator->getRHS())));
+
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", binary_operator->getOpcodeStr()));
+
+     return VisitExpr(binary_operator, node_desc) && res;
 }
 #endif
 
@@ -3331,6 +3381,14 @@ bool ClangToDotTranslator::VisitCompoundAssignOperator(clang::CompoundAssignOper
      bool res = true;
 
      node_desc.kind_hierarchy.push_back("CompoundAssignOperator");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>(
+        "computation_lhs_type", Traverse(compound_assign_operator->getComputationLHSType().getTypePtr())
+     ));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>(
+        "computation_result_type", Traverse(compound_assign_operator->getComputationResultType().getTypePtr())
+     ));
 
      // TODO 
 
@@ -3434,7 +3492,22 @@ bool ClangToDotTranslator::VisitCallExpr(clang::CallExpr * call_expr, NodeDescri
 
      node_desc.kind_hierarchy.push_back("CallExpr");
 
-    return VisitExpr(call_expr, node_desc) && res;
+     node_desc.successors.push_back(std::pair<std::string, std::string>("callee", Traverse(call_expr->getCallee())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("callee_decl", Traverse(call_expr->getCalleeDecl())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("direct_callee", Traverse(call_expr->getDirectCallee())));
+
+     clang::CallExpr::arg_iterator it;
+     unsigned cnt = 0;
+     for (it = call_expr->arg_begin(); it != call_expr->arg_end(); ++it)
+        {
+          std::ostringstream oss;
+          oss << "argument[" << cnt++ << "]";
+          node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
+        }
+
+     return VisitExpr(call_expr, node_desc) && res;
 }
 #endif
 
@@ -3562,6 +3635,8 @@ bool ClangToDotTranslator::VisitCastExpr(clang::CastExpr * cast_expr, NodeDescri
 
      node_desc.kind_hierarchy.push_back("CastExpr");
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("sub_expr", Traverse(cast_expr->getSubExpr())));
+
     // TODO
 
     return VisitExpr(cast_expr, node_desc) && res;
@@ -3582,28 +3657,30 @@ bool ClangToDotTranslator::VisitExplicitCastExpr(clang::ExplicitCastExpr * expli
 #else
 bool ClangToDotTranslator::VisitExplicitCastExpr(clang::ExplicitCastExpr * explicit_cast_expr, NodeDescriptor & node_desc) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToDotTranslator::VisitExplicitCastExpr" << std::endl;
+     std::cerr << "ClangToDotTranslator::VisitExplicitCastExpr" << std::endl;
 #endif
-    bool res = true;
+     bool res = true;
 
      node_desc.kind_hierarchy.push_back("ExplicitCastExpr");
 
-    // TODO
+     node_desc.successors.push_back(std::pair<std::string, std::string>("type_as_written", Traverse(explicit_cast_expr->getTypeAsWritten().getTypePtr())));
 
-    return VisitCastExpr(explicit_cast_expr, node_desc) && res;
+ // TODO
+
+     return VisitCastExpr(explicit_cast_expr, node_desc) && res;
 }
 #endif
 
 #if 0
 bool ClangToDotTranslator::VisitBuiltinBitCastExpr(clang::BuiltinBitCastExpr * builtin_bit_cast_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToDotTranslator::VisitBuiltinBitCastExpr" << std::endl;
+     std::cerr << "ClangToDotTranslator::VisitBuiltinBitCastExpr" << std::endl;
 #endif
-    bool res = true;
+     bool res = true;
 
-    // TODO
+  // TODO
 
-    return VisitExplicitCastExpr(builtin_bit_cast_expr, node) && res;
+     return VisitExplicitCastExpr(builtin_bit_cast_expr, node) && res;
 }
 #else
 bool ClangToDotTranslator::VisitBuiltinBitCastExpr(clang::BuiltinBitCastExpr * builtin_bit_cast_expr, NodeDescriptor & node_desc) {
@@ -3896,6 +3973,25 @@ bool ClangToDotTranslator::VisitCharacterLiteral(clang::CharacterLiteral * chara
 
      node_desc.kind_hierarchy.push_back("CharacterLiteral");
 
+    switch (character_literal->getKind()) {
+        case clang::CharacterLiteral::Ascii:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "Ascii"));
+            break;
+        case clang::CharacterLiteral::Wide:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "Wide"));
+            break;
+        case clang::CharacterLiteral::UTF16:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "UTF16"));
+            break;
+        case clang::CharacterLiteral::UTF32:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "UTF32"));
+            break;
+    }
+
+    std::ostringstream oss;
+    oss << std::hex << character_literal->getValue();
+    node_desc.attributes.push_back(std::pair<std::string, std::string>("hex_value", oss.str()));
+
     return VisitExpr(character_literal, node_desc);
 }
 #endif
@@ -3965,6 +4061,8 @@ bool ClangToDotTranslator::VisitCompoundLiteralExpr(clang::CompoundLiteralExpr *
 #endif
 
      node_desc.kind_hierarchy.push_back("CompoundLiteralExpr");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("initializer", Traverse(compound_literal->getInitializer())));
 
     return VisitExpr(compound_literal, node_desc);
 }
@@ -4159,7 +4257,18 @@ bool ClangToDotTranslator::VisitCXXConstructExpr(clang::CXXConstructExpr * cxx_c
 
     // TODO
 
-    return VisitExpr(cxx_construct_expr, node_desc) && res;
+     node_desc.successors.push_back(std::pair<std::string, std::string>("constructor", Traverse(cxx_construct_expr->getConstructor())));
+
+     clang::CXXConstructExpr::arg_iterator it;
+     unsigned cnt = 0;
+     for (it = cxx_construct_expr->arg_begin(); it != cxx_construct_expr->arg_end(); ++it)
+        {
+          std::ostringstream oss;
+          oss << "argument[" << cnt++ << "]";
+          node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
+        }
+
+     return VisitExpr(cxx_construct_expr, node_desc) && res;
 }
 #endif
 
@@ -4764,7 +4873,9 @@ bool ClangToDotTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr, 
 
      node_desc.kind_hierarchy.push_back("DeclRefExpr");
 
-    return VisitExpr(decl_ref_expr, node_desc) && res;
+     node_desc.successors.push_back(std::pair<std::string, std::string>("decl", Traverse(decl_ref_expr->getDecl())));
+
+     return VisitExpr(decl_ref_expr, node_desc) && res;
 }
 #endif
 
@@ -4946,6 +5057,75 @@ bool ClangToDotTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * d
 
      node_desc.kind_hierarchy.push_back("DesignatedInitExpr");
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("init", Traverse(designated_init_expr->getInit())));
+
+#if 0
+     clang::DesignatedInitExpr::designators_iterator it;
+     unsigned cnt = 0;
+     for (it = designated_init_expr->designators_begin(); it != designated_init_expr->designators_end(); it++) 
+        {
+          std::ostringstream oss;
+          oss << "designator[" << cnt++ << "]";
+          if (it->isFieldDesignator()) {
+              oss << " field";
+              node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(it->getField())));
+          }
+         else if (it->isArrayDesignator()) {
+            oss << " array";
+            node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(designated_init_expr->getArrayIndex(*it))));
+        }
+        else if (it->isArrayRangeDesignator()) {
+            oss << " range";
+            std::ostringstream oss_;
+            oss_ << oss.str() << "_end";
+            oss << "_start";
+            node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(designated_init_expr->getArrayRangeStart(*it))));
+            node_desc.successors.push_back(std::pair<std::string, std::string>(oss_.str(), Traverse(designated_init_expr->getArrayRangeEnd(*it))));
+        }
+        else assert(false);
+        }
+#else
+  // DQ (11/28/2020): There is no clang::DesignatedInitExpr::designators_iterator in Clang 10, 
+  // so this has to be iterated over using a for loop and calling the getDesignator() function.
+     unsigned cnt = 0;
+     for (unsigned i = 0; i < designated_init_expr->size(); i++)
+        {
+          clang::DesignatedInitExpr::Designator* it = designated_init_expr->getDesignator(i);
+
+          std::ostringstream oss;
+          oss << "designator[" << cnt++ << "]";
+          if (it->isFieldDesignator()) 
+             {
+               oss << " field";
+               node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(it->getField())));
+             }
+            else 
+             {
+               if (it->isArrayDesignator()) 
+                  {
+                    oss << " array";
+                    node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(designated_init_expr->getArrayIndex(*it))));
+                  }
+                 else 
+                  {
+                    if (it->isArrayRangeDesignator()) 
+                       {
+                         oss << " range";
+                         std::ostringstream oss_;
+                         oss_ << oss.str() << "_end";
+                         oss << "_start";
+                         node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(designated_init_expr->getArrayRangeStart(*it))));
+                         node_desc.successors.push_back(std::pair<std::string, std::string>(oss_.str(), Traverse(designated_init_expr->getArrayRangeEnd(*it))));
+                       }
+                      else 
+                       {
+                         assert(false);
+                       }
+                  }
+             }
+        }
+#endif
+
     return VisitExpr(designated_init_expr, node_desc);
 }
 #endif
@@ -5086,7 +5266,19 @@ bool ClangToDotTranslator::VisitExtVectorElementExpr(clang::ExtVectorElementExpr
 
      node_desc.kind_hierarchy.push_back("ExtVectorElementExpr");
 
-   return VisitExpr(ext_vector_element_expr, node_desc);
+     node_desc.successors.push_back(std::pair<std::string, std::string>("base", Traverse(ext_vector_element_expr->getBase())));
+
+     if (ext_vector_element_expr->isArrow()) 
+          node_desc.attributes.push_back(std::pair<std::string, std::string>("access_operator", "arrow"));
+       else 
+          node_desc.attributes.push_back(std::pair<std::string, std::string>("access_operator", "dot"));
+
+     clang::IdentifierInfo & ident_info = ext_vector_element_expr->getAccessor();
+     std::string ident = ident_info.getName().str();
+
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("accessed_field", ident));
+
+     return VisitExpr(ext_vector_element_expr, node_desc);
 }
 #endif
 
@@ -5150,7 +5342,24 @@ bool ClangToDotTranslator::VisitFloatingLiteral(clang::FloatingLiteral * floatin
 
      node_desc.kind_hierarchy.push_back("FloatingLiteral");
 
-    return VisitExpr(floating_literal, node_desc);
+  // FIXME
+
+     unsigned int precision =  llvm::APFloat::semanticsPrecision(floating_literal->getValue().getSemantics());
+     std::ostringstream oss;
+     if (precision == 24) {
+         node_desc.attributes.push_back(std::pair<std::string, std::string>("precision", "single"));
+         oss << floating_literal->getValue().convertToFloat();
+     }
+     else if (precision == 53) {
+         node_desc.attributes.push_back(std::pair<std::string, std::string>("precision", "double"));
+         oss << floating_literal->getValue().convertToDouble();
+     }
+     else
+         assert(!"In VisitFloatingLiteral: Unsupported float size");
+
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("value", oss.str()));
+
+     return VisitExpr(floating_literal, node_desc);
 }
 #endif
 
@@ -5344,6 +5553,8 @@ bool ClangToDotTranslator::VisitImaginaryLiteral(clang::ImaginaryLiteral * imagi
 
      node_desc.kind_hierarchy.push_back("ImaginaryLiteral");
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("sub_expr", Traverse(imaginary_literal->getSubExpr())));
+
     return VisitExpr(imaginary_literal, node_desc);
 }
 #endif
@@ -5422,6 +5633,14 @@ bool ClangToDotTranslator::VisitInitListExpr(clang::InitListExpr * init_list_exp
 
      node_desc.kind_hierarchy.push_back("InitListExpr");
 
+    clang::InitListExpr::iterator it;
+    unsigned cnt = 0;
+    for (it = init_list_expr->begin(); it != init_list_expr->end(); it++) {
+        std::ostringstream oss;
+        oss << "init[" << cnt++ << "]";
+        node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
+    }
+
     return VisitExpr(init_list_expr, node_desc);
 }
 #endif
@@ -5447,6 +5666,13 @@ bool ClangToDotTranslator::VisitIntegerLiteral(clang::IntegerLiteral * integer_l
 #endif
 
      node_desc.kind_hierarchy.push_back("IntegerLiteral");
+
+    // FIXME
+
+  // DQ (11/28/2020): getHashValue is no longer available.
+  // std::ostringstream oss;
+  // oss << std::hex << integer_literal->getValue().getHashValue();
+  // node_desc.attributes.push_back(std::pair<std::string, std::string>("hex_hash_value", oss.str()));
 
     return VisitExpr(integer_literal, node_desc);
 }
@@ -5591,6 +5817,15 @@ bool ClangToDotTranslator::VisitMemberExpr(clang::MemberExpr * member_expr, Node
 #endif
 
      node_desc.kind_hierarchy.push_back("MemberExpr");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("base", Traverse(member_expr->getBase())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("member_decl", Traverse(member_expr->getMemberDecl())));
+
+     if (member_expr->isArrow())
+         node_desc.attributes.push_back(std::pair<std::string, std::string>("access_operator", "arrow"));
+     else
+         node_desc.attributes.push_back(std::pair<std::string, std::string>("access_operator", "dot"));
 
     return VisitExpr(member_expr, node_desc) && res;
 }
@@ -5898,6 +6133,8 @@ bool ClangToDotTranslator::VisitParenExpr(clang::ParenExpr * paren_expr, NodeDes
 
      node_desc.kind_hierarchy.push_back("ParenExpr");
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("sub_expr", Traverse(paren_expr->getSubExpr())));
+
     return VisitExpr(paren_expr, node_desc) && res;
 }
 #endif
@@ -6072,6 +6309,24 @@ bool ClangToDotTranslator::VisitPredefinedExpr(clang::PredefinedExpr * predefine
 
      node_desc.kind_hierarchy.push_back("PredefinedExpr");
 
+  // DQ (11/28/2020): Change of function name in Clang 10.
+  // switch (predefined_expr->getIdentType()) 
+     switch (predefined_expr->getIdentKind()) 
+        {
+          case clang::PredefinedExpr::Func:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("ident_type", "func"));
+               break;
+          case clang::PredefinedExpr::Function:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("ident_type", "function"));
+               break;
+          case clang::PredefinedExpr::PrettyFunction:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("ident_type", "pretty_function"));
+               break;
+          case clang::PredefinedExpr::PrettyFunctionNoVirtual:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("ident_type", "pretty_function_no_virtual"));
+               break;
+        }
+
     return VisitExpr(predefined_expr, node_desc);
 }
 #endif
@@ -6220,6 +6475,8 @@ bool ClangToDotTranslator::VisitStmtExpr(clang::StmtExpr * stmt_expr, NodeDescri
 
      node_desc.kind_hierarchy.push_back("StmtExpr");
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("sub_stmt", Traverse(stmt_expr->getSubStmt())));
+
     return VisitExpr(stmt_expr, node_desc) && res;
 }
 #endif
@@ -6345,6 +6602,8 @@ bool ClangToDotTranslator::VisitStringLiteral(clang::StringLiteral * string_lite
 #endif
 
      node_desc.kind_hierarchy.push_back("StringLiteral");
+
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("string", string_literal->getString().str()));
 
     return VisitExpr(string_literal, node_desc);
 }
@@ -6532,6 +6791,27 @@ bool ClangToDotTranslator::VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeT
 
      node_desc.kind_hierarchy.push_back("UnaryExprOrTypeTraitExpr");
 
+    if (unary_expr_or_type_trait_expr->isArgumentType()) {
+        node_desc.successors.push_back(std::pair<std::string, std::string>(
+            "argument_type", Traverse(unary_expr_or_type_trait_expr->getArgumentType().getTypePtr())
+        ));
+    }
+    else {
+        node_desc.successors.push_back(std::pair<std::string, std::string>("argument_expr", Traverse(unary_expr_or_type_trait_expr->getArgumentExpr())));
+    }
+
+    switch (unary_expr_or_type_trait_expr->getKind()) {
+        case clang::UETT_SizeOf:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "sizeof"));
+            break;
+        case clang::UETT_AlignOf:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "alignof"));
+            break;
+        case clang::UETT_VecStep:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "vecstep"));
+            break;
+    }
+
     return VisitStmt(unary_expr_or_type_trait_expr, node_desc) && res;
 }
 #endif
@@ -6662,6 +6942,50 @@ bool ClangToDotTranslator::VisitUnaryOperator(clang::UnaryOperator * unary_opera
 
      node_desc.kind_hierarchy.push_back("UnaryOperator");
 
+    node_desc.successors.push_back(std::pair<std::string, std::string>("sub_expr", Traverse(unary_operator->getSubExpr())));
+
+    switch (unary_operator->getOpcode()) {
+        case clang::UO_PostInc:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "PostInc"));
+            break;
+        case clang::UO_PostDec:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "PostDec"));
+            break;
+        case clang::UO_PreInc:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "PreInc"));
+            break;
+        case clang::UO_PreDec:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "PreDec"));
+            break;
+        case clang::UO_AddrOf:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "AddrOf"));
+            break;
+        case clang::UO_Deref:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "Deref"));
+            break;
+        case clang::UO_Plus:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "Plus"));
+            break;
+        case clang::UO_Minus:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "Minus"));
+            break;
+        case clang::UO_Not:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "Not"));
+            break;
+        case clang::UO_LNot:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "LNot"));
+            break;
+        case clang::UO_Real:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "Real"));
+            break;
+        case clang::UO_Imag:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "Imag"));
+            break;
+        case clang::UO_Extension:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "Extension"));
+            break;
+    }
+
     return VisitExpr(unary_operator, node_desc) && res;
 }
 #endif
@@ -6695,6 +7019,8 @@ bool ClangToDotTranslator::VisitVAArgExpr(clang::VAArgExpr * va_arg_expr, NodeDe
 #endif
 
      node_desc.kind_hierarchy.push_back("VAArgExpr");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("sub_expr", Traverse(va_arg_expr->getSubExpr())));
 
     return VisitExpr(va_arg_expr, node_desc);
 }
@@ -6784,6 +7110,10 @@ bool ClangToDotTranslator::VisitLabelStmt(clang::LabelStmt * label_stmt, NodeDes
 
      node_desc.kind_hierarchy.push_back("LabelStmt");
 
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("name", label_stmt->getName()));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("sub_stmt", Traverse(label_stmt->getSubStmt())));
+
     return VisitStmt(label_stmt, node_desc) && res;
 }
 #endif
@@ -6866,6 +7196,10 @@ bool ClangToDotTranslator::VisitWhileStmt(clang::WhileStmt * while_stmt, NodeDes
 
      node_desc.kind_hierarchy.push_back("WhileStmt");
 
-    return VisitStmt(while_stmt, node_desc);
+     node_desc.successors.push_back(std::pair<std::string, std::string>("cond", Traverse(while_stmt->getCond())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("body", Traverse(while_stmt->getBody())));
+
+     return VisitStmt(while_stmt, node_desc);
 }
 #endif
