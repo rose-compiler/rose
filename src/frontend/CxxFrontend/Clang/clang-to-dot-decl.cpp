@@ -122,7 +122,11 @@ SgSymbol * ClangToDotTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * dec
 std::string ClangToDotTranslator::Traverse(clang::Decl * decl) 
    {
      if (decl == NULL)
-          return NULL;
+        {
+       // DQ (11/27/2020): Old code from the ROSE AST generation not converted to using Tristan's design.
+       // return NULL;
+          return "";
+        }
 
 #if 0
      std::map<clang::Decl *, SgNode *>::iterator it = p_decl_translation_map.find(decl);
@@ -155,13 +159,13 @@ std::string ClangToDotTranslator::Traverse(clang::Decl * decl)
     bool ret_status = false;
 #endif
 
-     CLANG_ROSE_Graph::graph (decl);
+  // CLANG_ROSE_Graph::graph (decl);
 
      switch (decl->getKind()) 
         {
         case clang::Decl::AccessSpec:
          // ret_status = VisitAccessSpecDecl((clang::AccessSpecDecl *)decl, &result);
-          ret_status = VisitAccessSpecDecl((clang::AccessSpecDecl *)decl, node_desc);
+            ret_status = VisitAccessSpecDecl((clang::AccessSpecDecl *)decl, node_desc);
             break;
         case clang::Decl::Block:
          // ret_status = VisitBlockDecl((clang::BlockDecl *)decl, &result);
@@ -346,8 +350,11 @@ std::string ClangToDotTranslator::Traverse(clang::Decl * decl)
             ROSE_ASSERT(false);
     }
 
+  // DQ (11/27/2020): Added debugging support.
+  // printf ("ret_status = %s \n",ret_status ? "true" : "false");
+
  // ROSE_ASSERT(ret_status == false || result != NULL);
-    ROSE_ASSERT(ret_status == false);
+ // ROSE_ASSERT(ret_status == false);
 
  // p_decl_translation_map.insert(std::pair<clang::Decl *, SgNode *>(decl, result));
 
@@ -437,8 +444,45 @@ bool ClangToDotTranslator::VisitDecl(clang::Decl * decl, NodeDescriptor & node_d
 */
 #endif
 
-    return true;
-}
+     node_desc.kind_hierarchy.push_back("Decl");
+
+     switch (decl->getAccess()) 
+        {
+          case clang::AS_public:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("access_specifier", "public"));
+               break;
+          case clang::AS_protected:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("access_specifier", "protected"));
+               break;
+          case clang::AS_private:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("access_specifier", "private`"));
+               break;
+          case clang::AS_none:
+               break;
+        }
+
+     clang::Decl::attr_iterator it;
+     unsigned cnt = 0;
+     for (it = decl->attr_begin(); it != decl->attr_end(); it++) 
+        {
+          std::ostringstream oss;
+          oss << "attribute[" << cnt++ << "]";
+#if 0
+       // DQ (11/27/2020): I'm not clear what code this is exapanding into.
+          switch ((*it)->getKind()) 
+             {
+#define ATTR(X) case clang::attr::X: \
+                     node_desc.attributes.push_back(std::pair<std::string, std::string>(oss.str(), "X")); \
+                     break;
+#include "clang/Basic/AttrList.inc"
+             }
+#endif
+        }
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("canonical_decl", Traverse(decl->getCanonicalDecl())));
+
+     return true;
+   }
 #endif
 
 
@@ -460,6 +504,8 @@ bool ClangToDotTranslator::VisitAccessSpecDecl(clang::AccessSpecDecl * access_sp
      std::cerr << "ClangToDotTranslator::VisitAccessSpecDecl" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("AccessSpecDecl");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -486,6 +532,8 @@ bool ClangToDotTranslator::VisitBlockDecl(clang::BlockDecl * block_decl, NodeDes
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("BlockDecl");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitDecl(block_decl, node_desc) && res;
@@ -509,6 +557,8 @@ bool ClangToDotTranslator::VisitCapturedDecl(clang::CapturedDecl * captured_decl
     std::cerr << "ClangToDotTranslator::VisitCapturedDecl" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CapturedDecl");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -535,7 +585,10 @@ bool ClangToDotTranslator::VisitEmptyDecl(clang::EmptyDecl * empty_decl, NodeDes
 #endif
      bool res = true;
 
-     ROSE_ASSERT(FAIL_TODO == 0); // TODO
+     node_desc.kind_hierarchy.push_back("EmptyDecl");
+
+  // ROSE_ASSERT(FAIL_TODO == 0); // TODO
+     printf ("ClangToDotTranslator::VisitEmptyDecl called but not implemented! \n");
 
      return VisitDecl(empty_decl, node_desc) && res;
    }
@@ -558,6 +611,8 @@ bool ClangToDotTranslator::VisitExportDecl(clang::ExportDecl * export_decl, Node
     std::cerr << "ClangToDotTranslator::VisitExportDecl" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("ExportDecl");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -584,6 +639,8 @@ bool ClangToDotTranslator::VisitExternCContextDecl(clang::ExternCContextDecl * c
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("ExternCContextDecl");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitDecl(ccontent_decl, node_desc) && res;
@@ -609,7 +666,10 @@ bool ClangToDotTranslator::VisitFileScopeAsmDecl(clang::FileScopeAsmDecl * file_
 #endif
      bool res = true;
 
-     ROSE_ASSERT(FAIL_TODO == 0); // TODO
+     node_desc.kind_hierarchy.push_back("FileScopeAsmDecl");
+
+     // ROSE_ASSERT(FAIL_TODO == 0); // TODO
+     printf ("ClangToDotTranslator::VisitFileScopeAsmDecl called but not implemented! \n");
 
      return VisitDecl(file_scope_asm_decl, node_desc) && res;
    }
@@ -634,6 +694,8 @@ bool ClangToDotTranslator::VisitFriendDecl(clang::FriendDecl * friend_decl, Node
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("FriendDecl");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitDecl(friend_decl, node_desc) && res;
@@ -657,6 +719,8 @@ bool ClangToDotTranslator::VisitFriendTemplateDecl(clang::FriendTemplateDecl * f
     std::cerr << "ClangToDotTranslator::VisitFriendTemplateDecl" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("FriendTemplateDecl");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -684,6 +748,8 @@ bool ClangToDotTranslator::VisitImportDecl(clang::ImportDecl * import_decl, Node
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("ImportDecl");
+
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
      return VisitDecl(import_decl, node_desc) && res;
@@ -709,6 +775,50 @@ bool ClangToDotTranslator::VisitNamedDecl(clang::NamedDecl * named_decl, NodeDes
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("NamedDecl");
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("name", named_decl->getNameAsString()));
+
+#if 0
+  // Clang 10 does not store the linkage in the same place as Clang 3.x
+     switch (named_decl->getLinkage()) 
+        {
+          case clang::NoLinkage:
+               break;
+          case clang::InternalLinkage:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("linkage", "internal"));
+               break;
+          case clang::UniqueExternalLinkage:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("linkage", "unique external"));
+               break;
+          case clang::ExternalLinkage:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("linkage", "external"));
+               break;
+        }
+#else
+  // DQ (11/27/2020): I want to print out this warning, but not too much.
+     static int counter = 0;
+     if (counter % 1000 == 0)
+        {
+          printf ("Need to support linkage from different location than Clang 3.x (assuming NoLinkage) \n");
+        }
+     counter++;
+#endif
+
+     switch (named_decl->getVisibility()) 
+        {
+          case clang::HiddenVisibility:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("visibility", "hidden"));
+               break;
+          case clang::ProtectedVisibility:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("visibility", "protected"));
+               break;
+          case clang::DefaultVisibility:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("visibility", "default"));
+               break;
+        }
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("underlying_decl", Traverse(named_decl->getUnderlyingDecl())));
+
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
      return VisitDecl(named_decl, node_desc) && res;
@@ -733,6 +843,8 @@ bool ClangToDotTranslator::VisitLabelDecl(clang::LabelDecl * label_decl, NodeDes
      std::cerr << "ClangToDotTranslator::VisitLabelDecl" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("LabelDecl");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -760,6 +872,8 @@ bool ClangToDotTranslator::VisitNamespaceAliasDecl(clang::NamespaceAliasDecl * n
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("NamespaceAliasDecl");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitNamedDecl(namespace_alias_decl, node_desc) && res;
@@ -784,6 +898,8 @@ bool ClangToDotTranslator::VisitNamespaceDecl(clang::NamespaceDecl * namespace_d
      std::cerr << "ClangToDotTranslator::VisitNamespaceDecl" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("NamespaceDecl");
 
   // ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -810,6 +926,8 @@ bool ClangToDotTranslator::VisitTemplateDecl(clang::TemplateDecl * template_decl
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("TemplateDecl");
+
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
      return VisitNamedDecl(template_decl, node_desc) && res;
@@ -834,6 +952,8 @@ bool ClangToDotTranslator::VisitBuiltinTemplateDecl(clang::BuiltinTemplateDecl *
      std::cerr << "ClangToDotTranslator::VisitBuiltinTemplateDecl" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("BuiltinTemplateDecl");
 
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
@@ -860,6 +980,8 @@ bool ClangToDotTranslator::VisitConceptDecl(clang::ConceptDecl * concept_decl, N
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("ConceptDecl");
+
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
      return VisitTemplateDecl(concept_decl, node_desc) && res;
@@ -884,6 +1006,8 @@ bool ClangToDotTranslator::VisitRedeclarableTemplateDecl(clang::RedeclarableTemp
      std::cerr << "ClangToDotTranslator::VisitRedeclarableTemplateDecl" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("RedeclarableTemplateDecl");
 
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
@@ -910,6 +1034,8 @@ bool ClangToDotTranslator::VisitClassTemplateDecl(clang::ClassTemplateDecl * cla
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("ClassTemplateDecl");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitRedeclarableTemplateDecl(class_template_decl, node_desc) && res;
@@ -935,6 +1061,8 @@ bool ClangToDotTranslator::VisitFunctionTemplateDecl(clang::FunctionTemplateDecl
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("FunctionTemplateDecl");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitRedeclarableTemplateDecl(function_template_decl, node_desc) && res;
@@ -959,6 +1087,8 @@ bool ClangToDotTranslator::VisitTypeAliasTemplateDecl(clang::TypeAliasTemplateDe
      std::cerr << "ClangToDotTranslator::VisitTypeAliasTemplateDecl" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("TypeAliasTemplateDecl");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -986,6 +1116,8 @@ bool ClangToDotTranslator::VisitVarTemplateDecl(clang::VarTemplateDecl * var_tem
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("VarTemplateDecl");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitRedeclarableTemplateDecl(var_template_decl, node_desc) && res;
@@ -1010,6 +1142,8 @@ bool ClangToDotTranslator::VisitTemplateTemplateParmDecl(clang::TemplateTemplate
      std::cerr << "ClangToDotTranslator::VisitTemplateTemplateParmDecl" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("TemplateTemplateParmDecl");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -1038,6 +1172,10 @@ bool ClangToDotTranslator::VisitTypeDecl(clang::TypeDecl * type_decl, NodeDescri
 
      bool res = true;
 
+  // Code copied from Tristan's dot file generator.
+     node_desc.kind_hierarchy.push_back("TypeDecl");
+     node_desc.successors.push_back(std::pair<std::string, std::string>("type_for_decl", Traverse(type_decl->getTypeForDecl())));
+
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
      return VisitNamedDecl(type_decl, node_desc) && res;
@@ -1064,6 +1202,8 @@ bool ClangToDotTranslator::VisitTagDecl(clang::TagDecl * tag_decl, NodeDescripto
 #endif
 
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("TagDecl");
 
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
@@ -1359,6 +1499,8 @@ bool ClangToDotTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, Node
     *node = sg_class_decl;
 #endif
 
+     node_desc.kind_hierarchy.push_back("RecordDecl");
+
     return VisitTagDecl(record_decl, node_desc) && res;
 }
 #endif
@@ -1402,6 +1544,8 @@ bool ClangToDotTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record_
      std::cerr << "ClangToDotTranslator::VisitCXXRecordDecl" << std::endl;
 #endif
      bool res = VisitRecordDecl(cxx_record_decl, node_desc);
+
+     node_desc.kind_hierarchy.push_back("CXXRecordDecl");
 
      clang::CXXRecordDecl::base_class_iterator it_base;
      for (it_base = cxx_record_decl->bases_begin(); it_base !=  cxx_record_decl->bases_end(); it_base++) 
@@ -1454,6 +1598,8 @@ bool ClangToDotTranslator::VisitClassTemplateSpecializationDecl(clang::ClassTemp
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("ClassTemplateSpecializationDecl");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitCXXRecordDecl(class_tpl_spec_decl, node_desc) && res;
@@ -1477,6 +1623,8 @@ bool ClangToDotTranslator::VisitClassTemplatePartialSpecializationDecl(clang::Cl
     std::cerr << "ClangToDotTranslator::VisitClassTemplatePartialSpecializationDecl" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("ClassTemplatePartialSpecializationDecl");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -1557,6 +1705,8 @@ bool ClangToDotTranslator::VisitEnumDecl(clang::EnumDecl * enum_decl, NodeDescri
     }
 #endif
 
+     node_desc.kind_hierarchy.push_back("EnumDecl");
+
     return VisitDecl(enum_decl, node_desc) && res;
 }
 #endif
@@ -1578,6 +1728,8 @@ bool ClangToDotTranslator::VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl
     std::cerr << "ClangToDotTranslator::VisitTemplateTypeParmDecl" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("TemplateTypeParmDecl");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -1603,6 +1755,12 @@ bool ClangToDotTranslator::VisitTypedefNameDecl(clang::TypedefNameDecl * typedef
      std::cerr << "ClangToDotTranslator::VisitTypedefNameDecl" << std::endl;
 #endif
      bool res = true;
+
+  // Code copied from Tristan's dot file generator.
+     node_desc.kind_hierarchy.push_back("TypedefNameDecl");
+     node_desc.successors.push_back(std::pair<std::string, std::string>("underlying_type", Traverse(typedef_name_decl->getUnderlyingType().getTypePtr())));
+
+     node_desc.kind_hierarchy.push_back("TypedefNameDecl");
 
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
@@ -1678,6 +1836,9 @@ bool ClangToDotTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, N
     *node = sg_typedef_decl;
 #endif
 
+ // Code copied from Tristan's dot file generator.
+    node_desc.kind_hierarchy.push_back("TypedefDecl");
+
     return VisitTypedefNameDecl(typedef_decl, node_desc) && res;
 }
 #endif
@@ -1700,6 +1861,8 @@ bool ClangToDotTranslator::VisitTypeAliasDecl(clang::TypeAliasDecl * type_alias_
      std::cerr << "ClangToDotTranslator::VisitTypeAliasDecl" << std::endl;
 #endif  
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("TypeAliasDecl");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -1726,6 +1889,8 @@ bool ClangToDotTranslator::VisitUnresolvedUsingTypenameDecl(clang::UnresolvedUsi
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("UnresolvedUsingTypenameDecl");
+
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
      return VisitTypeDecl(unresolved_using_type_name_decl, node_desc) && res;
@@ -1749,6 +1914,8 @@ bool ClangToDotTranslator::VisitUsingDecl(clang::UsingDecl * using_decl, NodeDes
     std::cerr << "ClangToDotTranslator::VisitUsingDecl" << std::endl;
 #endif  
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("UsingDecl");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
@@ -1774,6 +1941,8 @@ bool ClangToDotTranslator::VisitUsingDirectiveDecl(clang::UsingDirectiveDecl * u
 #endif  
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("UsingDirectiveDecl");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
     return VisitNamedDecl(using_directive_decl, node_desc) && res;
@@ -1797,6 +1966,8 @@ bool ClangToDotTranslator::VisitUsingPackDecl(clang::UsingPackDecl * using_pack_
     std::cerr << "ClangToDotTranslator::VisitUsingPackDecl" << std::endl;
 #endif  
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("UsingPackDecl");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
@@ -1822,6 +1993,8 @@ bool ClangToDotTranslator::VisitUsingShadowDecl(clang::UsingShadowDecl * using_s
 #endif  
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("UsingShadowDecl");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
     return VisitNamedDecl(using_shadow_decl, node_desc) && res;
@@ -1846,6 +2019,8 @@ bool ClangToDotTranslator::VisitConstructorUsingShadowDecl(clang::ConstructorUsi
 #endif  
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("ConstructorUsingShadowDecl");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
     return VisitNamedDecl(constructor_using_shadow_decl, node_desc) && res;
@@ -1864,16 +2039,21 @@ bool ClangToDotTranslator::VisitValueDecl(clang::ValueDecl * value_decl, SgNode 
     return VisitNamedDecl(value_decl, node) && res;
 }
 #else
-bool ClangToDotTranslator::VisitValueDecl(clang::ValueDecl * value_decl, NodeDescriptor & node_desc) {
+bool ClangToDotTranslator::VisitValueDecl(clang::ValueDecl * value_decl, NodeDescriptor & node_desc) 
+   {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToDotTranslator::VisitValueDecl" << std::endl;
+     std::cerr << "ClangToDotTranslator::VisitValueDecl" << std::endl;
 #endif  
-    bool res = true;
+     bool res = true;
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+     node_desc.kind_hierarchy.push_back("ValueDecl");
 
-    return VisitNamedDecl(value_decl, node_desc) && res;
-}
+     node_desc.successors.push_back(std::pair<std::string, std::string>("type", Traverse(value_decl->getType().getTypePtr())));
+
+     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+
+     return VisitNamedDecl(value_decl, node_desc) && res;
+   }
 #endif
 
 #if 0
@@ -1894,6 +2074,8 @@ bool ClangToDotTranslator::VisitBindingDecl(clang::BindingDecl * binding_decl, N
      std::cerr << "ClangToDotTranslator::VisitBindingDecl" << std::endl;
 #endif  
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("BindingDecl");
 
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
@@ -1919,6 +2101,8 @@ bool ClangToDotTranslator::VisitDeclaratorDecl(clang::DeclaratorDecl * declarato
      std::cerr << "ClangToDotTranslator::VisitDeclaratorDecl" << std::endl;
 #endif  
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("DeclaratorDecl");
 
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
@@ -2059,6 +2243,8 @@ bool ClangToDotTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, NodeDes
 
     *node = var_decl;
 #endif
+
+     node_desc.kind_hierarchy.push_back("FieldDecl");
 
     return VisitDeclaratorDecl(field_decl, node_desc) && res; 
 }
@@ -2417,6 +2603,26 @@ bool ClangToDotTranslator::VisitFunctionDecl(clang::FunctionDecl * function_decl
     *node = sg_function_decl;
 #endif
 
+     node_desc.kind_hierarchy.push_back("FunctionDecl");
+
+  // DQ (11/27/2020): Trying to update the code from Clang 3.x to Clang 10.
+  // node_desc.successors.push_back(std::pair<std::string, std::string>("previous_declaration", Traverse(function_decl->getPreviousDeclaration())));
+  // node_desc.successors.push_back(std::pair<std::string, std::string>("previous_declaration", Traverse(function_decl->getPreviousDeclImpl())));
+     node_desc.successors.push_back(std::pair<std::string, std::string>("previous_declaration", Traverse(function_decl->getCanonicalDecl())));
+
+  // DQ (11/27/2020): Trying to update the code from Clang 3.x to Clang 10.
+  // node_desc.successors.push_back(std::pair<std::string, std::string>("result_type", Traverse(function_decl->getResultType().getTypePtr())));
+     node_desc.successors.push_back(std::pair<std::string, std::string>("result_type", Traverse(function_decl->getReturnType().getTypePtr())));
+
+     for (unsigned i = 0; i < function_decl->getNumParams(); i++) 
+        {
+          std::ostringstream oss;
+          oss << "parameter[" << i << "]";
+          node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(function_decl->getParamDecl(i))));
+        }
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("body", Traverse(function_decl->getBody())));
+
      return VisitDeclaratorDecl(function_decl, node_desc) && res;
    }
 #endif
@@ -2440,6 +2646,8 @@ bool ClangToDotTranslator::VisitCXXDeductionGuideDecl(clang::CXXDeductionGuideDe
     std::cerr << "ClangToDotTranslator::VisitCXXDeductionGuideDecl" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXDeductionGuideDecl");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2466,6 +2674,8 @@ bool ClangToDotTranslator::VisitCXXMethodDecl(clang::CXXMethodDecl * cxx_method_
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXMethodDecl");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitFunctionDecl(cxx_method_decl, node_desc) && res;
@@ -2491,6 +2701,8 @@ bool ClangToDotTranslator::VisitCXXConstructorDecl(clang::CXXConstructorDecl * c
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXConstructorDecl");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitCXXMethodDecl(cxx_constructor_decl, node_desc) && res;
@@ -2514,6 +2726,8 @@ bool ClangToDotTranslator::VisitCXXConversionDecl(clang::CXXConversionDecl * cxx
     std::cerr << "ClangToDotTranslator::VisitCXXConversionDecl" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXConversionDecl");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2540,6 +2754,8 @@ bool ClangToDotTranslator::VisitCXXDestructorDecl(clang::CXXDestructorDecl * cxx
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXDestructorDecl");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitCXXMethodDecl(cxx_destructor_decl, node_desc) && res;
@@ -2565,6 +2781,8 @@ bool ClangToDotTranslator::VisitMSPropertyDecl(clang::MSPropertyDecl * ms_proper
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("MSPropertyDecl");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitDeclaratorDecl(ms_property_decl, node_desc) && res;
@@ -2588,6 +2806,8 @@ bool ClangToDotTranslator::VisitNonTypeTemplateParmDecl(clang::NonTypeTemplatePa
     std::cerr << "ClangToDotTranslator::VisitNonTypeTemplateParmDecl" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("NonTypeTemplateParmDecl");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2738,6 +2958,8 @@ bool ClangToDotTranslator::VisitVarDecl(clang::VarDecl * var_decl, NodeDescripto
     *node = sg_var_decl;
 #endif
 
+     node_desc.kind_hierarchy.push_back("VarDecl");
+
     return VisitDeclaratorDecl(var_decl, node_desc) && res;
 }
 #endif
@@ -2760,6 +2982,8 @@ bool ClangToDotTranslator::VisitDecompositionDecl(clang::DecompositionDecl * dec
      std::cerr << "ClangToDotTranslator::VisitDecompositionDecl" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("DecompositionDecl");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2786,6 +3010,8 @@ bool ClangToDotTranslator::VisitImplicitParamDecl(clang::ImplicitParamDecl * imp
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("ImplicitParamDecl");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitVarDecl(implicit_param_decl, node_desc) && res;
@@ -2810,6 +3036,8 @@ bool ClangToDotTranslator::VisitOMPCaptureExprDecl(clang::OMPCapturedExprDecl * 
      std::cerr << "ClangToDotTranslator::VisitOMPCaptureExprDecl" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPCaptureExprDecl");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2879,6 +3107,8 @@ bool ClangToDotTranslator::VisitParmVarDecl(clang::ParmVarDecl * param_var_decl,
     *node = SageBuilder::buildInitializedName(name, type, init);
 #endif
 
+     node_desc.kind_hierarchy.push_back("ParmVarDecl");
+
     return VisitDeclaratorDecl(param_var_decl, node_desc) && res;
 }
 #endif
@@ -2901,6 +3131,8 @@ bool ClangToDotTranslator::VisitVarTemplateSpecializationDecl(clang::VarTemplate
      std::cerr << "ClangToDotTranslator::VisitVarTemplateSpecializationDecl" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("VarTemplateSpecializationDecl");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2926,6 +3158,8 @@ bool ClangToDotTranslator::VisitVarTemplatePartialSpecializationDecl(clang::VarT
      std::cerr << "ClangToDotTranslator::VisitVarTemplatePartialSpecializationDecl" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("VarTemplatePartialSpecializationDecl");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -3004,6 +3238,8 @@ bool  ClangToDotTranslator::VisitEnumConstantDecl(clang::EnumConstantDecl * enum
     *node = init_name;
 #endif
 
+     node_desc.kind_hierarchy.push_back("EnumConstantDecl");
+
     return VisitValueDecl(enum_constant_decl, node_desc) && res;
 }
 #endif
@@ -3025,6 +3261,8 @@ bool ClangToDotTranslator::VisitIndirectFieldDecl(clang::IndirectFieldDecl * ind
     std::cerr << "ClangToDotTranslator::VisitIndirectFieldDecl" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("IndirectFieldDecl");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -3049,6 +3287,8 @@ bool ClangToDotTranslator::VisitOMPDeclareMapperDecl(clang::OMPDeclareMapperDecl
     std::cerr << "ClangToDotTranslator::VisitOMPDeclareMapperDecl" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPDeclareMapperDecl");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -3075,6 +3315,8 @@ bool ClangToDotTranslator::VisitOMPDeclareReductionDecl(clang::OMPDeclareReducti
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPDeclareReductionDecl");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitValueDecl(omp_declare_reduction_decl, node_desc) && res;
@@ -3099,6 +3341,8 @@ bool ClangToDotTranslator::VisitUnresolvedUsingValueDecl(clang::UnresolvedUsingV
      std::cerr << "ClangToDotTranslator::VisitUnresolvedUsingValueDecl" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("UnresolvedUsingValueDecl");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -3125,6 +3369,8 @@ bool ClangToDotTranslator::VisitOMPAllocateDecl(clang::OMPAllocateDecl * omp_all
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPAllocateDecl");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitDecl(omp_allocate_decl, node_desc) && res;
@@ -3149,6 +3395,8 @@ bool ClangToDotTranslator::VisitOMPRequiresDecl(clang::OMPRequiresDecl * omp_req
      std::cerr << "ClangToDotTranslator::VisitOMPRequiresDecl" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPRequiresDecl");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -3175,6 +3423,8 @@ bool ClangToDotTranslator::VisitOMPThreadPrivateDecl(clang::OMPThreadPrivateDecl
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPThreadPrivateDecl");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitDecl(omp_thread_private_decl, node_desc) && res;
@@ -3199,6 +3449,8 @@ bool ClangToDotTranslator::VisitPragmaCommentDecl(clang::PragmaCommentDecl * pra
      std::cerr << "ClangToDotTranslator::VisitPragmaCommentDecl" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("PragmaCommentDecl");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -3225,6 +3477,8 @@ bool ClangToDotTranslator::VisitPragmaDetectMismatchDecl(clang::PragmaDetectMism
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("PragmaDetectMismatchDecl");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitDecl(pragma_detect_mismatch_decl, node_desc) && res;
@@ -3248,6 +3502,8 @@ bool ClangToDotTranslator::VisitStaticAssertDecl(clang::StaticAssertDecl * pragm
     std::cerr << "ClangToDotTranslator::VisitStaticAssertDecl" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("StaticAssertDecl");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -3400,6 +3656,25 @@ bool ClangToDotTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl *
 
      SageBuilder::popScopeStack();
 #endif
+
+ // Code copied from Tristan's dot file generator.
+    node_desc.kind_hierarchy.push_back("TranslationUnitDecl");
+
+    clang::DeclContext::decl_iterator it;
+    unsigned cnt = 0;
+    for (it = translation_unit_decl->decls_begin(); it != translation_unit_decl->decls_end(); it++) {
+        std::ostringstream oss;
+        oss << "child[" << cnt++ << "]";
+#ifdef SHORT_CUT_BUILTIN
+        if (cnt < 6) continue;
+#endif
+        node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
+    }
+
+    node_desc.successors.push_back(std::pair<std::string, std::string>("anonymous_namespace",  Traverse(translation_unit_decl->getAnonymousNamespace())));
+
+ // return VisitDecl(translation_unit_decl, node_desc) && res;
+
 
   // Traverse the class hierarchy
 

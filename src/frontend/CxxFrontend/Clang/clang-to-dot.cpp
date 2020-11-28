@@ -48,9 +48,8 @@ using namespace CLANG_ROSE_Graph;
 // We need to show the AST plus the edges that are specific to the source sequence lists (and which node's source sequence list they are associated with).
 std::set<void*> graphNodeSet;
 
-#define DEBUG_CLANG_DOT_GRAPH_SUPPPORT 0
-
-#define DEBUG_HEADER_GRAPH_SUPPPORT 0
+// #define DEBUG_CLANG_DOT_GRAPH_SUPPPORT 0
+// #define DEBUG_HEADER_GRAPH_SUPPPORT 0
 
 
 // int clang_to_dot_main(int argc, char ** argv, SgSourceFile& sageFile) 
@@ -68,34 +67,8 @@ int clang_to_dot_main(int argc, char ** argv)
      printf ("In clang_to_dot_main(): filename = %s \n",filename.c_str());
 #endif
 
-  // std::set<void*> graphNodeSet;
-     if (graphNodeSet.empty() == false)
-        {
-#if 1
-          printf ("In graph_edg_ast(): calling graphNodeSet.clear() to support multiple files \n");
-#endif
-          graphNodeSet.clear();
-        }
-
-  // Open file...(file is declared in the EDG_ROSE_Graph namespace).
+  // Open file...(file is declared in the CLANG_ROSE_Graph namespace).
      file.open(filename.c_str());
-
-  // Output the opening header for a DOT file.
-     file << "digraph \"" << dot_header << "\" {" << endl;
-
-#if 0
-  // DQ (11/1/2020): This is not defined for Clang (only EDG).
-
-  // Calling recursive function to build dot file for scope, starting at the top level scope.
-     graph (il_header.primary_scope,"EDG Global Scope");
-
-  // Function "main" is stored seperately.
-     if (il_header.main_routine != NULL)
-        {
-          graph (il_header.main_routine);
-        }
-#endif
-
 
   // 0 - Analyse Cmd Line
 
@@ -346,44 +319,21 @@ int clang_to_dot_main(int argc, char ** argv)
 
   // 3 - Translate
 
+    printf ("\nCalling clang::ParseAST() (generate Dot file of Clang AST) \n");
+
     compiler_instance->getDiagnosticClient().BeginSourceFile(compiler_instance->getLangOpts(), &(compiler_instance->getPreprocessor()));
     clang::ParseAST(compiler_instance->getPreprocessor(), &translator, compiler_instance->getASTContext());
     compiler_instance->getDiagnosticClient().EndSourceFile();
 
-#if 0
-    SgGlobal * global_scope = translator.getGlobalScope();
+    printf ("\nDONE: Calling clang::ParseAST() (generate Dot file of Clang AST) \n\n");
 
-#if 0
-  // 4 - Attach to the file
+ // 4 - Generate Graphviz
 
-    if (sageFile.get_globalScope() != NULL) SageInterface::deleteAST(sageFile.get_globalScope());
+  // printf ("Calling translator.toDot(out); to call the DOT graph generator \n");
 
-    sageFile.set_globalScope(global_scope);
+    translator.toDot(file);
 
-    global_scope->set_parent(&sageFile);
-#endif
-
-    std::string file_name(input_file);
-
-    Sg_File_Info * start_fi = new Sg_File_Info(file_name, 0, 0);
-    Sg_File_Info * end_fi   = new Sg_File_Info(file_name, 0, 0);
-
-    global_scope->set_startOfConstruct(start_fi);
-
-    global_scope->set_endOfConstruct(end_fi);
-#endif
-
-  // 5 - Finish the AST (fixup phase)
-
-    printf ("Calling finishSageAST(): needs to call DOT graph generator \n");
-
- // finishSageAST(translator);
-
-  // DOT specific code to close off the file.
-  // Close off the DOT file.
-     file << endl;
-     file << "} " << endl;
-     file.close();
+ // printf ("DONE: Calling translator.toDot(out); to call the DOT graph generator \n");
 
 #if 0
      printf ("Exiting as a test! \n");
@@ -421,6 +371,23 @@ void finishSageAST(ClangToDotTranslator & translator) {
 SgGlobal * ClangToDotTranslator::getGlobalScope() { return p_global_scope; }
 #endif
 
+
+// void ClangToDot::toDot(std::ostream & out) const 
+void ClangToDotTranslator::toDot(std::ostream & out) const 
+   {
+#if 1
+     printf ("In ClangToDotTranslator::toDot(): p_node_desc.size() = %zu \n",p_node_desc.size());
+#endif
+     out << "digraph {" << std::endl;
+
+     std::map<std::string, NodeDescriptor>::const_iterator it_node;
+     for (it_node = p_node_desc.begin(); it_node != p_node_desc.end(); it_node++)
+         it_node->second.toDot(out);
+
+     out << "}" << std::endl;
+   }
+
+
 #if 1
 ClangToDotTranslator::ClangToDotTranslator(clang::CompilerInstance * compiler_instance, Language language_) :
     clang::ASTConsumer(),
@@ -444,198 +411,12 @@ std::string ClangToDotTranslator::genNextIdent() {
     return oss.str();
 }
 
-#if 0
-ClangToDotTranslator::ClangToDotTranslator(clang::CompilerInstance * compiler_instance, Language language_) :
-    clang::ASTConsumer(),
-    p_decl_translation_map(),
-    p_stmt_translation_map(),
-    p_type_translation_map(),
- // p_global_scope(NULL),
- // p_class_type_decl_first_see_in_type(),
- // p_enum_type_decl_first_see_in_type(),
-    p_compiler_instance(compiler_instance),
- // p_sage_preprocessor_recorder(new ClangToDotPreprocessorRecord(&(p_compiler_instance->getSourceManager()))),
-    language(language_)
-{}
-
-ClangToDotTranslator::~ClangToDotTranslator() 
-   {
-  // delete p_sage_preprocessor_recorder;
-   }
-#endif
-
-/* (protected) Helper methods */
-
-#if 0
-void ClangToDotTranslator::applySourceRange(SgNode * node, clang::SourceRange source_range)  {
-    SgLocatedNode * located_node = isSgLocatedNode(node);
-    SgInitializedName * init_name = isSgInitializedName(node);
-
-#if DEBUG_SOURCE_LOCATION
-    std::cerr << "Set File_Info for " << node << " of type " << node->class_name() << std::endl;
-#endif
-
-    if (located_node == NULL && init_name == NULL) {
-        std::cerr << "Consistency error: try to apply a source range to a Sage node which is not a SgLocatedNode or a SgInitializedName." << std::endl;
-        exit(-1);
-    }
-    else if (located_node != NULL) {
-        Sg_File_Info * fi = located_node->get_startOfConstruct();
-        if (fi != NULL) delete fi;
-        fi = located_node->get_endOfConstruct();
-        if (fi != NULL) delete fi;
-    }
-    else if (init_name != NULL) {
-        Sg_File_Info * fi = init_name->get_startOfConstruct();
-        if (fi != NULL) delete fi;
-        fi = init_name->get_endOfConstruct();
-        if (fi != NULL) delete fi;
-    }
-
-    Sg_File_Info * start_fi = NULL;
-    Sg_File_Info * end_fi = NULL;
-
-    if (source_range.isValid()) {
-        clang::SourceLocation begin  = source_range.getBegin();
-        clang::SourceLocation end    = source_range.getEnd();
-
-        if (begin.isValid() && end.isValid()) {
-            if (begin.isMacroID()) {
-#if DEBUG_SOURCE_LOCATION
-                std::cerr << "\tDump SourceLocation begin as it is a MacroID: ";
-                begin.dump(p_compiler_instance->getSourceManager());
-                std::cerr << std::endl;
-#endif
-                begin = p_compiler_instance->getSourceManager().getExpansionLoc(begin);
-                ROSE_ASSERT(begin.isValid());
-            }
-
-            if (end.isMacroID()) {
-#if DEBUG_SOURCE_LOCATION
-                std::cerr << "\tDump SourceLocation end as it is a MacroID: ";
-                end.dump(p_compiler_instance->getSourceManager());
-                std::cerr << std::endl;
-#endif
-                end = p_compiler_instance->getSourceManager().getExpansionLoc(end);
-                ROSE_ASSERT(end.isValid());
-            }
-
-            clang::FileID file_begin = p_compiler_instance->getSourceManager().getFileID(begin);
-            clang::FileID file_end   = p_compiler_instance->getSourceManager().getFileID(end);
-
-            bool inv_begin_line;
-            bool inv_begin_col;
-            bool inv_end_line;
-            bool inv_end_col;
-
-            unsigned ls = p_compiler_instance->getSourceManager().getSpellingLineNumber(begin, &inv_begin_line);
-            unsigned cs = p_compiler_instance->getSourceManager().getSpellingColumnNumber(begin, &inv_begin_col);
-            unsigned le = p_compiler_instance->getSourceManager().getSpellingLineNumber(end, &inv_end_line);
-            unsigned ce = p_compiler_instance->getSourceManager().getSpellingColumnNumber(end, &inv_end_col);
-
-            if (file_begin.isInvalid() || file_end.isInvalid() || inv_begin_line || inv_begin_col || inv_end_line || inv_end_col) {
-                ROSE_ASSERT(!"Should not happen as everything have been check before...");
-            }
-
-            if (p_compiler_instance->getSourceManager().getFileEntryForID(file_begin) != NULL) {
-                std::string file = p_compiler_instance->getSourceManager().getFileEntryForID(file_begin)->getName();
-
-                start_fi = new Sg_File_Info(file, ls, cs);
-                end_fi   = new Sg_File_Info(file, le, ce);
-#if DEBUG_SOURCE_LOCATION
-                std::cerr << "\tCreate FI for node in " << file << ":" << ls << ":" << cs << std::endl;
-#endif
-            }
-#if DEBUG_SOURCE_LOCATION
-            else {
-                std::cerr << "\tDump SourceLocation for \"Invalid FileID\": " << std::endl << "\t";
-                begin.dump(p_compiler_instance->getSourceManager());
-                std::cerr << std::endl << "\t";
-                end.dump(p_compiler_instance->getSourceManager());
-                std::cerr << std::endl;
-            }
-#endif
-        }
-    }
-
-    if (start_fi == NULL && end_fi == NULL) {
-        start_fi = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
-        end_fi   = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
-
-        start_fi->setCompilerGenerated();
-        end_fi->setCompilerGenerated();
-#if DEBUG_SOURCE_LOCATION
-        std::cerr << "Create FI for compiler generated node" << std::endl;
-#endif
-    }
-    else if (start_fi == NULL || end_fi == NULL) {
-        ROSE_ASSERT(!"start_fi == NULL xor end_fi == NULL");
-    }
-
-    if (located_node != NULL) {
-        located_node->set_startOfConstruct(start_fi);
-        located_node->set_endOfConstruct(end_fi);
-    }
-    else if (init_name != NULL) {
-        init_name->set_startOfConstruct(start_fi);
-        init_name->set_endOfConstruct(end_fi);
-    }
-
-}
-#endif
-
-#if 0
-void ClangToDotTranslator::setCompilerGeneratedFileInfo(SgNode * node, bool to_be_unparse) {
-    Sg_File_Info * start_fi = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
-    Sg_File_Info * end_fi   = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
-
-    start_fi->setCompilerGenerated();
-    end_fi->setCompilerGenerated();
-
-    if (to_be_unparse) {
-        start_fi->setOutputInCodeGeneration();
-        end_fi->setOutputInCodeGeneration();
-    }
-
-    ROSE_ASSERT(start_fi != NULL && end_fi != NULL);
-
-#if DEBUG_SOURCE_LOCATION
-    std::cerr << "Set File_Info for " << node << " of type " << node->class_name() << std::endl;
-#endif
-
-    SgLocatedNode * located_node = isSgLocatedNode(node);
-    SgInitializedName * init_name = isSgInitializedName(node);
-
-    if (located_node == NULL && init_name == NULL) {
-        std::cerr << "Consistency error: try to set a Sage node which is not a SgLocatedNode or a SgInitializedName as compiler generated" << std::endl;
-        exit(-1);
-    }
-    else if (located_node != NULL) {
-        Sg_File_Info * fi = located_node->get_startOfConstruct();
-        if (fi != NULL) delete fi;
-        fi = located_node->get_endOfConstruct();
-        if (fi != NULL) delete fi;
-
-        located_node->set_startOfConstruct(start_fi);
-        located_node->set_endOfConstruct(end_fi);
-    }
-    else if (init_name != NULL) {
-        Sg_File_Info * fi = init_name->get_startOfConstruct();
-        if (fi != NULL) delete fi;
-        fi = init_name->get_endOfConstruct();
-        if (fi != NULL) delete fi;
-
-        init_name->set_startOfConstruct(start_fi);
-        init_name->set_endOfConstruct(end_fi);
-    }
-}
-#endif
 
 /* Overload of ASTConsumer::HandleTranslationUnit, it is the "entry point" */
 
 void ClangToDotTranslator::HandleTranslationUnit(clang::ASTContext & ast_context) {
 
-#if 1
+#if 0
      printf ("In ClangToDotTranslator::HandleTranslationUnit(): calling Traverse(ast_context.getTranslationUnitDecl()); \n");
 #endif
 
@@ -649,16 +430,12 @@ void ClangToDotTranslator::HandleTranslationUnit(clang::ASTContext & ast_context
 
 /* Preprocessor Stack */
 
-#if 1
 std::pair<Sg_File_Info *, PreprocessingInfo *> ClangToDotTranslator::preprocessor_top() {
     return p_sage_preprocessor_recorder->top();
 }
-#endif
-#if 1
 bool ClangToDotTranslator::preprocessor_pop() {
     return p_sage_preprocessor_recorder->pop();
 }
-#endif
 
 // struct NextPreprocessorToInsert
 
@@ -843,3 +620,51 @@ ClangToDotTranslator::NodeDescriptor::NodeDescriptor(std::string ident_) :
     successors(),
     attributes()
 {}
+
+
+// DQ (11/27/2020): Adding support from Tristan's ClangToDot version.
+// void ClangToDot::NodeDescriptor::toDot(std::ostream & out) const 
+void ClangToDotTranslator::NodeDescriptor::toDot(std::ostream & out) const 
+  {
+    std::vector<std::string>::const_iterator str_it;
+    std::vector<std::pair<std::string, std::string> >::const_iterator pair_str_it;
+
+#if 0
+    printf ("In ClangToDotTranslator::NodeDescriptor::toDot(): kind_hierarchy.size() = %zu \n",kind_hierarchy.size());
+    printf ("In ClangToDotTranslator::NodeDescriptor::toDot(): attributes.size()     = %zu \n",attributes.size());
+    printf ("In ClangToDotTranslator::NodeDescriptor::toDot(): successors.size()     = %zu \n",successors.size());
+
+    if (kind_hierarchy.size() > 0)
+       {
+      // printf ("kind_hierarchy.front() = %s \n",(*(kind_hierarchy.front())).c_str());
+      // printf ("kind_hierarchy.front() = %s \n",kind_hierarchy.front()->c_str());
+         cout << "\nkind_hierarchy.front() = " << kind_hierarchy.front() << "\n\n";
+       }
+      else
+       {
+         printf ("kind_hierarchy is EMPTY \n");
+       }
+#endif
+
+    out << "\t" << ident << "[";
+        out << "label=\"";
+            out << kind_hierarchy.front() << "\\n";
+
+         // DQ  (11/27/2020): Note that if kind_hierarchy is empty, this is a runtime error.
+            for (str_it = kind_hierarchy.begin() + 1; str_it != kind_hierarchy.end(); str_it++)
+                out << "::" << *str_it;
+            out << "\\n\\n";
+            for (pair_str_it = attributes.begin(); pair_str_it != attributes.end(); pair_str_it++)
+                out << pair_str_it->first << " : " << pair_str_it->second << "\\n";
+        out << "\"";
+        // TODO color from node type (NIY)
+    out << "];" << std::endl;
+
+    for (pair_str_it = successors.begin(); pair_str_it != successors.end(); pair_str_it++) 
+        {
+          if (pair_str_it->second != "")
+              out << "\t\t" << ident << " -> " << pair_str_it->second << "[label=\"" << pair_str_it->first << "\"];" << std::endl;
+        }
+
+    out << std::endl;
+}
