@@ -38,7 +38,7 @@ void clang::PPCallbacks::type_info() {};
 extern bool roseInstallPrefix(std::string&);
 
 // DQ (11/28/2020): Use this after testing.
-#define EXIT_AFTER_BUILDING_DOT_FILE 1
+#define EXIT_AFTER_BUILDING_DOT_FILE 0
 
 int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
