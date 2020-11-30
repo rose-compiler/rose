@@ -297,6 +297,9 @@ bool ClangToSageTranslator::VisitArrayType(clang::ArrayType * array_type, SgNode
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
+ // DQ (11/28/2020): Added assertion.
+    ROSE_ASSERT(*node != NULL);
+
     return VisitType(array_type, node) && res;
 }
 
@@ -338,6 +341,9 @@ bool ClangToSageTranslator::VisitIncompleteArrayType(clang::IncompleteArrayType 
 
     *node = SageBuilder::buildArrayType(type);
 
+ // DQ (11/28/2020): Added assertion.
+ // ROSE_ASSERT(*node != NULL);
+
     return VisitArrayType(incomplete_array_type, node);
 }
 
@@ -346,6 +352,16 @@ bool ClangToSageTranslator::VisitVariableArrayType(clang::VariableArrayType * va
     std::cerr << "ClangToSageTranslator::VisitVariableArrayType" << std::endl;
 #endif
     bool res = true;
+
+    SgType * type = buildTypeFromQualifiedType(variable_array_type->getElementType());
+
+    SgNode* tmp_expr = Traverse(variable_array_type->getSizeExpr());
+    SgExpression* array_size = isSgExpression(tmp_expr);
+
+    *node = SageBuilder::buildArrayType(type,array_size);
+
+ // DQ (11/28/2020): Added assertion.
+    ROSE_ASSERT(*node != NULL);
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -897,6 +913,15 @@ bool ClangToSageTranslator::VisitTypeOfExprType(clang::TypeOfExprType * type_of_
     std::cerr << "ClangToSageTranslator::TypeOfExprType" << std::endl;
 #endif
     bool res = true;
+
+    SgNode* tmp_expr = Traverse(type_of_expr_type->getUnderlyingExpr());
+
+ // printf ("In VisitTypeOfExprType(): tmp_expr = %p = %s \n",tmp_expr,tmp_expr->class_name().c_str());
+
+    SgExpression* expr = isSgExpression(tmp_expr);
+    SgType* type = SageBuilder::buildTypeOfType(expr,NULL);
+
+    *node = type;
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
