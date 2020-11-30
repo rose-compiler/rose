@@ -19,7 +19,7 @@
 namespace CodeThorn {
   
 /// A context and priority aware solver  
-// \note derived from PASolver1
+// \note derived from DFSolver1
 struct CtxPrioritySolver : DFAbstractSolver
 {
     // define your call context
@@ -39,8 +39,6 @@ struct CtxPrioritySolver : DFAbstractSolver
     void runSolver() ROSE_OVERRIDE;
     void computeCombinedPreInfo(Label lab, Lattice& inInfo) ROSE_OVERRIDE;
     
-    void setTrace(bool) ROSE_OVERRIDE { /* supported in name only */ }
-
   private:
     //
     // internal types
@@ -109,7 +107,7 @@ struct CtxPrioritySolver : DFAbstractSolver
 };
 
 /// A priority-aware solver  
-// \note derived from PASolver1
+// \note derived from DFSolver1
 struct SeqPrioritySolver : DFAbstractSolver
 {
     // define your call context
@@ -128,8 +126,6 @@ struct SeqPrioritySolver : DFAbstractSolver
     void runSolver() ROSE_OVERRIDE;
     void computeCombinedPreInfo(Label lab, Lattice& inInfo) ROSE_OVERRIDE;
     
-    void setTrace(bool) ROSE_OVERRIDE { /* supported in name only */ }
-
   private:
     
     typedef PropertyStateFactory StateFactory;

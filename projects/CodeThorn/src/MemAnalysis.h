@@ -31,7 +31,6 @@ class MemAnalysis : public DFAnalysisBase {
   MemAnalysis();
   ~MemAnalysis();
   virtual void initializeExtremalValue(Lattice* element);
-  void initialize(SgProject* root);
 
  protected:
 };

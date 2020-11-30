@@ -5,10 +5,11 @@
 #include <sageGeneric.h>
 
 #include "CodeThornLib.h"
+#include "CodeThornOptions.h"
 #include "CtxSolver0.h"
 #include "CtxPrioritySolver.h"
 // #include "HTMPrioritySolver.h"
-#include "PASolver1.h"
+#include "DFSolver1.h"
 #include "SgNodeHelper.h"
 #include "DFAnalysisBase.h"
 #include "CtxLattice.h"
@@ -435,7 +436,10 @@ unfoldCFG(ProgramAbstractionLayer& pal, SgFunctionDefinition& entryPoint)
   CtxUnfoldTransfer transfer;
   CtxUnfoldAnalysis analysis{factory, transfer};
   
-  analysis.initialize(nullptr, &pal);
+ 
+  CodeThornOptions dummyCtOpt; // this has to be passed as argument now (new version)
+  // MS: using a nullptr for the AST?
+  analysis.initialize(dummyCtOpt,nullptr, &pal);
   analysis.initializeTransferFunctions();
   
   transfer.setProgramAbstractionLayer(&pal);
@@ -487,7 +491,7 @@ namespace // anonymous
                                                 SG_DEREF(getLabeler())
                                               );
 #else
-        PASolver1* theSolver = new PASolver1( _workList,
+        DFSolver1* theSolver = new DFSolver1( _workList,
                                               _analyzerDataPreInfo,
                                               _analyzerDataPostInfo,
                                               SG_DEREF(getInitialElementFactory()),
@@ -547,7 +551,8 @@ runUnfoldedAnalysis( ProgramAbstractionLayer& pal,
   
   SimpleAnalysis analysis{factory, transfer};
   
-  analysis.initialize(nullptr, &unfoldedPal);
+  CodeThornOptions dummyCtOpt;
+  analysis.initialize(dummyCtOpt,nullptr, &unfoldedPal);
   analysis.initializeTransferFunctions();
   
   if (!initialLat)

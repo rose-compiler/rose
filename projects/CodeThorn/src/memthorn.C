@@ -28,7 +28,7 @@
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
-#include "EquivalenceChecking.h"
+//#include "EquivalenceChecking.h"
 #include "Solver5.h"
 #include "Solver8.h"
 #include "ltlthorn-lib/Solver10.h"
@@ -95,11 +95,10 @@ void configureRersSpecialization() {
 #endif
 }
 
-void runMemAnalysis(SgProject* astRoot, SgNode* startFunRoot) {
+void runMemAnalysis(CodeThornOptions& ctOpt, SgProject* astRoot, SgNode* startFunRoot) {
   MemAnalysis* memAnalysis=new MemAnalysis();
-  memAnalysis->initialize(astRoot);
+  memAnalysis->initialize(ctOpt,astRoot,nullptr);
   ROSE_ASSERT(memAnalysis->getVariableIdMapping());
-  ROSE_ASSERT(memAnalysis->getFunctionIdMapping());
   
   memAnalysis->determineExtremalLabels(startFunRoot,false);
   memAnalysis->initializeTransferFunctions();
@@ -107,11 +106,10 @@ void runMemAnalysis(SgProject* astRoot, SgNode* startFunRoot) {
   memAnalysis->run();
 }
 
-void runEStateAnalysis(SgProject* astRoot, SgNode* startFunRoot) {
+void runEStateAnalysis(CodeThornOptions& ctOpt, SgProject* astRoot, SgNode* startFunRoot) {
   EStateAnalysis* estateAnalysis=new EStateAnalysis();
-  estateAnalysis->initialize(astRoot);
+  estateAnalysis->initialize(ctOpt,astRoot,nullptr);
   ROSE_ASSERT(estateAnalysis->getVariableIdMapping());
-  ROSE_ASSERT(estateAnalysis->getFunctionIdMapping());
 
   estateAnalysis->determineExtremalLabels(startFunRoot,false);
   estateAnalysis->initializeTransferFunctions();
@@ -241,12 +239,12 @@ int main( int argc, char * argv[] ) {
       break;
     case 1: {
       cout<<"Running MemState analysis."<<endl;
-      runMemAnalysis(astRoot, startFunRoot);
+      runMemAnalysis(ctOpt,astRoot, startFunRoot);
       break;
     }
     case 2: {
       cout<<"Running EState analysis."<<endl;
-      runEStateAnalysis(astRoot, startFunRoot);
+      runEStateAnalysis(ctOpt,astRoot, startFunRoot);
     }
     }
     // reset terminal

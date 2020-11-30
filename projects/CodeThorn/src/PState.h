@@ -25,7 +25,7 @@ using CodeThorn::Edge;
 namespace CodeThorn {
 
   class VariableValueMonitor;
-  class Analyzer;
+  class CTAnalysis;
   /*! 
    * \author Markus Schordan
    * \date 2012.

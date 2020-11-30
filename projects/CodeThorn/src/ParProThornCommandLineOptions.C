@@ -15,27 +15,6 @@ using namespace Sawyer::Message;
 using namespace std;
 using namespace CodeThorn;
 
-void checkSpotOptions(LTLOptions& ltlOpt, ParProOptions& parProOpt) {
-    // Check if chosen options are available
-#ifndef HAVE_SPOT
-    // display error message and exit in case SPOT is not avaiable, but related options are selected
-  if (ltlOpt.activeOptionsRequireSPOTLibrary()
-      || parProOpt.activeOptionsRequireSPOTLibrary()) {
-    cerr << "Error: Options selected that require the SPOT library, however SPOT was not selected during configuration." << endl;
-    exit(1);
-  }
-#endif
-}
-
-void checkZ3Options(CodeThornOptions& ctOpt) {
-#ifndef HAVE_Z3
-  if(ctOpt.activeOptionsRequireZ3Library()) {
-    cerr << "Error: Options selected that require the Z3 library, however Z3 was not selected during configuration." << endl;
-    exit(1);
-  }
-#endif	
-}
-
 CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger, std::string version,
                                                 CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
 
@@ -43,37 +22,10 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   po::options_description visibleOptions("Supported options");
   po::options_description hiddenOptions("Hidden options");
   po::options_description passOnToRoseOptions("Options passed on to ROSE frontend");
-  po::options_description cegpraOptions("CEGPRA options");
-  po::options_description ltlOptions("LTL options");
-  po::options_description svcompOptions("SV-Comp options");
-  po::options_description rersOptions("RERS options");
-  po::options_description patternSearchOptions("RERS options");
-  po::options_description equivalenceCheckingOptions("Equivalence checking options");
   po::options_description parallelProgramOptions("Analysis options for parallel programs");
-  po::options_description dataRaceOptions("Data race detection options");
   po::options_description experimentalOptions("Experimental options");
   po::options_description visualizationOptions("Visualization options");
   po::options_description infoOptions("Program information options");
-
-  ltlOptions.add_options()
-    ("csv-spot-ltl", po::value< string >(&ltlOpt.spotVerificationResultsCSVFileName), "Output SPOT's LTL verification results into a CSV file <arg>.")
-    ("csv-stats-size-and-ltl",po::value< string >(&ltlOpt.ltlStatisticsCSVFileName),"Output statistics regarding the final model size and results for LTL properties into a CSV file <arg>.")
-    ("check-ltl", po::value< string >(&ltlOpt.ltlFormulaeFile), "Take a text file of LTL I/O formulae <arg> and check whether or not the analyzed program satisfies these formulae. Formulae should start with '('. Use \"csv-spot-ltl\" option to specify an output csv file for the results.")
-    ("single-property", po::value< int >(&ltlOpt.propertyNrToCheck)->default_value(-1), "Number (ID) of the property that is supposed to be analyzed. All other LTL properties will be ignored. ( Use \"check-ltl\" option to specify a input property file).")
-    ("counterexamples-with-output", po::value< bool >(&ltlOpt.counterExamplesWithOutput)->default_value(false)->implicit_value(true), "Reported counterexamples for LTL or reachability properties also include output values.")
-    ("inf-paths-only", po::value< bool >(&ltlOpt.inifinitePathsOnly)->default_value(false)->implicit_value(true), "Recursively prune the transition graph so that only infinite paths remain when checking LTL properties.")
-    ("io-reduction", po::value< int >(&ltlOpt.ioReduction), "(work in progress) IO reduction threshold. Reduce the transition system to only input/output/worklist states after every <arg> computed EStates.")
-    ("keep-error-states",  po::value< bool >(&ltlOpt.keepErrorStates)->default_value(false)->implicit_value(true), "Do not reduce error states for the LTL analysis.")      
-    ("ltl-in-alphabet",po::value< string >(&ltlOpt.ltlInAlphabet),"Specify an input alphabet used by the LTL formulae. (e.g. \"{1,2,3}\")")
-    ("ltl-out-alphabet",po::value< string >(&ltlOpt.ltlOutAlphabet),"Specify an output alphabet used by the LTL formulae. (e.g. \"{19,20,21,22,23,24,25,26}\")")
-    ("ltl-driven", po::value< bool >(&ltlOpt.ltlDriven)->default_value(false)->implicit_value(true), "Select mode to verify LTLs driven by SPOT's access to the state transitions.")
-    ("reset-analyzer", po::value< bool >(&ltlOpt.resetAnalyzer)->default_value(false)->implicit_value(true), "Reset the analyzer and therefore the state transition graph before checking the next property. Only affects ltl-driven mode.")
-    ("no-input-input",  po::value< bool >(&ltlOpt.noInputInputTransitions)->default_value(false)->implicit_value(true), "(deprecated) remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [yes|=no]")
-    ("std-io-only", po::value< bool >(&ltlOpt.stdIOOnly)->default_value(false)->implicit_value(true), "Bypass and remove all states that are not standard I/O.")
-    ("with-counterexamples", po::value< bool >(&ltlOpt.withCounterExamples)->default_value(false)->implicit_value(true), "Add counterexample I/O traces to the analysis results. Applies to reachable assertions and falsified LTL properties (uses RERS-specific alphabet).")
-    ("with-assert-counterexamples", po::value< bool >(&ltlOpt.withAssertCounterExamples)->default_value(false)->implicit_value(true), "Report counterexamples leading to failing assertion states.")
-    ("with-ltl-counterexamples", po::value< bool >(&ltlOpt.withLTLCounterExamples)->default_value(false)->implicit_value(true), "Report counterexamples that violate LTL properties.")
-    ;
 
   hiddenOptions.add_options()
     ("max-transitions-forced-top1",po::value< int >(&ctOpt.maxTransitionsForcedTop1)->default_value(-1),"Performs approximation after <arg> transitions (only exact for input,output).")
@@ -89,14 +41,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     (",D", po::value< vector<string> >(&ctOpt.preProcessorDefines),"Define constants for preprocessor.")
     ("edg:no_warnings", po::bool_switch(&ctOpt.edgNoWarningsFlag),"EDG frontend flag.")
     ("rose:ast:read", po::value<std::string>(&ctOpt.roseAstReadFileName),"read in binary AST from comma separated list (no spaces)")
-    ;
-
-  cegpraOptions.add_options()
-    ("csv-stats-cegpra",po::value< string >(&ltlOpt.cegpra.csvStatsFileName),"Output statistics regarding the counterexample-guided prefix refinement analysis (CEGPRA) into a CSV file <arg>.")
-    ("cegpra-ltl",po::value< int >(&ltlOpt.cegpra.ltlPropertyNr)->default_value(-1),"Select the ID of an LTL property that should be checked using cegpra (between 0 and 99).")
-    ("cegpra-ltl-all", po::value< bool >(&ltlOpt.cegpra.checkAllProperties)->default_value(false)->implicit_value(true),"Check all specified LTL properties using CEGPRA.")
-    ("cegpra-max-iterations",po::value< int >(&ltlOpt.cegpra.maxIterations)->default_value(-1),"Select a maximum number of counterexamples anaylzed by CEGPRA.")
-    ("viz-cegpra-detailed",po::value< string >(&ltlOpt.cegpra.visualizationDotFile),"Generate visualization (.dot) output files with prefix <arg> for different stages within each loop of CEGPRA.")
     ;
 
   visualizationOptions.add_options()
@@ -190,54 +134,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("unit-test-expr-analyzer", po::value< bool >(&ctOpt.exprEvalTest)->default_value(false)->implicit_value(true), "Run expr eval test (with input program).")
     ;
 
-  rersOptions.add_options()
-    ("csv-assert", po::value< string >(&ctOpt.rers.assertResultsOutputFileName), "Output assert reachability results into a CSV file <arg>.")
-    ("eliminate-arrays", po::value< bool >(&ctOpt.rers.eliminateArrays)->default_value(false)->implicit_value(true), "Transform all arrays into single variables.")
-    ("iseq-file", po::value< string >(&ctOpt.rers.iSeqFile), "Compute input sequence and generate file <arg>.")
-    ("iseq-length", po::value< int >(&ctOpt.rers.iSeqLength)->default_value(-1), "Set length <arg> of input sequence to be computed.")
-    ("iseq-random-num", po::value< int >(&ctOpt.rers.iSeqRandomNum)->default_value(-1), "Select random search and number <arg> of paths.")
-    ("rers-binary", po::value< bool >(&ctOpt.rers.rersBinary)->default_value(false)->implicit_value(true),"Call RERS binary functions in analysis.")
-    ("rers-numeric", po::value< bool >(&ctOpt.rers.rersNumeric)->default_value(false)->implicit_value(true), "Print RERS I/O values as raw numeric numbers.")
-    ("rersmode", po::value< bool >(&ctOpt.rers.rersMode)->default_value(false)->implicit_value(true), "Sets several options such that RERS specifics are utilized and observed.")
-    ("stderr-like-failed-assert", po::value< bool >(&ctOpt.rers.stdErrLikeFailedAssert)->default_value(false)->implicit_value(true), "Treat output on stderr similar to a failed assert.")
-    ;
-
-  svcompOptions.add_options()
-    ("svcomp-mode", po::value< bool >(&ctOpt.svcomp.svcompMode)->default_value(false)->implicit_value(true), "Sets default options for all following SVCOMP-specific options.")
-    ("error-function", po::value< string >(&ctOpt.svcomp.detectedErrorFunctionName), "Detect a verifier error function with name <arg> (terminates verification).")
-    ("witness-file", po::value< string >(&ctOpt.svcomp.witnessFileName), "Write an SV-COMP witness (counterexample) to file <arg>.")
-    ;
-
-  equivalenceCheckingOptions.add_options()
-    ("dump-sorted",po::value< string >(&ctOpt.equiCheck.dumpSortedFileName), " (experimental) Generates sorted array updates in file <file>.")
-    ("dump-non-sorted",po::value< string >(&ctOpt.equiCheck.dumpNonSortedFileName), " (experimental) Generates non-sorted array updates in file <file>.")
-    ("rewrite-ssa", po::value< bool >(&ctOpt.equiCheck.rewriteSSA)->default_value(false)->implicit_value(true), "Rewrite SSA form: Replace use of SSA variable by rhs of its assignment (only applied outside loops or unrolled loops).")
-    ("print-rewrite-trace", po::value< bool >(&ctOpt.equiCheck.printRewriteTrace)->default_value(false)->implicit_value(true), "Print trace of rewrite rules.")
-    ("print-update-infos", po::value< bool >(&ctOpt.equiCheck.printUpdateInfos)->default_value(false)->implicit_value(true), "Print information about array updates on stdout.")
-    ("rule-const-subst", po::value< bool >(&ctOpt.equiCheck.ruleConstSubst)->default_value(true)->implicit_value(true), "Use const-expr substitution rule.")
-    ("rule-commutative-sort", po::value< bool >(&ctOpt.equiCheck.ruleCommutativeSort)->default_value(false)->implicit_value(true), "Apply rewrite rule for commutative sort of expression trees.")
-    ("max-extracted-updates",po::value< int >(&ctOpt.equiCheck.maxExtractedUpdates)->default_value(5000)->implicit_value(-1),"Set maximum number of extracted updates. This ends the analysis.")
-    ("specialize-fun-name", po::value< string >(&ctOpt.equiCheck.specializeFunName), "Function of name <arg> to be specialized.")
-    ("specialize-fun-param", po::value< vector<int> >(&ctOpt.equiCheck.specializeFunParamList), "Function parameter number to be specialized (starting at 0).")
-    ("specialize-fun-const", po::value< vector<int> >(&ctOpt.equiCheck.specializeFunConstList), "Constant <arg>, the param is to be specialized to.")
-    ("specialize-fun-varinit", po::value< vector<string> >(&ctOpt.equiCheck.specializeFunVarInitList), "Variable name of which the initialization is to be specialized (overrides any initializer expression).")
-    ("specialize-fun-varinit-const", po::value< vector<int> >(&ctOpt.equiCheck.specializeFunVarInitConstList), "Constant <arg>, the variable initialization is to be specialized to.")
-    ;
-
-  patternSearchOptions.add_options()
-    ("pattern-search-max-depth", po::value< int >(&ctOpt.patSearch.maxDepth)->default_value(10), "Maximum input depth that is searched for cyclic I/O patterns.")
-    ("pattern-search-repetitions", po::value< int >(&ctOpt.patSearch.repetitions)->default_value(100), "Number of unrolled iterations of cyclic I/O patterns.")
-    ("pattern-search-max-suffix", po::value< int >(&ctOpt.patSearch.maxSuffix)->default_value(5), "Maximum input depth of the suffix that is searched for failing assertions after following an I/O-pattern.")
-    ("pattern-search-exploration", po::value< string >(&ctOpt.patSearch.explorationMode), "Exploration mode for the pattern search. Note: all suffixes will always be checked using depth-first search. ([depth-first]|breadth-first)")
-    ;
-
-  dataRaceOptions.add_options()
-    ("data-race", po::value< bool >(&ctOpt.dr.detection)->default_value(false)->implicit_value(true), "Perform data race detection.")
-    ("data-race-check-shuffle", po::value< bool >(&ctOpt.dr. checkShuffleAlgorithm)->default_value(false)->implicit_value(true), "(work in progress) Perform data race detection using the new \"shuffle\" algorithm.")
-    ("data-race-csv",po::value<string >(&ctOpt.dr.csvResultsFile),"Write data race detection results in specified csv file <arg>. Implicitly enables data race detection.")
-    ("data-race-fail", po::value< bool >(&ctOpt.dr.failOnError)->default_value(false)->implicit_value(true), "Perform data race detection and fail on error (codethorn exit status 1). For use in regression verification. Implicitly enables data race detection.")
-    ;
-
   visibleOptions.add_options()            
     ("config,c", po::value< string >(&ctOpt.configFileName), "Use the configuration specified in file <arg>.")
     ("colors", po::value< bool >(&ctOpt.colors)->default_value(true)->implicit_value(true),"Use colors in output.")
@@ -288,7 +184,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 
   infoOptions.add_options()
     ("print-variable-id-mapping",po::value< bool >(&ctOpt.info.printVariableIdMapping)->default_value(false)->implicit_value(true),"Print variable-id-mapping on stdout.")
-    ("print-function-id-mapping",po::value< bool >(&ctOpt.info.printFunctionIdMapping)->default_value(false)->implicit_value(true),"Print function-id-mapping on stdout.")
     ("ast-stats-print",po::value< bool >(&ctOpt.info.printAstNodeStats)->default_value(false)->implicit_value(true),"Print ast node statistics on stdout.")
     ("ast-stats-csv",po::value< string >(&ctOpt.info.astNodeStatsCSVFileName),"Write ast node statistics to CSV file [arg].")
     ("type-size-mapping-print",po::value< bool >(&ctOpt.info.printTypeSizeMapping)->default_value(false)->implicit_value(true),"Print type-size mapping on stdout.")
@@ -299,15 +194,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   all.add(visibleOptions)
     .add(hiddenOptions)
     .add(passOnToRoseOptions)
-    .add(cegpraOptions)
-    .add(equivalenceCheckingOptions)
     .add(parallelProgramOptions)
     .add(experimentalOptions)
-    .add(ltlOptions)
-    .add(patternSearchOptions)
-    .add(rersOptions)
-    .add(svcompOptions)
-    .add(dataRaceOptions)
     .add(visualizationOptions)
     .add(infoOptions)
     ;
@@ -316,15 +204,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   configFileOptions.add(visibleOptions)
     .add(hiddenOptions)
     //    .add(passOnToRoseOptions) [cannot be used in config file]
-    .add(cegpraOptions)
-    .add(equivalenceCheckingOptions)
     .add(parallelProgramOptions)
     .add(experimentalOptions)
-    .add(ltlOptions)
-    .add(patternSearchOptions)
-    .add(rersOptions)
-    .add(svcompOptions)
-    .add(dataRaceOptions)
     .add(visualizationOptions)
     .add(infoOptions)
     ;
@@ -337,38 +218,17 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   } else if(args.isUserProvided("help-all")) {
     cout << all << "\n";
     exit(0);
-  } else if(args.isUserProvided("help-cegpra")) {
-    cout << cegpraOptions << "\n";
-    exit(0);
-  } else if(args.isUserProvided("help-eq")) {
-    cout << equivalenceCheckingOptions << "\n";
-    exit(0);
   } else if(args.isUserProvided("help-exp")) {
     cout << experimentalOptions << "\n";
-    exit(0);
-  } else if(args.isUserProvided("help-ltl")) {
-    cout << ltlOptions << "\n";
     exit(0);
   } else if(args.isUserProvided("help-par")) {
     cout << parallelProgramOptions << "\n";
     exit(0);
-  } else if(args.isUserProvided("help-pat")) {
-    cout << patternSearchOptions << "\n";
-    exit(0);
-  } else if(args.isUserProvided("help-rers")) {
-    cout << rersOptions << "\n";
-    exit(0);
   } else if(args.isUserProvided("help-rose")) {
     cout << passOnToRoseOptions << "\n";
     exit(0);
-  } else if(args.isUserProvided("help-svcomp")) {
-    cout << svcompOptions << "\n";
-    exit(0);
   } else if(args.isUserProvided("help-vis")) {
     cout << visualizationOptions << "\n";
-    exit(0);
-  } else if(args.isUserProvided("help-data-race")) {
-    cout << dataRaceOptions << "\n";
     exit(0);
   } else if(args.isUserProvided("help-info")) {
     cout << infoOptions << "\n";
@@ -423,9 +283,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     // Must be a CodeThorn option, therefore remove it from argv.
     argv[i] = strdup("");
   }
-
-  checkSpotOptions(ltlOpt,parProOpt);
-  checkZ3Options(ctOpt);
 
   return args;
 }

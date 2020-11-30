@@ -5,7 +5,7 @@
 #include "sage3basic.h"
 #include "ExprAnalyzer.h"
 #include "CodeThornException.h"
-#include "Analyzer.h" // dependency on analyzer->transferAssignOp 
+#include "CTAnalysis.h" // dependency on analyzer->transferAssignOp 
 #include "CppStdUtilities.h"
 #include "CodeThornCommandLineOptions.h"
 #include "CodeThornLib.h"
@@ -49,7 +49,7 @@ void ExprAnalyzer::setInterpreterModeFileName(string imFileName) {
   _interpreterModeFileName=imFileName;
 }
 
-void ExprAnalyzer::setAnalyzer(Analyzer* analyzer) {
+void ExprAnalyzer::setAnalyzer(CTAnalysis* analyzer) {
   ROSE_ASSERT(analyzer);
   _analyzer=analyzer;
 }

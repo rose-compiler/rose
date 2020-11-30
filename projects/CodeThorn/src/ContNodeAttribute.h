@@ -3,7 +3,7 @@
 
 #include"sage3basic.h"
 #include<AstAttributeMechanism.h>
-#include"Analyzer.h"
+#include"CTAnalysis.h"
 #include"Flow.h"
 
 using namespace std;

@@ -14,9 +14,9 @@
 
 namespace CodeThorn {
 
-class PASolver1 : public DFAbstractSolver {
+class DFSolver1 : public DFAbstractSolver {
  public:
-  PASolver1(WorkListSeq<Edge>& workList,
+  DFSolver1(WorkListSeq<Edge>& workList,
 	   std::vector<Lattice*>& analyzerDataPreInfo,
 	   std::vector<Lattice*>& analyzerDataPostInfo,
 	   PropertyStateFactory& initialElementFactory,
@@ -44,10 +44,6 @@ class PASolver1 : public DFAbstractSolver {
   Flow& _flow;
   DFTransferFunctions& _transferFunctions;
   Labeler* l;
- public:
-  void setTrace(bool trace) ROSE_OVERRIDE { _trace=trace; }
- private:
-  bool _trace;
 };
 
 }

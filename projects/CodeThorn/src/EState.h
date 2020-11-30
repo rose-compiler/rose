@@ -30,7 +30,7 @@ typedef int EStateId;
 namespace CodeThorn {
 
   class VariableValueMonitor;
-  class Analyzer;
+  class CTAnalysis;
 
 /*! 
   * \author Markus Schordan

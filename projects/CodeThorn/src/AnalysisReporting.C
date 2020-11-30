@@ -2,7 +2,7 @@
 #include "AnalysisReporting.h"
 #include <iostream>
 #include <string>
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "AstStatistics.h"
 #include "CppStdUtilities.h"
 #include "ProgramLocationsAnalysis.h"
@@ -15,7 +15,7 @@ namespace CodeThorn {
 
   enum VerificationResult { INCONSISTENT, UNVERIFIED, VERIFIED, FALSIFIED };
 
-  LabelSet AnalysisReporting::functionLabels(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer) {
+  LabelSet AnalysisReporting::functionLabels(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
     LabelSet allFunctionLabels;
     Flow& flow=*analyzer->getFlow();
     LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
@@ -26,7 +26,7 @@ namespace CodeThorn {
     return allFunctionLabels;
   }
   
-  void AnalysisReporting::generateVerificationReports(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer, bool reportDetectedErrorLines) {
+  void AnalysisReporting::generateVerificationReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, bool reportDetectedErrorLines) {
     for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
       string analysisName=analysisInfo.second;
@@ -76,7 +76,7 @@ namespace CodeThorn {
     }
   }
   
-  void AnalysisReporting::generateAnalysisStatsRawData(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer) {
+  void AnalysisReporting::generateAnalysisStatsRawData(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
     for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
       string analysisName=analysisInfo.second;
@@ -90,7 +90,7 @@ namespace CodeThorn {
     }
   }
                              
-  void AnalysisReporting::generateNullPointerAnalysisStats(CodeThorn::Analyzer* analyzer) {
+  void AnalysisReporting::generateNullPointerAnalysisStats(CodeThorn::CTAnalysis* analyzer) {
     ProgramLocationsAnalysis pla;
     LabelSet pdlSet=pla.pointerDereferenceLocations(*analyzer->getLabeler());
     cout<<"Found "<<pdlSet.size()<<" pointer dereference locations."<<endl;
@@ -116,7 +116,7 @@ namespace CodeThorn {
     }
   }
 
-  void AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer) {
+  void AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
     if(ctOpt.analyzedFunctionsCSVFileName.size()>0) {
       string fileName=ctOpt.analyzedFunctionsCSVFileName;
       if(!ctOpt.quiet)
@@ -150,7 +150,7 @@ namespace CodeThorn {
       }
     }
   }
-  void AnalysisReporting::generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer, string analysisName, ProgramLocationsReport& report) {
+  void AnalysisReporting::generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report) {
     string fileName1=analysisName+"-cg1.dot";
     string fileName2=analysisName+"-cg2.dot";
     //cout<<"Generating verification call graph for "<<analysisName<<" analysis."<<endl;
@@ -251,7 +251,7 @@ namespace CodeThorn {
 
   }
 
-  void AnalysisReporting::generateVerificationFunctionsCsvFile(CodeThornOptions& ctOpt, CodeThorn::Analyzer* analyzer, string analysisName, ProgramLocationsReport& report) {
+  void AnalysisReporting::generateVerificationFunctionsCsvFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report) {
     string fileName1=analysisName+"-functions.csv";
     LabelSet verified=report.verifiedLocations();
     LabelSet falsified=report.falsifiedLocations();

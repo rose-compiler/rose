@@ -193,12 +193,13 @@ AbstractValueSet AstUtility::determineVarsInAssertConditions(SgNode* node, Varia
         int errorLabelCode=-1;
         errorLabelCode=ReachabilityAnalysis::isConditionOfIfWithLabeledAssert(cond);
         if(errorLabelCode>=0) {
-          //cout<<"Assertion cond: "<<cond->unparseToString()<<endl;
-          //cout<<"Stmt: "<<ifstmt->unparseToString()<<endl;
+          //cout<<"DEBUG: Assertion cond: "<<cond->unparseToString()<<endl;
+          //cout<<"DEBUG: Stmt: "<<ifstmt->unparseToString()<<endl;
           std::vector<SgVarRefExp*> vars=SgNodeHelper::determineVariablesInSubtree(cond);
-          //cout<<"Num of vars: "<<vars.size()<<endl;
+          //cout<<"DEBUG: Num of vars: "<<vars.size()<<endl;
           for(std::vector<SgVarRefExp*>::iterator j=vars.begin();j!=vars.end();++j) {
             VariableId varId=variableIdMapping->variableId(*j);
+            ROSE_ASSERT(varId.isValid());
             usedVarsInAssertConditions.insert(AbstractValue(varId));
           }
         }

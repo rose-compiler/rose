@@ -41,7 +41,7 @@ void TransitionGraphReducer::reduceStgToStatesSatisfying(function<bool(const ESt
     worklist.pop_front();
     wl--;
     ROSE_ASSERT(predicate(current) || current == _stg->getStartEState());
-    // similar to Analyzer's "subSolver"
+    // similar to CTAnalysis's "subSolver"
     list<const EState*> successors = successorsOfStateSatisfying(current, predicate);
     for (list<const EState*>::iterator i=successors.begin(); i!= successors.end(); ++i) {
       if (visited.find(*i) == visited.end()) {
