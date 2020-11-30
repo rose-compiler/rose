@@ -6636,20 +6636,35 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
 
    char* name;
 
+   // Look for a variable (or could be a function call because of ambiguities)
+   //
    if (ATmatch(term, "<str>" , &name)) {
-      // MATCHED NamedVariable
+     SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name);
 
-      var = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
-      setSourcePosition(var, term);
+     // Look for a function call first (function need not be declared yet)
+     //
+     if (isSgFunctionSymbol(symbol) || symbol == nullptr) {
+       SgFunctionCallExp* func_call = nullptr;
+       sage_tree_builder.Enter(func_call, std::string(name), nullptr);
+       sage_tree_builder.Leave(func_call);
+       var = func_call;
+     }
+     else {
+       var = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+     }
+     ROSE_ASSERT(var);
+     setSourcePosition(var, term);
 
+   // Look for other possibilities
+   //
    } else if (traverse_Dereference(term, var)) {
-      // MATCHED ItemDereference/TableDereference -> Item/Table -> NamedVariable
+     // MATCHED ItemDereference/TableDereference -> Item/Table -> NamedVariable
    } else if (traverse_TableItem(term, var)) {
-      // MATCHED TableItem
+     // MATCHED TableItem
    } else if (traverse_BitFunctionVariable(term, var)) {
-      // MATCHED BitFunctionVariable
+     // MATCHED BitFunctionVariable
    } else if (traverse_ByteFunctionVariable(term, var)) {
-      // MATCHED ByteFunctionVariable
+     // MATCHED ByteFunctionVariable
    }
    else return ATfalse;
 
