@@ -675,7 +675,8 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   }
 #endif
 
-  // Add "-D_REENTRANT" if "-pthread" is present before we save the command-line or do any other processing.
+// DQ (11/29/2020): Clang linker does not understand the -pthread option (issues a warning, but I think it is a makefile commandline issue).
+// Add "-D_REENTRANT" if "-pthread" is present before we save the command-line or do any other processing.
   vector<string>::iterator pthread =
       find(local_commandLineArgumentList.begin(), local_commandLineArgumentList.end(), "-pthread");
   if (pthread != local_commandLineArgumentList.end())
