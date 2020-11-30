@@ -154,7 +154,7 @@ struct PointerDescriptor {
 /** Functor to compare two PointerLocation objects. */
 class PointerDescriptorLessp {
 public:
-    bool operator()(const PointerDescriptor &a, const PointerDescriptor &b);
+    bool operator()(const PointerDescriptor &a, const PointerDescriptor &b) const;
 };
 
 /** Set of pointers. */
