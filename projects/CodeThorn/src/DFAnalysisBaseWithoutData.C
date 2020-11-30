@@ -33,33 +33,7 @@ namespace CodeThorn
   }
 
   Flow* DFAnalysisBaseWithoutData::getFlow() const {
-    return _flow;
-  }
-
-  void DFAnalysisBaseWithoutData::computeAllPreInfo() {
-    if(!_preInfoIsValid) {
-      _solver->runSolver();
-      _preInfoIsValid=true;
-      _postInfoIsValid=false;
-    }
-  }
-
-  void DFAnalysisBaseWithoutData::computeAllPostInfo() {
-    if(!_postInfoIsValid) {
-      computeAllPreInfo();
-      // compute set of used labels in ICFG.
-      for(Labeler::iterator i=getLabeler()->begin();i!=getLabeler()->end();++i) {
-        Label lab=*i;
-        Lattice* info=getInitialElementFactory()->create();
-        _solver->computeCombinedPreInfo(lab,*info);
-        // TODO: invoke edge-based transfer function for each edge and
-        // (i) combine results or (ii) provide set of results (one
-        // result per edge)
-        _transferFunctions->transfer(lab,*info);
-        setPostInfo(lab.getId(),info);
-      }
-      _postInfoIsValid=true;
-    }
+    return _programAbstractionLayer->getFlow();
   }
 
   PropertyStateFactory*
@@ -123,21 +97,14 @@ namespace CodeThorn
     return elem;
   }
 
-  // runs until worklist is empty
   void
-  DFAnalysisBaseWithoutData::solve() {
-    computeAllPreInfo();
-    computeAllPostInfo();
+  DFAnalysisBaseWithoutData::initialize(CodeThornOptions& ctOpt, SgProject* root) {
+    this->initialize(ctOpt, root, nullptr);
   }
 
   void
-  DFAnalysisBaseWithoutData::initialize(SgProject* root) {
-    this->initialize(root,nullptr);
-  }
-
-  void
-  DFAnalysisBaseWithoutData::initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
-    cout << "INIT: establishing program abstraction layer." << endl;
+  DFAnalysisBaseWithoutData::initialize(CodeThornOptions& ctOpt, SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
+    //cout << "INIT: establishing program abstraction layer." << endl;
     if(programAbstractionLayer) {
       ROSE_ASSERT(_programAbstractionLayer==nullptr);
       _programAbstractionLayer=programAbstractionLayer;
@@ -145,26 +112,25 @@ namespace CodeThorn
     } else {
       _programAbstractionLayer=new ProgramAbstractionLayer();
       _programAbstractionLayerOwner=true;
-      _programAbstractionLayer->initialize(root);
+      _programAbstractionLayer->initialize(ctOpt,root);
     }
     _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(getVariableIdMapping());
     _pointerAnalysisEmptyImplementation->initialize();
     _pointerAnalysisEmptyImplementation->run();
-    cout << "INIT: Creating CFAnalysis."<<endl;
 
-    // PP (07/15/19) moved flow generation to ProgramAbstractionLayer
-    cout << "INIT: Requesting CFG."<<endl;
-    _flow = _programAbstractionLayer->getFlow(isBackwardAnalysis());
-
-    initializeAnalyzerDataInfo();
-    cout << "INIT: initialized pre/post property states."<<endl;
     initializeSolver();
-    cout << "STATUS: initialized solver."<<endl;
+    //cout << "STATUS: initialized solver."<<endl;
+    initializeAnalyzerDataInfo();
+    //cout << "INIT: initialized pre/post property states."<<endl;
   }
 
+  void DFAnalysisBaseWithoutData::initializeAnalyzerDataInfo() {
+  }
+  
   void DFAnalysisBaseWithoutData::initializeTransferFunctions() {
     ROSE_ASSERT(_transferFunctions);
     ROSE_ASSERT(getLabeler());
+    ROSE_ASSERT(_programAbstractionLayer);
     _transferFunctions->setProgramAbstractionLayer(_programAbstractionLayer);
     if(_pointerAnalysisInterface==0)
       _transferFunctions->setPointerAnalysis(_pointerAnalysisEmptyImplementation);
@@ -228,15 +194,17 @@ namespace CodeThorn
 
   CFAnalysis* DFAnalysisBaseWithoutData::getCFAnalyzer() {
     ROSE_ASSERT(_programAbstractionLayer);
-
     return _programAbstractionLayer->getCFAnalyzer();
   }
 
   Labeler* DFAnalysisBaseWithoutData::getLabeler() const {
+    ROSE_ASSERT(_programAbstractionLayer);
     return _programAbstractionLayer->getLabeler();
   }
 
   VariableIdMappingExtended* DFAnalysisBaseWithoutData::getVariableIdMapping() {
+    ROSE_ASSERT(_programAbstractionLayer);
+    ROSE_ASSERT(dynamic_cast<VariableIdMappingExtended*>(_programAbstractionLayer->getVariableIdMapping()));
     return _programAbstractionLayer->getVariableIdMapping();
   }
 

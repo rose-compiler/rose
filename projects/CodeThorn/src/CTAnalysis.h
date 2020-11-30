@@ -79,7 +79,7 @@ namespace CodeThorn {
    */
 
 
-  class CTAnalysis : public DFAnalysisBase {
+  class CTAnalysis : public DFAnalysisBaseWithoutData {
     friend class Solver;
     friend class Solver5;
     friend class Solver8;
@@ -94,8 +94,20 @@ namespace CodeThorn {
     CTAnalysis();
     virtual ~CTAnalysis();
 
+    virtual void run() override;
+    virtual void initializeSolver() override; // required (abstract in DFAnalysisWithoutData)
+
+  protected:    
+    virtual void initializeAnalyzerDataInfo() override;
+#if 0
+    virtual Lattice* getPreInfo(Label lab) override;
+    virtual Lattice* getPostInfo(Label lab) override;
+    virtual void setPostInfo(Label lab,Lattice*) override;
+#endif
+  public:
+    
     void initAstNodeInfo(SgNode* node);
-    virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
+    virtual void initializeSolver2(std::string functionToStartAt, SgProject* root);
     void initLabeledAssertNodes(SgProject* root);
     
     void setExplorationMode(ExplorationMode em);
@@ -122,7 +134,6 @@ namespace CodeThorn {
 
     // initialize command line arguments provided by option "--cl-options" in PState
     void initializeCommandLineArgumentsInState(PState& initialPState);
-    void initializeVariableIdMapping(SgProject*);
     void initializeStringLiteralInState(PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId);
     void initializeStringLiteralsInState(PState& initialPState);
 
@@ -150,18 +161,17 @@ namespace CodeThorn {
     bool checkTransitionGraph();
 
     //! The analyzer requires a CFAnalysis to obtain the ICFG.
-    void setCFAnalyzer(CFAnalysis* cf);
-    CFAnalysis* getCFAnalyzer() const;
+    //void setCFAnalyzer(CFAnalysis* cf);
+    //CFAnalysis* getCFAnalyzer() const;
 
     ExprAnalyzer* getExprAnalyzer();
 
     // access  functions for computed information
-    VariableIdMappingExtended* getVariableIdMapping() override;
     FunctionCallMapping* getFunctionCallMapping();
     FunctionCallMapping2* getFunctionCallMapping2();
-    Label getFunctionEntryLabel(SgFunctionRefExp* funRefExp);
+    //Label getFunctionEntryLabel(SgFunctionRefExp* funRefExp);
     CTIOLabeler* getLabeler() const override;
-    Flow* getFlow(); // this is NOT overriding 'DFAnalysis::getFlow() const'
+    //Flow* getFlow(); // this is NOT overriding 'DFAnalysis::getFlow() const'
     InterFlow* getInterFlow();
     CodeThorn::PStateSet* getPStateSet();
     EStateSet* getEStateSet();
@@ -235,7 +245,7 @@ namespace CodeThorn {
     void setOptionContextSensitiveAnalysis(bool flag);
     bool getOptionContextSensitiveAnalysis();
   protected:
-    void configureOptionSets(CodeThornOptions& ctOpt);
+    using super = CTAnalysis; // allows use of super like in Java without repeating the class name
   public:
     enum GlobalTopifyMode {GTM_IO, GTM_IOCF, GTM_IOCFPTR, GTM_COMPOUNDASSIGN, GTM_FLAGS};
     void setGlobalTopifyMode(GlobalTopifyMode mode);
@@ -246,7 +256,9 @@ namespace CodeThorn {
     bool svCompFunctionSemantics();
     bool getStdFunctionSemantics();
     void setStdFunctionSemantics(bool flag);
+    void run(CodeThornOptions& ctOpt, SgProject* root, Labeler* labeler, VariableIdMappingExtended* vim, CFAnalysis* icfg);
 
+    
     /* command line options provided to analyzed application
        if set they are used to initialize the initial state with argv and argc domain abstractions
     */
@@ -415,9 +427,9 @@ namespace CodeThorn {
     bool isLoopCondLabel(Label lab);
     void incIterations();
 
-    Flow flow;
+    //Flow flow;
     InterFlow _interFlow;
-    CFAnalysis* cfanalyzer;
+    //CFAnalysis* cfanalyzer;
     std::list<std::pair<SgLabelStatement*,SgNode*> > _assertNodes;
     GlobalTopifyMode _globalTopifyMode;
     set<AbstractValue> _compoundIncVarsSet;
@@ -429,12 +441,15 @@ namespace CodeThorn {
     std::list<int>::iterator _inputSequenceIterator;
     
     ExprAnalyzer exprAnalyzer;
-    VariableIdMappingExtended* variableIdMapping;
-    FunctionCallMapping functionCallMapping;
-    FunctionCallMapping2 functionCallMapping2;
+
+    // abstract layer
+    //FunctionCallMapping functionCallMapping;
+    //FunctionCallMapping2 functionCallMapping2;
+
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
     EStateWorkList* estateWorkListCurrent=0;
     EStateWorkList* estateWorkListNext=0;
+
     EStateSet estateSet;
     PStateSet pstateSet;
     ConstraintSetMaintainer constraintSetMaintainer;
@@ -446,7 +461,7 @@ namespace CodeThorn {
     int _resourceLimitDiff;
     int _numberOfThreadsToUse;
     VariableIdMapping::VariableIdSet _variablesToIgnore;
-    Solver* _solver;
+    //    Solver* _solver;
     AnalyzerMode _analyzerMode;
     long int _maxTransitions;
     long int _maxIterations;
@@ -458,6 +473,7 @@ namespace CodeThorn {
     long int _maxSecondsForcedTop;
 
     VariableValueMonitor variableValueMonitor;
+
     CodeThornOptions _ctOpt;
     LTLOptions _ltlOpt;
     bool _treatStdErrLikeFailedAssert;

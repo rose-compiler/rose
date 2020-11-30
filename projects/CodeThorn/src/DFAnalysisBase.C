@@ -28,12 +28,8 @@ namespace CodeThorn
   }
 
   void DFAnalysisBase::initializeSolver() {
-    ROSE_ASSERT(&_workList);
     ROSE_ASSERT(getInitialElementFactory());
-    ROSE_ASSERT(&_analyzerDataPreInfo);
-    ROSE_ASSERT(&_analyzerDataPostInfo);
     ROSE_ASSERT(getFlow());
-    ROSE_ASSERT(&_transferFunctions);
      
     _solver = new DFSolver1( _workList,
                              _analyzerDataPreInfo,
@@ -54,6 +50,39 @@ namespace CodeThorn
     return _analyzerDataPostInfo[lab.getId()];
   }
 
+  void DFAnalysisBase::setPostInfo(Label lab,Lattice* el) {
+    if(getPostInfo(lab.getId())) {
+      delete _analyzerDataPostInfo[lab.getId()];
+    }
+    _analyzerDataPostInfo[lab.getId()]=el;
+  }
+
+  void DFAnalysisBase::computeAllPreInfo() {
+    if(!_preInfoIsValid) {
+      _solver->runSolver();
+      _preInfoIsValid=true;
+      _postInfoIsValid=false;
+    }
+  }
+
+  void DFAnalysisBase::computeAllPostInfo() {
+    if(!_postInfoIsValid) {
+      computeAllPreInfo();
+      // compute set of used labels in ICFG.
+      for(Labeler::iterator i=getLabeler()->begin();i!=getLabeler()->end();++i) {
+        Label lab=*i;
+        Lattice* info=getInitialElementFactory()->create();
+        _solver->computeCombinedPreInfo(lab,*info);
+        // TODO: invoke edge-based transfer function for each edge and
+        // (i) combine results or (ii) provide set of results (one
+        // result per edge)
+        _transferFunctions->transfer(lab,*info);
+        setPostInfo(lab.getId(),info);
+      }
+      _postInfoIsValid=true;
+    }
+  }
+
   void
   DFAnalysisBase::initializeAnalyzerDataInfo() {
     Labeler*              labeler = getLabeler();
@@ -72,8 +101,8 @@ namespace CodeThorn
   }
 
   void
-  DFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
-    cout << "INIT: establishing program abstraction layer." << endl;
+  DFAnalysisBase::initialize(CodeThornOptions& ctOpt, SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
+    //cout << "INIT: establishing program abstraction layer." << endl;
     if(programAbstractionLayer) {
       ROSE_ASSERT(_programAbstractionLayer==nullptr);
       _programAbstractionLayer=programAbstractionLayer;
@@ -81,29 +110,22 @@ namespace CodeThorn
     } else {
       _programAbstractionLayer=new ProgramAbstractionLayer();
       _programAbstractionLayerOwner=true;
-      _programAbstractionLayer->initialize(root);
+      _programAbstractionLayer->initialize(ctOpt,root);
     }
     _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(getVariableIdMapping());
     _pointerAnalysisEmptyImplementation->initialize();
     _pointerAnalysisEmptyImplementation->run();
-    cout << "INIT: Creating CFAnalysis."<<endl;
 
-    // PP (07/15/19) moved flow generation to ProgramAbstractionLayer
-    cout << "INIT: Requesting CFG."<<endl;
-    _flow = _programAbstractionLayer->getFlow(isBackwardAnalysis());
-
-    initializeAnalyzerDataInfo();
-    cout << "STATUS: initialized monotone data flow analyzer for "<<_analyzerDataPreInfo.size()<< " labels."<<endl;
-    cout << "INIT: initialized pre/post property states."<<endl;
+    //cout << "STATUS: initializing solver."<<endl;
     initializeSolver();
-    cout << "STATUS: initialized solver."<<endl;
+    //cout << "STATUS: initializing monotone data flow analyzer data for "<<_analyzerDataPreInfo.size()<< " labels."<<endl;
+    //cout << "INIT: initializing pre/post property states."<<endl;
+    initializeAnalyzerDataInfo();
   }
 
-  DFAstAttribute* DFAnalysisBase::createDFAstAttribute(Lattice* elem) {
-    // elem ignored in default function
-    return new DFAstAttribute();
+  WorkListSeq<Edge>* DFAnalysisBase::getWorkList() {
+    return &_workList;
   }
-
 
   // runs until worklist is empty
   void
@@ -123,13 +145,13 @@ namespace CodeThorn
       // schroder3 (2016-08-16): Topological sorted CFG as worklist initialization is currently
       //  not supported for backward analyses. Add the extremal label's outgoing edges instead.
       if(_no_topological_sort || !isForwardAnalysis()) {
-        Flow outEdges=_flow->outEdges(*i);
+        Flow outEdges=getFlow()->outEdges(*i);
         for(Flow::iterator j=outEdges.begin();j!=outEdges.end();++j) {
           _workList.add(*j);
         }
       }
 #if 0
-      LabelSet initsucc=_flow.succ(*i);
+      LabelSet initsucc=getFlow->succ(*i);
       for(LabelSet::iterator i=initsucc.begin();i!=initsucc.end();++i) {
         _workList.add(*i);
       }
@@ -142,7 +164,7 @@ namespace CodeThorn
     if(!_no_topological_sort && isForwardAnalysis()) {
       if(_extremalLabels.size() == 1) {
         Label startLabel = *(_extremalLabels.begin());
-        std::list<Edge> topologicalEdgeList = _flow->getTopologicalSortedEdgeList(startLabel);
+        std::list<Edge> topologicalEdgeList = getFlow()->getTopologicalSortedEdgeList(startLabel);
         cout << "INFO: Using topologically sorted CFG as work list initialization." << endl;
         for(std::list<Edge>::const_iterator i = topologicalEdgeList.begin(); i != topologicalEdgeList.end(); ++i) {
           //cout << (*i).toString() << endl;
@@ -151,7 +173,7 @@ namespace CodeThorn
       } else {
         cout << "INFO: Using non-topologically sorted CFG with multiple function entries as work list initialization." << endl;
         for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
-          Flow outEdges=_flow->outEdges(*i);
+          Flow outEdges=getFlow()->outEdges(*i);
           for(Flow::iterator i=outEdges.begin();i!=outEdges.end();++i) {
             _workList.add(*i);
           }
@@ -162,6 +184,25 @@ namespace CodeThorn
     solve();
   }
 
+  // runs until worklist is empty
+  void
+  DFAnalysisBase::solve() {
+    computeAllPreInfo();
+    computeAllPostInfo();
+  }
+
+  /*!
+   * \author Markus Schordan
+   * \date 2018.
+   */
+
+  void DFAnalysisBase::setSkipUnknownFunctionCalls(bool defer) {
+    _skipSelectedFunctionCalls=defer;
+    if(_transferFunctions) {
+      _transferFunctions->setSkipUnknownFunctionCalls(defer);
+    }
+  }
+
 #include <iostream>
 #include "AstAnnotator.h"
 #include <string>
@@ -169,6 +210,11 @@ namespace CodeThorn
   using std::string;
 
 #include <sstream>
+
+  DFAstAttribute* DFAnalysisBase::createDFAstAttribute(Lattice* elem) {
+    // elem ignored in default function
+    return new DFAstAttribute();
+  }
 
   /*!
    * \author Markus Schordan
@@ -178,7 +224,7 @@ namespace CodeThorn
   void DFAnalysisBase::attachInfoToAst(string attributeName,bool inInfo) {
     computeAllPreInfo();
     computeAllPostInfo();
-    LabelSet labelSet=_flow->nodeLabels();
+    LabelSet labelSet=getFlow()->nodeLabels();
     for(LabelSet::iterator i=labelSet.begin();
         i!=labelSet.end();
         ++i) {
@@ -244,29 +290,6 @@ namespace CodeThorn
   void DFAnalysisBase::attachOutInfoToAst(string attributeName) {
     attachInfoToAst(attributeName,false);
   }
-
-  /*!
-   * \author Markus Schordan
-   * \date 2018.
-   */
-
-  void DFAnalysisBase::setSkipUnknownFunctionCalls(bool defer) {
-    _skipSelectedFunctionCalls=defer;
-    if(_transferFunctions) {
-      _transferFunctions->setSkipUnknownFunctionCalls(defer);
-    }
-  }
-
-  void DFAnalysisBase::setPostInfo(Label lab,Lattice* el) {
-    if(getPostInfo(lab.getId())) {
-      delete _analyzerDataPostInfo[lab.getId()];
-    }
-    _analyzerDataPostInfo[lab.getId()]=el;
-  }
-  
-  WorkListSeq<Edge>* DFAnalysisBase::getWorkList() {
-    return &_workList;
-  }
-
+ 
 }
 

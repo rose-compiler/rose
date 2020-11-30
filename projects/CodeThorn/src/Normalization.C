@@ -119,6 +119,8 @@ namespace CodeThorn {
 
   void Normalization::normalizeAst(SgNode* root, unsigned int level) {
     options.configureLevel(level);
+    if(level==0)
+      return;
     normalizeAstPhaseByPhase(root);
 #if 0
     // AST consistency tests

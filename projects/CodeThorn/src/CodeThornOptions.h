@@ -206,7 +206,6 @@ struct CodeThornOptions : public CodeThorn::Options {
   // default hard code init values
   int maxExactMemorySizeRepresentation=10;
   bool exprEvalTest=false;
-   
 };
 
 #endif

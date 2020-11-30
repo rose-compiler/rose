@@ -14,6 +14,7 @@ namespace CodeThorn {
     unsigned int getTypeSize(SgType* type);
     unsigned int getTypeSize(VariableId varId);
     std::string typeSizeMappingToString();
+    size_t getNumVarIds();
   private:
     CodeThorn::TypeSizeMapping typeSizeMapping;
   };

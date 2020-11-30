@@ -7,7 +7,7 @@ COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counte
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 # 
-bin_PROGRAMS = codethorn equithorn memthorn parprothorn ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
+bin_PROGRAMS = codethorn memthorn parprothorn ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
 
 # matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis cldemo
@@ -95,9 +95,9 @@ CODETHORN_HEADER_FILES=\
   DFAbstractSolver.h \
   DFAnalysisBaseWithoutData.h \
   DFAnalysisBase.h \
+  CSDFAnalysisBase.h \
   DFTransferFunctions.h \
   DotGraphCfgFrontend.h \
-  EquivalenceChecking.h \
   EState.h \
   EStateAnalysis.h \
   EStateFactory.h \
@@ -224,9 +224,9 @@ CODETHORN_SOURCE_FILES=\
   DataRaceDetection.C \
   DFAnalysisBaseWithoutData.C \
   DFAnalysisBase.C \
+  CSDFAnalysisBase.C \
   DFTransferFunctions.C \
   DotGraphCfgFrontend.C \
-  EquivalenceChecking.C \
   EState.C \
   EStateAnalysis.C \
   EStateFactory.C \
@@ -479,41 +479,6 @@ ltlthorn_SOURCES = \
   LTLThornCommandLineOptions.C \
   ltlthorn.C
 
-##############################################################
-# TOOL: EQUITHORN
-##############################################################
-
-# yacc flags for LTL parser
-equithorn_YFLAGS = -p ltl_ 
-
-# this line creates speparately named object files
-equithorn_CXXFLAGS = -fopenmp -Wall -O3 
-
-# equithorn has most of its code organized in two separate libraries
-equithorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
-
-if ROSE_WITH_SPOT
-#spot and bdd need to be linked last with gcc 5.4
-equithorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
-equithorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
-else
-equithorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
-endif
-
-equithorndir=.
-
-# only informative
-equithorn_xHEADERS = \
-  CommandLineOptions.h \
-  EquiThornCommandLineOptions.h \
-  codethorn.h \
-  LTL.h
-
-# codethorn sources in addition to libcodethorn and libltlthorn
-equithorn_SOURCES = \
-  LTLParser.y++ \
-  EquiThornCommandLineOptions.C \
-  equithorn.C
 
 ##############################################################
 # TOOL: PARPROTHORN
@@ -721,7 +686,7 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain unit-test check-normalization check-equivalence check-par-cfg
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain unit-test check-normalization check-par-cfg
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
@@ -729,6 +694,8 @@ CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer check-reachability
 
 CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_ONLY_PASSING)
+
+check-default: $(CHECK_DEFAULT_PASSING)
 
 if ROSE_WITH_SPOT
 check-local: $(CHECK_WITH_SPOT_PASSING)
@@ -874,16 +841,6 @@ check-svcomp-witness:
 
 check-reachability:
 	./codethorn $(srcdir)/tests/rers/Problem1911_opt.c --input-values="{1,2,3,4,5,6,7,8,9,10}" --status --threads=6 --with-counterexamples
-
-check-equivalence:
-	@rm -f tmp.nsdump
-	@echo ================================================================
-	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
-	@echo ================================================================
-	@./equithorn --edg:no_warnings --normalize-all=off $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump --rule-commutative-sort=no --abstraction-mode=0
-#	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
-	@cat tmp.nsdump
-	@rm -f tmp.nsdump
 
 check-commandline-options: ./codethorn
 	@echo ================================================================

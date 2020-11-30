@@ -8,6 +8,9 @@
 
 using namespace std;
 
+CodeThorn::DFSolver2::DFSolver2() {
+}
+
 CodeThorn::DFSolver2::DFSolver2(DFAnalysisBase* dfAnalysisBase):
   _dfAnalysisBase(dfAnalysisBase)
 {

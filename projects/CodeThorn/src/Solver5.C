@@ -26,6 +26,7 @@ int Solver5::getId() {
   * \date 2012.
  */
 void Solver5::run() {
+  logger[INFO]<<"Running solver "<<getId()<<endl;
   //_analyzer->_analysisTimer.start(); // is started in runSolver now
   if(_analyzer->svCompFunctionSemantics()) {
     _analyzer->reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
@@ -96,7 +97,7 @@ void Solver5::run() {
         ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->_numberOfThreadsToUse);
       } else {
         ROSE_ASSERT(currentEStatePtr);
-        Flow edgeSet=_analyzer->flow.outEdges(currentEStatePtr->label());
+        Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
         //cout << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;

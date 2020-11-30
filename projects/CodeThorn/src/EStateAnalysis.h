@@ -12,6 +12,7 @@
 #include "AstUtility.h"
 #include "DFAstAttribute.h"
 #include "EStateTransferFunctions.h"
+#include "CodeThornOptions.h"
 
 namespace CodeThorn {
 
@@ -31,7 +32,6 @@ class EStateAnalysis : public DFAnalysisBase {
   EStateAnalysis();
   ~EStateAnalysis();
   virtual void initializeExtremalValue(Lattice* element);
-  void initialize(SgProject* root);
 
  protected:
 };

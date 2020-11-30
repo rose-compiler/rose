@@ -1,6 +1,8 @@
 #ifndef SOLVER_H
 #define SOLVER_H
 
+#include "DFSolver2.h"
+
 namespace CodeThorn {
 
   class CTAnalysis;
@@ -10,9 +12,9 @@ namespace CodeThorn {
   * \date 2017.
   * \brief Solver interface
  */
-  class Solver {
+  class Solver : public DFSolver2 {
 
-  friend class CTAnalysis;
+    //friend class CTAnalysis;
 
   public:
     Solver();
@@ -20,8 +22,8 @@ namespace CodeThorn {
     virtual void run() = 0;
     virtual int getId() = 0;
 
-  protected:
     virtual void setAnalyzer(CTAnalysis* analyzer);
+  protected:
     void initDiagnostics(Sawyer::Message::Facility& logger, int solverId);
 
     CTAnalysis* _analyzer = nullptr;

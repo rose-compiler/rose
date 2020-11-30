@@ -141,7 +141,7 @@ void Solver12::run() {
         ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->_numberOfThreadsToUse);
       } else {
         ROSE_ASSERT(currentEStatePtr);
-        Flow edgeSet=_analyzer->flow.outEdges(currentEStatePtr->label());
+        Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
         // logger[DEBUG]<< "out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;

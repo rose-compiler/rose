@@ -5,6 +5,7 @@
 #include <sageGeneric.h>
 
 #include "CodeThornLib.h"
+#include "CodeThornOptions.h"
 #include "CtxSolver0.h"
 #include "CtxPrioritySolver.h"
 // #include "HTMPrioritySolver.h"
@@ -435,7 +436,10 @@ unfoldCFG(ProgramAbstractionLayer& pal, SgFunctionDefinition& entryPoint)
   CtxUnfoldTransfer transfer;
   CtxUnfoldAnalysis analysis{factory, transfer};
   
-  analysis.initialize(nullptr, &pal);
+ 
+  CodeThornOptions dummyCtOpt; // this has to be passed as argument now (new version)
+  // MS: using a nullptr for the AST?
+  analysis.initialize(dummyCtOpt,nullptr, &pal);
   analysis.initializeTransferFunctions();
   
   transfer.setProgramAbstractionLayer(&pal);
@@ -547,7 +551,8 @@ runUnfoldedAnalysis( ProgramAbstractionLayer& pal,
   
   SimpleAnalysis analysis{factory, transfer};
   
-  analysis.initialize(nullptr, &unfoldedPal);
+  CodeThornOptions dummyCtOpt;
+  analysis.initialize(dummyCtOpt,nullptr, &unfoldedPal);
   analysis.initializeTransferFunctions();
   
   if (!initialLat)

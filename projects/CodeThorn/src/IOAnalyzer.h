@@ -16,7 +16,7 @@ namespace CodeThorn {
     friend class Solver10;
 
   public:
-    IOAnalyzer();
+  IOAnalyzer();
     
   protected:
     static Sawyer::Message::Facility logger;
@@ -27,7 +27,7 @@ namespace CodeThorn {
     void setup(CTAnalysis* analyzer, Sawyer::Message::Facility logger,
                CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt);
     // overwritten or extended analyzer functions
-    virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
+    virtual void initializeSolver2(std::string functionToStartAt, SgProject* root) override;
     void resetAnalysis();
     void printAnalyzerStatistics(double totalRunTime, string title = "state transition system computed");
     // only used in LTL-driven mode

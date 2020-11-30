@@ -32,7 +32,7 @@
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
-#include "EquivalenceChecking.h"
+//#include "EquivalenceChecking.h"
 #include "Solver5.h"
 #include "Solver8.h"
 #include "ltlthorn-lib/Solver10.h"
@@ -539,8 +539,7 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.status) {
       cout<<"STATUS: analysis started."<<endl;
     }
-    // TODO: introduce ProgramAbstractionLayer
-    analyzer->initializeVariableIdMapping(sageProject);
+    analyzer->initialize(ctOpt, sageProject,nullptr);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
 
     if(ctOpt.info.printVariableIdMapping) {
@@ -683,7 +682,7 @@ int main( int argc, char * argv[] ) {
     SAWYER_MESG(logger[TRACE])<< "INIT: creating solver "<<analyzer->getSolver()->getId()<<"."<<endl;
 
     if(option_specialize_fun_name!="") {
-      analyzer->initializeSolver(option_specialize_fun_name,root,true);
+      analyzer->initializeSolver2(option_specialize_fun_name,sageProject);
     } else {
       // if main function exists, start with main-function
       // if a single function exist, use this function
@@ -709,7 +708,7 @@ int main( int argc, char * argv[] ) {
         }
       }
       ROSE_ASSERT(startFunction!="");
-      analyzer->initializeSolver(startFunction,root,false);
+      analyzer->initializeSolver2(startFunction,sageProject);
     }
     analyzer->initLabeledAssertNodes(sageProject);
 

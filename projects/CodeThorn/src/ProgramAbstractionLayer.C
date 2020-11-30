@@ -2,6 +2,8 @@
 #include "ProgramAbstractionLayer.h"
 #include "ClassHierarchyGraph.h"
 #include "Normalization.h"
+#include "CTIOLabeler.h"
+#include "CodeThornLib.h"
 
 #include <iostream>
 
@@ -19,15 +21,12 @@ SgProject* CodeThorn::ProgramAbstractionLayer::getRoot() {
   return _root;
 }
 
-void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
+
+void CodeThorn::ProgramAbstractionLayer::initialize(CodeThornOptions& ctOpt, SgProject* root) {
   _root=root;
-  cout << "INIT: Normalization level " << getNormalizationLevel() << endl;
-  CodeThorn::Normalization normalization;
-  normalization.setInliningOption(getInliningOption());
-  normalization.normalizeAst(root,getNormalizationLevel());
-  _variableIdMapping=new VariableIdMappingExtended();
-  getVariableIdMapping()->computeVariableSymbolMapping(root);
-  _labeler=new Labeler(root);
+  normalizationPass(ctOpt,root);
+  _variableIdMapping=CodeThorn::createVariableIdMapping(ctOpt,root);
+  _labeler=createLabeler(root,_variableIdMapping);
   
   _classHierarchy=new ClassHierarchyWrapper(root);
   _cfanalyzer=new CFAnalysis(_labeler);
@@ -39,7 +38,7 @@ void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
     // another function resolution mode
     _functionCallMapping = new FunctionCallMapping();
   
-    getFunctionCallMapping()->setClassHierarchy(getClassHierarchy());
+    getFunctionCallMapping()->setClassHierarchy(_classHierarchy);
     getFunctionCallMapping()->computeFunctionCallMapping(root);
     _cfanalyzer->setFunctionCallMapping(getFunctionCallMapping());
   }
@@ -48,24 +47,27 @@ void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
     // PP (02/17/20) add class hierarchy and call mapping
     _functionCallMapping2=new FunctionCallMapping2();
     getFunctionCallMapping2()->setLabeler(_labeler);
-    getFunctionCallMapping2()->setClassHierarchy(getClassHierarchy());
+    getFunctionCallMapping2()->setClassHierarchy(_classHierarchy);
     getFunctionCallMapping2()->computeFunctionCallMapping(root);
     _cfanalyzer->setFunctionCallMapping2(getFunctionCallMapping2());
   }
   
   //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
-  cout << "INIT: Building CFG for each function."<<endl;
+  //cout << "INIT: Building CFG for each function."<<endl;
   _fwFlow = _cfanalyzer->flow(root);
-  cout << "STATUS: Building CFGs finished."<<endl;
-  cout << "INIT: Intra-Flow OK. (size: " << _fwFlow.size() << " edges)"<<endl;
-  InterFlow interFlow=_cfanalyzer->interFlow(_fwFlow);
-  cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
-  _cfanalyzer->intraInterFlow(_fwFlow,interFlow);
-  cout << "INIT: IntraInter-CFG OK. (size: " << _fwFlow.size() << " edges)"<<endl;
+  //cout << "STATUS: Building CFGs finished."<<endl;
+  //cout << "INIT: Intra-Flow OK. (size: " << _fwFlow.size() << " edges)"<<endl;
+  _interFlow=_cfanalyzer->interFlow(_fwFlow);
+  //cout << "INIT: Inter-Flow OK. (size: " << _interFlow.size()*2 << " edges)"<<endl;
+  _cfanalyzer->intraInterFlow(_fwFlow,_interFlow);
+  //cout << "INIT: IntraInter-CFG OK. (size: " << _fwFlow.size() << " edges)"<<endl;
 
   _bwFlow = _fwFlow.reverseFlow();
 }
 
+CodeThorn::InterFlow* CodeThorn::ProgramAbstractionLayer::getInterFlow() {
+  return &_interFlow;
+}
 
 void CodeThorn::ProgramAbstractionLayer::setForwardFlow(const Flow& fwdflow)
 {
@@ -111,11 +113,6 @@ CodeThorn::FunctionCallMapping* CodeThorn::ProgramAbstractionLayer::getFunctionC
 CodeThorn::FunctionCallMapping2* CodeThorn::ProgramAbstractionLayer::getFunctionCallMapping2(){
   ROSE_ASSERT(_functionCallMapping2!=0);
   return _functionCallMapping2;
-}
-
-ClassHierarchyWrapper* CodeThorn::ProgramAbstractionLayer::getClassHierarchy(){
-  ROSE_ASSERT(_classHierarchy!=0);
-  return _classHierarchy;
 }
 
 void CodeThorn::ProgramAbstractionLayer::setNormalizationLevel(unsigned int level) {

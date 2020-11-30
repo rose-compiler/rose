@@ -70,7 +70,7 @@ LabelSet CFAnalysis::functionCallLabels(Flow& flow) {
   return resultSet;
 }
 
-// MS: TODO: refactor thse two functions  (2/2)
+// MS: TODO: refactor these two functions  (2/2)
 LabelSet CFAnalysis::conditionLabels(Flow& flow) {
   LabelSet resultSet;
   LabelSet nodeLabels;
@@ -1873,4 +1873,15 @@ bool CFAnalysis::forkJoinConsistencyChecks(Flow &flow) const {
   SAWYER_MESG(logger[INFO]) << "Passed fork/join consistency checks 2/2" << endl;
 
   return forksEqualJoins;
+}
+
+void CFAnalysis::createICFG(SgProject* project) {
+  ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(project);
+  FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
+  functionCallMapping2->setClassHierarchy(classHierarchy);
+  functionCallMapping2->computeFunctionCallMapping(project);
+  setFunctionCallMapping2(functionCallMapping2);
+  _icfgFlow=flow(project);
+  _interFlow=interFlow(_icfgFlow);
+  intraInterFlow(_icfgFlow, _interFlow);
 }

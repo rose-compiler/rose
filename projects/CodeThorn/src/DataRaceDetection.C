@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 #include "DataRaceDetection.h"
 #include "Specialization.h"
-#include "EquivalenceChecking.h"
+//#include "EquivalenceChecking.h"
 #include "AstTerm.h"
 #include "OmpSupport.h"
 #include "CodeThornCommandLineOptions.h"

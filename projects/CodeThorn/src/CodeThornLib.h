@@ -34,9 +34,7 @@ namespace CodeThorn {
      sets. Returns false if reading fails. Exits with error message if
      format is wrong. */
   bool readAndParseLTLRersMappingFile(string ltlRersMappingFileName, LtlRersMapping& ltlRersMapping);
-
   void processCtOptGenerateAssertions(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgProject* root);
-  IOAnalyzer* createAnalyzer(CodeThornOptions& ctOpt, LTLOptions& ltlOpt);
   void optionallyRunInternalChecks(CodeThornOptions& ctOpt, int argc, char * argv[]);
   void optionallyRunInliner(CodeThornOptions& ctOpt, Normalization& normalization, SgProject* sageProject);
   void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNode* root);
@@ -56,11 +54,24 @@ namespace CodeThorn {
   void optionallyEliminateRersArraysAndExit(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer);
   void optionallyWriteSVCompWitnessFile(CodeThornOptions& ctOpt, CTAnalysis* analyzer);
   void optionallyAnalyzeAssertions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, IOAnalyzer* analyzer, TimingCollector& tc);
+  void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt);
+
+  IOAnalyzer* createAnalyzer(CodeThornOptions& ctOpt, LTLOptions& ltlOpt);
+  void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,CTAnalysis* analyzer,SgProject* root, TimingCollector& tc);
+  void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProject,TimingCollector& tc);
+
   void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,CTAnalysis* analyzer);
   void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* analyzer);
-  void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,CTAnalysis* analyzer,SgNode* root, TimingCollector& tc);
-  void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProject,TimingCollector& tc);
-  void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt);
+  
+  SgProject* parsingPass(CodeThornOptions& ctOpt, int argc, char * argv[]);
+  void normalizationPass(CodeThornOptions& ctOpt, SgProject* sageProject);
+  Labeler* createLabeler(SgProject* sageProject, VariableIdMappingExtended* variableIdMapping);
+  VariableIdMappingExtended* createVariableIdMapping(CodeThornOptions& ctOpt, SgProject* sageProject);
+  CFAnalysis* createControlFlowGraph(CodeThornOptions& ctOpt, SgProject* project, Labeler* labeler);
+  //CFAnalysis* createBackwardControlFlowGraph(SgProject* sageProject*, CodeThornOptions& ctOpt, SgProject* sageProject);
+  IOAnalyzer* runMemoryAnalysis(CodeThornOptions& ctOpt, VariableIdMapping* vim, Labeler* labeler, CFAnalysis* icfg, TimingCollector& timingCollector);
+  //IOAnalyzer* runLTLVerification(CodeThornOptions&, CFAnalysis*,TimingCollector& timingCollector));
+  
 } // end of namespace CodeThorn
 
 

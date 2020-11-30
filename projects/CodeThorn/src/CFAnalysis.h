@@ -140,6 +140,10 @@ class CFAnalysis {
   static Sawyer::Message::Facility logger;
   void setInterProcedural(bool flag); // by default true
   bool getInterProcedural();
+
+  // this function stores the Flow and InterFlow in this object.
+  void createICFG(SgProject* project);
+
  protected:
   SgFunctionDefinition* determineFunctionDefinition2(SgFunctionCallExp* funCall);
   FunctionCallTargetSet determineFunctionDefinition4(SgFunctionCallExp* funCall);
@@ -156,6 +160,10 @@ class CFAnalysis {
   SgNode* correspondingLoopConstruct(SgNode* node);
   FunctionCallMapping* _functionCallMapping=nullptr;
   FunctionCallMapping2* _functionCallMapping2=nullptr;
+  
+  Flow _icfgFlow;
+  InterFlow _interFlow;
+  
 };
 
 } // end of namespace CodeThorn
