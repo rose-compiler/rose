@@ -27,11 +27,11 @@ $foundInDir  = "";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
-$mkinstaller_ver_build = "5";
-$mkinstaller_ver_patch = "4";
-$mkinstaller_ver_name  = "2.6.5.4";
-$mkinstaller_ver_time  = "19Oct2020,19:33:29z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.5.4 - 19Oct2020,19:33:29z";
+$mkinstaller_ver_build = "6";
+$mkinstaller_ver_patch = "";
+$mkinstaller_ver_name  = "2.6.6";
+$mkinstaller_ver_time  = "21Nov2020,18:52:34z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.6 - 21Nov2020,18:52:34z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
