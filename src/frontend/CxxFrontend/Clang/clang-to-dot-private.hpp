@@ -73,7 +73,13 @@
 // DQ (10/23/2020): Adding clang-to-dot support (graph functions).
 #include "clang_graph.h"
 
-// #define DEBUG_VISITOR 0
+// DQ (11/27/2020): Turn on the debugging information as we visit clang IR nodes.
+#define DEBUG_VISITOR             0
+#define DEBUG_TRAVERSAL           0
+#define DEBUG_SOURCE_LOCATION     0
+#define DEBUG_SYMBOL_TABLE_LOOKUP 0
+#define DEBUG_ARGS                0
+#define DEBUG_TRAVERSE_DECL       0
 
 // Print visitor name when visiting a node inheritance hierarchy
 #ifdef DEBUG_VISITOR

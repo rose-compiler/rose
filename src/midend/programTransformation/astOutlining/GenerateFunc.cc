@@ -1633,6 +1633,31 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
   //
   ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()));
 
+#if 1
+   // Eliminate problematic type casting to base class
+  // Liao 2020/11/18
+   RoseAst ast(func->get_definition()->get_body());
+ 
+   vector<SgCastExp*> cast_nodes; 
+   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+        if (SgCastExp* cast_n= isSgCastExp(*i))
+        {
+          // TODO: check if class B (source type) is a derived type of class A (cast to)
+          if (isSgClassType(cast_n->get_type()) && isSgClassType(cast_n->get_operand_i()->get_type()))
+            cast_nodes.push_back(cast_n);
+        }
+   }
+ 
+   for (vector<SgCastExp*>::reverse_iterator iter=cast_nodes.rbegin(); iter!=cast_nodes.rend(); iter++ )
+   {
+     //     (*iter)->get_startOfConstruct()->unsetOutputInCodeGeneration();
+     //     (*iter)->get_endOfConstruct()->unsetOutputInCodeGeneration();
+     // we keep the original subtree, only delete the root node.
+     SageInterface::replaceExpression ( *iter, (*iter)->get_operand_i(), true );
+     delete (*iter);
+   }
+#endif
+
 #if 0
   printf ("Leaving generateFunction(): func = %p func_name_str = %s \n",func,func_name_str.c_str());
 #endif

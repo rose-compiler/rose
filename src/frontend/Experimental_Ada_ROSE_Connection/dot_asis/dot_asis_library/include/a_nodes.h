@@ -1847,9 +1847,6 @@ struct Clause_Struct {
   Name_List         Clause_Names;
   //   A_Component_Clause  
   Name_ID           Representation_Clause_Name;
-  Expression_ID     Representation_Clause_Expression;
-  Expression_ID     Mod_Clause_Expression;
-  Element_ID_List      Component_Clauses;
   Expression_ID     Component_Clause_Position;
   Element_ID        Component_Clause_Range;
   //   A_Representation_Clause

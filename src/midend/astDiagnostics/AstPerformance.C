@@ -207,6 +207,11 @@ SgProject* AstPerformance::project = NULL;
 // DQ (10/28/2020): Adding control over output of performance report (static data member).
 bool AstPerformance::outputCompilationPerformance = false;
 
+// MS (11/9/2020) : tracing support
+std::ofstream *TracingPerformance::trace_stream = NULL;
+double TracingPerformance::trace_zero_time = -1;
+bool TracingPerformance::first_event = true;
+bool TracingPerformance::trace_durations = true;
 
 AstPerformance::AstPerformance( std::string s , bool outputReport )
    : label(s), outputReportInDestructor(outputReport)
@@ -844,16 +849,193 @@ AstPerformance::performanceResolution()
 
 TimingPerformance::TimingPerformance ( std::string s , bool outputReport )
 // Save the label explaining what the performance number means
-   : AstPerformance(s,outputReport)
+  : AstPerformance(s,outputReport), TracingPerformance()
    {
-#if 0
-      timer = clock(); // Liao, 2/18/2009, fixing bug 2009. This has to be turned on 
-                       //since timer is used as the start time for calculating performance 
-#else
    // DQ (2/20/2013): We want to uniformally used the new mechanism to compute the elapsed time.
       timer = time_stamp();
-#endif
+
+      if (checkTracing())
+        {
+          emitTraceBoundaryEvent(label, timer, true);
+        }
    }
+
+TraceOnlyPerformance::TraceOnlyPerformance ( std::string s, bool outputReport )
+  : TracingPerformance()
+{
+  label = s;
+  timer = time_stamp();
+  if (checkTracing())
+    {
+      emitTraceBoundaryEvent(label, timer, true);
+    }
+}
+
+void
+TraceOnlyPerformance::endTimer()
+{
+  if (checkTracing()) {
+    double duration = ProcessingPhase::getCurrentDelta(timer);
+    emitTraceDurationEvent(label, timer, duration);
+    emitTraceBoundaryEvent(label, timer+duration, false);
+  }
+}
+
+TraceOnlyPerformance::~TraceOnlyPerformance()
+{
+  endTimer();
+}
+
+// MS (11/9/2020): emit tracing events in JSON format
+bool TracingPerformance::checkTracing() {
+  static bool trace_disabled = false;
+
+  // if we've decided to disable tracing, immediately return false
+  if (trace_disabled)
+    {
+      return false;
+    }
+
+  // if stream exists, then we know we're tracing
+  if (trace_stream != NULL)
+    {
+      return true;
+    }
+
+  // stream is null, so see if we need to open it
+  const char* trace_env = std::getenv("ROSE_TRACEFILE");
+  if (trace_env != NULL)
+    {
+      // check if tracing boundaries
+      if (std::getenv("ROSE_TRACEBOUNDARIES") != NULL)
+        {
+          trace_durations = false;
+        }
+
+      // use environment variable as base trace filename
+      // TODO: this is not safe if multiple programs are tracing at once.
+      //       need to acquire lock, determine unused filename, allocate
+      //       it, and release lock.
+      trace_stream = new std::ofstream(trace_env, std::ios::out);
+
+      // valid stream = tracing
+      if (trace_stream != NULL)
+        {
+          return true;
+        }
+
+      // something bad happened opening the stream.  warn and return false.
+      std::cerr << "checkTracing(): unable to open file \"" << trace_env
+                << "\".  Tracing disabled." << std::endl;
+
+      // set static flag to avoid future checks
+      trace_disabled = true;
+
+      return false;
+    }
+
+  // no stream + no env = not tracing
+  return false;
+}
+
+// MS (11/9/2020): emit tracing events in JSON format
+void
+TracingPerformance::emitTraceDurationEvent( std::string label, double t, double dur )
+{
+  // sanity check - should never enter here with a null stream
+  ROSE_ASSERT(trace_stream != NULL);
+
+  // if not tracing durations, return
+  if (!trace_durations) {
+    return;
+  }
+
+  // if we have not set the earliest time observed, set it to be the zero time.
+  if (trace_zero_time < 0) {
+    trace_zero_time = t;
+  }
+
+  // make all events relative to the first observed event
+  double ts = t - trace_zero_time;
+
+  // scale factor: assumes times are in microseconds
+  static double scalefactor = 1.0e6;
+
+  // check if first event.  if not, add ", \n" to separate from
+  // previous.  this avoids the annoying trailing comma problem
+  // for the last event.
+  if (first_event)
+    {
+      *trace_stream << "{ \"traceEvents\": [" << std::endl;
+      first_event = false;
+
+      // stash a lambda that closes off the JSON list at exit.
+      atexit([]{ *trace_stream << std::endl << "] }" << std::endl; });
+    }
+  else
+    {
+      *trace_stream << ", " << std::endl;
+    }
+
+  *trace_stream << setprecision(18) << "{"
+                << "\"name\": \"" << label << "\", "
+                << "\"ph\": \"X\", "
+                << "\"ts\": " << ts*scalefactor << ", "
+                << "\"dur\": " << dur*scalefactor << ", "
+                << "\"pid\": 1, "
+                << "\"tid\": 1, "
+                << "\"args\": {} }";
+}
+
+void
+TracingPerformance::emitTraceBoundaryEvent( std::string label, double t, bool isStart )
+{
+  // sanity check - should never enter here with a null stream
+  ROSE_ASSERT(trace_stream != NULL);
+
+  // if tracing durations, don't trace boundary events
+  if (trace_durations) {
+    return;
+  }
+
+  // if we have not set the earliest time observed, set it to be the zero time.
+  if (trace_zero_time < 0) {
+    trace_zero_time = t;
+  }
+
+  // make all events relative to the first observed event
+  double ts = t - trace_zero_time;
+
+  // scale factor: assumes times are in microseconds
+  static double scalefactor = 1.0e6;
+
+  // check if first event.  if not, add ", \n" to separate from
+  // previous.  this avoids the annoying trailing comma problem
+  // for the last event.
+  if (first_event)
+    {
+      *trace_stream << "{ \"traceEvents\": [" << std::endl;
+      first_event = false;
+
+      // stash a lambda that closes off the JSON list at exit.
+      atexit([]{ *trace_stream << std::endl << "] }" << std::endl; });
+    }
+  else
+    {
+      *trace_stream << ", " << std::endl;
+    }
+
+  std::string typeLabel = isStart ? "\"B\"" : "\"E\"";
+
+  *trace_stream << setprecision(18) << "{"
+                << "\"name\": \"" << label << "\", "
+                << "\"ph\": " << typeLabel << ", "
+                << "\"ts\": " << ts*scalefactor << ", "
+                << "\"pid\": 1, "
+                << "\"tid\": 1, "
+                << "\"args\": {} }";
+}
+
 
 // DQ (6/30/2013): Refactored this function to be something that can be called from the 
 // destructor and also in the scope of the outer most scope timer before report generation 
@@ -864,6 +1046,14 @@ TimingPerformance::endTimer()
   // DQ (9/1/2006): Refactor the code to stop the timing so that we can call it in the 
   // destructor and the report generation (both trigger the stopping of all timers).
      assert(localData != NULL);
+
+     // MS (11/9/2020): tracing support
+     if (checkTracing()) {
+       double duration = ProcessingPhase::getCurrentDelta(timer);
+       emitTraceDurationEvent(label, timer, duration);
+       emitTraceBoundaryEvent(label, timer+duration, false);
+     }
+
      double p = ProcessingPhase::getCurrentDelta(timer);
      if (p < 0.0) // Liao, 2/18/2009, avoid future bug 
         {
@@ -903,15 +1093,14 @@ TimingPerformance::endTimer()
 
 TimingPerformance::~TimingPerformance()
    {
-  // DQ (6/30/2013): Refactored this function to be something that can just call the new endTimer() function.
+     // DQ (6/30/2013): Refactored this function to be something that can just call the new endTimer() function.
      endTimer();
    }
 
 double
 TimingPerformance::performanceResolution()
    {
-  // printf ("Inside of TimingPerformance::performanceResolution() \n");
-  // This may not be the correct resolution of the clock
+     // This may not be the correct resolution of the clock
      double resolution = 1.0 / (double) CLOCKS_PER_SEC;
      return resolution;
    }
@@ -925,12 +1114,8 @@ AstPerformance::reportAccumulatedTime ( const string & s, const double & accumul
 void
 AstPerformance::startTimer ( RoseTimeType & time )
    {
-#if 0
-     time = clock();
-#else
-   // DQ (2/20/2013): We want to uniformally used the new mechanism to compute the elapsed time.
-      time = time_stamp();
-#endif
+     // DQ (2/20/2013): We want to uniformally used the new mechanism to compute the elapsed time.
+     time = time_stamp();
    }
 
 void

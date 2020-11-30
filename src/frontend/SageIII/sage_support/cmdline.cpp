@@ -675,7 +675,8 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   }
 #endif
 
-  // Add "-D_REENTRANT" if "-pthread" is present before we save the command-line or do any other processing.
+// DQ (11/29/2020): Clang linker does not understand the -pthread option (issues a warning, but I think it is a makefile commandline issue).
+// Add "-D_REENTRANT" if "-pthread" is present before we save the command-line or do any other processing.
   vector<string>::iterator pthread =
       find(local_commandLineArgumentList.begin(), local_commandLineArgumentList.end(), "-pthread");
   if (pthread != local_commandLineArgumentList.end())
@@ -3878,6 +3879,16 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_edg_il_to_graphviz(true);
         }
 
+  // DQ (11/27/2020): Turn on generation of GraphViz representation of Clang's internal representation
+     set_clang_il_to_graphviz(false);
+     ROSE_ASSERT (get_clang_il_to_graphviz() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","clang_il_to_graphviz",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Clang IL to GraphViz ON \n");
+          set_clang_il_to_graphviz(true);
+        }
+
   // TV (10/01/2018): ROSE-1424
      set_no_optimize_flag_for_frontend(false);
      if ( CommandlineProcessing::isOption(argv,"-rose:","no_optimize_flag_for_frontend",true) == true ) {
@@ -4361,6 +4372,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_upc_threads(integerOptionForUPCThreads);
           if ( SgProject::get_verbose() >= 1 )
                printf ("upc_threads is set to %d\n",integerOptionForUPCThreads);
+
+       // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+          Rose::is_UPC_dynamic_threads = true;
         }
 
 #if 0
@@ -5718,6 +5732,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // TV (04/11/2018): Generates GraphViz from EDG internal representation
      optionCount = sla(argv, "-rose:", "($)", "edg_il_to_graphviz",1);
+
+  // DQ (11/27/2020): Generates GraphViz from Clang internal representation
+     optionCount = sla(argv, "-rose:", "($)", "clang_il_to_graphviz",1);
 
   // TV (10/04/2018): Do not pass -D__OPTIMIZE__ to EDG frontend (ROSE-1424)
      optionCount = sla(argv, "-rose:", "($)", "no_optimize_flag_for_frontend",1);

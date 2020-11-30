@@ -533,7 +533,7 @@ Dispatcher::unwrapEmulationOperators(const IS::BaseSemantics::RiscOperatorsPtr &
 
 RiscOperatorsPtr
 Dispatcher::emulationOperators() const {
-    return unwrapEmulationOperators(get_operators());
+    return unwrapEmulationOperators(operators());
 }
 
 rose_addr_t

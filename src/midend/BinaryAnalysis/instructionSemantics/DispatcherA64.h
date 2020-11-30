@@ -57,6 +57,7 @@ protected:
         initializeRegisterDescriptors();
         initializeInsnDispatchTable();
         initializeMemory();
+        initializeState(ops->currentState());
     }
 
 public:

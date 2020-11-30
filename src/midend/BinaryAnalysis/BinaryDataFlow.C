@@ -27,7 +27,7 @@ DataFlow::initDiagnostics() {
 void
 DataFlow::init(const BaseSemantics::DispatcherPtr &userDispatcher) {
     ASSERT_not_null(userDispatcher);
-    userOps_ = userDispatcher->get_operators();
+    userOps_ = userDispatcher->operators();
     ASSERT_not_null(userOps_);
     dfOps_ = InstructionSemantics2::DataFlowSemantics::RiscOperators::instance(userOps_);
     ASSERT_not_null(dfOps_);

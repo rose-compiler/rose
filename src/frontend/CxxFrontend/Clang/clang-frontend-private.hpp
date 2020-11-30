@@ -70,6 +70,14 @@
 
 #include "llvm/Frontend/OpenMP/OMPIRBuilder.h"
 
+// DQ (11/27/2020): Turn on/off the debugging information as we visit clang IR nodes.
+#define DEBUG_VISITOR             0
+#define DEBUG_TRAVERSAL           0
+#define DEBUG_SOURCE_LOCATION     0
+#define DEBUG_SYMBOL_TABLE_LOOKUP 0
+#define DEBUG_ARGS                0
+#define DEBUG_TRAVERSE_DECL       0
+
 // Print visitor name when visiting a node inheritance hierarchy
 #ifdef DEBUG_VISITOR
 #  ifndef DEBUG_VISIT_STMT

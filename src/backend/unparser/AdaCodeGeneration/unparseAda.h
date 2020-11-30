@@ -33,7 +33,8 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
           void unparseAdaFile(SgSourceFile *file, SgUnparse_Info &info);
           void unparseStatement(SgStatement* stmt, SgUnparse_Info& info) ROSE_OVERRIDE;
           void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info) ROSE_OVERRIDE;
-          std::string computeScopeQualification(SgStatement& local, SgStatement& remote);
+          std::string computeScopeQual(SgScopeStatement& local, SgScopeStatement& remote);
+          // std::string computeScopeQualStmts(SgStatement& local, SgStatement& remote);
 
           //
           // in unparseAda_expressions.C
@@ -47,7 +48,7 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
 
           //
           // in unparseAda_types.C
-          void unparseType(SgType* type, SgStatement* where, SgUnparse_Info& info);
+          void unparseType(SgType* type, SgScopeStatement* where, SgUnparse_Info& info);
 
           // DQ (9/12/2017): Mark the derived class to support debugging.
           // virtual std::string languageName() const;

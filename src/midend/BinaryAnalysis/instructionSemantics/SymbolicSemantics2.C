@@ -1205,14 +1205,30 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
     size_t nbits = dflt->get_width();
     ASSERT_require(0 == nbits % 8);
     SValuePtr retval;
-    if (address->isBottom()) {
+
+    PartialDisableUsedef du(this);
+
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = address;
+    } else {
+        BaseSemantics::SValuePtr segregValue;
+        if (AllowSideEffects::YES == allowSideEffects) {
+            segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        } else {
+            segregValue = peekRegister(segreg, undefined_(segreg.nBits()));
+        }
+        adjustedVa = add(address, signExtend(segregValue, address->get_width()));
+    }
+
+    // Short circuit if address is Bottom.
+    if (adjustedVa->isBottom()) {
         retval = SValue::promote(bottom_(dflt->get_width()));
         if (reinterpretMemoryReads_)
             retval = SValue::promote(reinterpret(retval, SageBuilderAsm::buildTypeU(retval->get_width())));
         return retval;
     }
-
-    PartialDisableUsedef du(this);
 
     // Read the bytes and concatenate them together. SymbolicExpr will simplify the expression so that reading after
     // writing a multi-byte value will return the original value written rather than a concatenation of byte extractions.
@@ -1222,7 +1238,7 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
         size_t byteOffset = ByteOrder::ORDER_MSB==currentMem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
         BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*byteOffset, 8*byteOffset+8);
-        BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
+        BaseSemantics::SValuePtr byte_addr = add(adjustedVa, number_(adjustedVa->get_width(), bytenum));
 
         // Read the default value from the initial memory state first. We want to use whatever value is in the initial memory
         // state if the address is not present in the current memory state. As a side effect, if this value is not in the
@@ -1301,17 +1317,27 @@ RiscOperators::peekMemory(RegisterDescriptor segreg,
 
 void
 RiscOperators::writeMemory(RegisterDescriptor segreg,
-                           const BaseSemantics::SValuePtr &address_,
+                           const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value_,
                            const BaseSemantics::SValuePtr &condition) {
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
     if (condition->is_number() && !condition->get_number())
         return;
-    if (address_->isBottom())
-        return;
-    SValuePtr address = SValue::promote(address_);
-    SValuePtr value = SValue::promote(value_);
+
     PartialDisableUsedef du(this);
+
+    // Offset the address by the value of the segment register.
+    SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = SValue::promote(address);
+    } else {
+        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        adjustedVa = SValue::promote(add(address, signExtend(segregValue, address->get_width())));
+    }
+
+    if (adjustedVa->isBottom())
+        return;
+    SValuePtr value = SValue::promote(value_);
     size_t nbits = value->get_width();
     ASSERT_require(0 == nbits % 8);
     size_t nbytes = nbits/8;
@@ -1331,8 +1357,8 @@ RiscOperators::writeMemory(RegisterDescriptor segreg,
 
         SValuePtr byte_value = SValue::promote(extract(value, 8*byteOffset, 8*byteOffset+8));
         byte_value->add_defining_instructions(value);
-        SValuePtr byte_addr = SValue::promote(add(address, number_(address->get_width(), bytenum)));
-        byte_addr->add_defining_instructions(address);
+        SValuePtr byte_addr = SValue::promote(add(adjustedVa, number_(adjustedVa->get_width(), bytenum)));
+        byte_addr->add_defining_instructions(adjustedVa);
         currentState()->writeMemory(byte_addr, byte_value, this, this);
 
         // Update the latest writer info if we have a current instruction and the memory state supports it.

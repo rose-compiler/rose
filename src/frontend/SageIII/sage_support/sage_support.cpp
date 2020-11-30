@@ -956,6 +956,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                file->set_Fortran_only(true);
 
+            // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+               Rose::is_Fortran_language = true;
+
             // DQ (11/30/2010): This variable activates scopes built within the SageBuilder
             // interface to be built to use case insensitive symbol table handling.
                SageBuilder::symbol_table_case_insensitive_semantics = true;
@@ -1091,6 +1094,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                     file->set_PHP_only(true);
 
+                 // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+                    Rose::is_PHP_language = true;
+
                  // DQ (12/23/2008): We don't handle CPP directives and comments for PHP yet.
                  // file->get_skip_commentsAndDirectives(true);
 
@@ -1122,6 +1128,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                          file->set_Cxx_only(true);
 
+                      // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+                         Rose::is_Cxx_language = true;
+
                       // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
                       // Note that file->get_requires_C_preprocessor() should be false.
                          ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
@@ -1148,10 +1157,16 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                               file->set_C_only(true);
 
+                           // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+                              Rose::is_C_language = true;
+
                            // Liao 6/6/2008  Set the newly introduced p_UPC_only flag.
                               if (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true)
                                  {
                                    file->set_UPC_only();
+
+                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+                                   Rose::is_UPC_language = true;
                                  }
                                 else
                                  {
@@ -1180,6 +1195,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                    file->set_Cuda_only(true);
 
+                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+                                   Rose::is_Cuda_language = true;
+
                                 // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
                                 // Note that file->get_requires_C_preprocessor() should be false.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
@@ -1193,6 +1211,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                                    file = sourceFile;
                                    file->set_OpenCL_only(true);
+
+                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+                                   Rose::is_OpenCL_language = true;
 
                                 // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
                                 // Note that file->get_requires_C_preprocessor() should be false.
@@ -1219,6 +1240,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                    file->set_inputLanguage(SgFile::e_Java_language);
 
                                    file->set_Java_only(true);
+
+                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+                                   Rose::is_Java_language = true;
 
                                 // DQ (4/2/2011): Java code is only compiled, not linked as is C/C++ and Fortran.
                                    file->set_compileOnly(true);
@@ -1249,6 +1273,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                    file->set_X10_only(true);
 
+                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+                                   Rose::is_X10_language = true;
+
                                 // TOO1 (2/20/2013): X10 code is only compiled, not linked as is C/C++ and Fortran.
                                    file->set_compileOnly(true);
 
@@ -1272,6 +1299,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                    file->set_inputLanguage(SgFile::e_Python_language);
 
                                    file->set_Python_only(true);
+
+                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+                                   Rose::is_Python_language = true;
 
                                 // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
                                 // Note that file->get_requires_C_preprocessor() should be false.
@@ -1313,6 +1343,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                    file->set_Ada_only(true);
 
+                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+                                   Rose::is_Ada_language = true;
+
                                 // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
                                 // Note that file->get_requires_C_preprocessor() should be false.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
@@ -1329,6 +1362,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                    file->set_inputLanguage (SgFile::e_Jovial_language);
 
                                    file->set_Jovial_only(true);
+
+                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+                                   Rose::is_Jovial_language = true;
 
                                    SageBuilder::symbol_table_case_insensitive_semantics = true;
 
@@ -1351,6 +1387,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                    file->set_inputLanguage(SgFile::e_Cobol_language);
 
                                    file->set_Cobol_only(true);
+
+                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+                                   Rose::is_Cobol_language = true;
 
                                 // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
                                 // Note that file->get_requires_C_preprocessor() should be false.
@@ -1388,6 +1427,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                    // DQ (2/5/2009): Put this at both the SgProject and SgFile levels.
                                    // DQ (2/4/2009):  This is now a data member on the SgProject instead of on the SgFile.
                                    file->set_binary_only(true);
+
+                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+                                   Rose::is_binary_executable = true;
 
                                    // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C
                                    // preprocessor.

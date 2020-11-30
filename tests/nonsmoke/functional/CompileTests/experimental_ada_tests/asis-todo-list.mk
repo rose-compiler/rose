@@ -23,7 +23,6 @@ ASIS_TODO := \
   test_unit.adb                        \
   unit_2.ads                           \
   unit_2.adb                           \
-  unit_3.ads                           \
   pkgrename.ads                        \
   EndOfList
 

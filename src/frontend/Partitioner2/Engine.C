@@ -295,6 +295,10 @@ Engine::disassemblerSwitches(DisassemblerSettings &settings) {
            "These switches have no effect if the input is a ROSE Binary Analysis (RBA) file, since the disassembler steps "
            "in such an input have already been completed.");
 
+    Rose::CommandLine::insertBooleanSwitch(sg, "disassemble", settings.doDisassemble,
+                                           "Perform the disassemble, partition, and post-analysis steps. Otherwise only parse "
+                                           "the container (if any) and save the raw, un-disassembled bytes.");
+
     sg.insert(Switch("isa")
               .argument("architecture", anyParser(settings.isaName))
               .doc("Name of instruction set architecture.  If no name is specified then the architecture is obtained from "
@@ -1128,6 +1132,10 @@ Engine::roseFrontendReplacement(const std::vector<boost::filesystem::path> &file
     // FIXME[Robb Matzke 2019-01-29]: A SgBinaryComposite represents many files, not just one, so some of these settings
     //                                don't make much sense.
     SgBinaryComposite *binaryComposite = new SgBinaryComposite;
+
+ // DQ (11/25/2020): Add support to set this as a binary file (there is at least one binary file processed by ROSE).
+    Rose::is_binary_executable = true;
+
     binaryComposite->initialization(); // SgFile::initialization
     binaryComposite->set_skipfinalCompileStep(true);
     binaryComposite->set_genericFileList(fileList); fileList->set_parent(binaryComposite);
@@ -1448,7 +1456,7 @@ Engine::obtainDisassembler(Disassembler *hint) {
     if (!disassembler_ && hint)
         disassembler_ = hint;
 
-    if (!disassembler_)
+    if (!disassembler_ && settings_.disassembler.doDisassemble)
         throw std::runtime_error("no disassembler found and none specified");
 
     return disassembler_;
@@ -1460,7 +1468,7 @@ Engine::obtainDisassembler(Disassembler *hint) {
 
 void
 Engine::checkCreatePartitionerPrerequisites() const {
-    if (NULL==disassembler_)
+    if (NULL == disassembler_ && settings_.disassembler.doDisassemble)
         throw std::runtime_error("Engine::createBarePartitioner needs a prior disassembler");
     if (!map_ || map_->isEmpty())
         mlog[WARN] <<"Engine::createBarePartitioner: using an empty memory map\n";
@@ -1472,7 +1480,7 @@ Engine::createBarePartitioner() {
 
     checkCreatePartitionerPrerequisites();
     Partitioner p(disassembler_, map_);
-    if (p.memoryMap() && p.memoryMap()->byteOrder() == ByteOrder::ORDER_UNSPECIFIED)
+    if (p.memoryMap() && p.memoryMap()->byteOrder() == ByteOrder::ORDER_UNSPECIFIED && disassembler_)
         p.memoryMap()->byteOrder(disassembler_->byteOrder());
     p.settings(settings_.partitioner.base);
     p.progress(progress_);

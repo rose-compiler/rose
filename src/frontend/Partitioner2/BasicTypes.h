@@ -274,6 +274,8 @@ private:
  *
  *  The runtime descriptions and command-line parser for these switches can be obtained from @ref disassemblerSwitches. */
 struct DisassemblerSettings {
+    bool doDisassemble;                             /**< Perform disassembly. If false, then it is not an error if no
+                                                     *   disassembler can be found. */
     std::string isaName;                            /**< Name of the instruction set architecture. Specifying a non-empty
                                                      *   ISA name will override the architecture that's chosen from the
                                                      *   binary container(s) such as ELF or PE. */
@@ -283,8 +285,14 @@ private:
 
     template<class S>
     void serialize(S &s, unsigned version) {
+        if (version >= 1)
+            s & BOOST_SERIALIZATION_NVP(doDisassemble);
         s & BOOST_SERIALIZATION_NVP(isaName);
     }
+
+public:
+    DisassemblerSettings()
+        : doDisassemble(true) {}
 };
 
 /** Controls whether the function may-return analysis runs. */
@@ -506,6 +514,7 @@ typedef Sawyer::SharedPointer<ThunkPredicates> ThunkPredicatesPtr;
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 6);
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::BasePartitionerSettings, 1);
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::LoaderSettings, 1);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::DisassemblerSettings, 1);
 
 #endif
 #endif

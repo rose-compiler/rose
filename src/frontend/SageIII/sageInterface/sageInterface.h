@@ -641,9 +641,34 @@ void markNodeToBeUnparsed(SgNode* node, int physical_file_id);
   \brief version, language properties of current AST.
 */
 
+// DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+// The value of 0 allows the old implementation to be tested, and the value of 1 allows the new optimized implementation to be tested.
+// However to get all of the functions to be inlined, we have to recompile all of ROSE.
+#define INLINE_OPTIMIZED_IS_LANGUAGE_KIND_FUNCTIONS 1
+
 //  std::string version();  // utility_functions.h, version number
   /*! Brief These traverse the memory pool of SgFile IR nodes and determine what languages are in use!
    */
+#if INLINE_OPTIMIZED_IS_LANGUAGE_KIND_FUNCTIONS
+  ROSE_DLL_API inline bool is_Ada_language ()       { return Rose::is_Ada_language; }
+  ROSE_DLL_API inline bool is_C_language ()         { return Rose::is_C_language; }
+  ROSE_DLL_API inline bool is_Cobol_language ()     { return Rose::is_Cobol_language; }
+  ROSE_DLL_API inline bool is_OpenMP_language ()    { return Rose::is_OpenMP_language; }
+  ROSE_DLL_API inline bool is_UPC_language ()       { return Rose::is_UPC_language; }
+  ROSE_DLL_API inline bool is_UPC_dynamic_threads() { return Rose::is_UPC_dynamic_threads; }
+  ROSE_DLL_API inline bool is_C99_language ()       { return Rose::is_C99_language; }
+  ROSE_DLL_API inline bool is_Cxx_language ()       { return Rose::is_Cxx_language; }
+  ROSE_DLL_API inline bool is_Java_language ()      { return Rose::is_Java_language; }
+  ROSE_DLL_API inline bool is_Jovial_language ()    { return Rose::is_Jovial_language; }
+  ROSE_DLL_API inline bool is_Fortran_language ()   { return Rose::is_Fortran_language; }
+  ROSE_DLL_API inline bool is_CAF_language ()       { return Rose::is_CAF_language; }
+  ROSE_DLL_API inline bool is_PHP_language()        { return Rose::is_PHP_language; }
+  ROSE_DLL_API inline bool is_Python_language()     { return Rose::is_Python_language; }
+  ROSE_DLL_API inline bool is_Cuda_language()       { return Rose::is_Cuda_language; }
+  ROSE_DLL_API inline bool is_OpenCL_language()     { return Rose::is_OpenCL_language; }
+  ROSE_DLL_API inline bool is_X10_language()        { return Rose::is_X10_language; }
+  ROSE_DLL_API inline bool is_binary_executable()   { return Rose::is_binary_executable; }
+#else
   ROSE_DLL_API bool is_Ada_language ();
   ROSE_DLL_API bool is_C_language ();
   ROSE_DLL_API bool is_Cobol_language ();
@@ -663,6 +688,8 @@ void markNodeToBeUnparsed(SgNode* node, int physical_file_id);
   ROSE_DLL_API bool is_OpenCL_language();
   ROSE_DLL_API bool is_X10_language();
   ROSE_DLL_API bool is_binary_executable();
+#endif
+
   ROSE_DLL_API bool is_mixed_C_and_Cxx_language ();
   ROSE_DLL_API bool is_mixed_Fortran_and_C_language ();
   ROSE_DLL_API bool is_mixed_Fortran_and_Cxx_language ();
@@ -720,6 +747,9 @@ void markNodeToBeUnparsed(SgNode* node, int physical_file_id);
 
   //! Dumps a located node's preprocessing information.
   void dumpPreprocInfo (SgLocatedNode* locatedNode);
+
+  //! Find the preprocessingInfo node representing #include <header.h> or #include "header.h" within a source file. Return NULL if not found.
+  PreprocessingInfo * findHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader);
 
 //! Insert  #include "filename" or #include <filename> (system header) onto the global scope of a source file, add to be the last #include .. by default among existing headers, Or as the first header. Recommended for use.
 PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader, bool asLastHeader);
@@ -1803,6 +1833,67 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 
   scope->append_statement(), exprListExp->append_expression() etc. are not enough to handle side effect of parent pointers, symbol tables, preprocessing info, defining/nondefining pointers etc.
 */
+
+#if 1
+struct DeferredTransformation
+   {
+  // DQ (11/19/2020): We need to expand the use of this to cover deffered transformations of common SageInterface transformations (e.g. replaceStatement).
+  // So I needed to move this out of being specific to the outliner and make it more generally data structure in the SageInterface.
+
+  // DQ (11/15/2020): Need to add the concept of deffered transformation to cover replaceStatement operations.
+
+  // DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes 
+  // into class declaration (when this is required to support the outlined function's access to protected or private data members).
+  // This is part of an optimization to support the optimization of header file unparsing (limiting the overhead of supporting any 
+  // header file to just focus on the few (typically one) header file that would have to be unparsed.
+
+     enum TransformationKind
+        {
+       // DQ (11/22/2020): Might need to also add SageInterface::addDefaultConstructorIfRequired() and SageStatement::insert_statment()
+       // to support the processStatements.C transforamtions to pre-process the AST (return expressions and variable initializations).
+          e_error,
+          e_default,
+          e_outliner,
+          e_replaceStatement,
+          e_removeStatement,
+          e_replaceDefiningFunctionDeclarationWithFunctionPrototype,
+          e_last
+        };
+
+     TransformationKind deferredTransformationKind;
+
+  // Remove sets statementToRemove, replace sets statementToRemove and StatementToAdd.
+     SgStatement* statementToRemove;
+     SgStatement* statementToAdd;
+
+     SgClassDefinition* class_definition;
+     SgDeclarationStatement* target_class_member;
+     SgDeclarationStatement* new_function_prototype;
+
+     typedef std::set<SgClassDefinition *> ClassDefSet_t;
+     ClassDefSet_t targetClasses;
+
+     typedef std::vector<SgFunctionDeclaration *> FuncDeclList_t;
+     FuncDeclList_t targetFriends;
+
+  // DQ (12/5/2019): Added ROSE_DLL_API prefix for Windows support (too all of these functions).
+     ROSE_DLL_API DeferredTransformation();
+     ROSE_DLL_API DeferredTransformation(SgClassDefinition* class_definition, SgDeclarationStatement* target_class_member, SgDeclarationStatement* new_function_prototype);
+     ROSE_DLL_API DeferredTransformation (const DeferredTransformation& X); //! Copy constructor.
+     ROSE_DLL_API ~DeferredTransformation (void); //! Shallow; does not delete fields.
+
+     ROSE_DLL_API DeferredTransformation & operator= (const DeferredTransformation& X); //! operator=()
+
+  // DQ (11/20/20): static function to generate specialized version of deferred transformation object.
+     static ROSE_DLL_API DeferredTransformation replaceDefiningFunctionDeclarationWithFunctionPrototype( SgFunctionDeclaration* functionDeclaration );
+     static ROSE_DLL_API DeferredTransformation replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessinInfo = false);
+
+     static ROSE_DLL_API std::string outputDeferredTransformationKind(const TransformationKind & kind);
+     ROSE_DLL_API void display ( std::string label ) const;
+
+   };
+#endif
+
 
 // DQ (2/24/2009): Simple function to delete an AST subtree (used in outlining).
 //! Function to delete AST subtree's nodes only, users must take care of any dangling pointers, symbols or types that result.
