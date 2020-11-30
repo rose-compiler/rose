@@ -39,10 +39,9 @@ struct Settings {
     boost::filesystem::path outputFileName;
     SerialIo::Format stateFormat;
     bool doRemap;
-    bool doDisassemble;
     bool skipOutput;
 
-    Settings(): outputFileName("-"), stateFormat(SerialIo::BINARY), doRemap(false), doDisassemble(true), skipOutput(false) {}
+    Settings(): outputFileName("-"), stateFormat(SerialIo::BINARY), doRemap(false), skipOutput(false) {}
 };
 
 // Parse command-line and return arguments that represent the specimen.
@@ -70,10 +69,6 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                                      "This is normally most useful for specimens that have no address information, as is often the "
                                      "case with firmware where the boot loader, which is perhaps not available during analysis, is "
                                      "responsible for choosing the final addresses.");
-
-    CommandLine::insertBooleanSwitch(tool, "disassemble", settings.doDisassemble,
-                                     "Perform the disassemble, partition, and analysis steps. Otherwise only parse the "
-                                     "container, if any.");
 
     CommandLine::insertBooleanSwitch(tool, "skip-output", settings.skipOutput,
                                      "Skip the output step even if @s{output} is specified. This is mainly for performance testing.");
@@ -187,13 +182,12 @@ main(int argc, char *argv[]) {
         engine.memoryMap(newMap);
     }
 
-    mlog[INFO] <<"using the " <<engine.obtainDisassembler()->name() <<" disassembler\n";
     P2::Partitioner partitioner;
-    if (settings.doDisassemble) {
+    if (engine.doDisassemble()) {
+        mlog[INFO] <<"using the " <<engine.obtainDisassembler()->name() <<" disassembler\n";
         partitioner = engine.partition(specimen);
     } else {
         partitioner = engine.createPartitioner();
-        engine.obtainDisassembler();
         engine.runPartitionerInit(partitioner);
         engine.runPartitionerFinal(partitioner);
     }

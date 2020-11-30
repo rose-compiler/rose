@@ -128,7 +128,13 @@ namespace
     {}
 
     std::string
-    scopeQual(SgExpression& local, SgStatement& remote);
+    scopeQual(SgExpression& local, SgScopeStatement& remote);
+
+    std::string
+    scopeQual(SgExpression& local, SgScopeStatement* remote)
+    {
+      return scopeQual(local, SG_DEREF(remote));
+    }
 
     void prn(const std::string& s)
     {
@@ -228,7 +234,7 @@ namespace
       SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
 
       if (ctxRequiresScopeQualification)
-        prn(scopeQual(n, fundcl));
+        prn(scopeQual(n, fundcl.get_scope()));
 
       prn(nameOf(n));
     }
@@ -267,7 +273,7 @@ namespace
 
     void type(SgType* t, SgExpression& ctx)
     {
-      unparser.unparseType(t, &sg::ancestor<SgStatement>(ctx), info);
+      unparser.unparseType(t, &sg::ancestor<SgScopeStatement>(ctx), info);
     }
 
     Unparse_Ada&    unparser;
@@ -333,9 +339,9 @@ namespace
   }
 
   std::string
-  AdaExprUnparser::scopeQual(SgExpression& local, SgStatement& remote)
+  AdaExprUnparser::scopeQual(SgExpression& local, SgScopeStatement& remote)
   {
-    return unparser.computeScopeQualification(sg::ancestor<SgStatement>(local), remote);
+    return unparser.computeScopeQual(sg::ancestor<SgScopeStatement>(local), remote);
   }
 
 }

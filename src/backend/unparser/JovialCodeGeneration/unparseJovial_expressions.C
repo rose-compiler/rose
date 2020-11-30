@@ -449,6 +449,11 @@ Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
            curprint("@");
            unparseVarRef(operand, info);
            break;
+        case V_SgPntrArrRefExp:
+           curprint("@(");
+           unparseArrayOp(operand, info);
+           curprint(")");
+           break;
         case V_SgCastExp:
            curprint("@ (");
            unparseCastExp(operand, info);

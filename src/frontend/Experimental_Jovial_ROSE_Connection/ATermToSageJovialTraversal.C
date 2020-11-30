@@ -1,5 +1,4 @@
 #include "sage3basic.h"
-#include "untypedBuilder.h"
 
 #include "ATermToSageJovialTraversal.h"
 #include "Jovial_to_ROSE_translation.h"
@@ -18,15 +17,6 @@ using std::cerr;
 using std::endl;
 namespace SB = SageBuilder;
 namespace SI = SageInterface;
-
-ATermToSageJovialTraversal::ATermToSageJovialTraversal(SgSourceFile* source) : ATermToUntypedTraversal(source)
-{
-   UntypedBuilder::set_language(SgFile::e_Jovial_language);
-}
-
-ATermToSageJovialTraversal::~ATermToSageJovialTraversal()
-{
-}
 
 void ATermToSageJovialTraversal::setLocationSpecifier(SgVariableDeclaration* var_decl, const LocationSpecifier &loc_spec)
 {
@@ -207,7 +197,7 @@ ATbool ATermToSageJovialTraversal::traverse_MainProgramModule(ATerm term)
 
    if (ATmatch(term, "MainProgramModule(<term>,<term>,<term>,<term>,<term>)", &t_dirs, &t_decls,&t_name,&t_body,&t_funcs)) {
       std::string name;
-      std::list<std::string> labels;
+      std::vector<std::string> labels;
 
       if (traverse_DirectiveList(t_dirs)) {
          // MATCHED DirectiveList
@@ -5045,7 +5035,7 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
    printf("... traverse_IfStatement: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_labels, t_cond, t_else, t_true, t_false;
+   ATerm t_labels, t_if, t_cond, t_else, t_true, t_false;
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
    SgExpression* conditional = nullptr;
@@ -5053,10 +5043,12 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
    SgBasicBlock* false_body = nullptr;
    SgIfStmt* if_stmt = nullptr;
 
-   if (ATmatch(term, "IfStatement(<term>,<term>,<term>,<term>)", &t_labels,&t_cond,&t_true,&t_else)) {
+   if (ATmatch(term, "IfStatement(<term>,<term>,<term>,<term>,<term>)", &t_labels,&t_if,&t_cond,&t_true,&t_else)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
+
+      // t_if is the keyword 'IF'
 
       if (traverse_BitFormula(t_cond, conditional)) {
          // MATCHED BitFormula
@@ -5508,9 +5500,8 @@ ATbool ATermToSageJovialTraversal::traverse_GotoStatement(ATerm term)
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
    std::string name;
-   SgUntypedStatement* stmt;
 
-    if (ATmatch(term, "GotoStatement(<term>,<term>)", &t_labels, &t_name)) {
+   if (ATmatch(term, "GotoStatement(<term>,<term>)", &t_labels, &t_name)) {
        if (traverse_LabelList(t_labels, labels, locations)) {
           // MATCHED LabelList
        } else return ATfalse;
@@ -5518,21 +5509,13 @@ ATbool ATermToSageJovialTraversal::traverse_GotoStatement(ATerm term)
        if (traverse_Name(t_name, name)) {
           // MATCHED Name
        } else return ATfalse;
-
-      SgUntypedGotoStatement* goto_stmt = new SgUntypedGotoStatement("", name);
-      setSourcePosition(goto_stmt, term);
-
-      stmt = convert_Labels(labels, locations, goto_stmt);
    }
    else return ATfalse;
 
-//TODO_STATEMENTS
-#if 0
-   stmt_list->get_stmt_list().push_back(stmt);
-#endif
+   cerr << "WARNING UNIMPLEMENTED: GotoStatement\n";
+   ROSE_ASSERT(false);
 
    return ATtrue;
-
 }
 
 //========================================================================================
@@ -5665,7 +5648,7 @@ ATbool ATermToSageJovialTraversal::traverse_NumericFormula(ATerm term, SgExpress
    printf("... traverse_NumericFormula: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_sign, t_expr, t_lhs, t_op, t_rhs;
+   ATerm t_sign, t_expr, t_lhs, t_op, t_rhs, t_amb;
 
    // OptSign NumericTerm -> NumericFormula
    //
@@ -5711,6 +5694,20 @@ ATbool ATermToSageJovialTraversal::traverse_NumericFormula(ATerm term, SgExpress
          setSourcePosition(expr, term);
       } else return ATfalse;
    }
+
+#if CHECK_AMB
+   else if (ATmatch(term, "amb(<term>)", &t_amb)) {
+#if PRINT_AMB_WARNINGS
+      cerr << "WARNING AMBIGUITY: NumericFormula \n";
+#endif
+      ATermList tail = (ATermList) ATmake("<term>", t_amb);
+      ATerm head = ATgetFirst(tail);
+
+      // try first amb path
+      return traverse_NumericFormula(head, expr);
+   }
+#endif
+
    else return ATfalse;
 
    return ATtrue;
@@ -5875,7 +5872,7 @@ ATbool ATermToSageJovialTraversal::traverse_NumericTerm(ATerm term, SgExpression
    printf("... traverse_NumericTerm: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_lhs, t_op, t_rhs;
+   ATerm t_lhs, t_op, t_rhs, t_amb;
    SgExpression *lhs = nullptr, *rhs = nullptr;
 
    if (ATmatch(term, "NumericTerm(<term>,<term>,<term>)", &t_lhs, &t_op, &t_rhs)) {
@@ -5906,6 +5903,20 @@ ATbool ATermToSageJovialTraversal::traverse_NumericTerm(ATerm term, SgExpression
    else if (traverse_NumericFactor(term, expr)) {
          // MATCHED NumericFactor
    }
+
+#if CHECK_AMB
+   else if (ATmatch(term, "amb(<term>)", &t_amb)) {
+#if PRINT_AMB_WARNINGS
+      cerr << "WARNING AMBIGUITY: NumericTerm \n";
+#endif
+      ATermList tail = (ATermList) ATmake("<term>", t_amb);
+      ATerm head = ATgetFirst(tail);
+
+      // try first amb path
+      return traverse_NumericTerm(head, expr);
+   }
+#endif
+
    else return ATfalse;
 
    return ATtrue;
@@ -6356,11 +6367,14 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
          // MATCHED BitVariable
       } else return ATfalse;
    }
+   else if (traverse_FunctionCall(term, expr)) {
+      // FunctionCall      -> BitFunctionCall
+      // BitFunctionCall   -> BitPrimary (no cons)
+   }
    else return ATfalse;
 
    // TODO: create else if for following (is this still the case, testing should inform)
    // NamedBitConstant       -> BitPrimary {cons("NamedBitConstant")} (rejected in grammar)
-   // BitFunctionCall        -> BitPrimary (no cons)
 
    ROSE_ASSERT(expr != nullptr);
 
@@ -6996,16 +7010,23 @@ ATbool ATermToSageJovialTraversal::traverse_NamedConstant(ATerm term, SgExpressi
 #endif
 
    char* letter;
+   var = nullptr;
 
    if (ATmatch(term, "ControlLetter(<str>)" , &letter)) {
-      // MATCHED ControlLetter
-      cerr << "WARNING UNIMPLEMENTED: NamedConstant - ControlLetter " << letter << endl;
-      ROSE_ASSERT(false);
-   } else return ATfalse;
+      SgVarRefExp* var_ref = nullptr;
+      sage_tree_builder.Enter(var_ref, std::string(letter));
+      sage_tree_builder.Leave(var_ref);
+      ROSE_ASSERT(var_ref);
 
-      //  ConstantItemName            -> NamedConstant         {prefer}  %% ambiguous with ConstantTableName
-      //  ConstantTableName           -> NamedConstant         {cons("ConstantTableName")}
-      //  ConstantTableName Subscript -> NamedConstant         {cons("NamedConstant")}
+      var = var_ref;
+   }
+   else return ATfalse;
+
+   //  ConstantItemName            -> NamedConstant         {prefer}  %% ambiguous with ConstantTableName
+   //  ConstantTableName           -> NamedConstant         {cons("ConstantTableName")}
+   //  ConstantTableName Subscript -> NamedConstant         {cons("NamedConstant")}
+
+   ROSE_ASSERT(var);
 
    return ATtrue;
 }
@@ -7126,7 +7147,7 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
       // disambiguate so assume it is a replication operator. It is not even clear
       // that a replication operator can't have expression size other than 1.
 #if PRINT_WARNINGS
-         cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall - variable reference ambiguous "
+         cerr << "WARNING: UserDefinedFunctionCall - variable reference ambiguous "
               << "with replication operator for " << name << endl;
 #endif
 

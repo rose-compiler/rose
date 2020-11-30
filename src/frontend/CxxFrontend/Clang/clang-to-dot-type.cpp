@@ -1,67 +1,12 @@
 #include "sage3basic.h"
-
-// #include "clang-frontend-private.hpp"
 #include "clang-to-dot-private.hpp"
 
-#if 0
-SgType * ClangToDotTranslator::buildTypeFromQualifiedType(const clang::QualType & qual_type) {
-    SgNode * tmp_type = Traverse(qual_type.getTypePtr());
-    SgType * type = isSgType(tmp_type);
-
-    ROSE_ASSERT(type != NULL); 
-
-    if (qual_type.hasLocalQualifiers()) {
-        SgModifierType * modified_type = new SgModifierType(type);
-        SgTypeModifier & sg_modifer = modified_type->get_typeModifier();
-        clang::Qualifiers qualifier = qual_type.getLocalQualifiers();
-
-        if (qualifier.hasConst()) sg_modifer.get_constVolatileModifier().setConst();
-        if (qualifier.hasVolatile()) sg_modifer.get_constVolatileModifier().setVolatile();
-        if (qualifier.hasRestrict()) sg_modifer.setRestrict();
-        
-        if (qualifier.hasAddressSpace()) {
-            clang::LangAS addrspace = qualifier.getAddressSpace();
-            switch (addrspace) {
-                case clang::LangAS::opencl_global:
-                    sg_modifer.setOpenclGlobal();
-                    break;
-                case clang::LangAS::opencl_local:
-                    sg_modifer.setOpenclLocal();
-                    break;
-                case clang::LangAS::opencl_constant:
-                    sg_modifer.setOpenclConstant();
-                    break;
-                default:
-                    sg_modifer.setAddressSpace();
-                    sg_modifer.set_address_space_value(static_cast<unsigned int>(addrspace));
-            }
-        }
-        modified_type = SgModifierType::insertModifierTypeIntoTypeTable(modified_type);
-
-        return modified_type;
-    }
-    else {
-        return type;
-    }
-}
-#endif
-
-// SgNode * ClangToDotTranslator::Traverse(const clang::Type * type) 
 std::string ClangToDotTranslator::Traverse(const clang::Type * type) 
    {
-#if 0
-     if (type == NULL)
-          return NULL;
-
-  // std::map<const clang::Type *, SgNode *>::iterator it = p_type_translation_map.find(type);
-     std::map<const clang::Type *, std::string *>::iterator it = p_type_translation_map.find(type);
-     if (it != p_type_translation_map.end()) 
-          return it->second;
-#endif
      if (type == NULL)
           return "";
 
-    // Look for previous translation
+ // Look for previous translation
     std::map<const clang::Type *, std::string>::iterator it = p_type_translation_map.find(type);
     if (it != p_type_translation_map.end()) 
          return it->second;
@@ -76,7 +21,7 @@ std::string ClangToDotTranslator::Traverse(const clang::Type * type)
 
     bool ret_status = false;
 
-     CLANG_ROSE_Graph::graph (type);
+  // CLANG_ROSE_Graph::graph (type);
 
      switch (type->getTypeClass())
         {
@@ -253,9 +198,10 @@ bool ClangToDotTranslator::VisitType(clang::Type * type, SgNode ** node) {
     return true;
 }
 #else
-bool ClangToDotTranslator::VisitType(clang::Type * type, NodeDescriptor & node_desc) {
+bool ClangToDotTranslator::VisitType(clang::Type * type, NodeDescriptor & node_desc) 
+   {
 #if DEBUG_VISIT_TYPE
-    std::cerr << "ClangToDotTranslator::VisitType" << std::endl;
+     std::cerr << "ClangToDotTranslator::VisitType" << std::endl;
 #endif
 
 #if 0
@@ -270,10 +216,41 @@ bool ClangToDotTranslator::VisitType(clang::Type * type, NodeDescriptor & node_d
 */
 #endif
 
-    // TODO
+     node_desc.kind_hierarchy.push_back("Type");
 
-    return true;
-}
+     switch (type->getLinkage())
+        {
+          case clang::NoLinkage:
+               break;
+          case clang::InternalLinkage:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("linkage", "internal"));
+               break;
+          case clang::UniqueExternalLinkage:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("linkage", "unique external"));
+               break;
+          case clang::ExternalLinkage:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("linkage", "external"));
+               break;
+        }
+
+     switch (type->getVisibility()) 
+        {
+          case clang::HiddenVisibility:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("visibility", "hidden"));
+               break;
+          case clang::ProtectedVisibility:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("visibility", "protected"));
+               break;
+          case clang::DefaultVisibility:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("visibility", "default"));
+               break;
+        }
+
+  // DQ (11/27/2020): Comment from original code that generated the ROSE AST.
+  // TODO
+
+     return true;
+   }
 #endif
 
 #if 0
@@ -293,6 +270,8 @@ bool ClangToDotTranslator::VisitAdjustedType(clang::AdjustedType * adjusted_type
     std::cerr << "ClangToDotTranslator::VisitAdjustedType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("AdjustedType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -318,6 +297,8 @@ bool ClangToDotTranslator::VisitDecayedType(clang::DecayedType * decayed_type, N
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("DecayedType");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
     return VisitAdjustedType(decayed_type, node_desc) && res;
@@ -341,6 +322,8 @@ bool ClangToDotTranslator::VisitArrayType(clang::ArrayType * array_type, NodeDes
     std::cerr << "ClangToDotTranslator::VisitArrayType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("ArrayType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
@@ -380,6 +363,8 @@ bool ClangToDotTranslator::VisitConstantArrayType(clang::ConstantArrayType * con
     *node = SageBuilder::buildArrayType(type, expr);
 #endif
 
+     node_desc.kind_hierarchy.push_back("ConstantArrayType");
+
     return VisitArrayType(constant_array_type, node_desc);
 }
 #endif
@@ -401,6 +386,8 @@ bool ClangToDotTranslator::VisitDependentSizedArrayType(clang::DependentSizedArr
     std::cerr << "ClangToDotTranslator::VisitDependentSizedArrayType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("DependentSizedArrayType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -436,6 +423,8 @@ bool ClangToDotTranslator::VisitIncompleteArrayType(clang::IncompleteArrayType *
     *node = SageBuilder::buildArrayType(type);
 #endif
 
+     node_desc.kind_hierarchy.push_back("IncompleteArrayType");
+
     return VisitArrayType(incomplete_array_type, node_desc);
 }
 #endif
@@ -457,6 +446,8 @@ bool ClangToDotTranslator::VisitVariableArrayType(clang::VariableArrayType * var
     std::cerr << "ClangToDotTranslator::VisitVariableArrayType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("VariableArrayType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -481,6 +472,8 @@ bool ClangToDotTranslator::VisitAtomicType(clang::AtomicType * atomic_type, Node
     std::cerr << "ClangToDotTranslator::VisitAtomicType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("AtomicArrayType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -584,6 +577,8 @@ bool ClangToDotTranslator::VisitAttributedType(clang::AttributedType * attribute
     *node = SgModifierType::insertModifierTypeIntoTypeTable(modified_type);;
 #endif
 
+     node_desc.kind_hierarchy.push_back("AttributedType");
+
     return VisitType(attributed_type, node_desc);
 }
 #endif
@@ -605,6 +600,8 @@ bool ClangToDotTranslator::VisitBlockPointerType(clang::BlockPointerType * block
     std::cerr << "ClangToDotTranslator::VisitBlockPointerType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("BlockPointerType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -718,6 +715,106 @@ bool ClangToDotTranslator::VisitBuiltinType(clang::BuiltinType * builtin_type, N
     }
 #endif
 
+     node_desc.kind_hierarchy.push_back("BuiltinType");
+
+     switch (builtin_type->getKind()) 
+        {
+          case clang::BuiltinType::Void:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "void"));
+               break; 
+          case clang::BuiltinType::Bool:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "bool"));
+               break; 
+        case clang::BuiltinType::Short:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "short"));
+            break; 
+        case clang::BuiltinType::Int:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "int"));
+            break; 
+        case clang::BuiltinType::Long:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "long"));
+            break; 
+        case clang::BuiltinType::LongLong:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "long long"));
+            break; 
+        case clang::BuiltinType::Float:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "float"));
+            break; 
+        case clang::BuiltinType::Double:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "double"));
+            break; 
+        case clang::BuiltinType::LongDouble:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "long double"));
+            break; 
+        case clang::BuiltinType::Char_S:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "char_s"));
+            break; 
+        case clang::BuiltinType::UInt:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "unsigned int"));
+            break; 
+        case clang::BuiltinType::UChar:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "unsigned char"));
+            break; 
+        case clang::BuiltinType::SChar:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "signed char"));
+            break; 
+        case clang::BuiltinType::UShort:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "unsigned short"));
+            break; 
+        case clang::BuiltinType::ULong:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "unsigned long"));
+            break; 
+        case clang::BuiltinType::ULongLong:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "unsigned long long"));
+            break; 
+        case clang::BuiltinType::NullPtr:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "null pointer"));
+            break; 
+        case clang::BuiltinType::UInt128:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "uint_128"));
+            break; 
+        case clang::BuiltinType::Int128:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "int_128"));
+            break; 
+        case clang::BuiltinType::Char_U:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "char_u"));
+            break; 
+        case clang::BuiltinType::WChar_U:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "wchar_u"));
+            break; 
+        case clang::BuiltinType::Char16:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "char_16"));
+            break; 
+        case clang::BuiltinType::Char32:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "char_32"));
+            break; 
+        case clang::BuiltinType::WChar_S:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "wchar_s"));
+            break; 
+        case clang::BuiltinType::ObjCId:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "ObjCId"));
+            break; 
+        case clang::BuiltinType::ObjCClass:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "ObjCClass"));
+            break; 
+        case clang::BuiltinType::ObjCSel:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "ObjCSel"));
+            break; 
+        case clang::BuiltinType::Dependent:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "Dependent"));
+            break; 
+        case clang::BuiltinType::Overload:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "Overload"));
+            break; 
+        case clang::BuiltinType::BoundMember:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "BoundMember"));
+            break; 
+        case clang::BuiltinType::UnknownAny:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("type", "UnknownAny"));
+            break; 
+    }
+
+
     return VisitType(builtin_type, node_desc);
 }
 #endif
@@ -750,6 +847,10 @@ bool ClangToDotTranslator::VisitComplexType(clang::ComplexType * complex_type, N
     *node = SageBuilder::buildComplexType(type);
 #endif
 
+     node_desc.kind_hierarchy.push_back("ComplexType");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("element_type", Traverse(complex_type->getElementType().getTypePtr())));
+
     return VisitType(complex_type, node_desc) && res;
 }
 #endif
@@ -771,6 +872,8 @@ bool ClangToDotTranslator::VisitDecltypeType(clang::DecltypeType * decltype_type
     std::cerr << "ClangToDotTranslator::VisitDecltypeType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("DecltypeType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -796,6 +899,8 @@ bool ClangToDotTranslator::VisitDependentDecltypeType(clang::DependentDecltypeTy
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("DependentDecltypeType");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
     return VisitDecltypeType(dependent_decltype_type, node_desc) && res;
@@ -819,6 +924,8 @@ bool ClangToDotTranslator::VisitDeducedType(clang::DeducedType * deduced_type, N
     std::cerr << "ClangToDotTranslator::VisitDeducedType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("DeducedType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -844,6 +951,8 @@ bool ClangToDotTranslator::VisitAutoType(clang::AutoType * auto_type, NodeDescri
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("AutoType");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
     return VisitDeducedType(auto_type, node_desc) && res;
@@ -867,6 +976,8 @@ bool ClangToDotTranslator::VisitDeducedTemplateSpecializationType(clang::Deduced
     std::cerr << "ClangToDotTranslator::VisitDeducedTemplateSpecializationType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("DeducedTemplateSpecializationType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -892,6 +1003,8 @@ bool ClangToDotTranslator::VisitDependentAddressSpaceType(clang::DependentAddres
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("DependentAddressSpaceType");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
     return VisitType(dependent_address_space_type, node_desc) && res;
@@ -915,6 +1028,8 @@ bool ClangToDotTranslator::VisitDependentSizedExtVectorType(clang::DependentSize
     std::cerr << "ClangToDotTranslator::DependentSizedExtVectorType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("DependentSizedExtVectorType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -940,6 +1055,8 @@ bool ClangToDotTranslator::VisitDependentVectorType(clang::DependentVectorType *
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("DependentVectorType");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
     return VisitType(dependent_vector_type, node_desc) && res;
@@ -958,16 +1075,24 @@ bool ClangToDotTranslator::VisitFunctionType(clang::FunctionType * function_type
     return VisitType(function_type, node) && res;
 }
 #else
-bool ClangToDotTranslator::VisitFunctionType(clang::FunctionType * function_type, NodeDescriptor & node_desc)  {
+bool ClangToDotTranslator::VisitFunctionType(clang::FunctionType * function_type, NodeDescriptor & node_desc)
+   {
 #if DEBUG_VISIT_TYPE
-    std::cerr << "ClangToDotTranslator::VisitFunctionType" << std::endl;
+     std::cerr << "ClangToDotTranslator::VisitFunctionType" << std::endl;
 #endif
-    bool res = true;
+     bool res = true;
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+     node_desc.kind_hierarchy.push_back("FunctionType");
 
-    return VisitType(function_type, node_desc) && res;
-}
+  // node_desc.successors.push_back(std::pair<std::string, std::string>("result_type", Traverse(function_type->getResultType().getTypePtr())));
+     node_desc.successors.push_back(std::pair<std::string, std::string>("result_type", Traverse(function_type->getReturnType().getTypePtr())));
+
+  // TODO some attr
+
+     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+
+     return VisitType(function_type, node_desc) && res;
+   }
 #endif
 
 #if 0
@@ -987,23 +1112,26 @@ bool ClangToDotTranslator::VisitFunctionNoProtoType(clang::FunctionNoProtoType *
     return VisitType(function_no_proto_type, node) && res;
 }
 #else
-bool ClangToDotTranslator::VisitFunctionNoProtoType(clang::FunctionNoProtoType * function_no_proto_type, NodeDescriptor & node_desc) {
+bool ClangToDotTranslator::VisitFunctionNoProtoType(clang::FunctionNoProtoType * function_no_proto_type, NodeDescriptor & node_desc) 
+   {
 #if DEBUG_VISIT_TYPE
-    std::cerr << "ClangToDotTranslator::VisitFunctionNoProtoType" << std::endl;
+     std::cerr << "ClangToDotTranslator::VisitFunctionNoProtoType" << std::endl;
 #endif
 
-    bool res = true;
+     bool res = true;
 
 #if 0
-    SgFunctionParameterTypeList * param_type_list = new SgFunctionParameterTypeList();
+     SgFunctionParameterTypeList * param_type_list = new SgFunctionParameterTypeList();
 
-    SgType * ret_type = buildTypeFromQualifiedType(function_no_proto_type->getReturnType()); 
+     SgType * ret_type = buildTypeFromQualifiedType(function_no_proto_type->getReturnType()); 
 
-    *node = SageBuilder::buildFunctionType(ret_type, param_type_list);
+     *node = SageBuilder::buildFunctionType(ret_type, param_type_list);
 #endif
 
-    return VisitType(function_no_proto_type, node_desc) && res;
-}
+     node_desc.kind_hierarchy.push_back("FunctionNoProtoType");
+
+     return VisitType(function_no_proto_type, node_desc) && res;
+   }
 #endif
 
 #if 0
@@ -1061,7 +1189,26 @@ bool ClangToDotTranslator::VisitFunctionProtoType(clang::FunctionProtoType * fun
     *node = func_type;
 #endif
 
-    return VisitType(function_proto_type, node_desc) && res;
+     node_desc.kind_hierarchy.push_back("FunctionProtoType");
+
+  // DQ (11/27/2020): Updated to Clang 10.
+  // for (unsigned i = 0; i < function_proto_type->getNumArgs(); i++)
+     for (unsigned i = 0; i < function_proto_type->getNumParams(); i++)
+        {
+          std::ostringstream oss;
+          oss << "arg_type[" << i << "]";
+
+       // DQ (11/27/2020): Updated to Clang 10.
+       // node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(function_proto_type->getArgType(i).getTypePtr())));
+          node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(function_proto_type->getParamType(i).getTypePtr())));
+        }
+
+     if (function_proto_type->isVariadic())
+          node_desc.attributes.push_back(std::pair<std::string, std::string>("have", "variadic"));
+
+  // Using the return from Tristan's dot generator code.
+  // return VisitType(function_proto_type, node_desc) && res;
+     return VisitFunctionType(function_proto_type, node_desc) && res;
 }
 #endif
 
@@ -1083,7 +1230,21 @@ bool ClangToDotTranslator::VisitInjectedClassNameType(clang::InjectedClassNameTy
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("InjectedClassNameType");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    node_desc.successors.push_back(
+        std::pair<std::string, std::string>("injected_specialization_type", Traverse(injected_class_name_type->getInjectedSpecializationType().getTypePtr()))
+    );
+
+    node_desc.successors.push_back(
+        std::pair<std::string, std::string>("injected_template_specialization_type", Traverse(injected_class_name_type->getInjectedTST()))
+    );
+
+    node_desc.successors.push_back(
+        std::pair<std::string, std::string>("declaration", Traverse(injected_class_name_type->getDecl()))
+    );
 
     return VisitType(injected_class_name_type, node_desc) && res;
 }
@@ -1106,6 +1267,8 @@ bool ClangToDotTranslator::VisitLocInfoType(clang::LocInfoType * loc_info_type, 
     std::cerr << "ClangToDotTranslator::LocInfoType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("LocInfoType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -1131,6 +1294,8 @@ bool ClangToDotTranslator::VisitMacroQualifiedType(clang::MacroQualifiedType * m
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("MacroQualifiedType");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
     return VisitType(macro_qualified_type, node_desc) && res;
@@ -1155,6 +1320,8 @@ bool ClangToDotTranslator::VisitMemberPointerType(clang::MemberPointerType * mem
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("MemberPointerType");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
     return VisitType(member_pointer_type, node_desc) && res;
@@ -1178,6 +1345,8 @@ bool ClangToDotTranslator::VisitPackExpansionType(clang::PackExpansionType * pac
     std::cerr << "ClangToDotTranslator::PackExpansionType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("PackExpansionType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -1205,6 +1374,10 @@ bool ClangToDotTranslator::VisitParenType(clang::ParenType * paren_type, NodeDes
     *node = buildTypeFromQualifiedType(paren_type->getInnerType());
 #endif
 
+     node_desc.kind_hierarchy.push_back("ParenType");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("inner_type", Traverse(paren_type->getInnerType().getTypePtr())));
+
     return VisitType(paren_type, node_desc);
 }
 #endif
@@ -1226,6 +1399,8 @@ bool ClangToDotTranslator::VisitPipeType(clang::PipeType * pipe_type, NodeDescri
     std::cerr << "ClangToDotTranslator::PipeType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("PipeType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -1257,6 +1432,10 @@ bool ClangToDotTranslator::VisitPointerType(clang::PointerType * pointer_type, N
     *node = SageBuilder::buildPointerType(type);
 #endif
 
+     node_desc.kind_hierarchy.push_back("PointerType");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("pointee_type", Traverse(pointer_type->getPointeeType().getTypePtr())));
+
     return VisitType(pointer_type, node_desc);
 }
 #endif
@@ -1279,7 +1458,11 @@ bool ClangToDotTranslator::VisitReferenceType(clang::ReferenceType * reference_t
 #endif
     bool res = true;
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+     node_desc.kind_hierarchy.push_back("ReferenceType");
+
+     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("pointee_type", Traverse(reference_type->getPointeeType().getTypePtr())));
 
     return VisitType(reference_type, node_desc) && res;
 }
@@ -1302,6 +1485,8 @@ bool ClangToDotTranslator::VisitLValueReferenceType(clang::LValueReferenceType *
     std::cerr << "ClangToDotTranslator::LValueReferenceType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("LValueReferenceType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -1327,6 +1512,8 @@ bool ClangToDotTranslator::VisitRValueReferenceType(clang::RValueReferenceType *
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("RValueReferenceType");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
     return VisitReferenceType(rvalue_reference_type, node_desc) && res;
@@ -1350,6 +1537,8 @@ bool ClangToDotTranslator::VisitSubstTemplateTypeParmPackType(clang::SubstTempla
     std::cerr << "ClangToDotTranslator::SubstTemplateTypeParmPackType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("SubstTemplateTypeParmPackType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -1375,7 +1564,14 @@ bool ClangToDotTranslator::VisitSubstTemplateTypeParmType(clang::SubstTemplateTy
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("SubstTemplateTypeParmType");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("replaced_parameter", Traverse(subst_template_type_parm_type->getReplacedParameter())));
+
+     node_desc.successors.push_back(
+        std::pair<std::string, std::string>("replacement_type", Traverse(subst_template_type_parm_type->getReplacementType().getTypePtr())) );
 
     return VisitType(subst_template_type_parm_type, node_desc) && res;
 }
@@ -1395,13 +1591,17 @@ bool ClangToDotTranslator::VisitTagType(clang::TagType * tag_type, SgNode ** nod
 #else
 bool ClangToDotTranslator::VisitTagType(clang::TagType * tag_type, NodeDescriptor & node_desc) {
 #if DEBUG_VISIT_TYPE
-    std::cerr << "ClangToDotTranslator::VisitTagType" << std::endl;
+     std::cerr << "ClangToDotTranslator::VisitTagType" << std::endl;
 #endif
-    bool res = true;
+     bool res = true;
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+     node_desc.kind_hierarchy.push_back("TagType");
 
-    return VisitType(tag_type, node_desc) && res;
+     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("declaration", Traverse(tag_type->getDecl())));
+
+     return VisitType(tag_type, node_desc) && res;
 }
 #endif
 
@@ -1468,6 +1668,8 @@ bool ClangToDotTranslator::VisitEnumType(clang::EnumType * enum_type, NodeDescri
             p_enum_type_decl_first_see_in_type.insert(std::pair<SgEnumType *, bool>(isSgEnumType(*node), false));
     }
 #endif
+
+     node_desc.kind_hierarchy.push_back("EnumType");
 
     return VisitType(enum_type, node_desc);
 }
@@ -1539,6 +1741,8 @@ bool ClangToDotTranslator::VisitRecordType(clang::RecordType * record_type, Node
     }
 #endif
 
+     node_desc.kind_hierarchy.push_back("RecordType");
+
     return VisitType(record_type, node_desc);
 }
 #endif
@@ -1561,7 +1765,25 @@ bool ClangToDotTranslator::VisitTemplateSpecializationType(clang::TemplateSpecia
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("TemplateSpecializationType");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    if (template_specialization_type->isTypeAlias())
+        node_desc.successors.push_back(
+            std::pair<std::string, std::string>("aliased_type", Traverse(template_specialization_type->getAliasedType().getTypePtr()))
+        );
+
+    const clang::TemplateName & template_name = template_specialization_type->getTemplateName();
+    VisitTemplateName(template_name, node_desc, "template_name");
+
+    clang::TemplateSpecializationType::iterator it;
+    unsigned cnt = 0;
+    for (it = template_specialization_type->begin(); it != template_specialization_type->end(); it++) {
+        std::ostringstream oss;
+        oss << "template_argument[" << cnt++ << "]";
+        VisitTemplateArgument(*it, node_desc, oss.str());
+    }
 
     return VisitType(template_specialization_type, node_desc) && res;
 }
@@ -1570,24 +1792,34 @@ bool ClangToDotTranslator::VisitTemplateSpecializationType(clang::TemplateSpecia
 #if 0
 bool ClangToDotTranslator::VisitTemplateTypeParmType(clang::TemplateTypeParmType * template_type_parm_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
-    std::cerr << "ClangToDotTranslator::TemplateTypeParmType" << std::endl;
+     std::cerr << "ClangToDotTranslator::TemplateTypeParmType" << std::endl;
 #endif
-    bool res = true;
+     bool res = true;
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
-    return VisitType(template_type_parm_type, node) && res;
+     return VisitType(template_type_parm_type, node) && res;
 }
 #else
 bool ClangToDotTranslator::VisitTemplateTypeParmType(clang::TemplateTypeParmType * template_type_parm_type, NodeDescriptor & node_desc) {
 #if DEBUG_VISIT_TYPE
-    std::cerr << "ClangToDotTranslator::TemplateTypeParmType" << std::endl;
+     std::cerr << "ClangToDotTranslator::TemplateTypeParmType" << std::endl;
 #endif
-    bool res = true;
+     bool res = true;
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+     node_desc.kind_hierarchy.push_back("TemplateTypeParmType");
 
-    return VisitType(template_type_parm_type, node_desc) && res;
+     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("declaration", Traverse(template_type_parm_type->getDecl())));
+
+     clang::IdentifierInfo * indent_info = template_type_parm_type->getIdentifier();
+
+     assert(indent_info != NULL); // I am not sure of it let try
+
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("identifier_name", indent_info->getName().data()));
+
+     return VisitType(template_type_parm_type, node_desc) && res;
 }
 #endif
 
@@ -1631,7 +1863,11 @@ bool ClangToDotTranslator::VisitTypedefType(clang::TypedefType * typedef_type, N
     *node = tdef_sym->get_type();
 #endif
 
-   return VisitType(typedef_type, node_desc) && res;
+     node_desc.kind_hierarchy.push_back("TypedefType");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("declaration", Traverse(typedef_type->getDecl())));
+
+    return VisitType(typedef_type, node_desc) && res;
 }
 #endif
 
@@ -1652,6 +1888,8 @@ bool ClangToDotTranslator::VisitTypeOfExprType(clang::TypeOfExprType * type_of_e
     std::cerr << "ClangToDotTranslator::TypeOfExprType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("TypeOfExprType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -1677,6 +1915,8 @@ bool ClangToDotTranslator::VisitDependentTypeOfExprType(clang::DependentTypeOfEx
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("DependentTypeOfExprType");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
     return VisitTypeOfExprType(dependent_type_of_expr_type, node_desc) && res;
@@ -1700,6 +1940,8 @@ bool ClangToDotTranslator::VisitTypeOfType(clang::TypeOfType * type_of_type, Nod
     std::cerr << "ClangToDotTranslator::TypeOfType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("TypeOfType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -1725,7 +1967,29 @@ bool ClangToDotTranslator::VisitTypeWithKeyword(clang::TypeWithKeyword * type_wi
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("TypeWithKeyword");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+
+    switch (type_with_keyword->getKeyword()) {
+        case clang::ETK_Struct:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "struct"));
+            break;
+        case clang::ETK_Union:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "union"));
+            break;
+        case clang::ETK_Class:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "class"));
+            break;
+        case clang::ETK_Enum:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "enum"));
+            break;
+        case clang::ETK_Typename:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("elaborated_type_keyword", "typename"));
+            break;
+        case clang::ETK_None:
+            break;
+    }
 
     return VisitType(type_with_keyword, node_desc) && res;
 }
@@ -1749,7 +2013,15 @@ bool ClangToDotTranslator::VisitDependentNameType(clang::DependentNameType * dep
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("DependentNameType");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    VisitNestedNameSpecifier(dependent_name_type->getQualifier(), node_desc, "nested_name_qualifier");
+
+    const clang::IdentifierInfo * identifier = dependent_name_type->getIdentifier();
+    assert(identifier != NULL);
+    node_desc.attributes.push_back(std::pair<std::string, std::string>("identifier" , identifier->getName().data()));
 
     return VisitTypeWithKeyword(dependent_name_type, node_desc) && res;
 }
@@ -1772,6 +2044,8 @@ bool ClangToDotTranslator::VisitDependentTemplateSpecializationType(clang::Depen
     std::cerr << "ClangToDotTranslator::DependentTemplateSpecializationType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("DependentTemplateSpecializationType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -1807,7 +2081,11 @@ bool ClangToDotTranslator::VisitElaboratedType(clang::ElaboratedType * elaborate
     *node = type;
 #endif
 
-    return VisitTypeWithKeyword(elaborated_type, node_desc);
+     node_desc.kind_hierarchy.push_back("ElaboratedType");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("named_type", Traverse(elaborated_type->getNamedType().getTypePtr())));
+
+     return VisitTypeWithKeyword(elaborated_type, node_desc);
 }
 #endif
 
@@ -1828,6 +2106,8 @@ bool ClangToDotTranslator::VisitUnaryTransformType(clang::UnaryTransformType * u
     std::cerr << "ClangToDotTranslator::UnaryTransformType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("UnaryTransformType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -1853,6 +2133,8 @@ bool ClangToDotTranslator::VisitDependentUnaryTransformType(clang::DependentUnar
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("DependentUnaryTransformType");
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
     return VisitUnaryTransformType(dependent_unary_transform_type, node_desc) && res;
@@ -1876,6 +2158,8 @@ bool ClangToDotTranslator::VisitUnresolvedUsingType(clang::UnresolvedUsingType *
     std::cerr << "ClangToDotTranslator::UnresolvedUsingType" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("UnresolvedUsingType");
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
@@ -1919,7 +2203,15 @@ bool ClangToDotTranslator::VisitVectorType(clang::VectorType * vector_type, Node
     *node = SgModifierType::insertModifierTypeIntoTypeTable(modified_type);
 #endif
 
-    return VisitType(vector_type, node_desc);
+     node_desc.kind_hierarchy.push_back("VectorType");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("element_type", Traverse(vector_type->getElementType().getTypePtr())));
+
+     std::ostringstream oss;
+     oss << vector_type->getNumElements();
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("number_element", oss.str()));
+
+     return VisitType(vector_type, node_desc);
 }
 #endif
 
@@ -1937,12 +2229,14 @@ bool ClangToDotTranslator::VisitExtVectorType(clang::ExtVectorType * ext_vector_
 #else
 bool ClangToDotTranslator::VisitExtVectorType(clang::ExtVectorType * ext_vector_type, NodeDescriptor & node_desc) {
 #if DEBUG_VISIT_TYPE
-    std::cerr << "ClangToDotTranslator::VisitExtVectorType" << std::endl;
+     std::cerr << "ClangToDotTranslator::VisitExtVectorType" << std::endl;
 #endif
-    bool res = true;
+     bool res = true;
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME Is it anything to be done here?
+     node_desc.kind_hierarchy.push_back("ExtVectorType");
 
-    return VisitVectorType(ext_vector_type, node_desc) && res;
+     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME Is it anything to be done here?
+
+     return VisitVectorType(ext_vector_type, node_desc) && res;
 }
 #endif
