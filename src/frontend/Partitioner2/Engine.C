@@ -1586,6 +1586,7 @@ Engine::createTunedPartitioner() {
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
         p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
+        p.basicBlockCallbacks().append(libcStartMain_ = ModulesLinux::LibcStartMain::instance());
         return boost::move(p);
     }
 
