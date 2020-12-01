@@ -3,7 +3,7 @@
  *************************************************************/
 
 #include "sage3basic.h"
-#include "DFAnalysisBase.h"
+#include "CSDFAnalysisBase.h"
 #include "AstUtility.h"
 #include "ExtractFunctionArguments.h"
 #include "FunctionNormalization.h"
@@ -15,19 +15,19 @@ using namespace std;
 namespace CodeThorn 
 {
 
-  DFAnalysisBase::DFAnalysisBase()
+  CSDFAnalysisBase::CSDFAnalysisBase()
   {
     // all data member initializers are specified in class definition
   }
 
-  DFAnalysisBase::~DFAnalysisBase() {
+  CSDFAnalysisBase::~CSDFAnalysisBase() {
     if(_pointerAnalysisEmptyImplementation)
       delete _pointerAnalysisEmptyImplementation;
     if(_programAbstractionLayer && _programAbstractionLayerOwner)
       delete _programAbstractionLayer;
   }
 
-  void DFAnalysisBase::initializeSolver() {
+  void CSDFAnalysisBase::initializeSolver() {
     ROSE_ASSERT(getInitialElementFactory());
     ROSE_ASSERT(getFlow());
      
@@ -42,22 +42,22 @@ namespace CodeThorn
     ROSE_ASSERT(_solver);
   }
 
-  Lattice* DFAnalysisBase::getPreInfo(Label lab) {
+  Lattice* CSDFAnalysisBase::getPreInfo(Label lab, Context* context) {
     return _analyzerDataPreInfo.at(lab.getId());
   }
 
-  Lattice* DFAnalysisBase::getPostInfo(Label lab) {
+  Lattice* CSDFAnalysisBase::getPostInfo(Label lab, Context* context) {
     return _analyzerDataPostInfo[lab.getId()];
   }
 
-  void DFAnalysisBase::setPostInfo(Label lab,Lattice* el) {
-    if(getPostInfo(lab.getId())) {
+  void CSDFAnalysisBase::setPostInfo(Label lab, Context* context, Lattice* el) {
+    if(getPostInfo(lab.getId(),context)) {
       delete _analyzerDataPostInfo[lab.getId()];
     }
     _analyzerDataPostInfo[lab.getId()]=el;
   }
 
-  void DFAnalysisBase::computeAllPreInfo() {
+  void CSDFAnalysisBase::computeAllPreInfo() {
     if(!_preInfoIsValid) {
       _solver->runSolver();
       _preInfoIsValid=true;
@@ -65,7 +65,7 @@ namespace CodeThorn
     }
   }
 
-  void DFAnalysisBase::computeAllPostInfo() {
+  void CSDFAnalysisBase::computeAllPostInfo() {
     if(!_postInfoIsValid) {
       computeAllPreInfo();
       // compute set of used labels in ICFG.
@@ -77,14 +77,15 @@ namespace CodeThorn
         // (i) combine results or (ii) provide set of results (one
         // result per edge)
         _transferFunctions->transfer(lab,*info);
-        setPostInfo(lab.getId(),info);
+        class Context* context=nullptr;
+        setPostInfo(lab.getId(),context,info);
       }
       _postInfoIsValid=true;
     }
   }
 
   void
-  DFAnalysisBase::initializeAnalyzerDataInfo() {
+  CSDFAnalysisBase::initializeAnalyzerDataInfo() {
     Labeler*              labeler = getLabeler();
     PropertyStateFactory* factory = getInitialElementFactory();
     ROSE_ASSERT(factory && labeler);  
@@ -101,7 +102,7 @@ namespace CodeThorn
   }
 
   void
-  DFAnalysisBase::initialize(CodeThornOptions& ctOpt, SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
+  CSDFAnalysisBase::initialize(CodeThornOptions& ctOpt, SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
     //cout << "INIT: establishing program abstraction layer." << endl;
     if(programAbstractionLayer) {
       ROSE_ASSERT(_programAbstractionLayer==nullptr);
@@ -123,13 +124,13 @@ namespace CodeThorn
     initializeAnalyzerDataInfo();
   }
 
-  WorkListSeq<Edge>* DFAnalysisBase::getWorkList() {
+  WorkListSeq<Edge>* CSDFAnalysisBase::getWorkList() {
     return &_workList;
   }
 
   // runs until worklist is empty
   void
-  DFAnalysisBase::run() {
+  CSDFAnalysisBase::run() {
     ROSE_ASSERT(_globalVariablesState);
     // initialize work list with extremal labels
     cerr << "INFO: " << &_extremalLabels << " " << _extremalLabels.size() << std::endl;
@@ -186,110 +187,10 @@ namespace CodeThorn
 
   // runs until worklist is empty
   void
-  DFAnalysisBase::solve() {
+  CSDFAnalysisBase::solve() {
     computeAllPreInfo();
     computeAllPostInfo();
   }
 
-  /*!
-   * \author Markus Schordan
-   * \date 2018.
-   */
-
-  void DFAnalysisBase::setSkipUnknownFunctionCalls(bool defer) {
-    _skipSelectedFunctionCalls=defer;
-    if(_transferFunctions) {
-      _transferFunctions->setSkipUnknownFunctionCalls(defer);
-    }
-  }
-
-#include <iostream>
-#include "AstAnnotator.h"
-#include <string>
-
-  using std::string;
-
-#include <sstream>
-
-  DFAstAttribute* DFAnalysisBase::createDFAstAttribute(Lattice* elem) {
-    // elem ignored in default function
-    return new DFAstAttribute();
-  }
-
-  /*!
-   * \author Markus Schordan
-   * \date 2012.
-   */
-
-  void DFAnalysisBase::attachInfoToAst(string attributeName,bool inInfo) {
-    computeAllPreInfo();
-    computeAllPostInfo();
-    LabelSet labelSet=getFlow()->nodeLabels();
-    for(LabelSet::iterator i=labelSet.begin();
-        i!=labelSet.end();
-        ++i) {
-      ROSE_ASSERT(*i<_analyzerDataPreInfo.size());
-      ROSE_ASSERT(*i<_analyzerDataPostInfo.size());
-      // TODO: need to add a solution for nodes with multiple associated labels (e.g. function call)
-      if(*i >=0 ) {
-        Label lab=*i;
-        SgNode* node=getLabeler()->getNode(*i);
-        Lattice* info=0;
-        if(inInfo) {
-          if(isForwardAnalysis()) {
-            info=getPreInfo(lab);
-            if(getLabeler()->isSecondLabelOfMultiLabeledNode(lab)) {
-              continue;
-            }
-          } else if(isBackwardAnalysis()) {
-            if(getLabeler()->isSecondLabelOfMultiLabeledNode(lab)) {
-              continue;
-            }
-            info=getPostInfo(lab);
-          } else {
-            cerr<<"Error: Ast-annotation: unsupported analysis mode."<<endl;
-            exit(1);
-          }
-        } else {
-          if(isForwardAnalysis()) {
-            if(getLabeler()->isFirstLabelOfMultiLabeledNode(lab)) {
-              continue;
-            }
-            info=getPostInfo(lab);
-          } else if(isBackwardAnalysis()) {
-            if(getLabeler()->isFirstLabelOfMultiLabeledNode(lab)) {
-              continue;
-            }
-            info=getPreInfo(lab);
-          } else {
-            cerr<<"Error: Ast-annotation: unsupported analysis mode."<<endl;
-            exit(1);
-          }
-
-        }
-        ROSE_ASSERT(info!=0);
-        node->setAttribute(attributeName,createDFAstAttribute(info));
-      }
-    }
-  }
-
-  /*!
-   * \author Markus Schordan
-   * \date 2012.
-   */
-
-  void DFAnalysisBase::attachInInfoToAst(string attributeName) {
-    attachInfoToAst(attributeName,true);
-  }
-
-  /*!
-   * \author Markus Schordan
-   * \date 2012.
-   */
-
-  void DFAnalysisBase::attachOutInfoToAst(string attributeName) {
-    attachInfoToAst(attributeName,false);
-  }
- 
 }
 

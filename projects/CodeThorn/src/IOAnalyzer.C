@@ -28,12 +28,12 @@ void IOAnalyzer::initDiagnostics() {
   }
 }
 
-IOAnalyzer::IOAnalyzer() {
+IOAnalyzer::IOAnalyzer():CTAnalysis() {
   initDiagnostics();
 }
 
-void IOAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
-  Analyzer::initializeSolver(functionToStartAt, root, oneFunctionOnly);
+void IOAnalyzer::initializeSolver2(std::string functionToStartAt,SgProject* root) {
+  super::initializeSolver2(functionToStartAt, root);
   const EState* currentEState=estateWorkListCurrent->front();
   ROSE_ASSERT(currentEState);
   if(getModeLTLDriven()) {
@@ -97,7 +97,7 @@ void IOAnalyzer::removeOutputOutputTransitions() {
         const EState* pred = (*k)->source;
         if (pred->io.isStdOutIO()) {
           transitionGraph.erase(**k);
-          logger[DEBUG]<< "erased an output -> output transition." << endl;
+          SAWYER_MESG(logger[DEBUG])<< "erased an output -> output transition." << endl;
         }
       }
     }
@@ -118,7 +118,7 @@ void IOAnalyzer::removeInputInputTransitions() {
         const EState* succ = (*k)->target;
         if (succ->io.isStdInIO()) {
           transitionGraph.erase(**k);
-          logger[DEBUG]<< "erased an input -> input transition." << endl;
+          SAWYER_MESG(logger[DEBUG])<< "erased an input -> input transition." << endl;
         }
       }
     }
@@ -198,7 +198,7 @@ void IOAnalyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerDat
     estateWorkListCurrent = &newEStateWorkList;
     TransitionGraph newTransitionGraph;
     transitionGraph = newTransitionGraph;
-    Label startLabel=flow.getStartLabel();
+    Label startLabel=getFlow()->getStartLabel();
     transitionGraph.setStartLabel(startLabel);
     list<int> newInputSequence;
     _inputSequence = newInputSequence;
@@ -234,7 +234,7 @@ void IOAnalyzer::continueAnalysisFrom(EState * newStartEState) {
 }
 
 void IOAnalyzer::resetAnalysis() {
-  Analyzer::resetAnalysis();
+  CTAnalysis::resetAnalysis();
   _prevStateSetSizeDisplay = 0;
   _prevStateSetSizeResource = 0;
 }
@@ -292,7 +292,7 @@ void IOAnalyzer::printAnalyzerStatistics(double totalRunTime, string title) {
   printStatusMessage(ss.str());
 }
 
-void IOAnalyzer::setup(Analyzer* analyzer, Sawyer::Message::Facility logger,
+void IOAnalyzer::setup(CTAnalysis* analyzer, Sawyer::Message::Facility logger,
                        CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
   analyzer->setOptionOutputWarnings(ctOpt.printWarnings);
   analyzer->setPrintDetectedViolations(ctOpt.printViolations);
@@ -378,28 +378,28 @@ void IOAnalyzer::setup(Analyzer* analyzer, Sawyer::Message::Facility logger,
 
   if(ctOpt.maxIterationsForcedTop!=-1) {
     analyzer->setMaxIterationsForcedTop(ctOpt.maxIterationsForcedTop);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
   }
 
-  // TODO: Analyzer::GTM_IO is only mode used now, all others are deprecated
+  // TODO: CTAnalysis::GTM_IO is only mode used now, all others are deprecated
   if(ctOpt.maxTransitionsForcedTop!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
   } else if(ctOpt.maxTransitionsForcedTop1!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop1);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
   } else if(ctOpt.maxTransitionsForcedTop2!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop2);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCF);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IOCF);
   } else if(ctOpt.maxTransitionsForcedTop3!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop3);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCFPTR);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IOCFPTR);
   } else if(ctOpt.maxTransitionsForcedTop4!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop4);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_COMPOUNDASSIGN);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_COMPOUNDASSIGN);
   } else if(ctOpt.maxTransitionsForcedTop5!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop5);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_FLAGS);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_FLAGS);
   }
 
   int gigaByteMultiply=1; //1024*1024*1024;
@@ -451,15 +451,12 @@ void CodeThorn::IOAnalyzer::configureOptions(CodeThornOptions ctOpt, LTLOptions 
   if (ctOpt.callStringLength >= 2) 
     setFiniteCallStringMaxLength(ctOpt.callStringLength);
 
-  //configureOptionSets(ctOpt);
-
   optionStringLiteralsInState=ctOpt.inStateStringLiterals;
   setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
   setIgnoreFunctionPointers(ctOpt.ignoreFunctionPointers);
   setStdFunctionSemantics(ctOpt.stdFunctions);
 
   setup(this, logger, ctOpt, ltlOpt, parProOpt);
-  //setSolver(createSolver(ctOpt));
     
   switch(int mode=ctOpt.interpreterMode) {
   case 0: setInterpreterMode(IM_DISABLED); break;
@@ -494,7 +491,6 @@ void CodeThorn::IOAnalyzer::configureOptions(CodeThornOptions ctOpt, LTLOptions 
   if(ctOpt.svcomp.detectedErrorFunctionName.size()>0) {
     setExternalErrorFunctionName(ctOpt.svcomp.detectedErrorFunctionName);
   }
-
 
   // Build the AST used by ROSE
   if(ctOpt.status) {

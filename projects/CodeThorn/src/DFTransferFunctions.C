@@ -346,6 +346,7 @@ void DFTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* 
 }
 
 void DFTransferFunctions::addParameterPassingVariables() {
+  ROSE_ASSERT(getVariableIdMapping());
   std::string nameprefix="$p";
   /* this variable is necessary to know the id-range where parameter
      passing variable-ids are starting in the id-range.

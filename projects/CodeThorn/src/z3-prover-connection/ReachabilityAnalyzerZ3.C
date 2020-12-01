@@ -9,7 +9,7 @@
 
 #include <iostream>
 #include "z3++.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "staticSingleAssignment.h"
 #include "Flow.h"
 #include <assert.h>

@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "RewriteSystem.h"
 #include "Specialization.h"
 #include "Normalization.h"
@@ -24,7 +24,7 @@
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
-#include "EquivalenceChecking.h"
+//#include "EquivalenceChecking.h"
 #include "Solver5.h"
 #include "Solver8.h"
 #include "ltlthorn-lib/Solver10.h"
@@ -111,7 +111,7 @@ void CodeThorn::initDiagnostics() {
   // general logger for CodeThorn library functions
   Rose::Diagnostics::initAndRegister(&CodeThorn::logger, "CodeThorn");
   // class specific loggers for CodeThorn library functions
-  Analyzer::initDiagnostics();
+  CTAnalysis::initDiagnostics();
   ExprAnalyzer::initDiagnostics();
   RewriteSystem::initDiagnostics();
   Specialization::initDiagnostics();
@@ -296,7 +296,7 @@ bool readAndParseLTLRersMappingFile(string ltlRersMappingFileName, CodeThorn::Lt
   return true;
 }
 
-void processCtOptGenerateAssertions(CodeThornOptions& ctOpt, Analyzer* analyzer, SgProject* root) {
+void processCtOptGenerateAssertions(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgProject* root) {
   if (ctOpt.generateAssertions) {
     AssertionExtractor assertionExtractor(analyzer);
     assertionExtractor.computeLabelVectorOfEStates();
@@ -344,7 +344,7 @@ void optionallyRunInliner(CodeThornOptions& ctOpt, Normalization& normalization,
   }
 }
 
-void optionallyRunVisualizer(CodeThornOptions& ctOpt, Analyzer* analyzer, SgNode* root) {
+void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNode* root) {
   Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
   if (ctOpt.visualization.icfgFileName.size()>0) {
     string cfgFileName=ctOpt.visualization.icfgFileName;
@@ -530,7 +530,7 @@ void optionallyRunIOSequenceGenerator(CodeThornOptions& ctOpt, IOAnalyzer* analy
   }
 }
 
-void optionallyAnnotateTermsAndUnparse(CodeThornOptions& ctOpt, SgProject* sageProject, Analyzer* analyzer) {
+void optionallyAnnotateTermsAndUnparse(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer) {
   if (ctOpt.annotateTerms) {
     // TODO: it might be useful to be able to select certain analysis results to be annotated only
     logger[INFO] << "Annotating term representations."<<endl;
@@ -546,7 +546,7 @@ void optionallyAnnotateTermsAndUnparse(CodeThornOptions& ctOpt, SgProject* sageP
   }
 }
 
-void optionallyRunDataRaceDetection(CodeThornOptions& ctOpt, Analyzer* analyzer) {
+void optionallyRunDataRaceDetection(CodeThornOptions& ctOpt, CTAnalysis* analyzer) {
   // parse command line options for data race detection
   DataRaceDetection dataRaceDetection;
   dataRaceDetection.setOptions(ctOpt);
@@ -582,7 +582,7 @@ SgProject* runRoseFrontEnd(int argc, char * argv[], CodeThornOptions& ctOpt, Tim
   return project;
 }
 
-void optionallyPrintProgramInfos(CodeThornOptions& ctOpt, Analyzer* analyzer) {
+void optionallyPrintProgramInfos(CodeThornOptions& ctOpt, CTAnalysis* analyzer) {
   if(ctOpt.info.printVariableIdMapping) {
     analyzer->getVariableIdMapping()->toStream(cout);
   }
@@ -624,13 +624,15 @@ void optionallyRunNormalization(CodeThornOptions& ctOpt,SgProject* sageProject, 
   CodeThorn::optionallyRunInliner(ctOpt,normalization, sageProject);
 }
 
-void setAssertConditionVariablesInAnalyzer(SgNode* root,Analyzer* analyzer) {
+void setAssertConditionVariablesInAnalyzer(SgNode* root,CTAnalysis* analyzer) {
+  SAWYER_MESG(logger[TRACE])<<"setAssertConditionVariablesInAnalyzer started"<<endl;
+  ROSE_ASSERT(analyzer->getVariableIdMapping());
   AbstractValueSet varsInAssertConditions=AstUtility::determineVarsInAssertConditions(root,analyzer->getVariableIdMapping());
   SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
   analyzer->setAssertCondVarsSet(varsInAssertConditions);
 }
 
-void optionallyEliminateCompoundStatements(CodeThornOptions& ctOpt, Analyzer* analyzer, SgNode* root) {
+void optionallyEliminateCompoundStatements(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNode* root) {
   if(ctOpt.eliminateCompoundStatements) {
     RewriteSystem rewriteSystem;
     SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments started."<<endl;
@@ -643,7 +645,7 @@ void optionallyEliminateCompoundStatements(CodeThornOptions& ctOpt, Analyzer* an
   }
 }
 
-void optionallyEliminateRersArraysAndExit(CodeThornOptions& ctOpt, SgProject* sageProject, Analyzer* analyzer) {
+void optionallyEliminateRersArraysAndExit(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer) {
   if(ctOpt.rers.eliminateArrays) {
     Specialization speci;
     speci.transformArrayProgram(sageProject, analyzer);
@@ -652,16 +654,7 @@ void optionallyEliminateRersArraysAndExit(CodeThornOptions& ctOpt, SgProject* sa
   }
 }
 
-void optionallyPrintFunctionIdMapping(CodeThornOptions& ctOpt,Analyzer* analyzer) {
-  // function-id-mapping is initialized with initializeSolver function.
-  if(ctOpt.info.printFunctionIdMapping) {
-    ROSE_ASSERT(analyzer->getCFAnalyzer());
-    ROSE_ASSERT(analyzer->getCFAnalyzer()->getFunctionIdMapping());
-    analyzer->getCFAnalyzer()->getFunctionIdMapping()->toStream(cout);
-  }
-}
-
-void optionallyWriteSVCompWitnessFile(CodeThornOptions& ctOpt, Analyzer* analyzer) {
+void optionallyWriteSVCompWitnessFile(CodeThornOptions& ctOpt, CTAnalysis* analyzer) {
   if (ctOpt.svcomp.svcompMode && ctOpt.svcomp.witnessFileName.size()>0) {
     analyzer->writeWitnessToFile(ctOpt.svcomp.witnessFileName);
   }
@@ -705,7 +698,7 @@ void optionallyAnalyzeAssertions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, IO
   }
 }
 
-void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,Analyzer* analyzer) {
+void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
   if(ctOpt.analysisList().size()>0) {
     const bool reportDetectedErrorLines=true;
     AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
@@ -713,7 +706,7 @@ void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,Analyzer* ana
     AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
   }
 }
-void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,Analyzer* analyzer) {
+void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
   std::string fileName=ctOpt.visualization.callGraphFileName;
   if(fileName.size()>0) {
     InterFlow::LabelToFunctionMap map=analyzer->getCFAnalyzer()->labelToFunctionMap(*analyzer->getFlow());
@@ -729,7 +722,7 @@ void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,Analyzer* analyz
   }
 }
 
-  void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,Analyzer* analyzer,SgNode* root, TimingCollector& tc) {
+  void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,CTAnalysis* analyzer,SgProject* root, TimingCollector& tc) {
   tc.startTimer();
   SAWYER_MESG(logger[INFO])<< "Iinitializing solver "<<analyzer->getSolver()->getId()<<" started"<<endl;
   string startFunctionName;
@@ -738,12 +731,12 @@ void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,Analyzer* analyz
   } else {
     startFunctionName = "main";
   }
-  analyzer->initializeSolver(startFunctionName,root,false);
+  analyzer->initializeSolver2(startFunctionName,root);
   SAWYER_MESG(logger[INFO])<< "Initializing solver "<<analyzer->getSolver()->getId()<<" finished"<<endl;
   tc.initRunTime=tc.timer.getTimeDurationAndStop().milliSeconds();
 }
 
-void runSolver(CodeThornOptions& ctOpt,Analyzer* analyzer, SgProject* sageProject,TimingCollector& tc) {
+void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProject,TimingCollector& tc) {
   tc.startTimer();
   analyzer->printStatusMessageLine("==============================================================");
   if(!analyzer->getModeLTLDriven() && ctOpt.z3BasedReachabilityAnalysis==false && ctOpt.ssa==false) {
@@ -754,7 +747,7 @@ void runSolver(CodeThornOptions& ctOpt,Analyzer* analyzer, SgProject* sageProjec
       break;
     case 2:
       cout<<"INFO: PA framework: initialization."<<endl;
-      analyzer->initialize(sageProject,nullptr);
+      analyzer->initialize(ctOpt,sageProject);
       cout<<"INFO: running PA Framework solver."<<endl;
       analyzer->run();
       cout<<"INFO: PA framework: finished."<<endl;
@@ -763,4 +756,53 @@ void runSolver(CodeThornOptions& ctOpt,Analyzer* analyzer, SgProject* sageProjec
   }
   tc.analysisRunTime=tc.timer.getTimeDurationAndStop().milliSeconds();
 }
+
+  SgProject* parsingPass(CodeThornOptions& ctOpt, int argc, char * argv[]) {
+    TimingCollector timingCollector;
+    SgProject* project=runRoseFrontEnd(argc,argv,ctOpt,timingCollector);
+    return project;
+  }
+
+  void normalizationPass(CodeThornOptions& ctOpt, SgProject* project) {
+    CodeThorn::Normalization normalization;
+    normalization.setInliningOption(ctOpt.inlineFunctions);
+    int normalizationLevel=0;
+    if(ctOpt.normalizeFCalls)
+      normalizationLevel=1;
+    if(ctOpt.normalizeAll)
+      normalizationLevel=2;
+    normalization.normalizeAst(project,normalizationLevel);
+  }
+
+  VariableIdMappingExtended* createVariableIdMapping(CodeThornOptions& ctOpt, SgProject* project) {
+    VariableIdMappingExtended* variableIdMapping=new VariableIdMappingExtended();
+    variableIdMapping->computeVariableSymbolMapping(project);
+    return variableIdMapping;
+  }
+
+  Labeler* createLabeler(SgProject* project, VariableIdMappingExtended* variableIdMapping) {
+    return new CTIOLabeler(project,variableIdMapping);
+  }
+    
+  CFAnalysis* createControlFlowGraph(CodeThornOptions& ctOpt, SgProject* project, Labeler* labeler) {
+    SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=true;
+    CFAnalysis* cfAnalyzer=new CFAnalysis(labeler);
+    FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
+    ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(project);
+    functionCallMapping2->setLabeler(labeler);
+    functionCallMapping2->setClassHierarchy(classHierarchy);
+    functionCallMapping2->computeFunctionCallMapping(project);
+    cfAnalyzer->setFunctionCallMapping2(functionCallMapping2);
+    cfAnalyzer->createICFG(project);
+    return cfAnalyzer;
+  }
+
+  IOAnalyzer* runMemoryAnalysis(CodeThornOptions& ctOpt, VariableIdMapping* vim, Labeler* labeler, CFAnalysis* icfg, TimingCollector& timingCollector) {
+    //new: IOAnalyzer* ioAnalysis=new IOAnalyzer(ctOpt,vim,labeler,icfg,timingCollector);
+    IOAnalyzer* ioAnalysis=new IOAnalyzer();
+    ioAnalysis->initializeSolver();
+    ioAnalysis->runSolver();
+    return ioAnalysis;
+  }
+  
 } // end of namespace CodeThorn

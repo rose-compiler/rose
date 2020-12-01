@@ -15,10 +15,10 @@ namespace CodeThorn {
   class IOSolver : public Solver {
   public:
     IOSolver();
-    IOSolver(Analyzer* analyzer);
+    IOSolver(CTAnalysis* analyzer);
 
   protected:
-    virtual void setAnalyzer(Analyzer* analyzer);
+    virtual void setAnalyzer(CTAnalysis* analyzer);
 
     IOAnalyzer* _analyzer = nullptr;
   };
