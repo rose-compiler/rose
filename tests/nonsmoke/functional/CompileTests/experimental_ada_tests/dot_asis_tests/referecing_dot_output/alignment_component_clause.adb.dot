@@ -178,6 +178,14 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"State"</TD></TR>
           </TABLE>> ];
+  Element_2322149 -> Element_2323097
+      [ label="Enumeration_Literal_Declarations ( 1)" ];
+  Element_2322149 -> Element_2330097
+      [ label="Enumeration_Literal_Declarations ( 2)" ];
+  Element_2322149 -> Element_2337097
+      [ label="Enumeration_Literal_Declarations ( 3)" ];
+  Element_2322149 -> Element_2344097
+      [ label="Enumeration_Literal_Declarations ( 4)" ];
   Element_2322149
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2322149</TD></TR>
@@ -187,7 +195,10 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 8:26 .. 8:34</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Type_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_TYPE_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2323097</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 2)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2330097</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 3)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2337097</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 4)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2344097</TD></TR>
           </TABLE>> ];
   Element_2323097 -> Element_2323059
       [ label="Names ( 1)" ];
@@ -321,6 +332,14 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Mode"</TD></TR>
           </TABLE>> ];
+  Element_2360149 -> Element_2361097
+      [ label="Enumeration_Literal_Declarations ( 1)" ];
+  Element_2360149 -> Element_2368097
+      [ label="Enumeration_Literal_Declarations ( 2)" ];
+  Element_2360149 -> Element_2375097
+      [ label="Enumeration_Literal_Declarations ( 3)" ];
+  Element_2360149 -> Element_2382097
+      [ label="Enumeration_Literal_Declarations ( 4)" ];
   Element_2360149
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2360149</TD></TR>
@@ -330,7 +349,10 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 9:26 .. 9:48</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Type_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_TYPE_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2361097</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 2)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2368097</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 3)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2375097</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 4)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2382097</TD></TR>
           </TABLE>> ];
   Element_2361097 -> Element_2361059
       [ label="Names ( 1)" ];
@@ -464,6 +486,10 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Byte_Mask"</TD></TR>
           </TABLE>> ];
+  Element_2399161 -> Element_2400186
+      [ label="Discrete_Subtype_Definitions ( 1)" ];
+  Element_2399161 -> Element_2403183
+      [ label=Array_Component_Definition ];
   Element_2399161
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2399161</TD></TR>
@@ -473,8 +499,13 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 10:26 .. 10:49</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Type_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">A_CONSTRAINED_ARRAY_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Subtype_Definitions ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2400186</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Definition       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2403183</TD></TR>
           </TABLE>> ];
+  Element_2400186 -> Element_2398234
+      [ label=Lower_Bound ];
+  Element_2400186 -> Element_2401234
+      [ label=Upper_Bound ];
   Element_2400186
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2400186</TD></TR>
@@ -483,7 +514,9 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2399161</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 10:33 .. 10:36</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SUBTYPE_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SIMPLE_EXPRESSION_RANGE</TD></TR>
+          <TR><TD ALIGN="LEFT">Lower_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2398234</TD></TR>
+          <TR><TD ALIGN="LEFT">Upper_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2401234</TD></TR>
           </TABLE>> ];
   Element_2398234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -508,7 +541,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Value_Image   </TD><TD> = </TD><TD ALIGN="LEFT">7</TD></TR>
           </TABLE>> ];
   Element_2403183 -> Element_2402176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2403183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2403183</TD></TR>
@@ -517,7 +550,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2399161</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 10:43 .. 10:49</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2402176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2402176</TD></TR>
           </TABLE>> ];
   Element_2402176 -> Element_2402237
       [ label=Subtype_Mark ];
@@ -578,6 +611,10 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"State_Mask"</TD></TR>
           </TABLE>> ];
+  Element_2413161 -> Element_2412184
+      [ label="Discrete_Subtype_Definitions ( 1)" ];
+  Element_2413161 -> Element_2415183
+      [ label=Array_Component_Definition ];
   Element_2413161
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2413161</TD></TR>
@@ -587,8 +624,11 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 11:26 .. 11:49</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Type_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">A_CONSTRAINED_ARRAY_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Subtype_Definitions ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2412184</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Definition       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2415183</TD></TR>
           </TABLE>> ];
+  Element_2412184 -> Element_2412237
+      [ label=Subtype_Mark ];
   Element_2412184
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2412184</TD></TR>
@@ -597,7 +637,9 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2413161</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 11:33 .. 11:37</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SUBTYPE_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SUBTYPE_INDICATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Subtype_Mark    </TD><TD> = </TD><TD ALIGN="LEFT">Element_2412237</TD></TR>
+          <TR><TD ALIGN="LEFT">Subtype_Constraint     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           </TABLE>> ];
   Element_2412237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -614,7 +656,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2352082</TD></TR>
           </TABLE>> ];
   Element_2415183 -> Element_2414176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2415183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2415183</TD></TR>
@@ -623,7 +665,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2413161</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 11:43 .. 11:49</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2414176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2414176</TD></TR>
           </TABLE>> ];
   Element_2414176 -> Element_2414237
       [ label=Subtype_Mark ];
@@ -684,6 +726,10 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Mode_Mask"</TD></TR>
           </TABLE>> ];
+  Element_2425161 -> Element_2424184
+      [ label="Discrete_Subtype_Definitions ( 1)" ];
+  Element_2425161 -> Element_2427183
+      [ label=Array_Component_Definition ];
   Element_2425161
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2425161</TD></TR>
@@ -693,8 +739,11 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 12:26 .. 12:49</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Type_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">A_CONSTRAINED_ARRAY_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Subtype_Definitions ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2424184</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Definition       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2427183</TD></TR>
           </TABLE>> ];
+  Element_2424184 -> Element_2424237
+      [ label=Subtype_Mark ];
   Element_2424184
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2424184</TD></TR>
@@ -703,7 +752,9 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2425161</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 12:33 .. 12:36</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SUBTYPE_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SUBTYPE_INDICATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Subtype_Mark    </TD><TD> = </TD><TD ALIGN="LEFT">Element_2424237</TD></TR>
+          <TR><TD ALIGN="LEFT">Subtype_Constraint     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           </TABLE>> ];
   Element_2424237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -720,7 +771,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2390082</TD></TR>
           </TABLE>> ];
   Element_2427183 -> Element_2426176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2427183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2427183</TD></TR>
@@ -729,7 +780,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2425161</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 12:43 .. 12:49</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2426176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2426176</TD></TR>
           </TABLE>> ];
   Element_2426176 -> Element_2426237
       [ label=Subtype_Mark ];
@@ -867,7 +918,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"System_Mask"</TD></TR>
           </TABLE>> ];
   Element_2448183 -> Element_2453176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2448183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2448183</TD></TR>
@@ -876,7 +927,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2447099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 15:31 .. 15:50</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2453176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2453176</TD></TR>
           </TABLE>> ];
   Element_2453176 -> Element_2446237
       [ label=Subtype_Mark ];
@@ -973,7 +1024,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Protection_Key"</TD></TR>
           </TABLE>> ];
   Element_2463183 -> Element_2468176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2463183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2463183</TD></TR>
@@ -982,7 +1033,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2462099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 16:31 .. 16:50</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2468176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2468176</TD></TR>
           </TABLE>> ];
   Element_2468176 -> Element_2461237
       [ label=Subtype_Mark ];
@@ -1079,7 +1130,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Machine_State"</TD></TR>
           </TABLE>> ];
   Element_2478183 -> Element_2483176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2478183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2478183</TD></TR>
@@ -1088,7 +1139,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2477099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 17:31 .. 17:50</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2483176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2483176</TD></TR>
           </TABLE>> ];
   Element_2483176 -> Element_2476237
       [ label=Subtype_Mark ];
@@ -1185,7 +1236,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Interrupt_Cause"</TD></TR>
           </TABLE>> ];
   Element_2493183 -> Element_2498176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2493183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2493183</TD></TR>
@@ -1194,7 +1245,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2492099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 18:31 .. 18:54</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2498176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2498176</TD></TR>
           </TABLE>> ];
   Element_2498176 -> Element_2491237
       [ label=Subtype_Mark ];
@@ -1291,7 +1342,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Ilc"</TD></TR>
           </TABLE>> ];
   Element_2508183 -> Element_2513176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2508183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2508183</TD></TR>
@@ -1300,7 +1351,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2507099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 19:31 .. 19:50</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2513176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2513176</TD></TR>
           </TABLE>> ];
   Element_2513176 -> Element_2506237
       [ label=Subtype_Mark ];
@@ -1397,7 +1448,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Cc"</TD></TR>
           </TABLE>> ];
   Element_2523183 -> Element_2528176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2523183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2523183</TD></TR>
@@ -1406,7 +1457,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2522099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 20:31 .. 20:50</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2528176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2528176</TD></TR>
           </TABLE>> ];
   Element_2528176 -> Element_2521237
       [ label=Subtype_Mark ];
@@ -1503,7 +1554,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Program_Mask"</TD></TR>
           </TABLE>> ];
   Element_2538183 -> Element_2543176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2538183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2538183</TD></TR>
@@ -1512,7 +1563,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2537099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 21:31 .. 21:50</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2543176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2543176</TD></TR>
           </TABLE>> ];
   Element_2543176 -> Element_2536237
       [ label=Subtype_Mark ];
@@ -1609,7 +1660,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Inst_Address"</TD></TR>
           </TABLE>> ];
   Element_2553183 -> Element_2558176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2553183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2553183</TD></TR>
@@ -1618,7 +1669,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2552099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 22:31 .. 22:54</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2558176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2558176</TD></TR>
           </TABLE>> ];
   Element_2558176 -> Element_2551237
       [ label=Subtype_Mark ];
@@ -1853,6 +1904,10 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2306057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2314095</TD></TR>
           </TABLE>> ];
+  Element_2565189 -> Element_2569234
+      [ label=Lower_Bound ];
+  Element_2565189 -> Element_2570234
+      [ label=Upper_Bound ];
   Element_2565189
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2565189</TD></TR>
@@ -1861,7 +1916,9 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2565433</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 26:43 .. 26:49</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SIMPLE_EXPRESSION_RANGE</TD></TR>
+          <TR><TD ALIGN="LEFT">Lower_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2569234</TD></TR>
+          <TR><TD ALIGN="LEFT">Upper_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2570234</TD></TR>
           </TABLE>> ];
   Element_2569234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2001,6 +2058,10 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2306057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2314095</TD></TR>
           </TABLE>> ];
+  Element_2572189 -> Element_2576234
+      [ label=Lower_Bound ];
+  Element_2572189 -> Element_2577234
+      [ label=Upper_Bound ];
   Element_2572189
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2572189</TD></TR>
@@ -2009,7 +2070,9 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2572433</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 27:43 .. 27:50</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SIMPLE_EXPRESSION_RANGE</TD></TR>
+          <TR><TD ALIGN="LEFT">Lower_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2576234</TD></TR>
+          <TR><TD ALIGN="LEFT">Upper_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2577234</TD></TR>
           </TABLE>> ];
   Element_2576234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2149,6 +2212,10 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2306057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2314095</TD></TR>
           </TABLE>> ];
+  Element_2579189 -> Element_2583234
+      [ label=Lower_Bound ];
+  Element_2579189 -> Element_2584234
+      [ label=Upper_Bound ];
   Element_2579189
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2579189</TD></TR>
@@ -2157,7 +2224,9 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2579433</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 28:43 .. 28:50</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SIMPLE_EXPRESSION_RANGE</TD></TR>
+          <TR><TD ALIGN="LEFT">Lower_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2583234</TD></TR>
+          <TR><TD ALIGN="LEFT">Upper_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2584234</TD></TR>
           </TABLE>> ];
   Element_2583234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2297,6 +2366,10 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2306057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2314095</TD></TR>
           </TABLE>> ];
+  Element_2586189 -> Element_2590234
+      [ label=Lower_Bound ];
+  Element_2586189 -> Element_2591234
+      [ label=Upper_Bound ];
   Element_2586189
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2586189</TD></TR>
@@ -2305,7 +2378,9 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2586433</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 29:43 .. 29:50</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SIMPLE_EXPRESSION_RANGE</TD></TR>
+          <TR><TD ALIGN="LEFT">Lower_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2590234</TD></TR>
+          <TR><TD ALIGN="LEFT">Upper_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2591234</TD></TR>
           </TABLE>> ];
   Element_2590234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2445,6 +2520,10 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2306057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2314095</TD></TR>
           </TABLE>> ];
+  Element_2593189 -> Element_2597234
+      [ label=Lower_Bound ];
+  Element_2593189 -> Element_2598234
+      [ label=Upper_Bound ];
   Element_2593189
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2593189</TD></TR>
@@ -2453,7 +2532,9 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2593433</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 30:43 .. 30:49</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SIMPLE_EXPRESSION_RANGE</TD></TR>
+          <TR><TD ALIGN="LEFT">Lower_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2597234</TD></TR>
+          <TR><TD ALIGN="LEFT">Upper_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2598234</TD></TR>
           </TABLE>> ];
   Element_2597234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2593,6 +2674,10 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2306057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2314095</TD></TR>
           </TABLE>> ];
+  Element_2600189 -> Element_2604234
+      [ label=Lower_Bound ];
+  Element_2600189 -> Element_2605234
+      [ label=Upper_Bound ];
   Element_2600189
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2600189</TD></TR>
@@ -2601,7 +2686,9 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2600433</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 31:43 .. 31:49</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SIMPLE_EXPRESSION_RANGE</TD></TR>
+          <TR><TD ALIGN="LEFT">Lower_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2604234</TD></TR>
+          <TR><TD ALIGN="LEFT">Upper_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2605234</TD></TR>
           </TABLE>> ];
   Element_2604234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2741,6 +2828,10 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2306057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2314095</TD></TR>
           </TABLE>> ];
+  Element_2607189 -> Element_2611234
+      [ label=Lower_Bound ];
+  Element_2607189 -> Element_2612234
+      [ label=Upper_Bound ];
   Element_2607189
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2607189</TD></TR>
@@ -2749,7 +2840,9 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2607433</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 32:43 .. 32:49</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SIMPLE_EXPRESSION_RANGE</TD></TR>
+          <TR><TD ALIGN="LEFT">Lower_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2611234</TD></TR>
+          <TR><TD ALIGN="LEFT">Upper_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2612234</TD></TR>
           </TABLE>> ];
   Element_2611234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2889,6 +2982,10 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2306057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2314095</TD></TR>
           </TABLE>> ];
+  Element_2614189 -> Element_2618234
+      [ label=Lower_Bound ];
+  Element_2614189 -> Element_2619234
+      [ label=Upper_Bound ];
   Element_2614189
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2614189</TD></TR>
@@ -2897,7 +2994,9 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2614433</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Alignment_Component_Clause.adb - 33:43 .. 33:50</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SIMPLE_EXPRESSION_RANGE</TD></TR>
+          <TR><TD ALIGN="LEFT">Lower_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2618234</TD></TR>
+          <TR><TD ALIGN="LEFT">Upper_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2619234</TD></TR>
           </TABLE>> ];
   Element_2618234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 

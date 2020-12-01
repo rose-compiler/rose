@@ -11,7 +11,6 @@
 # This script is in the base directory of this build:
 rel_base_dir=`dirname $0`
 base_dir=`(cd ${rel_base_dir}; pwd)`
-
 # Defines log, log_and_run, etc.:
 source ${base_dir}/../utility_functions.sh
 
@@ -19,20 +18,29 @@ gprbuild_path=`which gprbuild` || exit -1
 gnat_bin=`dirname ${gprbuild_path}`
 gnat_home=`dirname ${gnat_bin}`
 
+# The base dir is at [repo base]/src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/ada_main:
+repo_base_dir=`(cd ${base_dir}/../../../../..; pwd)`
+test_base_dir="${repo_base_dir}/tests/nonsmoke/functional/CompileTests/experimental_ada_tests"
+#test_dir="${test_base_dir}/tests"
+test_dir="${test_base_dir}/dot_asis_tests/test_units"
+reference_dot_file_dir="${test_base_dir}/dot_asis_tests/referecing_dot_output"
+
+target_dir="${test_dir}"
+#target_units="minimal.adb"
+#target_units="package_pragma.ads procedure_pragma.adb"
+#target_units="array_declare_2.ads"
+#target_units="variable_declaration.ads"
+#target_units="if_statement.adb"
+#target_units="requeue_statement_2.adb"
+#target_units="hello_world.adb"
+#target_units="ordinary_type_declaration.ads"
+target_units=`(cd ${target_dir}; ls *.ad[bs])`
+
+output_dir="${reference_dot_file_dir}"
+
 obj_dir=${base_dir}/obj
 
 tool_name=run_asis_tool_2
-# From: src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/ada_main/obj
-# To:   tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/test_units
-target_dir=${base_dir}/../../../../../tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/test_units
-#target_units="minimal.adb"
-#target_units="unit_2.ads"
-#target_units="unit_2.adb"
-#target_units="variable_declaration.ads"
-#target_units="if_statement.adb"
-target_units="hello_world.adb"
-#target_units="ordinary_type_declaration.ads"
-#target_units=`(cd ${target_dir}; ls *.ad[bs])`
 
 show_compiler_version () {
   log_separator_1
@@ -62,7 +70,8 @@ build_asis_tool () {
 process_units () {
   status=0  
   log_separator_1
-  log "Processing specified files in ${target_dir} with ${tool_name}"
+  log "Processing specified files in ${target_dir} with ${tool_name}."
+  log "Writing dot files to ${output_dir}."
   for target_unit in ${target_units}
   do
     log "Processing ${target_unit}"
@@ -73,10 +82,10 @@ process_units () {
     # -p, --process_predefined_units     - Process Ada predefined language environment units
     # -o, --output_dir - Output directory (optional)
     log_then_run ${obj_dir}/${tool_name} \
--i -p -d \
+   \
        --file=${target_dir}/${target_unit} \
        --gnat_home=${gnat_home} \
-       --output_dir=`pwd` \
+       --output_dir=${output_dir} \
        "$@" || status=1
   done
   return ${status}

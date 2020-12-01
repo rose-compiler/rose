@@ -151,6 +151,14 @@ digraph "enumeration.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"MyColor"</TD></TR>
           </TABLE>> ];
+  Element_2313149 -> Element_2314097
+      [ label="Enumeration_Literal_Declarations ( 1)" ];
+  Element_2313149 -> Element_2321097
+      [ label="Enumeration_Literal_Declarations ( 2)" ];
+  Element_2313149 -> Element_2328097
+      [ label="Enumeration_Literal_Declarations ( 3)" ];
+  Element_2313149 -> Element_2335097
+      [ label="Enumeration_Literal_Declarations ( 4)" ];
   Element_2313149
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2313149</TD></TR>
@@ -160,7 +168,10 @@ digraph "enumeration.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Enumeration.adb - 4:19 .. 4:44</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Type_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_TYPE_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2314097</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 2)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2321097</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 3)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2328097</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 4)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2335097</TD></TR>
           </TABLE>> ];
   Element_2314097 -> Element_2314059
       [ label="Names ( 1)" ];
@@ -272,6 +283,8 @@ digraph "enumeration.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2305106</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Enumeration.adb - 5:3 .. 8:32</TD></TR>
           <TR><TD ALIGN="LEFT">Clause_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">A_REPRESENTATION_CLAUSE</TD></TR>
+          <TR><TD ALIGN="LEFT">Representation_Clause_Kind       </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_REPRESENTATION_CLAUSE</TD></TR>
+          <TR><TD ALIGN="LEFT">Representation_Clause_Name       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2345237</TD></TR>
           <TR><TD ALIGN="LEFT">Representation_Clause_Expression         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2348365</TD></TR>
           </TABLE>> ];
   Element_2345237

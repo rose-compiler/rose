@@ -1,4 +1,4 @@
-procedure My_Main is
+procedure Procedure_Pragma is
 
    --  Declare then export an Integer entity called num_from_Ada
    My_Num : Integer := 10;
@@ -16,4 +16,4 @@ procedure My_Main is
 
 begin
    Print_Num (Get_Num);
-end My_Main;
+end Procedure_Pragma;

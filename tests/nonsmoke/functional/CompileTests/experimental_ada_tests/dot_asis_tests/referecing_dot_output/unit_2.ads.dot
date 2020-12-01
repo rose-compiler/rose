@@ -438,6 +438,7 @@ digraph "unit_2.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Unit_2.ads - 15:22 .. 17:16</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Type_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">A_TAGGED_RECORD_TYPE_DEFINITION</TD></TR>
+          <TR><TD ALIGN="LEFT">Has_Tagged   </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Has_Abstract    </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Record_Definition     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2369192</TD></TR>
           </TABLE>> ];
@@ -483,7 +484,7 @@ digraph "unit_2.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Component_1"</TD></TR>
           </TABLE>> ];
   Element_2381183 -> Element_2379176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2381183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2381183</TD></TR>
@@ -492,7 +493,7 @@ digraph "unit_2.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2380099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Unit_2.ads - 16:24 .. 16:30</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2379176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2379176</TD></TR>
           </TABLE>> ];
   Element_2379176 -> Element_2379237
       [ label=Subtype_Mark ];
@@ -675,6 +676,8 @@ digraph "unit_2.adt" {
       [ label=Parent_Subtype_Indication ];
   Element_2422148 -> Element_2426192
       [ label=Record_Definition ];
+  Element_2422148 -> Element_2380099
+      [ label="Implicit_Inherited_Declarations ( 1)" ];
   Element_2422148
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2422148</TD></TR>
@@ -790,7 +793,7 @@ digraph "unit_2.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Component_2"</TD></TR>
           </TABLE>> ];
   Element_2438183 -> Element_2436176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2438183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2438183</TD></TR>
@@ -799,7 +802,7 @@ digraph "unit_2.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2437099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Unit_2.ads - 27:24 .. 27:30</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2436176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2436176</TD></TR>
           </TABLE>> ];
   Element_2436176 -> Element_2436237
       [ label=Subtype_Mark ];

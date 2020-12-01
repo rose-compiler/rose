@@ -1,4 +1,4 @@
-package Unit1 is
+package Package_Pragma is
    function Add (A, B : Integer) return Integer;
    pragma Export (C, Add, "add");
-end Unit1;
+end Package_Pragma;

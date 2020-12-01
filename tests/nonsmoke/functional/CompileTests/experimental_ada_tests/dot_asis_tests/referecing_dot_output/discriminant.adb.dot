@@ -342,6 +342,12 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"SQUARE"</TD></TR>
           </TABLE>> ];
+  Element_2326160 -> Element_2325237
+      [ label="Index_Subtype_Definitions ( 1)" ];
+  Element_2326160 -> Element_2327237
+      [ label="Index_Subtype_Definitions ( 2)" ];
+  Element_2326160 -> Element_2329183
+      [ label=Array_Component_Definition ];
   Element_2326160
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2326160</TD></TR>
@@ -351,7 +357,9 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 6:19 .. 7:52</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Type_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">AN_UNCONSTRAINED_ARRAY_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Index_Subtype_Definitions ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2325237</TD></TR>
+          <TR><TD ALIGN="LEFT">Index_Subtype_Definitions ( 2)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2327237</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Definition       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2329183</TD></TR>
           </TABLE>> ];
   Element_2325237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -382,7 +390,7 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
           </TABLE>> ];
   Element_2329183 -> Element_2328176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2329183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2329183</TD></TR>
@@ -391,7 +399,7 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2326160</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 7:46 .. 7:52</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2328176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2328176</TD></TR>
           </TABLE>> ];
   Element_2328176 -> Element_2328237
       [ label=Subtype_Mark ];
@@ -452,6 +460,10 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"LINEAR_TYPE"</TD></TR>
           </TABLE>> ];
+  Element_2339160 -> Element_2338237
+      [ label="Index_Subtype_Definitions ( 1)" ];
+  Element_2339160 -> Element_2341183
+      [ label=Array_Component_Definition ];
   Element_2339160
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2339160</TD></TR>
@@ -461,7 +473,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 9:24 .. 9:58</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Type_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">AN_UNCONSTRAINED_ARRAY_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Index_Subtype_Definitions ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2338237</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Definition       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2341183</TD></TR>
           </TABLE>> ];
   Element_2338237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -478,7 +491,7 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
           </TABLE>> ];
   Element_2341183 -> Element_2340176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2341183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2341183</TD></TR>
@@ -487,7 +500,7 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339160</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 9:51 .. 9:58</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2340176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2340176</TD></TR>
           </TABLE>> ];
   Element_2340176 -> Element_2340237
       [ label=Subtype_Mark ];
@@ -550,6 +563,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"STUFF"</TD></TR>
           </TABLE>> ];
+  Element_2421191 -> Element_2359098
+      [ label="Discriminants ( 1)" ];
   Element_2421191
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2421191</TD></TR>
@@ -558,7 +573,7 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2421082</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 11:14 .. 11:35</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_KNOWN_DISCRIMINANT_PART</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discriminants ( 1)     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2359098</TD></TR>
           </TABLE>> ];
   Element_2359098 -> Element_2351057
       [ label="Names ( 1)" ];
@@ -666,7 +681,7 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Matrix"</TD></TR>
           </TABLE>> ];
   Element_2372183 -> Element_2380176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2372183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2372183</TD></TR>
@@ -675,7 +690,7 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2371099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 13:21 .. 13:54</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2380176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2380176</TD></TR>
           </TABLE>> ];
   Element_2380176 -> Element_2370237
       [ label=Subtype_Mark ];
@@ -706,6 +721,10 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2318057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2330082</TD></TR>
           </TABLE>> ];
+  Element_2373181 -> Element_2375189
+      [ label="Discrete_Ranges ( 1)" ];
+  Element_2373181 -> Element_2378189
+      [ label="Discrete_Ranges ( 2)" ];
   Element_2373181
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2373181</TD></TR>
@@ -718,6 +737,10 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Discrete_Ranges ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2375189</TD></TR>
           <TR><TD ALIGN="LEFT">Discrete_Ranges ( 2)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2378189</TD></TR>
           </TABLE>> ];
+  Element_2375189 -> Element_2374234
+      [ label=Lower_Bound ];
+  Element_2375189 -> Element_2376237
+      [ label=Upper_Bound ];
   Element_2375189
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2375189</TD></TR>
@@ -726,7 +749,9 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2373181</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 13:28 .. 13:39</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SIMPLE_EXPRESSION_RANGE</TD></TR>
+          <TR><TD ALIGN="LEFT">Lower_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2374234</TD></TR>
+          <TR><TD ALIGN="LEFT">Upper_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2376237</TD></TR>
           </TABLE>> ];
   Element_2374234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -753,6 +778,10 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2351057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2359098</TD></TR>
           </TABLE>> ];
+  Element_2378189 -> Element_2377234
+      [ label=Lower_Bound ];
+  Element_2378189 -> Element_2379237
+      [ label=Upper_Bound ];
   Element_2378189
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2378189</TD></TR>
@@ -761,7 +790,9 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2373181</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 13:42 .. 13:53</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SIMPLE_EXPRESSION_RANGE</TD></TR>
+          <TR><TD ALIGN="LEFT">Lower_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2377234</TD></TR>
+          <TR><TD ALIGN="LEFT">Upper_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2379237</TD></TR>
           </TABLE>> ];
   Element_2377234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -818,7 +849,7 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Elements"</TD></TR>
           </TABLE>> ];
   Element_2390183 -> Element_2388176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2390183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2390183</TD></TR>
@@ -827,7 +858,7 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2389099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 14:21 .. 14:27</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2388176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2388176</TD></TR>
           </TABLE>> ];
   Element_2388176 -> Element_2388237
       [ label=Subtype_Mark ];
@@ -973,7 +1004,7 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Linear"</TD></TR>
           </TABLE>> ];
   Element_2403183 -> Element_2408176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2403183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2403183</TD></TR>
@@ -982,7 +1013,7 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2402099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 15:21 .. 15:45</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2408176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2408176</TD></TR>
           </TABLE>> ];
   Element_2408176 -> Element_2401237
       [ label=Subtype_Mark ];
@@ -1013,6 +1044,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2331057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2342082</TD></TR>
           </TABLE>> ];
+  Element_2404181 -> Element_2406189
+      [ label="Discrete_Ranges ( 1)" ];
   Element_2404181
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2404181</TD></TR>
@@ -1024,6 +1057,10 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Constraint_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_INDEX_CONSTRAINT</TD></TR>
           <TR><TD ALIGN="LEFT">Discrete_Ranges ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2406189</TD></TR>
           </TABLE>> ];
+  Element_2406189 -> Element_2405234
+      [ label=Lower_Bound ];
+  Element_2406189 -> Element_2407237
+      [ label=Upper_Bound ];
   Element_2406189
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2406189</TD></TR>
@@ -1032,7 +1069,9 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2404181</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 15:33 .. 15:44</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SIMPLE_EXPRESSION_RANGE</TD></TR>
+          <TR><TD ALIGN="LEFT">Lower_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2405234</TD></TR>
+          <TR><TD ALIGN="LEFT">Upper_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2407237</TD></TR>
           </TABLE>> ];
   Element_2405234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -1089,7 +1128,7 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Number"</TD></TR>
           </TABLE>> ];
   Element_2418183 -> Element_2416176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2418183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2418183</TD></TR>
@@ -1098,7 +1137,7 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2417099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 16:21 .. 16:27</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2416176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2416176</TD></TR>
           </TABLE>> ];
   Element_2416176 -> Element_2416237
       [ label=Subtype_Mark ];
@@ -1175,6 +1214,16 @@ digraph "discriminant.adt" {
           </TABLE>> ];
   Element_2429147 -> Element_2430176
       [ label=Parent_Subtype_Indication ];
+  Element_2429147 -> Element_19333098
+      [ label="Implicit_Inherited_Declarations ( 1)" ];
+  Element_2429147 -> Element_19303099
+      [ label="Implicit_Inherited_Declarations ( 2)" ];
+  Element_2429147 -> Element_19314099
+      [ label="Implicit_Inherited_Declarations ( 3)" ];
+  Element_2429147 -> Element_19320099
+      [ label="Implicit_Inherited_Declarations ( 4)" ];
+  Element_2429147 -> Element_19328099
+      [ label="Implicit_Inherited_Declarations ( 5)" ];
   Element_2429147
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2429147</TD></TR>
@@ -1279,6 +1328,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2343057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2421082</TD></TR>
           </TABLE>> ];
+  Element_2441182 -> Element_2442382
+      [ label="Discriminant_Associations ( 1)" ];
   Element_2441182
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2441182</TD></TR>
@@ -1369,6 +1420,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2343057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2421082</TD></TR>
           </TABLE>> ];
+  Element_2453182 -> Element_2454382
+      [ label="Discriminant_Associations ( 1)" ];
   Element_2453182
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2453182</TD></TR>
@@ -1459,6 +1512,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2343057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2421082</TD></TR>
           </TABLE>> ];
+  Element_2465182 -> Element_2466382
+      [ label="Discriminant_Associations ( 1)" ];
   Element_2465182
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2465182</TD></TR>
@@ -1549,6 +1604,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2422057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_19335082</TD></TR>
           </TABLE>> ];
+  Element_2477182 -> Element_2478382
+      [ label="Discriminant_Associations ( 1)" ];
   Element_2477182
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2477182</TD></TR>
@@ -1639,6 +1696,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2343057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2421082</TD></TR>
           </TABLE>> ];
+  Element_2489182 -> Element_2490382
+      [ label="Discriminant_Associations ( 1)" ];
   Element_2489182
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2489182</TD></TR>
@@ -1783,6 +1842,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2343057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2421082</TD></TR>
           </TABLE>> ];
+  Element_2510182 -> Element_2512382
+      [ label="Discriminant_Associations ( 1)" ];
   Element_2510182
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2510182</TD></TR>
@@ -1879,6 +1940,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Index1"</TD></TR>
           </TABLE>> ];
+  Element_19951185 -> Element_19951322
+      [ label=Range_Attribute ];
   Element_19951185
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_19951185</TD></TR>
@@ -1887,7 +1950,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2525100</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 32:18 .. 32:43</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SUBTYPE_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE_ATTRIBUTE_REFERENCE</TD></TR>
+          <TR><TD ALIGN="LEFT">Range_Attribute    </TD><TD> = </TD><TD ALIGN="LEFT">Element_19951322</TD></TR>
           </TABLE>> ];
   Element_19951322
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2109,6 +2173,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Index2"</TD></TR>
           </TABLE>> ];
+  Element_20005185 -> Element_20005322
+      [ label=Range_Attribute ];
   Element_20005185
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_20005185</TD></TR>
@@ -2117,7 +2183,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2549100</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 34:21 .. 34:46</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SUBTYPE_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE_ATTRIBUTE_REFERENCE</TD></TR>
+          <TR><TD ALIGN="LEFT">Range_Attribute    </TD><TD> = </TD><TD ALIGN="LEFT">Element_20005322</TD></TR>
           </TABLE>> ];
   Element_20005322
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 

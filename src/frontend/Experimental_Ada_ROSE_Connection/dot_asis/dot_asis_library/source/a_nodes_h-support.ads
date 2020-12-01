@@ -184,13 +184,18 @@ package a_nodes_h.Support is
       Subtype_Constraint => Invalid_Element_ID);
 
    Default_Component_Definition_Struct : constant Component_Definition_Struct :=
-     (Component_Definition_View => Invalid_Element_ID);
+     (Has_Aliased                  => Invalid_bool,
+      Component_Subtype_Indication => Invalid_Element_ID,
+      Component_Definition_View    => Invalid_Element_ID);
 
    Default_Discrete_Subtype_Definition_Struct :
    constant Discrete_Subtype_Definition_Struct :=
      (Discrete_Range_Kind => Not_A_Discrete_Range,
       Subtype_Mark        => Invalid_Element_ID,
-      Subtype_Constraint  => Invalid_Element_ID);
+      Subtype_Constraint  => Invalid_Element_ID,
+      Lower_Bound         => Invalid_Element_ID,
+      Upper_Bound         => Invalid_Element_ID,
+      Range_Attribute     => Invalid_Element_ID);
 
    Default_Discrete_Range_Struct : constant Discrete_Range_Struct :=
      (Discrete_Range_Kind => Not_A_Discrete_Range,
@@ -420,9 +425,6 @@ package a_nodes_h.Support is
       Has_Limited                      => Invalid_bool,
       Clause_Names                     => Empty_Name_List,
       Representation_Clause_Name       => Invalid_Element_ID,
-      Representation_Clause_Expression => Invalid_Element_ID,
-      Mod_Clause_Expression            => Invalid_Element_ID,
-      Component_Clauses                => Empty_Element_ID_List,
       Component_Clause_Position        => Invalid_Element_ID,
       Component_Clause_Range           => Invalid_Element_ID,
       Representation_Clause            => Default_Representation_Clause_Struct);

@@ -53,12 +53,20 @@ package body Asis_Tool_2.Element.Definitions is
          return ID;
       end;
 
+      function Add_And_Return_Component_Subtype_Indication return a_nodes_h.Element_ID is
+         ID : constant a_nodes_h.Element_ID :=
+           Get_Element_ID (Asis.Definitions.Component_Subtype_Indication (Element));
+      begin
+         State.Add_To_Dot_Label_And_Edge ("Component_Subtype_Indication", ID);
+         return ID;
+      end;
+
       function Add_And_Return_Corresponding_Parent_Subtype return a_nodes_h.Element_ID is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Definitions.Corresponding_Parent_Subtype
                            (Element));
       begin
-         State.Add_To_Dot_Label ("Corresponding_Parent_Subtype", To_String (ID));
+         State.Add_To_Dot_Label ("Corresponding_Parent_Subtype", ID);
          return ID;
       end;
 
@@ -67,7 +75,7 @@ package body Asis_Tool_2.Element.Definitions is
            Get_Element_ID (Asis.Definitions.Corresponding_Root_Type
                            (Element));
       begin
-         State.Add_To_Dot_Label ("Corresponding_Root_Type", To_String (ID));
+         State.Add_To_Dot_Label ("Corresponding_Root_Type", ID);
          return ID;
       end;
 
@@ -84,7 +92,7 @@ package body Asis_Tool_2.Element.Definitions is
            Get_Element_ID (Asis.Definitions.Corresponding_Type_Structure
                            (Element));
       begin
-         State.Add_To_Dot_Label ("Corresponding_Type_Structure", To_String (ID));
+         State.Add_To_Dot_Label ("Corresponding_Type_Structure", ID);
          return ID;
       end;
 
@@ -93,7 +101,8 @@ package body Asis_Tool_2.Element.Definitions is
          return To_Element_ID_List
            (This           => State,
             Elements_In    => Asis.Definitions.Definition_Interface_List (Element),
-            Dot_Label_Name => "Definition_Interface_List");
+            Dot_Label_Name => "Definition_Interface_List",
+            Add_Edges      => True);
       end;
 
       function Add_And_Return_Discriminant_Direct_Name return a_nodes_h.Element_ID is
@@ -108,7 +117,7 @@ package body Asis_Tool_2.Element.Definitions is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Definitions.Delta_Expression (Element));
       begin
-         State.Add_To_Dot_Label ("Delta_Expression", To_String (ID));
+         State.Add_To_Dot_Label_And_Edge ("Delta_Expression", ID);
          return ID;
       end;
 
@@ -116,7 +125,7 @@ package body Asis_Tool_2.Element.Definitions is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Definitions.Digits_Expression (Element));
       begin
-         State.Add_To_Dot_Label ("Digits_Expression", To_String (ID));
+         State.Add_To_Dot_Label_And_Edge ("Digits_Expression", ID);
          return ID;
       end;
 
@@ -125,7 +134,8 @@ package body Asis_Tool_2.Element.Definitions is
          return To_Element_ID_List
            (This           => State,
             Elements_In    => Asis.Definitions.Discrete_Ranges (Element),
-            Dot_Label_Name => "Discrete_Ranges");
+            Dot_Label_Name => "Discrete_Ranges",
+            Add_Edges      => True);
       end;
 
       function Add_And_Return_Discriminant_Associations return a_nodes_h.Element_ID_List is
@@ -133,7 +143,8 @@ package body Asis_Tool_2.Element.Definitions is
          return To_Element_ID_List
            (This           => State,
             Elements_In    => Asis.Definitions.Discriminant_Associations (Element),
-            Dot_Label_Name => "Discriminant_Associations");
+            Dot_Label_Name => "Discriminant_Associations",
+            Add_Edges      => True);
       end;
 
       function Add_And_Return_Discriminants return a_nodes_h.Element_ID_List is
@@ -141,13 +152,21 @@ package body Asis_Tool_2.Element.Definitions is
          return To_Element_ID_List
            (This           => State,
             Elements_In    => Asis.Definitions.Discriminants (Element),
-            Dot_Label_Name => "Discriminants");
+            Dot_Label_Name => "Discriminants",
+            Add_Edges      => True);
       end;
 
       function Add_And_Return_Has_Abstract return ICE.bool is
          Value : constant Boolean := Asis.Elements.Has_Abstract (Element);
       begin
          State.Add_To_Dot_Label ("Has_Abstract", Value);
+         return a_nodes_h.Support.To_bool (Value);
+      end;
+
+      function Add_And_Return_Has_Aliased return ICE.bool is
+         Value : constant Boolean := Asis.Elements.Has_Aliased (Element);
+      begin
+         State.Add_To_Dot_Label ("Has_Aliased", Value);
          return a_nodes_h.Support.To_bool (Value);
       end;
 
@@ -208,7 +227,8 @@ package body Asis_Tool_2.Element.Definitions is
             return To_Element_ID_List
               (This           => State,
                Elements_In    => Asis.Definitions.Implicit_Components (Element),
-               Dot_Label_Name => "Implicit_Components");
+               Dot_Label_Name => "Implicit_Components",
+               Add_Edges      => True);
          else
             return a_nodes_h.Support.Empty_Element_ID_List;
          end if;
@@ -219,7 +239,8 @@ package body Asis_Tool_2.Element.Definitions is
          return To_Element_ID_List
            (This           => State,
             Elements_In    => Asis.Definitions.Implicit_Inherited_Declarations (Element),
-            Dot_Label_Name => "Implicit_Inherited_Declarations");
+            Dot_Label_Name => "Implicit_Inherited_Declarations",
+            Add_Edges      => True);
       end;
 
       function Add_And_Return_Implicit_Inherited_Subprograms return a_nodes_h.Element_ID_List is
@@ -227,7 +248,8 @@ package body Asis_Tool_2.Element.Definitions is
          return To_Element_ID_List
            (This           => State,
             Elements_In    => Asis.Definitions.Implicit_Inherited_Subprograms (Element),
-            Dot_Label_Name => "Implicit_Inherited_Subprograms");
+            Dot_Label_Name => "Implicit_Inherited_Subprograms",
+            Add_Edges      => True);
       end;
 
       function Add_And_Return_Index_Subtype_Definitions return a_nodes_h.Element_ID_List is
@@ -235,7 +257,8 @@ package body Asis_Tool_2.Element.Definitions is
          return To_Element_ID_List
            (This           => State,
             Elements_In    => Asis.Definitions.Index_Subtype_Definitions (Element),
-            Dot_Label_Name => "Index_Subtype_Definitions");
+            Dot_Label_Name => "Index_Subtype_Definitions",
+            Add_Edges      => True);
       end;
 
       function Add_And_Return_Is_Private_Present return ICE.bool is
@@ -267,14 +290,15 @@ package body Asis_Tool_2.Element.Definitions is
          return To_Element_ID_List
            (This           => State,
             Elements_In    => Asis.Definitions.Private_Part_Items (Element),
-            Dot_Label_Name => "Private_Part_Items");
+            Dot_Label_Name => "Private_Part_Items",
+            Add_Edges      => True);
       end;
 
       function Add_And_Return_Range_Attribute return a_nodes_h.Element_ID is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Definitions.Range_Attribute (Element));
       begin
-         State.Add_To_Dot_Label ("Range_Attribute", To_String (ID));
+         State.Add_To_Dot_Label_And_Edge ("Range_Attribute", ID);
          return ID;
       end;
 
@@ -282,7 +306,7 @@ package body Asis_Tool_2.Element.Definitions is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Definitions.Real_Range_Constraint (Element));
       begin
-         State.Add_To_Dot_Label ("Real_Range_Constraint", To_String (ID));
+         State.Add_To_Dot_Label_And_Edge ("Real_Range_Constraint", ID);
          return ID;
       end;
 
@@ -464,18 +488,22 @@ package body Asis_Tool_2.Element.Definitions is
          Result : a_nodes_h.Component_Definition_Struct :=
            a_nodes_h.Support.Default_Component_Definition_Struct;
       begin -- Create_And_Return_Component_Definition
-         Result.Component_Definition_View := -- A2005 and afr
-             Add_And_Return_Component_Definition_View;
-
-         -- Component_Subtype_Indication should not be needed as long as
-         -- Component_Definition_View is available.  See comment in
-         -- Asis.Definitions under function Component_Subtype_Indication.
-         -- Result.Component_Subtype_Indication := -- Pre A2005 only
-         --    Add_Component_Subtype_Indication;
-
-         -- Add here and in a_nodes.h, Component_Definition_Struct:
-         -- Has_Aliased
-         State.Add_Not_Implemented;
+         if Supported_Ada_Version < Ada_2005 then
+            -- Component_Subtype_Indication should not be needed as long as
+            -- Component_Definition_View is available.  See comment in
+            -- Asis.Definitions under function Component_Subtype_Indication.
+            Result.Component_Subtype_Indication :=
+              Add_And_Return_Component_Subtype_Indication;
+            --  Returns Definition_Kinds:
+            --       A_Subtype_Indication
+         else
+            Result.Component_Definition_View :=
+              Add_And_Return_Component_Definition_View;
+            --  Returns Definition_Kinds:
+            --       A_Subtype_Indication
+            --       An_Access_Definition
+         end if;
+         Result.Has_Aliased := Add_And_Return_Has_Aliased;
          return Result;
       end Create_And_Return_Component_Definition;
 
@@ -547,14 +575,17 @@ package body Asis_Tool_2.Element.Definitions is
          end if;
 
          case Discrete_Range_Kind is
-         when Not_A_Discrete_Range |
-              A_Discrete_Range_Attribute_Reference |
-              A_Discrete_Simple_Expression_Range =>
+         when Not_A_Discrete_Range =>
             raise Internal_Error with
             Module_Name & " called with: " & Discrete_Range_Kind'Image;
          when A_Discrete_Subtype_Indication =>
             Result.Subtype_Mark := Add_And_Return_Subtype_Mark;
             Result.Subtype_Constraint := Add_And_Return_Subtype_Constraint;
+         when A_Discrete_Range_Attribute_Reference =>
+            Result.Range_Attribute := Add_And_Return_Range_Attribute;
+         when A_Discrete_Simple_Expression_Range =>
+            Result.Lower_Bound := Add_And_Return_Lower_Bound;
+            Result.Upper_Bound := Add_And_Return_Upper_Bound;
          end case;
 
          return Result;
