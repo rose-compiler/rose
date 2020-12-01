@@ -3304,6 +3304,9 @@ HEADER_EMPTY_DECLARATION_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
+       // DQ (11/24/2020): Adding support for explicit scope to be false.
+          virtual bool hasExplicitScope() const $ROSE_OVERRIDE;
+
 HEADER_EMPTY_DECLARATION_END
 
 
@@ -18178,6 +18181,14 @@ SgEmptyDeclaration::get_mangled_name(void) const
      returnName = "empty_declaration";
 
      return returnName;
+   }
+
+// DQ (11/24/2020): Adding support for explicit scope to be false.
+bool
+SgEmptyDeclaration::hasExplicitScope() const
+   {
+  // This function reports that this IR node does NOT store its scope explicitly.
+     return false;
    }
 
 SOURCE_EMPTY_DECLARATION_END

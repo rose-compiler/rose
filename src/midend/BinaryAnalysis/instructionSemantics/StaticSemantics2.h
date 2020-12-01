@@ -14,13 +14,13 @@ namespace InstructionSemantics2 {       // documented elsewhere
 
 /** Generate static semantics and attach to the AST.
  *
- *  ROSE normally uses dynamically generate semantics, where the user instantiates a state (where register and memory values
+ *  ROSE normally uses dynamically generated semantics, where the user instantiates a state (where register and memory values
  *  are stored), attaches the state to a semantic domain (risc operators and an associated value type), and the "executes" an
  *  instruction and looks at the effect that occurred on the state.  For instance, if one wants to see whether an instruction
  *  is a RET-like instruction, one constructs an initial state, executes the instruction in the chosen domain (e.g., symbolic),
  *  and then examines the final state. If the final state's instruction pointer register has a value which equal to the value
  *  stored in memory just past (above or below according to stack direction) the stack pointer register, then the instruction
- *  is behaving like an x86 RET instruction.
+ *  is behaving like an x86 RET instruction, at least on architectures that use this calling convention.
  *
  *  On the other hand, some people like to work with semantics that are represented statically as part of the AST. In this
  *  case, each instruction has a non-null @ref SgAsmInstruction::get_semantics "semantics" property that returns a list (@ref

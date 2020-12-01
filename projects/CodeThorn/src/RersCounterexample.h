@@ -8,7 +8,7 @@ namespace CodeThorn {
 
   class EState;
   class TransitionGraph;
-  class Analyzer;
+  class CTAnalysis;
 
 /**
  * @brief An input/output counterexample in a syntax resembling that of RERS

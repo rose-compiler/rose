@@ -14,6 +14,7 @@
 #include <BinaryUnparserBase.h>
 #include <CommandLine.h>
 #include <Diagnostics.h>
+#include <DisassemblerNull.h>
 #include <RecursionCounter.h>
 #include <SymbolicSemantics2.h>
 
@@ -235,6 +236,8 @@ Partitioner::init(Disassembler *disassembler, const MemoryMap::Ptr &map) {
         configureInsnUnparser(insnUnparser_);
         insnPlainUnparser_ = disassembler->unparser()->copy();
         configureInsnPlainUnparser(insnPlainUnparser_);
+    } else {
+        instructionProvider_ = InstructionProvider::instance(new DisassemblerNull, map);
     }
     undiscoveredVertex_ = cfg_.insertVertex(CfgVertex(V_UNDISCOVERED));
     indeterminateVertex_ = cfg_.insertVertex(CfgVertex(V_INDETERMINATE));

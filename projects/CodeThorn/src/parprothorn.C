@@ -32,7 +32,7 @@
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
-#include "EquivalenceChecking.h"
+//#include "EquivalenceChecking.h"
 #include "Solver5.h"
 #include "Solver8.h"
 #include "ltlthorn-lib/Solver10.h"
@@ -172,28 +172,28 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
 
   if(ctOpt.maxIterationsForcedTop!=-1) {
     analyzer->setMaxIterationsForcedTop(ctOpt.maxIterationsForcedTop);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
   }
 
-  // TODO: Analyzer::GTM_IO is only mode used now, all others are deprecated
+  // TODO: CTAnalysis::GTM_IO is only mode used now, all others are deprecated
   if(ctOpt.maxTransitionsForcedTop!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
   } else if(ctOpt.maxTransitionsForcedTop1!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop1);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
   } else if(ctOpt.maxTransitionsForcedTop2!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop2);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCF);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IOCF);
   } else if(ctOpt.maxTransitionsForcedTop3!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop3);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCFPTR);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IOCFPTR);
   } else if(ctOpt.maxTransitionsForcedTop4!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop4);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_COMPOUNDASSIGN);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_COMPOUNDASSIGN);
   } else if(ctOpt.maxTransitionsForcedTop5!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop5);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_FLAGS);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_FLAGS);
   }
 
   if (ctOpt.maxTime!=1) {
@@ -297,7 +297,9 @@ int main( int argc, char * argv[] ) {
 
     IOAnalyzer* analyzer;
     if(ctOpt.dr.checkShuffleAlgorithm) {
-      analyzer = new ReadWriteAnalyzer();
+      cout<<"Error: ReadWriteAnalyzer not supported."<<endl;
+      exit(1);
+      //analyzer = new ReadWriteAnalyzer();
     } else {
       analyzer = new IOAnalyzer();
     }
@@ -323,7 +325,6 @@ int main( int argc, char * argv[] ) {
       switch(int argVal=ctOpt.functionResolutionMode) {
       case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
       case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
-      case 3: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_ID_MAPPING;break;
       case 4: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;break;
       default: 
         cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
@@ -538,8 +539,7 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.status) {
       cout<<"STATUS: analysis started."<<endl;
     }
-    // TODO: introduce ProgramAbstractionLayer
-    analyzer->initializeVariableIdMapping(sageProject);
+    analyzer->initialize(ctOpt, sageProject,nullptr);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
 
     if(ctOpt.info.printVariableIdMapping) {
@@ -682,7 +682,7 @@ int main( int argc, char * argv[] ) {
     SAWYER_MESG(logger[TRACE])<< "INIT: creating solver "<<analyzer->getSolver()->getId()<<"."<<endl;
 
     if(option_specialize_fun_name!="") {
-      analyzer->initializeSolver(option_specialize_fun_name,root,true);
+      analyzer->initializeSolver2(option_specialize_fun_name,sageProject);
     } else {
       // if main function exists, start with main-function
       // if a single function exist, use this function
@@ -708,16 +708,10 @@ int main( int argc, char * argv[] ) {
         }
       }
       ROSE_ASSERT(startFunction!="");
-      analyzer->initializeSolver(startFunction,root,false);
+      analyzer->initializeSolver2(startFunction,sageProject);
     }
     analyzer->initLabeledAssertNodes(sageProject);
 
-    // function-id-mapping is initialized in initializeSolver.
-    if(ctOpt.info.printFunctionIdMapping) {
-      ROSE_ASSERT(analyzer->getCFAnalyzer());
-      ROSE_ASSERT(analyzer->getCFAnalyzer()->getFunctionIdMapping());
-      analyzer->getCFAnalyzer()->getFunctionIdMapping()->toStream(cout);
-    }
     // pattern search: requires that exploration mode is set,
     // otherwise no pattern search is performed
     if(ctOpt.patSearch.explorationMode.size()>0) {

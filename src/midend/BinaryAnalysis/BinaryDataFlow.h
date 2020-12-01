@@ -214,7 +214,7 @@ public:
         InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops_;
     public:
         explicit SemanticsMerge(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops): ops_(ops) {}
-        explicit SemanticsMerge(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu): ops_(cpu->get_operators()) {}
+        explicit SemanticsMerge(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu): ops_(cpu->operators()) {}
 
         bool operator()(InstructionSemantics2::BaseSemantics::StatePtr &dst /*in,out*/,
                         const InstructionSemantics2::BaseSemantics::StatePtr &src) const {

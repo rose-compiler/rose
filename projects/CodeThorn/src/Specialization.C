@@ -227,7 +227,7 @@ int Specialization::substituteVariablesWithConst(SgNode* node, ConstReporter* co
    return (int)substitutionList.size();
  }
 
-void Specialization::extractArrayUpdateOperations(Analyzer* ana,
+void Specialization::extractArrayUpdateOperations(CTAnalysis* ana,
                                                   ArrayUpdatesSequence& arrayUpdates,
                                                   RewriteSystem& rewriteSystem,
                                                   bool useConstExprSubstRule
@@ -714,20 +714,20 @@ void Specialization::transformArrayAccess(SgNode* node, VariableIdMapping* varia
   }
 }
 
-void Specialization::transformArrayProgram(SgProject* root, Analyzer* analyzer) {
+void Specialization::transformArrayProgram(SgProject* root, CTAnalysis* analyzer) {
   // 1) transform initializers of global variables : a[]={1,2,3} ==> int a_0=1;int a_1=2;int a_2=3;
   // 2) eliminate initializers of pointer variables: int p* = a; ==> \eps
   // 3) replace uses of p[k]: with a_k (where k is a constant)
 
   //ad 1 and 2)
   VariableIdMapping* variableIdMapping=analyzer->getVariableIdMapping();
-  Analyzer::VariableDeclarationList usedGlobalVariableDeclarationList=analyzer->computeUsedGlobalVariableDeclarationList(root);
+  CTAnalysis::VariableDeclarationList usedGlobalVariableDeclarationList=analyzer->computeUsedGlobalVariableDeclarationList(root);
   cout<<"STATUS: number of used global variables: "<<usedGlobalVariableDeclarationList.size()<<endl;
   list<pair<SgNode*,string> > toReplaceArrayInitializations;
   list<SgVariableDeclaration*> toDeleteDeclarations;
   typedef map<VariableId,VariableId> ArrayPointerMapType;
   ArrayPointerMapType arrayPointer; // var,arrayName
-  for(Analyzer::VariableDeclarationList::iterator i=usedGlobalVariableDeclarationList.begin();
+  for(CTAnalysis::VariableDeclarationList::iterator i=usedGlobalVariableDeclarationList.begin();
       i!=usedGlobalVariableDeclarationList.end();
       ++i) {
     SgVariableDeclaration* decl=*i;
@@ -930,9 +930,9 @@ void Specialization::transformArrayProgram(SgProject* root, Analyzer* analyzer) 
     }
   }
 #endif
-  Analyzer::VariableDeclarationList unusedGlobalVariableDeclarationList=analyzer->computeUnusedGlobalVariableDeclarationList(root);
+  CTAnalysis::VariableDeclarationList unusedGlobalVariableDeclarationList=analyzer->computeUnusedGlobalVariableDeclarationList(root);
   cout<<"STATUS: deleting unused global variables."<<endl;
-  for(Analyzer::VariableDeclarationList::iterator i=unusedGlobalVariableDeclarationList.begin();
+  for(CTAnalysis::VariableDeclarationList::iterator i=unusedGlobalVariableDeclarationList.begin();
       i!=unusedGlobalVariableDeclarationList.end();
       ++i) {
     SgVariableDeclaration* decl=*i;

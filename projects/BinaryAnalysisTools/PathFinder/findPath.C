@@ -548,7 +548,7 @@ setInitialState(const BaseSemantics::DispatcherPtr &cpu, const P2::ControlFlowGr
     // Create the new state from an existing state and make the new state current.
     BaseSemantics::StatePtr state = cpu->currentState()->clone();
     state->clear();
-    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
     ops->currentState(state);
 
     // Start of path is always feasible.
@@ -611,7 +611,7 @@ processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::Dispat
     ASSERT_not_null(bblock);
     
     // Update the path constraint "register"
-    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
     RegisterDescriptor IP = cpu->instructionPointerRegister();
     BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.nBits()));
     BaseSemantics::SValuePtr va = ops->number_(ip->get_width(), bblock->address());
@@ -645,7 +645,7 @@ processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &pathsVer
     ASSERT_require(functionSummaries.exists(pathsVertex->value().address()));
     const FunctionSummary &summary = functionSummaries[pathsVertex->value().address()];
 
-    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
     if (pathInsnIndex != size_t(-1))
         ops->pathInsnIndex(pathInsnIndex);
 
@@ -691,9 +691,9 @@ processVertex(const BaseSemantics::DispatcherPtr &cpu, const P2::ControlFlowGrap
         default:
             PathFinder::mlog[ERROR] <<"cannot comput path feasibility; invalid vertex type at "
                           <<P2::Partitioner::vertexName(*pathsVertex) <<"\n";
-            cpu->get_operators()->writeRegister(cpu->instructionPointerRegister(),
-                                                cpu->get_operators()->number_(cpu->instructionPointerRegister().nBits(),
-                                                                              0x911 /*arbitrary, unlikely to be satisfied*/));
+            cpu->operators()->writeRegister(cpu->instructionPointerRegister(),
+                                            cpu->operators()->number_(cpu->instructionPointerRegister().nBits(),
+                                                                      0x911 /*arbitrary, unlikely to be satisfied*/));
             ++pathInsnIndex;
     }
 }
@@ -937,7 +937,7 @@ incorporatePostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // ops con
 static void
 checkPostConditionSyntax(const P2::Partitioner &partitioner) {
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
-    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
     std::vector<SymbolicExpr::Ptr> pathConstraints;
     incorporatePostConditions(ops, pathConstraints);
 }
@@ -964,7 +964,7 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
 
     SmtSolverPtr solver = SmtSolver::instance(CommandLine::genericSwitchArgs.smtSolver);
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
-    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
     setInitialState(cpu, path.frontVertex());
     std::vector<SymbolicExpr::Ptr> pathConstraints;
 
@@ -1292,7 +1292,7 @@ singleThreadBfsWorker(BfsContext *ctx) {
     SmtSolverPtr solver = SmtSolver::instance(CommandLine::genericSwitchArgs.smtSolver);
     size_t lastTestedPathLength = 0;
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(ctx->partitioner);
-    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
     Sawyer::Message::Stream debug(PathFinder::mlog[DEBUG]);
 
     while (1) {
@@ -1704,7 +1704,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
     // Build the semantics framework and initialize the path constraints.
     YicesSolver solver;
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
-    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
     ops->writeRegister(REG_PATH, ops->boolean_(true)); // start of path is always feasible
     if (pathsBeginVertex->value().type() == P2::V_INDETERMINATE) {
         ops->writeRegister(cpu->instructionPointerRegister(),

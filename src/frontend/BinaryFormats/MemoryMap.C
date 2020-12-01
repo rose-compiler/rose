@@ -932,6 +932,11 @@ MemoryMap::dump(std::ostream &out, std::string prefix) const
     }
 }
 
+void
+MemoryMap::dump() const {
+    dump(std::cout, "");
+}
+
 } // namespace
 } // namespace
 

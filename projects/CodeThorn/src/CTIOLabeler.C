@@ -24,7 +24,7 @@ bool CTIOLabeler::isStdInLabel(Label label, VariableId* id) {
   return false;
 }
 
-// consider to use Analyzer* instead and query this information
+// consider to use CTAnalysis* instead and query this information
 void CTIOLabeler::setExternalNonDetIntFunctionName(std::string name) {
   _externalNonDetIntFunctionName=name;
 }

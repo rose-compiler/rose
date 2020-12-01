@@ -364,6 +364,9 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
         }
 #endif
 
+    } else if (isSgAsmNullInstruction(insn)) {
+        // Null ISA has no parsable PLT section
+
     } else {
         // FIXME[Robb P. Matzke 2014-08-23]: Architecture is not supported yet
         static bool warned = false;

@@ -49,7 +49,7 @@ namespace CodeThorn {
    * \author Markus Schordan
    * \date 2012.
    */
-  class Analyzer;
+  class CTAnalysis;
   class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun,TransitionEqualToPred> {
   public:
     typedef std::set<const Transition*> TransitionPtrSet;
@@ -93,10 +93,10 @@ namespace CodeThorn {
     bool isComplete();
     void setForceQuitExploration(bool v);
     size_t memorySize() const;
-    void setAnalyzer(Analyzer* analyzer) {
+    void setAnalyzer(CTAnalysis* analyzer) {
       _analyzer=analyzer;
     }
-    Analyzer* getAnalyzer() {
+    CTAnalysis* getAnalyzer() {
       return _analyzer;
     }
     // prints #transitions and details about states on stdout
@@ -115,7 +115,7 @@ namespace CodeThorn {
     bool _forceQuitExploration;
 
     // only used by ltl-driven mode in function succ
-    Analyzer* _analyzer = nullptr;
+    CTAnalysis* _analyzer = nullptr;
     // only used by ltl-driven mode in function succ
     const EState* _startEState = nullptr;
   };

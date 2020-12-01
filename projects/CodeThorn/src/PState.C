@@ -8,7 +8,7 @@
 #include "CodeThornException.h"
 
 // only necessary for class VariableValueMonitor
-//#include "Analyzer.h"
+//#include "CTAnalysis.h"
 
 using namespace std;
 using namespace CodeThorn;

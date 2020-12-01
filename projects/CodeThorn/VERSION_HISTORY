@@ -169,3 +169,21 @@ V1.9 2018-12-12 Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, J
   * improved support of array initializers
   * added support for pointers to C-strings (char literals)
   * added mapping for built-in type sizes (used in analysis and configurable)
+
+------------------------------------------------------------------------------------------------------------
+Author: Markus Schordan <schordan1@llnl.gov>
+Date:   Wed Oct 28 09:25:24 2020 -0700
+
+    (codethorn) version 1.12.16
+    
+    * fixed topological sort
+    * added support for fork semantics in analysis
+    * added support for GNU ranges in switch case statements (e.g. case 1...3:)
+    * fixed unreachability analysis of default case (improves precision)
+    * added test case DOM033.
+    * added progress reporting during analysis of time/memory consumption
+    * added resource limit reporting
+    * fixed array expression evaluation
+    * fixed normaliization in case of address operator inside ?-operator
+    * added support for SgAsmStmt in analysis
+    * improved support for function pointer normalization (RC-145)

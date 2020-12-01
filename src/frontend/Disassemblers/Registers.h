@@ -40,6 +40,8 @@ public:
     typedef std::map<std::string/*name*/, RegisterDescriptor> Entries;
     typedef std::vector<RegisterDescriptor> RegisterDescriptors;
 
+    /** Mostly empty dictionary for the null ISA. */
+    static const RegisterDictionary *dictionary_null();
 
     /** Intel 8086 registers.
      *

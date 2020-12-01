@@ -525,6 +525,7 @@ public:
     void dump(FILE*, const char *prefix="") const;
     void dump(std::ostream&, std::string prefix="") const;
     void print(std::ostream &o, std::string prefix="") const { dump(o, prefix); }
+    void dump() const;                                  // mostly for calling from within GDB or similar
     /** @} */
 
     /** Compute a hash of the entire memory contents.

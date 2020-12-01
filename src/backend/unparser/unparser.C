@@ -334,7 +334,16 @@ Unparser::computeNameQualification(SgSourceFile* file)
        }
 
 #if 0
+     printf ("\n\n");
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
      printf ("In computeNameQualification(): file->getFileName() = %s isCxxFile = %s \n",file->getFileName().c_str(),isCxxFile ? "true" : "false");
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
 #endif
 
   // DQ (11/10/2007): Moved computation of hidden list from astPostProcessing.C to unparseFile so that
@@ -414,6 +423,17 @@ Unparser::computeNameQualification(SgSourceFile* file)
 #if 0
   // DQ (10/23/2018): Output report of AST nodes marked as modified!
      SageInterface::reportModifiedStatements("Leaving Unparser::computeNameQualification()",file);
+#endif
+
+#if 0
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+     printf ("Leaving computeNameQualification(): file->getFileName() = %s isCxxFile = %s \n",file->getFileName().c_str(),isCxxFile ? "true" : "false");
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+     printf ("\n\n");
 #endif
    }
 
@@ -4065,7 +4085,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
   // DQ (10/26/2019): Added debugging code.
      if (include_sourceFile == NULL)
         {
-#if 1
+#if 0
           printf ("In buildSourceFileForHeaderFile(): include_sourceFile == NULL: include_file = %p include_file->get_filename() = %s \n",include_file,include_file->get_filename().str());
 #endif
        // DQ (10/26/2019): If it does not exist, then add one here.
@@ -4164,7 +4184,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
   // ASSERT_not_null(include_sourceFile->get_globalScope());
      if (include_sourceFile->get_globalScope() != NULL)
         {
-          printf ("WARNING: global scope pointer will be overwritten: calling set_globalScope() below \n");
+          printf ("NOTE: global scope pointer will be overwritten: calling set_globalScope() below \n");
 #if 0
           printf ("Exiting to support debugging this case! \n");
           ROSE_ASSERT(false);
@@ -4562,7 +4582,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
                     if (exists(newFileNamePath) == false)
                        {
-#if 1
+#if 0
                          printf ("Copying file = %s to newFileName = %s \n",originalFileName.c_str(),newFileName.c_str());
 #endif
                       // syntax: copy_file(from, to, copy_option::fail_if_exists);
@@ -4570,7 +4590,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                        }
                       else
                        {
-#if 1
+#if 0
                          printf ("File already exists: file = %s \n",newFileNamePath.c_str());
 #endif
                        }
@@ -5523,7 +5543,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
              {
             // #if 1
             // DQ (4/4/2020): Added header file unparsing feature specific debug level.
-               if (SgProject::get_unparseHeaderFilesDebug() >= 3)
+               if (SgProject::get_unparseHeaderFilesDebug() >= 4)
                   {
                     printf ("In unparseProject(): loop over all files: calling computeNameQualification() for sourceFile = %p = %s \n",sourceFile,sourceFile->getFileName().c_str());
                   }
@@ -5825,14 +5845,17 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
           void* i_stack_offset = &i;
           printf ("i_stack_offset = %p \n",i_stack_offset);
 #endif
-       // #if 0
+#if 1
        // DQ (4/9/2020): Added header file unparsing feature specific debug level.
           if (SgProject::get_unparseHeaderFilesDebug() >= 4)
              {
                printf ("\n**************************************************** \n");
+               printf ("**************************************************** \n");
+               printf ("**************************************************** \n");
+               printf ("**************************************************** \n");
                printf ("In unparseFileList(): unparse file = %p filename = %s \n",file,file->getFileName().c_str());
              }
-       // #endif
+#endif
 
        // {
           ASSERT_not_null(file);
@@ -5901,14 +5924,17 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
              }
        // }//file
 
-       // #if 0
+#if 1
        // DQ (4/9/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 5)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
              {
                printf ("In unparseFileList(): base of loop \n");
                printf ("**************************************************** \n");
+               printf ("**************************************************** \n");
+               printf ("**************************************************** \n");
+               printf ("**************************************************** \n");
              }
-       // #endif
+#endif
 
 #if 0
           if (i > 0)
