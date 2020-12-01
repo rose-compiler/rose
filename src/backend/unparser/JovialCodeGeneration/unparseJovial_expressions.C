@@ -445,6 +445,10 @@ Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
 
      switch (operand->variantT())
         {
+        case V_SgAtOp:
+           curprint("@");
+           unparseExpression(operand, info);
+           break;
         case V_SgVarRefExp:
            curprint("@");
            unparseVarRef(operand, info);
