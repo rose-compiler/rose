@@ -162,6 +162,10 @@ digraph "array_expressions.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Arr_Type"</TD></TR>
           </TABLE>> ];
+  Element_2314160 -> Element_2313237
+      [ label="Index_Subtype_Definitions ( 1)" ];
+  Element_2314160 -> Element_2316183
+      [ label=Array_Component_Definition ];
   Element_2314160
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2314160</TD></TR>
@@ -171,7 +175,8 @@ digraph "array_expressions.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">array_expressions.adb - 9:21 .. 9:55</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Type_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">AN_UNCONSTRAINED_ARRAY_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Index_Subtype_Definitions ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2313237</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Definition       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2316183</TD></TR>
           </TABLE>> ];
   Element_2313237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -188,7 +193,7 @@ digraph "array_expressions.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
           </TABLE>> ];
   Element_2316183 -> Element_2315176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2316183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2316183</TD></TR>
@@ -197,7 +202,7 @@ digraph "array_expressions.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2314160</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">array_expressions.adb - 9:49 .. 9:55</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2315176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2315176</TD></TR>
           </TABLE>> ];
   Element_2315176 -> Element_2315237
       [ label=Subtype_Mark ];
@@ -282,6 +287,8 @@ digraph "array_expressions.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2306057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2317082</TD></TR>
           </TABLE>> ];
+  Element_2327181 -> Element_2329189
+      [ label="Discrete_Ranges ( 1)" ];
   Element_2327181
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2327181</TD></TR>
@@ -293,6 +300,10 @@ digraph "array_expressions.adt" {
           <TR><TD ALIGN="LEFT">Constraint_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_INDEX_CONSTRAINT</TD></TR>
           <TR><TD ALIGN="LEFT">Discrete_Ranges ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2329189</TD></TR>
           </TABLE>> ];
+  Element_2329189 -> Element_2328234
+      [ label=Lower_Bound ];
+  Element_2329189 -> Element_2330234
+      [ label=Upper_Bound ];
   Element_2329189
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2329189</TD></TR>
@@ -301,7 +312,9 @@ digraph "array_expressions.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2327181</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">array_expressions.adb - 10:22 .. 10:28</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SIMPLE_EXPRESSION_RANGE</TD></TR>
+          <TR><TD ALIGN="LEFT">Lower_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2328234</TD></TR>
+          <TR><TD ALIGN="LEFT">Upper_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2330234</TD></TR>
           </TABLE>> ];
   Element_2328234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -691,6 +704,10 @@ digraph "array_expressions.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2318057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2326090</TD></TR>
           </TABLE>> ];
+  Element_2354189 -> Element_2353234
+      [ label=Lower_Bound ];
+  Element_2354189 -> Element_2355234
+      [ label=Upper_Bound ];
   Element_2354189
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2354189</TD></TR>
@@ -699,7 +716,9 @@ digraph "array_expressions.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2356264</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">array_expressions.adb - 19:9 .. 19:14</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SIMPLE_EXPRESSION_RANGE</TD></TR>
+          <TR><TD ALIGN="LEFT">Lower_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2353234</TD></TR>
+          <TR><TD ALIGN="LEFT">Upper_Bound   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2355234</TD></TR>
           </TABLE>> ];
   Element_2353234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -1107,6 +1126,7 @@ digraph "array_expressions.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_914082</TD></TR>
           <TR><TD ALIGN="LEFT">Membership_Test_Expression       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2378234</TD></TR>
           <TR><TD ALIGN="LEFT">Membership_Test_Choices ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2381178</TD></TR>
+          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">ADA_2012_FEATURE_NOT_IMPLEMENTED_IN_ADA_95</TD></TR>
           </TABLE>> ];
   Element_2378234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -1313,6 +1333,7 @@ digraph "array_expressions.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_914082</TD></TR>
           <TR><TD ALIGN="LEFT">Membership_Test_Expression       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2392234</TD></TR>
           <TR><TD ALIGN="LEFT">Membership_Test_Choices ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2395178</TD></TR>
+          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">ADA_2012_FEATURE_NOT_IMPLEMENTED_IN_ADA_95</TD></TR>
           </TABLE>> ];
   Element_2392234
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 

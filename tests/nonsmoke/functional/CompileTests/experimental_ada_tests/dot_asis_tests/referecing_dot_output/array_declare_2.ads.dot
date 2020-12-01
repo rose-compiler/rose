@@ -413,6 +413,8 @@ digraph "array_declare_2.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_58057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_920089</TD></TR>
           </TABLE>> ];
+  Element_2336365 -> Element_2337384
+      [ label="Array_Component_Associations ( 1)" ];
   Element_2336365
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2336365</TD></TR>
@@ -422,7 +424,7 @@ digraph "array_declare_2.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Array_Declare_2.ads - 3:47 .. 3:59</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_NAMED_ARRAY_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2337384</TD></TR>
           </TABLE>> ];
   Element_2337384 -> Element_2338197
       [ label="Array_Component_Choices ( 1)" ];
@@ -626,6 +628,12 @@ digraph "array_declare_2.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_58057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_920089</TD></TR>
           </TABLE>> ];
+  Element_2358365 -> Element_2359384
+      [ label="Array_Component_Associations ( 1)" ];
+  Element_2358365 -> Element_2366384
+      [ label="Array_Component_Associations ( 2)" ];
+  Element_2358365 -> Element_2374384
+      [ label="Array_Component_Associations ( 3)" ];
   Element_2358365
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2358365</TD></TR>
@@ -635,7 +643,9 @@ digraph "array_declare_2.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Array_Declare_2.ads - 5:7 .. 7:21</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_NAMED_ARRAY_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2359384</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2366384</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Associations ( 3)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2374384</TD></TR>
           </TABLE>> ];
   Element_2359384 -> Element_2653262
       [ label="Array_Component_Choices ( 1)" ];
@@ -1054,6 +1064,8 @@ digraph "array_declare_2.adt" {
           <TR><TD ALIGN="LEFT">Discrete_Range_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_RANGE_ATTRIBUTE_REFERENCE</TD></TR>
           <TR><TD ALIGN="LEFT">Range_Attribute    </TD><TD> = </TD><TD ALIGN="LEFT">Element_2683322</TD></TR>
           </TABLE>> ];
+  Element_2683322 -> Element_2385237
+      [ label=Prefix ];
   Element_2683322
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2683322</TD></TR>
@@ -1064,6 +1076,7 @@ digraph "array_declare_2.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ATTRIBUTE_REFERENCE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Attribute_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_RANGE_ATTRIBUTE</TD></TR>
+          <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2385237</TD></TR>
           <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
           </TABLE>> ];
   Element_2385237

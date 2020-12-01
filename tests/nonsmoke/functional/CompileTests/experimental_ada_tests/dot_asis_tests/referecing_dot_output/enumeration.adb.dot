@@ -301,6 +301,14 @@ digraph "enumeration.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2306057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2343082</TD></TR>
           </TABLE>> ];
+  Element_2348365 -> Element_2349384
+      [ label="Array_Component_Associations ( 1)" ];
+  Element_2348365 -> Element_2352384
+      [ label="Array_Component_Associations ( 2)" ];
+  Element_2348365 -> Element_2355384
+      [ label="Array_Component_Associations ( 3)" ];
+  Element_2348365 -> Element_2358384
+      [ label="Array_Component_Associations ( 4)" ];
   Element_2348365
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2348365</TD></TR>
@@ -310,7 +318,10 @@ digraph "enumeration.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Enumeration.adb - 5:19 .. 8:31</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_NAMED_ARRAY_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2349384</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2352384</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Associations ( 3)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2355384</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Associations ( 4)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2358384</TD></TR>
           </TABLE>> ];
   Element_2349384 -> Element_2347260
       [ label="Array_Component_Choices ( 1)" ];

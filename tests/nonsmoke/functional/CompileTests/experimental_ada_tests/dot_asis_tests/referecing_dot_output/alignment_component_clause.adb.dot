@@ -3034,6 +3034,8 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Representation_Clause_Name       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2624332</TD></TR>
           <TR><TD ALIGN="LEFT">Representation_Clause_Expression         </TD><TD> = </TD><TD ALIGN="LEFT">Element_3665262</TD></TR>
           </TABLE>> ];
+  Element_2624332 -> Element_2621237
+      [ label=Prefix ];
   Element_2624332
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2624332</TD></TR>
@@ -3044,6 +3046,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ATTRIBUTE_REFERENCE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Attribute_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_SIZE_ATTRIBUTE</TD></TR>
+          <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2621237</TD></TR>
           <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
           </TABLE>> ];
   Element_2621237
@@ -3203,6 +3206,8 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Representation_Clause_Name       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2634270</TD></TR>
           <TR><TD ALIGN="LEFT">Representation_Clause_Expression         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2635234</TD></TR>
           </TABLE>> ];
+  Element_2634270 -> Element_2631237
+      [ label=Prefix ];
   Element_2634270
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2634270</TD></TR>
@@ -3213,6 +3218,7 @@ digraph "alignment_component_clause.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ATTRIBUTE_REFERENCE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Attribute_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ALIGNMENT_ATTRIBUTE</TD></TR>
+          <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2631237</TD></TR>
           <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
           </TABLE>> ];
   Element_2631237
