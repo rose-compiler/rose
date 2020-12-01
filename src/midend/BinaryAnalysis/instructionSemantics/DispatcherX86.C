@@ -33,7 +33,7 @@ namespace X86 {
 void
 InsnProcessor::process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) {
     DispatcherX86Ptr dispatcher = DispatcherX86::promote(dispatcher_);
-    BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
+    BaseSemantics::RiscOperatorsPtr operators = dispatcher->operators();
     SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
     ASSERT_require(insn!=NULL && insn==operators->currentInstruction());
     dispatcher->advanceInstructionPointer(insn);
@@ -4469,6 +4469,18 @@ DispatcherX86::regcache_init()
 }
 
 void
+DispatcherX86::initializeState(const BaseSemantics::StatePtr &state) {
+    if (state) {
+        // The code, data, and stack segment registers in modern operating systems default to the entire virtual memory,
+        // thus their base addresses are always zero.
+        ASSERT_not_null(operators());
+        state->writeRegister(REG_CS, operators()->number_(REG_CS.nBits(), 0), operators().get());
+        state->writeRegister(REG_DS, operators()->number_(REG_CS.nBits(), 0), operators().get());
+        state->writeRegister(REG_SS, operators()->number_(REG_CS.nBits(), 0), operators().get());
+    }
+}
+
+void
 DispatcherX86::memory_init() {
     if (BaseSemantics::StatePtr state = currentState()) {
         if (BaseSemantics::MemoryStatePtr memory = state->memoryState()) {
@@ -4529,46 +4541,46 @@ void
 DispatcherX86::setFlagsForResult(const BaseSemantics::SValuePtr &result)
 {
     size_t width = result->get_width();
-    writeRegister(REG_PF, parity(operators->extract(result, 0, 8)));
-    writeRegister(REG_SF, operators->extract(result, width-1, width));
-    writeRegister(REG_ZF, operators->equalToZero(result));
+    writeRegister(REG_PF, parity(operators()->extract(result, 0, 8)));
+    writeRegister(REG_SF, operators()->extract(result, width-1, width));
+    writeRegister(REG_ZF, operators()->equalToZero(result));
 }
 
 void
 DispatcherX86::setFlagsForResult(const BaseSemantics::SValuePtr &result, const BaseSemantics::SValuePtr &cond)
 {
     ASSERT_require(cond->get_width()==1);
-    BaseSemantics::SValuePtr lo_byte = operators->extract(result, 0, 8);
-    BaseSemantics::SValuePtr signbit = operators->extract(result, result->get_width()-1, result->get_width());
+    BaseSemantics::SValuePtr lo_byte = operators()->extract(result, 0, 8);
+    BaseSemantics::SValuePtr signbit = operators()->extract(result, result->get_width()-1, result->get_width());
     BaseSemantics::SValuePtr pf = readRegister(REG_PF, PEEK_REGISTER);
-    writeRegister(REG_PF, operators->ite(cond, parity(lo_byte), pf));
-    writeRegister(REG_SF, operators->ite(cond, signbit, readRegister(REG_SF, PEEK_REGISTER)));
+    writeRegister(REG_PF, operators()->ite(cond, parity(lo_byte), pf));
+    writeRegister(REG_SF, operators()->ite(cond, signbit, readRegister(REG_SF, PEEK_REGISTER)));
     BaseSemantics::SValuePtr zf = readRegister(REG_ZF, PEEK_REGISTER);
-    writeRegister(REG_ZF, operators->ite(cond, operators->equalToZero(result), zf));
+    writeRegister(REG_ZF, operators()->ite(cond, operators()->equalToZero(result), zf));
 }
 
 BaseSemantics::SValuePtr
 DispatcherX86::parity(const BaseSemantics::SValuePtr &v)
 {
     ASSERT_require(v->get_width()==8);
-    BaseSemantics::SValuePtr p1 = operators->extract(v, 1, 2);
-    BaseSemantics::SValuePtr p01 = operators->xor_(operators->extract(v, 0, 1), p1);
-    BaseSemantics::SValuePtr p3 = operators->extract(v, 3, 4);
-    BaseSemantics::SValuePtr p23 = operators->xor_(operators->extract(v, 2, 3), p3);
-    BaseSemantics::SValuePtr p5 = operators->extract(v, 5, 6);
-    BaseSemantics::SValuePtr p45 = operators->xor_(operators->extract(v, 4, 5), p5);
-    BaseSemantics::SValuePtr p7 = operators->extract(v, 7, 8);
-    BaseSemantics::SValuePtr p67 = operators->xor_(operators->extract(v, 6, 7), p7);
-    BaseSemantics::SValuePtr p0123 = operators->xor_(p01, p23);
-    BaseSemantics::SValuePtr p4567 = operators->xor_(p45, p67);
-    BaseSemantics::SValuePtr pall = operators->xor_(p0123, p4567);
-    return operators->invert(pall);
+    BaseSemantics::SValuePtr p1 = operators()->extract(v, 1, 2);
+    BaseSemantics::SValuePtr p01 = operators()->xor_(operators()->extract(v, 0, 1), p1);
+    BaseSemantics::SValuePtr p3 = operators()->extract(v, 3, 4);
+    BaseSemantics::SValuePtr p23 = operators()->xor_(operators()->extract(v, 2, 3), p3);
+    BaseSemantics::SValuePtr p5 = operators()->extract(v, 5, 6);
+    BaseSemantics::SValuePtr p45 = operators()->xor_(operators()->extract(v, 4, 5), p5);
+    BaseSemantics::SValuePtr p7 = operators()->extract(v, 7, 8);
+    BaseSemantics::SValuePtr p67 = operators()->xor_(operators()->extract(v, 6, 7), p7);
+    BaseSemantics::SValuePtr p0123 = operators()->xor_(p01, p23);
+    BaseSemantics::SValuePtr p4567 = operators()->xor_(p45, p67);
+    BaseSemantics::SValuePtr pall = operators()->xor_(p0123, p4567);
+    return operators()->invert(pall);
 }
 
 BaseSemantics::SValuePtr
 DispatcherX86::invertMaybe(const BaseSemantics::SValuePtr &value, bool maybe)
 {
-    return maybe ? operators->invert(value) : value;
+    return maybe ? operators()->invert(value) : value;
 }
 
 BaseSemantics::SValuePtr
@@ -4576,9 +4588,9 @@ DispatcherX86::greaterOrEqualToTen(const BaseSemantics::SValuePtr &w)
 {
     size_t nbits = w->get_width();
     BaseSemantics::SValuePtr carries;
-    BaseSemantics::SValuePtr no = operators->boolean_(false);
-    operators->addWithCarries(w, number_(nbits, 6), no, carries/*out*/);
-    return operators->extract(carries, nbits-1, nbits);
+    BaseSemantics::SValuePtr no = operators()->boolean_(false);
+    operators()->addWithCarries(w, number_(nbits, 6), no, carries/*out*/);
+    return operators()->extract(carries, nbits-1, nbits);
 }
 
 BaseSemantics::SValuePtr
@@ -4588,7 +4600,7 @@ DispatcherX86::flagsCombo(X86InstructionKind k)
         case x86_jne:
         case x86_setne:
         case x86_cmovne:
-            return operators->invert(readRegister(REG_ZF));
+            return operators()->invert(readRegister(REG_ZF));
         case x86_je:
         case x86_sete:
         case x86_cmove:
@@ -4596,7 +4608,7 @@ DispatcherX86::flagsCombo(X86InstructionKind k)
         case x86_jno:
         case x86_setno:
         case x86_cmovno:
-            return operators->invert(readRegister(REG_OF));
+            return operators()->invert(readRegister(REG_OF));
         case x86_jo:
         case x86_seto:
         case x86_cmovo:
@@ -4604,7 +4616,7 @@ DispatcherX86::flagsCombo(X86InstructionKind k)
         case x86_jns:
         case x86_setns:
         case x86_cmovns:
-            return operators->invert(readRegister(REG_SF));
+            return operators()->invert(readRegister(REG_SF));
         case x86_js:
         case x86_sets:
         case x86_cmovs:
@@ -4612,7 +4624,7 @@ DispatcherX86::flagsCombo(X86InstructionKind k)
         case x86_jpo:
         case x86_setpo:
         case x86_cmovpo:
-            return operators->invert(readRegister(REG_PF));
+            return operators()->invert(readRegister(REG_PF));
         case x86_jpe:
         case x86_setpe:
         case x86_cmovpe:
@@ -4620,7 +4632,7 @@ DispatcherX86::flagsCombo(X86InstructionKind k)
         case x86_jae:
         case x86_setae:
         case x86_cmovae:
-            return operators->invert(readRegister(REG_CF));
+            return operators()->invert(readRegister(REG_CF));
         case x86_jb:
         case x86_setb:
         case x86_cmovb:
@@ -4629,44 +4641,44 @@ DispatcherX86::flagsCombo(X86InstructionKind k)
         case x86_setbe:
         case x86_cmovbe: {
             BaseSemantics::SValuePtr zf = readRegister(REG_ZF);
-            return operators->or_(readRegister(REG_CF), zf);
+            return operators()->or_(readRegister(REG_CF), zf);
         }
         case x86_ja:
         case x86_seta:
         case x86_cmova: {
-            BaseSemantics::SValuePtr notZf = operators->invert(readRegister(REG_ZF));
-            return operators->and_(operators->invert(readRegister(REG_CF)), notZf);
+            BaseSemantics::SValuePtr notZf = operators()->invert(readRegister(REG_ZF));
+            return operators()->and_(operators()->invert(readRegister(REG_CF)), notZf);
         }
         case x86_jl:
         case x86_setl:
         case x86_cmovl: {
             BaseSemantics::SValuePtr of = readRegister(REG_OF);
-            return operators->xor_(readRegister(REG_SF), of);
+            return operators()->xor_(readRegister(REG_SF), of);
         }
         case x86_jge:
         case x86_setge:
         case x86_cmovge: {
             BaseSemantics::SValuePtr of = readRegister(REG_OF);
-            return operators->invert(operators->xor_(readRegister(REG_SF), of));
+            return operators()->invert(operators()->xor_(readRegister(REG_SF), of));
         }
         case x86_jle:
         case x86_setle:
         case x86_cmovle: {
             BaseSemantics::SValuePtr of = readRegister(REG_OF);
-            BaseSemantics::SValuePtr sf_xor_of = operators->xor_(readRegister(REG_SF), of);
-            return operators->or_(readRegister(REG_ZF), sf_xor_of);
+            BaseSemantics::SValuePtr sf_xor_of = operators()->xor_(readRegister(REG_SF), of);
+            return operators()->or_(readRegister(REG_ZF), sf_xor_of);
         }
         case x86_jg:
         case x86_setg:
         case x86_cmovg: {
-            BaseSemantics::SValuePtr notZf = operators->invert(readRegister(REG_ZF));
+            BaseSemantics::SValuePtr notZf = operators()->invert(readRegister(REG_ZF));
             BaseSemantics::SValuePtr of = readRegister(REG_OF);
-            return operators->and_(operators->invert(operators->xor_(readRegister(REG_SF), of)), notZf);
+            return operators()->and_(operators()->invert(operators()->xor_(readRegister(REG_SF), of)), notZf);
         }
         case x86_jcxz:
-            return operators->equalToZero(readRegister(REG_CX));
+            return operators()->equalToZero(readRegister(REG_CX));
         case x86_jecxz:
-            return operators->equalToZero(readRegister(REG_ECX));
+            return operators()->equalToZero(readRegister(REG_ECX));
         default:
             ASSERT_not_reachable("instruction kind not handled");
         }
@@ -4676,9 +4688,9 @@ BaseSemantics::SValuePtr
 DispatcherX86::repEnter(X86RepeatPrefix repeat)
 {
     if (repeat==x86_repeat_none)
-        return operators->boolean_(true);
+        return operators()->boolean_(true);
     BaseSemantics::SValuePtr cx = readRegister(REG_anyCX);
-    BaseSemantics::SValuePtr in_loop = operators->invert(operators->equalToZero(cx));
+    BaseSemantics::SValuePtr in_loop = operators()->invert(operators()->equalToZero(cx));
     return in_loop;
 }
 
@@ -4689,39 +4701,39 @@ DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SVal
     ASSERT_require(in_loop!=NULL && in_loop->get_width()==1);
 
     // conditionally decrement the CX register
-    BaseSemantics::SValuePtr zero = operators->number_(REG_anyCX.nBits(),  0);
-    BaseSemantics::SValuePtr maybeDecrement = operators->ite(in_loop, operators->number_(REG_anyCX.nBits(), -1), zero);
-    BaseSemantics::SValuePtr new_cx = operators->add(readRegister(REG_anyCX), maybeDecrement);
+    BaseSemantics::SValuePtr zero = operators()->number_(REG_anyCX.nBits(),  0);
+    BaseSemantics::SValuePtr maybeDecrement = operators()->ite(in_loop, operators()->number_(REG_anyCX.nBits(), -1), zero);
+    BaseSemantics::SValuePtr new_cx = operators()->add(readRegister(REG_anyCX), maybeDecrement);
     writeRegister(REG_anyCX, new_cx);
-    BaseSemantics::SValuePtr nonzero_cx = operators->invert(operators->equalToZero(new_cx));
+    BaseSemantics::SValuePtr nonzero_cx = operators()->invert(operators()->equalToZero(new_cx));
 
     // determine whether we should repeat the instruction.
     BaseSemantics::SValuePtr again;
     switch (repeat_prefix) {
         case x86_repeat_none:
-            again = operators->boolean_(false);
+            again = operators()->boolean_(false);
             break;
         case x86_repeat_repe:
             // REPE is an alias for REP when used with certain instructions.
             if (honorZeroFlag) {
                 BaseSemantics::SValuePtr zf = readRegister(REG_ZF);
-                again = operators->and_(operators->and_(in_loop, nonzero_cx), zf);
+                again = operators()->and_(operators()->and_(in_loop, nonzero_cx), zf);
             } else {
-                again = operators->and_(in_loop, nonzero_cx);
+                again = operators()->and_(in_loop, nonzero_cx);
             }
             break;
         case x86_repeat_repne: {
-            BaseSemantics::SValuePtr notZf = operators->invert(readRegister(REG_ZF));
-            again = operators->and_(operators->and_(in_loop, nonzero_cx), notZf);
+            BaseSemantics::SValuePtr notZf = operators()->invert(readRegister(REG_ZF));
+            again = operators()->and_(operators()->and_(in_loop, nonzero_cx), notZf);
             break;
         }
     }
 
     BaseSemantics::SValuePtr ip = readRegister(REG_anyIP);
     writeRegister(REG_anyIP,
-                  operators->ite(again,
-                                 operators->number_(REG_anyIP.nBits(), insn_va),    // repeat
-                                 ip)); // exit loop
+                  operators()->ite(again,
+                                   operators()->number_(REG_anyIP.nBits(), insn_va),    // repeat
+                                   ip)); // exit loop
 }
 
 BaseSemantics::SValuePtr
@@ -4729,21 +4741,21 @@ DispatcherX86::doAddOperation(BaseSemantics::SValuePtr a, BaseSemantics::SValueP
                               bool invertCarries, const BaseSemantics::SValuePtr &carryIn)
 {
     if (a->get_width() > b->get_width()) {
-        b = operators->signExtend(b, a->get_width());
+        b = operators()->signExtend(b, a->get_width());
     } else if (a->get_width() < b->get_width()) {
-        a = operators->signExtend(a, b->get_width());
+        a = operators()->signExtend(a, b->get_width());
     }
 
     ASSERT_require(1==carryIn->get_width());
     size_t nbits = a->get_width();
     BaseSemantics::SValuePtr carries;
-    BaseSemantics::SValuePtr result = operators->addWithCarries(a, b, invertMaybe(carryIn, invertCarries), carries/*out*/);
+    BaseSemantics::SValuePtr result = operators()->addWithCarries(a, b, invertMaybe(carryIn, invertCarries), carries/*out*/);
     setFlagsForResult(result);
-    BaseSemantics::SValuePtr sign = operators->extract(carries, nbits-1, nbits);
-    BaseSemantics::SValuePtr ofbit = operators->extract(carries, nbits-2, nbits-1);
-    writeRegister(REG_AF, invertMaybe(operators->extract(carries, 3, 4), invertCarries));
+    BaseSemantics::SValuePtr sign = operators()->extract(carries, nbits-1, nbits);
+    BaseSemantics::SValuePtr ofbit = operators()->extract(carries, nbits-2, nbits-1);
+    writeRegister(REG_AF, invertMaybe(operators()->extract(carries, 3, 4), invertCarries));
     writeRegister(REG_CF, invertMaybe(sign, invertCarries));
-    writeRegister(REG_OF, operators->xor_(sign, ofbit));
+    writeRegister(REG_OF, operators()->xor_(sign, ofbit));
     return result;
 }
 
@@ -4753,34 +4765,34 @@ DispatcherX86::doAddOperation(BaseSemantics::SValuePtr a, BaseSemantics::SValueP
                               const BaseSemantics::SValuePtr &cond)
 {
     if (a->get_width() > b->get_width()) {
-        b = operators->signExtend(b, a->get_width());
+        b = operators()->signExtend(b, a->get_width());
     } else if (a->get_width() < b->get_width()) {
-        a = operators->signExtend(a, b->get_width());
+        a = operators()->signExtend(a, b->get_width());
     }
 
     ASSERT_require(1==carryIn->get_width());
     ASSERT_require(cond!=NULL && cond->get_width()==1);
     size_t nbits = a->get_width();
     BaseSemantics::SValuePtr carries;
-    BaseSemantics::SValuePtr result = operators->addWithCarries(a, b, invertMaybe(carryIn, invertCarries), carries/*out*/);
+    BaseSemantics::SValuePtr result = operators()->addWithCarries(a, b, invertMaybe(carryIn, invertCarries), carries/*out*/);
     setFlagsForResult(result, cond);
-    BaseSemantics::SValuePtr sign = operators->extract(carries, nbits-1, nbits);
-    BaseSemantics::SValuePtr ofbit = operators->extract(carries, nbits-2, nbits-1);
+    BaseSemantics::SValuePtr sign = operators()->extract(carries, nbits-1, nbits);
+    BaseSemantics::SValuePtr ofbit = operators()->extract(carries, nbits-2, nbits-1);
     BaseSemantics::SValuePtr af = readRegister(REG_AF);
     writeRegister(REG_AF,
-                  operators->ite(cond,
-                                 invertMaybe(operators->extract(carries, 3, 4), invertCarries),
-                                 af));
+                  operators()->ite(cond,
+                                   invertMaybe(operators()->extract(carries, 3, 4), invertCarries),
+                                   af));
     BaseSemantics::SValuePtr cf = readRegister(REG_CF);
     writeRegister(REG_CF,
-                  operators->ite(cond,
-                                 invertMaybe(sign, invertCarries),
-                                 cf));
+                  operators()->ite(cond,
+                                   invertMaybe(sign, invertCarries),
+                                   cf));
     BaseSemantics::SValuePtr of = readRegister(REG_OF);
     writeRegister(REG_OF,
-                  operators->ite(cond,
-                                 operators->xor_(sign, ofbit),
-                                 of));
+                  operators()->ite(cond,
+                                   operators()->xor_(sign, ofbit),
+                                   of));
     return result;
 }
     
@@ -4792,13 +4804,13 @@ DispatcherX86::doIncOperation(const BaseSemantics::SValuePtr &a, bool dec, bool 
 {
     size_t nbits = a->get_width();
     BaseSemantics::SValuePtr carries;
-    BaseSemantics::SValuePtr no = operators->boolean_(false);
-    BaseSemantics::SValuePtr result = operators->addWithCarries(a, number_(nbits, dec?-1:1), no, carries/*out*/);
+    BaseSemantics::SValuePtr no = operators()->boolean_(false);
+    BaseSemantics::SValuePtr result = operators()->addWithCarries(a, number_(nbits, dec?-1:1), no, carries/*out*/);
     setFlagsForResult(result);
-    BaseSemantics::SValuePtr sign = operators->extract(carries, nbits-1, nbits);
-    BaseSemantics::SValuePtr ofbit = operators->extract(carries, nbits-2, nbits-1);
-    writeRegister(REG_AF, invertMaybe(operators->extract(carries, 3, 4), dec));
-    writeRegister(REG_OF, operators->xor_(sign, ofbit));
+    BaseSemantics::SValuePtr sign = operators()->extract(carries, nbits-1, nbits);
+    BaseSemantics::SValuePtr ofbit = operators()->extract(carries, nbits-2, nbits-1);
+    writeRegister(REG_AF, invertMaybe(operators()->extract(carries, 3, 4), dec));
+    writeRegister(REG_OF, operators()->xor_(sign, ofbit));
     if (setCarry)
         writeRegister(REG_CF, invertMaybe(sign, dec));
     return result;
@@ -4813,28 +4825,28 @@ DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::S
 
     // The 8086 does not mask the rotate count; processors starting with the 80286 (including virtual-8086 mode) do mask. We
     // will always mask. The effect (other than timing) is the same either way.
-    BaseSemantics::SValuePtr maskedRotateCount = operators->extract(total_rotate, 0, rotateSignificantBits);
+    BaseSemantics::SValuePtr maskedRotateCount = operators()->extract(total_rotate, 0, rotateSignificantBits);
     if (operand->get_width()==9 || operand->get_width()==17) { //  RCL or RCR on an 8- or 16-bit operand
-        maskedRotateCount = operators->unsignedModulo(maskedRotateCount,
-                                                      number_(maskedRotateCount->get_width(), operand->get_width()));
+        maskedRotateCount = operators()->unsignedModulo(maskedRotateCount,
+                                                        number_(maskedRotateCount->get_width(), operand->get_width()));
     }
-    BaseSemantics::SValuePtr isZeroRotateCount = operators->equalToZero(maskedRotateCount);
+    BaseSemantics::SValuePtr isZeroRotateCount = operators()->equalToZero(maskedRotateCount);
 
     // isOneBitRotate is true if the (masked) amount by which to rotate is equal to one.
     uintmax_t m = IntegerOps::genMask<uintmax_t>(rotateSignificantBits);
     BaseSemantics::SValuePtr mask = number_(rotateSignificantBits, m); // -1 in modulo arithmetic
-    BaseSemantics::SValuePtr isOneBitRotate = operators->equalToZero(operators->add(maskedRotateCount, mask));
+    BaseSemantics::SValuePtr isOneBitRotate = operators()->equalToZero(operators()->add(maskedRotateCount, mask));
 
     // Do the actual rotate.
     BaseSemantics::SValuePtr result;
     switch (kind) {
         case x86_rcl:
         case x86_rol:
-            result = operators->rotateLeft(operand, maskedRotateCount);
+            result = operators()->rotateLeft(operand, maskedRotateCount);
             break;
         case x86_rcr:
         case x86_ror:
-            result = operators->rotateRight(operand, maskedRotateCount);
+            result = operators()->rotateRight(operand, maskedRotateCount);
             break;
         default:
             ASSERT_not_reachable("instruction not handled");
@@ -4847,10 +4859,10 @@ DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::S
         case x86_rcl:
         case x86_rcr:
         case x86_ror:
-            new_cf = operators->extract(result, result->get_width()-1, result->get_width());
+            new_cf = operators()->extract(result, result->get_width()-1, result->get_width());
             break;
         case x86_rol:
-            new_cf = operators->extract(result, 0, 1);
+            new_cf = operators()->extract(result, 0, 1);
             break;
         default:
             ASSERT_not_reachable("instruction not handled");
@@ -4861,18 +4873,18 @@ DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::S
     switch (kind) {
         case x86_rcl:
         case x86_ror: {
-            BaseSemantics::SValuePtr v1 = operators->extract(result, result->get_width()-2, result->get_width()-1);
-            new_of = operators->xor_(operators->extract(result, result->get_width()-1, result->get_width()), v1);
+            BaseSemantics::SValuePtr v1 = operators()->extract(result, result->get_width()-2, result->get_width()-1);
+            new_of = operators()->xor_(operators()->extract(result, result->get_width()-1, result->get_width()), v1);
             break;
         }
         case x86_rcr: {
-            BaseSemantics::SValuePtr v1 = operators->extract(operand, operand->get_width()-2, operand->get_width()-1);
-            new_of = operators->xor_(operators->extract(operand, operand->get_width()-1, operand->get_width()), v1);
+            BaseSemantics::SValuePtr v1 = operators()->extract(operand, operand->get_width()-2, operand->get_width()-1);
+            new_of = operators()->xor_(operators()->extract(operand, operand->get_width()-1, operand->get_width()), v1);
             break;
         }
         case x86_rol:
-            new_of = operators->xor_(new_cf,
-                                     operators->extract(result, result->get_width()-1, result->get_width()));
+            new_of = operators()->xor_(new_cf,
+                                       operators()->extract(result, result->get_width()-1, result->get_width()));
             break;
         default:
             ASSERT_not_reachable("instruction not handled");
@@ -4880,10 +4892,10 @@ DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::S
 
     // Update CF and OF flags. SF, ZF, AF, and PF are not affected.
     writeRegister(REG_CF, new_cf);
-    BaseSemantics::SValuePtr maybeOf = operators->ite(isOneBitRotate, new_of, unspecified_(1));
-    writeRegister(REG_OF, operators->ite(isZeroRotateCount,
-                                         readRegister(REG_OF, PEEK_REGISTER),
-                                         maybeOf));
+    BaseSemantics::SValuePtr maybeOf = operators()->ite(isOneBitRotate, new_of, unspecified_(1));
+    writeRegister(REG_OF, operators()->ite(isZeroRotateCount,
+                                           readRegister(REG_OF, PEEK_REGISTER),
+                                           maybeOf));
 
     return result;
 }
@@ -4899,86 +4911,86 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
 
     // The 8086 does not mask the shift count; processors starting with the 80286 (including virtual-8086 mode) do
     // mask.  The effect (other than timing) is the same either way.
-    BaseSemantics::SValuePtr maskedShiftCount = operators->extract(total_shift, 0, shiftSignificantBits);
-    BaseSemantics::SValuePtr isZeroShiftCount = operators->equalToZero(maskedShiftCount);
+    BaseSemantics::SValuePtr maskedShiftCount = operators()->extract(total_shift, 0, shiftSignificantBits);
+    BaseSemantics::SValuePtr isZeroShiftCount = operators()->equalToZero(maskedShiftCount);
 
     // isLargeShift is true if the (unmasked) amount by which to shift is greater than or equal to the size in
     // bits of the destination operand.
-    BaseSemantics::SValuePtr extraShiftCount = operators->extract(total_shift, shiftSignificantBits, 8);
-    BaseSemantics::SValuePtr isLargeShift = operators->invert(operators->equalToZero(extraShiftCount));
+    BaseSemantics::SValuePtr extraShiftCount = operators()->extract(total_shift, shiftSignificantBits, 8);
+    BaseSemantics::SValuePtr isLargeShift = operators()->invert(operators()->equalToZero(extraShiftCount));
 
     // isOneBitShift is true if the (masked) amount by which to shift is equal to one.
     uintmax_t m = IntegerOps::genMask<uintmax_t>(shiftSignificantBits);
     BaseSemantics::SValuePtr mask = number_(shiftSignificantBits, m); // -1 in modulo arithmetic
-    BaseSemantics::SValuePtr isOneBitShift = operators->equalToZero(operators->add(maskedShiftCount, mask));
+    BaseSemantics::SValuePtr isOneBitShift = operators()->equalToZero(operators()->add(maskedShiftCount, mask));
 
     // Do the actual shift, according to instruction kind.
     BaseSemantics::SValuePtr result;
     switch (kind) {
         case x86_shr:
-            result = operators->shiftRight(operand, maskedShiftCount);
+            result = operators()->shiftRight(operand, maskedShiftCount);
             break;
         case x86_sar:
-            result = operators->shiftRightArithmetic(operand, maskedShiftCount);
+            result = operators()->shiftRightArithmetic(operand, maskedShiftCount);
             break;
         case x86_shl:
-            result = operators->shiftLeft(operand, maskedShiftCount);
+            result = operators()->shiftLeft(operand, maskedShiftCount);
             break;
         case x86_shrd: {
-            BaseSemantics::SValuePtr v1 = operators->shiftLeft(source_bits, operators->negate(maskedShiftCount));
-            BaseSemantics::SValuePtr v2 = operators->ite(isZeroShiftCount,
-                                                         number_(operand->get_width(), 0),
-                                                         v1);
-            BaseSemantics::SValuePtr v3 = operators->or_(operators->shiftRight(operand, maskedShiftCount), v2);
-            result = operators->ite(isLargeShift, unspecified_(operand->get_width()), v3);
+            BaseSemantics::SValuePtr v1 = operators()->shiftLeft(source_bits, operators()->negate(maskedShiftCount));
+            BaseSemantics::SValuePtr v2 = operators()->ite(isZeroShiftCount,
+                                                           number_(operand->get_width(), 0),
+                                                           v1);
+            BaseSemantics::SValuePtr v3 = operators()->or_(operators()->shiftRight(operand, maskedShiftCount), v2);
+            result = operators()->ite(isLargeShift, unspecified_(operand->get_width()), v3);
             break;
         }
         case x86_shld: {
-            BaseSemantics::SValuePtr v1 = operators->shiftRight(source_bits, operators->negate(maskedShiftCount));
-            BaseSemantics::SValuePtr v2 = operators->ite(isZeroShiftCount,
-                                                         number_(operand->get_width(), 0),
-                                                         v1);
-            BaseSemantics::SValuePtr v3 = operators->or_(operators->shiftLeft(operand, maskedShiftCount), v2);
-            result = operators->ite(isLargeShift, unspecified_(operand->get_width()), v3);
+            BaseSemantics::SValuePtr v1 = operators()->shiftRight(source_bits, operators()->negate(maskedShiftCount));
+            BaseSemantics::SValuePtr v2 = operators()->ite(isZeroShiftCount,
+                                                           number_(operand->get_width(), 0),
+                                                           v1);
+            BaseSemantics::SValuePtr v3 = operators()->or_(operators()->shiftLeft(operand, maskedShiftCount), v2);
+            result = operators()->ite(isLargeShift, unspecified_(operand->get_width()), v3);
             break;
         }
         default:
             ASSERT_not_reachable("instruction not handled");
     }
     ASSERT_require(operand->get_width()==result->get_width());
-    BaseSemantics::SValuePtr originalSign = operators->extract(operand, operand->get_width()-1, operand->get_width());
-    BaseSemantics::SValuePtr resultSign = operators->extract(result, result->get_width()-1, result->get_width());
+    BaseSemantics::SValuePtr originalSign = operators()->extract(operand, operand->get_width()-1, operand->get_width());
+    BaseSemantics::SValuePtr resultSign = operators()->extract(result, result->get_width()-1, result->get_width());
 
     // The AF flag is undefined if a shift occurs.  The documentation for SHL, SHR, and SAR are somewhat ambiguous about
     // this, but the documentation for SHLD and SHRD is more specific.  We assume that both sets of shift instructions
     // behave the same way.
     BaseSemantics::SValuePtr unspecAf = unspecified_(1);
     writeRegister(REG_AF,
-                  operators->ite(isZeroShiftCount,
-                                 readRegister(REG_AF, PEEK_REGISTER),
-                                 unspecAf));
+                  operators()->ite(isZeroShiftCount,
+                                   readRegister(REG_AF, PEEK_REGISTER),
+                                   unspecAf));
 
     // What is the last bit shifted off the operand?  If we're right shifting by N bits, then the original operand N-1 bit
     // is what should make it into the final CF; if we're left shifting by N bits then we need bit operand->get_width()-N.
     BaseSemantics::SValuePtr bitPosition;
     if (x86_shr==kind || x86_sar==kind || x86_shrd==kind) {
-        bitPosition = operators->add(maskedShiftCount, mask);
+        bitPosition = operators()->add(maskedShiftCount, mask);
     } else {
         BaseSemantics::SValuePtr one = number_(shiftSignificantBits, 1);
-        BaseSemantics::SValuePtr term1 = operators->add(operators->invert(maskedShiftCount), one);
-        bitPosition = operators->add(number_(shiftSignificantBits, operand->get_width() & m), // probably zero modulo
-                                     term1);
+        BaseSemantics::SValuePtr term1 = operators()->add(operators()->invert(maskedShiftCount), one);
+        bitPosition = operators()->add(number_(shiftSignificantBits, operand->get_width() & m), // probably zero modulo
+                                       term1);
     }
-    BaseSemantics::SValuePtr shifted_off = operators->extract(operators->shiftRight(operand, bitPosition), 0, 1);
+    BaseSemantics::SValuePtr shifted_off = operators()->extract(operators()->shiftRight(operand, bitPosition), 0, 1);
 
     // New carry flag value.  From the Intel manual, the CF flag is "undefined for SHL and SHR [and SAL] instructions where
     // the count is greater than or equal to the size (in bits) of the destination operand", and "if the count is 0, the
     // flags are not affected."  The manual is silent about the value of CF for large SAR shifts, so we use the original
     // sign bit, matching the pseudo-code in the manual.
-    BaseSemantics::SValuePtr newCFite = operators->ite(isLargeShift,
-                                                       (x86_sar==kind ? originalSign : unspecified_(1)),
-                                                       shifted_off);
-    BaseSemantics::SValuePtr newCF = operators->ite(isZeroShiftCount, readRegister(REG_CF, PEEK_REGISTER), newCFite);
+    BaseSemantics::SValuePtr newCFite = operators()->ite(isLargeShift,
+                                                         (x86_sar==kind ? originalSign : unspecified_(1)),
+                                                         shifted_off);
+    BaseSemantics::SValuePtr newCF = operators()->ite(isZeroShiftCount, readRegister(REG_CF, PEEK_REGISTER), newCFite);
     writeRegister(REG_CF, newCF);
 
     // Ajust the overflow flag.  From the Intel manual for the SHL, SHR, and SAR instructions, "The OF flag is affected
@@ -4993,25 +5005,25 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
     switch (kind) {
         case x86_shr: {
             BaseSemantics::SValuePtr unspec = unspecified_(1);
-            newOF = operators->ite(isOneBitShift,
-                                   originalSign,
-                                   operators->ite(isZeroShiftCount, 
-                                                  readRegister(REG_OF, PEEK_REGISTER),
-                                                  unspec));
+            newOF = operators()->ite(isOneBitShift,
+                                     originalSign,
+                                     operators()->ite(isZeroShiftCount,
+                                                      readRegister(REG_OF, PEEK_REGISTER),
+                                                      unspec));
             break;
         }
         case x86_sar: {
             BaseSemantics::SValuePtr unspec = unspecified_(1);
-            BaseSemantics::SValuePtr v1 = operators->ite(isZeroShiftCount, readRegister(REG_OF, PEEK_REGISTER), unspec);
-            newOF = operators->ite(isOneBitShift, operators->boolean_(false), v1);
+            BaseSemantics::SValuePtr v1 = operators()->ite(isZeroShiftCount, readRegister(REG_OF, PEEK_REGISTER), unspec);
+            newOF = operators()->ite(isOneBitShift, operators()->boolean_(false), v1);
             break;
         }
         case x86_shl:
         case x86_shld:
         case x86_shrd: {
             BaseSemantics::SValuePtr unspec = unspecified_(1);
-            BaseSemantics::SValuePtr v1 = operators->ite(isZeroShiftCount, readRegister(REG_OF, PEEK_REGISTER), unspec);
-            newOF = operators->ite(isOneBitShift, operators->xor_(originalSign, resultSign), v1);
+            BaseSemantics::SValuePtr v1 = operators()->ite(isZeroShiftCount, readRegister(REG_OF, PEEK_REGISTER), unspec);
+            newOF = operators()->ite(isOneBitShift, operators()->xor_(originalSign, resultSign), v1);
             break;
         }
         default:
@@ -5020,7 +5032,7 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
     writeRegister(REG_OF, newOF);
 
     // Result flags SF, ZF, and PF are set according to the result, but are unchanged if the shift count is zero.
-    setFlagsForResult(result, operators->invert(isZeroShiftCount));
+    setFlagsForResult(result, operators()->invert(isZeroShiftCount));
     return result;
 }
 
@@ -5028,24 +5040,24 @@ BaseSemantics::SValuePtr
 DispatcherX86::readRegister(RegisterDescriptor reg, AccessMode mode) {
     // When reading FLAGS, EFLAGS as a whole do not coalesce individual flags into the single register.
     if (reg.majorNumber()==x86_regclass_flags && reg.offset()==0 && reg.nBits()>1) {
-        if (BaseSemantics::StatePtr ss = operators->currentState()) {
+        if (BaseSemantics::StatePtr ss = operators()->currentState()) {
             BaseSemantics::RegisterStatePtr rs = ss->registerState();
             if (BaseSemantics::RegisterStateGeneric *rsg = dynamic_cast<BaseSemantics::RegisterStateGeneric*>(rs.get())) {
                 BaseSemantics::RegisterStateGeneric::AccessModifiesExistingLocationsGuard guard(rsg, false);
                 switch (mode) {
                     case READ_REGISTER:
-                        return operators->readRegister(reg);
+                        return operators()->readRegister(reg);
                     case PEEK_REGISTER:
-                        return operators->peekRegister(reg, operators->undefined_(reg.nBits()));
+                        return operators()->peekRegister(reg, operators()->undefined_(reg.nBits()));
                 }
             }
         }
     }
     switch (mode) {
         case READ_REGISTER:
-            return operators->readRegister(reg);
+            return operators()->readRegister(reg);
         case PEEK_REGISTER:
-            return operators->peekRegister(reg, operators->undefined_(reg.nBits()));
+            return operators()->peekRegister(reg, operators()->undefined_(reg.nBits()));
     }
     ASSERT_not_reachable("unhandled access mode");
 }
@@ -5057,17 +5069,17 @@ DispatcherX86::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
         // EDI" is one way to clear the upper 32-bits in RDI.
         if (reg.majorNumber() == x86_regclass_gpr || reg.majorNumber() == x86_regclass_ip) {
             RegisterDescriptor upperHalf(reg.majorNumber(), reg.minorNumber(), 32, 32);
-            operators->writeRegister(upperHalf, operators->number_(32, 0));
+            operators()->writeRegister(upperHalf, operators()->number_(32, 0));
         }
     } else if (reg.majorNumber()==x86_regclass_st && reg.minorNumber()<8 && reg.offset()==0 && reg.nBits()==64) {
         // When writing to an MM register, the high-order 16 bits are set in order to make the underlying
         // ST register NaN.
         RegisterDescriptor wider = reg;
         wider.nBits(80);
-        operators->writeRegister(wider, operators->concat(value, number_(16, 0xffff)));
+        operators()->writeRegister(wider, operators()->concat(value, number_(16, 0xffff)));
         return;
     }
-    operators->writeRegister(reg, value);
+    operators()->writeRegister(reg, value);
 }
 
 void
@@ -5086,7 +5098,7 @@ DispatcherX86::pushFloatingPoint(const BaseSemantics::SValuePtr &value)
     BaseSemantics::SValuePtr topOfStack = readRegister(REG_FPSTATUS_TOP);
     if (!topOfStack->is_number())
         throw BaseSemantics::Exception("FP-stack top is not concrete", NULL);
-    BaseSemantics::SValuePtr newTopOfStack = operators->add(topOfStack, operators->number_(topOfStack->get_width(), -1));
+    BaseSemantics::SValuePtr newTopOfStack = operators()->add(topOfStack, operators()->number_(topOfStack->get_width(), -1));
     ASSERT_require2(newTopOfStack->is_number(), "constant folding is required for FP-stack");
 
     RegisterDescriptor reg(REG_ST0.majorNumber(), (REG_ST0.minorNumber() + newTopOfStack->get_number()) % 8,
@@ -5112,7 +5124,7 @@ DispatcherX86::popFloatingPoint()
     BaseSemantics::SValuePtr topOfStack = readRegister(REG_FPSTATUS_TOP);
     if (!topOfStack->is_number())
         throw BaseSemantics::Exception("FP-stack top is not concrete", NULL);
-    BaseSemantics::SValuePtr newTopOfStack = operators->add(topOfStack, operators->number_(topOfStack->get_width(), 1));
+    BaseSemantics::SValuePtr newTopOfStack = operators()->add(topOfStack, operators()->number_(topOfStack->get_width(), 1));
     ASSERT_require2(newTopOfStack->is_number(), "constant folding is required for FP-stack");
     writeRegister(REG_FPSTATUS_TOP, newTopOfStack);
 }
@@ -5122,9 +5134,9 @@ DispatcherX86::fixMemoryAddress(const BaseSemantics::SValuePtr &addr) const
 {
     if (size_t addrWidth = addressWidth()) {
         if (addr->get_width() < addrWidth)
-            return operators->signExtend(addr, addrWidth);
+            return operators()->signExtend(addr, addrWidth);
         if (addr->get_width() > addrWidth)
-            return operators->unsignedExtend(addr, addrWidth);
+            return operators()->unsignedExtend(addr, addrWidth);
     }
     return addr;
 }
@@ -5135,11 +5147,11 @@ DispatcherX86::saturateSignedToUnsigned(const BaseSemantics::SValuePtr &src, siz
     ASSERT_require(src->get_width() >= nBits);
     if (src->get_width() == nBits)
         return src;
-    BaseSemantics::SValuePtr signBit = operators->extract(src, src->get_width()-1, src->get_width());
-    BaseSemantics::SValuePtr high = operators->extract(src, nBits, src->get_width());
-    BaseSemantics::SValuePtr noOverflow = operators->equalToZero(high);
-    BaseSemantics::SValuePtr v1 = operators->signExtend(signBit, nBits);
-    return operators->ite(noOverflow, operators->extract(src, 0, nBits), v1);
+    BaseSemantics::SValuePtr signBit = operators()->extract(src, src->get_width()-1, src->get_width());
+    BaseSemantics::SValuePtr high = operators()->extract(src, nBits, src->get_width());
+    BaseSemantics::SValuePtr noOverflow = operators()->equalToZero(high);
+    BaseSemantics::SValuePtr v1 = operators()->signExtend(signBit, nBits);
+    return operators()->ite(noOverflow, operators()->extract(src, 0, nBits), v1);
 }
 
 BaseSemantics::SValuePtr
@@ -5148,17 +5160,17 @@ DispatcherX86::saturateSignedToSigned(const BaseSemantics::SValuePtr &src, size_
     ASSERT_require(src->get_width() >= nBits);
     if (src->get_width() == nBits)
         return src;
-    BaseSemantics::SValuePtr signBit = operators->extract(src, src->get_width()-1, src->get_width());
-    BaseSemantics::SValuePtr high = operators->extract(src, nBits-1, src->get_width());
-    BaseSemantics::SValuePtr zero = operators->number_(high->get_width(), 0);
-    BaseSemantics::SValuePtr allSet = operators->invert(zero);
-    BaseSemantics::SValuePtr highZerop = operators->isEqual(high, allSet);
-    BaseSemantics::SValuePtr noOverflow = operators->or_(operators->equalToZero(high), highZerop);
-    BaseSemantics::SValuePtr yes = operators->boolean_(true);
-    BaseSemantics::SValuePtr minResult = operators->concat(operators->number_(nBits-1, 0), yes);
-    BaseSemantics::SValuePtr maxResult = operators->invert(minResult);
-    BaseSemantics::SValuePtr minOrMax = operators->ite(signBit, minResult, maxResult);
-    return operators->ite(noOverflow, operators->extract(src, 0, nBits), minOrMax);
+    BaseSemantics::SValuePtr signBit = operators()->extract(src, src->get_width()-1, src->get_width());
+    BaseSemantics::SValuePtr high = operators()->extract(src, nBits-1, src->get_width());
+    BaseSemantics::SValuePtr zero = operators()->number_(high->get_width(), 0);
+    BaseSemantics::SValuePtr allSet = operators()->invert(zero);
+    BaseSemantics::SValuePtr highZerop = operators()->isEqual(high, allSet);
+    BaseSemantics::SValuePtr noOverflow = operators()->or_(operators()->equalToZero(high), highZerop);
+    BaseSemantics::SValuePtr yes = operators()->boolean_(true);
+    BaseSemantics::SValuePtr minResult = operators()->concat(operators()->number_(nBits-1, 0), yes);
+    BaseSemantics::SValuePtr maxResult = operators()->invert(minResult);
+    BaseSemantics::SValuePtr minOrMax = operators()->ite(signBit, minResult, maxResult);
+    return operators()->ite(noOverflow, operators()->extract(src, 0, nBits), minOrMax);
 }
 
 BaseSemantics::SValuePtr
@@ -5167,10 +5179,10 @@ DispatcherX86::saturateUnsignedToUnsigned(const BaseSemantics::SValuePtr &src, s
     ASSERT_require(src->get_width() >= nBits);
     if (src->get_width() == nBits)
         return src;
-    BaseSemantics::SValuePtr high = operators->extract(src, nBits, src->get_width());
-    BaseSemantics::SValuePtr noOverflow = operators->equalToZero(high);
-    BaseSemantics::SValuePtr allBits = operators->invert(operators->number_(nBits, 0));
-    return operators->ite(noOverflow, operators->extract(src, 0, nBits), allBits);
+    BaseSemantics::SValuePtr high = operators()->extract(src, nBits, src->get_width());
+    BaseSemantics::SValuePtr noOverflow = operators()->equalToZero(high);
+    BaseSemantics::SValuePtr allBits = operators()->invert(operators()->number_(nBits, 0));
+    return operators()->ite(noOverflow, operators()->extract(src, 0, nBits), allBits);
 }
 
 } // namespace

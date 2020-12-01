@@ -4,6 +4,9 @@
 0x004000e0: hlt
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
+ cs = 0x0000[u16]
+ ss = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004000e0] write-only = 0x00000000004000e0<4194528>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -15,6 +18,9 @@ memory:
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004000e1] write-only = 0x00000000004000e2<4194530>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -32,6 +38,9 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004000e2] write-only = 0x00000000004000e5<4194533>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -50,6 +59,9 @@ registers:
  rax [writer=0x004000e5] write-only = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004000e5] write-only = 0x00000000004000ef<4194543>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -68,6 +80,9 @@ registers:
  rax [writer=0x004000e5] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x004000ef] write-only = 0x00000000004000f7<4194551>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -95,6 +110,9 @@ registers:
  REG0.0@32+32 [writer=0x004000e5] = 0x07060504<117835012>[u32]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x004000f7] write-only = 0x00000000004000fe<4194558>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -127,6 +145,9 @@ registers:
  REG0.0@32+32 [writer=0x004000e5] = 0x07060504<117835012>[u32]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x004000fe] write-only = 0x0000000000400106<4194566>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -162,6 +183,9 @@ registers:
  REG0.0@32+32 [writer=0x004000e5] = 0x07060504<117835012>[u32]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x00400106] write-only = 0x000000000040010d<4194573>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -197,6 +221,9 @@ registers:
  REG0.0@32+32 [writer=0x004000e5] = 0x07060504<117835012>[u32]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x0040010d] write-only = 0x0000000000400115<4194581>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -233,6 +260,9 @@ registers:
  REG0.0@32+32 [writer=0x004000e5] = 0x07060504<117835012>[u32]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x00400115] write-only = 0x000000000040011c<4194588>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -272,6 +302,9 @@ registers:
  rax [writer=0x004000e5] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x0040011c] write-only = 0x0000000000400124<4194596>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -321,6 +354,9 @@ registers:
  REG0.0@16+48 [writer=0x004000e5] = 0x070605040302<7722435347202>[u48]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x00400124] write-only = 0x000000000040012b<4194603>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -370,6 +406,9 @@ registers:
  ah [writer=0x004000e5] = 0x01[u8]
  REG0.0@16+48 [writer=0x004000e5] = 0x070605040302<7722435347202>[u48]
  rbp [writer=0x0040012b] read-before-write = V1[u64]
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x0040012b] write-only = 0x000000000040012c<4194604>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -420,6 +459,9 @@ registers:
  REG0.0@16+48 [writer=0x004000e5] = 0x070605040302<7722435347202>[u48]
  rsp [writer=0x0040012c] read-before-write = (add[u64] rsp_0[u64] 0x0000000000000008[u64])
  rbp [writer=0x0040012b] read-before-write = V1[u64]
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x0040012c] write-only = V2[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -477,6 +519,9 @@ memory:
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rsp [writer=0x0040012d] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x0040012d] write-only = 0x000000000040012e<4194606>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -494,6 +539,9 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rsp [writer=0x0040012d] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x0040012e] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x0040012e] write-only = 0x0000000000400131<4194609>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -512,6 +560,9 @@ registers:
  rax [writer=0x00400131] write-only = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x0040012d] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x0040012e] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x00400131] write-only = 0x000000000040013b<4194619>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -530,6 +581,9 @@ registers:
  rax [writer=0x00400131] write-only = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x0040013b] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x0040012e] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x0040013b] write-only = 0x0000000000400145<4194629>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -548,6 +602,9 @@ registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x0040013b] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x0040012e] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x00400145] write-only = 0x000000000040014d<4194637>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -574,6 +631,9 @@ registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x0040013b] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x0040012e] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x0040014d] write-only = 0x0000000000400154<4194644>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -604,6 +664,9 @@ registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x0040013b] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x0040012e] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x00400154] write-only = 0x000000000040015c<4194652>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -636,6 +699,9 @@ registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x0040013b] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x0040012e] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x0040015c] write-only = 0x0000000000400163<4194659>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -668,6 +734,9 @@ RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations
 registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
  rbp [writer=0x00400163] read-before-write = V1[u64]
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x00400163] write-only = 0x0000000000400164<4194660>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -701,6 +770,9 @@ registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x00400164] read-before-write = (add[u64] rsp_0[u64] 0x0000000000000008[u64])
  rbp [writer=0x00400163] read-before-write = V1[u64]
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x00400164] write-only = V2[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -743,6 +815,9 @@ memory:
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x00400165] write-only = 0x0000000000400166<4194662>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -760,6 +835,9 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x00400166] write-only = 0x0000000000400169<4194665>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -778,6 +856,9 @@ registers:
  rax [writer=0x00400169] write-only = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x00400169] write-only = 0x0000000000400173<4194675>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -797,6 +878,9 @@ registers:
  REG0.0@32+32 [writer=0x00400173] write-only = 0x00000000[u32]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x00400173] write-only = 0x0000000000400178<4194680>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -817,6 +901,9 @@ registers:
  REG0.0@32+32 [writer=0x00400173] write-only = 0x00000000[u32]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x00400178] write-only = 0x000000000040017c<4194684>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -838,6 +925,9 @@ registers:
  REG0.0@32+32 [writer=0x00400173] write-only = 0x00000000[u32]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x0040017c] write-only = 0x000000000040017e<4194686>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -858,6 +948,9 @@ registers:
  REG0.0@32+32 [writer=0x00400173] write-only = 0x00000000[u32]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x0040017e] write-only = 0x0000000000400182<4194690>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -877,6 +970,9 @@ registers:
  REG0.0@32+32 [writer=0x00400182] write-only = 0x00000000[u32]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x00400182] write-only = 0x0000000000400187<4194695>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -895,6 +991,9 @@ registers:
  rax [writer=0x00400187] write-only = 0xa7a6a5a4a3a2a1a0<12080525177006498208>[u64]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x00400187] write-only = 0x0000000000400191<4194705>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -915,6 +1014,9 @@ registers:
  REG0.0@16+48 [writer=0x00400187] write-only = 0xa7a6a5a4a3a2<184334185440162,-97140791270494>[u48]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x00400191] write-only = 0x0000000000400193<4194707>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -933,6 +1035,9 @@ registers:
  al [writer=0x00400187] write-only = 0xa0<-96>[u8]
  ah [writer=0x00400191] write-only = 0xff<-1>[u8]
  REG0.0@16+48 [writer=0x00400187] write-only = 0xa7a6a5a4a3a2<184334185440162,-97140791270494>[u48]
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x00400193] write-only = 0x0000000000400194<4194708>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -952,6 +1057,9 @@ registers:
  ah [writer=0x00400191] write-only = 0xff<-1>[u8]
  REG0.0@16+48 [writer=0x00400187] write-only = 0xa7a6a5a4a3a2<184334185440162,-97140791270494>[u48]
  rsp [writer=0x00400194] read-before-write = (add[u64] rsp_0[u64] 0x0000000000000008[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x00400194] write-only = V1[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -979,6 +1087,9 @@ memory:
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rsp [writer=0x00400195] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x00400195] write-only = 0x0000000000400196<4194710>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -996,6 +1107,9 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rsp [writer=0x00400195] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x00400196] write-only = 0x0000000000400199<4194713>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1013,6 +1127,9 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x00400199] write-only = 0x00000000004001a3<4194723>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1031,6 +1148,9 @@ registers:
  rax [writer=0x004001a3] write-only = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004001a3] write-only = 0x00000000004001ad<4194733>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1049,6 +1169,9 @@ registers:
  rax [writer=0x004001ad] write-only = 0x00000000f3f2f1f0<4092785136>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004001ad] write-only = 0x00000000004001b2<4194738>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1067,6 +1190,9 @@ registers:
  rax [writers={0x004001ad, 0x004001b2}] write-only = 0x00000000f3f2e1e0<4092781024>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004001b2] write-only = 0x00000000004001b6<4194742>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1085,6 +1211,9 @@ registers:
  rax [writers={0x004001ad, 0x004001b2, 0x004001b6}] write-only = 0x00000000f3f2e1d0<4092781008>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004001b6] write-only = 0x00000000004001b8<4194744>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1103,6 +1232,9 @@ registers:
  rax [writers={0x004001ad, 0x004001b8}] write-only = 0x00000000f3f2c1c0<4092772800>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004001b8] write-only = 0x00000000004001bc<4194748>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1121,6 +1253,9 @@ registers:
  rax [writer=0x004001bc] write-only = 0x00000000b3b2b1b0<3014832560>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004001bc] write-only = 0x00000000004001c1<4194753>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1139,6 +1274,9 @@ registers:
  rax [writer=0x004001c1] write-only = 0xa7a6a5a4a3a2a1a0<12080525177006498208>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004001c1] write-only = 0x00000000004001cb<4194763>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1157,6 +1295,9 @@ registers:
  rax [writers={0x004001c1, 0x004001cb}] write-only = 0xa7a6a5a4a3a2ffa0<12080525177006522272>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004001cb] write-only = 0x00000000004001cd<4194765>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1173,6 +1314,9 @@ memory:
 RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations=yes
 registers:
  rax [writers={0x004001c1, 0x004001cb}] write-only = 0xa7a6a5a4a3a2ffa0<12080525177006522272>[u64]
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004001cd] write-only = 0x00000000004001ce<4194766>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1190,6 +1334,9 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rax [writers={0x004001c1, 0x004001cb}] write-only = 0xa7a6a5a4a3a2ffa0<12080525177006522272>[u64]
  rsp [writer=0x004001ce] read-before-write = (add[u64] rsp_0[u64] 0x0000000000000008[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004001ce] write-only = V1[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1217,6 +1364,9 @@ memory:
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rsp [writer=0x004001cf] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004001cf] write-only = 0x00000000004001d0<4194768>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1234,6 +1384,9 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rsp [writer=0x004001cf] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004001d0] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004001d0] write-only = 0x00000000004001d3<4194771>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1252,6 +1405,9 @@ registers:
  rax [writer=0x004001d3] write-only = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x004001cf] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004001d0] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004001d3] write-only = 0x00000000004001dd<4194781>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1270,6 +1426,9 @@ registers:
  rax [writer=0x004001d3] write-only = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x004001dd] read-before-write = 0x00000000137017c1<326113217>[u64]
  rbp [writer=0x004001d0] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds = 0x0000[u16]
  rip [writer=0x004001dd] write-only = 0x00000000004001e7<4194791>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1289,6 +1448,9 @@ registers:
  REG0.0@32+32 [writer=0x004001d3] write-only = 0x07060504<117835012>[u32]
  rsp [writer=0x004001dd] read-before-write = 0x00000000137017c1<326113217>[u64]
  rbp [writer=0x004001d0] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x004001e7] write-only = 0x00000000004001ee<4194798>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1311,6 +1473,9 @@ registers:
  rax [writer=0x004001d3] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x004001dd] read-before-write = 0x00000000137017c1<326113217>[u64]
  rbp [writer=0x004001d0] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x004001ee] write-only = 0x00000000004001f6<4194806>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1340,6 +1505,9 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rax [writer=0x004001d3] = 0x0706050403020100<506097522914230528>[u64]
  rbp [writer=0x004001f6] read-before-write = V1[u64]
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x004001f6] write-only = 0x00000000004001f7<4194807>[u64]
  fpstatus_top = 0x0[u3]
 memory:
@@ -1370,6 +1538,9 @@ registers:
  rax [writer=0x004001d3] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x004001f7] read-before-write = (add[u64] rsp_0[u64] 0x0000000000000008[u64])
  rbp [writer=0x004001f6] read-before-write = V1[u64]
+ cs = 0x0000[u16]
+ ss read-before-write = 0x0000[u16]
+ ds read-before-write = 0x0000[u16]
  rip [writer=0x004001f7] write-only = V2[u64]
  fpstatus_top = 0x0[u3]
 memory:

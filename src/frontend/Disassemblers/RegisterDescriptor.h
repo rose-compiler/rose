@@ -213,6 +213,9 @@ public:
         o <<"{" <<majorNumber() <<"," <<minorNumber() <<"," <<offset() <<"," <<nBits() <<"}";
     }
 
+    /** Show the properties as a string. */
+    std::string toString() const;
+
     friend std::ostream& operator<<(std::ostream&, RegisterDescriptor);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

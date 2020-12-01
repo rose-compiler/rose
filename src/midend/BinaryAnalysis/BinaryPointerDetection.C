@@ -206,9 +206,18 @@ public:
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+        // Offset the address by the value of the segment register.
+        BaseSemantics::SValuePtr adjustedVa;
+        if (segreg.isEmpty()) {
+            adjustedVa = addr;
+        } else {
+            BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+            adjustedVa = add(addr, signExtend(segregValue, addr->get_width()));
+        }
+
         BaseSemantics::SValuePtr retval = Super::readMemory(segreg, addr, dflt, cond);
         StatePtr state = State::promote(currentState());
-        state->saveRead(addr, retval);
+        state->saveRead(adjustedVa, retval);
         return retval;
     }
 };
@@ -314,6 +323,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     BaseSemantics::RegisterStateGenericPtr initialRegState =
         BaseSemantics::RegisterStateGeneric::promote(initialState_->registerState());
     initialRegState->initialize_large();
+    cpu->initializeState(initialState_);
 
     // Allow data-flow merge operations to create sets of values up to a certain cardinality. This is optional.
     SymbolicSemantics::MergerPtr merger = SymbolicSemantics::Merger::instance(10 /*arbitrary*/);
