@@ -1357,6 +1357,14 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2476057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2498090</TD></TR>
           </TABLE>> ];
+  Element_2740362 -> Element_2520383
+      [ label="Record_Component_Associations ( 1)" ];
+  Element_2740362 -> Element_2522383
+      [ label="Record_Component_Associations ( 2)" ];
+  Element_2740362 -> Element_2523383
+      [ label="Record_Component_Associations ( 3)" ];
+  Element_2740362 -> Element_2524383
+      [ label="Record_Component_Associations ( 4)" ];
   Element_2740362
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2740362</TD></TR>
@@ -1366,7 +1374,10 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 23:12 .. 23:28</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_RECORD_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2520383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2522383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 3)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2523383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 4)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2524383</TD></TR>
           </TABLE>> ];
   Element_2520383 -> Element_2520260
       [ label=Component_Expression ];
@@ -1492,6 +1503,14 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2476057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2498090</TD></TR>
           </TABLE>> ];
+  Element_2798362 -> Element_2527383
+      [ label="Record_Component_Associations ( 1)" ];
+  Element_2798362 -> Element_2529383
+      [ label="Record_Component_Associations ( 2)" ];
+  Element_2798362 -> Element_2531383
+      [ label="Record_Component_Associations ( 3)" ];
+  Element_2798362 -> Element_2534383
+      [ label="Record_Component_Associations ( 4)" ];
   Element_2798362
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2798362</TD></TR>
@@ -1501,7 +1520,10 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 24:12 .. 24:59</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_RECORD_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2527383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2529383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 3)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2531383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 4)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2534383</TD></TR>
           </TABLE>> ];
   Element_2527383 -> Element_2527260
       [ label=Component_Expression ];
@@ -1664,6 +1686,14 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2483057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2498090</TD></TR>
           </TABLE>> ];
+  Element_2856362 -> Element_2538383
+      [ label="Record_Component_Associations ( 1)" ];
+  Element_2856362 -> Element_2540383
+      [ label="Record_Component_Associations ( 2)" ];
+  Element_2856362 -> Element_2541383
+      [ label="Record_Component_Associations ( 3)" ];
+  Element_2856362 -> Element_2542383
+      [ label="Record_Component_Associations ( 4)" ];
   Element_2856362
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2856362</TD></TR>
@@ -1673,7 +1703,10 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 26:13 .. 26:36</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_RECORD_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2538383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2540383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 3)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2541383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 4)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2542383</TD></TR>
           </TABLE>> ];
   Element_2538383 -> Element_2538260
       [ label=Component_Expression ];

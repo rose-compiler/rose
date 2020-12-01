@@ -720,6 +720,10 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Formal_Parameter     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Actual_Parameter     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2373263</TD></TR>
           </TABLE>> ];
+  Element_2373263 -> Element_2372237
+      [ label="Index_Expressions ( 1)" ];
+  Element_2373263 -> Element_2371237
+      [ label=Prefix ];
   Element_2373263
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2373263</TD></TR>
@@ -729,7 +733,8 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">array_declare.adb - 16:17 .. 16:20</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_INDEXED_COMPONENT</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_920089</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Index_Expressions ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2372237</TD></TR>
+          <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2371237</TD></TR>
           </TABLE>> ];
   Element_2371237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -981,6 +986,8 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SUBTYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
           </TABLE>> ];
+  Element_19232322 -> Element_2420237
+      [ label=Prefix ];
   Element_19232322
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_19232322</TD></TR>
@@ -991,6 +998,7 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ATTRIBUTE_REFERENCE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Attribute_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_RANGE_ATTRIBUTE</TD></TR>
+          <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2420237</TD></TR>
           <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
           </TABLE>> ];
   Element_2420237
@@ -1063,6 +1071,10 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Formal_Parameter     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Actual_Parameter     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2427263</TD></TR>
           </TABLE>> ];
+  Element_2427263 -> Element_2426237
+      [ label="Index_Expressions ( 1)" ];
+  Element_2427263 -> Element_2425237
+      [ label=Prefix ];
   Element_2427263
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2427263</TD></TR>
@@ -1072,7 +1084,8 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">array_declare.adb - 28:17 .. 28:20</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_INDEXED_COMPONENT</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Index_Expressions ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2426237</TD></TR>
+          <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2425237</TD></TR>
           </TABLE>> ];
   Element_2425237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -1258,6 +1271,8 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_58057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_920089</TD></TR>
           </TABLE>> ];
+  Element_2448365 -> Element_2449384
+      [ label="Array_Component_Associations ( 1)" ];
   Element_2448365
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2448365</TD></TR>
@@ -1267,7 +1282,7 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">array_declare.adb - 35:38 .. 35:50</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_NAMED_ARRAY_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2449384</TD></TR>
           </TABLE>> ];
   Element_2449384 -> Element_2450197
       [ label="Array_Component_Choices ( 1)" ];
@@ -1354,6 +1369,8 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SUBTYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
           </TABLE>> ];
+  Element_19313322 -> Element_2460237
+      [ label=Prefix ];
   Element_19313322
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_19313322</TD></TR>
@@ -1364,6 +1381,7 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ATTRIBUTE_REFERENCE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Attribute_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_RANGE_ATTRIBUTE</TD></TR>
+          <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2460237</TD></TR>
           <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
           </TABLE>> ];
   Element_2460237
@@ -1432,6 +1450,8 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_58057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_920089</TD></TR>
           </TABLE>> ];
+  Element_2465365 -> Element_2466384
+      [ label="Array_Component_Associations ( 1)" ];
   Element_2465365
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2465365</TD></TR>
@@ -1441,7 +1461,7 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">array_declare.adb - 36:39 .. 36:51</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_NAMED_ARRAY_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2466384</TD></TR>
           </TABLE>> ];
   Element_2466384 -> Element_2467197
       [ label="Array_Component_Choices ( 1)" ];
@@ -1633,6 +1653,8 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_82</TD></TR>
           <TR><TD ALIGN="LEFT">Value_Image   </TD><TD> = </TD><TD ALIGN="LEFT">5</TD></TR>
           </TABLE>> ];
+  Element_2492365 -> Element_2493384
+      [ label="Array_Component_Associations ( 1)" ];
   Element_2492365
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2492365</TD></TR>
@@ -1642,7 +1664,7 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">array_declare.adb - 42:33 .. 42:45</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_NAMED_ARRAY_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2389082</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2493384</TD></TR>
           </TABLE>> ];
   Element_2493384 -> Element_2494197
       [ label="Array_Component_Choices ( 1)" ];
@@ -1780,6 +1802,8 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_82</TD></TR>
           <TR><TD ALIGN="LEFT">Value_Image   </TD><TD> = </TD><TD ALIGN="LEFT">25</TD></TR>
           </TABLE>> ];
+  Element_2510365 -> Element_2511384
+      [ label="Array_Component_Associations ( 1)" ];
   Element_2510365
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2510365</TD></TR>
@@ -1789,7 +1813,7 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">array_declare.adb - 43:35 .. 43:47</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_NAMED_ARRAY_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2389082</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2511384</TD></TR>
           </TABLE>> ];
   Element_2511384 -> Element_2512197
       [ label="Array_Component_Choices ( 1)" ];
@@ -1884,6 +1908,8 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SUBTYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
           </TABLE>> ];
+  Element_19471322 -> Element_2526237
+      [ label=Prefix ];
   Element_19471322
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_19471322</TD></TR>
@@ -1894,6 +1920,7 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ATTRIBUTE_REFERENCE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Attribute_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_RANGE_ATTRIBUTE</TD></TR>
+          <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2526237</TD></TR>
           <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
           </TABLE>> ];
   Element_2526237
@@ -1966,6 +1993,10 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Formal_Parameter     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Actual_Parameter     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2533263</TD></TR>
           </TABLE>> ];
+  Element_2533263 -> Element_2532237
+      [ label="Index_Expressions ( 1)" ];
+  Element_2533263 -> Element_2531237
+      [ label=Prefix ];
   Element_2533263
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2533263</TD></TR>
@@ -1975,7 +2006,8 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">array_declare.adb - 48:13 .. 48:17</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_INDEXED_COMPONENT</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_920089</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Index_Expressions ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2532237</TD></TR>
+          <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2531237</TD></TR>
           </TABLE>> ];
   Element_2531237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2048,6 +2080,10 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Formal_Parameter     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Actual_Parameter     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2538263</TD></TR>
           </TABLE>> ];
+  Element_2538263 -> Element_2537237
+      [ label="Index_Expressions ( 1)" ];
+  Element_2538263 -> Element_2536237
+      [ label=Prefix ];
   Element_2538263
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2538263</TD></TR>
@@ -2057,7 +2093,8 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">array_declare.adb - 49:13 .. 49:17</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_INDEXED_COMPONENT</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_920089</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Index_Expressions ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2537237</TD></TR>
+          <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2536237</TD></TR>
           </TABLE>> ];
   Element_2536237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2143,6 +2180,10 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2469057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2477090</TD></TR>
           </TABLE>> ];
+  Element_2547365 -> Element_2548384
+      [ label="Array_Component_Associations ( 1)" ];
+  Element_2547365 -> Element_2553384
+      [ label="Array_Component_Associations ( 2)" ];
   Element_2547365
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2547365</TD></TR>
@@ -2152,7 +2193,8 @@ digraph "array_declare.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">array_declare.adb - 53:11 .. 53:36</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_NAMED_ARRAY_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2333082</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2548384</TD></TR>
+          <TR><TD ALIGN="LEFT">Array_Component_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2553384</TD></TR>
           </TABLE>> ];
   Element_2548384 -> Element_19500262
       [ label="Array_Component_Choices ( 1)" ];

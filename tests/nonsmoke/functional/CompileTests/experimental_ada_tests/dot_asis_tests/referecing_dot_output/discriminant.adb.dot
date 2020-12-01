@@ -1889,6 +1889,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SUBTYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
           </TABLE>> ];
+  Element_19951322 -> Element_2528265
+      [ label=Prefix ];
   Element_19951322
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_19951322</TD></TR>
@@ -1899,6 +1901,7 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ATTRIBUTE_REFERENCE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Attribute_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_RANGE_ATTRIBUTE</TD></TR>
+          <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2528265</TD></TR>
           <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
           </TABLE>> ];
   Element_2528265 -> Element_2526237
@@ -1984,6 +1987,10 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Assignment_Variable_Name       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2537263</TD></TR>
           <TR><TD ALIGN="LEFT">Assignment_Expression      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2538237</TD></TR>
           </TABLE>> ];
+  Element_2537263 -> Element_2536237
+      [ label="Index_Expressions ( 1)" ];
+  Element_2537263 -> Element_2535265
+      [ label=Prefix ];
   Element_2537263
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2537263</TD></TR>
@@ -1993,7 +2000,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 33:7 .. 33:31</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_INDEXED_COMPONENT</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_922089</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Index_Expressions ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2536237</TD></TR>
+          <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2535265</TD></TR>
           </TABLE>> ];
   Element_2535265 -> Element_2533237
       [ label=Prefix ];
@@ -2119,6 +2127,8 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DISCRETE_SUBTYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
           </TABLE>> ];
+  Element_20005322 -> Element_2552265
+      [ label=Prefix ];
   Element_20005322
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_20005322</TD></TR>
@@ -2129,6 +2139,7 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ATTRIBUTE_REFERENCE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Attribute_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_RANGE_ATTRIBUTE</TD></TR>
+          <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2552265</TD></TR>
           <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
           </TABLE>> ];
   Element_2552265 -> Element_2550237
@@ -2214,6 +2225,12 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Assignment_Variable_Name       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2562263</TD></TR>
           <TR><TD ALIGN="LEFT">Assignment_Expression      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2565262</TD></TR>
           </TABLE>> ];
+  Element_2562263 -> Element_2560237
+      [ label="Index_Expressions ( 1)" ];
+  Element_2562263 -> Element_2561237
+      [ label="Index_Expressions ( 2)" ];
+  Element_2562263 -> Element_2559265
+      [ label=Prefix ];
   Element_2562263
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2562263</TD></TR>
@@ -2223,7 +2240,9 @@ digraph "discriminant.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Discrim1.adb - 35:10 .. 35:42</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_INDEXED_COMPONENT</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Index_Expressions ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2560237</TD></TR>
+          <TR><TD ALIGN="LEFT">Index_Expressions ( 2)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2561237</TD></TR>
+          <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2559265</TD></TR>
           </TABLE>> ];
   Element_2559265 -> Element_2557237
       [ label=Prefix ];

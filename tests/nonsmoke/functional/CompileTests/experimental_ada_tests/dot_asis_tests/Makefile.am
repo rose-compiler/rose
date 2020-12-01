@@ -42,8 +42,10 @@ ASIS_SPEC_TESTS = $(ASIS_SPEC_PASS_TESTS) $(ASIS_SPEC_FAILED_TESTS)
 
 ASIS_BODY_FAILED_TESTS := \
 	alignment_component_clause.adb \
+	array_expressions.adb \
 	asm_machine_code.adb \
 	enumeration.adb \
+	explicit_deref.adb \
 	for_loop_statement.adb \
 	requeue_statements.adb \
         pragma.adb 
@@ -70,6 +72,7 @@ ASIS_BODY_PASS_TESTS := \
 	procedure_declaration.adb \
 	raise_statement.adb \
 	select_accept.adb \
+	short_circuit.adb \
 	task_with_abort.adb \
 	task_with_body.adb \
 	test_unit.adb \
