@@ -1425,7 +1425,7 @@ context-free syntax
 %%
 
   LabelList
-  'IF' BooleanFormula ';'
+  IfKeyword BooleanFormula ';'
     ConditionalStatement
     OptElseClause            -> IfStatement            {cons("IfStatement")}
 

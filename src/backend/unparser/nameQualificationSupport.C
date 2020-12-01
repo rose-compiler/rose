@@ -9873,7 +9873,6 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     mfprintf(mlog [ WARN ] ) ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
                   }
 #endif
-
             // Handle the function name...
             // DQ (6/20/2011): Friend function can be qualified...sometimes...
             // if (functionDeclaration->get_declarationModifier().isFriend() == true || functionDeclaration->get_specialFunctionModifier().isOperator() == true)
@@ -9901,7 +9900,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
                  // DQ (6/20/2011): Friend function can be qualified and a fix to add a SgAliasSymbol to the class definition scope's symbol table 
                  // should allow it to be handled with greater precission.
-
+#if 0
+                    printf ("functionDeclaration->get_declarationModifier().isFriend() = %s \n",functionDeclaration->get_declarationModifier().isFriend() ? "true" : "false");
+#endif
                  // DQ (6/25/2011): Friend functions can require global qualification as well (see test2011_106.C).
                  // Not clear how to handle this case.
                     if (functionDeclaration->get_declarationModifier().isFriend() == true)
@@ -9997,11 +9998,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                               if (isSameNamespace == false)
                                  {
                                    int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
-#if 0
-                                   mfprintf(mlog [ WARN ] ) ("isSameNamespace = %s \n",isSameNamespace ? "true" : "false");
-#endif
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
-                                   mfprintf(mlog [ WARN ] ) ("SgFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+                                   mfprintf(mlog [ WARN ] ) ("isSameNamespace == false: SgFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
                                 // DQ (21/2011): test2011_89.C demonstrates a case where name qualification of a functionRef expression is required.
                                 // DQ (6/9/2011): Support for test2011_78.C (we only qualify function call references where the function has been declared in 
@@ -10009,7 +10007,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                 // definition could not live in the SgBasicBlock.
                                    bool skipNameQualification = skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(functionDeclaration);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                                   mfprintf(mlog [ WARN ] ) ("Test of functionDeclaration: skipNameQualification = %s \n",skipNameQualification ? "true" : "false");
+                                   mfprintf(mlog [ WARN ] ) ("isSameNamespace == false: Test of functionDeclaration: skipNameQualification = %s \n",skipNameQualification ? "true" : "false");
 #endif
                                    if (skipNameQualification == false)
                                       {
@@ -10018,6 +10016,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                  }
                                 else
                                  {
+#if 0
+                                   printf ("isSameNamespace == true: functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+#endif
                                 // DQ (3/31/2018): Note that we still might require name qualification on any template arguments in the template function instantiation.
                                 // Ignore the case fo a SgTemplateFunctionDeclaration.
                                    if (isSgTemplateInstantiationFunctionDecl(functionDeclaration) != NULL)
@@ -10072,6 +10073,13 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
                                         mfprintf(mlog [ WARN ] ) ("Need to process the template arguments: exiting as a test! \n");
                                         ROSE_ASSERT(false);
+#endif
+                                      }
+                                     else
+                                      {
+                                     // DQ (11/24/2020): This seems like an important case to handle, but perhaps it is handled below.
+#if 0
+                                        printf ("###### In NameQualificationTraversal::evaluateInheritedAttribute(): Why don't we handle the case of a non-template function declaration in a namespace and defined outside of the namespace? \n");
 #endif
                                       }
                                  }
@@ -10138,7 +10146,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                ROSE_ASSERT(functionDeclaration->get_type_syntax_is_available() == false);
                ROSE_ASSERT(functionDeclaration->get_type_syntax() == NULL);
 #endif
-
+#if 0
+               printf ("functionDeclaration->get_type_syntax_is_available() = %s \n",functionDeclaration->get_type_syntax_is_available() ? "true" : "false");
+#endif
             // DQ (4/14/2018): Add the name qualification computation to the parameterList_syntax (since it will be used by preference in the unparser).
             // generateNestedTraversalWithExplicitScope( SgNode* node, SgScopeStatement* input_currentScope )
                if (functionDeclaration->get_type_syntax_is_available() == true)
@@ -13755,7 +13765,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
      if (declaration != NULL)
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
           mfprintf(mlog [ WARN ] ) ("Found a SgDeclarationStatement in the evaluation of name qualification declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+          printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
 #endif
        // If this is a declaration of something that has a name then we need to mark it as having been seen.
 
@@ -13919,7 +13931,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
             // ROSE_ASSERT(false);
              }
-
+#if 0
+          printf ("acceptableDeclarationScope                                                         = %s \n",acceptableDeclarationScope ? "true" : "false");
+          printf ("referencedNameSet.find(declarationForReferencedNameSet) == referencedNameSet.end() = %s \n",referencedNameSet.find(declarationForReferencedNameSet) == referencedNameSet.end() ? "true" : "false");
+#endif
           ASSERT_not_null(declarationForReferencedNameSet);
        // if (referencedNameSet.find(firstNondefiningDeclaration) == referencedNameSet.end())
        // if (acceptableDeclarationScope == true && firstNondefiningDeclaration != NULL && referencedNameSet.find(firstNondefiningDeclaration) == referencedNameSet.end())
@@ -13943,7 +13958,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              {
             // mfprintf(mlog [ WARN ] ) ("firstNondefiningDeclaration = %p NOT added to referencedNameSet \n",firstNondefiningDeclaration);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
                mfprintf(mlog [ WARN ] ) ("declarationForReferencedNameSet = %p NOT added to referencedNameSet \n",declarationForReferencedNameSet);
+               printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
 #endif
              }
         }
@@ -14230,6 +14247,21 @@ NameQualificationTraversal::evaluateSynthesizedAttribute(SgNode* n, NameQualific
 
           i++;
         }
+
+#if 0
+  // DQ (11/24/2020): This is support for testing a specific new tool.
+     SgSourceFile* sourceFile = isSgSourceFile(n);
+     if (sourceFile != NULL)
+        {
+          printf ("In NameQualificationTraversal::evaluateSynthesizedAttribute(): case of SgSourceFile: filename = %s \n",sourceFile->getFileName().c_str());
+
+          if (sourceFile->getFileName() == "rose_test_107_lib.cpp")
+             {
+               printf ("Exiting as a test after name qualification of rose_test_107_lib.cpp \n");
+               ROSE_ASSERT(false);
+             }
+        }
+#endif
 
   // DQ (8/2/2020): Added assertion.
      ROSE_ASSERT(returnAttribute.node != NULL);

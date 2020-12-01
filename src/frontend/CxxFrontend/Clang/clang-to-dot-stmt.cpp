@@ -23,7 +23,7 @@ std::string ClangToDotTranslator::Traverse(clang::Stmt * stmt)
   // SgNode * result = NULL;
      bool ret_status = false;
 
-     CLANG_ROSE_Graph::graph (stmt);
+  // CLANG_ROSE_Graph::graph (stmt);
 
      switch (stmt->getStmtClass()) 
         {
@@ -573,6 +573,8 @@ bool ClangToDotTranslator::VisitStmt(clang::Stmt * stmt, NodeDescriptor & node_d
     }
 #endif
 
+     node_desc.kind_hierarchy.push_back("Stmt");
+
      return true;
    }
 #endif
@@ -594,6 +596,8 @@ bool ClangToDotTranslator::VisitAsmStmt(clang::AsmStmt * asm_stmt, NodeDescripto
      std::cerr << "ClangToDotTranslator::VisitAsmStmt" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("AsmStmt");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
      return VisitStmt(asm_stmt, node_desc) && res;
@@ -618,7 +622,11 @@ bool ClangToDotTranslator::VisitGCCAsmStmt(clang::GCCAsmStmt * gcc_asm_stmt, Nod
 #endif
      bool res = true;
 
-     ROSE_ASSERT(FAIL_TODO == 0); // TODO
+     node_desc.kind_hierarchy.push_back("GCCAsmStmt");
+
+  // ROSE_ASSERT(FAIL_TODO == 0); // TODO
+     printf ("ClangToDotTranslator::VisitGCCAsmStmt called but not implemented! \n");
+
      return VisitStmt(gcc_asm_stmt, node_desc) && res;
    }
 #endif
@@ -640,6 +648,8 @@ bool ClangToDotTranslator::VisitMSAsmStmt(clang::MSAsmStmt * ms_asm_stmt, NodeDe
      std::cerr << "ClangToDotTranslator::VisitMSAsmStmt" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("MSAsmStmt");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
      return VisitStmt(ms_asm_stmt, node_desc) && res;
@@ -666,6 +676,8 @@ bool ClangToDotTranslator::VisitBreakStmt(clang::BreakStmt * break_stmt, NodeDes
      *node = SageBuilder::buildBreakStmt();
 #endif
 
+     node_desc.kind_hierarchy.push_back("BreakStmt");
+
      return VisitStmt(break_stmt, node_desc);
    }
 #endif
@@ -687,6 +699,8 @@ bool ClangToDotTranslator::VisitCapturedStmt(clang::CapturedStmt * captured_stmt
      std::cerr << "ClangToDotTranslator::VisitCapturedStmt" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CapturedStmt");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
      return VisitStmt(captured_stmt, node_desc) && res;
@@ -804,6 +818,17 @@ bool ClangToDotTranslator::VisitCompoundStmt(clang::CompoundStmt * compound_stmt
     *node = block;
 #endif
 
+     node_desc.kind_hierarchy.push_back("CompoundStmt");
+
+     clang::CompoundStmt::body_iterator it;
+     unsigned cnt = 0;
+     for (it = compound_stmt->body_begin(); it != compound_stmt->body_end(); it++) 
+        {
+          std::ostringstream oss;
+          oss << "child[" << cnt++ << "]";
+          node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
+        }
+
      return VisitStmt(compound_stmt, node_desc) && res;
    }
 #endif
@@ -828,6 +853,8 @@ bool ClangToDotTranslator::VisitContinueStmt(clang::ContinueStmt * continue_stmt
      *node = SageBuilder::buildContinueStmt();
 #endif
 
+     node_desc.kind_hierarchy.push_back("ContinueStmt");
+
      return VisitStmt(continue_stmt, node_desc);
    }
 #endif
@@ -849,6 +876,8 @@ bool ClangToDotTranslator::VisitCoreturnStmt(clang::CoreturnStmt * core_turn_stm
      std::cerr << "ClangToDotTranslator::VisitCoreturnStmt" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CoreturnStmt");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
      return VisitStmt(core_turn_stmt, node_desc) && res;
@@ -873,6 +902,8 @@ bool ClangToDotTranslator::VisitCoroutineBodyStmt(clang::CoroutineBodyStmt * cor
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CoroutineBodyStmt");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
      return VisitStmt(coroutine_body_stmt, node_desc) && res;
    }
@@ -895,6 +926,8 @@ bool ClangToDotTranslator::VisitCXXCatchStmt(clang::CXXCatchStmt * cxx_catch_stm
      std::cerr << "ClangToDotTranslator::VisitCXXCatchStmt" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXCatchStmt");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
      return VisitStmt(cxx_catch_stmt, node_desc) && res;
@@ -920,6 +953,8 @@ bool ClangToDotTranslator::VisitCXXForRangeStmt(clang::CXXForRangeStmt * cxx_for
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXForRangeStmt");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
      return VisitStmt(cxx_for_range_stmt, node_desc) && res;
    }
@@ -942,6 +977,8 @@ bool ClangToDotTranslator::VisitCXXTryStmt(clang::CXXTryStmt * cxx_try_stmt, Nod
      std::cerr << "ClangToDotTranslator::VisitCXXTryStmt" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXTryStmt");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
      return VisitStmt(cxx_try_stmt, node_desc) && res;
@@ -1040,7 +1077,27 @@ bool ClangToDotTranslator::VisitDeclStmt(clang::DeclStmt * decl_stmt, NodeDescri
     }
 #endif
 
-    return res;
+     node_desc.kind_hierarchy.push_back("DeclStmt");
+
+     if (decl_stmt->isSingleDecl())
+        {
+          node_desc.successors.push_back(std::pair<std::string, std::string>("declaration[0]", Traverse(decl_stmt->getSingleDecl())));
+        }
+       else
+        {
+          clang::DeclStmt::decl_iterator it;
+          unsigned cnt = 0;
+          for (it = decl_stmt->decl_begin(); it != decl_stmt->decl_end(); it++)
+             {
+               std::ostringstream oss;
+               oss << "declaration[" << cnt++ << "]";
+               node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
+             }
+        }
+
+ // DQ (11/27/2020): I think we need to call this instead (in Tristan's code).
+ // return res;
+    return VisitStmt(decl_stmt, node_desc) && res;
 }
 #endif
 
@@ -1129,6 +1186,12 @@ bool ClangToDotTranslator::VisitDoStmt(clang::DoStmt * do_stmt, NodeDescriptor &
 
     *node = sg_do_stmt;
 #endif
+
+     node_desc.kind_hierarchy.push_back("DoStmt");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("condition", Traverse(do_stmt->getCond())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("body", Traverse(do_stmt->getBody())));
 
      return VisitStmt(do_stmt, node_desc); 
    }
@@ -1391,6 +1454,16 @@ bool ClangToDotTranslator::VisitForStmt(clang::ForStmt * for_stmt, NodeDescripto
     *node = sg_for_stmt;
 #endif
 
+     node_desc.kind_hierarchy.push_back("ForStmt");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("init", Traverse(for_stmt->getInit())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("cond", Traverse(for_stmt->getCond())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("inc", Traverse(for_stmt->getInc())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("body", Traverse(for_stmt->getBody())));
+
      return VisitStmt(for_stmt, node_desc) && res;
    }
 #endif
@@ -1458,6 +1531,10 @@ bool ClangToDotTranslator::VisitGotoStmt(clang::GotoStmt * goto_stmt, NodeDescri
         *node = SageBuilder::buildGotoStatement(label_stmt);
     }
 #endif
+
+     node_desc.kind_hierarchy.push_back("GotoStmt");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("label", Traverse(goto_stmt->getLabel()->getStmt())));
 
      return VisitStmt(goto_stmt, node_desc) && res;
    }
@@ -1566,6 +1643,14 @@ bool ClangToDotTranslator::VisitIfStmt(clang::IfStmt * if_stmt, NodeDescriptor &
     }
 #endif
 
+     node_desc.kind_hierarchy.push_back("IfStmt");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("cond", Traverse(if_stmt->getCond())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("then", Traverse(if_stmt->getThen())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("else", Traverse(if_stmt->getElse())));
+
      return VisitStmt(if_stmt, node_desc) && res;
    }
 #endif
@@ -1588,6 +1673,8 @@ bool ClangToDotTranslator::VisitIndirectGotoStmt(clang::IndirectGotoStmt * indir
      std::cerr << "ClangToDotTranslator::VisitIndirectGotoStmt" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("IndirectGotoStmt");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -1613,6 +1700,8 @@ bool ClangToDotTranslator::VisitMSDependentExistsStmt(clang::MSDependentExistsSt
      std::cerr << "ClangToDotTranslator::VisitMSDependentExistsStmt" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("MSDependentExistsStmt");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -1643,6 +1732,8 @@ bool ClangToDotTranslator::VisitNullStmt(clang::NullStmt * null_stmt, NodeDescri
      *node = SageBuilder::buildNullStatement();
 #endif
 
+     node_desc.kind_hierarchy.push_back("NullStmt");
+
      return VisitStmt(null_stmt, node_desc) && res;
    }
 #endif
@@ -1665,6 +1756,8 @@ bool ClangToDotTranslator::VisitOMPExecutableDirective(clang::OMPExecutableDirec
      std::cerr << "ClangToDotTranslator::VisitOMPExecutableDirective" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPExecutableDirective");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -1691,6 +1784,8 @@ bool ClangToDotTranslator::VisitOMPAtomicDirective(clang::OMPAtomicDirective * o
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPAtomicDirective");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitOMPExecutableDirective(omp_atomic_directive, node_desc) && res;
@@ -1715,6 +1810,8 @@ bool ClangToDotTranslator::VisitOMPBarrierDirective(clang::OMPBarrierDirective *
      std::cerr << "ClangToDotTranslator::VisitOMPBarrierDirective" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPAtomicDirective");
 
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -1741,6 +1838,8 @@ bool ClangToDotTranslator::VisitOMPCancelDirective(clang::OMPCancelDirective * o
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPCancelDirective");
+
      ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitOMPExecutableDirective(omp_cancel_directive, node_desc) && res;
@@ -1764,6 +1863,8 @@ bool ClangToDotTranslator::VisitOMPCancellationPointDirective(clang::OMPCancella
     std::cerr << "ClangToDotTranslator::VisitOMPCancellationPointDirective" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPCancellationPointDirective");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -1789,6 +1890,8 @@ bool ClangToDotTranslator::VisitOMPCriticalDirective(clang::OMPCriticalDirective
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPCriticalDirective");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitOMPExecutableDirective(omp_critical_directive, node_desc) && res;
@@ -1812,6 +1915,8 @@ bool ClangToDotTranslator::VisitOMPFlushDirective(clang::OMPFlushDirective * omp
     std::cerr << "ClangToDotTranslator::VisitOMPFlushDirective" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPFlushDirective");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -1837,6 +1942,8 @@ bool ClangToDotTranslator::VisitOMPLoopDirective(clang::OMPLoopDirective * omp_l
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPLoopDirective");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitOMPExecutableDirective(omp_loop_directive, node_desc) && res;
@@ -1860,6 +1967,8 @@ bool ClangToDotTranslator::VisitOMPDistributeDirective(clang::OMPDistributeDirec
     std::cerr << "ClangToDotTranslator::VisitOMPDistributeDirective" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPDistributeDirective");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -1885,6 +1994,8 @@ bool ClangToDotTranslator::VisitOMPDistributeParallelForDirective(clang::OMPDist
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPDistributeParallelForDirective");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitOMPExecutableDirective(omp_distribute_parallel_for_directive, node_desc) && res;
@@ -1908,6 +2019,8 @@ bool ClangToDotTranslator::VisitOMPDistributeParallelForSimdDirective(clang::OMP
     std::cerr << "ClangToDotTranslator::VisitOMPDistributeParallelForSimdDirective" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPDistributeParallelForSimdDirective");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -1933,6 +2046,8 @@ bool ClangToDotTranslator::VisitOMPDistributeSimdDirective(clang::OMPDistributeS
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPDistributeSimdDirective");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitOMPExecutableDirective(omp_distribute__simd_directive, node_desc) && res;
@@ -1956,6 +2071,8 @@ bool ClangToDotTranslator::VisitOMPForDirective(clang::OMPForDirective * omp_for
     std::cerr << "ClangToDotTranslator::VisitOMPForDirective" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPForDirective");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -1981,6 +2098,8 @@ bool ClangToDotTranslator::VisitOMPForSimdDirective(clang::OMPForSimdDirective *
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPForSimdDirective");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitOMPLoopDirective(omp_for_simd_directive, node_desc) && res;
@@ -2004,6 +2123,8 @@ bool ClangToDotTranslator::VisitOMPParallelForDirective(clang::OMPParallelForDir
     std::cerr << "ClangToDotTranslator::VisitOMPParallelForDirective" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPParallelForDirective");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2029,6 +2150,8 @@ bool ClangToDotTranslator::VisitOMPParallelForSimdDirective(clang::OMPParallelFo
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPParallelForSimdDirective");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitOMPLoopDirective(omp_parallel_for_simd_directive, node_desc) && res;
@@ -2052,6 +2175,8 @@ bool ClangToDotTranslator::VisitOMPSimdDirective(clang::OMPSimdDirective * omp_s
     std::cerr << "ClangToDotTranslator::VisitOMPSimdDirective" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPSimdDirective");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2077,6 +2202,8 @@ bool ClangToDotTranslator::VisitOMPTargetParallelForDirective(clang::OMPTargetPa
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPTargetParallelForDirective");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitOMPLoopDirective(omp_target_parallel_for_directive, node_desc) && res;
@@ -2100,6 +2227,8 @@ bool ClangToDotTranslator::VisitOMPTargetParallelForSimdDirective(clang::OMPTarg
     std::cerr << "ClangToDotTranslator::VisitOMPTargetParallelForSimdDirective" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPTargetParallelForSimdDirective");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2125,6 +2254,8 @@ bool ClangToDotTranslator::VisitOMPTargetSimdDirective(clang::OMPTargetSimdDirec
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPTargetSimdDirective");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitOMPLoopDirective(omp_target_simd_directive, node_desc) && res;
@@ -2148,6 +2279,8 @@ bool ClangToDotTranslator::VisitOMPTargetTeamsDistributeDirective(clang::OMPTarg
     std::cerr << "ClangToDotTranslator::VisitOMPTargetTeamsDistributeDirective" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPTargetTeamsDistributeDirective");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2173,6 +2306,8 @@ bool ClangToDotTranslator::VisitOMPTargetTeamsDistributeSimdDirective(clang::OMP
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPTargetTeamsDistributeSimdDirective");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitOMPLoopDirective(omp_target_teams_distribute_simd_directive, node_desc) && res;
@@ -2196,6 +2331,8 @@ bool ClangToDotTranslator::VisitOMPTaskLoopDirective(clang::OMPTaskLoopDirective
     std::cerr << "ClangToDotTranslator::VisitOMPTaskLoopDirective" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPTaskLoopDirective");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2221,6 +2358,8 @@ bool ClangToDotTranslator::VisitOMPTaskLoopSimdDirective(clang::OMPTaskLoopSimdD
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPTaskLoopSimdDirective");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitOMPLoopDirective(omp_task_loop_simd_directive, node_desc) && res;
@@ -2244,6 +2383,8 @@ bool ClangToDotTranslator::VisitOMPMasterDirective(clang::OMPMasterDirective * o
     std::cerr << "ClangToDotTranslator::VisitOMPMasterDirective" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPMasterDirective");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2269,6 +2410,8 @@ bool ClangToDotTranslator::VisitOMPOrderedDirective(clang::OMPOrderedDirective *
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPOrderedDirective");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitOMPExecutableDirective(omp_ordered_directive, node_desc) && res;
@@ -2293,6 +2436,8 @@ bool ClangToDotTranslator::VisitOMPParallelDirective(clang::OMPParallelDirective
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OMPParallelDirective");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitOMPExecutableDirective(omp_parallel_directive, node_desc) && res;
@@ -2316,6 +2461,8 @@ bool ClangToDotTranslator::VisitOMPParallelSectionsDirective(clang::OMPParallelS
     std::cerr << "ClangToDotTranslator::VisitOMPParallelSectionsDirective" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPParallelSectionsDirective");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2359,6 +2506,10 @@ bool ClangToDotTranslator::VisitReturnStmt(clang::ReturnStmt * return_stmt, Node
     *node = SageBuilder::buildReturnStmt(expr);
 #endif
 
+     node_desc.kind_hierarchy.push_back("ReturnStmt");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("return_value", Traverse(return_stmt->getRetValue())));
+
     return VisitStmt(return_stmt, node_desc) && res;
 }
 #endif
@@ -2380,6 +2531,8 @@ bool ClangToDotTranslator::VisitSEHExceptStmt(clang::SEHExceptStmt * seh_except_
     std::cerr << "ClangToDotTranslator::VisitSEHExceptStmt" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("SEHExceptStmt");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2405,6 +2558,8 @@ bool ClangToDotTranslator::VisitSEHFinallyStmt(clang::SEHFinallyStmt * seh_final
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("SEHFinallyStmt");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitStmt(seh_finally_stmt, node_desc) && res;
@@ -2428,6 +2583,8 @@ bool ClangToDotTranslator::VisitSEHLeaveStmt(clang::SEHLeaveStmt * seh_leave_stm
     std::cerr << "ClangToDotTranslator::VisitSEHLeaveStmt" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("SEHLeaveStmt");
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2453,6 +2610,8 @@ bool ClangToDotTranslator::VisitSEHTryStmt(clang::SEHTryStmt * seh_try_stmt, Nod
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("SEHTryStmt");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitStmt(seh_try_stmt, node_desc) && res;
@@ -2477,7 +2636,11 @@ bool ClangToDotTranslator::VisitSwitchCase(clang::SwitchCase * switch_case, Node
 #endif
     bool res = true;
     
+     node_desc.kind_hierarchy.push_back("SwitchStmt");
+
     // TODO
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("sub_stmt", Traverse(switch_case->getSubStmt())));
 
     return VisitStmt(switch_case, node_desc) && res;
 }
@@ -2543,6 +2706,12 @@ bool ClangToDotTranslator::VisitCaseStmt(clang::CaseStmt * case_stmt, NodeDescri
     *node = SageBuilder::buildCaseOptionStmt_nfi(lhs, stmt);
 #endif
 
+     node_desc.kind_hierarchy.push_back("CaseStmt");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("lhs", Traverse(case_stmt->getLHS())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("rhs", Traverse(case_stmt->getRHS())));
+
     return VisitSwitchCase(case_stmt, node_desc);
 }
 #endif
@@ -2572,6 +2741,8 @@ bool ClangToDotTranslator::VisitDefaultStmt(clang::DefaultStmt * default_stmt, N
 
     *node = SageBuilder::buildDefaultOptionStmt_nfi(stmt);
 #endif
+
+     node_desc.kind_hierarchy.push_back("DefaultStmt");
 
     return VisitSwitchCase(default_stmt, node_desc);
 }
@@ -2641,6 +2812,12 @@ bool ClangToDotTranslator::VisitSwitchStmt(clang::SwitchStmt * switch_stmt, Node
     *node = sg_switch_stmt;
 #endif
 
+     node_desc.kind_hierarchy.push_back("SwitchStmt");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("cond", Traverse(switch_stmt->getCond())));
+    
+     node_desc.successors.push_back(std::pair<std::string, std::string>("body", Traverse(switch_stmt->getBody())));
+
     return VisitStmt(switch_stmt, node_desc);
 }
 #endif
@@ -2662,6 +2839,8 @@ bool ClangToDotTranslator::VisitValueStmt(clang::ValueStmt * value_stmt, NodeDes
     std::cerr << "ClangToDotTranslator::VisitValueStmt" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("ValueStmt");
 
     //ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -2687,6 +2866,8 @@ bool ClangToDotTranslator::VisitAttributedStmt(clang::AttributedStmt * attribute
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("AttributedStmt");
+
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitValueStmt(attributed_stmt, node_desc) && res;
@@ -2709,7 +2890,11 @@ bool ClangToDotTranslator::VisitExpr(clang::Expr * expr, NodeDescriptor & node_d
     std::cerr << "ClangToDotTranslator::VisitExpr" << std::endl;
 #endif
 
+     node_desc.kind_hierarchy.push_back("Expr");
+
      // TODO Is there anything to be done? (maybe in relation with typing?)
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("type", Traverse(expr->getType().getTypePtr())));
 
      return VisitValueStmt(expr, node_desc);
 }
@@ -2732,6 +2917,14 @@ bool ClangToDotTranslator::VisitAbstractConditionalOperator(clang::AbstractCondi
     std::cerr << "ClangToDotTranslator::VisitAbstractConditionalOperator" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("AbstractConditionalOperator");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("condition", Traverse(abstract_conditional_operator->getCond())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("true_stmt", Traverse(abstract_conditional_operator->getTrueExpr())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("false_stmt", Traverse(abstract_conditional_operator->getFalseExpr())));
 
      // TODO 
 
@@ -2756,6 +2949,8 @@ bool ClangToDotTranslator::VisitBinaryConditionalOperator(clang::BinaryCondition
     std::cerr << "ClangToDotTranslator::VisitBinaryConditionalOperator" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("BinaryConditionalOperator");
 
      // TODO 
 
@@ -2807,6 +3002,8 @@ bool ClangToDotTranslator::VisitConditionalOperator(clang::ConditionalOperator *
     *node = SageBuilder::buildConditionalExp(cond_expr, true_expr, false_expr);
 #endif
 
+     node_desc.kind_hierarchy.push_back("ConditionalOperator");
+
     return VisitAbstractConditionalOperator(conditional_operator, node_desc) && res;
 }
 #endif
@@ -2828,6 +3025,8 @@ bool ClangToDotTranslator::VisitAddrLabelExpr(clang::AddrLabelExpr * addr_label_
     std::cerr << "ClangToDotTranslator::VisitAddrLabelExpr" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("AddrLabelExpr");
 
      // TODO 
 
@@ -2853,6 +3052,8 @@ bool ClangToDotTranslator::VisitArrayInitIndexExpr(clang::ArrayInitIndexExpr * a
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("ArrayInitIndexExpr");
+
      // TODO 
 
      return VisitExpr(array_init_index_expr, node_desc) && res;
@@ -2876,6 +3077,8 @@ bool ClangToDotTranslator::VisitArrayInitLoopExpr(clang::ArrayInitLoopExpr * arr
     std::cerr << "ClangToDotTranslator::VisitArrayInitLoopExpr" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("ArrayInitLoopExpr");
 
      // TODO 
 
@@ -2935,6 +3138,12 @@ bool ClangToDotTranslator::VisitArraySubscriptExpr(clang::ArraySubscriptExpr * a
     *node = SageBuilder::buildPntrArrRefExp(base, idx);
 #endif
 
+     node_desc.kind_hierarchy.push_back("ArraySubscriptExpr");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("base", Traverse(array_subscript_expr->getBase())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("index", Traverse(array_subscript_expr->getIdx())));
+
     return VisitExpr(array_subscript_expr, node_desc) && res;
 }
 #endif
@@ -2956,6 +3165,8 @@ bool ClangToDotTranslator::VisitArrayTypeTraitExpr(clang::ArrayTypeTraitExpr * a
     std::cerr << "ClangToDotTranslator::VisitArrayTypeTraitExpr" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("ArrayTypeTraitExpr");
 
      // TODO 
 
@@ -2981,6 +3192,8 @@ bool ClangToDotTranslator::VisitAsTypeExpr(clang::AsTypeExpr * as_type_expr, Nod
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("AsTypeExpr");
+
      // TODO 
 
      return VisitExpr(as_type_expr, node_desc) && res;
@@ -3004,6 +3217,8 @@ bool ClangToDotTranslator::VisitAtomicExpr(clang::AtomicExpr * atomic_expr, Node
     std::cerr << "ClangToDotTranslator::VisitAtomicExpr" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("AtomicExpr");
 
      // TODO 
 
@@ -3135,7 +3350,15 @@ bool ClangToDotTranslator::VisitBinaryOperator(clang::BinaryOperator * binary_op
     }
 #endif
 
-    return VisitExpr(binary_operator, node_desc) && res;
+     node_desc.kind_hierarchy.push_back("BinaryOperator");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("lhs", Traverse(binary_operator->getLHS())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("rhs", Traverse(binary_operator->getRHS())));
+
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", binary_operator->getOpcodeStr()));
+
+     return VisitExpr(binary_operator, node_desc) && res;
 }
 #endif
 
@@ -3156,6 +3379,16 @@ bool ClangToDotTranslator::VisitCompoundAssignOperator(clang::CompoundAssignOper
     std::cerr << "ClangToDotTranslator::VisitCompoundAssignOperator" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CompoundAssignOperator");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>(
+        "computation_lhs_type", Traverse(compound_assign_operator->getComputationLHSType().getTypePtr())
+     ));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>(
+        "computation_result_type", Traverse(compound_assign_operator->getComputationResultType().getTypePtr())
+     ));
 
      // TODO 
 
@@ -3180,6 +3413,8 @@ bool ClangToDotTranslator::VisitBlockExpr(clang::BlockExpr * block_expr, NodeDes
     std::cerr << "ClangToDotTranslator::VisitBlockExpr" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("BlockExpr");
 
      // TODO 
 
@@ -3255,7 +3490,24 @@ bool ClangToDotTranslator::VisitCallExpr(clang::CallExpr * call_expr, NodeDescri
     *node = SageBuilder::buildFunctionCallExp_nfi(expr, param_list);
 #endif
 
-    return VisitExpr(call_expr, node_desc) && res;
+     node_desc.kind_hierarchy.push_back("CallExpr");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("callee", Traverse(call_expr->getCallee())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("callee_decl", Traverse(call_expr->getCalleeDecl())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("direct_callee", Traverse(call_expr->getDirectCallee())));
+
+     clang::CallExpr::arg_iterator it;
+     unsigned cnt = 0;
+     for (it = call_expr->arg_begin(); it != call_expr->arg_end(); ++it)
+        {
+          std::ostringstream oss;
+          oss << "argument[" << cnt++ << "]";
+          node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
+        }
+
+     return VisitExpr(call_expr, node_desc) && res;
 }
 #endif
 
@@ -3276,6 +3528,8 @@ bool ClangToDotTranslator::VisitCUDAKernelCallExpr(clang::CUDAKernelCallExpr * c
     std::cerr << "ClangToDotTranslator::VisitCUDAKernelCallExpr" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CUDAKernelCallExpr");
 
      // TODO 
 
@@ -3301,6 +3555,8 @@ bool ClangToDotTranslator::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr * cxx
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXMemberCallExpr");
+
      // TODO 
 
      return VisitExpr(cxx_member_call_expr, node_desc) && res;
@@ -3324,6 +3580,8 @@ bool ClangToDotTranslator::VisitCXXOperatorCallExpr(clang::CXXOperatorCallExpr *
     std::cerr << "ClangToDotTranslator::VisitCXXOperatorCallExpr" << std::endl;
 #endif
      bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXOperatorCallExpr");
 
      // TODO 
 
@@ -3349,6 +3607,8 @@ bool ClangToDotTranslator::VisitUserDefinedLiteral(clang::UserDefinedLiteral * u
 #endif
      bool res = true;
 
+     node_desc.kind_hierarchy.push_back("UserDefinedLiteral");
+
      // TODO 
 
      return VisitExpr(user_defined_literal, node_desc) && res;
@@ -3373,6 +3633,10 @@ bool ClangToDotTranslator::VisitCastExpr(clang::CastExpr * cast_expr, NodeDescri
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CastExpr");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("sub_expr", Traverse(cast_expr->getSubExpr())));
+
     // TODO
 
     return VisitExpr(cast_expr, node_desc) && res;
@@ -3393,26 +3657,30 @@ bool ClangToDotTranslator::VisitExplicitCastExpr(clang::ExplicitCastExpr * expli
 #else
 bool ClangToDotTranslator::VisitExplicitCastExpr(clang::ExplicitCastExpr * explicit_cast_expr, NodeDescriptor & node_desc) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToDotTranslator::VisitExplicitCastExpr" << std::endl;
+     std::cerr << "ClangToDotTranslator::VisitExplicitCastExpr" << std::endl;
 #endif
-    bool res = true;
+     bool res = true;
 
-    // TODO
+     node_desc.kind_hierarchy.push_back("ExplicitCastExpr");
 
-    return VisitCastExpr(explicit_cast_expr, node_desc) && res;
+     node_desc.successors.push_back(std::pair<std::string, std::string>("type_as_written", Traverse(explicit_cast_expr->getTypeAsWritten().getTypePtr())));
+
+ // TODO
+
+     return VisitCastExpr(explicit_cast_expr, node_desc) && res;
 }
 #endif
 
 #if 0
 bool ClangToDotTranslator::VisitBuiltinBitCastExpr(clang::BuiltinBitCastExpr * builtin_bit_cast_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToDotTranslator::VisitBuiltinBitCastExpr" << std::endl;
+     std::cerr << "ClangToDotTranslator::VisitBuiltinBitCastExpr" << std::endl;
 #endif
-    bool res = true;
+     bool res = true;
 
-    // TODO
+  // TODO
 
-    return VisitExplicitCastExpr(builtin_bit_cast_expr, node) && res;
+     return VisitExplicitCastExpr(builtin_bit_cast_expr, node) && res;
 }
 #else
 bool ClangToDotTranslator::VisitBuiltinBitCastExpr(clang::BuiltinBitCastExpr * builtin_bit_cast_expr, NodeDescriptor & node_desc) {
@@ -3420,6 +3688,8 @@ bool ClangToDotTranslator::VisitBuiltinBitCastExpr(clang::BuiltinBitCastExpr * b
     std::cerr << "ClangToDotTranslator::VisitBuiltinBitCastExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("BuiltinBitCastExpr");
 
     // TODO
 
@@ -3465,6 +3735,8 @@ bool ClangToDotTranslator::VisitCStyleCastExpr(clang::CStyleCastExpr * c_style_c
     *node = SageBuilder::buildCastExp(expr, type, SgCastExp::e_C_style_cast);
 #endif
 
+     node_desc.kind_hierarchy.push_back("CStyleCastExpr");
+
     return VisitExplicitCastExpr(c_style_cast, node_desc) && res;
 }
 #endif
@@ -3486,6 +3758,8 @@ bool ClangToDotTranslator::VisitCXXFunctionalCastExpr(clang::CXXFunctionalCastEx
     std::cerr << "ClangToDotTranslator::VisitCXXFunctionalCastExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXFunctionalCastExpr");
 
     // TODO
 
@@ -3511,6 +3785,8 @@ bool ClangToDotTranslator::VisitCXXNamedCastExpr(clang::CXXNamedCastExpr * cxx_n
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXNamedCastExpr");
+
     // TODO
 
     return VisitExplicitCastExpr(cxx_named_cast_expr, node_desc) && res;
@@ -3534,6 +3810,8 @@ bool ClangToDotTranslator::VisitCXXConstCastExpr(clang::CXXConstCastExpr * cxx_c
     std::cerr << "ClangToDotTranslator::VisitCXXConstCastExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXConstCastExpr");
 
     // TODO
 
@@ -3559,6 +3837,8 @@ bool ClangToDotTranslator::VisitCXXDynamicCastExpr(clang::CXXDynamicCastExpr * c
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXDynamicCastExpr");
+
     // TODO
 
     return VisitCXXNamedCastExpr(cxx_dynamic_cast_expr, node_desc) && res;
@@ -3583,6 +3863,8 @@ bool ClangToDotTranslator::VisitCXXReinterpretCastExpr(clang::CXXReinterpretCast
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXReinterpretCastExpr");
+
     // TODO
 
     return VisitCXXNamedCastExpr(cxx_reinterpret_cast_expr, node_desc) && res;
@@ -3606,6 +3888,8 @@ bool ClangToDotTranslator::VisitCXXStaticCastExpr(clang::CXXStaticCastExpr * cxx
     std::cerr << "ClangToDotTranslator::VisitCXXStaticCastExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXStaticCastExpr");
 
     // TODO
 
@@ -3661,6 +3945,8 @@ bool ClangToDotTranslator::VisitImplicitCastExpr(clang::ImplicitCastExpr * impli
     *node = expr;
 #endif
 
+     node_desc.kind_hierarchy.push_back("ImplicitCastExpr");
+
     return VisitCastExpr(implicit_cast_expr, node_desc);
 }
 #endif
@@ -3685,6 +3971,27 @@ bool ClangToDotTranslator::VisitCharacterLiteral(clang::CharacterLiteral * chara
     *node = SageBuilder::buildCharVal(character_literal->getValue());
 #endif
 
+     node_desc.kind_hierarchy.push_back("CharacterLiteral");
+
+    switch (character_literal->getKind()) {
+        case clang::CharacterLiteral::Ascii:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "Ascii"));
+            break;
+        case clang::CharacterLiteral::Wide:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "Wide"));
+            break;
+        case clang::CharacterLiteral::UTF16:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "UTF16"));
+            break;
+        case clang::CharacterLiteral::UTF32:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "UTF32"));
+            break;
+    }
+
+    std::ostringstream oss;
+    oss << std::hex << character_literal->getValue();
+    node_desc.attributes.push_back(std::pair<std::string, std::string>("hex_value", oss.str()));
+
     return VisitExpr(character_literal, node_desc);
 }
 #endif
@@ -3706,6 +4013,8 @@ bool ClangToDotTranslator::VisitChooseExpr(clang::ChooseExpr * choose_expr, Node
     std::cerr << "ClangToDotTranslator::VisitChooseExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("ChooseExpr");
 
     // TODO
 
@@ -3751,6 +4060,10 @@ bool ClangToDotTranslator::VisitCompoundLiteralExpr(clang::CompoundLiteralExpr *
     *node = SageBuilder::buildCompoundInitializer_nfi(expr, type);
 #endif
 
+     node_desc.kind_hierarchy.push_back("CompoundLiteralExpr");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("initializer", Traverse(compound_literal->getInitializer())));
+
     return VisitExpr(compound_literal, node_desc);
 }
 #endif
@@ -3784,6 +4097,8 @@ bool ClangToDotTranslator::VisitConvertVectorExpr(clang::ConvertVectorExpr * con
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("ConvertVectorExpr");
+
     // TODO
 
     return VisitExpr(convert_vector_expr, node_desc) && res;
@@ -3807,6 +4122,8 @@ bool ClangToDotTranslator::VisitCoroutineSuspendExpr(clang::CoroutineSuspendExpr
     std::cerr << "ClangToDotTranslator::VisitCoroutineSuspendExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CoroutineSuspendExpr");
 
     // TODO
 
@@ -3832,6 +4149,8 @@ bool ClangToDotTranslator::VisitCoawaitExpr(clang::CoawaitExpr * coawait_expr, N
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CoawaitExpr");
+
     // TODO
 
     return VisitCoroutineSuspendExpr(coawait_expr, node_desc) && res;
@@ -3855,6 +4174,8 @@ bool ClangToDotTranslator::VisitCoyieldExpr(clang::CoyieldExpr * coyield_expr, N
     std::cerr << "ClangToDotTranslator::VisitCoyieldExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CoyieldExpr");
 
     // TODO
 
@@ -3880,6 +4201,8 @@ bool ClangToDotTranslator::VisitCXXBindTemporaryExpr(clang::CXXBindTemporaryExpr
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXBindTemporaryExpr");
+
     // TODO
 
     return VisitExpr(cxx_bind_temporary_expr, node_desc) && res;
@@ -3903,6 +4226,8 @@ bool ClangToDotTranslator::VisitCXXBoolLiteralExpr(clang::CXXBoolLiteralExpr * c
     std::cerr << "ClangToDotTranslator::VisitCXXBoolLiteralExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXBoolLiteralExpr");
 
     // TODO
 
@@ -3928,9 +4253,22 @@ bool ClangToDotTranslator::VisitCXXConstructExpr(clang::CXXConstructExpr * cxx_c
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXConstructExpr");
+
     // TODO
 
-    return VisitExpr(cxx_construct_expr, node_desc) && res;
+     node_desc.successors.push_back(std::pair<std::string, std::string>("constructor", Traverse(cxx_construct_expr->getConstructor())));
+
+     clang::CXXConstructExpr::arg_iterator it;
+     unsigned cnt = 0;
+     for (it = cxx_construct_expr->arg_begin(); it != cxx_construct_expr->arg_end(); ++it)
+        {
+          std::ostringstream oss;
+          oss << "argument[" << cnt++ << "]";
+          node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
+        }
+
+     return VisitExpr(cxx_construct_expr, node_desc) && res;
 }
 #endif
 
@@ -3951,6 +4289,8 @@ bool ClangToDotTranslator::VisitCXXTemporaryObjectExpr(clang::CXXTemporaryObject
     std::cerr << "ClangToDotTranslator::VisitCXXTemporaryObjectExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXTemporaryObjectExpr");
 
     // TODO
 
@@ -3976,6 +4316,8 @@ bool ClangToDotTranslator::VisitCXXDefaultArgExpr(clang::CXXDefaultArgExpr * cxx
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXDefaultArgExpr");
+
     // TODO
 
     return VisitExpr(cxx_default_arg_expr, node_desc) && res;
@@ -3999,6 +4341,8 @@ bool ClangToDotTranslator::VisitCXXDefaultInitExpr(clang::CXXDefaultInitExpr * c
     std::cerr << "ClangToDotTranslator::VisitCXXDefaultInitExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXDefaultInitExpr");
 
     // TODO
 
@@ -4024,6 +4368,8 @@ bool ClangToDotTranslator::VisitCXXDeleteExpr(clang::CXXDeleteExpr * cxx_delete_
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXDeleteExpr");
+
     // TODO
 
     return VisitExpr(cxx_delete_expr, node_desc) && res;
@@ -4047,6 +4393,8 @@ bool ClangToDotTranslator::VisitCXXDependentScopeMemberExpr(clang::CXXDependentS
     std::cerr << "ClangToDotTranslator::VisitCXXDependentScopeMemberExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXDependentScopeMemberExpr");
 
     // TODO
 
@@ -4072,6 +4420,8 @@ bool ClangToDotTranslator::VisitCXXFoldExpr(clang::CXXFoldExpr * cxx_fold_expr, 
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXFoldExpr");
+
     // TODO
 
     return VisitExpr(cxx_fold_expr, node_desc) && res;
@@ -4095,6 +4445,8 @@ bool ClangToDotTranslator::VisitCXXInheritedCtorInitExpr(clang::CXXInheritedCtor
     std::cerr << "ClangToDotTranslator::VisitCXXInheritedCtorInitExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXInheritedCtorInitExpr");
 
     // TODO
 
@@ -4120,6 +4472,8 @@ bool ClangToDotTranslator::VisitCXXNewExpr(clang::CXXNewExpr * cxx_new_expr, Nod
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXNewExpr");
+
     // TODO
 
     return VisitExpr(cxx_new_expr, node_desc) && res;
@@ -4143,6 +4497,8 @@ bool ClangToDotTranslator::VisitCXXNoexceptExpr(clang::CXXNoexceptExpr * cxx_noe
     std::cerr << "ClangToDotTranslator::VisitCXXNoexceptExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXNoexceptExpr");
 
     // TODO
 
@@ -4168,6 +4524,8 @@ bool ClangToDotTranslator::VisitCXXNullPtrLiteralExpr(clang::CXXNullPtrLiteralEx
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXNullPtrLiteralExpr");
+
     // TODO
 
     return VisitExpr(cxx_null_ptr_literal_expr, node_desc) && res;
@@ -4191,6 +4549,8 @@ bool ClangToDotTranslator::VisitCXXPseudoDestructorExpr(clang::CXXPseudoDestruct
     std::cerr << "ClangToDotTranslator::VisitCXXPseudoDestructorExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXPseudoDestructorExpr");
 
     // TODO
 
@@ -4227,6 +4587,8 @@ bool ClangToDotTranslator::VisitCXXScalarValueInitExpr(clang::CXXScalarValueInit
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXScalarValueInitExpr");
+
     // TODO
 
     return VisitExpr(cxx_scalar_value_init_expr, node_desc) && res;
@@ -4250,6 +4612,8 @@ bool ClangToDotTranslator::VisitCXXStdInitializerListExpr(clang::CXXStdInitializ
     std::cerr << "ClangToDotTranslator::VisitCXXStdInitializerListExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXStdInitializerListExpr");
 
     // TODO
 
@@ -4275,6 +4639,8 @@ bool ClangToDotTranslator::VisitCXXThisExpr(clang::CXXThisExpr * cxx_this_expr, 
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXThisExpr");
+
     // TODO
 
     return VisitExpr(cxx_this_expr, node_desc) && res;
@@ -4298,6 +4664,8 @@ bool ClangToDotTranslator::VisitCXXThrowExpr(clang::CXXThrowExpr * cxx_throw_exp
     std::cerr << "ClangToDotTranslator::VisitCXXThrowExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXThrowExpr");
 
     // TODO
 
@@ -4323,6 +4691,8 @@ bool ClangToDotTranslator::VisitCXXTypeidExpr(clang::CXXTypeidExpr * cxx_typeid_
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXTypeidExpr");
+
     // TODO
 
     return VisitExpr(cxx_typeid_expr, node_desc) && res;
@@ -4347,6 +4717,8 @@ bool ClangToDotTranslator::VisitCXXUnresolvedConstructExpr(clang::CXXUnresolvedC
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("CXXUnresolvedConstructExpr");
+
     // TODO
 
     return VisitExpr(cxx_unresolved_construct_expr, node_desc) && res;
@@ -4370,6 +4742,8 @@ bool ClangToDotTranslator::VisitCXXUuidofExpr(clang::CXXUuidofExpr * cxx_uuidof_
     std::cerr << "ClangToDotTranslator::VisitCXXUuidofExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("CXXUuidofExpr");
 
     // TODO
 
@@ -4497,7 +4871,11 @@ bool ClangToDotTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr, 
     }
 #endif
 
-    return VisitExpr(decl_ref_expr, node_desc) && res;
+     node_desc.kind_hierarchy.push_back("DeclRefExpr");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("decl", Traverse(decl_ref_expr->getDecl())));
+
+     return VisitExpr(decl_ref_expr, node_desc) && res;
 }
 #endif
 
@@ -4518,6 +4896,8 @@ bool ClangToDotTranslator::VisitDependentCoawaitExpr(clang::DependentCoawaitExpr
     std::cerr << "ClangToDotTranslator::VisitDependentCoawaitExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("DependentCoawaitExpr");
 
     // TODO
 
@@ -4542,6 +4922,8 @@ bool ClangToDotTranslator::VisitDependentScopeDeclRefExpr(clang::DependentScopeD
     std::cerr << "ClangToDotTranslator::VisitDependentScopeDeclRefExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("DependentScopeDeclRefExpr");
 
     // TODO
 
@@ -4673,6 +5055,77 @@ bool ClangToDotTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * d
     *node = design_init;
 #endif
 
+     node_desc.kind_hierarchy.push_back("DesignatedInitExpr");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("init", Traverse(designated_init_expr->getInit())));
+
+#if 0
+     clang::DesignatedInitExpr::designators_iterator it;
+     unsigned cnt = 0;
+     for (it = designated_init_expr->designators_begin(); it != designated_init_expr->designators_end(); it++) 
+        {
+          std::ostringstream oss;
+          oss << "designator[" << cnt++ << "]";
+          if (it->isFieldDesignator()) {
+              oss << " field";
+              node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(it->getField())));
+          }
+         else if (it->isArrayDesignator()) {
+            oss << " array";
+            node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(designated_init_expr->getArrayIndex(*it))));
+        }
+        else if (it->isArrayRangeDesignator()) {
+            oss << " range";
+            std::ostringstream oss_;
+            oss_ << oss.str() << "_end";
+            oss << "_start";
+            node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(designated_init_expr->getArrayRangeStart(*it))));
+            node_desc.successors.push_back(std::pair<std::string, std::string>(oss_.str(), Traverse(designated_init_expr->getArrayRangeEnd(*it))));
+        }
+        else assert(false);
+        }
+#else
+  // DQ (11/28/2020): There is no clang::DesignatedInitExpr::designators_iterator in Clang 10, 
+  // so this has to be iterated over using a for loop and calling the getDesignator() function.
+     unsigned cnt = 0;
+     for (unsigned i = 0; i < designated_init_expr->size(); i++)
+        {
+          clang::DesignatedInitExpr::Designator* it = designated_init_expr->getDesignator(i);
+
+          std::ostringstream oss;
+          oss << "designator[" << cnt++ << "]";
+          if (it->isFieldDesignator()) 
+             {
+               oss << " field";
+               node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(it->getField())));
+             }
+            else 
+             {
+               if (it->isArrayDesignator()) 
+                  {
+                    oss << " array";
+                    node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(designated_init_expr->getArrayIndex(*it))));
+                  }
+                 else 
+                  {
+                    if (it->isArrayRangeDesignator()) 
+                       {
+                         oss << " range";
+                         std::ostringstream oss_;
+                         oss_ << oss.str() << "_end";
+                         oss << "_start";
+                         node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(designated_init_expr->getArrayRangeStart(*it))));
+                         node_desc.successors.push_back(std::pair<std::string, std::string>(oss_.str(), Traverse(designated_init_expr->getArrayRangeEnd(*it))));
+                       }
+                      else 
+                       {
+                         assert(false);
+                       }
+                  }
+             }
+        }
+#endif
+
     return VisitExpr(designated_init_expr, node_desc);
 }
 #endif
@@ -4694,6 +5147,8 @@ bool ClangToDotTranslator::VisitDesignatedInitUpdateExpr(clang::DesignatedInitUp
     std::cerr << "ClangToDotTranslator::VisitDesignatedInitUpdateExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("DesignatedInitUpdateExpr");
 
     // TODO
 
@@ -4718,6 +5173,8 @@ bool ClangToDotTranslator::VisitExpressionTraitExpr(clang::ExpressionTraitExpr *
     std::cerr << "ClangToDotTranslator::VisitExpressionTraitExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("ExpressionTraitExpr");
 
     // TODO
 
@@ -4807,7 +5264,21 @@ bool ClangToDotTranslator::VisitExtVectorElementExpr(clang::ExtVectorElementExpr
     *node = res;
 #endif
 
-   return VisitExpr(ext_vector_element_expr, node_desc);
+     node_desc.kind_hierarchy.push_back("ExtVectorElementExpr");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("base", Traverse(ext_vector_element_expr->getBase())));
+
+     if (ext_vector_element_expr->isArrow()) 
+          node_desc.attributes.push_back(std::pair<std::string, std::string>("access_operator", "arrow"));
+       else 
+          node_desc.attributes.push_back(std::pair<std::string, std::string>("access_operator", "dot"));
+
+     clang::IdentifierInfo & ident_info = ext_vector_element_expr->getAccessor();
+     std::string ident = ident_info.getName().str();
+
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("accessed_field", ident));
+
+     return VisitExpr(ext_vector_element_expr, node_desc);
 }
 #endif
 
@@ -4828,6 +5299,8 @@ bool ClangToDotTranslator::VisitFixedPointLiteral(clang::FixedPointLiteral * fix
     std::cerr << "ClangToDotTranslator::VisitFixedPointLiteral" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("FixedPointLiteral");
 
     // TODO
 
@@ -4867,7 +5340,26 @@ bool ClangToDotTranslator::VisitFloatingLiteral(clang::FloatingLiteral * floatin
         ROSE_ASSERT(!"In VisitFloatingLiteral: Unsupported float size");
 #endif
 
-    return VisitExpr(floating_literal, node_desc);
+     node_desc.kind_hierarchy.push_back("FloatingLiteral");
+
+  // FIXME
+
+     unsigned int precision =  llvm::APFloat::semanticsPrecision(floating_literal->getValue().getSemantics());
+     std::ostringstream oss;
+     if (precision == 24) {
+         node_desc.attributes.push_back(std::pair<std::string, std::string>("precision", "single"));
+         oss << floating_literal->getValue().convertToFloat();
+     }
+     else if (precision == 53) {
+         node_desc.attributes.push_back(std::pair<std::string, std::string>("precision", "double"));
+         oss << floating_literal->getValue().convertToDouble();
+     }
+     else
+         assert(!"In VisitFloatingLiteral: Unsupported float size");
+
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("value", oss.str()));
+
+     return VisitExpr(floating_literal, node_desc);
 }
 #endif
 
@@ -4888,6 +5380,8 @@ bool ClangToDotTranslator::VisitFullExpr(clang::FullExpr * full_expr, NodeDescri
     std::cerr << "ClangToDotTranslator::VisitFullExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("FullExpr");
 
     // TODO
 
@@ -4913,6 +5407,8 @@ bool ClangToDotTranslator::VisitConstantExpr(clang::ConstantExpr * constant_expr
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("ConstantExpr");
+
     // TODO
 
     return VisitFullExpr(constant_expr, node_desc) && res;
@@ -4936,6 +5432,8 @@ bool ClangToDotTranslator::VisitExprWithCleanups(clang::ExprWithCleanups * expr_
     std::cerr << "ClangToDotTranslator::VisitExprWithCleanups" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("ExprWithCleanups");
 
     // TODO
 
@@ -4961,6 +5459,8 @@ bool ClangToDotTranslator::VisitFunctionParmPackExpr(clang::FunctionParmPackExpr
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("FunctionParmPackExpr");
+
     // TODO
 
     return VisitExpr(function_parm_pack_expr, node_desc) && res;
@@ -4985,6 +5485,8 @@ bool ClangToDotTranslator::VisitGenericSelectionExpr(clang::GenericSelectionExpr
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("GenericSelectionExpr");
+
     // TODO
 
     return VisitExpr(generic_Selection_expr, node_desc) && res;
@@ -5008,6 +5510,8 @@ bool ClangToDotTranslator::VisitGNUNullExpr(clang::GNUNullExpr * gnu_null_expr, 
     std::cerr << "ClangToDotTranslator::VisitGNUNullExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("GNUNullExpr");
 
     // TODO
 
@@ -5047,6 +5551,10 @@ bool ClangToDotTranslator::VisitImaginaryLiteral(clang::ImaginaryLiteral * imagi
     *node = comp_val;
 #endif
 
+     node_desc.kind_hierarchy.push_back("ImaginaryLiteral");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("sub_expr", Traverse(imaginary_literal->getSubExpr())));
+
     return VisitExpr(imaginary_literal, node_desc);
 }
 #endif
@@ -5068,6 +5576,8 @@ bool ClangToDotTranslator::VisitImplicitValueInitExpr(clang::ImplicitValueInitEx
     std::cerr << "ClangToDotTranslator::VisitImplicitValueInitExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("ImplicitValueInitExpr");
 
     // TODO
 
@@ -5121,6 +5631,16 @@ bool ClangToDotTranslator::VisitInitListExpr(clang::InitListExpr * init_list_exp
     *node = expr_list_expr;
 #endif
 
+     node_desc.kind_hierarchy.push_back("InitListExpr");
+
+    clang::InitListExpr::iterator it;
+    unsigned cnt = 0;
+    for (it = init_list_expr->begin(); it != init_list_expr->end(); it++) {
+        std::ostringstream oss;
+        oss << "init[" << cnt++ << "]";
+        node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
+    }
+
     return VisitExpr(init_list_expr, node_desc);
 }
 #endif
@@ -5145,6 +5665,15 @@ bool ClangToDotTranslator::VisitIntegerLiteral(clang::IntegerLiteral * integer_l
     *node = SageBuilder::buildIntVal(integer_literal->getValue().getSExtValue());
 #endif
 
+     node_desc.kind_hierarchy.push_back("IntegerLiteral");
+
+    // FIXME
+
+  // DQ (11/28/2020): getHashValue is no longer available.
+  // std::ostringstream oss;
+  // oss << std::hex << integer_literal->getValue().getHashValue();
+  // node_desc.attributes.push_back(std::pair<std::string, std::string>("hex_hash_value", oss.str()));
+
     return VisitExpr(integer_literal, node_desc);
 }
 #endif
@@ -5155,6 +5684,8 @@ bool ClangToDotTranslator::VisitLambdaExpr(clang::LambdaExpr * lambda_expr, SgNo
     std::cerr << "ClangToDotTranslator::VisitLambdaExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("LambdaExpr");
 
     // TODO
 
@@ -5190,6 +5721,8 @@ bool ClangToDotTranslator::VisitMaterializeTemporaryExpr(clang::MaterializeTempo
     std::cerr << "ClangToDotTranslator::VisitMaterializeTemporaryExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("MaterializeTemporaryExpr");
 
     // TODO
 
@@ -5283,6 +5816,17 @@ bool ClangToDotTranslator::VisitMemberExpr(clang::MemberExpr * member_expr, Node
         *node = SageBuilder::buildDotExp(base, sg_member_expr);
 #endif
 
+     node_desc.kind_hierarchy.push_back("MemberExpr");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("base", Traverse(member_expr->getBase())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("member_decl", Traverse(member_expr->getMemberDecl())));
+
+     if (member_expr->isArrow())
+         node_desc.attributes.push_back(std::pair<std::string, std::string>("access_operator", "arrow"));
+     else
+         node_desc.attributes.push_back(std::pair<std::string, std::string>("access_operator", "dot"));
+
     return VisitExpr(member_expr, node_desc) && res;
 }
 #endif
@@ -5304,6 +5848,8 @@ bool ClangToDotTranslator::VisitMSPropertyRefExpr(clang::MSPropertyRefExpr * ms_
     std::cerr << "ClangToDotTranslator::VisitMSPropertyRefExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("MSPropertyRefExpr");
 
     // TODO
 
@@ -5329,6 +5875,8 @@ bool ClangToDotTranslator::VisitMSPropertySubscriptExpr(clang::MSPropertySubscri
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("MSPropertySubscriptExpr");
+
     // TODO
 
     return VisitExpr(ms_property_subscript_expr, node_desc) && res;
@@ -5352,6 +5900,8 @@ bool ClangToDotTranslator::VisitNoInitExpr(clang::NoInitExpr * no_init_expr, Nod
     std::cerr << "ClangToDotTranslator::VisitNoInitExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("NoInitExpr");
 
     // TODO
 
@@ -5377,6 +5927,8 @@ bool ClangToDotTranslator::VisitOffsetOfExpr(clang::OffsetOfExpr * offset_of_exp
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OffsetOfExpr");
+
     // TODO
 
     return VisitExpr(offset_of_expr, node_desc) && res;
@@ -5400,6 +5952,8 @@ bool ClangToDotTranslator::VisitOMPArraySectionExpr(clang::OMPArraySectionExpr *
     std::cerr << "ClangToDotTranslator::VisitOMPArraySectionExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OMPArraySectionExpr");
 
     // TODO
 
@@ -5425,6 +5979,8 @@ bool ClangToDotTranslator::VisitOpaqueValueExpr(clang::OpaqueValueExpr * opaque_
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("OpaqueValueExpr");
+
     // TODO
 
     return VisitExpr(opaque_value_expr, node_desc) && res;
@@ -5448,6 +6004,8 @@ bool ClangToDotTranslator::VisitOverloadExpr(clang::OverloadExpr * overload_expr
     std::cerr << "ClangToDotTranslator::VisitOverloadExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("OverloadExpr");
 
     // TODO
 
@@ -5473,6 +6031,8 @@ bool ClangToDotTranslator::VisitUnresolvedLookupExpr(clang::UnresolvedLookupExpr
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("UnresolvedLookupExpr");
+
     // TODO
 
     return VisitOverloadExpr(unresolved_lookup_expr, node_desc) && res;
@@ -5497,6 +6057,8 @@ bool ClangToDotTranslator::VisitUnresolvedMemberExpr(clang::UnresolvedMemberExpr
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("UnresolvedMemberExpr");
+
     // TODO
 
     return VisitOverloadExpr(unresolved_member_expr, node_desc) && res;
@@ -5520,6 +6082,8 @@ bool ClangToDotTranslator::VisitPackExpansionExpr(clang::PackExpansionExpr * pac
     std::cerr << "ClangToDotTranslator::VisitPackExpansionExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("PackExpansionExpr");
 
     // TODO
 
@@ -5567,6 +6131,10 @@ bool ClangToDotTranslator::VisitParenExpr(clang::ParenExpr * paren_expr, NodeDes
     *node = subexpr;
 #endif
 
+     node_desc.kind_hierarchy.push_back("ParenExpr");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("sub_expr", Traverse(paren_expr->getSubExpr())));
+
     return VisitExpr(paren_expr, node_desc) && res;
 }
 #endif
@@ -5588,6 +6156,8 @@ bool ClangToDotTranslator::VisitParenListExpr(clang::ParenListExpr * paran_list_
     std::cerr << "ClangToDotTranslator::VisitParenListExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("ParenListExpr");
 
     // TODO
 
@@ -5737,6 +6307,26 @@ bool ClangToDotTranslator::VisitPredefinedExpr(clang::PredefinedExpr * predefine
     *node = SageBuilder::buildVarRefExp_nfi(symbol);
 #endif
 
+     node_desc.kind_hierarchy.push_back("PredefinedExpr");
+
+  // DQ (11/28/2020): Change of function name in Clang 10.
+  // switch (predefined_expr->getIdentType()) 
+     switch (predefined_expr->getIdentKind()) 
+        {
+          case clang::PredefinedExpr::Func:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("ident_type", "func"));
+               break;
+          case clang::PredefinedExpr::Function:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("ident_type", "function"));
+               break;
+          case clang::PredefinedExpr::PrettyFunction:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("ident_type", "pretty_function"));
+               break;
+          case clang::PredefinedExpr::PrettyFunctionNoVirtual:
+               node_desc.attributes.push_back(std::pair<std::string, std::string>("ident_type", "pretty_function_no_virtual"));
+               break;
+        }
+
     return VisitExpr(predefined_expr, node_desc);
 }
 #endif
@@ -5758,6 +6348,8 @@ bool ClangToDotTranslator::VisitPseudoObjectExpr(clang::PseudoObjectExpr * pseud
     std::cerr << "ClangToDotTranslator::VisitPseudoObjectExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("PseudoObjectExpr");
 
     // TODO
 
@@ -5783,6 +6375,8 @@ bool ClangToDotTranslator::VisitShuffleVectorExpr(clang::ShuffleVectorExpr * shu
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("ShuffleVectorExpr");
+
     // TODO
 
     return VisitExpr(shuffle_vector_expr, node_desc) && res;
@@ -5807,6 +6401,8 @@ bool ClangToDotTranslator::VisitSizeOfPackExpr(clang::SizeOfPackExpr * size_of_p
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("SizeOfPackExpr");
+
     // TODO
 
     return VisitExpr(size_of_pack_expr, node_desc) && res;
@@ -5830,6 +6426,8 @@ bool ClangToDotTranslator::VisitSourceLocExpr(clang::SourceLocExpr * source_loc_
     std::cerr << "ClangToDotTranslator::VisitSourceLocExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("SourceLocExpr");
 
     // TODO
 
@@ -5874,6 +6472,10 @@ bool ClangToDotTranslator::VisitStmtExpr(clang::StmtExpr * stmt_expr, NodeDescri
 
     *node = new SgStatementExpression(substmt);
 #endif
+
+     node_desc.kind_hierarchy.push_back("StmtExpr");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("sub_stmt", Traverse(stmt_expr->getSubStmt())));
 
     return VisitExpr(stmt_expr, node_desc) && res;
 }
@@ -5999,6 +6601,10 @@ bool ClangToDotTranslator::VisitStringLiteral(clang::StringLiteral * string_lite
     *node = SageBuilder::buildStringVal(str);
 #endif
 
+     node_desc.kind_hierarchy.push_back("StringLiteral");
+
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("string", string_literal->getString().str()));
+
     return VisitExpr(string_literal, node_desc);
 }
 #endif
@@ -6020,6 +6626,8 @@ bool ClangToDotTranslator::VisitSubstNonTypeTemplateParmExpr(clang::SubstNonType
     std::cerr << "ClangToDotTranslator::VisitSubstNonTypeTemplateParmExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("SubstNonTypeTemplateParmExpr");
 
     // TODO
 
@@ -6045,6 +6653,8 @@ bool ClangToDotTranslator::VisitSubstNonTypeTemplateParmPackExpr(clang::SubstNon
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("SubstNonTypeTemplateParmPackExpr");
+
     // TODO
 
     return VisitExpr(subst_non_type_template_parm_pack_expr, node_desc) && res;
@@ -6069,6 +6679,8 @@ bool ClangToDotTranslator::VisitTypeTraitExpr(clang::TypeTraitExpr * type_trait,
 #endif
     bool res = true;
 
+     node_desc.kind_hierarchy.push_back("TypeTraitExpr");
+
     // TODO
 
     return VisitExpr(type_trait, node_desc) && res;
@@ -6092,6 +6704,8 @@ bool ClangToDotTranslator::VisitTypoExpr(clang::TypoExpr * typo_expr, NodeDescri
     std::cerr << "ClangToDotTranslator::VisitTypoExpr" << std::endl;
 #endif
     bool res = true;
+
+     node_desc.kind_hierarchy.push_back("TypoExpr");
 
     // TODO
 
@@ -6174,6 +6788,29 @@ bool ClangToDotTranslator::VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeT
             ROSE_ASSERT(!"OpenCL - VecStep is not supported!");
     }
 #endif
+
+     node_desc.kind_hierarchy.push_back("UnaryExprOrTypeTraitExpr");
+
+    if (unary_expr_or_type_trait_expr->isArgumentType()) {
+        node_desc.successors.push_back(std::pair<std::string, std::string>(
+            "argument_type", Traverse(unary_expr_or_type_trait_expr->getArgumentType().getTypePtr())
+        ));
+    }
+    else {
+        node_desc.successors.push_back(std::pair<std::string, std::string>("argument_expr", Traverse(unary_expr_or_type_trait_expr->getArgumentExpr())));
+    }
+
+    switch (unary_expr_or_type_trait_expr->getKind()) {
+        case clang::UETT_SizeOf:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "sizeof"));
+            break;
+        case clang::UETT_AlignOf:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "alignof"));
+            break;
+        case clang::UETT_VecStep:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("kind", "vecstep"));
+            break;
+    }
 
     return VisitStmt(unary_expr_or_type_trait_expr, node_desc) && res;
 }
@@ -6303,6 +6940,52 @@ bool ClangToDotTranslator::VisitUnaryOperator(clang::UnaryOperator * unary_opera
     }
 #endif
 
+     node_desc.kind_hierarchy.push_back("UnaryOperator");
+
+    node_desc.successors.push_back(std::pair<std::string, std::string>("sub_expr", Traverse(unary_operator->getSubExpr())));
+
+    switch (unary_operator->getOpcode()) {
+        case clang::UO_PostInc:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "PostInc"));
+            break;
+        case clang::UO_PostDec:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "PostDec"));
+            break;
+        case clang::UO_PreInc:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "PreInc"));
+            break;
+        case clang::UO_PreDec:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "PreDec"));
+            break;
+        case clang::UO_AddrOf:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "AddrOf"));
+            break;
+        case clang::UO_Deref:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "Deref"));
+            break;
+        case clang::UO_Plus:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "Plus"));
+            break;
+        case clang::UO_Minus:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "Minus"));
+            break;
+        case clang::UO_Not:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "Not"));
+            break;
+        case clang::UO_LNot:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "LNot"));
+            break;
+        case clang::UO_Real:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "Real"));
+            break;
+        case clang::UO_Imag:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "Imag"));
+            break;
+        case clang::UO_Extension:
+            node_desc.attributes.push_back(std::pair<std::string, std::string>("opcode", "Extension"));
+            break;
+    }
+
     return VisitExpr(unary_operator, node_desc) && res;
 }
 #endif
@@ -6334,6 +7017,10 @@ bool ClangToDotTranslator::VisitVAArgExpr(clang::VAArgExpr * va_arg_expr, NodeDe
 
     *node = SageBuilder::buildVarArgOp_nfi(expr, expr->get_type());
 #endif
+
+     node_desc.kind_hierarchy.push_back("VAArgExpr");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("sub_expr", Traverse(va_arg_expr->getSubExpr())));
 
     return VisitExpr(va_arg_expr, node_desc);
 }
@@ -6421,6 +7108,12 @@ bool ClangToDotTranslator::VisitLabelStmt(clang::LabelStmt * label_stmt, NodeDes
     }
 #endif
 
+     node_desc.kind_hierarchy.push_back("LabelStmt");
+
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("name", label_stmt->getName()));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("sub_stmt", Traverse(label_stmt->getSubStmt())));
+
     return VisitStmt(label_stmt, node_desc) && res;
 }
 #endif
@@ -6501,6 +7194,12 @@ bool ClangToDotTranslator::VisitWhileStmt(clang::WhileStmt * while_stmt, NodeDes
     *node = sg_while_stmt;
 #endif
 
-    return VisitStmt(while_stmt, node_desc);
+     node_desc.kind_hierarchy.push_back("WhileStmt");
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("cond", Traverse(while_stmt->getCond())));
+
+     node_desc.successors.push_back(std::pair<std::string, std::string>("body", Traverse(while_stmt->getBody())));
+
+     return VisitStmt(while_stmt, node_desc);
 }
 #endif

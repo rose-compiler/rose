@@ -32,6 +32,9 @@ buildBinaryComposite(const std::string &fileName) {
         // We already have a project, so we cannot call frontend() again.
         retval = new SgBinaryComposite(args, project);
         BinaryLoader::load(retval, DONT_DISASSEMBLE);
+
+     // DQ (11/25/2020): Add support to set this as a binary file (there is at least one binary file processed by ROSE).
+        Rose::is_binary_executable = true;
     } else {
         // No project yet, so just call frontend()
         project = frontend(args);

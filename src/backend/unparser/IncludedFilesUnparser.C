@@ -136,7 +136,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
           if (FileHelper::isNotEmptyFolder(unparseRootPath))
              {
             // DQ (1/29/2018): This case happens when running ROSE from the command line and maybe we should automate the removal of this directory.
-#if 1
+#if 0
                printf ("\n\n");
                printf ("******************************************************************************************************** \n");
                printf ("Note: the unparseRootPath directory should be removed before running ROSE with the header file unparsing \n");
@@ -152,7 +152,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
   // Should be erased completely at every run to avoid name collisions with previous runs.
      FileHelper::eraseFolder(unparseRootPath);
 
-#if 1
+#if 0
   // DQ (4/6/2020): Added header file unparsing feature specific debug level.
      if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
@@ -239,7 +239,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 #endif
         }
 
-#if 1
+#if 0
   // DQ (4/6/2020): Added header file unparsing feature specific debug level.
      if (SgProject::get_unparseHeaderFilesDebug() >= 1)
         {
@@ -437,7 +437,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 
 #if 1
   // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("List allFiles list (size = %zu): \n",allFiles.size());
           for (set<string>::iterator i = allFiles.begin(); i != allFiles.end(); i++)
@@ -449,7 +449,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 
 #if 1
   // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("List modifiedFiles list (size = %zu): \n",modifiedFiles.size());
           set<string>::iterator j = modifiedFiles.begin();
@@ -1365,19 +1365,21 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                       // DQ (10/18/2020): This is enforced within secondaryPassOverSourceFile() and attachPreprocessingInfo(), so move the enforcement to be as early as possible.
                          ROSE_ASSERT(sourceFile->get_processedToIncludeCppDirectivesAndComments() == false);
 
-#if DEBUG_INITIALIZER_FILES_TO_UNPARSE && 1
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 0
                          printf ("In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
                       // DQ (4/22/2020): Location of call to insert redundant comments and CPP directives.
                          sourceFile->secondaryPassOverSourceFile();
 
-#if DEBUG_INITIALIZER_FILES_TO_UNPARSE && 1
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 0
                          printf ("DONE: In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
                        }
                       else
                        {
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 0
                          printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): (already processed sourceFile = %p = %s) \n",sourceFile,sourceFile->getFileName().c_str());
+#endif
                        }
 
                     includeFileIterator++;

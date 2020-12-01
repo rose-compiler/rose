@@ -59,7 +59,16 @@ AST_Graph::nodePartOfGraph::operator()(pair<SgNode*,std::string>& x)
           Sg_File_Info* fileInfo = locatedNode->get_file_info();
           std::string filename(Rose::utility_stripPathFromFileName(fileInfo->get_filename()));
 
+       // DQ (11/29/2020): When we are using clang as a frontend within ROSE, there are a 
+       // few different files to look for predefined constructs (functions, types, etc.).
+       // if (filename.find("rose_edg_required_macros_and_functions.h") != std::string::npos)
+#ifdef ROSE_USE_CLANG_FRONTEND
+          if ( filename.find("rose_edg_required_macros_and_functions.h") != std::string::npos || 
+               filename.find("clang-builtin-c.h") != std::string::npos || 
+               filename.find("clang-builtin-cpp.hpp") != std::string::npos )
+#else
           if (filename.find("rose_edg_required_macros_and_functions.h") != std::string::npos)
+#endif
              {
                functionalReturn.addToGraph = false;
              }

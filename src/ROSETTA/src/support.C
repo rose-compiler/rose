@@ -1632,8 +1632,12 @@ Grammar::setUpSupport ()
      File.setDataPrototype ("bool", "suppress_variable_declaration_normalization", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // TV (04/11/2018): Whether or not to generate a graphviz representation of EDG internal representation
+  // TV (04/11/2018): Whether or not to generate a graphviz representation of the EDG internal representation
      File.setDataPrototype("bool", "edg_il_to_graphviz", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // TV (11/27/2020): Whether or not to generate a graphviz representation of the Clang internal representation
+     File.setDataPrototype("bool", "clang_il_to_graphviz", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // TV (10/01/2018): ROSE-1424
