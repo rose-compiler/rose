@@ -149,6 +149,7 @@ int main( int argc, char * argv[] ) {
     configureRersSpecialization();
     CodeThorn::initDiagnosticsLTL();
 
+    cout<<roseGlobalVariantNameList[V_SgTypeShort]<<endl;
     TimingCollector tc;
 
     tc.startTimer();

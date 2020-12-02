@@ -96,6 +96,7 @@ CODETHORN_HEADER_FILES=\
   DFAnalysisBaseWithoutData.h \
   DFAnalysisBase.h \
   CSDFAnalysisBase.h \
+  CSDFAnalysisBaseWithoutData.h \
   DFTransferFunctions.h \
   DotGraphCfgFrontend.h \
   EState.h \

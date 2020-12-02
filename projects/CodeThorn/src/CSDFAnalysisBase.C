@@ -42,15 +42,18 @@ namespace CodeThorn
     ROSE_ASSERT(_solver);
   }
 
-  Lattice* CSDFAnalysisBase::getPreInfo(Label lab, Context* context) {
+  void CSDFAnalysisBase::setPreInfo(Label lab, Context context, Lattice*) {
+  }
+
+  Lattice* CSDFAnalysisBase::getPreInfo(Label lab, Context context) {
     return _analyzerDataPreInfo.at(lab.getId());
   }
 
-  Lattice* CSDFAnalysisBase::getPostInfo(Label lab, Context* context) {
+  Lattice* CSDFAnalysisBase::getPostInfo(Label lab, Context context) {
     return _analyzerDataPostInfo[lab.getId()];
   }
 
-  void CSDFAnalysisBase::setPostInfo(Label lab, Context* context, Lattice* el) {
+  void CSDFAnalysisBase::setPostInfo(Label lab, Context context, Lattice* el) {
     if(getPostInfo(lab.getId(),context)) {
       delete _analyzerDataPostInfo[lab.getId()];
     }
@@ -77,7 +80,7 @@ namespace CodeThorn
         // (i) combine results or (ii) provide set of results (one
         // result per edge)
         _transferFunctions->transfer(lab,*info);
-        class Context* context=nullptr;
+        Context context;
         setPostInfo(lab.getId(),context,info);
       }
       _postInfoIsValid=true;
