@@ -364,6 +364,42 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
         }
 #endif
 
+    } else if (isSgAsmM68kInstruction(insn)) {
+        // m68k entries look like this (from GDB-4.1.6's bfd/elf32-m68k.c file):
+        //    4e fb 01 71: jmp ([%pc, symbol@GOTPC])
+        //    00 00 00 00: replaced with offset to symbol's .got entry
+        //    2f 3c      : move.l #offset, -(%sp)
+        //    00 00 00 00: replaced with offset into relocation table
+        //    60 ff      : bra.l .plt
+        //    00 00 00 00: replaced with offset to start of .plt
+        //
+        // In practice, the 20-byte entry looks like this on disk:
+        //    This example's PLT starts at 8000081c and GOT starts at 80004000.
+        //    800008a8: entry #7 for "time" function
+        //        00 00 00 00
+        //        00 00 37 7a    -- 800008a8 + 377a = 80004022, or two bytes before time's .got entry of 4024
+        //        2f 3c
+        //        00 00 00 48
+        //        60 ff
+        //        ff ff ff 64    --  + ffffff64 = 8000080c, or 0x10 bytes before the beginning of this PLT
+        //
+        // From the same source as above also describes the first PLT entry as being:
+        //    2f 3b 01 70: move.l (%pc,addr), -(%sp)
+        //    00 00 00 00: replaced with offset to .got+4
+        //    4e fb 01 71: jmp ([%pc, addr])
+        //    00 00 00 00: replaced with offset to .got+8
+        //    00 00 00 00: pad out to 20 bytes
+        if (partitioner.memoryMap() != NULL) {
+            uint8_t entry[20];
+            size_t nRead = partitioner.memoryMap()->at(anchor).limit(sizeof entry).read(entry).size();
+            if (nRead == sizeof entry && entry[8] == 0x2f && entry[9] == 0x3c && entry[14] == 0x60 && entry[15] == 0xff) {
+                rose_addr_t gotOffset = (entry[4] << 24) | (entry[5] << 16) | (entry[6] << 8) | entry[7];
+                gotEntryVa_ = (anchor + gotOffset + 2) & 0xffffffffUL;
+                gotEntryNBytes_ = 4;
+                nBytesMatched_ = 20;
+            }
+        }
+
     } else if (isSgAsmNullInstruction(insn)) {
         // Null ISA has no parsable PLT section
 

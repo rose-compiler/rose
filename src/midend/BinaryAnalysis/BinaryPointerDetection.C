@@ -37,7 +37,7 @@ initDiagnostics() {
 }
 
 bool
-PointerDescriptorLessp::operator()(const PointerDescriptor &a, const PointerDescriptor &b) {
+PointerDescriptorLessp::operator()(const PointerDescriptor &a, const PointerDescriptor &b) const {
     if (a.lvalue == NULL || b.lvalue == NULL)
         return a.lvalue == NULL && b.lvalue != NULL;
     return a.lvalue->hash() < b.lvalue->hash();

@@ -1087,8 +1087,9 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
             BaseSemantics::SValuePtr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
             ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 
-        } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherX86>(cpu)) {
-            // x86 and amd64 store the return address at the top of the stack
+        } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherX86>(cpu) ||
+                   boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherM68k>(cpu)) {
+            // x86, amd64, and m68k store the return address at the top of the stack
             const RegisterDescriptor SP = cpu->stackPointerRegister();
             ASSERT_forbid(SP.isEmpty());
             BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.nBits()));
