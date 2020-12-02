@@ -80,7 +80,7 @@ package body Asis_Tool_2.Element.Clauses is
          ID : constant a_nodes_h.Name_ID :=
            Get_Element_ID (Asis.Clauses.Representation_Clause_Name (Element));
       begin
-         State.Add_To_Dot_Label ("Representation_Clause_Name", To_String(ID));
+         State.Add_To_Dot_Label_And_Edge ("Representation_Clause_Name", ID);
          Result.Representation_Clause_Name := ID;
       end;
 
@@ -114,7 +114,7 @@ package body Asis_Tool_2.Element.Clauses is
             ID : constant a_nodes_h.Name_ID :=
               Get_Element_ID (Asis.Clauses.Representation_Clause_Name (Element));
          begin
-            State.Add_To_Dot_Label ("Representation_Clause_Name", To_String(ID));
+            State.Add_To_Dot_Label_And_Edge ("Representation_Clause_Name", ID);
             Result.Representation_Clause_Name := ID;
          end;
 
@@ -129,11 +129,6 @@ package body Asis_Tool_2.Element.Clauses is
          procedure Add_Common_Representation_Clause_Items is
          begin
             State.Add_To_Dot_Label("Representation_Clause_Kind", Representation_Clause_Kind'Image);
-            Ada.Text_IO.Put_Line(Representation_Clause_Kind'Image);
-            Ada.Text_IO.Put_Line(Representation_Clause_Kind'Image);
-            Ada.Text_IO.Put_Line(Representation_Clause_Kind'Image);
-            Ada.Text_IO.Put_Line(Representation_Clause_Kind'Image);
-            Ada.Text_IO.Put_Line(Representation_Clause_Kind'Image);
             Result.Representation_Clause_Kind := anhS.To_Representation_Clause_Kinds (Representation_Clause_Kind);
             Add_Representation_Clause_Name;
          end Add_Common_Representation_Clause_Items;
@@ -148,9 +143,8 @@ package body Asis_Tool_2.Element.Clauses is
          end;
 
       begin
-         If Representation_Clause_Kind /= Not_A_Representation_Clause then
-            Add_Common_Representation_Clause_Items;
-         end if;
+
+         Add_Common_Representation_Clause_Items;
 
          case Representation_Clause_Kind is
 
