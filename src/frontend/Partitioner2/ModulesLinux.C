@@ -100,14 +100,26 @@ nameSystemCalls(const Partitioner &partitioner, const boost::filesystem::path &s
     }
 }
 
+BaseSemantics::SValuePtr
+LibcStartMain::readStack(const Partitioner &partitioner, const BaseSemantics::DispatcherPtr &cpu, int byteOffset,
+                         size_t nBits, RegisterDescriptor segmentRegister) {
+    const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
+    if (SP.isEmpty())
+        return BaseSemantics::SValuePtr();
+    BaseSemantics::SValuePtr sp = cpu->operators()->peekRegister(SP, cpu->undefined_(SP.nBits()));
+    BaseSemantics::SValuePtr stackOffset = cpu->number_(SP.nBits(),
+                                                        BitOps::signExtend((uint64_t)byteOffset, 8*sizeof(byteOffset)));
+    BaseSemantics::SValuePtr addr = cpu->operators()->add(sp, stackOffset);
+    BaseSemantics::SValuePtr value = cpu->operators()->peekMemory(segmentRegister, addr, cpu->undefined_(nBits));
+    return value;
+}
+
 bool
 LibcStartMain::operator()(bool chain, const Args &args) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
     // Look at this block only if it's a function call
     if (!chain || !args.bblock || args.bblock->nInstructions() == 0)
-        return chain;
-    if (!isSgAsmX86Instruction(args.bblock->instructions().back()))
         return chain;
     if (!args.partitioner.basicBlockIsFunctionCall(args.bblock))
         return chain;
@@ -116,7 +128,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
     bool foundCallToLibcStartMain = false;
     BOOST_FOREACH (const rose_addr_t &succVa, args.partitioner.basicBlockConcreteSuccessors(args.bblock)) {
         Function::Ptr func = args.partitioner.functionExists(succVa);
-        if (func && func->name() == "__libc_start_main@plt") {
+        if (func && (func->name() == "__libc_start_main@plt" || func->name() == "__libc_start_main")) {
             foundCallToLibcStartMain = true;
             break;
         }
@@ -190,23 +202,23 @@ LibcStartMain::operator()(bool chain, const Args &args) {
             }
 
         } else if (dispatcher->addressWidth() == 32) {
-            // x86 integer arguments are passed on the stack
-            dispatcher->operators()->currentState(state);
-            const RegisterDescriptor REG_ESP = args.partitioner.instructionProvider().stackPointerRegister();
-            ASSERT_require(!REG_ESP.isEmpty());
-            BaseSemantics::SValuePtr esp = dispatcher->operators()->peekRegister(REG_ESP, dispatcher->undefined_(32));
-            BaseSemantics::SValuePtr arg0addr = dispatcher->operators()->add(esp, dispatcher->number_(32, 4));
-            BaseSemantics::SValuePtr arg0 = dispatcher->operators()->peekMemory(RegisterDescriptor(),
-                                                                                arg0addr, dispatcher->undefined_(32));
+            // x86 integer arguments are passed on the stack. The address of main is the first argument, which starts four bytes
+            // into the stack because the return address has also been pushed onto the stack.
+            BaseSemantics::SValuePtr arg0 = readStack(args.partitioner, dispatcher, 4, 32, RegisterDescriptor());
             if (arg0->is_number()) {
-                // The address of "main" is passed as the first argument.
                 SAWYER_MESG(debug) <<"LibcStartMain analysis: x86 with main as the first argument\n";
                 mainVa_ = arg0->get_number();
                 functionPtrs.push_back(arg0);
             }
-
-        } else {
-            // architecture not supported yet
+        }
+    } else if (isSgAsmM68kInstruction(args.bblock->instructions().back())) {
+        // M68k integer arguments are passed on the stack. The address of main is the first argument, which starts four bytes
+        // into the stack because the return address has also been pushed onto the stack.
+        BaseSemantics::SValuePtr arg0 = readStack(args.partitioner, dispatcher, 4, 32, RegisterDescriptor());
+        if (arg0->is_number()) {
+            SAWYER_MESG(debug) <<"LibcStartMain analysis: m68k with main as the first argument\n";
+            mainVa_ = arg0->get_number();
+            functionPtrs.push_back(arg0);
         }
     }
 
@@ -223,6 +235,8 @@ LibcStartMain::operator()(bool chain, const Args &args) {
 
     return true;
 }
+
+
 
 void
 LibcStartMain::nameMainFunction(const Partitioner &partitioner) const {
