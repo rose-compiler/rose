@@ -6140,21 +6140,33 @@ ATbool ATermToSageJovialTraversal::traverse_OptLogicalContinuation(ATerm term, S
    printf("... traverse_OptLogicalContinuation: %s\n", ATwriteToString(term));
 #endif
 
+   ATerm t_amb;
+
 // expr is an input variable (and may be modified on output)
    ROSE_ASSERT(expr);
 
-// "no-logical-continuation" removed from grammar productions
-   if (ATmatch(term, "no-logical-continuation")) {
-      // MATCHED no-logical-continuation
-   } else {
-      ATermList tail = (ATermList) ATmake("<term>", term);
-      while (! ATisEmpty(tail)) {
-         ATerm head = ATgetFirst(tail);
-         tail = ATgetNext(tail);
-         if (traverse_LogicalContinuation(head, expr)) {
-            // MATCHED LogicalContinuation
-         } else return ATfalse;
-      }
+#if CHECK_AMB
+   if (ATmatch(term, "amb(<term>)", &t_amb)) {
+      ATermList tail = (ATermList) ATmake("<term>", t_amb);
+      ATerm head = ATgetFirst(tail);
+
+#if PRINT_AMB_WARNINGS
+      cerr << "WARNING AMBIGUITY: OptLogicalContinuation has multiple paths \n";
+      printf("... traverse_OptLogicalContinuation: %s\n", ATwriteToString(term));
+#endif
+
+      // try first amb path
+      return traverse_OptLogicalContinuation(head, expr);
+   }
+#endif
+
+   ATermList tail = (ATermList) ATmake("<term>", term);
+   while (! ATisEmpty(tail)) {
+      ATerm head = ATgetFirst(tail);
+      tail = ATgetNext(tail);
+      if (traverse_LogicalContinuation(head, expr)) {
+         // MATCHED LogicalContinuation
+      } else return ATfalse;
    }
 
 // expr may be modified on output
