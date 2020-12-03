@@ -51,11 +51,15 @@
 #include "ParProOptions.h"
 #include "LTLRersMapping.h"
 #include "DFAnalysisBase.h"
+#include "CSDFAnalysisBaseWithoutData.h"
 #include "EStateTransferFunctions.h"
 #include "EStateWorkList.h"
 #include "EStatePriorityWorkList.h"
 
+
 namespace CodeThorn {
+
+  typedef CallString Context;
 
   typedef std::pair<int, const EState*> FailedAssertion;
   typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
@@ -79,7 +83,7 @@ namespace CodeThorn {
    */
 
 
-  class CTAnalysis : public DFAnalysisBaseWithoutData {
+  class CTAnalysis : public CSDFAnalysisBaseWithoutData<CodeThorn::CallString> {
     friend class Solver;
     friend class Solver5;
     friend class Solver8;
@@ -294,6 +298,11 @@ namespace CodeThorn {
     // temporary option
     bool optionStringLiteralsInState=false;
     void reduceStg(function<bool(const EState*)> predicate);
+
+    virtual Lattice* getPreInfo(Label lab, CallString context);
+    virtual Lattice* getPostInfo(Label lab, CallString context);
+    virtual void setPreInfo(Label lab, CallString context, Lattice*);
+    virtual void setPostInfo(Label lab, CallString context, Lattice*);
 
     void initializeSummaryStates(const PState* initialPStateStored, const ConstraintSet* emptycsetstored);
     const CodeThorn::EState* getSummaryState(CodeThorn::Label lab, CallString cs);

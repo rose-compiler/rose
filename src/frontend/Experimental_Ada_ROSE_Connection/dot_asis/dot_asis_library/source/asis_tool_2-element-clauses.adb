@@ -59,7 +59,7 @@ package body Asis_Tool_2.Element.Clauses is
          ID : constant a_nodes_h.Name_ID :=
            Get_Element_ID (Asis.Clauses.Representation_Clause_Name (Element));
       begin
-         State.Add_To_Dot_Label ("Representation_Clause_Name", To_String(ID));
+         State.Add_To_Dot_Label_And_Edge ("Representation_Clause_Name", ID);
          Result.Representation_Clause_Name := ID;
       end;
 
@@ -120,7 +120,7 @@ package body Asis_Tool_2.Element.Clauses is
             ID : constant a_nodes_h.Name_ID :=
               Get_Element_ID (Asis.Clauses.Representation_Clause_Name (Element));
          begin
-            State.Add_To_Dot_Label ("Representation_Clause_Name", To_String(ID));
+            State.Add_To_Dot_Label_And_Edge ("Representation_Clause_Name", ID);
             Result.Representation_Clause_Name := ID;
          end;
 
