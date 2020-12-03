@@ -964,7 +964,7 @@ package body Asis_Tool_2.Element.Definitions is
             Result.Digits_Expression := Add_And_Return_Digits_Expression;
             Result.Real_Range_Constraint := Add_And_Return_Real_Range_Constraint;
          when An_Ordinary_Fixed_Point_Definition =>
-            Result.Digits_Expression := Add_And_Return_Digits_Expression;
+            Result.Delta_Expression := Add_And_Return_Delta_Expression;
             Result.Real_Range_Constraint := Add_And_Return_Real_Range_Constraint;
          when A_Decimal_Fixed_Point_Definition =>
             Result.Digits_Expression := Add_And_Return_Digits_Expression;

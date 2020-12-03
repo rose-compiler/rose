@@ -273,6 +273,8 @@ digraph "enumeration.adt" {
           <TR><TD ALIGN="LEFT">Position_Number_Image      </TD><TD> = </TD><TD ALIGN="LEFT">3</TD></TR>
           <TR><TD ALIGN="LEFT">Representation_Value_Image       </TD><TD> = </TD><TD ALIGN="LEFT">44</TD></TR>
           </TABLE>> ];
+  Element_2346430 -> Element_2345237
+      [ label=Representation_Clause_Name ];
   Element_2346430 -> Element_2348365
       [ label=Representation_Clause_Expression ];
   Element_2346430
