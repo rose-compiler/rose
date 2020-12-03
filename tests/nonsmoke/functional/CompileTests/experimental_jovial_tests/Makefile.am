@@ -148,7 +148,9 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-391.jov                  \
  rose-issue-rc-391.pre.jov              \
  rose-issue-rc-392.jov                  \
- rose-issue-rc-392.pre.jov
+ rose-issue-rc-392.pre.jov              \
+ rose-issue-rc-394.jov                  \
+ rose-issue-rc-394.pre.jov
 
 # status_enumval.jov                     \
 # 1_2_3_program-body_a.jov               \

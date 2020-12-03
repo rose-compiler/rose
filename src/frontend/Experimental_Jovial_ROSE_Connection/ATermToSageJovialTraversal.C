@@ -7169,57 +7169,76 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 // Look for table variable or table initialization replication operator
 //
    else if (isSgVariableSymbol(symbol)) {
-      if (expr_list->get_expressions().size() == 1) {
-      // An table/array ref is not a replication operator but I don't know how to
-      // disambiguate so assume it is a replication operator. It is not even clear
-      // that a replication operator can't have expression size other than 1.
-#if PRINT_WARNINGS
-         cerr << "WARNING: UserDefinedFunctionCall - variable reference ambiguous "
-              << "with replication operator for " << name << endl;
-#endif
+   // First look for a table type
+      SgJovialTableType* table_type = nullptr;
+      SgInitializedName* init_name = nullptr;
+      SgExprListExp* dim_info = nullptr;
+      SgVariableSymbol* var_sym = isSgVariableSymbol(symbol);
 
-      // Try looking at parent of the declaration for subscripts
-         SgInitializedName* init_name = nullptr;
+      if (var_sym) init_name = isSgInitializedName(var_sym->get_declaration());
+      if (init_name) table_type = isSgJovialTableType(init_name->get_type());
+      if (!table_type) {
+         // Sometimes can't get to table type directly through initialized name,
+         // try looking at parent of the declaration for subscripts.
+         // TODO: maybe not needed anymore so try deleting and see if tests pass
          SgVariableDeclaration* var_decl = nullptr;
          SgClassDefinition* var_def = nullptr;
          SgJovialTableStatement* table_decl = nullptr;
-         SgJovialTableType* table_type = nullptr;
-         SgExprListExp* dim_info = nullptr;
 
-         SgVariableSymbol* var_sym = isSgVariableSymbol(symbol);
-         if (var_sym) init_name = isSgInitializedName(var_sym->get_declaration());
          if (init_name) var_decl = isSgVariableDeclaration(init_name->get_parent());
          if (var_decl) var_def = isSgClassDefinition(var_decl->get_parent());
-         if (var_def) table_decl = isSgJovialTableStatement(var_def->get_parent());
+         if (var_def) {
+           table_decl = isSgJovialTableStatement(var_def->get_parent());
+           table_decl = isSgJovialTableStatement(var_decl->get_parent());
+         }
          if (table_decl) table_type = isSgJovialTableType(table_decl->get_type());
-         if (table_type) dim_info = table_type->get_dim_info();
-         if (dim_info && (dim_info->get_expressions().size() == expr_list->get_expressions().size())) {
-            // Back tracked this long chain of dependencies down to find that there a table declaration
-            // with a dimension the same size as the expr_list (from parser a function parameter list).
-            // Therefore let's just assume that this is an array reference (handled as leftover below).
-
-            expr = nullptr; // and handle below
-         }
-         else {
-            // hopefully is a replication operator
-            // TODO - check to see if type of value can help with disambiguation
-            SgReplicationOp* rep_op = nullptr;
-            SgExpression* value = expr_list->get_expressions()[0];
-            ROSE_ASSERT(value);
-
-            sage_tree_builder.Enter(rep_op, name, value);
-            sage_tree_builder.Leave(rep_op);
-            expr = rep_op;
-         }
       }
 
-   // catch leftovers for a variable symbol
+      if (table_type) {
+         dim_info = table_type->get_dim_info();
+         // Make sure the rank of the table is same as # of params in "function call"
+         if (dim_info && (dim_info->get_expressions().size() == expr_list->get_expressions().size())) {
+            SgVarRefExp* var_ref = nullptr;
+            sage_tree_builder.Enter(var_ref, name);
+            sage_tree_builder.Leave(var_ref);
+            expr = SageBuilder::buildPntrArrRefExp_nfi(var_ref, expr_list);
+         }
+         else {
+            cerr << "ERROR: UserDefinedFunctionCall - variable reference ambiguous "
+                 << "with table reference (and rank is incorrect) for " << name << endl;
+            ROSE_ASSERT(false);
+         }
+      }
+      else {
+        // hopefully is a replication operator
+        // TODO - check to see if type of value can help with disambiguation
+        SgType* type = init_name->get_type();
+        SgReplicationOp* rep_op = nullptr;
+        SgExpression* value = expr_list->get_expressions()[0];
+        ROSE_ASSERT(value);
+
+        if (expr_list->get_expressions().size() == 1) {
+           // It is not clear that a replication operator can't have expression size other than 1?
+#if PRINT_WARNINGS
+           cerr << "WARNING: UserDefinedFunctionCall - variable reference ambiguous "
+                << "with replication operator for " << name << endl;
+#endif
+         }
+
+        sage_tree_builder.Enter(rep_op, name, value);
+        sage_tree_builder.Leave(rep_op);
+        expr = rep_op;
+      }
+
+#if 0
+   // catch leftovers for a variable symbol (shouldn't be any leftovers)
       if (expr == nullptr) {
          SgVarRefExp* var_ref = nullptr;
          sage_tree_builder.Enter(var_ref, name);
          sage_tree_builder.Leave(var_ref);
          expr = SageBuilder::buildPntrArrRefExp_nfi(var_ref, expr_list);
       }
+#endif
    }
 
    ROSE_ASSERT(expr);
