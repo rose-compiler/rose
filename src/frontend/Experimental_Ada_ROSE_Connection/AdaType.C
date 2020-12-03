@@ -264,7 +264,15 @@ namespace
 
           Component_Definition_Struct& component = def.The_Union.The_Component_Definition;
 
+#if ADA_2005_OR_MORE_RECENT
           res = &getDefinitionTypeID(component.Component_Definition_View, ctx);
+#else
+          res = &getDefinitionTypeID(component.Component_Subtype_Indication, ctx);
+#endif /* ADA_2005_OR_MORE_RECENT */
+
+          /* unused fields:
+               bool       Has_Aliased;
+          */
           break;
         }
 

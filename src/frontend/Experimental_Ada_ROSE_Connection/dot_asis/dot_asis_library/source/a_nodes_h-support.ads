@@ -184,13 +184,18 @@ package a_nodes_h.Support is
       Subtype_Constraint => Invalid_Element_ID);
 
    Default_Component_Definition_Struct : constant Component_Definition_Struct :=
-     (Component_Definition_View => Invalid_Element_ID);
+     (Has_Aliased                  => Invalid_bool,
+      Component_Subtype_Indication => Invalid_Element_ID,
+      Component_Definition_View    => Invalid_Element_ID);
 
    Default_Discrete_Subtype_Definition_Struct :
    constant Discrete_Subtype_Definition_Struct :=
      (Discrete_Range_Kind => Not_A_Discrete_Range,
       Subtype_Mark        => Invalid_Element_ID,
-      Subtype_Constraint  => Invalid_Element_ID);
+      Subtype_Constraint  => Invalid_Element_ID,
+      Lower_Bound         => Invalid_Element_ID,
+      Upper_Bound         => Invalid_Element_ID,
+      Range_Attribute     => Invalid_Element_ID);
 
    Default_Discrete_Range_Struct : constant Discrete_Range_Struct :=
      (Discrete_Range_Kind => Not_A_Discrete_Range,
@@ -261,7 +266,7 @@ package a_nodes_h.Support is
       Private_Part_Items => Empty_Element_ID_List,
       Is_Private_Present => Invalid_bool);
 
-   Defult_Formal_Type_Definition_Struct :
+   Default_Formal_Type_Definition_Struct :
    constant Formal_Type_Definition_Struct :=
      (Formal_Type_Kind                => Not_A_Formal_Type_Definition,
       Corresponding_Type_Operators    => Empty_Element_ID_List,
@@ -420,9 +425,6 @@ package a_nodes_h.Support is
       Has_Limited                      => Invalid_bool,
       Clause_Names                     => Empty_Name_List,
       Representation_Clause_Name       => Invalid_Element_ID,
-      Representation_Clause_Expression => Invalid_Element_ID,
-      Mod_Clause_Expression            => Invalid_Element_ID,
-      Component_Clauses                => Empty_Element_ID_List,
       Component_Clause_Position        => Invalid_Element_ID,
       Component_Clause_Range           => Invalid_Element_ID,
       Representation_Clause            => Default_Representation_Clause_Struct);
@@ -507,6 +509,10 @@ package a_nodes_h.Support is
       Elements => null);
 
    -- Order below is alphabetical:
+   function To_Access_Type_Kinds is new Unchecked_Conversion
+     (Source => Asis.Access_Type_Kinds,
+      Target => a_nodes_h.Access_Type_Kinds);
+
    function To_Association_Kinds is new Unchecked_Conversion
      (Source => Asis.Association_Kinds,
       Target => a_nodes_h.Association_Kinds);
@@ -543,6 +549,10 @@ package a_nodes_h.Support is
      (Source => Asis.Definition_Kinds,
       Target => a_nodes_h.Definition_Kinds);
 
+   function To_Discrete_Range_Kinds is new Unchecked_Conversion
+     (Source => Asis.Discrete_Range_Kinds,
+      Target => a_nodes_h.Discrete_Range_Kinds);
+
    function To_Element_Kinds is new Unchecked_Conversion
      (Source => Asis.Element_Kinds,
       Target => a_nodes_h.Element_Kinds);
@@ -550,6 +560,10 @@ package a_nodes_h.Support is
    function To_Expression_Kinds is new Unchecked_Conversion
      (Source => Asis.Expression_Kinds,
       Target => a_nodes_h.Expression_Kinds);
+
+   function To_Formal_Type_Kinds is new Unchecked_Conversion
+     (Source => Asis.Formal_Type_Kinds,
+      Target => a_nodes_h.Formal_Type_Kinds);
 
    function To_Mode_Kinds is new Unchecked_Conversion
      (Source => Asis.Mode_Kinds,
@@ -566,6 +580,10 @@ package a_nodes_h.Support is
    function To_Pragma_Kinds is new Unchecked_Conversion
      (Source => Asis.Pragma_Kinds,
       Target => a_nodes_h.Pragma_Kinds);
+
+   function To_Root_Type_Kinds is new Unchecked_Conversion
+     (Source => Asis.Root_Type_Kinds,
+      Target => a_nodes_h.Root_Type_Kinds);
 
    function To_Statement_Kinds is new Unchecked_Conversion
      (Source => Asis.Statement_Kinds,

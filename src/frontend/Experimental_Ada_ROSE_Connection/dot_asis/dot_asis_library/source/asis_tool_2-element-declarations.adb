@@ -486,7 +486,7 @@ package body Asis_Tool_2.Element.Declarations is
          -- No Iterator_Specification in a_nodes yet:
          -- TODO: Add:
          -- Result.Iterator_Specification := ID;
-         State.Add_Not_Implemented;
+         State.Add_Not_Implemented (Ada_2012);
       end;
 
       procedure Add_Mode_Kind is
@@ -752,13 +752,13 @@ package body Asis_Tool_2.Element.Declarations is
          Add_Specification_Subtype_Definition;
          Add_Has_Reverse;
 
-      when A_Generalized_Iterator_Specification =>
-         Add_Iterator_Specification;
+      when A_Generalized_Iterator_Specification => -- A2012
+         Add_Iterator_Specification; -- Has Add_Not_Implemented
          Add_Has_Reverse;
 
-      when An_Element_Iterator_Specification =>
+      when An_Element_Iterator_Specification => -- A2012
          Add_Iteration_Scheme_Name;
-         Add_Iterator_Specification;
+         Add_Iterator_Specification; -- Has Add_Not_Implemented
          Add_Has_Reverse;
 
       when A_Procedure_Declaration =>
@@ -825,17 +825,17 @@ package body Asis_Tool_2.Element.Declarations is
          Add_Is_Subunit;
          Add_Is_Dispatching_Operation;
 
-      when A_Return_Variable_Specification =>
-         State.Add_Not_Implemented; -- A2005
+      when A_Return_Variable_Specification => -- A2005
+         State.Add_Not_Implemented (Ada_2005);
 
-      when A_Return_Constant_Specification =>
-         State.Add_Not_Implemented; -- A2005
+      when A_Return_Constant_Specification => -- A2005
+         State.Add_Not_Implemented (Ada_2005);
 
-      when A_Null_Procedure_Declaration =>
-         State.Add_Not_Implemented; -- A2005
+      when A_Null_Procedure_Declaration => -- A2005
+         State.Add_Not_Implemented (Ada_2005);
 
-      when An_Expression_Function_Declaration =>
-         State.Add_Not_Implemented; -- A2012
+      when An_Expression_Function_Declaration =>  -- A2012
+         State.Add_Not_Implemented (Ada_2012);
 
       when A_Package_Declaration =>
          Add_Pragmas;
@@ -1068,12 +1068,12 @@ package body Asis_Tool_2.Element.Declarations is
          Add_Corresponding_First_Subtype;
          Add_Corresponding_Last_Constraint;
          Add_Corresponding_Last_Subtype;
-         Add_Corresponding_Type_Operators;
+         Add_Corresponding_Type_Operators; -- Has Add_Not_Implemented
          Add_Discriminant_Part;
          Add_Type_Declaration_View;
 
       when A_Formal_Incomplete_Type_Declaration => -- A2012
-         State.Add_Not_Implemented;
+         State.Add_Not_Implemented (Ada_2012);
 
       when A_Formal_Procedure_Declaration =>
          Add_Default_Kind;

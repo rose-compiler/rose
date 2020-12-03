@@ -149,6 +149,16 @@ package body A_Nodes is
    ------------
    -- EXPORTED:
    ------------
+   function Get_Not_Implemented
+     (This : access Class)
+      return Natural is
+   begin
+      return This.Not_Implemented;
+   end Get_Not_Implemented;
+
+   ------------
+   -- EXPORTED:
+   ------------
    function Get_Nodes
      (This : access Class)
       return a_nodes_h.Nodes_Struct is
@@ -173,7 +183,7 @@ package body A_Nodes is
       Put_Line ("Highest Unit ID    :" & This.Highest_Unit_ID'Image);
       Put_Line ("Total Elements     :" & This.Element_Ids.Length'Image);
       Put_Line ("Highest Element ID :" & This.Highest_Element_ID'Image);
-      Put_Line ("Not Implemented    :" & This.Not_Implemented'Image);
+      Put_Line ("Not_Implemented    :" & This.Not_Implemented'Image);
    end Print_Stats;
 
 
