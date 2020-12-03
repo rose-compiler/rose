@@ -16,10 +16,11 @@
 #include "DFAbstractSolver.h"
 #include "PointerAnalysisInterface.h"
 #include "ProgramAbstractionLayer.h"
+#include "CallString.h"
 
 namespace CodeThorn {
 
-  class Context;
+  typedef CallString Context;
 
 #include "PropertyState.h"
 
@@ -28,9 +29,10 @@ namespace CodeThorn {
     CSDFAnalysisBase();
     virtual ~CSDFAnalysisBase();
 
-    virtual Lattice* getPreInfo(Label lab, Context* context);
-    virtual Lattice* getPostInfo(Label lab, Context* context);
-  virtual void setPostInfo(Label lab, Context* context, Lattice*);
+    virtual Lattice* getPreInfo(Label lab, Context context);
+    virtual Lattice* getPostInfo(Label lab, Context context);
+    virtual void setPreInfo(Label lab, Context context, Lattice*);
+    virtual void setPostInfo(Label lab, Context context, Lattice*);
   
     void initialize(CodeThornOptions& ctOpt, SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) override;
 
