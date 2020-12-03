@@ -13,7 +13,8 @@ ASIS_TESTS_DIR = $(srcdir)/../tests
 # ASIS_SPEC_TESTS := $(shell find $(ASIS_TESTS_DIR) -name '*.ads')
 
 ASIS_SPEC_FAILED_TESTS := \
-	all_modes.ads 
+	all_modes.ads \
+	representation_clause.ads
 
 ASIS_SPEC_PASS_TESTS := \
 	component_declaration.ads \

@@ -381,6 +381,22 @@ size_t CodeThorn::CTAnalysis::getSummaryStateMapSize() {
   return _summaryCSStateMap.size();
 }
 
+Lattice* CodeThorn::CTAnalysis::getPreInfo(Label lab, CallString context) {
+  return const_cast<EState*>(getSummaryState(lab,context));
+}
+
+Lattice* CodeThorn::CTAnalysis::getPostInfo(Label lab, CallString context) {
+  ROSE_ASSERT(0);
+}
+
+void CodeThorn::CTAnalysis::setPreInfo(Label lab, CallString context, Lattice* el) {
+  setSummaryState(lab,context,dynamic_cast<CodeThorn::EState const*>(el));
+}
+
+void CodeThorn::CTAnalysis::setPostInfo(Label lab, CallString context, Lattice*) {
+  ROSE_ASSERT(0);
+}
+
 const CodeThorn::EState* CodeThorn::CTAnalysis::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
   // cs not used yet
   //return _summaryStateMap[lab.getId()];
