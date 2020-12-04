@@ -7,6 +7,8 @@
 
 #include "sage-tree-builder.h"
 
+namespace rb = Rose::builder;
+
 // From SourceryInstitute
 typedef std::tuple<std::string, SgType*, SgExpression*> EntityDeclTuple;
 
@@ -15,10 +17,15 @@ namespace ATermSupport {
 class ATermToSageFortranTraversal : public ATermTraversal
 {
  private:
-   Rose::builder::SageTreeBuilder sage_tree_builder;
+  // C++11
+  // rb::SageTreeBuilder sage_tree_builder{rb::SageTreeBuilder::e_language_fortran}
+  rb::SageTreeBuilder sage_tree_builder;
 
  public:
-   ATermToSageFortranTraversal(SgSourceFile* source) : ATermTraversal(source) {}
+   ATermToSageFortranTraversal(SgSourceFile* source)
+     : ATermTraversal(source), sage_tree_builder(rb::SageTreeBuilder(rb::SageTreeBuilder::e_language_fortran))
+     {
+     }
 
 //R201
 ATbool traverse_Program(ATerm term);
@@ -135,7 +142,7 @@ ATbool traverse_VarRef(ATerm term, SgExpression* &var_expr);
 // R611
 ATbool traverse_DataRef(ATerm term, SgExpression* &var_expr);
 // R612
-ATbool traverse_PartRef(ATerm term, SgExpression* &var_expr);
+ATbool traverse_PartRef(ATerm term, SgExpression* &expr);
 
 // R620
 ATbool traverse_SectionSubscript(ATerm term, SgExpression* &subscript);

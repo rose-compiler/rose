@@ -2358,7 +2358,7 @@ ATbool ATermToSageFortranTraversal::traverse_DataRef(ATerm term, SgExpression* &
 //========================================================================================
 // R612 part-ref
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageFortranTraversal::traverse_PartRef(ATerm term, SgExpression* &var_expr)
+ATbool ATermToSageFortranTraversal::traverse_PartRef(ATerm term, SgExpression* &expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_PartRef: %s\n", ATwriteToString(term));
@@ -2369,43 +2369,58 @@ ATbool ATermToSageFortranTraversal::traverse_PartRef(ATerm term, SgExpression* &
 
    std::string name;
    bool isArray = false;
+   bool isCoarray = false;
+   bool isFunctionCall = false;
    SgExprListExp* subscripts = nullptr;
    SgExprListExp* image_selector = nullptr;
 
-   var_expr = nullptr;
+   expr = nullptr;
 
    if (ATmatch(term, "PartRef(<term>,<term>,<term>)", &t_name, &t_subscripts, &t_image_selector)) {
       if (ATmatch(t_name, "<str>", &arg1)) {
          // MATCHED string
          name += arg1;
       } else return ATfalse;
+
       if (traverse_OptSectionSubscripts(t_subscripts, subscripts)) {
          // MATCHED OptSectionSubscripts
          if (subscripts) isArray = true;
-      } else return ATfalse;
+      }
+      else if (ATmatch(t_subscripts, "function-ref-no-args()")) {
+         isFunctionCall = true;
+      }
+      else return ATfalse;
+
       if (traverse_OptImageSelector(t_image_selector, image_selector)) {
          // MATCHED OptImageSelector
-         if (image_selector) isArray = true;
+         if (image_selector) isCoarray = true;
       } else return ATfalse;
-
-      if (isArray) {
-         int expr_enum = LanguageTranslation::e_array_reference;
-         SgExpression*   array_subscripts = subscripts;
-         SgExpression* coarray_subscripts = image_selector;
-         if (  array_subscripts == nullptr)   array_subscripts = SageBuilder::buildNullExpression_nfi();
-         if (coarray_subscripts == nullptr) coarray_subscripts = SageBuilder::buildNullExpression_nfi();
-#ifdef UNTYPED
-         var_expr = new SgUntypedArrayReferenceExpression(expr_enum, name, array_subscripts, coarray_subscripts);
-#endif
-      }
-      else {
-        var_expr = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
-      }
    }
-   else return ATfalse;
 
-   ROSE_ASSERT(var_expr);
-   setSourcePosition(var_expr, term);
+   if (isArray || isCoarray) {
+      SgPntrArrRefExp* array_ref = nullptr;
+      sage_tree_builder.Enter(array_ref, name, subscripts, image_selector);
+      sage_tree_builder.Leave(array_ref);
+      expr = array_ref;
+   }
+   else if (isFunctionCall) {
+      SgFunctionCallExp* func_call = nullptr;
+      SgExprListExp* expr_list = SageBuilder::buildExprListExp_nfi();
+      sage_tree_builder.Enter(func_call, name, expr_list);
+      sage_tree_builder.Leave(func_call);
+      expr = func_call;
+   }
+   else if (SageInterface::lookupVariableSymbolInParentScopes(name, SageBuilder::topScopeStack())) {
+      expr = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+   }
+   else {
+      cerr << "WARNING UNIMPLEMENTED: implicit variable reference \n";
+      printf("... traverse_PartRef: %s\n", ATwriteToString(term));
+      return ATfalse;
+   }
+
+   ROSE_ASSERT(expr);
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }
@@ -2480,6 +2495,7 @@ ATbool ATermToSageFortranTraversal::traverse_OptSectionSubscripts(ATerm term, Sg
    //TODO_SgUntyped - (function-ref-no-args)
    //TODO_SgUntyped - needs section subscripts
    else {
+      printf("... traverse_OptSectionSubscripts: %s\n", ATwriteToString(term));
       std::cerr << "...TODO... implement OptSectionSubscripts" << std::endl;
       return ATfalse;
    }
@@ -2571,6 +2587,7 @@ ATbool ATermToSageFortranTraversal::traverse_OptImageSelector(ATerm term, SgExpr
    //TODO_SgUntyped - needs image-selector (ImageSelector - CosubscriptList)
    //TODO_SgUntyped - (substring-section-range)
    else {
+      printf("... traverse_OptImageSelector: %s\n", ATwriteToString(term));
       std::cerr << "...TODO... implement OptImageSelector" << std::endl;
       return ATfalse;
    }
