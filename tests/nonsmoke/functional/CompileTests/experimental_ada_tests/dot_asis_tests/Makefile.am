@@ -36,7 +36,20 @@ ASIS_SPEC_PASS_TESTS := \
 	task_with_body.ads \
 	test_unit.ads \
 	variable_declaration.ads \
-	unit_2.ads 
+ 	unit_2.ads \
+        access_to_object.ads \
+        access_to_subprogram.ads \
+        access_to_subprogram.ads \
+        array_declare_2.ads \
+        constrained_array_definition.ads \
+        fixed_point_definition.ads \
+        floating_point_definition.ads \
+        modular_type_definition.ads \
+        package_pragma.ads \
+        representation_clause.ads \
+        signed_integer_type_definition.ads \
+        unconstrained_array_definition.ads
+
 
 ASIS_SPEC_TESTS = $(ASIS_SPEC_PASS_TESTS) $(ASIS_SPEC_FAILED_TESTS)
 
@@ -87,7 +100,10 @@ ASIS_BODY_PASS_TESTS := \
 	while_loop_statement.adb \
         array_declare.adb \
         variable_variant_record.adb \
-        discriminant.adb 
+        discriminant.adb \ 
+        alignment_component_clause.adb \
+        procedure_pragma.adb \
+        requeue_statement_2.adb
 
 ASIS_BODY_TESTS = $(ASIS_BODY_PASS_TESTS) $(ASIS_BODY_FAILED_TESTS) 
 

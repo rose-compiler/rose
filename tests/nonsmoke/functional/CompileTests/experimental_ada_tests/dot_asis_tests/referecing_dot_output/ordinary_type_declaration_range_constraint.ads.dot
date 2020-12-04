@@ -83,6 +83,8 @@ digraph "ordinary_type_declaration_range_constraint.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Ordinary_Type"</TD></TR>
           </TABLE>> ];
+  Element_2310150 -> Element_2310178
+      [ label=Integer_Constraint ];
   Element_2310150
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2310150</TD></TR>
@@ -92,7 +94,7 @@ digraph "ordinary_type_declaration_range_constraint.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">ordinary_type_declaration_range_constraint.ads - 3:26 .. 3:36</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Type_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">A_SIGNED_INTEGER_TYPE_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Integer_Constraint     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310178</TD></TR>
           </TABLE>> ];
   Element_2310178 -> Element_2311234
       [ label=Lower_Bound ];
