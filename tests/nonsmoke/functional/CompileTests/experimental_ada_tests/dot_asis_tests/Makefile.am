@@ -8,7 +8,8 @@ $(ADA_MAIN)/obj/run_asis_tool_2:
 RUN_ASIS_TOOL=$(ADA_MAIN)/obj/run_asis_tool_2
 GNAT_HOME=$(shell dirname $(shell dirname $(shell which gprbuild)))
 
-ASIS_TESTS_DIR = $(srcdir)/test_units
+# ASIS and ROSE share same test files in a joint directory
+ASIS_TESTS_DIR = $(srcdir)/../tests
 # ASIS_SPEC_TESTS := $(shell find $(ASIS_TESTS_DIR) -name '*.ads')
 
 ASIS_SPEC_FAILED_TESTS := \
@@ -24,6 +25,7 @@ ASIS_SPEC_PASS_TESTS := \
 	exception_declaration.ads \
 	function_declaration.ads \
 	ordinary_type_declaration.ads \
+	ordinary_type_declaration_range_constraint.ads \
 	package_with_body.ads \
 	parameter_declaration.ads \
 	procedure_declaration.ads \
@@ -34,7 +36,20 @@ ASIS_SPEC_PASS_TESTS := \
 	task_with_body.ads \
 	test_unit.ads \
 	variable_declaration.ads \
-	unit_2.ads 
+ 	unit_2.ads \
+        access_to_object.ads \
+        access_to_subprogram.ads \
+        access_to_subprogram.ads \
+        array_declare_2.ads \
+        constrained_array_definition.ads \
+        fixed_point_definition.ads \
+        floating_point_definition.ads \
+        modular_type_definition.ads \
+        package_pragma.ads \
+        representation_clause.ads \
+        signed_integer_type_definition.ads \
+        unconstrained_array_definition.ads
+
 
 ASIS_SPEC_TESTS = $(ASIS_SPEC_PASS_TESTS) $(ASIS_SPEC_FAILED_TESTS)
 
@@ -61,6 +76,7 @@ ASIS_BODY_PASS_TESTS := \
 	entry_call.adb \
 	exit_statement.adb \
 	goto_loop.adb \
+	goto_loop_v2.adb \
 	function_call.adb \
 	function_declaration.adb \
 	hello_world.adb \
@@ -74,7 +90,9 @@ ASIS_BODY_PASS_TESTS := \
 	raise_statement.adb \
 	select_accept.adb \
 	short_circuit.adb \
+	short_circuit_v2.adb \
 	task_with_abort.adb \
+	task_with_abort_v2.adb \
 	task_with_body.adb \
 	test_unit.adb \
 	type_conversion.adb \
@@ -82,7 +100,10 @@ ASIS_BODY_PASS_TESTS := \
 	while_loop_statement.adb \
         array_declare.adb \
         variable_variant_record.adb \
-        discriminant.adb 
+        discriminant.adb \ 
+        alignment_component_clause.adb \
+        procedure_pragma.adb \
+        requeue_statement_2.adb
 
 ASIS_BODY_TESTS = $(ASIS_BODY_PASS_TESTS) $(ASIS_BODY_FAILED_TESTS) 
 
