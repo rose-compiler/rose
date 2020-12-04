@@ -23,6 +23,7 @@ namespace CodeThorn {
   
   class AbstractValue;
   class AlignedMemLoc;
+  class AbstractValueSet;
   
   bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
   bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
@@ -37,7 +38,13 @@ class AbstractValue {
  public:
   friend bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
   friend bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
-  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, FUN_PTR, TOP, UNDEFINED };
+  /* the following are extensions that allocate more memory than a single abstract value
+     they can only be created through merging abstract value
+     - PTR_SET allows to represent a set of values pointers.
+     - INTERVAL represents an interval of abstract number values // TODO
+     - INDEX_RANGE represents a range of a consecutive memory region (e.g. array) // TODO
+  */
+  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, FUN_PTR, TOP, UNDEFINED, PTR_SET, /*INTERVAL, INDEX_RANGE*/ };
   AbstractValue();
   AbstractValue(bool val);
   // type conversion
@@ -62,6 +69,7 @@ class AbstractValue {
   // -Wno-psabi allows to turn this off
   //AbstractValue(long double x);
   AbstractValue(CodeThorn::VariableId varId); // allows implicit type conversion
+  ~AbstractValue(); // also deallocates extensions
   void initInteger(CodeThorn::BuiltInType btype, long int ival);
   void initFloat(CodeThorn::BuiltInType btype, double fval);
   static AbstractValue createIntegerValue(CodeThorn::BuiltInType btype, long long int ival);
@@ -80,6 +88,7 @@ class AbstractValue {
   // currently identical to isPtr() but already used where one unique value is required
   bool isConstPtr() const;
   bool isPtr() const;
+  bool isPtrSet() const;
   bool isFunctionPtr() const;
   bool isRef() const;
   bool isNullPtr() const;
@@ -116,6 +125,10 @@ class AbstractValue {
   static AbstractValue createUndefined(); // used to model values of uninitialized variables/memory locations
   static AbstractValue createTop();
   static AbstractValue createBot();
+  static AbstractValue createAbstractValuePtrSet(AbstractValueSet*);
+  void setAbstractValueSetPtr(AbstractValueSet* avPtr);
+  AbstractValueSet* getAbstractValueSet() const;
+
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
   //  bool operator==(AbstractValue other) const;
@@ -169,6 +182,11 @@ class AbstractValue {
   // with the offset into the element. If the offset is 0, then it's exactly aligned.
   AlignedMemLoc alignedMemLoc();
  private:
+
+  // functions used for (de)allocating additional memory for some abstractions
+  void allocateExtension(ValueType);
+  void deallocateExtension();
+  void setExtension(void*);
   AbstractValue topOrError(std::string) const;
   ValueType valueType;
   CodeThorn::VariableId variableId;
@@ -203,7 +221,8 @@ class AbstractValue {
     bool operator()(const AbstractValue& c1, const AbstractValue& c2) const;
   };
 
-  typedef std::set<AbstractValue> AbstractValueSet;
+  //typedef std::set<AbstractValue> AbstractValueSet;
+  class AbstractValueSet : public std::set<AbstractValue> {};
   AbstractValueSet& operator+=(AbstractValueSet& s1, AbstractValueSet& s2);
 
   struct AlignedMemLoc {

@@ -351,6 +351,10 @@ namespace CodeThorn {
     const EState* topWorkList();
     void swapWorkLists();
 
+    std::pair<CallString,const EState*> popWorkListCS();
+    std::pair<CallString,const EState*> topWorkListCS();
+    void pushWorkListCS(CallString,const EState*);
+
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise
       a new state is entered into stateSet and a pointer to it is returned.
     */

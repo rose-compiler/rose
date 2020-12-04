@@ -1046,6 +1046,21 @@ const EState* CodeThorn::CTAnalysis::popWorkList() {
   return estate;
 }
 
+std::pair<CallString,const EState*> CodeThorn::CTAnalysis::popWorkListCS() {
+  const EState* eState=popWorkList();
+  return std::make_pair(eState->getCallString(),eState);
+}
+
+std::pair<CallString,const EState*> CodeThorn::CTAnalysis::topWorkListCS() {
+  const EState* eState=topWorkList();
+  return std::make_pair(eState->getCallString(),eState);
+}
+
+void CodeThorn::CTAnalysis::pushWorkListCS(CallString cs,const EState* eState) {
+  //eState->setCallString(cs); (eState is const and contains cs)
+  addToWorkList(eState);
+}
+  
 // this function has to be protected by a critical section
 // currently called once inside a critical section
 void CodeThorn::CTAnalysis::swapWorkLists() {

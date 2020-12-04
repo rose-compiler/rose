@@ -44,7 +44,26 @@ AbstractValue::AbstractValue(VariableId varId):valueType(AbstractValue::PTR),var
 }
 
 AbstractValue::AbstractValue(Label lab):valueType(AbstractValue::FUN_PTR),label(lab) {}
-
+AbstractValue::~AbstractValue() {
+  switch(valueType) {
+  case BOT:
+  case INTEGER:
+  case FLOAT:
+  case PTR:
+  case REF:
+  case FUN_PTR:
+  case TOP:
+  case UNDEFINED:
+    // nothing to do
+    break;
+  case PTR_SET:
+    deallocateExtension();
+    break;
+    // intentionally no default case to get compiler warning if one is missing
+  }
+}
+  
+  
 // type conversion
 AbstractValue::AbstractValue(bool val) {
   if(val) {
@@ -212,6 +231,7 @@ std::string AbstractValue::valueTypeToString() const {
   case FUN_PTR: return "funptr";
   case REF: return "ref";
   case BOT: return "bot";
+  case PTR_SET: return "ptrset";
   default:
     return "unknown";
   }
@@ -228,6 +248,7 @@ bool AbstractValue::isConstInt() const {return valueType==AbstractValue::INTEGER
 bool AbstractValue::isConstFloat() const {return valueType==AbstractValue::FLOAT;}
 bool AbstractValue::isConstPtr() const {return (valueType==AbstractValue::PTR);}
 bool AbstractValue::isPtr() const {return (valueType==AbstractValue::PTR);}
+bool AbstractValue::isPtrSet() const {return (valueType==AbstractValue::PTR_SET);}
 bool AbstractValue::isFunctionPtr() const {return (valueType==AbstractValue::FUN_PTR);}
 bool AbstractValue::isRef() const {return (valueType==AbstractValue::REF);}
 bool AbstractValue::isNullPtr() const {return valueType==AbstractValue::INTEGER && intValue==0;}
@@ -555,6 +576,17 @@ string AbstractValue::toLhsString(CodeThorn::VariableIdMapping* vim) const {
     ss<<getIntValue();
     return ss.str();
   }
+  case PTR_SET: {
+    // print set of abstract values
+    AbstractValueSet& avSet=*static_cast<AbstractValueSet*>(extension);
+    stringstream ss;
+    ss<<"{";
+    for (auto el:avSet) {
+      el.toString(vim);
+      ss<<" ";
+    }
+    ss<<"}";
+  }
   case PTR: {
     stringstream ss;
     if(vim->getNumberOfElements(variableId)==1) {
@@ -813,6 +845,8 @@ AbstractValue AbstractValue::operatorUnaryMinus() {
   case AbstractValue::REF:
     return topOrError("Error: AbstractValue operator unary minus on reference value.");
     //  default case intentionally not present to force all values to be handled explicitly
+  case AbstractValue::PTR_SET:
+    return topOrError("Error: AbstractValue operator unary minus on ptrset value.");
   }
   return tmp;
 }
@@ -958,6 +992,11 @@ AbstractValue AbstractValue::operatorMod(AbstractValue& a,AbstractValue& b) {
   return a.getIntValue()%b.getIntValue();
 }
 
+AbstractValueSet* AbstractValue::getAbstractValueSet() const {
+  ROSE_ASSERT(valueType==PTR_SET);
+  return static_cast<AbstractValueSet*>(extension);
+}
+
 // static function, two arguments
 bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
   if(val1.isBot()||val2.isTop()) {
@@ -980,6 +1019,13 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
       // should be unreachable because of 2nd if-condition above
       // TODO: enforce non-reachable here
       return true;
+    case PTR_SET: {
+      AbstractValueSet* set1=val1.getAbstractValueSet();
+      AbstractValueSet* set2=val2.getAbstractValueSet();
+      // (val1 approximatedBy val2) iff (val1 subsetOf val2) iff (val2 includes val1)
+      return std::includes(set2->begin(),set2->end(),
+                           set1->begin(),set2->end());
+    }
     }
   }
   return false;
@@ -1035,6 +1081,23 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
         return createTop();
       }
     }
+    case PTR_SET: {
+      // set union
+      AbstractValueSet* set1=val1.getAbstractValueSet();
+      AbstractValueSet* set2=val2.getAbstractValueSet();
+      AbstractValueSet* resultSet=new AbstractValueSet();
+#if 1
+      for(AbstractValueSet::iterator i=set1->begin();i!=set1->end();++i) {
+        resultSet->insert(*i);
+      }
+      for(AbstractValueSet::iterator i=set2->begin();i!=set2->end();++i) {
+        resultSet->insert(*i);
+      }
+#else
+      std::set_union(set1->begin(),set1->end(),set2->begin(),set2->end(),resultSet->begin());
+#endif
+      return createAbstractValuePtrSet(resultSet);
+    }
     }
   }
   return createTop();
@@ -1054,6 +1117,17 @@ AbstractValue AbstractValue::createBot() {
   return AbstractValue(bot);
 }
 
+AbstractValue AbstractValue::createAbstractValuePtrSet(AbstractValueSet* set) {
+  AbstractValue val;
+  val.setAbstractValueSetPtr(set);
+  return val;
+}
+
+void AbstractValue::setAbstractValueSetPtr(AbstractValueSet* avPtr) {
+  valueType=PTR_SET;
+  extension=avPtr;
+}
+
 bool AbstractValue::isReferenceVariableAddress() {
   // TODO: remove this test, once null pointers are no longer represented as zero integers, it will then be covered by one of the other two predicates
   if(isNullPtr()) {
@@ -1063,6 +1137,23 @@ bool AbstractValue::isReferenceVariableAddress() {
     return getVariableIdMapping()->hasReferenceType(getVariableId());
   }
   return false;
+}
+
+void AbstractValue::allocateExtension(ValueType valueTypeParam) {
+  valueType=valueTypeParam;
+  switch(valueType) {
+  case PTR_SET:
+    extension=new AbstractValueSet();
+    break;
+  default:
+    cerr<<"Error: unsupported value type extension:"<<valueType<<endl;
+    exit(1);
+  }
+}
+
+void AbstractValue::deallocateExtension() {
+  ROSE_ASSERT(valueType==PTR_SET);
+  delete getAbstractValueSet();
 }
 
 AbstractValue CodeThorn::operator+(AbstractValue& a,AbstractValue& b) {
