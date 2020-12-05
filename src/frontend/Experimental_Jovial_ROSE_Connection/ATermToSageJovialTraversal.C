@@ -7121,8 +7121,8 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
    //     a. General conversion (isSgTypedefSymbol)
    //     b. StatusConversion   (isSgEnumSymbol)
    //  3. variable
-   //     a. Table initialization replication operator
-   //     b. Table reference
+   //     a. Table reference
+   //     b. Table initialization replication operator
 
 // The symbol is used to disambiguate the design of the grammar.
 // For Jovial the symbol should be present, unfortuately this is not true for Fortran
@@ -7210,37 +7210,27 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
          }
       }
       else {
-        // hopefully is a replication operator
-        // TODO - check to see if type of value can help with disambiguation
+        // Since there is a variable and the type isn't a table, this must be
+        // a replication operator (yes?).
+        if (expr_list->get_expressions().size() != 1) {
+           // It is not clear that a replication operator can't have expression size other than 1.
+#if PRINT_WARNINGS
+           cerr << "WARNING: UserDefinedFunctionCall - variable reference ambiguous "
+                << "with replication operator and # expressions != 1 for variable " << name << endl;
+#endif
+           ROSE_ASSERT(false);
+        }
+
         SgType* type = init_name->get_type();
         SgReplicationOp* rep_op = nullptr;
         SgExpression* value = expr_list->get_expressions()[0];
         ROSE_ASSERT(value);
 
-        if (expr_list->get_expressions().size() == 1) {
-           // It is not clear that a replication operator can't have expression size other than 1?
-#if PRINT_WARNINGS
-           cerr << "WARNING: UserDefinedFunctionCall - variable reference ambiguous "
-                << "with replication operator for " << name << endl;
-#endif
-         }
-
         sage_tree_builder.Enter(rep_op, name, value);
         sage_tree_builder.Leave(rep_op);
         expr = rep_op;
       }
-
-#if 0
-   // catch leftovers for a variable symbol (shouldn't be any leftovers)
-      if (expr == nullptr) {
-         SgVarRefExp* var_ref = nullptr;
-         sage_tree_builder.Enter(var_ref, name);
-         sage_tree_builder.Leave(var_ref);
-         expr = SageBuilder::buildPntrArrRefExp_nfi(var_ref, expr_list);
-      }
-#endif
    }
-
    ROSE_ASSERT(expr);
    setSourcePosition(expr, term);
 
