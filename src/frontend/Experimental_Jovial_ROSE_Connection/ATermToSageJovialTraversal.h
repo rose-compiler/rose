@@ -6,6 +6,8 @@
 #include "Jovial_to_ROSE_translation.h"
 #include "sage-tree-builder.h"
 
+namespace rb = Rose::builder;
+
 namespace ATermSupport {
 
    using namespace LanguageTranslation;
@@ -13,14 +15,19 @@ namespace ATermSupport {
 class ATermToSageJovialTraversal : public ATermTraversal
 {
  private:
-   Rose::builder::SageTreeBuilder sage_tree_builder;
+  // C++11
+  // rb::SageTreeBuilder sage_tree_builder{rb::SageTreeBuilder::e_language_jovial}
+   rb::SageTreeBuilder sage_tree_builder;
 
  protected:
    void setSourcePositions(ATerm term, Rose::builder::SourcePosition &start, Rose::builder::SourcePosition &end);
    void setDeclarationModifier(SgVariableDeclaration* var_decl, int def_or_ref);
 
  public:
-   ATermToSageJovialTraversal(SgSourceFile* source) : ATermTraversal(source) {}
+   ATermToSageJovialTraversal(SgSourceFile* source)
+     : ATermTraversal(source), sage_tree_builder(rb::SageTreeBuilder(rb::SageTreeBuilder::e_language_jovial))
+     {
+     }
 
    void setLocationSpecifier(SgVariableDeclaration* var_decl, const LocationSpecifier &loc_spec);
 
