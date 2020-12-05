@@ -1220,6 +1220,12 @@ ATbool ATermToSageFortranTraversal::traverse_Operator(ATerm term, SgExpression* 
    else if (ATmatch(term, "GE(<term>,<term>)", &t_lhs, &t_rhs)) {
       op_enum = LanguageTranslation::e_operator_greater_or_equal;
    }
+   else if (ATmatch(term, "EQV(<term>,<term>)", &t_lhs, &t_rhs)) {
+      op_enum = LanguageTranslation::e_operator_eqv;
+   }
+   else if (ATmatch(term, "NEQV(<term>,<term>)", &t_lhs, &t_rhs)) {
+      op_enum = LanguageTranslation::e_operator_not_eqv;
+   }
    else {
       return ATfalse;
    }
@@ -1250,6 +1256,12 @@ ATbool ATermToSageFortranTraversal::traverse_Operator(ATerm term, SgExpression* 
        case LT::e_operator_less_or_equal:    expr = SB::buildLessOrEqualOp_nfi(lhs,rhs);    break;
        case LT::e_operator_greater_than:     expr = SB::buildGreaterThanOp_nfi(lhs,rhs);    break;
        case LT::e_operator_greater_or_equal: expr = SB::buildGreaterOrEqualOp_nfi(lhs,rhs); break;
+         //       case LT::e_operator_eqv:              expr = SB::buildEqualityOp_nfi(lhs,rhs);       break;
+         //       case LT::e_operator_not_eqv:          expr = SB::buildNotEqualOp_nfi(lhs,rhs);       break;
+       default: {
+         std::cerr << "ERROR: binary operator enum not found \n";
+         ROSE_ASSERT(false);
+       }
      }
    ROSE_ASSERT(expr);
 
