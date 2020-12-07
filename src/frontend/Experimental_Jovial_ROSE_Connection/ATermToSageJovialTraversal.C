@@ -5035,7 +5035,7 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
    printf("... traverse_IfStatement: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_labels, t_if, t_cond, t_else, t_true, t_false;
+   ATerm t_labels, t_if, t_cond, t_else, t_true, t_false, t_amb;
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
    SgExpression* conditional = nullptr;
@@ -5052,7 +5052,24 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
 
       if (traverse_BitFormula(t_cond, conditional)) {
          // MATCHED BitFormula
-      } else return ATfalse;
+      }
+#if CHECK_AMB
+      // Check for ambiguity in BitFormula
+      else if (ATmatch(t_cond, "amb(<term>)", &t_amb)) {
+        // MATCHED amb
+#if PRINT_AMB_WARNINGS
+      cerr << "WARNING AMBIGUITY: \n";
+      printf("... traverse_IfStatement: %s\n", ATwriteToString(term));
+#endif
+        ATermList tail = (ATermList) ATmake("<term>", t_amb);
+        ATerm head = ATgetFirst(tail);
+        // chose first amb path, now traverse it
+        if (traverse_BitFormula(head, conditional)) {
+          // MATCHED BitFormula
+        } else return ATfalse;
+      }
+#endif
+      else return ATfalse;
 
    // Create a basic block and push it on the scope stack so there is
    // a place for statements. Temporarily set its parent so symbols can be found.
