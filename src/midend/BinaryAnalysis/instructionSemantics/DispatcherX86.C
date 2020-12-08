@@ -4471,12 +4471,31 @@ DispatcherX86::regcache_init()
 void
 DispatcherX86::initializeState(const BaseSemantics::StatePtr &state) {
     if (state) {
-        // The code, data, and stack segment registers in modern operating systems default to the entire virtual memory,
-        // thus their base addresses are always zero.
+        // Back in the 16-bit days, segment registers were actually used to increase the amount of memory that could be
+        // addressed since addresses where only 16-bits.
+        //
+        // Then when 32-bit processors came along there was no real need for segment registers, but they were kept in the
+        // architecture for backwards-compatibility. Conventionally, CS, DS, SS, and ES were all set to zero in Windows and FS
+        // was an offset in low memory to a process' thread environment block. Something similar happened in Linux. GS wasn't
+        // used for anything initially (zero in practice), and eventually got used for some other features in GCC. It may still
+        // be unused (zero) in Windows generally.  It appears that there are no official declarations from Intel on how these
+        // registers are to be used in this era.
+        //
+        // Then with 64-bit processors, Intel's guidance became a lot clearer. The Intel manual on Volume 1, Section 3.3.4
+        // "Modes of Operation vs. Memory Model" page Vol 1 3-9 reads "Segmentation is generally (but not completely) disabled,
+        // creating a flat 64-bit linear-address space. The processor treats the segment base of CS, DS, ES, and SS as zero,
+        // creating a linear address that is equal to the effective address. The exceptions are the FS and GS segments, whose
+        // segment registers (which hold the segment base) can be used as additional base registers in some linear address
+        // calculations.
+        //
+        // Therefore, ROSE initializes CS, DS, SS, and ES to zero and it's up to the caller to modify these registers if
+        // setting them to zero is not appropriate.  Also, note that for simplicity, ROSE treates the segment registers as
+        // memory offsets rather than indexes into a descriptor table.
         ASSERT_not_null(operators());
         state->writeRegister(REG_CS, operators()->number_(REG_CS.nBits(), 0), operators().get());
-        state->writeRegister(REG_DS, operators()->number_(REG_CS.nBits(), 0), operators().get());
-        state->writeRegister(REG_SS, operators()->number_(REG_CS.nBits(), 0), operators().get());
+        state->writeRegister(REG_DS, operators()->number_(REG_DS.nBits(), 0), operators().get());
+        state->writeRegister(REG_SS, operators()->number_(REG_SS.nBits(), 0), operators().get());
+        state->writeRegister(REG_ES, operators()->number_(REG_ES.nBits(), 0), operators().get());
     }
 }
 
