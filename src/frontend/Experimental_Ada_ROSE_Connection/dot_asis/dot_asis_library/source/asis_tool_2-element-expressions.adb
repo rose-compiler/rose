@@ -2,7 +2,8 @@ with Asis.Elements;
 with Asis.Exceptions;
 with Asis.Expressions;
 with Asis.Extensions;
-
+with Asis.Set_Get; use  Asis.Set_Get;
+with A4G.Int_Knds; use A4G.Int_Knds;
 package body Asis_Tool_2.Element.Expressions is
 
    -----------------------------
@@ -21,16 +22,27 @@ package body Asis_Tool_2.Element.Expressions is
         Asis.Elements.Expression_Kind (Element);
 
       -- Supporting procedures are in alphabetical order:
-      procedure Attribute_Designator_Expressions is
-      begin
-         Add_Element_List
-           (This           => State,
-            Elements_In    => Asis.Expressions.Attribute_Designator_Expressions (Element),
-            Dot_Label_Name => "Attribute_Designator_Expressions",
-            List_Out       => Result.Attribute_Designator_Expressions,
-            Add_Edges      => True);
-      end;
 
+      --Designator Expressions only applies to certain kinds of attributes
+      procedure Add_Attribute_Designator_Expressions is
+         Arg_Kind : constant Internal_Element_Kinds := Int_Kind (Element);
+      begin
+         if (Arg_Kind = A_First_Attribute                   or else
+             Arg_Kind = A_Last_Attribute                    or else
+             Arg_Kind = A_Length_Attribute                  or else
+             Arg_Kind = A_Range_Attribute                   or else
+             Arg_Kind = An_Implementation_Defined_Attribute or else
+             Arg_Kind = An_Unknown_Attribute)
+         then  
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Expressions.Attribute_Designator_Expressions (Element),
+               Dot_Label_Name => "Attribute_Designator_Expressions",
+               List_Out       => Result.Attribute_Designator_Expressions,
+               Add_Edges      => True);
+         end if;
+      end;
+      
       procedure Add_Allocator_Qualified_Expression is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Expressions.Allocator_Qualified_Expression (Element));
@@ -58,6 +70,14 @@ package body Asis_Tool_2.Element.Expressions is
             Add_Edges      => True);
       end;
 
+      procedure Add_Attribute_Kind is
+      begin
+         State.Add_To_Dot_Label ("Attribute_Kind",
+                                 Asis.Elements.Attribute_Kind (Element)'Image);
+         Result.Attribute_Kind := anhS.To_Attribute_Kinds (Asis.Elements.Attribute_Kind (Element));
+      end;
+        
+      
       procedure Add_Attribute_Designator_Identifier is
          ID : constant a_nodes_h.Element_ID := Get_Element_ID
            (Asis.Expressions.Attribute_Designator_Identifier (Element));
@@ -116,7 +136,8 @@ package body Asis_Tool_2.Element.Expressions is
             ID := Get_Element_ID
               (Asis.Expressions.Corresponding_Name_Declaration (Element));
          end if;
-         State.Add_To_Dot_Label
+         --May be Invalid/Nil This is so we know if this value is not set
+         State.Add_To_Dot_Label  
            ("Corresponding_Name_Declaration", To_String (ID));
          Result.Corresponding_Name_Declaration := ID;
       end;
@@ -128,6 +149,7 @@ package body Asis_Tool_2.Element.Expressions is
             ID := Get_Element_ID
               (Asis.Expressions.Corresponding_Name_Definition (Element));
          end if;
+         --May be Invalid/Nil This is so we know if this value is not set
          State.Add_To_Dot_Label
            ("Corresponding_Name_Definition", To_String (ID));
          Result.Corresponding_Name_Definition := ID;
@@ -225,8 +247,20 @@ package body Asis_Tool_2.Element.Expressions is
       procedure Add_Name_Image is
          WS : constant Wide_String := Asis.Expressions.Name_Image (Element);
       begin
-         State.Add_To_Dot_Label ("Name_Image", To_Quoted_String (WS));
+         --If the name image contains < or >, graphviz will barf.  Use the correct
+         --special character identifier for those.
          Result.Name_Image := To_Chars_Ptr (WS);
+         If(To_String(WS) = To_Quoted_String(">")) then
+            State.Add_To_Dot_Label ("Name_Image", String'("&gt;"));
+         elsif(To_String(WS) = To_Quoted_String("<")) then
+            State.Add_To_Dot_Label ("Name_Image", String'("&lt;"));
+         elsif(To_String(WS) = To_Quoted_String(">=")) then
+            State.Add_To_Dot_Label ("Name_Image", String'("&gt;="));
+         elsif(To_String(WS) = To_Quoted_String("<=")) then
+            State.Add_To_Dot_Label ("Name_Image", String'("&lt;="));           
+         else
+            State.Add_To_Dot_Label ("Name_Image", To_String (WS));
+         end if;
       end;
 
       procedure Add_Expression_Parenthesized is
@@ -374,13 +408,10 @@ package body Asis_Tool_2.Element.Expressions is
             Add_Prefix;--selected_component.ads
             Add_Selector;
          when An_Attribute_Reference =>
-            State.Add_To_Dot_Label ("Attribute_Kind",
-                                    Asis.Elements.Attribute_Kind (Element)'Image);
-            --Add_Attribute_Kind;  This is going to have a whole subproceedure
+            Add_Attribute_Kind;
             Add_Prefix;
-            --Add_Attribute_Designator_Identifier;
-            --Add_Attribute_Designator_Expressions;
-            State.Add_Not_Implemented;
+            Add_Attribute_Designator_Identifier;
+            Add_Attribute_Designator_Expressions;
          when A_Record_Aggregate =>
             Add_Record_Component_Associations;
          when An_Extension_Aggregate =>
