@@ -6,6 +6,7 @@
 registers:
  esp = V1-0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -18,6 +19,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -30,6 +32,7 @@ memory:
 registers:
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -48,6 +51,7 @@ memory:
 registers:
  esp = V1-0x10[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -69,6 +73,7 @@ memory:
 0x080482d3: call 0x080483d0<(func)frame_dummy>
 registers:
  esp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -83,6 +88,7 @@ memory:
 0x080482d8: call 0x08048580<(func)__do_global_ctors_aux>
 registers:
  esp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -98,6 +104,7 @@ memory:
 registers:
  esp = V1+0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -110,6 +117,7 @@ memory:
 registers:
  esp = V1+0x8[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -125,6 +133,7 @@ memory:
 0x080482e0: push dword ds:[0x080496cc<.got.plt+4>]
 registers:
  esp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -137,6 +146,7 @@ memory:
 0x080482e6: jmp dword ds:[0x080496d0<.got.plt+8>]
 registers:
  esp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -152,6 +162,7 @@ memory:
 
 0x080482f0: jmp dword ds:[0x080496d4<.got.plt+0x0c>]
 registers:
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -165,6 +176,7 @@ memory:
 
 0x08048300: jmp dword ds:[0x080496d8<.got.plt+0x10>]
 registers:
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -178,6 +190,7 @@ memory:
 
 0x08048310: jmp dword ds:[0x080496dc<.got.plt+0x14>]
 registers:
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -191,6 +204,7 @@ memory:
 
 0x08048320: jmp dword ds:[0x080496e0<.got.plt+0x18>]
 registers:
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -204,6 +218,7 @@ memory:
 
 0x08048330: jmp dword ds:[0x080496e4<.got.plt+0x1c>]
 registers:
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -218,6 +233,7 @@ memory:
 0x08048340: xor ebp, ebp
 registers:
  ebp = 0x0[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -236,6 +252,7 @@ registers:
  esp = V2+0x4[32]
  ebp = 0x0[32]
  esi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -256,6 +273,7 @@ registers:
  esp = V2+0x4[32]
  ebp = 0x0[32]
  esi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -276,6 +294,7 @@ registers:
  esp = V4[32]
  ebp = 0x0[32]
  esi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -297,6 +316,7 @@ registers:
  esp = V4-0x4[32]
  ebp = 0x0[32]
  esi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -319,6 +339,7 @@ registers:
  esp = V4-0x8[32]
  ebp = 0x0[32]
  esi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -343,6 +364,7 @@ registers:
  esp = V4-0xc[32]
  ebp = 0x0[32]
  esi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -368,6 +390,7 @@ registers:
  esp = V4-0x10[32]
  ebp = 0x0[32]
  esi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -394,6 +417,7 @@ registers:
  esp = V4-0x14[32]
  ebp = 0x0[32]
  esi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -421,6 +445,7 @@ registers:
  esp = V4-0x18[32]
  ebp = 0x0[32]
  esi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -449,6 +474,7 @@ registers:
  esp = V4-0x1c[32]
  ebp = 0x0[32]
  esi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -478,6 +504,7 @@ registers:
  esp = V4-0x20[32]
  ebp = 0x0[32]
  esi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -508,6 +535,7 @@ registers:
  esp = V4-0x24[32]
  ebp = 0x0[32]
  esi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -536,6 +564,7 @@ memory:
 
 0x08048361: hlt 
 registers:
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -550,6 +579,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -562,6 +592,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -575,6 +606,7 @@ registers:
  ebx = V3[32]
  esp = V1-0x8[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -590,6 +622,7 @@ registers:
  ebx = V3[32]
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -606,6 +639,7 @@ registers:
  ebx = V3[32]
  esp = V1-0x10[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -624,6 +658,7 @@ memory:
 registers:
  ebx = V1[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -636,6 +671,7 @@ memory:
 registers:
  ebx = V1+0x135a[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -655,6 +691,7 @@ registers:
  edx = V9[32]
  ebx = V1+0x135a[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -675,6 +712,7 @@ registers:
  edx = V9[32]
  ebx = V1+0x135a[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -695,6 +733,7 @@ registers:
  edx = V9[32]
  ebx = V1+0x135a[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -716,6 +755,7 @@ memory:
 0x0804837f: call 0x08048330<__gmon_start__@plt>
 registers:
  esp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -731,6 +771,7 @@ memory:
 registers:
  eax = V1[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -744,6 +785,7 @@ registers:
  eax = V1[32]
  ebx = V3[32]
  esp = V2+0x8[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -759,6 +801,7 @@ registers:
  ebx = V3[32]
  esp = V4+0x4[32]
  ebp = V5[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -775,6 +818,7 @@ registers:
  ebx = V3[32]
  esp = V4+0x8[32]
  ebp = V5[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -793,6 +837,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -805,6 +850,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -817,6 +863,7 @@ memory:
 registers:
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -835,6 +882,7 @@ memory:
 registers:
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -854,6 +902,7 @@ memory:
 registers:
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -875,6 +924,7 @@ memory:
 0x0804839f: mov eax, dword ds:[0x080496f0<(data)p.0>]
 registers:
  eax = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -887,6 +937,7 @@ memory:
 registers:
  eax = V1[32]
  edx = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -900,6 +951,7 @@ memory:
 registers:
  eax = V1[32]
  edx = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -919,6 +971,7 @@ memory:
 registers:
  eax = V1[32]
  edx = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -940,6 +993,7 @@ memory:
 0x080483aa: lea esi, [esi + 0x00000000]
 registers:
  esi = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -951,6 +1005,7 @@ memory:
 registers:
  eax = V2+0x4[32]
  esi = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -968,6 +1023,7 @@ memory:
 registers:
  eax = V2+0x4[32]
  esi = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -988,6 +1044,7 @@ registers:
  edx = V9[32]
  esp = V10-0x4[32]
  esi = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1009,6 +1066,7 @@ memory:
 0x080483ba: mov eax, dword ds:[0x080496f0<(data)p.0>]
 registers:
  eax = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1021,6 +1079,7 @@ memory:
 registers:
  eax = V1[32]
  edx = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1034,6 +1093,7 @@ memory:
 registers:
  eax = V1[32]
  edx = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1053,6 +1113,7 @@ memory:
 registers:
  eax = V1[32]
  edx = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1073,6 +1134,7 @@ memory:
 
 0x080483c5: mov byte ds:[0x080496f4<_edata>], 0x01
 registers:
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1085,6 +1147,7 @@ memory:
 registers:
  esp = V1+0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1098,6 +1161,7 @@ memory:
 registers:
  esp = V1+0x8[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1115,6 +1179,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1127,6 +1192,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1139,6 +1205,7 @@ memory:
 registers:
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1158,6 +1225,7 @@ registers:
  eax = V9[32]
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1178,6 +1246,7 @@ registers:
  eax = V9[32]
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1198,6 +1267,7 @@ registers:
  eax = V9[32]
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1219,6 +1289,7 @@ memory:
 0x080483df: mov eax, 0x00000000
 registers:
  eax = 0x0[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1229,6 +1300,7 @@ memory:
 0x080483e4: test eax, eax
 registers:
  eax = 0x0[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1245,6 +1317,7 @@ memory:
 0x080483e6: je 0x08048400<<BBlock>>
 registers:
  eax = 0x0[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1263,6 +1336,7 @@ registers:
  eax = 0x0[32]
  esp = V2[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1281,6 +1355,7 @@ registers:
  eax = 0x0[32]
  esp = V2+0x4[32]
  ebp = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1300,6 +1375,7 @@ registers:
  eax = 0x0[32]
  esp = V2+0x8[32]
  ebp = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1321,6 +1397,7 @@ memory:
 0x080483e8: mov dword ss:[esp], 0x080495f8<(data)__JCR_END__>
 registers:
  esp = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1332,6 +1409,7 @@ memory:
 0x080483ef: call 0x00000000
 registers:
  esp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1347,6 +1425,7 @@ memory:
 0x080483f4: lea esi, [esi + 0x00000000]
 registers:
  esi = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1358,6 +1437,7 @@ memory:
 registers:
  esi = V1[32]
  edi = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1372,6 +1452,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1385,6 +1466,7 @@ registers:
  edx = 0x8048480[32]
  esp = V1-0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1398,6 +1480,7 @@ registers:
  edx = 0x8048480[32]
  esp = V1-0x4[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1411,6 +1494,7 @@ registers:
  edx = 0x8048480[32]
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1430,6 +1514,7 @@ registers:
  edx = 0x8048480[32]
  esp = V9[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1449,6 +1534,7 @@ registers:
  edx = 0x8048480[32]
  esp = V9[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1469,6 +1555,7 @@ registers:
  edx = 0x8048480[32]
  esp = V9[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1490,6 +1577,7 @@ registers:
  edx = 0x8048480[32]
  esp = V9-0x4[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1514,6 +1602,7 @@ memory:
 registers:
  esp = V1[32]
  ebp = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1526,6 +1615,7 @@ registers:
  eax = 0x0[32]
  esp = V1[32]
  ebp = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1544,6 +1634,7 @@ registers:
  eax = 0x0[32]
  esp = V1+0x4[32]
  ebp = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1563,6 +1654,7 @@ registers:
  eax = 0x0[32]
  esp = V1+0x8[32]
  ebp = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1585,6 +1677,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1597,6 +1690,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1609,6 +1703,7 @@ memory:
 registers:
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1627,6 +1722,7 @@ memory:
 registers:
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1646,6 +1742,7 @@ memory:
 registers:
  esp = V1-0x10[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1669,6 +1766,7 @@ memory:
 registers:
  esp = V1[32]
  ebp = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1680,6 +1778,7 @@ memory:
 registers:
  esp = V1+0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1692,6 +1791,7 @@ memory:
 registers:
  esp = V1+0x8[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1708,6 +1808,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1720,6 +1821,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1732,6 +1834,7 @@ memory:
 registers:
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1750,6 +1853,7 @@ memory:
 registers:
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1769,6 +1873,7 @@ memory:
 registers:
  esp = V1-0x10[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1791,6 +1896,7 @@ memory:
 0x08048472: mov dword ss:[esp], 0x00000000
 registers:
  esp = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1802,6 +1908,7 @@ memory:
 0x08048479: call 0x08048320<_exit@plt>
 registers:
  esp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1818,6 +1925,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1830,6 +1938,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1842,6 +1951,7 @@ memory:
 registers:
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1860,6 +1970,7 @@ memory:
 registers:
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1880,6 +1991,7 @@ memory:
 registers:
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1901,6 +2013,7 @@ memory:
 registers:
  esp = V1-0x10[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1925,6 +2038,7 @@ memory:
 0x08048498: mov dword ss:[esp], 0x00000000
 registers:
  esp = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1936,6 +2050,7 @@ memory:
 0x0804849f: call 0x08048320<_exit@plt>
 registers:
  esp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1952,6 +2067,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1964,6 +2080,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1977,6 +2094,7 @@ registers:
  esp = V1-0x8[32]
  ebp = V1-0x4[32]
  edi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -1992,6 +2110,7 @@ registers:
  ebp = V1-0x4[32]
  esi = V4[32]
  edi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2009,6 +2128,7 @@ registers:
  ebp = V1-0x4[32]
  esi = V4[32]
  edi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2027,6 +2147,7 @@ registers:
  ebp = V1-0x4[32]
  esi = V4[32]
  edi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2051,6 +2172,7 @@ registers:
  ebp = V1-0x4[32]
  esi = V4[32]
  edi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2076,6 +2198,7 @@ memory:
 registers:
  ebx = V1[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2088,6 +2211,7 @@ memory:
 registers:
  ebx = V1+0x120a[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2106,6 +2230,7 @@ memory:
 registers:
  ebx = V1+0x120a[32]
  esp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2128,6 +2253,7 @@ memory:
 registers:
  eax = V1-0xe0[32]
  ebx = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2140,6 +2266,7 @@ registers:
  eax = V1-0xe0[32]
  edx = V1-0xe0[32]
  ebx = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2152,6 +2279,7 @@ registers:
  eax = 0x0[32]
  edx = V1-0xe0[32]
  ebx = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2170,6 +2298,7 @@ registers:
  eax = 0x0[32]
  edx = V1-0xe0[32]
  ebx = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2189,6 +2318,7 @@ registers:
  edx = V1-0xe0[32]
  ebx = V1[32]
  ebp = V4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2209,6 +2339,7 @@ registers:
  edx = V1-0xe0[32]
  ebx = V1[32]
  ebp = V4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2230,6 +2361,7 @@ registers:
  ebx = V1[32]
  esp = V5+0xc[32]
  ebp = V4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2251,6 +2383,7 @@ registers:
  ebx = V12[32]
  esp = V5+0x10[32]
  ebp = V4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2274,6 +2407,7 @@ registers:
  esp = V5+0x14[32]
  ebp = V4[32]
  esi = V13[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2299,6 +2433,7 @@ registers:
  ebp = V4[32]
  esi = V13[32]
  edi = V14[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2325,6 +2460,7 @@ registers:
  ebp = V15[32]
  esi = V13[32]
  edi = V14[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2352,6 +2488,7 @@ registers:
  ebp = V15[32]
  esi = V13[32]
  edi = V14[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2376,6 +2513,7 @@ memory:
 
 0x080484e8: nop 
 registers:
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2386,6 +2524,7 @@ memory:
 0x080484e9: lea esi, [esi + 0x00000000]
 registers:
  esi = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2397,6 +2536,7 @@ memory:
 registers:
  esi = V1[32]
  edi = 0x0[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2415,6 +2555,7 @@ registers:
  edx = V3[32]
  esi = V3[32]
  edi = 0x0[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2433,6 +2574,7 @@ registers:
  edx = V3[32]
  esi = V3[32]
  edi = 0x0[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2451,6 +2593,7 @@ registers:
  edx = V3[32]
  esi = V3[32]
  edi = 0x0[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2470,6 +2613,7 @@ registers:
  esp = V4-0x4[32]
  esi = V3[32]
  edi = 0x0[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2491,6 +2635,7 @@ memory:
 0x08048502: inc edi
 registers:
  edi = V1+0x1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2507,6 +2652,7 @@ memory:
 registers:
  esi = V7+0x4[32]
  edi = V1+0x1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2525,6 +2671,7 @@ registers:
  ebp = V14[32]
  esi = V7+0x4[32]
  edi = V1+0x1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2544,6 +2691,7 @@ registers:
  ebp = V14[32]
  esi = V7+0x4[32]
  edi = V1+0x1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2564,6 +2712,7 @@ memory:
 0x0804850b: add esp, 0x0c
 registers:
  esp = V1+0xc[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2581,6 +2730,7 @@ memory:
 registers:
  ebx = V8[32]
  esp = V1+0x10[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2600,6 +2750,7 @@ registers:
  ebx = V8[32]
  esp = V1+0x14[32]
  esi = V9[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2621,6 +2772,7 @@ registers:
  esp = V1+0x18[32]
  esi = V9[32]
  edi = V10[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2644,6 +2796,7 @@ registers:
  ebp = V11[32]
  esi = V9[32]
  edi = V10[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2668,6 +2821,7 @@ registers:
  ebp = V11[32]
  esi = V9[32]
  edi = V10[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2693,6 +2847,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2705,6 +2860,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2718,6 +2874,7 @@ registers:
  esp = V1-0x8[32]
  ebp = V1-0x4[32]
  edi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2733,6 +2890,7 @@ registers:
  ebp = V1-0x4[32]
  esi = V4[32]
  edi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2750,6 +2908,7 @@ registers:
  ebp = V1-0x4[32]
  esi = V4[32]
  edi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2768,6 +2927,7 @@ registers:
  ebp = V1-0x4[32]
  esi = V4[32]
  edi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2792,6 +2952,7 @@ registers:
  ebp = V1-0x4[32]
  esi = V4[32]
  edi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2817,6 +2978,7 @@ memory:
 registers:
  ebx = V1[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2829,6 +2991,7 @@ memory:
 registers:
  ebx = V1+0x119a[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2848,6 +3011,7 @@ registers:
  eax = V1+0x10ba[32]
  ebx = V1+0x119a[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2868,6 +3032,7 @@ registers:
  edx = V1+0x10ba[32]
  ebx = V1+0x119a[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2888,6 +3053,7 @@ registers:
  edx = V1+0x10ba[32]
  ebx = V1+0x119a[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2908,6 +3074,7 @@ registers:
  edx = V1+0x10ba[32]
  ebx = V1+0x119a[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2929,6 +3096,7 @@ registers:
  ebx = V1+0x119a[32]
  esp = V2+0x4[32]
  ebp = V11[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2951,6 +3119,7 @@ registers:
  ebx = V1+0x119a[32]
  esp = V2+0x4[32]
  ebp = V11[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2973,6 +3142,7 @@ registers:
  ebx = V1+0x119a[32]
  esp = V2+0x4[32]
  ebp = V11[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -2995,6 +3165,7 @@ registers:
  ebx = V1+0x119a[32]
  esp = V2+0x4[32]
  ebp = V11[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3017,6 +3188,7 @@ registers:
  ebx = V1+0x119a[32]
  esp = V2[32]
  ebp = V11[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3041,6 +3213,7 @@ registers:
  eax = V1[32]
  edx = V2[32]
  esi = V3[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3054,6 +3227,7 @@ registers:
  edx = V2[32]
  esi = V3[32]
  edi = 0x0[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3073,6 +3247,7 @@ registers:
  edx = V2[32]
  esi = V3[32]
  edi = 0x0[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3092,6 +3267,7 @@ registers:
  edx = V2[32]
  esi = V3[32]
  edi = 0x0[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3112,6 +3288,7 @@ registers:
  esp = V5-0x4[32]
  esi = V3[32]
  edi = 0x0[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3133,6 +3310,7 @@ memory:
 0x08048562: inc edi
 registers:
  edi = V1+0x1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3149,6 +3327,7 @@ memory:
 registers:
  esi = V7-0x4[32]
  edi = V1+0x1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3167,6 +3346,7 @@ registers:
  ebp = V14[32]
  esi = V7-0x4[32]
  edi = V1+0x1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3186,6 +3366,7 @@ registers:
  ebp = V14[32]
  esi = V7-0x4[32]
  edi = V1+0x1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3206,6 +3387,7 @@ memory:
 0x08048570: add esp, 0x0c
 registers:
  esp = V1+0xc[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3223,6 +3405,7 @@ memory:
 registers:
  ebx = V8[32]
  esp = V1+0x10[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3242,6 +3425,7 @@ registers:
  ebx = V8[32]
  esp = V1+0x14[32]
  esi = V9[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3263,6 +3447,7 @@ registers:
  esp = V1+0x18[32]
  esi = V9[32]
  edi = V10[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3286,6 +3471,7 @@ registers:
  ebp = V11[32]
  esi = V9[32]
  edi = V10[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3310,6 +3496,7 @@ registers:
  ebp = V11[32]
  esi = V9[32]
  edi = V10[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3335,6 +3522,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3347,6 +3535,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3360,6 +3549,7 @@ registers:
  ebx = V3[32]
  esp = V1-0x8[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3374,6 +3564,7 @@ registers:
  ebx = V3[32]
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3394,6 +3585,7 @@ registers:
  ebx = 0x80495e8[32]
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3415,6 +3607,7 @@ registers:
  ebx = 0x80495e8[32]
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3437,6 +3630,7 @@ registers:
  ebx = 0x80495e8[32]
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3459,6 +3653,7 @@ registers:
  ebx = 0x80495e8[32]
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3481,6 +3676,7 @@ memory:
 0x08048596: lea esi, [esi + 0x00]
 registers:
  esi = V1[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3492,6 +3688,7 @@ memory:
 registers:
  esi = V1[32]
  edi = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3504,6 +3701,7 @@ registers:
  ebx = V3-0x4[32]
  esi = V1[32]
  edi = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3524,6 +3722,7 @@ registers:
  esp = V11-0x4[32]
  esi = V1[32]
  edi = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3545,6 +3744,7 @@ memory:
 registers:
  eax = V1[32]
  ebx = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3557,6 +3757,7 @@ memory:
 registers:
  eax = V1[32]
  ebx = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3575,6 +3776,7 @@ memory:
 registers:
  eax = V1[32]
  ebx = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3596,6 +3798,7 @@ memory:
 registers:
  eax = V1[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3609,6 +3812,7 @@ registers:
  eax = V1[32]
  ebx = V3[32]
  esp = V2+0x8[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3624,6 +3828,7 @@ registers:
  ebx = V3[32]
  esp = V2+0xc[32]
  ebp = V4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3640,6 +3845,7 @@ registers:
  ebx = V3[32]
  esp = V2+0x10[32]
  ebp = V4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3658,6 +3864,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3670,6 +3877,7 @@ memory:
 registers:
  esp = V1-0x4[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3683,6 +3891,7 @@ registers:
  ebx = V3[32]
  esp = V1-0x8[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3698,6 +3907,7 @@ registers:
  ebx = V3[32]
  esp = V1-0xc[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3714,6 +3924,7 @@ registers:
  ebx = V3[32]
  esp = V1-0x10[32]
  ebp = V1-0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3732,6 +3943,7 @@ memory:
 registers:
  ebx = V1[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3744,6 +3956,7 @@ memory:
 registers:
  ebx = V1+0x110e[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3762,6 +3975,7 @@ memory:
 registers:
  ebx = V1+0x110e[32]
  esp = V2[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3784,6 +3998,7 @@ memory:
 registers:
  eax = V1[32]
  esp = V2+0x4[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3797,6 +4012,7 @@ registers:
  eax = V1[32]
  ebx = V3[32]
  esp = V2+0x8[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3812,6 +4028,7 @@ registers:
  ebx = V3[32]
  esp = V4+0x4[32]
  ebp = V5[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]
@@ -3828,6 +4045,7 @@ registers:
  ebx = V3[32]
  esp = V4+0x8[32]
  ebp = V5[32]
+ es = 0x0[16]
  cs = 0x0[16]
  ss = 0x0[16]
  ds = 0x0[16]

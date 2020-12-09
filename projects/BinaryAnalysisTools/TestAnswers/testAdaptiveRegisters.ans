@@ -4,6 +4,7 @@
 0x004000e0: hlt
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -18,6 +19,7 @@ memory:
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -38,6 +40,7 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -59,6 +62,7 @@ registers:
  rax [writer=0x004000e5] write-only = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -80,6 +84,7 @@ registers:
  rax [writer=0x004000e5] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -110,6 +115,7 @@ registers:
  REG0.0@32+32 [writer=0x004000e5] = 0x07060504<117835012>[u32]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -145,6 +151,7 @@ registers:
  REG0.0@32+32 [writer=0x004000e5] = 0x07060504<117835012>[u32]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -183,6 +190,7 @@ registers:
  REG0.0@32+32 [writer=0x004000e5] = 0x07060504<117835012>[u32]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -221,6 +229,7 @@ registers:
  REG0.0@32+32 [writer=0x004000e5] = 0x07060504<117835012>[u32]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -260,6 +269,7 @@ registers:
  REG0.0@32+32 [writer=0x004000e5] = 0x07060504<117835012>[u32]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -302,6 +312,7 @@ registers:
  rax [writer=0x004000e5] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -354,6 +365,7 @@ registers:
  REG0.0@16+48 [writer=0x004000e5] = 0x070605040302<7722435347202>[u48]
  rsp [writer=0x004000e1] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004000e2] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -406,6 +418,7 @@ registers:
  ah [writer=0x004000e5] = 0x01[u8]
  REG0.0@16+48 [writer=0x004000e5] = 0x070605040302<7722435347202>[u48]
  rbp [writer=0x0040012b] read-before-write = V1[u64]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -459,6 +472,7 @@ registers:
  REG0.0@16+48 [writer=0x004000e5] = 0x070605040302<7722435347202>[u48]
  rsp [writer=0x0040012c] read-before-write = (add[u64] rsp_0[u64] 0x0000000000000008[u64])
  rbp [writer=0x0040012b] read-before-write = V1[u64]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -519,6 +533,7 @@ memory:
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rsp [writer=0x0040012d] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -539,6 +554,7 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rsp [writer=0x0040012d] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x0040012e] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -560,6 +576,7 @@ registers:
  rax [writer=0x00400131] write-only = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x0040012d] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x0040012e] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -581,6 +598,7 @@ registers:
  rax [writer=0x00400131] write-only = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x0040013b] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x0040012e] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -602,6 +620,7 @@ registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x0040013b] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x0040012e] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -631,6 +650,7 @@ registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x0040013b] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x0040012e] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -664,6 +684,7 @@ registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x0040013b] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x0040012e] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -699,6 +720,7 @@ registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x0040013b] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x0040012e] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -734,6 +756,7 @@ RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations
 registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
  rbp [writer=0x00400163] read-before-write = V1[u64]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -770,6 +793,7 @@ registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x00400164] read-before-write = (add[u64] rsp_0[u64] 0x0000000000000008[u64])
  rbp [writer=0x00400163] read-before-write = V1[u64]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -815,6 +839,7 @@ memory:
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -835,6 +860,7 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -856,6 +882,7 @@ registers:
  rax [writer=0x00400169] write-only = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -878,6 +905,7 @@ registers:
  REG0.0@32+32 [writer=0x00400173] write-only = 0x00000000[u32]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -901,6 +929,7 @@ registers:
  REG0.0@32+32 [writer=0x00400173] write-only = 0x00000000[u32]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -925,6 +954,7 @@ registers:
  REG0.0@32+32 [writer=0x00400173] write-only = 0x00000000[u32]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -948,6 +978,7 @@ registers:
  REG0.0@32+32 [writer=0x00400173] write-only = 0x00000000[u32]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -970,6 +1001,7 @@ registers:
  REG0.0@32+32 [writer=0x00400182] write-only = 0x00000000[u32]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -991,6 +1023,7 @@ registers:
  rax [writer=0x00400187] write-only = 0xa7a6a5a4a3a2a1a0<12080525177006498208>[u64]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1014,6 +1047,7 @@ registers:
  REG0.0@16+48 [writer=0x00400187] write-only = 0xa7a6a5a4a3a2<184334185440162,-97140791270494>[u48]
  rsp [writer=0x00400165] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400166] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1035,6 +1069,7 @@ registers:
  al [writer=0x00400187] write-only = 0xa0<-96>[u8]
  ah [writer=0x00400191] write-only = 0xff<-1>[u8]
  REG0.0@16+48 [writer=0x00400187] write-only = 0xa7a6a5a4a3a2<184334185440162,-97140791270494>[u48]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1057,6 +1092,7 @@ registers:
  ah [writer=0x00400191] write-only = 0xff<-1>[u8]
  REG0.0@16+48 [writer=0x00400187] write-only = 0xa7a6a5a4a3a2<184334185440162,-97140791270494>[u48]
  rsp [writer=0x00400194] read-before-write = (add[u64] rsp_0[u64] 0x0000000000000008[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1087,6 +1123,7 @@ memory:
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rsp [writer=0x00400195] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1107,6 +1144,7 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rsp [writer=0x00400195] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1127,6 +1165,7 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1148,6 +1187,7 @@ registers:
  rax [writer=0x004001a3] write-only = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1169,6 +1209,7 @@ registers:
  rax [writer=0x004001ad] write-only = 0x00000000f3f2f1f0<4092785136>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1190,6 +1231,7 @@ registers:
  rax [writers={0x004001ad, 0x004001b2}] write-only = 0x00000000f3f2e1e0<4092781024>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1211,6 +1253,7 @@ registers:
  rax [writers={0x004001ad, 0x004001b2, 0x004001b6}] write-only = 0x00000000f3f2e1d0<4092781008>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1232,6 +1275,7 @@ registers:
  rax [writers={0x004001ad, 0x004001b8}] write-only = 0x00000000f3f2c1c0<4092772800>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1253,6 +1297,7 @@ registers:
  rax [writer=0x004001bc] write-only = 0x00000000b3b2b1b0<3014832560>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1274,6 +1319,7 @@ registers:
  rax [writer=0x004001c1] write-only = 0xa7a6a5a4a3a2a1a0<12080525177006498208>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1295,6 +1341,7 @@ registers:
  rax [writers={0x004001c1, 0x004001cb}] write-only = 0xa7a6a5a4a3a2ffa0<12080525177006522272>[u64]
  rsp [writer=0x00400199] read-before-write = 0x00000000137017c2<326113218>[u64]
  rbp [writer=0x00400196] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1314,6 +1361,7 @@ memory:
 RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations=yes
 registers:
  rax [writers={0x004001c1, 0x004001cb}] write-only = 0xa7a6a5a4a3a2ffa0<12080525177006522272>[u64]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1334,6 +1382,7 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rax [writers={0x004001c1, 0x004001cb}] write-only = 0xa7a6a5a4a3a2ffa0<12080525177006522272>[u64]
  rsp [writer=0x004001ce] read-before-write = (add[u64] rsp_0[u64] 0x0000000000000008[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1364,6 +1413,7 @@ memory:
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rsp [writer=0x004001cf] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1384,6 +1434,7 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rsp [writer=0x004001cf] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004001d0] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1405,6 +1456,7 @@ registers:
  rax [writer=0x004001d3] write-only = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x004001cf] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
  rbp [writer=0x004001d0] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1426,6 +1478,7 @@ registers:
  rax [writer=0x004001d3] write-only = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x004001dd] read-before-write = 0x00000000137017c1<326113217>[u64]
  rbp [writer=0x004001d0] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1448,6 +1501,7 @@ registers:
  REG0.0@32+32 [writer=0x004001d3] write-only = 0x07060504<117835012>[u32]
  rsp [writer=0x004001dd] read-before-write = 0x00000000137017c1<326113217>[u64]
  rbp [writer=0x004001d0] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1473,6 +1527,7 @@ registers:
  rax [writer=0x004001d3] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x004001dd] read-before-write = 0x00000000137017c1<326113217>[u64]
  rbp [writer=0x004001d0] read-before-write = (add[u64] rsp_0[u64] 0xfffffffffffffff8<18446744073709551608,-8>[u64])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1505,6 +1560,7 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
  rax [writer=0x004001d3] = 0x0706050403020100<506097522914230528>[u64]
  rbp [writer=0x004001f6] read-before-write = V1[u64]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1538,6 +1594,7 @@ registers:
  rax [writer=0x004001d3] = 0x0706050403020100<506097522914230528>[u64]
  rsp [writer=0x004001f7] read-before-write = (add[u64] rsp_0[u64] 0x0000000000000008[u64])
  rbp [writer=0x004001f6] read-before-write = V1[u64]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]

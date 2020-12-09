@@ -69,16 +69,6 @@ ba-u18.04:
     expire_in: 1 week
 
 ########################################################################################################################
-# Build, test, and install ROSE configured for binary analysis on centos6, which is compatible with Red Hat 6.
-ba-centos6:
-  image: matzke/rosedev:centos6
-  script: /rose-installers/scripts/gitlab-ci install-binaryanalysis-centos6
-  artifacts:
-    paths:
-      - artifacts/
-    expire_in: 1 week
-
-########################################################################################################################
 # Build, test, and install ROSE configured for binary analysis on centos7, which is compatible with Red Hat 7.
 ba-centos7:
   image: matzke/rosedev:centos7
