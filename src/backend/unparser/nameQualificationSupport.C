@@ -502,6 +502,7 @@ NameQualificationTraversal::associatedDeclaration(SgScopeStatement* scope)
           case V_SgCatchOptionStmt:
           case V_SgUpcForAllStatement:
           case V_SgJovialForThenStatement:
+          case V_SgAdaPackageSpec:
              {
                return_declaration = NULL;
                break;
