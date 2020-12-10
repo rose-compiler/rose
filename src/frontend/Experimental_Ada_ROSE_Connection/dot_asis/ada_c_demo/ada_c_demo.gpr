@@ -3,8 +3,8 @@ project Ada_C_Demo is
    for Source_Dirs use (".");
    for Object_Dir use "./obj";
    for Main use
-     ("ada_main.adb",
-      "c_main.c",
+     ("ada_c_main.adb",
+      "c_ada_main.c",
       "c_ada_c_main.c");
 end Ada_C_Demo;
 
