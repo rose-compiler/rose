@@ -1,6 +1,8 @@
 #include <DynamicCompSlice.h>
 #include <CompSliceImpl.h>
 #include <LoopTreeTransform.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <assert.h>
 #include <stdio.h>
 
 class CondSliceStmt : public CompSliceStmt
@@ -11,14 +13,14 @@ class CondSliceStmt : public CompSliceStmt
     { return new CondSliceStmt( n, *this); }
  public:
   CondSliceStmt( LoopTreeNode *s,  CompSliceImpl *tc, int a = 0, int gi = 0)
-     : CompSliceStmt(s, tc, a), groupIndex(gi) {} 
+     : CompSliceStmt(s, tc, a), groupIndex(gi) {}
   CondSliceStmt( LoopTreeNode *n, const CondSliceStmt &that)
      : CompSliceStmt(n, that), groupIndex(that.groupIndex) {}
   ~CondSliceStmt() {}
 
   unsigned GetSliceGroupIndex() const { return groupIndex; }
   void Dump() const
-    { 
+    {
       CompSliceStmt::Dump();
       std::cerr << "slicing group: " <<  groupIndex << "\n";
     }
@@ -31,16 +33,16 @@ class DynamicCompSliceImpl : public CompSliceImpl
    unsigned groupIndex, groupNum;
  protected:
    virtual CompSliceStmt* CreateSliceStmtNode( LoopTreeNode *n, CompSliceStmt *_that = 0)
-   {  
-      CondSliceStmt *that = (_that == 0 || _that->GetClassName() != "CondSliceStmt")? 0 
+   {
+      CondSliceStmt *that = (_that == 0 || _that->GetClassName() != "CondSliceStmt")? 0
                             :  static_cast<CondSliceStmt*>(_that);
       size_t gi = (that == 0)? groupIndex : groupIndex + that->GetSliceGroupIndex();
       if (gi > groupNum)
           groupNum = gi;
-      return new CondSliceStmt( n, this, 0, gi ); 
+      return new CondSliceStmt( n, this, 0, gi );
    }
  public:
-  DynamicCompSliceImpl( int looplevel, int gi = 0 ) 
+  DynamicCompSliceImpl( int looplevel, int gi = 0 )
      : CompSliceImpl(looplevel), groupIndex(gi+1), groupNum(gi) {}
   ~DynamicCompSliceImpl() {}
   virtual CompSliceImpl* CloneImpl() const
@@ -66,7 +68,8 @@ DynamicCompSlice :: ~DynamicCompSlice()
 
 unsigned DynamicCompSlice:: QuerySliceStmtGroupIndex( const LoopTreeNode *n) const
 {
-  CondSliceStmt* sliceStmt = static_cast<CondSliceStmt*>( GetImpl()->QuerySliceStmt(n)); 
+  CondSliceStmt* sliceStmt = static_cast<CondSliceStmt*>( GetImpl()->QuerySliceStmt(n));
+  assert(sliceStmt != NULL);
   return sliceStmt->GetSliceGroupIndex();
 }
 
@@ -77,7 +80,7 @@ unsigned DynamicCompSlice :: QuerySliceGroupNumber() const
 }
 
 
-LoopTreeNode* DynamicSlicing:: 
+LoopTreeNode* DynamicSlicing::
 Transform( LoopTreeDepComp& c, const CompSlice *_slice, LoopTreeNode *root)
 {
   AstInterface& fa = LoopTransformInterface::getAstInterface();
@@ -100,24 +103,24 @@ Transform( LoopTreeDepComp& c, const CompSlice *_slice, LoopTreeNode *root)
        args.push_back( fa.CreateVarRef( name).get_ptr() );
     }
     int id;
-    AstNodePtr config = LoopTransformInterface::CreateDynamicFusionConfig( fa.CreateVarRef(groupVarN), args, id); 
+    AstNodePtr config = LoopTransformInterface::CreateDynamicFusionConfig( fa.CreateVarRef(groupVarN), args, id);
     LoopTreeNode *configNode = tc->CreateStmtNode(config);
     configNode->Link( nr, LoopTreeNode::AsPrevSibling);
     AstNodePtr configEnd = LoopTransformInterface::CreateDynamicFusionEnd( id);
     LoopTreeNode *endNode = tc->CreateStmtNode(configEnd);
     endNode->Link( nr, LoopTreeNode::AsNextSibling);
-     
+
     for (CompSlice::ConstStmtIterator p = slice->GetConstStmtIterator();
          !p.ReachEnd(); ++p) {
         LoopTreeNode* stmt = p.Current();
         sprintf(buf, "%1d", slice->QuerySliceStmtGroupIndex(stmt));
-        LoopTreeEmbedStmt()( nr, stmt, SymbolicVar(groupVar + buf, AST_NULL) ); 
-    }   
+        LoopTreeEmbedStmt()( nr, stmt, SymbolicVar(groupVar + buf, AST_NULL) );
+    }
     DependenceHoisting::Transform(c, slice, root);
   }
   else
     nr = DependenceHoisting::Transform(c, slice, root);
-  
+
   return nr;
 }
 

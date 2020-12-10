@@ -65,6 +65,9 @@ HEADER_START
           bool isUnsignedType() const;  //!< There are many sorts of unsigned types (this queries an arbitrary type).
           bool isIntegerType() const;   //!< There are many sorts of integer types (this queries an arbitrary type).
           bool isFloatType() const;     //!< There are several sorts of float types (this queries an arbitrary type).
+
+       // DQ (4/20/2019): Added support to detect primative types (which don't require name qualification).
+          bool isPrimativeType() const;   //!< There are many sorts of primative types (this queries an arbitrary type).
        /*! */
 
        // DQ (10/11/2007): These sorts of values are usually handled as enum fields in ROSE. They could be redone at some point.
@@ -75,6 +78,12 @@ HEADER_START
           static const unsigned char STRIP_POINTER_TYPE          = ((unsigned char) 1 << 3); // 0x08
           static const unsigned char STRIP_ARRAY_TYPE            = ((unsigned char) 1 << 4); // 0x16
           static const unsigned char STRIP_TYPEDEF_TYPE          = ((unsigned char) 1 << 5); // 0x32
+
+       // DQ (4/15/2019): Adding specific support for pointer to member (SgPointerMemberType) since we don't always 
+       // want to strip it and we need better control over this.  Since SgPointerMemberType is derived from SgPointerType 
+       // (which might be a design mistake) it was handled along with SgPointer but for name qualification we need the 
+       // stripType function to have greater expresiveness.
+          static const unsigned char STRIP_POINTER_MEMBER_TYPE   = ((unsigned char) 1 << 6); // 0x64
 
       /*! \brief Some types store internal SgType pointers explicitly while others compute them from other data.  This function is true if it has a data member that is a type (pointer, array, etc.).
 
@@ -117,7 +126,9 @@ HEADER_START
 
        // DQ (6/21/2005): Added to support getting a deeply nested types quickly and easily.
       //! Returns hidden type beneath layers of typedefs, pointers, references, modifiers, array representation, etc.
-          SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_RVALUE_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE ) const;
+      //  SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_RVALUE_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE ) const;
+          SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_RVALUE_REFERENCE_TYPE | 
+                                                      STRIP_POINTER_TYPE  | STRIP_ARRAY_TYPE     | STRIP_TYPEDEF_TYPE          | STRIP_POINTER_MEMBER_TYPE ) const;
 
        // DQ (6/30/2005): Added to support invistigation of hidden types
       //! This only strips away typedefs and modifiers (specialized usage).
@@ -422,6 +433,19 @@ HEADER_JAVA_UNION_TYPE_END
 HEADER_JAVA_PARAMETER_TYPE_START
           SgJavaParameterType ( const SgJavaParameterType & X );
 HEADER_JAVA_PARAMETER_TYPE_END
+
+
+HEADER_JOVIAL_TABLE_TYPE_START
+          SgJovialTableType ( const SgJovialTableType & X );
+
+      //! Enum for Jovial structure specifiers
+          enum structure_specifier_enum
+             {
+               e_default = 0, /*!< jovial table structure is unspecified, indicates serial structure */
+               e_parallel,    /*!< jovial table has parallel structure */
+               e_tight        /*!< jovial table has serial structure that is tightly packed */
+             };
+HEADER_JOVIAL_TABLE_TYPE_END
 
 
 HEADER_ENUM_TYPE_START
@@ -827,7 +851,11 @@ HEADER_MEMBER_FUNCTION_TYPE_START
              {
                e_const     =     0x00000001,
                e_volatile  =     0x00000002,
-               e_restrict  =     0x00000004
+               e_restrict  =     0x00000004,
+
+            // DQ (1/9/2020): Added reference qualifiers (C++11 feature).
+               e_ref_qualifier_lvalue = 0x00000008,
+               e_ref_qualifier_rvalue = 0x00000010
              };
 
        // static SgMemberFunctionType* createType(SgPartialFunctionType *);
@@ -857,6 +885,17 @@ HEADER_MEMBER_FUNCTION_TYPE_START
           void setRestrictFunc();
           void unsetRestrictFunc();
 #endif
+
+       // DQ (1/9/2020): Enabled the use of reference qualification recorded in the function type.
+      //! L-value reference access/set/unset member functions and member function type
+          bool isLvalueReferenceFunc() const;
+          void setLvalueReferenceFunc();
+          void unsetLvalueReferenceFunc();
+
+      //! R-value reference access/set/unset member functions and member function type
+          bool isRvalueReferenceFunc() const;
+          void setRvalueReferenceFunc();
+          void unsetRvalueReferenceFunc();
 #endif
 
        // void set_mfunc_specifier(unsigned long i);
@@ -883,9 +922,11 @@ HEADER_MEMBER_FUNCTION_TYPE_START
 
 HEADER_MEMBER_FUNCTION_TYPE_END
 
+
 HEADER_PARTIAL_FUNCTION_TYPE_START
           void post_construction_initialization () $ROSE_OVERRIDE;
 HEADER_PARTIAL_FUNCTION_TYPE_END
+
 
 HEADER_TYPEDEF_TYPE_START
 
@@ -927,8 +968,21 @@ HEADER_TYPE_TUPLE_END
 
 
 HEADER_POINTER_MEMBER_TYPE_START
+       //! The API to this function has been changed to support returning a SgDeclarationStatement.
+       // DQ (4/11/2019): This alllows it to support both the cases where a definition might not 
+       // exist and the case of a pointer to member of a nonreal type.
+       // The old functionality is represented in the get_class_definition_of() function.
+          SgDeclarationStatement* get_class_declaration_of() const;
+
       //! \deprecated The class_of property has been replaced by the class_type property, an SgType
-          SgClassDefinition* get_class_of() const;
+          SgClassDefinition* get_class_definition_of() const;
+
+       // DQ (4/20/2019): Renamed these to make them more clear, since there are two locations for name qualification in a SgPointerMemberType.
+       // DQ (4/18/2019): Added support for name qualification of type chains of SgPointerMemberType.
+       // SgName get_qualified_name_prefix() const;
+          SgName get_qualified_name_prefix_for_class_of() const;
+          SgName get_qualified_name_prefix_for_base_type() const;
+
 HEADER_POINTER_MEMBER_TYPE_END
 
 HEADER_TYPE_STRING_TYPE_START
@@ -986,6 +1040,40 @@ HEADER_ARRAY_TYPE_START
 
 HEADER_ARRAY_TYPE_END
 
+HEADER_ADA_ACCESS_TYPE_START
+
+          SgName get_name() const;
+
+HEADER_ADA_ACCESS_TYPE_END
+
+HEADER_ADA_SUBTYPE_START
+
+          SgName get_name() const;
+
+HEADER_ADA_SUBTYPE_END
+
+HEADER_ADA_TASK_TYPE_START
+          //~ SgName get_name() const;
+HEADER_ADA_TASK_TYPE_END
+
+
+HEADER_ADA_FLOAT_TYPE_START
+
+          SgName get_name() const;
+
+HEADER_ADA_FLOAT_TYPE_END
+
+// CR (4/4/2020): Added SgJovialBitType for Jovial. This type participates in logical
+//                       operations with literals TRUE and FALSE.
+HEADER_JOVIAL_BIT_TYPE_START
+          SgName get_name() const;
+HEADER_JOVIAL_BIT_TYPE_END
+
+// CR (2/19/2020): Added SgTypedFixed for Jovial. Don't really know what to do here.
+HEADER_TYPE_FIXED_TYPE_START
+      // SgName get_name() const;
+HEADER_TYPE_FIXED_TYPE_END
+
 
 // #########################################################
 // #########################################################
@@ -1016,7 +1104,7 @@ $CLASSNAME::get_mangled (void) const
      ROSE_ASSERT(this != NULL);
 
   // DQ (10/4/2010): Modified to provide Fortran support (type_kind is a data member used for Fortran only, it is always NULL for other languages)
-  // return SgName("MANGLED_ID_STRING");
+  // CR (3/6/2020): Now type_kind is also used for Jovial.
      SgName name = "MANGLED_ID_STRING";
      if (get_type_kind() != NULL)
         {
@@ -1044,8 +1132,31 @@ $CLASSNAME::get_mangled (void) const
              }
         }
 
+  // CR (3/6/2020): This is a hack but I can't get SgTypeFixed::get_mangled() to work
+  // REMOVE_ME please!
+     if (isSgTypeFixed(this))
+        {
+          const SgTypeFixed* fixed_type = isSgTypeFixed(this);
+          if (fixed_type->get_scale() != NULL)
+             {
+               SgValueExp* value = isSgValueExp(fixed_type->get_scale());
+               if (value != NULL)
+                  {
+                    name += string("_") + value->get_constant_folded_value_as_string();
+                  }
+             }
+          if (fixed_type->get_fraction() != NULL)
+             {
+               SgValueExp* value = isSgValueExp(fixed_type->get_fraction());
+               if (value != NULL)
+                  {
+                    name += string("_") + value->get_constant_folded_value_as_string();
+                  }
+             }
+        }
+
 #if 0
-     printf ("Leaving get_mangled(void): this = %p = %s MANGLED_ID_STRING = %s \n",this,this->class_name().c_str(),"MANGLED_ID_STRING");
+     printf("Leaving get_mangled(void): this = %p = %s mangled name = %s \n",this,this->class_name().c_str(),name.str());
 #endif
 
      return name;
@@ -1266,6 +1377,46 @@ SgTypeString::get_mangled (void) const
 
 SOURCE_GET_MANGLED_STRING_TYPE_END
 
+// CR (3/6/2020): Added get_mangled for SgTypedFixed (primitive type in Jovial)
+SOURCE_GET_MANGLED_TYPE_FIXED_START
+
+SgName
+SgTypeFixed::get_mangled (void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+     SgName mangled_name = "MANGLED_ID_STRING";
+
+  // Note additional name mangling is being done here because I couldn't figure out how to add
+  // it to get_mangled directly because the class is a ROSETTA macro and doesn't have access to
+  // the scale or fraction information.
+     if (get_scale() != NULL)
+        {
+           SgValueExp* value = isSgValueExp(get_scale());
+           if (value != NULL)
+              {
+                 mangled_name += string("_") + value->get_constant_folded_value_as_string();
+                 std::cout << "--> added scale " << mangled_name << std::endl;
+              }
+        }
+     if (get_fraction() != NULL)
+        {
+           SgValueExp* value = isSgValueExp(get_fraction());
+           if (value != NULL)
+              {
+                 mangled_name += string("_") + value->get_constant_folded_value_as_string();
+                 std::cout << "--> added fraction " << mangled_name << std::endl;
+              }
+        }
+
+#if 1
+     printf ("LEAVING: In SgTypeFixed::get_mangled(): mangled_name = %s \n",mangled_name.str());
+#endif
+
+     return mangled_name;
+   }
+
+SOURCE_GET_MANGLED_TYPE_FIXED_END
 
 SOURCE_CONSTRUCTOR_START
 #if 0
@@ -1617,9 +1768,16 @@ SgType::isFloatType() const
      switch (t->variant())
         {
           case T_FLOAT :
+
+       // DQ (4/20/2019): Added additional floating point types to be classified as (isFloatType() == true) by this function.
+          case T_FLOAT80 :
+          case T_FLOAT128 :
+
           case T_DOUBLE:
           case T_LONG_DOUBLE:
                return 1;
+               break;
+
           default:
                return 0;
         }
@@ -1639,10 +1797,76 @@ SgType::isUnsignedType() const
           case T_UNSIGNED_128BIT_INTEGER:
                return 1;
                break;
+
           default:
                return 0;
         }
    }
+
+
+bool
+SgType::isPrimativeType() const
+   {
+  // DQ (4/20/2019): Added query for primative types so that they can be easily skipped in name qualification.
+  // Note that a typedef type is not a primative type, even if it resolves to such a type (because it can be name qualified).
+  // A typedef type may be otherwise type equvalent to a primative type.
+
+     switch (variant())
+        {
+       // The list of types from isIntegerType() function
+          case T_CHAR:
+          case T_SIGNED_CHAR:
+          case T_UNSIGNED_CHAR:
+          case T_SHORT:
+          case T_SIGNED_SHORT:
+          case T_UNSIGNED_SHORT:
+          case T_INT:
+          case T_SIGNED_INT:
+          case T_UNSIGNED_INT:
+          case T_LONG:
+          case T_SIGNED_LONG:
+          case T_UNSIGNED_LONG:
+          case T_WCHAR:
+
+       // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+          case T_CHAR16:
+          case T_CHAR32:
+
+          case T_LONG_LONG:
+          case T_SIGNED_LONG_LONG:
+          case T_UNSIGNED_LONG_LONG:
+       // DQ (3/24/2014): Added support for 128 bit integers.
+          case T_SIGNED_128BIT_INTEGER:
+          case T_UNSIGNED_128BIT_INTEGER:
+          case T_BOOL:
+
+       // float types
+          case T_FLOAT :
+          case T_FLOAT80 :
+          case T_FLOAT128 :
+          case T_DOUBLE:
+          case T_LONG_DOUBLE:
+
+       // Other kinds of float types.
+          case T_COMPLEX:
+          case T_IMAGINARY:
+
+       // Other types
+          case T_VOID:
+          case T_LABEL:
+          case T_NULLPTR:
+          case T_DECLTYPE:
+          case T_STRING:
+
+               return true; // 1
+               break;
+
+          default:
+               return false; // 0
+        }
+   }
+
+
 
 SgType*
 SgType::integer_promotion(SgType * t1, SgType * t2)
@@ -1899,7 +2123,7 @@ SgType::stripType(unsigned char bit_array) const
    {
   // This function forms the low level support for both SgType::findBaseType()
   // and SgType::stripTypedefsAndModifiers().  It takes a default valued
-  // bit_array == (STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_RVALUE_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE)
+  // bit_array == (STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_RVALUE_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE | STRIP_POINTER_MEMBER_TYPE)
   // Alternatively any of these value may be ORed together to for other combinations.
 
   // Cast away const of "this" pointer
@@ -1917,6 +2141,8 @@ SgType::stripType(unsigned char bit_array) const
      SgRvalueReferenceType* rRefType    = NULL;
      SgArrayType*           arrayType   = NULL;
      SgTypedefType*         typedefType = NULL;
+
+     SgPointerMemberType*   pointerMemberType = NULL;
 
      size_t counter = 0;
      while (true)
@@ -1945,12 +2171,25 @@ SgType::stripType(unsigned char bit_array) const
 #endif
                currentType = rRefType->get_base_type();
              }
-          else if ( (bit_array & STRIP_POINTER_TYPE) && (pointType = isSgPointerType(currentType)) )
+       // DQ (4/15/2019): I don't think this should apply to SgPointerMemberType (which maybe should not be derived from SgPointerType).
+       // Is SgPointerMemberType a kind of type that should be something we should support in this stripType function?
+       // else if ( (bit_array & STRIP_POINTER_TYPE) && (pointType = isSgPointerType(currentType)) )
+          else if ( (bit_array & STRIP_POINTER_TYPE) && ((pointType = isSgPointerType(currentType)) && (isSgPointerMemberType(currentType) == NULL)) )
              {
 #if DEBUG_SGTYPE_STRIPTYPE_MORE
-               printf ("In loop of SgType::stripType(): found SgPointerType \n");
+               printf ("In loop of SgType::stripType(): found SgPointerType (that is not SgPointerMemberType) \n");
 #endif
+            // DQ (4/15/2019): Added assertion.
+               ROSE_ASSERT(pointType != NULL);
+
                currentType = pointType->get_base_type();
+             }
+          else if ( (bit_array & STRIP_POINTER_MEMBER_TYPE) && (pointerMemberType = isSgPointerMemberType(currentType)) )
+             {
+#if DEBUG_SGTYPE_STRIPTYPE_MORE
+               printf ("In loop of SgType::stripType(): found SgPointerMemberType \n");
+#endif
+               currentType = pointerMemberType->get_base_type();
              }
           else if ( (bit_array & STRIP_ARRAY_TYPE) && (arrayType = isSgArrayType(currentType)) )
              {
@@ -1968,7 +2207,7 @@ SgType::stripType(unsigned char bit_array) const
             // DQ (6/21/2005): Added support for typedef types to be uncovered by findBaseType()
                currentType = typedefType->get_base_type();
              }
-          else
+            else
              {
             // Exit the while(true){} loop!
                ROSE_ASSERT(currentType != NULL);
@@ -1983,6 +2222,7 @@ SgType::stripType(unsigned char bit_array) const
              {
                printf ("In loop of SgType::stripType(bit_array = %u): counter = %" PRIuPTR " currentType = %p = %s = %s\n",bit_array,counter,currentType,currentType->class_name().c_str(),currentType->unparseToString().c_str());
              }
+
           if (counter >= 100)
              {
             // Exit loop and return the currentType... 
@@ -2187,8 +2427,6 @@ SgType::handledUsingLocalTable(SgType* t)
 // Liao 10/29/2010
 // My understanding of this code (may not be accurate):
 //  This function was designed to work with C/C++ and Fortran frontends to generate AST.
-//  For C/C++: a global variable curr_sg_scope is used 
-//  For Fortran: a stack is used 
 //  So code has to be conditionized with proper #ifdef ..#endf around the use of the variable or stack.
 //  
 //  Now we allow users to build types during AST transformation. This function will be called and scope can be NULL
@@ -2214,36 +2452,19 @@ SgType::getCurrentScope()
 
   // Liao 8/3/2010, pass fortran only test
 // #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-#ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-# ifdef ROSE_USE_NEW_EDG_INTERFACE
-  // DQ (3/15/2012): Adding support for specification of scope for new C++ support (new EDG 4.x support).
-  // extern SgScopeStatement* SageBuilder::topScopeStack();
-
-  // This is what is used to test when we can use the AST Builder function (above).
-  // extern bool SageBuilder::emptyScopeStack();
-# else
-#  ifndef ROSE_USE_CLANG_FRONTEND
-  // DQ (7/23/2010): This is defined in the EDG/Sage connection.
-     extern SgScopeStatement* curr_sg_scope;
-#  endif
-# endif
-#endif
 
 // Liao 8/4/2010, support enable-only-c
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-// #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT || ROSE_USE_NEW_EDG_INTERFACE
   // This is what is used in the Open Fortran Parser connection.
      extern SgScopeStatement* getTopOfScopeStack();
 
-  // This is what is used to test when we can use the fortran specific function (above).
+  // These functions are used to test if we can use the fortran specific function above.
      extern bool emptyFortranStateStack();
+     extern bool emptyFortranScopeStack();
 #endif
 
-  // If we are processing a C++ code then curr_sg_scope is a valid pointer, else we are processing a fortran code.
-  // SgScopeStatement* currentScope = (curr_sg_scope != NULL) ? curr_sg_scope : getTopOfScopeStack();
      SgScopeStatement* currentScope = NULL;
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
      if (SageBuilder::emptyScopeStack() == false)
         {
        // C/C++ AST being generated (using new connection to EDG 4.x).
@@ -2251,24 +2472,19 @@ SgType::getCurrentScope()
           ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
         }
        else
-#else
-#ifdef ROSE_USE_CLANG_FRONTEND
-  // TV (03/01/2012): Clang Frontend use the scope stack from SageBuilder...
-     SgScopeStatement * curr_sg_scope = SageBuilder::topScopeStack();
-#endif
-     if (curr_sg_scope != NULL)
-        {
-       // C/C++ AST being generated
-          currentScope = curr_sg_scope;
-          ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
-        }
-       else
-#endif
 #endif
         {
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 8/4/2010, support enable-only-c
        // DQ (7/31/2010): If Fortran is not enabled then these functions will not be available.
-          if (emptyFortranStateStack() == false)
+
+       // Changed check for emptyFortranStateStack to emptyFortranScopeStack. An error can occur
+       // when the state stack is not empty but the scope stack is. This error was found when
+       // running tests in the experimental_frontend_tests directory. Perhaps junk was left in the
+       // Fortran state stack from tests run earlier in the parent Fortran test directory.
+       // WARNING, the following relies on short circuiting and emptyFortranStateStack() == false
+       // must be checked before emptyFortranScopeStack() == false.
+       // Apparently Java is also examining the Fortran stack! [CR 2019-7-18].
+          if (SageInterface::is_Fortran_language() && emptyFortranStateStack() == false && emptyFortranScopeStack() == false)
              {
             // Fortran AST being generated
                currentScope = getTopOfScopeStack();
@@ -2300,8 +2516,12 @@ SgType::getAssociatedDeclaration() const
 
   // printf ("In SgType::getAssociatedDeclaration(): type = %s \n",class_name().c_str());
 
+  // DQ (4/15/2019): Adding support for SgType::STRIP_POINTER_MEMBER_TYPE, not clear if we need it here.
+  // printf ("NOTE: SgType::getAssociatedDeclaration(): not using SgType::STRIP_POINTER_MEMBER_TYPE in call to stripType() \n");
+
   // Resolve to the base type (but not past typedef types).  Note that a subtle point is that 
   // we want to avoid expressing typedefs that are private in functions that are public.
+  // SgType* strippedType = this->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
      SgType* strippedType = this->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
      ROSE_ASSERT(strippedType != NULL);
 
@@ -2318,13 +2538,50 @@ SgType::getAssociatedDeclaration() const
        // printf ("In HiddenListTraversal::getDeclarationAssociatedWithType(): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 
        // DQ (5/25/2013): Check if the declaration might have been deleted.
-          if (declaration->class_name() == "SgNode")
-             {
-               printf ("Found a case where the declaration = %p for the type = %p = %s has been deleted (returning NULL) \n",declaration,this,this->class_name().c_str());
-               declaration = NULL;
-             }
-       // ROSE_ASSERT(declaration->class_name() != "SgNode");
+          if (declaration->get_freepointer() != AST_FileIO::IS_VALID_POINTER()) {
+            printf("Found a pointer to a deleted node:\n");
+            printf(" - type = %p (%s)\n", this, this->class_name().c_str());
+            printf(" - decl = %p\n", declaration);
+            printf(" - name : %s\n", SageInterface::generateUniqueName(this, false).c_str());
+          }
+          ROSE_ASSERT(declaration->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
         }
+
+#if 0
+  // DQ (4/28/2019): Added support for member functions which are the base type of SgPointerMemberType 
+  // when they are pointers to member functions.
+     SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(strippedType);
+     if (memberFunctionType != NULL)
+        {
+#if 0
+          SgType* associtedClass = memberFunctionType->get_class_type();
+          ROSE_ASSERT(associtedClass != NULL);
+
+          declaration = associtedClass->getAssociatedDeclaration();
+          ROSE_ASSERT(declaration != NULL);
+#else
+       // DQ (4/28/2019): I think this is the better implementation.
+          SgType* returnType = memberFunctionType->get_return_type();
+          ROSE_ASSERT(returnType != NULL);
+
+          declaration = returnType->getAssociatedDeclaration();
+#endif
+        }
+#endif
+
+#if 1
+  // DQ (4/28/2019): Added support for functions (for which a member function is the base type of SgPointerMemberType 
+  // when they are pointers to member functions.
+     SgFunctionType* functionType = isSgFunctionType(strippedType);
+     if (functionType != NULL)
+        {
+       // DQ (4/28/2019): I think this is the better implementation.
+          SgType* returnType = functionType->get_return_type();
+          ROSE_ASSERT(returnType != NULL);
+
+          declaration = returnType->getAssociatedDeclaration();
+        }
+#endif
 
      return declaration;
    }
@@ -2563,6 +2820,8 @@ SgType::isEquivalentType (const SgType & Y) const;
      static int counter = 0;
 
      const SgType & X = *this;
+
+#error "DEAD CODE!"
 
   // DQ (11/28/2015): We don't want to strip off everything.
   // SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE ) const;
@@ -2835,6 +3094,8 @@ SgType::isEquivalentType (const SgType & Y) const;
      printf ("In SgType::operator==(): isSame = %s \n",isSame ? "true" : "false");
 #endif
 
+#error "DEAD CODE!"
+
      return isSame;
    }
 #endif
@@ -3067,7 +3328,7 @@ SgTypeDefault::createType ( const SgName & nameOfType )
         {
        // The pointer type was not found in the type table, put it into the global type table.
 #if 0
-          printf ("Mangled type name for SgTypeDefault = %s (does NOT exist in type table) interting it... \n",name.str());
+          printf ("Mangled type name for SgTypeDefault = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
           get_globalTypeTable()->insert_type(name,returnType);
         }
@@ -3146,7 +3407,7 @@ SgTypeLabel::createType ( const SgName & nameOfType )
         {
        // The pointer type was not found in the type table, put it into the global type table.
 #if 0
-          printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+          printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
           get_globalTypeTable()->insert_type(name,returnType);
         }
@@ -3181,18 +3442,211 @@ SOURCE_POINTER_TYPE_END
 
 SOURCE_POINTER_MEMBER_TYPE_START
 
-// PC (10/29/2009): Deprecated compatibility routine for those still using get_class_of()
-SgClassDefinition*
-SgPointerMemberType::get_class_of() const
+// DQ (4/11/2019): This function supports returning a SgDeclarationStatement instead of a SgClassDeclaration, 
+// which will always be well define where returning a SgClassDefinition is not always well defined.  Using
+// a SgDeclarationStatement will also allow it to work with the case of pointer to member associated with 
+// SgNonrealType IR nodes as well.
+SgDeclarationStatement*
+SgPointerMemberType::get_class_declaration_of() const
    {
-     if (get_class_type() == NULL)
-          return NULL;
-     SgClassType *clsType = isSgClassType(get_class_type()->stripTypedefsAndModifiers());
-     ROSE_ASSERT(clsType != NULL);
-     SgClassDeclaration *clsDecl = isSgClassDeclaration(clsType->get_declaration()->get_definingDeclaration());
-     ROSE_ASSERT(clsDecl != NULL);
-     return clsDecl->get_definition();
+     SgDeclarationStatement* result = NULL;
+
+     if (get_class_type() != NULL)
+        {
+          SgType* type = get_class_type()->stripTypedefsAndModifiers();
+       // SgClassType *clsType = isSgClassType(get_class_type()->stripTypedefsAndModifiers());
+          SgClassType *clsType = isSgClassType(type);
+       // ROSE_ASSERT(clsType != NULL);
+
+          if (clsType != NULL)
+             {
+            // DQ (4/11/2019): Note that the defining declaration may not exist.
+            // SgClassDeclaration *clsDecl = isSgClassDeclaration(clsType->get_declaration()->get_definingDeclaration());
+               SgClassDeclaration *clsDecl = isSgClassDeclaration(clsType->get_declaration());
+               result = clsDecl;
+             }
+            else
+             {
+#if 0
+               printf ("WARNING: SgPointerMemberType::get_class_declaration_of() retuning NULL type = %p = %s \n",type,type->class_name().c_str());
+#endif
+               SgNonrealType* nonrealType = isSgNonrealType(type);
+               ROSE_ASSERT(nonrealType != NULL);
+               result = nonrealType->get_declaration();
+             }
+
+          ROSE_ASSERT(result != NULL);
+        }
+
+     ROSE_ASSERT(result != NULL);
+
+     return result;
    }
+
+// DQ (4/11/2019): This is a depricated function, because it can not always return a valid SgClassDefinition.
+SgClassDefinition*
+SgPointerMemberType::get_class_definition_of() const
+   {
+     SgClassDefinition* result = NULL;
+
+     if (get_class_type() != NULL)
+        {
+          SgType* type = get_class_type()->stripTypedefsAndModifiers();
+       // SgClassType *clsType = isSgClassType(get_class_type()->stripTypedefsAndModifiers());
+          SgClassType *clsType = isSgClassType(type);
+       // ROSE_ASSERT(clsType != NULL);
+       // SgClassType *clsType = isSgClassType(get_class_type()->stripTypedefsAndModifiers());
+       // ROSE_ASSERT(clsType != NULL);
+
+          if (clsType != NULL)
+             {
+               SgClassDeclaration *clsDecl = isSgClassDeclaration(clsType->get_declaration()->get_definingDeclaration());
+
+            // DQ (4/10/2019): This should not be an error when the SgClassDefinition is not available.  
+            // But we might want to change the API to return the SgClassDeclaration instead.
+            // ROSE_ASSERT(clsDecl != NULL);
+            // return clsDecl->get_definition();
+
+            // DQ (4/10/2019): This should not be an error when the SgClassDefinition is not available.  
+               if (clsDecl != NULL)
+                  {
+                    result = clsDecl->get_definition();
+                  }
+                 else
+                  {
+                    printf ("NOTE: SgPointerMemberType::get_class_definition_of() retuning NULL: use SgPointerMemberType::get_class_declaration_of() instead! \n");
+                  }
+             }
+            else
+             {
+               printf ("WARNING: SgPointerMemberType::get_class_definition_of() retuning NULL type = %p = %s \n",type,type->class_name().c_str());
+             }
+        }
+
+     return result;
+   }
+
+
+SgName
+SgPointerMemberType::get_qualified_name_prefix_for_class_of() const
+   {
+  // DQ (4/18/2019): Adding support for type chains of types (including SgPointerMemberType).
+
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+  // This only applies to specific SgSupport IR nodes:
+  //    SgVarRefExp
+  //    SgFunctionRefExp
+  //    SgMemberFunctionRefExp
+
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+  // printf ("In SgPointerMemberType::get_qualified_name_prefix_for_class_of(): search globalQualifiedNameMapForNames: this = %p = %s \n",this,this->class_name().c_str());
+  // printf ("In SgPointerMemberType::get_qualified_name_prefix_for_class_of(): search globalQualifiedNameMapForTypes: this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgPointerMemberType::get_qualified_name_prefix_for_class_of(): search globalQualifiedNameMapForNames: this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+  // DQ (4/20/2019): Use the globalQualifiedNameMapForNames for the get_qualified_name_prefix_for_class_of() function.
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+  // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgPointerMemberType*>(this));
+  // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgPointerMemberType*>(this));
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgPointerMemberType*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+  // if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+  // if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+     if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+        {
+          nameQualifier = i->second;
+
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+          printf ("In SgPointerMemberType::get_qualified_name_prefix_for_class_of(): Found a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
+#endif
+        }
+       else
+        {
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+          printf ("In SgPointerMemberType::get_qualified_name_prefix_for_class_of(): Could NOT find a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
+#endif
+        }
+
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+     printf ("nameQualifier for SgType = %p = %p = %s = %s \n",this,const_cast<SgType*>(this),class_name().c_str(),nameQualifier.str());
+#endif
+
+#if 0
+  // DQ (8/19/2013): Error checking on the globalTypeNameMap...check if there is an entry here that we might have wanted to use instead.
+     std::map<SgNode*,std::string>::iterator j = SgNode::get_globalTypeNameMap().find(const_cast<SgPointerMemberType*>(this));
+     if (j != SgNode::get_globalTypeNameMap().end())
+        {
+          SgName debug_nameQualifier = j->second;
+          printf ("In SgPointerMemberType::get_qualified_name_prefix_for_class_of(): Found a valid name qualification in the globalTypeNameMap: debug_nameQualifier = %s \n",debug_nameQualifier.str());
+        }
+#endif
+
+     return nameQualifier;
+   }
+ 
+
+SgName
+SgPointerMemberType::get_qualified_name_prefix_for_base_type() const
+   {
+  // DQ (4/18/2019): Adding support for type chains of types (including SgPointerMemberType).
+
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+  // This only applies to specific SgSupport IR nodes:
+  //    SgVarRefExp
+  //    SgFunctionRefExp
+  //    SgMemberFunctionRefExp
+
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+  // printf ("In SgPointerMemberType::get_qualified_name_prefix(): search globalQualifiedNameMapForNames: this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgPointerMemberType::get_qualified_name_prefix(): search globalQualifiedNameMapForTypes: this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+  // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgPointerMemberType*>(this));
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgPointerMemberType*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+  // if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+        {
+          nameQualifier = i->second;
+
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+          printf ("In SgPointerMemberType::get_qualified_name_prefix(): Found a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
+#endif
+        }
+       else
+        {
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+          printf ("In SgPointerMemberType::get_qualified_name_prefix(): Could NOT find a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
+#endif
+        }
+
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+     printf ("nameQualifier for SgType = %p = %p = %s = %s \n",this,const_cast<SgType*>(this),class_name().c_str(),nameQualifier.str());
+#endif
+
+#if 0
+  // DQ (8/19/2013): Error checking on the globalTypeNameMap...check if there is an entry here that we might have wanted to use instead.
+     std::map<SgNode*,std::string>::iterator j = SgNode::get_globalTypeNameMap().find(const_cast<SgPointerMemberType*>(this));
+     if (j != SgNode::get_globalTypeNameMap().end())
+        {
+          SgName debug_nameQualifier = j->second;
+          printf ("In SgPointerMemberType::get_qualified_name_prefix(): Found a valid name qualification in the globalTypeNameMap: debug_nameQualifier = %s \n",debug_nameQualifier.str());
+        }
+#endif
+
+     return nameQualifier;
+   }
+ 
+
 
 SOURCE_POINTER_MEMBER_TYPE_END
 
@@ -3930,6 +4384,49 @@ $CLASSNAME::get_mangled(void) const
      return mangled_name;
    }
 SOURCE_JAVA_PARAMETER_TYPE_END
+
+
+SOURCE_JOVIAL_TABLE_TYPE_START
+SgJovialTableType::SgJovialTableType ( const SgJovialTableType & X )
+   : SgClassType(X)
+   {
+   }
+
+SgName
+SgJovialTableType::get_name() const
+   {
+     if(get_declaration())
+          return isSgClassDeclaration(get_declaration())->get_name();
+       else
+          return SgName((char *)0L);
+   }
+
+SgName
+SgJovialTableType::get_qualified_name() const
+   {
+       return this -> get_name();
+   }
+
+// DQ (8/18/2011): This function is copied from the version from SgClassType.
+SgName
+$CLASSNAME::get_mangled(void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+  // DQ (2/10/2014): We want to iterate over the list of types and output a name from the concatination of the type names.
+     SgClassDeclaration *class_declaration = isSgClassDeclaration(get_declaration() -> get_definingDeclaration());
+     ROSE_ASSERT(class_declaration);
+     SgName mangled_name = class_declaration -> get_mangled_name();
+     SgBaseClassPtrList &bases = class_declaration -> get_definition() -> get_inheritances();
+     for (size_t i = 0; i < bases.size(); i++) {
+         mangled_name += "_";
+         SgClassDeclaration *super_type = isSgBaseClass(bases[i]) -> get_base_class();
+         mangled_name += super_type -> get_mangled_name();
+     }
+
+     return mangled_name;
+   }
+SOURCE_JOVIAL_TABLE_TYPE_END
 
 
 SOURCE_TEMPLATE_TYPE_START
@@ -5173,9 +5670,11 @@ SgMemberFunctionType::post_construction_initialization()
           printf ("In SgMemberFunctionType::post_construction_initialization(): p_mfunc_specifier = %u isVolatileFunc() = %s \n",p_mfunc_specifier,isVolatileFunc() ? "true" : "false");
           printf ("In SgMemberFunctionType::post_construction_initialization(): p_mfunc_specifier = %u isRestrictFunc() = %s \n",p_mfunc_specifier,isRestrictFunc() ? "true" : "false");
 #endif
+       // DQ (1/9/2020): Adding support for reference qualification.
        // ROSE_ASSERT(partialFunctionType->isConstFunc() == true || partialFunctionType->isVolatileFunc() == true);
        // ROSE_ASSERT(isConstFunc() == true || isVolatileFunc() == true || isRestrictFunc() == true);
-          ROSE_ASSERT( (isConstFunc() == true) || (isVolatileFunc() == true) || (isRestrictFunc() == true) );
+       // ROSE_ASSERT( (isConstFunc() == true) || (isVolatileFunc() == true) || (isRestrictFunc() == true) );
+          ROSE_ASSERT( (isConstFunc() == true) || (isVolatileFunc() == true) || (isRestrictFunc() == true) || (isLvalueReferenceFunc() == true) || (isRvalueReferenceFunc() == true));
         }
    }
 
@@ -5220,6 +5719,35 @@ SgMemberFunctionType::setRestrictFunc()
 void
 SgMemberFunctionType::unsetRestrictFunc()
    { p_mfunc_specifier &= ~e_restrict; }
+
+// DQ (1/9/2020): Enabled the use of reference qualification recorded in the function type.
+// L-value reference access/set/unset member functions and member function type
+bool
+SgMemberFunctionType::isLvalueReferenceFunc() const
+   { return (p_mfunc_specifier & e_ref_qualifier_lvalue); }
+
+void
+SgMemberFunctionType::setLvalueReferenceFunc()
+   { p_mfunc_specifier |= e_ref_qualifier_lvalue; }
+
+void
+SgMemberFunctionType::unsetLvalueReferenceFunc()
+   { p_mfunc_specifier &= ~e_ref_qualifier_lvalue; }
+
+
+// DQ (1/9/2020): Enabled the use of reference qualification recorded in the function type.
+// R-value reference access/set/unset member functions and member function type
+bool
+SgMemberFunctionType::isRvalueReferenceFunc() const
+   { return (p_mfunc_specifier & e_ref_qualifier_rvalue); }
+
+void
+SgMemberFunctionType::setRvalueReferenceFunc()
+   { p_mfunc_specifier |= e_ref_qualifier_rvalue; }
+
+void
+SgMemberFunctionType::unsetRvalueReferenceFunc()
+   { p_mfunc_specifier &= ~e_ref_qualifier_rvalue; }
 
 
 
@@ -5299,6 +5827,18 @@ SgName SgMemberFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTy
         {
        // Mark as restrict
           mangled_cls_tag << "_rf";
+        }
+
+     if (mfunc_specifier & SgMemberFunctionType::e_ref_qualifier_lvalue)
+        {
+       // Mark as restrict
+          mangled_cls_tag << "_lvf";
+        }
+
+     if (mfunc_specifier & SgMemberFunctionType::e_ref_qualifier_rvalue)
+        {
+       // Mark as restrict
+          mangled_cls_tag << "_rvf";
         }
 
   // DQ (12/6/2012): Now use the static function taking extra parameters.
@@ -6154,6 +6694,76 @@ SgArrayType::get_mangled(void) const
 
 SOURCE_ARRAY_TYPE_END
 
+SOURCE_ADA_ACCESS_TYPE_START
+
+SgName
+SgAdaAccessType::get_mangled(void) const {
+    const SgType* under_type = get_base_type();
+     
+    string name("a'");
+    
+    name.append(under_type->get_mangled());
+    return SgName(name);
+}
+     
+SOURCE_ADA_ACCESS_TYPE_END
+
+SOURCE_ADA_TASK_TYPE_START
+
+SgName
+SgAdaTaskType::get_mangled(void) const {
+    string name("t'");
+    
+    name.append(get_decl()->get_task_name());
+    return SgName(name);
+}
+     
+SOURCE_ADA_TASK_TYPE_END
+
+
+SOURCE_ADA_SUBTYPE_START
+
+SgName
+SgAdaSubtype::get_mangled(void) const {
+    const SgType* under_type = get_base_type();
+    std::string   name(under_type->get_mangled());
+    
+    name += ":>";
+    name += get_constraint()->displayString();
+    return SgName(name);
+}
+     
+SOURCE_ADA_SUBTYPE_END
+
+
+SOURCE_ADA_FLOAT_TYPE_START
+
+SgName
+SgAdaFloatType::get_mangled(void) const {
+    string name("f'");
+    
+    name.append(get_digits()->unparseToString());
+    name.append("'");
+    name.append(get_range()->displayString());
+    return SgName(name);
+}
+     
+SOURCE_ADA_FLOAT_TYPE_END
+
+SOURCE_JOVIAL_BIT_TYPE_START
+SgName
+SgJovialBitType::get_mangled(void) const {
+    string name("bt");
+    if (get_size())
+       {
+          name.append("_");
+          name.append(get_size()->unparseToString());
+       }
+    return SgName(name);
+}
+SOURCE_JOVIAL_BIT_TYPE_END
+
+
 SOURCE_TYPE_ELLIPSE_TYPE_START
 SgName
 $CLASSNAME::get_mangled (void) const
@@ -6161,7 +6771,7 @@ $CLASSNAME::get_mangled (void) const
      ROSE_ASSERT(this != NULL);
      return SgName ("_E_");
    }
- SOURCE_TYPE_ELLIPSE_TYPE_END
+SOURCE_TYPE_ELLIPSE_TYPE_END
 
 
 
@@ -7340,6 +7950,27 @@ SgJavaParameterType::createType(SgClassDeclaration * cd, SgExpression* optional_
 SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETER_TYPE_END
 
 
+SOURCE_CREATE_TYPE_FOR_JOVIAL_TABLE_TYPE_START
+
+// SgClassType* SgClassType::createType(SgClassDeclaration * cd)
+// CR - why is optional_fortran_type_kind a parameter?
+SgJovialTableType*
+SgJovialTableType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
+   {
+     ROSE_ASSERT(cd != NULL);
+
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     if (! cd -> get_type()) {
+         $CLASSNAME *newType = new $CLASSNAME(cd);
+         cd -> set_type(newType);
+     }
+     return ($CLASSNAME *) cd -> get_type();
+   }
+
+SOURCE_CREATE_TYPE_FOR_JOVIAL_TABLE_TYPE_END
+
+
 SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE_START
 
 SgTemplateType*
@@ -7436,7 +8067,7 @@ SgPointerType::createType(SgType* base_type, SgExpression* optional_fortran_type
                if (handledUsingLocalTable(root_type) == false)
                   {
 #if 0
-                    printf ("Mangled type name for SgPointerType = %s (does NOT exist in type table) interting it... \n",name.str());
+                    printf ("Mangled type name for SgPointerType = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                     get_globalTypeTable()->insert_type(name,newType);
                   }
@@ -7533,7 +8164,7 @@ SgReferenceType::createType(SgType* base_type, SgExpression* optional_fortran_ty
                if (handledUsingLocalTable(root_type) == false)
                   {
 #if 0
-                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                     get_globalTypeTable()->insert_type(name,newType);
                   }
@@ -7613,7 +8244,7 @@ SgRvalueReferenceType::createType(SgType* base_type, SgExpression* optional_fort
                if (handledUsingLocalTable(root_type) == false)
                   {
 #if 0
-                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                     get_globalTypeTable()->insert_type(name,newType);
                   }
@@ -7742,7 +8373,7 @@ SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_for
                if (handledUsingLocalTable(root_type) == false)
                   {
 #if 0
-                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                     get_globalTypeTable()->insert_type(name,newType);
                   }
@@ -7842,7 +8473,7 @@ SgTypeOfType::createType(SgExpression* base_expression, SgExpression* optional_f
                if (handledUsingLocalTable(root_type) == false)
                   {
 #if DEBUG_TYPEOF_CREATETYPE_EXP
-                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                     get_globalTypeTable()->insert_type(name,newType);
                   }
@@ -7935,7 +8566,7 @@ SgTypeOfType::createType(SgType* base_type, SgExpression* optional_fortran_type_
                if (handledUsingLocalTable(root_type) == false)
                   {
 #if DEBUG_TYPEOF_CREATETYPE_TYPE
-                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                     get_globalTypeTable()->insert_type(name,newType);
                   }
@@ -8020,7 +8651,7 @@ SgArrayType::createType ( SgType* base_type, SgExpression* idx, SgExpression* op
           if (handledUsingLocalTable(root_type) == false)
              {
 #if 0
-               printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+               printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                get_globalTypeTable()->insert_type(name,returnType);
              }
@@ -8097,6 +8728,150 @@ SgArrayType::createType ( SgType* base_type, SgExpression* idx, SgExpression* op
 
 SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_END
 
+SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE_START
+
+SgAdaAccessType*
+SgAdaAccessType::createType (SgType* base_type, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgAdaAccessType  proto(base_type); // \pp not sure if stack allocation works
+  SgName           name = proto.get_mangled();
+  SgType*          ty = get_globalTypeTable()->lookup_type(name);
+  
+  if (SgAdaAccessType* unified = isSgAdaAccessType(ty))
+    return unified;
+   
+  ROSE_ASSERT(ty == NULL); 
+  SgAdaAccessType* res = new SgAdaAccessType(base_type);
+  
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+
+SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE_END
+
+SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE_START
+
+SgAdaTaskType*
+SgAdaTaskType::createType (SgDeclarationStatement* decl, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgAdaTaskType    proto(decl); // \pp not sure if stack allocation works
+  SgName           name = proto.get_mangled();
+  SgType*          ty   = get_globalTypeTable()->lookup_type(name);
+  
+  if (SgAdaTaskType* unified = isSgAdaTaskType(ty))
+    return unified;
+   
+  ROSE_ASSERT(ty == NULL); 
+  SgAdaTaskType* res = new SgAdaTaskType(decl);
+  
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+
+SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_ADA_SUBTYPE_START
+
+SgAdaSubtype*
+SgAdaSubtype::createType (SgType* base_type, SgAdaTypeConstraint* constraint, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgAdaSubtype  proto(base_type, constraint); // \pp not sure if stack allocation works
+  SgName        name = proto.get_mangled();
+  SgType*       ty = get_globalTypeTable()->lookup_type(name);
+  
+  if (SgAdaSubtype* unified = isSgAdaSubtype(ty))
+    return unified;
+   
+  ROSE_ASSERT(ty == NULL); 
+  SgAdaSubtype* res = new SgAdaSubtype(base_type, constraint);
+  
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+
+SOURCE_CREATE_TYPE_FOR_ADA_SUBTYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE_START
+
+SgAdaFloatType*
+SgAdaFloatType::createType (SgExpression* digits, SgAdaRangeConstraint* range, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgAdaFloatType   proto(digits, range); 
+  SgName           name = proto.get_mangled();
+  SgType*          ty   = get_globalTypeTable()->lookup_type(name);
+  
+  if (SgAdaFloatType* unified = isSgAdaFloatType(ty))
+    return unified;
+   
+  ROSE_ASSERT(ty == NULL); 
+  SgAdaFloatType* res = new SgAdaFloatType(digits, range);
+  
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+
+SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE_END
+
+SOURCE_CREATE_TYPE_FOR_JOVIAL_BIT_TYPE_START
+SgJovialBitType*
+SgJovialBitType::createType (SgExpression* size, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgJovialBitType  proto(size);
+  SgName           name = proto.get_mangled();
+  SgType*          ty   = get_globalTypeTable()->lookup_type(name);
+
+  if (SgJovialBitType* unified = isSgJovialBitType(ty)) {
+     return unified;
+  }
+
+  ROSE_ASSERT(ty == NULL);
+  SgJovialBitType* res = new SgJovialBitType(size);
+
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+SOURCE_CREATE_TYPE_FOR_JOVIAL_BIT_TYPE_END
+
+// CR (2/19/2020): Added SgTypedFixed (primitive type in Jovial)
+SOURCE_CREATE_TYPE_FOR_TYPE_FIXED_START
+
+SgTypeFixed*
+SgTypeFixed::createType ( SgExpression* scale, SgExpression* fraction, SgExpression* optional_fortran_type_kind )
+   {
+  // There is no size (equivalent to Fortran kind) parameter for Jovial fixed type
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     SgTypeFixed* return_type = new SgTypeFixed(scale, fraction);
+     ROSE_ASSERT(return_type != NULL);
+
+     SgName name = return_type->get_mangled();
+
+  // Only look for pointers to type in the global type table.
+     SgType* t = get_globalTypeTable()->lookup_type(name);
+     if (t == NULL)
+        {
+           get_globalTypeTable()->insert_type(name,return_type);
+        }
+       else
+        {
+       // If it is already present in the type table then delete the type (so that it will remain unique).
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+       // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+       // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+       // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
+          ROSE_ASSERT(t != return_type);
+          delete return_type;
+#endif
+          return_type = isSgTypeFixed(t);
+        }
+
+     return return_type;
+   }
+
+SOURCE_CREATE_TYPE_FOR_TYPE_FIXED_END
+
 
 SOURCE_CREATE_TYPE_FOR_STRING_TYPE_START
 
@@ -8136,7 +8911,7 @@ SgTypeString::createType ( SgExpression* lengthExpression, SgExpression* optiona
         {
        // The pointer type was not found in the type table, put it into the global type table.
 #if 0
-          printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+          printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
           get_globalTypeTable()->insert_type(name,returnType);
         }
@@ -8237,7 +9012,7 @@ SgModifierType::createType(SgType* base_type, unsigned int f, SgExpression* opti
           if (handledUsingLocalTable(root_type) == false)
              {
 #if 0
-               printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+               printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                get_globalTypeTable()->insert_type(name,newType);
              }
@@ -8320,6 +9095,9 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
           printf ("insertModifierTypeIntoTypeTable(): Mangled type name for $CLASSNAME = %s (does NOT exist in type table) \n",name.str());
           get_globalTypeTable()->insert_type(name,newType);
 #else
+       // DQ (4/15/2019): Adding pointer to member support: not using SgType::STRIP_POINTER_MEMBER_TYPE
+       // printf ("In SgModifierType::insertModifierTypeIntoTypeTable(): Adding pointer to member support: not using SgType::STRIP_POINTER_MEMBER_TYPE \n");
+
        // DQ (7/30/2018): This function can't just strip down to the bae type (past typedefs, since we need 
        // to resolve different typedefs in different classes to be different, we need to stop at typedefs.
        // This issue is important ot Cxx11_tests/test2018_134.C where a typedef is not to be shared since it 
@@ -8354,6 +9132,61 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
        else
         {
        // TV (07/13/2018): At the very least they should have the same stripped type... (it would happen if the base types have colliding mangled name)
+       // ROSE_ASSERT(t->stripType() == result->stripType());
+          if (t->stripType() != result->stripType())
+             {
+               printf ("insertModifierTypeIntoTypeTable(): result is modifier type to base_type = %p = %s name = %s \n",result->get_base_type(),result->get_base_type()->class_name().c_str(),name.str());
+               printf ("t      = %p = %s \n",t,t->class_name().c_str());
+               printf ("result = %p = %s \n",result,result->class_name().c_str());
+               SgType* t_stripped      = t->stripType();
+               SgType* result_stripped = result->stripType();
+               printf ("t_stripped           = %p = %s \n",t_stripped,t_stripped->class_name().c_str());
+               printf ("result_stripped      = %p = %s \n",result_stripped,result_stripped->class_name().c_str());
+
+               SgName t_name      = t->get_mangled();
+               SgName result_name = result->get_mangled();
+
+               printf ("t_name      = %s \n",t_name.str());
+               printf ("result_name = %s \n",result_name.str());
+
+               bool t_isTypeEquivalent          = t->isEquivalentType(result);
+               bool t_stripped_isTypeEquivalent = t_stripped->isEquivalentType(result_stripped);
+
+               printf ("t_isTypeEquivalent          = %s \n",t_isTypeEquivalent ? "true" : "false");
+               printf ("t_stripped_isTypeEquivalent = %s \n",t_stripped_isTypeEquivalent ? "true" : "false");
+
+               SgNamedType* t_namedType      = isSgNamedType(t_stripped);
+               SgNamedType* result_namedType = isSgNamedType(result_stripped);
+               if (t_namedType != NULL && result_namedType != NULL)
+                  {
+                    SgDeclarationStatement* t_declaration = isSgDeclarationStatement(t_namedType->get_declaration());
+                    ROSE_ASSERT(t_declaration != NULL);
+                    SgDeclarationStatement* result_declaration = isSgDeclarationStatement(result_namedType->get_declaration());
+                    ROSE_ASSERT(result_declaration != NULL);
+
+                    printf ("t_declaration      = %p = %s \n",t_declaration,t_declaration->class_name().c_str());
+                    printf ("result_declaration = %p = %s \n",result_declaration,result_declaration->class_name().c_str());
+
+                    printf ("t_namedType->get_name()      = %s \n",t_namedType->get_name().str());
+                    printf ("result_namedType->get_name() = %s \n",result_namedType->get_name().str());
+
+                    SgName t_stripped_name      = t_stripped->get_mangled();
+                    SgName result_stripped_name = result_stripped->get_mangled();
+
+                    printf ("t_stripped_name      = %s \n",t_stripped_name.str());
+                    printf ("result_stripped_name = %s \n",result_stripped_name.str());
+
+                    SgNonrealDecl* t_nonreal_declaration      = isSgNonrealDecl(t_declaration);
+                    SgNonrealDecl* result_nonreal_declaration = isSgNonrealDecl(result_declaration);
+
+                    if (t_nonreal_declaration != NULL && result_nonreal_declaration != NULL)
+                       {
+                         printf ("t_nonreal_declaration->get_name()      = %s \n",t_nonreal_declaration->get_name().str());
+                         printf ("result_nonreal_declaration->get_name() = %s \n",result_nonreal_declaration->get_name().str());
+                       }
+                  }
+             }
+       // DQ (12/15/2019): Comment out as a test!
           ROSE_ASSERT(t->stripType() == result->stripType());
 
        // This should be only a pointer to a SgModifierType (e.g. a pointer to a const base_type) NOT TRUE.
@@ -8365,12 +9198,12 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
 
        // If it is already present in the type table then delete the type (so that it will remain unique).
 #if 0
-           printf ("insertModifierTypeIntoTypeTable(): Mangled type name for SgModifierType = %s t = %p = %s (already exists in type table) \n",name.str(),t,t->class_name().c_str());
-           printf ("insertModifierTypeIntoTypeTable(): t = %p result = %p \n",t,result);
+          printf ("insertModifierTypeIntoTypeTable(): Mangled type name for SgModifierType = %s t = %p = %s (already exists in type table) \n",name.str(),t,t->class_name().c_str());
+          printf ("insertModifierTypeIntoTypeTable(): t = %p result = %p \n",t,result);
 #endif
 
 #if 0
-           if (t != result)
+          if (t != result)
              {
             // Never delete the input type!
             // delete result;
@@ -8379,17 +9212,16 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
                result = isSgModifierType(t);
              }
 #else
-        // DQ (7/30/2010): Because SageBuilder::buildModifierType(SgType*) can be still
-        // called by mistake, we have to handle the case of where the type in the table is
-        // not a SgModifierType.
-           if (isSgModifierType(t) != NULL)
+       // DQ (7/30/2010): Because SageBuilder::buildModifierType(SgType*) can be still
+       // called by mistake, we have to handle the case of where the type in the table is
+       // not a SgModifierType.
+          if (isSgModifierType(t) != NULL)
              {
 #if 0
                printf ("insertModifierTypeIntoTypeTable(): Reset result (the return variabel) to be the SgModifier found in the type table (t = %p) \n",t);
 #endif
                result = isSgModifierType(t);
              }
-
 #if 0
        // DQ (8/27/2010): There is no problem with t not being a SgModifierType.
             else

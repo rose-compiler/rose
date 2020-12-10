@@ -159,6 +159,7 @@ static void calculateVariableRestorationSet(const ASTtools::VarSymSet_t& syms,
   for (ASTtools::VarSymSet_t::const_reverse_iterator i = syms.rbegin ();
       i != syms.rend (); ++i)
   {
+    ROSE_ASSERT (*i != NULL); 
     SgInitializedName* i_name = (*i)->get_declaration ();
     //conservatively consider them as all live out if no liveness analysis is enabled,
     bool isLiveOut = true;
@@ -171,6 +172,15 @@ static void calculateVariableRestorationSet(const ASTtools::VarSymSet_t& syms,
     // must compare to the original init name (i_name), not the local copy (local_var_init)
     if (readOnlyVars.find(i_name)==readOnlyVars.end() && isLiveOut)   // variables not in read-only set have to be restored
       restoreVars.insert(i_name);
+  }
+
+  if (Outliner::enable_debug)
+  { 
+    cout<<"Executing calculateVariableRestorationSet()....."<<endl;
+    cout<<"Found "<<restoreVars.size()<<" symbols which must be restored in the end of the outlined function:";
+    for (std::set<SgInitializedName*> ::const_iterator iter=restoreVars.begin();iter!=restoreVars.end();iter++)
+      cout<<(*iter)->get_name().getString()<<" ";
+    cout<<endl;
   }
 }
  
@@ -201,6 +211,10 @@ static void calculateVariableUsingAddressOf(const ASTtools::VarSymSet_t& syms, c
 Outliner::Result
 Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 {
+#if 0
+  printf ("Inside of Outliner::outlineBlock() \n");
+#endif
+
   //---------step 1. Preparations-----------------------------------
   //new file, cut preprocessing information, collect variables
   // Generate a new source file for the outlined function, if requested
@@ -223,6 +237,8 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // Also collect symbols which must use pointer dereferencing if replaced during outlining
   ASTtools::VarSymSet_t syms, pdSyms;
   collectVars (s, syms);
+  for (ASTtools::VarSymSet_t::iterator it = syms.begin(); it != syms.end(); it++ )
+    ROSE_ASSERT (*it!=NULL);
 
   // prepare necessary analysis to optimize the outlining 
   //-----------------------------------------------------------------
@@ -249,12 +265,19 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
     if (Outliner::enable_debug)
     {
-      cout<<"Outliner::Transform::generateFunction() -----Found "<<readOnlyVars.size()<<" read only variables..:";
+      cout<<"Transform.cc Outliner::outlineBlock() -----Found "<<readOnlyVars.size()<<" read only variables..:";
       for (std::set<SgInitializedName*>::const_iterator iter = readOnlyVars.begin();
           iter!=readOnlyVars.end(); iter++)
         cout<<" "<<(*iter)->get_name().getString()<<" ";
       cout<<endl;
-      cout<<"Outliner::Transform::generateFunction() -----Found "<<liveOuts.size()<<" live out variables..:";
+
+      cout<<"Outliner::outlineBlock() -----Found "<<pdSyms.size()<<" varaibles to be replaced as pointer dereferencing variables..:";
+      for (ASTtools::VarSymSet_t::const_iterator iter = pdSyms.begin();
+          iter!=pdSyms.end(); iter++)
+        cout<<" "<<(*iter)->get_name().getString()<<" ";
+      cout<<endl;
+
+      cout<<"Outliner::outlineBlock() -----Found "<<liveOuts.size()<<" live out variables..:";
       for (std::set<SgInitializedName*>::const_iterator iter = liveOuts.begin();
           iter!=liveOuts.end(); iter++)
         cout<<" "<<(*iter)->get_name().getString()<<" ";
@@ -296,7 +319,16 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     calculateVariableUsingAddressOf (syms, readOnlyVars, pdSyms);
   }
 
+#if 0
+  printf ("Calling generateFunction(): func_name_str = %s \n",func_name_str.c_str());
+#endif
+
   SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, pdSyms, restoreVars, struct_decl, glob_scope);
+
+#if 0
+  printf ("DONE: Calling generateFunction(): func_name_str = %s \n",func_name_str.c_str());
+#endif
+
   ROSE_ASSERT (func != NULL);
   ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
 
@@ -305,6 +337,7 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   // Retest this...
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+
 #if 0
   printf ("After resetting the parent: func->get_definition() = %p func->get_definition()->get_body()->get_parent() = %p \n",func->get_definition(),func->get_definition()->get_body()->get_parent());
 #endif
@@ -323,32 +356,75 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // DQ (2/16/2009): Added (with Liao) the target block which the outlined function will replace.
   // Insert the function and its prototype as necessary  
   ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
-  insert (func, glob_scope, s); //Outliner::insert() 
+
+#if 0
+  printf ("Calling insert() (func = %p to global scope) \n",func);
+#endif
+
+  // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
+  // insert (func, glob_scope, s); //Outliner::insert() 
+     DeferredTransformation headerFileTransformation = insert (func, glob_scope, s); //Outliner::insert() 
+
+  // Liao 2/4/2020   
+  // Some comments and #include directives may be attached after the global scope for an otherwise empty input file.
+  // We must move them to be attached to the first prototype's before location. 
+  // Otherwise, the #include directive will show up in the end of the resulting file.
+     SgStatement* firstStmt = getFirstStatement(glob_scope);
+     SgFunctionDeclaration* first_func_decl = isSgFunctionDeclaration(firstStmt);
+     if (first_func_decl!=NULL) // we expect that the first statement is a prototype func of an outlined function.
+     {
+       AttachedPreprocessingInfoType save_buf; 
+       cutPreprocessingInfo ( glob_scope, PreprocessingInfo::after, save_buf);
+       pastePreprocessingInfo(first_func_decl, PreprocessingInfo::before, save_buf);
+     }
+
+#if 0
+     printf ("DONE: Calling insert() (func = %p to global scope) \n",func);
+#endif
+
   ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
   //
   // Retest this...
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+
+#if 0
+  printf ("Calling NodeQuery::querySubTree() \n");
+#endif
 
   // reproduce the lost OpenMP pragma attached to a outlining target loop 
   // The assumption is that OmpAttribute is attached to both the pragma and the affected loop
   // in the frontend already.
   // Liao, 3/12/2009
   Rose_STL_Container <SgNode*>  loops = NodeQuery::querySubTree(func,V_SgForStatement);
+
+#if 0
+  printf ("DONE: Calling NodeQuery::querySubTree() \n");
+#endif
+
   if (loops.size()>0)
   {
     Rose_STL_Container <SgNode*>::iterator liter =loops.begin();
-    SgForStatement* firstloop = isSgForStatement(*liter); 
+    SgForStatement* firstloop = isSgForStatement(*liter);
+#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
     OmpSupport::generatePragmaFromOmpAttribute(firstloop);
+#endif
   }
 
   //-----------Step 4. Replace the outlining target with a function call-------------
+
+#if 0
+  printf ("Replace the outlining target with a function call \n");
+#endif
 
   // Prepare the parameter of the function call,
   // Generate packing statements, insert them into the beginning of the target s
   std::string wrapper_name;
   // two ways to pack parameters: an array of pointers v.s. A structure
+  int sym_count = syms.size(); // using symbol count to decide if we need to pass parameters at all
   if (useParameterWrapper || useStructureWrapper)
-    wrapper_name= generatePackingStatements(s,syms,pdSyms, struct_decl );
+    {
+      wrapper_name= generatePackingStatements(s,syms,pdSyms, struct_decl );
+    }
 
   // Generate a call to the outlined function.
   SgScopeStatement * p_scope = s->get_scope();
@@ -357,7 +433,12 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // Retest this...
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
+#if 0
+  printf ("In outlineBlock(): use_dlopen = %s \n",use_dlopen ? "true" : "false");
+#endif
+
   SgStatement *func_call = NULL;
+  SgVarRefExp* wrapper_exp = NULL; 
   if (use_dlopen) 
     // if dlopen() is used, insert a lib call to find the function pointer from a shared lib file
     // e.g. OUT__2__8072__p = findFunctionUsingDlopen("OUT__2__8072__", "OUT__2__8072__.so");
@@ -377,7 +458,8 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     else 
         lib_name = output_path+"/"+func_name_str+".so"; 
     // the new option copy_origFile will ask the outliner to generate rose_input_lib.c/cxx and compile to a .so later
-    
+//e.g.
+// OUT_1_test_26_2020_0p = findFunctionUsingDlopen("OUT_1_test_26_2020_0","test_26_2020/rose_test_26_2020_lib.so");  
     SgExprListExp* arg_list = buildExprListExp(buildStringVal(func_name_str), buildStringVal(lib_name)); 
     SgFunctionCallExp* dlopen_call = buildFunctionCallExp(SgName(FIND_FUNCP_DLOPEN),ftype_return,arg_list, p_scope);
     SgExprStatement * assign_stmt = buildAssignStatement(buildVarRefExp(func_name_str+"p",p_scope),dlopen_call);
@@ -385,21 +467,75 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     // Generate a function call using the func pointer
     // e.g. (*OUT__2__8888__p)(__out_argv2__1527__);
     SgExprListExp* exp_list_exp = SageBuilder::buildExprListExp();
-    appendExpression(exp_list_exp, buildVarRefExp(wrapper_name,p_scope));
+    if (sym_count>0) // passing wrapper parameter only if non-zero variables are used in the outlined function
+    {
+      wrapper_exp= buildVarRefExp(wrapper_name,p_scope);
+      // Check if the reference is associated to a found symbol or not, by checking its type
+      SgVariableSymbol* sym = wrapper_exp->get_symbol();
+      ROSE_ASSERT (sym != NULL);
+      SgType * stype = sym->get_declaration()->get_type();
+      if  (stype == SgTypeUnknown::createType())
+      {
+        printf("Error: outliner builds a reference to a wrapper variable which cannot be found in AST!\n");
+        ROSE_ASSERT (stype!= SgTypeUnknown::createType());
+      }
+
+      appendExpression(exp_list_exp, wrapper_exp);
+    }
+    else
+      appendExpression(exp_list_exp, buildIntVal(0)); // NULL pointer as parameter
     func_call = buildFunctionCallStmt(buildPointerDerefExp(buildVarRefExp(func_name_str+"p",p_scope)), exp_list_exp);   
   }
   else  // regular function call for other cases
-    func_call = generateCall (func, syms, readOnlyVars, wrapper_name,p_scope);
+    {
+#if 0
+      printf ("use_dlopen == false: calling generateCall() \n");
+#endif
+      func_call = generateCall (func, syms, readOnlyVars, wrapper_name,p_scope);
+#if 0
+      printf ("DONE: use_dlopen == false: calling generateCall() \n");
+#endif
+    }
 
   ROSE_ASSERT (func_call != NULL);
 
   // Retest this...
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
+#if 0
+  printf ("Calling SageInterface::replaceStatement \n");
+#endif
+
   // What is this doing (what happens to "s")
   //  cout<<"Debug before replacement(s, func_call), s is\n "<< s<<endl; 
   //     SageInterface::insertStatementAfter(s,func_call);
   SageInterface::replaceStatement(s,func_call);
+
+#if 0
+  printf ("DONE: Calling SageInterface::replaceStatement \n");
+#endif
+
+#if 0
+// DQ (11/9/2019): When used in conjunction with header file unparsing we need to set the physical file id on entirety of the subtree being inserted.
+   int physical_file_id = func->get_startOfConstruct()->get_physical_file_id();
+
+#if 1
+   printf ("physical_file_id = %d \n",physical_file_id);
+#endif
+
+   string physical_filename_from_id = Sg_File_Info::getFilenameFromID(physical_file_id);
+
+#if 1
+   printf ("physical_filename_from_id = %d \n",physical_filename_from_id);
+#endif
+
+   SageBuilder::fixupSourcePositionFileSpecification(func_call,physical_filename_from_id);
+#endif
+
+#if 0
+  printf ("Exiting as a test! \n");
+  ROSE_ASSERT(false);
+#endif
 
   ROSE_ASSERT(s != NULL);
   ROSE_ASSERT(s->get_statements().empty() == true);
@@ -414,17 +550,25 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   SageInterface::fixVariableReferences(p_scope);
 
+  //ROSE_ASSERT (wrapper_exp->get_symbol()->get_declaration() != NULL);
   //-----------handle dependent declarations, headers if new file is generated-------------
   if (new_file)
   {
-    SageInterface::fixVariableReferences(new_file);
+    // Liao, 2019/8/14. We disable unused symbol clean up for now. 
+    // Searching for all symbols then check if they are used within a new file. 
+    // This will wrongfully delete symbols used in the original files. 
+    SageInterface::fixVariableReferences(new_file, false);
     // SgProject * project2= new_file->get_project();
     // AstTests::runAllTests(project2);// turn it off for now
     // project2->unparse();
   }
 
+  if (wrapper_exp)
+    ROSE_ASSERT (wrapper_exp->get_symbol()->get_declaration() != NULL);
+
   // Retest this...
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+
 #if 0
   printf ("After resetting the parent: func->get_definition() = %p func->get_definition()->get_body()->get_parent() = %p \n",func->get_definition(),func->get_definition()->get_body()->get_parent());
 #endif
@@ -455,6 +599,7 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
     ROSE_ASSERT(TransformationSupport::getSourceFile(func) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
     ROSE_ASSERT(TransformationSupport::getSourceFile(func->get_scope()) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
+
 #if 0
     printf ("******************************************************************** \n");
     printf ("Now calling SageInterface::appendStatementWithDependentDeclaration() \n");
@@ -469,7 +614,17 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 #endif
   }
 
+#if 0
+  // DQ (2/7/2020): Added debugging support.
+     printf ("In Outliner::outlineBlock(): Generate the dot output of the SAGE III AST \n");
+     SgProject* project = SageInterface::getProject();
+  // generateDOT ( *project );
+     generateDOTforMultipleFile ( *project );
+     printf ("DONE: In Outliner::outlineBlock(): Generate the dot output of the SAGE III AST \n");
+#endif
+
 #if 1
+  // DQ (2/7/2020): Disable call to AstPostProcessing so that I can call it in tool_G.C as part of debugging).
   // DQ (2/26/2009): Moved (here) to as late as possible so that all transformations are complete before running AstPostProcessing()
 
   // This fails for moreTest3.cpp
@@ -498,7 +653,15 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 #endif
   }
 
-  return Result (func, func_call, new_file);
+#if 0
+  // DQ (8/7/2019): Tracing down how to get function prototype information into the return result of this function.
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+  // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
+  // return Result (func, func_call, new_file);
+     return Result (func, func_call, new_file, headerFileTransformation);
 }
 
 /**
@@ -603,7 +766,7 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
   int var_count = syms.size();
   int counter=0;
   string wrapper_name= generateFuncArgName(target); //"__out_argv";
-
+// We still need to generate the declaration for the wrapper variable.
   if (var_count==0) 
     return wrapper_name;
   SgScopeStatement* cur_scope = target->get_scope();
@@ -698,6 +861,13 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
 SgSourceFile* 
 Outliner::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
 {
+#ifdef __linux__
+  if (enable_debug)  
+  {
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
+  }
+#endif
+ 
   SgSourceFile* new_file = NULL;
   SgProject * project = getEnclosingNode<SgProject> (s);
   ROSE_ASSERT(project != NULL);
@@ -718,8 +888,17 @@ Outliner::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
   }
   // remove pre-existing file with the same name
   remove (new_file_name.c_str());
+
+  if (enable_debug)
+    printf ("In Outliner::generateNewSourceFile(): Calling buildFile(): new_file_name = %s \n",new_file_name.c_str());
+
   // par1: input file, par 2: output file name, par 3: the project to attach the new file
   new_file = isSgSourceFile(buildFile(new_file_name, new_file_name,project));
+
+
+  if (enable_debug)
+    printf ("DONE: In Outliner::generateNewSourceFile(): Calling buildFile(): new_file_name = %s \n",new_file_name.c_str());
+
   //new_file = isSgSourceFile(buildFile(new_file_name, new_file_name));
   ROSE_ASSERT(new_file != NULL);
   return new_file;
@@ -731,6 +910,12 @@ Outliner::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
  * 
  */
 std::string Outliner::generateLibSourceFileName(SgBasicBlock* target) {
+#ifdef __linux__
+  if (enable_debug)  
+  {
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
+  }
+#endif
     std::string lib_file_name;
  
     // s could be transformation generated, so use the root SgFile for file name
@@ -747,16 +932,25 @@ std::string Outliner::generateLibSourceFileName(SgBasicBlock* target) {
         lib_file_name = output_path + "/" + lib_file_name;
     }
     
+    if (enable_debug)  
+    {
+      cout<<"lib_file_name="<< lib_file_name <<endl;
+    }
     return lib_file_name; 
 }
-    
+
 /*!\brief Obtain the file handle to the separated source file storing outlined functions.  
  * This file will be compiled to .so dynamically loadable library.
  * target is the input code block for outlining. It provides SgProject and input file name info. 
  * the lib source file's name convention is rose_input_lib.[c|cxx] by default. Or overrided by file_name.  
  */
 SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
-
+#ifdef __linux__
+  if (enable_debug)  
+  {
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
+  }
+#endif
     SgSourceFile* new_file = NULL;
     SgProject * project = getEnclosingNode<SgProject> (target);
     ROSE_ASSERT(project != NULL);
@@ -766,7 +960,15 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
     std::string input_file_name = input_file->get_file_info()->get_filenameString();
 
     std::string new_file_name =   generateLibSourceFileName (target);
-    
+
+    if (enable_debug) 
+      printf ("Before strip path: new_file_name = %s \n",new_file_name.c_str());
+
+    new_file_name = Rose::utility_stripPathFromFileName(new_file_name);
+
+    if (enable_debug) 
+      printf ("After strip path: new_file_name = %s \n",new_file_name.c_str());
+
     // Search if the lib file already exists. 
     SgFilePtrList file_list = project->get_files();
     SgFilePtrList::iterator iter;
@@ -775,155 +977,102 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
     {   
       SgFile* cur_file = *iter;
       SgSourceFile * sfile = isSgSourceFile(cur_file);
+
+#if 0
+      printf ("In Outliner::getLibSourceFile(): sfile = %p = %s name = %s \n",sfile,sfile->class_name().c_str(),sfile->getFileName().c_str());
+#endif
+
       if (sfile!=NULL)
       {
           string cur_file_name =sfile->get_file_info()->get_filenameString();
-//          cout<<"\t Debug: compare cur vs. new file name:"<<cur_file_name <<" vs. " << new_file_name <<endl;
+       // cout < <"\t Debug: compare cur vs. new file name:"<<cur_file_name <<" vs. " << new_file_name <<endl;
+
+#if 0
+          printf ("cur_file_name = %s new_file_name = %s \n",cur_file_name.c_str(),new_file_name.c_str());
+#endif
+
           if (cur_file_name == new_file_name)
           {
+#if 0
+            printf ("Found file to use for outlining \n");
+#endif
               new_file = sfile;
               break;
           }
       }        
     } // end for SgFile
+
+    if (enable_debug) 
+      printf ("In Outliner::getLibSourceFile(): new_file = %p \n",new_file);
     
     if (new_file == NULL)
     {
+      if (enable_debug)
+        printf ("In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",  input_file_name.c_str());
+
       // par1: input file, par 2: output file name, par 3: the project to attach the new file
         // to simplify the lib file generation, we copy entire original source file to it, then later append outlined functions
       new_file = isSgSourceFile(buildSourceFile(input_file_name, new_file_name, project));
+
+#if 0
+      printf ("DONE: In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
+      printf (" --- new_file_name = %s \n",new_file_name.c_str());
+#endif
+
+      if (enable_debug)
+      {
+        printf ("DONE: In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
+        //generateDOTforMultipleFile(*project);   // this is too large
+      //  string filename = SageInterface::generateProjectName(project);
+       // generateWholeGraphOfAST(filename+".WholeAST");
+      }
+
       // buildFile() will set filename to be input file name by default. 
       // we have to rename the input file to be output file name. This is used to avoid duplicated creation later on
       new_file->get_file_info()->set_filenameString(new_file_name);
 
-#if 0
-   // DQ (3/28/2019): The conversion of functions with definitions to function prrototypes must preserve the 
+#if 1
+   // DQ (3/28/2019): The conversion of functions with definitions to function prototypes must preserve the 
    // associated comments and CPP directives (else the #includes will be missing and types will not be defined.
    // This is an issue with the astOutliner test code jacobi.c.
    // DQ (3/20/2019): Need to eliminate possible undefined symbols in this file when it will be compiled into 
    // a dynamic shared library.  Any undefined symbols will cause an error when loading the library using dlopen().
-      convertFunctionDefinitionsToFunctionPrototypes(new_file);
+   // convertFunctionDefinitionsToFunctionPrototypes(new_file);
+      //SageInterface::convertFunctionDefinitionsToFunctionPrototypes(new_file);
+      //Liao, 2020/8/11 We only convert non-static functions into prototypes. 
+      //Static function definitions should be preserved or undefined function during making of shared lib.
+      std::vector<SgFunctionDeclaration*> functionList = generateFunctionDefinitionsList(new_file);
+
+      std::vector<SgFunctionDeclaration*>::iterator i = functionList.begin();
+      while (i != functionList.end())
+      { 
+        SgFunctionDeclaration* functionDeclaration = *i;
+        ROSE_ASSERT(functionDeclaration != NULL);
+        // Transform into prototype.
+        if (!isStatic(functionDeclaration))
+          replaceDefiningFunctionDeclarationWithFunctionPrototype(functionDeclaration);
+        i++;
+      }
 #endif
+
+#if 0
+      printf ("Exiting as a test! \n");
+      ROSE_ASSERT(false);
+#endif
+
     }
+
+#ifdef __linux__
+    if (enable_debug)  
+    {
+      cout<<"Exiting "<< __PRETTY_FUNCTION__ <<endl;
+    }
+#endif
+
     //new_file = isSgSourceFile(buildFile(new_file_name, new_file_name));
     ROSE_ASSERT(new_file != NULL);
     return new_file;
 }
-
-
-void Outliner::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node) 
-   {
-  // DQ (3/20/2019): This function operates on the new file used to support outlined function definitions.
-  // We use a copy of the file where the code will be outlined FROM, so that if there are references to
-  // declarations in the outlined code we can support the outpiled code with those references.  This
-  // approach has the added advantage of also supporting the same include file tree as the original 
-  // file where the outlined code is being taken from.
-
-     class TransformFunctionDefinitionsTraversal : public AstSimpleProcessing
-        {
-          public:
-               std::vector<SgFunctionDeclaration*> functionList;
-               SgSourceFile* sourceFile;
-               int sourceFileId;
-               string filenameWithPath;
-
-          public:
-               TransformFunctionDefinitionsTraversal(): sourceFile(NULL), sourceFileId(-99) {}
-
-               void visit (SgNode* node)
-                  {
-#if 0
-                    printf ("In visit(): node = %p = %s \n",node,node->class_name().c_str());
-#endif
-                    SgSourceFile* temp_sourceFile = isSgSourceFile(node);
-                    if (temp_sourceFile != NULL)
-                       {
-                         sourceFile       = temp_sourceFile;
-                         sourceFileId     = sourceFile->get_file_info()->get_file_id();
-
-                      // The file_id is not sufficnet, not clear why, but the filenames match.
-                         filenameWithPath = sourceFile->get_sourceFileNameWithPath();
-
-                         printf ("Found source file: id = %d name = %s \n",sourceFileId,sourceFile->get_sourceFileNameWithPath().c_str());
-
-                       }
-
-                    SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
-                    if (functionDeclaration != NULL)
-                       {
-                      // This should have been set already.
-                         ROSE_ASSERT(sourceFile != NULL);
-
-                         SgFunctionDeclaration* definingFunctionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_definingDeclaration());
-                         if (functionDeclaration == definingFunctionDeclaration)
-                            {
-#if 1
-                              printf ("Found a defining function declaration: functionDeclaration = %p = %s name = %s \n",
-                                   functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
-
-                              printf (" --- recorded source file: id = %d name = %s \n",sourceFileId,sourceFile->get_sourceFileNameWithPath().c_str());
-                              printf (" --- source file: file_info: id = %d name = %s \n",
-                                   functionDeclaration->get_file_info()->get_file_id(),functionDeclaration->get_file_info()->get_filenameString().c_str());
-#endif
-                           // DQ (3/20/2019): The file_id is not sufficent, using the filename with path to do string equality.
-                           // bool isInSourceFile = (sourceFileId == functionDeclaration->get_file_info()->get_file_id());
-                              bool isInSourceFile = (filenameWithPath == functionDeclaration->get_file_info()->get_filenameString());
-#if 1
-                              printf (" --- isInSourceFile = %s \n",isInSourceFile ? "true" : "false");
-#endif
-                           // Remove the defining declaration as a test.
-                              SgScopeStatement* functionDeclarationScope = isSgScopeStatement(functionDeclaration->get_parent());
-                              if (isInSourceFile == true && functionDeclarationScope != NULL)
-                                 {
-#if 1
-                                   printf (" --- Found a defining function declaration: functionDeclarationScope = %p = %s \n",
-                                        functionDeclarationScope,functionDeclarationScope->class_name().c_str());
-#endif
-                                // functionDeclarationScope->removeStatement(functionDeclaration);
-                                // removeStatement(functionDeclaration);
-                                   functionList.push_back(functionDeclaration);
-                                 }
-                            }
-                       }
-                  }
-        };
-
-  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
-     TransformFunctionDefinitionsTraversal traversal;
-     traversal.traverse(node, preorder);
-
-     std::vector<SgFunctionDeclaration*> & functionList = traversal.functionList;
-
-#if 1
-     printf ("In convertFunctionDefinitionsToFunctionPrototypes(): functionList.size() = %zu \n",functionList.size());
-#endif
-
-     std::vector<SgFunctionDeclaration*>::iterator i = functionList.begin();
-     while (i != functionList.end())
-        {
-          SgFunctionDeclaration* functionDeclaration = *i;
-          ROSE_ASSERT(functionDeclaration != NULL);
-
-          SgFunctionDeclaration* nondefiningFunctionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_firstNondefiningDeclaration());
-          ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
-
-#if 1
-          printf (" --- Removing function declaration: functionDeclaration = %p = %s name = %s \n",
-               functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
-#endif
-       // Likely we should build a new nondefining function declaration instead of reusing the existing non-defining declaration.
-       // removeStatement(functionDeclaration);
-          replaceStatement(functionDeclaration,nondefiningFunctionDeclaration);
-
-          i++;
-        }
-
-#if 0
-     printf ("In convertFunctionDefinitionsToFunctionPrototypes(): exiting as a test! \n");
-     ROSE_ASSERT(false);
-#endif
-   }
-
 
 
 // eof

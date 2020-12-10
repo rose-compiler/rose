@@ -1,6 +1,7 @@
 
 #include "broadway.h"
 #include <assert.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 using namespace std;
 
@@ -17,20 +18,20 @@ pointerRuleAnn::~pointerRuleAnn()
   structure_list_p p;
 
   delete _condition;
-  
+
   delete _effects_tree;
 
   for (p = _effects.begin();
        p != _effects.end();
        ++p)
     delete (*p);
-  
+
 }
 
 pointerRuleAnn::pointerRuleAnn(const pointerRuleAnn & X)
    : Ann(X)
    {
-  // DQ (9/13/2011): This copy constructor was built because static analysis tools 
+  // DQ (9/13/2011): This copy constructor was built because static analysis tools
   // suggested it would avoid a possible double free error.  I agree.
      printf ("Error: it is an error to call this copy constructor. \n");
      assert(false);
@@ -39,7 +40,7 @@ pointerRuleAnn::pointerRuleAnn(const pointerRuleAnn & X)
 
 #ifdef __PROCLOCATION
 void pointerRuleAnn::test(procLocation * where,
-			  propertyAnalyzer * property_analyzer)
+                          propertyAnalyzer * property_analyzer)
 {
   if (Annotations::Verbose_properties) {
     cout << "  + Test: ";
@@ -63,10 +64,10 @@ void pointerRuleAnn::test(procLocation * where,
       cout << "false" << endl;
   }
 }
-#endif 
+#endif
 
 void pointerRuleAnn::lookup(procedureAnn * procedure,
-			    Annotations * annotations)
+                            Annotations * annotations)
 {
   propertyAnn * no_property = 0;
 

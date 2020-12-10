@@ -1,5 +1,6 @@
 
 #include "broadway.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 using namespace std;
 
@@ -18,7 +19,7 @@ ruleAnn::ruleAnn(exprAnn * condition, exprann_list * effects, int line)
 #ifdef __PROCLOCATION
 
 void ruleAnn::test(procLocation * where,
-		   propertyAnalyzer * property_analyzer)
+                   propertyAnalyzer * property_analyzer)
 {
   if (Annotations::Verbose_properties) {
     cout << "  + Test: ";
@@ -58,8 +59,8 @@ void ruleAnn::compute_next(procLocation * where)
  * the analysis problem has not converged. */
 
 void ruleAnn::apply_next(procLocation * where,
-			 propertyAnalyzer * property_analyzer,
-			 memoryblock_set & changes)
+                         propertyAnalyzer * property_analyzer,
+                         memoryblock_set & changes)
 {
   for (exprann_list_p p = _effects.begin();
        p != _effects.end();
@@ -70,8 +71,8 @@ void ruleAnn::apply_next(procLocation * where,
 #endif /* __PROCLOCATION */
 
 void ruleAnn::lookup(propertyAnn * default_property,
-		     procedureAnn * procedure,
-		     Annotations * annotations)
+                     procedureAnn * procedure,
+                     Annotations * annotations)
 {
   // -- Call lookup on the condition expression
 

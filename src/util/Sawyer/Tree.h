@@ -49,7 +49,7 @@ namespace Sawyer {
  *  class MyNode: public Tree::Node {
  *  public:
  *      // Define a tree edge called "first" that points to a user-defined type
- *      // "First" (define elsewhere) that derives from Tree::Node.
+ *      // "First" (defined elsewhere) that derives from Tree::Node.
  *      Tree::ChildEdge<First> first;
  *
  *      // Define a tree edge called "second" that points to another "MyNode" node.
@@ -60,7 +60,7 @@ namespace Sawyer {
  *
  *      // Initialize the nodes during construction. The first will point to a
  *      // specified node, and the other two will be initialized to null.
- *      explicit MyNode(const std::shared_ptr<First> first)
+ *      explicit MyNode(const std::shared_ptr<First> &first)
  *          : first(this, first), second(this), third(this) {}
  *  }
  * @endcode
@@ -186,8 +186,8 @@ public:
  *  It is also possible to give non-null values to the child ends of the edges during construction:
  *
  * @code
- *  Parent::Parent(const std::shared_ptr<ChildType1> &c1, const std::shared_ptr<ChildType2> &c2)
- *      : first(this, c1), second(this, c2) {}
+ *  Parent::Parent(const std::shared_ptr<ChildType1> &c1)
+ *      : first(this, c1), second(this, std::make_shared<ChildType2>()) {}
  * @endcode
  *
  *  The @ref ChildEdge members are used as if they were pointers:
@@ -431,7 +431,7 @@ private:
     // edge data members, it is illegal to attach a node to a tree in such a way that the structure would no longer be a tree,
     // and in such cases no changes are made an an exception is thrown.
     void setAt(size_t idx, const NodePtr &newChild);
-    void setAt(size_t idx, nullptr_t) {
+    void setAt(size_t idx, std::nullptr_t) {
         setAt(idx, NodePtr());
     }
 
@@ -781,7 +781,7 @@ public:
     void setAt(size_t i, const std::shared_ptr<T> &child) {
         children.setAt(i, child);
     }
-    void setAt(size_t i, nullptr_t) {
+    void setAt(size_t i, std::nullptr_t) {
         children.setAt(i, nullptr);
     }
     /** @} */
@@ -828,20 +828,20 @@ template<class T, class U> bool operator> (const ChildEdge<T> &lhs, const ChildE
 template<class T, class U> bool operator>=(const ChildEdge<T> &lhs, const ChildEdge<U> &rhs) noexcept { return lhs.shared() >= rhs.shared(); }
 
 // ChildEdge<T> and nullptr
-template<class T> bool operator==(const ChildEdge<T> &lhs, nullptr_t) noexcept { return lhs.shared() == nullptr; }
-template<class T> bool operator!=(const ChildEdge<T> &lhs, nullptr_t) noexcept { return lhs.shared() != nullptr; }
-template<class T> bool operator< (const ChildEdge<T> &lhs, nullptr_t) noexcept { return lhs.shared() <  nullptr; }
-template<class T> bool operator<=(const ChildEdge<T> &lhs, nullptr_t) noexcept { return lhs.shared() <= nullptr; }
-template<class T> bool operator> (const ChildEdge<T> &lhs, nullptr_t) noexcept { return lhs.shared() >  nullptr; }
-template<class T> bool operator>=(const ChildEdge<T> &lhs, nullptr_t) noexcept { return lhs.shared() >= nullptr; }
+template<class T> bool operator==(const ChildEdge<T> &lhs, std::nullptr_t) noexcept { return lhs.shared() == nullptr; }
+template<class T> bool operator!=(const ChildEdge<T> &lhs, std::nullptr_t) noexcept { return lhs.shared() != nullptr; }
+template<class T> bool operator< (const ChildEdge<T> &lhs, std::nullptr_t) noexcept { return lhs.shared() <  nullptr; }
+template<class T> bool operator<=(const ChildEdge<T> &lhs, std::nullptr_t) noexcept { return lhs.shared() <= nullptr; }
+template<class T> bool operator> (const ChildEdge<T> &lhs, std::nullptr_t) noexcept { return lhs.shared() >  nullptr; }
+template<class T> bool operator>=(const ChildEdge<T> &lhs, std::nullptr_t) noexcept { return lhs.shared() >= nullptr; }
 
 // nullptr and ChildEdge<T>
-template<class T> bool operator==(nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr == rhs.shared(); }
-template<class T> bool operator!=(nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr != rhs.shared(); }
-template<class T> bool operator< (nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr <  rhs.shared(); }
-template<class T> bool operator<=(nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr <= rhs.shared(); }
-template<class T> bool operator> (nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr >  rhs.shared(); }
-template<class T> bool operator>=(nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr >= rhs.shared(); }
+template<class T> bool operator==(std::nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr == rhs.shared(); }
+template<class T> bool operator!=(std::nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr != rhs.shared(); }
+template<class T> bool operator< (std::nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr <  rhs.shared(); }
+template<class T> bool operator<=(std::nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr <= rhs.shared(); }
+template<class T> bool operator> (std::nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr >  rhs.shared(); }
+template<class T> bool operator>=(std::nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr >= rhs.shared(); }
 
 // ChildEdge<T> and std::shared_ptr<U>
 template<class T, class U> bool operator==(const ChildEdge<T> &lhs, const std::shared_ptr<U> &rhs) noexcept { return lhs.shared() == rhs; }
@@ -860,20 +860,20 @@ template<class T, class U> bool operator> (const std::shared_ptr<T> &lhs, const 
 template<class T, class U> bool operator>=(const std::shared_ptr<T> &lhs, const ChildEdge<U> &rhs) noexcept { return lhs >= rhs.shared(); }
 
 // ParentEdge and nullptr
-inline bool operator==(const ParentEdge &lhs, nullptr_t) noexcept { return lhs.shared() == nullptr; }
-inline bool operator!=(const ParentEdge &lhs, nullptr_t) noexcept { return lhs.shared() != nullptr; }
-inline bool operator< (const ParentEdge &lhs, nullptr_t) noexcept { return lhs.shared() <  nullptr; }
-inline bool operator<=(const ParentEdge &lhs, nullptr_t) noexcept { return lhs.shared() <= nullptr; }
-inline bool operator> (const ParentEdge &lhs, nullptr_t) noexcept { return lhs.shared() >  nullptr; }
-inline bool operator>=(const ParentEdge &lhs, nullptr_t) noexcept { return lhs.shared() >= nullptr; }
+inline bool operator==(const ParentEdge &lhs, std::nullptr_t) noexcept { return lhs.shared() == nullptr; }
+inline bool operator!=(const ParentEdge &lhs, std::nullptr_t) noexcept { return lhs.shared() != nullptr; }
+inline bool operator< (const ParentEdge &lhs, std::nullptr_t) noexcept { return lhs.shared() <  nullptr; }
+inline bool operator<=(const ParentEdge &lhs, std::nullptr_t) noexcept { return lhs.shared() <= nullptr; }
+inline bool operator> (const ParentEdge &lhs, std::nullptr_t) noexcept { return lhs.shared() >  nullptr; }
+inline bool operator>=(const ParentEdge &lhs, std::nullptr_t) noexcept { return lhs.shared() >= nullptr; }
 
 // nullptr and ParentEdge
-inline bool operator==(nullptr_t, const ParentEdge &rhs) noexcept { return nullptr == rhs.shared(); }
-inline bool operator!=(nullptr_t, const ParentEdge &rhs) noexcept { return nullptr != rhs.shared(); }
-inline bool operator< (nullptr_t, const ParentEdge &rhs) noexcept { return nullptr <  rhs.shared(); }
-inline bool operator<=(nullptr_t, const ParentEdge &rhs) noexcept { return nullptr <= rhs.shared(); }
-inline bool operator> (nullptr_t, const ParentEdge &rhs) noexcept { return nullptr >  rhs.shared(); }
-inline bool operator>=(nullptr_t, const ParentEdge &rhs) noexcept { return nullptr >= rhs.shared(); }
+inline bool operator==(std::nullptr_t, const ParentEdge &rhs) noexcept { return nullptr == rhs.shared(); }
+inline bool operator!=(std::nullptr_t, const ParentEdge &rhs) noexcept { return nullptr != rhs.shared(); }
+inline bool operator< (std::nullptr_t, const ParentEdge &rhs) noexcept { return nullptr <  rhs.shared(); }
+inline bool operator<=(std::nullptr_t, const ParentEdge &rhs) noexcept { return nullptr <= rhs.shared(); }
+inline bool operator> (std::nullptr_t, const ParentEdge &rhs) noexcept { return nullptr >  rhs.shared(); }
+inline bool operator>=(std::nullptr_t, const ParentEdge &rhs) noexcept { return nullptr >= rhs.shared(); }
 
 // ParentEdge and std::shared_ptr<T>
 template<class T> bool operator==(const ParentEdge &lhs, const std::shared_ptr<T> &rhs) noexcept { return lhs.shared() == rhs; }

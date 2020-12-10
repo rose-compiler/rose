@@ -21,5 +21,5 @@ sub json_escape {
 print("{",
       "\"directory\":\"", json_escape(Cwd::cwd()), "\",",
       "\"command\":\"", json_escape($command), "\",",
-      "\"file:\":\"", json_escape($file), "\"",
+      "\"file\":\"", json_escape($file), "\"",
       "}");

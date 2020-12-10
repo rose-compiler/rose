@@ -1,5 +1,6 @@
 
 #include "OperatorAnnotation.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -35,7 +36,7 @@ get_modify( AstInterface& fa, const AstNodePtr& fc,
   AstInterface::AstNodeList args;
   OperatorSideEffectDescriptor mod;
   if (modInfo.known_operator( fa, fc, &args, &mod)) {
-    if (collect != 0) 
+    if (collect != 0)
       mod.get_side_effect(fa, args, *collect);
     return true;
   }
@@ -48,22 +49,22 @@ get_read( AstInterface& fa, const AstNodePtr& fc,
 {
   AstInterface::AstNodeList args;
   OperatorSideEffectDescriptor read;
-  if  (readInfo.known_operator( fa, fc, &args, &read)) { 
-       if (collect != 0) 
+  if  (readInfo.known_operator( fa, fc, &args, &read)) {
+       if (collect != 0)
          read.get_side_effect(fa, args, *collect);
        return true;
    }
   return false;
 }
 
-static bool 
-AliasAnnotAnal(AstInterface& fa, 
+static bool
+AliasAnnotAnal(AstInterface& fa,
                OperatorAnnotCollection <OperatorAliasDescriptor>& aliasInfo,
-               const AstNodePtr& fc, const AstNodePtr& result, 
+               const AstNodePtr& fc, const AstNodePtr& result,
                CollectObject< pair<AstNodePtr, int> >& collectalias)
 {
   AstInterface::AstNodeList args;
-  OperatorAliasDescriptor desc; 
+  OperatorAliasDescriptor desc;
   if (!aliasInfo.known_operator( fa, fc, &args, &desc, false) )
     return false;
   ReplaceParams paramMap( desc.get_param_decl().get_params(), args);
@@ -72,7 +73,7 @@ AliasAnnotAnal(AstInterface& fa,
   for (OperatorAliasDescriptor::const_iterator p1 = desc.begin();
        p1 != desc.end(); ++p1, ++index) {
     const NameGroup& cur = *p1;
-    for (NameGroup::const_iterator p2 = cur.begin(); 
+    for (NameGroup::const_iterator p2 = cur.begin();
          p2 != cur.end(); ++p2) {
       string varname = *p2;
       AstNodePtr arg = paramMap.find(varname).get_ast();
@@ -96,7 +97,7 @@ may_alias(AstInterface& fa, const AstNodePtr& fc, const AstNodePtr& result,
 }
 
 bool OperatorAliasAnnotation::
-allow_alias(AstInterface& fa, const AstNodePtr& fc, 
+allow_alias(AstInterface& fa, const AstNodePtr& fc,
             CollectObject< pair<AstNodePtr, int> >& collectalias)
 {
   return AliasAnnotAnal( fa, allowaliasInfo, fc, AST_NULL, collectalias);
@@ -124,7 +125,7 @@ template class OperatorAnnotCollection<OperatorInlineDescriptor>;
 #include <AnnotDescriptors.C>
 template class WriteContainer<set<NameDescriptor>, ',', '(', ')'>;
 template class WriteContainer<vector<NameDescriptor>, ',', '(', ')'>;
-template class ReadContainer<SetDescriptor<NameDescriptor, ',', '{', '}'>, 
+template class ReadContainer<SetDescriptor<NameDescriptor, ',', '{', '}'>,
                              NameDescriptor, ',','{','}'>;
 #if 0
 // DQ (1/8/2006): This does not appear to be required (unless it is type equivalant to the one using ParameterDeclaration

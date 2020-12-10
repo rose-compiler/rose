@@ -1,7 +1,7 @@
 include_rules
 
 ifneq (@(WITH_SQLITE),no)
-    run $(librose_compile) libraryIdentification_reader.C libraryIdentification_writer.C functionIdentification.C
+    run $(librose_compile) FunctionIdDatabaseInterface.C libraryIdentification.C
 endif
 
-run $(public_header) functionIdentification.h libraryIdentification.h
+run $(public_header) FunctionIdDatabaseInterface.h FunctionInfo.h libraryIdentification.h LibraryInfo.h

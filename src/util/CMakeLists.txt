@@ -79,9 +79,9 @@ target_sources(roseUtil INTERFACE
 
 ########### install files ###############
 install(FILES
-  BitFlags.h Color.h FileSystem.h FormatRestorer.h
-  setup.h processSupport.h rose_paths.h
+  BitFlags.h BitOps.h Color.h FileSystem.h FormatRestorer.h
+  setup.h processSupport.h RoseAsserts.h rose_paths.h
   compilationFileDatabase.h LinearCongruentialGenerator.h
-  Map.h Progress.h timing.h rose_getline.h rose_override.h rose_strtoull.h
+  Map.h Progress.h timing.h rose_constants.h rose_getline.h rose_override.h rose_strtoull.h
   roseTraceLib.c ParallelSort.h GraphUtility.h RecursionCounter.h rose_isnan.h
   DESTINATION ${INCLUDE_INSTALL_DIR})

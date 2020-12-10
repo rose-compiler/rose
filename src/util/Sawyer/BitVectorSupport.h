@@ -370,7 +370,7 @@ void traverse(Processor &processor,
               LowToHigh dir) {
     traverse2(processor, vec1, range1, vec2, range2, dir);
 }
-    
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -473,6 +473,34 @@ void swap(Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2
     traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
 }
 
+template<class Word>
+struct EqualTo {
+    bool wasEqv;
+
+    EqualTo()
+        : wasEqv(true) {}
+
+    bool operator()(const Word &w1, Word &w2, size_t nbits) {
+        if (wasEqv) {
+            Word a = w1 & bitMask<Word>(0, nbits);
+            Word b = w2 & bitMask<Word>(0, nbits);
+            wasEqv = a == b;
+        }
+        return false;
+    }
+};
+
+/** Compare bits for equality.
+ *
+ *  Returns true if and only if the ranges are the same size and contain the same bit values in the same order. */
+template<class Word>
+bool equalTo(const Word *vec1, const BitRange &range1, const Word *vec2, const BitRange &range2) {
+    if (range1.size() != range2.size())
+        return false;
+    EqualTo<Word> visitor;
+    traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
+    return visitor.wasEqv;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Counting/searching
@@ -707,7 +735,7 @@ Optional<size_t> leastSignificantDifference(const Word *vec1, const BitRange &ra
     traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
     return visitor.result;
 }
-    
+
 template<class Word>
 struct MostSignificantDifference {
     size_t offset;
@@ -971,7 +999,7 @@ boost::uint64_t toInteger(const Word *words, const BitRange &range) {
 
 /** Convert a small bit vector to an integer.
  *
- *  Faster version of @ref toInteger for instances where the range offset is zero, and the size is not greater than 64 bits. */
+ *  Faster version of @ref toInteger for instances where the range offset is zero and the size is not greater than 64 bits. */
 template<class Word>
 boost::uint64_t toInteger(const Word *words, size_t nbits) {
     boost::uint64_t result = 0;
@@ -982,6 +1010,38 @@ boost::uint64_t toInteger(const Word *words, size_t nbits) {
     if (nbits < 64)
         result &= ~((~(boost::uint64_t)0) << nbits);
     return result;
+}
+
+/** Convert a bit vector to a signed integer.
+ *
+ *  Converts the specified range to a signed 64-bit value and returns it. If the size of the range is one then the return value
+ *  is either zero or one; if the size of the range is less than or equal to 64 bits then the bits are sign-extended to 64 bits
+ *  and returned; otherwise when the size of the range is larger than 64 bits the low-order 64 bits are returned. */
+template<class Word>
+boost::int64_t toSignedInteger(const Word *words, const BitRange &range) {
+    boost::uint64_t u = toInteger<Word>(words, range);
+    const size_t nBits = range.size();
+    if (nBits > 1 && nBits < 64) {
+        bool isNegative = (u & (boost::uint64_t(1) << (nBits-1))) != 0;
+        if (isNegative)
+            u |= boost::uint64_t(-1) << nBits;
+    }
+    return boost::int64_t(u);
+}
+
+/** Convert a small bit vector to a signed integer.
+ *
+ *  Faster version of @ref toSignedInteger for instances where the range offset is zero and the size is not greater than 64
+ *  bits. */
+template<class Word>
+boost::int64_t toSignedInteger(const Word *words, size_t nBits) {
+    boost::uint64_t u = toInteger<Word>(words, nBits);
+    if (nBits > 1 && nBits < 64) {
+        bool isNegative = (u & (boost::uint64_t(1) << (nBits-1))) != 0;
+        if (isNegative)
+            u |= boost::uint64_t(-1) << nBits;
+    }
+    return boost::int64_t(u);
 }
 
 template<class Word>
@@ -1278,7 +1338,7 @@ struct ToString {
         ASSERT_require(bitsPerDigit >= 1 && bitsPerDigit <= 4);
         ASSERT_require(bitsPerDigit <= bitsPerWord<Word>::value);
     }
-    
+
     bool operator()(const Word &word, size_t nbits) {
         static const char digits[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
         Word tmp = word & bitMask<Word>(0, nbits);

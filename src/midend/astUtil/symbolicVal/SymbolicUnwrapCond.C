@@ -1,4 +1,5 @@
 #include "SymbolicExpr.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 //store condition for a variable
 // coeff*variable + result Relation 0
 // e.g.   5*i+1 <=0
@@ -10,7 +11,7 @@ struct VarRestr
    : coeff(co), result(res), rel(r) {}
   bool IsNIL() const { return rel == REL_UNKNOWN; }
 };
-//extract a condition to be the form of 
+//extract a condition to be the form of
 //  left*pivot rel right
 //  e.g. 5*i <= 0
 class UnwrapCond : public SymbolicVisitor
@@ -26,8 +27,8 @@ class UnwrapCond : public SymbolicVisitor
         succ = true;
       }
     }
-  void VisitExpr( const  SymbolicExpr& v) 
-   { 
+  void VisitExpr( const  SymbolicExpr& v)
+   {
      SymbolicVal cur;
      SymbolicExpr::OpdIterator iter = v.GetOpdIterator();
      while ( !iter.ReachEnd()) { // find the first term using pivot variable like 2*i
@@ -53,10 +54,10 @@ class UnwrapCond : public SymbolicVisitor
           succ = true;
           break;
      case SYMOP_PLUS:
-           for (iter.Reset(); iter.Current() != p; iter++) 
+           for (iter.Reset(); iter.Current() != p; iter++)
                  right = right - v.Term2Val(iter.Current());
            cur.Visit(this);
-           if (!succ) 
+           if (!succ)
               return;
            for (iter.Advance(); !iter.ReachEnd(); ++iter) {
                SymbolicVal curv = v.Term2Val(iter.Current());
@@ -66,8 +67,8 @@ class UnwrapCond : public SymbolicVisitor
                   if (!succ)
                     return;
                   left = left + leftsave;
-               } 
-               else 
+               }
+               else
                  right = right - curv;
            }
            break;
@@ -77,12 +78,12 @@ class UnwrapCond : public SymbolicVisitor
            }
            break;
      case SYMOP_MIN:
-           if (rel==REL_GT || rel==REL_EQ || rel==REL_GE) { 
+           if (rel==REL_GT || rel==REL_EQ || rel==REL_GE) {
               cur.Visit(this);
            }
            else if (rel == REL_LE || rel == REL_LT) {
               for (iter.Reset(); !iter.ReachEnd(); iter++) {
-                 if (p != iter.Current()) 
+                 if (p != iter.Current())
                     right = Min(right,v.Term2Val(*iter));
               }
               cur.Visit(this);
@@ -90,19 +91,19 @@ class UnwrapCond : public SymbolicVisitor
            break;
      default:
            assert(false);
-     } 
+     }
    }
  public:
   UnwrapCond( const SymbolicVar &var) : pivot(var) {}
   VarRestr operator()( const SymbolicCond &cond)  // normalize condition to be  Left_is_func(x) Relation const_exp
-   { 
+   {
      left = cond.GetLeftVal();
      right = cond.GetRightVal();
      rel = cond.GetRelType();
      succ = false;
 // try to find pivot variable on left and right sides
      bool b1 = FindVal(left, pivot), b2 = FindVal(right, pivot);
-     if (!b1 && !b2) 
+     if (!b1 && !b2)
         rel = REL_NONE;
      else {
         if (!b1 && b2) {
@@ -116,7 +117,7 @@ class UnwrapCond : public SymbolicVisitor
            right = 0;
         }   // if (b1 && !b2), left and right are kept intact?
         SymbolicVal tmp = left; // need to create a temporary because left may be re-assigned, causing memory error
-        tmp.Visit(this); 
+        tmp.Visit(this);
         if (!succ)
            rel = REL_UNKNOWN;
      }

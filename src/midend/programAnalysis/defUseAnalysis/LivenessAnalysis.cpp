@@ -504,6 +504,7 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
                         }
                 }
                 if (!found) {
+                        ROSE_ASSERT(initName != NULL);
                         std::string name = initName->get_name().str();
                         in[sgNode].push_back(initName); // = varRef
                         std::sort(in[sgNode].begin(), in[sgNode].end(),

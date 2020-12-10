@@ -1,4 +1,5 @@
 #include "dominatorAnalysis.h"
+#include <assert.h>
 #include <algorithm>
 
 int dominatorAnalysisDebugLevel=0;
@@ -241,6 +242,7 @@ void DominatorAnalysis::genInitState(const Function& func, const DataflowNode& n
         //cout << "    genInitState: "<<n.getNode()->unparseToString() << " | " << n.getNode()->class_name() << "\n";;
         // If n is the application's starting node
         //if(func.get_name().getString() == "main" && n == func.get_definition()->cfgForBeginning()/*cfgUtils::getFuncStartCFG(func.get_definition())*/) {
+        assert(func.get_definition() != NULL);
         if(func.get_name().getString() == "main" && n == DataflowNode(func.get_definition()->cfgForBeginning(),filter) /*cfgUtils::getFuncStartCFG(func.get_definition())*/) {
                 //cout << "        STARTING NODE\n";
                 dLat = new DominatorLattice(n, n);

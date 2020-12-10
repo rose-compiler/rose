@@ -1,5 +1,8 @@
 /* Generic Dynamic Linking */
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "stringify.h"
 
 using namespace Rose;
@@ -170,3 +173,5 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     fprintf(f, "%s%-*s = %" PRIu64 " bytes\n", p, w, "size", p_size);
 }
+
+#endif

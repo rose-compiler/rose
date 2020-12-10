@@ -1,5 +1,6 @@
 /* Strings. Uniform treatment for strings stored in a binary file and strings generated on the fly. */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 using namespace Rose;
@@ -450,3 +451,5 @@ SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx) const
                 interval.greatest()+1, interval.greatest()+1);
     }
 }
+
+#endif

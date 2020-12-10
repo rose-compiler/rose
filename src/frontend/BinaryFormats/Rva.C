@@ -12,7 +12,8 @@
 //     symbol.p_addresses[0].set_section(section);     // this works
 //     symbol.get_addresses()[0].set_section(section); // so does this.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 /** @class rose_rva_t
@@ -207,3 +208,5 @@ bool operator> (const rose_rva_t &a1, const rose_rva_t &a2) {return a1.get_rva()
 bool operator>=(const rose_rva_t &a1, const rose_rva_t &a2) {return a1.get_rva() >= a2.get_rva();}
 bool operator==(const rose_rva_t &a1, const rose_rva_t &a2) {return a1.get_rva() == a2.get_rva();}
 bool operator!=(const rose_rva_t &a1, const rose_rva_t &a2) {return a1.get_rva() != a2.get_rva();}
+
+#endif

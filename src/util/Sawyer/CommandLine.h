@@ -10,7 +10,9 @@
 #define Sawyer_CommandLine_H
 
 #include <Sawyer/Assert.h>
+#include <Sawyer/BitFlags.h>
 #include <Sawyer/DocumentMarkup.h>
+#include <Sawyer/IntervalSet.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Optional.h>
@@ -444,6 +446,23 @@ public:
         }                                                                                                                      \
     }
 
+// Partial specialization of TypedSaver for saving values into set-like containers. The CONTAINER_TEMPLATE should take one
+// parameter: the value type (not part of this specialization). The value is stored by invoking the INSERT_METHOD with one
+// argument: the value to save. The value is always an interval.
+#define SAWYER_COMMANDLINE_INTERVALSET_SAVER(CONTAINER_TEMPLATE, INSERT_METHOD)                                                \
+    template<typename Interval>                                                                                                \
+    class TypedSaver<CONTAINER_TEMPLATE<Interval> >: public ValueSaver {                                                         \
+        CONTAINER_TEMPLATE<Interval> &storage_;                                                                                \
+    protected:                                                                                                                 \
+        TypedSaver(CONTAINER_TEMPLATE<Interval> &storage): storage_(storage) {}                                                \
+    public:                                                                                                                    \
+        static Ptr instance(CONTAINER_TEMPLATE<Interval> &storage) { return Ptr(new TypedSaver(storage)); }                    \
+        virtual void save(const boost::any &value, const std::string &switchKey) /*override*/ {                                \
+            Interval typed = boost::any_cast<Interval>(value);                                                                        \
+            storage_.INSERT_METHOD(typed);                                                                                     \
+        }                                                                                                                      \
+    }
+
 // Partial specialization of TypedSaver for saving values into map-like containers using the STL approach where the insert
 // operator takes an std::pair(key,value) rather than two arguments. The CONTAINER_TEMPLATE should take two parameters: the key
 // type (always std::string) and the value type (not part of this specialization). The value is stored by invoking the
@@ -467,8 +486,10 @@ SAWYER_COMMANDLINE_SEQUENCE_SAVER(std::list, push_back);
 SAWYER_COMMANDLINE_SEQUENCE_SAVER(std::set, insert);
 SAWYER_COMMANDLINE_SEQUENCE_SAVER(Sawyer::Container::Set, insert);
 SAWYER_COMMANDLINE_SEQUENCE_SAVER(Optional, operator=);
+SAWYER_COMMANDLINE_SEQUENCE_SAVER(BitFlags, set);
 SAWYER_COMMANDLINE_MAP_PAIR_SAVER(std::map, insert);
 SAWYER_COMMANDLINE_MAP_SAVER(Sawyer::Container::Map, insert);
+SAWYER_COMMANDLINE_INTERVALSET_SAVER(Sawyer::Container::IntervalSet, insert);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Parsed value
@@ -736,6 +757,13 @@ struct LexicalCast {
         } catch (const boost::bad_lexical_cast &e) {
             throw std::runtime_error(e.what());
         }
+    }
+};
+
+template<>
+struct LexicalCast<boost::regex> {
+    static boost::regex convert(const std::string &src) {
+        return boost::regex(src);
     }
 };
 
@@ -1454,6 +1482,10 @@ typename EnumParser<T>::Ptr enumParser(std::vector<T> &storage) {
 template<typename T>
 typename EnumParser<T>::Ptr enumParser(Optional<T> &storage) {
     return EnumParser<T>::instance(TypedSaver<Optional<T> >::instance(storage));
+}
+template<typename T>
+typename EnumParser<T>::Ptr enumParser(BitFlags<T> &storage) {
+    return EnumParser<T>::instance(TypedSaver<BitFlags<T> >::instance(storage));
 }
 template<typename T>
 typename EnumParser<T>::Ptr enumParser() {
@@ -2729,6 +2761,7 @@ class SAWYER_EXPORT Parser {
     Optional<std::string> exitMessage_;                 /**< Additional message before exit when errorStream_ is not empty. */
     SortOrder switchGroupOrder_;                        /**< Order of switch groups in the documentation. */
     bool reportingAmbiguities_;                         /**< Whether to report ambiguous switches. */
+    std::string environmentVariable_;                   /**< parse() reads from this variable first. */
 #include <Sawyer/WarningsRestore.h>
 
 public:
@@ -2744,13 +2777,23 @@ public:
     /** Add switch declarations. The specified switch declaration or group of switch declarations is copied into the parser. A
      *  documentation key can be supplied to override the sort order for the group or switch.
      * @{ */
-    Parser& with(const SwitchGroup &sg) { switchGroups_.push_back(sg); return *this; }
+    Parser& with(const SwitchGroup &sg) {
+        switchGroups_.push_back(sg);
+        return *this;
+    }
     Parser& with(const SwitchGroup &sg, const std::string &docKey) {
         switchGroups_.push_back(sg);
         switchGroups_.back().docKey(docKey);
         return *this;
     }
-    Parser& with(const Switch &sw) { switchGroups_.push_back(SwitchGroup().insert(sw)); return *this; }
+    Parser& with(const std::vector<SwitchGroup> &sgs) {
+        switchGroups_.insert(switchGroups_.end(), sgs.begin(), sgs.end());
+        return *this;
+    }
+    Parser& with(const Switch &sw) {
+        switchGroups_.push_back(SwitchGroup().insert(sw));
+        return *this;
+    }
     Parser& with(Switch sw, const std::string &docKey) {
         sw.docKey(docKey);
         switchGroups_.push_back(SwitchGroup().insert(sw));
@@ -2951,6 +2994,16 @@ public:
     std::string exitMessage() const { return exitMessage_ ? *exitMessage_ : std::string(); }
     /** @} */
 
+    /** Name of environment variable holding initial arguments.
+     *
+     *  If the environment variable is set and has a value, its value string is treated as command-line arguments in the same
+     *  way that command-line arguments are read from files by @ref readArgsFromFile.
+     *
+     * @{ */
+    Parser& environmentVariable(const std::string &s) { environmentVariable_ = s; return *this; }
+    const std::string& environmentVariable() const { return environmentVariable_; }
+    /** @} */
+
     /** Parse program arguments.  The first program argument, <code>argv[0]</code>, is considered to be the name of the program
      *  and is not parsed as a program argument.  This function does not require that <code>argv[argc]</code> be a member of
      *  the argv array (normally, <code>argv[argc]==NULL</code> in <code>main</code>). */
@@ -2969,12 +3022,23 @@ public:
     }
 #endif
 
+    /** Split line of text into words.
+     *
+     *  Line is split at white space, but honoring the usual convention of single and double quotes. */
+    static std::vector<std::string> splitLineIntoWords(std::string);
+
     /** Read a text file to obtain arguments.  The specified file is opened and each line is read to obtain a vector of
      *  arguments.  Blank lines and lines whose first non-space character is "#" are ignored.  The remaining lines are split
      *  into one or more arguments at white space.  Single and double quoted regions within a line are treated as single
      *  arguments (the quotes are removed).  The backslash can be used to escape quotes, white space, and backslash; any other
      *  use of the backslash is not special. */
     static std::vector<std::string> readArgsFromFile(const std::string &filename);
+
+    /** Read an envrionment variable to obtain arguments.
+     *
+     *  This function behaves identically to @ref readArgsFromFile except the content comes from the environment variable. An
+     *  undefined variable is treated as an empty variable. */
+    static std::vector<std::string> readArgsFromEnvVar(const std::string &varName);
 
     /** Expand file arguments.
      *
@@ -3178,7 +3242,7 @@ private:
     void init();
 
     // Implementation for the public parse methods.
-    ParserResult parseInternal(const std::vector<std::string> &programArguments);
+    ParserResult parseInternal(std::vector<std::string> programArguments);
 
     // Parse one switch from the current position in the command line and return the switch descriptor.  If the cursor is at
     // the end of the command line then return false without updating the cursor or parsed values.  If the cursor is at a

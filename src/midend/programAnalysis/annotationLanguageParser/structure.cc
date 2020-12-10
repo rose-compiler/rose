@@ -1,15 +1,16 @@
 
 #include "broadway.h"
 #include <assert.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 using namespace std;
 
 // Multiple targets constructor
 
 structureTreeAnn::structureTreeAnn( const parserID * id,
-				    structuretree_list * targets,
-				    Operator op,
-				    bool target_is_new)
+                                    structuretree_list * targets,
+                                    Operator op,
+                                    bool target_is_new)
   : Ann(id->line()),
     _name(id->name()),
     _targets(targets),
@@ -21,9 +22,9 @@ structureTreeAnn::structureTreeAnn( const parserID * id,
 // Single target constructor
 
 structureTreeAnn::structureTreeAnn( const parserID * id,
-				    structureTreeAnn * target,
-				    Operator op,
-				    bool target_is_new)
+                                    structureTreeAnn * target,
+                                    Operator op,
+                                    bool target_is_new)
   : Ann(id->line()),
     _name(id->name()),
     _targets(new structuretree_list()),
@@ -42,8 +43,8 @@ structureTreeAnn::~structureTreeAnn()
 
   if (_targets) {
     for (p = _targets->begin();
-	 p != _targets->end();
-	 ++p)
+         p != _targets->end();
+         ++p)
       delete (*p);
   }
 
@@ -53,7 +54,7 @@ structureTreeAnn::~structureTreeAnn()
 structureTreeAnn::structureTreeAnn(const structureTreeAnn & X)
    : Ann(X)
    {
-  // DQ (9/13/2011): This copy constructor was built because static analysis tools 
+  // DQ (9/13/2011): This copy constructor was built because static analysis tools
   // suggested it would avoid a possible double free error.  I agree.
      printf ("Error: it is an error to call this copy constructor. \n");
      assert(false);
@@ -78,18 +79,18 @@ void structureTreeAnn::print(int depth) const
       cout << "{" << endl;
 
     for (structuretree_list_p p = _targets->begin();
-	 p != _targets->end();
-	 ++p)
+         p != _targets->end();
+         ++p)
       {
-	structureTreeAnn * child = *p;
-	child->print(depth+1);
-	if (size > 1)
-	  cout << endl;
+        structureTreeAnn * child = *p;
+        child->print(depth+1);
+        if (size > 1)
+          cout << endl;
       }
 
     if (size > 1) {
       for (int i = 0; i < depth; i++)
-	cout << " ";
+        cout << " ";
       cout << "}" << endl;
     }
   }
@@ -129,7 +130,7 @@ void structureTreeAnn::print(int depth) const
  *  it's built into the name.  */
 
 structureAnn::structureAnn(annVariable * source, annVariable * target,
-			   const string * field_name, int line)
+                           const string * field_name, int line)
   : Ann(line),
     _source(source),
     _target(target),

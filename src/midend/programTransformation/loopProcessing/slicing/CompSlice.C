@@ -9,6 +9,7 @@
 #include <CompSliceImpl.h>
 #include <CompSliceObserver.h>
 #include <LoopInfoInterface.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 class CompSlice::ObserveImpl
    : public ObserveObject <CompSliceObserver>
@@ -55,11 +56,11 @@ CompSlice ::  ~CompSlice()
   Notify(info);
 
   delete impl;
-  delete obImpl; 
+  delete obImpl;
 }
 
 std::string CompSliceNest::toString() const
-{ 
+{
   std::string res = "<***Slice Nest***>\n";
   for (int i = 0;i<NumberOfEntries();++i)
      res = res + Entry(i)->toString();
@@ -78,18 +79,22 @@ SetSliceLoop( LoopTreeNode *s, LoopTreeNode *l,
 {
   CompSliceStmt *stmt = impl->CreateSliceStmt(s);
   CompSliceLoop *loop = impl->CreateSliceLoop(l);
-  loop->SetReversal( loopreversible); 
+  loop->SetReversal( loopreversible);
   stmt->SetSliceLoop(loop, align);
 }
 
 void CompSlice::SetSliceAlign( LoopTreeNode *s, int align)
 {
   CompSliceStmt *stmt = impl->QuerySliceStmt(s);
+  assert(stmt != NULL);
   stmt->SetSliceAlign(align);
 }
 
 CompSlice::SliceStmtInfo CompSlice :: QuerySliceStmtInfo( const LoopTreeNode *n) const
-{ return impl->QuerySliceStmt(n)->GetSliceInfo(); }
+{
+  assert(impl->QuerySliceStmt(n) != NULL);
+  return impl->QuerySliceStmt(n)->GetSliceInfo();
+}
 
 CompSlice::SliceLoopInfo CompSlice :: QuerySliceLoopInfo( const LoopTreeNode *n) const
 {
@@ -201,12 +206,12 @@ void CompSliceNest :: DetachObserver( CompSliceNestObserver &o) const
   impl->DetachObserver( &o );
 }
 
-void CompSliceNest :: Notify( const CompSliceNestObserveInfo& info) 
+void CompSliceNest :: Notify( const CompSliceNestObserveInfo& info)
 {
     impl->Notify( info );
 }
 
-CompSliceNest :: CompSliceNest(unsigned _maxsize) 
+CompSliceNest :: CompSliceNest(unsigned _maxsize)
    : sliceVec(0), maxsize(0),size(0)
 {
   impl = new ObserveImpl();
@@ -228,11 +233,11 @@ CompSliceNest ::  ~CompSliceNest()
 }
 
 void CompSliceNest:: Reset( unsigned _maxsize)
-{ 
+{
   assert(sliceVec == 0);
   maxsize = _maxsize;
   size = 0;
-  sliceVec = new CompSlice*[maxsize]; 
+  sliceVec = new CompSlice*[maxsize];
 }
 
 void CompSliceNest :: SwapEntry( int index1, int index2)
@@ -248,10 +253,10 @@ void CompSliceNest :: DeleteEntry( int index, bool saveAsInner)
 {
   CompSliceNestDeleteEntryInfo info(*this, index, saveAsInner);
   Notify(info);
-  if (!saveAsInner) 
+  if (!saveAsInner)
      delete sliceVec[index];
   for (size_t i = index; i + 1 < size; ++i)
-    sliceVec[i] = sliceVec[i+1]; 
+    sliceVec[i] = sliceVec[i+1];
   --size;
 }
 
@@ -342,7 +347,7 @@ SymbolicVar SliceLoopIvar( AstInterface &fa, const CompSlice *slice)
        }
     }
   }
-  for (nameset::iterator p = sliceVars.begin(); p != sliceVars.end(); 
+  for (nameset::iterator p = sliceVars.begin(); p != sliceVars.end();
        ++p) {
     if (usedVars.find(*p) == usedVars.end())
       return SymbolicVar(*p, AST_NULL);;
@@ -443,8 +448,8 @@ class FindCommonInterface {
   LoopTreeNode* parent;
  public:
   FindCommonInterface(LoopTreeNode* p) : parent(p) {}
-  LoopTreeNode* GetParent(LoopTreeNode* n) 
-     { LoopTreeNode* res = n->Parent(); 
+  LoopTreeNode* GetParent(LoopTreeNode* n)
+     { LoopTreeNode* res = n->Parent();
        assert(res != 0);
        if (res == parent) return 0;
        return res;

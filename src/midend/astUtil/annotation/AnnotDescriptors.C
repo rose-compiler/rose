@@ -3,22 +3,23 @@
 #include "AnnotDescriptors.h"
 #include <sstream>
 #include <list>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
 template <class Container, class Member, char sep, char left, char right>
-bool ReadContainer<Container, Member, sep, left, right> :: 
+bool ReadContainer<Container, Member, sep, left, right> ::
 read(Container& c, istream& in)
 {
   if (peek_id(in) == "none") {
       read_id(in, "none");
   }
-  else { 
-    if (left != 0) 
+  else {
+    if (left != 0)
       read_ch(in, left);
 
-    if (peek_id(in) == "none") 
+    if (peek_id(in) == "none")
       read_id(in, "none");
     else if (peek_ch(in) != right) {
       ReadContainerWrap< Member, Container> op(c);
@@ -26,12 +27,12 @@ read(Container& c, istream& in)
     }
     if (right != 0)
       read_ch(in, right);
-   } 
+   }
    return true;
 }
 
 template <class Container, char sep, char left, char right>
-void WriteContainer<Container, sep, left, right> :: 
+void WriteContainer<Container, sep, left, right> ::
 write( const Container& c, ostream& out)
 {
   out << left;
@@ -41,7 +42,7 @@ write( const Container& c, ostream& out)
     if (!first)
        out << sep;
 
-// DQ (8/30/2009): Debugging ROSE compiling ROSE (this statement does not compile using ROSE. The error is: 
+// DQ (8/30/2009): Debugging ROSE compiling ROSE (this statement does not compile using ROSE. The error is:
 // sage_gen_be.C:10043: SgExpression* sage_gen_expr(an_expr_node*, a_boolean, DataRequiredForComputationOfSourcePostionInformation*): Assertion `optionalSourcePositionData->ok() == true' failed.
 #ifndef USE_ROSE
     (*p).write(out);
@@ -64,8 +65,8 @@ bool CollectPair<First,Second, sep>:: read( istream& in)
       //           return false;
       //         ...
       //         second.read(in);
-      if (!this->first.read(in)) return false;      
-      
+      if (!this->first.read(in)) return false;
+
       if (sep != 0) {
         read_ch(in, sep);
       }
@@ -95,16 +96,16 @@ bool SelectPair<First,Second, sep, sel>:: read( istream& in)
 
 template <class First, class Second, char sep>
 void CollectPair<First,Second, sep>::write( ostream& out) const
-     { 
+     {
   // pmp 08JUN05
   //   cmp previous comment
 
-       this->first.write(out); 
+       this->first.write(out);
        if (sep != 0)
           out << sep;
        else
           out << ' ';
-       this->second.write(out); 
+       this->second.write(out);
      }
 
 template <class First, class Second, char sep, char sel>
@@ -122,7 +123,7 @@ template <class Descriptor, char left, char right>
 bool CloseDescriptor<Descriptor, left, right> :: read( istream& in)
 {
   read_ch(in, left);
-  if (peek_ch(in) != right) 
+  if (peek_ch(in) != right)
       Descriptor::read(in);
   read_ch(in, right);
   return true;
@@ -151,7 +152,7 @@ bool TypeDescriptor:: read(istream& in)
      read_ch(in,':');
      get_name() = get_name() + "::" + read_id(in);
      c = peek_ch(in);
-  } 
+  }
   // The type name could be reference or pointer type?
   if (c == '&' || c == '*') {
     read_ch(in,c);
@@ -171,7 +172,7 @@ bool NameDescriptor:: read(istream& in)
      read_ch(in,':');
      get_name() = get_name() + "::" + read_id(in);
      c = peek_ch(in);
-  } 
+  }
  return true;
 }
 

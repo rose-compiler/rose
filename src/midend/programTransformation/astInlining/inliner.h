@@ -26,6 +26,7 @@ ROSE_DLL_API bool doInline(SgFunctionCallExp* funcall, bool allowRecursion = fal
 namespace Inliner {
   // if set to true, ignore function calls within headers. Default is false. 
   extern bool skipHeaders;   
+  extern bool verbose; // if set to true, generate debugging information   
 }
 
 #endif // INLINER_H

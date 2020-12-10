@@ -84,25 +84,42 @@ Grammar::setUpSymbols ()
      NEW_NONTERMINAL_MACRO ( MemberFunctionSymbol,TemplateMemberFunctionSymbol,"MemberFunctionSymbol","MEMBER_FUNC_NAME", true);
      NEW_NONTERMINAL_MACRO ( FunctionSymbol, MemberFunctionSymbol | TemplateFunctionSymbol | RenameSymbol,"FunctionSymbol","FUNCTION_NAME", true);
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   // DQ (5/3/2010): Added symbol table support to the binary analysis within ROSE.  Values that
   // are addresses or references to data will have symbols in a function symbol table.  All other 
   // values are assumed to be literals and will not have associated symbols.
      NEW_TERMINAL_MACRO ( AsmBinaryAddressSymbol,  "AsmBinaryAddressSymbol",  "BINARY_ADDRESS_SYMBOL" );
      NEW_TERMINAL_MACRO ( AsmBinaryDataSymbol,     "AsmBinaryDataSymbol",     "BINARY_DATA_SYMBOL" );
-
+#endif
 
   // DQ (9/26/2008): Added support for references to symbols to support: "use" declaration in F90, "using" declaration in C++, and "namespace aliasing" in C++.
      NEW_TERMINAL_MACRO ( AliasSymbol,          "AliasSymbol",         "ALIAS_SYMBOL" );
 
      NEW_TERMINAL_MACRO ( NonrealSymbol, "NonrealSymbol", "NONREAL_SYMBOL" );
+     
+  // PP (06/03/2020) Adding Ada support   
+     NEW_TERMINAL_MACRO ( AdaPackageSymbol, "AdaPackageSymbol", "ADA_PACKAGE_SYMBOL" );
+     NEW_TERMINAL_MACRO ( AdaTaskSymbol,    "AdaTaskSymbol", "ADA_TASK_SYMBOL" );
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      NEW_NONTERMINAL_MACRO (Symbol,
           VariableSymbol   | NonrealSymbol          | FunctionSymbol         | FunctionTypeSymbol | 
           ClassSymbol      | TemplateSymbol         | EnumSymbol             | EnumFieldSymbol    | 
           TypedefSymbol    | LabelSymbol            | DefaultSymbol          | NamespaceSymbol    |
           IntrinsicSymbol  | ModuleSymbol           | InterfaceSymbol        | CommonSymbol       | 
-          AliasSymbol      | AsmBinaryAddressSymbol | AsmBinaryDataSymbol    | JavaLabelSymbol /* | RenameSymbol*/,
+          AliasSymbol      | AsmBinaryAddressSymbol | AsmBinaryDataSymbol    | JavaLabelSymbol    | 
+          AdaPackageSymbol | AdaTaskSymbol /* | RenameSymbol */, 
           "Symbol","SymbolTag", false);
+#else
+     NEW_NONTERMINAL_MACRO (Symbol,
+          VariableSymbol   | NonrealSymbol          | FunctionSymbol         | FunctionTypeSymbol | 
+          ClassSymbol      | TemplateSymbol         | EnumSymbol             | EnumFieldSymbol    | 
+          TypedefSymbol    | LabelSymbol            | DefaultSymbol          | NamespaceSymbol    |
+          IntrinsicSymbol  | ModuleSymbol           | InterfaceSymbol        | CommonSymbol       | 
+          AliasSymbol      |                                                   JavaLabelSymbol    |
+          AdaPackageSymbol | AdaTaskSymbol /* | RenameSymbol */,
+          "Symbol","SymbolTag", false);
+#endif
 
   // ***********************************************************************
   // ***********************************************************************
@@ -176,6 +193,13 @@ Grammar::setUpSymbols ()
   // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
      NonrealSymbol.setDataPrototype ( "SgNonrealDecl*", "declaration", "= NULL",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaPackageSymbol.setDataPrototype    ( "SgDeclarationStatement*",   "declaration", "= NULL",
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaTaskSymbol.setDataPrototype    ( "SgDeclarationStatement*",   "declaration", "= NULL",
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
 
   // DQ (2/29/2004): Header file support code for template declaration support
   // TemplateInstantiationSymbol.setFunctionPrototype( "HEADER_TEMPLATE_INSTANTIATION_DECLARATION", "../Grammar/Symbol.code" );
@@ -298,6 +322,7 @@ Grammar::setUpSymbols ()
   // DQ (5/3/2010): Added symbol table support to the binary analysis within ROSE.  Values that
   // are addresses or references to data will have symbols in a function symbol table.  All other 
   // values are assumed to be literals and will not have associated symbols.
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      AsmBinaryAddressSymbol.setFunctionPrototype ( "HEADER_ASM_BINARY_ADDRESS_SYMBOL", "../Grammar/Symbol.code" );
      AsmBinaryAddressSymbol.setDataPrototype     ( "SgName", "address_name", "= \"\"",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -309,6 +334,7 @@ Grammar::setUpSymbols ()
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmBinaryDataSymbol.setDataPrototype     ( "SgAsmInstruction*", "address", "= NULL",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // ***********************************************************************
   // ***********************************************************************
@@ -401,6 +427,13 @@ Grammar::setUpSymbols ()
      NamespaceSymbol.setFunctionSource      ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
   // We need a special version of the get_symbol_basis() function
   // NamespaceSymbol.setFunctionSource      ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
+     
+  // PP (06/03/20)+: supporting Ada   
+     AdaPackageSymbol.setFunctionSource     ( "SOURCE_ADA_PACKAGE_SYMBOL", "../Grammar/Symbol.code" );     
+     AdaPackageSymbol.setFunctionSource     ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
+
+     AdaTaskSymbol.setFunctionSource        ( "SOURCE_ADA_TASK_SYMBOL", "../Grammar/Symbol.code" );     
+     AdaTaskSymbol.setFunctionSource        ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
 
   // DQ (12/23/2005): Removed SgName object and so we now need to build the get_name() member function
      DefaultSymbol.setFunctionSource        ( "SOURCE_SHORT_DEFAULT_GET_NAME", "../Grammar/Symbol.code" );
@@ -428,11 +461,12 @@ Grammar::setUpSymbols ()
 
      RenameSymbol.setFunctionSource         ( "SOURCE_RENAME_SYMBOL", "../Grammar/Symbol.code" );
 
-
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   // DQ (5/3/2010): Added symbol table support to the binary analysis within ROSE.  Values that
   // are addresses or references to data will have symbols in a function symbol table.  All other 
   // values are assumed to be literals and will not have associated symbols.
      AsmBinaryAddressSymbol.setFunctionSource ( "SOURCE_ASM_BINARY_ADDRESS_SYMBOL", "../Grammar/Symbol.code" );
      AsmBinaryDataSymbol.setFunctionSource    ( "SOURCE_ASM_BINARY_DATA_SYMBOL",    "../Grammar/Symbol.code" );
+#endif
    }
 

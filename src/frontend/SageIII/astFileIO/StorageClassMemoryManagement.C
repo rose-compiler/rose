@@ -518,6 +518,7 @@ EasyStorage<Sawyer::Container::BitVector>::storeDataInEasyStorageClass(const Saw
         // there is still space in the actual block
         if (offset < Base::getSizeOfData() && Base::actual != NULL) {
             while ((unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize) {
+                assert(words != NULL);
                 assert(idx <= nWords);
                 *Base::actual++ = 0==idx ? excess : words[idx-1];
                 ++idx;
@@ -527,6 +528,7 @@ EasyStorage<Sawyer::Container::BitVector>::storeDataInEasyStorageClass(const Saw
         while (Base::blockSize < (unsigned long)offset) {
             Base::actual = Base::getNewMemoryBlock();
             while ((unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize) {
+                assert(words != NULL);
                 assert(idx <= nWords);
                 *Base::actual++ = 0==idx ? excess : words[idx-1];
                 ++idx;
@@ -537,6 +539,7 @@ EasyStorage<Sawyer::Container::BitVector>::storeDataInEasyStorageClass(const Saw
     }
     // put (the rest of) the data in a new memory block
     while (idx <= nWords) {
+        assert(words != NULL);
         assert(idx <= nWords);
         *Base::actual++ = 0==idx ? excess : words[idx-1];
         ++idx;
@@ -572,10 +575,13 @@ EasyStorage<Sawyer::Container::BitVector>::rebuildDataStoredInEasyStorageClass()
         }
         retval.resize(nBits);
 
-        // Now read the data and load it into the bit vector
+        // Now read the data and load it into the bit vector, note that since
+        // the size is known to be positive the pointer better not be nil.
         BVWord *dst = retval.data();
-        for (size_t i=1; i < (size_t)Base::getSizeOfData(); ++i)
+        assert(dst != NULL);
+        for (size_t i=1; i < (size_t)Base::getSizeOfData(); ++i) {
             *dst++ = *words++;
+        }
     }
     return retval;
 }
@@ -1614,10 +1620,6 @@ void EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(PreprocessingI
   // printf ("In EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(): info->get_file_info() = %p \n",info->get_file_info());
   // printf ("In EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(): info->get_file_info()->get_freepointer() = %p \n",info->get_file_info()->get_freepointer());
 
-  // ROSE-1470
-     Sg_File_Info * file_info = info->get_file_info();
-     file_info->check_file_id("EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass", false);
-
      fileInfoIndex = AST_FILE_IO::getGlobalIndexFromSgClassPointer(info->get_file_info());
   // printf ("Saving fileInfoIndex = %d for %p \n",fileInfoIndex, info->get_file_info());
 
@@ -1675,7 +1677,6 @@ PreprocessingInfo* EasyStorage<PreprocessingInfo*>::rebuildDataStoredInEasyStora
 
         // ROSE-1470
            Sg_File_Info * file_info = (Sg_File_Info*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex(fileInfoIndex));
-           file_info->check_file_id("EasyStorage<PreprocessingInfo*>::rebuildDataStoredInEasyStorageClass", false);
            returnInfo->set_file_info(file_info);
 #if 0
            printf ("Check the file Info object just read... \n");
@@ -4375,6 +4376,7 @@ void EasyStorage <rose_graph_integerpair_edge_hash_multimap> :: readFromFile (st
    ****************************************************************************************
 */
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 template <class TYPE>
 void EasyStorage <SgSharedVector<TYPE> > :: storeDataInEasyStorageClass(const SgSharedVector<TYPE>& data_)
 {
@@ -4429,6 +4431,7 @@ SgSharedVector<TYPE> EasyStorage <SgSharedVector<TYPE> > :: rebuildDataStoredInE
 
     return SgSharedVector<TYPE>();
 }
+#endif
 
 /*
    ****************************************************************************************

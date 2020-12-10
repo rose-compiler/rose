@@ -9,7 +9,6 @@
 #include <sstream>
 #include "AstStatistics.h"
 
-// DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
 // avoid qualification of different supporting classes
@@ -21,121 +20,116 @@ using namespace ROSE_Statistics;
 
 //  NodeStatistics Constructors/Destructors
 AstNodeTraversalStatistics::AstNodeTraversalStatistics() 
-   : numNodeTypes(*new StatisticsContainerType(V_SgNumVariants))
-   {
-   }
+{
+  numNodeTypes.resize(V_SgNumVariants);
+}
 
 AstNodeTraversalStatistics::~AstNodeTraversalStatistics()
-   {
-     delete &numNodeTypes;
-   }
+{
+}
 
-AstNodeTraversalStatistics::AstNodeTraversalStatistics( const AstNodeTraversalStatistics & X)
-   : numNodeTypes(*new StatisticsContainerType(V_SgNumVariants))
-   {
-  // DQ (9/13/2011): This copy constructor was built because static analysis tools 
-  // suggested it would avoid a possible double free error.  I agree.
-     printf ("Error: it is an error to call this copy constructor. \n");
-     ROSE_ASSERT(false);
-   }
+AstNodeTraversalCSVStatistics::AstNodeTraversalCSVStatistics():minCountToShow(1) {
+}
 
+void AstNodeTraversalCSVStatistics::setMinCountToShow(int minValue) {
+  minCountToShow=minValue;
+}
+
+unsigned int AstNodeTraversalCSVStatistics::getMinCountToShow() {
+  return minCountToShow;
+}
+
+std::string AstNodeTraversalCSVStatistics::toString(SgNode* node) {
+  std::stringstream ss;
+  traverse(node,preorder); // traverse input files and all included files
+  for(size_t i=0;i!=numNodeTypes.size();++i) {
+    if(numNodeTypes.at(i)>=(size_t)getMinCountToShow())
+      ss<<getVariantName(VariantT(i)) <<","<<numNodeTypes[i]<<endl;
+  }
+  return ss.str();
+}
+ 
 string
-AstNodeTraversalStatistics::toString(SgNode* node)
-   {
-     string s;
-     traverse(node,preorder); // traverse input files and all included files
-     SgProject* n=dynamic_cast<SgProject*>(node);
-     if (n != NULL)
-        {
-          AstNodeTraversalStatistics stat2;
-          stat2.traverseInputFiles(n,preorder); // only traverse .C files specified on the command line
-          s = stat2.cmpStatistics(*this); // comparison of the size of the AST including and excluding header files
-        }
-       else
-        {
-          s = singleStatistics();
-        }
-     return s;
-   }
+AstNodeTraversalStatistics::toString(SgNode* node) {
+  string s;
+  traverse(node,preorder); // traverse input files and all included files
+  SgProject* n=dynamic_cast<SgProject*>(node);
+  if (n != NULL) {
+    AstNodeTraversalStatistics stat2;
+    stat2.traverseInputFiles(n,preorder); // only traverse .C files specified on the command line
+    s = stat2.cmpStatistics(*this); // comparison of the size of the AST including and excluding header files
+  } else {
+    s = singleStatistics();
+  }
+  return s;
+}
 
 void 
-AstNodeTraversalStatistics::visit(SgNode* node)
-   { 
-     if(!node) return;
-     ROSE_ASSERT(node->variantT()<V_SgNumVariants);
-     numNodeTypes[node->variantT()]++;
-   }
+AstNodeTraversalStatistics::visit(SgNode* node) { 
+  if(!node) return;
+  ROSE_ASSERT(node->variantT()<V_SgNumVariants);
+  numNodeTypes.at(node->variantT())++;
+}
 
 AstNodeTraversalStatistics::StatisticsContainerType
-AstNodeTraversalStatistics::getStatisticsData()
-   {
-     return numNodeTypes;
-   }
+AstNodeTraversalStatistics::getStatisticsData() {
+  return numNodeTypes;
+}
 
 string
-AstNodeTraversalStatistics::singleStatistics()
-   {
+AstNodeTraversalStatistics::singleStatistics() {
   // we possibly will want to overload << 
-     ostringstream ss;
-     for (unsigned int i=0; i != numNodeTypes.size(); i++)
-        {
-          if (numNodeTypes[i] > 0)
-             {
-               if ( SgProject::get_verbose() >= 2 )
-                    ss << "AST Traversal Statistics: " << setw(8) << numNodeTypes[i] << ": " << getVariantName(VariantT(i)) << endl;
-             }
-        }
-
-     return ss.str();
-   }
+  ostringstream ss;
+  for (size_t i=0; i != numNodeTypes.size(); i++) {
+    if (numNodeTypes.at(i) > 0) {
+      if ( SgProject::get_verbose() >= 2 )
+        ss << "AST Traversal Statistics: " << setw(8) << numNodeTypes[i] << ": " << getVariantName(VariantT(i)) << endl;
+    }
+  }
+  return ss.str();
+}
 
 string
-AstNodeTraversalStatistics::cmpStatistics( AstNodeTraversalStatistics & q )
-   {
-     ostringstream ss;
-     StatisticsContainerType numNodeTypes2 = q.getStatisticsData();
-     ElementType sum1 = 0, sum2 = 0;
-     ss << "****************************************************************************************************************\n";
-     ss << "AST Traversal Statistics (traversed in current file) : (total in AST) : (percent of total traversed in current file)\n";
-     ss << "****************************************************************************************************************\n";
-     for(unsigned int i=0; i != numNodeTypes.size(); i++)
-        {
-          if (numNodeTypes[i]>0 || numNodeTypes2[i]>0)
-             {
-               ss << generateCMPStatisticsValueString(getVariantName(VariantT(i)), numNodeTypes[i], numNodeTypes2[i]);
-             }
+AstNodeTraversalStatistics::cmpStatistics( AstNodeTraversalStatistics & q ) {
+  ostringstream ss;
+  StatisticsContainerType numNodeTypes2 = q.getStatisticsData();
+  ElementType sum1 = 0, sum2 = 0;
 
-          sum1 += numNodeTypes[i]; 
-          sum2 += numNodeTypes2[i];
-        }
+  ss << "********************************************************************************************************************\n";
+  ss << "AST Traversal Statistics (traversed in current file) : (total in AST) : (percent of total traversed in current file)\n";
+  ss << "********************************************************************************************************************\n";
 
-     ss << generateCMPStatisticsValueString("TOTAL", sum1, sum2);
-     ss << "**************************************************************************************************************** \n";
+  for(unsigned int i=0; i != numNodeTypes.size(); i++) {
+    if (numNodeTypes.at(i)>0 || numNodeTypes2.at(i)>0) {
+      ss << generateCMPStatisticsValueString(getVariantName(VariantT(i)), numNodeTypes[i], numNodeTypes2[i]);
+    }
+    sum1 += numNodeTypes[i]; 
+    sum2 += numNodeTypes2[i];
+  }
+  
+  ss << generateCMPStatisticsValueString("TOTAL", sum1, sum2);
+  ss << "********************************************************************************************************************\n";
 
-     return ss.str();
-   }
+  return ss.str();
+}
 
 // if the higher values are input data % is < 100.
 string 
-AstNodeTraversalStatistics::generateCMPStatisticsValueString(string name, ElementType v1, ElementType v2)
-   {
-     ostringstream ss;
-     ss << "AST Traversal Statistics:";
-     ss << setw(6) << v1 << ":" << setw(6) << v2 << ":";
-     if (v2 > 0)
-        {
-          ss.setf(ios::fixed|ios::showpoint);
-          ss << " " << setprecision(1) << setw(5) << (static_cast<float>(v1)/static_cast<float>(v2))*100.0 << "%";
-        }
-       else
-        {
-          ss << "-N/A-";
-        }
-     ss << " " << name;
-     ss << endl;
+AstNodeTraversalStatistics::generateCMPStatisticsValueString(string name, ElementType v1, ElementType v2) {
+  ostringstream ss;
+  ss << "AST Traversal Statistics:";
+  ss << setw(6) << v1 << ":" << setw(6) << v2 << ":";
+  if (v2 > 0) {
+    ss.setf(ios::fixed|ios::showpoint);
+    ss << " " << setprecision(1) << setw(5) << (static_cast<float>(v1)/static_cast<float>(v2))*100.0 << "%";
+  } else {
+    ss << "-N/A-";
+  }
+  ss << " " << name;
+  ss << endl;
 
-     return ss.str();
-   }
+  return ss.str();
+}
 
 // ************************************************************************
 //                    AstNodeMemoryPoolStatistics member functions
@@ -179,7 +173,7 @@ AstNodeMemoryPoolStatistics::ElementType::operator<(const ElementType & x)
                int numberOfNodes   = castNode->numberOfNodes(); \
                int memoryFootprint = castNode->memoryUsage(); \
                double percent = (((double) memoryFootprint) / ((double) totalMemoryUsed)) * 100.0; \
-               if ( SgProject::get_verbose() >= 2 ) \
+               if ( SgProject::get_verbose() >= 0 ) \
                     printf ("AST Memory Pool Statistics: numberOfNodes = %9d memory consumption = %10d bytes (%6.3f percent of total) sizeof() = %4ld node = %s \n",numberOfNodes,memoryFootprint,percent,sizeof(*castNode),castNode->class_name().c_str());\
                break; \
              }
@@ -223,7 +217,9 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgModifier)
           IR_NODE_VISIT_CASE(SgBitAttribute)
           IR_NODE_VISIT_CASE(SgAttribute)
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           IR_NODE_VISIT_CASE(SgBinaryComposite)
+#endif
           IR_NODE_VISIT_CASE(SgSupport)
        // IR_NODE_VISIT_CASE(SgPartialFunctionType)
           IR_NODE_VISIT_CASE(SgMemberFunctionType)
@@ -422,7 +418,9 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgVariableDeclaration)
           IR_NODE_VISIT_CASE(SgVariableDefinition)
           IR_NODE_VISIT_CASE(SgEnumDeclaration)
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           IR_NODE_VISIT_CASE(SgAsmStmt)
+#endif
           IR_NODE_VISIT_CASE(SgTypedefDeclaration)
           IR_NODE_VISIT_CASE(SgFunctionTypeTable)
           IR_NODE_VISIT_CASE(SgExprStatement)
@@ -470,9 +468,12 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgCommonSymbol)
           IR_NODE_VISIT_CASE(SgRenameSymbol)
           IR_NODE_VISIT_CASE(SgAliasSymbol)
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           IR_NODE_VISIT_CASE(SgAsmBlock)
           IR_NODE_VISIT_CASE(SgAsmOperandList)
-          IR_NODE_VISIT_CASE(SgAsmArmInstruction)
+#ifdef ROSE_ENABLE_ASM_A64
+          IR_NODE_VISIT_CASE(SgAsmA64Instruction)
+#endif
           IR_NODE_VISIT_CASE(SgAsmX86Instruction)
           IR_NODE_VISIT_CASE(SgAsmPowerpcInstruction)
           IR_NODE_VISIT_CASE(SgAsmInstruction)
@@ -495,7 +496,6 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgAsmUnaryPlus)
           IR_NODE_VISIT_CASE(SgAsmUnaryMinus)
           IR_NODE_VISIT_CASE(SgAsmUnaryRrx)
-          IR_NODE_VISIT_CASE(SgAsmUnaryArmSpecialRegisterList)
           IR_NODE_VISIT_CASE(SgAsmUnaryExpression)
           IR_NODE_VISIT_CASE(SgAsmMemoryReferenceExpression)
           IR_NODE_VISIT_CASE(SgAsmControlFlagsExpression)
@@ -686,6 +686,7 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgAsmGenericFileList)
           IR_NODE_VISIT_CASE(SgAsmInterpretation)
           IR_NODE_VISIT_CASE(SgAsmNode)
+#endif
           IR_NODE_VISIT_CASE(SgOmpOrderedClause)
           IR_NODE_VISIT_CASE(SgOmpNowaitClause)
           IR_NODE_VISIT_CASE(SgOmpUntiedClause)
@@ -719,23 +720,6 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgLocatedNodeSupport)
           IR_NODE_VISIT_CASE(SgToken)
 
-#if 0
-Case not handled: SgTemplateMemberFunctionDeclaration 
-Case not handled: SgTemplateFunctionDeclaration 
-Case not handled: SgTemplateVariableDeclaration 
-Case not handled: SgTemplateClassDefinition 
-Case not handled: SgTemplateFunctionDefinition 
-Case not handled: SgTemplateMemberFunctionRefExp 
-No representative for SgShortVal found in memory pools 
-No representative for SgUnsignedCharVal found in memory pools 
-No representative for SgWcharVal found in memory pools 
-No representative for SgUnsignedShortVal found in memory pools 
-Case not handled: SgTemplateParameterVal 
-Case not handled: SgTemplateClassSymbol 
-Case not handled: SgTemplateFunctionSymbol 
-Case not handled: SgTemplateMemberFunctionSymbol 
-#endif
-
        // DQ (11/19/2012): Added missing IR nodes.
           IR_NODE_VISIT_CASE(SgTypeTable)
           IR_NODE_VISIT_CASE(SgPartialFunctionType)
@@ -750,6 +734,44 @@ Case not handled: SgTemplateMemberFunctionSymbol
           IR_NODE_VISIT_CASE(SgTemplateClassSymbol)
           IR_NODE_VISIT_CASE(SgTemplateFunctionSymbol)
           IR_NODE_VISIT_CASE(SgTemplateMemberFunctionSymbol)
+
+
+       // DQ (10/28/2020): Added missing IR nodes.
+       // IR_NODE_VISIT_CASE(SgUnparse_Info)
+          IR_NODE_VISIT_CASE(SgTypeNullptr)
+          IR_NODE_VISIT_CASE(SgDeclType)
+          IR_NODE_VISIT_CASE(SgTypeSigned128bitInteger)
+       // IR_NODE_VISIT_CASE(SgPartialFunctionType)
+          IR_NODE_VISIT_CASE(SgDeclarationScope)
+       // IR_NODE_VISIT_CASE(SgAggregateInitializer)
+          IR_NODE_VISIT_CASE(SgNullptrValExp)
+          IR_NODE_VISIT_CASE(SgNonrealBaseClass)
+          IR_NODE_VISIT_CASE(SgTypeSignedLongLong)
+          IR_NODE_VISIT_CASE(SgRvalueReferenceType)
+          IR_NODE_VISIT_CASE(SgTypeOfType)
+          IR_NODE_VISIT_CASE(SgTypeUnsigned128bitInteger)
+          IR_NODE_VISIT_CASE(SgNonrealType)
+          IR_NODE_VISIT_CASE(SgAutoType)
+          IR_NODE_VISIT_CASE(SgTypeChar16)
+          IR_NODE_VISIT_CASE(SgTypeChar32)
+          IR_NODE_VISIT_CASE(SgTemplateTypedefDeclaration)
+          IR_NODE_VISIT_CASE(SgTemplateInstantiationTypedefDeclaration)
+          IR_NODE_VISIT_CASE(SgNonrealDecl)
+          IR_NODE_VISIT_CASE(SgStaticAssertionDeclaration)
+          IR_NODE_VISIT_CASE(SgNonrealRefExp)
+          IR_NODE_VISIT_CASE(SgTemplateFunctionRefExp)
+          IR_NODE_VISIT_CASE(SgAlignOfOp)
+          IR_NODE_VISIT_CASE(SgNoexceptOp)
+          IR_NODE_VISIT_CASE(SgLambdaExp)
+          IR_NODE_VISIT_CASE(SgBracedInitializer)
+          IR_NODE_VISIT_CASE(SgFunctionParameterRefExp)
+          IR_NODE_VISIT_CASE(SgPseudoDestructorRefExp)
+          IR_NODE_VISIT_CASE(SgTypeTraitBuiltinOperator)
+          IR_NODE_VISIT_CASE(SgTemplateVariableSymbol)
+          IR_NODE_VISIT_CASE(SgNonrealSymbol)
+          IR_NODE_VISIT_CASE(SgLambdaCapture)
+          IR_NODE_VISIT_CASE(SgLambdaCaptureList)
+          IR_NODE_VISIT_CASE(SgTemplateTypedefSymbol)
 
        // IR_NODE_VISIT_CASE()
 
@@ -785,6 +807,20 @@ string
 AstNodeStatistics::IRnodeUsageStatistics()
    {
   // printf ("IR node statistics not implemented! \n");
+
+#if 0
+     printf ("AstNodeStatistics::IRnodeUsageStatistics(): AstPerformance::outputCompilationPerformance = %s \n",AstPerformance::outputCompilationPerformance ? "true" : "false");
+#endif
+
+#if 0
+  // DQ (10/28/2020): This function is now called from within the AstPerformance::generateReportFromObject() function.
+  // DQ (10/28/2020): Control output of reporting using static bool data member outputCompilationPerformance.
+     if (AstPerformance::outputCompilationPerformance == false)
+        {
+          return "";
+        }
+#endif
+
      string s = "\n\n";
      AstNodeMemoryPoolStatistics memoryPoolTraversal;
      memoryPoolTraversal.traverseRepresentativeIRnodes();

@@ -5,6 +5,7 @@ HEADER_NODE_PREDECLARATION_START
 
 // tps (01/27/10): Added essential files..
 //#include "sage3basic.h"
+#include <rosePublicConfig.h>
 #include "setup.h"
 #include "rangemap.h"
 #include "Map.h"
@@ -14,6 +15,7 @@ HEADER_NODE_PREDECLARATION_START
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/set.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/version.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 #include <Sawyer/CommandLine.h>
@@ -41,44 +43,54 @@ class AstAttributeMechanism;
 // DQ (6/14/2008): Include the Exec format support.
 // #include "ExecGeneric.h"
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <Sawyer/Set.h>
+namespace Rose {
+  namespace BinaryAnalysis {
+    typedef Sawyer::Container::Set<rose_addr_t> AddressSet;
+  }
+}
+
 // This is all documented in Rva.C since doxygen can't pick of documentation from this file.
 class ROSE_DLL_API rose_rva_t {
-	public:
-		rose_rva_t();
-		rose_rva_t(const rose_rva_t&);
-		rose_rva_t operator=(const rose_rva_t&);
-		rose_rva_t(rose_addr_t rva, SgAsmGenericSection *section=NULL); //implicit
-		static rose_rva_t section_relative(SgAsmGenericSection *section, rose_addr_t offset);
-		bool is_bound() const;
-		rose_addr_t get_rva() const;
-		rose_rva_t& set_rva(rose_addr_t rva);
-		SgAsmGenericSection *get_section() const;
-		rose_rva_t& set_section(SgAsmGenericSection *section);
-		rose_rva_t& bind(SgAsmGenericHeader*);
-		rose_addr_t get_va() const;
-		rose_addr_t get_rel() const;
-		rose_addr_t get_rel(SgAsmGenericSection*);
-		void increment(rose_addr_t amount);
-		std::string to_string() const;
-	private:
-		rose_addr_t addr;             /* virtual address (relative to section if section is not null) */
-		SgAsmGenericSection *section; /* rva is relative to header base_va if section is null */
+        public:
+                rose_rva_t();
+                rose_rva_t(const rose_rva_t&);
+                rose_rva_t operator=(const rose_rva_t&);
+                rose_rva_t(rose_addr_t rva, SgAsmGenericSection *section=NULL); //implicit
+                static rose_rva_t section_relative(SgAsmGenericSection *section, rose_addr_t offset);
+                bool is_bound() const;
+                rose_addr_t get_rva() const;
+                rose_rva_t& set_rva(rose_addr_t rva);
+                SgAsmGenericSection *get_section() const;
+                rose_rva_t& set_section(SgAsmGenericSection *section);
+                rose_rva_t& bind(SgAsmGenericHeader*);
+                rose_addr_t get_va() const;
+                rose_addr_t get_rel() const;
+                rose_addr_t get_rel(SgAsmGenericSection*);
+                void increment(rose_addr_t amount);
+                std::string to_string() const;
+        private:
+                rose_addr_t addr;             /* virtual address (relative to section if section is not null) */
+                SgAsmGenericSection *section; /* rva is relative to header base_va if section is null */
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-	private:
-		friend class boost::serialization::access;
+        private:
+                friend class boost::serialization::access;
 
-		template<class S>
+                template<class S>
                 void serialize(S &s, const unsigned /*version*/) {
                     s & BOOST_SERIALIZATION_NVP(addr);
                     s & BOOST_SERIALIZATION_NVP(section);
                 }
 #endif
 };
+#endif
 
 // #ifndef ROSE_USE_SWIG_SUPPORT
 #ifndef SWIG
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 std::ostream &operator<<(std::ostream&, const rose_rva_t&);
 
 rose_addr_t operator-(const rose_rva_t &a1, const rose_rva_t &a2);
@@ -90,6 +102,7 @@ bool operator> (const rose_rva_t &a1, const rose_rva_t &a2);
 bool operator>=(const rose_rva_t &a1, const rose_rva_t &a2);
 bool operator==(const rose_rva_t &a1, const rose_rva_t &a2);
 bool operator!=(const rose_rva_t &a1, const rose_rva_t &a2);
+#endif
 
 #endif
 
@@ -111,17 +124,17 @@ void Range<rose_addr_t>::print(std::ostream &o) const;
 // deprecated. Use AddressSet instead for all new code.
 class ExtentMap: public RangeMap<Extent> {
 public:
-	ExtentMap(): RangeMap<Extent>() {}
-	template<class Other> ExtentMap(const Other &other): RangeMap<Extent>(other) {}
-	static char category(const Extent &a, const Extent &b);
-	ExtentMap subtract_from(const Extent &e) const {
-		return invert_within<ExtentMap>(e);
+        ExtentMap(): RangeMap<Extent>() {}
+        template<class Other> ExtentMap(const Other &other): RangeMap<Extent>(other) {}
+        static char category(const Extent &a, const Extent &b);
+        ExtentMap subtract_from(const Extent &e) const {
+                return invert_within<ExtentMap>(e);
         }
-	void allocate_at(const Extent &request);
-	Extent allocate_best_fit(const rose_addr_t size);
-	Extent allocate_first_fit(const rose_addr_t size);
-	void dump_extents(std::ostream&, const std::string &prefix="", const std::string &label="") const;
-	void dump_extents(FILE *f, const char *prefix, const char *label, bool pad=true) const;
+        void allocate_at(const Extent &request);
+        Extent allocate_best_fit(const rose_addr_t size);
+        Extent allocate_first_fit(const rose_addr_t size);
+        void dump_extents(std::ostream&, const std::string &prefix="", const std::string &label="") const;
+        void dump_extents(FILE *f, const char *prefix, const char *label, bool pad=true) const;
 };
 
 // deprecated. Conversion functions, to be deleted when the old types are no longer needed.
@@ -146,7 +159,7 @@ struct HexdumpFormat {
     bool multiline;             /**< Emit prefix at beginning and line feed at end of output. */
 
     /* Settings for numeric output of bytes */
-    bool show_numeric;		/**< Show numeric format of bytes (default true). */
+    bool show_numeric;          /**< Show numeric format of bytes (default true). */
     std::string numeric_fmt;    /**< Printf format for bytes (default "%02x"). */
     std::map<unsigned char,std::string> numeric_fmt_special; /**< Special formatting for certain values. */
     std::string numeric_sep;    /**< String to print between numeric values (default " "). */
@@ -159,9 +172,10 @@ struct HexdumpFormat {
 
 #include <RegisterDescriptor.h>
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 /** Mapping from instruction virtual address to instruction. */
 typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
-
+#endif
 
 // DQ (8/21/2008): these are from the GenericExec.h (from before we used Robb's work in the new IR nodes).
 #define NELMTS(X)       (sizeof(X)/sizeof((X)[0]))      /* number of elements in a static-sized array */
@@ -249,6 +263,7 @@ typedef Rose_STL_Container<SgDeclarationStatement*> SgDeclarationStatementPtrLis
  */
 typedef SgDeclarationStatementPtrList*              SgDeclarationStatementPtrListPtr;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 // tps (8/20/2007): Added support for binaries.
 /** \typedef SgAsmBlockPtrList
     This is socumentation for the following typedef 
@@ -296,6 +311,7 @@ typedef SgAsmCoffSymbolPtrList*              SgAsmCoffSymbolPtrListPtr;
 // DQ (8/8/2008): Added to support new exec format IR nodes
 typedef Rose_STL_Container<SgAsmGenericSymbol*> SgAsmGenericSymbolPtrList;
 typedef SgAsmGenericSymbolPtrList*              SgAsmGenericSymbolPtrListPtr;
+#endif
 
 class SgStatement;
 typedef Rose_STL_Container<SgStatement*>    SgStatementPtrList;
@@ -431,6 +447,7 @@ typedef SgBasicBlock*                       SgBasicBlockPtr;
 typedef std::vector<SgBasicBlockPtr>        SgBasicBlockPtrList;
 typedef SgBasicBlockPtrList*                SgBasicBlockPtrListPtr;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 // DQ (3/15/2007): Added support for binaries.
 typedef Rose_STL_Container<SgAsmStatement*> SgAsmStatementPtrList;
 typedef SgAsmStatementPtrList*              SgAsmStatementPtrListPtr;
@@ -440,16 +457,17 @@ typedef Rose_STL_Container<SgAsmExpression*> SgAsmExpressionPtrList;
 typedef SgAsmExpressionPtrList*              SgAsmExpressionPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmIntegerValueExpression*> SgAsmIntegerValuePtrList;
-typedef SgAsmIntegerValuePtrList* 		 SgAsmIntegerValuePtrListPtr;
+typedef SgAsmIntegerValuePtrList*                SgAsmIntegerValuePtrListPtr;
 
 // DQ (3/15/2007): Added support for binaries.
 typedef Rose_STL_Container<SgAsmSynthesizedDeclaration*> SgAsmSynthesizedDeclarationPtrList;
 typedef SgAsmSynthesizedDeclarationPtrList*              SgAsmSynthesizedDeclarationPtrListPtr;
 
-// JJW (3/19/2008): Added support for containers of x86 instructions
 typedef Rose_STL_Container<SgAsmX86Instruction*> SgAsmX86InstructionPtrList;
-// JJW (3/21/2008): Added support for containers of Arm instructions
-typedef Rose_STL_Container<SgAsmArmInstruction*> SgAsmArmInstructionPtrList;
+#ifdef ROSE_ENABLE_ASM_A64
+typedef Rose_STL_Container<SgAsmA64Instruction*> SgAsmA64InstructionPtrList;
+#endif
+#endif
 
 // DQ (11/19/2007): Added support for Fortran namelist statement.
 typedef Rose_STL_Container<SgNameGroup*>           SgNameGroupPtrList;
@@ -483,8 +501,6 @@ typedef SgLabelSymbolPtrList*                  SgLabelSymbolPtrListPtr;
 typedef Rose_STL_Container<SgFormatItem*>      SgFormatItemPtrList;
 typedef SgFormatItemPtrList*                   SgFormatItemPtrListPtr;
 
-// #ifndef ROSE_USE_SWIG_SUPPORT
-
 // DQ (8/21/2008): Use the reference built for rose_addr_t instead.
 // DQ (8/21/2008): Moved this from Node.code to make it local since 
 // we can't reference the nested addr_t directly from glogal scope.
@@ -492,14 +508,13 @@ typedef SgFormatItemPtrList*                   SgFormatItemPtrListPtr;
 typedef Rose_STL_Container<rose_addr_t>  SgAddressList;
 typedef SgAddressList*                   SgAddressListPtr;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 typedef Rose_STL_Container<rose_rva_t>         SgRVAList;
 typedef SgRVAList*                             SgRVAListPtr;
 
-// endif for ifndef ROSE_USE_SWIG_SUPPORT
-// #endif
-
 typedef Rose_STL_Container<SgAsmPEExportEntry*> SgAsmPEExportEntryPtrList;
-typedef SgAsmPEExportEntryPtrList*		SgAsmPEExportEntryPtrListPtr;
+typedef SgAsmPEExportEntryPtrList*              SgAsmPEExportEntryPtrListPtr;
+#endif
 
 typedef Rose_STL_Container<unsigned>           SgUnsignedList;
 typedef SgUnsignedList*                        SgUnsignedListPtr;
@@ -508,6 +523,7 @@ typedef SgUnsignedList*                        SgUnsignedListPtr;
 typedef Rose_STL_Container<size_t>             SgSizeTList;
 typedef SgSizeTList*                           SgSizeTListPtr;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 typedef Rose_STL_Container<SgAsmNEEntryPoint*> SgAsmNEEntryPointPtrList;
 typedef SgAsmNEEntryPointPtrList*              SgAsmNEEntryPointPtrListPtr;
 
@@ -530,6 +546,7 @@ typedef SgAsmGenericHeaderPtrList*              SgAsmGenericHeaderPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmGenericDLL*> SgAsmGenericDLLPtrList;
 typedef SgAsmGenericDLLPtrList*              SgAsmGenericDLLPtrListPtr;
+#endif
 
 typedef Rose_STL_Container<unsigned char>    SgUnsignedCharList;
 typedef SgUnsignedCharList*                  SgUnsignedCharListPtr;
@@ -557,6 +574,7 @@ typedef SgRenamePairPtrList*              SgRenamePairPtrListPtr;
 typedef Rose_STL_Container<SgInterfaceBody*> SgInterfaceBodyPtrList;
 typedef SgInterfaceBodyPtrList*              SgInterfaceBodyPtrListPtr;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 // DQ (11/5/2008): Addes as part of general Dwarf support in the AST for binary executables.
 typedef Rose_STL_Container<SgAsmDwarfLine*> SgAsmDwarfLinePtrList;
 typedef SgAsmDwarfLinePtrList*              SgAsmDwarfLinePtrListPtr;
@@ -569,6 +587,7 @@ typedef SgAsmDwarfConstructPtrList*              SgAsmDwarfConstructPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmDwarfCompilationUnit*> SgAsmDwarfCompilationUnitPtrList;
 typedef SgAsmDwarfCompilationUnitPtrList*              SgAsmDwarfCompilationUnitPtrListPtr;
+#endif
 
 // DQ (11/28/2008): Added support for list of integers (used for flag list in SgLinemarkerDirectiveStatement).
 // typedef std::vector<int>                     SgIntegerList;
@@ -617,9 +636,11 @@ class SgUntypedFunctionDeclaration;
 typedef Rose_STL_Container<SgUntypedFunctionDeclaration*> SgUntypedFunctionDeclarationPtrList;
 typedef SgUntypedFunctionDeclarationPtrList*              SgUntypedFunctionDeclarationPtrListPtr;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 class SgAsmRegisterReferenceExpression;
 typedef Rose_STL_Container<SgAsmRegisterReferenceExpression*> SgAsmRegisterReferenceExpressionPtrList;
 typedef SgAsmRegisterReferenceExpressionPtrList* SgAsmRegisterReferenceExpressionPtrListPtr;
+#endif
 
 // DQ (9/3/2014): Added support for C++11 Lambda expressions.
 typedef Rose_STL_Container<SgLambdaCapture*>     SgLambdaCapturePtrList;
@@ -644,6 +665,7 @@ class PreviousAndNextNodeData;
 // DQ (11/30/2015): Added support for mapping of the AST to macro expansions.
 class MacroExpansion;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <SgSharedVector.h>
 
 typedef SgSharedVector<unsigned char>             SgFileContentList;
@@ -682,11 +704,9 @@ typedef SgAsmElfSymverNeededEntryPtrList*              SgAsmElfSymverNeededEntry
 typedef Rose_STL_Container<SgAsmElfSymverNeededAux*> SgAsmElfSymverNeededAuxPtrList;
 typedef SgAsmElfSymverNeededAuxPtrList*              SgAsmElfSymverNeededAuxPtrListPtr;
 
-
-
 typedef Rose_STL_Container<SgAsmPERVASizePair*> SgAsmPERVASizePairPtrList;
 typedef SgAsmPERVASizePairPtrList* SgAsmPERVASizePairPtrListPtr;
-
+#endif
 
 // DQ (11/20/2010): Added type for SgToken list
 // Build a type for the SgToken list.
@@ -718,7 +738,7 @@ namespace rose_hash
      struct hash_integer
         {
        // tps (11/17/2009) : Changed this so that it works under Windows.
-       // CH (4/9/2010): Use boost::hash instead	    
+       // CH (4/9/2010): Use boost::hash instead            
           size_t operator()(const int n) const
              {
                return n;
@@ -728,7 +748,7 @@ namespace rose_hash
      struct hash_integer_pair
         {
        // tps (11/17/2009) : Changed this so that it works under Windows.
-       // CH (4/9/2010): Use boost::hash instead	    
+       // CH (4/9/2010): Use boost::hash instead            
           size_t operator()(const std::pair<int,int> & p) const
              {
             // DQ (4/30/2009): This subject should be reviewed!
@@ -766,7 +786,7 @@ namespace rose_hash
      struct hash_graph_node
         {
        // tps (11/17/2009) : Changed this so that it works under Windows.
-       // CH (4/9/2010): Use boost::hash instead	    
+       // CH (4/9/2010): Use boost::hash instead            
           size_t operator()(const SgGraphNode* ptr) const
              {
                return (size_t) ptr;
@@ -781,7 +801,7 @@ namespace rose_hash
 // DQ (8/19/2008): Note that "rose_hash" is a namespace defined above.
 // class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
-// CH (4/9/2010): Use boost::unordered instead	    
+// CH (4/9/2010): Use boost::unordered instead      
 typedef rose_hash::unordered_multimap<std::string, SgGraphNode*> rose_graph_string_node_hash_multimap_base_type;
 
 class rose_graph_string_node_hash_multimap : public rose_graph_string_node_hash_multimap_base_type
@@ -801,7 +821,7 @@ class rose_graph_string_node_hash_multimap : public rose_graph_string_node_hash_
           rose_graph_string_node_hash_multimap()
              : rose_graph_string_node_hash_multimap_base_type(), parent(NULL)
              {}
-			 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
+                         // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 #if 0
           rose_graph_string_node_hash_multimap(int sz) 
              : rose_graph_string_node_hash_multimap_base_type(sz), parent(NULL)
@@ -851,7 +871,7 @@ typedef rose_graph_string_node_hash_multimap rose_graph_hash_multimap;
 
 // DQ (4/29/2009): Added to support ROSE Graph IR nodes
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
-// CH (4/9/2010): Use boost::unordered instead	    
+// CH (4/9/2010): Use boost::unordered instead      
 typedef rose_hash::unordered_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node> rose_graph_node_edge_hash_multimap_base_type;
 class rose_graph_node_edge_hash_multimap : public rose_graph_node_edge_hash_multimap_base_type
    {
@@ -866,7 +886,7 @@ class rose_graph_node_edge_hash_multimap : public rose_graph_node_edge_hash_mult
           rose_graph_node_edge_hash_multimap()
              : rose_graph_node_edge_hash_multimap_base_type()
              {}
-	 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
+         // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 #if 0
           rose_graph_node_edge_hash_multimap(int sz) 
              : rose_graph_node_edge_hash_multimap_base_type(sz)
@@ -909,7 +929,7 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_node_edge_hash_m
 
 // DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
 // typedef rose_hash::unordered_map<int,SgGraphNode*, rose_hash::hash_integer, rose_hash::eqstr_graph_node> rose_graph_integer_node_hash_map_base_type
-// CH (4/9/2010): Use boost::unordered instead	    
+// CH (4/9/2010): Use boost::unordered instead      
 //#ifdef _MSCx_VER
 #if 0
 typedef rose_hash::unordered_map<int, SgGraphNode*, stdext::hash_compare <int, greater<int> > > rose_graph_integer_node_hash_map_base_type;
@@ -971,7 +991,7 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integer_node_has
 
 // DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
 // typedef rose_hash::unordered_map<int,SgGraphEdge*, rose_hash::hash_integer, rose_hash::eqstr_graph_edge> rose_graph_integer_edge_hash_map_base_type;
-// CH (4/9/2010): Use boost::unordered instead	    
+// CH (4/9/2010): Use boost::unordered instead      
 //#ifdef _MSCx_VER
 #if 0
 typedef rose_hash::unordered_map<int,SgGraphEdge*> rose_graph_integer_edge_hash_map_base_type;
@@ -1147,7 +1167,7 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integerpair_edge
 
 // DQ (5/1/2009): This is added to support lookup of indexes based on labels (can be used for nodes or edges).
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
-// CH (4/9/2010): Use boost::unordered instead	    
+// CH (4/9/2010): Use boost::unordered instead      
 typedef rose_hash::unordered_multimap<std::string, int> rose_graph_string_integer_hash_multimap_base_type;
 class rose_graph_string_integer_hash_multimap : public rose_graph_string_integer_hash_multimap_base_type
    {
@@ -1160,7 +1180,7 @@ class rose_graph_string_integer_hash_multimap : public rose_graph_string_integer
           rose_graph_string_integer_hash_multimap()
              : rose_graph_string_integer_hash_multimap_base_type(), parent(NULL)
              {}
- 	 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
+         // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 #if 0
           rose_graph_string_integer_hash_multimap(int sz) 
              : rose_graph_string_integer_hash_multimap_base_type(sz), parent(NULL)
@@ -1490,7 +1510,7 @@ namespace AST_FileIO
 class ROSE_VisitTraversal
    {
      public:
-	  virtual ~ROSE_VisitTraversal() {};
+          virtual ~ROSE_VisitTraversal() {};
           virtual void visit (SgNode* node) = 0;
           void traverseMemoryPool()
              {
@@ -1542,8 +1562,10 @@ namespace VirtualCFG
    }
 #endif
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 // DQ (3/15/2007): Added support for binaries
 std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<SgAsmStatement*> & l );
+#endif
 
 // DQ (5/8/2007): Added support for type elaboration lists, hidden type lists, and hidden declaration lists.
 std::ostream & operator<< ( std::ostream & os, const std::set<SgSymbol*> & l );
@@ -1553,6 +1575,11 @@ std::ostream & operator<< ( std::ostream & os, const std::set<SgSymbol*> & l );
 //#include "virtualCFG.h"
 // tps (8/13/2007): working on binary cfg mechanism.
 //#include "virtualBinCFG.h"
+
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+// Version numbers for SgAsm* nodes. Used for backward compatibility. */
+BOOST_CLASS_VERSION(SgAsmInstruction, 1);
+#endif
 
 HEADER_NODE_PREDECLARATION_END
 
@@ -1629,7 +1656,7 @@ HEADER_START
        // numbers are the same, but the enumerator names are different)
           int variant() const ROSE_DEPRECATED_FUNCTION {return (int)this->variantT();}
 
-       // AS (10/22/2007): build function to return class hierachy subtree of a VariantT		  
+       // AS (10/22/2007): build function to return class hierachy subtree of a VariantT                  
           static std::vector<VariantT> getClassHierarchySubTreeFunction( VariantT v);
           static void getClassHierarchySubTreeFunction( VariantT v, std::vector<VariantT>&);
 
@@ -1883,8 +1910,8 @@ HEADER_START
 
       /* name Control flow graph public functions
 
-	  These functions return control flow graph nodes for various positions
-	  around a construct. */
+          These functions return control flow graph nodes for various positions
+          around a construct. */
       /* */
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -1903,7 +1930,7 @@ HEADER_START
              {
              assert (this);
                return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
-	          }
+                  }
       /* */
 #else
      /*! \brief Returns the CFG node for just before this AST node */
@@ -2037,7 +2064,7 @@ HEADER_PARSER_END
 
 SOURCE_START
 
-	          
+                  
 // ########################################
 // Some global variables used within SAGE 3
 // ########################################
@@ -2418,7 +2445,7 @@ SgNode::set_attributeMechanism(AstAttributeMechanism* a)
 #if 0
 void 
 SgNode::print( std::ostream* os,   /* 0 uses the default */
-	       int maxdepth)  /* controlling function*/
+               int maxdepth)  /* controlling function*/
    {
      Sg_print_info().reset(os, maxdepth); 
      this->_print(0); 
@@ -2482,6 +2509,30 @@ SgNode::set_isModified ( bool isModified)
      ROSE_ASSERT(this != NULL);
 
 #if 0
+  // DQ (6/4/2019): Use this to debug the outlining to seperate file mechanism (remove some spew by ignoring some IR nodes).
+     if (variantT() != V_Sg_File_Info && variantT() != V_SgUnparse_Info)
+        {
+          printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
+        }
+#endif
+
+#if 0
+  // DQ (6/6/2019): Testing where isModified is being reset.
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(this);
+     if (functionDeclaration != NULL && functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration())
+        {
+          if (functionDeclaration->get_name() == "OUT_1_transformation_0")
+             {
+               printf ("%%%%%%%%%%%%%%%%%% Setting SgFunctionDeclaration: OUT_1_transformation_0: isModified = %s \n",isModified ? "true" : "false");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+#endif
+
+#if 0
   // DQ (4/14/2015): Adding testing to identify side-effects in the AST.
      if (SgProject::get_verbose() >= 3)
         {
@@ -2491,7 +2542,7 @@ SgNode::set_isModified ( bool isModified)
           if (isSgUnparse_Info(this) == NULL && isSgToken(this) == NULL)
              {
                printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
-#if 1
+#if 0
                if (SgProject::get_verbose() >= 4)
                   {
                     printf ("Exiting as a test (when verbose >= 3) in SgNode::set_isModified \n");
@@ -2586,7 +2637,12 @@ SgNode::set_parent ( SgNode* parent )
      ROSE_ASSERT(this != NULL);
      ROSE_ASSERT(this != parent);
 
-  // printf ("In SgNode::set_parent(): Setting parent of %p = %s to %p = %s \n",this,class_name().c_str(),parent,parent->class_name().c_str());
+#if 0
+     printf ("In SgNode::set_parent():\n");
+     printf (" - this     = %p (%s)\n", this,     class_name().c_str());
+     printf (" - parent   = %p (%s)\n", parent,   parent ? parent->class_name().c_str() : "" );
+     printf (" - p_parent = %p (%s)\n", p_parent, p_parent ? p_parent->class_name().c_str() : "" );
+#endif
 
      p_parent = parent;
 
@@ -2688,7 +2744,7 @@ $CLASSNAME::buildCommandLineToSubstituteTransformationFile( const vector<string>
        // have to process +w2 (warnings option) on some compilers so include +<option>
           if ( argv[i].size() < 1 || (argv[i][0] != '-') || (argv[i][0] != '+') )
              {
-	       unsigned int length = argv[i].size();
+               unsigned int length = argv[i].size();
             // printf ("Look for file names:  argv[%d] = %s length = %d \n",i,argv[i],length);
 
             // look only for .c and .C files (source code files)
@@ -2717,7 +2773,7 @@ $CLASSNAME::buildCommandLineToSubstituteTransformationFile( const vector<string>
              }
 
        // printf ("In loop: i = %d \n",i);
-	}
+        }
 
   // For now ets only debug the case of a single file specified on the command line
      ROSE_ASSERT (fileNameCounter == 1);

@@ -138,6 +138,7 @@ Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, int pos, ObserveTransform &
     n1 = n->Clone();
     for ( LoopTreeNode *cur1 = n->FirstChild(); cur1 != tmp1; ) {
       LoopTreeNode* t = cur1;
+      assert(cur1 != NULL);
       cur1 = cur1->NextSibling();
       UnlinkNode(t);
       t->Link( n1, LoopTreeNode::AsLastChild);
@@ -198,7 +199,8 @@ operator () ( LoopTreeNode *n, SelectLoopTreeNode stmts, Location config)
             std::cerr << "distributing loop before " << n->toString() << "\n";
         n1 = Distribute( n, stmts, -1, ob, &loc);
         if (n1 != n && n1 != 0) 
-           n1->Link( n, LoopTreeNode::AsPrevSibling); break;
+           n1->Link( n, LoopTreeNode::AsPrevSibling); 
+        break;
         }
      case AFTER:
         {
@@ -206,7 +208,8 @@ operator () ( LoopTreeNode *n, SelectLoopTreeNode stmts, Location config)
             std::cerr << "distributing loop after " << n->toString() << "\n";
         n1 = Distribute( n, stmts, 1, ob, &loc);
         if (n1 != n && n1 != 0) 
-            n1->Link( n, LoopTreeNode::AsNextSibling); break;
+            n1->Link( n, LoopTreeNode::AsNextSibling); 
+        break;
         }
      default: assert(0);
      }
@@ -1167,14 +1170,15 @@ operator()( LoopTreeNode* repl, LoopTreeNode* init,
 {
   CopyArrayOpt opt = c.get_opt();
   if (DebugCopyConfig()) {
-      if (init != 0) 
+      if (init != NULL) 
         std::cerr << "init cutting node: " << init->toString() << std::endl;
-      if (save != 0) 
+      if (save != NULL) 
         std::cerr << "save cutting node: " << save->toString() << std::endl;
       std::cerr << "copy config " << c.toString() << " : " << std::endl;
   }
   if (init == save) {
      LoopTreeNode *r = new LoopTreeCopyArray(c);
+     assert(init != NULL);
      InsertNode(r,init,-1); 
      return;
   }
@@ -1184,12 +1188,14 @@ operator()( LoopTreeNode* repl, LoopTreeNode* init,
   if (opt1 != 0) {
      c.set_opt(opt1);
      LoopTreeNode *r = new LoopTreeCopyArray(c);
+     assert(init != NULL);
      InsertNode(r,init,-1); 
   }
 
   if (opt2 != 0) {
      c.set_opt(opt2);
      LoopTreeNode *r = new LoopTreeCopyArray(c);
+     assert(save != NULL);
      InsertNode(r,save,-1); 
   }
 }
@@ -1231,6 +1237,7 @@ class ApplyLoopSplittingImpl
        for (PtrSetWrap<LoopTreeNode>::const_iterator listp = stmtlist.begin();
            !listp.ReachEnd(); listp.Advance()) {
          LoopTreeNode* curstmt = listp.Current();
+         assert(curstmt != NULL);
          LoopTreeSplitStmt()(curstmt, loop, mid);
        }
        SelectPtrSet<LoopTreeNode> sel(stmtlist);
@@ -1239,6 +1246,7 @@ class ApplyLoopSplittingImpl
        OptimizeLoopTree(loop);       
        OptimizeLoopTree(loop1); 
        ++cur;
+       assert(loop1 != NULL);
        if (!loop1->SelfRemove())
           SplitLoop(loop1, cur, end);
        if (!loop->SelfRemove()) 

@@ -1,5 +1,7 @@
 #ifndef FUNCTION_INFO_H
 #define FUNCTION_INFO_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BinaryAstHash.h>
 #include "Combinatorics.h"
@@ -166,8 +168,7 @@ namespace LibraryIdentification
         
         static std::string getHash(const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner, Rose::BinaryAnalysis::Partitioner2::Function::Ptr function) 
         {
-            Rose::Combinatorics::HasherFnv fnv;
-            Rose::Combinatorics::Hasher& hasher = dynamic_cast<Rose::Combinatorics::Hasher&>(fnv);            
+            boost::shared_ptr<Rose::Combinatorics::Hasher> hasher = Rose::Combinatorics::Hasher::HasherFactory::Instance().createHasher("SHA256");
             Rose::BinaryAnalysis::AstHash astHash(hasher);            
 
             const std::set<rose_addr_t>& basicBlocks = function->basicBlockAddresses();
@@ -180,7 +181,7 @@ namespace LibraryIdentification
                     
                 }
 
-            return fnv.toString();
+            return hasher->toString();
         }
         
 
@@ -195,6 +196,5 @@ namespace LibraryIdentification
     
 }
 
-
-
-#endif //FUNCTION_INFO
+#endif
+#endif

@@ -12,8 +12,13 @@
  *    SgAsmElfSymverEntry   -- A single entry in an SgAsmElfSymverSection, usually an index into one of the other
  *                             version tables, but some special values are also defined.
  */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
+// In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
+// need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 
 /*========================================================================================================================
  * Methods for classes related to the GNU Symbol Version Table
@@ -745,3 +750,5 @@ SgAsmElfSymverNeededSection::dump(FILE *f, const char *prefix, ssize_t idx) cons
     if (variantT() == V_SgAsmElfSymverNeededSection) /*unless a base class*/
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
+
+#endif

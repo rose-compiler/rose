@@ -177,6 +177,11 @@ public:
         return *this;
     }
 
+    /** Reset as if default-constructed. */
+    void reset() {
+        *this = Nothing();
+    }
+
     /** Dereference to obtain value.
      *
      *  If this optional contains a value then a reference to that value is returned. Otherwise an
@@ -233,6 +238,9 @@ public:
     const Value& orElse(Value &dflt) {
         return isEmpty_ ? dflt : **this;
     }
+    const Optional orElse(const Optional &other) const {
+        return isEmpty_ ? other : *this;
+    }
     /** @} */
 
     /** Obtain a value or a default.
@@ -271,7 +279,8 @@ public:
      *  while (Optional<std::string> opt = imap.getOptional(key)) {
      *      std::string value = *opt;
      * @endcode */
-    bool assignTo(Value &out) const {
+    template<class U>
+    bool assignTo(U &out) const {
         if (isEmpty_) {
             return false;
         } else {

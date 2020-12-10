@@ -746,7 +746,7 @@ get(Sawyer::Boost::vertex_value_t, Sawyer::Container::Graph<V, E, VKey, EKey, Al
 }
 
 template<class V, class E, class VKey, class EKey, class Alloc>
-typename property_map<const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc>, Sawyer::Boost::vertex_value_t>::type
+typename property_map<const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc>, Sawyer::Boost::vertex_value_t>::const_type
 get(Sawyer::Boost::vertex_value_t, const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> &graph) {
     return Sawyer::Boost::ConstVertexPropertyMap<const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> >(graph);
 }
@@ -758,19 +758,19 @@ get(Sawyer::Boost::edge_value_t, Sawyer::Container::Graph<V, E, VKey, EKey, Allo
 }
 
 template<class V, class E, class VKey, class EKey, class Alloc>
-typename property_map<const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc>, Sawyer::Boost::edge_value_t>::type
+typename property_map<const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc>, Sawyer::Boost::edge_value_t>::const_type
 get(Sawyer::Boost::edge_value_t, const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> &graph) {
     return Sawyer::Boost::ConstEdgePropertyMap<const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> >(graph);
 }
 
 template<class V, class E, class VKey, class EKey, class Alloc>
-typename property_map<const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc>, Sawyer::Boost::vertex_id_t>::type
+typename property_map<const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc>, Sawyer::Boost::vertex_id_t>::const_type
 get(Sawyer::Boost::vertex_id_t, const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> &graph) {
     return Sawyer::Boost::ConstVertexIdPropertyMap<const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> >(graph);
 }
 
 template<class V, class E, class VKey, class EKey, class Alloc>
-typename property_map<const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc>, Sawyer::Boost::edge_id_t>::type
+typename property_map<const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc>, Sawyer::Boost::edge_id_t>::const_type
 get(Sawyer::Boost::edge_id_t, const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> &graph) {
     return Sawyer::Boost::ConstEdgeIdPropertyMap<const Sawyer::Container::Graph<V, E, VKey, EKey, Alloc> >(graph);
 }

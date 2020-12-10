@@ -16,12 +16,6 @@ std::string version_message();
 // returns a string containing the current version number
 std::string version_number();
 
-//! SCM version identifier for ROSE
-std::string rose_scm_version_id();
-
-//! SCM version date-identifier for ROSE (Unix timestamp)
-time_t rose_scm_version_date();
-
 //! Boost version identifier (numeric)
 unsigned int rose_boost_version_id();
 
@@ -60,7 +54,7 @@ ROSE_DLL_API SgProject* frontendShell ( const std::vector<std::string>& argv);
 //
 // WARNING: If a non-null unparseFormatHelp is specified then backend will unconditionally delete it.  Therefore, the caller
 // must have allocated it on the heap or else strange errors will result.
-ROSE_DLL_API int backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelagate = NULL );
+ROSE_DLL_API int backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelegate = NULL );
 
 // DQ (8/24/2009): This backend calls the backend compiler using the original input source file list.
 // This is useful as a test code for testing ROSE for use on projects that target Compass or any
@@ -179,96 +173,130 @@ namespace Rose
   // Global variable (in this rose namespace) to permit multiple parts of ROSE to access consistant information on options.
      ROSE_DLL_API extern Options global_options;
 
+  // DQ (8/10/2004): This was moved to the SgFile a long time ago and should not be used any more)
+  // DQ (8/11/2004): Need to put this back so that there is a global concept of verbosity for all of ROSE.
+  // static int roseVerboseLevel;
 
-       // DQ (8/10/2004): This was moved to the SgFile a long time ago and should not be used any more)
-       // DQ (8/11/2004): Need to put this back so that there is a global concept of verbosity for all of ROSE.
-       // static int roseVerboseLevel;
+  // These functions trim the header files from the unparsed output.
+  // static int isCutStart ( SgStatement *st );
+  // static int isCutEnd ( SgStatement *st );
+  // void ROSE_Unparse ( SgFile *f , std::ostream *of );
 
-       // These functions trim the header files from the unparsed output.
-       // static int isCutStart ( SgStatement *st );
-       // static int isCutEnd ( SgStatement *st );
-       // void ROSE_Unparse ( SgFile *f , std::ostream *of );
+  // This function helps isolate the details of the UNIX strcmp function
+  // static int isSameName ( const std::string& s1, const std::string& s2 );
+     int containsString ( const std::string& masterString, const std::string& targetString );
 
-       // This function helps isolate the details of the UNIX strcmp function
-       // static int isSameName ( const std::string& s1, const std::string& s2 );
-          int containsString ( const std::string& masterString, const std::string& targetString );
+  // DQ (9/5/2008): Try to remove these functions...
+     std::string getFileNameByTraversalBackToFileNode ( const SgNode* astNode );
+  // std::string getFileName ( const SgFile* file );
 
-        // DQ (9/5/2008): Try to remove these functions...
-          std::string getFileNameByTraversalBackToFileNode ( const SgNode* astNode );
-       // std::string getFileName ( const SgFile* file );
+  // DQ (5/25/2005): Removed from ROSE class (since they are redundant with other uses)
+     std::string getFileName     ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
+     int   getLineNumber   ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
+     int   getColumnNumber ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
+     bool  isPartOfTransformation( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
 
-       // DQ (5/25/2005): Removed from ROSE class (since they are redundant with other uses)
-          std::string getFileName     ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
-          int   getLineNumber   ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
-          int   getColumnNumber ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
-          bool  isPartOfTransformation( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
+     ROSE_DLL_API std::string getWorkingDirectory (); //! get the current directory
+     ROSE_DLL_API std::string getSourceDirectory  ( std::string fileNameWithPath ); //! get the sourceDirectory directory
 
-          ROSE_DLL_API std::string getWorkingDirectory (); //! get the current directory
-          ROSE_DLL_API std::string getSourceDirectory  ( std::string fileNameWithPath ); //! get the sourceDirectory directory
+     std::string getFileNameWithoutPath ( SgStatement* statementPointer );
+     ROSE_DLL_API std::string utility_stripPathFromFileName ( const std::string& fileNameWithPath ); //! get the filename from the full filename
 
-          std::string getFileNameWithoutPath ( SgStatement* statementPointer );
-          ROSE_DLL_API std::string utility_stripPathFromFileName ( const std::string& fileNameWithPath ); //! get the filename from the full filename
+     ROSE_DLL_API std::string getPathFromFileName   ( std::string fileNameWithPath ); //! get the path from the full filename
 
-          ROSE_DLL_API std::string getPathFromFileName   ( std::string fileNameWithPath ); //! get the path from the full filename
+  // DQ (9/8/2008): This is removed since it is redundant with the version in StringUtility.
+  // std::string stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix ); //! get the name without the ".C"
 
-       // DQ (9/8/2008): This is removed since it is redundant with the version in StringUtility.
-       // std::string stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix ); //! get the name without the ".C"
+  // std::string getPragmaString ( SgStatement  *stmt );
+  // std::string getPragmaString ( SgExpression *expr );
 
-       // std::string getPragmaString ( SgStatement  *stmt );
-       // std::string getPragmaString ( SgExpression *expr );
+  // SgPragma* getPragma ( SgExpression *expr );
+  // SgPragma* getPragma ( SgStatement  *stmt );
+  // SgPragma* getPragma ( SgBinaryOp   *binaryOperator );
 
-       // SgPragma* getPragma ( SgExpression *expr );
-       // SgPragma* getPragma ( SgStatement  *stmt );
-       // SgPragma* getPragma ( SgBinaryOp   *binaryOperator );
+  // std::string identifyVariant ( int Code );
 
-       // std::string identifyVariant ( int Code );
+     SgName concatenate ( const SgName & X, const SgName & Y );
 
-          SgName concatenate ( const SgName & X, const SgName & Y );
+     ROSE_DLL_API void usage (int status);
 
-          ROSE_DLL_API void usage (int status);
+     void filterInputFile ( const std::string inputFileName, const std::string outputFileName );
 
-          void filterInputFile ( const std::string inputFileName, const std::string outputFileName );
+ //! Functions to move to SgStatement object in SAGE III later
+     SgStatement* getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope = true);
+     SgStatement* getNextStatement     ( SgStatement *targetStatement );
 
-      //! Functions to move to SgStatement object in SAGE III later
-          SgStatement* getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope = true);
-          SgStatement* getNextStatement     ( SgStatement *targetStatement );
+  // DQ (9/27/2018): We need to build multiple maps, one for each file (to support token based unparsing for multiple files,
+  // such as what is required when using the unparsing header files feature).
+  // DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
+  // extern std::map<SgNode*,TokenStreamSequenceToNodeMapping*> tokenSubsequenceMap;
+     extern std::map<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > tokenSubsequenceMapOfMaps;
 
-       // DQ (9/27/2018): We need to build multiple maps, one for each file (to support token based unparsing for multiple files,
-       // such as what is required when using the unparsing header files feature).
-       // DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
-       // extern std::map<SgNode*,TokenStreamSequenceToNodeMapping*> tokenSubsequenceMap;
-          extern std::map<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > tokenSubsequenceMapOfMaps;
+  // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
+  // extern std::vector<FrontierNode*> frontierNodes;
+  // extern std::map<SgStatement*,FrontierNode*> frontierNodes;
+     extern std::map<int,std::map<SgStatement*,FrontierNode*>*> frontierNodesMapOfMaps;
 
-       // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
-       // extern std::vector<FrontierNode*> frontierNodes;
-       // extern std::map<SgStatement*,FrontierNode*> frontierNodes;
-          extern std::map<int,std::map<SgStatement*,FrontierNode*>*> frontierNodesMapOfMaps;
+  // DQ (11/27/2013): Adding adjacency information for the nodes in the token unparsing AST frontier.
+  // extern std::map<SgNode*,PreviousAndNextNodeData*> previousAndNextNodeMap;
+     extern std::map<int,std::map<SgNode*,PreviousAndNextNodeData*>*> previousAndNextNodeMapOfMaps;
 
-       // DQ (11/27/2013): Adding adjacency information for the nodes in the token unparsing AST frontier.
-       // extern std::map<SgNode*,PreviousAndNextNodeData*> previousAndNextNodeMap;
-          extern std::map<int,std::map<SgNode*,PreviousAndNextNodeData*>*> previousAndNextNodeMapOfMaps;
+  // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
+  // extern std::multimap<int,SgStatement*> redundantlyMappedTokensToStatementMultimap;
+  // extern std::set<int> redundantTokenEndingsSet;
+     extern std::map<int,std::multimap<int,SgStatement*>*> redundantlyMappedTokensToStatementMapOfMultimaps;
+     extern std::map<int,std::set<int>*> redundantTokenEndingsMapOfSets;
 
-       // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
-       // extern std::multimap<int,SgStatement*> redundantlyMappedTokensToStatementMultimap;
-       // extern std::set<int> redundantTokenEndingsSet;
-          extern std::map<int,std::multimap<int,SgStatement*>*> redundantlyMappedTokensToStatementMapOfMultimaps;
-          extern std::map<int,std::set<int>*> redundantTokenEndingsMapOfSets;
+  // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
+  // extern std::map<SgScopeStatement*,SgStatement*> representativeWhitespaceStatementMap;
+     extern std::map<int,std::map<SgScopeStatement*,SgStatement*>*> representativeWhitespaceStatementMapOfMaps;
 
-       // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
-       // extern std::map<SgScopeStatement*,SgStatement*> representativeWhitespaceStatementMap;
-          extern std::map<int,std::map<SgScopeStatement*,SgStatement*>*> representativeWhitespaceStatementMapOfMaps;
+  // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
+  // extern std::map<SgStatement*,MacroExpansion*> macroExpansionMap;
+     extern std::map<int,std::map<SgStatement*,MacroExpansion*>*> macroExpansionMapOfMaps;
 
-       // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
-       // extern std::map<SgStatement*,MacroExpansion*> macroExpansionMap;
-          extern std::map<int,std::map<SgStatement*,MacroExpansion*>*> macroExpansionMapOfMaps;
-
-       // DQ (10/29/2018): Build a map for the unparser to use to locate SgIncludeFile IR nodes.
-          extern std::map<std::string, SgIncludeFile*> includeFileMapForUnparsing;
+  // DQ (10/29/2018): Build a map for the unparser to use to locate SgIncludeFile IR nodes.
+     extern std::map<std::string, SgIncludeFile*> includeFileMapForUnparsing;
 
   // DQ (3/5/2017): Added general IR node specific message stream to support debugging message from the ROSE IR nodes.
      extern Sawyer::Message::Facility ir_node_mlog;
 
      void initDiagnostics();
+
+  // DQ (11/25/2020): These are the boolean variables that are computed in the function compute_language_kind() 
+  // and inlined via the SageInterface::is_<language kind>_language() functions.  This fixes a significant 
+  // performacne bug that was identified by Matt Sottile. First indications of this problem were from HPCToolKit,
+  // when it reported that there were large ammounts of time spent in the memory pool traversals, but the results 
+  // were not clear since we could not trace that to the SageInterface::is_<language kind>_language() functions 
+  // directly.  Matt was able to identify the root cause of the problem.  It turns out the that the
+  // SageInterface::is_<language kind>_language() functions are implemented using a memory pool traversal of the 
+  // SgSourceFile (and SgBinaryFile, when binary analysis is enabled at configure time).  The new implementation
+  // supports these boolean values to be inlined via the SageInterface::is_<language kind>_language() functions.
+  // And the compute_language_kind() function is called from the:
+  //    SgFile* determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project );
+  // contained in the sage_support.cpp file.  This function is the single point at whcuh all of the SgFile IR nodes
+  // (including SgSourceFile, and SgBinaryFile) are generated.
+
+  // Note: the semantics is that there is at least one of the language kind files processed by ROSE, across all 
+  // SgFile objects across all SgProject objects.
+     extern bool is_Ada_language;
+     extern bool is_C_language;
+     extern bool is_Cobol_language;
+     extern bool is_OpenMP_language;
+     extern bool is_UPC_language;
+     extern bool is_UPC_dynamic_threads;
+     extern bool is_C99_language;
+     extern bool is_Cxx_language;
+     extern bool is_Java_language;
+     extern bool is_Jovial_language;
+     extern bool is_Fortran_language;
+     extern bool is_CAF_language;
+     extern bool is_PHP_language;
+     extern bool is_Python_language;
+     extern bool is_Cuda_language;
+     extern bool is_OpenCL_language;
+     extern bool is_X10_language;
+     extern bool is_binary_executable;
    };
 
 

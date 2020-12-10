@@ -8,7 +8,7 @@
 #include <sstream>
 #include <iomanip>
 #include <boost/lexical_cast.hpp>
-
+#include <Sawyer/BitVector.h>
 
 // Helpful functions for Cxx_GrammarRTI.C
 // Probably should not be included anywhere else
@@ -79,6 +79,7 @@ static std::string toStringForRTI(const ExtentMap &x)
     return ss.str();
 }
 #endif
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 // DQ (8/29/2008): Added the support for the Robb's SgSharedVector class.
 template <typename T>
 static std::string toStringForRTI(const SgSharedVector<T>& x)
@@ -94,6 +95,7 @@ static std::string toStringForRTI(const SgSharedVector<T>& x)
      ss << "]";
      return ss.str();
    }
+#endif
 
 static std::string toStringForRTI(const std::vector<bool>& x) {
   std::ostringstream ss;

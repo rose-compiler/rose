@@ -37,7 +37,7 @@ class ArrayInterface
   ArrayInterface( ArrayAnnotation& a) : aliasCollect(&a) {}
   void initialize( AstInterface& fa, const AstNodePtr& h);
   //! Expose alias analysis for unit testing
-  void AliasCollect( AstInterface& fa, const AstNodePtr& h);
+  virtual void analyze( AstInterface& fa, const AstNodePtr& h);
   void observe( AstInterface& fa) ;
   void stop_observe( AstInterface& fa) ;
   bool may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2);

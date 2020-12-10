@@ -1,5 +1,8 @@
 // tps (01/14/2010) : Switching from rose.h to sage3. added integerops.h
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include <stdint.h>
 #include <iostream>
 #include "integerOps.h"
@@ -25,3 +28,5 @@ SageInterface::getAsmSignedConstant(SgAsmValueExpression *expr)
     // DQ (11/30/2009): avoid MSVC warning of path without return stmt.
     return 0;
 }
+
+#endif

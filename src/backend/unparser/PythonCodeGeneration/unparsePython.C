@@ -184,7 +184,7 @@ Unparse_Python::unparseStatement(SgStatement* stmt, SgUnparse_Info& info) {
 void
 Unparse_Python::unparseGlobalStmt(SgStatement* stmt, SgUnparse_Info& info) {
     SgGlobal* global = isSgGlobal(stmt);
-    ROSE_ASSERT(global != NULL);
+    ASSERT_not_null(global);
 
     info.set_current_scope(global);
     foreach (SgDeclarationStatement* child, global->get_declarations()) {
@@ -358,7 +358,7 @@ void
 Unparse_Python::unparseComplexVal(SgExpression* exp, SgUnparse_Info& info)
 {
     SgComplexVal* val = isSgComplexVal(exp);
-    ROSE_ASSERT(val != NULL);
+    ASSERT_not_null(val);
     unparseComplexVal(val, info);
 }
 
@@ -424,7 +424,7 @@ Unparse_Python::unparseBaseClassPtrList(SgBaseClassPtrList& inheritances,
 
         if (base_it != inheritances.begin())
             curprint(", ");
-        ROSE_ASSERT(exp_base->get_base_class_exp() != NULL);
+        ASSERT_not_null(exp_base->get_base_class_exp());
         unparseExpression(exp_base->get_base_class_exp(), info);
     }
 }
@@ -487,7 +487,7 @@ Unparse_Python::unparseClassDeclaration(SgClassDeclaration* class_decl,
     curprint(class_decl->get_name().getString());
 
     curprint("(");
-    ROSE_ASSERT(class_decl->get_definition() != NULL);
+    ASSERT_not_null(class_decl->get_definition());
     SgBaseClassPtrList& inheritances = class_decl->get_definition()->get_inheritances();
     unparseBaseClassPtrList(inheritances, info);
     curprint("):\n");
@@ -555,7 +555,7 @@ Unparse_Python::unparseDoubleVal(SgExpression* e, SgUnparse_Info& info)
 {
  // DQ (3/28/2017): Adding this here so that the function parameter can be SgExpression*.
     SgDoubleVal* d_val = isSgDoubleVal(e);
-    ROSE_ASSERT(d_val != NULL);
+    ASSERT_not_null(d_val);
 
     stringstream code;
     code.setf( ios::showpoint );
@@ -829,7 +829,7 @@ Unparse_Python::unparseLongLongIntVal(SgExpression* e, SgUnparse_Info& info)
 {
  // DQ (3/28/2017): Adding this here so that the function parameter can be SgExpression*.
     SgLongLongIntVal* lli_val = isSgLongLongIntVal(e);
-    ROSE_ASSERT(lli_val != NULL);
+    ASSERT_not_null(lli_val);
 
     stringstream code;
     code << lli_val->get_value();
@@ -954,7 +954,7 @@ Unparse_Python::unparseStringVal(SgExpression* exp,
                                  SgUnparse_Info& info)
 {
     SgStringVal* str = isSgStringVal(exp);
-    ROSE_ASSERT(str != NULL);
+    ASSERT_not_null(str);
     unparseStringVal(str, info);
 }
 

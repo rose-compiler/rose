@@ -23,9 +23,10 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
     # compiler used for C++ analysis, thus the variables printed for this section
     # of the summary are named "FRONTEND".
     ROSE_SUMMARY_HEADING([Compilers for ROSE source code])
-    echo "    C++ compiler                     ${FRONTEND_CXX_COMPILER_COMMAND:-none}"
-    echo "    C++ vendor                       ${FRONTEND_CXX_COMPILER_VENDOR:-unknown}"
-    echo "    C++ version                      ${FRONTEND_CXX_COMPILER_VERSION_TRIPLET:-unknown}"
+    echo "    C++ compiler                     ${CXX}"
+    echo "    C++ vendor                       ${HOST_CXX_VENDOR:-unknown}"
+    echo "    C++ version                      ${HOST_CXX_VERSION:-unknown}"
+    echo "    C++ language                     ${HOST_CXX_LANGUAGE:-unknown}"
     echo "    Bison version                    ${bison_version:-unknown}"
 
     #--------------------------------------------------------------------------------
@@ -33,13 +34,13 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
     echo "    Binaries                         ${support_binaries_frontend:-no}"
     echo "    C                                ${support_c_frontend:-no}"
     echo "    C++                              ${support_cxx_frontend:-no}"
+    echo "    C preprocessor                   ${support_cpp_frontend:-no}"
     echo "    Cuda                             ${support_cuda_frontend:-no}"
     echo "    Fortran                          ${support_fortran_frontend:-no}"
     echo "    Java                             ${support_java_frontend:-no}"
     echo "    OpenCL                           ${support_opencl_frontend:-no}"
     echo "    PHP                              ${support_php_frontend:-no}"
     echo "    Python                           ${support_python_frontend:-no}"
-    echo "    X10                              ${support_x10_frontend:-no}"
 
     #--------------------------------------------------------------------------------
     ROSE_SUMMARY_HEADING([Boost library])
@@ -67,11 +68,14 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
     if test -n "$support_binaries_frontend" -o -n "$verbose"; then
         ROSE_SUMMARY_HEADING([Binary analysis support])
 	echo "    i386 support                     ${CFLAGS32:-none}"
+	echo "    libcapstone                      ${ROSE_HAVE_CAPSTONE:-none}"
 	echo "    libmagic                         ${ROSE_HAVE_LIBMAGIC:-none}"
 	echo "    readline                         ${LIBREADLINE_LIBRARY_PATH:-none}"
+	echo "    SQLite3                          ${SQLITE3_VERSION:-none}"
 	echo "    YAML-cpp                         ${ROSE_YAML_PREFIX:-none}"
 	echo "    yices executable                 ${ROSE_YICES:-none}"
 	echo "    yices library                    ${ROSE_HAVE_LIBYICES:-none}"
+	echo "    z3 version                       ${Z3_VERSION:-unknown}"
 	echo "    z3 executable                    ${Z3:-none}"
 	echo "    z3 library                       ${Z3_LIBRARY_PATH:-none}"
     fi
@@ -80,6 +84,8 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
     if test -n "$support_cxx_frontend" -o -n "$verbose"; then
         ROSE_SUMMARY_HEADING([C/C++ analysis support])
 	echo "    frontend C++ parser              EDG-${edg_major_version_number}.${edg_minor_version_number}"
+	echo "    compiling EDG from source        $has_edg_source"
+	echo "    generating EDG binary tarball    $binary_edg_tarball_enabled"
 	echo "    backend C++ compiler             ${BACKEND_CXX_COMPILER_COMMAND:-none}"
 	echo "    C++ vendor                       ${BACKEND_CXX_COMPILER_VENDOR:-unknown}"
 	echo "    C++ version                      ${BACKEND_CXX_VERSION_TRIPLET:-unknown}"
@@ -100,7 +106,6 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
 	echo "    C++ link switches            	   ${JAVA_JVM_LINK:-none}"
 	echo "    runtime command                  ${JAVA:-none}"
 	echo "    compiler command                 ${JAVAC:-none}"
-	echo "    header generator                 ${JAVAH:-none}"
 	echo "    archive tool                     ${JAR:-none}"
     fi
 

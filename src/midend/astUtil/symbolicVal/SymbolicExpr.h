@@ -3,6 +3,7 @@
 
 #include "SymbolicVal.h"
 #include "LatticeElemList.h"
+#include <assert.h>
 #include <iostream>
 
 
@@ -73,7 +74,7 @@ class SymbolicOperands
   void AddOpd( const SymbolicTerm& v, OPApplicator *op = 0) ;
   unsigned NumOfOpds() const { return opds.NumberOfEntries(); }
   OpdIterator GetOpdIterator() const { return OpdIterator(opds); }
-  SymbolicTerm& First() const { return opds.First()->GetEntry(); }
+  SymbolicTerm& First() const { assert(opds.First() != NULL); return opds.First()->GetEntry(); }
   std::string toString() const;
 
   SymbolicOperands* Clone() const { return new SymbolicOperands(*this); }

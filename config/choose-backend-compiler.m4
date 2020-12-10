@@ -201,7 +201,9 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
       #
       # Tnerefore, grep -Po usage has been replaced by shell scripts.
 
-      IS_APPLE_GCC=`g++ --version | grep -ci "Apple LLVM"`
+    # DQ (3/31/2020): Bug fix suggested by Pei-Hung.
+    # IS_APPLE_GCC=`g++ --version | grep -ci "Apple clang"`
+      IS_APPLE_GCC=`g++ --version | grep -ci "Apple "`
       AC_MSG_NOTICE([IS_APPLE_GCC = "$IS_APPLE_GCC"])
       if test $IS_APPLE_GCC -ne 0; then
         BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMajorVersionNumber.sh`
@@ -284,6 +286,19 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
                       AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR"])
                       ;;
               esac
+          elif test $XCODE_VERSION_MAJOR -eq 11; then
+              BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=8
+            # Rasmussen (11/18/2019): Added results for clang --version 11.0.0
+            # see https://en.wikipedia.org/wiki/Xcode#11.x_series
+            # NOTE that this is very tentative and don't know if it will work
+              case "$XCODE_VERSION_MINOR" in
+                  0|2)
+                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+                      ;;
+                  *)
+                      AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR"])
+                      ;;
+              esac
           else
               AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MAJOR = "$XCODE_VERSION_MAJOR"])
           fi
@@ -351,19 +366,50 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
 # Or Jeremiah suggests the alternative:
 # gfortran --version | sed -n '1s/.*) //;1p'
   AC_MSG_NOTICE([BACKEND_FORTRAN_COMPILER = "$BACKEND_FORTRAN_COMPILER"])
+  FORTRAN_COMPILER_NAME=`basename $BACKEND_FORTRAN_COMPILER`
 
-# DQ (9/15/2009): Normally we expect a string such as "GNU Fortran 95 (GCC) 4.1.2", but 
-# the GNU 4.0.x compiler's gfortran outputs a string such as "GNU Fortran 95 (GCC 4.0.2)"
-# So for this case we detect it explicitly and fill in the values directly!
-  BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f1`
-  BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f2`
+  if test x$BACKEND_FORTRAN_COMPILER == xpgfortran; then
 
-# Test if we computed the major and minor version numbers correctly...recompute if required
-  if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
-    AC_MSG_NOTICE([BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER = "$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER" (blank) so this is likely the GNU 4.0.x version (try again to get the version number)])
-    BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | sed s/"GNU Fortran 95 (GCC "//g | cut -f1 -d \) | cut -d\. -f1`
-    BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | sed s/"GNU Fortran 95 (GCC "//g | cut -f1 -d \) | cut -d\. -f2`
+    BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version 2>1 | grep pgfortran | cut -f2 -d\  | tr -d \  | cut -d\. -f1`
+    BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version 2>1 | grep pgfortran | cut -f2 -d\  | tr -d \  | cut -d\. -f2 | cut -d\- -f1`
+
+  else
+
+ # DQ (9/15/2009): Normally we expect a string such as "GNU Fortran 95 (GCC) 4.1.2", but 
+ # the GNU 4.0.x compiler's gfortran outputs a string such as "GNU Fortran 95 (GCC 4.0.2)"
+ # So for this case we detect it explicitly and fill in the values directly!
+    BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f1`
+    BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f2`
+ 
+ # Test if we computed the major and minor version numbers correctly...recompute if required
+    if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
+      AC_MSG_NOTICE([BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER = "$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER" (blank) so this is likely the GNU 4.0.x version (try again to get the version number)])
+      BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | sed s/"GNU Fortran 95 (GCC "//g | cut -f1 -d \) | cut -d\. -f1`
+      BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | sed s/"GNU Fortran 95 (GCC "//g | cut -f1 -d \) | cut -d\. -f2`
+    fi
   fi
+
+  case "$BACKEND_FORTRAN_COMPILER" in
+  gfortran*)
+     AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [1], [Mark that GFORTRAN is used in backend])
+     ;;
+  ifort*)
+     AC_DEFINE([BACKEND_FORTRAN_IS_INTEL_COMPILER], [1], [Mark that Intel Fortran is used in backend])
+     AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [0], [Mark that GFORTRAN is not used in backend ])
+     AC_CHECK_TOOL(INTEL_FPP_PATH, [fpp], [no])
+     if test "$INTEL_FPP_PATH" != "no"; then
+       AC_DEFINE([ROSE_USE_INTEL_FPP], [1], [Mark that Intel FPP is used in backend ])
+       AC_DEFINE_UNQUOTED([INTEL_FPP_PATH],"$INTEL_FPP_PATH",[Name of Intel Fortran preprocessor])
+     fi
+     ;;
+  pgf*)
+     AC_DEFINE([BACKEND_FORTRAN_IS_PGI_COMPILER], [1], [Mark that PGI Fortran is used in backend])
+     AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [0], [Mark that GFORTRAN is not used in backend ])
+     ;;
+  *)
+     AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [0], [Mark that GFORTRAN is not used in backend ])
+     ;;
+  esac
 
 # echo "back-end compiler for generated translators to use will be: $BACKEND_CXX_COMPILER"
   AC_MSG_NOTICE([Fortran back-end compiler major version number = "$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER"])
@@ -636,6 +682,193 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_6_3, [test "x$gcc_version_later_6_3" = "xyes"])
 
+  gcc_version_later_6_4=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x6; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "4"; then
+        AC_MSG_NOTICE([we have identified version 6.4+ of gcc])
+        gcc_version_later_6_4=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "6"; then
+        gcc_version_later_6_4=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_6_4, [test "x$gcc_version_later_6_4" = "xyes"])
+
+  gcc_version_later_6_5=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x6; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "5"; then
+        AC_MSG_NOTICE([we have identified version 6.5+ of gcc])
+        gcc_version_later_6_5=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "6"; then
+        gcc_version_later_6_5=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_6_5, [test "x$gcc_version_later_6_5" = "xyes"])
+
+  gcc_version_later_7_1=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x7; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "1"; then
+        AC_MSG_NOTICE([we have identified version 7.1+ of gcc])
+        gcc_version_later_7_1=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "7"; then
+        gcc_version_later_7_1=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_7_1, [test "x$gcc_version_later_7_1" = "xyes"])
+
+  gcc_version_later_7_2=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x7; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "2"; then
+        AC_MSG_NOTICE([we have identified version 7.2+ of gcc])
+        gcc_version_later_7_2=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "7"; then
+        gcc_version_later_7_2=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_7_2, [test "x$gcc_version_later_7_2" = "xyes"])
+
+  gcc_version_later_7_3=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x7; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "3"; then
+        AC_MSG_NOTICE([we have identified version 7.3+ of gcc])
+        gcc_version_later_7_3=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "7"; then
+        gcc_version_later_7_3=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_7_3, [test "x$gcc_version_later_7_3" = "xyes"])
+
+  gcc_version_later_7_4=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x7; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "4"; then
+        AC_MSG_NOTICE([we have identified version 7.4+ of gcc])
+        gcc_version_later_7_4=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "7"; then
+        gcc_version_later_7_4=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_7_4, [test "x$gcc_version_later_7_4" = "xyes"])
+
+  gcc_version_later_7_5=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x7; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "5"; then
+        AC_MSG_NOTICE([we have identified version 7.5+ of gcc])
+        gcc_version_later_7_5=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "7"; then
+        gcc_version_later_7_5=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_7_5, [test "x$gcc_version_later_7_5" = "xyes"])
+
+  gcc_version_later_8_1=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x8; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "1"; then
+        AC_MSG_NOTICE([we have identified version 8.1+ of gcc])
+        gcc_version_later_8_1=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "8"; then
+        gcc_version_later_8_1=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_8_1, [test "x$gcc_version_later_8_1" = "xyes"])
+
+  gcc_version_later_8_2=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x8; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "2"; then
+        AC_MSG_NOTICE([we have identified version 8.2+ of gcc])
+        gcc_version_later_8_2=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "8"; then
+        gcc_version_later_8_2=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_8_2, [test "x$gcc_version_later_8_2" = "xyes"])
+
+  gcc_version_later_8_3=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x8; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "3"; then
+        AC_MSG_NOTICE([we have identified version 8.3+ of gcc])
+        gcc_version_later_8_3=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "8"; then
+        gcc_version_later_8_3=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_8_3, [test "x$gcc_version_later_8_3" = "xyes"])
+
+  gcc_version_later_8_4=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x8; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "4"; then
+        AC_MSG_NOTICE([we have identified version 8.4+ of gcc])
+        gcc_version_later_8_4=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "8"; then
+        gcc_version_later_8_4=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_8_4, [test "x$gcc_version_later_8_4" = "xyes"])
+
+  gcc_version_later_9_1=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x9; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "1"; then
+        AC_MSG_NOTICE([we have identified version 9.1+ of gcc])
+        gcc_version_later_9_1=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "9"; then
+        gcc_version_later_9_1=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_9_1, [test "x$gcc_version_later_9_1" = "xyes"])
+
+  gcc_version_later_9_2=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x9; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "2"; then
+        AC_MSG_NOTICE([we have identified version 9.2+ of gcc])
+        gcc_version_later_9_2=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "9"; then
+        gcc_version_later_9_2=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_9_2, [test "x$gcc_version_later_9_2" = "xyes"])
+
+  gcc_version_later_9_3=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x9; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "3"; then
+        AC_MSG_NOTICE([we have identified version 9.3+ of gcc])
+        gcc_version_later_9_3=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "9"; then
+        gcc_version_later_9_3=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_9_3, [test "x$gcc_version_later_9_3" = "xyes"])
+
+  gcc_version_later_10_1=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x10; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "1"; then
+        AC_MSG_NOTICE([we have identified version 10.1+ of gcc])
+        gcc_version_later_10_1=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "10"; then
+        gcc_version_later_10_1=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_10_1, [test "x$gcc_version_later_10_1" = "xyes"])
+
+  gcc_version_later_10_2=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x10; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "2"; then
+        AC_MSG_NOTICE([we have identified version 10.2+ of gcc])
+        gcc_version_later_10_2=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "10"; then
+        gcc_version_later_10_2=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_10_2, [test "x$gcc_version_later_10_2" = "xyes"])
+
+  gcc_version_later_10_3=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x10; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "3"; then
+        AC_MSG_NOTICE([we have identified version 10.3+ of gcc])
+        gcc_version_later_10_3=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "10"; then
+        gcc_version_later_10_3=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_10_3, [test "x$gcc_version_later_10_3" = "xyes"])
+
 # echo "Exiting after test of backend version number support ..."
 # exit 1
 
@@ -679,6 +912,9 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
 
   export C_COMPILER_NAME
   AC_DEFINE_UNQUOTED([BACKEND_C_COMPILER_NAME_WITHOUT_PATH],"$C_COMPILER_NAME",[Name of backend C compiler excluding path (used to select code generation options).])
+
+  export FORTRAN_COMPILER_NAME
+  AC_DEFINE_UNQUOTED([BACKEND_FORTRAN_COMPILER_NAME_WITHOUT_PATH],"$FORTRAN_COMPILER_NAME",[Name of backend Fortran compiler excluding path (used to select code generation options).])
 
 # This will be called to execute the backend compiler (for C++)
   export BACKEND_CXX_COMPILER

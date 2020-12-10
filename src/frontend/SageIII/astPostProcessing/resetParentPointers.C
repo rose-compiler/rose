@@ -1,7 +1,6 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
-// DQ (12/29//2011): Since this file used the TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS macro we need to include rose_config.h.
 #include "rose_config.h"
 
 #include "resetParentPointers.h"
@@ -44,7 +43,7 @@ ResetParentPointers::traceBackToRoot ( SgNode* node )
 
   // printf ("Starting at parentNode->sage_class_name() = %s \n",parentNode->sage_class_name());
      int counter = 0;
-     while (parentNode->get_parent() != NULL)
+     while ((parentNode != NULL) && (parentNode->get_parent() != NULL))
         {
           parentNode = parentNode->get_parent();
        // printf ("     parentNode->sage_class_name() = %s \n",parentNode->sage_class_name());
@@ -53,25 +52,28 @@ ResetParentPointers::traceBackToRoot ( SgNode* node )
             // There is likely an error so limit path lengths back to the AST root to this arbitrary distance
                printf ("Error: ResetParentPointers::traceBackToRoot path to root length (1000) exceeded \n");
                ROSE_ASSERT(parentNode != NULL);
-               ROSE_ASSERT(parentNode->get_parent() != NULL);
+               SgNode* grandParentNode = parentNode->get_parent();
+               ROSE_ASSERT(grandParentNode != NULL);
                printf ("   starting node           = %p = %s \n",node,node->sage_class_name());
                printf ("   (current node)          = %p = %s \n",parentNode,parentNode->sage_class_name());
-               printf ("   (current node's parent) = %p = %s \n",parentNode->get_parent(),parentNode->get_parent()->sage_class_name());
+               printf ("   (current node's parent) = %p = %s \n",grandParentNode,grandParentNode->sage_class_name());
 
-               ROSE_ASSERT(parentNode->get_parent()->get_parent() != NULL);
+               SgNode* greatGrandParentNode = grandParentNode->get_parent();
+               ROSE_ASSERT(greatGrandParentNode != NULL);
                printf ("   (parent node's parent)  = %p = %s \n",
-                    parentNode->get_parent()->get_parent(),parentNode->get_parent()->get_parent()->sage_class_name());
+                    greatGrandParentNode,greatGrandParentNode->sage_class_name());
 
-               ROSE_ASSERT(parentNode->get_parent()->get_parent()->get_parent() != NULL);
+               SgNode* greatGreatGrandParentNode = greatGrandParentNode->get_parent();
+               ROSE_ASSERT(greatGreatGrandParentNode != NULL);
                printf ("   (parent node's parent 2)  = %p = %s \n",
-                    parentNode->get_parent()->get_parent()->get_parent(),parentNode->get_parent()->get_parent()->get_parent()->sage_class_name());
+                    greatGreatGrandParentNode,greatGreatGrandParentNode->sage_class_name());
 
                if (node->get_file_info() != NULL)
                     node->get_file_info()->display("node");
                if (parentNode->get_file_info() != NULL)
                     parentNode->get_file_info()->display("parentNode");
-               if (parentNode->get_parent()->get_file_info() != NULL)
-                    parentNode->get_parent()->get_file_info()->display("parentNode->get_parent()");
+               if (grandParentNode->get_file_info() != NULL)
+                    grandParentNode->get_file_info()->display("parentNode->get_parent()");
 
                ROSE_ASSERT(false);
              }
@@ -79,8 +81,8 @@ ResetParentPointers::traceBackToRoot ( SgNode* node )
           counter++;
         }
 
-  // DQ (2/26/2004): Fixed in Sage to pass SgParent to SgFile constructor so that SgProject 
-  //                 could be know earily in the construction of the SgFile to support template 
+  // DQ (2/26/2004): Fixed in Sage to pass SgParent to SgFile constructor so that SgProject
+  //                 could be know earily in the construction of the SgFile to support template
   //                 instantiation and evaluation of SgProject commandLine.
   // Check to see if we made it back to the root (current root is SgFile, later it will be SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
@@ -124,13 +126,13 @@ ResetParentPointers::traceBackToRoot ( SgNode* node )
 #endif
    }
 
-void 
+void
 ResetParentPointers::resetParentPointersInDeclaration (SgDeclarationStatement* declaration, SgNode* inputParent )
    {
   // This function makes the value in the parent consistent across the defining and non-defining declarations
 
-  // DQ (5/21/2006): Set the Sg_File_Info so that they can be traced (later we might 
-  // want to remove the parent pointer since it is not really required, except that 
+  // DQ (5/21/2006): Set the Sg_File_Info so that they can be traced (later we might
+  // want to remove the parent pointer since it is not really required, except that
   // it is helpful for debugging). This allows declaration in islands to be set!
   // declaration->get_startOfConstruct()->set_parent(declaration);
   // declaration->get_endOfConstruct()->set_parent(declaration);
@@ -172,9 +174,9 @@ ResetParentPointers::resetParentPointersInDeclaration (SgDeclarationStatement* d
         {
           if (parent == NULL)
              {
-            // DQ (10/12/2004): If neither the defining nor non-defining declaration has its parent 
-            // set then this is likely the first time the parent is being set for any associated 
-            // declaration (for the current object declared).  In this case set the parent to be 
+            // DQ (10/12/2004): If neither the defining nor non-defining declaration has its parent
+            // set then this is likely the first time the parent is being set for any associated
+            // declaration (for the current object declared).  In this case set the parent to be
             // the parent passed in as a parameter to this function.
 
                printf ("In ResetParentPointers::resetParentPointersInDeclaration(): using the inputParent = %p = %s = %s as a parent for declaration \n",inputParent,inputParent->class_name().c_str(),SageInterface::get_name(inputParent).c_str());
@@ -187,8 +189,8 @@ ResetParentPointers::resetParentPointersInDeclaration (SgDeclarationStatement* d
                declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str(),
                parent,parent->class_name().c_str());
 #endif
-       // DQ (10/9/2004): Avoid resetting any parents that are set to scope 
-       // statements (these are likely already correct, either a forward 
+       // DQ (10/9/2004): Avoid resetting any parents that are set to scope
+       // statements (these are likely already correct, either a forward
        // declaration or a normal defining class declaration).
           if (definingDeclaration != NULL && definingDeclaration->get_parent() != NULL)
              {
@@ -205,12 +207,13 @@ ResetParentPointers::resetParentPointersInDeclaration (SgDeclarationStatement* d
                     definingDeclaration,definingDeclaration->class_name().c_str(),
                     parent,parent->class_name().c_str());
 #endif
-               if (definingDeclaration->get_parent() != NULL)
+               SgNode* defnDeclParent = definingDeclaration->get_parent();
+               if (defnDeclParent != NULL)
                   {
                     printf ("Existing parent is already set to = %p = %s \n",
-                         definingDeclaration->get_parent(),definingDeclaration->get_parent()->class_name().c_str());
+                         defnDeclParent,defnDeclParent->class_name().c_str());
                   }
-               ROSE_ASSERT(definingDeclaration->get_parent() == NULL);
+               ROSE_ASSERT(defnDeclParent == NULL);
                definingDeclaration->set_parent(parent);
              }
           ROSE_ASSERT(definingDeclaration == NULL || definingDeclaration->get_parent() != NULL);
@@ -249,7 +252,7 @@ ResetParentPointers::resetParentPointersInDeclaration (SgDeclarationStatement* d
   // DQ (10/12/2004): Check and see if this is always true!
      ROSE_ASSERT(declaration->get_parent() != NULL);
 
-  // Now  set the current parent (if not already set) to the same parent pointer 
+  // Now  set the current parent (if not already set) to the same parent pointer
      if (declaration->get_parent() == NULL)
         {
 #if DEBUG_PARENT_INITIALIZATION
@@ -266,10 +269,10 @@ ResetParentPointers::resetParentPointersInDeclaration (SgDeclarationStatement* d
      if (classDeclaration != NULL)
         {
        // DQ (10/22/2005): Changed semantics to make forward declaration have a null pointer!
-       // DQ (older comment) Note that all classDeclarations have a valid pointer to their definition independent 
-       // of if they are defining or non-defining declarations, this is different from functions which only have 
-       // a valid pointer to their definition if they are a defining declaration.  I like that this removed 
-       // opportunities for NULL pointers in the AST, but it can make it confusing for users who might only check 
+       // DQ (older comment) Note that all classDeclarations have a valid pointer to their definition independent
+       // of if they are defining or non-defining declarations, this is different from functions which only have
+       // a valid pointer to their definition if they are a defining declaration.  I like that this removed
+       // opportunities for NULL pointers in the AST, but it can make it confusing for users who might only check
        // for a definition and assume it is a defining declaration if the definition is found.
        // ROSE_ASSERT(classDeclaration->get_definition() != NULL);
 #if 0
@@ -280,9 +283,9 @@ ResetParentPointers::resetParentPointersInDeclaration (SgDeclarationStatement* d
        // DQ (10/22/2005): This is now conditional on having a valid definition
           if (classDeclaration->get_definition() != NULL)
              {
-            // DQ (10/17/2004): We have to set the definition uniformally so that even definitions that would not be 
-            // traversed (such as those associated with hidden declarations (e.g. in typedefs or variable declarations) 
-            // will get their parent set).  It is reset by the normal mechanism to a value consistant with the traversal 
+            // DQ (10/17/2004): We have to set the definition uniformally so that even definitions that would not be
+            // traversed (such as those associated with hidden declarations (e.g. in typedefs or variable declarations)
+            // will get their parent set).  It is reset by the normal mechanism to a value consistant with the traversal
             // if it is not set correctly.
                if (classDeclaration->get_definition()->get_parent() == NULL)
                   {
@@ -296,7 +299,7 @@ ResetParentPointers::resetParentPointersInDeclaration (SgDeclarationStatement* d
         }
    }
 
-void 
+void
 ResetParentPointers::resetParentPointersInType (SgType* typeNode, SgNode* previousNode)
    {
   // DQ (10/7/2004): Refactored common code for traversing islands within the AST which require a nested traversal
@@ -399,7 +402,7 @@ ResetParentPointers::resetParentPointersInType (SgType* typeNode, SgNode* previo
              {
             // Find any code (inside of a SgEnumDeclaration) that is buried within a SgEnumType.
             // Examples of such code is: "enum X { value = 0; } Xvar;" or "typedef enum X { value = 0; } Xtype;".
-            // This is not a significant island of untraversed code except that the parent pointers 
+            // This is not a significant island of untraversed code except that the parent pointers
             // are not set and we want to set them all!
                SgEnumType* enumType = isSgEnumType (typeNode);
                SgDeclarationStatement* declarationStatement = enumType->get_declaration();
@@ -425,12 +428,12 @@ ResetParentPointers::resetParentPointersInType (SgType* typeNode, SgNode* previo
 
           case V_SgTypedefType:
              {
-            // DQ (11/14/2004): Not certain that we require this case, but Kull triggered the default case 
+            // DQ (11/14/2004): Not certain that we require this case, but Kull triggered the default case
             // for a SgTypedefType so I have implemented it as part of testing.
 
             // Find any code (inside of a SgTypedefDeclaration) that is buried within a SgTypedefType.
             // Examples of such code is: "typedef X Xtype;" where X is a typedef type with a declaration.
-            // This is not a significant island of untraversed code except that the parent pointers 
+            // This is not a significant island of untraversed code except that the parent pointers
             // are not set and we want to set them all!
                SgTypedefType* typedefType = isSgTypedefType (typeNode);
                SgDeclarationStatement* declarationStatement = typedefType->get_declaration();
@@ -458,15 +461,15 @@ ResetParentPointers::resetParentPointersInType (SgType* typeNode, SgNode* previo
    }
 
 
-void 
+void
 ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplateArgumentPtrList& templateArgListPtr )
    {
   // DQ (10/15/2004): It would be helpful if this were a part of the standard traversal, but it is not and it might be
   // that the SgTemplateArgumentPtrList would have to be made a new IR node to allow it to be traversed.
   // for now we will set the parents of any declarations hidden in any types explicitly (so that the resetTemplateName()
-  // function will work (which requires the parent pointers)).  The reason why the parent pointers are required to be 
+  // function will work (which requires the parent pointers)).  The reason why the parent pointers are required to be
   // set for template arguments is that the template arguments can require qualified names and the name qualification
-  // requires that the parents pointers be traversed to trace back through the scopes and collect the names of all the 
+  // requires that the parents pointers be traversed to trace back through the scopes and collect the names of all the
   // scopes.  This is handled in the get_scope() function which is called by the get_qualified_name() function.
 
   // ROSE_ASSERT(templateArgListPtr != NULL);
@@ -717,7 +720,28 @@ ResetParentPointers::evaluateInheritedAttribute (
   // cerr << "reset parent for node " << node->unparseToString();
 
 #if 0
-     printf ("##### ResetParentPointers::evaluateInheritedAttribute(node = %p = %s) \n",node,node->class_name().c_str());
+  // DQ (7/18/2019): Debugginf readFileTwice with test2019_501.C.
+  // printf ("##### ResetParentPointers::evaluateInheritedAttribute(node = %p = %s) \n",node,node->class_name().c_str());
+  // printf ("##### ResetParentPointers::evaluateInheritedAttribute(node = %p = %s) parent = %p \n",node,node->class_name().c_str(),node->get_parent());
+     printf ("##### ResetParentPointers::evaluateInheritedAttribute(node = %p = %s) parent = %p = %s \n",
+          node,node->class_name().c_str(),node->get_parent(),node->get_parent() != NULL ? node->get_parent()->class_name().c_str() : "null");
+     printf (" --- inheritedAttribute.parentNode = %p = %s \n",inheritedAttribute.parentNode,inheritedAttribute.parentNode != NULL ? inheritedAttribute.parentNode->class_name().c_str() : "null");
+#endif
+
+#if 0
+     vector <SgNode*> children = node->get_traversalSuccessorContainer();
+     printf (" --- Output the children at this node (children.size() = %zu): \n",children.size());
+     for (size_t i = 0; i < children.size(); i++)
+        {
+          printf (" --- --- children[%zu] = %p = %s \n",i,children[i],children[i] != NULL ? children[i]->class_name().c_str() : "null");
+        }
+#endif
+
+#if 0
+     if (node->get_parent() != NULL)
+        {
+          printf (" --- node->get_parent() = %p = %s \n",node->get_parent(),node->get_parent()->class_name().c_str());
+        }
 #endif
 #if 0
   // ROSE_ASSERT(node->get_file_info() != NULL);
@@ -755,12 +779,12 @@ ResetParentPointers::evaluateInheritedAttribute (
      printf ("----- node = %p = %s -----\n\n\n",node,node->sage_class_name());
 #endif
 
-  // Fix the parent pointer in the subtree (can't fix root node parent pointer so 
-  // this shoud be called from above any node that requires an update (safe nodes 
+  // Fix the parent pointer in the subtree (can't fix root node parent pointer so
+  // this shoud be called from above any node that requires an update (safe nodes
   // would be the SgProject node) fix only made if parent == NULL)
 
-  // DQ (5/10/2006): Set the Sg_File_Info so that they can be traced (later we might 
-  // want to remove the parent pointer since it is not really required, except that 
+  // DQ (5/10/2006): Set the Sg_File_Info so that they can be traced (later we might
+  // want to remove the parent pointer since it is not really required, except that
   // it is helpful for debugging).
   // node->get_startOfConstruct()->set_parent(declaration);
   // node->get_endOfConstruct()->set_parent(declaration);
@@ -819,8 +843,8 @@ ResetParentPointers::evaluateInheritedAttribute (
 #if 0
 #error "Dead Code!"
 
-  // DQ (9/26/2004): Since we set both defining and non-defining declarations it can happen that we over 
-  // aggressively set the parent of some nodes further along in the source sequence so I have disabled 
+  // DQ (9/26/2004): Since we set both defining and non-defining declarations it can happen that we over
+  // aggressively set the parent of some nodes further along in the source sequence so I have disabled
   // the testing of declarations (enforcing that they have a NULL parent pointer).
   // if (node->get_parent() != NULL)
      if (node->get_parent() != NULL && (dynamic_cast<SgFile*>(node) == NULL) && (dynamic_cast<SgDeclarationStatement*>(node) == NULL))
@@ -836,13 +860,13 @@ ResetParentPointers::evaluateInheritedAttribute (
   // DQ (9/26/2004): I think this may be too restrictive given that SgTemplateInstantiationDecl are shared
   // ROSE_ASSERT (node->get_parent() == NULL);
   // ROSE_ASSERT (node->get_parent() == NULL || (dynamic_cast<SgFile*>(node) != NULL) );
-     ROSE_ASSERT ( (node->get_parent() == NULL) || 
-                   (dynamic_cast<SgFile*>(node) != NULL) || 
+     ROSE_ASSERT ( (node->get_parent() == NULL) ||
+                   (dynamic_cast<SgFile*>(node) != NULL) ||
                    (dynamic_cast<SgDeclarationStatement*>(node) != NULL) );
 #endif
 #endif
 
-  // Note: SgType and SgSymbol nodes are not fixed (currently) (SgType nodes 
+  // Note: SgType and SgSymbol nodes are not fixed (currently) (SgType nodes
   //       and SgSymbol nodes are shared))
   // Set all nodes except SgSymbol and SgType nodes (even if they have been set previously set)
      if ( dynamic_cast<SgType*>(node) == NULL && dynamic_cast<SgSymbol*>(node) == NULL )
@@ -853,11 +877,20 @@ ResetParentPointers::evaluateInheritedAttribute (
             // set the parent on the current node to the one saved in the inherited attribute (for this traversal)
 #if 0
                printf ("Valid parentNode = %p = %s at node = %p = %s \n",
-                    inheritedAttribute.parentNode,inheritedAttribute.parentNode->sage_class_name(),node,node->sage_class_name());
+                       inheritedAttribute.parentNode,inheritedAttribute.parentNode->class_name().c_str(),node,node->class_name().c_str());
 #endif
                ROSE_ASSERT(node != NULL);
                if (node->get_parent() != inheritedAttribute.parentNode)
                   {
+                 // DQ (8/1/2019): Output information where the node->get_parent() != inheritedAttribute.parentNode
+                 // ROSE_ASSERT(inheritedAttribute.parentNode != NULL);
+                 // ROSE_ASSERT(node->get_parent() != NULL);
+#if 0
+                    printf ("Note: ResetParentPointers::evaluateInheritedAttribute(): (not reset) node->get_parent() != inheritedAttribute.parentNode: node = %p = %s node->get_parent() = %p = %s inheritedAttribute.parentNode = %p = %s \n",
+                         node,node->class_name().c_str(),
+                         node->get_parent(),node->get_parent() != NULL ? node->get_parent()->class_name().c_str() : "null",
+                         inheritedAttribute.parentNode,inheritedAttribute.parentNode->class_name().c_str());
+#endif
 #if 0
                   // DQ (9/24/2007): This feature is not used and should be removed, as a performance improvement!
                      string currentNodeString       = node->sage_class_name();
@@ -866,8 +899,8 @@ ResetParentPointers::evaluateInheritedAttribute (
                      string futureNodeParentString  = inheritedAttribute.parentNode->sage_class_name();
                   // printf ("On node (%s): parent node currently set to %s being reset to %s \n",
                   //      currentNodeString.c_str(),currentNodeParentString.c_str(),futureNodeParentString.c_str());
-                     string saveString = "On node (" + currentNodeString + 
-                                         "): parent node currently set to "+ currentNodeParentString + 
+                     string saveString = "On node (" + currentNodeString +
+                                         "): parent node currently set to "+ currentNodeParentString +
                                          " being reset to " + futureNodeParentString;
 
                   // Accumulate the string into a list and remove redundent entries
@@ -933,7 +966,7 @@ ResetParentPointers::evaluateInheritedAttribute (
 #if STRICT_ERROR_CHECKING
                  // Only SgProject and SgFile can be root nodes after EDG->SAGE translation
                     printf ("Warning: only SgProject and SgFile can be root nodes after EDG->SAGE translation \n");
-                         ROSE_ABORT();
+                    ROSE_ABORT();
 #endif
                   }
              }
@@ -955,17 +988,19 @@ ResetParentPointers::evaluateInheritedAttribute (
                   {
                     SgTemplateInstantiationDecl* templateInstantiation = isSgTemplateInstantiationDecl(node);
                     ROSE_ASSERT(templateInstantiation != NULL);
+                    ROSE_ASSERT(inheritedAttribute.parentNode != NULL);
                     resetParentPointersInDeclaration (templateInstantiation, inheritedAttribute.parentNode);
 
                  // TV (05/29/2018): possible if it is non-real
                  // ROSE_ASSERT(templateInstantiation->get_templateDeclaration() != NULL);
 
-                 // DQ (10/15/2004): Now we have to reset the parents of any declarations appearing in 
+                 // DQ (10/15/2004): Now we have to reset the parents of any declarations appearing in
                  // the template argument list!  Unless we should define the traversal to traverse that list!
-                 // Could there be cycles introduced this way???  For now maybe we should just visit them 
+                 // Could there be cycles introduced this way???  For now maybe we should just visit them
                  // explicitly (and check with Markus).
-                 // printf ("\n\n##### Setting parents of declarations within the template arguments not implemented! ##### \n\n");
-
+#if 0
+                    printf ("\n\n##### Setting parents of declarations within the template arguments not implemented! ##### \n\n");
+#endif
                  // ROSE_ASSERT(templateInstantiation->get_templateArguments() != NULL);
                     resetParentPointersInTemplateArgumentList(templateInstantiation->get_templateArguments());
                     break;
@@ -976,15 +1011,12 @@ ResetParentPointers::evaluateInheritedAttribute (
                   {
                     SgTemplateInstantiationMemberFunctionDecl* templateInstantiation = isSgTemplateInstantiationMemberFunctionDecl(node);
                     ROSE_ASSERT(templateInstantiation != NULL);
+                    ROSE_ASSERT(inheritedAttribute.parentNode != NULL);
 
                  // this is likely redundant
                     resetParentPointersInDeclaration (templateInstantiation, inheritedAttribute.parentNode);
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                     SgDeclarationStatement* templateDeclaration = templateInstantiation->get_templateDeclaration();
-#else
-                    SgTemplateDeclaration* templateDeclaration = templateInstantiation->get_templateDeclaration();
-#endif
                     if (templateDeclaration == NULL)
                        {
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
@@ -995,7 +1027,7 @@ ResetParentPointers::evaluateInheritedAttribute (
                  // ROSE_ASSERT(templateDeclaration != NULL);
 
 #if 0
-                 // DQ (8/18/2005): There is too much variablity in how this is set, 
+                 // DQ (8/18/2005): There is too much variablity in how this is set,
                  // it is better to have it be set in the EDG/Sage III translation!
                     printf ("##### AST Fixup: Calling resetParentPointersInDeclaration for templateDeclaration = %p = %s using parent = %p = %s \n",
                          templateDeclaration,templateDeclaration->class_name().c_str(),
@@ -1003,12 +1035,13 @@ ResetParentPointers::evaluateInheritedAttribute (
                     resetParentPointersInDeclaration (templateDeclaration, inheritedAttribute.parentNode);
 #endif
 
-                 // DQ (10/15/2004): Now we have to reset the parents of any declarations appearing in 
+                 // DQ (10/15/2004): Now we have to reset the parents of any declarations appearing in
                  // the template argument list!  Unless we should define the traversal to traverse that list!
-                 // Could there be cycles introduced this way???  For now maybe we should just visit them 
+                 // Could there be cycles introduced this way???  For now maybe we should just visit them
                  // explicitly (and check with Markus).
-                 // printf ("\n\n##### Setting parents of declarations within the template arguments not implemented! ##### \n\n");
-
+#if 0
+                    printf ("\n\n##### Setting parents of declarations within the template arguments not implemented! ##### \n\n");
+#endif
                  // ROSE_ASSERT(templateInstantiation->get_templateArguments() != NULL);
                     resetParentPointersInTemplateArgumentList(templateInstantiation->get_templateArguments());
                     break;
@@ -1019,10 +1052,11 @@ ResetParentPointers::evaluateInheritedAttribute (
                case V_SgClassDeclaration:
                   {
                  // Set any of the defining or nondefining declaration parent pointers
-                 // these will be used to set parents of other class declarations 
+                 // these will be used to set parents of other class declarations
                  // referenced within types.
                     SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
                     ROSE_ASSERT(classDeclaration != NULL);
+                    ROSE_ASSERT(inheritedAttribute.parentNode != NULL);
                     resetParentPointersInDeclaration (classDeclaration, inheritedAttribute.parentNode);
                     break;
                   }
@@ -1030,8 +1064,8 @@ ResetParentPointers::evaluateInheritedAttribute (
                case V_SgVarRefExp:
                   {
                  // DQ (5/1/2005): some SgInitializedName are not traversed and so there parents are not set!
-                 // Note that hidden in the SgVarRefExp is a SgVariableSymbol with a SgInitializedName 
-                 // which will not have its parent set since we don't traverse the SgVariableSymbol within 
+                 // Note that hidden in the SgVarRefExp is a SgVariableSymbol with a SgInitializedName
+                 // which will not have its parent set since we don't traverse the SgVariableSymbol within
                  // the SgVarRefExp to find the hidden SgInitializedName object.  Why?  Well, in general
                  // symbols are shared and we can't guarentee uniqueness of the visit of many symbols.
                  // The SgInitializedName is in the SgVariableSymbol and so it is never visited!
@@ -1041,7 +1075,7 @@ ResetParentPointers::evaluateInheritedAttribute (
                  //      SgFunctionRefExp (contains a SgFunctionSymbol)
                  //      MemberFunctionRefExp (contains a SgMemberFunctionSymbol)
                  //      ThisExp (contains a SgClassSymbol)
-                 // But only the SgVariableSymbol's declaration is a SgInitializedName, so 
+                 // But only the SgVariableSymbol's declaration is a SgInitializedName, so
                  // no other IR nodes must be specially handled (I think).
 
                     SgVarRefExp *variableRefExpression = isSgVarRefExp(node);
@@ -1060,24 +1094,31 @@ ResetParentPointers::evaluateInheritedAttribute (
                  // Initially we want to allow this so that we can get the graph of the AST so that I can understand the problem better.
                     if (variableSymbol != NULL)
                        {
-                 // This is bit confusing since what is returned is the SgInitializedName and NOT a declaration!
-                    SgInitializedName *initializedName = variableSymbol->get_declaration();
-                    ROSE_ASSERT(initializedName != NULL);
+                      // This is bit confusing since what is returned is the SgInitializedName and NOT a declaration!
+                         SgInitializedName *initializedName = variableSymbol->get_declaration();
 
-                 // printf ("AST fixup: In a SgVarRefExp found a SgInitializedName = %p \n",initializedName);
+                      // DQ (2/6/2020): Added debugging information.
+                         if (initializedName == NULL)
+                            {
+                              printf ("In resetParentPointers.C: case V_SgVarRefExp: variableSymbol = %p = %s \n",variableSymbol,variableSymbol->class_name().c_str());
+                              printf ("In resetParentPointers.C: case V_SgVarRefExp: variableRefExpression = %p = %s \n",variableRefExpression,variableRefExpression->class_name().c_str());
+                            }
+                         ROSE_ASSERT(initializedName != NULL);
 
-                    if (initializedName->get_parent() == NULL)
-                       {
-                      // Set the parent to be the SgVarRefExp (since setting it to the
-                      // symbol would not productive, because symbols can be shared!)
+                      // printf ("AST fixup: In a SgVarRefExp found a SgInitializedName = %p \n",initializedName);
+
+                         if (initializedName->get_parent() == NULL)
+                            {
+                           // Set the parent to be the SgVarRefExp (since setting it to the
+                           // symbol would not productive, because symbols can be shared!)
 #if DEBUG_PARENT_INITIALIZATION
-                         printf ("Setting parent of %p = %s to %p = %s \n",
-                              initializedName,initializedName->class_name().c_str(),
-                              variableRefExpression,variableRefExpression->class_name().c_str());
+                              printf ("Setting parent of %p = %s to %p = %s \n",
+                                   initializedName,initializedName->class_name().c_str(),
+                                   variableRefExpression,variableRefExpression->class_name().c_str());
 #endif
-                         initializedName->set_parent(variableRefExpression);
-                       }
-                    ROSE_ASSERT(initializedName->get_parent() != NULL);
+                              initializedName->set_parent(variableRefExpression);
+                            }
+                         ROSE_ASSERT(initializedName->get_parent() != NULL);
                        }
 
                     break;
@@ -1085,15 +1126,15 @@ ResetParentPointers::evaluateInheritedAttribute (
 
                case V_SgInitializedName:
                   {
-                 // Find the types within the function declaration and set the parents of any 
+                 // Find the types within the function declaration and set the parents of any
                  // declarations that are contained in the types.
                     SgInitializedName* initializedName = isSgInitializedName(node);
                     ROSE_ASSERT(initializedName != NULL);
-
-                 // printf ("AST fixup: Found a SgInitializedName = %p = %s \n",initializedName,initializedName->get_name().str());
-
+#if 0
+                    printf ("AST fixup: Found a SgInitializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+#endif
                  // DQ (9/6/2005): Set the parents of SgInitializedName objects
-                 // This problem shows up in the loop processor test codes, 
+                 // This problem shows up in the loop processor test codes,
                  // not clear if it is a real problem or not!
                     if (initializedName->get_parent() == NULL)
                        {
@@ -1115,7 +1156,44 @@ ResetParentPointers::evaluateInheritedAttribute (
                               ROSE_ASSERT(declaration != NULL);
                               SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
                               ROSE_ASSERT(classDeclaration != NULL);
+#if 0
+                              printf ("Calling resetParentPointers(): classDeclaration = %p = %s parent = %p = %s inheritedAttribute.parentNode = %p = %s \n",
+                                   classDeclaration,classDeclaration->class_name().c_str(),
+                                   classDeclaration->get_parent(),classDeclaration->get_parent() != NULL ? classDeclaration->get_parent()->class_name().c_str() : "null",
+                                   inheritedAttribute.parentNode,inheritedAttribute.parentNode->class_name().c_str());
+                              SgNode* parentBeforeReset = classDeclaration->get_parent();
+#endif
                               resetParentPointers (classDeclaration,inheritedAttribute.parentNode);
+#if 0
+                              SgNode* parentAfterReset = classDeclaration->get_parent();
+                              printf ("DONE: Calling resetParentPointers(): classDeclaration = %p = %s inheritedAttribute.parentNode = %p = %s \n",
+                                   classDeclaration,classDeclaration->class_name().c_str(),inheritedAttribute.parentNode,inheritedAttribute.parentNode->class_name().c_str());
+#endif
+#if 0
+                           // DQ (8/3/2019): Check the value of the parent to see if it was reset.
+                              printf ("DONE: Calling resetParentPointers(): classDeclaration = %p = %s parent = %p = %s inheritedAttribute.parentNode = %p = %s \n",
+                                   classDeclaration,classDeclaration->class_name().c_str(),
+                                   classDeclaration->get_parent(),classDeclaration->get_parent() != NULL ? classDeclaration->get_parent()->class_name().c_str() : "null",
+                                   inheritedAttribute.parentNode,inheritedAttribute.parentNode->class_name().c_str());
+#endif
+#if 0
+                           // DQ (8/3/2019): This code demonstrates that the resetParentPointers function is called (rarely), test2016_90.C is an example of where it is required.
+                              if (parentBeforeReset != parentAfterReset)
+                                 {
+                                   printf ("Note: in type of SgInitializedName: parent of classDeclaration = %p = %s was changed by the resetParentPointers() function \n",
+                                        classDeclaration,classDeclaration->class_name().c_str());
+
+                                // ROSE_ASSERT(parentBeforeReset != NULL);
+                                   ROSE_ASSERT(parentAfterReset != NULL);
+
+                                   printf (" --- parentBeforeReset = %p = %s \n",parentBeforeReset,parentBeforeReset != NULL ? parentBeforeReset->class_name().c_str() : "null");
+                                   printf (" --- parentAfterReset  = %p = %s \n",parentAfterReset,parentAfterReset->class_name().c_str());
+#if 0
+                                   printf ("Exiting as a test! \n");
+                                   ROSE_ASSERT(false);
+#endif
+                                 }
+#endif
                             }
                        }
 
@@ -1131,7 +1209,7 @@ ResetParentPointers::evaluateInheritedAttribute (
                               printf ("--- previousInitializedName->get_scope() = %p = %s \n",
                                       previousInitializedName->get_scope(),previousInitializedName->get_scope()->class_name().c_str());
                             }
-                      // DQ (2/12/2011): Commented out to support generation of graph to debug test2011_08.C, this test codes 
+                      // DQ (2/12/2011): Commented out to support generation of graph to debug test2011_08.C, this test codes
                       // demonstrates that the SgInitializedName build first might only be to support a symbol and not have a
                       // proper parent.
                       // ROSE_ASSERT(previousInitializedName->get_parent() != NULL);
@@ -1162,6 +1240,9 @@ ResetParentPointers::evaluateInheritedAttribute (
                          ROSE_ASSERT(classDeclaration->get_parent() != NULL);
                        }
 #endif
+#if 0
+                    printf ("AST fixup: BOTTOM OF CASE: Found a SgInitializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+#endif
                     break;
                   }
 
@@ -1169,7 +1250,7 @@ ResetParentPointers::evaluateInheritedAttribute (
             // so find the types and set the parents of all the declarations.
                case V_SgFunctionDeclaration:
                   {
-                 // Find the types within the function declaration and set the parents of any 
+                 // Find the types within the function declaration and set the parents of any
                  // declarations that are contained in the types.
                     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
                     ROSE_ASSERT(functionDeclaration != NULL);
@@ -1194,7 +1275,7 @@ ResetParentPointers::evaluateInheritedAttribute (
 #endif
                                    classDeclaration->set_parent(functionDeclaration);
                                  }
-                           // DQ (10/17/2004): Modified this to not enforce assertion that defining 
+                           // DQ (10/17/2004): Modified this to not enforce assertion that defining
                            // declaration existed (see Python specific testcode: test2004_92.C).
                            // Implemented the same fix for the firstNondefiningDeclaration as well.
 
@@ -1240,7 +1321,7 @@ ResetParentPointers::evaluateInheritedAttribute (
                       // We only want to traverse the base type (since all "*" and "&" are associated
                       // with the variables in this variable list, e.g. list of SgInitializedName objects)
 
-                      // DQ (5/21/2006): Set the parent of the declaration in the typedef if it exists 
+                      // DQ (5/21/2006): Set the parent of the declaration in the typedef if it exists
                       // (it should if "islandFound == true").
                          ROSE_ASSERT(typedefDeclaration->get_declaration() != NULL);
                       // DQ (5/21/2006): Not true for enum declaration in typedef.
@@ -1262,9 +1343,9 @@ ResetParentPointers::evaluateInheritedAttribute (
                  // DQ (10/12/2007): A forward enum will not have its parent set, see test2007_92.C.  E.g. "typedef enum zero number;"
                  // so we need to test this independent of the island problem (which is now fixed).
 // #ifndef FIXED_ISLAND_TRAVERSAL
-                 // DQ (10/14/2004): Even if this is not an island it might be a typedef of a template which 
+                 // DQ (10/14/2004): Even if this is not an island it might be a typedef of a template which
                  // needs its name to be reset.  If it is a typedef that is later used then it would be reset
-                 // where the type of the variable declaration would be seen, but if it is not used then we will 
+                 // where the type of the variable declaration would be seen, but if it is not used then we will
                  // only see it here and thus we have to find and reset the name of the template declaration.
                     SgType* baseType = typedefDeclaration->get_base_type();
                     ROSE_ASSERT(baseType != NULL);
@@ -1308,7 +1389,7 @@ ResetParentPointers::evaluateInheritedAttribute (
 
 #ifndef FIXED_ISLAND_TRAVERSAL
                     bool islandFound = variableDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration();
-#if 0
+#if 1
                     printf ("variableDeclaration                                    = %p \n",variableDeclaration);
                     printf ("variableDeclaration->get_definingDeclaration()         = %p \n",variableDeclaration->get_definingDeclaration());
                     printf ("variableDeclaration->get_firstNondefiningDeclaration() = %p \n",variableDeclaration->get_firstNondefiningDeclaration());
@@ -1319,7 +1400,9 @@ ResetParentPointers::evaluateInheritedAttribute (
                     bool isSameAsFirstNondefiningDeclaration = (variableDeclaration == variableDeclaration->get_firstNondefiningDeclaration());
                     printf ("isSameAsFirstNondefiningDeclaration = %s \n",isSameAsFirstNondefiningDeclaration ? "true" : "false");
 #endif
-                 // printf ("islandFound = %s \n",(islandFound == true) ? "true" : "false");
+#if 1
+                    printf ("islandFound = %s \n",(islandFound == true) ? "true" : "false");
+#endif
                     if (islandFound == true)
                        {
                       // We only want to traverse the base type (since all "*" and "&" are associated
@@ -1329,14 +1412,14 @@ ResetParentPointers::evaluateInheritedAttribute (
                          SgInitializedName* firstVariable = *(variableList.begin());
                          ROSE_ASSERT(firstVariable != NULL);
 #if 1
-                      // DQ (5/21/2006): Set the parent of the declaration in the typedef if it exists 
+                      // DQ (5/21/2006): Set the parent of the declaration in the typedef if it exists
                       // (it should if "islandFound == true").
                       // SgDeclarationStatement* declaration = NULL;
                          SgType* variableType = firstVariable->get_typeptr();
                          ROSE_ASSERT(variableType != NULL);
                          SgNamedType* namedType = isSgNamedType(variableType);
 
-                      // DQ (6/21/2006): Handle case of indirection in SgNamedType variables, 
+                      // DQ (6/21/2006): Handle case of indirection in SgNamedType variables,
                       // for example SgArrayType (e.g. "struct { int x; } ArrayVar [100];").
                          if (namedType == NULL)
                             {
@@ -1397,7 +1480,7 @@ ResetParentPointers::evaluateInheritedAttribute (
                        }
                       else
                        {
-                      // DQ (2/9/2014): This was an error, but it only shows up in the use of the GNU 4.6 header files 
+                      // DQ (2/9/2014): This was an error, but it only shows up in the use of the GNU 4.6 header files
                       // (and it is not clear that it should be an error).  So output a message as we debug this issue.
                          if (declaration->get_parent() != directive)
                             {
@@ -1446,6 +1529,9 @@ ResetParentPointers::evaluateInheritedAttribute (
                default:
                   {
                  // Only trap out typedefs and variable declarations
+#if 0
+                    printf ("default reached in reset parent pointers: node = %p = %s \n",node,node != NULL ? node->class_name().c_str() : "null");
+#endif
                     break;
                   }
              }
@@ -1473,7 +1559,7 @@ ResetParentPointers::evaluateInheritedAttribute (
                SgNode* parentNode = node->get_parent();
                if ( inheritedAttribute.parentNode != parentNode )
                   {
-                 // Interesting node 
+                 // Interesting node
                     string currentNodeString  = node->class_name();
                     string expectedNodeString = (suggestedNode) ? suggestedNode->class_name() : "NULL POINTER";
                     string recordedNodeString = (parentNode)    ? parentNode->class_name()    : "NULL POINTER";
@@ -1481,6 +1567,10 @@ ResetParentPointers::evaluateInheritedAttribute (
                   }
              }
         }
+
+#if 0
+     printf (" --- Setting inheritedAttribute.parentNode to node = %p = %s \n",node,node != NULL ? node->class_name().c_str() : "null");
+#endif
 
   // Always set the parent node point in the inherited attribute
      inheritedAttribute.parentNode = node;
@@ -1506,7 +1596,7 @@ void resetParentPointers ( SgNode* node, SgNode* parent )
 
 void ResetParentPointersOfClassAndNamespaceDeclarations::visit(SgNode* node)
    {
-  // DQ (11/1/2005): Reset parent pointers of and data members 
+  // DQ (11/1/2005): Reset parent pointers of and data members
   // or namespace members to the class or namespace.
 
      ROSE_ASSERT(node != NULL);
@@ -1609,8 +1699,8 @@ void ResetParentPointersOfClassAndNamespaceDeclarations::visit(SgNode* node)
 // DQ (9/25/2004): build another function that has a better interface and really works with any SgNode
 void resetParentPointersOfClassOrNamespaceDeclarations ( SgNode* node )
    {
-  // DQ (11/1/2005): In a separate pass set the data members of any class or 
-  // namespace to have a parent pointing at the class definition or the namspace.
+  // DQ (11/1/2005): In a separate pass set the data members of any class or
+  // namespace to have a parent pointing at the class definition or the namespace.
 
   // printf ("Resetting the parent pointers ... (starting at node = %s) \n",node->sage_class_name());
      ResetParentPointersOfClassAndNamespaceDeclarations setParentPointerTraversal;
@@ -1620,8 +1710,8 @@ void resetParentPointersOfClassOrNamespaceDeclarations ( SgNode* node )
 
 void topLevelResetParentPointer ( SgNode* node )
    {
-  // Put this is a local scope so that the timing can be easily controled
-  // this is required because the resetParentPointers() function is called 
+  // Put this in a local scope so that the timing can be easily controled
+  // this is required because the resetParentPointers() function is called
   // recursively.
 
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
@@ -1644,7 +1734,7 @@ resetFileInfoParentPointersInMemoryPool()
      ResetFileInfoParentPointersInMemoryPool t;
      t.traverseMemoryPool();
    }
-     
+
 void
 ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
    {
@@ -1659,7 +1749,7 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
   // DQ (9/15/2014): Skip checking of parent pointers here for SgUntypedNode IR nodes (handle this case seperately).
   // All types should have NULL parent pointers (because types can be shared)
   // if (locatedNode != NULL)
-     if (locatedNode != NULL && untypedNode == NULL)
+     if ((locatedNode != NULL) && (untypedNode == NULL))
         {
           if (locatedNode->get_startOfConstruct() == NULL)
              {
@@ -1667,9 +1757,10 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
                if (isSgFunctionParameterList(node) != NULL)
                   {
                  // DQ (9/13/2011): Reported as possible NULL value in static analysis of ROSE code.
-                    ROSE_ASSERT(locatedNode->get_parent() != NULL);
+                    SgNode* parent = locatedNode->get_parent();
+                    ROSE_ASSERT(parent != NULL);
 
-                    printf ("     This is a SgFunctionParameterList, so look at the parent = %p = %s \n",locatedNode->get_parent(),locatedNode->get_parent()->class_name().c_str());
+                    printf ("     This is a SgFunctionParameterList, so look at the parent = %p = %s \n",parent,parent->class_name().c_str());
                   }
 
                if (locatedNode->get_parent() == NULL)
@@ -1760,7 +1851,9 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
 #endif
             // case V_SgFile:
                case V_SgSourceFile:
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
                case V_SgBinaryComposite:
+#endif
                case V_SgUnknownFile:
                   {
                     ROSE_ASSERT(support->get_file_info() != NULL);
@@ -1769,7 +1862,7 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
                   }
 
 #if 0
-            // It still might be that these will be set properly 
+            // It still might be that these will be set properly
             // (so we can't set them here, set then in the resetParentPointersInMemoryPool (next))
                case V_Sg_File_Info:
                   {
@@ -1806,7 +1899,7 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
 
 
 
-// DQ (8/23/2012): Modified to take a SgNode so that we could compute the global scope for use in setting 
+// DQ (8/23/2012): Modified to take a SgNode so that we could compute the global scope for use in setting
 // parents of template instantiations that have not be placed into the AST but exist in the memory pool.
 // This is called directly from void postProcessingSupport (SgNode* node).
 // void resetParentPointersInMemoryPool()
@@ -1818,7 +1911,10 @@ resetParentPointersInMemoryPool(SgNode* node)
      TimingPerformance timer ("Reset parent pointers in memory pool:");
 
      ROSE_ASSERT(node != NULL);
-  // printf ("In resetParentPointersInMemoryPool() : node = %p = %s \n",node,node->class_name().c_str());
+
+#if 0
+     printf ("In resetParentPointersInMemoryPool(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
 
      SgGlobal* globalScope = NULL;
      SgProject* project = isSgProject(node);
@@ -1835,7 +1931,47 @@ resetParentPointersInMemoryPool(SgNode* node)
                globalScope = sourceFile->get_globalScope();
              }
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           ROSE_ASSERT(globalScope != NULL || isSgBinaryComposite(file) != NULL);
+#else
+          ROSE_ASSERT(globalScope != NULL);
+#endif
+        }
+       else
+        {
+          SgSourceFile* sourceFile = isSgSourceFile(node);
+          if (sourceFile != NULL)
+             {
+               globalScope = sourceFile->get_globalScope();
+             }
+            else
+             {
+            // DQ (8/5/2019): It is a bit of a problem that we have to allow this to work when not using a SgProject or SgSourceFile, but this
+            // is required for the inlining tests.  Note that these inlined tests will not have the resetFileInfoParentPointersInMemoryPool() be called.
+
+            // DQ (8/2/2019): This function is only meaningful to call with the SgProject node, and will do nothing otherwise.
+            // This may be the source of the problem in using the SageBuilder::buildFile() API in testing test2019_501.C).
+            // If so then this function should be fixed to allow a SgFile to be used alternatively.
+            // printf ("In resetParentPointersInMemoryPool(): This function can't be called using anything but the SgProject: node = %p = %s \n",node,node->class_name().c_str());
+            // ROSE_ASSERT(false);
+
+            // DQ (8/6/2019): Alternatively, let's use the existing parent pointers to serach for the associated global scope.
+               bool includingSelf = true;
+               globalScope = SageInterface::getEnclosingNode<SgGlobal>(node,includingSelf);
+
+               if (globalScope == NULL)
+                  {
+                 // DQ (8/6/2019): Make it an error to not have found an associated global scope from the input node.
+                    printf ("Error: In resetParentPointersInMemoryPool(): Could not locate global scope in search upward through the AST from this node = %p = %s \n",node,node->class_name().c_str());
+                  }
+                 else
+                  {
+#if 0
+                    printf ("In resetParentPointersInMemoryPool(): Found global scope in search upward through the AST from this node = %p = %s \n",node,node->class_name().c_str());
+#endif
+                  }
+               ROSE_ASSERT(globalScope != NULL);
+             }
         }
 
   // ROSE_ASSERT(globalScope != NULL);
@@ -1854,10 +1990,16 @@ resetParentPointersInMemoryPool(SgNode* node)
        // Reset parents of any remaining unset Sg_File_Info object first
           resetFileInfoParentPointersInMemoryPool();
         }
-
+       else
+        {
+       // DQ (8/5/2019): This fails for the binary analysis, where there is no SgGlobal found.
+       // DQ (8/2/2019): This function is only meaningful to call with the SgProject node, and will do nothing otherwise.
+       // printf ("In resetParentPointersInMemoryPool(): This function is not doing anything when called using: node = %p = %s \n",node,node->class_name().c_str());
+       // ROSE_ASSERT(false);
+        }
    }
 
-     
+
 void
 ResetParentPointersInMemoryPool::visit(SgNode* node)
    {
@@ -1871,6 +2013,10 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
        // Only do I/O on nodes not in the header of predefined functions.
           printf ("##### ResetParentPointersInMemoryPool::visit(node = %p = %s) \n",node,node->class_name().c_str());
         }
+#endif
+
+#if 0
+     printf ("##### ResetParentPointersInMemoryPool::visit(node = %p = %s) \n",node,node->class_name().c_str());
 #endif
 
   // I built a pointer to global scope so that we could use it for this case.
@@ -2001,7 +2147,7 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                               SgStatement* fortranStatement = tempSymbol->get_fortran_statement();
                               ROSE_ASSERT(fortranStatement != NULL);
                             }
-                         
+
                          break;
                        }
 
@@ -2049,7 +2195,7 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                          printf ("Error: default reached in switch(symbol->variantT()) symbol = %p = %s \n",symbol,symbol->class_name().c_str());
                          ROSE_ASSERT(false);
                        }
-                  }                  
+                  }
              }
           ROSE_ASSERT(symbol->get_parent() != NULL);
         }
@@ -2070,15 +2216,26 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                case V_SgClassDeclaration:
                case V_SgTemplateInstantiationDecl:
                   {
-                 // At this point the AST traversal has been used to set the parents and we can use information 
-                 // from defining and non-defining declaration to set parents of extrainious non-defining 
+                 // At this point the AST traversal has been used to set the parents and we can use information
+                 // from defining and non-defining declaration to set parents of extrainious non-defining
                  // declarations accessible only from the memory pool.  We only reset NULL pointers.
                     SgClassDeclaration* declaration = isSgClassDeclaration(locatedNode);
                     if (declaration != NULL && declaration->get_parent() == NULL)
                        {
                          SgDeclarationStatement* definingDeclaration    = declaration->get_definingDeclaration();
                          SgDeclarationStatement* nondefiningDeclaration = declaration->get_firstNondefiningDeclaration();
-
+#if 0
+                      // DQ (8/2/2019): Debugging nondefining template instantiation if global scope (test2019_501.C).
+                         printf ("ResetParentPointersInMemoryPool::visit(): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+                         if (definingDeclaration != NULL)
+                            {
+                              printf (" --- definingDeclaration = %p = %s \n",definingDeclaration,definingDeclaration->class_name().c_str());
+                            }
+                         if (nondefiningDeclaration != NULL)
+                            {
+                              printf (" --- nondefiningDeclaration = %p = %s \n",nondefiningDeclaration,nondefiningDeclaration->class_name().c_str());
+                            }
+#endif
                          SgNode* parentOfRelatedDeclaration = NULL;
                          if (definingDeclaration != NULL)
                             {
@@ -2091,14 +2248,20 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
 
                          if (parentOfRelatedDeclaration != NULL)
                             {
+#if 0
+                              printf ("Note: declaration->set_parent() using parentOfRelatedDeclaration = %p = %s \n",
+                                   parentOfRelatedDeclaration,parentOfRelatedDeclaration->class_name().c_str());
+#endif
                               declaration->set_parent(parentOfRelatedDeclaration);
                             }
 #if 1
                          if (declaration->get_parent() == NULL)
                             {
                             // DQ (3/6/2017): Converted to use message logging.
-                               mprintf ("##### ResetParentPointersInMemoryPool::visit(declaration = %p = %s) declaration->get_parent() == NULL \n",node,node->class_name().c_str());
-
+                            // mprintf ("##### ResetParentPointersInMemoryPool::visit(declaration = %p = %s) declaration->get_parent() == NULL \n",node,node->class_name().c_str());
+#if 0
+                               printf ("##### ResetParentPointersInMemoryPool::visit(declaration = %p = %s) declaration->get_parent() == NULL \n",node,node->class_name().c_str());
+#endif
                             // DQ (8/23/2012): For remaining template instantiationsthat only have a non-definng declaration, set the parent to the global scope (since they don't appear to be connected to anything else).
                                SgTemplateInstantiationDecl* templateInstantiation = isSgTemplateInstantiationDecl(nondefiningDeclaration);
                                if (templateInstantiation != NULL)
@@ -2114,12 +2277,18 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                       // DQ (6/10/2007): Test for null parents before the call to resetTemplateNames()
                       // DQ (6/22/2006): Commented out temporarily for debugging use of glob.h
 
+#if 0
                       // DQ (3/3/2012): I think we might not need to have this test (or at least I want to debug this case using the AST Whole AST dot graph).
                       // This is a problem (failing test) for test2006_01.C.
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                          printf ("WARNING: In ResetParentPointersInMemoryPool::visit(declaration = %p = %s): test commented out for declaration->get_parent() != NULL \n",node,node->class_name().c_str());
 #endif
                       // ROSE_ASSERT(declaration->get_parent() != NULL);
+#else
+                      // DQ (8/3/2019): This assertion is a problem (failing C language test) for test2012_47.c (and about 27 other C language tests).
+                      // DQ (8/2/2019): reintroduce this asseretion.
+                      // ROSE_ASSERT(declaration->get_parent() != NULL);
+#endif
                        }
 
                  // DQ (6/22/2006): Commented out temporarily for debugging use of glob.h
@@ -2147,12 +2316,13 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
 
                          if (nondefiningDeclaration == NULL)
                             {
+                              SgNode* parentNode = functionDeclaration->get_parent();
                            // DQ (9/13/2011): Reported as possible NULL value in static analysis of ROSE code.
-                              ROSE_ASSERT(functionDeclaration->get_parent() != NULL);
+                              ROSE_ASSERT(parentNode != NULL);
 
                               printf ("Error: nondefiningDeclaration == NULL for functionDeclaration = %p = %s \n",functionDeclaration,SageInterface::get_name(functionDeclaration).c_str());
                               printf ("   definingDeclaration = %p \n",definingDeclaration);
-                              printf ("   functionDeclaration->get_parent() = %p = %s \n",functionDeclaration->get_parent(),functionDeclaration->get_parent()->class_name().c_str());
+                              printf ("   functionDeclaration->get_parent() = %p = %s \n",parentNode,parentNode->class_name().c_str());
                             }
                          ROSE_ASSERT(nondefiningDeclaration != NULL);
 #if PRINT_DEVELOPER_WARNINGS
@@ -2162,6 +2332,12 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                       // ROSE_ASSERT(nondefiningDeclaration->get_parent() != NULL);
                          if (definingDeclaration != NULL)
                             {
+                           // DQ (11/25/2020): Adding debugging support.
+                              if (definingDeclaration->get_parent() == NULL)
+                                 {
+                                   printf ("Error: definingDeclaration->get_parent() == NULL: definingDeclaration = %p = %s \n",definingDeclaration,definingDeclaration->class_name().c_str());
+                                   printf (" --- definingDeclaration name = %s \n",SageInterface::get_name(definingDeclaration).c_str());
+                                 }
                               ROSE_ASSERT(definingDeclaration->get_parent() != NULL);
 
                            // Make the parent the same for both the defining and nondefining declarations
@@ -2178,7 +2354,7 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                             }
                        }
 
-                  if (locatedNode->get_parent()==NULL) 
+                  if (locatedNode->get_parent()==NULL)
                   {
                     SageInterface::dumpInfo(locatedNode,"ResetParentPointersInMemoryPool::visit() error: found a func dec without defining declaration and its non-defining declaration has no scope info. ");
                     ROSE_ASSERT(locatedNode->get_parent() != NULL);
@@ -2227,8 +2403,8 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                          printf ("OK if root of subtree: locatedNode->get_parent() == NULL for support = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
                          locatedNode->get_file_info()->display("Error: locatedNode->get_parent() == NULL");
                        }
-                 // DQ (6/24/2006): When building tree fragments and setting the parent, the parent of the 
-                 // root node of the subtree can't be set until it is attached to the AST, so is has to be 
+                 // DQ (6/24/2006): When building tree fragments and setting the parent, the parent of the
+                 // root node of the subtree can't be set until it is attached to the AST, so is has to be
                  // OK to find an IR node with a NULL parent!
                  // ROSE_ASSERT(locatedNode->get_parent() != NULL);
 #endif
@@ -2245,10 +2421,10 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
           Sg_File_Info* fileInfo = isSg_File_Info(support);
           if (fileInfo != NULL && fileInfo->get_parent() == NULL)
              {
-            // This is a detached Sg_File_Info object (else it would have been set 
+            // This is a detached Sg_File_Info object (else it would have been set
             // properly in the ResetFileInfoParentPointersInMemoryPool traversal).
-            // by default we set it to the get_globalFunctionTypeTable() (somewhat 
-            // arbitrarily this helps me figure out what Sg_File_Info objects are 
+            // by default we set it to the get_globalFunctionTypeTable() (somewhat
+            // arbitrarily this helps me figure out what Sg_File_Info objects are
             // built redundantly).
             // support->set_parent(SgTypeShort::createType()get_globalFunctionTypeTable());
 #if 0
@@ -2256,10 +2432,10 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                ROSE_ASSERT(fileInfo->get_parent() != NULL);
 #endif
 
-            // DQ (12/23/2006): Sg_File_Info objects are used in non-SgNode objects to record source position information, 
-            // when this is done we add extra flags to the classification so that we can expect when the parent pointer 
+            // DQ (12/23/2006): Sg_File_Info objects are used in non-SgNode objects to record source position information,
+            // when this is done we add extra flags to the classification so that we can expect when the parent pointer
             // will be NULL.  In these cases the parent pointer can't be used to point to the object using the Sg_File_Info
-            // object since it is not dirived from SgNode.  This is a diesn issue and may be addressed differently in the 
+            // object since it is not dirived from SgNode.  This is a diesn issue and may be addressed differently in the
             // future.  We want to skip setting the parent in this case and avoid considering it to be an error.
                if (fileInfo->isCommentOrDirective() == false && fileInfo->isToken() == false)
                   {
@@ -2317,10 +2493,10 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                   {
                     if (support->get_parent() == NULL)
                        {
-                      // This is a detached Sg_File_Info object (else it would have been set 
+                      // This is a detached Sg_File_Info object (else it would have been set
                       // properly in the ResetFileInfoParentPointersInMemoryPool traversal).
-                      // by default we set it to the get_globalFunctionTypeTable() (somewhat 
-                      // arbitrarily this helps me figure out what Sg_File_Info objects are 
+                      // by default we set it to the get_globalFunctionTypeTable() (somewhat
+                      // arbitrarily this helps me figure out what Sg_File_Info objects are
                       // built redundantly).
                       // support->set_parent(SgTypeShort::createType()get_globalFunctionTypeTable());
                          support->set_parent(SgTypeShort::createType());

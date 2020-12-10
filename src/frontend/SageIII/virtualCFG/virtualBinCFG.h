@@ -1,5 +1,7 @@
 #ifndef VIRTUAL_BIN_CFG_H
 #define VIRTUAL_BIN_CFG_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <stdint.h>
 #include "rosedll.h"
@@ -128,4 +130,5 @@ namespace VirtualBinCFG {
     void makeEdge(SgAsmInstruction *from, SgAsmInstruction *to, const AuxiliaryInformation *info, std::vector<CFGEdge> &result);
 }
 
-#endif /* VIRTUAL_CFG_H */
+#endif
+#endif

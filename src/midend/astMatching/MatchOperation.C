@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 Markus Schordan                       *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "sage3basic.h"
@@ -389,8 +387,8 @@ void MatchStatus::addVarBinding(std::string varname,SgNode* node) {
   current_smr.singleMatchVarBindings[varname]=node;
 }
 
-void MatchStatus::addMarkedLocation(SgNode* node) {
-  current_smr.singleMatchMarkedLocations.push_back(node);
+void MatchStatus::addMarkedLocation(SingleMatchMarkedLocation locIter) {
+  current_smr.singleMatchMarkedLocations.push_back(locIter);
 }
 
 void MatchStatus::commitSingleMatchResult() {

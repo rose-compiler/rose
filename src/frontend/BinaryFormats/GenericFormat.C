@@ -1,6 +1,8 @@
 /* Classes describing basic features of a binary file that are in common to all file formats. (SgAsmGenericFormat class) */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "stringify.h"
 
 using namespace Rose;
@@ -26,3 +28,5 @@ SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u\n",  p, w, "ABIvers",  get_abi_version());
     fprintf(f, "%s%-*s = %" PRIuPTR "\n", p, w, "wordsize", get_word_size());
 }
+
+#endif

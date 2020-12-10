@@ -1,10 +1,12 @@
 unparseJovialCodeGeneration_la_sources=\
 	$(JovialCodeGenerationPath)/unparseJovial_expressions.C \
 	$(JovialCodeGenerationPath)/unparseJovial_statements.C \
-	$(JovialCodeGenerationPath)/unparseJovial_types.C
+	$(JovialCodeGenerationPath)/unparseJovial_types.C \
+	$(JovialCodeGenerationPath)/unparseJovial_modfile.C
 
 unparseJovialCodeGeneration_includeHeaders=\
-	$(JovialCodeGenerationPath)/unparseJovial.h
+	$(JovialCodeGenerationPath)/unparseJovial.h \
+	$(JovialCodeGenerationPath)/unparseJovial_modfile.h
 
 unparseJovialCodeGeneration_extraDist=\
 	$(JovialCodeGenerationPath)/CMakeLists.txt

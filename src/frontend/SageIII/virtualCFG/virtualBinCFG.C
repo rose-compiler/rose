@@ -1,4 +1,5 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "virtualBinCFG.h"
 
@@ -183,7 +184,7 @@ namespace VirtualBinCFG {
     const std::set<uint64_t>& AuxiliaryInformation::getPossibleSuccessors(SgAsmInstruction* insn) const {
         static const std::set<uint64_t> emptySet;
         std::map<SgAsmInstruction*, std::set<uint64_t> >::const_iterator succsIter = indirectJumpTargets.find(insn);
-        if (isSgAsmX86Instruction(insn) && isSgAsmX86Instruction(insn)->get_kind() == x86_ret) {
+        if (isSgAsmX86Instruction(insn) && isSgAsmX86Instruction(insn)->get_kind() == Rose::BinaryAnalysis::x86_ret) {
             SgNode* f = insn;
             while (f && !isSgAsmBlock(f) && !isSgAsmFunction(f)) f = f->get_parent();
             std::map<SgAsmStatement*, std::set<uint64_t> >::const_iterator retIter = returnTargets.find(isSgAsmStatement(f));
@@ -220,7 +221,7 @@ namespace VirtualBinCFG {
             virtual void visit(SgNode* n) {
                 SgAsmX86Instruction* insn = isSgAsmX86Instruction(n);
                 if (!insn) return;
-                if (insn->get_kind() != x86_call) return;
+                if (insn->get_kind() != Rose::BinaryAnalysis::x86_call) return;
                 //cerr << "Found call xxx at " << hex << insn->get_address() << endl;
                 uint64_t tgtAddr;
                 if (!insn->getBranchTarget(&tgtAddr)) return;
@@ -261,3 +262,5 @@ namespace VirtualBinCFG {
         trav3.traverse(top, preorder);
     }
 }
+
+#endif

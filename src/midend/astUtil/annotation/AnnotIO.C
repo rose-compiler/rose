@@ -10,6 +10,8 @@
 #include "assert.h"
 #endif
 
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+
 using namespace std;
 
 namespace annotation{
@@ -67,10 +69,10 @@ int is_operator( char c)
   return p - op.c_str() + 1;
 }
 
-//! Grab the next char from an annotation buffer, 
+//! Grab the next char from an annotation buffer,
 // if the buffer is fully processed already, get the char from an input stream
 char getch( istream& in)
- { 
+ {
     if (annotation::buffer != "") {
        char c = annotation::buffer[annotation::index++];
        if (annotation::index >= annotation::buffer.size()) {
@@ -80,7 +82,7 @@ char getch( istream& in)
        return c;
     }
     else {
-      char c = in.get(); 
+      char c = in.get();
       if (DebugAnnotRead())
          cerr << c;
       return c;
@@ -89,7 +91,7 @@ char getch( istream& in)
 
 char peek_ch(istream& in)
 {
-      char c = peek_next(in); 
+      char c = peek_next(in);
       while (is_space(c)) {
         getch(in);
         c = peek_next(in);
@@ -99,17 +101,17 @@ char peek_ch(istream& in)
       return c;
 }
 //! Peek the next char, don't increase the positioning index
-// Peek the input stream if the annotation buffer is already processed. 
+// Peek the input stream if the annotation buffer is already processed.
 char peek_next(istream& in)
 {
-   if (annotation::buffer != "") 
+   if (annotation::buffer != "")
       return annotation::buffer[annotation::index];
-    else 
+    else
       return in.peek();
 }
-//! Peek the next sub string of size 'size', 
+//! Peek the next sub string of size 'size',
 // append the annotation buffer using characters from 'in' to get sufficent substring
-// if the existing buffer is not long enough to be peeked up to 'size' characters from 
+// if the existing buffer is not long enough to be peeked up to 'size' characters from
 // the current positioning pointer (index)
 string peek_next(istream& in, unsigned size)
 {
@@ -144,7 +146,7 @@ void read_ch( istream& in, char c)
      throw m;
   }
 }
-//! Grab the next identifier from an input stream 
+//! Grab the next identifier from an input stream
 string read_id( istream& in )
 {
   char c = peek_ch(in);
@@ -160,7 +162,7 @@ string read_id( istream& in )
 void read_id( istream& in, const string& s)
 {
   string r = read_id(in);
-  if (r != s) 
+  if (r != s)
   {
 #ifdef _MSC_VER
           printf ("MSVC specific code comments out the use of throw expression... (exiting) \n");
@@ -176,10 +178,10 @@ string peek_id( istream& in)
 {
   if (annotation::buffer == "") {
      annotation::buffer = read_id(in);
-     annotation::index = 0; 
-  } 
-  return (annotation::index == 0)? annotation::buffer 
-            : annotation::buffer.substr(annotation::index, 
+     annotation::index = 0;
+  }
+  return (annotation::index == 0)? annotation::buffer
+            : annotation::buffer.substr(annotation::index,
                                         annotation::buffer.size() - annotation::index);
 }
 
@@ -188,21 +190,21 @@ string read_num( istream& in )
   char c = read_ch(in);
   if (!in.good())
       return "";
-  if (!is_num(c)) 
+  if (!is_num(c))
   {
 #ifdef _MSC_VER
           printf ("MSVC specific code comments out the use of throw expression... (exiting) \n");
           // tps: todo Windows. Not reached yet.
           assert(false);
 #else
-    throw ReadError("read number error: expecting numerics instead of " + string(1,c) );  
+    throw ReadError("read number error: expecting numerics instead of " + string(1,c) );
 #endif
   }
   string buf = "";
   buf.push_back(c);
   for (;;) {
     c = peek_next(in);
-    if ( !is_num(c) && c != '.') 
+    if ( !is_num(c) && c != '.')
       break;
     getch(in);
     buf.push_back(c);

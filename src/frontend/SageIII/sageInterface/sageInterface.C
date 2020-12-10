@@ -4,14 +4,14 @@
 #include "markLhsValues.h"
 #include "fixupNames.h"
 #include "FileUtility.h"
+
+#if ROSE_WITH_LIBHARU
 #include "AstPDFGeneration.h"
+#endif
+
 #include "SgNodeHelper.h" //Markus's helper functions
 
-#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-   #include "buildMangledNameMap.h"
-   #include "buildReplacementMap.h"
-   #include "fixupTraversal.h"
-#endif
+#include "fixupTraversal.h"
 
 #include "sageInterface.h"
 
@@ -27,7 +27,7 @@
 // Liao 1/24/2008 : need access to scope stack sometimes
 #include "sageBuilder.h"
 
-// DQ (3/14/2017): Try to comment this out since it is not tested (used in get_C_array_dimensions(), 
+// DQ (3/14/2017): Try to comment this out since it is not tested (used in get_C_array_dimensions(),
 // from midend/programTransformation/ompLowering/omp_lowering.cpp, but not tested).
 // PP 01/06/2012 : need swap operations for wrapFunction implementation
 // PP 05/30/2012 : need ancestor function
@@ -57,6 +57,7 @@
 #include <iostream>
 #include <algorithm> // for set operations
 #include <numeric>   // for std::accumulate
+#include <map>
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 #   include "jni.h"
@@ -84,6 +85,22 @@ using namespace Rose::Frontend::Java::Ecj;
 
 #endif
 
+
+// DQ (11/5/2019): Added to support SageInterface::statementCanBeTransformed().
+namespace EDG_ROSE_Translation
+   {
+  // DQ (9/18/2018): Declare this map so that we can use it for the unparse header files option.
+#if defined(ROSE_BUILD_CXX_LANGUAGE_SUPPORT) && !defined(ROSE_USE_CLANG_FRONTEND)
+  // DQ (12/11/2018): Use the definition in the EDG edgRose.C file if C/C++ support IS defined.
+     extern std::map<std::string, SgIncludeFile*> edg_include_file_map;
+#else
+  // DQ (12/11/2018): Allow this to be the definition if C/C++ support is NOT defined.
+     std::map<std::string, SgIncludeFile*> edg_include_file_map;
+#endif
+   }
+
+
+
 // DQ (12/1/2015): Added to support macro handling.
 #include "detectMacroOrIncludeFileExpansions.h"
 
@@ -101,6 +118,11 @@ namespace SageInterface {
 
 // DQ (3/4/2014): We need this feature to support the function: isStructurallyEquivalentAST().
 #include "RoseAst.h"
+
+
+// DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+// The value of 0 allows the old implementation to be tested, and the value of 1 allows the new optimized implementation to be tested.
+#define OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS 1
 
 //! C++ SageBuilder namespace specific state for storage of the source code position state (used to control how the source code positon is defined for IR nodes built within the SageBuilder interface).
 extern SageBuilder::SourcePositionClassification SageBuilder::SourcePositionClassificationMode;
@@ -221,9 +243,9 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                  // ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL);
 #if 0
                     bool isInTemplateDeclaration = ( (isSgTemplateClassDefinition(decl->get_parent()) != NULL) ||
-                                                     (isSgTemplateFunctionDeclaration(decl->get_parent()) != NULL) || 
-                                                     (isSgTemplateMemberFunctionDeclaration(decl->get_parent()) != NULL) || 
-                                                     (decl->get_parent() != NULL && isSgTemplateFunctionDeclaration(decl->get_parent()->get_parent()) != NULL) || 
+                                                     (isSgTemplateFunctionDeclaration(decl->get_parent()) != NULL) ||
+                                                     (isSgTemplateMemberFunctionDeclaration(decl->get_parent()) != NULL) ||
+                                                     (decl->get_parent() != NULL && isSgTemplateFunctionDeclaration(decl->get_parent()->get_parent()) != NULL) ||
                                                      (decl->get_parent() != NULL && isSgTemplateMemberFunctionDeclaration(decl->get_parent()->get_parent()) != NULL) );
 #else
                  // DQ (10/11/2015): We need a better test for if this is in a template class, function, member function, etc.
@@ -242,7 +264,7 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
 #endif
                     ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL) || (isInTemplateDeclaration == true);
 
-                 // DQ (2/5/2015): We need to ignore the case of un-named classes (or maybe those classes 
+                 // DQ (2/5/2015): We need to ignore the case of un-named classes (or maybe those classes
                  // from unnamed classes with lambda member functions).  See test2015_13.C for an example.
                  // Or maybe these should have been added to the declarationMap in the front-end?
                     if (isSgClassDeclaration(decl) != NULL)
@@ -270,11 +292,13 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                          printf ("decl->get_parent()               = %p = %s = %s \n",decl->get_parent(),decl->get_parent()->class_name().c_str(),get_name(decl->get_parent()).c_str());
                          printf ("decl->get_parent()->get_parent() = %p = %s = %s \n",decl->get_parent()->get_parent(),decl->get_parent()->get_parent()->class_name().c_str(),get_name(decl->get_parent()->get_parent()).c_str());
 #endif
+#if 0
                          SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(decl->get_parent()->get_parent());
                          if (namespaceDefinitionStatement != NULL)
                             {
                               namespaceDefinitionStatement->get_file_info()->display("namespaceDefinitionStatement: debug");
                             }
+#endif
 #if 0
                          if (isSgCtorInitializerList(decl) != NULL)
                             {
@@ -286,7 +310,7 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                          firstNondefiningDeclaration->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): firstNondefiningDeclaration: debug");
                          decl->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): decl: debug");
 #endif
-                      // DQ (2/5/2015): This is a problem for EDG 4.9 code using the GNU 4.8.1 compiler 
+                      // DQ (2/5/2015): This is a problem for EDG 4.9 code using the GNU 4.8.1 compiler
                       // and maybe related to C++11 support (commented out assertion as a test).
 #if 0
                          printf ("In SageInterface::DeclarationSets::addDeclaration(): Can not ignore this error \n");
@@ -361,7 +385,7 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
 #endif
    }
 
-const std::set<SgDeclarationStatement*>* 
+const std::set<SgDeclarationStatement*>*
 SageInterface::DeclarationSets::getDeclarations(SgDeclarationStatement* decl)
    {
   // DQ (4/3/2014): This function returns the associated set of declarations.
@@ -571,10 +595,12 @@ SageInterface::whereAmI(SgNode* node)
   // Don't traverse past the SgFile level.
      while (parent != NULL && isSgFileList(parent) == NULL)
         {
-//          printf ("--- parent = %p = %s \n",parent,parent->class_name().c_str());
+       // DQ (7/14/2019): These were commented out, but they are intended for debugging, so
+       // if someone does not need thi output then the function should not have been called.
+          printf ("--- parent = %p = %s \n",parent,parent->class_name().c_str());
 
           ROSE_ASSERT(parent->get_file_info() != NULL);
-//          parent->get_file_info()->display("In SageInterface::whereAmI() diagnostics support");
+          parent->get_file_info()->display("In SageInterface::whereAmI() diagnostics support");
 
           parent = parent->get_parent();
         }
@@ -599,8 +625,8 @@ SageInterface::initializeIfStmt(SgIfStmt *ifstmt, SgStatement* conditional, SgSt
      if (ifstmt->get_false_body() == NULL)
           ifstmt->set_false_body(false_body);
 
-  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-     if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+     if (is_language_case_insensitive())
          ifstmt->setCaseInsensitive(true);
 
      setOneSourcePositionNull(ifstmt);
@@ -610,13 +636,13 @@ SageInterface::initializeIfStmt(SgIfStmt *ifstmt, SgStatement* conditional, SgSt
    }
 
 
-void 
+void
 SageInterface::initializeSwitchStatement(SgSwitchStatement* switchStatement,SgStatement *item_selector,SgStatement *body)
    {
      ROSE_ASSERT(switchStatement != NULL);
 
-  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-     if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+     if (is_language_case_insensitive())
           switchStatement->setCaseInsensitive(true);
 
      if (switchStatement->get_item_selector() == NULL)
@@ -638,8 +664,8 @@ SageInterface::initializeWhileStatement(SgWhileStmt* whileStatement, SgStatement
    {
      ROSE_ASSERT(whileStatement);
 
-  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-     if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+     if (is_language_case_insensitive())
           whileStatement->setCaseInsensitive(true);
 
      if (whileStatement->get_condition() == NULL)
@@ -1128,10 +1154,12 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
         }
        else
         {
+#if 0
           printf ("In SageInterface::set_name(): This statement can be transformed! parent_declaration = %p = %s \n",parent_declaration,get_name(parent_declaration).c_str());
+#endif
 
 #if 0
-       // DQ (11/12/2018): Initial test problem should not permit a transformation! 
+       // DQ (11/12/2018): Initial test problem should not permit a transformation!
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
 #endif
@@ -1171,7 +1199,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
   // p_name = new_name;
      initializedNameNode->set_name(new_name);
 
-  // DQ (11/30/2018): Mark the enclosing statement as modified, so that it will be recognized 
+  // DQ (11/30/2018): Mark the enclosing statement as modified, so that it will be recognized
   // in the header file unparsing as being a header file that should be unparsed.
      SgStatement* enclosingStatement = getEnclosingStatement(initializedNameNode);
      ROSE_ASSERT(enclosingStatement != NULL);
@@ -1181,7 +1209,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
   // Invalidate the p_iterator, p_no_name and p_name data members in the Symbol table
 
 #if 1
-  // Search the AST for references to this SgInitializedName (SgVarRefExp), check if the symbol matches 
+  // Search the AST for references to this SgInitializedName (SgVarRefExp), check if the symbol matches
   // (we can do this since we only reused the exisitng symbol), and mark those expressions as modified.
      class RoseVisitor : public ROSE_VisitTraversal
         {
@@ -1200,7 +1228,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 
                     if (varRefExp->get_symbol() == variableSymbol)
                        {
-#if 1
+#if 0
                          printf ("In SageInterface::set_name(): Found associated SgVarRefExp varRefExp = %p to symbol associated_symbol = %p \n",varRefExp,variableSymbol);
 #endif
 #if 0
@@ -1208,19 +1236,22 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
                          ROSE_ASSERT(false);
 #endif
                          varRefExp->set_isModified(true);
+                         varRefExp->setTransformation();
 
+#if 0
                       // DQ (11/13/2018): Mark the statement associated with this SgVarRefExp (see test9 in UnparseHeaders_tests).
                          SgStatement* associatedStatement = getEnclosingStatement(varRefExp);
                          ROSE_ASSERT(associatedStatement != NULL);
                       // associatedStatement->set_isModified(true);
                       // associatedStatement->set_containsTransformation(true);
                          associatedStatement->setTransformation();
+#endif
                        }
                   }
 
                RoseVisitor(SgSymbol* symbol_parmeter) : counter(0), symbol(symbol_parmeter)
                  {
-#if 1
+#if 0
                    printf ("roseVisitor::visit: counter %4d node = %s \n",counter,symbol_parmeter->class_name().c_str());
 #endif
                    counter++;
@@ -1248,7 +1279,7 @@ SageInterface::listHeaderFiles ( SgIncludeFile* includeFile )
           public:
                void visit (SgNode* node)
                   {
-                    printf ("In visit(): node = %p = %s \n",node,node->class_name().c_str());
+                    printf ("In listHeaderFiles visit(): node = %p = %s \n",node,node->class_name().c_str());
                     SgIncludeFile* includeFile = isSgIncludeFile(node);
                     if (includeFile != NULL)
                        {
@@ -1264,7 +1295,15 @@ SageInterface::listHeaderFiles ( SgIncludeFile* includeFile )
    }
 
 
-
+namespace
+{
+  template <class SageDecl>
+  std::string genericGetName(SageDecl* dcl)
+  {
+    ROSE_ASSERT(dcl);
+    return dcl->get_name();
+  }
+}
 
 
 
@@ -1373,7 +1412,17 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
 
           case V_SgClassDeclaration:
           case V_SgDerivedTypeStatement:
+          case V_SgJovialTableStatement:
                name = isSgClassDeclaration(declaration)->get_name().str();
+               break;
+
+       // Rasmussen (8/2/2019): Added SgJovialDefineDeclaration and SgJovialDirectiveStatement
+       // I'm not sure class_name() is correct. Probably get_name() should be fixed.
+          case V_SgJovialDefineDeclaration:
+          case V_SgJovialDirectiveStatement:
+          case V_SgJovialCompoolStatement:
+               name = "__" + declaration->class_name() + "_";
+               name += StringUtility::numberToString(declaration);
                break;
 
           case V_SgEnumDeclaration:
@@ -1738,6 +1787,18 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                name = string("emptyDeclaration") + StringUtility::numberToString(const_cast<SgDeclarationStatement*>(declaration));
                break;
              }
+             
+          case V_SgAdaPackageSpecDecl:
+            {
+              name = "_ada_package_spec_decl_" + genericGetName(isSgAdaPackageSpecDecl(declaration));
+              break;
+            }
+            
+          case V_SgAdaPackageBodyDecl:
+            {
+              name = "_ada_package_body_decl_" + genericGetName(isSgAdaPackageBodyDecl(declaration));
+              break;
+            }
 
        // Note that the case for SgVariableDeclaration is not implemented
           default:
@@ -1791,7 +1852,8 @@ SageInterface::get_name ( const SgScopeStatement* scope )
        // DQ (11/30/2007): Added more fortran support.
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
-            
+
+          case V_SgAdaPackageSpec:
           case V_SgJovialForThenStatement: //Rasmussen: Jovial for statement
           case V_SgMatlabForStatement: //SK: Matlab for statement
           case V_SgBasicBlock:
@@ -1804,10 +1866,6 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgWhileStmt:
           case V_SgFortranDo:
           case V_SgForAllStatement:
-               name = StringUtility::numberToString(const_cast<SgScopeStatement*>(scope));
-               break;
-
-       // DQ (3/26/2018): Added support for new IR node.
           case V_SgRangeBasedForStatement:
                name = StringUtility::numberToString(const_cast<SgScopeStatement*>(scope));
                break;
@@ -1932,7 +1990,9 @@ SageInterface::get_name ( const SgSupport* node )
        // DQ (5/31/2007): Implemented case for SgFile
        // case V_SgFile:
           case V_SgSourceFile:
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           case V_SgBinaryComposite:
+#endif
              {
                name = "_file_";
 
@@ -2447,6 +2507,23 @@ SageInterface::get_name ( const SgExpression* expr )
                break;
              }
 
+       // DQ (1/3/2020): Added support for SgThisExp.
+          case V_SgThisExp:
+             {
+               const SgThisExp* thisExp = isSgThisExp(expr);
+               ROSE_ASSERT(thisExp != NULL);
+
+               name = "_this_exp_for_";
+
+               SgClassSymbol* classSymbol = thisExp->get_class_symbol();
+               ROSE_ASSERT(classSymbol != NULL);
+            // name += get_name(classSymbol->get_name());
+            // string class_name = classSymbol->get_name();
+            // name += class_name;
+               name += classSymbol->get_name();
+               break;
+             }
+
           default:
              {
             // Nothing to do for other IR nodes
@@ -2640,16 +2717,16 @@ SageInterface::reset_name_collision_map()
 string
 SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationStatement* declaration )
    {
-  // DQ (3/20/2016): Adding support for generating a unique name from a declaration that 
-  // can be used as an identifier.  This functionality is used in the DSL infrastructure 
+  // DQ (3/20/2016): Adding support for generating a unique name from a declaration that
+  // can be used as an identifier.  This functionality is used in the DSL infrastructure
   // support (refactored to this location in ROSE).  The point of this mechanism is that
-  // unlike mangled names that are compressed in a way that allows them to only be used 
+  // unlike mangled names that are compressed in a way that allows them to only be used
   // within a single translation unit, names generated by this function can be used across
   // multiple translation units. These names are also easier to interprete in debugging
   // (since they explicitly contain the scope, function name, and coding to interprete
   // function overloading.
 
-  // At present it only supports class declarations, and function declarations (all others 
+  // At present it only supports class declarations, and function declarations (all others
   // are trapped as errors).
 
   // Name collision testing, it might be that this should be external to this function.
@@ -2741,7 +2818,7 @@ SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationState
                string function_name_part = mangleFunctionName(original_name,"return_type");
                string function_name  = string("scope_") + scope + "_function_name_" + function_name_part;
 
-            // DQ (3/16/2016): Detect name collisions so that we can 
+            // DQ (3/16/2016): Detect name collisions so that we can
             // std::map<std::string,int> dsl_attribute_name_collision_map;
                if (local_name_collision_map.find(function_name) == local_name_collision_map.end())
                   {
@@ -2786,7 +2863,7 @@ SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationState
             // string member_function_name  = string("scope_") + member_function_scope + "_function_name_" + member_function_name_part;
                string member_function_name  = string("scope_") + scope + "_member_function_name_" + member_function_name_part;
 
-            // DQ (3/16/2016): Detect name collisions so that we can 
+            // DQ (3/16/2016): Detect name collisions so that we can
             // std::map<std::string,int> dsl_attribute_name_collision_map;
                if (local_name_collision_map.find(member_function_name) == local_name_collision_map.end())
                   {
@@ -2842,8 +2919,8 @@ SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationState
 std::string
 SageInterface::generateUniqueNameForUseAsIdentifier ( SgDeclarationStatement* declaration )
    {
-  // DQ (3/21/2016): The support for unique name generation for use across translation 
-  // units is not refactored into the SageInterface. 
+  // DQ (3/21/2016): The support for unique name generation for use across translation
+  // units is not refactored into the SageInterface.
   // string s = SageInterface::generateUniqueNameForUseAsIdentifier(declaration);
      string s;
 
@@ -2996,20 +3073,21 @@ SageInterface::getDefaultDestructor( SgClassDeclaration* classDeclaration )
                while ( i != classDefinition->get_members().end() )
                   {
                  // Check the parent pointer to make sure it is properly set
-                    ROSE_ASSERT( (*i)->get_parent() != NULL);
+                    SgNode* i_parent = (*i)->get_parent();
+                    ROSE_ASSERT(i_parent != NULL);
 
                  // DQ (11/1/2005): Note that a template instantiation can have a parent which is the
                  // variable which forced it's instantiation.  Since it does not really exist in the
                  // source code explicitly (it is compiler generated) this is as reasonable as anything else.
-                 // if ( (*i)->get_parent() != classDefinition && isSgVariableDeclaration((*i)->get_parent()) == NULL)
-                    if ( (*i)->get_parent() != classDefinition )
+                 // if ( i_parent != classDefinition && isSgVariableDeclaration(i_parent) == NULL)
+                    if ( i_parent != classDefinition )
                        {
-                         printf ("Error: (*i)->get_parent() = %p = %s \n",(*i)->get_parent(),(*i)->get_parent()->class_name().c_str());
+                         printf ("Error: (*i)->get_parent() = %p = %s \n",i_parent,i_parent->class_name().c_str());
                          printf ("(*i) = %p = %s = %s \n",*i,(*i)->class_name().c_str(),(*i)->unparseToString().c_str());
                          (*i)->get_file_info()->display("Called from SageInterface::getDefaultDestructor: debug");
                        }
-                    ROSE_ASSERT( (*i)->get_parent() == classDefinition);
-                 // ROSE_ASSERT( (*i)->get_parent() == classDefinition || isSgVariableDeclaration((*i)->get_parent()) != NULL);
+                    ROSE_ASSERT( i_parent == classDefinition);
+                 // ROSE_ASSERT( i_parent == classDefinition || isSgVariableDeclaration(i_parent) != NULL);
 
                     SgMemberFunctionDeclaration* memberFunction = isSgMemberFunctionDeclaration(*i);
                     if (memberFunction != NULL)
@@ -3030,6 +3108,138 @@ SageInterface::getDefaultDestructor( SgClassDeclaration* classDeclaration )
 
      return defaultDestructor;
    }
+
+
+
+bool
+SageInterface::addDefaultConstructorIfRequired ( SgClassType* classType, int physical_file_id /* = Sg_File_Info::TRANSFORMATION_FILE_ID */ )
+   {
+  // DQ (11/9/2020): Added function to support adding a default constructor definition to a class 
+  // if it does not have a default constructor, but has any other constructor that would prevend 
+  // a compiler generated default constructor from being generated by the compiler.
+
+  // Note the physical_file_id is so that it can be marked to be unparsed when header file unparsing is active.
+
+     ROSE_ASSERT(classType != NULL);
+
+     bool returnValue = false;
+
+  // To setup this transformation we need to see if there is a default constructor in the associated class.
+     SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+     ROSE_ASSERT(classDeclaration != NULL);
+     SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+     ROSE_ASSERT(definingClassDeclaration != NULL);
+     SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
+     ROSE_ASSERT(classDefinition != NULL);
+
+     SgDeclarationStatementPtrList & declarationList = classDefinition->get_members();
+
+     bool foundConstructor        = false;
+     bool foundDefaultConstructor = false;
+
+     SgDeclarationStatementPtrList::iterator i = declarationList.begin();
+     while (i != declarationList.end())
+        {
+          SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(*i);
+          if (memberFunctionDeclaration != NULL)
+             {
+               bool isConstructor = memberFunctionDeclaration->get_specialFunctionModifier().isConstructor();
+               if (isConstructor == true)
+                  {
+                    foundConstructor = true;
+#if 0
+                    printf ("Found a constructor! \n");
+#endif
+                    SgFunctionParameterList* functionParameterList = memberFunctionDeclaration->get_parameterList();
+                    ROSE_ASSERT(functionParameterList != NULL);
+                    foundDefaultConstructor = (functionParameterList->get_args().size() == 0);
+#if 0
+                    if (foundDefaultConstructor == true)
+                       {
+                         printf ("Found a default constructor! \n");
+                       }
+#endif
+                  }
+             }
+
+          i++;
+        }
+
+#if 0
+     printf ("foundConstructor        = %s \n",foundConstructor ? "true" : "false");
+     printf ("foundDefaultConstructor = %s \n",foundDefaultConstructor ? "true" : "false");
+#endif
+
+     if (foundConstructor == true)
+        {
+       // Since there is at least one constructor, we can't rely on compiler generated constructors.
+#if 0
+          printf ("Since there is at least one constructor, we can't rely on compiler generated constructors \n");
+#endif
+          if (foundDefaultConstructor == true)
+             {
+            // We can use the existing default constructor.
+#if 0
+               printf ("We can use the existing default constructor (no need to build one) \n");
+#endif
+             }
+            else
+             {
+            // We don't have a default constructor, so we need to build one explicitly, and insert it into the class definition.
+#if 0
+               printf ("########################################################### \n");
+               printf ("Need to build a default constructor in the associated class \n");
+#endif
+               SgMemberFunctionDeclaration* constructorDeclaration = SageBuilder::buildDefaultConstructor(classType);
+               ROSE_ASSERT(constructorDeclaration != NULL);
+#if 0
+               printf (" --- constructorDeclaration = %p = %s name = %s \n",constructorDeclaration,constructorDeclaration->class_name().c_str(),constructorDeclaration->get_name().str());
+#endif
+               ROSE_ASSERT (constructorDeclaration->get_declarationModifier().get_accessModifier().isPublic() == true);
+
+               classDefinition->prepend_statement(constructorDeclaration);
+
+            // constructorDeclaration->set_parent(classDefinition);
+               ROSE_ASSERT(constructorDeclaration->get_parent() != NULL);
+
+            // int physical_file_id = variableDeclaration->get_startOfConstruct()->get_physical_file_id();
+               markSubtreeToBeUnparsed(constructorDeclaration,physical_file_id);
+
+               returnValue = true;
+#if 0
+               constructorDeclaration->get_startOfConstruct()->set_physical_file_id(physical_file_id);
+               constructorDeclaration->get_endOfConstruct  ()->set_physical_file_id(physical_file_id);
+
+            // We also need to set the source position of the function definition, else the 
+            // function declaration will not be output.
+               ROSE_ASSERT(constructorDeclaration->get_definition() != NULL);
+               ROSE_ASSERT(constructorDeclaration->get_definition()->get_startOfConstruct() != NULL);
+               ROSE_ASSERT(constructorDeclaration->get_definition()->get_endOfConstruct() != NULL);
+               constructorDeclaration->get_definition()->get_startOfConstruct()->set_physical_file_id(physical_file_id);
+               constructorDeclaration->get_definition()->get_endOfConstruct  ()->set_physical_file_id(physical_file_id);
+#endif
+#if 0
+               printf ("DONE: Need to build a default constructor in the associated class \n");
+               printf ("################################################################# \n");
+#endif
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+       else
+        {
+       // No constructors found, so we don't need to add an explicit default constructor.
+#if 0
+          printf ("No constructors found, so we don't need to add an explicit default constructor \n");
+#endif
+        }
+
+     return returnValue;
+   }
+
+
 
 
 void
@@ -3063,6 +3273,11 @@ SageInterface::OutputLocalSymbolTables::visit ( SgNode* node )
    {
   // DQ (6/27/2005): Output the local symbol table from each scope.
   // printf ("node = %s \n",node->sage_class_name());
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
      SgScopeStatement* scope = isSgScopeStatement(node);
      if (scope != NULL)
@@ -3135,7 +3350,7 @@ SageInterface::templateDefinitionIsInClass( SgTemplateInstantiationMemberFunctio
 //          templateDeclaration->get_parent(),templateDeclaration->get_parent()->class_name().c_str());
 
     if (templateDeclaration != NULL && templateDeclaration->get_parent() != NULL)
-    {  
+    {
       SgScopeStatement* parentScope = isSgScopeStatement(templateDeclaration->get_parent());
       if (isSgClassDefinition(parentScope) != NULL)
          {
@@ -3171,7 +3386,7 @@ generateUniqueDeclaration ( SgDeclarationStatement* declaration )
 
      return keyDeclaration;
    }
-#endif   
+#endif
 //! Extract a SgPragmaDeclaration's leading keyword . For example "#pragma omp parallel" has a keyword of "omp".
 std::string SageInterface::extractPragmaKeyword(const SgPragmaDeclaration *pragmaDeclaration)
 {
@@ -3191,8 +3406,8 @@ bool SageInterface::isOmpStatement(SgNode* n)
   if (isSgOmpBarrierStatement(n)||
       isSgOmpBodyStatement(n)||
       isSgOmpDeclareSimdStatement(n) ||
-      isSgOmpFlushStatement(n)|| 
-      isSgOmpThreadprivateStatement(n)|| 
+      isSgOmpFlushStatement(n)||
+      isSgOmpThreadprivateStatement(n)||
       isSgOmpTaskwaitStatement(n) )
     result = true;
 
@@ -3618,6 +3833,8 @@ supportForVariableDeclarations ( SgScopeStatement* scope, SgSymbolTable* symbolT
           SgInitializedName* variable = *i;
           ROSE_ASSERT(variable != NULL);
 
+#error "DEAD CODE"
+
        // DQ (10/20/2007): static data members declared outside the class scope don't generate symbols.
        // if (variable->get_prev_decl_item() != NULL)
           if (variable->get_scope() == scope)
@@ -3635,6 +3852,8 @@ supportForVariableDeclarations ( SgScopeStatement* scope, SgSymbolTable* symbolT
             // I think there is nothing to do in this case
             // printf ("In SageInterface::rebuildSymbolTable() This variable has a scope inconsistant with the symbol table: variable->get_scope() = %p scope = %p \n",variable->get_scope(),scope);
              }
+
+#error "DEAD CODE"
 
           i++;
         }
@@ -3664,6 +3883,7 @@ supportForLabelStatements ( SgScopeStatement* scope, SgSymbolTable* symbolTable 
         {
           SgLabelStatement* labelStatement = isSgLabelStatement(labelList[i]);
 
+          ROSE_ASSERT(labelStatement != NULL);
           ROSE_ASSERT(labelStatement->get_scope() == scope);
 
           SgSymbol* symbol = new SgLabelSymbol(labelStatement);
@@ -3779,7 +3999,7 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
             return;
             break;
           }
-             
+
 
        // DQ (12/23/2012): Added support for templates.
           case V_SgTemplateFunctionDefinition:
@@ -4523,16 +4743,7 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
      SgSymbolTable::hash_iterator i = this_symbolTable->get_table()->begin();
 
   // This is used to fixup the AST by resetting references to IR nodes (leveraged from AST merge).
-     int replacementHashTableSize = 1001;
-// CH (4/9/2010): Use boost::unordered instead
-//#ifdef _MSCx_VER
-#if 0
-//#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
-     printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
-     ReplacementMapTraversal::ReplacementMapType replacementMap;
-#else
-     ReplacementMapTraversal::ReplacementMapType replacementMap(replacementHashTableSize);
-#endif
+     std::map<SgNode*, SgNode*> replacementMap;
      int counter = 0;
      while (i != this_symbolTable->get_table()->end())
         {
@@ -4597,18 +4808,12 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
           i++;
         }
 
-     set<SgNode*>  intermediateDeleteSet;
-
 #if 0
-     printf ("Output the replacementMap: \n");
-  // printf ("replacementMap.size() = %" PRIuPTR " \n",replacementMap.size());
-     ReplacementMapTraversal::displayReplacementMap(replacementMap);
-
      printf ("\n\n************************************************************\n");
      printf ("fixupReferencesToSymbols(this_scope = %p copy_scope = %p = %s = %s): calling fixupSubtreeTraversal() \n",this_scope,copy_scope,copy_scope->class_name().c_str(),get_name(copy_scope).c_str());
 #endif
 
-     fixupSubtreeTraversal(copy_scope,replacementMap,intermediateDeleteSet);
+     Rose::AST::fixupSubtreeTraversal(copy_scope,replacementMap);
 
 #if 0
      printf ("fixupReferencesToSymbols(): calling fixupSubtreeTraversal(): DONE \n");
@@ -4662,7 +4867,9 @@ SageInterface::generateFileList()
   // traverse just the SgFile nodes (both the SgSourceFile and SgBinaryComposite IR nodes)!
   // SgFile::visitRepresentativeNode(fileTraversal);
      SgSourceFile::traverseMemoryPoolNodes(fileTraversal);
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      SgBinaryComposite::traverseMemoryPoolNodes(fileTraversal);
+#endif
 
   // This would alternatively traverse all IR nodes in thememory pool!
   // fileTraversal.traverseMemoryPool();
@@ -4678,7 +4885,7 @@ SageInterface::generateFileList()
 
 // #ifndef USE_ROSE
 
-// DQ (4/17/2015): I think this function should be removed since it interferes 
+// DQ (4/17/2015): I think this function should be removed since it interferes
 // with the concept of having more than one SgProject node.
 // This function uses a memory pool traversal specific to the SgProject IR nodes
 SgProject*
@@ -4708,24 +4915,18 @@ SageInterface::getProject()
   return resultlist[0];
 }
 
-SgProject * SageInterface::getProject(const SgNode * node) {
-  assert(node != NULL);
-  SgNode * parent = node->get_parent();
-  SgProject * project = NULL;
-  while (parent != NULL) {
-    if ((project = isSgProject(parent)) != NULL) break;
-    parent = parent->get_parent();
-  }
-  return project;
+SgProject*
+SageInterface::getProject(const SgNode * node) {
+    return getEnclosingNode<SgProject>(node, true /*includingSelf*/);
 }
 
 SgFunctionDeclaration* SageInterface::getDeclarationOfNamedFunction(SgExpression* func) {
-  SgFunctionDeclaration * ret = NULL; 
-  if (isSgFunctionRefExp(func)) 
+  SgFunctionDeclaration * ret = NULL;
+  if (isSgFunctionRefExp(func))
   {
     return isSgFunctionRefExp(func)->get_symbol()->get_declaration();
-  } 
-  else if (isSgDotExp(func) || isSgArrowExp(func)) 
+  }
+  else if (isSgDotExp(func) || isSgArrowExp(func))
   {
     SgExpression* func2 = isSgBinaryOp(func)->get_rhs_operand();
     if (isSgMemberFunctionRefExp(func2))
@@ -4734,7 +4935,7 @@ SgFunctionDeclaration* SageInterface::getDeclarationOfNamedFunction(SgExpression
     {
       cerr<<"Warning in SageInterface::getDeclarationOfNamedFunction(): rhs operand of dot or arrow operations is not a member function, but a "<<func2->class_name()<<endl;
     }
-  } 
+  }
 
   return ret;
 }
@@ -4782,10 +4983,17 @@ void SageInterface::addVarRefExpFromArrayDimInfo(SgNode * astNode, Rose_STL_Cont
 }
 
 
+// DQ (11/25/2020): This disables these non-inlined functions in favor of 
+// inlined versions of the functions in the sageInterface.h (header file).
+#if (INLINE_OPTIMIZED_IS_LANGUAGE_KIND_FUNCTIONS == 0)
 // Rasmussen (4/8/2018): Added Ada
 bool
 SageInterface::is_Ada_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Ada_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -4798,11 +5006,16 @@ SageInterface::is_Ada_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_C_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_C_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -4815,12 +5028,17 @@ SageInterface::is_C_language()
         }
 
      return returnValue;
+#endif
    }
 
 // Rasmussen (4/8/2018): Added Cobol
 bool
 SageInterface::is_Cobol_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Cobol_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -4833,11 +5051,16 @@ SageInterface::is_Cobol_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_OpenMP_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_OpenMP_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -4850,11 +5073,16 @@ SageInterface::is_OpenMP_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_UPC_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_UPC_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -4867,12 +5095,17 @@ SageInterface::is_UPC_language()
         }
 
      return returnValue;
+#endif
    }
 
 //FMZ
 bool
 SageInterface::is_CAF_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_CAF_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -4885,6 +5118,7 @@ SageInterface::is_CAF_language()
         }
 
      return returnValue;
+#endif
    }
 
 
@@ -4892,6 +5126,10 @@ SageInterface::is_CAF_language()
 bool
 SageInterface::is_UPC_dynamic_threads()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_UPC_dynamic_threads;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -4904,6 +5142,7 @@ SageInterface::is_UPC_dynamic_threads()
         }
 
      return returnValue;
+#endif
    }
 
 
@@ -4911,6 +5150,10 @@ SageInterface::is_UPC_dynamic_threads()
 bool
 SageInterface::is_C99_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_C99_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -4923,11 +5166,16 @@ SageInterface::is_C99_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_Cxx_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Cxx_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -4948,11 +5196,16 @@ SageInterface::is_Cxx_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_Java_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Java_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -4965,12 +5218,17 @@ SageInterface::is_Java_language()
         }
 
      return returnValue;
+#endif
    }
 
 // Rasmussen (4/4/2018): Added Jovial
 bool
 SageInterface::is_Jovial_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Jovial_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -4983,12 +5241,17 @@ SageInterface::is_Jovial_language()
         }
 
      return returnValue;
+#endif
    }
 
 
 bool
 SageInterface::is_Fortran_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Fortran_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5001,12 +5264,17 @@ SageInterface::is_Fortran_language()
         }
 
      return returnValue;
+#endif
    }
 
 
 bool
 SageInterface::is_binary_executable()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_binary_executable;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5019,11 +5287,16 @@ SageInterface::is_binary_executable()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_PHP_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_PHP_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5036,11 +5309,16 @@ SageInterface::is_PHP_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_Python_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Python_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5053,11 +5331,16 @@ SageInterface::is_Python_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_Cuda_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Cuda_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5070,11 +5353,16 @@ SageInterface::is_Cuda_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_OpenCL_language()
    {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_OpenCL_language;
+#else
      bool returnValue = false;
 
      vector<SgFile*> fileList = generateFileList();
@@ -5087,24 +5375,32 @@ SageInterface::is_OpenCL_language()
         }
 
      return returnValue;
+#endif
    }
 
 bool
 SageInterface::is_X10_language()
-{
-  bool returnValue = false;
+   {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_X10_language;
+#else
+     bool returnValue = false;
 
-  vector<SgFile*> fileList = generateFileList();
+     vector<SgFile*> fileList = generateFileList();
 
-  int size = (int)fileList.size();
-  for (int i = 0; i < size; i++)
-    {
-      if (fileList[i]->get_X10_only() == true)
-           returnValue = true;
-    }
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+       {
+         if (fileList[i]->get_X10_only() == true)
+              returnValue = true;
+       }
 
-  return returnValue;
+     return returnValue;
+#endif
 }
+// for if (INLINE_OPTIMIZED_IS_LANGUAGE_KIND_FUNCTIONS == 0)
+#endif
 
 bool SageInterface::is_mixed_C_and_Cxx_language()
    {
@@ -5124,6 +5420,23 @@ bool SageInterface::is_mixed_Fortran_and_Cxx_language()
 bool SageInterface::is_mixed_Fortran_and_C_and_Cxx_language()
    {
      return is_Fortran_language() && is_C_language() && is_Cxx_language();
+   }
+
+// Rasmussen (3/22/2020): Added this function because ROSE supports multiple
+// languages that are case insensitive. Warning, this doesn't work for mixed languages.
+bool SageInterface::is_language_case_insensitive()
+   {
+   // This won't work for mixed languages so try returning to original
+   // return is_Fortran_language() || is_Jovial_language();
+      return symbol_table_case_insensitive_semantics == true;
+   }
+
+// Rasmussen (3/28/2020): Collecting all languages that may have scopes that contain
+// statements that are not only declarations here. For Fortran (at least), function
+// definitions may be declared at the end of other procedures.
+bool SageInterface::language_may_contain_nondeclarations_in_scope()
+   {
+      return is_Fortran_language() || is_Python_language();
    }
 
 // #endif
@@ -5708,7 +6021,13 @@ SageInterface::functionCallExpressionPreceedsDeclarationWhichAssociatesScope ( S
                                       {
                                      // This might be a function declaration (non-defining) used in a type or buried deeply in some sort of declaration!
                                         printf ("Strange case of parentScopeOfDeclaration == NULL in SageInterface::functionCallExpressionPreceedsDeclarationWhichAssociatesScope() \n");
-                                        printf ("declaration->get_parent() = %s \n",declaration->get_parent()->class_name().c_str());
+                                        SgNode* parent = declaration->get_parent();
+                                        if (parent != NULL) {
+                                           printf ("declaration->get_parent() = %s \n",parent->class_name().c_str());
+                                        }
+                                        else {
+                                           printf ("declaration->get_parent() = NULL \n");
+                                        }
                                         declaration->get_file_info()->display("case of parentScopeOfDeclaration == NULL");
                                         ROSE_ASSERT(false);
                                       }
@@ -5951,7 +6270,7 @@ SageInterface::lookupTemplateMemberFunctionSymbolInParentScopes(const SgName & f
 void
 SageInterface::addTextForUnparser ( SgNode* astNode, string s, AstUnparseAttribute::RelativePositionType inputlocation )
    {
-    // printf ("addText(): using new attribute interface (s = %s) \n",s.c_str());
+  // printf ("addText(): using new attribute interface (s = %s) \n",s.c_str());
 
      if (isSgType(astNode) != NULL)
         {
@@ -6022,7 +6341,7 @@ SgType* SageInterface::lookupNamedTypeInParentScopes(const std::string& type_nam
 
      if (symbol == NULL)
           return NULL;
-       else 
+       else
           return symbol->get_type();
    }
 
@@ -6121,6 +6440,89 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
 
      return symbol;
    }
+
+
+
+SgSymbol*
+SageInterface::lookupSymbolInParentScopesIgnoringAliasSymbols (const SgName & name, SgScopeStatement *currentScope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
+   {
+// DQ (8/5/2020): the "using namespace" directive will not hide existing visability of symbols in resolving visability.
+// So we need to test if a symbol is visible exclusing matching alises due to using direectives before we can decide to
+// persue name space qualification. This is best demonstrated by Cxx_tests/test2020_18.C, test2020_19.C, test2020_20.C, 
+// and test2020_21.C.
+
+     SgSymbol* symbol = NULL;
+     if (currentScope == NULL)
+        {
+          currentScope = SageBuilder::topScopeStack();
+        }
+
+     ROSE_ASSERT(currentScope != NULL);
+
+#define DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS 0
+
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
+     printf ("In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): currentScope = %p = %s (templateParameterList = %p templateArgumentList = %p) \n",
+          currentScope,currentScope->class_name().c_str(),templateParameterList,templateArgumentList);
+#endif
+
+     while ((currentScope != NULL) && (symbol == NULL))
+        {
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
+          printf("   --- In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): name = %s currentScope = %p = %s \n",
+               name.str(),currentScope,currentScope->class_name().c_str());
+#endif
+
+       // DQ (8/16/2013): Changed API to support template parameters and template arguments.
+       // symbol = cscope->lookup_symbol(name);
+          symbol = currentScope->lookup_symbol(name,templateParameterList,templateArgumentList);
+
+          if (isSgAliasSymbol(symbol) != NULL)
+             {
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
+               printf ("Found a SgAliasSymbol: reset to NULL: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
+               symbol = NULL;
+             }
+
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS && 1
+       // debug
+          printf("   --- In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): symbol = %p \n",symbol);
+          currentScope->print_symboltable("In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): debug");
+#endif
+          if (currentScope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               currentScope = isSgGlobal(currentScope) ? NULL : currentScope->get_scope();
+            else
+               currentScope = NULL;
+
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
+          printf ("   --- In SageInterface:: (base of loop) lookupSymbolInParentScopesIgnoringAliasSymbols(): cscope = %p symbol = %p \n\n",currentScope,symbol);
+#endif
+        }
+
+     if (symbol == NULL)
+        {
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
+          printf ("Warning: In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): could not locate the specified name %s in any outer symbol table (templateParameterList = %p templateArgumentList = %p) \n",
+               name.str(),templateParameterList,templateArgumentList);
+#endif
+       // ROSE_ASSERT(false);
+        }
+
+#if 0
+     printf ("Support for lookupSymbolInParentScopesIgnoringAliasSymbols() is not yet implemented \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return symbol;
+   }
+
+
+
+
+
+
+
 
 #if 0
 // DQ (7/13/2011): This was part of a merge conflict with the above modified function.
@@ -6317,7 +6719,7 @@ SageInterface::lookupTypedefSymbolInParentScopes (const SgName &  name, SgScopeS
 #if 0
 // DQ (8/13/2013): This function does not make since any more, now that we have make the symbol
 // table handling more precise and we have to provide template parameters for any template lookup.
-// We also have to know if we want to lookup template classes, template functions, or template 
+// We also have to know if we want to lookup template classes, template functions, or template
 // member functions (since each have specific requirements).
 SgTemplateSymbol*
 SageInterface::lookupTemplateSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
@@ -6433,9 +6835,9 @@ SageInterface::setSourcePositionToDefault( T* node )
 
   // DQ (2/17/2013): This function is called a lot, so it might be a performance issue.
   // All IR nodes built by the Build Interface are assighed source position information
-  // using this function and then reset afterward as we use information within EDG to 
+  // using this function and then reset afterward as we use information within EDG to
   // reset the source position information.  Ideally, the EDG/ROSE connection would
-  // use NULL pointers as the behavior for the front-end mode.  We can move to that 
+  // use NULL pointers as the behavior for the front-end mode.  We can move to that
   // later to maek the source position handling more efficient.
 
   // DQ (1/24/2009): It might be that this function is only called from the Fortran support.
@@ -6504,17 +6906,17 @@ SageInterface::setSourcePositionToDefault( T* node )
 
   // DQ (11/2/2012): This is an important fix to support the new EDG 4.x branch.
   // Note that because the unparser will use the function isFromAnotherFile() in the unparsing
-  // of expressions, specifically: SgAggregateInitializer, SgCompoundInitializer, and anything 
+  // of expressions, specifically: SgAggregateInitializer, SgCompoundInitializer, and anything
   // in their expression lists (which could be any expression).   The isFromAnotherFile() will
-  // use the get_file_info() function on the SgExpression IR nodes and the data from that 
-  // Sg_File_Info object to determine if that expression subtree should be unparsed.  This 
+  // use the get_file_info() function on the SgExpression IR nodes and the data from that
+  // Sg_File_Info object to determine if that expression subtree should be unparsed.  This
   // expression level granularity of unparsing capability is extremely useful in handling
   // now #includes and other CPP directives are woven back into the AST.  But since the
   // get_file_info() function is used, and it returns the value of get_operatorPosition(),
   // it is critically important to have correct data in the SgExpression::p_operatorPosition
   // Sg_File_Info object (it counts more that the startOfConstruct and endOfConstruct
   // Sg_File_Info objects in controlling what expressions are unparsed.  So we have to set these
-  // up for all expressions (since any SgExpression could appear in the list contained in 
+  // up for all expressions (since any SgExpression could appear in the list contained in
   // a SgAggregateInitializer or SgCompoundInitializer.
 
   // DQ (11/2/2012): Set the operator source position information to default values.
@@ -6786,8 +7188,8 @@ SageInterface::setSourcePositionAtRootAndAllChildren(SgNode *root)
         }
    }
 
-// DQ (5/1/2012): This function queries the SageBuilder::SourcePositionClassification mode (stored in the SageBuilder 
-// interface) and used the specified mode to initialize the source position data (Sg_File_Info objects).  This 
+// DQ (5/1/2012): This function queries the SageBuilder::SourcePositionClassification mode (stored in the SageBuilder
+// interface) and used the specified mode to initialize the source position data (Sg_File_Info objects).  This
 // function is the only function that should be called directly (though in a namespace we can't define permissions).
 void
 SageInterface::setSourcePosition(SgNode* node)
@@ -6852,7 +7254,7 @@ SageInterface::setSourcePosition(SgNode* node)
 
           case e_sourcePositionNullPointers:         // Set pointers to Sg_File_Info objects to NULL.
              {
-            // DQ (2/17/2013): We want to move to this mode as the one used for EDG/ROSE connection so that we can 
+            // DQ (2/17/2013): We want to move to this mode as the one used for EDG/ROSE connection so that we can
             // avoid building and rebuilding source position information.
 #if 0
                printf ("e_sourcePositionNullPointers in SageInterface::setSourcePosition() \n");
@@ -6865,9 +7267,9 @@ SageInterface::setSourcePosition(SgNode* node)
              {
             // DQ (2/17/2013): The setSourcePositionToDefault() function is called a lot, so it might be a performance issue.
             // All IR nodes built by the Build Interface are assighed source position information
-            // using this function and then reset afterward as we use information within EDG to 
+            // using this function and then reset afterward as we use information within EDG to
             // reset the source position information.  Ideally, the EDG/ROSE connection would
-            // use NULL pointers as the behavior for the front-end mode.  We can move to that 
+            // use NULL pointers as the behavior for the front-end mode.  We can move to that
             // later to make the source position handling more efficient.
 
             // This function builds an empty Sg_File_Info entry (valid object but filled with default values; must be reset in front-end processing).
@@ -6944,7 +7346,7 @@ void
 SageInterface::setSourcePositionForTransformation_memoryPool()
    {
   // DQ (1/24/2009): This seems like a very dangerous function to have, is it required!
- 
+
   // DQ (5/1/2012): Make it an error to call this function.
      printf ("ERROR: In setSourcePositionForTransformation_memoryPool(): This seems like a very dangerous function to have, is it required? \n");
      ROSE_ASSERT(false);
@@ -7023,7 +7425,7 @@ SgStatement* SageInterface::getLastStatement(SgScopeStatement *scope)
 
 SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool includingCompilerGenerated/*=false*/)
    {
-  // DQ (2/17/2013): This function appears to be a performance problem (so a pass was made to 
+  // DQ (2/17/2013): This function appears to be a performance problem (so a pass was made to
   // use lower complexity operations that are equivalent in funcionality for this context).
 
      ROSE_ASSERT(scope);
@@ -7178,21 +7580,35 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool incl
 
 bool SageInterface::isMain(const SgNode* n)
 {
- bool result = false;
- // Liao 1/5/2010, handle Fortran main entry: SgProgramHeaderStatement
- if (SageInterface::is_Fortran_language())
- {
-   if (isSgProgramHeaderStatement(n))
-     result = true;
- }
- else
- {
-   if (isSgFunctionDeclaration(n) &&
-       (SageInterface::is_Java_language() || isSgGlobal(isSgStatement(n)->get_scope())) &&
-       isSgFunctionDeclaration(n)->get_name() == "main")
-   result = true;
- }
-
+   bool result = false;
+   // Liao 1/5/2010, handle Fortran main entry: SgProgramHeaderStatement
+   if (SageInterface::is_Fortran_language()) {
+      if (isSgProgramHeaderStatement(n)) {
+         result = true;
+      }
+   }
+   else {
+      if (isSgFunctionDeclaration(n) != NULL) {
+         bool either = false;
+         if (SageInterface::is_Java_language()) {
+            either = true;
+         }
+         else {
+            const SgStatement* stmnt = isSgStatement(n);
+            ROSE_ASSERT(stmnt != NULL);
+            if (isSgGlobal(stmnt->get_scope())) {
+               either = true;
+            }
+         }
+         if (either) {
+            const SgFunctionDeclaration* funcDefn = isSgFunctionDeclaration(n);
+            ROSE_ASSERT(funcDefn != NULL);
+            if (funcDefn->get_name() == "main") {
+               result = true;
+            }
+         }
+      }
+   }
    return result;
 }
 
@@ -7241,16 +7657,16 @@ SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scop
   {
     SgStatement* cur_stmt = stmt_list[i];
     // We should exclude pragma decl. We don't want to insert things after pragmas.
-    if (isSgDeclarationStatement(cur_stmt)) 
+    if (isSgDeclarationStatement(cur_stmt))
     {
       if (isSgPragmaDeclaration (cur_stmt))
       {
         if (includePragma)
           rt = cur_stmt;
       }
-      else  
+      else
         rt = cur_stmt;
-    }  
+    }
     //if (isSgImplicitStatement(cur_stmt)) || isSgFortranIncludeLine(cur_stmt) || isSgDeclarationStatement
   }
 
@@ -7305,7 +7721,7 @@ void SageInterface::changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* 
 
 #define DEBUG_TEMPLATE_ARG_EQUIVALENCE 0
 
-bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTemplateArgument * arg2) 
+bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTemplateArgument * arg2)
    {
      if (arg1 == arg2)
         {
@@ -7323,7 +7739,7 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
           return false;
         }
 
-     switch (arg1->get_argumentType()) 
+     switch (arg1->get_argumentType())
         {
           case SgTemplateArgument::type_argument:
              {
@@ -7337,7 +7753,7 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
 #endif
             // DQ (5/19/2016): Rewrote to support debugging.
             // return arg1->get_type() == arg2->get_type();
-               if (arg1->get_type() == arg2->get_type()) 
+               if (arg1->get_type() == arg2->get_type())
                   {
 #if DEBUG_TEMPLATE_ARG_EQUIVALENCE
                     printf ("In templateArgumentEquivalence(): case SgTemplateArgument::type_argument: checking for the same type: returning true \n");
@@ -7392,20 +7808,20 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
 
           case SgTemplateArgument::template_template_argument:
              {
-               if (arg1->get_templateDeclaration() == arg2->get_templateDeclaration()) 
+               if (arg1->get_templateDeclaration() == arg2->get_templateDeclaration())
                   {
 #if DEBUG_TEMPLATE_ARG_EQUIVALENCE
                     printf ("In templateArgumentEquivalence(): case SgTemplateArgument::template_template_argument: checking for the same templateDeclaration: returning true \n");
 #endif
                     return true;
                   }
-                 else 
+                 else
                   {
                     ROSE_ASSERT(!"NIY: template template argument comparaison."); /// \todo
                   }
              }
 
-          case SgTemplateArgument::argument_undefined: 
+          case SgTemplateArgument::argument_undefined:
              {
                ROSE_ASSERT(!"Try to compare template arguments of unknown type...");
              }
@@ -7414,8 +7830,8 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
           case SgTemplateArgument::start_of_pack_expansion_argument:
              {
                // Liao 6/24/2016. Handle the simplest case: both arguments are parameter pack.
-               if (arg2->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument) 
-                 return true; 
+               if (arg2->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
+                 return true;
                ROSE_ASSERT(!"Try to compare template arguments of unknown type start_of_pack_expansion_argument");
              }
 
@@ -7432,9 +7848,9 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
 
 #define DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE 0
 
-bool SageInterface::templateArgumentListEquivalence(const SgTemplateArgumentPtrList & list1, const SgTemplateArgumentPtrList & list2) 
+bool SageInterface::templateArgumentListEquivalence(const SgTemplateArgumentPtrList & list1, const SgTemplateArgumentPtrList & list2)
    {
-     if (list1.size() != list2.size()) 
+     if (list1.size() != list2.size())
         {
 #if DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE
           printf ("In templateArgumentListEquivalence(): different list sizes: returning false \n");
@@ -7511,6 +7927,21 @@ void SageInterface::moveForStatementIncrementIntoBody(SgForStatement* f) {
   ne->set_parent(f);
 }
 
+static
+bool hasEmptyCondition(SgForStatement* f)
+{
+  ROSE_ASSERT(f);
+
+  SgStatement* condstmt = f->get_test();
+  ROSE_ASSERT(condstmt);
+
+  if (isSgNullStatement(condstmt)) return true;
+
+  SgExprStatement* exprStmt = isSgExprStatement(condstmt);
+
+  return isSgNullExpression(exprStmt->get_expression());
+}
+
 void SageInterface::convertForToWhile(SgForStatement* f) {
   moveForStatementIncrementIntoBody(f);
   SgBasicBlock* bb = SageBuilder::buildBasicBlock();
@@ -7521,17 +7952,12 @@ void SageInterface::convertForToWhile(SgForStatement* f) {
   for (size_t i = 0; i < bbStmts.size(); ++i) {
     bbStmts[i]->set_parent(bb);
   }
-  bool testIsNull =
-    isSgExprStatement(f->get_test()) &&
-    isSgNullExpression(isSgExprStatement(f->get_test())->get_expression());
-  SgStatement* test =
-    testIsNull ?
-    SageBuilder::buildExprStatement(
-        SageBuilder::buildBoolValExp(true)) :
-    f->get_test();
-  SgWhileStmt* ws = SageBuilder::buildWhileStmt(
-      test,
-      f->get_loop_body());
+
+  const bool testIsNull = hasEmptyCondition(f);
+  SgStatement* test = testIsNull ? SageBuilder::buildExprStatement(SageBuilder::buildBoolValExp(true))
+                                 : f->get_test();
+  SgWhileStmt* ws = SageBuilder::buildWhileStmt(test, f->get_loop_body());
+
   appendStatement(ws, bb);
   isSgStatement(f->get_parent())->replace_statement(f, bb);
 }
@@ -7599,9 +8025,9 @@ static  void getSwitchCasesHelper(SgStatement* top, vector<SgStatement*>& result
 AbstractHandle::abstract_handle* SageInterface::buildAbstractHandle(SgNode* n)
 {
   return AbstractHandle::buildAbstractHandle(n);
-  
+
 }
-//! Get the enclosing scope from a node n 
+//! Get the enclosing scope from a node n
 SgScopeStatement* SageInterface::getEnclosingScope(SgNode* n, const bool includingSelf/* =false*/)
 {
   SgScopeStatement* result = getScope (n);
@@ -7618,7 +8044,7 @@ SgScopeStatement*
 SageInterface::getScope( const SgNode* astNode )
    {
 
-   // Case 1: directly call get_scope() for some types of nodes  
+   // Case 1: directly call get_scope() for some types of nodes
     if (const SgSymbol* symbol = isSgSymbol(astNode))
         return symbol->get_scope();
     else if (const SgInitializedName* initName = isSgInitializedName(astNode))
@@ -7645,7 +8071,7 @@ SageInterface::getScope( const SgNode* astNode )
                 return funcDeclaration->get_definition();
             }
         }
-  
+
         parentNode = parentNode->get_parent();
         if (parentNode == NULL)
         {
@@ -7659,7 +8085,7 @@ SageInterface::getScope( const SgNode* astNode )
           dynamic_cast<const SgType*>(parentNode) == NULL &&
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
         {
-          printf ("Error: could not trace back to SgScopeStatement node \n");
+          printf ("Error: In SageInterface::getScope(): could not trace back to SgScopeStatement node \n");
           ROSE_ABORT();
         }
        else
@@ -7684,7 +8110,7 @@ SageInterface::getScope( const SgNode* astNode )
        }
 
    // return scopeStatement;
-       return const_cast<SgScopeStatement*>(scopeStatement);
+     return const_cast<SgScopeStatement*>(scopeStatement);
    }
 
 
@@ -7891,8 +8317,9 @@ static void findContinueStmtsHelper(SgStatement* code, const std::string& fortra
   }
   vector<SgNode*> children = code->get_traversalSuccessorContainer();
   for (unsigned int i = 0; i < children.size(); ++i) {
-    if (isSgStatement(children[i])) {
-      findContinueStmtsHelper(isSgStatement(children[i]), fortranLabel, inOutermostBody, continueStmts);
+    SgStatement* stmnt = isSgStatement(children[i]);
+    if (stmnt != NULL) {
+      findContinueStmtsHelper(stmnt, fortranLabel, inOutermostBody, continueStmts);
     }
   }
 }
@@ -7945,13 +8372,9 @@ vector<SgVariableSymbol*> SageInterface::getSymbolsUsedInExpression(SgExpression
 }
 #endif
 
-SgSourceFile* SageInterface::getEnclosingSourceFile(SgNode* n,bool includingSelf)
-{
-    SgSourceFile* temp = getEnclosingNode<SgSourceFile>(n,includingSelf);
-  if (temp)
-    return temp;
-  else
-    return NULL;
+SgSourceFile*
+SageInterface::getEnclosingSourceFile(SgNode* n,bool includingSelf) {
+    return getEnclosingNode<SgSourceFile>(n, includingSelf);
 }
 
 
@@ -7966,37 +8389,15 @@ SgFunctionDefinition* SageInterface::getEnclosingProcedure(SgNode* n, bool inclu
   return getEnclosingFunctionDefinition(n,includingSelf);
 }
 
-SgFunctionDefinition* SageInterface::getEnclosingFunctionDefinition(SgNode* n,bool includingSelf)
-{
-    SgFunctionDefinition* temp = getEnclosingNode<SgFunctionDefinition>(n,includingSelf);
-  if (temp)
-    return temp;
-  else
-    return NULL;
+SgFunctionDefinition*
+SageInterface::getEnclosingFunctionDefinition(SgNode* n,bool includingSelf) {
+    return getEnclosingNode<SgFunctionDefinition>(n, includingSelf);
 }
 
 
-SgFunctionDeclaration *
-SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingSelf)
-{
-  SgNode* temp = getEnclosingNode<SgFunctionDeclaration>(astNode,includingSelf);
-  if (temp)
-    return isSgFunctionDeclaration(temp);
-  else
-    return NULL;
-#if 0
-  SgNode *astnode = astNode;
-  ROSE_ASSERT (astNode != NULL);
-  do
-    {
-      astnode = astnode->get_parent ();
-    }
-  while ((astnode != NULL) &&
-         (isSgFunctionDeclaration (astnode) == NULL) &&
-         (isSgMemberFunctionDeclaration (astnode) == NULL));
-  if (astnode==NULL) return NULL;
-  else return isSgFunctionDeclaration(astnode);
-#endif
+SgFunctionDeclaration*
+SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingSelf) {
+    return getEnclosingNode<SgFunctionDeclaration>(astNode, includingSelf);
 }
 
 // #endif
@@ -8004,61 +8405,41 @@ SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingS
 // #ifndef USE_ROSE
 
 SgGlobal*
-SageInterface::getGlobalScope( const SgNode* astNode )
-   {
-  // should including itself in this case
-     SgNode* temp = getEnclosingNode<SgGlobal>(astNode,true);
-     if (temp)
-          return isSgGlobal(temp);
-       else
-          return NULL;
-  }
+SageInterface::getGlobalScope(const SgNode* astNode) {
+    // should including itself in this case
+    return getEnclosingNode<SgGlobal>(astNode, true /*includingSelf*/);
+}
 
 SgClassDefinition*
-SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool includingSelf/* =false*/)
-  {
-    SgNode* temp = getEnclosingNode<SgClassDefinition>(astNode,includingSelf);
-    if (temp)
-      return isSgClassDefinition(temp);
-    else
-      return NULL;
- }
+SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool includingSelf/* =false*/) {
+    return getEnclosingNode<SgClassDefinition>(astNode, includingSelf);
+}
 
 
 SgClassDeclaration*
-SageInterface::getEnclosingClassDeclaration(SgNode* astNode)
-  {
- // DQ (1/24/2019): This might have to get the SgClassDefinition and then the SgClassDeclaration from that.
- // I'm having trouble making this work for a member function declared outside of the class definition.
-    SgNode* temp = getEnclosingNode<SgClassDeclaration>(astNode,true);
-    if (temp)
-      return isSgClassDeclaration(temp);
-    else
-      return NULL;
- }
+SageInterface::getEnclosingClassDeclaration(SgNode* astNode) {
+    // DQ (1/24/2019): This might have to get the SgClassDefinition and then the SgClassDeclaration from that.
+    // I'm having trouble making this work for a member function declared outside of the class definition.
+    return getEnclosingNode<SgClassDeclaration>(astNode, true);
+}
 
 SgExprListExp*
-SageInterface::getEnclosingExprListExp(SgNode* astNode, const bool includingSelf/* =false*/)
-   {
-     SgNode* temp = getEnclosingNode<SgExprListExp>(astNode,includingSelf);
-     if (temp)
-          return isSgExprListExp(temp);
-       else
-          return NULL;
-   }
+SageInterface::getEnclosingExprListExp(SgNode* astNode, const bool includingSelf/* =false*/) {
+    return getEnclosingNode<SgExprListExp>(astNode, includingSelf);
+}
 
 bool
 SageInterface::isInSubTree(SgExpression* subtree, SgExpression* exp)
    {
      bool returnValue = false;
 
-     struct Visitor: public AstSimpleProcessing 
+     struct Visitor: public AstSimpleProcessing
         {
           SgExpression* expression_target;
           bool in_subtree;
-          virtual void visit(SgNode* n) 
+          virtual void visit(SgNode* n)
              {
-               if (n == expression_target) 
+               if (n == expression_target)
                   {
                     in_subtree = true;
                   }
@@ -8081,7 +8462,7 @@ SgFunctionDeclaration*
 SageInterface::getFunctionDeclaration ( SgFunctionCallExp* functionCallExp )
    {
   // DQ (2/7/2019): Added more general function to support extraction of the associated function declaration.
-  // The lower level functions are more robust on the SgFunctionRefExp and SgMemberFunctionRefExp than 
+  // The lower level functions are more robust on the SgFunctionRefExp and SgMemberFunctionRefExp than
   // when called on the SgFunctionCallExp for example.
 
   // SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astNode);
@@ -8119,10 +8500,10 @@ SageInterface::getFunctionDeclaration ( SgFunctionCallExp* functionCallExp )
      if ( arrowExp != NULL)
         {
           ROSE_ASSERT (arrowExp != NULL);
-         
+
           SgExpression* rhsOperand = arrowExp->get_rhs_operand();
           ROSE_ASSERT (rhsOperand != NULL);
-         
+
           SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhsOperand);
 
        // ROSE_ASSERT (memberFunctionRefExp != NULL);
@@ -8131,7 +8512,7 @@ SageInterface::getFunctionDeclaration ( SgFunctionCallExp* functionCallExp )
                returnDeclaration = memberFunctionRefExp->getAssociatedMemberFunctionDeclaration();
              }
         }
-     
+
      return returnDeclaration;
    }
 
@@ -8156,7 +8537,7 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
      std::list<SgClassType*> classChain;
 
   // Make sure this is at least a reference to a data or member function member.
-  // The requirements for these functions are different, however, if they were 
+  // The requirements for these functions are different, however, if they were
   // virtual functions it might be a more attractive design.
      if (varRefExp != NULL)
         {
@@ -8212,8 +8593,12 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
      while (isSgCastExp(temp_lhs) != NULL)
         {
           cast = isSgCastExp(temp_lhs);
+          ROSE_ASSERT(cast != NULL);
           temp_lhs = cast->get_operand();
 
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("Top of loop: processing cast = %p temp_lhs = %p = %s \n",cast,temp_lhs,temp_lhs->class_name().c_str());
+#endif
           ROSE_ASSERT(cast->get_type() != NULL);
           SgClassType* classType = isSgClassType(cast->get_type());
           if (classType == NULL)
@@ -8226,7 +8611,7 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
                ROSE_ASSERT(baseType != NULL);
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
-               printf (" --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+               printf (" --- baseType = %p = %s name = %s \n",baseType,baseType->class_name().c_str(),get_name(baseType).c_str());
 #endif
                classType = isSgClassType(baseType);
              }
@@ -8235,13 +8620,103 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
           ROSE_ASSERT(temp_lhs != NULL);
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
-          printf (" --- temp_lhs = %p = %s \n",temp_lhs,temp_lhs->class_name().c_str());
+          printf (" --- temp_lhs = %p = %s name = %s \n",temp_lhs,temp_lhs->class_name().c_str(),get_name(temp_lhs).c_str());
 #endif
+
+#if 1
+       // DQ (1/20/2020): This (original) code works fine.
        // returnTypeChain.push_front(classType);
           if (classType != NULL)
              {
                classChain.push_front(classType);
              }
+#else
+       // DQ (1/20/2020): This (new) code works for Cxx11_tests/test2020_61.C.
+          if (classType != NULL)
+             {
+            // DQ (1/20/2020): We might want to fully resolve the class types associated with this cast here directly
+            // (see Cxx11_tests/test2020_61.C). The point is that we need a qualified name that will reflect all of
+            // the class declarations from the temp_lhs to the declarations associated with the classType.
+            // The steps are:
+            //    1) Get the target class definition for the type represented by the temp_lhs.
+            //    2) Get the source class definition for the classType.
+            //    3) Iterate from the source class definition to the target class definition, and save the associated
+            //       types associated with the class declarations associated with the scopes visited.
+               SgType* target_type = temp_lhs->get_type();
+               ROSE_ASSERT(target_type != NULL);
+               SgClassType* target_classType = isSgClassType(target_type);
+            // ROSE_ASSERT(target_classType != NULL);
+               if (target_classType != NULL)
+                  {
+                    SgDeclarationStatement* target_declaration = target_classType->get_declaration();
+                    ROSE_ASSERT(target_declaration != NULL);
+                    SgClassDeclaration* target_classDeclaration = isSgClassDeclaration(target_declaration);
+                    ROSE_ASSERT(target_classDeclaration != NULL);
+                    SgClassDeclaration* target_definingClassDeclaration = isSgClassDeclaration(target_classDeclaration->get_definingDeclaration());
+                    ROSE_ASSERT(target_definingClassDeclaration != NULL);
+                    SgScopeStatement* target_scope = target_definingClassDeclaration->get_definition();
+                    ROSE_ASSERT(target_scope != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+                    printf ("target_classDeclaration = %p = %s name = %s target_scope = %p = %s \n",
+                            target_classDeclaration,target_classDeclaration->class_name().c_str(),target_classDeclaration->get_name().str(),target_scope,target_scope->class_name().c_str());
+#endif
+                    SgClassType* source_classType = classType;
+                    ROSE_ASSERT(source_classType != NULL);
+                    SgDeclarationStatement* source_declaration = source_classType->get_declaration();
+                    ROSE_ASSERT(source_declaration != NULL);
+                    SgClassDeclaration* source_classDeclaration = isSgClassDeclaration(source_declaration);
+                    ROSE_ASSERT(source_classDeclaration != NULL);
+                    SgClassDeclaration* source_definingClassDeclaration = isSgClassDeclaration(source_classDeclaration->get_definingDeclaration());
+                    ROSE_ASSERT(source_definingClassDeclaration != NULL);
+                    SgScopeStatement* source_scope = source_definingClassDeclaration->get_definition();
+                    ROSE_ASSERT(source_scope != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+                    printf ("source_classDeclaration = %p = %s name = %s source_scope = %p = %s \n",
+                            source_classDeclaration,source_classDeclaration->class_name().c_str(),source_classDeclaration->get_name().str(),source_scope,source_scope->class_name().c_str());
+#endif
+                    SgScopeStatement* tmp_scope = source_scope;
+                    while (tmp_scope != NULL && tmp_scope != target_scope)
+                       {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+                         printf ("tmp_scope = %p = %s \n",tmp_scope,tmp_scope->class_name().c_str());
+#endif
+                         SgClassDefinition* tmp_classDefinition = isSgClassDefinition(tmp_scope);
+                         ROSE_ASSERT(tmp_classDefinition != NULL);
+                         SgClassDeclaration* tmp_classDeclaration = tmp_classDefinition->get_declaration();
+                         ROSE_ASSERT(tmp_classDeclaration != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+                         SgName scope_name = tmp_classDeclaration->get_name();
+                         printf ("scope_name = %s \n",scope_name.str());
+#endif
+                         SgClassType* tmp_classType = tmp_classDeclaration->get_type();
+                         ROSE_ASSERT(tmp_classType != NULL);
+
+                      // classChain.push_front(tmp_classDefinition);
+                         classChain.push_front(tmp_classType);
+
+                         tmp_scope = tmp_scope->get_scope();
+
+                         if (isSgGlobal(tmp_scope) != NULL)
+                            {
+                              tmp_scope = NULL;
+                            }
+                       }
+                  }
+                 else
+                  {
+#if 1
+                    printf ("In loop processing cast: target_type = %p = %s \n",target_type,target_type->class_name().c_str());
+#endif
+                  }
+             }
+#endif
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("Bottom of loop: processing cast = %p temp_lhs = %p = %s \n",cast,temp_lhs,temp_lhs->class_name().c_str());
+#endif
         }
 
   // We also need to include the first class where we are referencing the variable or function because that is where the first ambiguity may happen.
@@ -8312,9 +8787,17 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
           ROSE_ASSERT(type != NULL);
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
-          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs type = %p = %s \n",type,type->class_name().c_str());
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs type = %p = %s name = %s \n",type,type->class_name().c_str(),get_name(type).c_str());
 #endif
-          SgClassType* classType = isSgClassType(type);
+
+       // DQ (1/3/2019): Need to strip the type to get to a possible SgClassType.
+          SgType* stripped_type = type->stripType(SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_MODIFIER_TYPE);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): stripped_type = %p = %s name = %s \n",stripped_type,stripped_type->class_name().c_str(),get_name(stripped_type).c_str());
+#endif
+       // SgClassType* classType = isSgClassType(type);
+          SgClassType* classType = isSgClassType(stripped_type);
        // returnTypeChain.push_front(classType);
           if (classType != NULL)
              {
@@ -8333,7 +8816,7 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
         }
 #endif
 
-  // Test the first element in the list to see if there is an ambiguity in the associated classDefinition 
+  // Test the first element in the list to see if there is an ambiguity in the associated classDefinition
   // for the input variable referenced SgVarRefExp).
 
   // SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
@@ -8380,7 +8863,7 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
             // DQ (2/24/2019): This is an error (calls base class function).
             // printf ("templateInstantiationMemberFunctionDeclaration->get_template_name() = %s \n",templateInstantiationMemberFunctionDeclaration->get_template_name().str());
 
-               SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = 
+               SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration =
                     isSgTemplateMemberFunctionDeclaration(templateInstantiationMemberFunctionDeclaration->get_templateDeclaration());
                if (templateMemberFunctionDeclaration != NULL)
                   {
@@ -8454,32 +8937,58 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
   // If we have an abiguity at i then we want to save i++, so define save_iter to be the next in the class type list.
      save_iter++;
 
+  // DQ (1/19/2020): Add support for more complex nested base classes, see Cxx11_tests/test2020_61.C.
+     bool ambiguityDetectedSoSaveWholeChain = false;
+
      while(i != classChain.end())
         {
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN || 0
           printf (" --- *i = %p = %s name = %s \n",*i,(*i)->class_name().c_str(),(*i)->get_name().str());
           printf (" --- --- referenceSymbol = %p = %s \n",referenceSymbol,referenceSymbol->class_name().c_str());
 #endif
+          bool ambiguityDetected = false;
+
           SgDeclarationStatement* declarationStatement = (*i)->get_declaration();
           ROSE_ASSERT(declarationStatement != NULL);
           SgDeclarationStatement* definingDeclarationStatement = declarationStatement->get_definingDeclaration();
-          ROSE_ASSERT(definingDeclarationStatement != NULL);
-          SgClassDeclaration* classDeclaration = isSgClassDeclaration(definingDeclarationStatement);
-          ROSE_ASSERT(classDeclaration != NULL);
-          SgClassDefinition* classDefinition =  classDeclaration->get_definition();
-
-       // This works for any SgName and SgSymbol, so it need not be specific to variables.
-          bool ambiguityDetected = classDefinition->hasAmbiguity(symbolName,referenceSymbol);
+          if (definingDeclarationStatement != NULL)
+             {
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(definingDeclarationStatement);
+               ROSE_ASSERT(classDeclaration != NULL);
+               SgClassDefinition* classDefinition =  classDeclaration->get_definition();
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
-          printf ("ambiguityDetected = %s \n",ambiguityDetected ? "true" : "false");
+               printf (" --- classDeclaration = %p = %s name = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+               printf (" --- classDefinition = %p = %s \n",classDefinition,classDefinition->class_name().c_str());
 #endif
+            // This works for any SgName and SgSymbol, so it need not be specific to variables.
+               ambiguityDetected = classDefinition->hasAmbiguity(symbolName,referenceSymbol);
 
-          if (ambiguityDetected == true)
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+               printf (" --- ambiguityDetected = %s \n",ambiguityDetected ? "true" : "false");
+#endif
+             }
+
+       // DQ (1/19/2020): Add support for more complex nested base classes, see Cxx11_tests/test2020_61.C.
+       // if (ambiguityDetected == true)
+       // if (ambiguityDetected == true || ambiguityDetectedSoSaveWholeChain == true)
+       // if (ambiguityDetected == true)
+          if (ambiguityDetected == true || ambiguityDetectedSoSaveWholeChain == true)
              {
+               ambiguityDetectedSoSaveWholeChain = true;
+
                if (save_iter != classChain.end())
                   {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+                    printf (" --- add to saveList: *save_iter = %p \n",*save_iter);
+#endif
                     saveList.push_back(*save_iter);
+                  }
+                 else
+                  {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+                    printf (" --- save_iter == classChain.end() \n");
+#endif
                   }
              }
 
@@ -8512,7 +9021,7 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
 
 
 
-bool 
+bool
 SageInterface::isMemberFunctionMemberReference(SgMemberFunctionRefExp* memberFunctionRefExp)
    {
   // DQ (2/17/2019): This may share a design in common with isDataMemberReference() below.
@@ -8586,15 +9095,15 @@ SageInterface::isMemberFunctionMemberReference(SgMemberFunctionRefExp* memberFun
 
 
 
-bool 
+bool
 SageInterface::isDataMemberReference(SgVarRefExp* varRefExp)
    {
-  // This function is used to support the name qualification of data member references seperate from name qualification 
+  // This function is used to support the name qualification of data member references seperate from name qualification
   // of variables that might be members (e.g. "X x; x.A::y;" instead of "A::y" (which is just simple name qualification)).
 
   // DQ (2/8/2019): Adding support for detecting when to use added name qualification for pointer-to-member expressions.
 
-  // DQ (2/17/2019): I think we need to make sure this is not a static data member reference (since those are qualified 
+  // DQ (2/17/2019): I think we need to make sure this is not a static data member reference (since those are qualified
   // differently (not member data name qualification).  Consider changing the name of this function to indicate non-static.
 
 #define DEBUG_IS_DATA_MEMBER_REFERENCE 0
@@ -8726,7 +9235,7 @@ SageInterface::isAddressTaken(SgExpression* refExp)
 SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
    {
   // DQ (3/4/2014): This new version of this function supports both C/C++ and also Java.
-  // If the SgJavaPackageDeclaration is noticed then the previous parent is a 
+  // If the SgJavaPackageDeclaration is noticed then the previous parent is a
   // SgClassDefinition and the previous previous parent is a SgClassDeclaration whose
   // name can be used to match the filename in the SgProject's list of files.
   // A better implementation usign an attribute (not in place until tomorrow) and
@@ -8814,7 +9323,7 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
 
                // "This simpler and more efficent code requires the latest work in Java support (3/6/2014)"
 
-               if (attribute) 
+               if (attribute)
                   {
                  // true for all user-specified classes and false for all classes fom libraries
                     SgSourceFile *sourcefile = isSgSourceFile(attribute->getNode());
@@ -8860,6 +9369,62 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
         }
    }
 
+std::set<SgNode*> SageInterface::getFrontendSpecificNodes() {
+  struct FrontendSpecificTraversal : public ROSE_VisitTraversal {
+    std::set<SgNode*> specific;
+    std::set<SgNode*> non_specific;
+ 
+    static void recursive_collect( SgNode* node , std::set<SgNode *> & collection ) {
+      // Stop on sinks and loops
+      if (node == NULL || !collection.insert(node).second) return;
+
+      std::vector<std::pair<SgNode*, std::string> > data_members = node->returnDataMemberPointers();
+      for (std::vector<std::pair<SgNode*, std::string> >::iterator i = data_members.begin(); i != data_members.end(); ++i) {
+        recursive_collect(i->first, collection);
+      }
+    }
+
+    void visit (SgNode* n) {
+      Sg_File_Info * fileInfo = n->get_file_info();
+
+      if (fileInfo != NULL) {
+        if (fileInfo->isFrontendSpecific()) {
+          specific.insert(n);
+          recursive_collect(n, specific);
+        } else {
+          non_specific.insert(n);
+          recursive_collect(n, non_specific);
+        }
+      } else {
+        fileInfo = isSg_File_Info(n);
+        if (fileInfo != NULL) {
+          if (fileInfo->isFrontendSpecific()) {
+            specific.insert(n);
+          } else {
+            non_specific.insert(n);
+          }
+        }
+      }
+    }
+
+    std::set<SgNode*> apply() {
+      traverseMemoryPool();
+
+      std::set<SgNode*> result;
+
+      std::set_difference(
+        specific.begin(), specific.end(),
+        non_specific.begin(), non_specific.end(),
+        std::insert_iterator<set<SgNode*> >(result, result.begin())
+      );
+
+      return result;
+    }
+  };
+
+  FrontendSpecificTraversal fst;
+  return fst.apply();
+}
 
 void
 SageInterface::outputSharedNodes( SgNode* node )
@@ -8896,6 +9461,191 @@ SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
   while (n && !isSgStatement(n)) n = n->get_parent();
   return isSgStatement(n);
 }
+
+
+
+#if 1
+// DQ (11/19/2020): We need to expand the use of this to cover deffered transformations of common SageInterface transformations (e.g. replaceStatement).
+// So I need to move this out of being specific to the outliner and make it more generally data structure in the SageInterface.
+
+SageInterface::DeferredTransformation::DeferredTransformation()
+   : deferredTransformationKind(e_default),
+     statementToRemove(NULL),
+     statementToAdd(NULL),
+     class_definition(NULL),
+     target_class_member(NULL),
+     new_function_prototype(NULL)
+   {
+  // Default constructor (not particularly useful).
+#if 0
+     printf ("In SageInterface::DeferredTransformation default constructor called \n");
+#endif
+   }
+
+SageInterface::DeferredTransformation::DeferredTransformation(
+   SgClassDefinition* input_class_definition, 
+   SgDeclarationStatement* input_target_class_member, 
+   SgDeclarationStatement* input_new_function_prototype)
+   : deferredTransformationKind(e_outliner),
+     statementToRemove(NULL),
+     statementToAdd(NULL),
+     class_definition(input_class_definition),
+     target_class_member(input_target_class_member),
+     new_function_prototype(input_new_function_prototype)
+   {
+  // This constructor is used by the outliner.
+#if 0
+     printf ("In SageInterface::DeferredTransformation constructor for outliner called \n");
+#endif
+   }
+
+SageInterface::DeferredTransformation
+SageInterface::DeferredTransformation::replaceDefiningFunctionDeclarationWithFunctionPrototype( SgFunctionDeclaration* functionDeclaration )
+   {
+#if 0
+     printf ("In SageInterface::DeferredTransformation constructor for replaceDefiningFunctionDeclarationWithFunctionPrototype called \n");
+#endif
+  // DQ (11/20/20): Added new static function to support genertation of deferred transformation.
+  // This constructor is used by tool_G and supports the use of the transformation represented 
+  // by SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype().
+     DeferredTransformation X;
+     X.deferredTransformationKind = e_replaceDefiningFunctionDeclarationWithFunctionPrototype;
+     X.statementToRemove          = functionDeclaration;
+     X.statementToAdd             = NULL;
+     X.class_definition           = NULL;
+     X.target_class_member        = NULL;
+     X.new_function_prototype     = NULL;
+
+     return X;
+   }
+
+SageInterface::DeferredTransformation
+SageInterface::DeferredTransformation::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessinInfo/* = false*/)
+   {
+#if 0
+     printf ("In SageInterface::DeferredTransformation constructor for replaceStatement called \n");
+#endif
+  // DQ (11/20/20): Added new static function to support genertation of deferred transformation.
+  // This constructor is used by tool_G and supports the use of the transformation represented 
+  // by SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype().
+     DeferredTransformation X;
+     X.deferredTransformationKind = e_replaceStatement;
+     X.statementToRemove          = oldStmt;
+     X.statementToAdd             = newStmt;
+     X.class_definition           = NULL;
+     X.target_class_member        = NULL;
+     X.new_function_prototype     = NULL;
+
+     return X;
+   }
+
+SageInterface::DeferredTransformation::DeferredTransformation (const DeferredTransformation& X)
+#if 0
+   : deferredTransformationKind(X.deferredTransformationKind),
+     statementToRemove(X.statementToRemove),
+     statementToAdd(X.StatementToAdd),
+     class_definition(X.class_definition),
+     target_class_member(X.target_class_member),
+     new_function_prototype(X.new_function_prototype),
+     targetClasses(X.targetClasses),
+     targetFriends(X.targetFriends)
+   {
+   }
+#else
+   {
+#if 0
+     printf ("In SageInterface::DeferredTransformation copy constructor called \n");
+#endif
+  // DQ (11/19/2020): Leverage the operator=() implementation to reduce complexity (one place to update).
+     *this = X;
+   }
+#endif
+
+SageInterface::DeferredTransformation & SageInterface::DeferredTransformation::operator= (const DeferredTransformation& X)
+   {
+#if 0
+     printf ("Inside of SageInterface::DeferredTransformation::operator= (const DeferredTransformation& X) \n");
+#endif
+
+#if 0
+  // Original code.
+     targetFriends = X.targetFriends;
+     targetClasses = X.targetClasses;
+#else
+  // New code added to support more general usage.
+     deferredTransformationKind = X.deferredTransformationKind;
+     statementToRemove          = X.statementToRemove;
+     statementToAdd             = X.statementToAdd;
+
+     class_definition           = X.class_definition;
+     target_class_member        = X.target_class_member;
+     new_function_prototype     = X.new_function_prototype;
+     targetClasses              = X.targetClasses;
+     targetFriends              = X.targetFriends;
+#endif
+
+     return *this;
+   }
+
+SageInterface::DeferredTransformation::~DeferredTransformation (void)
+   {
+   //! Shallow; does not delete fields.
+   }
+
+std::string SageInterface::DeferredTransformation::outputDeferredTransformationKind(const TransformationKind & kind)
+   {
+     string returnValue = "uninitialized";
+     switch (kind)
+       {
+         case e_error:                                                   returnValue = "e_error";            break;
+         case e_default:                                                 returnValue = "e_default";          break;
+         case e_outliner:                                                returnValue = "e_outliner";         break;
+         case e_replaceStatement:                                        returnValue = "e_replaceStatement"; break;
+         case e_removeStatement:                                         returnValue = "e_removeStatement";  break;
+         case e_replaceDefiningFunctionDeclarationWithFunctionPrototype: returnValue = "e_replaceDefiningFunctionDeclarationWithFunctionPrototype"; break;
+         case e_last:                                                    returnValue = "e_last";             break;
+         default:
+            {
+              printf ("Error: SageInterface::DeferredTransformation::get_deferredTransformationKind_string(): default reached \n");
+              ROSE_ASSERT(false);
+            }
+       }
+
+     return returnValue;
+   }
+
+void SageInterface::DeferredTransformation::display ( std::string label ) const
+   {
+     printf ("SageInterface::DeferredTransformation::display(): label = %s \n",label.c_str());
+     printf (" --- deferredTransformationKind = %s \n",outputDeferredTransformationKind(deferredTransformationKind).c_str());
+     if (statementToRemove != NULL)
+        {
+          printf (" --- statementToRemove = %p = %s name = %s \n",statementToRemove,statementToRemove->class_name().c_str(),get_name(statementToRemove).c_str());
+        }
+     if (statementToAdd != NULL)
+        {
+          printf (" --- statementToAdd = %p = %s name = %s \n",statementToAdd,statementToAdd->class_name().c_str(),get_name(statementToAdd).c_str());
+        }
+     if (class_definition != NULL)
+        {
+          printf (" --- class_definition = %p = %s name = %s \n",class_definition,class_definition->class_name().c_str(),get_name(class_definition).c_str());
+        }
+     if (target_class_member != NULL)
+        {
+          printf (" --- target_class_member = %p = %s name = %s \n",target_class_member,target_class_member->class_name().c_str(),get_name(target_class_member).c_str());
+        }
+     if (new_function_prototype != NULL)
+        {
+          printf (" --- new_function_prototype = %p = %s name = %s \n",new_function_prototype,new_function_prototype->class_name().c_str(),get_name(new_function_prototype).c_str());
+        }
+     printf ("targetClasses.size() = %zu \n",targetClasses.size());
+     printf ("targetFriends.size() = %zu \n",targetFriends.size());
+   }
+#endif
+
+
+
+
 
 // DQ (/20/2010): Control debugging output for SageInterface::removeStatement() function.
 #define REMOVE_STATEMENT_DEBUG 0
@@ -8942,60 +9692,61 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
        // I think that special rules apply to inserting a SgBasicBlock so disable comment reloation when inserting a SgBasicBlock.
        // if (comments != NULL && isRemovable == true && isSgBasicBlock(targetStmt) == NULL )
        // Liao 10/28/2010. Sometimes we want remove the statement with all its preprocessing information
-         if (autoRelocatePreprocessingInfo)
-         {
-          if (comments != NULL && isSgBasicBlock(targetStmt) == NULL )
+          if (autoRelocatePreprocessingInfo == true)
              {
-               vector<int> captureList;
-#if REMOVE_STATEMENT_DEBUG
-               printf ("Found attached comments (removing %p = %s): comments->size() = %" PRIuPTR " \n",targetStmt,targetStmt->class_name().c_str(),comments->size());
-#endif
-
-             // Liao 10/28/2010. relinking AST statements may be achieved by remove it and attach it to somewhere else.
-             // In this case, preprocessing information sometimes should go with the statements and not be relocated to the original places.
-            // Dan: Since this statement will be removed we have to relocate all the associated comments and CPP directives.
-               int commentIndex = 0;
-               AttachedPreprocessingInfoType::iterator i;
-               for (i = comments->begin(); i != comments->end(); i++)
+               if (comments != NULL && isSgBasicBlock(targetStmt) == NULL )
                   {
-                    ROSE_ASSERT ( (*i) != NULL );
+                    vector<int> captureList;
 #if REMOVE_STATEMENT_DEBUG
-                    printf ("          Attached Comment (relativePosition=%s): %s\n",
-                         ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
-                         (*i)->getString().c_str());
-                    printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
-                    (*i)->get_file_info()->display("comment/directive location debug");
-#endif
-                    captureList.push_back(commentIndex);
-                    commentIndex++;
-                  }
-
-#if REMOVE_STATEMENT_DEBUG
-               printf ("captureList.size() = %" PRIuPTR " \n",captureList.size());
+                    printf ("Found attached comments (removing %p = %s): comments->size() = %" PRIuPTR " \n",targetStmt,targetStmt->class_name().c_str(),comments->size());
 #endif
 
-               if (captureList.empty() == false)
-                  {
-                 // Remove these comments and/or CPP directives and put them into the previous statement (marked to be output after the statement).
-                 // Find the surrounding statement by first looking up in the sequence of statements in this block, then down, we need another
-                 // statement from the same file.
-                    bool surroundingStatementPreceedsTargetStatement = false;
-                    SgStatement* surroundingStatement = findSurroundingStatementFromSameFile(targetStmt,surroundingStatementPreceedsTargetStatement);
-
-                 // ROSE_ASSERT(surroundingStatement != NULL);
-                    if (surroundingStatement != NULL)
+                 // Liao 10/28/2010. relinking AST statements may be achieved by remove it and attach it to somewhere else.
+                 // In this case, preprocessing information sometimes should go with the statements and not be relocated to the original places.
+                 // Dan: Since this statement will be removed we have to relocate all the associated comments and CPP directives.
+                    int commentIndex = 0;
+                    AttachedPreprocessingInfoType::iterator i;
+                    for (i = comments->begin(); i != comments->end(); i++)
                        {
-                      // If we have identified a valid surrounding statemen, then move the comments and CPP directives to that statement.
+                         ROSE_ASSERT ( (*i) != NULL );
 #if REMOVE_STATEMENT_DEBUG
-                         printf ("In removeStatement(): surroundingStatementPreceedsTargetStatement = %s \n",surroundingStatementPreceedsTargetStatement ? "true" : "false");
+                         printf ("          Attached Comment (relativePosition=%s): %s\n",
+                              ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                              (*i)->getString().c_str());
+                         printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+                         (*i)->get_file_info()->display("comment/directive location debug");
 #endif
-                         moveCommentsToNewStatement(targetStmt,captureList,surroundingStatement,surroundingStatementPreceedsTargetStatement);
+                         captureList.push_back(commentIndex);
+                         commentIndex++;
                        }
-                  }
-             } // end if (comments)
-        }// end if (autoRelocatePreprocessingInfo)
-#endif  // end #if 1
 
+#if REMOVE_STATEMENT_DEBUG
+                    printf ("captureList.size() = %" PRIuPTR " \n",captureList.size());
+#endif
+
+                    if (captureList.empty() == false)
+                       {
+                      // Remove these comments and/or CPP directives and put them into the previous statement (marked to be output after the statement).
+                      // Find the surrounding statement by first looking up in the sequence of statements in this block, then down, we need another
+                      // statement from the same file.
+                         bool surroundingStatementPreceedsTargetStatement = false;
+                         SgStatement* surroundingStatement = findSurroundingStatementFromSameFile(targetStmt,surroundingStatementPreceedsTargetStatement);
+
+                      // ROSE_ASSERT(surroundingStatement != NULL);
+                         if (surroundingStatement != NULL)
+                            {
+                           // If we have identified a valid surrounding statemen, then move the comments and CPP directives to that statement.
+#if REMOVE_STATEMENT_DEBUG
+                              printf ("In removeStatement(): surroundingStatementPreceedsTargetStatement = %s \n",surroundingStatementPreceedsTargetStatement ? "true" : "false");
+                              printf (" --- moving comments from targetStmt         = %p = %s name = %s \n",targetStmt,targetStmt->class_name().c_str(),get_name(targetStmt).c_str());
+                              printf (" --- moving comments to surroundingStatement = %p = %s name = %s \n",surroundingStatement,surroundingStatement->class_name().c_str(),get_name(surroundingStatement).c_str());
+#endif
+                              moveCommentsToNewStatement(targetStmt,captureList,surroundingStatement,surroundingStatementPreceedsTargetStatement);
+                            }
+                       }
+                  } // end if (comments)
+             }// end if (autoRelocatePreprocessingInfo)
+#endif  // end #if 1
 
        // DQ (12/1/2015): Adding support for fixup internal data struuctures that have references to statements (e.g. macro expansions).
           resetInternalMapsForTargetStatement(targetStmt);
@@ -9011,22 +9762,31 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
    }
 
 
+
 //! Reset internal data structures used for token-based unparsing and macro summaries based on modifications to this statement.
 void
 SageInterface::resetInternalMapsForTargetStatement(SgStatement* sourceStatement)
    {
-  // This function allows the modification of the input statement to trigger operations on internal 
+  // This function allows the modification of the input statement to trigger operations on internal
   // data structures that hold references to such statements.  An example is the macroExpansion
   // data structures that have a reference to the statements that are associated with and macro expansion.
   // if a statement assocated with a macro expansion is removed, then the macroExpansion needs to be
   // updated to force all of the statements to be marked as transformed (so that the AST will be unparsed
-  // instead of the tokens representing the macro or some partial representation of the transformed 
+  // instead of the tokens representing the macro or some partial representation of the transformed
   // statements and the macro call (worse).
+
+#if 0
+     printf ("In SageInterface::resetInternalMapsForTargetStatement(SgStatement*): sourceStatement = %p = %s \n",sourceStatement,sourceStatement->class_name().c_str());
+#endif
 
      SgSourceFile* sourceFile = getEnclosingSourceFile(sourceStatement);
 
   // NOTE: if the statment has not yet been added to the AST then it will not return a valid pointer.
   // ROSE_ASSERT(sourceFile != NULL);
+
+#if 0
+     printf ("In SageInterface::resetInternalMapsForTargetStatement(SgStatement*): sourceFile = %p \n",sourceFile);
+#endif
 
      if (sourceFile != NULL)
         {
@@ -9052,7 +9812,7 @@ SageInterface::resetInternalMapsForTargetStatement(SgStatement* sourceStatement)
                          printf ("Mark as transformation to be output: statement = %p = %s \n",statement,statement->class_name().c_str());
 #endif
                       // Note that any new statement might not yet have valid Sg_File_Info objects setup at this point.
-                      // Then again, now did it make it into the associatedStatementVector unless it was via memory 
+                      // Then again, now did it make it into the associatedStatementVector unless it was via memory
                       // recycling through the mmory pool.
                          if (statement->get_file_info() != NULL)
                             {
@@ -9060,12 +9820,12 @@ SageInterface::resetInternalMapsForTargetStatement(SgStatement* sourceStatement)
                               statement->setTransformation();
 
                            // This is required, else the statement will not be output in the generated code.
-                           // To understand this, consider that statements in header files could be transformed, 
+                           // To understand this, consider that statements in header files could be transformed,
                            // but we would not want that to cause them to be unparse in the source file.
                               statement->setOutputInCodeGeneration();
 
                            // Not clear if we should also remove the statement from the associatedStatementVector.
-                           // This would be important to do to avoid having the same location in the memory pool 
+                           // This would be important to do to avoid having the same location in the memory pool
                            // be reused for another statement. Since we makr the macro expansion as transformed
                            // we likely don't have to worry about this.
                             }
@@ -9093,6 +9853,9 @@ SageInterface::resetInternalMapsForTargetStatement(SgStatement* sourceStatement)
 
         }
 
+#if 0
+     printf ("Leaving SageInterface::resetInternalMapsForTargetStatement(SgStatement*): sourceStatement = %p = %s \n",sourceStatement,sourceStatement->class_name().c_str());
+#endif
    }
 
 
@@ -9102,8 +9865,10 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
    {
      AttachedPreprocessingInfoType* comments = sourceStatement->getAttachedPreprocessingInfo();
 
-#if REMOVE_STATEMENT_DEBUG
+#if REMOVE_STATEMENT_DEBUG || 0
      printf ("In moveCommentsToNewStatement(): surroundingStatementPreceedsTargetStatement = %s \n",surroundingStatementPreceedsTargetStatement ? "true" : "false");
+     printf (" --- sourceStatement = %p = %s name = %s \n",sourceStatement,sourceStatement->class_name().c_str(),get_name(sourceStatement).c_str());
+     printf (" --- targetStatement = %p = %s name = %s \n",targetStatement,targetStatement->class_name().c_str(),get_name(targetStatement).c_str());
 #endif
 
   // Now add the entries from the captureList to the surroundingStatement and remove them from the targetStmt.
@@ -9113,7 +9878,7 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
         {
        // Add the captured comments to the new statement. Likely we need to make sure that the order is preserved.
           ROSE_ASSERT(targetStatement->get_file_info() != NULL);
-#if REMOVE_STATEMENT_DEBUG
+#if REMOVE_STATEMENT_DEBUG || 0
           printf ("Attaching comments to targetStatement = %p = %s on file = %s line %d \n",
                targetStatement,targetStatement->class_name().c_str(),
                targetStatement->get_file_info()->get_filenameString().c_str(),
@@ -9126,11 +9891,17 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
              {
                if ((*comments)[*j]->getRelativePosition() == PreprocessingInfo::before)
                   {
+#if 0
+                    printf ("Mark comments that were before the preceeding statement to be after the preceeding statement \n");
+#endif
                     (*comments)[*j]->setRelativePosition(PreprocessingInfo::after);
                     ROSE_ASSERT((*comments)[*j]->getRelativePosition() == PreprocessingInfo::after);
                   }
                  else
                   {
+#if 0
+                    printf ("Leave the comments marked as being after the removed statement as after the preceeding \n");
+#endif
                  // If is is not before, I hope it can only be after.
                     ROSE_ASSERT((*comments)[*j]->getRelativePosition() == PreprocessingInfo::after);
                   }
@@ -9140,9 +9911,15 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
                if ((*comments)[*j]->getRelativePosition() == PreprocessingInfo::before)
                   {
                  // Leave the comments marked as being before the associated statement.
+#if 0
+                    printf ("Leave the comments marked as being before the removed statement as before the following statement \n");
+#endif
                   }
                  else
                   {
+#if 0
+                    printf ("Mark comments that were after the removed statement to be before the following statement \n");
+#endif
                  // If is is not before, I hope it can only be after.
                     ROSE_ASSERT((*comments)[*j]->getRelativePosition() == PreprocessingInfo::after);
                     (*comments)[*j]->setRelativePosition(PreprocessingInfo::before);
@@ -9168,7 +9945,7 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
   // Because of iterator invalidation we must reset the iterators after each call to erase (I think).
      for (size_t n = 0; n < indexList.size(); n++)
         {
-#if REMOVE_STATEMENT_DEBUG
+#if REMOVE_STATEMENT_DEBUG || 0
           printf ("Erase entry from comments list on comments->size() %" PRIuPTR " \n",comments->size());
 #endif
           bool modifiedList = false;
@@ -9204,9 +9981,11 @@ SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, boo
      SgStatement* surroundingStatement = targetStmt;
      int surroundingStatement_fileId   = Sg_File_Info::BAD_FILE_ID; // No file id can have this value.
 
-#if REMOVE_STATEMENT_DEBUG
+#if REMOVE_STATEMENT_DEBUG || 1
      printf ("TOP of findSurroundingStatementFromSameFile(): surroundingStatementPreceedsTargetStatement = %s \n",surroundingStatementPreceedsTargetStatement ? "true" : "false");
 #endif
+
+     std::set<SgStatement*> previousVisitedStatementSet;
 
   // Only handle relocation for statements that exist in the file (at least for now while debugging).
      if (targetStmt->get_file_info()->get_file_id() >= 0)
@@ -9255,6 +10034,23 @@ SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, boo
                     printf ("surroundingStatement == NULL \n");
                   }
 #endif
+
+            // DQ (11/15/2020): Eliminate the infinite loop that is possible when we iterate over a loop of statements.
+               if (previousVisitedStatementSet.find(surroundingStatement) != previousVisitedStatementSet.end())
+                 {
+                   printf ("This statement has been previously visited: surroundingStatement = %p = %s \n",surroundingStatement,surroundingStatement->class_name().c_str());
+
+                   printf ("ERROR: SageInterface::findSurroundingStatementFromSameFile(): cannot located surrounding statement from same file (return NULL) \n");
+
+                   surroundingStatement = NULL;
+                // break;
+                // return NULL;
+                 }
+               else
+                 {
+                   previousVisitedStatementSet.insert(surroundingStatement);
+                 }
+
             // As a last resort restart and go down in the statement sequence.
             // if (surroundingStatement == NULL)
                if (surroundingStatement == NULL || isSgGlobal(surroundingStatement) != NULL)
@@ -9274,9 +10070,28 @@ SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, boo
                     SgStatement* previousStatement = surroundingStatement;
                  // surroundingStatement = getNextStatement(surroundingStatement);
                     surroundingStatement_fileId = Sg_File_Info::BAD_FILE_ID;
+
+                    std::set<SgStatement*> forwardVisitedStatementSet;
+
                  // while ( (surroundingStatement != NULL) && (surroundingStatement->get_file_info()->get_file_id() != targetStmt->get_file_info()->get_file_id()) )
                     while ( (surroundingStatement != NULL) && (surroundingStatement_fileId != targetStmt->get_file_info()->get_file_id()) )
                        {
+                      // DQ (11/15/2020): Eliminate the infinite loop that is possible when we iterate over a loop of statements.
+                         if (forwardVisitedStatementSet.find(surroundingStatement) != forwardVisitedStatementSet.end())
+                            {
+                              printf ("This statement has been previously visited: surroundingStatement = %p = %s \n",surroundingStatement,surroundingStatement->class_name().c_str());
+
+                              printf ("ERROR: SageInterface::findSurroundingStatementFromSameFile(): cannot located surrounding statement from same file (return NULL) \n");
+
+                              surroundingStatement = NULL;
+                              break;
+                           // return NULL;
+                            }
+                           else
+                            {
+                              forwardVisitedStatementSet.insert(surroundingStatement);
+                            }
+
                          previousStatement = surroundingStatement;
                          surroundingStatement = getNextStatement(surroundingStatement);
 
@@ -9390,10 +10205,15 @@ void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt,
 
 // Some translators have their own handling for this (e.g. the outliner)
   if (movePreprocessinInfo)
-    moveUpPreprocessingInfo(newStmt, oldStmt);
+     {
+#if 0
+       printf ("In SageInterface::replaceStatement(): calling moveUpPreprocessingInfo() \n");
+#endif
+       moveUpPreprocessingInfo(newStmt, oldStmt);
+     }
 }
 
-void 
+void
 SageInterface::moveDeclarationToAssociatedNamespace ( SgDeclarationStatement* declarationStatement )
    {
   // Relocate the declaration to be explicitly represented in its associated namespace (required for some backend compilers to process template instantiations).
@@ -9401,7 +10221,7 @@ SageInterface::moveDeclarationToAssociatedNamespace ( SgDeclarationStatement* de
   // DQ (7/19/2015): This is required to support general unparsing of template instantations for the GNU g++
   // compiler which does not permit name qualification to be used to support the expression of the namespace
   // where a template instantiatoon would be places.  Such name qualification would also sometimes require
-  // global qualification which is also not allowed by the GNU g++ compiler.  These issues appear to be 
+  // global qualification which is also not allowed by the GNU g++ compiler.  These issues appear to be
   // specific to the GNU compiler versions, at least versions 4.4 through 4.8.
 
   // Find the previous statement in this scope so that we can close off the namepsace and start a new one.
@@ -9538,7 +10358,7 @@ SageInterface::moveDeclarationToAssociatedNamespace ( SgDeclarationStatement* de
        else
         {
 #if 0
-          printf ("Warning: declarationParent == NULL: declarationStatement->get_parent() = %p = %s \n",declarationStatement->get_parent(), (declarationStatement->get_parent() != NULL) ? declarationStatement->get_parent()->class_name().c_str() : "null"); 
+          printf ("Warning: declarationParent == NULL: declarationStatement->get_parent() = %p = %s \n",declarationStatement->get_parent(), (declarationStatement->get_parent() != NULL) ? declarationStatement->get_parent()->class_name().c_str() : "null");
 #endif
        // ROSE_ASSERT(declarationParent != NULL);
         }
@@ -9547,7 +10367,7 @@ SageInterface::moveDeclarationToAssociatedNamespace ( SgDeclarationStatement* de
 
 
 bool
-SageInterface::isTemplateInstantiationNode(SgNode* node) 
+SageInterface::isTemplateInstantiationNode(SgNode* node)
    {
   // DQ (7/19/2015): I think we want to focus exclusively on declarations.
      if (isSgTemplateInstantiationDefn(node) != NULL)
@@ -9571,7 +10391,7 @@ SageInterface::isTemplateInstantiationNode(SgNode* node)
 #if 0
 // DQ (6/27/2018): This will be the template declaration test version of the template instantiation test function above.
 bool
-SageInterface::isTemplateDeclarationNode(SgNode* node) 
+SageInterface::isTemplateDeclarationNode(SgNode* node)
    {
   // DQ (7/19/2015): I think we want to focus exclusively on declarations.
      if (isSgTemplateDefinition(node) != NULL)
@@ -9594,11 +10414,11 @@ SageInterface::isTemplateDeclarationNode(SgNode* node)
 #endif
 
 void
-SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root) 
+SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root)
    {
   // DQ (8/18/2015): This function is called from the tests/nonsmoke/functional/testTemplates translator.
 
-  // DQ (7/19/2015): This function can't use an iterator since it will be 
+  // DQ (7/19/2015): This function can't use an iterator since it will be
   // doing transformations on the AST and will cause iterator invalidation errors.
 
 #if 0
@@ -9612,9 +10432,9 @@ SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* ro
      RoseAst ast(root);
 
      int n = 0;
-     for (RoseAst::iterator i= ast.begin(); i!= ast.end(); ++i) 
+     for (RoseAst::iterator i= ast.begin(); i!= ast.end(); ++i)
         {
-          if (isTemplateInstantiationNode(*i)) 
+          if (isTemplateInstantiationNode(*i))
              {
             // markNodeToBeUnparsed(*i);
                SgDeclarationStatement* declaration = isSgDeclarationStatement(*i);
@@ -9830,17 +10650,17 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
 
     //Generate a unique variable name
     string name = generateUniqueVariableName(scope);
-    
+
     //initialize the variable in its declaration
     SgAssignInitializer* initializer = NULL;
     SgExpression* initExpressionCopy = SageInterface::copyExpression(expression);
     initializer = SageBuilder::buildAssignInitializer(initExpressionCopy);
-    
+
     SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, variableType, initializer, scope);
     ROSE_ASSERT(tempVarDeclaration != NULL);
-    
+
     //Build the variable reference expression that can be used in place of the original expression
-    SgExpression* varRefExpression = SageBuilder::buildVarRefExp(tempVarDeclaration);    
+    SgExpression* varRefExpression = SageBuilder::buildVarRefExp(tempVarDeclaration);
     return std::make_pair(tempVarDeclaration, varRefExpression);
 }
 
@@ -9852,6 +10672,8 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
 
 void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp/*=false*/)
 {
+  SgExpression* parentExp;
+
   ROSE_ASSERT(oldExp);
   ROSE_ASSERT(newExp);
   if (oldExp==newExp) return;
@@ -9874,13 +10696,24 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
     isSgForStatement(parent)->set_increment(newExp);
     // TODO: any other cases here??
   }
-  else if(SgMatlabForStatement *matlabFor = isSgMatlabForStatement(parent))
-    {
-      if(matlabFor->get_index() == oldExp)
-        matlabFor->set_index(newExp);
-      else if(matlabFor->get_range() == oldExp)
-        matlabFor->set_range(newExp);
-    }
+  else if(SgMatlabForStatement *matlabFor = isSgMatlabForStatement(parent)) {
+    if(matlabFor->get_index() == oldExp)
+      matlabFor->set_index(newExp);
+    else if(matlabFor->get_range() == oldExp)
+      matlabFor->set_range(newExp);
+    else
+      ROSE_ASSERT(!"sub-expression not found");
+  }
+  else if (SgRangeExp* rngexp = isSgRangeExp(parent)) {
+    if (rngexp->get_start() == oldExp)
+      rngexp->set_start(newExp);
+    else if (rngexp->get_end() == oldExp)
+      rngexp->set_end(newExp);
+    else if (rngexp->get_stride() == oldExp)
+      rngexp->set_stride(newExp);
+    else
+      ROSE_ASSERT(!"sub-expression not found");
+  }
   else if (isSgReturnStmt(parent))
     isSgReturnStmt(parent)->set_expression(newExp);
   else  if (isSgBinaryOp(parent)!=NULL){
@@ -9898,31 +10731,35 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
            isSgUnaryOp(parent)->set_operand_i(newExp);
       else
         ROSE_ASSERT(false);
-  }  else//SgConditionalExp
-  if (isSgConditionalExp(parent)!=NULL){
-     SgConditionalExp *expparent= isSgConditionalExp(parent);//get explicity type parent
-     if (oldExp==expparent->get_conditional_exp()) expparent->set_conditional_exp(newExp);
-     else if (oldExp==expparent->get_true_exp()) expparent->set_true_exp(newExp);
-     else if (oldExp==expparent->get_false_exp()) expparent->set_false_exp(newExp);
+  }
+  else if (isSgConditionalExp(parent) != NULL) {
+     SgConditionalExp* expparent = isSgConditionalExp(parent); //get explicity type parent
+     if (oldExp==expparent->get_conditional_exp())
+        expparent->set_conditional_exp(newExp);
+     else if (oldExp==expparent->get_true_exp())
+        expparent->set_true_exp(newExp);
+     else if (oldExp==expparent->get_false_exp())
+        expparent->set_false_exp(newExp);
      else
-       ROSE_ASSERT(false);
-  } else if (isSgExprListExp(parent)!=NULL)
-  {
-    SgExpressionPtrList & explist = isSgExprListExp(parent)->get_expressions();
-    for (Rose_STL_Container<SgExpression*>::iterator i=explist.begin();i!=explist.end();i++)
+        ROSE_ASSERT(false);
+  }
+  else if (isSgExprListExp(parent) != NULL) {
+    SgExpressionPtrList& explist = isSgExprListExp(parent)->get_expressions();
+    for (Rose_STL_Container<SgExpression*>::iterator i=explist.begin();i!=explist.end();i++) {
       if (isSgExpression(*i)==oldExp) {
-        isSgExprListExp(parent)->replace_expression(oldExp,newExp);
+        SgExprListExp* parentExpListExp = isSgExprListExp(parent);
+        parentExpListExp->replace_expression(oldExp,newExp);
        // break; //replace the first occurrence only??
       }
+    }
   }
-  else if (isSgValueExp(parent))
-  {
+  else if (isSgValueExp(parent)) {
       // For compiler generated code, this could happen.
       // We can just ignore this function call since it will not appear in the final AST.
       return;
   }
-  else if (isSgExpression(parent)) {
-    int worked = isSgExpression(parent)->replace_expression(oldExp, newExp);
+  else if ((parentExp=isSgExpression(parent)) != NULL) {
+    int worked = parentExp->replace_expression(oldExp, newExp);
     // ROSE_DEPRECATED_FUNCTION
     ROSE_ASSERT (worked);
   }
@@ -10064,10 +10901,15 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
 void SageInterface::removeAllOriginalExpressionTrees(SgNode* top) {
   struct Visitor: public AstSimpleProcessing {
     virtual void visit(SgNode* n) {
-      if (isSgValueExp(n)) {
-        isSgValueExp(n)->set_originalExpressionTree(NULL);
-      } else if (isSgCastExp(n)) {
-        isSgCastExp(n)->set_originalExpressionTree(NULL);
+      SgValueExp* valueExp = isSgValueExp(n);
+      if (valueExp != NULL) {
+        valueExp->set_originalExpressionTree(NULL);
+      }
+      else {
+        SgCastExp* cast_exp = isSgCastExp(n);
+        if (cast_exp != NULL) {
+          cast_exp->set_originalExpressionTree(NULL);
+        }
       }
     }
   };
@@ -10083,14 +10925,14 @@ SgSwitchStatement* SageInterface::findEnclosingSwitch(SgStatement* s) {
   return isSgSwitchStatement(s);
 }
 
-//! Find enclosing OpenMP clause body statement from s. If s is already one, return it directly. 
+//! Find enclosing OpenMP clause body statement from s. If s is already one, return it directly.
 SgOmpClauseBodyStatement* SageInterface::findEnclosingOmpClauseBodyStatement(SgStatement* s) {
   while (s && !isSgOmpClauseBodyStatement(s)) {
     s = isSgStatement(s->get_parent());
   }
   // ROSE_ASSERT (s); // s is allowed to be NULL.
   if (s==NULL)
-    return NULL; 
+    return NULL;
   return isSgOmpClauseBodyStatement(s);
 }
 
@@ -10313,7 +11155,7 @@ static SgExpression* SkipCasting (SgExpression* exp)
 }
 
 //! Promote the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable
-bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop) 
+bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop)
 {
   ROSE_ASSERT(loop!=NULL);
 
@@ -10323,7 +11165,7 @@ bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop)
 
   SgStatement* init1 = init.front();
   SgVariableDeclaration* decl = isSgVariableDeclaration(init1);
-  if (decl == NULL) // we only handle for (int i=0; ...) 
+  if (decl == NULL) // we only handle for (int i=0; ...)
     return true;    // the return value is ambiguous: if not int i=0; it is already normalized
 
   SgVariableSymbol* osymbol = getFirstVarSym(decl);
@@ -10334,7 +11176,7 @@ bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop)
   if (isSgAssignInitializer(initor))
   {
     lbast = isSgAssignInitializer(initor)->get_operand();
-  } 
+  }
   else
   { //SgConstructorInitializer etc.
     // other complex declaration statements, such as Decomposition::Iterator ditr(&decomp) should be skipped
@@ -10356,7 +11198,7 @@ bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop)
   os<<ivarname->get_name().getString();
 
   // keep the original variable name if possible
-  SgSymbol * visibleSym = NULL; 
+  SgSymbol * visibleSym = NULL;
   visibleSym = lookupVariableSymbolInParentScopes(ivarname->get_name(), funcBody);
   if (visibleSym != NULL) // if there is a name collision, add suffix to the variable name
   {
@@ -10394,8 +11236,8 @@ bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop)
 
 /*
   int i_norm_1;
-  for (i_norm_1=0; i_norm_1<upper; i_norm_1 ++ ); 
-Becomes: 
+  for (i_norm_1=0; i_norm_1<upper; i_norm_1 ++ );
+Becomes:
   for (int i=0; i< upper; i++) ;
  * */
 bool SageInterface::unnormalizeForLoopInitDeclaration(SgForStatement* loop)
@@ -10404,13 +11246,13 @@ bool SageInterface::unnormalizeForLoopInitDeclaration(SgForStatement* loop)
   //If not previously normalized, nothing to do and return false.
   if (!trans_records.forLoopInitNormalizationTable[loop])
     return false;
-  // retrieve original and new declaration of the previous normalization   
-  SgVariableDeclaration* decl = trans_records.forLoopInitNormalizationRecord[loop].first;   
-  SgVariableDeclaration* ndecl = trans_records.forLoopInitNormalizationRecord[loop].second;   
+  // retrieve original and new declaration of the previous normalization
+  SgVariableDeclaration* decl = trans_records.forLoopInitNormalizationRecord[loop].first;
+  SgVariableDeclaration* ndecl = trans_records.forLoopInitNormalizationRecord[loop].second;
   ROSE_ASSERT (decl!= NULL);
   ROSE_ASSERT (ndecl!= NULL);
-   
-  
+
+
   // Sanity check
   SgStatementPtrList &init = loop ->get_init_stmt();
   ROSE_ASSERT(init.size() ==1); // We only handle one statement case
@@ -10422,16 +11264,16 @@ bool SageInterface::unnormalizeForLoopInitDeclaration(SgForStatement* loop)
   SgAssignOp* assign_op = isSgAssignOp(exp_stmt->get_expression());
   ROSE_ASSERT (assign_op != NULL);
 
-  // remove the new declaration and the current i_norm=1; 
+  // remove the new declaration and the current i_norm=1;
   removeStatement(ndecl);
   removeStatement (exp_stmt);
- 
+
   // restore the original declaration
-  init.push_back(decl);                                                                                                          
-  ROSE_ASSERT (loop->get_for_init_stmt () != NULL);                                                                               
-  // ninit->set_parent(loop);                                                                                                     
-  decl->set_parent(loop->get_for_init_stmt ());     
- 
+  init.push_back(decl);
+  ROSE_ASSERT (loop->get_for_init_stmt () != NULL);
+  // ninit->set_parent(loop);
+  decl->set_parent(loop->get_for_init_stmt ());
+
   // replace variable references
   // current symbol in the AST
   SgVariableSymbol* osymbol = getFirstVarSym(ndecl);
@@ -10447,7 +11289,7 @@ bool SageInterface::unnormalizeForLoopInitDeclaration(SgForStatement* loop)
   }
 
   // clear record: now the loop is not normalized any more
-  trans_records.forLoopInitNormalizationTable[loop] = false; 
+  trans_records.forLoopInitNormalizationTable[loop] = false;
   return true;
 }
 
@@ -10465,7 +11307,7 @@ bool SageInterface::normalizeForLoopTest(SgForStatement* loop)
     if (isSgNullStatement(test_stmt))
       return false;
   }
-#endif  
+#endif
   SgExpression* test = loop->get_test_expr();
   SgExpression* testlhs=NULL, * testrhs=NULL;
   if (isSgBinaryOp(test))
@@ -10501,7 +11343,7 @@ bool SageInterface::normalizeForLoopTest(SgForStatement* loop)
     default:
       return false;
   }
-  return true; 
+  return true;
 }
 bool  SageInterface::normalizeForLoopIncrement(SgForStatement* loop)
 {
@@ -10571,7 +11413,7 @@ bool  SageInterface::normalizeForLoopIncrement(SgForStatement* loop)
       return false;
   }
 
-  return true; 
+  return true;
 }
 //! Normalize a for loop, part of migrating Qing's loop handling into SageInterface
 // Her loop translation does not pass AST consistency tests so we rewrite some of them here
@@ -10808,7 +11650,7 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
        {
          // replace reference to ivar with ivar +/- step*i
          SgExpression* new_exp = NULL;
-         //build replacement  expression for every appearance 
+         //build replacement  expression for every appearance
          if (isPlus) //ivar +/- step * i
          new_exp = buildAddOp(buildVarRefExp(ivar,scope),buildMultiplyOp(copyExpression(step),buildIntVal(i)));
          else
@@ -11149,10 +11991,10 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   SgForStatement* fs = isSgForStatement(loop);
   if (fs == NULL)
   {
-    return NULL;  
+    return NULL;
   }
   // we only handle C/C++ for loops and Fortran Do loops.
-  // Any other kinds of loops (while, do-while,etc.) are skipped and return NULL; 
+  // Any other kinds of loops (while, do-while,etc.) are skipped and return NULL;
   // ROSE_ASSERT (fs != NULL);
 
   //Check initialization statement is something like i=xx;
@@ -11161,7 +12003,7 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   {
     cerr<<"SageInterface::getLoopIndexVariable(), no or more than one initialization statements are encountered. Not supported yet "<<endl;
     //ROSE_ASSERT(false);
-    return NULL; 
+    return NULL;
   }
   SgStatement* init1 = init.front();
   SgExpression* ivarast=NULL;
@@ -11214,7 +12056,7 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
       cerr<<"Init statement is :"<<init1->class_name() <<" " <<init1->unparseToString()<<endl;
       init1->get_file_info()->display("Debug");
     }
-    return NULL; 
+    return NULL;
     //ROSE_ASSERT (false);
   }
   // Cannot be both true
@@ -11262,7 +12104,7 @@ bool SageInterface::hasMultipleInitStatmentsOrExpressions (SgForStatement* loop)
   if (stmt_list.size() == 0) return false;
 
 //  generateDOTforMultipleFile(*getProject());
-  //single variable declaration statement, like int i; 
+  //single variable declaration statement, like int i;
   SgVariableDeclaration* decl_stmt = isSgVariableDeclaration(stmt_list[0]);
   if (decl_stmt != NULL)
     return false;
@@ -11270,7 +12112,7 @@ bool SageInterface::hasMultipleInitStatmentsOrExpressions (SgForStatement* loop)
   // single statement, but with comma expression (i=0, j=0)
   SgExprStatement* exp_stmt = isSgExprStatement(stmt_list[0]);
   ROSE_ASSERT (exp_stmt != NULL);
-  if (isSgCommaOpExp (exp_stmt->get_expression()) ) 
+  if (isSgCommaOpExp (exp_stmt->get_expression()) )
   {
      return true;
   }
@@ -11442,19 +12284,19 @@ For Fortran:
 */
 bool isStructuredBlock(SgStatement* s)
 {
-  bool rt = true; 
+  bool rt = true;
   ROSE_ASSERT (s != NULL);
 
-  // contain break; 
+  // contain break;
   std::set<SgNode*>  bset = SgNodeHelper::loopRelevantBreakStmtNodes (s);
-  if (bset.size()!=0 ) 
+  if (bset.size()!=0 )
     rt = false;
   //TODO: contain goto statement, jumping to outside targets
-  // longjump(), throw(), 
+  // longjump(), throw(),
   // calls to exit() are allowed.
 
-  return rt; 
-  
+  return rt;
+
 }
 
 //! Based on AstInterface::IsFortranLoop() and ASTtools::getLoopIndexVar()
@@ -11599,12 +12441,12 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
       if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_lhs_operand()))) {
         // cases : var + incr, var - incr
         incr_var=varRefExp;
-        stepast=isSgBinaryOp(incr)->get_rhs_operand();
+        stepast=isSgBinaryOp(arithOp)->get_rhs_operand();
       } else if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_rhs_operand()))) {
         if(isSgAddOp(arithOp)) {
           // case : incr + var (not allowed: incr-var)
           incr_var=varRefExp;
-          stepast=isSgBinaryOp(incr)->get_lhs_operand();
+          stepast=isSgBinaryOp(arithOp)->get_lhs_operand();
         }
       }
       break;
@@ -11912,18 +12754,18 @@ bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, 
 bool SageInterface::mergeAssignmentWithDeclaration(SgExprStatement* assign_stmt, SgVariableDeclaration* decl, bool removeAssignStmt /*= true*/)
 {
   bool rt= true;
-  ROSE_ASSERT(decl != NULL);   
-  ROSE_ASSERT(assign_stmt != NULL);   
+  ROSE_ASSERT(decl != NULL);
+  ROSE_ASSERT(assign_stmt != NULL);
 
-  // Sanity check of assign statement: must be a form of var = xxx; 
+  // Sanity check of assign statement: must be a form of var = xxx;
   SgAssignOp * assign_op = isSgAssignOp (assign_stmt->get_expression());
-  if (assign_op == NULL) 
+  if (assign_op == NULL)
     return false;
   SgVarRefExp* assign_op_var = isSgVarRefExp(assign_op->get_lhs_operand());
   if (assign_op_var == NULL) return false;
 
   // Sanity check of the variable declaration: it should not have an existing initializer
-  SgInitializedName * decl_var = SageInterface::getFirstInitializedName (decl); 
+  SgInitializedName * decl_var = SageInterface::getFirstInitializedName (decl);
   if (decl_var->get_initptr()!= NULL ) return false;
 
   // check if two variables match
@@ -11940,7 +12782,7 @@ bool SageInterface::mergeAssignmentWithDeclaration(SgExprStatement* assign_stmt,
   else
   { // fallback to comparing variable names instead
     // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
-    // if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL; 
+    // if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL;
     if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return false;
   }
 
@@ -11948,19 +12790,19 @@ bool SageInterface::mergeAssignmentWithDeclaration(SgExprStatement* assign_stmt,
   SgExpression * rhs_copy = SageInterface::copyExpression(assign_op->get_rhs_operand());
 
   // Must preserve the proprecessing information of the original assign_stmt
-  // use appending (not prepending) so the order of decl's comments and assign_stmt's comments can be preserved 
+  // use appending (not prepending) so the order of decl's comments and assign_stmt's comments can be preserved
    SageInterface::movePreprocessingInfo(assign_stmt, decl, PreprocessingInfo::before, PreprocessingInfo::before, false);
 
   // removeStatement() does not support removing a statement which is not inside a container.
   // But sometimes we do need to remove such a statement and replace it with a new one.
   // As a workaround, we allow users to optionally disabling removing here and handle the removal on their own.
-  // TODO: improve removeStatement() which uses low level rewritting. 
+  // TODO: improve removeStatement() which uses low level rewritting.
   if (removeAssignStmt)
     SageInterface::removeStatement (assign_stmt);
 //  SageInterface::deepDelete (assign_stmt);
   SgAssignInitializer * initor = SageBuilder::buildAssignInitializer (rhs_copy);
   decl_var->set_initptr(initor);
-  initor->set_parent(decl_var);  
+  initor->set_parent(decl_var);
 
   return rt;
 }
@@ -11968,49 +12810,54 @@ bool SageInterface::mergeAssignmentWithDeclaration(SgExprStatement* assign_stmt,
 bool SageInterface::mergeDeclarationWithAssignment(SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
 {
   bool rt= true;
-  ROSE_ASSERT(decl != NULL);   
-  ROSE_ASSERT(assign_stmt != NULL);   
 
-  // Sanity check of assign statement: must be a form of var = xxx; 
+  // Sanity check of assign statement: must be a form of var = xxx;
+  ROSE_ASSERT(assign_stmt != NULL);
   SgAssignOp * assign_op = isSgAssignOp (assign_stmt->get_expression());
-  if (assign_op == NULL) 
+  if (assign_op == NULL)
     return false;
   SgVarRefExp* assign_op_var = isSgVarRefExp(assign_op->get_lhs_operand());
-  if (assign_op_var == NULL) return false;
+  if (assign_op_var == NULL)
+    return false;
 
   // Sanity check of the variable declaration: it should not have an existing initializer
-  SgInitializedName * decl_var = SageInterface::getFirstInitializedName (decl); 
-  if (decl_var->get_initptr()!= NULL ) return false;
+  ROSE_ASSERT(decl != NULL);
+  SgInitializedName * decl_var = SageInterface::getFirstInitializedName (decl);
+  if (decl_var->get_initptr()!= NULL)
+     return false;
 
   // check if two variables match
   // In translation, it is possible the declaration has not yet been inserted into its scope.
   // finding its symbol can return NULL.
   // But we still want to do the merge.
+  ROSE_ASSERT(decl_var != NULL);
   SgSymbol* decl_var_symbol = decl_var->get_symbol_from_symbol_table();
-  if (decl_var_symbol!=NULL)
-  {
+  if (decl_var_symbol != NULL) {
     // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
-    // if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
-    if (assign_op_var->get_symbol() != decl_var_symbol)  return false;
+    // if (assign_op_var->get_symbol() != decl_var_symbol)
+    //    return NULL;
+    if (assign_op_var->get_symbol() != decl_var_symbol)
+       return false;
   }
   else
   { // fallback to comparing variable names instead
     // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
-    // if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL; 
-    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return false; 
+    // if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL;
+    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name())
+       return false;
   }
 
   // Everything looks fine now. Do the merge.
-  // It is implemented by 
-  // 1. copy rhs to the decl's rhs, 
-  // 2. then move the decl to the place of the assignment, 
+  // It is implemented by
+  // 1. copy rhs to the decl's rhs,
+  // 2. then move the decl to the place of the assignment,
   // 3. then remove the assignment
   //
   // Copy rhs to be initializer
   SgExpression * rhs_copy = SageInterface::copyExpression(assign_op->get_rhs_operand());
   SgAssignInitializer * initor = SageBuilder::buildAssignInitializer (rhs_copy);
   decl_var->set_initptr(initor);
-  initor->set_parent(decl_var);  
+  initor->set_parent(decl_var);
 
   // move proprocessing info. attached before decl to its next statement's front, using prepending to preserve the original order
   SgStatement* next_stmt = SageInterface::getNextStatement (decl);
@@ -12019,26 +12866,26 @@ bool SageInterface::mergeDeclarationWithAssignment(SgVariableDeclaration* decl, 
   // removeStatement() does not support removing a statement which is not inside a container.
   // But sometimes we do need to remove such a statement and replace it with a new one.
   // As a workaround, we allow users to optionally disabling removing here and handle the removal on their own.
-  // TODO: improve removeStatement() which uses low level rewritting. 
+  // TODO: improve removeStatement() which uses low level rewritting.
 
-  // Now move the declaration to a new position, right before the assignment statement 
+  // Now move the declaration to a new position, right before the assignment statement
   SageInterface::removeStatement (decl);
   SageInterface::insertStatementBefore(assign_stmt, decl, false);
-  
+
   // preserve preprocessing info. attached to assign_stmt before removing it  , using append (last false)
   SageInterface::movePreprocessingInfo(assign_stmt, decl, PreprocessingInfo::before, PreprocessingInfo::before, false);
 
   // Original assignment statement should be removed
   SageInterface::removeStatement (assign_stmt);
   //  SageInterface::deepDelete (decl);
-  
+
   return rt;
 }
-// Split a variable declaration with an rhs assignment into two statements: a declaration and an assignment. 
+// Split a variable declaration with an rhs assignment into two statements: a declaration and an assignment.
 // Return the generated assignment statement, if any
 SgExprStatement* SageInterface::splitVariableDeclaration (SgVariableDeclaration* decl)
 {
-  SgExprStatement* rt = NULL; 
+  SgExprStatement* rt = NULL;
   ROSE_ASSERT (decl != NULL);
 
   SgInitializedName * decl_var = SageInterface::getFirstInitializedName (decl);
@@ -12054,18 +12901,18 @@ SgExprStatement* SageInterface::splitVariableDeclaration (SgVariableDeclaration*
     decl_var->set_initptr(NULL);
     //TODO clean up initor
     insertStatementAfter ( decl, rt );
-   }  
+   }
 
-  return rt; 
+  return rt;
 }
 //! Split declarations within a scope into declarations and assignment statements, by default only top level declarations are considered.
 ROSE_DLL_API int SageInterface::splitVariableDeclaration (SgScopeStatement* scope, bool topLevelOnly /* = true */)
 {
-  int count = 0; 
+  int count = 0;
   if (!topLevelOnly)
   {
     cerr<<"SageInterface::splitVariableDeclaration() topLevelOnly == false is not yet implemented."<<endl;
-    ROSE_ASSERT (false);  
+    ROSE_ASSERT (false);
   }
 
   Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(scope, V_SgVariableDeclaration);
@@ -12074,6 +12921,7 @@ ROSE_DLL_API int SageInterface::splitVariableDeclaration (SgScopeStatement* scop
     SgVariableDeclaration *decl= isSgVariableDeclaration(*i);
     if (topLevelOnly)
     {
+      ROSE_ASSERT(decl != NULL);
       if (decl->get_scope() == scope)
       {
         splitVariableDeclaration (decl);
@@ -12081,13 +12929,13 @@ ROSE_DLL_API int SageInterface::splitVariableDeclaration (SgScopeStatement* scop
       }
     }
   }
-  return count; 
+  return count;
 }
 
 void SageInterface::collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* > & result)
 {
-  ROSE_ASSERT (root != NULL);    
-//  std::vector<SgVarRefExp* > result; 
+  ROSE_ASSERT (root != NULL);
+//  std::vector<SgVarRefExp* > result;
 
   Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(root, V_SgVarRefExp);
   // AST query won't find variables used in types
@@ -12098,7 +12946,7 @@ void SageInterface::collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp*
     SgVarRefExp *vRef = isSgVarRefExp(*i);
     ROSE_ASSERT (vRef != NULL);
     result.push_back(vRef);
-  } 
+  }
 }
 
 int SageInterface::collectVariableReferencesInArrayTypes(SgLocatedNode* root, Rose_STL_Container<SgNode*> & currentVarRefList)
@@ -12208,12 +13056,14 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
   ROSE_ASSERT(from != NULL);
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+#if 0  // This is not accurate for template class specializations. We disable this assertion for now. The worst case is compilation error later.
   if (!SageInterface::isCopyConstructible(from->get_type())) {
     std::cerr << "Type " << from->get_type()->unparseToString() << " of expression " << from->unparseToString() << " is not copy constructible" << std::endl;
     ROSE_ASSERT (false);
   }
 
   assert (SageInterface::isCopyConstructible(from->get_type())); // How do we report errors?
+#endif
   SgStatement* stmt = getStatementOfExpression(from);
   assert (stmt);
   if (!isSgForInitStatement(stmt->get_parent())) {
@@ -12423,8 +13273,8 @@ void
 // SageInterface::setParameterList(SgFunctionDeclaration * func,SgFunctionParameterList * paralist)
 SageInterface::setParameterList(actualFunction * func,SgFunctionParameterList * paralist)
    {
-  // DQ (11/25/2011): Modified this to be a templated function so that we can handle both 
-  // SgFunctionDeclaration and SgTemplateFunctionDeclaration (and their associated member 
+  // DQ (11/25/2011): Modified this to be a templated function so that we can handle both
+  // SgFunctionDeclaration and SgTemplateFunctionDeclaration (and their associated member
   // function derived classes).
 
      ROSE_ASSERT(func);
@@ -12450,7 +13300,7 @@ SageInterface::setParameterList(actualFunction * func,SgFunctionParameterList * 
    }
 #endif
 
-// static 
+// static
 SgVariableSymbol* addArg(SgFunctionParameterList *paraList, SgInitializedName* initName, bool isPrepend)
    {
      ROSE_ASSERT(paraList != NULL);
@@ -12490,7 +13340,7 @@ SgVariableSymbol* addArg(SgFunctionParameterList *paraList, SgInitializedName* i
             // nondefining declaration, set scope only, currently set to decl's scope, TODO
                scope = func_decl->get_scope();
              }
- 
+
        // fix up declptr of the init name
           initName->set_declptr(func_decl);
         }
@@ -12569,6 +13419,10 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
      ROSE_ASSERT(scope != NULL);
 
 #if 0
+     printf ("In SageInterface::appendStatement(): stmt = %p = %s scope = %p = %s \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+
+#if 0
   // DQ (2/2/2010): This fails in the projects/OpenMP_Translator "make check" tests.
   // DQ (1/2/2010): Introducing test that are enforced at lower levels to catch errors as early as possible.
      SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
@@ -12626,8 +13480,8 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
 #endif
 
        // DQ (6/26/2013): Don't just check for SgTemplateInstantiationDecl, but also for SgClassDeclaration.
-       // DQ (6/9/2013): Check if this is a SgTemplateInstantiationDecl, since it might be appearing 
-       // twice as a result of a template argument being instantiated and we only want to add it into 
+       // DQ (6/9/2013): Check if this is a SgTemplateInstantiationDecl, since it might be appearing
+       // twice as a result of a template argument being instantiated and we only want to add it into
        // the scope once.  This happens for test2013_198.C and I can't find a better solution.
        // if (isSgTemplateInstantiationDecl(classDeclaration) != NULL && scope->containsOnlyDeclarations() == true)
           if (classDeclaration != NULL && scope->containsOnlyDeclarations() == true)
@@ -12674,7 +13528,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
         }
 
 #if 0
-  // DQ (6/26/2013): This is an attempt to support better testing of possible redundant statements 
+  // DQ (6/26/2013): This is an attempt to support better testing of possible redundant statements
   // that would be inserted into the current scope. This is however a bit expensive so we are using
   // this as a way to also debug the new cases where this happens.
      bool statementAlreadyExistsInScope = scope->statementExistsInScope(stmt);
@@ -12712,17 +13566,17 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
 #endif
           scope->insertStatementInScope(stmt,false);
 
-       // DQ (6/9/2013): Added comment only: This is needed because some declaration have to have the 
-       // setting of there paremtn pointes delayed until now based on if they appear nested inside of 
+       // DQ (6/9/2013): Added comment only: This is needed because some declaration have to have the
+       // setting of there paremtn pointes delayed until now based on if they appear nested inside of
        // other declarations (e.g. "typedef struct { int x; } y;").
           stmt->set_parent(scope); // needed?
         }
 #endif
 
-  // DQ (11/19/2012): If we are building the AST within the front-end then don't do this expensive 
-  // fixup (we already set it properly in the AST construction within the frontend so we don't need 
-  // this).  Also since this is only operating within a single scope it is likely too specific to C 
-  // instead of addressing the details of C++ where functions can be placed in alternative scopes and 
+  // DQ (11/19/2012): If we are building the AST within the front-end then don't do this expensive
+  // fixup (we already set it properly in the AST construction within the frontend so we don't need
+  // this).  Also since this is only operating within a single scope it is likely too specific to C
+  // instead of addressing the details of C++ where functions can be placed in alternative scopes and
   // use name qualification).
   // update the links after insertion!
   // if (isSgFunctionDeclaration(stmt))
@@ -12734,7 +13588,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
 
 #if 0
   // DQ (6/26/2013): Turn on this test for debugging ROSE compiling rose.h header file.
-  // Note that this is a stronger AST subtree test and not the weaker test for a redundant 
+  // Note that this is a stronger AST subtree test and not the weaker test for a redundant
   // statement in a single scope.
   // DQ (9/1/2012): this is a debugging mode that we need to more easily turn on and off.
   // DQ (4/3/2012): Added test to make sure that the pointers are unique.
@@ -12754,7 +13608,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgForInitStatement* for_i
      printf ("In SageInterface::appendStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
 
-  // DQ (12/2/2015): If this is a moved statement then cause it to update internal data structures 
+  // DQ (12/2/2015): If this is a moved statement then cause it to update internal data structures
   // to record it being moved (and thus the macroExpansions that it might be associated with having
   // to force the macroExpansion's associated statements to be marked as a transformation.
      resetInternalMapsForTargetStatement(stmt);
@@ -12763,7 +13617,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgForInitStatement* for_i
      printf ("In SageInterface::appendStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: scope) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
 
-  // DQ (12/2/2015): Also look at the statements on either side of the location where this statement 
+  // DQ (12/2/2015): Also look at the statements on either side of the location where this statement
   // is being inserted to make sure that they are not a part of a macro expansion. In the case of
   // prepend, we only need to look at the scope.
      resetInternalMapsForTargetStatement(for_init_stmt);
@@ -12772,7 +13626,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgForInitStatement* for_i
 }
 
 void
-SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) 
+SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope)
    {
      for (size_t i = 0; i < stmts.size(); ++i)
         {
@@ -12783,7 +13637,7 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
 #endif
 #endif
         appendStatement(stmts[i], scope); // Liao 5/15/2013, defer the logic of checking parent pointers to appendStatement()
-#if 0        
+#if 0
           if (stmts[i]->get_parent() != NULL)
              {
 #if 0
@@ -12797,7 +13651,7 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
              {
                printf ("   --- WARNING: In appendStatementList(): stmts[i = %" PRIuPTR "] not added to scope (because stmts[i]->get_parent() == NULL) \n",i);
              }
-#endif        
+#endif
         }
    }
 
@@ -12805,8 +13659,16 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
 void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
    {
      ROSE_ASSERT (stmt != NULL);
+
+#if 0
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p \n",stmt,stmt->class_name().c_str(),scope);
+#endif
+
      if (scope == NULL)
+        {
           scope = SageBuilder::topScopeStack();
+        }
+
      ROSE_ASSERT(scope != NULL);
   // TODO handle side effect like SageBuilder::appendStatement() does
 
@@ -12815,30 +13677,36 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
      fixStatement(stmt,scope);
 
 #if 0
-     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",
+          stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
 
-  // DQ (12/1/2015): If this is a moved statement then cause it to update internal data structures 
+  // DQ (12/1/2015): If this is a moved statement then cause it to update internal data structures
   // to record it being moved (and thus the macroExpansions that it might be associated with having
   // to force the macroExpansion's associated statements to be marked as a transformation.
      resetInternalMapsForTargetStatement(stmt);
 
 #if 0
-     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: scope) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: scope) \n",
+          stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
 
-  // DQ (12/1/2015): Also look at the statements on either side of the location where this statement 
+  // DQ (12/1/2015): Also look at the statements on either side of the location where this statement
   // is being inserted to make sure that they are not a part of a macro expansion. In the case of
   // prepend, we only need to look at the scope.
      resetInternalMapsForTargetStatement(scope);
 
+#if 0
+     printf ("Calling insertStatementInScope() \n");
+#endif
+
      scope->insertStatementInScope(stmt,true);
      stmt->set_parent(scope); // needed?
 
-  // DQ (11/19/2012): If we are building the AST within the front-end then don't do this expensive 
-  // fixup (we already set it properly in the AST construction within the frontend so we don't need 
-  // this).  Also since this is only operating within a single scope it is likely too specific to C 
-  // instead of addessing the details of C++ where functions can be placed in alternative scopes and 
+  // DQ (11/19/2012): If we are building the AST within the front-end then don't do this expensive
+  // fixup (we already set it properly in the AST construction within the frontend so we don't need
+  // this).  Also since this is only operating within a single scope it is likely too specific to C
+  // instead of addessing the details of C++ where functions can be placed in alternative scopes and
   // use name qualification).
   // update the links after insertion!
   // if (isSgFunctionDeclaration(stmt))
@@ -12848,7 +13716,11 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
           updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
         }
 
+#if 0
+     printf ("Leaving SageInterface::prependStatement() \n");
+#endif
    } // prependStatement()
+
 
 //! Prepend a statement to the beginning of SgForInitStatement
 void SageInterface::prependStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt)
@@ -12860,7 +13732,7 @@ void SageInterface::prependStatement(SgStatement *stmt, SgForInitStatement* for_
      printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
 
-  // DQ (12/2/2015): If this is a moved statement then cause it to update internal data structures 
+  // DQ (12/2/2015): If this is a moved statement then cause it to update internal data structures
   // to record it being moved (and thus the macroExpansions that it might be associated with having
   // to force the macroExpansion's associated statements to be marked as a transformation.
      resetInternalMapsForTargetStatement(stmt);
@@ -12869,7 +13741,7 @@ void SageInterface::prependStatement(SgStatement *stmt, SgForInitStatement* for_
      printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: scope) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
 
-  // DQ (12/2/2015): Also look at the statements on either side of the location where this statement 
+  // DQ (12/2/2015): Also look at the statements on either side of the location where this statement
   // is being inserted to make sure that they are not a part of a macro expansion. In the case of
   // prepend, we only need to look at the scope.
      resetInternalMapsForTargetStatement(for_init_stmt);
@@ -12927,7 +13799,7 @@ bool  SageInterface::hasSimpleChildrenList (SgScopeStatement* scope)
 // DQ (11/21/2018): We need to sometimes insert something after the last statement of the collection from rose_edg_required_macros_and_functions.h.
 SgStatement* SageInterface::lastFrontEndSpecificStatement( SgGlobal* globalScope )
    {
-  // When inserting a statement into global scope, if inserting at the top of scope it is best to insert 
+  // When inserting a statement into global scope, if inserting at the top of scope it is best to insert
   // after the last statement from the preinclude file rose_edg_required_macros_and_functions.h.
 
      SgDeclarationStatementPtrList & declarationList = globalScope->get_declarations();
@@ -13258,10 +14130,10 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                        {
                          if (SgUpcForAllStatement* p = isSgUpcForAllStatement(parent))
                             {
-                              const bool stmt_present = (p->get_loop_body() == targetStmt || p->get_test() == targetStmt);
+                              //const bool stmt_present = (p->get_loop_body() == targetStmt || p->get_test() == targetStmt);
 
                           // \pp \todo what if !stmt_present
-                              ROSE_ASSERT(stmt_present);
+                           // ROSE_ASSERT(stmt_present != NULL);
                               insertStatement(p, newStmt, insertBefore);
                             }
                            else
@@ -13272,22 +14144,24 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                                    p->set_body(newparent);
                                    newparent->set_parent(parent);
                                    insertStatement(targetStmt, newStmt,insertBefore);
-                                }
+                                 }
                                else
                                  {
                                 // It appears that all of the recursive calls are untimately calling this location.
-                                   isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
+                                   SgStatement* stmnt = isSgStatement(parent);
+                                   ROSE_ASSERT(stmnt != NULL);
+                                   stmnt->insert_statement(targetStmt,newStmt,insertBefore);
                                  }
                             }
                        }
                   }
              }
         }
-     
-  // DQ (11/19/2012): If we are building the AST within the front-end then don't do this expensive 
-  // fixup (we already set it properly in the AST construction within the frontend so we don't need 
-  // this).  Also since this is only operating within a single scope it is likely too specific to C 
-  // instead of addessing the details of C++ where functions can be placed in alternative scopes and 
+
+  // DQ (11/19/2012): If we are building the AST within the front-end then don't do this expensive
+  // fixup (we already set it properly in the AST construction within the frontend so we don't need
+  // this).  Also since this is only operating within a single scope it is likely too specific to C
+  // instead of addessing the details of C++ where functions can be placed in alternative scopes and
   // use name qualification).
   // update the links after insertion!
   // if (isSgFunctionDeclaration(newStmt))
@@ -13304,18 +14178,18 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
    }
 
 
-void SageInterface::insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore) 
+void SageInterface::insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore)
    {
-     if (insertBefore) 
+     if (insertBefore)
         {
-          for (size_t i = 0; i < newStmts.size(); ++i) 
+          for (size_t i = 0; i < newStmts.size(); ++i)
              {
                insertStatementBefore(targetStmt, newStmts[i]);
              }
         }
        else
         {
-          for (size_t i = newStmts.size(); i > 0; --i) 
+          for (size_t i = newStmts.size(); i > 0; --i)
              {
                insertStatementAfter(targetStmt, newStmts[i - 1]);
              }
@@ -13433,7 +14307,7 @@ void SageInterface::setOperand(SgExpression* target, SgExpression* operand)
          isSgAssignInitializer (target)->set_operand(operand);
          break;
       default:
-        if (isSgUnaryOp(target)!=NULL) 
+        if (isSgUnaryOp(target)!=NULL)
           isSgUnaryOp(target)->set_operand_i(operand);
         else
           {
@@ -13708,19 +14582,7 @@ void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScope
                     printf ("namedType_nondefiningDecl->get_declaration() = %p = %s \n",namedType_nondefiningDecl->get_declaration(),namedType_nondefiningDecl->get_declaration()->class_name().c_str());
                   }
              }
-          ROSE_ASSERT(defdecl->get_type() == nondefdecl->get_type());
-
-          if (defdecl->get_type() != nondefdecl->get_type())
-             {
-               if (defdecl->get_type())
-                  {
-                    printf ("WARNING: In SageInterface::fixStructDeclaration(): skipped calling delete on (defdecl = %p = %s) defdecl->get_type() = %p = %s \n",defdecl,defdecl->class_name().c_str(),defdecl->get_type(),defdecl->get_type()->class_name().c_str());
-                 // delete defdecl->get_type();
-                  }
-               defdecl->set_type(nondefdecl->get_type());
-             }
-          ROSE_ASSERT (defdecl->get_type() != NULL);
-          ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
+          //ROSE_ASSERT(defdecl->get_type() == nondefdecl->get_type());
         }
    }
 
@@ -13805,7 +14667,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
           printf ("  -- initName->get_scope() = %p (%s)\n", initName->get_scope(), initName->get_scope() ? initName->get_scope()->class_name().c_str() : "");
 #endif
 
-       // DQ (11/19/2011): When used with C++, the variable may already have an associated scope 
+       // DQ (11/19/2011): When used with C++, the variable may already have an associated scope
        // and be using name qualification, so might not be associated with the current scope.
           SgScopeStatement* requiredScope = scope;
           SgScopeStatement* preAssociatedScope = initName->get_scope();
@@ -13829,7 +14691,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
        // DQ (7/12/2012): This is not correct for C++, so don't set it here (unless we use the current scope instead of scope).
        // Yes, let's set it to the current top of the scope stack.  This might be a problem if the scope stack is not being used...
        // varDecl->set_parent(scope);
-        if (topScopeStack() != NULL) 
+        if (topScopeStack() != NULL)
         {
           varDecl->set_parent(topScopeStack());
           ROSE_ASSERT(varDecl->get_parent() != NULL);
@@ -13858,7 +14720,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
                     }
                     ROSE_ASSERT(varSymbol);
 
-                 // DQ (5/16/2013): We now want to use the SgScopeStatement::insert_symbol() functions since we put 
+                 // DQ (5/16/2013): We now want to use the SgScopeStatement::insert_symbol() functions since we put
                  // the complexity of handling namespaces into the implementation of that function.
                     scope->insert_symbol(name, varSymbol);
                   }
@@ -13876,7 +14738,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
                     initName->set_prev_decl_item(prev_decl);
 
                ROSE_ASSERT(initName->get_prev_decl_item() != initName);
-               
+
              } //end if
         } //end for
 
@@ -13890,7 +14752,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
         }
    }
 
-int SageInterface::fixVariableReferences(SgNode* root)
+int SageInterface::fixVariableReferences(SgNode* root, bool cleanUnusedSymbols/*=true*/)
 {
   ROSE_ASSERT(root);
   int counter=0;
@@ -14039,7 +14901,8 @@ int SageInterface::fixVariableReferences(SgNode* root)
     }
   } // end for
   // Liao 2/1/2013: delete unused initname and symbol, considering possible use by the current subtree from root node
-  clearUnusedVariableSymbols(root); 
+  if (cleanUnusedSymbols)
+    clearUnusedVariableSymbols(root);
   return counter;
 }
 
@@ -14143,12 +15006,17 @@ void SageInterface::fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* 
 
 //! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelR
 //efExp are created transparently as needed.
-void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value)
+void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value,
+                                           SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope)
    {
      ROSE_ASSERT (stmt != NULL);
      ROSE_ASSERT (label_value >0 && label_value <=99999); //five digits for Fortran label
 
-     SgScopeStatement* label_scope = getEnclosingFunctionDefinition(stmt);
+  // Added optional label_type and label_scope [Rasmussen 2019.01.20]
+     if (label_scope == NULL)
+        {
+           label_scope = getEnclosingFunctionDefinition(stmt);
+        }
      ROSE_ASSERT (label_scope != NULL);
      SgName label_name(StringUtility::numberToString(label_value));
      SgLabelSymbol * symbol = label_scope->lookup_label_symbol (label_name);
@@ -14171,8 +15039,27 @@ void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value)
 
   // SgLabelRefExp
      SgLabelRefExp* ref_exp = buildLabelRefExp(symbol);
-     stmt->set_numeric_label(ref_exp);
      ref_exp->set_parent(stmt);
+
+     switch(label_type)
+       {
+         case SgLabelSymbol::e_start_label_type:
+            {
+              stmt->set_numeric_label(ref_exp);
+              break;
+            }
+         case SgLabelSymbol::e_end_label_type:
+            {
+              stmt->set_end_numeric_label(ref_exp);
+              break;
+            }
+         default:
+            {
+               std::cerr << "SageInterface::setFortranNumericLabel: unimplemented for label_type " << label_type << "\n";
+               ROSE_ASSERT(0);  // NOT IMPLEMENTED
+            }
+       }
+
    }
 
 
@@ -14231,11 +15118,13 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
 
   // Liao 4/23/2010,  Fix function symbol
   // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
+  // Added SgProgramHeaderStatement [Rasmussen, 2020.01.19]
      SgFunctionDeclaration               * func         = isSgFunctionDeclaration(stmt);
      SgMemberFunctionDeclaration         * mfunc        = isSgMemberFunctionDeclaration(stmt);
      SgTemplateFunctionDeclaration       * tfunc        = isSgTemplateFunctionDeclaration(stmt);
      SgTemplateMemberFunctionDeclaration * tmfunc       = isSgTemplateMemberFunctionDeclaration(stmt);
      SgProcedureHeaderStatement          * procfunc     = isSgProcedureHeaderStatement(stmt);
+     SgProgramHeaderStatement            * progfunc     = isSgProgramHeaderStatement(stmt);
 
      if (tmfunc != NULL)
        assert(tmfunc->variantT() == V_SgTemplateMemberFunctionDeclaration);
@@ -14245,6 +15134,8 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
        assert(tfunc->variantT() == V_SgTemplateFunctionDeclaration);
      else if (procfunc != NULL)
         assert(procfunc->variantT() == V_SgProcedureHeaderStatement);
+     else if (progfunc != NULL)
+        assert(progfunc->variantT() == V_SgProgramHeaderStatement);
      else if (func != NULL)
        assert(func->variantT() == V_SgFunctionDeclaration || func->variantT() == V_SgTemplateInstantiationFunctionDecl);
      else assert(false);
@@ -14255,8 +15146,8 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
 #endif
 
   // DQ (12/3/2011): This is a scary piece of code, but I think it is OK now!
-  // It is an error to put the symbol for a function into the current scope if the function's scope 
-  // is explicitly set to be different.  So this should be allowed only if the function's scope is 
+  // It is an error to put the symbol for a function into the current scope if the function's scope
+  // is explicitly set to be different.  So this should be allowed only if the function's scope is
   // not explicitly set, or if the scopes match.  This is an example of something different for C++
   // than for C or other simpler languages.
   // If the scope of the function is not set, or if it matches the current scope then allow this step.
@@ -14301,6 +15192,11 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
             func_symbol = scope->lookup_function_symbol (procfunc->get_name(), procfunc->get_type());
             assert(func_symbol != NULL);
           }
+          else if (progfunc != NULL)
+          {
+            func_symbol = scope->lookup_function_symbol (progfunc->get_name(), progfunc->get_type());
+            assert(func_symbol != NULL);
+          }
           else if (func != NULL)
           {
 #if 0
@@ -14321,7 +15217,7 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
                  scope->insert_symbol(func->get_name(), func_symbol);
                }
           }
-          else 
+          else
           {
             assert(false);
           }
@@ -14393,8 +15289,8 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
           printf ("In SageInterface::fixStatement(): stmt->get_scope() = %p \n",stmt->get_scope());
 
        // DQ (12/3/2011): This is a scary piece of code, but I think it is OK now!
-       // It is an error to put the symbol for a function into the current scope if the function's scope 
-       // is explicitly set to be different.  So this should be allowed only if the function's scope is 
+       // It is an error to put the symbol for a function into the current scope if the function's scope
+       // is explicitly set to be different.  So this should be allowed only if the function's scope is
        // not explicitly set, or if the scopes match.  This is an example of something different for C++
        // than for C or other simpler languages.
        // If the scope of the function is not set, or if it matches the current scope then allow this step.
@@ -14430,9 +15326,9 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
 #if 0
        // Fix local symbol, a symbol directly refer to this function declaration
        // This could happen when a non-defining func decl is copied, the corresonding symbol will point to the original source func
-       // symbolTable->find(this) used inside get_symbol_from_symbol_table()  won't find the copied decl 
+       // symbolTable->find(this) used inside get_symbol_from_symbol_table()  won't find the copied decl
           SgSymbol* local_symbol = func ->get_symbol_from_symbol_table();
-          if (local_symbol == NULL) // 
+          if (local_symbol == NULL) //
              {
                if (func->get_definingDeclaration() == NULL) // prototype function
                   {
@@ -14454,8 +15350,8 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
         }
 
 #if 0
-  // DQ (12/4/2011): This WAS not the correct behavior for C++ since declarations can appear structureally in different 
-  // scopes than where the are positioned (e.g. member functions defined outside of there associated class). 
+  // DQ (12/4/2011): This WAS not the correct behavior for C++ since declarations can appear structureally in different
+  // scopes than where the are positioned (e.g. member functions defined outside of there associated class).
   // This this code is very dangerous.
 
   // fix scope pointer for statements explicitly storing scope pointer
@@ -14469,7 +15365,7 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
           case V_SgMemberFunctionDeclaration:
           case V_SgTemplateInstantiationFunctionDecl:
              {
-            // DQ (12/4/2011): We can't just set the scope this simily (except in C).  In C++ the scope should have 
+            // DQ (12/4/2011): We can't just set the scope this simily (except in C).  In C++ the scope should have
             // already been set or we can let it default to the current scope where it si located structurally.
             // stmt->set_scope(scope);
                 if ( (stmt->hasExplicitScope() == true) && (stmt->get_scope() == NULL) )
@@ -14514,7 +15410,7 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
  */
 void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatement* scope)
    {
-  // DQ (11/19/2012): Note that this appears to be an expensive function presently taking 22.5% of the total time 
+  // DQ (11/19/2012): Note that this appears to be an expensive function presently taking 22.5% of the total time
   // to process the tests/CompilerTests/Cxx_tests/rosePerformance.C file.  So this is a performance problem.
 
      ROSE_ASSERT(func != NULL && scope != NULL);
@@ -14538,7 +15434,7 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
      SgFunctionDeclaration* firstNondefiningFunctionDeclaration = isSgFunctionDeclaration(func->get_firstNondefiningDeclaration());
      if (firstNondefiningFunctionDeclaration != NULL)
         {
-       // If there exists a non-NULL reference to a firstNondefiningFunctionDeclaration 
+       // If there exists a non-NULL reference to a firstNondefiningFunctionDeclaration
        // then use it (unless we want to handle where it might be set wrong).
 #if 0
           printf ("In SageInterface::updateDefiningNondefiningLinks(): func = %p Found a valid pointer to a firstNondefiningFunctionDeclaration = %p \n",func,firstNondefiningFunctionDeclaration);
@@ -14578,7 +15474,7 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
           SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(*j);
           if (func_decl != NULL)
              {
-            // DQ (11/19/2012): This call to the isSameFunction() function is taking a total of 22.1% 
+            // DQ (11/19/2012): This call to the isSameFunction() function is taking a total of 22.1%
             // of the total execution time of the tests/CompilerTests/Cxx_tests/rosePerformance.C file.
                if (isSameFunction(func_decl, func))
                   {
@@ -14653,7 +15549,7 @@ PreprocessingInfo* SageInterface::attachComment(SgSourceFile * source_file, cons
   ROSE_ASSERT(result);
 
   // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
-  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen
   // when multiple files are used on the command line.
   result->get_file_info()->setTransformation();
 
@@ -14674,35 +15570,40 @@ PreprocessingInfo* SageInterface::attachComment(
      PreprocessingInfo::DirectiveType mytype=dtype;
      string comment;
 
+  // Rasmussen (11/3/2020): Added Ada and Jovial style comments
   // DQ (5/5/2010): infer comment type from target's language
      if (mytype == PreprocessingInfo::CpreprocessorUnknownDeclaration)
         {
        // This is a rather expensive way to detect the language type (chases pointers back to the SgFile object).
           if (is_C_language() || is_C99_language())
              {
-               mytype = PreprocessingInfo::C_StyleComment;
-            // comment = "/* "+ content + " */";
+             // Comment = "/* "+ content + " */";
+                mytype = PreprocessingInfo::C_StyleComment;
              }
-            else
+          else if (is_Cxx_language() || is_Java_language())
              {
-               if (is_Cxx_language() || is_Java_language())
-                  {
-                    mytype = PreprocessingInfo::CplusplusStyleComment;
-                 // comment = "// "+ content;
-                  }
-                 else  // TODO :What about Fortran?
-                  {
-                    if (is_Fortran_language() || is_CAF_language()) //FMZ:3/23/2009
-                       {
-                         mytype = PreprocessingInfo::F90StyleComment;
-                      // comment = "// "+ content;
-                       }
-                      else  // TODO :What about Fortran?
-                       {
-                         cout<<"Un-handled programming languages when building source comments.. "<<endl;
-                         ROSE_ASSERT(false);
-                       }
-                  }
+             // Comment = "// "+ content;
+                mytype = PreprocessingInfo::CplusplusStyleComment;
+             }
+          else if (is_Fortran_language() || is_CAF_language()) //FMZ:3/23/2009
+             {
+             // Comment = "! "+ content;
+                mytype = PreprocessingInfo::F90StyleComment;
+             }
+          else if (is_Ada_language())
+             {
+             // Comment = "-- " + content;
+                mytype = PreprocessingInfo::AdaStyleComment;
+             }
+          else if (is_Jovial_language())
+             {
+             // Comment = "% " + content + " %";
+                mytype = PreprocessingInfo::JovialStyleComment;
+             }
+          else
+             {
+               cout << "WARNING: SageInterface::attachComment(): Unknown programming language \n";
+               ROSE_ASSERT(false);
              }
         }
 
@@ -14713,7 +15614,9 @@ PreprocessingInfo* SageInterface::attachComment(
           case PreprocessingInfo::C_StyleComment:        comment = "/* " + content + " */"; break;
           case PreprocessingInfo::CplusplusStyleComment: comment = "// " + content;         break;
           case PreprocessingInfo::FortranStyleComment:   comment = "      C " + content;    break;
-          case PreprocessingInfo::F90StyleComment:   comment = "!" + content;    break;
+          case PreprocessingInfo::F90StyleComment:       comment = "!"   + content;         break;
+          case PreprocessingInfo::AdaStyleComment:       comment = "-- " + content;         break;
+          case PreprocessingInfo::JovialStyleComment:    comment = "% "  + content + " %";  break;
           case PreprocessingInfo::CpreprocessorLineDeclaration:
                comment = "#myline " + content;
                mytype = PreprocessingInfo::CplusplusStyleComment;
@@ -14739,7 +15642,7 @@ PreprocessingInfo* SageInterface::attachComment(
        else
         {
        // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
-       // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+       // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen
        // when multiple files are used on the command line.
           result->get_file_info()->setTransformation();
         }
@@ -14767,18 +15670,75 @@ void SageInterface::guardNode(SgLocatedNode * target, std::string guard) {
   target->addToAttachedPreprocessingInfo(endif_macro);
 
 // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
-// This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+// This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen
 // when multiple files are used on the command line.
   if_macro->get_file_info()->setTransformation();
   endif_macro->get_file_info()->setTransformation();
 }
 
+// internal hash table to cache the results: fileHeaderDict[file][header-key]
+// header-key: 
+//    system header : <header.h> 
+//    non-system headers : "header.h"
+static map<SgSourceFile*, map<string, PreprocessingInfo*> > fileHeaderDict; 
+//! Find the preprocessingInfo node representing #include <header.h> or #include "header.h" within a source file. Return NULL if not found.
+PreprocessingInfo * SageInterface::findHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader)
+{
+  string header_key;
+  if (isSystemHeader)
+    header_key="<"+header_file_name+">";
+  else
+    header_key="\""+header_file_name+"\"";
+
+  if (fileHeaderDict.count(source_file) && fileHeaderDict[source_file].count(header_key))
+    return fileHeaderDict[source_file][header_key];
+
+  vector<SgLocatedNode*> candidates; 
+  // do a fresh check. we only check global scope's declarations since we insert header into global scope
+  // check SgGlobal
+  SgGlobal* global= source_file -> get_globalScope();
+
+  candidates.push_back(global);
+  
+  //check declarations within the global scope
+  SgDeclarationStatementPtrList decl_stmt_list = global->get_declarations();
+  for (SgDeclarationStatementPtrList::iterator iter= decl_stmt_list.begin(); iter!=decl_stmt_list.end(); iter++)
+    candidates.push_back(*iter);
+
+  bool found = false;
+  for (size_t ci=0; ci<candidates.size(); ci++)
+  {
+    SgLocatedNode* locatedNode= candidates[ci];
+    AttachedPreprocessingInfoType *comments = locatedNode->getAttachedPreprocessingInfo ();
+
+    if (comments == NULL) continue; 
+    AttachedPreprocessingInfoType::iterator i;
+    for (i = comments->begin (); i != comments->end (); i++)
+    { 
+      if ((*i)->getTypeOfDirective () != PreprocessingInfo::CpreprocessorIncludeDeclaration) continue; 
+      string content = (*i)->getString ();
+      if (content.find(header_key) != string::npos)
+      {
+        fileHeaderDict[source_file][header_key] = *i;
+        found =true; 
+        break; 
+      }
+
+    } // each comment
+ 
+    if (found) break; 
+  } // each node
+
+  if (found)
+    return fileHeaderDict[source_file][header_key];
+  return NULL; 
+}
 
 PreprocessingInfo*
-SageInterface::insertHeader(SgSourceFile * source_file, const string & header_file_name, bool isSystemHeader, PreprocessingInfo::RelativePositionType position) 
+SageInterface::insertHeader(SgSourceFile * source_file, const string & header_file_name, bool isSystemHeader, PreprocessingInfo::RelativePositionType position)
    {
-  // DQ (3/22/2019): If we are using the token based unparsing, then this will not work, since the global scope will not 
-  // be marked as a transformation.  So it might be better to implement this with an option to support the token based 
+  // DQ (3/22/2019): If we are using the token based unparsing, then this will not work, since the global scope will not
+  // be marked as a transformation.  So it might be better to implement this with an option to support the token based
   // unparsing, and specifically add a null declaration so that we can attach the #include directive directly to that statement.
      bool supportTokenUnparsing = false;
 
@@ -14797,9 +15757,23 @@ SageInterface::insertHeader(SgSourceFile * source_file, const string & header_fi
      ROSE_ASSERT(result);
 
   // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
-  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen
   // when multiple files are used on the command line.
      result->get_file_info()->setTransformation();
+
+  // DQ (11/21/2019): Need to set supportTokenUnparsing.
+     supportTokenUnparsing = source_file->get_unparse_tokens();
+     bool supportUnparseHeaders = source_file->get_unparseHeaderFiles();
+
+#if 0
+     printf ("supportTokenUnparsing = %s \n",supportTokenUnparsing ? "true" : "false");
+     printf ("source_file  = %p \n",source_file);
+     printf ("global_scope = %p \n",global_scope);
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
   // global_scope->addToAttachedPreprocessingInfo(result, position);
      if (supportTokenUnparsing == false)
@@ -14811,6 +15785,21 @@ SageInterface::insertHeader(SgSourceFile * source_file, const string & header_fi
        // global_scope->prepend_statement(null_statement);
           SgEmptyDeclaration* emptyDeclaration = buildEmptyDeclaration();
 
+          if (supportUnparseHeaders == true)
+              {
+             // In this case we need to set the physical_file_id to match the target file to be unparsed.
+                int physical_file_id = global_scope->get_startOfConstruct()->get_physical_file_id();
+#if 0
+                printf ("physical_file_id = %d \n",physical_file_id);
+#endif
+                emptyDeclaration->get_startOfConstruct()->set_physical_file_id(physical_file_id);
+                emptyDeclaration->get_endOfConstruct()->set_physical_file_id(physical_file_id);
+#if 0
+                printf ("Exiting as a test! \n");
+                ROSE_ASSERT(false);
+#endif
+              }
+
           emptyDeclaration->addToAttachedPreprocessingInfo(result, position);
 
           global_scope->prepend_statement(emptyDeclaration);
@@ -14821,24 +15810,67 @@ SageInterface::insertHeader(SgSourceFile * source_file, const string & header_fi
 
 PreprocessingInfo* SageInterface::insertHeader(const string& filename, PreprocessingInfo::RelativePositionType position /*=after*/, bool isSystemHeader /*=false*/, SgScopeStatement* scope /*=NULL*/)
   {
-  // DQ (3/22/2019): If we are using the token based unparsing, then this will not work, since the global scope will not 
-  // be marked as a transformation.  So it might be better to implement this with an option to support the token based 
+  // DQ (3/22/2019): If we are using the token based unparsing, then this will not work, since the global scope will not
+  // be marked as a transformation.  So it might be better to implement this with an option to support the token based
   // unparsing, and specifically add a null declaration so that we can attach the #include directive directly to that statement.
      bool supportTokenUnparsing = false;
 
-    //bool successful = false;
+ // DQ (8/12/2020): This is a compiler warning.
+ // bool successful = false;
+
     if (scope == NULL)
         scope = SageBuilder::topScopeStack();
     ROSE_ASSERT(scope);
     SgGlobal* globalScope = getGlobalScope(scope);
     ROSE_ASSERT(globalScope);
 
+    // To support inserting a header file into a header file, we need this srcScope to indicate the src file in which to insert the header
+    // if the input scope is within a header file,
+    // its global scope will jump to a .cpp file. Later looping will not find a match.
+    SgScopeStatement* srcScope = globalScope;
     PreprocessingInfo* result=NULL;
     string content;
     if (isSystemHeader)
       content = "#include <" + filename + "> \n";
     else
       content = "#include \"" + filename + "\" \n";
+
+  // DQ (11/21/2019): Token based unparsing has an additional requirement, we need to mark that the
+  // whitespace around the statement has been modified.  This will trigger the unparser to output
+  // the comments and CPP directives when using the token-based unparsing. The insertion of a header
+  // file requires this support else the original token stream will not have the added header file.
+
+  // DQ (11/21/2019): Need to set supportTokenUnparsing.
+     SgSourceFile* sourceFile = getEnclosingSourceFile(scope);
+     ROSE_ASSERT(sourceFile != NULL);
+
+     supportTokenUnparsing      = sourceFile->get_unparse_tokens();
+
+     bool supportUnparseHeaders = sourceFile->get_unparseHeaderFiles();
+     // if unparsing header and the scope is within a header file, we adjust srcScope to be scope, not its enclosing global scope
+     if (supportUnparseHeaders)
+     {
+       string filename= scope->get_file_info()->get_filename();
+       string suffix = Rose::StringUtility ::fileNameSuffix(filename);
+
+       //vector.tcc: This is an internal header file, included by other library headers
+       if (suffix=="h" ||suffix=="hpp"|| suffix=="hh"||suffix=="H" ||suffix=="hxx"||suffix=="h++" ||suffix=="tcc")
+         srcScope = scope;
+     }
+
+#if 0
+     printf ("supportTokenUnparsing = %s \n",supportTokenUnparsing ? "true" : "false");
+     printf ("supportUnparseHeaders = %s \n",supportUnparseHeaders ? "true" : "false");
+     printf ("sourceFile  = %p \n",sourceFile);
+     printf ("globalScope = %p \n",globalScope);
+#endif
+#if 0
+     printf ("supportTokenUnparsing = %s \n",supportTokenUnparsing ? "true" : "false");
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
     SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
     if (stmtList.size() > 0) // the source file is not empty
@@ -14848,7 +15880,7 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
       {
             //must have this judgement, otherwise wrong file will be modified!
             //It could also be the transformation generated statements with #include attached
-        if ( ((*j)->get_file_info ())->isSameFile(globalScope->get_file_info ())||
+        if ( ((*j)->get_file_info ())->isSameFile(srcScope->get_file_info ())||
               ((*j)->get_file_info ())->isTransformation()
            )
          {
@@ -14857,8 +15889,8 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
            ROSE_ASSERT(result);
 
            // DQ (3/22/2019): Fixing this to work with the token-based unparsing.
-           // add to the last position 
-           // TODO: support to add to the first, 
+           // add to the last position
+           // TODO: support to add to the first,
            // TODO: support fine positioning with #include directives
            // (*j)->addToAttachedPreprocessingInfo(result,position);
 
@@ -14868,15 +15900,35 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
               }
              else
               {
+
+                (*j)->addToAttachedPreprocessingInfo(result,position);
+#if 0 // Liao, let's try the new way.
              // global_scope->prepend_statement(null_statement);
                 SgEmptyDeclaration* emptyDeclaration = buildEmptyDeclaration();
+
+                if (supportUnparseHeaders == true)
+                   {
+                  // In this case we need to set the physical_file_id to match the target file to be unparsed.
+                     int physical_file_id = globalScope->get_startOfConstruct()->get_physical_file_id();
+#if 0
+                     printf ("physical_file_id = %d \n",physical_file_id);
+#endif
+                     emptyDeclaration->get_startOfConstruct()->set_physical_file_id(physical_file_id);
+                     emptyDeclaration->get_endOfConstruct()->set_physical_file_id(physical_file_id);
+#if 0
+                     printf ("Exiting as a test! \n");
+                     ROSE_ASSERT(false);
+#endif
+                   }
 
                 emptyDeclaration->addToAttachedPreprocessingInfo(result, position);
 
                 globalScope->insert_statement(*j,emptyDeclaration);
+#endif
               }
 
-          // successful = true;
+        // DQ (8/12/2020): This is a compiler warning.
+        // successful = true;
            break;
          }
       }
@@ -14891,11 +15943,13 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
                 content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
        ROSE_ASSERT(result);
        globalScope->addToAttachedPreprocessingInfo(result,position);
-       //successful = true;
+
+    // DQ (8/12/2020): This is a compiler warning.
+    // successful = true;
     }
 
  // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
- // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+ // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen
  // when multiple files are used on the command line.
  // DQ (3/12/2019): This can be NULL for the omp tests.
     if (result != NULL)
@@ -14907,6 +15961,7 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
     // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
     // The caller function should decide what to do if insertion is failed: ignore vs. assert failure.
     //ROSE_ASSERT(successful==true);
+
     return result;
   }
 
@@ -14916,12 +15971,16 @@ void SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheade
   ROSE_ASSERT (stmt != NULL);
   ROSE_ASSERT (newheader != NULL);
 
+#if 0
+  printf ("In SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheader, bool asLastHeader) \n");
+#endif
+
   PreprocessingInfo::RelativePositionType position ;
 
   if (asLastHeader )
-    position = PreprocessingInfo::after; 
+    position = PreprocessingInfo::after;
   else
-    position = PreprocessingInfo::before; 
+    position = PreprocessingInfo::before;
 
 
   // Find existing first and last header.
@@ -14930,23 +15989,68 @@ void SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheade
   if (comments != NULL)
   {
     PreprocessingInfo * firstExistingHeader = NULL;
-    PreprocessingInfo * lastExistingHeader = NULL;
+    PreprocessingInfo * lastExistingHeader  = NULL;
+    PreprocessingInfo * firstExistingEndif  = NULL;
+
+ // DQ (10/27/2020): Fixed warning of unused variable by compiler.
+ // PreprocessingInfo * lastExistingEndif   = NULL;
+
     AttachedPreprocessingInfoType::iterator i, firsti, lasti;
     for (i = comments->begin (); i != comments->end (); i++)
     {
+   // DQ (9/12/2020): this original code is not sufficent since when the final #include is enclosed in a 
+   // #ifdef #endif the added include directive might not be visible in the generated file.
+   // This actually happened in the case of wget application: wget.c source file.
+#if 0
+   // Original version of code.
       if ((*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+         {
+        // Only set first header for the first time
+           if ((*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+              {
+                if (firstExistingHeader == NULL)
+                   {
+                     firstExistingHeader = (*i);
+                     firsti = i;
+                   }
+             // always updates last header
+                lastExistingHeader = (*i);
+                lasti = i;
+             }
+        }
+#else
+   // DQ (9/12/2020): New version of code. Addresses insertion after last endif if it is after any #include.
+      if ( (*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorIncludeDeclaration || 
+           (*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorEndifDeclaration )
       {
         // Only set first header for the first time
-        if (firstExistingHeader == NULL)
-        {
-          firstExistingHeader = (*i);
-          firsti = i;
-        }
-        // always updates last header  
-        lastExistingHeader = (*i);
-        lasti = i;
+        if ((*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+           {
+             if (firstExistingHeader == NULL)
+             {
+               firstExistingHeader = (*i);
+               firsti = i;
+             }
+           // always updates last header
+             lastExistingHeader = (*i);
+             lasti = i;
+           }
+        if ((*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorEndifDeclaration)
+           {
+             if (firstExistingEndif == NULL)
+             {
+               firstExistingEndif = (*i);
+               firsti = i;
+             }
+          // always updates last header
+          // DQ (10/27/2020): Fixed warning of unused variable by compiler.
+          // lastExistingEndif = (*i);
+             lasti = i;
+           }
       }
+#endif
     }
+
     // based on existing header positions, insert the new header
     if (asLastHeader)
     {
@@ -14988,31 +16092,35 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
   PreprocessingInfo::RelativePositionType position ;
 
   if (asLastHeader )
-     position = PreprocessingInfo::after; 
+     position = PreprocessingInfo::after;
   else
-     position = PreprocessingInfo::before; 
+     position = PreprocessingInfo::before;
 
   SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
   if (stmtList.size()>0) // the source file is not empty
   {
-    for (SgDeclarationStatementPtrList::iterator j = stmtList.begin ();
-        j != stmtList.end (); j++)
+    for (SgDeclarationStatementPtrList::iterator j = stmtList.begin (); j != stmtList.end (); j++)
     {
       // Attach to the first eligible located statement
       //must have this judgement, otherwise wrong file will be modified!
       //It could also be the transformation generated statements with #include attached
-      if ( ((*j)->get_file_info ())->isSameFile(globalScope->get_file_info ())||
-          ((*j)->get_file_info ())->isTransformation()
-         )
+      if ( (*j)->get_file_info()->isSameFile(globalScope->get_file_info()) || (*j)->get_file_info()->isTransformation() )
       {
-        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
-            content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
+#if 0
+        printf ("In SageInterface::insertHeader(): Found statement to attached #include: *j = %p = %s \n",*j,(*j)->class_name().c_str());
+        printf (" --- unparseToString() = %s \n",(*j)->unparseToString().c_str());
+#endif
+        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration, content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
         ROSE_ASSERT(result);
         insertHeader (*j, result, asLastHeader);
         //successful = true;
+#if 0
+        printf ("Exiting as a test! \n");
+        ROSE_ASSERT(false);
+#endif
         break;
       }
-    } // end for                                               
+    } // end for
   }
   else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!
   {
@@ -15024,28 +16132,28 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
         content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
     ROSE_ASSERT(result);
     globalScope->addToAttachedPreprocessingInfo(result,position);
-//    successful = true;                                                                                                       
+//    successful = true;
   }
 
-#if 1
+#if 0
      printf ("In SageInterface::insertHeader(): Marking include file for filename = %s as a transformation \n",filename.c_str());
 #endif
 
   // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
-  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen
   // when multiple files are used on the command line.
      result->get_file_info()->setTransformation();
 
   // must be inserted once somehow
   // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
-  // The caller function should decide what to do if insertion is failed: ignore vs. assert failure.                          
-  //ROSE_ASSERT(successful==true);                                                                                            
-  return result;        
+  // The caller function should decide what to do if insertion is failed: ignore vs. assert failure.
+  //ROSE_ASSERT(successful==true);
+  return result;
 
 } // end insertHeader
 
 //! Attach an arbitrary string to a located node. A workaround to insert irregular statements or vendor-specific attributes. We abuse CpreprocessorDefineDeclaration for this purpose.
-PreprocessingInfo* 
+PreprocessingInfo*
 SageInterface::attachArbitraryText(SgLocatedNode* target, const std::string & text, PreprocessingInfo::RelativePositionType position /*=PreprocessingInfo::before*/)
    {
   // DQ (1/13/2014): This function needs a better mechanism than attaching text to the AST unparser as a CPP directive.
@@ -15053,7 +16161,7 @@ SageInterface::attachArbitraryText(SgLocatedNode* target, const std::string & te
      ROSE_ASSERT(target != NULL); //dangling #define xxx is not allowed in the ROSE AST
      PreprocessingInfo* result = NULL;
 
-  // DQ (1/13/2014): It is a mistake to attach arbitrary test to the AST as a #define 
+  // DQ (1/13/2014): It is a mistake to attach arbitrary test to the AST as a #define
   // (since we evaluate all #define CPP declarations to be a self-referential macro).
   // For now I will make it a #if CPP declaration, since these are not evaluated internally.
   // PreprocessingInfo::DirectiveType mytype = PreprocessingInfo::CpreprocessorDefineDeclaration;
@@ -15066,7 +16174,7 @@ SageInterface::attachArbitraryText(SgLocatedNode* target, const std::string & te
      ROSE_ASSERT(result);
 
  // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
- // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+ // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen
  // when multiple files are used on the command line.
     result->get_file_info()->setTransformation();
 
@@ -15184,17 +16292,82 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
 #if 0
      printf ("In SageInterface::movePreprocessingInfo(): \n");
      printf ("   --- stmt_src = %p = %s src_position = %d \n",stmt_src,stmt_src->class_name().c_str(),src_position);
+     SgDeclarationStatement* src_declarationStatement = isSgDeclarationStatement(stmt_src);
+     if (src_declarationStatement != NULL)
+        {
+          printf ("src_declarationStatement->get_firstNondefiningDeclaration() = %p \n",src_declarationStatement->get_firstNondefiningDeclaration());
+          printf ("src_declarationStatement->get_definingDeclaration()         = %p \n",src_declarationStatement->get_definingDeclaration());
+        }
      printf ("   --- stmt_dst = %p = %s dst_position = %d \n",stmt_dst,stmt_dst->class_name().c_str(),dst_position);
+     SgDeclarationStatement* dst_declarationStatement = isSgDeclarationStatement(stmt_dst);
+     if (dst_declarationStatement != NULL)
+        {
+          printf ("dst_declarationStatement->get_firstNondefiningDeclaration() = %p \n",dst_declarationStatement->get_firstNondefiningDeclaration());
+          printf ("dst_declarationStatement->get_definingDeclaration()         = %p \n",dst_declarationStatement->get_definingDeclaration());
+        }
+     printf ("   --- src_position                    = %s \n",PreprocessingInfo::relativePositionName(src_position).c_str());
+     printf ("   --- dst_position                    = %s \n",PreprocessingInfo::relativePositionName(dst_position).c_str());
+     printf ("   --- usePrepend                      = %s \n",usePrepend ? "true" : "false");
+
+     printf ("   --- infoList                        = %p \n",infoList);
+     printf ("   --- infoToRemoveList                = %p \n",infoToRemoveList);
+
+     AttachedPreprocessingInfoType* dst_infoList = stmt_dst->getAttachedPreprocessingInfo();
+     printf ("   --- dst_infoList                    = %p \n",dst_infoList);
 #endif
+
+  // DQ (11/22/2020): These can't be the same list else we will have a case of iterator invalidation.
+  // This is a bug in the support for building a new prototype from a defining function declaration 
+  // and caused this problem. This assertion will prevent this sort of error from happening again.
+     ROSE_ASSERT(infoList == NULL || stmt_src->getAttachedPreprocessingInfo() != stmt_dst->getAttachedPreprocessingInfo());
 
      if (infoList == NULL) return;
 
-     PreprocessingInfo* prevItem = NULL; 
-     for (Rose_STL_Container<PreprocessingInfo*>::iterator i = (*infoList).begin(); i != (*infoList).end();i++)
+#if 0
+     printf ("   --- infoList->size()                = %zu \n",infoList->size());
+     printf ("   --- infoToRemoveList->size()        = %zu \n",infoToRemoveList->size());
+#endif
+
+#if 0
+     int counter = 0;
+
+     for (Rose_STL_Container<PreprocessingInfo*>::iterator i = (*infoList).begin(); i != (*infoList).end(); i++)
         {
-          PreprocessingInfo * info = dynamic_cast<PreprocessingInfo*> (*i);
+       // DQ (11/19/2020): Added assertion.
+          ROSE_ASSERT(*i != NULL);
+
+       // DQ (11/19/2020): Why do we have a dynamic cast here.
+       // PreprocessingInfo * info = dynamic_cast<PreprocessingInfo*> (*i);
+          PreprocessingInfo * info = *i;
           ROSE_ASSERT(info != NULL);
 
+       // printf ("counter = %d \n",counter);
+          printf ("counter = %d Processing PreprocessingInfo = %s \n",counter,info->getString().c_str());
+          counter++;
+        }
+
+     counter = 0;
+#endif
+
+     PreprocessingInfo* prevItem = NULL;
+     for (Rose_STL_Container<PreprocessingInfo*>::iterator i = (*infoList).begin(); i != (*infoList).end(); i++)
+        {
+       // DQ (11/19/2020): Added assertion.
+          ROSE_ASSERT(*i != NULL);
+
+       // DQ (11/19/2020): Why do we have a dynamic cast here.
+       // PreprocessingInfo * info = dynamic_cast<PreprocessingInfo*> (*i);
+          PreprocessingInfo * info = *i;
+          ROSE_ASSERT(info != NULL);
+#if 0
+          printf ("counter = %d \n",counter);
+          printf ("counter = %d Processing PreprocessingInfo = %s \n",counter,info->getString().c_str());
+          counter++;
+#endif
+#if 0
+          printf ("   --- TOP of loop: infoList->size()                = %zu \n",infoList->size());
+          printf ("   --- TOP of loop: infoToRemoveList->size()        = %zu \n",infoToRemoveList->size());
+#endif
           if (   // match enum values in http://rosecompiler.org/ROSE_HTML_Reference/classPreprocessingInfo.html
                (info->getTypeOfDirective()==PreprocessingInfo::C_StyleComment)||
                (info->getTypeOfDirective()==PreprocessingInfo::CplusplusStyleComment)||
@@ -15216,40 +16389,100 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorWarningDeclaration)
              )
              {
+#if 0
+               printf ("Processing PreprocessingInfo = %s \n",info->getString().c_str());
+#endif
+#if 0
+            // DQ (11/19/2020): Debugging moving of comments in replaceStatement() support.
+               printf (" --- Skip body of loop over the comments and CPP directives \n");
+#else
             // move all source preprocessing info if the desired source type is not specified or matching
             // a specified desired source type
                if ( src_position == PreprocessingInfo::undef || info->getRelativePosition() == src_position)
                   {
-                    if (usePrepend)
+#if 0
+                 // DQ (11/19/2020): Debugging moving of comments in replaceStatement() support.
+                    printf (" --- Skip upper inner body of loop over the comments and CPP directives \n");
+#else
+#if 0
+                    printf ("usePrepend = %s \n",usePrepend ? "true" : "false");
+#endif
+                    if (usePrepend == true)
                        {
-                      // Liao (1/27/2015):  modification to fix oder of CPP directives when a list of them are moved.
+#if 0
+                      // This still fails.
+                      // DQ (11/19/2020): Debugging moving of comments in replaceStatement() support.
+                         printf (" --- Skip upper inner body (part 1) of loop over the comments and CPP directives \n");
+#else
+#if 0
+                         printf ("prevItem = %p \n",prevItem);
+#endif
+                      // Liao (1/27/2015):  modification to fix order of CPP directives when a list of them are moved.
                          if (prevItem == NULL)
                             {
                            // addToAttachedPreprocessingInfo() is poorly designed, the last parameter is used
                            // to indicate appending or prepending by reusing the type of relative position.
                            // this is very confusing for users
+#if 0
+                           // DQ (11/19/2020): Debugging moving of comments in replaceStatement() support.
+                              printf (" --- Skip upper inner body (part 1.1) of loop over the comments and CPP directives \n");
+#else
                               stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::before);
+#endif
                             }
                            else // there is a previous item, insert after it
                             {
+#if 0
+                           // DQ (11/19/2020): Debugging moving of comments in replaceStatement() support.
+                              printf (" --- Skip upper inner body (part 1.2) of loop over the comments and CPP directives \n");
+#else
                               stmt_dst->insertToAttachedPreprocessingInfo(info, prevItem);
+#endif
                             }
-
-                         prevItem = info; 
+#if 0
+                      // DQ (11/19/2020): Debugging moving of comments in replaceStatement() support.
+                         printf (" --- Skip upper inner body (part 1.3) of loop over the comments and CPP directives \n");
+#else
+                         prevItem = info;
+#if 0
+                         printf ("after being set: prevItem = %p \n",prevItem);
+#endif
+#endif
+#endif
                        }
                       else
                        {
+#if 1
+#if 0
+                         printf ("In SageInterface::movePreprocessingInfo(): calling addToAttachedPreprocessingInfo(): info                    = %s \n",info->getString().c_str());
+                         printf ("In SageInterface::movePreprocessingInfo(): before addToAttachedPreprocessingInfo(): infoList->size()         = %zu \n",infoList->size());
+                         printf ("In SageInterface::movePreprocessingInfo(): before addToAttachedPreprocessingInfo(): infoToRemoveList->size() = %zu \n",infoToRemoveList->size());
+                         printf ("In SageInterface::movePreprocessingInfo(): before addToAttachedPreprocessingInfo(): stmt_dst                 = %p \n",stmt_dst);
+#endif
                          stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
+#if 0
+                         printf ("In SageInterface::movePreprocessingInfo(): after addToAttachedPreprocessingInfo(): infoList->size()          = %zu \n",infoList->size());
+                         printf ("In SageInterface::movePreprocessingInfo(): after addToAttachedPreprocessingInfo(): infoToRemoveList->size()  = %zu \n",infoToRemoveList->size());
+                         printf ("In SageInterface::movePreprocessingInfo(): after addToAttachedPreprocessingInfo(): stmt_dst                  = %p \n",stmt_dst);
+#endif
+#else
+                      // DQ (11/22/2020): Debugging moving of comments in replaceStatement() support.
+                         printf (" --- Skip usePrepend == false body of loop over the comments and CPP directives \n");
+#endif
                        }
-
+#endif
+#if 0
+                 // DQ (11/19/2020): Debugging moving of comments in replaceStatement() support.
+                    printf (" --- Skip lower inner body of loop over the comments and CPP directives \n");
+#else
                  // DQ (1/15/2015): Added support to mark as transformations so that the token-based unparsing can know to NOT use the leading and trailing token stream for whitespace.
                     info->setAsTransformation();
                  // ROSE_ASSERT(stmt_dst->getAttachedPreprocessingInfo() != NULL);
                  // stmt_dst->getAttachedPreprocessingInfo()->setAsTransformation();
 
-                 // DQ (10/13/2015): This is a problem for the token-based unparsing since we don't want to have this 
+                 // DQ (10/13/2015): This is a problem for the token-based unparsing since we don't want to have this
                  // set_containsTransformationToSurroundingWhitespace() function cause the isModified flag to be set.
-                 // So we have to detect it being set and reset it as needed.  An alternative would be to have a 
+                 // So we have to detect it being set and reset it as needed.  An alternative would be to have a
                  // non-ROSETTA generate function that didn't have the isModified flag set for the seter access function.
                  // Note that the inputmoveDeclarationToInnermostScope_test2015_123.C file demonstrates this problem.
                     bool isMarkedAsModified = stmt_dst->get_isModified();
@@ -15270,6 +16503,7 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
                          printf ("In SageInterface::movePreprocessingInfo(): This was already marked as isModified == TRUE: stmt_dst = %p = %s \n",stmt_dst,stmt_dst->class_name().c_str());
 #endif
                        }
+#endif
 
                     (*infoToRemoveList).push_back(*i);
                   }
@@ -15277,7 +16511,6 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
 #if 0
                  else if (info->getRelativePosition()==src_position)
                   {
-
                     if (usePrepend)
                        {
                        }
@@ -15290,9 +16523,24 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
 
             // adjust dst position if needed
                if (dst_position != PreprocessingInfo::undef)
+                  {
+#if 0
+                    printf ("In SageInterface::movePreprocessingInfo(): adjust dst position: dst_position = %s \n",PreprocessingInfo::relativePositionName(dst_position).c_str());
+#endif
                     info->setRelativePosition(dst_position);
+                  }
+#endif
              } // end if
+
+#if 0
+          printf ("   --- BOTTOM of loop: infoList->size()                = %zu \n",infoList->size());
+          printf ("   --- BOTTOM of loop: infoToRemoveList->size()        = %zu \n",infoToRemoveList->size());
+#endif
         } // end for
+
+#if 0
+     printf ("In SageInterface::movePreprocessingInfo(): Remove the element from the list of comments at the current astNode \n");
+#endif
 
   // Remove the element from the list of comments at the current astNode
      AttachedPreprocessingInfoType::iterator j;
@@ -15319,10 +16567,13 @@ void SageInterface::moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement 
       PreprocessingInfo::RelativePositionType src_position/*=PreprocessingInfo::undef*/,
       PreprocessingInfo::RelativePositionType dst_position/*=PreprocessingInfo::undef*/,
       bool usePrepend /*= false */)
-{
-  movePreprocessingInfo (stmt_src, stmt_dst, src_position, dst_position, usePrepend);
-} // moveUpPreprocessingInfo()
+   {
+#if 0
+     printf ("In SageInterface::moveUpPreprocessingInfo(): calling movePreprocessingInfo() \n");
+#endif
 
+     movePreprocessingInfo (stmt_src, stmt_dst, src_position, dst_position, usePrepend);
+   } // moveUpPreprocessingInfo()
 
 
 /*!
@@ -15593,7 +16844,7 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatem
 // DQ (1/18/2015): This is added to support better quality token-based unparsing.
 void SageInterface::recordNormalizations(SgStatement* s)
    {
-  // Record where normalization have been done so that we can preform denormalizations as required 
+  // Record where normalization have been done so that we can preform denormalizations as required
   // for the token-based unparsing to generate minimal diffs.
 
      SgBasicBlock* bb = isSgBasicBlock(s);
@@ -15963,7 +17214,7 @@ SgBasicBlock * SageInterface::makeSingleStatementBodyToBlock(SgStatement* single
           if (isSgDefaultOptionStmt(p)->get_body() == s)
             rt = ensureBasicBlockAsBodyOfDefaultOption(isSgDefaultOptionStmt(p));
           break;
-      }          
+      }
     case V_SgCatchOptionStmt:
       {
         if (isSgCatchOptionStmt(p)->get_body() == s)
@@ -16105,8 +17356,8 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
 #endif
   void SageInterface::changeAllBodiesToBlocks(SgNode* top, bool createEmptyBody /*= true*/ ) {
     class Visitor: public AstSimpleProcessing {
-      public: 
-      bool allowEmptyBody; 
+      public:
+      bool allowEmptyBody;
       Visitor (bool flag):allowEmptyBody(flag) {}
       virtual void visit(SgNode* n) {
 
@@ -16324,7 +17575,7 @@ SageInterface::replaceExpressionWithStatement(SgExpression* from, StatementGener
                       new_statement->insert_symbol(varname, varsym);
                       varsym->set_parent(new_statement->get_symbol_table());
 #endif
-                      
+
                       SageInterface::appendStatement(new_decl, new_statement);
                       SageInterface::appendStatement(doWhileStatement, new_statement);
                       assert (varsym);
@@ -16562,6 +17813,42 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
     return ((stmt->get_declarationModifier()).get_storageModifier()).setExtern();
   }
 
+  // Check if an SgInitializedName is "mutable' (has storage modifier set)
+  bool SageInterface::isMutable(SgInitializedName* name)
+  {
+    ROSE_ASSERT(name);
+    return name->get_storageModifier().isMutable();
+  }
+
+  // True if a parameter name is a Jovial output parameter
+  bool SageInterface::isJovialOutParam(SgInitializedName* name)
+  {
+    return isMutable(name);
+  }
+
+  // Get a vector of Jovial input parameters from the function parameter list
+  // TODO: Look into making this work for Fortran
+  std::vector<SgInitializedName*> SageInterface::getInParameters(const SgInitializedNamePtrList &params)
+  {
+    std::vector<SgInitializedName*> in_params;
+    BOOST_FOREACH (SgInitializedName* name, params)
+      {
+        if (!isJovialOutParam(name)) in_params.push_back(name);
+      }
+    return in_params;
+  }
+
+  // Get a list of Jovial output parameters from the function parameter list
+  // TODO: Look into making this work for Fortran
+  std::vector<SgInitializedName*> SageInterface::getOutParameters(const SgInitializedNamePtrList &params)
+  {
+    std::vector<SgInitializedName*> out_params;
+    BOOST_FOREACH (SgInitializedName* name, params)
+      {
+        if (isJovialOutParam(name)) out_params.push_back(name);
+      }
+    return out_params;
+  }
 
   unsigned long long SageInterface::getIntegerConstantValue(SgValueExp* expr) {
     switch (expr->variantT()) {
@@ -16579,12 +17866,12 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
 
    // DQ (2/18/2015): Make this a better error message.
    // default: ROSE_ASSERT (!"Bad kind in getIntegerConstantValue");
-      default: 
+      default:
          {
            printf ("ERROR: In SageInterface::getIntegerConstantValue(): default reached: expr = %p = %s \n",expr,expr->class_name().c_str());
            ROSE_ASSERT (false);
          }
-      
+
     }
 
     ROSE_ASSERT (!"Bad kind return in getIntegerConstantValue");
@@ -16592,6 +17879,7 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
   }
 
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 // tps : 28 Oct 2008 - support for finding the main interpretation
 // rpm : 18 Sep 2009 - rewritten to support multiple files per interpretation
 /** Returns the "main" interpretation. "Main" is defined as the first interpretation that points to a header of the supplied
@@ -16630,6 +17918,7 @@ SageInterface::getMainInterpretation(SgAsmGenericFile *file)
     ROSE_ASSERT(!"no appropriate interpretation");
     return NULL;
 }
+#endif
 
 class CollectDependentDeclarationsCopyType : public SgCopyHelp
    {
@@ -17078,15 +18367,15 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
          {
            // printf ("Found class declaration: classDeclaration = %p \n",classDeclaration);
            declaration = classDeclaration->get_definingDeclaration();
-           // Liao, 12/09/2016. 
+           // Liao, 12/09/2016.
            // In some cases, forward declaration of class types are used and sufficient, without providing defining declaration.
-           // We should allow this. 
+           // We should allow this.
            if (declaration != NULL)
            {
              //  ROSE_ASSERT(declaration != NULL);
              addDeclaration(declaration);
            }
-           else 
+           else
              addDeclaration (classDeclaration); // we use the original forward declaration.
 
            // Note that since types are shared in the AST, the declaration for a named type may be (is)
@@ -17279,9 +18568,9 @@ SageInterface::sortSgNodeListBasedOnAppearanceOrderInSource(const vector<SgDecla
     vector<SgDeclarationStatement*>::const_iterator i = find (nodevec.begin(), nodevec.end(), cur_stmt);
     if (i!=nodevec.end())
     {
-      // It is possible we already visited a real prototype func decl before, now we see a prototype converted from a defining declaration. 
+      // It is possible we already visited a real prototype func decl before, now we see a prototype converted from a defining declaration.
       // We have to make sure only one copy is inserted.
-      vector<SgDeclarationStatement*>::const_iterator j = find (sortedNode.begin(), sortedNode.end(), *i); 
+      vector<SgDeclarationStatement*>::const_iterator j = find (sortedNode.begin(), sortedNode.end(), *i);
       if (j == sortedNode.end())
         sortedNode.push_back(*i);
     }
@@ -17361,10 +18650,10 @@ SageInterface::isPrefixOperatorName( const SgName & functionName )
      if (functionName.is_null() == false)
         {
        // DQ (1/20/2019): Add operator~() to this list (see test2019_10.C).
-       // if ( functionName == "operator++" || functionName == "operator--" || functionName == "operator&" || 
+       // if ( functionName == "operator++" || functionName == "operator--" || functionName == "operator&" ||
        //      functionName == "operator!"  || functionName == "operator*"  || functionName == "operator+" ||
        //      functionName == "operator-"  || functionName == "operator+" )
-          if ( functionName == "operator++" || functionName == "operator--" || functionName == "operator&" || 
+          if ( functionName == "operator++" || functionName == "operator--" || functionName == "operator&" ||
                functionName == "operator!"  || functionName == "operator*"  || functionName == "operator+" ||
                functionName == "operator-"  || functionName == "operator+"  || functionName == "operator~")
              {
@@ -17507,7 +18796,7 @@ SageInterface::isIndexOperator( SgExpression* exp )
                   }
              }
         }
-      
+
      return returnValue;
    }
 
@@ -17596,6 +18885,186 @@ SageInterface::lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::
    }
 
 
+void
+SageInterface::checkAccessPermissions ( SgNode* astNode )
+   {
+  // DQ (8/12/2020): Check the access permissions of all defining and nodefining declarations (debugging support for Cxx_tests/test2020_28.C).
+
+     class DeclarationTraversal : public AstSimpleProcessing
+        {
+          public:
+            // DeclarationTraversal() {}
+
+               void visit (SgNode* node)
+                  {
+                    SgDeclarationStatement* decl = isSgDeclarationStatement(node);
+                    if (decl != NULL)
+                       {
+                         SgDeclarationStatement* definingDeclaration         = isSgDeclarationStatement(decl->get_definingDeclaration());
+                         SgDeclarationStatement* firstNondefiningDeclaration = isSgDeclarationStatement(decl->get_firstNondefiningDeclaration());
+                         SgDeclarationStatement* otherDeclaration            = NULL;
+
+                      // Output access modifier information for each declaration.
+                         printf ("Found declaration = %p = %s name = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+                         if (decl != definingDeclaration && decl != firstNondefiningDeclaration)
+                            {
+                              otherDeclaration = decl;
+                            }
+
+                         if (definingDeclaration != NULL)
+                            {
+                              definingDeclaration->get_declarationModifier().get_accessModifier().display("definingDeclaration: accessModifier");
+                            }
+
+                         if (firstNondefiningDeclaration != NULL)
+                            {
+                              firstNondefiningDeclaration->get_declarationModifier().get_accessModifier().display("firstNondefiningDeclaration: accessModifier");
+                            }
+
+                         if (otherDeclaration != NULL)
+                            {
+                              otherDeclaration->get_declarationModifier().get_accessModifier().display("otherDeclaration: accessModifier");
+                            }
+
+                      // Adding space for formatting.
+                         printf ("\n");
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+     DeclarationTraversal traversal;
+     traversal.traverse(astNode, preorder);
+   }
+
+
+void
+SageInterface::checkSymbolTables ( SgNode* astNode )
+   {
+  // DQ (8/14/2020): Check the symbol tables for specific scopes (debugging support).
+
+     class ScopeTraversal : public AstSimpleProcessing
+        {
+          public:
+               void visit (SgNode* node)
+                  {
+                    SgScopeStatement* scope = isSgScopeStatement(node);
+                    if (scope != NULL)
+                       {
+                         SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(scope);
+                         if (functionDefinition != NULL)
+                            {
+                              SgFunctionDeclaration* functionDeclaration = functionDefinition->get_declaration();
+                              ROSE_ASSERT(functionDeclaration != NULL);
+
+                              string functionName = functionDeclaration->get_name();
+
+                              printf ("functionName = %s \n",functionName.c_str());
+
+                              if (functionName == "main")
+                                 {
+
+                                   SgBasicBlock* functionBody = functionDefinition->get_body();
+                                   ROSE_ASSERT(functionBody != NULL);
+                                   SgSymbolTable* symbolTable = functionBody->get_symbol_table();
+                                   ROSE_ASSERT(symbolTable != NULL);
+
+                                // Print out the symbol table.
+                                   symbolTable->print();
+                                 }
+                            }
+
+                         SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(scope);
+                         if (namespaceDefinition != NULL)
+                            {
+                              SgNamespaceDeclarationStatement* namespaceDeclaration = namespaceDefinition->get_namespaceDeclaration();
+                              ROSE_ASSERT(namespaceDeclaration != NULL);
+
+                              string namespaceName = namespaceDeclaration->get_name();
+
+                              printf ("namespaceName = %s \n",namespaceName.c_str());
+
+                              if (namespaceName == "B")
+                                 {
+                                   SgSymbolTable* symbolTable = namespaceDefinition->get_symbol_table();
+                                   ROSE_ASSERT(symbolTable != NULL);
+
+                                // Print out the symbol table.
+                                   symbolTable->print();
+                                 }
+                            }
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+     ScopeTraversal traversal;
+     traversal.traverse(astNode, preorder);
+   }
+
+
+
+
+void SageInterface::markNodeToBeUnparsed(SgNode* node, int physical_file_id)
+   {
+     Sg_File_Info* fileInfo=node->get_file_info();
+     if (fileInfo != NULL) 
+        {
+          fileInfo->setTransformation();
+          fileInfo->setOutputInCodeGeneration();
+
+          SgLocatedNode* locatedNode = isSgLocatedNode(node);
+          if (locatedNode != NULL)
+             {
+            // DQ (7/7/2015): Make the subtree as transformed.
+               locatedNode->setTransformation();
+               locatedNode->setOutputInCodeGeneration();
+
+            // DQ (10/26/2020): Set the physical_file_id, required for ueader file unparsing (is it?).
+               locatedNode->get_file_info()->set_physical_file_id(physical_file_id);
+#if 0
+               printf ("Note: calling node markTransformationsForOutput(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+               markTransformationsForOutput(node);
+             }
+            else
+             {
+#if 0
+               printf ("Note: node is not a SgLocatedNode: node = %p = %s \n",node,node->class_name().c_str());
+#endif
+             }
+        }
+       else
+        {
+#if 0
+          printf ("Note: no Sg_File_Info was found: node = %p = %s \n",node,node->class_name().c_str());
+#endif
+        }
+   }
+
+
+void SageInterface::markSubtreeToBeUnparsed(SgNode* root, int physical_file_id) 
+   {
+     RoseAst ast(root);
+     for (RoseAst::iterator i=ast.begin();i!=ast.end();++i) 
+        {
+#if 0
+       // DQ (5/9/2017): Debugging code.
+          if (isSgGlobal((*i)->get_parent()) != NULL)
+             {
+               printf ("In global scope: *i = %p = %s \n",*i,(*i)->class_name().c_str());
+             }
+#endif
+#if 0
+          printf ("Calling markNodeToBeUnparsed(): *i = %p = %s physical_file_id = %d \n",*i,(*i)->class_name().c_str(),physical_file_id);
+#endif
+          markNodeToBeUnparsed(*i,physical_file_id);
+       }
+   }
+
+
+
+
 //! Generate copies for a list of declarations and insert them into a different targetScope.
 vector<SgDeclarationStatement*>
 generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& dependentDeclarations, SgScopeStatement* targetScope)
@@ -17659,7 +19128,7 @@ generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& d
 
             // DQ (8/16/2013): I think this is the wrong symbol lookup function to be using here, but the API is fixed.
             // if (targetScope->lookup_symbol(functionDeclaration->get_name()) !=NULL)
-            // TV (2/4/2014): can be found in the project wide global scope... 
+            // TV (2/4/2014): can be found in the project wide global scope...
             //                So I removed it as we only build a nondef decl and it will only happen for function declared in global scope.`
             // if (targetScope->lookup_symbol(functionDeclaration->get_name(),NULL,NULL) !=NULL)
             //      continue;
@@ -17679,13 +19148,19 @@ generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& d
                copy_functionDeclaration->set_parent(targetScope);
 
                assert(copy_functionDeclaration->get_firstNondefiningDeclaration() != NULL);
-               assert(copy_functionDeclaration->get_firstNondefiningDeclaration() != copy_functionDeclaration);
+
+            // DQ (11/8/2020): This can not be asserted now that the buildSourceFile() has the 
+            // feature of clearing the symbol table used across multiple files.
+            // assert(copy_functionDeclaration->get_firstNondefiningDeclaration() != copy_functionDeclaration);
+
                assert(copy_functionDeclaration->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
 
                assert(copy_functionDeclaration->get_scope() != NULL);
                assert(copy_functionDeclaration->get_scope() == targetScope);
-               assert(copy_functionDeclaration->get_scope()->lookup_function_symbol(copy_functionDeclaration->get_name(), copy_functionDeclaration->get_type()) != NULL);
-               assert(copy_functionDeclaration->get_scope()->lookup_function_symbol(copy_functionDeclaration->get_name(), copy_functionDeclaration->get_type())->get_symbol_basis() == copy_functionDeclaration->get_firstNondefiningDeclaration());
+               assert(copy_functionDeclaration->get_scope()->lookup_function_symbol(copy_functionDeclaration->get_name(), 
+                    copy_functionDeclaration->get_type()) != NULL);
+               assert(copy_functionDeclaration->get_scope()->lookup_function_symbol(copy_functionDeclaration->get_name(), 
+                    copy_functionDeclaration->get_type())->get_symbol_basis() == copy_functionDeclaration->get_firstNondefiningDeclaration());
 
                copy_node = copy_functionDeclaration;
 #if 0
@@ -17916,7 +19391,7 @@ SageInterface::addMessageStatement( SgStatement* stmt, string message )
      stmt->addToAttachedPreprocessingInfo(messageToUser,PreprocessingInfo::before);
 
   // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
-  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen
   // when multiple files are used on the command line.
      messageToUser->get_file_info()->setTransformation();
    }
@@ -17993,8 +19468,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
      ROSE_ASSERT(TransformationSupport::getSourceFile(decl->get_scope()) == TransformationSupport::getSourceFile(decl->get_firstNondefiningDeclaration()));
 
   // This is used to fixup the AST by resetting references to IR nodes (leveraged from AST merge).
-     int replacementHashTableSize = 1001;
-     ReplacementMapTraversal::ReplacementMapType replacementMap(replacementHashTableSize);
+     std::map<SgNode*, SgNode*> replacementMap;
 
   // DQ (3/2/2009): Now use the collectDependentDeclarationsCopyType object to generate the mapping
   // from the symbols in the old AST to the new symbols in the new AST (generated as part of the AST
@@ -18221,10 +19695,6 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
      SgSourceFile* outlinedFile = TransformationSupport::getSourceFile(scope);
      ROSE_ASSERT(outlinedFile != NULL);
 
-  // This is required because the AST merge interface records a delete list
-  // (these nodes are not deleted for the outlining support).
-     set<SgNode*>  intermediateDeleteSet;
-
   // This replacement will be done over the entire file (parts of it are redundant with what has already
   // been done by the AST copy (so this step need not do as much and may be reduced to just operating
   // on the outlined function, I think).
@@ -18233,7 +19703,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
      printf ("Calling fixupSubtreeTraversal() \n");
 #endif
 
-     fixupSubtreeTraversal(outlinedFile,replacementMap,intermediateDeleteSet);
+     Rose::AST::fixupSubtreeTraversal(outlinedFile,replacementMap);
 
 #if 0
      printf ("Calling fixupSubtreeTraversal(): DONE \n");
@@ -18241,9 +19711,6 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 
      printf ("\n\n After replacementMapTraversal(): intermediateDeleteSet: \n");
      displaySet(intermediateDeleteSet,"After fixupTraversal");
-
-     printf ("Output the replacementMap: \n");
-     ReplacementMapTraversal::displayReplacementMap(replacementMap);
 #endif
 
   // Repeated test from above
@@ -18259,27 +19726,6 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
   // ROSE_ASSERT(replacementMap.size() == dependentDeclarationList.size() + 1);
 #endif
    }
-
-
-
-#if 0
-// This function is not implemented or used, but it might be when the final code is refactored.
-
-// rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr>
-// void SageInterface::supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap )
-void
-SageInterface::supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap )
-   {
-  // Prior to the call to fixupSubtreeTraversal(), we have to build the "replacementMap".  The "replacementMap"
-  // contains the IR node address references into the old AST (what was copied) which need to be replaced in the
-  // new AST (the copy).  In general the old AST is the original file from which outlining was done and the new
-  // AST is the separate file where the outlined code has been placed with its dependent declarations.
-  // This function adds to the previously assembled "replacementMap"
-
-
-   }
-#endif
-
 
 void
 SageInterface::deleteAST ( SgNode* n )
@@ -18609,7 +20055,7 @@ SageInterface::deleteAST ( SgNode* n )
                         if (SgFunctionSymbolPtr !=NULL)
                         {
                                 SgFunctionSymbol* s = node->get_symbol_i();
-                                if (isSgFunctionSymbol(s) == SgFunctionSymbolPtr) 
+                                if (isSgFunctionSymbol(s) == SgFunctionSymbolPtr)
                                 {
                                   SgFunctionSymbol_count++;
 #if 0
@@ -18628,7 +20074,7 @@ SageInterface::deleteAST ( SgNode* n )
                         if (SgFunctionSymbolPtr !=NULL)
                         {
                                 SgFunctionSymbol* s = node->get_symbol_i();
-                                if (isSgFunctionSymbol(s) == SgFunctionSymbolPtr) 
+                                if (isSgFunctionSymbol(s) == SgFunctionSymbolPtr)
                                 {
                                   SgFunctionSymbol_count++;
 #if 0
@@ -18843,9 +20289,9 @@ SageInterface::deleteAST ( SgNode* n )
                         void visit (SgNode* node)
                         {
                         //These nodes are manually deleted because they cannot be visited by the traversal
-                                /*////////////////////////////////////////////////
-                                /remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
-                                /////////////////////////////////////////////////*/
+                                ////////////////////////////////////////////////
+                                //remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
+                                ////////////////////////////////////////////////
 #if 0
                                 printf ("In DeleteAST::visit(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
@@ -18927,24 +20373,27 @@ SageInterface::deleteAST ( SgNode* n )
                                 /remove SgFunctionSymbol
                                 /////////////////////////////////////////////////*/
 
-                                if(isSgFunctionDeclaration(node) && isSgMemberFunctionDeclaration(node)==NULL){
-                                        if(isSgFunctionDeclaration(node)->get_scope()!=NULL){
-                                             if(isSgFunctionDeclaration(node)->get_scope()->get_symbol_table()!=NULL)
-                                                {
-                                                        SgSymbol* symbol = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
-                                                        ClassicVisitor visitor((SgFunctionSymbol *)symbol);
-                                                        traverseMemoryPoolVisitorPattern(visitor);
-                                                        if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete
-                                                                ((SgFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
-                                                                delete symbol;
-                                                                //printf("A SgFunctionSymbol was deleted\n");
-                                                        }
-                                                        ClassicVisitor visitor1((SgFunctionDeclaration *)node);
-                                                        traverseMemoryPoolVisitorPattern(visitor1);
-                                                }
-                                        }
+                                {
+                                   SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(node); 
+                                   if (funcDecl != NULL){
+                                      if (isSgMemberFunctionDeclaration(node) == NULL) {
+                                         if (funcDecl->get_scope() != NULL) {
+                                            if (funcDecl->get_scope()->get_symbol_table() != NULL) {
+                                               SgSymbol* symbol = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
+                                               ClassicVisitor visitor((SgFunctionSymbol *)symbol);
+                                               traverseMemoryPoolVisitorPattern(visitor);
+                                               if (visitor.get_num_Function_pointers()==1) { //only one reference to this FunctionSymbol => safe to delete
+                                                  ((SgFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                  delete symbol;
+                                                //printf("A SgFunctionSymbol was deleted\n");
+                                               }
+                                               ClassicVisitor visitor1((SgFunctionDeclaration *)node);
+                                               traverseMemoryPoolVisitorPattern(visitor1);
+                                            }
+                                         }
+                                      }
+                                   }
                                 }
-
 
                                 if(isSgFunctionRefExp(node) !=NULL)
                                 {
@@ -19400,132 +20849,336 @@ void SageInterface::deleteExpressionTreeWithOriginalExpressionSubtrees(SgNode* r
      Visitor().traverse(root, postorder);
    }
 #endif
+  // move symbol table from one scope to another
+static void moveSymbolTableBetweenBlocks(SgScopeStatement* sourceBlock, SgScopeStatement* targetBlock, std::vector <SgInitializedName*>& initname_vec) 
+{
+  // Move the symbol table
+  SgSymbolTable* s_table = sourceBlock->get_symbol_table();
+  ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
+  // Liao, 11/26/2019 make sure the symbol table has symbols for init names before and after the move
+  for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
+  {
+    SgInitializedName* iname = *iter;
+    SgSymbol* symbol = s_table->find(iname);
+    ROSE_ASSERT (symbol != NULL);
+  }
 
+  targetBlock->set_symbol_table(sourceBlock->get_symbol_table());
+
+  ROSE_ASSERT(sourceBlock != NULL);
+  ROSE_ASSERT(targetBlock != NULL);
+  ROSE_ASSERT(targetBlock->get_symbol_table() != NULL);
+  ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
+  targetBlock->get_symbol_table()->set_parent(targetBlock);
+
+  ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
+  sourceBlock->set_symbol_table(NULL);
+
+  // DQ (9/23/2011): Reset with a valid symbol table.
+  sourceBlock->set_symbol_table(new SgSymbolTable());
+  sourceBlock->get_symbol_table()->set_parent(sourceBlock);
+
+  ROSE_ASSERT (targetBlock->get_symbol_table() == s_table);
+  for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
+  {
+    SgInitializedName* iname = *iter;
+    SgSymbol* symbol = s_table->find(iname);
+    ROSE_ASSERT (symbol != NULL);
+  }
+
+  // Liao, 11/26/2019 make sure init names have symbols after the move.
+  for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
+  {
+    SgInitializedName* iname = *iter;
+    SgSymbol* symbol = iname->get_symbol_from_symbol_table();
+    ROSE_ASSERT (symbol != NULL);
+  }
+}
+
+// helper function to move a single statement or declaration from a block to another
+static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* targetBlock, SgStatement* stmt, std::vector <SgInitializedName*>& initname_vec)
+{
+  // append statement to the target block
+  targetBlock->append_statement(stmt);
+
+  // Make sure that the parents are set.
+  ROSE_ASSERT(stmt->get_parent() == targetBlock);
+  if (stmt->hasExplicitScope())
+  {
+    // DQ (3/4/2009): This fails the test in ROSE/tutorial/outliner/inputCode_OutlineNonLocalJumps.cc
+    // I am unclear if this is a reasonable constraint, it passes all tests but this one!
+    if (stmt->get_scope() != targetBlock)
+    {
+      if (SgFunctionDeclaration* func = isSgFunctionDeclaration(stmt))
+      { // A call to a undeclared function will introduce a hidden func prototype declaration in the enclosing scope .
+        // The func declaration should be moved along with the call site.
+        // The scope should be set to the new block also
+        // Liao 1/14/2011
+        if (func->get_firstNondefiningDeclaration() == func)
+          func->set_scope(targetBlock);
+      }
+      else if (isSgJovialTableStatement(stmt) || isSgTypedefDeclaration(stmt))
+      {
+        // Rasmussen 9/21/2020,10/27/2020,11/4/2020: Uncovered by issues RC-135 and RC-227.
+        // The issues are fixed in the switch statement below but this test is needed
+        // so that the warning message immediately below is not triggered.
+      }
+      else
+      {
+        printf ("Warning: test failing (*i)->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks() \n");
+        cerr<<"  "<<stmt->class_name()<<endl;
+      }
+    }
+  }
+
+  SgDeclarationStatement* declaration = isSgDeclarationStatement(stmt);
+  if (declaration != NULL)
+  {
+    // Need to reset the scope from sourceBlock to targetBlock.
+    switch(declaration->variantT())
+    {
+      // There will be other cases to handle, but likely not all declaration will be possible to support.
+
+      case V_SgVariableDeclaration:
+        {
+          // Reset the scopes on any SgInitializedName objects.
+          SgVariableDeclaration* varDecl = isSgVariableDeclaration(declaration);
+          SgInitializedNamePtrList & l = varDecl->get_variables();
+          for (SgInitializedNamePtrList::iterator ii = l.begin(); ii != l.end(); ii++)
+          {
+            // reset the scope, but make sure it was set to sourceBlock to make sure.
+            // This might be an issue for extern variable declaration that have a scope
+            // in a separate namespace of a static class member defined external to
+            // its class, etc. I don't want to worry about those cases right now.
+
+            SgInitializedName * init_name = (*ii);
+
+            // Rasmussen (6/29/2020) and (10/19/2020): Variable declarations related to anonymous types are not
+            // moved. This is fixed below. Note that SgJovialTableType derives from SgClassType, it may
+            // be that class types are not moved correctly either.
+            //
+            if (isSgEnumType(init_name->get_type()))
+            {
+              SgEnumType* enum_type = isSgEnumType(init_name->get_type());
+              SgEnumDeclaration* decl = isSgEnumDeclaration(enum_type->get_declaration());
+              SgEnumDeclaration* def_decl = isSgEnumDeclaration(decl->get_definingDeclaration());
+              SgEnumDeclaration* nondef_decl = isSgEnumDeclaration(decl->get_firstNondefiningDeclaration());
+
+              if (decl->get_scope() == sourceBlock)
+              {
+                // Needs to be moved
+                def_decl->set_scope(targetBlock);
+                nondef_decl->set_scope(targetBlock);
+                nondef_decl->set_parent(targetBlock);
+
+                // Move the scope of the enumerators to the new block as well
+                SgInitializedNamePtrList & enums = def_decl->get_enumerators();
+                for (SgInitializedNamePtrList::iterator e = enums.begin(); e != enums.end(); e++)
+                {
+                  (*e)->set_scope(targetBlock);
+                }
+              }
+            }
+            else if (isSgJovialTableType(init_name->get_type()))
+            {
+              SgJovialTableType* table_type = isSgJovialTableType(init_name->get_type());
+              SgDeclarationStatement* decl = table_type->get_declaration();
+              SgDeclarationStatement* def_decl = decl->get_definingDeclaration();
+              SgDeclarationStatement* nondef_decl = decl->get_firstNondefiningDeclaration();
+
+              def_decl->set_scope(targetBlock);
+              nondef_decl->set_scope(targetBlock);
+              nondef_decl->set_parent(targetBlock);
+            }
+
+            // Must also move the symbol into the source block, Liao 2019/8/14
+            SgVariableSymbol* var_sym = isSgVariableSymbol(init_name -> search_for_symbol_from_symbol_table ()) ;
+            ROSE_ASSERT (var_sym);
+            SgScopeStatement * old_scope = var_sym -> get_scope();
+#if 1 // we will later move entire source symbol table to target scope,  so we move symbol to the sourceBlock first here.
+            if (old_scope != sourceBlock)
+            {
+              old_scope->remove_symbol (var_sym);
+              sourceBlock ->insert_symbol(init_name->get_name(), var_sym);
+            }
+#endif
+            init_name->set_scope(targetBlock);
+            initname_vec.push_back(init_name);
+          }
+          break;
+        }
+      case V_SgFunctionDeclaration: // Liao 1/15/2009, I don't think there is any extra things to do here
+        {
+          SgFunctionDeclaration * funcDecl = isSgFunctionDeclaration(declaration);
+          ROSE_ASSERT (funcDecl);
+          break;
+        }
+      // needed to move Ada record into definition of C++ namespace
+      case V_SgClassDeclaration: 
+      case V_SgEnumDeclaration:
+        {
+          SgDeclarationStatement* def_decl = declaration->get_definingDeclaration();
+          SgDeclarationStatement* nondef_decl = declaration->get_firstNondefiningDeclaration();
+
+          nondef_decl->set_parent(targetBlock);
+          nondef_decl->set_scope(targetBlock);
+
+          def_decl->set_parent(targetBlock);
+          def_decl->set_scope(targetBlock);
+          break;
+        }
+      case V_SgJovialTableStatement:
+        {
+          // Rasmussen 9/21/2020: Needed for issue RC-135
+          SgJovialTableStatement* table = isSgJovialTableStatement(declaration);
+          ROSE_ASSERT (table);
+
+          SgDeclarationStatement* def_decl = table->get_definingDeclaration();
+          SgDeclarationStatement* nondef_decl = table->get_firstNondefiningDeclaration();
+          nondef_decl->set_parent(targetBlock);
+          nondef_decl->set_scope(targetBlock);
+          def_decl->set_scope(targetBlock);
+          break;
+        }
+      case V_SgTypedefDeclaration: // Rasmussen (10/19/2020)
+        {
+          // Rasmussen 10/19/2020: Needed for issue RC-227
+          SgTypedefDeclaration* typedef_decl = isSgTypedefDeclaration(declaration);
+          ROSE_ASSERT (typedef_decl);
+          typedef_decl->set_parent(targetBlock);
+          typedef_decl->set_scope(targetBlock);
+          break;
+       }
+      case V_SgAttributeSpecificationStatement:
+      case V_SgEmptyDeclaration:
+      case V_SgFortranIncludeLine:
+      case V_SgJovialDefineDeclaration:
+      case V_SgJovialDirectiveStatement:
+      case V_SgPragmaDeclaration:
+        break;
+      default:
+        {
+          printf ("Moving this declaration = %p = %s = %s between blocks is not yet supported \n",declaration,declaration->class_name().c_str(), SageInterface::get_name(declaration).c_str());
+          declaration->get_file_info()->display("file info");
+          ROSE_ASSERT(false);
+        }
+    }
+  } // end if
+}
+
+// different handling for scopes with declarations only
+template <class T1, class T2>
+void moveDeclarationsBetweenScopes( T1* sourceBlock, T2* targetBlock)
+{
+  // This function moves statements from one block to another (used by the outliner).
+  // printf ("***** Moving statements from sourceBlock %p to targetBlock %p ***** \n",sourceBlock,targetBlock);
+  ROSE_ASSERT (sourceBlock && targetBlock);
+  ROSE_ASSERT (sourceBlock->containsOnlyDeclarations() && targetBlock->containsOnlyDeclarations());
+  if ((void*)sourceBlock == (void*)targetBlock)
+  {
+    cerr<<"warning: SageInterface::moveStatementsBetweenScopes() is skipped, "<<endl;
+    cerr<<"         since program is trying to move statements from and to the identical scoped block. "<<endl;
+    return;
+  }
+
+  SgDeclarationStatementPtrList& srcStmts = sourceBlock->get_declarations ();
+  std::vector <SgInitializedName*> initname_vec;
+
+  for (SgDeclarationStatementPtrList::iterator i = srcStmts.begin(); i != srcStmts.end(); i++)
+  { 
+    moveOneStatement(sourceBlock, targetBlock, *i, initname_vec);
+  } // end for
+
+  // Remove the statements in the sourceBlock
+  srcStmts.clear();
+  ROSE_ASSERT(srcStmts.empty() == true);
+  ROSE_ASSERT(sourceBlock->get_declarations().empty() == true);
+
+ // move symbol table from one scope to another
+  moveSymbolTableBetweenBlocks(sourceBlock, targetBlock, initname_vec);
+
+  // Liao 2/4/2009
+  // Finally , move preprocessing information attached inside the source block to the target block
+  // Outliner uses this function to move a code block to the outlined function.
+  // This will ensure that a trailing #endif (which is attached inside the source block) will be moved
+  // to the target block to match #if (which is attached
+  // before some statement moved to the target block)
+  SageInterface::moveUpPreprocessingInfo (targetBlock, sourceBlock, PreprocessingInfo::inside);
+}
+
+
+// source and destination class, both are derived classes of scope statment but with support of get_statements()
+template <class T1, class T2>
+void moveStatementsBetweenScopes( T1* sourceBlock, T2* targetBlock)
+{
+  // This function moves statements from one block to another (used by the outliner).
+  // printf ("***** Moving statements from sourceBlock %p to targetBlock %p ***** \n",sourceBlock,targetBlock);
+  ROSE_ASSERT (sourceBlock && targetBlock);
+  if (sourceBlock == targetBlock)
+  {
+    cerr<<"warning: SageInterface::moveStatementsBetweenScopes() is skipped, "<<endl;
+    cerr<<"         since program is trying to move statements from and to the identical scoped block. "<<endl;
+    return;
+  }
+
+  SgStatementPtrList & srcStmts = sourceBlock->get_statements();
+  std::vector <SgInitializedName*> initname_vec;
+
+
+  for (SgStatementPtrList::iterator i = srcStmts.begin(); i != srcStmts.end(); i++)
+  {
+    moveOneStatement(sourceBlock, targetBlock, *i, initname_vec);
+  } // end for
+
+  // Remove the statements in the sourceBlock
+  srcStmts.clear();
+  ROSE_ASSERT(srcStmts.empty() == true);
+  ROSE_ASSERT(sourceBlock->get_statements().empty() == true);
+
+ // move symbol table from one scope to another
+  moveSymbolTableBetweenBlocks(sourceBlock, targetBlock, initname_vec); 
+
+  // Liao 2/4/2009
+  // Finally , move preprocessing information attached inside the source block to the target block
+  // Outliner uses this function to move a code block to the outlined function.
+  // This will ensure that a trailing #endif (which is attached inside the source block) will be moved
+  // to the target block to match #if (which is attached
+  // before some statement moved to the target block)
+  SageInterface::moveUpPreprocessingInfo (targetBlock, sourceBlock, PreprocessingInfo::inside);
+
+}
+
+static void createAliasSymbols (SgNamespaceDeclarationStatement* decl)
+{   
+  ROSE_ASSERT(decl);
+  SgNamespaceDefinitionStatement* local_def = decl->get_definition();
+  SgNamespaceDefinitionStatement* global_def = local_def->get_global_definition();
+
+  ROSE_ASSERT(local_def && global_def && (local_def!=global_def));
+
+  std::set<SgNode*> syms = local_def->get_symbol_table()->get_symbols();
+//  cout<<"Found syms.size()=="<<syms.size()<<endl;
+  for (std::set<SgNode*>::iterator iter= syms.begin(); iter != syms.end(); iter++)
+  {   
+    SgSymbol *orig_sym = isSgSymbol(*iter);
+    ROSE_ASSERT (orig_sym);
+    SgAliasSymbol* asym = new SgAliasSymbol (orig_sym);
+    global_def->get_symbol_table()->insert (asym->get_name(), asym);
+  }   
+}
+
+void SageInterface::moveStatementsBetweenBlocks ( SgAdaPackageSpec * sourceBlock, SgNamespaceDefinitionStatement* targetBlock )
+{
+  moveDeclarationsBetweenScopes(sourceBlock, targetBlock); 
+  //create alias symbols in its global definition 
+  createAliasSymbols(isSgNamespaceDeclarationStatement(targetBlock->get_parent()));
+}
 
 void
 SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicBlock* targetBlock )
-   {
-  // This function moves statements from one block to another (used by the outliner).
-  // printf ("***** Moving statements from sourceBlock %p to targetBlock %p ***** \n",sourceBlock,targetBlock);
-    ROSE_ASSERT (sourceBlock && targetBlock);
-    if (sourceBlock == targetBlock)
-    {
-      cerr<<"warning: SageInterface::moveStatementsBetweenBlocks() is skipped, "<<endl;
-      cerr<<"         since program is trying to move statements from and to the identical basic block. "<<endl;
-      return;
-    }
-
-     SgStatementPtrList & srcStmts = sourceBlock->get_statements();
-
-//     cout<<"debug SageInterface::moveStatementsBetweenBlocks() number of stmts = "<< srcStmts.size() <<endl;
-     for (SgStatementPtrList::iterator i = srcStmts.begin(); i != srcStmts.end(); i++)
-        {
-          // append statement to the target block
-          targetBlock->append_statement(*i);
-
-       // Make sure that the parents are set.
-          ROSE_ASSERT((*i)->get_parent() == targetBlock);
-          if ((*i)->hasExplicitScope())
-             {
-            // DQ (3/4/2009): This fails the test in ROSE/tutorial/outliner/inputCode_OutlineNonLocalJumps.cc
-            // I am unclear if this is a reasonable constraint, it passes all tests but this one!
-               if ((*i)->get_scope() != targetBlock)
-                  {
-                    if (SgFunctionDeclaration* func = isSgFunctionDeclaration(*i))
-                    { // A call to a undeclared function will introduce a hidden func prototype declaration in the enclosing scope .
-                      // The func declaration should be moved along with the call site.
-                      // The scope should be set to the new block also
-                      // Liao 1/14/2011
-                      if (func->get_firstNondefiningDeclaration() == func)
-                        func->set_scope(targetBlock);
-                    }
-                    else
-                    {
-                      //(*i)->set_scope(targetBlock);
-                      printf ("Warning: test failing (*i)->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks() \n");
-                      cerr<<"  "<<(*i)->class_name()<<endl;
-                    }
-                  }
-               //ROSE_ASSERT((*i)->get_scope() == targetBlock);
-             }
-
-          SgDeclarationStatement* declaration = isSgDeclarationStatement(*i);
-          if (declaration != NULL)
-             {
-            // Need to reset the scope from sourceBlock to targetBlock.
-               switch(declaration->variantT())
-                  {
-                 // There will be other cases to handle, but likely not all declaration will be possible to support.
-
-                    case V_SgVariableDeclaration:
-                       {
-                      // Reset the scopes on any SgInitializedName objects.
-                         SgVariableDeclaration* varDecl = isSgVariableDeclaration(declaration);
-                         SgInitializedNamePtrList & l = varDecl->get_variables();
-                         for (SgInitializedNamePtrList::iterator i = l.begin(); i != l.end(); i++)
-                            {
-                           // reset the scope, but make sure it was set to sourceBlock to make sure.
-                           // This might be an issue for extern variable declaration that have a scope
-                           // in a separate namespace of a static class member defined external to
-                           // its class, etc. I don't want to worry about those cases right now.
-                              ROSE_ASSERT((*i)->get_scope() == sourceBlock);
-
-                              (*i)->set_scope(targetBlock);
-                            }
-                         break;
-                       }
-                     case V_SgFunctionDeclaration: // Liao 1/15/2009, I don't think there is any extra things to do here
-                       {
-                         SgFunctionDeclaration * funcDecl = isSgFunctionDeclaration(declaration);
-                         ROSE_ASSERT (funcDecl);
-                         //cout<<"found a function declaration to be moved ..."<<endl;
-                       }
-                     break;
-                     case V_SgFortranIncludeLine:
-                     case V_SgAttributeSpecificationStatement:
-                     case V_SgPragmaDeclaration: 
-                       break;
-                    default:
-                       {
-                         printf ("Moving this declaration = %p = %s = %s between blocks is not yet supported \n",declaration,declaration->class_name().c_str(),get_name(declaration).c_str());
-                         declaration->get_file_info()->display("file info");
-                         ROSE_ASSERT(false);
-                       }
-                }
-             } // end if
-        } // end for
-
-  // Remove the statements in the sourceBlock
-     srcStmts.clear();
-     ROSE_ASSERT(srcStmts.empty() == true);
-     ROSE_ASSERT(sourceBlock->get_statements().empty() == true);
-
-  // Move the symbol table
-     ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
-     targetBlock->set_symbol_table(sourceBlock->get_symbol_table());
-
-     ROSE_ASSERT(sourceBlock != NULL);
-     ROSE_ASSERT(targetBlock != NULL);
-     ROSE_ASSERT(targetBlock->get_symbol_table() != NULL);
-     ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
-     targetBlock->get_symbol_table()->set_parent(targetBlock);
-
-     ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
-     sourceBlock->set_symbol_table(NULL);
-
-  // DQ (9/23/2011): Reset with a valid symbol table.
-     sourceBlock->set_symbol_table(new SgSymbolTable());
-     sourceBlock->get_symbol_table()->set_parent(sourceBlock);
-
-     // Liao 2/4/2009
-     // Finally , move preprocessing information attached inside the source block to the target block
-     // Outliner uses this function to move a code block to the outlined function.
-     // This will ensure that a trailing #endif (which is attached inside the source block) will be moved
-     // to the target block to match #if (which is attached
-     // before some statement moved to the target block)
-     moveUpPreprocessingInfo (targetBlock, sourceBlock, PreprocessingInfo::inside);
-   }
-
+{
+  moveStatementsBetweenScopes (sourceBlock, targetBlock); 
+}
 
 //! Check if a function declaration is a C++11 lambda function
 // TODO, expose to SageInterface namespace
@@ -19537,8 +21190,8 @@ bool isLambdaFunction (SgFunctionDeclaration* func)
   ROSE_ASSERT (p != NULL);
   SgLambdaExp* le = isSgLambdaExp (p);
   if (le && le->get_lambda_function() == func)
-    rt = true; 
-  return rt;   
+    rt = true;
+  return rt;
 }
 
 // check if a variable reference is this->a[i] inside of a lambda function
@@ -19550,7 +21203,7 @@ bool isLambdaCapturedVariable (SgVarRefExp* varRef)
   bool rt = false;
 #ifdef  _MSC_VER
   #pragma message ("WARNING: MSVC does not handle isLambdaCapturedVariable() properly.")
-#else  
+#else
   ROSE_ASSERT (varRef!= NULL);
   SgNode* parent = varRef->get_parent();
   if (SgArrowExp *p = isSgArrowExp(parent))
@@ -19562,17 +21215,17 @@ bool isLambdaCapturedVariable (SgVarRefExp* varRef)
       ROSE_ASSERT (csym!= NULL);
       SgClassDeclaration* xdecl = isSgClassDeclaration(csym->get_declaration());
       // each this exp should have a class decl
-      ROSE_ASSERT (xdecl != NULL); 
+      ROSE_ASSERT (xdecl != NULL);
       SgLambdaExp* le = isSgLambdaExp(xdecl->get_parent());
       if (le != NULL)
       {
         if (le->get_lambda_closure_class() == xdecl ) // the class is a lambda closure class
-          rt = true; 
+          rt = true;
       }
     }
   }
-#endif  
-  return rt; 
+#endif
+  return rt;
 }
 
 //! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
@@ -19583,19 +21236,22 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
   SgInitializedName* name = NULL;
   SgExpression* nameExp = NULL;
   ROSE_ASSERT(current != NULL);
+
   if (isSgInitializedName(current))
   {
     name = isSgInitializedName(current);
   }
-  else if (isSgPntrArrRefExp(current))
+  else if (isSgPntrArrRefExp(current) != NULL)
   {
     bool suc=false;
-    suc= SageInterface::isArrayReference(isSgExpression(current),&nameExp);
+    SgExpression* exp = isSgExpression(current);
+    ROSE_ASSERT(exp != NULL);
+    suc = SageInterface::isArrayReference(exp,&nameExp);
     ROSE_ASSERT(suc == true);
      // has to resolve this recursively
     return convertRefToInitializedName(nameExp, coarseGrain);
   }
-  else if (isSgVarRefExp(current))
+  else if (isSgVarRefExp(current) != NULL)
   {
     if (coarseGrain)
     {
@@ -19606,7 +21262,7 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
         if (isSgDotExp(parent)->get_rhs_operand() == current)
           return convertRefToInitializedName(parent, coarseGrain);
       }
-      // avoid backtracking to parent if this is part of lambda function 
+      // avoid backtracking to parent if this is part of lambda function
       else if(isSgArrowExp(parent) && ! isLambdaCapturedVariable ( isSgVarRefExp(current) ) )
       {
         if (isSgArrowExp(parent)->get_rhs_operand() == current)
@@ -19617,7 +21273,7 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
   }
   else if (isSgDotExp(current))
   {
-    SgExpression* child = NULL; 
+    SgExpression* child = NULL;
     if (coarseGrain)
      child= isSgDotExp(current)->get_lhs_operand();
     else
@@ -19628,14 +21284,14 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
   }
    else if (isSgArrowExp(current))
   {
-    SgExpression* child = NULL; 
+    SgExpression* child = NULL;
     if (coarseGrain)
     {
       child = isSgArrowExp(current)->get_lhs_operand();
       SgExpression* lhs = isSgArrowExp(current)->get_lhs_operand();
       ROSE_ASSERT(lhs);
       // Liao 9/12/2016, special handling for variables inside of C++11 lambda functions
-      // They capture variables outside of the lambda function. 
+      // They capture variables outside of the lambda function.
       // They are represented as a class variable of an anonymous class, this->a[i]
       // So, we have to recognize this pattern, and pass the rhs variable to obtain initialized name.
       // has to resolve this recursively
@@ -19644,13 +21300,13 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
       if (isLambdaFunction (efunc) )
         child= isSgArrowExp(current)->get_rhs_operand();
       else
-        child = lhs; 
+        child = lhs;
     }
     else
       child = isSgArrowExp(current)->get_rhs_operand();
     ROSE_ASSERT(child);
      // has to resolve this recursively
-  
+
     return convertRefToInitializedName(child, coarseGrain);
   } // The following expression types are usually introduced by left hand operands of DotExp, ArrowExp
   else if (isSgThisExp(current))
@@ -19678,10 +21334,16 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
     SgExpression* lhs = isSgSubtractOp(current)->get_lhs_operand();
     return convertRefToInitializedName(lhs, coarseGrain);
   }
- else
+  // operator->() may be called upon a class object.
+  // e.g.  we need to get the function: it a SgDotExp node, (lhs is the class object, rhs is its member function)
+ else if (SgFunctionCallExp * func_call = isSgFunctionCallExp(current))
+ {
+    return convertRefToInitializedName(func_call->get_function(), coarseGrain); 
+ }
+  else
   {
-    // side effect analysis will return rhs of  Class A a = A(); as a read ref exp. SgConstructorInitializer 
-    if (!isSgConstructorInitializer(current)) 
+    // side effect analysis will return rhs of  Class A a = A(); as a read ref exp. SgConstructorInitializer
+    if (!isSgConstructorInitializer(current))
     {
       cerr<<"In SageInterface::convertRefToInitializedName(): unhandled reference type:"<<current->class_name()<<endl;
       ROSE_ASSERT(false);
@@ -19823,7 +21485,7 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
     LoopTransformInterface::set_arrayInfo(array_interface);
   } else {
     ArrayInterface array_interface(*annot);
- // Alias analysis and value propagation are called in initialize(). Turn both off for now.   
+ // Alias analysis and value propagation are called in initialize(). Turn both off for now.
 //    array_interface.initialize(fa, AstNodePtrImpl(funcDef));
     array_interface.observe(fa);
     LoopTransformInterface::set_arrayInfo(&array_interface);
@@ -19903,7 +21565,7 @@ bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializ
 
     ROSE_ASSERT (current != NULL);
     SgInitializedName* name= convertRefToInitializedName(current, coarseGrain);
-    //ROSE_ASSERT (name); // this pointer will return NULL 
+    //ROSE_ASSERT (name); // this pointer will return NULL
     if (!name) continue;
    // Only insert unique ones
    // We use std::set to ensure uniqueness now
@@ -19939,6 +21601,18 @@ void SageInterface::collectReadOnlyVariables(SgStatement* stmt, std::set<SgIniti
         writeVars.begin(), writeVars.end(),
         std::inserter(readOnlyVars, readOnlyVars.begin()));
   }
+  else // Qing's side effect analysis often fails, we do a simple type based read only variable collection, find all referenced variables of const type
+  {
+    RoseAst ast(stmt);
+
+    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+      if (SgVarRefExp* v_ref = isSgVarRefExp(*i))
+      {
+        if (isConstType(v_ref->get_type()))
+          readOnlyVars.insert (v_ref->get_symbol()->get_declaration());
+      }
+    } // end for 
+  } // end else
 }
 
 
@@ -19979,7 +21653,11 @@ bool SageInterface::isUseByAddressVariableRef(SgVarRefExp* ref)
     if (isSgFunctionCallExp(grandparent)) // Is used as a function call's parameter
     {
       // find which parameter ref is in SgExpressionPtrList
-      int param_index =0;
+
+   // DQ (8/12/2020): This is a compiler warning where it is used below in comparision between signed and unsigned types.
+   // int param_index = 0;
+      size_t param_index = 0;
+
       SgExpressionPtrList expList = isSgExprListExp(ref->get_parent())->get_expressions();
       Rose_STL_Container<SgExpression*>::const_iterator iter= expList.begin();
       for (; iter!=expList.end(); iter++)
@@ -19998,6 +21676,15 @@ bool SageInterface::isUseByAddressVariableRef(SgVarRefExp* ref)
         SgFunctionDeclaration* funcDecl = isSgFunctionSymbol(funcRef->get_symbol())->get_declaration();
         SgInitializedNamePtrList nameList = funcDecl->get_args();
         //TODO tolerate typedef chains
+        // printf() has only two arguments to express variable arguments.
+        // The third argument index ==2 will be out of bounds for nameList[index]
+        // So we must check the bound first.
+        if (param_index >= nameList.size() ||isSgTypeEllipse(nameList[param_index]->get_type()) )
+        {
+          if (isSgReferenceType(ref))
+            result = true;
+        }
+        else // now within the bound: two situations,
         if (isSgReferenceType(nameList[param_index]->get_type()))
         {
           result = true;
@@ -20114,6 +21801,7 @@ LivenessAnalysis * SageInterface::call_liveness_analysis(SgProject* project, boo
   for (i= vars.begin(); i!=vars.end();++i)
   {
     SgFunctionDefinition* func = isSgFunctionDefinition(*i);
+    ROSE_ASSERT(func != NULL);
     if (debug)
     {
       std::string name = func->class_name();
@@ -20219,7 +21907,7 @@ void SageInterface::getLiveVariables(LivenessAnalysis * liv, SgForStatement* loo
 //Check if two references form an idiom like:  x= x op expr,  x = expr op x (except for subtraction)
 static bool isAssignReduction (SgVarRefExp* ref_exp1, SgVarRefExp* ref_exp2, OmpSupport::omp_construct_enum& optype)
 {
-  bool isReduction = false; 
+  bool isReduction = false;
   // Sanity check
   ROSE_ASSERT (ref_exp1!= NULL);
   ROSE_ASSERT (ref_exp2!= NULL);
@@ -20322,20 +22010,20 @@ static bool isAssignReduction (SgVarRefExp* ref_exp1, SgVarRefExp* ref_exp2, Omp
       } // end matching associative operations
     }
   } // end if assignop
-  return isReduction; 
+  return isReduction;
 }
 // A helper function for reduction recognition
 // check if two references to the same variable form a reduction idiom using if-statement
 // example 1: if (array[i]> maxV) maxV = array[i]
 // example 2: if (array[i]< minV) minV = array[i]
-// If it matches, return true and the reduction operator type 
+// If it matches, return true and the reduction operator type
 static  bool isIfReduction(SgVarRefExp* ref1, SgVarRefExp* ref2, OmpSupport::omp_construct_enum& optype)
 {
   bool matchStmt1 = false;
   bool matchStmt2 = false;
 
   //TODO: ensure ref1, ref2 are ordered as pre-order manner in AST
-  //   SgExpression* reduction_var_ref = NULL; 
+  //   SgExpression* reduction_var_ref = NULL;
   //   SgExpression* source_var_ref = NULL;  //array[i] is the source var ref
 
   // Sanity check
@@ -20345,26 +22033,26 @@ static  bool isIfReduction(SgVarRefExp* ref1, SgVarRefExp* ref2, OmpSupport::omp
   // must be scalar type
   ROSE_ASSERT (SageInterface::isScalarType(ref1-> get_symbol()->get_type() ) );
 
-  SgStatement* stmt1 = SageInterface::getEnclosingStatement(ref1);                                                               
-  SgStatement* stmt2 = SageInterface::getEnclosingStatement(ref2);                                                              
+  SgStatement* stmt1 = SageInterface::getEnclosingStatement(ref1);
+  SgStatement* stmt2 = SageInterface::getEnclosingStatement(ref2);
 
   //early return if the same stmt
   if (stmt1 == stmt2) return false;
 
   // check stmt2 first. It is easier.
-  // stmt2 should be an assignment stmt like: 
-  //    reduction_variable = else; 
+  // stmt2 should be an assignment stmt like:
+  //    reduction_variable = else;
   //    minV = array[i];
   SgExpression* lhs2 = NULL;
   SgExpression* rhs2 = NULL;
   if (SageInterface::isAssignmentStatement (stmt2, &lhs2, &rhs2 ))
   {
-    // lhs2 must be ref2 
-    if (lhs2 == ref2 ) 
+    // lhs2 must be ref2
+    if (lhs2 == ref2 )
     {
-      matchStmt2 = true; 
-      //     reduction_var_ref = lhs2; 
-      //     source_var_ref= rhs2; 
+      matchStmt2 = true;
+      //     reduction_var_ref = lhs2;
+      //     source_var_ref= rhs2;
     }
   } // end assignment stmt
 
@@ -20381,6 +22069,7 @@ static  bool isIfReduction(SgVarRefExp* ref1, SgVarRefExp* ref2, OmpSupport::omp
         if (SgBasicBlock* block = isSgBasicBlock (body))
         {
           // stmt2 must be the only child of the if true body
+          ROSE_ASSERT(stmt2 != NULL);
           if ( ((block->get_statements()).size() == 1) && stmt2->get_scope() == block )
             matchBody = true;
         }
@@ -20405,7 +22094,7 @@ static  bool isIfReduction(SgVarRefExp* ref1, SgVarRefExp* ref2, OmpSupport::omp
               optype = OmpSupport::e_reduction_max;
               matchCondition= true;
             }
-            else if (isSgGreaterThanOp(binop))  
+            else if (isSgGreaterThanOp(binop))
             {
               optype = OmpSupport::e_reduction_min;
               matchCondition= true;
@@ -20419,7 +22108,7 @@ static  bool isIfReduction(SgVarRefExp* ref1, SgVarRefExp* ref2, OmpSupport::omp
               optype = OmpSupport::e_reduction_min;
               matchCondition= true;
             }
-            else if (isSgGreaterThanOp(binop))  
+            else if (isSgGreaterThanOp(binop))
             {
               optype = OmpSupport::e_reduction_max;
               matchCondition= true;
@@ -20433,7 +22122,7 @@ static  bool isIfReduction(SgVarRefExp* ref1, SgVarRefExp* ref2, OmpSupport::omp
   } // end if-stmt
 
 
-  return (matchStmt2 && matchStmt1);   
+  return (matchStmt2 && matchStmt1);
 }
 
 // check if a var ref is a form of
@@ -20442,7 +22131,7 @@ static  bool isIfReduction(SgVarRefExp* ref1, SgVarRefExp* ref2, OmpSupport::omp
 // The reduction variable appears only once in the reduction idiom.
 static bool isSingleAppearanceReduction(SgVarRefExp* ref1, OmpSupport::omp_construct_enum& optype )
 {
-  bool isReduction = false; 
+  bool isReduction = false;
 
   ROSE_ASSERT (ref1 != NULL);
   // must be scalar type
@@ -20588,7 +22277,7 @@ void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pa
         cout<<"Debug: SageInterface::ReductionRecognition() A candidate used once:"<<initname->get_name().getString()<<endl;
       SgVarRefExp* ref_exp = *(var_references[initname].begin());
       if (isSingleAppearanceReduction (ref_exp, optype))
-        isReduction = true; 
+        isReduction = true;
     }
     // referenced twice within a same statement
     else if (var_references[initname].size()==2)
@@ -20601,7 +22290,7 @@ void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pa
       // TODO: recognize  maxV = max (maxV, array[i])
       if (isAssignReduction (ref_exp1, ref_exp2, optype) || isIfReduction (ref_exp1, ref_exp2, optype) )
       {
-        isReduction = true; 
+        isReduction = true;
       }
 
     }// end referenced twice
@@ -20656,7 +22345,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
   }
 
 #if 0
-  // DQ (11/1/2016): This function violated the ROSE -enable-advanced-warnings 
+  // DQ (11/1/2016): This function violated the ROSE -enable-advanced-warnings
   // option (-D_GLIBCXX_CONCEPT_CHECKS -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC).
 
   /// \brief  clones a function parameter list @params and uses the function
@@ -20697,7 +22386,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
 #endif
 
 #if 0
-  // DQ (11/1/2016): This function violated the ROSE -enable-advanced-warnings 
+  // DQ (11/1/2016): This function violated the ROSE -enable-advanced-warnings
   // option (-D_GLIBCXX_CONCEPT_CHECKS -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC).
 
   std::pair<SgStatement*, SgInitializedName*>
@@ -20949,20 +22638,20 @@ SageInterface::collectSourceSequenceNumbers( SgNode* astNode )
     traversal.traverse(astNode,preorder);
 
     return traversal.sourceSequenceSet;
-    
+
   }
 
 /*Winnie, loop collapse, collapse nested for loops into one large for loop
- *  return a SgExprListExp *, which will contain a list of SgVarRefExp * to variables newly created, inserted outside of the 
+ *  return a SgExprListExp *, which will contain a list of SgVarRefExp * to variables newly created, inserted outside of the
  *                            loop scope, and used inside the loop scope.
- *                            If the target_loop comes with omp target directive, these variables should be added in map in clause in 
+ *                            If the target_loop comes with omp target directive, these variables should be added in map in clause in
  *                            transOmpCollpase(..) function in omp_lowering.cpp.
  *
- *  The input loop pointer is changed to the generated collapsed loop after the transformation.                              
+ *  The input loop pointer is changed to the generated collapsed loop after the transformation.
  *
- * 
+ *
  *  Loop is normalized to [lb,ub,step], ub is inclusive (<=, >=)
- *  
+ *
  *  to collapse two level of loops:
  *  iteration_count_one= (ub1-lb1+1)%step1 ==0?(ub1-lb1+1)/step1: (ub1-lb1+1)/step1+1
  *  iteration_count_two= (ub2-lb2+1)%step2 ==0?(ub2-lb2+1)/step2: (ub2-lb2+1)/step2+1
@@ -20971,13 +22660,13 @@ SageInterface::collectSourceSequenceNumbers( SgNode* astNode )
  *  Decide incremental/decremental loop by checking operator of test statement(ub), <=/>=, this is done in isCanonicalForLoop()
  *
  * Example 1:
- * for (int i=lb2;i<ub2;i+=inc2)                 //incremental 
+ * for (int i=lb2;i<ub2;i+=inc2)                 //incremental
  *  {
  *      for (int j=lb1;j>ub1;i+=inc1)            //decremental
  *      {
- *                  for (int l=lb2;l<ub2;l+=inc2)        //incremental 
+ *                  for (int l=lb2;l<ub2;l+=inc2)        //incremental
  *              {
- *               a[i][j][l]=i+j+l;      
+ *               a[i][j][l]=i+j+l;
  *              }
  *      }
  *  }
@@ -21013,13 +22702,13 @@ SageInterface::collectSourceSequenceNumbers( SgNode* astNode )
  *     // total iteration count = ((9 - 1 + 1)/1) * ((10 - 1 + 1)/2) = 45
  *     // ub = 45
  *     // lb = 0
- *       
+ *
  *     int i_nom_1_total_iters = 9;
  *     int j_nom_1_total_iters = 5;      // 10 % (-2 * -1) == 0 ? 10 / (-2 * -1) : 10 /(-2 * -1) + 1;
  *     int final_total_iters = 45;       // i_nom_1_total_iters * j_nom_2_total_iters;
  *
- *     int i_nom_1_interval = 5;        
- * 
+ *     int i_nom_1_interval = 5;
+ *
  *     for (z=0; z<=44; z+=1)
  *     {
  *       i_nom_1 = z / 5 + 1;
@@ -21042,21 +22731,21 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
     SgExprListExp * new_var_list = buildExprListExp();  //expression list contains all the SgVarRefExp * to variables that need to be added in the mapin clause
 
-    /* 
+    /*
      *step 1: grab the target loops' header information
      */
     SgForStatement *& target_loop = loop;
 
     // we use global scope to help generate unique variable name later
     // local scope-based unique names may cause conflicts if the declarations are moved around (in OpenMP target data promotion)
-    SgGlobal* global_scope = getGlobalScope (loop); 
+    SgGlobal* global_scope = getGlobalScope (loop);
     ROSE_ASSERT (global_scope != NULL);
     SgInitializedName** ivar = new SgInitializedName*[collapsing_factor];
     SgExpression** lb = new SgExpression*[collapsing_factor];
     SgExpression** ub = new SgExpression*[collapsing_factor];
     SgExpression** step = new SgExpression*[collapsing_factor];
-    SgStatement** orig_body = new SgStatement*[collapsing_factor]; 
-    
+    SgStatement** orig_body = new SgStatement*[collapsing_factor];
+
     SgExpression** total_iters = new SgExpression*[collapsing_factor]; //Winnie, the real iteration counter in each loop level
     SgExpression** interval = new SgExpression*[collapsing_factor]; //Winnie, this will be used to calculate i_nom_1_remainder
     bool *isPlus = new bool[collapsing_factor]; //Winnie, a flag indicates incremental or decremental for loop
@@ -21065,7 +22754,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
     //Winnie, get loops info first
     std::vector<SgForStatement* > loops= SageInterface::querySubTree<SgForStatement>(target_loop,V_SgForStatement);
     ROSE_ASSERT(loops.size()>=collapsing_factor);
- 
+
     SgForStatement* temp_target_loop = NULL;
     SgExpression* temp_range_exp = NULL; //Raw iteration range
     SgExpression* temp_range_d_step_exp = NULL; //temp_range_exp / step[i]
@@ -21076,36 +22765,35 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
     /*
     *    get lb, ub, step information for each level of the loops
     *    ub_exp is the final iterantion range(starting from 0) after loop collapsing
-    *    total_iters[i], = (ub[i] - lb[i] + 1)/step[i]  is the total iter num in each level of loop before loop collapsing   
+    *    total_iters[i], = (ub[i] - lb[i] + 1)/step[i]  is the total iter num in each level of loop before loop collapsing
     */
 
     SgStatement* parent =  isSgStatement(getScope(target_loop)->get_parent());        //Winnie, the scope that include target_loop
     ROSE_ASSERT(getScope(target_loop)->get_parent()!= NULL);
-    
+
     SgScopeStatement* scope = isSgScopeStatement(parent);    //Winnie, the scope that include target_loop
-    
-    SgStatement* insert_target;
+
     while(scope == NULL)
     {
        parent = isSgStatement(parent->get_parent());
        scope = isSgScopeStatement(parent);
     }
 
-    insert_target = findLastDeclarationStatement(scope);
-    if(insert_target != NULL)
+    SgStatement* insert_target = findLastDeclarationStatement(scope);
+    if (insert_target != NULL)
         insert_target = getNextStatement(insert_target);
     else
         insert_target = getFirstStatement(scope);
 
-    ROSE_ASSERT(scope != NULL); 
+    ROSE_ASSERT(scope != NULL);
 
 
     for(size_t i = 0; i < collapsing_factor; i ++)
-    {     
-        temp_target_loop = loops[i]; 
+    {
+        temp_target_loop = loops[i];
 
         // normalize the target loop first  // adjust to numbering starting from 0
-        forLoopNormalization(temp_target_loop);  
+        forLoopNormalization(temp_target_loop);
 
         if (!isCanonicalForLoop(temp_target_loop, &ivar[i], &lb[i], &ub[i], &step[i], &orig_body[i], &isPlus[i]))
         {
@@ -21113,10 +22801,10 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
             dumpInfo(target_loop);
             return NULL;
         }
-        
+
         ROSE_ASSERT(ivar[i]&& lb[i] && ub[i] && step[i]);
-   
-      
+
+
 //Winnie, (ub[i]-lb[i]+1)%step[i] ==0?(ub[i]-lb[i]+1)/step[i]: (ub[i]-lb[i]+1)/step[i]+1; (need ceiling) total number of iterations in this level (ub[i] - lb[i] + 1)/step[i]
         if(isPlus[i] == true)
             temp_range_exp = buildAddOp(buildSubtractOp(copyExpression(ub[i]), copyExpression(lb[i])), buildIntVal(1));
@@ -21125,7 +22813,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
             step[i] = buildMultiplyOp(step[i], buildIntVal(-1));
         }
         temp_range_d_step_exp = buildDivideOp(temp_range_exp,copyExpression(step[i]));//(ub[i]-lb[i]+1)/step[i]
-        
+
         temp_condition_1 = buildEqualityOp(buildModOp(copyExpression(temp_range_exp),copyExpression(step[i])),buildIntVal(0)); //(ub[i]-lb[i]+1)%step[i] ==0
 
         temp_total_iter = buildConditionalExp(temp_condition_1,temp_range_d_step_exp, buildAddOp(copyExpression(temp_range_d_step_exp),buildIntVal(1)));
@@ -21133,13 +22821,13 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
         //build variables to store iteration numbers in each loop, simplify the calculation of "final_total_iters"
         //insert the new variable (store real iteration number of each level of the loop) before the target loop
         string iter_var_name= "_total_iters";
-        //iter_var_name = ivar[i]->get_name().getString() + iter_var_name + generateUniqueName(temp_total_iter, false);  
+        //iter_var_name = ivar[i]->get_name().getString() + iter_var_name + generateUniqueName(temp_total_iter, false);
         iter_var_name = "__"+ivar[i]->get_name().getString() + iter_var_name+ generateUniqueVariableName (global_scope,"");
-        SgVariableDeclaration* total_iter = buildVariableDeclaration(iter_var_name, buildIntType(), buildAssignInitializer(temp_total_iter, buildIntType()), scope);  
-        insertStatementBefore(insert_target, total_iter);    
+        SgVariableDeclaration* total_iter = buildVariableDeclaration(iter_var_name, buildIntType(), buildAssignInitializer(temp_total_iter, buildIntType()), scope);
+        insertStatementBefore(insert_target, total_iter);
         constantFolding (total_iter);
         total_iters[i] = buildVarRefExp(iter_var_name, scope);
-        ub_exp = buildMultiplyOp(ub_exp, total_iters[i]);    //Winnie, build up the final iteration range 
+        ub_exp = buildMultiplyOp(ub_exp, total_iters[i]);    //Winnie, build up the final iteration range
     }
 
 
@@ -21154,14 +22842,14 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
     insertStatementBefore(insert_target, final_total_iter);
     ub_exp = buildVarRefExp(final_iter_counter_name, scope);
     new_var_list->append_expression(isSgVarRefExp(ub_exp));
-  
+
     /*Winnie, interval[i] will make the calculation of remainders simpler*/
     for(unsigned int i = 0; i < collapsing_factor; i++)
     {
         interval[i] = buildIntVal(1);
         for(unsigned int j = collapsing_factor - 1; j > i; j--)
         {
-            interval[i] = buildMultiplyOp(total_iters[j], interval[i]); 
+            interval[i] = buildMultiplyOp(total_iters[j], interval[i]);
         }
         //string interval_name = ivar[i]->get_name().getString() + "_interval" + generateUniqueName(interval[i], false);
         string interval_name = "__"+ ivar[i]->get_name().getString() + "_interval" + generateUniqueVariableName (global_scope,"");
@@ -21178,63 +22866,64 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
    //Winnie, init statement of the loop header, copy the lower bound, we are dealing with a range, the lower bound should always be "0"
     //Winnie, declare a brand new var as the new index
       string ivar_name = "__collapsed_index"+ generateUniqueVariableName (global_scope,"");
+      ROSE_ASSERT(insert_target != NULL);
       SgVariableDeclaration* new_index_decl = buildVariableDeclaration(ivar_name, buildIntType(), NULL, insert_target->get_scope());
       SgVariableSymbol * collapsed_index_symbol = getFirstVarSym (new_index_decl);
       insertStatementBefore(insert_target, new_index_decl);
       SgVarRefExp * clps_index_ref = buildVarRefExp(collapsed_index_symbol);
       new_var_list->append_expression(clps_index_ref);
 
-//      SgVariableDeclaration* init_stmt = buildVariableDeclaration(ivar_name, buildIntType(), buildAssignInitializer(buildIntVal(0), buildIntType()), scope);  
-  
-  
+//      SgVariableDeclaration* init_stmt = buildVariableDeclaration(ivar_name, buildIntType(), buildAssignInitializer(buildIntVal(0), buildIntType()), scope);
+
+
      SgBasicBlock* body = isSgBasicBlock(deepCopy(temp_target_loop->get_loop_body())); // normalized loop has a BB body
-     ROSE_ASSERT(body);
+     ROSE_ASSERT(body != NULL);
      SgExpression* new_exp = NULL;
      SgExpression* remain_exp_temp = buildVarRefExp(ivar_name, scope);
-     std::vector<SgStatement*> new_stmt_list; 
-     
+     std::vector<SgStatement*> new_stmt_list;
+
      SgExprStatement* assign_stmt = NULL;
-     
+
      /*  Winnie
-     *   express old iterator variables (i_norm, j_norm ...)  with new_index,  
+     *   express old iterator variables (i_norm, j_norm ...)  with new_index,
      *   new_exp, create new expression for each of the iterators
-     *   i_nom_1 = (_new_index / interval[0])*step[0] + lb[0] 
+     *   i_nom_1 = (_new_index / interval[0])*step[0] + lb[0]
      *   i_nom_1_remain_value = (_new_index % interval[0])*step[0] + lb[0], create a new var to store remain value
      *   create a new var to store total_iters[i]
-     */ 
-     for(unsigned int i = 0; i < collapsing_factor - 1; i ++)  
-     {  
+     */
+     for(unsigned int i = 0; i < collapsing_factor - 1; i ++)
+     {
          if(isPlus[i] == true)
              new_exp = buildAddOp(buildMultiplyOp(buildDivideOp(copyExpression(remain_exp_temp), copyExpression(interval[i])), step[i]), copyExpression(lb[i]));  //Winnie, (i_remain/interval[i])*step[i] + lb[i]
          else
              new_exp = buildAddOp(buildMinusOp(buildMultiplyOp(buildDivideOp(copyExpression(remain_exp_temp), copyExpression(interval[i])), step[i])), copyExpression(lb[i]));  //Winnie, -(i_remain/interval[i])*step[i] + lb[i], for decremental loop
 
-         assign_stmt = buildAssignStatement(buildVarRefExp(ivar[i], scope), copyExpression(new_exp));   
-         new_stmt_list.push_back(assign_stmt); 
-         remain_exp_temp = buildModOp((remain_exp_temp), copyExpression(interval[i])); 
+         assign_stmt = buildAssignStatement(buildVarRefExp(ivar[i], scope), copyExpression(new_exp));
+         new_stmt_list.push_back(assign_stmt);
+         remain_exp_temp = buildModOp((remain_exp_temp), copyExpression(interval[i]));
 
          if(i != collapsing_factor - 2){ //Winnie, if this is the second last level of loop, no need to create new variable to hold the remain_value, or remove the original index variable declaration
              string remain_var_name= "_remainder";
-             remain_var_name = "__"+ ivar[i]->get_name().getString() + remain_var_name;  
-             SgVariableDeclaration* loop_index_decl = buildVariableDeclaration(remain_var_name, buildIntType(), buildAssignInitializer(remain_exp_temp, buildIntType()), scope);  
+             remain_var_name = "__"+ ivar[i]->get_name().getString() + remain_var_name;
+             SgVariableDeclaration* loop_index_decl = buildVariableDeclaration(remain_var_name, buildIntType(), buildAssignInitializer(remain_exp_temp, buildIntType()), scope);
              remain_exp_temp = buildVarRefExp(remain_var_name, scope);
-             new_stmt_list.push_back(loop_index_decl); 
+             new_stmt_list.push_back(loop_index_decl);
          }
          new_exp = NULL;
      }
 
 //Winnie, the inner most loop, iter
     if(isPlus[collapsing_factor - 1] == true)
-        assign_stmt = buildAssignStatement(buildVarRefExp(ivar[collapsing_factor - 1], scope), buildAddOp(buildMultiplyOp(remain_exp_temp, step[collapsing_factor - 1]), lb[collapsing_factor - 1]));  
+        assign_stmt = buildAssignStatement(buildVarRefExp(ivar[collapsing_factor - 1], scope), buildAddOp(buildMultiplyOp(remain_exp_temp, step[collapsing_factor - 1]), lb[collapsing_factor - 1]));
     else
-        assign_stmt = buildAssignStatement(buildVarRefExp(ivar[collapsing_factor - 1], scope), buildAddOp(buildMinusOp(buildMultiplyOp(remain_exp_temp, step[collapsing_factor - 1])), lb[collapsing_factor - 1]));   
+        assign_stmt = buildAssignStatement(buildVarRefExp(ivar[collapsing_factor - 1], scope), buildAddOp(buildMinusOp(buildMultiplyOp(remain_exp_temp, step[collapsing_factor - 1])), lb[collapsing_factor - 1]));
      new_stmt_list.push_back(assign_stmt);
      prependStatementList(new_stmt_list, body);
 
     /*
     * step 3: build the new loop, new step is always 1, disregard value of step[i]
     */
-    SgExpression* incr_exp = buildPlusAssignOp(buildVarRefExp(ivar_name, scope), buildIntVal(1)); 
+    SgExpression* incr_exp = buildPlusAssignOp(buildVarRefExp(ivar_name, scope), buildIntVal(1));
 
     //Winnie, build the new conditional expression/ub
     SgExprStatement* cond_stmt = NULL;
@@ -21247,7 +22936,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
     replaceStatement(target_loop, new_loop);
 
-    target_loop = new_loop; //Winnie, so that transOmpLoop() can work on the collapsed loop   
+    target_loop = new_loop; //Winnie, so that transOmpLoop() can work on the collapsed loop
    // constant folding for the transformed AST
    ConstantFolding::constantFoldingOptimization(scope->get_parent(),false);   //Winnie, "scope" is the scope that contains new_loop, this is the scope where we insert some new variables to store interation count and intervals
 
@@ -21276,8 +22965,8 @@ SageInterface::isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 )
   // DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
 
   // This is AST container for the ROSE AST that will provide an iterator.
-  // We want two iterators (one for the copy of the snippet and one for the 
-  // original snippet so that we can query the original snippet's AST 
+  // We want two iterators (one for the copy of the snippet and one for the
+  // original snippet so that we can query the original snippet's AST
   // as we process each IR node of the AST for the copy of the snippet.
   // Only the copy of the snippet is inserted into the target AST.
      RoseAst ast_of_copy(tree1);
@@ -21312,7 +23001,7 @@ SageInterface::isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 )
 
           i_copy++;
 
-       // Verify that we have not reached the end of the ast for the original (both the 
+       // Verify that we have not reached the end of the ast for the original (both the
        // copy and the original are the same structurally, and thus the same size).
           ROSE_ASSERT(i_original != ast_of_original.end());
           i_original++;
@@ -21372,15 +23061,17 @@ bool SageInterface::getForLoopInformations(
   SgExpression * rhs_exp = bin_test->get_rhs_operand_i();
   while (isSgCastExp(rhs_exp)) rhs_exp = ((SgCastExp *)rhs_exp)->get_operand_i();
   SgVarRefExp * rhs_var_ref = isSgVarRefExp(rhs_exp);
+#ifndef NDEBUG
   bool rhs_it = (rhs_var_ref != NULL) && (rhs_var_ref->get_symbol() == iterator);
 
 // DQ (4/21/2016): Replacing use of bitwise xor with something more approriate for logical types.
 // Note that the xor logica operator does not exist in C/C++ and that this is a case of using the
-// bitwise xor operator on boolean values (not a great idea).  Note that logical "a xor b" is 
-// equivalent to "!a != !b"  the use of "!" only make sure that the "!=" is applied to a boolean 
+// bitwise xor operator on boolean values (not a great idea).  Note that logical "a xor b" is
+// equivalent to "!a != !b"  the use of "!" only make sure that the "!=" is applied to a boolean
 // value.  Since these are boolean typed values we can use "a != b", directly.
 // assert(lhs_it xor rhs_it);
   assert(lhs_it != rhs_it);
+#endif
 
   upper_bound = lhs_it ? bin_test->get_rhs_operand_i() : bin_test->get_lhs_operand_i();
 
@@ -21423,24 +23114,30 @@ bool SageInterface::getForLoopInformations(
     case V_SgPlusAssignOp:
     {
       SgBinaryOp * bin_op = (SgBinaryOp *)increment;
+#ifndef NDEBUG
       SgVarRefExp * var_ref_lhs = isSgVarRefExp(bin_op->get_lhs_operand_i());
       assert(var_ref_lhs != NULL && var_ref_lhs->get_symbol() == iterator);
+#endif
       stride = bin_op->get_rhs_operand_i();
       break;
     }
     case V_SgMinusAssignOp:
     {
       SgBinaryOp * bin_op = (SgBinaryOp *)increment;
+#ifndef NDEBUG
       SgVarRefExp * var_ref_lhs = isSgVarRefExp(bin_op->get_lhs_operand_i());
       assert(var_ref_lhs != NULL && var_ref_lhs->get_symbol() == iterator);
+#endif
       stride = bin_op->get_rhs_operand_i();
       break;
     }
     case V_SgAssignOp:
     {
       SgAssignOp * assign_op = (SgAssignOp *)increment;
+#ifndef NDEBUG
       SgVarRefExp * inc_assign_lhs = isSgVarRefExp(assign_op->get_lhs_operand_i());
       assert(inc_assign_lhs != NULL && inc_assign_lhs->get_symbol() == iterator);
+#endif
       SgBinaryOp * inc_assign_rhs = isSgBinaryOp(assign_op->get_rhs_operand_i());
       assert(inc_assign_rhs != NULL);
       SgVarRefExp * inc_assign_rhs_lhs = isSgVarRefExp(inc_assign_rhs->get_lhs_operand_i());
@@ -21526,10 +23223,13 @@ SgFile* SageInterface::processFile(SgProject *project, string filename, bool unp
 
     sourcefile -> build_Java_AST(arg_list, project -> get_originalCommandLineArgumentList());
 
-    if (! unparse) { // if we are not supposed to unparse this file, 
+    if (! unparse) { // if we are not supposed to unparse this file,
         project -> get_fileList_ptr() -> get_listOfFiles().pop_back(); // remove it from the list of files in the project
         ROSE_ASSERT(sourcefile != isSgSourceFile((*project)[filename]));
     }
+
+  // DQ (7/2/2020): Added assertion (fails for snippet tests).
+     ROSE_ASSERT(file->get_preprocessorDirectivesAndCommentsList() != NULL);
 
     return file;
 }
@@ -21554,7 +23254,7 @@ string SageInterface::preprocessPackage(SgProject *project, string package_name)
     string filename = (string) utf8;
     Rose::Frontend::Java::Ecj::currentEnvironment -> ReleaseStringUTFChars(temp_file, utf8);
 
-    processFile(project, filename); // translate the file 
+    processFile(project, filename); // translate the file
 
     return package_name;
 }
@@ -21579,7 +23279,7 @@ string SageInterface::preprocessImport(SgProject *project, string import_string)
     string filename = (string) utf8;
     Rose::Frontend::Java::Ecj::currentEnvironment -> ReleaseStringUTFChars(temp_file, utf8);
 
-    processFile(project, filename); // translate the file 
+    processFile(project, filename); // translate the file
 
     return import_string;
 }
@@ -21679,7 +23379,7 @@ SgClassDeclaration *SageInterface::findOrImportJavaClass(SgProject *project, SgC
         class_symbol = package_definition -> lookup_class_symbol(class_name);
     }
 
-    class_declaration = (class_symbol == NULL 
+    class_declaration = (class_symbol == NULL
                                        ? NULL
                                        : isSgClassDeclaration(class_symbol -> get_declaration() -> get_definingDeclaration()));
 
@@ -21727,7 +23427,12 @@ SgMemberFunctionDeclaration *SageInterface::findJavaMain(SgClassDefinition *clas
     SgArrayType *string_array_type = getUniqueJavaArrayType(Rose::Frontend::Java::StringClassType, 1);
     ROSE_ASSERT(string_array_type);
     type_list -> append_argument(string_array_type);
-    SgFunctionType *member_function_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), type_list, class_definition, 0); // mfunc_specifier);
+
+ // DQ (1/11/2020): Fixing support for C++11 l-value and r-value reference modifiers for member functions.
+ // SgFunctionType *member_function_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), type_list, class_definition, 0); // mfunc_specifier);
+    unsigned int ref_modifiers = 0;
+    SgFunctionType *member_function_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), type_list, class_definition, /* mfunc_specifier */ 0 , ref_modifiers);
+
     SgFunctionSymbol *method_symbol = class_definition -> lookup_function_symbol("main", member_function_type);
     delete type_list;
     return (method_symbol == NULL ? NULL : isSgMemberFunctionDeclaration(method_symbol -> get_declaration()));
@@ -21749,7 +23454,7 @@ SgMemberFunctionDeclaration *SageInterface::findJavaMain(SgClassType *class_type
 //------------------------------------------------------------------------------
 
 //! Replace all variable references to an old symbol in a scope to being references to a new symbol.
-// Essentially replace variable a with b. 
+// Essentially replace variable a with b.
 void SageInterface::replaceVariableReferences(SgVariableSymbol* old_sym, SgVariableSymbol* new_sym, SgScopeStatement * scope )
 {
   ROSE_ASSERT  (old_sym != NULL);
@@ -21768,8 +23473,8 @@ void SageInterface::replaceVariableReferences(SgVariableSymbol* old_sym, SgVaria
 
 
 // DQ (11/12/2018): Adding test to avoid issues that we can't test for in the unparsing of header files using the token based unparsing.
-//! If header file unparsing and token-based unparsing are used, then some statements in header files 
-//! used with the same name and different include syntax can't be transformed. This is currently because 
+//! If header file unparsing and token-based unparsing are used, then some statements in header files
+//! used with the same name and different include syntax can't be transformed. This is currently because
 //! there is no way to generally test the resulting transformed code generated by ROSE.
 //! NOTE: This is demonstrated by test8 in the unparse headers tests directory.
 bool
@@ -21782,7 +23487,7 @@ SageInterface::statementCanBeTransformed(SgStatement* stmt)
 
      if (sourceFile == NULL)
         {
-          printf ("In SageInterface::statementCanBeTransformed(): sourceFile not found \n"); 
+          printf ("In SageInterface::statementCanBeTransformed(): sourceFile not found \n");
         }
 
   // I think we can assert this!
@@ -21795,10 +23500,15 @@ SageInterface::statementCanBeTransformed(SgStatement* stmt)
           string source_filename = stmt->getFilenameString();
 #if 0
           printf ("In SageInterface::statementCanBeTransformed(): source_filename = %s \n",source_filename.c_str());
+          printf (" --- Rose::includeFileMapForUnparsing.size()                   = %zu \n",Rose::includeFileMapForUnparsing.size());
 #endif
-          if (Rose::includeFileMapForUnparsing.find(source_filename) != Rose::includeFileMapForUnparsing.end())
+
+       // DQ (11/5/2019): Using the edg_include_file_map instead (constructed in EDG/ROSE translation).
+       // if (Rose::includeFileMapForUnparsing.find(source_filename) != Rose::includeFileMapForUnparsing.end())
+          if (EDG_ROSE_Translation::edg_include_file_map.find(source_filename) != EDG_ROSE_Translation::edg_include_file_map.end())
              {
-               SgIncludeFile* include_file = Rose::includeFileMapForUnparsing[source_filename];
+            // SgIncludeFile* include_file = Rose::includeFileMapForUnparsing[source_filename];
+               SgIncludeFile* include_file = EDG_ROSE_Translation::edg_include_file_map[source_filename];
                ROSE_ASSERT(include_file != NULL);
 #if 0
                printf ("include_file->get_can_be_supported_using_token_based_unparsing() = %s \n",include_file->get_can_be_supported_using_token_based_unparsing() ? "true" : "false");
@@ -21850,11 +23560,11 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
     target_scope = SageInterface::getEnclosingScope (target_scope, false);
     if (target_scope == )
   }
-# endif 
+# endif
 
-  // Move the declaration 
-  //TODO: consider another way: copy the declaration, insert the copy, replace varRefExp, and remove (delete) the original declaration 
-  SageInterface::removeStatement(decl); 
+  // Move the declaration
+  //TODO: consider another way: copy the declaration, insert the copy, replace varRefExp, and remove (delete) the original declaration
+  SageInterface::removeStatement(decl);
 
   switch (target_scope->variantT())
   {
@@ -21864,16 +23574,17 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
         break;
       }
 #if 0 // this check should be done earlier before any side effects can happen
-    case V_SgIfStmt: 
+    case V_SgIfStmt:
     {
        // adjust to parent scope of if-stmt
        break;
     }
 #endif
-    case V_SgForStatement: 
+    case V_SgForStatement:
       {
         // we move int i; to be for (int i=0; ...);
         SgForStatement* stmt = isSgForStatement (target_scope);
+        ROSE_ASSERT(stmt != NULL);
         SgStatementPtrList& stmt_list = stmt->get_init_stmt();
         // Try to match a pattern like for (i=0; ...) here
         // assuming there is only one assignment like i=0
@@ -21912,9 +23623,9 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
       }
   }
 
-#if 1 
   //make sure the symbol is moved also since prependStatement() (in fact fixVariableDeclaration()) does not handle this detail.
-  SgVariableSymbol * sym = SageInterface::getFirstVarSym(decl);
+  SgVariableSymbol* sym = SageInterface::getFirstVarSym(decl);
+  ROSE_ASSERT(sym != NULL);
   SgScopeStatement* orig_scope = sym->get_scope();
   if (orig_scope != target_scope)
   {
@@ -21929,7 +23640,6 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
   // This is difficult since C++ variables have namespaces
   // Details are in SageInterface::fixVariableDeclaration()
   ROSE_ASSERT (target_scope->symbol_exists(sym));
-#endif   
 }
 
 class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterface::const_int_expr_t> {
@@ -21973,12 +23683,12 @@ class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterf
      SgVariableSymbol *sym = vRef->get_symbol();
      SgInitializedName *iName = sym->get_declaration();
      SgInitializer *ini = iName->get_initializer();
-                                                                                 
+
      if (isSgAssignInitializer(ini)) {
        SgAssignInitializer *initializer = isSgAssignInitializer(ini);
        SgExpression *rhs = initializer->get_operand();
        SimpleExpressionEvaluator variableEval;
-                                                                                                                
+
        return variableEval.traverse(rhs);
      }
    }
@@ -21989,20 +23699,22 @@ class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterf
  }
 
  struct SageInterface::const_int_expr_t evaluateSynthesizedAttribute(SgNode *node, SynthesizedAttributesList synList) {
-   if (isSgExpression(node)) {
-     if (isSgValueExp(node)) {
-       return this->getValueExpressionValue(isSgValueExp(node));
+   if (isSgExpression(node) != NULL) {
+     SgValueExp* valueExp = isSgValueExp(node);
+     if (valueExp != NULL) {
+       return this->getValueExpressionValue(valueExp);
      }
-                                                                                                                                                 
-     if (isSgVarRefExp(node)) {
+
+     SgVarRefExp* varRefExp = isSgVarRefExp(node);
+     if (varRefExp != NULL) {
       //      std::cout << "Hit variable reference expression!" << std::endl;
-       return evaluateVariableReference(isSgVarRefExp(node));
+       return evaluateVariableReference(varRefExp);
      }
      // Early break out for assign initializer // other possibility?
      if (isSgAssignInitializer(node)) {
        if(synList.at(0).hasValue_){
          return synList.at(0);
-       } else { 
+       } else {
          struct SageInterface::const_int_expr_t val;
          val.value_ = -1;
          val.hasValue_ = false;
@@ -22061,7 +23773,7 @@ class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterf
  }
 };
 
-struct SageInterface::const_int_expr_t 
+struct SageInterface::const_int_expr_t
 SageInterface::evaluateConstIntegerExpression(SgExpression *expr){
   SimpleExpressionEvaluator eval;
   return eval.traverse(expr);
@@ -22074,7 +23786,7 @@ SageInterface::checkTypesAreEqual(SgType *typeA, SgType *typeB){
     public:
      TypeEquivalenceChecker(bool profile, bool useSemanticEquivalence)
        : profile_(profile), useSemanticEquivalence_(useSemanticEquivalence),
-         namedType_(0), pointerType_(0), arrayType_(0), functionType_(0) 
+         namedType_(0), pointerType_(0), arrayType_(0), functionType_(0)
      {
      }
 
@@ -22130,7 +23842,7 @@ bool typesAreEqual(SgType *t1, SgType *t2) {
   RoseAst subT2(t2);
 
   for (RoseAst::iterator i = subT1.begin(), j = subT2.begin();
-       i != subT1.end(), j != subT2.end(); ++i, ++j) {
+       i != subT1.end() && j != subT2.end(); ++i, ++j) {
     SgNode *nodeT1 = *i;
     SgNode *nodeT2 = *j;
 
@@ -22228,7 +23940,7 @@ bool typesAreEqual(SgType *t1, SgType *t2) {
 
           for(SgTypePtrList::const_iterator ii = funcTypeA->get_arguments().begin(),
               jj = funcTypeB->get_arguments().begin();
-              ii != funcTypeA->get_arguments().end(),
+              ii != funcTypeA->get_arguments().end() &&
               jj != funcTypeB->get_arguments().end();
               ++ii, ++jj) {
 //            std::cout << (*ii)->class_name() << " " << (*jj)->class_name() << std::endl;
@@ -22348,11 +24060,63 @@ SageInterface::collectModifiedStatements( SgNode* node )
      return traversal.returnset;
    }
 
+
+void
+SageInterface::outputFileIds( SgNode* node )
+   {
+  // DQ (12/2/2019): This reports the file id values of all located nodes in the AST subtree represented by the input node.
+
+#if 1
+     printf ("In outputFileIds(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
+     class LocatedNodeTraversal : public AstSimpleProcessing
+        {
+          public:
+               LocatedNodeTraversal() {}
+               void visit (SgNode* node)
+                  {
+                    SgLocatedNode* locatedNode = isSgLocatedNode(node);
+                    if (locatedNode != NULL)
+                       {
+#if 1
+                         printf ("In outputFileIds(): isModified() == %s: locatedNode = %p = %s \n",locatedNode->get_isModified() ? "true" : "false",locatedNode,locatedNode->class_name().c_str());
+                         printf (" --- file id = %d physical_file_id = %d \n",node->get_file_info()->get_file_id(),node->get_file_info()->get_physical_file_id());
+#endif
+                       }
+                      else
+                       {
+                         SgInitializedName* initializedName = isSgInitializedName(node);
+                         if (initializedName != NULL)
+                            {
+                              printf ("In outputFileIds(): isModified() == %s: initializedName = %p = %s \n",initializedName->get_isModified() ? "true" : "false",initializedName,initializedName->class_name().c_str());
+                              printf (" --- file id = %d physical_file_id = %d \n",initializedName->get_file_info()->get_file_id(),initializedName->get_file_info()->get_physical_file_id());
+                            }
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the function definition.
+     LocatedNodeTraversal traversal;
+     traversal.traverse(node, preorder);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+
 std::set<SgLocatedNode*>
 SageInterface::collectModifiedLocatedNodes( SgNode* node )
    {
   // DQ (6/11/2015): This reports the statements that are marked as modified (isModified flag).
   // It is useful for debugging the token-based unparsing.
+
+#if 0
+     printf ("In collectModifiedLocatedNodes(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
 
      class LocatedNodeTraversal : public AstSimpleProcessing
         {
@@ -22380,6 +24144,29 @@ SageInterface::collectModifiedLocatedNodes( SgNode* node )
      traversal.traverse(node, preorder);
 
      return traversal.returnset;
+   }
+
+//! Use the set of IR nodes and set the isModified flag in each IR node to true.
+void
+SageInterface::resetModifiedLocatedNodes(const std::set<SgLocatedNode*> & modifiedNodeSet)
+   {
+  // DQ (6/5/2019): Use a previously constructed set to reset the IR nodes to be marked as isModified.
+
+#if 0
+     printf ("In resetModifiedLocatedNodes(): modifiedNodeSet.size() = %zu \n",modifiedNodeSet.size());
+#endif
+
+     std::set<SgLocatedNode*>::const_iterator i = modifiedNodeSet.begin();
+     while (i != modifiedNodeSet.end())
+        {
+          SgLocatedNode* node = *i;
+#if 0
+          printf ("Marking node = %p = %s as modified \n",node,node->class_name().c_str());
+#endif
+          node->set_isModified(true);
+
+          i++;
+        }
    }
 
 
@@ -22410,15 +24197,42 @@ SageInterface::reportModifiedStatements( const string & label, SgNode* node )
      ROSE_ASSERT(node != NULL);
      std::set<SgStatement*> collection = collectModifiedStatements(node);
 
+#if 1
+     printf ("In reportModifiedStatements(): collection.size() = %zu \n",collection.size());
+#endif
+
      std::set<SgStatement*>::iterator i = collection.begin();
      while (i != collection.end())
         {
-          printf ("   --- modified statement = %p = %s \n",(*i),(*i)->class_name().c_str());
+       // DQ (10/9/2019): Adding filename to debug output.
+          string filename = (*i)->get_file_info()->get_filename();
+
+       // DQ (10/14/2019): Get the best name possible.
+          if (filename == "transformation")
+             {
+#if 0
+               printf ("   --- filename == transformation: sourceFile = %p using physical filename \n",sourceFile);
+#endif
+            // filename = (*i)->get_file_info()->get_physical_filename();
+               SgSourceFile* sourceFile = TransformationSupport::getSourceFile(*i);
+               if (sourceFile != NULL)
+                  {
+                    filename = sourceFile->getFileName();
+                  }
+             }
+
+          printf ("   --- filename = %s modified statement = %p = %s \n",filename.c_str(),(*i),(*i)->class_name().c_str());
 
           i++;
         }
 
-     printf ("##################################################### \n\n\n");
+#if 1
+  // DQ (6/8/2019): This helps track down where this is being called when are are cleaning up
+  // output spew else the message output at the top of this function will scroll off the screen.
+     printf ("########################################################## \n");
+     printf ("reportModifiedStatements(): Called using label = %s \n",label.c_str());
+#endif
+     printf ("########################################################## \n\n\n");
    }
 
 
@@ -22494,7 +24308,7 @@ std::vector<SgC_PreprocessorDirectiveStatement*>
 SageInterface::translateStatementToUseCppDeclarations( SgStatement* statement, SgScopeStatement* scope)
    {
 
-#if 1
+#if 0
      printOutComments(statement);
 #endif
 
@@ -22709,6 +24523,93 @@ SageInterface::translateToUseCppDeclarations( SgNode* n )
      printf ("Leaving translateToUseCppDeclarations(): DONE: Calling traversal.traverse() \n");
    }
 
+void SageInterface::recursivePrintCurrentAndParent (SgNode* n)
+{
+  // print current level's info
+  if (!n) return; 
+  cout<<"--------------"<<endl;
+  cout<<n<<":"<<n->class_name()<<  endl;
+  if (SgLocatedNode * lnode = isSgLocatedNode(n))
+  { 
+    cout<<"file info:\t ";
+    lnode->get_file_info()->display();
+    cout<<"\n unparseToString:\t ";
+    lnode->unparseToString();
+  }  
+
+  // track back to its parent
+  recursivePrintCurrentAndParent (n->get_parent());
+} 
+
+// print essential information from any AST node
+// hasRemaining if this node has a sibling node to be visited next.
+static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out)
+{ 
+  // there may be NULL children!!
+  //if (!node) return;
+
+  out<<prefix;
+  out<< (hasRemaining?"├──": "└──");
+  if (!node)
+  {
+    out<<" NULL "<<endl;
+    return;
+  }
+
+  // print address
+  out<<"@"<<node<<" "<< node->class_name()<<" ";
+  //file info
+  if (SgLocatedNode* lnode= isSgLocatedNode(node))
+  {
+    out<< Rose::StringUtility::stripPathFromFileName ( lnode->get_file_info()->get_filename() )<<" "<<lnode->get_file_info()->get_line()<<":"<<lnode->get_file_info()->get_col();
+  }
+  
+  if (SgFunctionDeclaration* f = isSgFunctionDeclaration(node) )
+    out<<" "<< f->get_qualified_name();
+
+  if (SgInitializedName * v = isSgInitializedName(node) )
+    out<<" "<< v->get_qualified_name();
+
+  out<<endl;
+
+  std::vector<SgNode* > children = node->get_traversalSuccessorContainer();
+  for (size_t i =0; i< children.size(); i++)
+  {
+    bool n_hasRemaining=false;
+    if (i+1<children.size())
+      n_hasRemaining=true;
+
+    string suffix= hasRemaining? "│   " : "    ";
+    string n_prefix = prefix+suffix;
+    serialize (children[i], n_prefix, n_hasRemaining, out);
+  }
+}
+
+void SageInterface::printAST(SgNode* node)
+{
+  ostringstream oss;
+  string prefix;
+  serialize(node, prefix, false, oss);
+  cout<<oss.str();
+}
+
+void printAST2TextFile (SgNode* node, std::string filename)
+{
+  // Rasmussen 9/21/2020: This leads to infinite recursion (clang warning message) and should be removed from API)
+  ROSE_ASSERT(false);
+  printAST2TextFile (node, filename.c_str());
+}
+
+void SageInterface::printAST2TextFile(SgNode* node, const char* filename)
+{
+  ostringstream oss;
+  string prefix;
+  serialize(node, prefix, false, oss);
+  ofstream textfile;
+  textfile.open(filename, ios::out | ios::app);
+  textfile<<oss.str();
+  textfile.close();
+}
 
 void SageInterface:: saveToPDF(SgNode* node)
 {
@@ -22717,14 +24618,18 @@ void SageInterface:: saveToPDF(SgNode* node)
 //! Save AST into a pdf file, start from a node to find its enclosing file node. The entire file's AST will be saved into a pdf.
 void SageInterface:: saveToPDF(SgNode* node, std::string filename)
 {
-  ROSE_ASSERT(node != NULL); 
+  ROSE_ASSERT(node != NULL);
+#if ROSE_WITH_LIBHARU
   AstPDFGeneration pdf;
   pdf.generateWithinFile(filename, getEnclosingFileNode(node));
+#else
+     printf ("Warning: libharu support is not enabled\n");
+#endif
 }
 
 bool SageInterface::insideSystemHeader (SgLocatedNode* node)
 {
-  bool rtval = false; 
+  bool rtval = false;
   ROSE_ASSERT (node != NULL);
   Sg_File_Info* finfo = node->get_file_info();
   if (finfo!=NULL)
@@ -22732,21 +24637,39 @@ bool SageInterface::insideSystemHeader (SgLocatedNode* node)
     string fname = finfo->get_filenameString();
     string buildtree_str1 = string("include-staging/gcc_HEADERS");
     string buildtree_str2 = string("include-staging/g++_HEADERS");
-    string installtree_str1 = string("include/edg/gcc_HEADERS"); 
-    string installtree_str2 = string("include/edg/g++_HEADERS"); 
+    string installtree_str1 = string("include/edg/gcc_HEADERS");
+    string installtree_str2 = string("include/edg/g++_HEADERS");
+    string system_headers = string("/usr/include");
     // if the file name has a sys header path of either source or build tree
     if ((fname.find (buildtree_str1, 0) != string::npos) ||
         (fname.find (buildtree_str2, 0) != string::npos) ||
         (fname.find (installtree_str1, 0) != string::npos) ||
-        (fname.find (installtree_str2, 0) != string::npos)
+        (fname.find (installtree_str2, 0) != string::npos) ||
+        (fname.find (system_headers, 0) != string::npos)
        )
       rtval = true;
   }
-  return rtval;  
+  return rtval;
+}
+
+//! Find the function type matching a function signature plus a given return type
+SgFunctionType* SageInterface::findFunctionType (SgType* return_type, SgFunctionParameterTypeList* typeList)
+{
+  ROSE_ASSERT(return_type != NULL);
+  ROSE_ASSERT(typeList != NULL);
+  SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
+  ROSE_ASSERT(fTable);
+
+  // This function make clever use of a static member function which can't be built
+  // for the case of a SgMemberFunctionType (or at least not without more work).
+  SgName typeName = SgFunctionType::get_mangled(return_type, typeList);
+  SgFunctionType* funcType = isSgFunctionType(fTable->lookup_function_type(typeName));
+
+  return funcType;
 }
 
 //! Test if two types are equivalent SgFunctionType nodes. This is necessary for template function types
-//! They may differ in one SgTemplateType pointer but identical otherwise. 
+//! They may differ in one SgTemplateType pointer but identical otherwise.
 //! The algorithm is to compare return type and all argument types
 bool SageInterface::isEquivalentFunctionType (const SgFunctionType* lhs, const SgFunctionType* rhs)
 {
@@ -22754,7 +24677,7 @@ bool SageInterface::isEquivalentFunctionType (const SgFunctionType* lhs, const S
   ROSE_ASSERT (rhs != NULL);
   if (lhs == rhs)
     return true;
-    
+
   bool rt = false;
   SgType* rt1 = lhs->get_return_type();
   SgType* rt2 = rhs->get_return_type();
@@ -22767,14 +24690,14 @@ bool SageInterface::isEquivalentFunctionType (const SgFunctionType* lhs, const S
     if (f1_arg_types.size() == f2_arg_types.size())
     {
    // DQ (2/16/2017): Fixed compiler warning about comparison between signed and unsigned integers
-   // int counter = 0; 
-      size_t counter = 0; 
+   // int counter = 0;
+      size_t counter = 0;
    // iterate through all argument types
    // for (int i=0; i< f1_arg_types.size(); i++)
       for (size_t i=0; i< f1_arg_types.size(); i++)
       {
         if (isEquivalentType (f1_arg_types[i], f2_arg_types[i]) )
-           counter ++;  // count the number of equal arguments 
+           counter ++;  // count the number of equal arguments
         else
           break; // found different type? jump out the loop
       }
@@ -22784,7 +24707,7 @@ bool SageInterface::isEquivalentFunctionType (const SgFunctionType* lhs, const S
     }
   } // end if equivalent return types
 
-  return rt; 
+  return rt;
 }
 
 bool
@@ -22797,7 +24720,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
   // DQ (12/8/2015): We need to add support for SgMemberFunctionType as demonstrated by test2007_17.C.
   // and for SgTemplateType as demonstrated by tests/nonsmoke/functional/CompileTests/RoseExample_tests/testRoseHeaders_03.C
   // Note that this is only required within the change to use this isEquivalentType() function in the
-  // support to replace: 
+  // support to replace:
   //    templateParameterOrArgumentLocal->get_initializedName()->get_type() == templateParameterOrArgumentFromSymbol->get_initializedName()->get_type()
   // in ROSETTA/Grammar/Support.code
 
@@ -22870,7 +24793,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                string s = modifierType->get_typeModifier().displayString();
                printf ("   --- type chain modifier: %s \n",s.c_str());
                printf ("   --- type chain modifier: unparseToString: %s \n",modifierType->unparseToString().c_str());
-             }          
+             }
         }
 #endif
 
@@ -22878,9 +24801,9 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
      counter++;
 
   // DQ (11/28/2015): exit with debug output instead of infinte recursion.
-  // if (counter >= 280) 
+  // if (counter >= 280)
   // if (counter >= 500)
-     if (counter >= 280) 
+     if (counter >= 280)
         {
        // printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s Y_element_type = %s \n",counter,X.class_name().c_str(),Y.class_name().c_str());
           printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s = %p Y_element_type = %s = %p \n",counter,X.class_name().c_str(),lhs,Y.class_name().c_str(),rhs);
@@ -23205,7 +25128,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                          isSame ? "true" : "false",lhs,lhs->unparseToString().c_str(),rhs,rhs->unparseToString().c_str());
 #endif
 #if DEBUG_TYPE_EQUIVALENCE || 0
-                 // DQ (2/13/2018): Debugging type equivalence. If they are the same typedef, they 
+                 // DQ (2/13/2018): Debugging type equivalence. If they are the same typedef, they
                  // still might not be interchangable if one is defined in a restrcited scope.
                     const SgTypedefType* lhs_typedefType = isSgTypedefType(lhs);
                     const SgTypedefType* rhs_typedefType = isSgTypedefType(rhs);
@@ -23432,8 +25355,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 #if 0
                                           // Check for irreducable types.
                                              bool X_isReduceable = true;
-                                             if (isSgTypeSignedLong(X_element_type)  != NULL || 
-                                                 isSgTypeUnsignedInt(X_element_type) != NULL || 
+                                             if (isSgTypeSignedLong(X_element_type)  != NULL ||
+                                                 isSgTypeUnsignedInt(X_element_type) != NULL ||
                                                  isSgTypeBool(X_element_type) != NULL ||
                                                  isSgTypeInt(X_element_type) != NULL)
                                                 {
@@ -23441,8 +25364,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                                                 }
 
                                              bool Y_isReduceable = true;
-                                             if (isSgTypeSignedLong(Y_element_type)  != NULL || 
-                                                 isSgTypeUnsignedInt(Y_element_type) != NULL || 
+                                             if (isSgTypeSignedLong(Y_element_type)  != NULL ||
+                                                 isSgTypeUnsignedInt(Y_element_type) != NULL ||
                                                  isSgTypeBool(Y_element_type) != NULL ||
                                                  isSgTypeInt(Y_element_type) != NULL)
                                                 {
@@ -23498,8 +25421,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 #endif
 
 #if DEBUG_TYPE_EQUIVALENCE || 0
-  // if (counter == 1) 
-     if (counter == 1 && isSame == true) 
+  // if (counter == 1)
+     if (counter == 1 && isSame == true)
         {
           printf ("In SageInterface::isEquivalentType(): counter = %d: isSame = %s type chain X_element_type = %s Y_element_type = %s \n",counter,isSame ? "true" : "false",X.class_name().c_str(),Y.class_name().c_str());
 
@@ -23539,10 +25462,10 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 #endif
 
 #if 0
-     if (counter == 0) 
+     if (counter == 0)
         {
-      // if (counter == 1 && isSame == true) 
-          if (isSame == true) 
+      // if (counter == 1 && isSame == true)
+          if (isSame == true)
              {
             // printf ("In SageInterface::isEquivalentType(): counter = %d: isSame = %s type chain X_element_type = %s Y_element_type = %s \n",counter,isSame ? "true" : "false",X.class_name().c_str(),Y.class_name().c_str());
                printf ("   --- isSame = %s \n",isSame ? "true" : "false");
@@ -23573,22 +25496,22 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
 bool
 SageInterface::isNormalizedTemplateInstantiation (SgFunctionDeclaration* function)
    {
-  // This function is called in the Call graph generation to avoid filtering out EDG normalized 
+  // This function is called in the Call graph generation to avoid filtering out EDG normalized
   // function template instnatiations (which come from normalized template functions and member functions).
 
      bool retval = false;
 
 #if 1
-  // DQ (8/30/2016): We need to mark this as an EDG normalization so that we can detect it as an exception 
-  // to some simple attempts to filter the AST (e.g. for the Call Graph implementation which filters on only 
+  // DQ (8/30/2016): We need to mark this as an EDG normalization so that we can detect it as an exception
+  // to some simple attempts to filter the AST (e.g. for the Call Graph implementation which filters on only
   // functions in the current directory).  This explicit makring makes it much easier to get this test correct.
   // But we still need to look at if the location of the parent template is something that we wnat to output.
-  // If tis is a template instantiation then it is not enough to look only at the non-defining declaration if 
+  // If tis is a template instantiation then it is not enough to look only at the non-defining declaration if
   // it is not compiler generated.
      retval = function->get_marked_as_edg_normalization();
 #else
-  // Test for this to be a template instantation (in which case it was marked as 
-  // compiler generated but we may want to allow it to be used in the call graph, 
+  // Test for this to be a template instantation (in which case it was marked as
+  // compiler generated but we may want to allow it to be used in the call graph,
   // if it's template was a part was defined in the current directory).
      SgTemplateInstantiationFunctionDecl*       templateInstantiationFunction       = isSgTemplateInstantiationFunctionDecl(function);
      SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(function);
@@ -23649,6 +25572,10 @@ void SageInterface::detectCycleInType(SgType * type, const std::string & from) {
   std::vector<SgType *> seen_types;
 
   while (type != NULL) {
+
+ // DQ (4/15/2019): Added assertion.
+    ROSE_ASSERT(type != NULL);
+
     std::vector<SgType *>::const_iterator it = std::find(seen_types.begin(), seen_types.end(), type);
     if (it != seen_types.end()) {
       printf("ERROR: Cycle found in type = %p (%s):\n", type, type->class_name().c_str());
@@ -23668,12 +25595,22 @@ void SageInterface::detectCycleInType(SgType * type, const std::string & from) {
     SgArrayType *     arrayType   = isSgArrayType(type);
     SgTypedefType *   typedefType = isSgTypedefType(type);
 
+#if 0
+ // DQ (4/15/2019): Don't count SgPointerMemberType (also fixed in SgType::stripType() function).
+    if (isSgPointerMemberType(type) != NULL)
+      {
+        pointType = NULL;
+      }
+#endif
+
     if ( modType ) {
       type = modType->get_base_type();
     } else if ( refType ) {
       type = refType->get_base_type();
     } else if ( pointType ) {
       type = pointType->get_base_type();
+ // } else if ( pointerMemberType ) {
+ //   type = pointerMemberType->get_base_type();
     } else if ( arrayType ) {
       type = arrayType->get_base_type();
     } else if ( typedefType ) {
@@ -23685,3 +25622,974 @@ void SageInterface::detectCycleInType(SgType * type, const std::string & from) {
   }
 }
 
+
+#if 0
+// DQ (11/10/2019): Older original version of the function.
+
+// DQ (6/6/2019): Move this to the SageInteface namespace.
+void
+SageInterface::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node)
+   {
+  // DQ (3/20/2019): This function operates on the new file used to support outlined function definitions.
+  // We use a copy of the file where the code will be outlined FROM, so that if there are references to
+  // declarations in the outlined code we can support the outpiled code with those references.  This
+  // approach has the added advantage of also supporting the same include file tree as the original
+  // file where the outlined code is being taken from.
+
+     class TransformFunctionDefinitionsTraversal : public AstSimpleProcessing
+        {
+          public:
+               std::vector<SgFunctionDeclaration*> functionList;
+               SgSourceFile* sourceFile;
+               int sourceFileId;
+               string filenameWithPath;
+
+          public:
+               TransformFunctionDefinitionsTraversal(): sourceFile(NULL), sourceFileId(-99) {}
+
+               void visit (SgNode* node)
+                  {
+#if 0
+                    printf ("In convertFunctionDefinitionsToFunctionPrototypes visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+                    SgSourceFile* temp_sourceFile = isSgSourceFile(node);
+                    if (temp_sourceFile != NULL)
+                       {
+                         sourceFile       = temp_sourceFile;
+                         sourceFileId     = sourceFile->get_file_info()->get_file_id();
+
+                      // The file_id is not sufficnet, not clear why, but the filenames match.
+                         filenameWithPath = sourceFile->get_sourceFileNameWithPath();
+
+                         printf ("Found source file: id = %d name = %s \n",sourceFileId,sourceFile->get_sourceFileNameWithPath().c_str());
+
+                       }
+
+                    SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
+                    if (functionDeclaration != NULL)
+                       {
+                      // This should have been set already.
+                         ROSE_ASSERT(sourceFile != NULL);
+
+                         SgFunctionDeclaration* definingFunctionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_definingDeclaration());
+                         if (functionDeclaration == definingFunctionDeclaration)
+                            {
+#if 1
+                              printf ("Found a defining function declaration: functionDeclaration = %p = %s name = %s \n",
+                                   functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+
+                              printf (" --- recorded source file: id = %d name = %s \n",sourceFileId,sourceFile->get_sourceFileNameWithPath().c_str());
+                              printf (" --- source file: file_info: id = %d name = %s \n",
+                                   functionDeclaration->get_file_info()->get_file_id(),functionDeclaration->get_file_info()->get_filenameString().c_str());
+#endif
+                           // DQ (3/20/2019): The file_id is not sufficent, using the filename with path to do string equality.
+                           // bool isInSourceFile = (sourceFileId == functionDeclaration->get_file_info()->get_file_id());
+                              bool isInSourceFile = (filenameWithPath == functionDeclaration->get_file_info()->get_filenameString());
+#if 1
+                              printf (" --- isInSourceFile = %s \n",isInSourceFile ? "true" : "false");
+#endif
+                           // Remove the defining declaration as a test.
+                              SgScopeStatement* functionDeclarationScope = isSgScopeStatement(functionDeclaration->get_parent());
+                              if (isInSourceFile == true && functionDeclarationScope != NULL)
+                                 {
+#if 1
+                                   printf (" --- Found a defining function declaration: functionDeclarationScope = %p = %s \n",
+                                        functionDeclarationScope,functionDeclarationScope->class_name().c_str());
+#endif
+                                // functionDeclarationScope->removeStatement(functionDeclaration);
+                                // removeStatement(functionDeclaration);
+                                   functionList.push_back(functionDeclaration);
+                                 }
+                            }
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+     TransformFunctionDefinitionsTraversal traversal;
+     traversal.traverse(node, preorder);
+
+     std::vector<SgFunctionDeclaration*> & functionList = traversal.functionList;
+
+#if 1
+     printf ("In convertFunctionDefinitionsToFunctionPrototypes(): functionList.size() = %zu \n",functionList.size());
+#endif
+
+     std::vector<SgFunctionDeclaration*>::iterator i = functionList.begin();
+     while (i != functionList.end())
+        {
+          SgFunctionDeclaration* functionDeclaration = *i;
+          ROSE_ASSERT(functionDeclaration != NULL);
+
+          SgFunctionDeclaration* nondefiningFunctionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_firstNondefiningDeclaration());
+          ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+
+#if 1
+          printf (" --- Removing function declaration: functionDeclaration = %p = %s name = %s \n",
+               functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
+       // Likely we should build a new nondefining function declaration instead of reusing the existing non-defining declaration.
+       // removeStatement(functionDeclaration);
+          replaceStatement(functionDeclaration,nondefiningFunctionDeclaration);
+
+          i++;
+        }
+
+#if 0
+     printf ("In convertFunctionDefinitionsToFunctionPrototypes(): exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+#endif
+
+
+void
+SageInterface::displayScope(SgScopeStatement* scope)
+   {
+  // DQ (10/31/2020): Display function for scopes (useful for debugging).
+     ROSE_ASSERT(scope != NULL);
+
+     printf ("Output the statements in scope = %p = %s \n",scope,scope->class_name().c_str());
+
+  // This makes a copy (on the stack) and is inefficent, but this is only for debugging.
+     SgStatementPtrList statementList = scope->generateStatementList();
+     for (size_t i = 0; i < statementList.size(); i++)
+        {
+          SgStatement* statement =  statementList[i];
+          printf (" --- statement: %zu ptr: %p IR node: %s name: %s \n",i,statement,statement->class_name().c_str(),SageInterface::get_name(statement).c_str());
+        }
+
+#if 0
+     printf ("Exiting as a test at the end of evaluation of global scope! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+SgFunctionDeclaration*
+SageInterface::buildFunctionPrototype ( SgFunctionDeclaration* functionDeclaration )
+   {
+     SgFunctionDeclaration* nondefiningFunctionDeclaration = NULL;
+  // SgDeclarationStatement* nondefiningFunctionDeclaration = NULL;
+
+#if 0
+     printf ("In SageInterface::buildFunctionPrototype(): functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+#endif
+
+  // DQ (11/21/2019): Check if this is a constructor, this is a temporary fix.
+     bool isConstructor = false;
+     SgMemberFunctionDeclaration* tmp_memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
+     if (tmp_memberFunctionDeclaration != NULL)
+        {
+          isConstructor = tmp_memberFunctionDeclaration->get_specialFunctionModifier().isConstructor();
+
+#if 0
+          if (isConstructor == true)
+             {
+               printf ("Skipping case of constructors (in building prototype from defining function declaration) \n");
+               return;
+             }
+#endif
+        }
+
+  // DQ (12/2/2019): Need to support member functions which can't be declared when outside of their class.
+  // bool replaceWithEmptyDeclaration = false;
+  // SgDeclarationStatement* emptyDeclaration = NULL;
+
+     SgName name                         = functionDeclaration->get_name();
+     SgType* return_type                 = functionDeclaration->get_type()->get_return_type();
+
+#if 1
+     SgFunctionParameterList* param_list = buildFunctionParameterList( functionDeclaration->get_type()->get_argument_list());
+#else
+  // DQ (9/26/2019): We need to avoid building SgFunctionParameterList IR nodes and then not attaching them to anything (parent pointers are checked in AST consistancy testing).
+  // SgFunctionParameterList *param_list = functionDeclaration->get_parlist();
+     SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
+     SgFunctionParameterList* param_list = NULL;
+
+     if (templateInstantiationFunctionDecl == NULL)
+        {
+          param_list = buildFunctionParameterList( functionDeclaration->get_type()->get_argument_list());
+        }
+       else
+        {
+          SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(functionDeclaration);
+          if (templateInstantiationMemberFunctionDecl == NULL)
+             {
+               param_list = buildFunctionParameterList( functionDeclaration->get_type()->get_argument_list());
+             }
+        }
+#endif
+
+  // bool isTemplateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(functionDeclaration) != NULL);
+     bool isTemplateInstantiationMemberFunctionDecl = false;
+
+     SgScopeStatement* scope             = functionDeclaration->get_scope();
+  // SgTemplateParameterPtrList* templateParameterList = NULL; // functionDeclaration->get_templateParameterList();
+     SgExprListExp* python_decoratorList = NULL;
+     bool buildTemplateInstantiation     = false;
+     SgTemplateArgumentPtrList* templateArgumentsList = NULL;
+
+  // DQ (9/26/2019): Tracing down a null parent pointer.
+  // ROSE_ASSERT(param_list->get_parent() != NULL);
+  // ROSE_ASSERT(param_list->get_parent() == NULL);
+     ROSE_ASSERT(param_list == NULL || param_list->get_parent() == NULL);
+
+     switch (functionDeclaration->variantT())
+        {
+          case V_SgTemplateMemberFunctionDeclaration:
+             {
+#if 0
+               printf ("This function to replace the defining declaration with a non-defining declaration does not yet support template member functions \n");
+#endif
+               SgTemplateMemberFunctionDeclaration* original_templateMemberFunctionDeclaration = isSgTemplateMemberFunctionDeclaration(functionDeclaration);
+               ROSE_ASSERT(original_templateMemberFunctionDeclaration != NULL);
+
+               SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = NULL;
+
+               unsigned int functionConstVolatileFlags = 0;
+
+               ROSE_ASSERT(original_templateMemberFunctionDeclaration->get_type() != NULL);
+
+            // Need to call:
+            // unsigned int get_mfunc_specifier();
+
+               SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(original_templateMemberFunctionDeclaration->get_type());
+               ROSE_ASSERT(memberFunctionType != NULL);
+
+               functionConstVolatileFlags = memberFunctionType->get_mfunc_specifier();
+
+            // SgTemplateMemberFunctionDeclaration*
+            // buildNondefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist,
+            //      SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateParameterPtrList* templateParameterList );
+
+               SgTemplateParameterPtrList templateParameterList = original_templateMemberFunctionDeclaration->get_templateParameters();
+            // ROSE_ASSERT(templateParameterList != NULL);
+
+               templateMemberFunctionDeclaration =
+                    buildNondefiningTemplateMemberFunctionDeclaration ( name, return_type, param_list, scope, python_decoratorList, functionConstVolatileFlags, &templateParameterList );
+#if 0
+               printf ("ERROR: Template functions are not yet supported! \n");
+               ROSE_ASSERT(false);
+#endif
+               nondefiningFunctionDeclaration = templateMemberFunctionDeclaration;
+
+               ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+
+            // DQ (11/21/2019): Handle constructors.
+               if (isConstructor == true)
+                  {
+                    templateMemberFunctionDeclaration->get_specialFunctionModifier().setConstructor();
+                  }
+
+               break;
+             }
+
+          case V_SgTemplateFunctionDeclaration:
+             {
+#if 0
+               printf ("This function to replace the defining declaration with a non-defining declaration does not yet support template functions \n");
+#endif
+               SgTemplateFunctionDeclaration* original_templateFunctionDeclaration = isSgTemplateFunctionDeclaration(functionDeclaration);
+               ROSE_ASSERT(original_templateFunctionDeclaration != NULL);
+
+               SgTemplateFunctionDeclaration* templateFunctionDeclaration = NULL; // isSgTemplateFunctionDeclaration(functionDeclaration);
+
+            // SgTemplateFunctionDeclaration*
+            // buildNondefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist,
+            //      SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, SgTemplateParameterPtrList* templateParameterList = NULL);
+
+               SgTemplateParameterPtrList templateParameterList = original_templateFunctionDeclaration->get_templateParameters();
+
+               templateFunctionDeclaration = buildNondefiningTemplateFunctionDeclaration ( name, return_type, param_list, scope, python_decoratorList, &templateParameterList );
+#if 0
+               printf ("ERROR: Template functions are not yet supported! \n");
+               ROSE_ASSERT(false);
+#endif
+               nondefiningFunctionDeclaration = templateFunctionDeclaration;
+
+               ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+
+               break;
+             }
+
+       // DQ (10/29/2020): Added new case.
+          case V_SgTemplateInstantiationMemberFunctionDecl:
+             {
+               buildTemplateInstantiation = true;
+
+               isTemplateInstantiationMemberFunctionDecl = true;
+
+               SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(functionDeclaration);
+               ROSE_ASSERT(templateInstantiationMemberFunctionDecl != NULL);
+               templateArgumentsList = &(templateInstantiationMemberFunctionDecl->get_templateArguments());
+#if 0
+               printf ("name from functionDeclaration->get_name(): name                                       = %s \n",name.str());
+            // printf ("name from templateInstantiationMemberFunctionDecl->get_template_name(): template_name = %s \n",templateInstantiationMemberFunctionDecl->get_template_name().str());
+               printf ("name from templateInstantiationMemberFunctionDecl->get_templateName(): template_name  = %s \n",templateInstantiationMemberFunctionDecl->get_templateName().str());
+               SgTemplateMemberFunctionDeclaration* templateDeclaration = templateInstantiationMemberFunctionDecl->get_templateDeclaration();
+               if (templateDeclaration != NULL)
+                  {
+                    printf ("name from templateInstantiationMemberFunctionDecl->get_template_declaration()->get_name(): template_name  = %s \n",templateDeclaration->get_name().str());
+                    printf ("name from templateInstantiationMemberFunctionDecl->get_template_declaration()->get_template_name(): template_name  = %s \n",templateDeclaration->get_template_name().str());
+                  }
+#endif
+            // name = functionDeclaration->get_name();
+            // name = templateInstantiationMemberFunctionDecl->get_template_name();
+               name = templateInstantiationMemberFunctionDecl->get_templateName();
+#if 0
+               printf ("In case V_SgTemplateInstantiationMemberFunctionDecl: using name = %s \n",name.str());
+#endif
+            // DQ (10/29/2020): Change this to include the functionality to build the member function support without fall-through.
+
+            // Case fall through...
+             }
+          case V_SgMemberFunctionDeclaration:
+             {
+#if 0
+               printf ("This function to replace the defining declaration with a non-defining declaration does not yet support member functions \n");
+#endif
+               SgMemberFunctionDeclaration* original_memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
+               ROSE_ASSERT(original_memberFunctionDeclaration != NULL);
+
+               SgMemberFunctionDeclaration* memberFunctionDeclaration = NULL; // isSgMemberFunctionDeclaration(functionDeclaration);
+
+            // SgMemberFunctionDeclaration*
+            // buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist,
+            //      SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
+
+               unsigned int functionConstVolatileFlags = 0;
+
+               ROSE_ASSERT(original_memberFunctionDeclaration->get_type() != NULL);
+
+            // Need to call:
+            // unsigned int get_mfunc_specifier();
+
+            // DQ (12/2/2019): If it is defined outside of the class, then don't replace with member function prototype,
+            // since they is not allowed to be declared outside of the class they are a member of.
+
+            // We do want to build prototypes for template instantiation member functions, and template instantiation non-member functions (see below).
+               bool buildPrototype = isTemplateInstantiationMemberFunctionDecl || original_memberFunctionDeclaration->get_parent() == original_memberFunctionDeclaration->get_scope();
+#if 0
+               printf ("In SageInterface::buildFunctionPrototype(): buildPrototype = %s \n",buildPrototype ? "true" : "false");
+#endif
+            // if (original_memberFunctionDeclaration->get_parent() == original_memberFunctionDeclaration->get_scope())
+               if (buildPrototype == true)
+                  {
+                    SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(original_memberFunctionDeclaration->get_type());
+                    ROSE_ASSERT(memberFunctionType != NULL);
+#if 0
+                    printf ("original_memberFunctionDeclaration->get_parent() == original_memberFunctionDeclaration->get_scope() \n");
+#endif
+                    functionConstVolatileFlags = memberFunctionType->get_mfunc_specifier();
+
+                    memberFunctionDeclaration =
+                         buildNondefiningMemberFunctionDeclaration
+                              ( name, return_type, param_list, scope, python_decoratorList, functionConstVolatileFlags,
+                                buildTemplateInstantiation,templateArgumentsList );
+#if 0
+                    printf ("ERROR: Member functions are not yet supported! \n");
+                    ROSE_ASSERT(false);
+#endif
+                 // DQ (11/21/2019): Handle constructors.
+                    if (isConstructor == true)
+                       {
+                         memberFunctionDeclaration->get_specialFunctionModifier().setConstructor();
+                       }
+
+                    nondefiningFunctionDeclaration = memberFunctionDeclaration;
+
+                    ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+                  }
+                 else
+                  {
+                 // Case of member function defined outside of it's class.
+#if 0
+                    printf ("NOTE: Member functions defined outside of their class can not be output as member function prototypes (not allowed in C++) \n");
+#endif
+                 // We want to build a SgEmptyDeclaration using buildEmptyDeclaration() but this is not a function.
+                 // nondefiningFunctionDeclaration = buildEmptyDeclaration();
+                    nondefiningFunctionDeclaration = NULL;
+#if 0
+                    nondefiningFunctionDeclaration = NULL;
+
+                    replaceWithEmptyDeclaration = true;
+                    emptyDeclaration = buildEmptyDeclaration();
+                    ROSE_ASSERT(emptyDeclaration != NULL);
+#endif
+                 // DQ (10/29/2020): Commented out as part of move to used SgFunctionDeclaration return type.
+                 // ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+
+                 // Since we din't build a member function we don't need the parameter list.
+                    delete param_list;
+                    param_list = NULL;
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+            // DQ (10/29/2020): Commented out as part of move to used SgFunctionDeclaration return type.
+            // ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+               break;
+             }
+
+          case V_SgFunctionDeclaration:
+             {
+            // This is for a non-member non-template function declaration.
+               nondefiningFunctionDeclaration = buildNondefiningFunctionDeclaration (name, return_type, param_list, scope, python_decoratorList, buildTemplateInstantiation,templateArgumentsList);
+               ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+               break;
+             }
+
+       // DQ (10/29/2020): Added new case.
+          case V_SgTemplateInstantiationFunctionDecl:
+             {
+            // This is for a non-member non-template function declaration.
+               buildTemplateInstantiation = true;
+               SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
+               ROSE_ASSERT(templateInstantiationFunctionDecl != NULL);
+               templateArgumentsList = &(templateInstantiationFunctionDecl->get_templateArguments());
+#if 0
+               printf ("name from functionDeclaration->get_name(): name                                       = %s \n",name.str());
+            // printf ("name from templateInstantiationFunctionDecl->get_template_name(): template_name = %s \n",templateInstantiationFunctionDecl->get_template_name().str());
+               printf ("name from templateInstantiationFunctionDecl->get_templateName(): template_name  = %s \n",templateInstantiationFunctionDecl->get_templateName().str());
+               SgTemplateFunctionDeclaration* templateDeclaration = templateInstantiationFunctionDecl->get_templateDeclaration();
+               if (templateDeclaration != NULL)
+                  {
+                    printf ("name from templateInstantiationFunctionDecl->get_template_declaration()->get_name(): template_name  = %s \n",templateDeclaration->get_name().str());
+                    printf ("name from templateInstantiationFunctionDecl->get_template_declaration()->get_template_name(): template_name  = %s \n",templateDeclaration->get_template_name().str());
+                  }
+#endif
+               name = templateInstantiationFunctionDecl->get_templateName();
+#if 0
+               printf ("In case V_SgTemplateInstantiationFunctionDecl: using name = %s \n",name.str());
+#endif
+               nondefiningFunctionDeclaration = buildNondefiningFunctionDeclaration (name, return_type, param_list, scope, python_decoratorList, buildTemplateInstantiation,templateArgumentsList);
+               ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+               break;
+             }
+
+          default:
+             {
+            // DQ (12/4/2019): If this is any other case than that handled above, then we just return.
+            // These cases would be only template instantiations.
+
+            // Nothing to do, except delete the parameter list we built, and return.
+               delete param_list;
+               param_list = NULL;
+
+               return NULL;
+             }
+        }
+
+  // DQ (10/29/2020): We should be able to change this now that we support SgTemplateInstantiationFunctionDecl and SgTemplateInstantiationMemberFunctionDecl IR nodes.
+  // DQ (9/26/2019): Tracing down a null parent pointer.
+     ROSE_ASSERT(param_list == NULL || param_list->get_parent() != NULL);
+  // ROSE_ASSERT(param_list != NULL);
+  // ROSE_ASSERT(param_list->get_parent() != NULL);
+
+  // ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+
+     if (nondefiningFunctionDeclaration != NULL)
+        {
+          if (nondefiningFunctionDeclaration->get_firstNondefiningDeclaration() == NULL)
+             {
+#if 0
+               printf ("Setting the firstNondefiningDeclaration \n");
+#endif
+               nondefiningFunctionDeclaration->set_firstNondefiningDeclaration(functionDeclaration->get_firstNondefiningDeclaration());
+             }
+
+          if (nondefiningFunctionDeclaration->get_definingDeclaration() == NULL)
+             {
+#if 0
+               printf ("Setting the definingDeclaration \n");
+#endif
+               nondefiningFunctionDeclaration->set_definingDeclaration(functionDeclaration->get_definingDeclaration());
+             }
+
+          ROSE_ASSERT(nondefiningFunctionDeclaration->get_firstNondefiningDeclaration() != NULL);
+          ROSE_ASSERT(nondefiningFunctionDeclaration->get_definingDeclaration() != NULL);
+
+       // DQ (11/22/2020): These can't be the same list else we will have a case of iterator invalidation.
+       // This is a bug in the support for building a new prototype from a defining function declaration 
+       // and caused this problem. This assertion will prevent this sort of error from happening again.
+          ROSE_ASSERT(functionDeclaration->getAttachedPreprocessingInfo() == NULL || functionDeclaration->getAttachedPreprocessingInfo() != nondefiningFunctionDeclaration->getAttachedPreprocessingInfo());
+        }
+
+     return nondefiningFunctionDeclaration;
+   }
+
+
+// DQ (10/27/2020): Need to return the generated function prototype (incase we want to mark it for output or template unparsing from the AST).
+// void SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunctionDeclaration* functionDeclaration )
+// SgDeclarationStatement* SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunctionDeclaration* functionDeclaration )
+SgFunctionDeclaration*
+SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunctionDeclaration* functionDeclaration )
+   {
+     SgFunctionDeclaration* nondefiningFunctionDeclaration = NULL;
+  // SgDeclarationStatement* nondefiningFunctionDeclaration = NULL;
+
+  // DQ (11/12/2020): Added assertion.
+     ROSE_ASSERT(functionDeclaration != NULL);
+
+#if 0
+     printf ("In SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(): functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+     printf ("In SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(): functionDeclaration = %s \n",functionDeclaration->unparseToString().c_str());
+
+     printf ("   --- functionDeclaration->isExternBrace()                                            = %s \n",functionDeclaration->isExternBrace() ? "true" : "false");
+     printf ("   --- functionDeclaration->get_declarationModifier().get_storageModifier().isExtern() = %s \n",functionDeclaration->get_declarationModifier().get_storageModifier().isExtern() ? "true" : "false");
+     printf ("   --- functionDeclaration->get_linkage().empty()                                      = %s \n",functionDeclaration->get_linkage().empty() ? "true" : "false");
+     printf ("   --- functionDeclaration->get_linkage()                                              = %s \n",functionDeclaration->get_linkage().c_str());
+     SgScopeStatement* scopeOfFunctionDeclaration = functionDeclaration->get_scope();
+     printf (" --- functionDeclaration->get_scope() = %p = %s name = %s \n",scopeOfFunctionDeclaration,scopeOfFunctionDeclaration->class_name().c_str(),get_name(scopeOfFunctionDeclaration).c_str());
+
+     SgMemberFunctionDeclaration* tmp_memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
+     if (tmp_memberFunctionDeclaration != NULL && tmp_memberFunctionDeclaration->get_parent() != tmp_memberFunctionDeclaration->get_scope())
+        {
+          printf (" --- this is a member function defined outside of its class, so no replacement with a fucntion prototype is possible (not legal C++): name = %s \n",
+               functionDeclaration->get_name().str());
+       // return NULL;
+        }
+#endif
+
+  // DQ (10/15/2019): Find the file_id associated with the current file, and make the transformation with the same file_id value so that it will be unparsed.
+
+  // DQ (10/29/2020): This is the refactored code.
+     nondefiningFunctionDeclaration = buildFunctionPrototype(functionDeclaration);
+
+#if 0
+     printf ("In SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(): nondefiningFunctionDeclaration = %p \n",nondefiningFunctionDeclaration);
+     if (nondefiningFunctionDeclaration != NULL)
+        {
+          printf (" --- nondefiningFunctionDeclaration = %p = %s name = %s \n",nondefiningFunctionDeclaration,
+               nondefiningFunctionDeclaration->class_name().c_str(),nondefiningFunctionDeclaration->get_name().str());
+          SgScopeStatement* scopeOfPrototype = nondefiningFunctionDeclaration->get_scope();
+          printf (" --- nondefiningFunctionDeclaration->get_scope() = %p = %s name = %s \n",scopeOfPrototype,scopeOfPrototype->class_name().c_str(),get_name(scopeOfPrototype).c_str());
+        }
+#endif
+
+  // DQ (11/22/2020): These can't be the same list else we will have a case of iterator invalidation.
+  // This is a bug in the support for building a new prototype from a defining function declaration 
+  // and caused this problem. This assertion will prevent this sort of error from happening again.
+     ROSE_ASSERT(functionDeclaration->getAttachedPreprocessingInfo() == NULL || functionDeclaration->getAttachedPreprocessingInfo() != nondefiningFunctionDeclaration->getAttachedPreprocessingInfo());
+
+     SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
+
+#if 0
+     printf ("After buildFunctionPrototype(): templateInstantiationFunctionDecl = %p \n",templateInstantiationFunctionDecl);
+#endif
+
+
+  // DQ (7/14/2019): I wonder if we want this code?
+  // SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
+
+#if 0
+     printf ("In SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(): templateInstantiationFunctionDecl = %p \n",templateInstantiationFunctionDecl);
+#endif
+
+     if (templateInstantiationFunctionDecl == NULL)
+        {
+#if 0
+          if (nondefiningFunctionDeclaration == NULL)
+             {
+               printf ("SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(); functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+               SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(functionDeclaration);
+               if (templateInstantiationMemberFunction != NULL)
+                  {
+                    printf (" --- templateInstantiationMemberFunction->get_name() = %s \n",templateInstantiationMemberFunction->get_name().str());
+
+                    delete param_list;
+                    param_list = NULL;
+
+                    return NULL;
+                  }
+             }
+#endif
+       // ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+          if (nondefiningFunctionDeclaration != NULL)
+             {
+            // DQ (10/29/2020): Match the associated declaration modifiers.
+               nondefiningFunctionDeclaration->get_declarationModifier() = functionDeclaration->get_declarationModifier();
+
+            // DQ (11/11/2020): Match the associated other kinds of modifiers.
+               nondefiningFunctionDeclaration->get_functionModifier()        = functionDeclaration->get_functionModifier();
+               nondefiningFunctionDeclaration->get_specialFunctionModifier() = functionDeclaration->get_specialFunctionModifier();
+
+            // std::string get_linkage() const
+               nondefiningFunctionDeclaration->set_linkage( functionDeclaration->get_linkage() );
+
+            // bool get_externBrace() const 
+               nondefiningFunctionDeclaration->set_externBrace( functionDeclaration->get_externBrace() );
+
+            // bool get_forward() const 
+            // nondefiningFunctionDeclaration->set_forward( functionDeclaration->get_forward() );
+               ROSE_ASSERT(nondefiningFunctionDeclaration->get_forward() == true);
+#if 0
+            // DQ (11/11/2020): Match the associated other kinds of bool and pointers.
+               nondefiningFunctionDeclaration->set_oldStyleDefinition    ( functionDeclaration->get_oldStyleDefinition() );
+               nondefiningFunctionDeclaration->set_gnu_regparm_attribute ( functionDeclaration->get_gnu_regparm_attribute() );
+
+            // enforce these to be false or copy the associated pointer:
+            // if get_type_syntax_is_available() == true then copy get_type_syntax()
+            // pointer: parameterList_syntax
+            // bool: using_C11_Noreturn_keyword
+            // bool: is_constexpr
+            // bool: using_new_function_return_type_syntax
+            // bool: marked_as_edg_normalization
+            // bool: is_implicit_function
+
+            // nondefiningFunctionDeclaration->set_parameterList_syntax                  ( functionDeclaration->get_parameterList_syntax() );
+               nondefiningFunctionDeclaration->set_using_C11_Noreturn_keyword            ( functionDeclaration->get_using_C11_Noreturn_keyword() );
+               nondefiningFunctionDeclaration->set_is_constexpr                          ( functionDeclaration->get_is_constexpr() );
+               nondefiningFunctionDeclaration->set_using_new_function_return_type_syntax ( functionDeclaration->get_using_new_function_return_type_syntax() );
+               nondefiningFunctionDeclaration->set_marked_as_edg_normalization           ( functionDeclaration->get_marked_as_edg_normalization() );
+               nondefiningFunctionDeclaration->set_is_implicit_function                  ( functionDeclaration->get_is_implicit_function() );
+#endif
+#if 0
+               SgMemberFunctionDeclaration* nondefiningMemberFunctionDeclaration = isSgMemberFunctionDeclaration(nondefiningFunctionDeclaration);
+               if (nondefiningMemberFunctionDeclaration != NULL)
+                  {
+                    SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(nondefiningFunctionDeclaration);
+                    ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+                 // DQ (11/11/2020): Match the associated other kinds of modifiers (for member functions).
+                 // nondefiningMemberFunctionDeclaration->set_isDefinedInClass ( memberFunctionDeclaration->isDefinedInClass() );
+                  }
+#endif
+            // DQ (10/15/2019): Set the physical_file_id of the transformation to match that of the original defining declaration.
+               int file_id = functionDeclaration->get_file_info()->get_physical_file_id();
+               nondefiningFunctionDeclaration->get_file_info()->set_physical_file_id(file_id);
+#if 0
+            // DQ (11/22/2020): This sould be done within the insertion step into the AST (e.g. SageInterface::replaceStatement() function).
+            // Otherwise this code will copy the same AttachedPreprocessingInfoType to both statements and when they are moved from one
+            // statement to the other it will cause an iterator invalidation error.
+            // DQ (10/15/2019): Move any attached comments and CPP directives.
+               AttachedPreprocessingInfoType* comments = functionDeclaration->getAttachedPreprocessingInfo();
+               if (comments != NULL)
+                  {
+                 // attachedPreprocessingInfoPtr
+                 // nondefiningFunctionDeclaration->setAttachedPreprocessingInfo(comments);
+                    nondefiningFunctionDeclaration->set_attachedPreprocessingInfoPtr(comments);
+                  }
+#endif
+#if 0
+               printf (" --- Removing function declaration: functionDeclaration = %p = %s name = %s file_id = %d \n",
+                    functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str(),file_id);
+               SgFunctionDeclaration* local_nondefiningFunctionDeclaration = isSgFunctionDeclaration(nondefiningFunctionDeclaration);
+            // ROSE_ASSERT(local_nondefiningFunctionDeclaration != NULL);
+               if (local_nondefiningFunctionDeclaration != NULL)
+                  {
+                    printf (" --- Replacing with nondefining function declaration: local_nondefiningFunctionDeclaration = %p = %s name = %s file_id = %d \n",
+                         local_nondefiningFunctionDeclaration,local_nondefiningFunctionDeclaration->class_name().c_str(),local_nondefiningFunctionDeclaration->get_name().str(),file_id);
+                  }
+                 else
+                  {
+                    printf (" --- nondefiningFunctionDeclaration = %p \n",nondefiningFunctionDeclaration);
+                    if (nondefiningFunctionDeclaration != NULL)
+                       {
+                         printf (" --- nondefiningFunctionDeclaration = %p = %s name = %s \n",
+                                 nondefiningFunctionDeclaration,nondefiningFunctionDeclaration->class_name().c_str(),SageInterface::get_name(nondefiningFunctionDeclaration).c_str());
+                       }
+                  }
+#endif
+
+#if 1
+            // Likely we should build a new nondefining function declaration instead of reusing the existing non-defining declaration.
+            // removeStatement(functionDeclaration);
+#if 0
+               printf ("functionDeclaration            = %p = %s name = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+               printf ("nondefiningFunctionDeclaration = %p = %s name = %s \n",nondefiningFunctionDeclaration,nondefiningFunctionDeclaration->class_name().c_str(),nondefiningFunctionDeclaration->get_name().str());
+               SgDeclarationStatement* definingDeclaration = functionDeclaration->get_definingDeclaration();
+               ROSE_ASSERT(definingDeclaration != NULL);
+               printf ("definingDeclaration = %p = %s name = %s \n",definingDeclaration,definingDeclaration->class_name().c_str(),get_name(definingDeclaration).c_str());
+#endif
+#if 0
+               SgScopeStatement* scope = functionDeclaration->get_scope();
+               printf ("calling displayScope: scope = %p = %s \n",scope,scope->class_name().c_str());
+               displayScope(scope);
+#endif
+#if 0
+               printf ("Calling replaceStatement(): functionDeclaration            = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+               printf ("Calling replaceStatement(): nondefiningFunctionDeclaration = %p = %s \n",nondefiningFunctionDeclaration,nondefiningFunctionDeclaration->class_name().c_str());
+#endif
+            // DQ (11/22/2020): Note that this step will move the comments and CPP directives to the new statement 
+            // (better in this step than in the copy of the pointer to the list above, which cause an iterator invalidation error).
+            // DQ (10/21/2020): I think we may want to return the orignal defining function declaration.
+            // DQ (12/2/2019): Need to support member functions which can't be declared when outside of their class.
+            // DQ (11/15/2020): Note that the default is false, and we need true.
+               bool movePreprocessingInfo = true;
+               replaceStatement(functionDeclaration,nondefiningFunctionDeclaration,movePreprocessingInfo);
+
+            // DQ (11/25/2020): This is the cause of a problem in the outliner caught in the resetParentPointer.C (definingDeclaration->get_parent() != __null).
+            // DQ (11/24/2020): Maybe we should set the parent of the functionDeclaration to NULL, so that we will know to set it properly later.
+            // This is the cause of a name qualification bug when the functionDeclaration is inserted into global scope and the name qualification 
+            // is not computed correctly (since the parent was still the namespace scope where it was originally.
+            // functionDeclaration->set_parent(NULL);
+#if 0
+               printf ("In SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(): Skip resetting the parent pointer to NULL \n");
+#endif
+            // DQ (10/22/2020): Added assertion.
+               ROSE_ASSERT(nondefiningFunctionDeclaration->get_parent() != NULL);
+#else
+            // DQ (7/12/2019): Debugging test_17.cpp.
+
+#error "DEAD CODE!"
+
+               printf ("SKIPPING CALL TO REPLACE STATEMENT: functionDeclaration = %p nondefiningFunctionDeclaration = %p \n",functionDeclaration,nondefiningFunctionDeclaration);
+#endif
+             }
+            else
+             {
+#if 0
+               printf (" --- If the nondefiningFunctionDeclaration is NULL, then we need to remove the functionDeclaration = %p name = %s instead of replacing it \n",
+                    functionDeclaration,functionDeclaration->get_name().str());
+               printf (" --- However, we can't do that from this SageInterface function, since it could corrupt a traversal calling this function \n");
+#endif
+#if 0
+               printf (" --- functionDeclaration            = %p = %s name = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+            // printf (" --- nondefiningFunctionDeclaration = %p = %s name = %s \n",nondefiningFunctionDeclaration,nondefiningFunctionDeclaration->class_name().c_str(),nondefiningFunctionDeclaration->get_name().str());
+               SgDeclarationStatement* definingDeclaration = functionDeclaration->get_definingDeclaration();
+               ROSE_ASSERT(definingDeclaration != NULL);
+               printf (" --- definingDeclaration = %p = %s name = %s \n",definingDeclaration,definingDeclaration->class_name().c_str(),get_name(definingDeclaration).c_str());
+               SgSourceFile* parentSourceFile = SageInterface::getEnclosingNode<SgSourceFile>(functionDeclaration);
+               ROSE_ASSERT(parentSourceFile != NULL);
+               printf (" --- parentSourceFile = %p name = %s \n",parentSourceFile,parentSourceFile->getFileName().c_str());
+#endif
+#if 0
+               SgScopeStatement* scope = functionDeclaration->get_scope();
+               printf (" --- calling displayScope: scope = %p = %s \n",scope,scope->class_name().c_str());
+               displayScope(scope);
+               SgScopeStatement* parent_scope = isSgScopeStatement(functionDeclaration->get_parent());
+               printf (" --- calling displayScope: parent_scope = %p = %s \n",parent_scope,parent_scope->class_name().c_str());
+               displayScope(parent_scope);
+#endif
+            // DQ (10/31/2020): We can't remove this since this function is called within a traversal and will corrupt the traversal.
+            // removeStatement(functionDeclaration);
+             }
+        }
+       else
+        {
+       // DQ (7/12/2019): Template instantiations are not directly from the source code, so we don't have to move them.
+#if 0
+          printf ("In SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(): Ignore template instantiations as functions: nondefiningFunctionDeclaration = %p \n",
+               nondefiningFunctionDeclaration);
+#endif
+
+       // DQ (10/27/2020): I think in this case we want to return NULL.
+          nondefiningFunctionDeclaration = NULL;
+        }
+
+  // Check that static declaration is preserved.
+     if (functionDeclaration->get_declarationModifier().get_storageModifier().isStatic() == true)
+        {
+          ROSE_ASSERT(nondefiningFunctionDeclaration->get_declarationModifier().get_storageModifier().isStatic() == true);
+        }
+
+#if 0
+  // DQ (11/12/2020): Added assertion.
+     if (nondefiningFunctionDeclaration != NULL)
+        {
+          printf ("Leaving SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(): nondefiningFunctionDeclaration = %s \n",nondefiningFunctionDeclaration->unparseToString().c_str());
+          SgScopeStatement* scopeOfPrototype = nondefiningFunctionDeclaration->get_scope();
+          printf (" --- nondefiningFunctionDeclaration->get_scope() = %p = %s name = %s \n",scopeOfPrototype,scopeOfPrototype->class_name().c_str(),get_name(scopeOfPrototype).c_str());
+          printf (" --- nondefiningFunctionDeclaration->get_definingDeclaration() = %p \n",nondefiningFunctionDeclaration->get_definingDeclaration());
+          printf (" --- functionDeclaration                                       = %p \n",functionDeclaration);
+          printf (" --- functionDeclaration->get_definingDeclaration()            = %p \n",functionDeclaration->get_definingDeclaration());
+          SgScopeStatement* scopeOfFunction = functionDeclaration->get_scope();
+          printf (" --- functionDeclaration->get_scope() = %p = %s name = %s \n",scopeOfFunction,scopeOfFunction->class_name().c_str(),get_name(scopeOfFunction).c_str());
+        }
+       else
+        {
+          printf ("Leaving SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(): nondefiningFunctionDeclaration = %p \n",nondefiningFunctionDeclaration);
+        }
+#endif
+
+  // DQ (10/27/2020): Added return value so that we can access the new function prototype.
+     return nondefiningFunctionDeclaration;
+   }
+
+
+
+
+std::vector<SgFunctionDeclaration*>
+SageInterface::generateFunctionDefinitionsList(SgNode* node)
+   {
+  // DQ (3/20/2019): This function operates on the new file used to support outlined function definitions.
+  // We use a copy of the file where the code will be outlined FROM, so that if there are references to
+  // declarations in the outlined code we can support the outpiled code with those references.  This
+  // approach has the added advantage of also supporting the same include file tree as the original
+  // file where the outlined code is being taken from.
+
+     class FunctionDefinitionsTraversal : public AstSimpleProcessing
+        {
+          public:
+               std::vector<SgFunctionDeclaration*> functionList;
+            // SgSourceFile* sourceFile;
+            // int sourceFileId;
+            // string filenameWithPath;
+
+          public:
+            // FunctionDefinitionsTraversal(): sourceFile(NULL), sourceFileId(-99) {}
+               FunctionDefinitionsTraversal() {}
+
+               void visit (SgNode* node)
+                  {
+#if 0
+                    printf ("In generateFunctionDefinitionsList visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+#if 0
+                    SgSourceFile* temp_sourceFile = isSgSourceFile(node);
+                    if (temp_sourceFile != NULL)
+                       {
+                         sourceFile       = temp_sourceFile;
+                         sourceFileId     = sourceFile->get_file_info()->get_file_id();
+
+                      // The file_id is not sufficnet, not clear why, but the filenames match.
+                         filenameWithPath = sourceFile->get_sourceFileNameWithPath();
+
+                         printf ("Found source file: id = %d name = %s \n",sourceFileId,sourceFile->get_sourceFileNameWithPath().c_str());
+
+                       }
+#endif
+                    SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
+                    if (functionDeclaration != NULL)
+                       {
+                      // This should have been set already.
+                      // ROSE_ASSERT(sourceFile != NULL);
+
+                         SgFunctionDeclaration* definingFunctionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_definingDeclaration());
+                         if (functionDeclaration == definingFunctionDeclaration)
+                            {
+#if 0
+                              printf ("Found a defining function declaration: functionDeclaration = %p = %s name = %s \n",
+                                   functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
+#if 0
+                              printf (" --- recorded source file: id = %d name = %s \n",sourceFileId,sourceFile->get_sourceFileNameWithPath().c_str());
+                              printf (" --- source file: file_info: id = %d name = %s \n",
+                                   functionDeclaration->get_file_info()->get_file_id(),functionDeclaration->get_file_info()->get_filenameString().c_str());
+#endif
+#if 0
+                           // DQ (3/20/2019): The file_id is not sufficent, using the filename with path to do string equality.
+                           // bool isInSourceFile = (sourceFileId == functionDeclaration->get_file_info()->get_file_id());
+                              bool isInSourceFile = (filenameWithPath == functionDeclaration->get_file_info()->get_filenameString());
+#if 0
+                              printf (" --- isInSourceFile = %s \n",isInSourceFile ? "true" : "false");
+#endif
+#endif
+                           // Remove the defining declaration as a test.
+                              SgScopeStatement* functionDeclarationScope = isSgScopeStatement(functionDeclaration->get_parent());
+                           // if (isInSourceFile == true && functionDeclarationScope != NULL)
+                              if (functionDeclarationScope != NULL)
+                                 {
+#if 0
+                                   printf (" --- Found a defining function declaration: functionDeclarationScope = %p = %s \n",
+                                        functionDeclarationScope,functionDeclarationScope->class_name().c_str());
+#endif
+                                // functionDeclarationScope->removeStatement(functionDeclaration);
+                                // removeStatement(functionDeclaration);
+                                   functionList.push_back(functionDeclaration);
+                                 }
+                            }
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+     FunctionDefinitionsTraversal traversal;
+
+#if 0
+     printf ("In (TOP) generateFunctionDefinitionsList(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
+  // traversal.traverse(node, preorder);
+     traversal.traverseWithinFile(node, preorder);
+
+     std::vector<SgFunctionDeclaration*> & functionList = traversal.functionList;
+
+#if 0
+     printf ("Leaving generateFunctionDefinitionsList(): functionList.size() = %zu \n",functionList.size());
+#endif
+
+     return functionList;
+   }
+
+
+void
+SageInterface::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node)
+   {
+     ROSE_ASSERT(node != NULL);
+
+     std::vector<SgFunctionDeclaration*> functionList = generateFunctionDefinitionsList(node);
+
+#if 0
+     printf ("In convertFunctionDefinitionsToFunctionPrototypes(): functionList.size() = %zu \n",functionList.size());
+#endif
+
+     std::vector<SgFunctionDeclaration*>::iterator i = functionList.begin();
+     while (i != functionList.end())
+        {
+          SgFunctionDeclaration* functionDeclaration = *i;
+          ROSE_ASSERT(functionDeclaration != NULL);
+#if 1
+       // Transform into prototype.
+          replaceDefiningFunctionDeclarationWithFunctionPrototype(functionDeclaration);
+#else
+       // DQ (10/15/2019): Testing unparsing without this function call.
+          printf ("Skipping replaceDefiningFunctionDeclarationWithFunctionPrototype() \n");
+#endif
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+          i++;
+        }
+
+#if 0
+     printf ("In convertFunctionDefinitionsToFunctionPrototypes(): exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+
+// DQ (7/14/2020): Added test for initializers to support debugging of Cxx11_tests/test2020_69.C.
+void
+SageInterface::checkForInitializers( SgNode* node )
+   {
+  // This function checks variable declarations for initializers.  An issue (bug) in EDG 6.0 
+  // support for variable declarations initialized using lambda functions is that the initalizer
+  // is discarded at some point in the processing of the AST.  This function reports on all 
+  // variable declarations and if they contain initializers and if so what kind of initializer.
+
+     ROSE_ASSERT(node != NULL);
+
+  // Preorder traversal to uniquely label the scopes (SgScopeStatements)
+     class CheckInitializerTraversal : public AstSimpleProcessing
+        {
+          public:
+               void visit (SgNode* node)
+                  {
+                    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(node);
+                    if (variableDeclaration != NULL)
+                       {
+                         SgInitializedName* initializedName = getFirstInitializedName(variableDeclaration);
+                         SgExpression* initializer = initializedName->get_initializer();
+
+                         printf ("variableDeclaration = %p initializedName = %p = %s initializer = %p \n",
+                              variableDeclaration,initializedName,initializedName->get_name().str(),initializer);
+
+                         if (initializer != NULL)
+                            {
+                              printf (" --- initializer = %s \n",initializer->class_name().c_str());
+                            }
+                       }
+                  }
+        };
+
+    // Now buid the traveral object and call the traversal (preorder) on the project.
+       CheckInitializerTraversal traversal;
+       traversal.traverse(node, preorder);
+   }

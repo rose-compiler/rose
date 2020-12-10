@@ -1,6 +1,7 @@
 /* SgAsmX86Instruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code file)
  * because then they won't get indexed/formatted/etc. by C-aware tools. */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
@@ -70,7 +71,7 @@ SgAsmX86Instruction::registersForWidth(size_t nbits) {
 
 // see base class
 bool
-SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
+SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
 {
     if (insns.empty())
         return false;
@@ -91,7 +92,7 @@ SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& in
 
 // see base class
 bool
-SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
+SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
 {
     if (isFunctionCallFast(insns, target, return_va))
         return true;
@@ -119,7 +120,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
         ASSERT_not_null(ops);
         const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.get_nbits());
+        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.nBits());
         SValuePtr orig_esp = SValue::promote(ops->peekRegister(dispatcher->REG_anySP));
         try {
             for (size_t i=0; i<insns.size(); ++i)
@@ -138,7 +139,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         }
 
         // If nothing was pushed onto the stack, then this isn't a function call.
-        const size_t spWidth = dispatcher->REG_anySP.get_nbits();
+        const size_t spWidth = dispatcher->REG_anySP.nBits();
         SValuePtr esp = SValue::promote(ops->peekRegister(dispatcher->REG_anySP));
         SValuePtr stack_delta = SValue::promote(ops->add(esp, ops->negate(orig_esp)));
         SValuePtr stack_delta_sign = SValue::promote(ops->extract(stack_delta, spWidth-1, spWidth));
@@ -147,7 +148,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
 
         // If the top of the stack does not contain a concrete value or the top of the stack does not point to an instruction
         // in this basic block's function, then this is not a function call.
-        const size_t ipWidth = dispatcher->REG_anyIP.get_nbits();
+        const size_t ipWidth = dispatcher->REG_anyIP.nBits();
         SValuePtr top = SValue::promote(ops->peekMemory(dispatcher->REG_SS, esp, esp->undefined_(ipWidth)));
         if (top->is_number()) {
             rose_addr_t va = top->get_number();
@@ -185,7 +186,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         const RegisterDictionary *regdict = registersForInstructionSize(x86insn->get_addressSize());
         const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
-        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.get_nbits());
+        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.nBits());
         try {
             for (size_t i=0; i<insns.size(); ++i)
                 dispatcher->processInstruction(insns[i]);
@@ -194,7 +195,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         }
 
         // Look at the top of the stack
-        const size_t ipWidth = dispatcher->REG_anyIP.get_nbits();
+        const size_t ipWidth = dispatcher->REG_anyIP.nBits();
         SValuePtr top = SValue::promote(ops->peekMemory(dispatcher->REG_SS, ops->peekRegister(SP),
                                                         ops->protoval()->undefined_(ipWidth)));
         if (top->is_number() && top->get_number() == last->get_address()+last->get_size()) {
@@ -237,10 +238,10 @@ SgAsmX86Instruction::isUnknown() const
     return x86_unknown_instruction == get_kind();
 }
 
-BinaryAnalysis::Disassembler::AddressSet
-SgAsmX86Instruction::getSuccessors(bool *complete) {
-    BinaryAnalysis::Disassembler::AddressSet retval;
-    *complete = true; /*assume true and prove otherwise*/
+AddressSet
+SgAsmX86Instruction::getSuccessors(bool &complete) {
+    AddressSet retval;
+    complete = true; /*assume true and prove otherwise*/
 
     switch (get_kind()) {
         case x86_call:
@@ -253,7 +254,7 @@ SgAsmX86Instruction::getSuccessors(bool *complete) {
             if (getBranchTarget(&va)) {
                 retval.insert(va);
             } else {
-                *complete = false;
+                complete = false;
             }
             break;
         }
@@ -285,7 +286,7 @@ SgAsmX86Instruction::getSuccessors(bool *complete) {
             if (getBranchTarget(&va)) {
                 retval.insert(va);
             } else {
-                *complete = false;
+                complete = false;
             }
             retval.insert(get_address() + get_size());
             break;
@@ -297,7 +298,7 @@ SgAsmX86Instruction::getSuccessors(bool *complete) {
         case x86_into:
         case x86_syscall: {
             retval.insert(get_address() + get_size());  // probable return point
-            *complete = false;
+            complete = false;
             break;
         }
             
@@ -308,7 +309,7 @@ SgAsmX86Instruction::getSuccessors(bool *complete) {
         case x86_ud2:
         case x86_retf: {
             /* Unconditional branch to run-time specified address */
-            *complete = false;
+            complete = false;
             break;
         }
 
@@ -319,7 +320,7 @@ SgAsmX86Instruction::getSuccessors(bool *complete) {
 
         case x86_unknown_instruction: {
             /* Instructions having unknown successors */
-            *complete = false;
+            complete = false;
             break;
         }
 
@@ -376,8 +377,8 @@ SgAsmX86Instruction::getBranchTarget(rose_addr_t *target) {
     }
 }
 
-BinaryAnalysis::Disassembler::AddressSet
-SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete,
+AddressSet
+SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool &complete,
                                    const MemoryMap::Ptr &initial_memory)
 {
     Stream debug(mlog[DEBUG]);
@@ -388,13 +389,13 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
               <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<"\n";
     }
 
-    BinaryAnalysis::Disassembler::AddressSet successors = SgAsmInstruction::getSuccessors(insns, complete);
+    AddressSet successors = SgAsmInstruction::getSuccessors(insns, complete/*out*/);
 
     /* If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then
      * we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
      * successors, a thorough analysis might be able to narrow it down to a single successor. We should not make special
      * assumptions about CALL and FARCALL instructions -- their only successor is the specified address operand. */
-    if (!*complete || successors.size()>1) {
+    if (!complete || successors.size()>1) {
         const RegisterDictionary *regdict;
         if (SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(this)) {
             regdict = RegisterDictionary::dictionary_for_isa(interp);
@@ -416,7 +417,7 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
         const RegisterDescriptor IP = regdict->findLargestRegister(x86_regclass_ip, 0);
         PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
         ops->set_memory_map(initial_memory);
-        BaseSemantics::DispatcherPtr cpu = DispatcherX86::instance(ops, IP.get_nbits(), regdict);
+        BaseSemantics::DispatcherPtr cpu = DispatcherX86::instance(ops, IP.nBits(), regdict);
 
         try {
             BOOST_FOREACH (SgAsmInstruction *insn, insns) {
@@ -427,7 +428,7 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
             if (ip->is_number()) {
                 successors.clear();
                 successors.insert(ip->get_number());
-                *complete = true;
+                complete = true;
             }
         } catch(const BaseSemantics::Exception &e) {
             /* Abandon entire basic block if we hit an instruction that's not implemented. */
@@ -437,10 +438,12 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
 
     if (debug) {
         debug <<"  successors:";
-        BOOST_FOREACH (rose_addr_t va, successors)
+        BOOST_FOREACH (rose_addr_t va, successors.values())
             debug <<" " <<StringUtility::addrToString(va);
-        debug <<(*complete?"":"...") <<"\n";
+        debug <<(complete?"":"...") <<"\n";
     }
 
     return successors;
 }
+
+#endif

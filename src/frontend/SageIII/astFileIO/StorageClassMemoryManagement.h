@@ -8,6 +8,8 @@
 
 #ifndef STORAGE_CLASS_MEMORY_MANAGEMENT_H
 #define STORAGE_CLASS_MEMORY_MANAGEMENT_H
+#include <rosePublicConfig.h>
+#include <Sawyer/BitVector.h>
 
 #define INITIAL_SIZE_OF_MEMORY_BLOCKS 10000
 #define MEMORY_BLOCK_LIST_INCREASE 10
@@ -1182,6 +1184,7 @@ class EasyStorage < std::map< SgSymbol*,  std::vector < std::pair <SgOmpClause::
 
 
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 /** Maps SgSharedVector to/from file representation. This is almost exactly the same as the
  *  vector of Sg object pointers specialization except the rebuildDataStoredInEasyStorageClass() constructs the SgSharedVector
  *  in a different manner. In an original AST all SgSharedVector objects probably pointed to a common underlying storage pool
@@ -1195,6 +1198,7 @@ class EasyStorage<SgSharedVector<BASIC_TYPE> >: public StorageClassMemoryManagem
     void storeDataInEasyStorageClass(const SgSharedVector<BASIC_TYPE>& data_);
     SgSharedVector<BASIC_TYPE> rebuildDataStoredInEasyStorageClass() const;
 };
+#endif
 
 /** Maps an ExtentMap to/from file representation. */
 template<>

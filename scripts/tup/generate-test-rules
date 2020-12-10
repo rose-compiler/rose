@@ -50,7 +50,8 @@ a different output name for each test, Tup will know that the rules produce non-
 Extra output files produced from the command. Tup requires knowledge of all files produced by a command, and all files
 must be produced each time.  A command cannot avoid an output by simply removing the file after the fact since this
 could interfere with other commands that are trying to legitimately produce the same file.  It is permissible, however,
-for a command to write to unannounced files that are outside the build tree. This switch may appear multiple times and/or the argument may be a space-separated list of file names.
+for a command to write to unannounced files that are outside the build tree. This switch may appear multiple times
+and/or the argument may be a space-separated list of file names.
 
 =back
 
@@ -182,6 +183,7 @@ print ": $input";
 print " | ", join(" ", @extra_inputs) if @extra_inputs;
 print " |> ^ ${command_name}^";
 print " \$(run_test) -o %o";
+print " ", join(" ", map {"-x " . TupScripts::shell_escape($_)} @extra_outputs);
 print " ", join(" ", map {TupScripts::shell_escape($_)} @other_switches) if @other_switches;
 print " ", join(" ", map {TupScripts::shell_escape($_)} @command);
 print " |> ${output}";

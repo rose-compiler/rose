@@ -29,8 +29,9 @@ class FixupAstSymbolTablesToSupportAliasedSymbols : public AstSimpleProcessing
        // removed from the AST.  This functionality has not yet been implemented.
        // This inserts an alias for each of the symbols in referencedScope into the symbol table of currentScope
        // static void injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgAccessModifier::access_modifier_enum accessLevel);
-          static void injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgNode* causalNode, SgAccessModifier::access_modifier_enum accessLevel);
-
+       // static void injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgNode* causalNode, SgAccessModifier::access_modifier_enum accessLevel);
+          static void injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgNode* causalNode, 
+                                                                         SgAccessModifier::access_modifier_enum accessLevel, bool calledFromUsingDirective );
        // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
           static Sawyer::Message::Facility mlog;
           static void initDiagnostics();

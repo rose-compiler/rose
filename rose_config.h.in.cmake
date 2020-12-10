@@ -18,7 +18,7 @@
 #cmakedefine ROSE_SCM_VERSION_ID "@ROSE_SCM_VERSION_ID@"
 
 /* Git SCM version information for ROSE: commit date (Unix timestamp). */
-#cmakedefine ROSE_SCM_VERSION_UNIX_DATE @ROSE_SCM_VERSION_UNIX_DATE@
+#cmakedefine ROSE_VERSION @ROSE_VERSION@
 
 /* Define user-friendly ROSE version */
 #cmakedefine ROSE_PACKAGE_VERSION "@ROSE_PACKAGE_VERSION@"
@@ -43,7 +43,7 @@
 #cmakedefine HAVE_BOOST_DATE_TIME
 
 /* define if the Boost::Filesystem library is available */
-#cmakedefine HAVE_BOOST_FILESYSTEM 
+#cmakedefine HAVE_BOOST_FILESYSTEM
 
 /* define if the Boost::PROGRAM_OPTIONS library is available */
 #cmakedefine HAVE_BOOST_PROGRAM_OPTIONS
@@ -98,7 +98,7 @@
 #cmakedefine HAVE_DIRENT_H 1
 
 /* Whether <dlfcn.h> and -ldl contain dladdr() */
-#cmakedefine HAVE_DLADDR 
+#cmakedefine HAVE_DLADDR
 
 /* Define if you have the GNU dld library. */
 //AS Seems unnecessary
@@ -121,7 +121,7 @@
 #cmakedefine HAVE_DOPRNT 1
 
 /* Define if you have the _dyld_func_lookup function. */
-#cmakedefine HAVE_DYLD 
+#cmakedefine HAVE_DYLD
 
 /* Define to 1 if you have the <errno.h> header file. */
 #cmakedefine HAVE_ERRNO_H 1
@@ -132,10 +132,10 @@
 
 /* Use explicit template instantiation. */
 //AS FIXME: Need to have a check for this
-#define HAVE_EXPLICIT_TEMPLATE_INSTANTIATION 
+#define HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
 
 /* Define to 1 if you have the <ffi.h> header file. */
-#cmakedefine HAVE_FFI_H 1 
+#cmakedefine HAVE_FFI_H 1
 
 /* Define to 1 if you have the `getcwd' function. */
 #cmakedefine HAVE_GETCWD 1
@@ -156,7 +156,7 @@
 #cmakedefine HAVE_INDEX 1
 
 /* Define to 1 if you have the <intrinsics.h> header file. */
-#cmakedefine HAVE_INTRINSICS_H 
+#cmakedefine HAVE_INTRINSICS_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #cmakedefine HAVE_INTTYPES_H 1
@@ -237,7 +237,7 @@
 #cmakedefine HAVE_WCHAR_T 1
 #cmakedefine HAVE_WINT_T 1
 #cmakedefine HAVE_STDINT_H_WITH_UINTMAX 1
-#cmakedefine HAVE_LC_MESSAGES 1    
+#cmakedefine HAVE_LC_MESSAGES 1
 #cmakedefine HAVE_SSTREAM 1
 #cmakedefine HAVE_ARGZ_H 1
 #cmakedefine SIZEOF_WCHAR_T_IS_2 1
@@ -340,7 +340,7 @@
 #cmakedefine HAVE_MACH_O_DYLD_H 1
 
 /* Define to 1 if you have the <memory.h> header file. */
-#cmakedefine HAVE_MEMORY_H 1 
+#cmakedefine HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the `mktime' function. */
 #cmakedefine HAVE_MKTIME 1
@@ -400,13 +400,13 @@
 #cmakedefine HAVE_STRINGS_H 1
 
 /* Define to 1 if you have the <string.h> header file. */
-#cmakedefine HAVE_STRING_H 1 
+#cmakedefine HAVE_STRING_H 1
 
 /* Define to 1 if you have the `strlcat' function. */
-#cmakedefine HAVE_STRLCAT 1 
+#cmakedefine HAVE_STRLCAT 1
 
 /* Define to 1 if you have the `strlcpy' function. */
-#cmakedefine HAVE_STRLCPY 1 
+#cmakedefine HAVE_STRLCPY 1
 
 /* Define to 1 if you have the `strspn' function. */
 #cmakedefine HAVE_STRSPN 1
@@ -519,10 +519,6 @@
 //AS Don't know what to do with this
 #undef PACKAGE_TARNAME
 
-/* Define to the version of this package. */
-//AS Don't know what to do with this
-#undef PACKAGE_VERSION
-
 /* Define as the return type of signal handlers (`int' or `void'). */
 //AS Don't know what to do with this
 #undef RETSIGTYPE
@@ -544,9 +540,6 @@
 
 /* Whether to use the new EDG version 4.7 */
 #cmakedefine ROSE_USE_EDG_VERSION_4_7
-
-/* Whether to use the new interface to EDG */
-#cmakedefine ROSE_USE_NEW_EDG_INTERFACE
 
 /* Use Valgrind calls in ROSE */
 //AS Don't know what to do with this
@@ -743,7 +736,7 @@
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
 
-/* DQ (10/16/2010): Added OFP required macros as part of move to exclude 
+/* DQ (10/16/2010): Added OFP required macros as part of move to exclude
  * rose_config.h from the ROSE header files.
  */
 #define ROSE_OFP_MAJOR_VERSION_NUMBER 0
@@ -762,10 +755,6 @@
 /* Defined if we're using a prebuilt EDG library */
 #cmakedefine BINARY_EDG
 
-/* Controls design of internal template declaration support within the ROSE
-   AST. */
-#cmakedefine TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-
 /* Build ROSE to support the Binary Analysis */
 #cmakedefine ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
@@ -777,6 +766,9 @@
 
 /* Build ROSE to support the C langauge */
 #cmakedefine ROSE_BUILD_C_LANGUAGE_SUPPORT
+
+/* Build ROSE to support the C preprocessor. */
+#cmakedefine ROSE_BUILD_CPP_LANGUAGE_SUPPORT
 
 /* Build ROSE to support the Fortran langauge */
 #cmakedefine ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT

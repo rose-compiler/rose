@@ -3,6 +3,7 @@
 #include "CommandOptions.h"
 #include "GraphUtils.h"
 #include "GraphIO.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 bool DebugReachingDef()
 {
@@ -12,7 +13,7 @@ bool DebugReachingDef()
          r = 1;
      else
          r = -1;
-  }  
+  }
   return r == 1;
 }
 
@@ -29,12 +30,12 @@ class ConstructReachingDefinitionBase
     AstNodePtr scope;
     if (fa.IsVarRef(mod.first, 0, &varname, &scope)) {
       base.add_ref( varname, scope, mod);
-      if (DebugReachingDef()) 
+      if (DebugReachingDef())
          std::cerr << "collecting var ref: " << varname << ":" << AstInterface::AstToString(mod.second) << std::endl;
     }
     else {
       base.add_unknown_def( mod);
-      if (DebugReachingDef()) 
+      if (DebugReachingDef())
          std::cerr << "collecting unknown ref: " << AstInterface::AstToString(mod.first) << ":" << AstInterface::AstToString(mod.second) << std::endl;
     }
     return true;
@@ -44,20 +45,20 @@ public:
     : base(b), fa(_fa) {}
 };
 
-void ReachingDefinitionBase:: 
+void ReachingDefinitionBase::
 add_ref( const std::string& varname, const AstNodePtr& scope, const std::pair<AstNodePtr,AstNodePtr>& def)
-{ 
+{
    std::string scopename = Ast2StringMap::inst()->get_string(scope);
    std::string name = varname + scopename;
-   if (DebugReachingDef()) 
+   if (DebugReachingDef())
        std:: cerr << "adding variable name: " << name << "\n";
-   add_data(name, def); 
+   add_data(name, def);
 }
-  
+
 void ReachingDefinitionBase::
 collect_refs ( AstInterface& fa, const AstNodePtr& h, FunctionSideEffectInterface* a,
                AstInterface::AstNodeList* in)
-{ 
+{
 
   for (AstInterface::AstNodeList::iterator p = in->begin();
        p != in->end(); ++p) {
@@ -65,7 +66,7 @@ collect_refs ( AstInterface& fa, const AstNodePtr& h, FunctionSideEffectInterfac
      std::string varname;
      AstNodePtr scope;
      if (fa.IsVarRef( cur, 0, &varname, &scope))
-        add_ref(varname, scope, std::pair<AstNodePtr, AstNodePtr>(cur, AST_NULL) ); 
+        add_ref(varname, scope, std::pair<AstNodePtr, AstNodePtr>(cur, AST_NULL) );
   }
   ConstructReachingDefinitionBase collect(fa, *this);
   StmtSideEffectCollect op(a);
@@ -90,7 +91,7 @@ get_def_set( const std::string& varname, const AstNodePtr& scope) const
       return get_data_set(name);
    }
    /*QY: if scope is not mapped, the variable hasn't been defined*/
-   return get_empty_set(); 
+   return get_empty_set();
 }
 
 class CollectLocalDefinitions : public CollectObject< std::pair<AstNodePtr, AstNodePtr> >
@@ -99,7 +100,7 @@ class CollectLocalDefinitions : public CollectObject< std::pair<AstNodePtr, AstN
   std::map<std::string, std::pair<AstNodePtr, std::pair<AstNodePtr,AstNodePtr> > > defvars;
   ReachingDefinitions gen;
   const ReachingDefinitionGenerator& g;
-  
+
   bool operator()( const std::pair<AstNodePtr,AstNodePtr>& mod)
   {
     std::string varname;
@@ -115,23 +116,23 @@ class CollectLocalDefinitions : public CollectObject< std::pair<AstNodePtr, AstN
   }
 public:
   CollectLocalDefinitions( AstInterface& _fa, const ReachingDefinitionGenerator& _g)
-      : fa(_fa), g(_g) 
+      : fa(_fa), g(_g)
    {
      init();
    }
-  ReachingDefinitions get_gen()  
-    { 
+  ReachingDefinitions get_gen()
+    {
       for (std::map<std::string, std::pair<AstNodePtr, std::pair<AstNodePtr,AstNodePtr> > >::const_iterator p = defvars.begin();
            p != defvars.end(); ++p) {
          std::pair <std::string, std::pair<AstNodePtr,std::pair<AstNodePtr,AstNodePtr> > > cur = *p;
          g.add_def( gen, cur.first, cur.second.first, cur.second.second);
       }
       defvars.clear();
-      return gen; 
+      return gen;
     }
   void init()
-  { 
-    gen = g.get_empty_set(); 
+  {
+    gen = g.get_empty_set();
     defvars.clear();
   }
 };
@@ -163,8 +164,8 @@ public:
 };
 
 void ReachingDefNode::
-finalize( AstInterface& fa, const ReachingDefinitionGenerator& g, 
-          FunctionSideEffectInterface* a, const ReachingDefinitions* _in) 
+finalize( AstInterface& fa, const ReachingDefinitionGenerator& g,
+          FunctionSideEffectInterface* a, const ReachingDefinitions* _in)
 {
   CollectLocalDefinitions collectgen(fa, g);
   CollectKillDefinitions collectkill(fa, g);
@@ -206,7 +207,7 @@ void ReachingDefinitionAnalysis:: FinalizeCFG( AstInterface& fa)
       AstNodePtr scope;
       if (fa.IsVarRef(cur, 0, &name, &scope))
          g->add_def( in, name, scope, std::pair<AstNodePtr,AstNodePtr>(cur,AST_NULL));
-  } 
+  }
   NodeIterator p = GetNodeIterator();
   (*p)->finalize( fa, *g, a, &in);
   for ( ++p;!p.ReachEnd(); ++p) {
@@ -214,7 +215,7 @@ void ReachingDefinitionAnalysis:: FinalizeCFG( AstInterface& fa)
   }
 }
 
-void ReachingDefinitionAnalysis:: 
+void ReachingDefinitionAnalysis::
 operator()( AstInterface& fa, const AstNodePtr& h,  FunctionSideEffectInterface* anal)
 {
   assert( g == 0 && pars.size() == 0);
@@ -227,18 +228,18 @@ operator()( AstInterface& fa, const AstNodePtr& h,  FunctionSideEffectInterface*
   base.collect_refs( fa, body, anal, &pars);
   base.finalize();
   g = new ReachingDefinitionGenerator( base);
- 
+
   a = anal;
 
   if (DebugReachingDef())
      std::cerr << "start building reaching definitions \n";
   DataFlowAnalysis<ReachingDefNode, ReachingDefinitions>::operator()( fa, h);
-  if (DebugReachingDef()) 
+  if (DebugReachingDef())
      std::cerr << "finished building reaching definitions \n" << GraphToString(*this);
 }
 
-void ReachingDefinitionAnalysis:: 
-collect_ast( const ReachingDefinitions& repr, 
+void ReachingDefinitionAnalysis::
+collect_ast( const ReachingDefinitions& repr,
              CollectObject< std::pair<AstNodePtr, AstNodePtr> >& collect)
 {
   assert(g != 0);

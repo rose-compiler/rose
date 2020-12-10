@@ -1015,9 +1015,9 @@ PreprocessingInfo::display (const string & label) const
 
 std::string
 PreprocessingInfo::relativePositionName (const RelativePositionType & position)
-{
-    return stringifyPreprocessingInfoRelativePositionType(position);
-}
+   {
+     return stringifyPreprocessingInfoRelativePositionType(position);
+   }
 
 
 PreprocessingInfo::RelativePositionType
@@ -1028,7 +1028,7 @@ PreprocessingInfo::getRelativePosition(void) const
      return relativePosition;
    }
 
-  void
+void
 PreprocessingInfo::setRelativePosition( RelativePositionType relPos )
    {
      ROSE_ASSERT(this != NULL);
@@ -1061,6 +1061,64 @@ PreprocessingInfo::set_file_info( Sg_File_Info* info )
      file_info = info;
      ROSE_ASSERT(file_info != NULL);
    }
+
+// DQ (8/26/2020): include directive have a filename imbedded inside, and we need to  
+// extract that for from tools (e.g. the fixup for initializers from include files).
+std::string PreprocessingInfo::get_filename_from_include_directive()
+   {
+     std::string s;
+
+  // s = "#line 12345\"foobar.h\"6789";
+  // s = "#line \"foobar.h\"";
+  // s = "#line <foobar.h>";
+  // s = "#line 12345<foobar.h>6789";
+
+     if (this->getTypeOfDirective() == CpreprocessorIncludeDeclaration)
+        {
+       // std::string line = s;
+          std::string line = internalString;
+          std::string name;
+
+          std::string tester="\"";
+
+          size_t findPos  = line.find(tester); //finds first quote mark
+
+          if (findPos == string::npos)
+             {
+#if 0
+               printf ("Could not find quoted substring, might be using <> syntax: line = %s \n",line.c_str());
+#endif
+               tester="<";
+               findPos  = line.find(tester); //finds first quote mark
+               tester=">";
+#if 0
+               printf ("Exitng as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
+          size_t findPos2 = line.find(tester, findPos+1); //finds second quote mark
+          ROSE_ASSERT(findPos2 > findPos);
+#if 0
+          printf ("findPos = %zu findPos2 = %zu \n",findPos,findPos2);
+#endif
+          name = line.substr(findPos+1,(findPos2-findPos)-1); //copies the name into name
+
+       // printf ("before adding terminal: name = |%s| \n",name.c_str());
+#if 0
+          printf ("In PreprocessingInfo::get_filename_from_include_directive(): name = |%s| \n",name.c_str());
+#endif
+          s = name;
+        }
+       else
+        {
+          printf ("Error: In PreprocessingInfo::get_filename_from_include_directive(): getTypeOfDirective != CpreprocessorIncludeDeclaration \n"); 
+          ROSE_ASSERT(false);
+        }
+
+     return s;
+   }
+
 
 // DQ (11/28/2008): Support for CPP generated linemarkers
 int
@@ -2088,7 +2146,9 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
           string cppIndentifier = line.substr(positionOfFirstCharacterOfCppIdentifier,cppIdentifierLength);
 
        // Some names will convert to integer values
-       // long integerValue = -1;
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+          long integerValue = -1;
+#endif
           if (spaceAfterHash == true)
              {
             // This is likely going to be a number but test2005_92.C demonstrates a case where this is not true.
@@ -2306,6 +2366,9 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
      printf ("In ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST: Opening file %s for reading comments and CPP directives \n",filename.c_str());
 #endif
+#if 0
+     printf (" --- attributeList.size() = %" PRIuPTR " \n",attributeList.size());
+#endif
 
      ifstream targetFile (filename.c_str());
      if (targetFile.is_open())
@@ -2317,7 +2380,10 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
           while ( targetFile.eof() == false )
              {
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
-               printf ("At top of loop over lines in the file ... lineCounter = %d \n",lineCounter);
+               printf ("\nAt top of loop over lines in the file ... lineCounter = %d \n",lineCounter);
+#endif
+#if 0
+               printf (" --- attributeList.size() = %" PRIuPTR " \n",attributeList.size());
 #endif
                getline (targetFile,line);
 
@@ -2391,11 +2457,16 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                               ROSE_ASSERT(false);
                             }
                        }
+#if 0
+                    printf ("line = %s \n",line.c_str());
+#endif
 
                  // bool isComment = isFortran90Comment(line);
                     if (isComment == true)
                        {
-                      // printf ("This is a comment, set to PreprocessingInfo::FortranStyleComment \n");
+#if 0
+                         printf ("This is a comment, set to PreprocessingInfo::FortranStyleComment \n");
+#endif
                          cppDeclarationKind = PreprocessingInfo::FortranStyleComment;
                        }
                   }
@@ -2547,7 +2618,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
 
             // printf ("increment lineCounter = %d \n",lineCounter);
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
-               printf ("At bottom of loop over lines in the file ... incremented lineCounter = %d attributeList.size() = %" PRIuPTR " \n",lineCounter,attributeList.size());
+               printf ("At bottom of loop over lines in the file ... incremented lineCounter = %d attributeList.size() = %" PRIuPTR " \n\n",lineCounter,attributeList.size());
 #endif
              }
 
@@ -2673,10 +2744,20 @@ ROSEAttributesList::generateFileIdListFromLineDirectives()
                  // ROSE_ASSERT(quotedFilename[0] == '\"');
                     if (quotedFilename[0] == '\"')
                        {
-                         ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
-                         std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
+                      // DQ (8/22/2020): C_tests/test2020_22.c demonstrates that this is not reasonable.
+                      // ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
+
+                      // DQ (8/22/2020): find the closing quote.
+                         size_t positionOfNextQuote = quotedFilename.find("\"",1);
 #if 0
-                         printf ("filename = %s \n",filename.c_str());
+                         printf ("positionOfNextQuote     = %zu \n",positionOfNextQuote);
+                         printf ("quotedFilename.length() = %zu \n",quotedFilename.length());
+#endif
+                      // std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
+                         ROSE_ASSERT(positionOfNextQuote <= quotedFilename.length()-1);
+                         std::string filename = quotedFilename.substr(1,positionOfNextQuote-1);
+#if 0
+                         printf ("In generateFileIdListFromLineDirectives(): filename = |%s| \n",filename.c_str());
 #endif
                       // Add the new filename to the static map stored in the Sg_File_Info (no action if filename is already in the map).
                          Sg_File_Info::addFilenameToMap(filename);
@@ -2788,6 +2869,9 @@ ROSEAttributesListContainer::~ROSEAttributesListContainer()
 void
 ROSEAttributesListContainer::addList ( std::string fileName, ROSEAttributesList* listPointer )
    {
+  // DQ (7/2/2020): Added assertion to catch when this function is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
   // attributeListList.push_back ( listPointer );
      attributeListMap[fileName] = listPointer;
    }

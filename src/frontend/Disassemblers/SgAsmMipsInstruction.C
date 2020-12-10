@@ -1,8 +1,11 @@
 /* SgAsmMipsInstruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code
  * file) because then they won't get indexed/formatted/etc. by C-aware tools. */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 unsigned
 SgAsmMipsInstruction::get_anyKind() const {
@@ -108,7 +111,7 @@ SgAsmMipsInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> 
     SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(args[0]);
     if (!rre)
         return false;
-    if (rre->get_descriptor().get_major()!=mips_regclass_gpr || rre->get_descriptor().get_minor()!=31)
+    if (rre->get_descriptor().majorNumber()!=mips_regclass_gpr || rre->get_descriptor().minorNumber()!=31)
         return false;
     return true; // this is a "JR ra" instruction.
 }
@@ -121,12 +124,12 @@ SgAsmMipsInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> 
 }
 
 // see base class
-std::set<rose_addr_t>
-SgAsmMipsInstruction::getSuccessors(bool *complete_)
+AddressSet
+SgAsmMipsInstruction::getSuccessors(bool &complete)
 {
-    bool complete = false;
+    complete = false;
     rose_addr_t target_va = 0;
-    std::set<rose_addr_t> successors;
+    AddressSet successors;
     switch (get_kind()) {
         case mips_break:
         case mips_j:
@@ -180,8 +183,6 @@ SgAsmMipsInstruction::getSuccessors(bool *complete_)
             successors.insert(get_address() + get_size());
             complete = true;
     }
-    if (complete_)
-        *complete_ = complete;
     return successors;
 }
 
@@ -568,3 +569,5 @@ SgAsmMipsInstruction::description() const {
     }
     ASSERT_not_reachable("invalid mips instruction kind: " + StringUtility::numberToString(get_kind()));
 }
+
+#endif

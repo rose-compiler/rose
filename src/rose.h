@@ -97,8 +97,10 @@ namespace ELF{
 // DQ (3/11/2006): Jeremiah Willcock's inliner
 #include "inliner.h"
 
+// PP (15/10/20) moved to legacy
 // DQ (3/18/2006): Jeremiah Willcock's partial redundancy elimination (PRE)
-#include "pre.h"
+// #include "pre.h"
+
 // DQ (4/8/2006): Constant folding of the AST (cleans out redundant
 // constant expresion trees save in translation from the frontend).
 // Required to be run before PRE!

@@ -21,10 +21,14 @@ get_rmod_dir(SgFile* sfile)
 void
 generateModFile(SgFile *sfile)
    {
-     ROSE_ASSERT(sfile != NULL);
+     ASSERT_not_null(sfile);
 
   // file name, with full path.
      string  originalModuleFilenameWithPath = sfile->get_file_info()->get_filenameString();
+
+#if 0
+     printf ("In generateModFile(): originalModuleFilenameWithPath = %s \n",originalModuleFilenameWithPath.c_str());
+#endif
 
 #if 0
   // DQ (10/24/2010): This is overly restrictive...we still want to generate the rmod file.
@@ -47,8 +51,16 @@ generateModFile(SgFile *sfile)
           printf ("In generateModFile(): Generating a Fortran 90 specific module (*.rmod file) for file = %s \n",originalModuleFilenameWithPath.c_str());
         }
 
+#if 0
+     printf ("In generateModFile(): before NodeQuery::querySubTree() \n");
+#endif
+
   // Get the list of SgModuleStatement objects for the current AST.
      Rose_STL_Container<SgNode*> moduleDeclarationList = NodeQuery::querySubTree (sfile,V_SgModuleStatement);
+
+#if 0
+     printf ("In generateModFile(): after NodeQuery::querySubTree() \n");
+#endif
 
 #if 0
   // DQ: I think this case is not required since the loop (below) would be empty.
@@ -59,19 +71,27 @@ generateModFile(SgFile *sfile)
         }
 #endif
 
+#if 0
+     printf ("In generateModFile(): before loop over module declarations \n");
+#endif
+
      for (Rose_STL_Container<SgNode*>::iterator i = moduleDeclarationList.begin(); i != moduleDeclarationList.end(); i++)
         {
        // For a module named "xx" generate a file "xx.rose_mod" which contains 
        // all the variable definitions and function declarations 
           SgModuleStatement* module_stmt = isSgModuleStatement(*i);
 
-          ROSE_ASSERT(module_stmt != NULL);
-string outputDir = get_rmod_dir(sfile);
-string outputFilename;
-if (outputDir !="")
-          outputFilename =outputDir + module_stmt->get_name() + MOD_FILE_SUFFIX;
-else
-          outputFilename = module_stmt->get_name() + MOD_FILE_SUFFIX;
+#if 0
+          printf ("In generateModFile(): top of loop over module list \n");
+#endif
+
+          ASSERT_not_null(module_stmt);
+          string outputDir = get_rmod_dir(sfile);
+          string outputFilename;
+          if (outputDir !="")
+               outputFilename =outputDir + module_stmt->get_name() + MOD_FILE_SUFFIX;
+            else
+               outputFilename = module_stmt->get_name() + MOD_FILE_SUFFIX;
 
           string lowerCaseOutputFilename = StringUtility::convertToLowerCase(outputFilename);
 
@@ -126,5 +146,20 @@ else
 
           Module_OutputFile.flush();
           Module_OutputFile.close();
+
+#if 0
+          printf ("In generateModFile(): bottom of loop over module list \n");
+#endif
         }
+
+#if 0
+     printf ("Leaving generateModFile(): originalModuleFilenameWithPath = %s \n",originalModuleFilenameWithPath.c_str());
+
+     printf ("exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+#if 0
+     printf ("Leaving generateModFile(): originalModuleFilenameWithPath = %s \n",originalModuleFilenameWithPath.c_str());
+#endif
    }

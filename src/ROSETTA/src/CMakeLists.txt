@@ -8,6 +8,11 @@ else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR_DEFINED=\"${CMAKE_SOURCE_DIR}\"")
 endif()
 
+# Rasmussen (04/17/2019): Support for ATerms has been deprecated as it is no longer needed
+# and likely never fully implemented nor tested.  Files remain in the src tree but are no
+# longer built. Files buildAtermSupport.C and grammarAtermConstructorDefinitionMacros.macro
+# has been removed.
+
 # source files for the code generator
 set(CxxGrammarMetaProgram_SRCS
   CxxGrammarMetaProgram.C
@@ -29,8 +34,7 @@ set(CxxGrammarMetaProgram_SRCS
   buildAstFileIO.C
   buildStorageClasses.C
   buildConstructorsWithoutSourcePositionInformation.C
-  outputClassesAndFields.C
-  buildAtermSupport.C)
+  outputClassesAndFields.C)
 
 # input files to generate source files
 set(GRAMMAR_SOURCE_FILES
@@ -41,7 +45,6 @@ set(GRAMMAR_SOURCE_FILES
   ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/Common.code 
   ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/Support.code 
   ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarConstructorDefinitionMacros.macro 
-  ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro 
   ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/node.macro 
   ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/Cxx_GlobalDeclarations.macro 
   ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/Symbol.code 

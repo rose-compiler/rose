@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "MemoryMap.h"
 
 using namespace Rose::BinaryAnalysis;
@@ -93,3 +96,5 @@ SgAsmPEImportItem::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (p_bound_rva.get_rva()!=0)
         fprintf(f, "%s%-*s = %s\n", p, w, "bound", p_bound_rva.to_string().c_str());
 }
+
+#endif

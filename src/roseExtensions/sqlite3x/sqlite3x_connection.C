@@ -58,7 +58,8 @@ void sqlite3_connection::post_open()
         std::cerr <<"sqlite3_connection::post_open: unable to load ROSE extensions; continuing without them\n";
     }
 #else
-    std::cerr <<"sqlite3_connection::post_open: unable to load ROSE extensions; continuing without them\n";
+    // It doesn't seem to matter that the extensions are disabled, so I'm commenting out this warning. [Robb Matzke 2019-08-12]
+    //std::cerr <<"sqlite3_connection::post_open: unable to load ROSE extensions; continuing without them\n";
 #endif
 }
 

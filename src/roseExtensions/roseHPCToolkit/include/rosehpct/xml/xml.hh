@@ -33,9 +33,7 @@
 #include <rosehpct/util/tree2.hh>
 #include <rosehpct/util/general.hh>
 
-extern "C" {
 #include <libxml/parser.h>
-}
 
 /*!
  *  \brief XML processing support routines, which are mostly wrappers

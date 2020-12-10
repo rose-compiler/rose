@@ -776,7 +776,6 @@
 ./midend/programAnalysis/OpenAnalysis/Utils/UnionFindUniverse.h
 ./midend/programAnalysis/valuePropagation/ValueAnnot.h
 ./midend/programAnalysis/valuePropagation/ValuePropagate.h
-./midend/programAnalysis/sideEffectAnalysis/sideEffect.h
 ./midend/programAnalysis/annotationLanguageParser/actionchanger.h
 ./midend/programAnalysis/annotationLanguageParser/action.h
 ./midend/programAnalysis/annotationLanguageParser/adaptor_statistics.h
@@ -1264,7 +1263,6 @@
 ./midend/programAnalysis/OpenAnalysis/Utils/trtest.C
 ./midend/programAnalysis/valuePropagation/ValueAnnot.C
 ./midend/programAnalysis/valuePropagation/ValuePropagate.C
-./midend/programAnalysis/sideEffectAnalysis/sideEffect.C
 ./midend/programAnalysis/CallGraphAnalysisMySQL/Callgraph.C
 ./midend/programAnalysis/CallGraphAnalysisMySQL/callgraph_example.C
 ./midend/programAnalysis/CallGraphAnalysisMySQL/Classhierarchy.C

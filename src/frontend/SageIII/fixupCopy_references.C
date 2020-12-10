@@ -193,7 +193,7 @@ SgLocatedNode::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
                               break;
                             }
 
-                      // DQ (10/16/2007): Note that labels are handled by the SgLabelStatement and the SgGotoStatement 
+                      // DQ (10/16/2007): Note that labels are handled by the SgLabelStatement and the SgGotoStatement
                       // directly and are not required to be processed here in the SgStatement.
                          case V_SgLabelStatement:
                             {
@@ -375,8 +375,8 @@ SgFunctionDeclaration::fixupCopy_references(SgNode* copy, SgCopyHelp & help) con
        // DQ (2/26/2009): Handle special cases where the copyHelp function is non-trivial.
        // Is every version of copyHelp object going to be a problem?
 
-       // For the outlining, our copyHelp object does not copy defining function declarations 
-       // and substitutes a non-defining declarations, so if the copy has been built this way 
+       // For the outlining, our copyHelp object does not copy defining function declarations
+       // and substitutes a non-defining declarations, so if the copy has been built this way
        // then skip trying to reset the SgFunctionDefinition.
        // printf ("In SgFunctionDeclaration::fixupCopy_references(): functionDeclaration_copy->get_definition() = %p \n",functionDeclaration_copy->get_definition());
        // this->get_definition()->fixupCopy_references(functionDeclaration_copy->get_definition(),help);
@@ -559,7 +559,7 @@ SgTemplateInstantiationFunctionDecl::fixupCopy_references(SgNode* copy, SgCopyHe
 
           templateArguments_iterator_original++;
           templateArguments_iterator_copy++;
-        } 
+        }
 #endif
    }
 
@@ -768,6 +768,52 @@ SgGotoStatement::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
    }
 
 void
+SgAdaExitStmt::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgAdaExitStmt::fixupCopy_references() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+  // Also call the base class version of the fixupCopycopy() member function
+     SgStatement::fixupCopy_references(copy,help);
+   }
+
+void
+SgAdaDelayStmt::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgAdaDelayStmt::fixupCopy_references() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+  // Also call the base class version of the fixupCopycopy() member function
+     SgStatement::fixupCopy_references(copy,help);
+   }
+
+void
+SgAdaAcceptStmt::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgAdaAcceptStmt::fixupCopy_references() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+  // Also call the base class version of the fixupCopycopy() member function
+     SgStatement::fixupCopy_references(copy,help);
+   }
+
+
+void
+SgAdaLoopStmt::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgAdaLoopStmt::fixupCopy_references() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+  // Also call the base class version of the fixupCopycopy() member function
+     SgStatement::fixupCopy_references(copy,help);
+   }
+
+
+void
 SgTypedefDeclaration::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
    {
 #if DEBUG_FIXUP_COPY
@@ -807,7 +853,7 @@ SgEnumDeclaration::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
 
      SgEnumDeclaration* enumDeclaration_copy = isSgEnumDeclaration(copy);
      ROSE_ASSERT(enumDeclaration_copy != NULL);
-     
+
   // DQ (10/17/2007): fixup the type used to make sure it has the declaration set the AST copy.
      SgEnumType* enum_type_original = this->get_type();
      ROSE_ASSERT(enum_type_original != NULL);
@@ -936,7 +982,7 @@ SgSourceFile::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
      ROSE_ASSERT(get_globalScope() != NULL);
      ROSE_ASSERT(file_copy->get_globalScope() != NULL);
      get_globalScope()->fixupCopy_references(file_copy->get_globalScope(),help);
-   } 
+   }
 
 
 void

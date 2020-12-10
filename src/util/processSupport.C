@@ -26,61 +26,80 @@
 using namespace std;
 using namespace Rose;
 
-int systemFromVector(const vector<string>& argv) {
-  assert (!argv.empty());
+int systemFromVector(const vector<string>& argv) 
+   {
+     assert (!argv.empty());
 
 #if !ROSE_MICROSOFT_OS
-  pid_t pid = fork();
-  if (pid == -1) {perror("fork"); abort();}
-  if (pid == 0) { // Child
-    vector<const char*> argvC(argv.size() + 1);
-    for (size_t i = 0; i < argv.size(); ++i) {
-      argvC[i] = strdup(argv[i].c_str());
+     pid_t pid = fork();
+
+     if (pid == -1) {perror("fork"); abort();}
+
+     if (pid == 0) 
+        { // Child
+          vector<const char*> argvC(argv.size() + 1);
+          size_t length = argv.size();
+
+       // DQ (6/22/2020): Truncate as a test!
+       // length = 5;
+
+       // for (size_t i = 0; i < argv.size(); ++i) 
+          for (size_t i = 0; i < length; ++i) 
+             {
+               argvC[i] = strdup(argv[i].c_str());
 #if 0
-      printf ("In systemFromVector(): loop: argvC[%zu] = %s \n",i,argvC[i]);
+               printf ("In systemFromVector(): loop: argvC[%zu] = %s \n",i,argvC[i]);
 #endif
-    }
-    argvC.back() = NULL;
-    execvp(argv[0].c_str(), (char* const*)&argvC[0]);
+             }
+          argvC.back() = NULL;
+          execvp(argv[0].c_str(), (char* const*)&argvC[0]);
 
 #if 0
- // DQ (9/12/2017): This is one approach to debugging this (which was required for Ada because the Ada compiler is a call to gnat with the extra option "compile".
- // execvp(argv[0].c_str(), (char* const*)&argvC[0]);
- // execvp("/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin/bin/gnat compile",(char* const*)&argvC[0]);
-    execvp("/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin/bin/gnat",(char* const*)&argvC[0]);
+       // DQ (9/12/2017): This is one approach to debugging this (which was required for Ada because the Ada compiler is a call to gnat with the extra option "compile".
+       // execvp(argv[0].c_str(), (char* const*)&argvC[0]);
+       // execvp("/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin/bin/gnat compile",(char* const*)&argvC[0]);
+          execvp("/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin/bin/gnat",(char* const*)&argvC[0]);
 #endif
 
-    perror(("execvp in systemFromVector: " + argv[0]).c_str());
-    exit(1); // Should not get here normally
-  } else { // Parent
-    int status;
-    pid_t err = waitpid(pid, &status, 0);
-    if (err == -1) {perror("waitpid"); abort();}
-    return status;
-  }
+          perror(("execvp in systemFromVector: " + argv[0]).c_str());
+          exit(1); // Should not get here normally
+        } 
+       else
+        { // Parent
+          int status;
+          pid_t err = waitpid(pid, &status, 0);
+#if 0
+          printf ("In systemFromVector(): status = %d \n",status);
+#endif
+          if (err == -1) {perror("waitpid"); abort();}
+
+          return status;
+        }
 #else
-  std::string commandLine = argv[0];
-  for (size_t i = 1; i < argv.size(); ++i) {
-    commandLine += " " + argv[i];
-  }
+     std::string commandLine = argv[0];
+     for (size_t i = 1; i < argv.size(); ++i)
+        {
+          commandLine += " " + argv[i];
+        }
 
-  STARTUPINFO si;
-  PROCESS_INFORMATION pi;
-  ZeroMemory(&si,sizeof(si));
-  si.cb=sizeof(si);
-  ZeroMemory(&pi,sizeof(pi));
+     STARTUPINFO si;
+     PROCESS_INFORMATION pi;
+     ZeroMemory(&si,sizeof(si));
+     si.cb=sizeof(si);
+     ZeroMemory(&pi,sizeof(pi));
 
-  if(!CreateProcess(NULL, (char*)commandLine.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
-    printf ("Error running MSVS compiler.\n");
-    return 1;
-  }
+     if(!CreateProcess(NULL, (char*)commandLine.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+        {
+          printf ("Error running MSVS compiler.\n");
+          return 1;
+        }
   
-  WaitForSingleObject(pi.hProcess,INFINITE);
-  unsigned long exitCode;
-  GetExitCodeProcess(pi.hProcess, &exitCode);
-  return exitCode;
+     WaitForSingleObject(pi.hProcess,INFINITE);
+     unsigned long exitCode;
+     GetExitCodeProcess(pi.hProcess, &exitCode);
+     return exitCode;
 #endif
-}
+   }
 
 // EOF is not handled correctly here -- EOF is normally set when the child
 // process exits

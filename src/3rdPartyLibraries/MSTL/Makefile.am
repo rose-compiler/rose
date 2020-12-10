@@ -10,7 +10,11 @@ libmstlSources = \
    DOTGraphInterface.C
 else
 libmstlSources = \
-   PDFGeneration.C DOTGraphInterface.C
+   DOTGraphInterface.C
+if ROSE_WITH_LIBHARU
+libmstlSources += \
+   PDFGeneration.C 
+endif
 endif
 
 # lib_LIBRARIES = libmstl.a
@@ -27,10 +31,14 @@ distclean-local:
 
 # Some source files are included so that templates can be included
 pkginclude_HEADERS = \
-   PDFGeneration.h DOTGeneration.h DOTRepresentation.h \
+   DOTGeneration.h DOTRepresentation.h \
    Translator.h DOTSubgraphRepresentation.h DOTGraphInterface.h TreeTraversal.h \
    DOTRepresentationImpl.h DOTGenerationImpl.h \
    DOTSubgraphRepresentationImpl.h
+if ROSE_WITH_LIBHARU
+pkginclude_HEADERS += \
+   PDFGeneration.h 
+endif
 
 EXTRA_DIST = CMakeLists.txt MSTL.docs
 

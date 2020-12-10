@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/Experimental_Jovial_ROSE_Connection
 
 SUBDIRS = \
   ATerm
@@ -12,7 +12,7 @@ endif
 noinst_LTLIBRARIES = libexperimentalRoseGeneralLanguage.la
 
 libexperimentalRoseGeneralLanguage_la_SOURCES = \
-  UntypedTraversal.C UntypedConverter.C
+  sage-tree-builder.C ModuleBuilder.C
 
 noinst_HEADERS = \
-  FASTNodes.h UntypedTraversal.h UntypedConverter.h
+  sage-tree-builder.h ModuleBuilder.h

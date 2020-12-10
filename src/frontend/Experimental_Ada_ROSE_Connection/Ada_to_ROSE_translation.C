@@ -10,13 +10,18 @@
 
 #include "Ada_to_ROSE_translation.h"
 
+#include "Ada_to_ROSE.h"
+//~ #include "untypedBuilder.h"
+
 using namespace std;
 
 #if 0
-namespace Ada_ROSE_Translation 
+namespace Ada_ROSE_Translation
    {
   // Data Members
      MapType untypedNodeMap;
+
+
    }
 #else
 // Ada_ROSE_Translation::MapType Ada_ROSE_Translation::untypedNodeMap;
@@ -28,19 +33,20 @@ Ada_ROSE_Translation::ASIS_element_id_to_ASIS_MapType Ada_ROSE_Translation::asis
 SgUntypedFile* Ada_ROSE_Translation::globalUntypedFile = NULL;
 #endif
 
+
 // Attribute constructor.
-Ada_ROSE_Translation::ASIS_Attribute::ASIS_Attribute (int element_id) 
-   : element_id(element_id) 
+Ada_ROSE_Translation::ASIS_Attribute::ASIS_Attribute (int element_id)
+   : element_id(element_id)
    {
    }
 
 // Attribute toString function (used by Dot file generator).
 string
-Ada_ROSE_Translation::ASIS_Attribute::toString() 
-   { 
+Ada_ROSE_Translation::ASIS_Attribute::toString()
+   {
      string s = "element_id = ";
      s += Rose::StringUtility::numberToString(element_id);
-     return s; 
+     return s;
    }
 
 
@@ -114,7 +120,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 #if 0
           printf ("Initial traversal: current_element: Next_Count = %d \n",current_element->Next_Count);
 #endif
-       // Build the asisMap of Element ids to Element_Struct pointers. 
+       // Build the asisMap of Element ids to Element_Struct pointers.
        // if (current_node->Node.Node_Kind == An_Element_Node)
        // if (current_element->Node.Node_Kind == An_Element_Node)
              {
@@ -129,11 +135,12 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
             // This code treats duplicate entries as a warning and skips the redundant entry.
                if (asisMap.find(element_id) == asisMap.end())
                   {
+                    //~ logTrace() << "***** adding element " << element_id << std::endl;
                     asisMap[element_id] = &element;
                   }
                  else
                   {
-                    printf ("ERROR: element_id = %d already processed (skipping additional instance) \n",element_id);
+                    logError() << "ERROR: element_id = " << element_id << " already processed (skipping additional instance) \n";
                   }
                ROSE_ASSERT(asisMap.find(element_id) != asisMap.end());
 #else
@@ -149,6 +156,8 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
           current_element = current_element->Next;
         }
 
+
+#if FIRST_CONVERSION
      Unit_Struct_List_Struct *current_unit = NULL;
 
      current_unit = head_nodes.Units;
@@ -156,43 +165,47 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 #if 0
      printf ("current_unit = %p \n",current_unit);
 #endif
+     logTrace() << "***** adding units (element) MAX: " << MAX_NUMBER_OF_UNITS << std::endl;
 
      while (current_unit != NULL)
         {
 #if 0
           printf ("Initial traversal: current_unit: Next_Count = %d \n",current_unit->Next_Count);
 #endif
-       // if (current_node->Node.Node_Kind == A_Unit_Node)
-             {
-               Unit_Struct & unit = current_unit->Unit;
-            // globalUnit = &unit;
-#if 0
-               printf ("Initialize Unit: filename = %s \n",unit.Text_Name);
-               printf ("Initialize Unit: Declaration_ID = %d \n",unit.Unit_Declaration);
-#endif
-            // This code treats duplicate entries as a warning and skips the redundant entry.
-               int unit_id = unit.ID;
+          //~ if (current_node->Node.Node_Kind == A_Unit_Node)
+          {
+            Unit_Struct & unit = current_unit->Unit;
 
-            // We are using the unit id for the key into the element list (messy).
-               ROSE_ASSERT(unit_id > 0);
-               ROSE_ASSERT(unit_id <= MAX_NUMBER_OF_UNITS);
+            logTrace() << "Initialize Unit: filename = " << unit.Text_Name;
 
-               if (asisMap.find(unit_id) == asisMap.end())
-                  {
-                    asisMap[unit_id] = (Element_Struct*) (&unit);
-                  }
-                 else
-                  {
-                    printf ("ERROR: element_id = %d already processed (skipping additional instance) \n",unit_id);
-                  }
+          // This code treats duplicate entries as a warning and skips the redundant entry.
+            int unit_id = unit.ID;
 
-               ROSE_ASSERT(asisMap.find(unit_id) != asisMap.end());
-             }
-#if 0
-          printf ("current_unit->Next = %p \n",current_unit->Next);
-#endif
+          // We are using the unit id for the key into the element list (messy).
+            ROSE_ASSERT(unit_id > 0);
+            ROSE_ASSERT(unit_id <= MAX_NUMBER_OF_UNITS);
+
+            if (asisMap.find(unit_id) == asisMap.end())
+            {
+              //~ logTrace() << "***** adding unit (element) " << unit_id << std::endl;
+              asisMap[unit_id] = (Element_Struct*) (&unit);
+            }
+            else
+            {
+              logError() << "ERROR: element_id = " << unit_id
+                         << " already processed (skipping additional instance) "
+                         << std::endl;
+            }
+
+            ROSE_ASSERT(asisMap.find(unit_id) != asisMap.end());
+          }
+
+          logTrace() << "current_unit->Next = " << current_unit->Next << std::endl;
           current_unit = current_unit->Next;
         }
+
+
+
 
 #if 1
      printf ("End of initial traversal of Ada IR node data structure: asisMap.size() = %zu \n",asisMap.size());
@@ -272,9 +285,12 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 #endif
        // We need to connect children to parents from the parent perspective.
 
-       // untypedNode = 0x7facf6247010 = SgUntypedInitializedName 
+       // untypedNode = 0x7facf6247010 = SgUntypedInitializedName
        // untypedNode = 0x7fc9f5aa3010 = SgUntypedFunctionDeclaration
-       // untypedNode = 0x7facf6272010 = SgUntypedNamedStatement 
+       // untypedNode = 0x7facf6272010 = SgUntypedNamedStatement
+
+          if (untypedNode == NULL) continue;
+
           switch (untypedNode->variantT())
              {
                case V_SgUntypedFile:
@@ -580,8 +596,8 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                          int statement_id = visiblePartDeclarativeItems.IDs[i];
                          printf ("i = %d statement_id = %d \n",i,statement_id);
 #if 1
-                         ROSE_ASSERT(untypedNodeMap.find(statement_id) != untypedNodeMap.end());
-
+                         if (untypedNodeMap.find(statement_id) != untypedNodeMap.end())
+                         {
                          SgUntypedNode* visiblePart_untypedNode = untypedNodeMap[statement_id];
                          ROSE_ASSERT(visiblePart_untypedNode != NULL);
 
@@ -594,6 +610,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
                       // untypedStatementList->get_stmt_list().insert(untypedStatementList->get_stmt_list().end(),untypedStatement);
                          stmtList.insert(stmtList.end(),untypedStatement);
+                        }
 #endif
                          printf ("untypedStatementList->get_stmt_list().size() = %zu \n",untypedStatementList->get_stmt_list().size());
                        }
@@ -606,7 +623,11 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                          int statement_id = privatePartDeclarativeItems.IDs[i];
                          printf ("i = %d statement_id = %d \n",i,statement_id);
 
-                         ROSE_ASSERT(untypedNodeMap.find(statement_id) != untypedNodeMap.end());
+                         if (untypedNodeMap.find(statement_id) == untypedNodeMap.end())
+                         {
+                           printf ("unhandled\n");
+                           continue;
+                         }
 
                          SgUntypedNode* private_untypedNode = untypedNodeMap[statement_id];
                          ROSE_ASSERT(private_untypedNode != NULL);
@@ -826,7 +847,8 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                       // Declaration_Struct & statement_declarationStruct = statement_element_union.Declaration;
 
                          SgUntypedNode* tmp_untypedNode = untypedNodeMap[id];
-                         ROSE_ASSERT(tmp_untypedNode != NULL);
+                         if (tmp_untypedNode != NULL)
+                         {
 
                          SgUntypedStatement* statement_untypedNode = isSgUntypedStatement(tmp_untypedNode);
                          ROSE_ASSERT(statement_untypedNode != NULL);
@@ -834,6 +856,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                          printf ("   --- --- statement_untypedNode = %p = %s \n",statement_untypedNode,statement_untypedNode->class_name().c_str());
 
                          untypedFunctionScope->get_statement_list()->get_stmt_list().push_back(statement_untypedNode);
+                         }
                        }
 
 #if 0
@@ -1029,7 +1052,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
                     Path_List & pathList = statementStruct.Statement_Paths;
                     ROSE_ASSERT(pathList.Length >= 1);
-                    ROSE_ASSERT(pathList.Length <= 2);
+                    //~ ROSE_ASSERT(pathList.Length <= 2);
 
                     int true_path_element_id = pathList.IDs[0];
 
@@ -1046,7 +1069,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
                     if (pathList.Length > 1)
                        {
-                         ROSE_ASSERT(pathList.Length == 2);
+                         //~ ROSE_ASSERT(pathList.Length == 2);
                          int false_path_element_id = pathList.IDs[1];
                          printf ("false_path_element_id = %d \n",false_path_element_id);
 
@@ -1106,7 +1129,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                default:
                   {
                     printf ("Error: default reached in switch: untypedNode in untypedNodeMap is: %p %s \n",untypedNode,untypedNode->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    //~ ROSE_ASSERT(false);
                   }
              }
 
@@ -1120,7 +1143,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
      printf ("Test traversal over untyped AST \n");
 #endif
 
-     testTraversal();
+     //~ testTraversal();
 
 #if 1
      printf ("DONE: Test traversal over untyped AST \n");
@@ -1141,7 +1164,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
   // void generate(SgNode* node,  std::string filename, traversalType tt = TOPDOWNBOTTOMUP,std::string filenamePostfix = "");
   // astdotgen.generate(globalUntypedFile, "untypedAdaAST");
   // astdotgen.generate(globalUntypedFile, "ada",AstDOTGeneration::TOPDOWNBOTTOMUP,"untypedAst");
-     generateDOT(globalUntypedFile,"adaUntypedAst");
+     //~ generateDOT(globalUntypedFile,"adaUntypedAst");
 
 #if 1
      printf ("DONE: Test traversal over untyped AST \n");
@@ -1155,7 +1178,11 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
 #endif
+#endif /* FIRST_CONVERSION */
 
+
+
+     convertAsisToROSE(head_nodes, file);
    }
 
 
@@ -1361,7 +1388,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processDiscreteSubtypeDefinition(definition.The_Union.The_Discrete_Subtype_Definition);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -1371,7 +1398,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processDiscreteRange(definition.The_Union.The_Discrete_Range);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               // ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -1453,7 +1480,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processOthersChoice(definition.The_Union.The_Others_Choice);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               // ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -1473,7 +1500,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
           case A_Private_Type_Definition:
              {
             // processPrivateTypeDefinition(definition.The_Union.The_Private_Type_Definition);
-#if 1
+#if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
@@ -1801,7 +1828,7 @@ Ada_ROSE_Translation::processUnit (Unit_Structs_Ptr unitList)
           SgUntypedGlobalScope* untypedGlobalScope = new SgUntypedGlobalScope();
           ROSE_ASSERT(untypedGlobalScope != NULL);
 
-       // Add the statement list to the global scope (the constructor preinitialization 
+       // Add the statement list to the global scope (the constructor preinitialization
        // should do this (so this should be fixed in the general untyped node support).
           SgUntypedStatementList* untypedStatementList = new SgUntypedStatementList();
           ROSE_ASSERT(untypedStatementList != NULL);
@@ -1826,7 +1853,7 @@ Ada_ROSE_Translation::processUnit (Unit_Structs_Ptr unitList)
 #if 1
   // This will build a scope in the unit declaration.
 
-  // Add the statement list to the global scope (the constructor preinitialization 
+  // Add the statement list to the global scope (the constructor preinitialization
   // should do this (so this should be fixed in the general untyped node support).
      SgUntypedStatementList* untypedStatementList = new SgUntypedStatementList();
      ROSE_ASSERT(untypedStatementList != NULL);
@@ -2105,8 +2132,8 @@ Ada_ROSE_Translation::processElement (Element_Structs_Ptr elementList)
 void
 Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int element_id)
    {
-  // Note that we need to seperately pass the element_id into this function because it 
-  // is only known to the processElement() function that is calling the processStatement() 
+  // Note that we need to seperately pass the element_id into this function because it
+  // is only known to the processElement() function that is calling the processStatement()
   // function, and we can't access it from Statement_Struct because the current C language
   // data structures only permit a "Has-a" relationship instead of an "Is-a" relationship.
   // A future move to support a C++ data structure would better permit an improved design.
@@ -2115,8 +2142,8 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
   // Documentation for Statement_Struct.
      enum Statement_Kinds   Statement_Kind;
      Defining_Name_List     Label_Names;
-  
-  // These fields are only valid for the kinds above them:  
+
+  // These fields are only valid for the kinds above them:
   // An_Assignment_Statement,             // 5.2
      Expression_ID          Assignment_Variable_Name;
      Expression_ID          Assignment_Expression;
@@ -2174,7 +2201,7 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
   //   An_Accept_Statement,                 // 9.5.2
      Expression_ID          Accept_Entry_Index;
      Name_ID                Accept_Entry_Direct_Name;
-     Parameter_Specification_List 
+     Parameter_Specification_List
                          Accept_Parameters;
      Statement_List         Accept_Body_Statements;
      Statement_List         Accept_Body_Exception_Handlers;
@@ -2322,7 +2349,7 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
                printf ("Case_Expression = %d \n",statement.Case_Expression);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               // ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -2396,6 +2423,7 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
                break;
              }
 
+          case An_Exit_Statement: // \todo
           case A_Null_Statement:
              {
             // Nothing to do for this case.
@@ -2542,6 +2570,8 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
 #endif
                break;
              }
+          case A_Goto_Statement:
+               break;
 
 #if 0
           case x:
@@ -2573,13 +2603,13 @@ Ada_ROSE_Translation::processDefiningName( Defining_Name_Struct & definingName, 
 struct Defining_Name_Struct {
   enum Defining_Name_Kinds  Defining_Name_Kind;
   char                     *Defining_Name_Image;
-  
+
   // These fields are only valid for the kinds above them:
   // A_Defining_Character_Literal
   // A_Defining_Enumeration_Literal
   char                     *Position_Number_Image;
   char                     *Representation_Value_Image;
-  // A_Defining_Expanded_Name 
+  // A_Defining_Expanded_Name
   Name_ID                   Defining_Prefix;
   Defining_Name_ID          Defining_Selector;
   // When this is the name of a constant or a deferred constant:
@@ -2651,14 +2681,14 @@ void
   // Documentation for Expression_Struct.
   enum Declaration_Kinds   Declaration_Kind;
   enum Declaration_Origins Declaration_Origin;
-  
+
   // These fields are only valid for the kinds above them:
   // A_Parameter_Specification |
   // A_Formal_Object_Declaration:
   enum Mode_Kinds          Mode_Kind;
   // A_Formal_Function_Declaration |
   // A_Formal_Procedure_Declaration:
-  enum Subprogram_Default_Kinds 
+  enum Subprogram_Default_Kinds
                            Default_Kind;
   // A_Private_Type_Declaration |
   // A_Private_Extension_Declaration |
@@ -2672,10 +2702,10 @@ void
   // A_Procedure_Declaration |
   // A_Function_Declaration:
   enum Trait_Kinds         Trait_Kind;
-  
+
   // TODO: add remaining valid kinds comments:
   // (all kinds)
-  Defining_Name_List             Names;  
+  Defining_Name_List             Names;
   //  An_Ordinary_Type_Declaration,            // 3.2.1(3)
   //  A_Task_Type_Declaration,                  // 9.1(2)
   //  A_Protected_Type_Declaration,             // 9.4(2)
@@ -2697,9 +2727,9 @@ void
   //  A_Deferred_Constant_Declaration,          // 3.3.1(6),7.4(2)
   //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
   //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
-  //  A_Discriminant_Specification,             // 3.7(5)  
+  //  A_Discriminant_Specification,             // 3.7(5)
   //  A_Component_Declaration,                  // 3.8(6)
-  //  A_Parameter_Specification,                // 6.1(15) 
+  //  A_Parameter_Specification,                // 6.1(15)
   //  A_Return_Variable_Specification,          // 6.5
   //  An_Object_Renaming_Declaration,           // 8.5.1(2)
   //  A_Formal_Object_Declaration,              // 12.4(2)
@@ -2710,9 +2740,9 @@ void
   //  A_Constant_Declaration,                   // 3.3.1(4)
   //  An_Integer_Number_Declaration,            // 3.3.2(2)
   //  A_Real_Number_Declaration,                // 3.5.6(2)
-  //  A_Discriminant_Specification,             // 3.7(5)  
+  //  A_Discriminant_Specification,             // 3.7(5)
   //  A_Component_Declaration,                  // 3.8(6)
-  //  A_Parameter_Specification,                // 6.1(15) 
+  //  A_Parameter_Specification,                // 6.1(15)
   //  A_Return_Variable_Specification,          // 6.5
   //  A_Formal_Object_Declaration,              // 12.4(2)
   Expression_ID                  Initialization_Expression;
@@ -2747,16 +2777,16 @@ void
   Declaration_ID                 Corresponding_Last_Subtype;
   // (all)
   Representation_Clause_List     Corresponding_Representation_Clauses;
-  //  A_Loop_Parameter_Specification,           // 5.5(4)  
+  //  A_Loop_Parameter_Specification,           // 5.5(4)
   //  An_Entry_Index_Specification,             // 9.5.2(2)
   Discrete_Subtype_Definition_ID Specification_Subtype_Definition;
-  //  A_Generalized_Iterator_Specification,     // 5.5.2   
-  //  An_Element_Iterator_Specification,        // 5.5.2   
+  //  A_Generalized_Iterator_Specification,     // 5.5.2
+  //  An_Element_Iterator_Specification,        // 5.5.2
   Element_ID                     Iteration_Scheme_Name;
-  //  An_Element_Iterator_Specification,        // 5.5.2   
+  //  An_Element_Iterator_Specification,        // 5.5.2
   Element_ID                     Subtype_Indication;
-  //  A_Procedure_Declaration,                  // 6.1(4)  
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Declaration,                  // 6.1(4)
+  //  A_Function_Declaration,                   // 6.1(4)
   //  A_Procedure_Body_Declaration,             // 6.3(2)
   //  A_Function_Body_Declaration,              // 6.3(2)
   //  A_Null_Procedure_Declaration,             // 6.7
@@ -2772,7 +2802,7 @@ void
   //  A_Formal_Procedure_Declaration,           // 12.6(2)
   //  A_Formal_Function_Declaration,            // 12.6(2)
   Parameter_Specification_List   Parameter_Profile;
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)
   //  A_Function_Body_Declaration,              // 6.3(2)
   //  An_Expression_Function_Declaration,       // 6.8
   //  A_Function_Renaming_Declaration,          // 8.5.4(2)
@@ -2782,8 +2812,8 @@ void
   Element_ID                     Result_Profile;
   //  An_Expression_Function_Declaration,       // 6.8
   Expression_ID                  Result_Expression;
-  //  A_Procedure_Declaration,                  // 6.1(4)  
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Declaration,                  // 6.1(4)
+  //  A_Function_Declaration,                   // 6.1(4)
   //  A_Procedure_Body_Declaration,             // 6.3(2)
   //  A_Function_Body_Declaration,              // 6.3(2)
   //  A_Null_Procedure_Declaration,             // 6.7
@@ -2825,8 +2855,8 @@ void
   //  A_Protected_Type_Declaration,             // 9.4(2)
   //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
   //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
-  //  A_Procedure_Declaration,                  // 6.1(4)  
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Declaration,                  // 6.1(4)
+  //  A_Function_Declaration,                   // 6.1(4)
   //  A_Procedure_Body_Declaration,             // 6.3(2)
   //  A_Function_Body_Declaration,              // 6.3(2)
   //  A_Null_Procedure_Declaration,             // 6.7
@@ -2861,8 +2891,8 @@ void
   //  A_Protected_Type_Declaration,             // 9.4(2)
   //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
   //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
-  //  A_Procedure_Declaration,                  // 6.1(4)  
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Declaration,                  // 6.1(4)
+  //  A_Function_Declaration,                   // 6.1(4)
   //  An_Entry_Declaration,                     // 9.5.2(2)
   //  An_Entry_Index_Specification,             // 9.5.2(2)
   //  A_Generic_Procedure_Declaration,          // 12.1(2)
@@ -2873,14 +2903,14 @@ void
   //  A_Function_Instantiation,                 // 12.3(2)
   //  A_Formal_Package_Declaration,             // 12.7(2)
   Declaration_ID                 Corresponding_Body;
-  //  A_Procedure_Declaration,                  // 6.1(4)  
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Declaration,                  // 6.1(4)
+  //  A_Function_Declaration,                   // 6.1(4)
   Declaration_ID                 Corresponding_Subprogram_Derivation;
-  //  A_Procedure_Declaration,                  // 6.1(4)  
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Declaration,                  // 6.1(4)
+  //  A_Function_Declaration,                   // 6.1(4)
   //  An_Expression_Function_Declaration,       // 6.8
   Type_Definition_ID             Corresponding_Type;
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)
   Declaration_ID                 Corresponding_Equality_Operator;
   //  A_Package_Declaration,                    // 7.1(2)
   //  A_Generic_Package_Declaration,            // 12.1(2)
@@ -2936,8 +2966,8 @@ void
   //  A_Formal_Procedure_Declaration,           // 12.6(2)
   //  A_Formal_Function_Declaration,            // 12.6(2)
   Expression_ID                  Formal_Subprogram_Default;
-  //  A_Procedure_Declaration,                  // 6.1(4)  
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Declaration,                  // 6.1(4)
+  //  A_Function_Declaration,                   // 6.1(4)
   //  A_Procedure_Body_Declaration,             // 6.3(2)
   //  A_Function_Body_Declaration,              // 6.3(2)
   //  A_Null_Procedure_Declaration,             // 6.7
@@ -3004,7 +3034,7 @@ void
                printf ("initializationExpression = %d \n",initializationExpression);
 
                ROSE_ASSERT(names.Length > 0);
-               ROSE_ASSERT(names.Length == 1);
+               //~ ROSE_ASSERT(names.Length == 1);
                int name_id = names.IDs[0];
 
                printf ("name_id = %d \n",name_id);
@@ -3038,7 +3068,7 @@ void
 
                Element_Struct* elementStruct = asisMap[objectDeclarationView_id];
 
-            // int mode_id = 
+            // int mode_id =
 #endif
 #if 0
                switch (modeKind)
@@ -3182,7 +3212,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -3224,8 +3254,8 @@ void
                Expression_ID initializationExpression = declaration.Initialization_Expression;
                printf ("initializationExpression = %d \n",initializationExpression);
 
-               SgUntypedType* type = NULL;
-               SgUntypedVariableDeclaration* untypedVariableDeclaration = new SgUntypedVariableDeclaration(type);
+               //~ SgUntypedType* type = NULL;
+               SgUntypedVariableDeclaration* untypedVariableDeclaration = new SgUntypedVariableDeclaration();
                ROSE_ASSERT(untypedVariableDeclaration != NULL);
 
             // Put into map using Ada Node ID's as the keys.
@@ -3297,7 +3327,7 @@ void
                printf ("     correspondingLastConstraint = %d \n",correspondingLastConstraint);
                printf ("     correspondingLastSubtype    = %d \n",correspondingLastSubtype);
 
-#if DEBUG_UNTYPED_NODE_GENERATION
+#if 0 /*DEBUG_UNTYPED_NODE_GENERATION*/
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
@@ -3513,9 +3543,9 @@ void
        // A_Deferred_Constant_Declaration,          // 3.3.1(6),7.4(2)
        // A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
        // A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
-       // A_Discriminant_Specification,             // 3.7(5)  
+       // A_Discriminant_Specification,             // 3.7(5)
        // A_Component_Declaration,                  // 3.8(6)
-       // A_Parameter_Specification,                // 6.1(15) 
+       // A_Parameter_Specification,                // 6.1(15)
        // A_Return_Variable_Specification,          // 6.5
        // An_Object_Renaming_Declaration,           // 8.5.1(2)
        // A_Formal_Object_Declaration,              // 12.4(2)
@@ -3591,8 +3621,8 @@ void
 
                if (declarationKind == A_Component_Declaration)
                   {
-                    SgUntypedType* type = NULL;
-                    SgUntypedVariableDeclaration* untypedVariableDeclaration = new SgUntypedVariableDeclaration(type);
+                    //~ SgUntypedType* type = NULL;
+                    SgUntypedVariableDeclaration* untypedVariableDeclaration = new SgUntypedVariableDeclaration();
                     ROSE_ASSERT(untypedVariableDeclaration != NULL);
 
                  // Put into map using Ada Node ID's as the keys.
@@ -3623,9 +3653,9 @@ void
        // A_Constant_Declaration,                   // 3.3.1(4)
        // An_Integer_Number_Declaration,            // 3.3.2(2)
        // A_Real_Number_Declaration,                // 3.5.6(2)
-       // A_Discriminant_Specification,             // 3.7(5)  
+       // A_Discriminant_Specification,             // 3.7(5)
        // A_Component_Declaration,                  // 3.8(6)
-       // A_Parameter_Specification,                // 6.1(15) 
+       // A_Parameter_Specification,                // 6.1(15)
        // A_Return_Variable_Specification,          // 6.5
        // A_Formal_Object_Declaration,              // 12.4(2)
        // case A_Variable_Declaration:
@@ -3643,7 +3673,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -3741,13 +3771,13 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
 #endif
                break;
              }
 
 #if 0
-       // A_Loop_Parameter_Specification,           // 5.5(4)  
+       // A_Loop_Parameter_Specification,           // 5.5(4)
        // An_Entry_Index_Specification,             // 9.5.2(2)
        // case A_Loop_Parameter_Specification:
        // case An_Entry_Index_Specification:
@@ -3758,8 +3788,8 @@ void
              }
 #endif
 
-       // A_Generalized_Iterator_Specification,     // 5.5.2   
-       // An_Element_Iterator_Specification,        // 5.5.2   
+       // A_Generalized_Iterator_Specification,     // 5.5.2
+       // An_Element_Iterator_Specification,        // 5.5.2
           case A_Generalized_Iterator_Specification:
        // case An_Element_Iterator_Specification:
              {
@@ -3778,7 +3808,7 @@ void
              }
 
 #if 0
-       // An_Element_Iterator_Specification,        // 5.5.2   
+       // An_Element_Iterator_Specification,        // 5.5.2
           case An_Element_Iterator_Specification:
              {
                Discrete_Subtype_Definition_ID specificationSubtypeDefinition = declaration.Specification_Subtype_Definition;
@@ -3794,8 +3824,8 @@ void
 #endif
 
 #if 0
-       // A_Procedure_Declaration,                  // 6.1(4)  
-       // A_Function_Declaration,                   // 6.1(4)  
+       // A_Procedure_Declaration,                  // 6.1(4)
+       // A_Function_Declaration,                   // 6.1(4)
        // A_Procedure_Body_Declaration,             // 6.3(2)
        // A_Function_Body_Declaration,              // 6.3(2)
        // A_Null_Procedure_Declaration,             // 6.7
@@ -4211,7 +4241,7 @@ void
              }
 
 #if 0
-       // A_Function_Declaration,                   // 6.1(4)  
+       // A_Function_Declaration,                   // 6.1(4)
        // A_Function_Body_Declaration,              // 6.3(2)
        // An_Expression_Function_Declaration,       // 6.8
        // A_Function_Renaming_Declaration,          // 8.5.4(2)
@@ -4404,15 +4434,15 @@ void
                bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
                printf ("      isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
 
-#if DEBUG_UNTYPED_NODE_GENERATION
+#if 0 /* DEBUG_UNTYPED_NODE_GENERATION */
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
                break;
              }
 
-       // A_Procedure_Declaration,                  // 6.1(4)  
-       // A_Function_Declaration,                   // 6.1(4)  
+       // A_Procedure_Declaration,                  // 6.1(4)
+       // A_Function_Declaration,                   // 6.1(4)
        // A_Procedure_Body_Declaration,             // 6.3(2)
        // A_Function_Body_Declaration,              // 6.3(2)
        // A_Null_Procedure_Declaration,             // 6.7
@@ -4613,8 +4643,8 @@ void
        // A_Protected_Type_Declaration,             // 9.4(2)
        // A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
        // A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
-       // A_Procedure_Declaration,                  // 6.1(4)  
-       // A_Function_Declaration,                   // 6.1(4)  
+       // A_Procedure_Declaration,                  // 6.1(4)
+       // A_Function_Declaration,                   // 6.1(4)
        // A_Procedure_Body_Declaration,             // 6.3(2)
        // A_Function_Body_Declaration,              // 6.3(2)
        // A_Null_Procedure_Declaration,             // 6.7
@@ -4743,7 +4773,7 @@ void
                Expression_ID correspondingBaseEntity = declaration.Corresponding_Base_Entity;
                printf ("      correspondingBaseEntity = %d \n",correspondingBaseEntity);
 
-#if DEBUG_UNTYPED_NODE_GENERATION
+#if 0 /*DEBUG_UNTYPED_NODE_GENERATION*/
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
@@ -4767,7 +4797,7 @@ void
                printf ("genericActualPart: \n");
                processAssociationList(genericActualPart);
 
-#if DEBUG_UNTYPED_NODE_GENERATION
+#if 0 /*DEBUG_UNTYPED_NODE_GENERATION*/
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
@@ -4794,8 +4824,8 @@ void
        // A_Protected_Type_Declaration,             // 9.4(2)
        // A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
        // A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
-       // A_Procedure_Declaration,                  // 6.1(4)  
-       // A_Function_Declaration,                   // 6.1(4)  
+       // A_Procedure_Declaration,                  // 6.1(4)
+       // A_Function_Declaration,                   // 6.1(4)
        // An_Entry_Declaration,                     // 9.5.2(2)
        // An_Entry_Index_Specification,             // 9.5.2(2)
        // A_Generic_Procedure_Declaration,          // 12.1(2)
@@ -4828,8 +4858,8 @@ void
 #endif
 
 #if 0
-       // A_Procedure_Declaration,                  // 6.1(4)  
-       // A_Function_Declaration,                   // 6.1(4)  
+       // A_Procedure_Declaration,                  // 6.1(4)
+       // A_Function_Declaration,                   // 6.1(4)
        // case A_Procedure_Declaration:
        // case A_Function_Declaration:
              {
@@ -4839,8 +4869,8 @@ void
              }
 #endif
 #if 0
-       // A_Procedure_Declaration,                  // 6.1(4)  
-       // A_Function_Declaration,                   // 6.1(4)  
+       // A_Procedure_Declaration,                  // 6.1(4)
+       // A_Function_Declaration,                   // 6.1(4)
        // An_Expression_Function_Declaration,       // 6.8
        // case A_Procedure_Declaration:
        // case A_Function_Declaration:
@@ -4852,7 +4882,7 @@ void
              }
 #endif
 #if 0
-       // A_Function_Declaration,                   // 6.1(4)  
+       // A_Function_Declaration,                   // 6.1(4)
        // case A_Function_Declaration:
              {
                Declaration_ID correspondingEqualityOperator = declaration.Corresponding_Equality_Operator;
@@ -5037,8 +5067,8 @@ void
              }
 #endif
 #if 0
-       // A_Procedure_Declaration,                  // 6.1(4)  
-       // A_Function_Declaration,                   // 6.1(4)  
+       // A_Procedure_Declaration,                  // 6.1(4)
+       // A_Function_Declaration,                   // 6.1(4)
        // A_Procedure_Body_Declaration,             // 6.3(2)
        // A_Function_Body_Declaration,              // 6.3(2)
        // A_Null_Procedure_Declaration,             // 6.7
@@ -5260,7 +5290,7 @@ void
           default:
              {
                printf ("Default reached in processDeclaration(): declarationKind = %d declarationKind = %s \n",declarationKind,declarationKindName(declarationKind).c_str());
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
              }
         }
 
@@ -5345,12 +5375,12 @@ void
   // Documentation for Expression_Struct.
   enum Expression_Kinds Expression_Kind;
   Declaration_ID        Corresponding_Expression_Type;
-  
-  // These fields are only valid for the kinds above them:  
+
+  // These fields are only valid for the kinds above them:
   // An_Integer_Literal,                        // 2.4
   // A_Real_Literal,                            // 2.4.1
   // A_String_Literal,                          // 2.6
-  char                 *Value_Image;  
+  char                 *Value_Image;
   // An_Identifier |                              // 4.1
   // An_Operator_Symbol |                         // 4.1
   // A_Character_Literal |                        // 4.1
@@ -5368,7 +5398,7 @@ void
   // A_Selected_Component =>                      // 4.1.3
   // An_Attribute_Reference =>                    // 4.1.4
   Expression_ID         Prefix;
-  // A_Function_Call =>                           // 4.1 
+  // A_Function_Call =>                           // 4.1
   // An_Indexed_Component (Is_Generalized_Indexing == true) //ASIS 2012 // 4.1.1
   Declaration_ID        Corresponding_Called_Function;
   // A_Function_Call =>                           // 4.1
@@ -5391,7 +5421,7 @@ void
   // An_Extension_Aggregate =>                    // 4.3
   Expression_ID         Extension_Aggregate_Expression;
   // A_Positional_Array_Aggregate |               // 4.3
-  // A_Named_Array_Aggregate =>                   // 4.3  
+  // A_Named_Array_Aggregate =>                   // 4.3
   Association_List      Array_Component_Associations;
   // An_And_Then_Short_Circuit |                  // 4.4
   // An_Or_Else_Short_Circuit =>                  // 4.4
@@ -5421,7 +5451,7 @@ void
   // A_For_All_Quantified_Expression |            // Ada 2012
   // A_For_Some_Quantified_Expression =>          // Ada 2012
   Declaration_ID        Iterator_Specification;
-  // An expression that references an entity declared within the 
+  // An expression that references an entity declared within the
   // implicit specification of a generic instantiation:
   Defining_Name_ID      Corresponding_Generic_Element;
 #endif
@@ -5682,7 +5712,7 @@ void
                break;
              }
 
-       // A_Function_Call =>                           // 4.1 
+       // A_Function_Call =>                           // 4.1
        // An_Indexed_Component (Is_Generalized_Indexing == true) //ASIS 2012 // 4.1.1
        // case A_Function_Call:
           case An_Indexed_Component:
@@ -5813,7 +5843,7 @@ void
              }
 
        // A_Positional_Array_Aggregate |               // 4.3
-       // A_Named_Array_Aggregate =>                   // 4.3  
+       // A_Named_Array_Aggregate =>                   // 4.3
           case A_Positional_Array_Aggregate:
           case A_Named_Array_Aggregate:
              {
@@ -5838,7 +5868,7 @@ void
                printf ("     shortCircuitOperationRightExpression = %d \n",shortCircuitOperationRightExpression);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -5868,7 +5898,7 @@ void
                printf ("     expressionParenthesized = %d \n",expressionParenthesized);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -5957,7 +5987,7 @@ void
                Expression_Path_List & expressionPaths = expression.Expression_Paths;
                printf ("     expressionPaths: \n");
                processPathList(expressionPaths);
-#if 1
+#if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
@@ -6025,7 +6055,7 @@ void
 
   //  //|A2012 start
      An_Aspect_Specification           // 13.3.1
-  //  //|A2012 end  
+  //  //|A2012 end
 
 
   // Documentation for Definition_Union
@@ -6053,7 +6083,7 @@ typedef union _Definition_Union {
   Protected_Definition_Struct           The_Protected_Definition;
   Formal_Type_Definition_Struct         The_Formal_Type_Definition;
   Aspect_Specification_Struct           The_Aspect_Specification;
-} Definition_Union;  
+} Definition_Union;
 
 
 #endif
@@ -6221,8 +6251,8 @@ typedef union _Definition_Union {
 
      if (buildDefaultUntypedNode == true)
         {
-       // DQ (10/5/2017): This is general code to handled definitions, we likely new additional 
-       // untyped IR nodes to support the concept fo a SgUntypedDefinition, plus whatever 
+       // DQ (10/5/2017): This is general code to handled definitions, we likely new additional
+       // untyped IR nodes to support the concept fo a SgUntypedDefinition, plus whatever
        // variations of untyped definition IR nodes that we require (for the cases above).
           SgUntypedScope* untypedScope = new SgUntypedScope();
           ROSE_ASSERT(untypedScope != NULL);
@@ -6252,7 +6282,7 @@ typedef union _Definition_Union {
    }
 
 
-void 
+void
 Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int element_id, bool & buildDefaultUntypedNode )
    {
 #if 0
@@ -6281,7 +6311,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
      Root_Type_Kinds      Root_Type_Kind;
   // A_Derived_Type_Definition
   // A_Derived_Record_Extension_Definition
-     Subtype_Indication   Parent_Subtype_Indication;  
+     Subtype_Indication   Parent_Subtype_Indication;
 
   // A_Derived_Record_Extension_Definition
   // A_Record_Type_Definition
@@ -6461,7 +6491,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
              {
                Declaration_List & enumerationLiteralDeclarations = x.Enumeration_Literal_Declarations;
                processDeclarationList(enumerationLiteralDeclarations);
-#if 1
+#if 0
                printf ("Not implemented! \n");
                ROSE_ASSERT(false);
 #endif
@@ -6509,7 +6539,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                printf ("   realRangeConstraint = %d \n",realRangeConstraint);
 #if 1
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -6552,7 +6582,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
 
                Component_Definition arrayComponentDefinition = x.Array_Component_Definition;
                printf ("   arrayComponentDefinition = %d \n",arrayComponentDefinition);
-#if 1
+#if 0
                printf ("Not implemented! \n");
                ROSE_ASSERT(false);
 #endif
@@ -6566,7 +6596,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
 
                Component_Definition arrayComponentDefinition = x.Array_Component_Definition;
                printf ("   arrayComponentDefinition = %d \n",arrayComponentDefinition);
-#if 1
+#if 0
                printf ("Not implemented! \n");
                ROSE_ASSERT(false);
 #endif
@@ -6656,7 +6686,7 @@ Ada_ROSE_Translation::processAccessType ( Access_Type_Struct & x )
    {
 #if 0
   // Documentation for x
-  Access_Type_Kinds            Access_Type_Kind;  
+  Access_Type_Kinds            Access_Type_Kind;
   bool                         Has_Null_Exclusion;
   // These fields are only valid for the kinds above them:
   // An_Access_To_Function
@@ -6670,7 +6700,7 @@ Ada_ROSE_Translation::processAccessType ( Access_Type_Struct & x )
   // An_Access_To_Protected_Procedure
   // An_Access_To_Function
   // An_Access_To_Protected_Function
-  Parameter_Specification_List Access_To_Subprogram_Parameter_Profile; 
+  Parameter_Specification_List Access_To_Subprogram_Parameter_Profile;
   // An_Access_To_Function
   // An_Access_To_Protected_Function
   Element                      Access_To_Function_Result_Profile;
@@ -6691,7 +6721,7 @@ Ada_ROSE_Translation::processAccessType ( Access_Type_Struct & x )
           case Not_An_Access_Type_Definition:
              {
                printf ("ERROR: case Not_An_Access_Type_Definition \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
                break;
              }
 
@@ -6706,7 +6736,7 @@ Ada_ROSE_Translation::processAccessType ( Access_Type_Struct & x )
                Element_ID accessToFunctionResultProfile = x.Access_To_Function_Result_Profile;
                printf ("   accessToFunctionResultProfile = %d \n",accessToFunctionResultProfile);
 
-               Parameter_Specification_List & accessToSubprogramParameterProfile = x.Access_To_Subprogram_Parameter_Profile; 
+               Parameter_Specification_List & accessToSubprogramParameterProfile = x.Access_To_Subprogram_Parameter_Profile;
                printf ("   accessToSubprogramParameterProfile: \n");
                processParameterSpecificationList(accessToSubprogramParameterProfile);
                break;
@@ -6731,7 +6761,7 @@ Ada_ROSE_Translation::processAccessType ( Access_Type_Struct & x )
           case An_Access_To_Procedure:
           case An_Access_To_Protected_Procedure:
              {
-               Parameter_Specification_List & accessToSubprogramParameterProfile = x.Access_To_Subprogram_Parameter_Profile; 
+               Parameter_Specification_List & accessToSubprogramParameterProfile = x.Access_To_Subprogram_Parameter_Profile;
                printf ("   accessToSubprogramParameterProfile: \n");
                processParameterSpecificationList(accessToSubprogramParameterProfile);
                break;
@@ -6751,7 +6781,7 @@ Ada_ROSE_Translation::processAccessType ( Access_Type_Struct & x )
    }
 
 
-void 
+void
 Ada_ROSE_Translation::processSubtypeIndication ( Subtype_Indication_Struct & x, int element_id)
    {
 #if 0
@@ -6775,7 +6805,7 @@ Ada_ROSE_Translation::processSubtypeIndication ( Subtype_Indication_Struct & x, 
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processConstraint ( Constraint_Struct & x, int element_id)
    {
 #if 0
@@ -6875,7 +6905,7 @@ Ada_ROSE_Translation::processConstraint ( Constraint_Struct & x, int element_id)
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processComponentDefinition ( Component_Definition_Struct & x, int element_id)
    {
 #if 0
@@ -6892,7 +6922,7 @@ Ada_ROSE_Translation::processComponentDefinition ( Component_Definition_Struct &
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processDiscreteSubtypeDefinition ( Discrete_Subtype_Definition_Struct & x, int element_id)
    {
 #if 0
@@ -6901,11 +6931,11 @@ Ada_ROSE_Translation::processDiscreteSubtypeDefinition ( Discrete_Subtype_Defini
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     //~ ROSE_ASSERT(false);
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processDiscreteRange ( Discrete_Range_Struct & x, int element_id)
    {
 #if 0
@@ -6914,11 +6944,11 @@ Ada_ROSE_Translation::processDiscreteRange ( Discrete_Range_Struct & x, int elem
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     // ROSE_ASSERT(false);
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processUnknownDiscriminantPart ( Unknown_Discriminant_Part_Struct & x, int element_id)
    {
 #if 0
@@ -6931,7 +6961,7 @@ Ada_ROSE_Translation::processUnknownDiscriminantPart ( Unknown_Discriminant_Part
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processKnownDiscriminantPart ( Known_Discriminant_Part_Struct & x, int element_id)
    {
 #if 0
@@ -6944,7 +6974,7 @@ Ada_ROSE_Translation::processKnownDiscriminantPart ( Known_Discriminant_Part_Str
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processRecordDefinition ( Record_Definition_Struct & x, int element_id)
    {
 #if 0
@@ -6967,7 +6997,7 @@ Ada_ROSE_Translation::processRecordDefinition ( Record_Definition_Struct & x, in
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processNullRecordDefinition ( Null_Record_Definition_Struct & x, int element_id)
    {
 #if 0
@@ -6980,7 +7010,7 @@ Ada_ROSE_Translation::processNullRecordDefinition ( Null_Record_Definition_Struc
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processNullComponent ( Null_Component_Struct & x, int element_id)
    {
 #if 0
@@ -6993,7 +7023,7 @@ Ada_ROSE_Translation::processNullComponent ( Null_Component_Struct & x, int elem
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processVariantPart ( Variant_Part_Struct & x, int element_id)
    {
 #if 0
@@ -7006,7 +7036,7 @@ Ada_ROSE_Translation::processVariantPart ( Variant_Part_Struct & x, int element_
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processVariant ( Variant_Struct & x, int element_id)
    {
 #if 0
@@ -7019,7 +7049,7 @@ Ada_ROSE_Translation::processVariant ( Variant_Struct & x, int element_id)
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processOthersChoice ( Others_Choice_Struct & x, int element_id)
    {
 #if 0
@@ -7028,11 +7058,11 @@ Ada_ROSE_Translation::processOthersChoice ( Others_Choice_Struct & x, int elemen
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     // ROSE_ASSERT(false);
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processAccessDefinition ( Access_Definition_Struct & x, int element_id)
    {
 #if 0
@@ -7045,20 +7075,20 @@ Ada_ROSE_Translation::processAccessDefinition ( Access_Definition_Struct & x, in
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processPrivateTypeDefinition ( Private_Type_Definition_Struct & x, int element_id)
    {
 #if 0
   // Documentation for x
 #endif
 
-#if 1
+#if 0
      printf ("ERROR: not implemented! \n");
      ROSE_ASSERT(false);
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processTaggedPrivateTypeDefinition ( Tagged_Private_Type_Definition_Struct & x, int element_id)
    {
 #if 0
@@ -7071,7 +7101,7 @@ Ada_ROSE_Translation::processTaggedPrivateTypeDefinition ( Tagged_Private_Type_D
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processPrivateExtensionDefinition ( Private_Extension_Definition_Struct & x, int element_id)
    {
 #if 0
@@ -7084,7 +7114,7 @@ Ada_ROSE_Translation::processPrivateExtensionDefinition ( Private_Extension_Defi
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processTaskDefinition ( Task_Definition_Struct & x, int element_id)
    {
 #if 0
@@ -7115,7 +7145,7 @@ Ada_ROSE_Translation::processTaskDefinition ( Task_Definition_Struct & x, int el
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processProtectedDefinition ( Protected_Definition_Struct & x, int element_id)
    {
 #if 0
@@ -7128,7 +7158,7 @@ Ada_ROSE_Translation::processProtectedDefinition ( Protected_Definition_Struct &
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processFormalTypeDefinition ( Formal_Type_Definition_Struct & x, int element_id)
    {
 #if 0
@@ -7141,7 +7171,7 @@ Ada_ROSE_Translation::processFormalTypeDefinition ( Formal_Type_Definition_Struc
 #endif
    }
 
-void 
+void
 Ada_ROSE_Translation::processAspectSpecification ( Aspect_Specification_Struct & x, int element_id)
    {
 #if 0
@@ -7159,7 +7189,7 @@ Ada_ROSE_Translation::processAspectSpecification ( Aspect_Specification_Struct &
 
 #if 0
 
-// OLD CODE! 
+// OLD CODE!
 
 void
   Ada_ROSE_Translation::processDefinition( Definition_Struct & definition, int element_id)
@@ -7169,7 +7199,7 @@ void
   enum Definition_Kinds Definition_Kind;
 
 #error "DEAD CODE!"
-  
+
   // These fields are only valid for the kinds above them:
   // A_Component_Definition
   // A_Private_Type_Definition
@@ -7205,19 +7235,19 @@ void
   // A_Component_Definition
   Subtype_Indication_ID Component_Subtype_Indication;
   Definition_ID         Component_Definition_View;
-  
+
   // A_Record_Definition
   // A_Variant
   Record_Component_List Record_Components;
   Record_Component_List Implicit_Components;
-  
+
   Declarative_Item_ID_List Visible_Part_Items;
   Declarative_Item_ID_List Private_Part_Items;
   bool                     Is_Private_Present;
   // TODO: not done yet - abt 55 fields to go.  Introduce union and sub structs?
 
 #error "DEAD CODE!"
-  
+
   // Thse are the Definition_Kinds:
 enum Definition_Kinds {
   Not_A_Definition,                 // An unexpected element
@@ -7259,23 +7289,23 @@ enum Definition_Kinds {
 
   //  //|A2012 start
   An_Aspect_Specification           // 13.3.1
-  //  //|A2012 end  
+  //  //|A2012 end
 };
 
 #error "DEAD CODE!"
-  
+
 #endif
 
      Definition_Kinds definitionKind = definition.Definition_Kind;
 
 #error "DEAD CODE!"
-  
+
      printf ("   In processDefinition(): \n");
      printf ("      definitionKind (value) = %d \n",definitionKind);
      printf ("      definitionKind (name)  = %s \n",definitionKindName(definitionKind).c_str());
 
 #error "DEAD CODE!"
-  
+
      switch (definitionKind)
         {
        // A_Component_Definition
@@ -7302,7 +7332,7 @@ enum Definition_Kinds {
              }
 
 #error "DEAD CODE!"
-  
+
        // A_Type_Definition
           case A_Type_Definition:
              {
@@ -7318,7 +7348,7 @@ enum Definition_Kinds {
              }
 
 #error "DEAD CODE!"
-  
+
 #if 0
        // A_Derived_Type_Definition
        // A_Derived_Record_Extension_Definition
@@ -7347,7 +7377,7 @@ enum Definition_Kinds {
 #endif
 
 #error "DEAD CODE!"
-  
+
 #if 0
        // A_Derived_Type_Definition
        // A_Derived_Record_Extension_Definition
@@ -7380,7 +7410,7 @@ enum Definition_Kinds {
 #endif
 
 #error "DEAD CODE!"
-  
+
        // A_Constraint
           case A_Constraint:
              {
@@ -7396,7 +7426,7 @@ enum Definition_Kinds {
              }
 
 #error "DEAD CODE!"
-  
+
 #if 0
        // A_Simple_Expression_Range
           case A_Simple_Expression_Range:
@@ -7428,7 +7458,7 @@ enum Definition_Kinds {
              }
 
 #error "DEAD CODE!"
-  
+
           case A_Subtype_Indication:
              {
                Expression_ID subtypeMark = definition.Subtype_Mark;
@@ -7448,7 +7478,7 @@ enum Definition_Kinds {
              }
 
 #error "DEAD CODE!"
-  
+
        // A_Component_Definition
           case A_Component_Definition:
              {
@@ -7469,7 +7499,7 @@ enum Definition_Kinds {
              }
 
 #error "DEAD CODE!"
-  
+
        // A_Record_Definition
        // A_Variant
           case A_Record_Definition:
@@ -7498,7 +7528,7 @@ enum Definition_Kinds {
              }
 
 #error "DEAD CODE!"
-  
+
           case A_Task_Definition:
              {
             // Nothing to output here, so far!
@@ -7513,7 +7543,7 @@ enum Definition_Kinds {
              }
 
 #error "DEAD CODE!"
-  
+
           default:
              {
                printf ("Default reached in processDefinition(): definitionKind = %d definitionKind = %s \n",definitionKind,definitionKindName(definitionKind).c_str());
@@ -7522,9 +7552,9 @@ enum Definition_Kinds {
         }
 
 #error "DEAD CODE!"
-  
-  // DQ (10/5/2017): This is general code to handled definitions, we likely new additional 
-  // untyped IR nodes to support the concept fo a SgUntypedDefinition, plus whatever 
+
+  // DQ (10/5/2017): This is general code to handled definitions, we likely new additional
+  // untyped IR nodes to support the concept fo a SgUntypedDefinition, plus whatever
   // variations of untyped definition IR nodes that we require (for the cases above).
      SgUntypedScope* untypedScope = new SgUntypedScope();
      ROSE_ASSERT(untypedScope != NULL);
@@ -7538,7 +7568,7 @@ enum Definition_Kinds {
      printf ("In processDefinition(): element_id = %d \n",element_id);
 
 #error "DEAD CODE!"
-  
+
   // ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
      if (untypedNodeMap.find(element_id) == untypedNodeMap.end())
         {
@@ -7554,7 +7584,7 @@ enum Definition_Kinds {
    }
 
 #error "DEAD CODE!"
-  
+
 #endif
 
 
@@ -7599,7 +7629,7 @@ Ada_ROSE_Translation::processAssociation( Association_Struct & association, int 
   // A_Generic_Association                  // 12.3
   Expression_ID          Formal_Parameter;
   Expression_ID          Actual_Parameter;
-  // A_Discriminant_Association,            // 3.7.1  
+  // A_Discriminant_Association,            // 3.7.1
   Expression_List        Discriminant_Selector_Names;
   Expression_ID          Discriminant_Expression;
   // A_Discriminant_Association,            // 3.7.1
@@ -7741,7 +7771,7 @@ Ada_ROSE_Translation::processAssociation( Association_Struct & association, int 
                break;
              }
 
-       // A_Discriminant_Association,            // 3.7.1  
+       // A_Discriminant_Association,            // 3.7.1
           case A_Discriminant_Association:
              {
                Expression_List & discriminantSelectorNames = association.Discriminant_Selector_Names;
@@ -7842,7 +7872,7 @@ Ada_ROSE_Translation::processPath( Path_Struct & path, int element_id)
 #if 0
   // Documentation for Path_Struct.
   enum Path_Kinds Path_Kind;
-  // These fields are only valid for the kinds above them:  
+  // These fields are only valid for the kinds above them:
   // An_If_Path,
   // An_Elsif_Path,
   Expression_ID  Condition_Expression;
@@ -7861,7 +7891,7 @@ enum Path_Kinds {
   //  An unexpected element
 
   //  Statement paths:
-  
+
   An_If_Path,
   //  5.3:
   //  if condition then
@@ -7895,7 +7925,7 @@ enum Path_Kinds {
 
   //  //|A2012 start
   //  Expression paths:
-  
+
   A_Case_Expression_Path,
   //  ??? (RM 2012)
   //  when expression => expression
@@ -7976,7 +8006,7 @@ enum Path_Kinds {
 
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               // ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -8418,7 +8448,7 @@ Ada_ROSE_Translation::enclosingKindName (Enclosing_Kinds x)
   // Enum values
      Not_Enclosing,
      Enclosing_Element,
-     Enclosing_Unit 
+     Enclosing_Unit
 #endif
 
      string s;
@@ -8597,7 +8627,7 @@ Ada_ROSE_Translation::declarationKindName (Declaration_Kinds x)
   A_Real_Number_Declaration,                // 3.5.6(2)
 
   An_Enumeration_Literal_Specification,     // 3.5.1(3)
-  
+
   A_Discriminant_Specification,             // 3.7(5)   -> Trait_Kinds
   A_Component_Declaration,                  // 3.8(6)
 
@@ -9235,7 +9265,7 @@ Ada_ROSE_Translation::typeKindName (Type_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::typeKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
              }
         }
 

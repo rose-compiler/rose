@@ -1,4 +1,10 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
+// In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
+// need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 
 void
 SgAsmPERVASizePair::ctor(SgAsmPERVASizePairList *parent, const RVASizePair_disk *disk) {
@@ -43,3 +49,4 @@ SgAsmPERVASizePair::get_section() const
     return p_section;
 }
 
+#endif

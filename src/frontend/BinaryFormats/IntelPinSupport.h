@@ -1,3 +1,6 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #ifndef USE_ROSE_INTEL_PIN_SUPPORT
 #error "ROSE not configured to use INTEL PIN support (use --with-IntelPin=<path>)."
 #endif
@@ -14,3 +17,5 @@
 
 std::string output (LEVEL_CORE::IMG_TYPE image_type);
 std::string output (LEVEL_CORE::SEC_TYPE section_type);
+
+#endif

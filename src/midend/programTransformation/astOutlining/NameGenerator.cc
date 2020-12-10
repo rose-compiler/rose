@@ -8,6 +8,7 @@
 
 #include <sstream>
 #include "NameGenerator.hh"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 using namespace std;
 

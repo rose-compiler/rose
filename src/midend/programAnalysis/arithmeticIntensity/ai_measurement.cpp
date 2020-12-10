@@ -221,8 +221,9 @@ namespace ArithmeticIntensityMeasurement
     else
       ss<< "NULL node"<<endl;
    // if non-zero, send out error code   
+
 //    if (error_code!=0)
-      ss<<"Error Code:"<<error_code<<endl;
+    ss<<"Error Code:"<<error_code<<endl;
 
     ss<<"\tFP_plus:"<< plus_count<<endl;
     ss<<"\tFP_minus:"<< minus_count<<endl;
@@ -680,7 +681,10 @@ namespace ArithmeticIntensityMeasurement
       assert (t != NULL);
       assert (count>0);
       SgExpression* sizeof_exp = NULL; 
-      if (is_Fortran_language())
+
+   // DQ (11/25/2020): Fixed ambiguity.
+   // if (is_Fortran_language())
+      if (SageInterface::is_Fortran_language())
       {
 #if 0  // this does not work. cannot find func symbol for sizeof()       
         // In Fortran sizeof() is a function call, not  SgSizeOfOp.
@@ -703,7 +707,9 @@ namespace ArithmeticIntensityMeasurement
         sizeof_exp = buildIntVal(getSizeOf(t));
 #endif         
       }
-      else if (is_C_language() || is_C99_language() || is_Cxx_language())
+   // DQ (11/25/2020): Fixed ambiguity.
+   // else if (is_C_language() || is_C99_language() || is_Cxx_language())
+      else if (SageInterface::is_C_language() || SageInterface::is_C99_language() || SageInterface::is_Cxx_language())
       {
         sizeof_exp = buildSizeOfOp(t);
       }

@@ -1,5 +1,4 @@
 /* JJW (12/8/2008): Do not include these definitions for EDG 3.10 */
-/* #ifndef ROSE_USE_NEW_EDG_INTERFACE */
 /* DQ (11/1/2011): I think we do need this for at least C++ code (e.g. __CHAR_BIT__ must
    be defined along with lots of other Common Predefined Macros.
 */
@@ -53,6 +52,9 @@
    Note that undefining the macro does not work well, and results in references to undefined functions.  
    This appears to be a clang specific macro function (compiler extension) that is supported in Intel V16 C++ cpmpiler.
  */
+/* DQ (7/23/2020): Later versions of EDG support this properly (EDG 6.0 and maybe EDG 5.0).
+   However this is confirmed to still be required for the Intel compiler.
+*/
   #define __has_include_next(file) 1
 
 /* DQ (5/10/2016): Ignoring the SSE support (turn it off). */
@@ -73,13 +75,24 @@
   #define __inline inline
 #endif
 
+
+// DQ (4/26/2019): Only use the ROSE_GNUATTR() featur for non-ansi code use. Might also 
+// need to combine this with turning off the optimization flag that triggers use of builtins.
+// Define away the GNU specific attribute mechanism (not supported by Microsoft compilers).
+#if defined(ROSE_MICROSOFT_EXTENSIONS) || defined(__STRICT_ANSI__)
+#  define ROSE_GNUATTR(X) 
+#  define __attribute__(X) 
+#else
+#  define ROSE_GNUATTR(X) __attribute__(X)
+#endif
+
+
+
 /* DQ (4/23/2017): This is now added on the EDG command line to support handling of Microsoft options.
    This supports analysis of Microsofte specific code on Linuc platforms.  It is not clear now specific
    our support can be since we can't interogate the Microsoft compiler for some specifics.
  */
 #ifdef ROSE_USE_MICROSOFT_EXTENSIONS
-// Define away the GNU specific attribute mechanism (not supported by Microsoft compilers).
-#define __attribute__(X)
 
 // Define away _Complex (until we figure out what this is equivalent to in MSVC).
 #define _Complex
@@ -93,7 +106,14 @@
 // to turn off 64-bit support.
 // #define __i386__
 // #undef __x86_64__
+
+// DQ (9/4/2020): This is required for WINE support (need to rethink how to support MS Windows header files and WINE).
+// DQ (9/2/2020): Heather reported this as a bug when using MS headers.
 #undef _MSC_VER
+// Heather reports additional macros that may be required are: 
+// _MX64 = 100 
+// _MAMD = 100
+// DQ (9/2/2020): She is sending us more details about this.
 
 // DQ (4/23/2017): This is required to avoid calling wine-2.0.1/include/winscard.h which calls wtypes.h (which does not exist).
 // Also prevents call to headef file "unknown.h"
@@ -114,6 +134,11 @@
 #endif
 
 #endif
+
+#if __sun
+// PP (16/05/19): This is most likely WRONG, however some __int128_t is required on Solaris
+typedef long long int __int128_t;
+#endif /* __sun */
 
 #if __cplusplus >= 201103L
 /* DQ (1/27/2017): This is needed for at least the Intel compilers and GNU 4.8 and later compilers in C++11 mode. */
@@ -143,6 +168,10 @@
   #define FE_UNDERFLOW    16
   #define FE_INEXACT      32
   #define _FENV_PUBAPI   /* do not change this line! */
+
+/* DQ (9/2/2020): Added to support ROSE-2511 (Cxx11_tests/test2020_79.C) */
+  #define FE_ALL_EXCEPT (FE_INEXACT | FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID)
+
   extern int  _FENV_PUBAPI feclearexcept (int __excepts) ;
   extern int  _FENV_PUBAPI fegetexceptflag (fexcept_t *__flagp, int __excepts) ;
   extern int  _FENV_PUBAPI fesetexceptflag (const fexcept_t *__flagp, int __excepts) ;
@@ -326,9 +355,11 @@ typedef long double __float128;
 #endif
 
 /* DQ (5/10/2016): Added support for GNU 5.x compilers (at least 5.1) */
+/* DQ (7/23/2020): Later versions of EDG support this properly (EDG 6.0 and maybe EDG 5.0).
 #if ((__GNUC__ > 4) && (__GNUC_MINOR__ >= 1) && (__GNUC_PATCHLEVEL__ >= 0))
    #undef __has_include(STR)
 #endif
+*/
 
 /* DQ (10/22/2010): Isolate some of the OSX specific details. */
 #ifdef __APPLE__
@@ -340,14 +371,6 @@ typedef long double __float128;
  * and we undefine the __BLOCKS__ macro.
  */
 #undef __BLOCKS__
-
-/* Cong (10/20/2010): In EDG 3.x, __attribute__, __dead2, __pure2 cannot be parsed, 
- * so we define them to nothing here.  */
-#ifndef ROSE_USE_EDG_VERSION_4
-	#define __attribute__(x)
-	#define __dead2
-	#define __pure2
-#endif
 
 /* DQ (1/16/2017): define this for the mac since it does not have a builtin definition. */
 #define __builtin_va_arg(v,l) (l)(sizeof(l))
@@ -464,6 +487,17 @@ __builtin_va_list & __builtin_next_arg(char const *format);
 /* typedef __SIZE_TYPE__ size_t; */
 #define size_t __SIZE_TYPE__
 
+/*Pei-Hung (02/07/2020) added builtin for Clang*/
+#if defined(__clang__)
+#if (ROSE_LANGUAGE_MODE == ROSE_C_LANGUAGE_MODE)
+  typedef __WCHAR_TYPE__ wchar_t;
+#endif
+  const char * __builtin_char_memchr ( const void * ptr, int value, size_t num );
+  int __builtin_wmemcmp ( const void * ptr1, const void * ptr2, size_t num );
+  size_t __builtin_wcslen ( const wchar_t * str );
+  const wchar_t * __builtin_wmemchr ( const void * ptr, int value, size_t num );
+#endif
+
 /* DQ (9/2/2016): This is part of what is required using the new automated support for builtin functions. */
 #if (ROSE_LANGUAGE_MODE == ROSE_CXX_LANGUAGE_MODE)
 /* C++ case is different because the header files will define a complex type (see hdrs1/complex) */
@@ -561,96 +595,97 @@ void               __builtin_ia32_fxsave64(void *__P);
 void               __builtin_ia32_fxrstor64(void *__P);
 
 // DQ (3/10/2017): These conflict with these declarations repeated further below.
-// int __builtin_signbitf(float) __attribute__((nothrow, const));
-// int __builtin_signbitl(long double) __attribute__((nothrow, const));
+// int __builtin_signbitf(float) ROSE_GNUATTR((nothrow, const));
+// int __builtin_signbitl(long double) ROSE_GNUATTR((nothrow, const));
 #endif
+
 
 // DQ (12/16/2016): This is incorrect for EDG 4.9, but required for later versions of EDG.
 #if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 411
-unsigned long long int __builtin_bswap64(unsigned long long int) __attribute__((nothrow, const));
+unsigned long long int __builtin_bswap64(unsigned long long int) ROSE_GNUATTR((nothrow, const));
 #endif
 
 // DQ (12/16/2016): Skip these for EDG 4.9.
 #if defined(__EDG_VERSION__) && __EDG_VERSION__ > 409
-ROSE_CONSTEXPR double __builtin_fabs(double) __attribute__((nothrow, const));
-ROSE_CONSTEXPR float __builtin_fabsf(float) __attribute__((nothrow, const));
-ROSE_CONSTEXPR long double __builtin_fabsl(long double) __attribute__((nothrow, const));
-ROSE_CONSTEXPR float __builtin_powf(float, float) __attribute__((nothrow, const));
-ROSE_CONSTEXPR long double __builtin_powl(long double, long double) __attribute__((nothrow, const));
+ROSE_CONSTEXPR double __builtin_fabs(double) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR float __builtin_fabsf(float) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR long double __builtin_fabsl(long double) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR float __builtin_powf(float, float) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR long double __builtin_powl(long double, long double) ROSE_GNUATTR((nothrow, const));
 
 #ifdef __cplusplus
-ROSE_CONSTEXPR int __builtin_isfinite(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_isinf(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_isnan(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_isnormal(...) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isfinite(...) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isinf(...) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isnan(...) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isnormal(...) ROSE_GNUATTR((nothrow, const));
 #endif
 
 
 #ifdef __cplusplus
 // DQ (2/21/2017): These functions are not defined for C language support.
-ROSE_CONSTEXPR int __builtin_isgreater(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_isgreaterequal(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_isless(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_islessequal(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_islessgreater(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_isunordered(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_fpclassify(int, int, int, int, ...) __attribute__((nothrow, const));
-int __builtin_isinf_sign(...) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isgreater(...) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isgreaterequal(...) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isless(...) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_islessequal(...) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_islessgreater(...) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isunordered(...) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_fpclassify(int, int, int, int, ...) ROSE_GNUATTR((nothrow, const));
+int __builtin_isinf_sign(...) ROSE_GNUATTR((nothrow, const));
 #endif
 
 #ifdef __cplusplus
 // DQ (2/21/2017): These functions are not defined for C language support.
-int __builtin_constant_p(...) __attribute__((nothrow, const));
-int __builtin_classify_type(...) __attribute__((nothrow, const));
-void __builtin_va_start(__builtin_va_list&, ...) __attribute__((nothrow));
-void __builtin_va_end(__builtin_va_list&) __attribute__((nothrow));
+int __builtin_constant_p(...) ROSE_GNUATTR((nothrow, const));
+int __builtin_classify_type(...) ROSE_GNUATTR((nothrow, const));
+void __builtin_va_start(__builtin_va_list&, ...) ROSE_GNUATTR((nothrow));
+void __builtin_va_end(__builtin_va_list&) ROSE_GNUATTR((nothrow));
 
 // DQ (4/16/2017): This appears to fix the issue with "__builtin_va_list &" (not const-qualified) 
 // cannot be initialized with a value of type "__va_list_tag *" __builtin_va_copy(args_copy,args);
-// void __builtin_va_copy(__builtin_va_list&, __builtin_va_list&) __attribute__((nothrow));
-void __builtin_va_copy(__builtin_va_list&, __builtin_va_list) __attribute__((nothrow));
+// void __builtin_va_copy(__builtin_va_list&, __builtin_va_list&) ROSE_GNUATTR((nothrow));
+void __builtin_va_copy(__builtin_va_list&, __builtin_va_list) ROSE_GNUATTR((nothrow));
 
-void __builtin_stdarg_start(__builtin_va_list&, ...) __attribute__((nothrow));
+void __builtin_stdarg_start(__builtin_va_list&, ...) ROSE_GNUATTR((nothrow));
 #endif
 
 
 #ifdef __cplusplus
 // DQ (2/21/2017): These functions are not defined for C language support.
-void __builtin_prefetch(void const*, ...) __attribute__((nothrow, const));
+void __builtin_prefetch(void const*, ...) ROSE_GNUATTR((nothrow, const));
 #endif
 
 #ifdef __cplusplus
 // DQ (2/21/2017): These functions are not defined for C language support.
 void __sync_fetch_and_add(...);
-char __sync_fetch_and_add_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_fetch_and_add_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_fetch_and_add_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_fetch_and_add_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_fetch_and_add_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
+char __sync_fetch_and_add_1(char volatile*, char, ...) ROSE_GNUATTR((nothrow));
+short __sync_fetch_and_add_2(short volatile*, short, ...) ROSE_GNUATTR((nothrow));
+int __sync_fetch_and_add_4(int volatile*, int, ...) ROSE_GNUATTR((nothrow));
+long long int __sync_fetch_and_add_8(long long int volatile*, long long int, ...) ROSE_GNUATTR((nothrow));
+__int128_t __sync_fetch_and_add_16(__int128_t volatile*, __int128_t, ...) ROSE_GNUATTR((nothrow));
 void __sync_fetch_and_sub(...);
-char __sync_fetch_and_sub_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_fetch_and_sub_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_fetch_and_sub_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_fetch_and_sub_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_fetch_and_sub_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
+char __sync_fetch_and_sub_1(char volatile*, char, ...) ROSE_GNUATTR((nothrow));
+short __sync_fetch_and_sub_2(short volatile*, short, ...) ROSE_GNUATTR((nothrow));
+int __sync_fetch_and_sub_4(int volatile*, int, ...) ROSE_GNUATTR((nothrow));
+long long int __sync_fetch_and_sub_8(long long int volatile*, long long int, ...) ROSE_GNUATTR((nothrow));
+__int128_t __sync_fetch_and_sub_16(__int128_t volatile*, __int128_t, ...) ROSE_GNUATTR((nothrow));
 void __sync_fetch_and_or(...);
-char __sync_fetch_and_or_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_fetch_and_or_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_fetch_and_or_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_fetch_and_or_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_fetch_and_or_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
+char __sync_fetch_and_or_1(char volatile*, char, ...) ROSE_GNUATTR((nothrow));
+short __sync_fetch_and_or_2(short volatile*, short, ...) ROSE_GNUATTR((nothrow));
+int __sync_fetch_and_or_4(int volatile*, int, ...) ROSE_GNUATTR((nothrow));
+long long int __sync_fetch_and_or_8(long long int volatile*, long long int, ...) ROSE_GNUATTR((nothrow));
+__int128_t __sync_fetch_and_or_16(__int128_t volatile*, __int128_t, ...) ROSE_GNUATTR((nothrow));
 void __sync_fetch_and_and(...);
-char __sync_fetch_and_and_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_fetch_and_and_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_fetch_and_and_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_fetch_and_and_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_fetch_and_and_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
+char __sync_fetch_and_and_1(char volatile*, char, ...) ROSE_GNUATTR((nothrow));
+short __sync_fetch_and_and_2(short volatile*, short, ...) ROSE_GNUATTR((nothrow));
+int __sync_fetch_and_and_4(int volatile*, int, ...) ROSE_GNUATTR((nothrow));
+long long int __sync_fetch_and_and_8(long long int volatile*, long long int, ...) ROSE_GNUATTR((nothrow));
+__int128_t __sync_fetch_and_and_16(__int128_t volatile*, __int128_t, ...) ROSE_GNUATTR((nothrow));
 void __sync_fetch_and_xor(...);
-char __sync_fetch_and_xor_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_fetch_and_xor_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_fetch_and_xor_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_fetch_and_xor_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_fetch_and_xor_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
+char __sync_fetch_and_xor_1(char volatile*, char, ...) ROSE_GNUATTR((nothrow));
+short __sync_fetch_and_xor_2(short volatile*, short, ...) ROSE_GNUATTR((nothrow));
+int __sync_fetch_and_xor_4(int volatile*, int, ...) ROSE_GNUATTR((nothrow));
+long long int __sync_fetch_and_xor_8(long long int volatile*, long long int, ...) ROSE_GNUATTR((nothrow));
+__int128_t __sync_fetch_and_xor_16(__int128_t volatile*, __int128_t, ...) ROSE_GNUATTR((nothrow));
 
 // DQ (3/9/2017): Another builtin function from mysql.
 // void __sync_add_and_fetch(...);
@@ -661,11 +696,11 @@ unsigned int __sync_add_and_fetch (volatile unsigned int * word, unsigned long i
 unsigned long int __sync_add_and_fetch(volatile unsigned long int * word, unsigned long int ammount);
 
 
-char __sync_add_and_fetch_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_add_and_fetch_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_add_and_fetch_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_add_and_fetch_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_add_and_fetch_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
+char __sync_add_and_fetch_1(char volatile*, char, ...) ROSE_GNUATTR((nothrow));
+short __sync_add_and_fetch_2(short volatile*, short, ...) ROSE_GNUATTR((nothrow));
+int __sync_add_and_fetch_4(int volatile*, int, ...) ROSE_GNUATTR((nothrow));
+long long int __sync_add_and_fetch_8(long long int volatile*, long long int, ...) ROSE_GNUATTR((nothrow));
+__int128_t __sync_add_and_fetch_16(__int128_t volatile*, __int128_t, ...) ROSE_GNUATTR((nothrow));
 
 // DQ (3/9/2017): Another builtin function from mysql.
 // void __sync_sub_and_fetch(...);
@@ -675,29 +710,29 @@ unsigned int __sync_sub_and_fetch (volatile unsigned int * word, unsigned long i
 // DQ (3/15/2017): Adding support for mysql required builtins.
 unsigned long int __sync_sub_and_fetch (volatile unsigned long int * word, unsigned long int ammount);
 
-char __sync_sub_and_fetch_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_sub_and_fetch_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_sub_and_fetch_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_sub_and_fetch_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_sub_and_fetch_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
+char __sync_sub_and_fetch_1(char volatile*, char, ...) ROSE_GNUATTR((nothrow));
+short __sync_sub_and_fetch_2(short volatile*, short, ...) ROSE_GNUATTR((nothrow));
+int __sync_sub_and_fetch_4(int volatile*, int, ...) ROSE_GNUATTR((nothrow));
+long long int __sync_sub_and_fetch_8(long long int volatile*, long long int, ...) ROSE_GNUATTR((nothrow));
+__int128_t __sync_sub_and_fetch_16(__int128_t volatile*, __int128_t, ...) ROSE_GNUATTR((nothrow));
 void __sync_or_and_fetch(...);
-char __sync_or_and_fetch_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_or_and_fetch_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_or_and_fetch_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_or_and_fetch_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_or_and_fetch_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
+char __sync_or_and_fetch_1(char volatile*, char, ...) ROSE_GNUATTR((nothrow));
+short __sync_or_and_fetch_2(short volatile*, short, ...) ROSE_GNUATTR((nothrow));
+int __sync_or_and_fetch_4(int volatile*, int, ...) ROSE_GNUATTR((nothrow));
+long long int __sync_or_and_fetch_8(long long int volatile*, long long int, ...) ROSE_GNUATTR((nothrow));
+__int128_t __sync_or_and_fetch_16(__int128_t volatile*, __int128_t, ...) ROSE_GNUATTR((nothrow));
 void __sync_and_and_fetch(...);
-char __sync_and_and_fetch_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_and_and_fetch_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_and_and_fetch_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_and_and_fetch_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_and_and_fetch_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
+char __sync_and_and_fetch_1(char volatile*, char, ...) ROSE_GNUATTR((nothrow));
+short __sync_and_and_fetch_2(short volatile*, short, ...) ROSE_GNUATTR((nothrow));
+int __sync_and_and_fetch_4(int volatile*, int, ...) ROSE_GNUATTR((nothrow));
+long long int __sync_and_and_fetch_8(long long int volatile*, long long int, ...) ROSE_GNUATTR((nothrow));
+__int128_t __sync_and_and_fetch_16(__int128_t volatile*, __int128_t, ...) ROSE_GNUATTR((nothrow));
 void __sync_xor_and_fetch(...);
-char __sync_xor_and_fetch_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_xor_and_fetch_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_xor_and_fetch_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_xor_and_fetch_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_xor_and_fetch_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
+char __sync_xor_and_fetch_1(char volatile*, char, ...) ROSE_GNUATTR((nothrow));
+short __sync_xor_and_fetch_2(short volatile*, short, ...) ROSE_GNUATTR((nothrow));
+int __sync_xor_and_fetch_4(int volatile*, int, ...) ROSE_GNUATTR((nothrow));
+long long int __sync_xor_and_fetch_8(long long int volatile*, long long int, ...) ROSE_GNUATTR((nothrow));
+__int128_t __sync_xor_and_fetch_16(__int128_t volatile*, __int128_t, ...) ROSE_GNUATTR((nothrow));
 
 // DQ (2/26/2017): The generated builtin is required to have a bool type.
 // void __sync_bool_compare_and_swap(...);
@@ -729,29 +764,29 @@ void* __sync_fetch_and_or( void volatile *__mem, local_int64 __val);
 #undef local_int32
 #undef local_int64
 
-char __sync_val_compare_and_swap_1(char volatile*, char, char, ...) __attribute__((nothrow));
-short __sync_val_compare_and_swap_2(short volatile*, short, short, ...) __attribute__((nothrow));
-int __sync_val_compare_and_swap_4(int volatile*, int, int, ...) __attribute__((nothrow));
-long long int __sync_val_compare_and_swap_8(long long int volatile*, long long int, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_val_compare_and_swap_16(__int128_t volatile*, __int128_t, __int128_t, ...) __attribute__((nothrow));
-char __sync_lock_test_and_set_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_lock_test_and_set_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_lock_test_and_set_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_lock_test_and_set_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_lock_test_and_set_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
+char __sync_val_compare_and_swap_1(char volatile*, char, char, ...) ROSE_GNUATTR((nothrow));
+short __sync_val_compare_and_swap_2(short volatile*, short, short, ...) ROSE_GNUATTR((nothrow));
+int __sync_val_compare_and_swap_4(int volatile*, int, int, ...) ROSE_GNUATTR((nothrow));
+long long int __sync_val_compare_and_swap_8(long long int volatile*, long long int, long long int, ...) ROSE_GNUATTR((nothrow));
+__int128_t __sync_val_compare_and_swap_16(__int128_t volatile*, __int128_t, __int128_t, ...) ROSE_GNUATTR((nothrow));
+char __sync_lock_test_and_set_1(char volatile*, char, ...) ROSE_GNUATTR((nothrow));
+short __sync_lock_test_and_set_2(short volatile*, short, ...) ROSE_GNUATTR((nothrow));
+int __sync_lock_test_and_set_4(int volatile*, int, ...) ROSE_GNUATTR((nothrow));
+long long int __sync_lock_test_and_set_8(long long int volatile*, long long int, ...) ROSE_GNUATTR((nothrow));
+__int128_t __sync_lock_test_and_set_16(__int128_t volatile*, __int128_t, ...) ROSE_GNUATTR((nothrow));
 void __sync_lock_release(...);
-void __sync_lock_release_1(char volatile*, ...) __attribute__((nothrow));
-void __sync_lock_release_2(short volatile*, ...) __attribute__((nothrow));
-void __sync_lock_release_4(int volatile*, ...) __attribute__((nothrow));
-void __sync_lock_release_8(long long int volatile*, ...) __attribute__((nothrow));
-void __sync_lock_release_16(__int128_t volatile*, ...) __attribute__((nothrow));
+void __sync_lock_release_1(char volatile*, ...) ROSE_GNUATTR((nothrow));
+void __sync_lock_release_2(short volatile*, ...) ROSE_GNUATTR((nothrow));
+void __sync_lock_release_4(int volatile*, ...) ROSE_GNUATTR((nothrow));
+void __sync_lock_release_8(long long int volatile*, ...) ROSE_GNUATTR((nothrow));
+void __sync_lock_release_16(__int128_t volatile*, ...) ROSE_GNUATTR((nothrow));
 void __sync_swap(...);
-char __sync_swap_1(char volatile*, char, ...) __attribute__((nothrow));
-short __sync_swap_2(short volatile*, short, ...) __attribute__((nothrow));
-int __sync_swap_4(int volatile*, int, ...) __attribute__((nothrow));
-long long int __sync_swap_8(long long int volatile*, long long int, ...) __attribute__((nothrow));
-__int128_t __sync_swap_16(__int128_t volatile*, __int128_t, ...) __attribute__((nothrow));
-void __sync_synchronize(...) __attribute__((nothrow));
+char __sync_swap_1(char volatile*, char, ...) ROSE_GNUATTR((nothrow));
+short __sync_swap_2(short volatile*, short, ...) ROSE_GNUATTR((nothrow));
+int __sync_swap_4(int volatile*, int, ...) ROSE_GNUATTR((nothrow));
+long long int __sync_swap_8(long long int volatile*, long long int, ...) ROSE_GNUATTR((nothrow));
+__int128_t __sync_swap_16(__int128_t volatile*, __int128_t, ...) ROSE_GNUATTR((nothrow));
+void __sync_synchronize(...) ROSE_GNUATTR((nothrow));
 #endif
 
 /* DQ (4/23/2017): This is now added on the EDG command line to support handling of Microsoft options.
@@ -761,38 +796,80 @@ void __sync_synchronize(...) __attribute__((nothrow));
 #ifndef ROSE_USE_MICROSOFT_EXTENSIONS
 #ifdef __cplusplus
 // DQ (2/21/2017): These functions are not defined for C language support.
-void __noop(...) __attribute__((nothrow));
+void __noop(...) ROSE_GNUATTR((nothrow));
 #endif
 #endif
 
+//Builtin Function Call support
+void* __builtin_apply_args();
+void* __builtin_apply(void (*function)(), void *arguments, size_t size);
+void  __builtin_return(void* result);
+
 #if defined(__INTEL_COMPILER) && (__cplusplus >= 201400L)
 // DQ (2/21/2017): Debugging C++14 support specific to the Intel compiler.
-extern "C" char* gets (char* __s) __attribute__((deprecated));
-// char* gets (char* __s) __attribute__((deprecated));
+extern "C" char* gets (char* __s) ROSE_GNUATTR((deprecated));
+// char* gets (char* __s) ROSE_GNUATTR((deprecated));
 #endif
 
 
 // This need to be const expr in EDG 4.12
-ROSE_CONSTEXPR double __builtin_huge_val() __attribute__((nothrow, const));
-ROSE_CONSTEXPR float __builtin_huge_valf() __attribute__((nothrow, const));
-ROSE_CONSTEXPR long double __builtin_huge_vall() __attribute__((nothrow, const));
+ROSE_CONSTEXPR double __builtin_huge_val() ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR float __builtin_huge_valf() ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR long double __builtin_huge_vall() ROSE_GNUATTR((nothrow, const));
 
-ROSE_CONSTEXPR double __builtin_nan(char const*) __attribute__((nothrow, const));
-ROSE_CONSTEXPR float __builtin_nanf(char const*) __attribute__((nothrow, const));
-ROSE_CONSTEXPR long double __builtin_nanl(char const*) __attribute__((nothrow, const));
-ROSE_CONSTEXPR double __builtin_nans(char const*) __attribute__((nothrow, const));
-ROSE_CONSTEXPR float __builtin_nansf(char const*) __attribute__((nothrow, const));
-ROSE_CONSTEXPR long double __builtin_nansl(char const*) __attribute__((nothrow, const));
+ROSE_CONSTEXPR double __builtin_nan(char const*) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR float __builtin_nanf(char const*) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR long double __builtin_nanl(char const*) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR double __builtin_nans(char const*) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR float __builtin_nansf(char const*) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR long double __builtin_nansl(char const*) ROSE_GNUATTR((nothrow, const));
 
 // DQ (12/16/2016): evening: allow these to be constexpr.
-ROSE_CONSTEXPR int __builtin_clz(unsigned int) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_clzl(unsigned long int) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_clzll(unsigned long long int) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_clz(unsigned int) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_clzl(unsigned long int) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_clzll(unsigned long long int) ROSE_GNUATTR((nothrow, const));
 
-ROSE_CONSTEXPR int __builtin_signbitf(float) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_signbitl(long double) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_signbitf(float) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_signbitl(long double) ROSE_GNUATTR((nothrow, const));
+
+ROSE_CONSTEXPR unsigned short  __builtin_bswap16(unsigned short x) ROSE_GNUATTR((nothrow, const));
+
+#if __cplusplus
+ROSE_CONSTEXPR bool            __builtin_is_constant_evaluated  ()                 ROSE_GNUATTR((nothrow, const));
 #endif
 
+#endif
+
+/* DQ (7/24/2020): This code is no longer required now that the EDG/ROSE connection is fixed for at least EDG 6.0 (maybe EDG 5.0). */
+/* DQ (7/23/2020): This fixes a bug demonstrated with GNU 10 using make check-core and/or make check-smoke. */
+/* #if __GNUC__ >= 10 && __cplusplus */
+#if 0
+template <typename T, typename U>
+struct __rose_is_same_as {
+  static constexpr bool value = false;
+};
+
+template <typename T>
+struct __rose_is_same_as<T,T> {
+  static constexpr bool value = true;
+};
+
+#define __is_same_as(T,U) __rose_is_same_as<T,U>::value
+#endif
+
+
+/* DQ (7/26/2020): Adding GNU 10 C++20 specific builtin functions (part of what 
+is needed to compile C++20 specific headers, the rest are some modified headers). */
+#if __GNUC__ >= 10 && __cplusplus
+bool __builtin_coro_done(void* _M_fr_ptr);
+void __builtin_coro_resume(void* _M_fr_ptr);
+void __builtin_coro_destroy(void* _M_fr_ptr);
+// std::compare_three_way()(__a.address(), __b.address());
+void* __builtin_coro_promise(void* _M_fr_ptr, unsigned long, bool);
+ROSE_CONSTEXPR bool __atomic_always_lock_free(unsigned long, unsigned long);
+// extern unsigned long ATOMIC_CHAR8_T_LOCK_FREE;
+const unsigned long __GCC_ATOMIC_CHAR8_T_LOCK_FREE = 2;
+#endif
 
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
@@ -1228,35 +1305,35 @@ void __builtin_ia32_writeeflags_u64 (unsigned long long X);
 
 /* SSE3 builtin functions required for GNU 6.1 compiler */
 /* SSE2 */
-typedef double __v2df __attribute__ ((__vector_size__ (16)));
-typedef long long __v2di __attribute__ ((__vector_size__ (16)));
-typedef int __v4si __attribute__ ((__vector_size__ (16)));
-typedef short __v8hi __attribute__ ((__vector_size__ (16)));
-typedef char __v16qi __attribute__ ((__vector_size__ (16)));
+typedef double __v2df ROSE_GNUATTR((__vector_size__ (16)));
+typedef long long __v2di ROSE_GNUATTR((__vector_size__ (16)));
+typedef int __v4si ROSE_GNUATTR((__vector_size__ (16)));
+typedef short __v8hi ROSE_GNUATTR((__vector_size__ (16)));
+typedef char __v16qi ROSE_GNUATTR((__vector_size__ (16)));
 
 /* Internal data types for implementing the intrinsics.  */
-typedef int __v2si __attribute__ ((__vector_size__ (8)));
-typedef char __v8qi __attribute__ ((__vector_size__ (8)));
+typedef int __v2si ROSE_GNUATTR((__vector_size__ (8)));
+typedef char __v8qi ROSE_GNUATTR((__vector_size__ (8)));
 
 /* The Intel API is flexible enough that we must allow aliasing with other
    vector types, and their scalar components.  */
-typedef float __m128 __attribute__ ((__vector_size__ (32), __may_alias__));
-typedef long long __m128i __attribute__ ((__vector_size__ (16), __may_alias__));
-typedef double __m128d __attribute__ ((__vector_size__ (16), __may_alias__));
+typedef float __m128 ROSE_GNUATTR((__vector_size__ (32), __may_alias__));
+typedef long long __m128i ROSE_GNUATTR((__vector_size__ (16), __may_alias__));
+typedef double __m128d ROSE_GNUATTR((__vector_size__ (16), __may_alias__));
 
 /* Not clear what these should be  */
 // DQ (3/12/2017): Added refinements to support Clang.
 #if defined(__clang__)
   #define __m64 long long
 #else
-// typedef int __m64 __attribute__ ((__vector_size__ (8), __may_alias__));
-  typedef long long __m64 __attribute__((__vector_size__(8)));
+// typedef int __m64 ROSE_GNUATTR((__vector_size__ (8), __may_alias__));
+  typedef long long __m64 ROSE_GNUATTR((__vector_size__(8)));
 #endif
-typedef short __v4hi __attribute__ ((__vector_size__ (8)));
-// typedef long long __m64 __attribute__ ((__vector_size__ (16)));
-// typedef int __v4hi __attribute__ ((__vector_size__ (16)));
-typedef float __v2sf __attribute__ ((__vector_size__ (8)));
-typedef float __v4sf __attribute__ ((__vector_size__ (16)));
+typedef short __v4hi ROSE_GNUATTR((__vector_size__ (8)));
+// typedef long long __m64 ROSE_GNUATTR((__vector_size__ (16)));
+// typedef int __v4hi ROSE_GNUATTR((__vector_size__ (16)));
+typedef float __v2sf ROSE_GNUATTR((__vector_size__ (8)));
+typedef float __v4sf ROSE_GNUATTR((__vector_size__ (16)));
 
 /* pmmintrin.h */
 __m128 __builtin_ia32_addsubps (__m128 __X, __m128 __Y);
@@ -1356,22 +1433,22 @@ __m128i __builtin_ia32_aesimc128 (__v2di __X);
 
 /* avxintrin.h */
 /* Internal data types for implementing the intrinsics.  */
-typedef double __v4df __attribute__ ((__vector_size__ (32)));
-typedef float __v8sf __attribute__ ((__vector_size__ (32)));
-typedef long long __v4di __attribute__ ((__vector_size__ (32)));
-typedef unsigned long long __v4du __attribute__ ((__vector_size__ (32)));
-typedef int __v8si __attribute__ ((__vector_size__ (32)));
-typedef unsigned int __v8su __attribute__ ((__vector_size__ (32)));
-typedef short __v16hi __attribute__ ((__vector_size__ (32)));
-typedef unsigned short __v16hu __attribute__ ((__vector_size__ (32)));
-typedef char __v32qi __attribute__ ((__vector_size__ (32)));
-typedef unsigned char __v32qu __attribute__ ((__vector_size__ (32)));
+typedef double __v4df ROSE_GNUATTR((__vector_size__ (32)));
+typedef float __v8sf ROSE_GNUATTR((__vector_size__ (32)));
+typedef long long __v4di ROSE_GNUATTR((__vector_size__ (32)));
+typedef unsigned long long __v4du ROSE_GNUATTR((__vector_size__ (32)));
+typedef int __v8si ROSE_GNUATTR((__vector_size__ (32)));
+typedef unsigned int __v8su ROSE_GNUATTR((__vector_size__ (32)));
+typedef short __v16hi ROSE_GNUATTR((__vector_size__ (32)));
+typedef unsigned short __v16hu ROSE_GNUATTR((__vector_size__ (32)));
+typedef char __v32qi ROSE_GNUATTR((__vector_size__ (32)));
+typedef unsigned char __v32qu ROSE_GNUATTR((__vector_size__ (32)));
 
 /* The Intel API is flexible enough that we must allow aliasing with other
    vector types, and their scalar components.  */
-typedef float __m256 __attribute__ ((__vector_size__ (32), __may_alias__));
-typedef long long __m256i __attribute__ ((__vector_size__ (32), __may_alias__));
-typedef double __m256d __attribute__ ((__vector_size__ (32), __may_alias__));
+typedef float __m256 ROSE_GNUATTR((__vector_size__ (32), __may_alias__));
+typedef long long __m256i ROSE_GNUATTR((__vector_size__ (32), __may_alias__));
+typedef double __m256d ROSE_GNUATTR((__vector_size__ (32), __may_alias__));
 
 __m256d __builtin_ia32_addsubpd256 (__v4df __A, __v4df __B);
 __m256 __builtin_ia32_addsubps256 (__v8sf __A, __v8sf __B);
@@ -1554,8 +1631,39 @@ __m128d _mm_mul_pd (__m128d __A, __m128d __B);
 double _mm_cvtsd_f64 (__m128d __A);
 __m128d _mm_hadd_pd (__m128d __X, __m128d __Y);
 __m128d _mm_add_pd (__m128d __A, __m128d __B);
+__m128 _mm_hadd_ps (__m128 a, __m128 b);
 void _mm_storeu_pd (double *__P, __m128d __A);
 
+__m128i _mm_cvtepi8_epi32(__m128i a);
+__m128i _mm_cvtepi8_epi64 (__m128i a);
+__m128i _mm_cvtepi8_epi16(__m128i a);
+__m128i _mm_cvtepi32_epi64(__m128i a);
+__m128i _mm_cvtepi16_epi32(__m128i a);
+__m128i _mm_cvtepi16_epi64(__m128i a);
+__m128i _mm_cvtepu8_epi32(__m128i a);
+__m128i _mm_cvtepu8_epi64(__m128i a);
+__m128i _mm_cvtepu8_epi16(__m128i a);
+__m128i _mm_cvtepu32_epi64(__m128i a);
+__m128i _mm_cvtepu16_epi32(__m128i a);
+__m128i _mm_cvtepu16_epi64(__m128i a);
+__m128  _mm_hadd_ps(__m128 a, __m128 b);
+__m128i _mm_cmpeq_epi64 (__m128i a, __m128i b);
+__m128  _mm_blendv_ps(__m128 v1, __m128 v2, __m128 v3);
+__m128d _mm_blendv_pd(__m128d v1, __m128d v2, __m128d v3);
+__m128i _mm_blendv_epi8 (__m128i a, __m128i b, __m128i mask);
+__m128i _mm_blend_epi16 (__m128i a, __m128i b, const int imm8);
+__m128i _mm_max_epi32 (__m128i a, __m128i b);
+__m128i _mm_max_epi8 (__m128i a, __m128i b);
+__m128i _mm_max_epu16 (__m128i a, __m128i b);
+__m128i _mm_max_epu32 (__m128i a, __m128i b);
+__m128i _mm_min_epi32 (__m128i a, __m128i b);
+__m128i _mm_min_epi8 (__m128i a, __m128i b);
+__m128i _mm_min_epu16 (__m128i a, __m128i b);
+__m128i _mm_min_epu32 (__m128i a, __m128i b);
+__m128i _mm_mul_epi32 (__m128i a, __m128i b);
+__m128i _mm_mullo_epi32 (__m128i a, __m128i b);
+__m128i _mm_packus_epi32 (__m128i a, __m128i b);
+__m128i _mm_shuffle_epi8 (__m128i a, __m128i b);
 
 
    #define _MM3DNOW_H_INCLUDED
@@ -1614,8 +1722,8 @@ void _mm_storeu_pd (double *__P, __m128d __A);
 
 // #define _mm_set1_epi64x(X) ((__m128i)(0LL))
 // #define _mm_set1_epi64x(X)
-// typedef double  __m128d __attribute__((__vector_size__(16)));
-// typedef __int64 __m128i __attribute__((__vector_size__(16)));
+// typedef double  __m128d ROSE_GNUATTR((__vector_size__(16)));
+// typedef __int64 __m128i ROSE_GNUATTR((__vector_size__(16)));
 // __m128i _mm_set1_epi64x (long long __A);
 // extern __m128i  _mm_set1_epi64x(__int64);
 
@@ -1728,15 +1836,16 @@ DQ (6/19/2007): These might required math.h to be included.
 /* DQ (2/22/2017): Added to support GNU 4.8 in C++11 mode using EDG 4.9. */
 #ifdef __cplusplus
 // DQ (2/21/2017): These functions are not defined for C language support.
-ROSE_CONSTEXPR int __builtin_isgreater(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_isgreaterequal(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_isless(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_islessequal(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_islessgreater(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_isunordered(...) __attribute__((nothrow, const));
-ROSE_CONSTEXPR int __builtin_fpclassify(int, int, int, int, ...) __attribute__((nothrow, const));
-int __builtin_isinf_sign(...) __attribute__((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isgreater(...) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isgreaterequal(...) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isless(...) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_islessequal(...) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_islessgreater(...) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_isunordered(...) ROSE_GNUATTR((nothrow, const));
+ROSE_CONSTEXPR int __builtin_fpclassify(int, int, int, int, ...) ROSE_GNUATTR((nothrow, const));
+int __builtin_isinf_sign(...) ROSE_GNUATTR((nothrow, const));
 #endif
+
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #if 0
@@ -1843,16 +1952,6 @@ long double __builtin_powil (long double __builtin__x, int __builtin__y);
 #ifdef _GLIBCXX_ATOMIC_BUILTINS
 typedef int _Atomic_word;
 _Atomic_word  __sync_fetch_and_add(volatile _Atomic_word* __mem, int __val);
-#endif
-
-/* DQ (8/25/2009): Added another builtin function required to compile ROSE with ROSE. (required for boost) */
-/* #if ROSE_CPP_MODE */
-#if (ROSE_LANGUAGE_MODE == ROSE_CXX_LANGUAGE_MODE)
-/* These use C++ references and so can't be used in C mode (should not be used with EDG 4.3) */
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
-int __sync_lock_test_and_set( int & v, int n );
-int __sync_lock_release( int & v );
-#endif
 #endif
 
 /* DQ and Liao (7/11/2009) Added macros to define away new GNU C++ extension (not required for newer EDG 4.0 use 
@@ -2660,7 +2759,7 @@ __device__ void __prof_trigger(int);
   /* Define alignment keys */
 
 #if defined( __GNUC__ )
-    #define OPENCL_ALIGNED(_x)          __attribute__ ((aligned(_x)))
+    #define OPENCL_ALIGNED(_x)          ROSE_GNUATTR((aligned(_x)))
 #elif defined( _WIN32) && (_MSC_VER)
     /* Alignment keys neutered on windows because MSVC can't swallow function arguments with alignment requirements     */
     /* http://msdn.microsoft.com/en-us/library/373ak2y1%28VS.71%29.aspx                                                 */
@@ -2698,17 +2797,17 @@ typedef unsigned __int32        size_t;
 
 typedef int8_t          opencl_char;
 typedef uint8_t         opencl_uchar;
-typedef int16_t         opencl_short    __attribute__((aligned(2)));
-typedef uint16_t        opencl_ushort   __attribute__((aligned(2)));
-typedef int32_t         opencl_int      __attribute__((aligned(4)));
-typedef uint32_t        opencl_uint     __attribute__((aligned(4)));
-typedef int64_t         opencl_long     __attribute__((aligned(8)));
-typedef uint64_t        opencl_ulong    __attribute__((aligned(8)));
+typedef int16_t         opencl_short    ROSE_GNUATTR((aligned(2)));
+typedef uint16_t        opencl_ushort   ROSE_GNUATTR((aligned(2)));
+typedef int32_t         opencl_int      ROSE_GNUATTR((aligned(4)));
+typedef uint32_t        opencl_uint     ROSE_GNUATTR((aligned(4)));
+typedef int64_t         opencl_long     ROSE_GNUATTR((aligned(8)));
+typedef uint64_t        opencl_ulong    ROSE_GNUATTR((aligned(8)));
 
-typedef float           opencl_float    __attribute__((aligned(4)));
-typedef double          opencl_double   __attribute__((aligned(8)));
+typedef float           opencl_float    ROSE_GNUATTR((aligned(4)));
+typedef double          opencl_double   ROSE_GNUATTR((aligned(8)));
 
-typedef uint16_t        half     __attribute__((aligned(2)));
+typedef uint16_t        half     ROSE_GNUATTR((aligned(2)));
 
 #endif
 
@@ -3319,8 +3418,6 @@ void prefetch (const __global float16 *p, size_t num_elements);
 #endif
 
 
-
-
 /* DQ (11/20/2016): This should be implemented only for EDG 4.11. */
 /* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
 /* DQ (10/18/2016): Turn this on for EDG 4.11 but not wanted for EDG 4.12 (we use our own mechanism for EDG versions before EDG 4.11) */
@@ -3334,32 +3431,32 @@ void prefetch (const __global float16 *p, size_t num_elements);
 #if 1
 /* SSE3 builtin functions required for GNU 6.1 compiler */
 /* SSE2 */
-typedef double __v2df __attribute__ ((__vector_size__ (16)));
-typedef long long __v2di __attribute__ ((__vector_size__ (16)));
-typedef int __v4si __attribute__ ((__vector_size__ (16)));
-typedef short __v8hi __attribute__ ((__vector_size__ (16)));
-typedef char __v16qi __attribute__ ((__vector_size__ (16)));
+typedef double __v2df ROSE_GNUATTR((__vector_size__ (16)));
+typedef long long __v2di ROSE_GNUATTR((__vector_size__ (16)));
+typedef int __v4si ROSE_GNUATTR((__vector_size__ (16)));
+typedef short __v8hi ROSE_GNUATTR((__vector_size__ (16)));
+typedef char __v16qi ROSE_GNUATTR((__vector_size__ (16)));
 
 /* Internal data types for implementing the intrinsics.  */
-typedef int __v2si __attribute__ ((__vector_size__ (8)));
-typedef char __v8qi __attribute__ ((__vector_size__ (8)));
+typedef int __v2si ROSE_GNUATTR((__vector_size__ (8)));
+typedef char __v8qi ROSE_GNUATTR((__vector_size__ (8)));
 
 /* The Intel API is flexible enough that we must allow aliasing with other
    vector types, and their scalar components.  */
-// typedef float __m128 __attribute__ ((__vector_size__ (32), __may_alias__));
-typedef float __m128 __attribute__ ((__vector_size__ (16), __may_alias__));
-typedef long long __m128i __attribute__ ((__vector_size__ (16), __may_alias__));
-typedef double __m128d __attribute__ ((__vector_size__ (16), __may_alias__));
+// typedef float __m128 ROSE_GNUATTR((__vector_size__ (32), __may_alias__));
+typedef float __m128 ROSE_GNUATTR((__vector_size__ (16), __may_alias__));
+typedef long long __m128i ROSE_GNUATTR((__vector_size__ (16), __may_alias__));
+typedef double __m128d ROSE_GNUATTR((__vector_size__ (16), __may_alias__));
 
 /* Not clear what these should be  */
-typedef int __m64 __attribute__ ((__vector_size__ (8), __may_alias__));
-typedef short __v4hi __attribute__ ((__vector_size__ (8)));
-// typedef long long __m64 __attribute__ ((__vector_size__ (16)));
-// typedef int __v4hi __attribute__ ((__vector_size__ (16)));
-typedef float __v2sf __attribute__ ((__vector_size__ (8)));
-typedef float __v4sf __attribute__ ((__vector_size__ (16)));
+typedef int __m64 ROSE_GNUATTR((__vector_size__ (8), __may_alias__));
+typedef short __v4hi ROSE_GNUATTR((__vector_size__ (8)));
+// typedef long long __m64 ROSE_GNUATTR((__vector_size__ (16)));
+// typedef int __v4hi ROSE_GNUATTR((__vector_size__ (16)));
+typedef float __v2sf ROSE_GNUATTR((__vector_size__ (8)));
+typedef float __v4sf ROSE_GNUATTR((__vector_size__ (16)));
 
-typedef long long __v1di __attribute__ ((__vector_size__ (8)));
+typedef long long __v1di ROSE_GNUATTR((__vector_size__ (8)));
 
 /* From: mmintrin.h */
 void __builtin_ia32_emms();
@@ -3642,9 +3739,12 @@ __m128i __builtin_ia32_pmulhw128 (__v8hi, __v8hi);
 __m128i __builtin_ia32_pmullw128 (__v8hi, __v8hi);
 __m64 __builtin_ia32_pmuludq (__v2si, __v2si);
 __m128i __builtin_ia32_pmuludq128 (__v4si, __v4si);
+__v2di  __builtin_ia32_pslldqi128 (__v2di, int);
+__v8hi __builtin_ia32_pshuflw (__v8hi, int);
 __m128i __builtin_ia32_psllwi128 (__v8hi, int);
 __m128i __builtin_ia32_pslldi128 (__v4si, int);
 __m128i __builtin_ia32_psllqi128 (__v2di, int);
+__v2di  __builtin_ia32_psrldqi128 (__v2di, int);
 __m128i __builtin_ia32_psrawi128 (__v8hi, int);
 __m128i __builtin_ia32_psradi128 (__v4si, int);
 __m128i __builtin_ia32_psrlwi128 (__v8hi, int);
@@ -3706,26 +3806,26 @@ int __builtin_ia32_mfence();
 
 #if 1
 // DQ (1/22/2017): Added AVX builtin functions support.
-typedef double __v4df __attribute__ ((__vector_size__ (32)));
-typedef float __v8sf __attribute__ ((__vector_size__ (32)));
-typedef long long __v4di __attribute__ ((__vector_size__ (32)));
-typedef int __v8si __attribute__ ((__vector_size__ (32)));
-typedef short __v16hi __attribute__ ((__vector_size__ (32)));
-typedef char __v32qi __attribute__ ((__vector_size__ (32)));
+typedef double __v4df ROSE_GNUATTR((__vector_size__ (32)));
+typedef float __v8sf ROSE_GNUATTR((__vector_size__ (32)));
+typedef long long __v4di ROSE_GNUATTR((__vector_size__ (32)));
+typedef int __v8si ROSE_GNUATTR((__vector_size__ (32)));
+typedef short __v16hi ROSE_GNUATTR((__vector_size__ (32)));
+typedef char __v32qi ROSE_GNUATTR((__vector_size__ (32)));
 
-typedef float __m256 __attribute__ ((__vector_size__ (32), __may_alias__));
-typedef long long __m256i __attribute__ ((__vector_size__ (32), __may_alias__));
-typedef double __m256d __attribute__ ((__vector_size__ (32), __may_alias__));
+typedef float __m256 ROSE_GNUATTR((__vector_size__ (32), __may_alias__));
+typedef long long __m256i ROSE_GNUATTR((__vector_size__ (32), __may_alias__));
+typedef double __m256d ROSE_GNUATTR((__vector_size__ (32), __may_alias__));
 
-typedef double __v8df __attribute__ ((__vector_size__ (64)));
-typedef float __v16sf __attribute__ ((__vector_size__ (64)));
-typedef long long __v8di __attribute__ ((__vector_size__ (64)));
-typedef int __v16si __attribute__ ((__vector_size__ (64)));
-typedef short __v32hi __attribute__ ((__vector_size__ (64)));
-typedef char __v64qi __attribute__ ((__vector_size__ (64)));
-typedef float __m512 __attribute__ ((__vector_size__ (64), __may_alias__));
-typedef long long __m512i __attribute__ ((__vector_size__ (64), __may_alias__));
-typedef double __m512d __attribute__ ((__vector_size__ (64), __may_alias__));
+typedef double __v8df ROSE_GNUATTR((__vector_size__ (64)));
+typedef float __v16sf ROSE_GNUATTR((__vector_size__ (64)));
+typedef long long __v8di ROSE_GNUATTR((__vector_size__ (64)));
+typedef int __v16si ROSE_GNUATTR((__vector_size__ (64)));
+typedef short __v32hi ROSE_GNUATTR((__vector_size__ (64)));
+typedef char __v64qi ROSE_GNUATTR((__vector_size__ (64)));
+typedef float __m512 ROSE_GNUATTR((__vector_size__ (64), __may_alias__));
+typedef long long __m512i ROSE_GNUATTR((__vector_size__ (64), __may_alias__));
+typedef double __m512d ROSE_GNUATTR((__vector_size__ (64), __may_alias__));
 typedef unsigned char __mmask8;
 typedef unsigned short __mmask16;
 
@@ -5133,8 +5233,8 @@ void __builtin_ia32_xsaveopt64 (void*__P, long long __M);
 
 typedef unsigned long long __mmask64;
 
-// typedef short __v32hi __attribute__ ((__vector_size__ (64)));
-// typedef char __v64qi __attribute__ ((__vector_size__ (64)));
+// typedef short __v32hi ROSE_GNUATTR((__vector_size__ (64)));
+// typedef char __v64qi ROSE_GNUATTR((__vector_size__ (64)));
 
 __m512i __builtin_ia32_pbroadcastq512_gpr_mask (long long, __v8di, __mmask8);
 // __m512i __builtin_ia32_pbroadcastq512_gpr_mask (__A, __v8di, int );
@@ -6033,8 +6133,8 @@ __m128i __builtin_ia32_pmuludq128_mask (__v4si __X, __v4si __Y, __v2di  __W, __m
 __m128i __builtin_ia32_pmuludq128_mask (__v4si __X, __v4si __Y, __v2di setzero, __mmask8 __M);
 __m256i __builtin_ia32_permvarsi256_mask (__v8si __Y,__v8si __X,__v8si __W,__mmask8 __M);
 
-typedef short __v32hi __attribute__ ((__vector_size__ (64)));
-typedef char __v64qi __attribute__ ((__vector_size__ (64)));
+typedef short __v32hi ROSE_GNUATTR((__vector_size__ (64)));
+typedef char __v64qi ROSE_GNUATTR((__vector_size__ (64)));
 typedef unsigned long long __mmask64;
 
 __m512i __builtin_ia32_movdquhi512_mask (__v32hi  __A,  __v32hi  __W,  __mmask32  __U);
@@ -7101,14 +7201,14 @@ __m256  __builtin_ia32_vfmsubaddps256(__m256 __A, __m256 __B, __m256 __C);
 __m256d __builtin_ia32_vfmsubaddpd256(__m256d __A, __m256d __B, __m256d __C);
 
 
-typedef double __v8df __attribute__((__vector_size__(64)));
-typedef float __v16sf __attribute__((__vector_size__(64)));
-typedef long long __v8di __attribute__((__vector_size__(64)));
-typedef int __v16si __attribute__((__vector_size__(64)));
+typedef double __v8df ROSE_GNUATTR((__vector_size__(64)));
+typedef float __v16sf ROSE_GNUATTR((__vector_size__(64)));
+typedef long long __v8di ROSE_GNUATTR((__vector_size__(64)));
+typedef int __v16si ROSE_GNUATTR((__vector_size__(64)));
 
-typedef float __m512 __attribute__((__vector_size__(64)));
-typedef double __m512d __attribute__((__vector_size__(64)));
-typedef long long __m512i __attribute__((__vector_size__(64)));
+typedef float __m512 ROSE_GNUATTR((__vector_size__(64)));
+typedef double __m512d ROSE_GNUATTR((__vector_size__(64)));
+typedef long long __m512i ROSE_GNUATTR((__vector_size__(64)));
 
 typedef unsigned char __mmask8;
 typedef unsigned short __mmask16;
@@ -8088,5 +8188,4 @@ int __frontend_specific_variable_to_provide_header_file_path;
 
 /* matching endif for SKIP_ROSE_BUILTIN_DECLARATIONS */
 #endif
-
-#endif /* !ROSE_USE_NEW_EDG_INTERFACE */
+#endif

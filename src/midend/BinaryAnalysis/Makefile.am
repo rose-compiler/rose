@@ -2,12 +2,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # AUTOMAKE_OPTIONS = subdir-objects
 
-AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES) -I$(srcdir)/graph -I$(srcdir)/libraryIdentification 
+AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES) -I$(srcdir)/graph -I$(srcdir)/libraryIdentification
 
 noinst_LTLIBRARIES = libbinaryMidend.la
 libbinaryMidend_la_DEPENDENCIES =
 
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 libbinaryMidend_la_SOURCES =					\
     AbstractLocation.C						\
     BinaryAstHash.C						\
@@ -16,11 +15,13 @@ libbinaryMidend_la_SOURCES =					\
     BinaryCodeInserter.C					\
     BinaryControlFlow.C						\
     BinaryDataFlow.C						\
+    BinaryDebugger.C						\
     BinaryDemangler.C						\
     BinaryDominance.C						\
     BinaryFeasiblePath.C					\
     BinaryFunctionCall.C					\
     BinaryFunctionSimilarity.C					\
+    BinaryHotPatch.C						\
     BinaryMagic.C						\
     BinaryNoOperation.C						\
     BinaryPointerDetection.C					\
@@ -29,6 +30,7 @@ libbinaryMidend_la_SOURCES =					\
     BinarySmtCommandLine.C					\
     BinarySmtSolver.C						\
     BinarySmtlibSolver.C					\
+    BinarySourceLocations.C					\
     BinaryStackDelta.C						\
     BinaryString.C						\
     BinarySymbolicExpr.C					\
@@ -36,15 +38,38 @@ libbinaryMidend_la_SOURCES =					\
     BinarySystemCall.C						\
     BinaryTaintedFlow.C						\
     BinaryToSource.C						\
+    BinaryVariables.C						\
     BinaryYicesSolver.C						\
     BinaryZ3Solver.C						\
+    Concolic/ConcolicExecutor.C					\
+    Concolic/ConcreteExecutor.C					\
+    Concolic/Database.C						\
+    Concolic/ExecutionManager.C					\
+    Concolic/LinuxExecutor.C					\
+    Concolic/LinuxExitStatus.C					\
+    Concolic/LinuxTraceExecutor.C				\
+    Concolic/Specimen.C						\
+    Concolic/SystemCall.C					\
+    Concolic/TestCase.C						\
+    Concolic/TestSuite.C					\
+    Concolic/Utility.C						\
     DwarfLineMapper.C						\
     instructionSemantics/BaseSemantics2.C			\
+    instructionSemantics/BaseSemanticsDispatcher.C		\
+    instructionSemantics/BaseSemanticsException.C		\
+    instructionSemantics/BaseSemanticsMemoryState.C		\
+    instructionSemantics/BaseSemanticsMerger.C			\
+    instructionSemantics/BaseSemanticsRegisterState.C		\
+    instructionSemantics/BaseSemanticsRiscOperators.C		\
+    instructionSemantics/BaseSemanticsState.C			\
+    instructionSemantics/BaseSemanticsSValue.C			\
     instructionSemantics/ConcreteSemantics2.C			\
     instructionSemantics/DataFlowSemantics2.C			\
+    instructionSemantics/DispatcherA64.C			\
     instructionSemantics/DispatcherM68k.C			\
     instructionSemantics/DispatcherPowerpc.C			\
     instructionSemantics/DispatcherX86.C			\
+    instructionSemantics/InstructionSemantics2.C		\
     instructionSemantics/IntervalSemantics2.C			\
     instructionSemantics/LlvmSemantics2.C			\
     instructionSemantics/MemoryCell.C				\
@@ -52,6 +77,7 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/MemoryCellMap.C			\
     instructionSemantics/MemoryCellState.C			\
     instructionSemantics/MultiSemantics2.C			\
+    instructionSemantics/NativeSemantics.C			\
     instructionSemantics/NullSemantics2.C			\
     instructionSemantics/PartialSymbolicSemantics2.C		\
     instructionSemantics/RegisterStateGeneric.C			\
@@ -60,10 +86,12 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/SymbolicMemory2.C			\
     instructionSemantics/SymbolicSemantics2.C			\
     instructionSemantics/TraceSemantics2.C
-else
-libbinaryMidend_la_SOURCES = dummyBinaryMidend.C
-endif
 
+if ROSE_USE_SQLITE_DATABASE
+libbinaryMidend_la_SOURCES +=					\
+    libraryIdentification/FunctionIdDatabaseInterface.C         \
+    libraryIdentification/libraryIdentification.C
+endif
 
 pkginclude_HEADERS =					\
     AbstractLocation.h					\
@@ -72,13 +100,16 @@ pkginclude_HEADERS =					\
     BinaryBestMapAddress.h				\
     BinaryCallingConvention.h				\
     BinaryCodeInserter.h				\
+    BinaryConcolic.h					\
     BinaryControlFlow.h					\
     BinaryDataFlow.h					\
+    BinaryDebugger.h					\
     BinaryDemangler.h					\
     BinaryDominance.h					\
     BinaryFeasiblePath.h				\
     BinaryFunctionCall.h				\
     BinaryFunctionSimilarity.h				\
+    BinaryHotPatch.h					\
     BinaryMagic.h					\
     BinaryMatrix.h					\
     BinaryNoOperation.h					\
@@ -88,6 +119,7 @@ pkginclude_HEADERS =					\
     BinarySmtCommandLine.h				\
     BinarySmtSolver.h					\
     BinarySmtlibSolver.h				\
+    BinarySourceLocations.h				\
     BinaryStackDelta.h					\
     BinaryStackVariable.h				\
     BinaryString.h					\
@@ -96,16 +128,29 @@ pkginclude_HEADERS =					\
     BinarySystemCall.h					\
     BinaryTaintedFlow.h					\
     BinaryToSource.h					\
+    BinaryVariables.h					\
     BinaryYicesSolver.h					\
     BinaryZ3Solver.h					\
     DwarfLineMapper.h					\
     ether.h						\
     instructionSemantics/BaseSemantics2.h		\
+    instructionSemantics/BaseSemanticsDispatcher.h	\
+    instructionSemantics/BaseSemanticsException.h	\
+    instructionSemantics/BaseSemanticsFormatter.h	\
+    instructionSemantics/BaseSemanticsMemoryState.h	\
+    instructionSemantics/BaseSemanticsMerger.h		\
+    instructionSemantics/BaseSemanticsRegisterState.h	\
+    instructionSemantics/BaseSemanticsRiscOperators.h	\
+    instructionSemantics/BaseSemanticsState.h		\
+    instructionSemantics/BaseSemanticsSValue.h		\
+    instructionSemantics/BaseSemanticsTypes.h		\
     instructionSemantics/ConcreteSemantics2.h		\
     instructionSemantics/DataFlowSemantics2.h		\
+    instructionSemantics/DispatcherA64.h		\
     instructionSemantics/DispatcherM68k.h		\
     instructionSemantics/DispatcherPowerpc.h		\
     instructionSemantics/DispatcherX86.h		\
+    instructionSemantics/InstructionSemantics2.h	\
     instructionSemantics/IntervalSemantics2.h		\
     instructionSemantics/LlvmSemantics2.h		\
     instructionSemantics/MemoryCell.h			\
@@ -113,6 +158,7 @@ pkginclude_HEADERS =					\
     instructionSemantics/MemoryCellMap.h		\
     instructionSemantics/MemoryCellState.h		\
     instructionSemantics/MultiSemantics2.h		\
+    instructionSemantics/NativeSemantics.h		\
     instructionSemantics/NullSemantics2.h		\
     instructionSemantics/PartialSymbolicSemantics2.h	\
     instructionSemantics/RegisterStateGeneric.h		\
@@ -121,23 +167,29 @@ pkginclude_HEADERS =					\
     instructionSemantics/SymbolicMemory2.h		\
     instructionSemantics/SymbolicSemantics2.h		\
     instructionSemantics/TestSemantics2.h		\
-    instructionSemantics/TraceSemantics2.h		
+    instructionSemantics/TraceSemantics2.h		\
+    Concolic/io-utility.h
+
+nobase_pkginclude_HEADERS =			\
+    Concolic/BasicTypes.h			\
+    Concolic/ConcolicExecutor.h			\
+    Concolic/ConcreteExecutor.h			\
+    Concolic/Database.h				\
+    Concolic/ExecutionManager.h			\
+    Concolic/LinuxExecutor.h			\
+    Concolic/LinuxExitStatus.h			\
+    Concolic/LinuxTraceExecutor.h		\
+    Concolic/Specimen.h				\
+    Concolic/SystemCall.h			\
+    Concolic/TestCase.h				\
+    Concolic/TestSuite.h
 
 if ROSE_USE_SQLITE_DATABASE
-libbinaryMidend_la_SOURCES +=					\
-    libraryIdentification/FunctionIdDatabaseInterface.C         \
-    libraryIdentification/libraryIdentification.C
-#    libraryIdentification/libraryIdentification_reader.C	\
-#    libraryIdentification/libraryIdentification_writer.C	\
-#    libraryIdentification/functionIdentification.C 
-
 pkginclude_HEADERS +=					\
     libraryIdentification/FunctionIdDatabaseInterface.h \
     libraryIdentification/FunctionInfo.h \
     libraryIdentification/libraryIdentification.h \
     libraryIdentification/LibraryInfo.h
-#    libraryIdentification/functionIdentification.h	\
-#    libraryIdentification/libraryIdentification.h
 
 endif
 

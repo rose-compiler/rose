@@ -1,5 +1,7 @@
 #ifndef LIBRARY_IDENTIFICATION_H
 #define LIBRARY_IDENTIFICATION_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "LibraryInfo.h"
 #include "FunctionInfo.h"
@@ -84,4 +86,6 @@ namespace LibraryIdentification
        
 
    }
+
+#endif
 #endif

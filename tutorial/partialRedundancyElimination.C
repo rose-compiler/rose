@@ -2,6 +2,7 @@
 
 #include "rose.h"
 #include "CommandOptions.h"
+#include "pre.h"
 
 int main (int argc, char* argv[])
    {
@@ -15,7 +16,7 @@ int main (int argc, char* argv[])
      CmdOptions::GetInstance()->SetOptions(argc, argv);
      SgProject* project = frontend(l);
 
-     PRE::partialRedundancyElimination(project);
+     legacy::PRE::partialRedundancyElimination(project);
 
      return backend(project);
    }

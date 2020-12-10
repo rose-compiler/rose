@@ -2,8 +2,10 @@
  * offset and size.  The main difference is that if two adjacent extents are added to the map they will be condensed into a
  * single extent.  This class is used to keep track of what parts of a binary file have been parsed, and is also used to
  * manage string table free lists, among other things. */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include <boost/foreach.hpp>
 
 using namespace Rose;
@@ -207,3 +209,5 @@ ExtentMap::dump_extents(FILE *f, const char *prefix, const char *label, bool pad
                 i->first.first()+i->first.size(), i->first.first()+i->first.size());
     }
 }
+
+#endif

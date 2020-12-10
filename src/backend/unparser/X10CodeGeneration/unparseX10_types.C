@@ -25,7 +25,7 @@ void
 Unparse_X10::unparseType(SgType* type, SgUnparse_Info& info)
    {
 
-     ROSE_ASSERT(type != NULL);
+     ASSERT_not_null(type);
 
      switch (type->variantT())
         {
@@ -78,7 +78,7 @@ void
 Unparse_X10::unparseClassType(SgClassType *type, SgUnparse_Info& info)
    {
      //SgClassDeclaration *decl = isSgClassDeclaration(type->get_declaration());
-     //ROSE_ASSERT(decl != NULL);
+     //ASSERT_not_null(decl);
      //unparseName(decl->get_name(), info);
      //todo templates and qualified names
 
@@ -105,7 +105,7 @@ void Unparse_X10::unparseTypeArguments(SgTemplateParameterList *type_list, SgUnp
 
         SgType* argumentType = NULL;
         SgTemplateParameter* templateParameter = type_list -> get_args()[i];
-        ROSE_ASSERT(templateParameter != NULL);
+        ASSERT_not_null(templateParameter);
         if (templateParameter->get_parameterType() == SgTemplateParameter::type_parameter) {
             if (templateParameter -> get_type() != NULL) {
                 argumentType = templateParameter -> get_type();
@@ -176,7 +176,7 @@ Unparse_X10::unparseEnumType(SgEnumType* type, SgUnparse_Info& info)
           SgClassDefinition *cdefn = NULL;
           SgNamespaceDefinitionStatement* namespaceDefn = NULL;
 
-          ROSE_ASSERT(edecl != NULL);
+          ASSERT_not_null(edecl);
 
        // Build reference to any possible enclosing scope represented by a SgClassDefinition or SgNamespaceDefinition
        // to be used check if name qualification is required.
@@ -240,7 +240,7 @@ Unparse_X10::unparseEnumType(SgEnumType* type, SgUnparse_Info& info)
               SgName tmp_name;
 
               SgEnumDeclaration *enum_stmt = isSgEnumDeclaration(enum_type->get_declaration());
-              ROSE_ASSERT(enum_stmt != NULL);
+              ASSERT_not_null(enum_stmt);
 
            // This permits support of the empty enum case! "enum x{};"
               curprint ( "{");

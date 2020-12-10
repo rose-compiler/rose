@@ -1,22 +1,46 @@
 #include "rose.h"
 #include "StatementList.h"
 
-StatementList::StatementList() : SgScopeStatement()
-    {
-    }
-
- StatementList::StatementList(SgStatement* statement)
-    {
-      appendStatement(statement);
-    }
-
-void StatementList::appendStatement(SgStatement* statement)
+/*
+static
+void appendAll(std::vector<Statement*>& vec)
+{
+  for (Statement* stmt : vec)
   {
-    statements.push_back(statement);
+    SageInterface::appendStatement(stmt);
   }
+}
+
+static
+void appendAll(std::vector<Statement*>& vec, SgScopeStatement* scope)
+{
+  SageBuilder::pushScopeStack(scope);
+  appendAll(vec);
+  SageBuilder::popScopeStack();
+}
+*/
+
+static
+void dbgList(std::vector<SgStatement*>& vec)
+{
+  for (SgStatement* s : vec)
+  {
+    SgLocatedNode*   n  = s;
+
+    if (SgExprStatement* es = isSgExprStatement(s))
+      n = es->get_expression();
+
+    std::cerr << static_cast<void*>(n) << " " << std::flush
+              << typeid(*n).name() << " " << std::flush
+              //~ << n->unparseToString()
+              << std::endl;
+  }
+}
+
 
 SgBasicBlock* StatementList::getBasicBlock()
   {
+    dbgList(statements);
     SgBasicBlock* block = SageBuilder::buildBasicBlock();
 
     SageInterface::appendStatementList(statements, block);
@@ -26,6 +50,7 @@ SgBasicBlock* StatementList::getBasicBlock()
 
 void StatementList::appendAll(SgScopeStatement *scope)
   {
+    dbgList(statements);
     SageBuilder::pushScopeStack(scope);
     SageInterface::appendStatementList(statements);
     SageBuilder::popScopeStack();
@@ -33,5 +58,6 @@ void StatementList::appendAll(SgScopeStatement *scope)
 
 void StatementList::appendAll()
   {
+    dbgList(statements);
     SageInterface::appendStatementList(statements);
   }

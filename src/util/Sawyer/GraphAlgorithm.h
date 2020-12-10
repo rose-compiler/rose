@@ -12,6 +12,7 @@
 
 #include <Sawyer/Sawyer.h>
 #include <Sawyer/DenseIntegerSet.h>
+#include <Sawyer/GraphIteratorMap.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/Set.h>
 
@@ -85,7 +86,7 @@ size_t
 graphBreakCycles(Graph &g) {
     std::vector<bool> visited(g.nVertices(), false);    // have we seen this vertex already?
     std::vector<unsigned char> onPath(g.nVertices(), false);  // is a vertex on the current path of edges? 0, 1, or 2
-    std::set<typename Graph::ConstEdgeIterator> edgesToErase;
+    Map<size_t, typename Graph::ConstEdgeIterator> edgesToErase;
 
     for (size_t rootId = 0; rootId < g.nVertices(); ++rootId) {
         if (visited[rootId])
@@ -97,7 +98,7 @@ graphBreakCycles(Graph &g) {
             size_t targetId = t.edge()->target()->id();
             if (t.event() == ENTER_EDGE) {
                 if (onPath[targetId]) {
-                    edgesToErase.insert(t.edge());
+                    edgesToErase.insert(t.edge()->id(), t.edge());
                     t.skipChildren();
                 }
                 ++onPath[targetId];
@@ -116,7 +117,7 @@ graphBreakCycles(Graph &g) {
         onPath[rootId] = 0;
     }
 
-    BOOST_FOREACH (const typename Graph::ConstEdgeIterator &edge, edgesToErase)
+    BOOST_FOREACH (const typename Graph::ConstEdgeIterator &edge, edgesToErase.values())
         g.eraseEdge(edge);
     return edgesToErase.size();
 }
@@ -254,7 +255,7 @@ void
 graphEraseParallelEdges(Graph &g) {
     BOOST_FOREACH (const typename Graph::Vertex &src, g.vertices()) {
         if (src.nOutEdges() > 1) {
-            Map<typename Graph::ConstVertexIterator /*target*/, std::vector<typename Graph::ConstEdgeIterator> > edgesByTarget;
+            GraphIteratorMap<typename Graph::ConstVertexIterator /*target*/, std::vector<typename Graph::ConstEdgeIterator> > edgesByTarget;
             typename Graph::ConstEdgeIterator nextEdge = src.outEdges().begin();
             while (nextEdge != src.outEdges().end()) {
                 typename Graph::ConstEdgeIterator curEdge = nextEdge++;
@@ -1158,7 +1159,7 @@ std::vector<typename GraphTraits<Graph>::VertexIterator>
 graphDirectedDominators(Graph &g, typename GraphTraits<Graph>::VertexIterator root) {
     typedef typename GraphTraits<Graph>::VertexIterator VertexIterator;
     typedef typename GraphTraits<Graph>::EdgeIterator EdgeIterator;
-    typedef typename GraphTraits<Graph>::Edge Edge;
+    //typedef typename GraphTraits<Graph>::Edge Edge;
     static const size_t NO_ID = (size_t)(-1);
 
     ASSERT_require(g.isValidVertex(root));

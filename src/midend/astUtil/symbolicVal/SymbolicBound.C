@@ -3,6 +3,7 @@
 #include "SymbolicSelect.h"
 #include "SymbolicBound.h"
 #include "CommandOptions.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 bool DebugReplaceVal()
 {
@@ -64,7 +65,7 @@ class ValGetBound : public SymbolicVisitor
        SymbolicFunction::Arguments args;
        SymbolicBound orig = result;
        bool change = false;
-           
+
        for (SymbolicFunction::const_iterator p = v.args_begin();
             p != v.args_end(); ++p ){
           SymbolicVal cur = *p;
@@ -74,36 +75,36 @@ class ValGetBound : public SymbolicVisitor
           }
           args.push_back( n);
        }
-       if (change) 
+       if (change)
           result.lb = result.ub = v.cloneFunction(args);
        else
          result = orig;
      }
   void VisitExpr( const SymbolicExpr &exp)
-       { 
+       {
          SymbolicBound orig = result;
          bool change = false, isrepl = true, reverse = false;
-         SymOpType op = exp.GetOpType(); 
+         SymOpType op = exp.GetOpType();
          std::vector<SymbolicBound> args;
          for (SymbolicExpr::OpdIterator iter = exp.GetOpdIterator();
                !iter.ReachEnd(); iter.Advance()) {
             SymbolicVal cur = exp.Term2Val(iter.Current());
             SymbolicBound curbound = GetBound(cur);
             if (! curbound.lb.IsSame(cur) || !curbound.ub.IsSame(cur))
-               change = true; 
+               change = true;
             if (!curbound.lb.IsSame( curbound.ub))
                isrepl = false;
-            if (op == SYMOP_MULTIPLY && curbound.ub < 0) 
-                reverse = !reverse; 
-            args.push_back(curbound); 
+            if (op == SYMOP_MULTIPLY && curbound.ub < 0)
+                reverse = !reverse;
+            args.push_back(curbound);
          }
          if (change) {
-            std::vector<SymbolicBound>::const_iterator p = args.begin(); 
+            std::vector<SymbolicBound>::const_iterator p = args.begin();
             result = *p;
             for ( ++p ; p != args.end(); ++p) {
                SymbolicBound cur = *p;
                result.ub = ::ApplyBinOP(op, result.ub, cur.ub);
-               if (isrepl) 
+               if (isrepl)
                   result.lb = result.ub;
                else
                   result.lb = ::ApplyBinOP(exp.GetOpType(), result.lb, cur.lb);
@@ -113,7 +114,7 @@ class ValGetBound : public SymbolicVisitor
                 result.lb = result.ub;
                 result.ub = tmp;
             }
-         } 
+         }
          else
             result = orig;
        }
@@ -125,8 +126,8 @@ class ValGetBound : public SymbolicVisitor
         if (!Default0(val))
             val.Visit(this);
       }
-  SymbolicBound GetBound( const SymbolicVal &val)  
-      { 
+  SymbolicBound GetBound( const SymbolicVal &val)
+      {
         Visit(val);
         return result;
       }
@@ -135,7 +136,7 @@ class ValGetBound : public SymbolicVisitor
         Visit(val);
         if (result.lb.IsSame(result.ub))
            return result.lb;
-        return val; 
+        return val;
       }
 };
 
@@ -145,7 +146,7 @@ SymbolicVal Max(const SymbolicVal &v1, const SymbolicVal &v2,
       return v2;
   if (v2.IsNIL())
       return v1;
-  SelectApplicatorWithBound op(f, 1); 
+  SelectApplicatorWithBound op(f, 1);
   return ::ApplyBinOP(op,v1,v2); }
 
 SymbolicVal Min(const SymbolicVal &v1, const SymbolicVal &v2,
@@ -155,14 +156,14 @@ SymbolicVal Min(const SymbolicVal &v1, const SymbolicVal &v2,
   if (v2.IsNIL())
       return v1;
   SelectApplicatorWithBound op(f, -1);
-  return ::ApplyBinOP(op,v1,v2); 
+  return ::ApplyBinOP(op,v1,v2);
 }
 
-SymbolicVal ReplaceVal( const SymbolicVal &v, const SymbolicVal &var, 
+SymbolicVal ReplaceVal( const SymbolicVal &v, const SymbolicVal &var,
                         const SymbolicVal& newval)
 {
   SingleValBound op1(var, newval, newval);
-  
+
   ValGetBound op(op1);
   SymbolicVal r = op.GetRepl(v);
   return r;
@@ -197,10 +198,10 @@ SymbolicVal GetValUB( const SymbolicVal& val, MapObject<SymbolicVal, SymbolicBou
  SymbolicVal GetValLB( const SymbolicVal& val,  MapObject<SymbolicVal, SymbolicBound>& f)
 { return ValGetBound(f).GetBound(val).lb; }
 
-SymbolicBound 
+SymbolicBound
 GetValBound(SymbolicVal val, MapObject<SymbolicVal, SymbolicBound>& f)
-{ 
-   SymbolicBound b = ValGetBound(f).GetBound(val); 
+{
+   SymbolicBound b = ValGetBound(f).GetBound(val);
    if (DebugValBound()) {
      std::cerr << " bound of ";
      val.Dump();

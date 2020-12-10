@@ -4,7 +4,6 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
-// DQ (12/29//2011): Since "markCompilerGenerated.h" uses the TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS macro we need to include rose_config.h.
 #include "rose_config.h"
 
 // tps : needed to define this here as it is defined in rose.h
@@ -331,7 +330,7 @@ AstTests::runAllTests(SgProject* sageProject)
   // DQ (9/21/2013): Force this to be skipped where ROSE's AST merge feature is active (since the point of 
   // merge is to share IR nodes, it is pointless to detect sharing and generate output for each identified case).
   // if (sageProject->get_astMerge() == false)
-     if (sageProject->get_astMerge() == false && sageProject->get_Fortran_only() == false)
+     if (sageProject->get_ast_merge() == false && sageProject->get_Fortran_only() == false)
         {
        // DQ (4/2/2012): Added test for unique IR nodes in the AST.
           if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
@@ -822,7 +821,7 @@ AstTests::runAllTests(SgProject* sageProject)
   // DQ (9/21/2013): Force this to be skipped where ROSE's AST merge feature is active (since the point of 
   // detect inconsistancy in parent child relationships and these will be present when astMerge is active.
   // if (sageProject->get_astMerge() == false)
-     if (sageProject->get_astMerge() == false && sageProject->get_Fortran_only() == false)
+     if (sageProject->get_ast_merge() == false && sageProject->get_Fortran_only() == false)
         {
        // DQ (3/19/2012): Added test from Robb for parents of the IR nodes in the AST.
           TestForParentsMatchingASTStructure::test(sageProject);
@@ -968,7 +967,11 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
   // if ( !isSgFile(node) && !isSgProject(node) )
   // if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node))
   // if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node) && !isSgFileList(node) && !isSgDirectory(node))
-     if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node) && !isSgFileList(node) && !isSgDirectory(node) && !isSgJavaImportStatementList(node) && !isSgJavaClassDeclarationList(node) )
+     bool isFileNode = isSgFile(node) || isSgProject(node) || isSgFileList(node) || isSgDirectory(node) || isSgJavaImportStatementList(node) || isSgJavaClassDeclarationList(node);
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     isFileNode = isFileNode || isSgAsmNode(node);
+#endif
+     if (!isFileNode)
         {
           Sg_File_Info* fileInfo = node->get_file_info();
           if ( fileInfo == NULL )
@@ -1136,147 +1139,20 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-                 // DQ (12/31/2008): In EDG 4.0, the translation of a function call such as "(*callback_lookup)();" 
-                 // can cause the functionExpression to be a wider number of IR nodes (e.g. SgVarRefExp).
-                 // See test2007_94.C for an example.
-                    case V_SgVarRefExp:
-                       {
-                         SgVarRefExp* varRefExp = isSgVarRefExp(functionExpression);
-                         ROSE_ASSERT(varRefExp != NULL);
-
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgVarRefExp returned from SgFunctionCallExp::get_function() member function \n");
-#endif
-                         break;
-                       }
-#endif
-
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (2/12/2012): This case is required for test2004_35.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
+                 // TV (04/16/2019): used to be casses guarded by ROSE_USE_EDG_VERSION_4
                     case V_SgIntVal:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#if 1
-                      // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         static int count = 0;
-                         if (count++ % 100 == 0)
-                            {
-                              printf ("Warning: EDG 4.0 specific case, found unusual case of SgIntVal returned from SgFunctionCallExp::get_function() member function \n");
-                            }
-#endif
-#else
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgIntVal returned from SgFunctionCallExp::get_function() member function \n");
-#endif
-                         break;
-                       }
-#endif
-
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (2/25/2012): This case is required for test2012_08.C (related to support for STL map.h header file).
                     case V_SgFunctionCallExp:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgFunctionCallExp returned from SgFunctionCallExp::get_function() member function \n");
-#endif
-                         break;
-                       }
-#endif
-
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (3/13/2012): This case is required for test2004_85.C (related to support for STL string.h header file).
                     case V_SgConstructorInitializer:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgConstructorInitializer returned from SgFunctionCallExp::get_function() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (3/13/2012): This case is required for test2004_85.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
+                    case V_SgCastExp:
+                    case V_SgConditionalExp:
+                    case V_SgTemplateParameterVal:
+                    case V_SgAddressOfOp:
+                    case V_SgPntrArrRefExp:
+                    case V_SgVarRefExp:
                     case V_SgTemplateMemberFunctionRefExp:
                        {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTemplateMemberFunctionRefExp returned from SgFunctionCallExp::get_type() member function \n");
-#endif
                          break;
                        }
-#endif
-
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (10/5/2012): This case is required for test2012_15.c.
-                    case V_SgPntrArrRefExp:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.x specific case, found unusual case of SgPntrArrRefExp returned from SgFunctionCallExp::get_type() member function \n");
-                      // printf ("Investigate this location in the code: \n");
-                      // functionExpression->get_startOfConstruct()->display("Warning: EDG 4.x specific case, found unusual case of SgPntrArrRefExp returned from SgFunctionCallExp::get_type() member function: debug");
-#endif
-#if 0
-                         printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (10/26/2012): This case is required for zsh/Src/Module/module.c (and test2012_102.c).
-                    case V_SgCastExp:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgCastExp returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (10/30/2012): This case is required for postfix/src/global/valid_mailhost_addr.c (and test2012_133.c, and simplified in test2012_139.c).
-                    case V_SgConditionalExp:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgConditionalExp returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (10/30/2012): This case is required for postfix/src/global/valid_mailhost_addr.c (and test2012_133.c, and simplified in test2012_139.c).
-                    case V_SgTemplateParameterVal:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTemplateParameterVal returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (1/29/2018): This case is required for Plum Hall test: 522Y13b.cpp.
-                    case V_SgAddressOfOp:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.x specific case, found unusual case of SgAddressOfOp returned from SgFunctionCallExp::get_type() member function \n");
-                      // printf ("Investigate this location in the code: \n");
-                      // functionExpression->get_startOfConstruct()->display("Warning: EDG 4.x specific case, found unusual case of SgPntrArrRefExp returned from SgFunctionCallExp::get_type() member function: debug");
-#endif
-#if 0
-                         printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
-#endif
-                         break;
-                       }
-#endif
 
                     case V_SgNonrealRefExp:
                        {
@@ -1332,108 +1208,21 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
                     case V_SgPartialFunctionType:
                        {
                       // This case is only present in the new EDG/Sage interface (demonstrated by gzip.c)
                          break;
                        }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (2/12/2012): This case is required for test2004_35.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
+                 // TV: these cases were guarded with EDG 4 condition (date from EDG 3)
                     case V_SgTypeInt:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#if 1
-                      // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         static int count = 0;
-                         if (count++ % 100 == 0)
-                            {
-                              printf ("Warning: EDG 4.0 specific case, found unusual case of SgTypeInt returned from SgFunctionCallExp::get_type() member function \n");
-                            }
-#endif
-#else
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTypeInt returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (2/12/2012): This case is required for test2004_35.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
                     case V_SgTemplateType:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTemplateType returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (3/13/2012): This case is required for test2004_85.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
                     case V_SgClassType:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgClassType returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (3/13/2012): This case is required for test2004_85.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
                     case V_SgReferenceType:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgReferenceType returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (1/30/2013): This case is required for ROSE compiling ROSE header files.
                     case V_SgModifierType:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgModifierType returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (2/26/2013): This case is required for ROSE compiling ROSE header files.
                     case V_SgTypeVoid:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTypeVoid returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (7/7/2014): This case is required for ROSE compiling ROSE header files.
                     case V_SgTypeUnknown:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.x specific case, found unusual case of SgTypeUnknown returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-
-                 // DQ (11/10/2014): This case is required for ROSE compiling C++11 header files.
                     case V_SgRvalueReferenceType:
                        {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.x specific case, found unusual case of SgTypeUnknown returned from SgFunctionCallExp::get_type() member function \n");
-#endif
                          break;
                        }
 
@@ -1521,7 +1310,9 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                   {
                     listOfNodesWithoutValidFileInfo.sort();
                     listOfNodesWithoutValidFileInfo.unique();
+#if 0
                     list<SgNode*>::iterator i = listOfNodesWithoutValidFileInfo.begin();
+#endif
                     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
                          printf ("\n     List of %ld IR nodes in the AST with default information in their file info objects: \n",(long)listOfNodesWithoutValidFileInfo.size());
 
@@ -1595,11 +1386,14 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          SgInitializedNamePtrList::const_iterator result = std::find(initNameList.begin(), initNameList.end(), initializedName);
                          ROSE_ASSERT(result != initNameList.end());
                        }
-                      else
+                      else if (isSgTemplateDeclaration(parentParameterList->get_parent()))
                        {
                       // DQ (12/6/2011): Now that we have the template declarations in the AST, this could be a SgTemplateDeclaration.
-                         ROSE_ASSERT(isSgTemplateDeclaration(parentParameterList->get_parent()) != NULL);
                          printf ("WARNING: There are tests missing for the case of a parentParameterList->get_parent() that is a SgTemplateDeclaration \n");
+                       }
+                       else
+                       {
+                         ROSE_ASSERT(isSgAdaAcceptStmt(parentParameterList->get_parent()));
                        }
                   }
                  else
@@ -1945,8 +1739,26 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
                       // DQ (2/12/2012): Implemented some diagnostics (fails for test2004_35.C).
                          if (templateInstantiation->get_nameResetFromMangledForm() == false)
                             {
+                              printf ("In AST Consistancy test: templateInstantiation = %p = %s \n",templateInstantiation,templateInstantiation->class_name().c_str());
                               printf ("In AST Consistancy test: templateInstantiation->get_templateName() = %s \n",templateInstantiation->get_templateName().str());
-                              SageInterface::whereAmI(templateInstantiation);
+                              printf ("In AST Consistancy test: templateInstantiation->get_name()         = %s \n",templateInstantiation->get_name().str());
+                           // SageInterface::whereAmI(templateInstantiation);
+
+                           // DQ (7/14/2019): Reset the name to see how it would be changed (for debugging)
+                           // The fix was to force the new file built in SageBuilder::buildFile() to call the astPostProcessing() 
+                           // function which will internally reset the template names.
+
+                           // This function will reset nameResetFromMangledForm to true, so we want to force the failure below.
+                           // templateInstantiation->resetTemplateName();
+
+                           // Re-output the template name.
+                           // printf ("In AST Consistancy test: (after resetTemplateName()): templateInstantiation->get_templateName() = %s \n",templateInstantiation->get_templateName().str());
+                           // printf ("In AST Consistancy test: (after resetTemplateName()): templateInstantiation->get_name()         = %s \n",templateInstantiation->get_name().str());
+#if 0
+                           // Force this to fail since the function call above we set nameResetFromMangledForm to true.
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
                             }
                          ROSE_ASSERT(templateInstantiation->get_nameResetFromMangledForm() == true);
                        }
@@ -2297,7 +2109,6 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
      ROSE_ASSERT(mangledName.find(':') == string::npos);
      ROSE_ASSERT(mangledName.find(';') == string::npos);
      ROSE_ASSERT(mangledName.find('\"') == string::npos);
-     ROSE_ASSERT(mangledName.find('\'') == string::npos);
      ROSE_ASSERT(mangledName.find('?') == string::npos);
      ROSE_ASSERT(mangledName.find('.') == string::npos);
      ROSE_ASSERT(mangledName.find('/') == string::npos);
@@ -2306,6 +2117,12 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
   // These are the most common cases that fail
      ROSE_ASSERT(mangledName.find('<') == string::npos);
      ROSE_ASSERT(mangledName.find('>') == string::npos);
+
+  // Jovial can have names like a'variable'name so don't disallow '\'' for Jovial [Rasmussen 2/10/2019]
+     if (!SageInterface::is_Jovial_language())
+        {
+           ROSE_ASSERT(mangledName.find('\'') == string::npos);
+        }
    }
 
 TestAstForProperlyMangledNames::TestAstForProperlyMangledNames()
@@ -2936,12 +2753,36 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                        }
                   }
 
+#if 0
+            // DQ (8/14/2020): After redesiging how access modifiers are set, we want to allow the defining and non-defigning declarations to have different access specifications.
             // DQ (6/30/2014): I think this is not an error for SgTemplateInstantiationDecl.
             // ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
                if (isSgTemplateInstantiationDecl(definingDeclaration) == NULL && firstNondefiningDeclaration->get_parent() == definingDeclaration->get_parent())
-                 {
-                   ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
-                 }
+                  {
+                 // DQ (8/11/2020): Debugging new change to e_default = e_public was changed from e_default = 4.
+                    if (definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier)
+                       {
+#if 0
+                         printf ("Error: in AST consistancy tests: definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier \n");
+#endif
+#if 0
+                         printf (" --- definingDeclaration = %p = %s \n",definingDeclaration,definingDeclaration->class_name().c_str());
+                         printf (" --- definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
+                         definingDeclaration->get_declarationModifier().get_accessModifier().display("definingDeclaration: definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier");
+                         definingDeclaration->get_file_info()->display("definingDeclaration");
+                         printf (" --- firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+                         printf (" --- firstNondefiningDeclaration = %p = %s \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+                         firstNondefiningDeclaration->get_declarationModifier().get_accessModifier().display("firstNondefiningDeclaration: definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier");
+                         firstNondefiningDeclaration->get_file_info()->display("firstNondefiningDeclaration");
+                      // definingDeclaration_access_modifier.display("definingDeclaration: definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier");
+                      // firstNondefiningDeclaration_access_modifier.display("firstNondefiningDeclaration: definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier");
+#endif
+                       }
+
+                 // DQ (8/11/2020): Test by commenting this out.  It might not make since to enforce this.
+                 // ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
+                  }
+#endif
              }
         }
 
@@ -3000,8 +2841,24 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // build a special non-defining declaration for these declarations.
                if (declaration != definingDeclaration)
                   {
-                    printf ("Warning: declaration %p = %s not equal to definingDeclaration = %p \n",
-                         declaration,declaration->sage_class_name(),definingDeclaration);
+                    printf ("declaration = %p (%s)\n",
+                                 declaration,
+                                 declaration->class_name().c_str());
+                    if (definingDeclaration) {
+                      printf ("definingDeclaration = %p (%s)\n",
+                                   definingDeclaration,
+                                   definingDeclaration->class_name().c_str());
+                    }
+                    if (declaration->get_definingDeclaration()) {
+                      printf ("declaration->get_definingDeclaration() = %p (%s)\n",
+                                   declaration->get_definingDeclaration(),
+                                   declaration->get_definingDeclaration()->class_name().c_str());
+                    }
+                    if (declaration->get_firstNondefiningDeclaration()) {
+                      printf ("declaration->get_firstNondefiningDeclaration() = %p (%s)\n",
+                                   declaration->get_firstNondefiningDeclaration(),
+                                   declaration->get_firstNondefiningDeclaration()->class_name().c_str());
+                    }
                   }
                ROSE_ASSERT(declaration == definingDeclaration);
                break;
@@ -3041,6 +2898,9 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // non-defining declarations in generated internally).
                if (firstNondefiningDeclaration == NULL)
                   {
+                 // DQ (8/11/2020): Fixed compiler warning.
+                 // ROSE_ASSERT(declaration->variantT() != NULL);
+                    ROSE_ASSERT(declaration != NULL);
                     switch (declaration->variantT())
                        {
                       // These nodes should have a non-defining declaration even if only a defining 
@@ -3281,13 +3141,15 @@ TestAstSymbolTables::visit ( SgNode* node )
                                    declarationStatement,declarationStatement->class_name().c_str(),SageInterface::get_name(declarationStatement).c_str(),
                                    symbol,symbol->class_name().c_str(),SageInterface::get_name(scope).c_str(),
                                    scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
+#if 0
                               declarationStatement->get_startOfConstruct()->display("declarationStatement->get_symbol_from_symbol_table() == NULL: debug");
-
+#endif
+#if 0
                               printf ("******************** START **********************\n");
                               printf ("In AST Consistantcy tests: Output the symbol table for scope = %p = %s: \n",scope,scope->class_name().c_str());
                               SageInterface::outputLocalSymbolTables(scope);
                               printf ("******************** DONE ***********************\n");
-
+#endif
 #if 1
                            // DQ (2/28/2018): Added testing (Tristan indicates that this is a problem for Fortran, above).
                               ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() != NULL);
@@ -3594,6 +3456,27 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(aliasSymbol->get_alias() != NULL);
                          break;
                        }
+                       
+                    case V_SgAdaPackageSymbol:
+                       {
+                      // This is an alias for a symbol injected from another scope as part of a Fortran "use" statement
+                      // (or perhaps eventually a C++ using declaration or using directive).
+                         SgAdaPackageSymbol* sy = isSgAdaPackageSymbol(symbol);
+                         ROSE_ASSERT(sy != NULL);
+                         ROSE_ASSERT(sy->get_declaration() != NULL);
+                         break;
+                       }
+                       
+                    case V_SgAdaTaskSymbol:
+                       {
+                      // This is an alias for a symbol injected from another scope as part of a Fortran "use" statement
+                      // (or perhaps eventually a C++ using declaration or using directive).
+                         SgAdaTaskSymbol* sy = isSgAdaTaskSymbol(symbol);
+                         ROSE_ASSERT(sy != NULL);
+                         ROSE_ASSERT(sy->get_declaration() != NULL);
+                         break;
+                       }   
+
 
                     case V_SgNonrealSymbol:
                        {
@@ -3654,6 +3537,29 @@ TestAstSymbolTables::visit ( SgNode* node )
           symbolTable->print();
 #endif
         }
+#if 0
+    // for each namespace declaration: there are at least two SgNamespaceDefinitionStatement nodes: 
+    // global definition and firstNondefinining declaration's definition
+     SgNamespaceDeclarationStatement *nsd = isSgNamespaceDeclarationStatement(node); 
+       // global_definition should have the same alias symbol count as the first definition's symbol table
+       // check first nondefinining declaration
+     if (nsd&& nsd->get_firstNondefiningDeclaration() == nsd) 
+     {
+       SgNamespaceDefinitionStatement* local_def = nsd->get_definition();
+       SgNamespaceDefinitionStatement* global_def = local_def->get_global_definition();
+
+       ROSE_ASSERT(local_def && global_def && (local_def!=global_def));
+
+       size_t countL= local_def->get_symbol_table()->get_symbols().size();
+       size_t countG= global_def->get_symbol_table()->get_symbols().size();
+       if (countG < countL)
+       {
+         printf ("Error: namespace definitions: global definition =%p alias symbol count %zd is smaller than local definition=%p symbol count %zd\n",
+            global_def, countG, local_def, countL);
+         ROSE_ASSERT(false); 
+       }
+     }
+#endif     
    }
 
 
@@ -4154,6 +4060,7 @@ TestExpressionTypes::visit ( SgNode* node )
                     case V_SgClassDeclaration:
                     case V_SgDerivedTypeStatement:
                     case V_SgTemplateInstantiationDecl:
+                    case V_SgJovialTableStatement:
                        {
                          SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(definingDeclaration);
                          ROSE_ASSERT(definingClassDeclaration->get_definition() != NULL);
@@ -4532,6 +4439,8 @@ TestLValues::visit ( SgNode* node )
                         case V_SgBoolValExp:     
                         case V_SgExponentiationOp: 
                         case V_SgConcatenationOp: 
+                        case V_SgAtOp:
+                        case V_SgReplicationOp:
                         case V_SgLshiftOp:      
                         case V_SgRshiftOp:       
                         case V_SgEqualityOp:    
@@ -4683,18 +4592,29 @@ TestMangledNames::visit ( SgNode* node )
 #if 0
           printf ("TestMangledNames::visit(): initializedName->get_scope() = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
 #endif
-          if (initializedName->get_scope()->class_name() == "SgNode")
+       // ROSE_ASSERT (initializedName->get_scope() != NULL);
+          if (initializedName->get_scope() != NULL)
              {
-               isDeletedNode = true;
-             }
+               if (initializedName->get_scope()->class_name() == "SgNode")
+                  {
+                    isDeletedNode = true;
+                  }
 
-          if (isDeletedNode == false)
-             {
-               mangledName = initializedName->get_mangled_name().getString();
+               if (isDeletedNode == false)
+                  {
+                    mangledName = initializedName->get_mangled_name().getString();
+                  }
+                 else
+                  {
+                    printf ("WARNING: evaluation of the mangled name for a SgInitializedName in a scope = %p that has been deleted is being skipped! \n",initializedName->get_scope());
+                  }
              }
             else
              {
-               printf ("WARNING: evaluation of the mangled name for a SgInitializedName in a scope = %p that has been deleted is being skipped! \n",initializedName->get_scope());
+#if 0
+            // DQ (1/25/2020): Output spew when using tool_G on target applications.
+               printf ("NOTE: In TestMangledNames::visit(): initializedName->get_scope() == NULL: initializedName = %p name = %s \n",initializedName,initializedName->get_name().str());
+#endif
              }
 
        // printf ("Test generated mangledName for node = %p = %s = %s \n",node,node->class_name().c_str(),mangledName.c_str());
@@ -4978,7 +4898,9 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                case V_SgSymbolTable:
             // case V_SgFile:
                case V_SgSourceFile:
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
                case V_SgBinaryComposite:
+#endif
                case V_SgUnknownFile:
                case V_SgTypedefSeq:
                case V_SgFunctionParameterTypeList:
@@ -5196,6 +5118,18 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                case V_SgJavaClassDeclarationList:
                   {
                     ROSE_ASSERT(support->get_parent() != NULL);
+                    break;
+                  }
+
+            // DQ (6/3/2019): Added support for SgIncludeFile (parent is a SgIncludeDirectiveStatement).
+            // case V_SgIncludeDirectiveStatement:
+               case V_SgIncludeFile:
+                  {
+                 // DQ (10/22/2019): Note that there is no parent pointer defined for this IR node, so no warning message really make sense, I think.
+#if 0
+                    printf ("NOTE: In AST Consistancy tests: TestParentPointersInMemoryPool::visit(): case SgIncludeFile: parent == NULL \n");
+#endif
+                 // ROSE_ASSERT(support->get_parent() != NULL);
                     break;
                   }
 
@@ -5517,12 +5451,17 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                                                // are assigned the class scope as a parent (independent of if they are first used in a function). So this 
                                                // case should not appear.
                                                // printf ("Error: non-defining memberFunctionDeclaration with parent not set to class scope \n");
+
+#if 0
+                                               // DQ (11/10/2019): Cleanup output spew for demo.
+
                                                   printf ("Note: non-defining memberFunctionDeclaration with parent not set to class scope \n");
                                                   printf ("     memberFunctionDeclaration = %p = %s = %s \n",memberFunctionDeclaration,memberFunctionDeclaration->class_name().c_str(),SageInterface::get_name(memberFunctionDeclaration).c_str());
                                                   SgNode* memberFunctionDeclarationParent = memberFunctionDeclaration->get_parent();
                                                   printf ("     memberFunctionDeclaration->get_parent() = %p = %s = %s \n",memberFunctionDeclarationParent,memberFunctionDeclarationParent->class_name().c_str(),SageInterface::get_name(memberFunctionDeclarationParent).c_str());
 
                                                   memberFunctionDeclaration->get_startOfConstruct()->display("Note: non-defining memberFunctionDeclaration with parent not set to class scope");
+#endif
                                                 }
                                            }
                                       }
@@ -6371,7 +6310,7 @@ TestForProperLanguageAndSymbolTableCaseSensitivity::evaluateInheritedAttribute(S
        // printf ("Found SgSourceFile for %s get_Fortran_only() = %s \n",sourceFile->getFileName().c_str(),sourceFile->get_Fortran_only() ? "true" : "false");
 
           return_inheritedAttribute.sourceFile = sourceFile;
-          if (sourceFile->get_Fortran_only() == true)
+          if (sourceFile->get_Fortran_only() == true || sourceFile->get_Jovial_only() == true)
              {
                return_inheritedAttribute.caseInsensitive = true;
              }
@@ -6389,9 +6328,9 @@ TestForProperLanguageAndSymbolTableCaseSensitivity::evaluateInheritedAttribute(S
                scope->get_startOfConstruct()->display("scope->isCaseInsensitive() incorrectly set");
                ROSE_ASSERT(return_inheritedAttribute.sourceFile != NULL);
                SgSourceFile* sourceFile = inheritedAttribute.sourceFile;
-               if (sourceFile->get_Fortran_only() == true)
+               if (sourceFile->get_Fortran_only() == true || sourceFile->get_Jovial_only() == true)
                   {
-                    printf ("Fortran file %s should have an AST with scopes marked as case insensitive \n",sourceFile->getFileName().c_str());
+                    printf ("Fortran (or Jovial) file %s should have an AST with scopes marked as case insensitive \n",sourceFile->getFileName().c_str());
                   }
                  else
                   {

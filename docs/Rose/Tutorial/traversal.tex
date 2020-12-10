@@ -139,7 +139,8 @@ the AST.
 \label{Tutorial:exampleClassicVisitorPattern}
 \end{figure}
 
-
+% (09/10/2019) Pei-Hung remove the following because it cannot be generated to PDF due to size limit
+\commentout{
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
@@ -162,6 +163,7 @@ the AST.
 \caption{Output of input file to the visitor pattern traversal over the memory pools.}
 \label{Tutorial:exampleOutput_ClassicVisitorPattern}
 \end{figure}
+}
 
 Figure~\ref{Tutorial:exampleClassicVisitorPattern} shows the source code 
 for a translator using the classic object-oriented visitor pattern 
@@ -171,10 +173,12 @@ of the attributed AST and does not work on a restricted subset of
 the AST (e.g. a subtree of the unattributed AST).
 % It is however expected to appear identical to the classing visitor pattern 
 % shown for the memory pool traversal.} 
+% (09/10/2019) Pei-Hung remove the following because the output example is removed
+\commentout{
 Figure~\ref{Tutorial:exampleOutput_ClassicVisitorPattern} shows the 
 output from this traversal using the example input source from 
 figure~\ref{Tutorial:exampleInputCode_ExampleTraversals}.
-
+}
 
 
 % \clearpage
@@ -1186,6 +1190,8 @@ The traversal order is the same as in the \ref{Tutorial:exampleMemoryPoolVisitor
 \end{figure}
 
 
+% (09/10/2019) Pei-Hung remove the following because the output example is removed
+\commentout{
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
@@ -1207,6 +1213,7 @@ The traversal order is the same as in the \ref{Tutorial:exampleMemoryPoolVisitor
 \caption{Output of input file to the visitor pattern traversal over the memory pools.}
 \label{Tutorial:exampleOutput_MemoryPoolVisitorPattern}
 \end{figure}
+}
 
 \clearpage
 \subsection{ROSE IR Type Traversal (uses Memory Pools)}

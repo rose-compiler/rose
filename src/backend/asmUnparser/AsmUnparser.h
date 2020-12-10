@@ -1,9 +1,12 @@
 #ifndef ROSE_AsmUnparser_H
 #define ROSE_AsmUnparser_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <ostream>
 
-#include "callbacks.h"          /* Needed for ROSE_Callbacks::List<> */
+#include "callbacks.h"                                  // Needed for Rose::Callbacks::List<>
 #include "BinaryControlFlow.h"
 #include "BinaryFunctionCall.h"
 #include "BaseSemantics2.h"
@@ -954,9 +957,9 @@ public:
 
 protected:
     struct CallbackLists {
-        ROSE_Callbacks::List<UnparserCallback> unparse;                 /**< The main unparsing callbacks. */
-        ROSE_Callbacks::List<UnparserCallback> pre;                     /**< Callbacks invoked before 'unparse' callbacks. */
-        ROSE_Callbacks::List<UnparserCallback> post;                    /**< Callbacks invoked after 'unparse' callbacks. */
+        Callbacks::List<UnparserCallback> unparse;      /**< The main unparsing callbacks. */
+        Callbacks::List<UnparserCallback> pre;          /**< Callbacks invoked before 'unparse' callbacks. */
+        Callbacks::List<UnparserCallback> post;         /**< Callbacks invoked after 'unparse' callbacks. */
 
         /** Clears all the callback lists. */
         void clear() {
@@ -1037,4 +1040,5 @@ protected:
 } // namespace
 } // namespace
 
+#endif
 #endif

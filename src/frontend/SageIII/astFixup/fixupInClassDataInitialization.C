@@ -19,6 +19,19 @@ fixupInClassDataInitialization( SgNode* node )
 void
 FixupInClassDataInitialization::visit (SgNode* node)
    {
+
+  // CR (8/12/2020): This has been a continuing source of problems for unparsing Jovial files
+  // whenever there is a variable declaration with initialization. Since I'm not at all sure that
+  // the semantics of the language should match C++, I'm skipping this check for Jovial. The same
+  // should probably be done for Fortran as the check isn't run when module *.rmod files are created and
+  // unparsed but only when the original module files are later unparsed. At least this is true for Jovial
+  // Compool files (and *.rcmp files).
+  //
+     if (SageInterface::is_Jovial_language())
+        {
+           return;
+        }
+
      switch(node->variantT())
         {
           case V_SgVariableDeclaration:

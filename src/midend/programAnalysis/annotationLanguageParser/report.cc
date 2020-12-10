@@ -1,5 +1,6 @@
 
 #include "broadway.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 using namespace std;
 
@@ -18,7 +19,7 @@ callNode * reportElementAnn::callnode(stmtNode * stmt)
     if (e->typ() == Binary) {
       binaryNode * b = (binaryNode *) e;
       if (b->right()->typ() == Call)
-	call = (callNode *) b->right();
+        call = (callNode *) b->right();
     }
   }
 
@@ -36,16 +37,16 @@ literalReportElementAnn::literalReportElementAnn(const parserID * literal)
 {}
 
 void literalReportElementAnn::lookup(enumPropertyAnn * default_property,
-				     procedureAnn * procedure,
-				     Annotations * annotations)
+                                     procedureAnn * procedure,
+                                     Annotations * annotations)
 {}
 
 #ifdef __PROCLOCATION
 
 void literalReportElementAnn::report(ostream & out,
-				     bool is_error,
-				     Analyzer * analyzer,
-				     procLocation * where)
+                                     bool is_error,
+                                     Analyzer * analyzer,
+                                     procLocation * where)
 {
   if (! Annotations::Quiet_reports || is_error)
     out << _literal;
@@ -58,15 +59,15 @@ void literalReportElementAnn::report(ostream & out,
 // ----------------------------------------------------------------------
 
 expressionReportElementAnn::expressionReportElementAnn(Broadway::FlowSensitivity flow_sensitivity,
-						       exprAnn * expression, int line)
+                                                       exprAnn * expression, int line)
   : reportElementAnn(line),
     _flow_sensitivity(flow_sensitivity),
     _expr(expression)
 {}
 
 void expressionReportElementAnn::lookup(enumPropertyAnn * default_property,
-					procedureAnn * procedure,
-					Annotations * annotations)
+                                        procedureAnn * procedure,
+                                        Annotations * annotations)
 {
   _expr->lookup(default_property, procedure, annotations);
 }
@@ -74,9 +75,9 @@ void expressionReportElementAnn::lookup(enumPropertyAnn * default_property,
 #ifdef __PROCLOCATION
 
 void expressionReportElementAnn::report(ostream & out,
-					bool is_error,
-					Analyzer * analyzer,
-					procLocation * where)
+                                        bool is_error,
+                                        Analyzer * analyzer,
+                                        procLocation * where)
 {
   _expr->report(out, is_error, where);
 }
@@ -101,7 +102,7 @@ public:
   }
 
   static int count_paths(basicblockNode * bb,
-			 basicblock_set & visited)
+                         basicblock_set & visited)
   {
     int total = 1;
 
@@ -111,8 +112,8 @@ public:
     visited.insert(bb);
 
     for (basicblock_list_p p = bb->preds().begin();
-	 p != bb->preds().end();
-	 ++p)
+         p != bb->preds().end();
+         ++p)
       total += count_paths(*p, visited);
 
     return total;
@@ -129,8 +130,8 @@ locationReportElementAnn::locationReportElementAnn(const parserID * id)
 }
 
 void locationReportElementAnn::lookup(enumPropertyAnn * default_property,
-				      procedureAnn * procedure,
-				      Annotations * annotations)
+                                      procedureAnn * procedure,
+                                      Annotations * annotations)
 {
   if (_kind_name == "callsite") _kind = Callsite;
   else
@@ -138,16 +139,16 @@ void locationReportElementAnn::lookup(enumPropertyAnn * default_property,
     else
       if (_kind_name == "numcontexts") _kind = Num_Contexts;
       else
-	annotations->Error(line(), string("Unknown $ location report element: \"") +
-			   _kind_name + "\"");
+        annotations->Error(line(), string("Unknown $ location report element: \"") +
+                           _kind_name + "\"");
 }
 
 #ifdef __PROCLOCATION
 
 void locationReportElementAnn::report(ostream & out,
-				      bool is_error,
-				      Analyzer * analyzer,
-				      procLocation * where)
+                                      bool is_error,
+                                      Analyzer * analyzer,
+                                      procLocation * where)
 {
   if (Annotations::Quiet_reports && ! is_error)
     return;
@@ -160,7 +161,7 @@ void locationReportElementAnn::report(ostream & out,
   if (_kind == Context) {
 
     // -- Location::print_path now includes source location
-    
+
     cout << * where;
 
     /*
@@ -174,12 +175,12 @@ void locationReportElementAnn::report(ostream & out,
 
       out << info->qualified_name();
       if (call)
-	out << " @ (" << call->coord() << ")";
+        out << " @ (" << call->coord() << ")";
 
       cur = cur->stmt_location()->block_location()->proc_location();
 
       if (cur->stmt_location())
-	out << " in ";
+        out << " in ";
     }
 
     if (cur) {
@@ -223,7 +224,7 @@ void locationReportElementAnn::report(ostream & out,
 // ----------------------------------------------------------------------
 
 bindingReportElementAnn::bindingReportElementAnn(const parserID * varname,
-						 bool size_only)
+                                                 bool size_only)
   : reportElementAnn(varname->line()),
     _variable_name(varname->name()),
     _size_only(size_only),
@@ -231,21 +232,21 @@ bindingReportElementAnn::bindingReportElementAnn(const parserID * varname,
 {}
 
 void bindingReportElementAnn::lookup(enumPropertyAnn * default_property,
-				     procedureAnn * procedure,
-				     Annotations * annotations)
+                                     procedureAnn * procedure,
+                                     Annotations * annotations)
 {
   _variable = procedure->lookup(_variable_name, false);
   if ( ! _variable )
     annotations->Error(line(),
-		       string("Undeclared identifier \"") + _variable_name + "\"");
+                       string("Undeclared identifier \"") + _variable_name + "\"");
 }
 
 #ifdef __PROCLOCATION
 
 void bindingReportElementAnn::report(ostream & out,
-				     bool is_error,
-				     Analyzer * analyzer,
-				     procLocation * where)
+                                     bool is_error,
+                                     Analyzer * analyzer,
+                                     procLocation * where)
 {
   if (Annotations::Quiet_reports && ! is_error)
     return;
@@ -267,40 +268,40 @@ void bindingReportElementAnn::report(ostream & out,
 
     bool first = true;
     for (memoryblock_set_p p = var_binding.blocks.begin();
-	 p != var_binding.blocks.end();
-	 ++p)
+         p != var_binding.blocks.end();
+         ++p)
       {
-	memoryBlock * block = (*p);
+        memoryBlock * block = (*p);
 
-	if ( ! first ) out << ", ";
-	out << block->name();
-	first = false;
+        if ( ! first ) out << ", ";
+        out << block->name();
+        first = false;
 
-	/*
-	cout << "BLOCK: " << block->name() << endl;
+        /*
+        cout << "BLOCK: " << block->name() << endl;
 
-	const memorydef_list defs = block->defs();
-	for (memorydef_list_cp mp = defs.begin();
-	     mp != defs.end();
-	     ++mp)
-	  {
-	    memorydef_key mlp = (*mp);
-	    Location * where = mlp.location;
-	    memoryDef * def = mlp.def;
+        const memorydef_list defs = block->defs();
+        for (memorydef_list_cp mp = defs.begin();
+             mp != defs.end();
+             ++mp)
+          {
+            memorydef_key mlp = (*mp);
+            Location * where = mlp.location;
+            memoryDef * def = mlp.def;
 
-	    cout << "  + Def at " << * where << " : ";
+            cout << "  + Def at " << * where << " : ";
 
-	    const memoryblock_set & points_to = def->points_to();
-	    for (memoryblock_set_cp q = points_to.begin();
-		 q != points_to.end();
-		 ++q)
-	      {
-		cout << (*q)->name() << " ";
-	      }
+            const memoryblock_set & points_to = def->points_to();
+            for (memoryblock_set_cp q = points_to.begin();
+                 q != points_to.end();
+                 ++q)
+              {
+                cout << (*q)->name() << " ";
+              }
 
-	    cout << endl;
-	  }
-	*/
+            cout << endl;
+          }
+        */
       }
   }
 }
@@ -312,8 +313,8 @@ void bindingReportElementAnn::report(ostream & out,
 // ----------------------------------------------------------------------
 
 reportAnn::reportAnn(exprAnn * condition,
-		     bool is_error,
-		     report_element_list * elements, int line)
+                     bool is_error,
+                     report_element_list * elements, int line)
   : Ann(line),
     _condition(condition),
     _elements(),
@@ -324,7 +325,7 @@ reportAnn::reportAnn(exprAnn * condition,
 }
 
 void reportAnn::lookup(procedureAnn * procedure,
-		       Annotations * annotations)
+                       Annotations * annotations)
 {
   // -- Invoke lookup on the condition, if there is one
 
@@ -342,9 +343,9 @@ void reportAnn::lookup(procedureAnn * procedure,
 #ifdef __PROCLOCATION
 
 void reportAnn::report(ostream & out,
-		       Analyzer * analyzer,
-		       procLocation * where,
-		       propertyAnalyzer * property_analyzer)
+                       Analyzer * analyzer,
+                       procLocation * where,
+                       propertyAnalyzer * property_analyzer)
 {
   // -- First, check the condition
 
@@ -352,7 +353,7 @@ void reportAnn::report(ostream & out,
   if (Annotations::Show_reports) {
     Annotations::Verbose_properties = true;
     cout << " -- Report at " << * (where) << " ------" << endl;
-  }    
+  }
 
   bool trigger = true;
   if (_condition) {
@@ -377,8 +378,8 @@ void reportAnn::report(ostream & out,
 
   if (trigger) {
     for (report_element_list_p p = _elements.begin();
-	 p != _elements.end();
-	 ++p)
+         p != _elements.end();
+         ++p)
       (*p)->report(out, _is_error, analyzer, where);
 
     if (_is_error) {
@@ -389,9 +390,9 @@ void reportAnn::report(ostream & out,
 
       error_report_map_p p = Annotations::Error_reports.find(key);
       if (p == Annotations::Error_reports.end())
-	Annotations::Error_reports[key] = 1;
+        Annotations::Error_reports[key] = 1;
       else
-	((*p).second)++;
+        ((*p).second)++;
 // begin TB new
       // perform error diagnostic
       if(_condition) _condition->diagnostic(out, where, property_analyzer);

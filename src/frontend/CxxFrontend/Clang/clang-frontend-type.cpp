@@ -17,7 +17,7 @@ SgType * ClangToSageTranslator::buildTypeFromQualifiedType(const clang::QualType
         if (qualifier.hasRestrict()) sg_modifer.setRestrict();
         
         if (qualifier.hasAddressSpace()) {
-            unsigned addrspace = qualifier.getAddressSpace();
+            clang::LangAS addrspace = qualifier.getAddressSpace();
             switch (addrspace) {
                 case clang::LangAS::opencl_global:
                     sg_modifer.setOpenclGlobal();
@@ -30,7 +30,7 @@ SgType * ClangToSageTranslator::buildTypeFromQualifiedType(const clang::QualType
                     break;
                 default:
                     sg_modifer.setAddressSpace();
-                    sg_modifer.set_address_space_value(addrspace);
+                    sg_modifer.set_address_space_value(static_cast<unsigned int>(addrspace));
             }
         }
         modified_type = SgModifierType::insertModifierTypeIntoTypeTable(modified_type);
@@ -54,117 +54,184 @@ SgNode * ClangToSageTranslator::Traverse(const clang::Type * type) {
     bool ret_status = false;
 
     switch (type->getTypeClass()) {
+        case clang::Type::Decayed:
+            ret_status = VisitDecayedType((clang::DecayedType *)type, &result);
+            ROSE_ASSERT(result != NULL);
+            break;
         case clang::Type::ConstantArray:
             ret_status = VisitConstantArrayType((clang::ConstantArrayType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::DependentSizedArray:
-    //      ret_status = VisitDependentSizedArrayType((clang::DependentSizedArrayType *)type, &result);
+            ret_status = VisitDependentSizedArrayType((clang::DependentSizedArrayType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
        case clang::Type::IncompleteArray:
             ret_status = VisitIncompleteArrayType((clang::IncompleteArrayType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::VariableArray:
-    //      ret_status = VisitVariableArrayType((clang::VariableArrayType *)type, &result);
+            ret_status = VisitVariableArrayType((clang::VariableArrayType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::Atomic:
-    //      ret_status = VisitAtomicType((clang::AtomicType *)type, &result);
+            ret_status = VisitAtomicType((clang::AtomicType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::Attributed:
             ret_status = VisitAttributedType((clang::AttributedType *)type, &result);
-            break;
-        case clang::Type::Auto:
-    //      ret_status = VisitAutoType((clang::AutoType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::BlockPointer:
-    //      ret_status = VisitBlockPointerType((clang::BlockPointerType *)type, &result);
+            ret_status = VisitBlockPointerType((clang::BlockPointerType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::Builtin:
             ret_status = VisitBuiltinType((clang::BuiltinType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::Complex:
             ret_status = VisitComplexType((clang::ComplexType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::Decltype:
-    //      ret_status = VisitDecltypeType((clang::DecltypeType *)type, &result);
+            ret_status = VisitDecltypeType((clang::DecltypeType *)type, &result);
+            ROSE_ASSERT(result != NULL);
+            break;
+     // case clang::Type::DependentDecltype:
+     //     ret_status = VisitDependentDecltypeType((clang::DependentDecltypeType *)type, &result);
+     //     break;
+        case clang::Type::Auto:
+            ret_status = VisitAutoType((clang::AutoType *)type, &result);
+            ROSE_ASSERT(result != NULL);
+            break;
+        case clang::Type::DeducedTemplateSpecialization:
+            ret_status = VisitDeducedTemplateSpecializationType((clang::DeducedTemplateSpecializationType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::DependentSizedExtVector:
-    //      ret_status = VisitDependentSizedExtVectorType((clang::DependentSizedExtVectorType *)type, &result);
+            ret_status = VisitDependentSizedExtVectorType((clang::DependentSizedExtVectorType *)type, &result);
+            ROSE_ASSERT(result != NULL);
+            break;
+        case clang::Type::DependentVector:
+            ret_status = VisitDependentVectorType((clang::DependentVectorType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::FunctionNoProto:
             ret_status = VisitFunctionNoProtoType((clang::FunctionNoProtoType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::FunctionProto:
             ret_status = VisitFunctionProtoType((clang::FunctionProtoType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::InjectedClassName:
-    //      ret_status = VisitInjectedClassNameType((clang::InjectedClassNameType *)type, &result);
+            ret_status = VisitInjectedClassNameType((clang::InjectedClassNameType *)type, &result);
+            ROSE_ASSERT(result != NULL);
+            break;
+     // case clang::Type::LocInfo:
+     //     ret_status = VisitLocInfoType((clang::LocInfoType *)type, &result);
+     //     break;
+        case clang::Type::MacroQualified:
+            ret_status = VisitMacroQualifiedType((clang::MacroQualifiedType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::MemberPointer:
-    //      ret_status = VisitMemberPointerType((clang::MemberPointerType *)type, &result);
+            ret_status = VisitMemberPointerType((clang::MemberPointerType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::PackExpansion:
-    //      ret_status = VisitPackExpansionType((clang::PackExpansionType *)type, &result);
+            ret_status = VisitPackExpansionType((clang::PackExpansionType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::Paren:
             ret_status = VisitParenType((clang::ParenType *)type, &result);
+            ROSE_ASSERT(result != NULL);
+            break;
+        case clang::Type::Pipe:
+            ret_status = VisitPipeType((clang::PipeType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::Pointer:
             ret_status = VisitPointerType((clang::PointerType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::LValueReference:
-    //      ret_status = VisitLValueReferenceType((clang::LValueReferenceType *)type, &result);
+            ret_status = VisitLValueReferenceType((clang::LValueReferenceType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::RValueReference:
-    //      ret_status = VisitRValueReferenceType((clang::RValueReferenceType *)type, &result);
+            ret_status = VisitRValueReferenceType((clang::RValueReferenceType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::SubstTemplateTypeParmPack:
-    //      ret_status = VisitSubstTemplateTypeParmPackType((clang::SubstTemplateTypeParmPackType *)type, &result);
+            ret_status = VisitSubstTemplateTypeParmPackType((clang::SubstTemplateTypeParmPackType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::SubstTemplateTypeParm:
-    //      ret_status = VisitSubstTemplateTypeParmType((clang::SubstTemplateTypeParmType *)type, &result);
+            ret_status = VisitSubstTemplateTypeParmType((clang::SubstTemplateTypeParmType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::Enum:
             ret_status = VisitEnumType((clang::EnumType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::Record:
             ret_status = VisitRecordType((clang::RecordType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::TemplateSpecialization:
-    //      ret_status = VisitTemplateSpecializationType((clang::TemplateSpecializationType *)type, &result);
+            ret_status = VisitTemplateSpecializationType((clang::TemplateSpecializationType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::TemplateTypeParm:
-    //      ret_status = VisitTemplateTypeParmType((clang::TemplateTypeParmType *)type, &result);
+            ret_status = VisitTemplateTypeParmType((clang::TemplateTypeParmType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::Typedef:
             ret_status = VisitTypedefType((clang::TypedefType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::TypeOfExpr:
-    //      ret_status = VisitTypeOfExprType((clang::TypeOfExprType *)type, &result);
+            ret_status = VisitTypeOfExprType((clang::TypeOfExprType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
+    //  case clang::Type::DependentTypeOfExpr:
+    //      ret_status = VisitDependentTypeOfExprType((clang::DependentTypeOfExprType *)type, &result);
+    //      break;
         case clang::Type::TypeOf:
-    //      ret_status = VisitTypeOfType((clang::TypeOfType *)type, &result);
+            ret_status = VisitTypeOfType((clang::TypeOfType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::DependentName:
-    //      ret_status = VisitDependentNameType((clang::DependentNameType *)type, &result);
+            ret_status = VisitDependentNameType((clang::DependentNameType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::DependentTemplateSpecialization:
-    //      ret_status = VisitDependentTemplateSpecializationType((clang::DependentTemplateSpecializationType *)type, &result);
+            ret_status = VisitDependentTemplateSpecializationType((clang::DependentTemplateSpecializationType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::Elaborated:
             ret_status = VisitElaboratedType((clang::ElaboratedType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::UnaryTransform:
-    //      ret_status = VisitUnaryTransformType((clang::UnaryTransformType *)type, &result);
+            ret_status = VisitUnaryTransformType((clang::UnaryTransformType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::UnresolvedUsing:
-    //      ret_status = VisitUnresolvedUsingType((clang::UnresolvedUsingType *)type, &result);
+            ret_status = VisitUnresolvedUsingType((clang::UnresolvedUsingType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::Vector:
             ret_status = VisitVectorType((clang::VectorType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Type::ExtVector:
-    //      ret_status = VisitExtVectorType((clang::ExtVectorType *)type, &result);
+            ret_status = VisitExtVectorType((clang::ExtVectorType *)type, &result);
+            ROSE_ASSERT(result != NULL);
             break;
+
         default:
             std::cerr << "Unhandled type" << std::endl;
             ROSE_ASSERT(false);
@@ -200,6 +267,28 @@ bool ClangToSageTranslator::VisitType(clang::Type * type, SgNode ** node) {
     return true;
 }
 
+bool ClangToSageTranslator::VisitAdjustedType(clang::AdjustedType * adjusted_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::VisitAdjustedType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(adjusted_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitDecayedType(clang::DecayedType * decayed_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::VisitDecayedType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitAdjustedType(decayed_type, node) && res;
+}
+
 bool ClangToSageTranslator::VisitArrayType(clang::ArrayType * array_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
     std::cerr << "ClangToSageTranslator::VisitArrayType" << std::endl;
@@ -207,6 +296,9 @@ bool ClangToSageTranslator::VisitArrayType(clang::ArrayType * array_type, SgNode
     bool res = true;
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+
+ // DQ (11/28/2020): Added assertion.
+    ROSE_ASSERT(*node != NULL);
 
     return VisitType(array_type, node) && res;
 }
@@ -227,7 +319,16 @@ bool ClangToSageTranslator::VisitConstantArrayType(clang::ConstantArrayType * co
     return VisitArrayType(constant_array_type, node);
 }
 
-// bool ClangToSageTranslator::VisitDependentSizedArrayType(clang::DependentSizedArrayType * dependent_sized_array_type, SgNode ** node);
+bool ClangToSageTranslator::VisitDependentSizedArrayType(clang::DependentSizedArrayType * dependent_sized_array_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::VisitDependentSizedArrayType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitArrayType(dependent_sized_array_type, node) && res;
+}
 
 bool ClangToSageTranslator::VisitIncompleteArrayType(clang::IncompleteArrayType * incomplete_array_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
@@ -240,10 +341,43 @@ bool ClangToSageTranslator::VisitIncompleteArrayType(clang::IncompleteArrayType 
 
     *node = SageBuilder::buildArrayType(type);
 
+ // DQ (11/28/2020): Added assertion.
+ // ROSE_ASSERT(*node != NULL);
+
     return VisitArrayType(incomplete_array_type, node);
 }
 
-// bool ClangToSageTranslator::VisitVariableArrayType(clang::VariableArrayType * variable_array_type, SgNode ** node);
+bool ClangToSageTranslator::VisitVariableArrayType(clang::VariableArrayType * variable_array_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::VisitVariableArrayType" << std::endl;
+#endif
+    bool res = true;
+
+    SgType * type = buildTypeFromQualifiedType(variable_array_type->getElementType());
+
+    SgNode* tmp_expr = Traverse(variable_array_type->getSizeExpr());
+    SgExpression* array_size = isSgExpression(tmp_expr);
+
+    *node = SageBuilder::buildArrayType(type,array_size);
+
+ // DQ (11/28/2020): Added assertion.
+    ROSE_ASSERT(*node != NULL);
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitArrayType(variable_array_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitAtomicType(clang::AtomicType * atomic_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::VisitAtomicType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(atomic_type, node) && res;
+}
 
 bool ClangToSageTranslator::VisitAttributedType(clang::AttributedType * attributed_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
@@ -255,6 +389,8 @@ bool ClangToSageTranslator::VisitAttributedType(clang::AttributedType * attribut
     SgModifierType * modified_type = SgModifierType::createType(type);
     SgTypeModifier & sg_modifer = modified_type->get_typeModifier();
 
+//(01/29/2020) Pei-Hung needs to revisit this part.
+/*
     switch (attributed_type->getAttrKind()) {
         case clang::AttributedType::attr_noreturn:             sg_modifer.setGnuAttributeNoReturn();      break;
         case clang::AttributedType::attr_cdecl:                sg_modifer.setGnuAttributeCdecl();         break;
@@ -285,14 +421,22 @@ bool ClangToSageTranslator::VisitAttributedType(clang::AttributedType * attribut
         default:
             std::cerr << "Unknown attribute" << std::endl; ROSE_ASSERT(false);
     } 
-
+*/
     *node = SgModifierType::insertModifierTypeIntoTypeTable(modified_type);;
 
     return VisitType(attributed_type, node);
 }
 
-// bool ClangToSageTranslator::VisitAutoType(clang::AutoType * auto_type, SgNode ** node);
-// bool ClangToSageTranslator::VisitBlockPointerType(clang::BlockPointerType * block_pointer_type, SgNode ** node);
+bool ClangToSageTranslator::VisitBlockPointerType(clang::BlockPointerType * block_pointer_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::VisitBlockPointerType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(block_pointer_type, node) && res;
+}
 
 bool ClangToSageTranslator::VisitBuiltinType(clang::BuiltinType * builtin_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
@@ -340,7 +484,7 @@ bool ClangToSageTranslator::VisitBuiltinType(clang::BuiltinType * builtin_type, 
         case clang::BuiltinType::BoundMember:
         case clang::BuiltinType::UnknownAny:
         default:
-            std::cerr << "Unknown builtin type: " << builtin_type->getName(p_compiler_instance->getLangOpts()) << " !" << std::endl;
+            std::cerr << "Unknown builtin type: " << builtin_type->getName(p_compiler_instance->getLangOpts()).str() << " !" << std::endl;
             exit(-1);
     }
 
@@ -361,9 +505,93 @@ bool ClangToSageTranslator::VisitComplexType(clang::ComplexType * complex_type, 
     return VisitType(complex_type, node) && res;
 }
 
-// bool ClangToSageTranslator::VisitDecltypeType(clang::DecltypeType * decltype_type, SgNode ** node);
-// bool ClangToSageTranslator::VisitDependentDecltypeType(clang::DependentDecltypeType * dependent_decltype_type, SgNode ** node);
-// bool ClangToSageTranslator::VisitDependentSizedExtVectorType(clang::DependentSizedExtVectorType * dependent_sized_ext_vector_type, SgNode ** node);
+bool ClangToSageTranslator::VisitDecltypeType(clang::DecltypeType * decltype_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::VisitDecltypeType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(decltype_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitDependentDecltypeType(clang::DependentDecltypeType * dependent_decltype_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::VisitDependentDecltypeType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitDecltypeType(dependent_decltype_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitDeducedType(clang::DeducedType * deduced_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::VisitDeducedType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(deduced_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitAutoType(clang::AutoType * auto_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::VisitAutoType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitDeducedType(auto_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitDeducedTemplateSpecializationType(clang::DeducedTemplateSpecializationType * deduced_template_specialization_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::VisitDeducedTemplateSpecializationType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitDeducedType(deduced_template_specialization_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitDependentAddressSpaceType(clang::DependentAddressSpaceType * dependent_address_space_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::VisitDependentAddressSpaceType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(dependent_address_space_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitDependentSizedExtVectorType(clang::DependentSizedExtVectorType * dependent_sized_ext_vector_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::DependentSizedExtVectorType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(dependent_sized_ext_vector_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitDependentVectorType(clang::DependentVectorType * dependent_vector_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::DependentVectorType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(dependent_vector_type, node) && res;
+}
 
 bool ClangToSageTranslator::VisitFunctionType(clang::FunctionType * function_type, SgNode ** node)  {
 #if DEBUG_VISIT_TYPE
@@ -385,7 +613,7 @@ bool ClangToSageTranslator::VisitFunctionNoProtoType(clang::FunctionNoProtoType 
 
     SgFunctionParameterTypeList * param_type_list = new SgFunctionParameterTypeList();
 
-    SgType * ret_type = buildTypeFromQualifiedType(function_no_proto_type->getResultType()); 
+    SgType * ret_type = buildTypeFromQualifiedType(function_no_proto_type->getReturnType()); 
 
     *node = SageBuilder::buildFunctionType(ret_type, param_type_list);
 
@@ -399,8 +627,8 @@ bool ClangToSageTranslator::VisitFunctionProtoType(clang::FunctionProtoType * fu
 
     bool res = true;
     SgFunctionParameterTypeList * param_type_list = new SgFunctionParameterTypeList();
-    for (unsigned i = 0; i < function_proto_type->getNumArgs(); i++) {
-        SgType * param_type = buildTypeFromQualifiedType(function_proto_type->getArgType(i));
+    for (unsigned i = 0; i < function_proto_type->getNumParams(); i++) {
+        SgType * param_type = buildTypeFromQualifiedType(function_proto_type->getParamType(i));
 
         param_type_list->append_argument(param_type);
     }
@@ -409,7 +637,7 @@ bool ClangToSageTranslator::VisitFunctionProtoType(clang::FunctionProtoType * fu
         param_type_list->append_argument(SgTypeEllipse::createType());
     }
 
-    SgType * ret_type = buildTypeFromQualifiedType(function_proto_type->getResultType());
+    SgType * ret_type = buildTypeFromQualifiedType(function_proto_type->getReturnType());
 
     SgFunctionType * func_type = SageBuilder::buildFunctionType(ret_type, param_type_list);
     if (function_proto_type->isVariadic()) func_type->set_has_ellipses(1);
@@ -419,10 +647,60 @@ bool ClangToSageTranslator::VisitFunctionProtoType(clang::FunctionProtoType * fu
     return VisitType(function_proto_type, node) && res;
 }
 
-// bool ClangToSageTranslator::VisitInjectedClassNameType(clang::InjectedClassNameType * injected_class_name_type, SgNode ** node);
-// bool ClangToSageTranslator::VisitLocInfoType(clang::LocInfoType * loc_info_type, SgNode ** node);
-// bool ClangToSageTranslator::VisitMemberPointerType(clang::MemberPointerType * member_pointer_type, SgNode ** node);
-// bool ClangToSageTranslator::VisitPackExpansionType(clang::PackExpansionType * pack_expansion_type, SgNode ** node);
+bool ClangToSageTranslator::VisitInjectedClassNameType(clang::InjectedClassNameType * injected_class_name_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::InjectedClassNameType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(injected_class_name_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitLocInfoType(clang::LocInfoType * loc_info_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::LocInfoType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(loc_info_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitMacroQualifiedType(clang::MacroQualifiedType * macro_qualified_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::MacroQualifiedType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(macro_qualified_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitMemberPointerType(clang::MemberPointerType * member_pointer_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::MemberPointerType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(member_pointer_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitPackExpansionType(clang::PackExpansionType * pack_expansion_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::PackExpansionType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(pack_expansion_type, node) && res;
+}
 
 bool ClangToSageTranslator::VisitParenType(clang::ParenType * paren_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
@@ -432,6 +710,17 @@ bool ClangToSageTranslator::VisitParenType(clang::ParenType * paren_type, SgNode
     *node = buildTypeFromQualifiedType(paren_type->getInnerType());
 
     return VisitType(paren_type, node);
+}
+
+bool ClangToSageTranslator::VisitPipeType(clang::PipeType * pipe_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::PipeType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(pipe_type, node) && res;
 }
 
 bool ClangToSageTranslator::VisitPointerType(clang::PointerType * pointer_type, SgNode ** node) {
@@ -446,11 +735,60 @@ bool ClangToSageTranslator::VisitPointerType(clang::PointerType * pointer_type, 
     return VisitType(pointer_type, node);
 }
 
-// bool ClangToSageTranslator::VisitReferenceType(clang::ReferenceType * reference_type, SgNode ** node);
-// bool ClangToSageTranslator::VisitLValueReferenceType(clang::LValueReferenceType * lvalue_reference_type, SgNode ** node);
-// bool ClangToSageTranslator::VisitRValueReferenceType(clang::RValueReferenceType * rvalue_reference_type, SgNode ** node);
-// bool ClangToSageTranslator::VisitSubstTemplateTypeParmPackType(clang::SubstTemplateTypeParmPackType * subst_template_type_parm_pack_type, SgNode ** node);
-// bool ClangToSageTranslator::VisitSubstTemplateTypeParmType(clang::SubstTemplateTypeParmType * subst_template_type_parm_type, SgNode ** node);
+bool ClangToSageTranslator::VisitReferenceType(clang::ReferenceType * reference_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::ReferenceType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(reference_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitLValueReferenceType(clang::LValueReferenceType * lvalue_reference_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::LValueReferenceType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitReferenceType(lvalue_reference_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitRValueReferenceType(clang::RValueReferenceType * rvalue_reference_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::RValueReferenceType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitReferenceType(rvalue_reference_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitSubstTemplateTypeParmPackType(clang::SubstTemplateTypeParmPackType * subst_template_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::SubstTemplateTypeParmPackType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(subst_template_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitSubstTemplateTypeParmType(clang::SubstTemplateTypeParmType * subst_template_type_parm_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::SubstTemplateTypeParmType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(subst_template_type_parm_type, node) && res;
+}
 
 bool ClangToSageTranslator::VisitTagType(clang::TagType * tag_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
@@ -528,8 +866,27 @@ bool ClangToSageTranslator::VisitRecordType(clang::RecordType * record_type, SgN
     return VisitType(record_type, node);
 }
 
-// bool ClangToSageTranslator::VisitTemplateSpecializationType(clang::TemplateSpecializationType * template_specialization_type, SgNode ** node);
-// bool ClangToSageTranslator::VisitTemplateTypeParmType(clang::TemplateTypeParmType * template_type_parm_type, SgNode ** node);
+bool ClangToSageTranslator::VisitTemplateSpecializationType(clang::TemplateSpecializationType * template_specialization_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::TemplateSpecializationType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(template_specialization_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitTemplateTypeParmType(clang::TemplateTypeParmType * template_type_parm_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::TemplateTypeParmType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(template_type_parm_type, node) && res;
+}
 
 bool ClangToSageTranslator::VisitTypedefType(clang::TypedefType * typedef_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
@@ -551,9 +908,47 @@ bool ClangToSageTranslator::VisitTypedefType(clang::TypedefType * typedef_type, 
    return VisitType(typedef_type, node) && res;
 }
 
-// bool ClangToSageTranslator::VisitTypeOfExprType(clang::TypeOfExprType * type_of_expr_type, SgNode ** node);
-// bool ClangToSageTranslator::VisitDependentTypeOfExprType(clang::DependentTypeOfExprType * dependent_type_of_expr_type, SgNode ** node);
-// bool ClangToSageTranslator::VisitTypeOfType(clang::TypeOfType * type_of_type, SgNode ** node);
+bool ClangToSageTranslator::VisitTypeOfExprType(clang::TypeOfExprType * type_of_expr_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::TypeOfExprType" << std::endl;
+#endif
+    bool res = true;
+
+    SgNode* tmp_expr = Traverse(type_of_expr_type->getUnderlyingExpr());
+
+ // printf ("In VisitTypeOfExprType(): tmp_expr = %p = %s \n",tmp_expr,tmp_expr->class_name().c_str());
+
+    SgExpression* expr = isSgExpression(tmp_expr);
+    SgType* type = SageBuilder::buildTypeOfType(expr,NULL);
+
+    *node = type;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(type_of_expr_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitDependentTypeOfExprType(clang::DependentTypeOfExprType * dependent_type_of_expr_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::DependentTypeOfExprType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitTypeOfExprType(dependent_type_of_expr_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitTypeOfType(clang::TypeOfType * type_of_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::TypeOfType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(type_of_type, node) && res;
+}
 
 bool ClangToSageTranslator::VisitTypeWithKeyword(clang::TypeWithKeyword * type_with_keyword, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
@@ -566,8 +961,27 @@ bool ClangToSageTranslator::VisitTypeWithKeyword(clang::TypeWithKeyword * type_w
     return VisitType(type_with_keyword, node) && res;
 }
 
-// bool ClangToSageTranslator::VisitDependentNameType(clang::DependentNameType * dependent_name_type, SgNode ** node);
-// bool ClangToSageTranslator::VisitDependentTemplateSpecializationType(clang::DependentTemplateSpecializationType * dependent_template_specialization_type, SgNode ** node);
+bool ClangToSageTranslator::VisitDependentNameType(clang::DependentNameType * dependent_name_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::DependentNameType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitTypeWithKeyword(dependent_name_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitDependentTemplateSpecializationType(clang::DependentTemplateSpecializationType * ependent_template_specialization_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::DependentTemplateSpecializationType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitTypeWithKeyword(ependent_template_specialization_type, node) && res;
+}
 
 bool ClangToSageTranslator::VisitElaboratedType(clang::ElaboratedType * elaborated_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
@@ -580,11 +994,41 @@ bool ClangToSageTranslator::VisitElaboratedType(clang::ElaboratedType * elaborat
 
     *node = type;
 
-    return VisitType(elaborated_type, node);
+    return VisitTypeWithKeyword(elaborated_type, node);
 }
 
-// bool ClangToSageTranslator::VisitUnaryTransformType(clang::UnaryTransformType * unary_transform_type, SgNode ** node);
-// bool ClangToSageTranslator::VisitUnresolvedUsingType(clang::UnresolvedUsingType * unresolved_using_type, SgNode ** node);
+bool ClangToSageTranslator::VisitUnaryTransformType(clang::UnaryTransformType * unary_transform_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::UnaryTransformType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(unary_transform_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitDependentUnaryTransformType(clang::DependentUnaryTransformType * dependent_unary_transform_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::DependentUnaryTransformType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitUnaryTransformType(dependent_unary_transform_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitUnresolvedUsingType(clang::UnresolvedUsingType * unresolved_using_type, SgNode ** node) {
+#if DEBUG_VISIT_TYPE
+    std::cerr << "ClangToSageTranslator::UnresolvedUsingType" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+    return VisitType(unresolved_using_type, node) && res;
+}
 
 bool ClangToSageTranslator::VisitVectorType(clang::VectorType * vector_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE

@@ -1,8 +1,8 @@
 /* Generic Binary Files (SgAsmGenericFile and associated classes). */
-
-// tps (01/14/2010) : Switching from rose.h to sage3.
-//#include "fileoffsetbits.h"
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "AsmUnparser_compat.h"
 #include "MemoryMap.h"
 
@@ -1218,3 +1218,5 @@ SgAsmGenericFile::get_header(SgAsmGenericFormat::ExecFamily efam)
 
     return retval;
 }
+
+#endif

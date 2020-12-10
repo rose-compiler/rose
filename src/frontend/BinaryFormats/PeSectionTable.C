@@ -1,8 +1,15 @@
 /* Windows PE Section Tables (SgAsmPESectionTable and related classes) */
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "BinaryLoader.h"
 #include "MemoryMap.h"
 #include "Diagnostics.h"
+
+// In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
+// need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 
 using namespace Rose;
 using namespace Rose::Diagnostics;
@@ -357,3 +364,5 @@ SgAsmPESectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (variantT() == V_SgAsmPESectionTable) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
+
+#endif

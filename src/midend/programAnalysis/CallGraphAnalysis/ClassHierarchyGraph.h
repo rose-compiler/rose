@@ -30,8 +30,9 @@ private:
     SgIncidenceDirectedGraph* classGraph;
 
 public:
+    explicit
+    ClassHierarchyWrapper(SgNode* node);
 
-    ClassHierarchyWrapper(SgNode *node);
     const ClassDefSet& getSubclasses(SgClassDefinition *) const;
     const ClassDefSet& getDirectSubclasses(SgClassDefinition *) const;
     const ClassDefSet& getAncestorClasses(SgClassDefinition *) const;
@@ -39,7 +40,7 @@ public:
 private:
 
     /** Computes the transitive closure of the child-parent class relationship.
-     * @param parents map from each class to its parents. 
+     * @param parents map from each class to its parents.
      * @param transitiveParents map from each class to all its ancestors */
     static void buildAncestorsMap(const MangledNameToClassDefsMap& parents, MangledNameToClassDefsMap& transitiveParents);
 };

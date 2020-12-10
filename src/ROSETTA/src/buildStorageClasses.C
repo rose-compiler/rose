@@ -202,7 +202,6 @@ Grammar::buildStaticDataMemberListClassEntries(AstNodeClass & node)
      std::string classMembers = node.buildStaticDataMemberList();
      string temp = classMembers;
      classMembers = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
-     vector<AstNodeClass *>::const_iterator treeListIterator;
      DO_ON_CHILDREN_TO_STRING(node, classMembers, buildStaticDataMemberListClassEntries);
      return classMembers;
    }
@@ -798,7 +797,8 @@ AstNodeClass::evaluateType(std::string& varTypeString)
               varTypeString == "SgStorageModifier" || 
               varTypeString == "SgElaboratedTypeModifier" ||
               varTypeString == "SgUPC_AccessModifier" ||
-              varTypeString == "SgConstVolatileModifier")
+              varTypeString == "SgConstVolatileModifier" ||
+              varTypeString == "SgStructureModifier")
              {
                returnType = MODIFIERCLASS_WITHOUTEASYSTORAGE;
              }
@@ -830,6 +830,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgStorageModifier::storage_modifier_enum" ) ||
                  ( varTypeString == "SgAccessModifier::access_modifier_enum" ) ||
                  ( varTypeString == "SgUPC_AccessModifier::upc_access_modifier_enum" ) ||
+                 ( varTypeString == "SgStructureModifier::jovial_structure_modifier_enum" ) ||
                  ( varTypeString == "SgElaboratedTypeModifier::elaborated_type_modifier_enum" ) ||
                  ( varTypeString == "SgDeclarationStatement::template_specialization_enum" ) ||
                  ( varTypeString == "SgDeclarationModifier::gnu_declaration_visability_enum" ) ||
@@ -838,13 +839,16 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgLinkageModifier::linkage_modifier_enum" ) ||
                  ( varTypeString == "SgAsmOp::asm_operand_constraint_enum" ) ||
                  ( varTypeString == "SgAsmOp::asm_operand_modifier_enum" ) ||
+                 ( varTypeString == "SgImplicitStatement::implicit_spec_enum" ) ||
                  ( varTypeString == "SgInitializedName::asm_register_name_enum" ) ||
                  ( varTypeString == "SgInitializedName::excess_specifier_enum" ) ||
+                 ( varTypeString == "SgJovialDirectiveStatement::directive_types" ) ||
+                 ( varTypeString == "SgJovialForThenStatement::loop_statement_type_enum" ) ||
+                 ( varTypeString == "SgProcessControlStatement::control_enum" ) ||
                  ( varTypeString == "SgTypeComplex::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgTypeImaginary::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgClassDeclaration::class_types" ) ||
                  ( varTypeString == "SgTemplateClassDeclaration::class_types" ) ||
-                 ( varTypeString == "SgStopOrPauseStatement::stop_or_pause_enum" ) ||
                  ( varTypeString == "SgIOStatement::io_statement_enum" ) ||
                  ( varTypeString == "SgForAllStatement::forall_statement_kind_enum" ) ||
                  ( varTypeString == "SgImageControlStatement::image_control_statement_enum" ) ||
@@ -871,23 +875,23 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgTypeModifier::gnu_extension_machine_mode_enum" ) ||
                  ( varTypeString == "SgDeclarationStatement::gnu_extension_visability_attribute_enum" ) ||
                  ( varTypeString == "SgVariableDeclaration::gnu_extension_declaration_attributes_enum" ) ||
-                 ( varTypeString == "X86InstructionKind" ) ||
-                 ( varTypeString == "X86RegisterClass" ) ||
-                 ( varTypeString == "X86SegmentRegister" ) ||
-                 ( varTypeString == "X86BranchPrediction" ) ||
-                 ( varTypeString == "X86RepeatPrefix" ) ||
-                 ( varTypeString == "X86PositionInRegister" ) ||
-                 ( varTypeString == "X86InstructionSize" ) ||
-                 ( varTypeString == "ArmInstructionKind" ) ||
-                 ( varTypeString == "ArmInstructionCondition" ) ||
-                 ( varTypeString == "PowerpcInstructionKind" ) ||
-                 ( varTypeString == "PowerpcRegisterClass" ) ||
-                 ( varTypeString == "PowerpcConditionRegisterAccessGranularity" ) ||
-                 ( varTypeString == "PowerpcSpecialPurposeRegister" ) ||
-                 ( varTypeString == "PowerpcTimeBaseRegister" ) ||
-                 ( varTypeString == "MipsInstructionKind") ||
-                 ( varTypeString == "M68kInstructionKind") ||
-                 ( varTypeString == "ByteOrder::Endianness" ) ||
+                 ( varTypeString == "X86InstructionKind" ) || "Rose::BinaryAnalysis::X86InstructionKind" == varTypeString ||
+                 ( varTypeString == "X86RegisterClass" ) || "Rose::BinaryAnalysis::X86RegisterClass" == varTypeString ||
+                 ( varTypeString == "X86SegmentRegister" ) || "Rose::BinaryAnalysis::X86SegmentRegister" == varTypeString ||
+                 ( varTypeString == "X86BranchPrediction" ) || "Rose::BinaryAnalysis::X86BranchPrediction" == varTypeString ||
+                 ( varTypeString == "X86RepeatPrefix" ) || "Rose::BinaryAnalysis::X86RepeatPrefix" == varTypeString ||
+                 ( varTypeString == "X86PositionInRegister" ) || "Rose::BinaryAnalysis::X86PositionInRegister" == varTypeString ||
+                 ( varTypeString == "X86InstructionSize" ) || "Rose::BinaryAnalysis::X86InstructionSize" == varTypeString ||
+                 ( varTypeString == "A64InstructionKind" ) || "Rose::BinaryAnalysis::A64InstructionKind" == varTypeString ||
+                 ( varTypeString == "A64InstructionCondition" ) || "Rose::BinaryAnalysis::A64InstructionCondition" == varTypeString ||
+                 ( varTypeString == "PowerpcInstructionKind" ) || "Rose::BinaryAnalysis::PowerpcInstructionKind" == varTypeString ||
+                 ( varTypeString == "PowerpcRegisterClass" ) || "Rose::BinaryAnalysis::PowerpcRegisterClass" == varTypeString ||
+                 ( varTypeString == "PowerpcConditionRegisterAccessGranularity" ) || "Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity" == varTypeString ||
+                 ( varTypeString == "PowerpcSpecialPurposeRegister" ) || "Rose::BinaryAnalysis::PowerpcSpecialPurposeRegister" == varTypeString ||
+                 ( varTypeString == "PowerpcTimeBaseRegister" ) || "Rose::BinaryAnalysis::PowerpcTimeBaseRegister" == varTypeString ||
+                 ( varTypeString == "MipsInstructionKind") || "Rose::BinaryAnalysis::MipsInstructionKind" == varTypeString ||
+                 ( varTypeString == "M68kInstructionKind") || "Rose::BinaryAnalysis::M68kInstructionKind" == varTypeString ||
+                 ( varTypeString == "ByteOrder::Endianness" ) || "Rose::BinaryAnalysis::ByteOrder::Endianness" == varTypeString ||
               // Note that these enum names do not conform to the naming scheme used in ROSE.
                  ( varTypeString == "SgAsmGenericSection::SectionPurpose" ) ||
                  ( varTypeString == "SgAsmGenericFormat::InsSetArchitecture" ) ||
@@ -917,6 +921,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgToken::ROSE_Fortran_Keywords" ) ||
               // DQ (12/9/2015): Added to support use of enums from SgUntypedType class.
                  ( varTypeString == "SgUntypedType::type_enum" ) ||
+                 ( varTypeString == "SgFile::standard_enum" ) ||
                  false 
               )
        {
@@ -958,7 +963,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmNERelocEntry::iord_type" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::iname_type" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::osfixup_type" ) ||
-                 ( varTypeString == "RegisterDescriptor") ||
+                 ( varTypeString == "RegisterDescriptor") || ( varTypeString == "Rose::BinaryAnalysis::RegisterDescriptor" ) ||
               // DQ (8/8/2008): Added typedef for primative types (used in binary format)
                  ( varTypeString == "SgAsmGenericFormat::fileDetails" ) ||
               // DQ (8/8/2008): This is a typedef to a std::vector<ExtentPair>, this should likely be supported elsewhere.

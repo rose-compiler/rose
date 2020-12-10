@@ -24,13 +24,7 @@ endif
 # DQ (1/25/2006): Renamed clean rule since we don't want "make clean" 
 # at the top level directory to always remove this documentation.
 cleandocs:
-	rm -rf ROSE_HTML_Reference ROSE_ResearchPapers test.cfg *.ps *.gif
-
-# This allows us to test the development of the 
-# documentation specific to the publications page.
-copyPublications:
-	mkdir -p ROSE_ResearchPapers
-	cp -r $(top_srcdir)/ROSE_ResearchPapers/*.pdf ROSE_ResearchPapers
+	rm -rf ROSE_HTML_Reference test.cfg *.ps *.gif
 
 # This copies the experimental version of the documentation to the
 # location where it will permanently reside in the source tree.
