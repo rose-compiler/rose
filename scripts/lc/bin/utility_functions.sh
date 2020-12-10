@@ -413,7 +413,8 @@ run_or_not () {
     command_status=$?
     pop_set_state
   else
-    _log_w_line_w_time_internal "RUN_OR_NOT_EFFORT_ONLY is set. Not running \"$*\"."
+    _log_w_line_w_time_internal "RUN_OR_NOT_EFFORT_ONLY is set. Not running:"
+    _log_w_line_w_time_internal "$@"
     command_status=0
   fi
   # Exit with the command status:

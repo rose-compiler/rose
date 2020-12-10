@@ -1,6 +1,6 @@
 # Intermediate results from test_this_build.sh: 
-*/testing/report*.json
-*/testing/report*.txt
+*/testing/*report*.json
+*/testing/*report*.txt
 
 # Generated
 */testing/*.dot

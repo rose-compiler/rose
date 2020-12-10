@@ -1,5 +1,5 @@
 #!/bin/bash
-# Configure, make, and install ROSE.  Run after clone_and_preconfigure.sh.
+# Gets and buils our own BOOST
 # Calls srun_do and run_and_log as needed.
 
 # For debug:
@@ -17,12 +17,7 @@ source ${ROSE_SCRIPT_DIR}/declare_install_functions.sh
 
 # Uses ROSE_BUILD_BASE if set, else sets it:
 set_main_vars
-#clone_latest_workspace
-#do_preconfigure
-use_latest_existing_workspace
-setup_gcc_compiler
-setup_boost_rose
+setup_gcc_compiler_base
+build_boost_rose
 print_rose_vars
-do_gcc_configure
-make_and_install
 

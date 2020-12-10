@@ -27,8 +27,9 @@ log_start
 #   ROSE_LD_LIBRARY_PATH
 #   ROSE_TOOL
 #use_specific_intel_rose 0.9.13.17
-# use_latest_intel_rose
-use_latest_intel_19_0_4_rose
+use_latest_intel_rose
+#use_latest_intel_19_0_4_rose
+#use_latest_gcc_rose
 #use_latest_gcc_rose_with_profiling
 print_rose_vars
 
@@ -104,14 +105,15 @@ log_preprocessed_line_count () {
   return ${status}
 }
 
+# -edg:H: print includes
 run_tool () {
   log "RUNNING ROSE TOOL"
 #  log "MPICH_CXX=${MPICH_CXX}"
   run_it \
-  log_then_run \
   timeout 15m \
   ${ROSE_CXX} \
   ${ROSE_ARGS} \
+  -edg:H \
   -c \
   -o ${object_path} 
   status=$?
@@ -121,7 +123,6 @@ run_tool () {
 run_tool_with_valgrind () {
   log "RUNNING ROSE TOOL WITH PROFILING"
   run_it \
-  log_then_run \
   valgrind --tool=callgrind \
   ${ROSE_CXX} \
   ${ROSE_ARGS} \
@@ -135,7 +136,6 @@ run_tool_with_valgrind () {
 run_compiler () {
   log "RUNNING COMPILER BEFORE RUNNING TOOL"
   run_it \
-  log_then_run \
   ${ROSE_BACKEND_CXX} \
   -H \
   -c \
@@ -146,6 +146,7 @@ run_compiler () {
 
 run_it () {
   last_err_status=0
+  log_then_run \
   $@ \
   ${RUN_IT_ARGS} \
   -I${source_dir} \

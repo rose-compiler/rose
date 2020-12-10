@@ -10,61 +10,69 @@
 #   ROSE_BIN_SCRIPT_DIR
 #   RUN_AND_LOG
 #   SRUN_DO
-#   _do_gcc_configure_common 
-#   _do_preconfigure_no_latest_copy 
-#   _set_versioned_REPO_PATH_and_BUILD_BASE_and_INSTALL_BASE 
-#   _setup_gcc_compiler_base 
-#   _setup_jvm_library_path 
-#   _temp 
-#   _turn_on_module 
-#   _use_latest_rose_begin 
-#   _use_rose_end 
-#   _use_specific_rose_begin 
-#   clone_latest_workspace 
-#   do_gcc_configure 
-#   do_gcc_configure_with_binary_analysis 
-#   do_gcc_configure_with_c_cxx 
-#   do_gcc_configure_with_fortran 
-#   do_gcc_configure_with_profiling 
-#   do_intel_configure 
-#   do_preconfigure 
-#   echo_version_from_file 
-#   log_maybe_not_set_var
-#   make_and_install 
-#   make_docs 
-#   print_rose_vars 
-#   set_ROSE_HOME_ROSE_LD_LIBRARY_PATH 
-#   set_ROSE_LATEST_INSTALL_VERSION 
-#   set_ROSE_LATEST_WORKSPACE_VERSION 
-#   set_main_vars 
-#   setup_boost 
-#   setup_gcc_compiler 
-#   setup_gcc_compiler_with_binary_analysis 
-#   setup_gcc_compiler_with_c_cxx 
-#   setup_gcc_compiler_with_fortran 
-#   setup_gcc_compiler_with_profiling 
-#   setup_intel_18_0_2_compiler_non_mpi 
-#   setup_intel_19_0_4_compiler 
-#   setup_intel_compiler 
-#   use_existing_workspace 
-#   use_latest_existing_install 
-#   use_latest_existing_workspace 
-#   use_latest_gcc_rose 
-#   use_latest_gcc_rose_with_binary_analysis 
-#   use_latest_gcc_rose_with_c_cxx 
-#   use_latest_gcc_rose_with_fortran 
-#   use_latest_gcc_rose_with_profiling 
+#   _do_gcc_configure_common
+#   _do_preconfigure_no_latest_copy
+#   _set_versioned_REPO_PATH_and_BUILD_BASE_and_INSTALL_BASE
+#   setup_gcc_compiler_base
+#   _setup_intel_compiler_common
+#   _setup_jvm_library_path
+#   _temp
+#   _turn_on_module
+#   _use_latest_rose_begin
+#   _use_rose_end
+#   _use_specific_rose_begin
+#   build_boost_rose
+#   clone_latest_workspace
+#   do_gcc_configure
+#   do_gcc_configure_with_binary_analysis
+#   do_gcc_configure_with_c_cxx
+#   do_gcc_configure_with_cxx11
+#   do_gcc_configure_with_fortran
+#   do_gcc_configure_with_profiling
+#   do_intel_configure
+#   do_preconfigure
+#   echo_version_from_file
+#   log_maybe_not_set_var() {
+#   make_and_install
+#   make_docs
+#   print_rose_vars
+#   set_ROSE_HOME_ROSE_LD_LIBRARY_PATH
+#   set_ROSE_LATEST_INSTALL_VERSION
+#   set_ROSE_LATEST_WORKSPACE_VERSION
+#   set_main_vars
+#   setup_boost
+#   setup_boost_rose
+#   setup_boost_tce
+#   setup_gcc_compiler
+#   setup_gcc_compiler_with_binary_analysis
+#   setup_gcc_compiler_with_c_cxx
+#   setup_gcc_compiler_with_fortran
+#   setup_gcc_compiler_with_profiling
+#   setup_intel_18_0_2_compiler_non_mpi
+#   setup_intel_19_0_4_compiler
+#   setup_intel_compiler
+#   use_existing_workspace
+#   use_latest_existing_install
+#   use_latest_existing_workspace
+#   use_latest_gcc_rose
+#   use_latest_gcc_rose_with_binary_analysis
+#   use_latest_gcc_rose_with_c_cxx
+#   use_latest_gcc_rose_with_fortran
+#   use_latest_gcc_rose_with_profiling
 #   use_latest_intel_19_0_4_rose
-#   use_latest_intel_rose 
-#   use_specific_intel_rose 
+#   use_latest_intel_rose
+#   use_specific_intel_rose
+
 #
 # Example users:
 #  clone_latest:
 #   set_main_vars
+#   print_rose_vars
 #   clone_latest_workspace
 #
 #  clone_and_preconfigure.sh:
 #   set_main_vars
+#   print_rose_vars
 #   clone_latest_workspace
 #   do_preconfigure
 # 
@@ -72,7 +80,8 @@
 #   set_main_vars
 #   use_latest_existing_workspace
 #   setup_gcc_compiler
-#   setup_boost
+#   use_tce_boost
+#   print_rose_vars
 #   do_gcc_configure
 #   make_and_install
 # 
@@ -80,7 +89,8 @@
 #   set_main_vars
 #   use_latest_existing_workspace
 #   setup_intel_compiler
-#   setup_boost
+#   use_tce_boost
+#   print_rose_vars
 #   do_intel_configure
 #   make_and_install
 
@@ -188,7 +198,8 @@ set_main_vars () {
   set_ROSE_LATEST_INSTALL_VERSION
   
   # The LLNL ROSE git project and repo:
-  _rose_remote_project="rose-dev@rosecompiler1.llnl.gov:rose/scratch"
+#  _rose_remote_project="rose-dev@rosecompiler1.llnl.gov:rose/scratch"
+  _rose_remote_project="ssh://git@rosecompiler2.llnl.gov:10022/rose-compiler"
 
   # e.g. "rose-dev@rosecompiler1.llnl.gov:rose/scratch/rose":
   export rose_remote_repo="${_rose_remote_project}/rose"
@@ -375,6 +386,8 @@ _use_rose_end () {
 #   COMMON_BUILD_BASE
 #   COMP_DB_MAP
 #   RENDER_TEXT
+#   ROSE_BACKEND_CC
+#   ROSE_BACKEND_COMPILER_HOME
 #   ROSE_BACKEND_CXX
 #   ROSE_HOME
 #   ROSE_INSTALL_BASE
@@ -609,7 +622,7 @@ setup_intel_18_0_2_compiler_non_mpi () {
   export CXX="${ROSE_COMPILER_HOME}/bin/icpc"
 
   export ROSE_BACKEND_COMPILER=${ROSE_COMPILER}
-  _rose_backend_compiler_versioned=${ROSE_COMPILER_VERSIONED}
+  _rose_backend_compiler_versioned=${ROSE_COMPILER_VERSIONED_STD}
   export ROSE_BACKEND_COMPILER_HOME=${ROSE_COMPILER_HOME}
   export  ROSE_BACKEND_CC="${ROSE_BACKEND_COMPILER_HOME}/bin/icc"
   export ROSE_BACKEND_CXX="${ROSE_BACKEND_COMPILER_HOME}/bin/icpc"
@@ -654,11 +667,15 @@ setup_intel_18_0_2_compiler_non_mpi () {
 #   ROSE_COMPILER_HOME
 #   ROSE_COMPILER_VERSION
 #   ROSE_COMPILER_VERSIONED
-_setup_gcc_compiler_base () {
+setup_gcc_compiler_base () {
   export ROSE_COMPILER="gcc"
 #  export ROSE_COMPILER_VERSION="6.1.0"
   export ROSE_COMPILER_VERSION="4.9.3"
+  export ROSE_COMPILER_CXX_STD="c++11"
+  export ROSE_COMPILER_CXX_STD_FLAG="-std=${ROSE_COMPILER_CXX_STD}"
+#  export ROSE_COMPILER_CXX_STD_FLAG=""
   export ROSE_COMPILER_VERSIONED="${ROSE_COMPILER}-${ROSE_COMPILER_VERSION}"
+  export ROSE_COMPILER_VERSIONED_STD="${ROSE_COMPILER}-${ROSE_COMPILER_VERSION}-${ROSE_COMPILER_CXX_STD}"
   export ROSE_COMPILER_HOME="/usr/tce/packages/${ROSE_COMPILER}/${ROSE_COMPILER_VERSIONED}"
   export  CC="${ROSE_COMPILER_HOME}/bin/cc"
   export CXX="${ROSE_COMPILER_HOME}/bin/c++"
@@ -672,11 +689,21 @@ _setup_gcc_compiler_base () {
 # Sets:
 #   LD_LIBRARY_PATH
 _setup_jvm_library_path () {
-  jvm_lib_path="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.232.b09-0.el7_7.x86_64/jre/lib/amd64/server"
+  # Old:
+  #jvm_lib_path="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.232.b09-0.el7_7.x86_64/jre/lib/amd64/server"
+  # Previous:
+  #jvm_home="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.242.b08-0.el7_7.x86_64"
+  # 2020-04-22:
+  #jvm_home="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.252.b09-2.el7_8.x86_64"
+  # 2020-08-10:
+  #jvm_home="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.262.b10-0.el7_8.x86_64"
+  # Link to current:
+  jvm_home="/usr/lib/jvm/java-1.8.0"
+  jvm_lib_path="${jvm_home}/jre/lib/amd64/server"
   if [ -z "${LD_LIBRARY_PATH+var_is_set}" ]
   then
     #LD_LIBRARY_PATH is not set
-    export LD_LIBRARY_PATH=${jvm_lib_path}
+    export LD_LIBRARY_PATH="${jvm_lib_path}"
   else
     export LD_LIBRARY_PATH="${jvm_lib_path}:${LD_LIBRARY_PATH:?}"
   fi
@@ -700,8 +727,8 @@ _setup_jvm_library_path () {
 #   ROSE_INSTALL_PATH
 setup_gcc_compiler () {
   _setup_jvm_library_path
-  _setup_gcc_compiler_base
-  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED}"
+  setup_gcc_compiler_base
+  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED_STD}"
   export ROSE_BUILD_PATH="${ROSE_BUILD_BASE_VERSIONED}-${_rose_compiler_path_part}"
   export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE_VERSIONED}-${_rose_compiler_path_part}"  
 }
@@ -709,8 +736,8 @@ setup_gcc_compiler () {
 # Uses and Sets are same as setup_gcc_compiler:
 setup_gcc_compiler_with_binary_analysis () {
   _setup_jvm_library_path
-  _setup_gcc_compiler_base
-  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED}-binary"
+  setup_gcc_compiler_base
+  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED_STD}-binary"
   export ROSE_BUILD_PATH="${ROSE_BUILD_BASE_VERSIONED}-${_rose_compiler_path_part}"
   export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE_VERSIONED}-${_rose_compiler_path_part}"  
 }
@@ -718,8 +745,8 @@ setup_gcc_compiler_with_binary_analysis () {
 # Uses and Sets are same as setup_gcc_compiler, but does not set:
 #   LD_LIBRARY_PATH
 setup_gcc_compiler_with_c_cxx () {
-  _setup_gcc_compiler_base
-  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED}-c-cxx"
+  setup_gcc_compiler_base
+  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED_STD}-c-cxx"
   export ROSE_BUILD_PATH="${ROSE_BUILD_BASE_VERSIONED}-${_rose_compiler_path_part}"
   export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE_VERSIONED}-${_rose_compiler_path_part}"  
 }
@@ -727,8 +754,8 @@ setup_gcc_compiler_with_c_cxx () {
 # Uses and Sets are same as setup_gcc_compiler:
 setup_gcc_compiler_with_fortran () {
   _setup_jvm_library_path
-  _setup_gcc_compiler_base
-  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED}-fortran"
+  setup_gcc_compiler_base
+  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED_STD}-fortran"
   export ROSE_BUILD_PATH="${ROSE_BUILD_BASE_VERSIONED}-${_rose_compiler_path_part}"
   export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE_VERSIONED}-${_rose_compiler_path_part}"  
 }
@@ -736,18 +763,89 @@ setup_gcc_compiler_with_fortran () {
 # Uses and Sets are same as setup_gcc_compiler, but does not set:
 #   LD_LIBRARY_PATH
 setup_gcc_compiler_with_profiling () {
-  _setup_gcc_compiler_base
-  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED}-gprof"
+  setup_gcc_compiler_base
+  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED_STD}-gprof"
   export ROSE_BUILD_PATH="${ROSE_BUILD_BASE_VERSIONED}-${_rose_compiler_path_part}"
   export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE_VERSIONED}-${_rose_compiler_path_part}"  
 }
 
 #======================================
 
-# Run after setup_xxx_compiler:
-setup_boost () {
+# Run after setup_xxx_compiler - or run build_boost
+# Uses:
+#   ROSE_BOOST_VERSION
+#   ROSE_COMPILER_VERSIONED
+#   ROSE_MPI_KIND
+#   ROSE_MPI_VERSION
+# Sets:
+#   ROSE_BOOST_HOME
+setup_boost_tce () {
   # SELECT BOOST:
   export ROSE_BOOST_HOME="/usr/tce/packages/boost/boost-${ROSE_BOOST_VERSION}-${ROSE_MPI_KIND}-${ROSE_MPI_VERSION}-${ROSE_COMPILER_VERSIONED}"
+}
+
+# Run after setup_xxx_compiler, instead of use_tce_boost:
+# Builds with -std=c++11
+# Uses:
+#   ROSE_BOOST_VERSION
+#   ROSE_COMPILER_VERSIONED_STD
+#   ROSE_INSTALL_BASE
+# Sets:
+#   ROSE_BOOST_HOME
+#   ROSE_BOOST_VERSION_UNDERSCORES
+#   ROSE_BOOST_VERSIONED
+setup_boost_rose () {
+  # Take out dots:
+  export ROSE_BOOST_VERSION_UNDERSCORES=$(echo ${ROSE_BOOST_VERSION} | tr '.' '_')
+  export ROSE_BOOST_VERSIONED=boost_${ROSE_BOOST_VERSION_UNDERSCORES}
+  export ROSE_BOOST_HOME="${ROSE_INSTALL_BASE}/${ROSE_BOOST_VERSIONED}-${ROSE_COMPILER_VERSIONED_STD}"
+}
+
+setup_boost () {
+  setup_boost_tce
+}
+
+# Run after setup_xxx_compiler, instead of use_tce_boost:
+# Builds with -std=c++11
+# Uses:
+#   CC
+#   CXX
+#   ROSE_BOOST_VERSION
+#   ROSE_BUILD_BASE
+#   ROSE_BUILD_PATH
+#   ROSE_COMPILER_VERSIONED_STD
+#   ROSE_INSTALL_BASE
+#   RUN_AND_LOG
+#   SRUN_DO
+# Sets:
+#   ROSE_BOOST_HOME
+#   ROSE_BOOST_VERSION_UNDERSCORES
+#   ROSE_BOOST_VERSIONED
+build_boost_rose () {
+  run_or_not cd ${ROSE_BUILD_BASE}
+  setup_boost_rose
+  # Using export below for ease of printing these local variables.  "set" shows 
+  # unexported variables but shows function bodies too.
+  # "env" only shows exported variables.
+  export boost_sourceforge_dir=${ROSE_BOOST_VERSIONED}
+  export boost_bzip_file=${boost_sourceforge_dir}.tar.bz2
+  export boost_build_path="${ROSE_BUILD_BASE}/${ROSE_BOOST_VERSIONED}"
+  export boost_install_path="${ROSE_BOOST_HOME}"
+  log_separator_1
+  env | grep boost_
+  log_separator_1
+
+  run_or_not log_then_run wget -nv https://sourceforge.net/projects/boost/files/boost/${ROSE_BOOST_VERSION}/${boost_bzip_file}/download -O ${boost_bzip_file}
+  run_or_not log_then_run ${SRUN_DO} tar jxf ${boost_bzip_file}
+  run_or_not rm -f ${boost_bzip_file}
+  run_or_not cd ${boost_build_path}
+
+  run_or_not ${SRUN_DO} \
+  ${RUN_AND_LOG} \
+  ./bootstrap.sh --prefix=${boost_install_path} --with-libraries=all 
+  run_or_not ${SRUN_DO} \
+  ${RUN_AND_LOG} \
+  ./b2 --prefix=${boost_install_path} -j36 cxxflags="${ROSE_COMPILER_CXX_STD_FLAG}" install
 }
 
 #==============================
@@ -812,7 +910,10 @@ _do_gcc_configure_common () {
   --enable-cxx \
   --with-boost=${ROSE_BOOST_HOME} \
   --disable-boost-version-check \
+  CXXFLAGS="${ROSE_COMPILER_CXX_STD_FLAG} -g -O2 -Wall" \
   "$@"
+  # Original flags:
+  # CXXFLAGS='-O2 -Wall -Wall'
  # Future:
  # no --disable-boost-version-check
  # 
@@ -849,7 +950,7 @@ do_gcc_configure_with_profiling () {
   _do_gcc_configure_common \
   --without-java \
   CFLAGS='-pg -g -O2 -Wall -Wstrict-prototypes -Wmissing-prototypes' \
-  CXXFLAGS='-pg -g -O2 -Wall'
+  CXXFLAGS='${ROSE_COMPILER_CXX_STD_FLAG} -pg -g -O2 -Wall'
   # Original flags:
   # CFLAGS='-g -O2 -O2 -Wall -Wstrict-prototypes -Wmissing-prototypes -Wall -Wstrict-prototypes -Wmissing-prototypes' 
   # CXXFLAGS='-O2 -Wall -Wall'

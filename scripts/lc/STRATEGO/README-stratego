@@ -1,19 +1,44 @@
 # Below are the steps to build ROSE 0.9.10.XX with gcc 4.9.3:
 
-# The LLNL ROSE git project and repo:
-export ROSE_REPO_NAME="rose"
-export ROSE_BRANCH_NAME="master"
-export ROSE_PROJECT_BASE="/g/g17/charles/code/ROSE"
+export ROSE_PROJECT_BASE="${HOME}/code/ROSE"
 
-# e.g. "/g/g17/charles/code/ROSE/rose":
+# The LLNL ROSE git project and repo:
+export ROSE_REMOTE_PROJECT="rose-dev@rosecompiler1.llnl.gov:rose/scratch"
+export ROSE_REPO_NAME="rose"
+#export ROSE_BRANCH_NAME_GIT="master"
+#export ROSE_BRANCH_NAME_GIT="rasmussen17/rose-jovial-dev"
+export ROSE_BRANCH_NAME_GIT="rasmussen17/rose-jovial-hudson-dev"
+
+# e.g. "rose-dev@rosecompiler1.llnl.gov:rose/scratch/rose":
+export ROSE_REMOTE_REPO="${ROSE_REMOTE_PROJECT}/${ROSE_REPO_NAME}"
+# e.g. "${HOME}/code/ROSE/rose":
 export ROSE_REPO_PATH_CLONED=${ROSE_PROJECT_BASE}/${ROSE_REPO_NAME}
 # Take out any slashes:
-# e.g. "dquinlan/dq-development-dev" -> "rose-dquinlan-dq-development-dev"
-export ROSE_BRANCH_PATH_PART=$(echo ${ROSE_BRANCH_NAME} | tr '/' '-')
+# e.g. "dquinlan/dq-development-dev" -> "dquinlan-dq-development-dev"
+export ROSE_BRANCH_PATH_PART=$(echo ${ROSE_BRANCH_NAME_GIT} | tr '/' '-')
 
+# Non-compiler version info:
+export MPI_KIND="mvapich2"
+export MPI_VERSION="2.2"
 export BOOST_VERSION="1.66.0"
 export CFLAGS="-DAT_64BIT"
 
+#===============
+# FOR NEW CLONE:
+#===============
+cd ${ROSE_PROJECT_BASE}
+git clone ${ROSE_REMOTE_REPO}
+cd ${ROSE_REPO_PATH_CLONED}
+# Check out the desired branch if needed:
+git checkout ${ROSE_BRANCH_NAME_GIT}
+git submodule init
+git submodule update
+export ROSE_VERSION=`cat ROSE_VERSION`
+export ROSE_BRANCH_VERSION="${ROSE_BRANCH_PATH_PART}-${ROSE_VERSION}"
+export ROSE_REPO_PATH_VERSIONED="${ROSE_REPO_PATH_CLONED}-${ROSE_BRANCH_VERSION}"
+mv ${ROSE_REPO_PATH_CLONED} ${ROSE_REPO_PATH_VERSIONED}
+cd ${ROSE_REPO_PATH_VERSIONED}
+srun_do run_and_log build
 #=========================
 # FOR EXISTING ROSE CLONE:
 #=========================
@@ -22,37 +47,32 @@ export ROSE_BRANCH_VERSION="${ROSE_BRANCH_PATH_PART}-${ROSE_VERSION}"
 export ROSE_REPO_PATH_VERSIONED="${ROSE_REPO_PATH_CLONED}-${ROSE_BRANCH_VERSION}"
 #========================
 
-#======================================
-# FOR GCC 4.9.3 non-MPI (used by Kull):
-#======================================
+#================================
+# FOR GCC 4.9.3 or 6.1.0 non-MPI:
+#================================
 export ROSE_COMPILER="gcc"
-export ROSE_COMPILER_VERSION="4.9.3"
+#export ROSE_COMPILER_VERSION="4.9.3"
+export ROSE_COMPILER_VERSION="6.1.0"
 export ROSE_COMPILER_VERSIONED="${ROSE_COMPILER}-${ROSE_COMPILER_VERSION}"
 export ROSE_COMPILER_HOME="/usr/tce/packages/${ROSE_COMPILER}/${ROSE_COMPILER_VERSIONED}"
 export  CC="${ROSE_COMPILER_HOME}/bin/cc"
 export CXX="${ROSE_COMPILER_HOME}/bin/c++"
-
 # BACKEND_COMPILER_HOME is not used to build gcc native ROSE, but may be useful elsewhere e.g. run_rose.sh:
 export BACKEND_COMPILER_HOME=${ROSE_COMPILER_HOME}
 
 #----------------------
-# FOR GCC 4.9.3 Jovial:
+# FOR Jovial:
 #----------------------
 # (.jovial on the end):
 export ROSE_BUILD_PATH="${ROSE_REPO_PATH_VERSIONED}-${ROSE_COMPILER_VERSIONED}.jovial"
 #----------------------
 #======================================
-
 mkdir ${ROSE_BUILD_PATH}
 
-# SELECT BOOST:
-export BOOST_HOME="/usr/tce/packages/boost/boost-${BOOST_VERSION}-${MPI_KIND}-${MPI_VERSION}-${ROSE_COMPILER_VERSIONED}"
 
-cd ${ROSE_BUILD_PATH}
-
-#======================================
-# FOR GCC 4.9.3 non-MPI (used by Kull):
-#======================================
+#================================
+# FOR GCC 4.9.3 or 6.1.0 non-MPI:
+#================================
 cd ${ROSE_BUILD_PATH}
 module load ${ROSE_COMPILER}/${ROSE_COMPILER_VERSION}
 
@@ -219,6 +239,10 @@ srun_do run_and_log ${STRATEGO_BUILD_PATH}/bin/sglri -p ${ROSE_REPO_PATH_VERSION
 
 # BACK to ROSE:
 cd ${ROSE_BUILD_PATH}
+
+# SELECT BOOST:
+export BOOST_HOME="/usr/tce/packages/boost/boost-${BOOST_VERSION}-${MPI_KIND}-${MPI_VERSION}-${ROSE_COMPILER_VERSIONED}"
+
 srun_do \
 run_and_log \
 ${ROSE_REPO_PATH_VERSIONED}/configure \
@@ -231,5 +255,12 @@ ${ROSE_REPO_PATH_VERSIONED}/configure \
 --with-stratego=${STRATEGO_BUILD_PATH} \
 
 #----------------------
+
+#======================================
+# Build and install ROSE:
+#======================================
+cd ${ROSE_BUILD_PATH}
+srun_do -c36 run_and_log --use_first_parm make all -j36
+srun_do -c36 run_and_log --use_first_parm make install -j36
 #======================================
 
