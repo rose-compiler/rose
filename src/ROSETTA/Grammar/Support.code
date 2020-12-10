@@ -14297,6 +14297,8 @@ Sg_File_Info::display( const std::string label ) const
         }
 
      printf ("     (computed) physical_file_id    = %d = %s \n",get_physical_file_id(),get_physical_filename().c_str());
+     printf ("     (internal) physical_file_id    = %d = %s \n",get_physical_file_id(),getFilenameFromID(get_physical_file_id()).c_str());
+     printf ("     (internal) physical_file_id    = %d = %s \n",p_physical_file_id,getFilenameFromID(p_physical_file_id).c_str());
      printf ("     (computed) physical_line       = %d \n",p_physical_line);
 
   // DQ (1/23/2013): Added support for source sequence numbering information.
