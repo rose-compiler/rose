@@ -603,30 +603,24 @@ Enter(SgFunctionCallExp* &func_call, const std::string &name, SgExprListExp* par
    // Function calls are ambiguous with arrays in Fortran (and type casts and the replication operator
    // in Jovial).  Start out by assuming it's a function call if another symbol doesn't exist.
 
-   SgFunctionSymbol* func_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name);
+   SgFunctionSymbol* func_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name, SageBuilder::topScopeStack());
 
-   if (func_symbol) {
-     func_call = SageBuilder::buildFunctionCallExp(func_symbol, params);
+   if (func_symbol == nullptr) {
+      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
+      if (symbol || isInitializationContext()) {
+         // There is a symbol but it is not a function, punt and let variable handling take care of it.
+         // Also, if this name is in an initialization expression it must be a constant so there will be a
+         // function declaration already (it can't be implicit).
+         return;
+      }
+      else {
+         // Assume a void return type.
+         SgType* return_type = SageBuilder::buildVoidType();
+         func_call = SB::buildFunctionCallExp(SgName(name), return_type, params, SageBuilder::topScopeStack());
+      }
    }
    else {
-     SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name);
-
-     if (symbol) {
-       // There is a symbol but it is not a function, perhaps it is an array reference.
-       // Punt and let someone else deal with it.
-       return;
-     }
-     else {
-       // First try to find an intrinsic function call that hasn't been seen (or created) yet
-       func_call = SageBuilderCpp17::buildIntrinsicFunctionCallExp_nfi(name, params);
-
-       if (!func_call) {
-         // This function must not have been declared yet, without further knowledge,
-         // assume a void return type.
-         SgType* return_type = SageBuilder::buildVoidType();
-         func_call = SageBuilder::buildFunctionCallExp(SgName(name), return_type, params);
-       }
-     }
+      func_call = SageBuilder::buildFunctionCallExp(func_symbol, params);
    }
 
    ROSE_ASSERT(func_call);
